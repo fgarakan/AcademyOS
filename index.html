@@ -1,0 +1,2407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Angles Academy OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;1,300&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --neon: #C8FF00;
+  --neon2: #a8d800;
+  --black: #060606;
+  --dark: #0d0d0d;
+  --card: #111111;
+  --card2: #161616;
+  --border: rgba(200,255,0,0.12);
+  --border2: rgba(255,255,255,0.06);
+  --text: #f0f0f0;
+  --muted: #777;
+  --dim: #333;
+
+  --player: #44aaff;
+  --parent: #ff6688;
+  --coach: #C8FF00;
+  --director: #ff9944;
+  --academy: #cc88ff;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+html {
+  scroll-behavior: smooth;
+  background: #060606;
+  color: #f0f0f0;
+}
+
+body {
+  background: var(--black);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-weight: 300;
+  overflow-x: hidden;
+  cursor: default;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Force any browser-injected or iframe white backgrounds to stay dark */
+input, button, select, textarea {
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+}
+
+/* ─── CUSTOM CURSOR ─── */
+.cursor {
+  position: fixed;
+  width: 8px; height: 8px;
+  background: var(--neon);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: transform 0.1s, width 0.2s, height 0.2s, opacity 0.2s;
+  mix-blend-mode: difference;
+}
+.cursor-ring {
+  position: fixed;
+  width: 32px; height: 32px;
+  border: 1px solid rgba(200,255,0,0.4);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%,-50%);
+  transition: all 0.15s ease;
+}
+
+/* ─── SLIDE SYSTEM ─── */
+.slide {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 80px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+  background: var(--black);
+  color: var(--text);
+}
+.slide.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── NAV DOTS ─── */
+.nav-dots {
+  position: fixed;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 100;
+}
+.nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--dim);
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+.nav-dot.active {
+  background: var(--neon);
+  box-shadow: 0 0 8px var(--neon);
+}
+.nav-dot:hover { background: var(--muted); transform: scale(1.4); }
+.nav-dot-label {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.nav-dot:hover .nav-dot-label { opacity: 1; }
+
+/* ─── TOP BAR ─── */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  background: rgba(6,6,6,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border2);
+  z-index: 100;
+}
+.topbar-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: var(--neon);
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.topbar-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.slide-counter {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  color: var(--dim);
+  letter-spacing: 2px;
+}
+.slide-counter span { color: var(--neon); }
+
+/* ─────────────────────────────────
+   SLIDE 1 — HERO
+───────────────────────────────── */
+#slide-1 {
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding-top: 120px;
+}
+
+.hero-eyebrow {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  letter-spacing: 5px;
+  color: var(--neon);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.3s forwards;
+}
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(60px, 10vw, 130px);
+  line-height: 0.92;
+  letter-spacing: 2px;
+  color: var(--text);
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.5s forwards;
+}
+.hero-title em {
+  font-style: normal;
+  color: var(--neon);
+  -webkit-text-stroke: 0px;
+}
+.hero-title .outline {
+  -webkit-text-stroke: 1px rgba(200,255,0,0.3);
+  color: transparent;
+}
+.hero-sub {
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--muted);
+  max-width: 520px;
+  line-height: 1.7;
+  margin-bottom: 52px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.7s forwards;
+}
+.hero-sub strong { color: var(--text); font-weight: 400; }
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--neon);
+  color: var(--black);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 3px;
+  padding: 16px 36px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.9s forwards;
+}
+.hero-cta:hover {
+  background: var(--text);
+  color: var(--black);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(200,255,0,0.2);
+}
+.hero-cta-arrow { font-size: 20px; transition: transform 0.2s; }
+.hero-cta:hover .hero-cta-arrow { transform: translateX(4px); }
+
+.hero-bg-text {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(120px, 18vw, 260px);
+  color: rgba(200,255,0,0.03);
+  letter-spacing: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.hero-scroll-hint {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  animation: fadeIn 1s ease 2s forwards;
+}
+.scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--neon), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+.scroll-text {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--dim);
+}
+
+/* ─────────────────────────────────
+   SLIDE 2 — THE PROBLEM
+───────────────────────────────── */
+#slide-2 { background: var(--dark); }
+
+.problem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  max-width: 1100px;
+}
+.problem-left { }
+.section-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-tag::before {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 1px;
+  background: var(--neon);
+}
+.slide-heading {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(36px,5vw,64px);
+  line-height: 0.95;
+  letter-spacing: 2px;
+  margin-bottom: 24px;
+}
+.slide-body {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.8;
+  font-weight: 300;
+}
+.slide-body strong { color: var(--text); font-weight: 400; }
+
+.problem-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.problem-card {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-left: 3px solid var(--dim);
+  padding: 18px 22px;
+  transition: all 0.3s;
+}
+.problem-card:hover {
+  border-left-color: var(--neon);
+  background: var(--card2);
+  transform: translateX(4px);
+}
+.problem-card-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.problem-card-text {
+  font-size: 14px;
+  color: #999;
+  line-height: 1.5;
+}
+.problem-card-text strong { color: var(--text); }
+
+/* ─────────────────────────────────
+   SLIDE 3 — THE SOLUTION
+───────────────────────────────── */
+#slide-3 { }
+
+.solution-statement {
+  max-width: 820px;
+  margin-bottom: 60px;
+}
+.solution-statement .slide-heading { color: var(--text); }
+.solution-statement .slide-heading em {
+  font-style: normal;
+  color: var(--neon);
+}
+
+.two-tracks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border2);
+  max-width: 900px;
+}
+.track-card {
+  background: var(--dark);
+  padding: 36px 40px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.track-card:hover { background: var(--card2); }
+.track-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+}
+.track-skill::after { background: var(--neon); }
+.track-comp::after { background: var(--player); }
+.track-icon {
+  font-size: 32px;
+  margin-bottom: 14px;
+}
+.track-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.track-skill .track-label { color: var(--neon); }
+.track-comp .track-label { color: var(--player); }
+.track-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+}
+.track-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* ─────────────────────────────────
+   SLIDE 4 — WHO IT SERVES (ROLES)
+───────────────────────────────── */
+#slide-4 { padding: 80px; }
+
+.roles-intro {
+  max-width: 600px;
+  margin-bottom: 52px;
+}
+
+.roles-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+  background: #0a0a0a;
+  border: 1px solid var(--border2);
+  max-width: 1100px;
+}
+.role-card {
+  background: var(--dark);
+  padding: 32px 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.role-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+.role-card:hover::before,
+.role-card.active::before { transform: scaleX(1); }
+.role-card:hover, .role-card.active { background: var(--card2); }
+
+.role-player::before { background: var(--player); }
+.role-parent::before { background: var(--parent); }
+.role-coach::before { background: var(--coach); }
+.role-director::before { background: var(--director); }
+.role-academy::before { background: var(--academy); }
+
+.role-emoji { font-size: 28px; }
+.role-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+.role-player .role-title { color: var(--player); }
+.role-parent .role-title { color: var(--parent); }
+.role-coach .role-title { color: var(--coach); }
+.role-director .role-title { color: var(--director); }
+.role-academy .role-title { color: var(--academy); }
+
+.role-tagline {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.5px;
+}
+.role-cta {
+  margin-top: auto;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--dim);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+.role-card:hover .role-cta { color: var(--muted); }
+
+/* ─────────────────────────────────
+   ROLE DEEP-DIVE MODAL
+───────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+  padding: 40px;
+}
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal {
+  background: var(--dark);
+  border: 1px solid var(--border2);
+  max-width: 900px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.4s ease;
+}
+.modal-overlay.open .modal {
+  transform: translateY(0) scale(1);
+}
+.modal-header {
+  padding: 36px 40px 24px;
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  background: var(--dark);
+  z-index: 2;
+}
+.modal-title-group { flex: 1; }
+.modal-eyebrow {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 40px;
+  letter-spacing: 3px;
+  line-height: 1;
+}
+.modal-close {
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  width: 36px; height: 36px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.modal-close:hover { border-color: var(--neon); color: var(--neon); }
+
+.modal-body { padding: 36px 40px; }
+
+/* Modal tab system */
+.modal-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 32px;
+  background: var(--black);
+  padding: 3px;
+}
+.modal-tab {
+  flex: 1;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.modal-tab:hover { color: var(--text); }
+.modal-tab.active {
+  background: var(--card2);
+  color: var(--text);
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Experience journey */
+.journey-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.journey-step {
+  display: flex;
+  gap: 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border2);
+  position: relative;
+}
+.journey-step:last-child { border-bottom: none; }
+.step-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 40px;
+  flex-shrink: 0;
+}
+.step-num {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+.step-line {
+  flex: 1;
+  width: 1px;
+  background: var(--border2);
+  min-height: 20px;
+}
+.step-right { flex: 1; padding-top: 4px; }
+.step-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+.step-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.step-desc strong { color: var(--text); font-weight: 400; }
+.step-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.step-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  border-radius: 2px;
+  border: 1px solid;
+  color: inherit;
+}
+
+/* What they see */
+.feature-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.feature-item {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  padding: 18px 20px;
+  transition: border-color 0.2s;
+}
+.feature-item:hover { border-color: var(--border); }
+.feature-icon { font-size: 20px; margin-bottom: 8px; }
+.feature-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  margin-bottom: 4px;
+}
+.feature-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* AI section inside modal */
+.ai-block {
+  background: rgba(200,255,0,0.03);
+  border: 1px solid rgba(200,255,0,0.12);
+  padding: 24px 28px;
+  margin-top: 8px;
+}
+.ai-block-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--neon);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ai-block-title::before {
+  content: '◆';
+  font-size: 8px;
+}
+.ai-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: #888;
+  line-height: 1.6;
+}
+.ai-item::before {
+  content: '→';
+  color: var(--neon);
+  font-size: 12px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.ai-item strong { color: var(--text); font-weight: 400; }
+
+/* ─────────────────────────────────
+   SLIDE 5 — THE SYSTEM MAP
+───────────────────────────────── */
+#slide-5 { background: var(--dark); }
+
+.system-map {
+  max-width: 1000px;
+}
+.system-intro {
+  max-width: 600px;
+  margin-bottom: 52px;
+}
+.system-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.system-layer {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 2px;
+  min-height: 70px;
+}
+.layer-label-col {
+  background: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 18px;
+}
+.layer-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-align: right;
+}
+.layer-modules {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+}
+.layer-module {
+  flex: 1;
+  background: var(--card);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.25s;
+  border-top: 2px solid transparent;
+  position: relative;
+  min-width: 0;
+}
+.layer-module:hover { background: var(--card2); }
+.layer-module-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.layer-module-sub {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* layer color themes */
+.layer-intel .layer-label { color: var(--academy); }
+.layer-intel .layer-module:hover { border-top-color: var(--academy); }
+.layer-intel .layer-module-title { color: #cc88ff; }
+
+.layer-ops .layer-label { color: var(--director); }
+.layer-ops .layer-module:hover { border-top-color: var(--director); }
+.layer-ops .layer-module-title { color: #ff9944; }
+
+.layer-core .layer-label { color: var(--neon); }
+.layer-core .layer-module:hover { border-top-color: var(--neon); }
+.layer-core .layer-module-title { color: var(--neon); }
+
+.layer-infra .layer-label { color: var(--muted); }
+.layer-infra .layer-module-title { color: var(--dim); font-size: 11px; }
+
+/* ─────────────────────────────────
+   SLIDE 6 — VOICE NOTE MAGIC
+───────────────────────────────── */
+#slide-6 { }
+
+.voice-intro {
+  max-width: 560px;
+  margin-bottom: 52px;
+}
+.voice-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 40px;
+  max-width: 1000px;
+}
+.vf-step {
+  flex: 1;
+  background: var(--card);
+  padding: 24px 20px;
+  position: relative;
+  border: 1px solid var(--border2);
+  border-right: none;
+  transition: background 0.3s;
+  cursor: default;
+}
+.vf-step:last-child { border-right: 1px solid var(--border2); }
+.vf-step:hover { background: var(--card2); }
+.vf-step::after {
+  content: '›';
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--neon);
+  font-size: 22px;
+  z-index: 2;
+  background: var(--card);
+  width: 22px;
+  text-align: center;
+}
+.vf-step:last-child::after { display: none; }
+.vf-step:hover::after { background: var(--card2); }
+.vf-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+.vf-icon { font-size: 22px; margin-bottom: 8px; }
+.vf-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.vf-desc {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.6;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.3px;
+}
+
+.voice-targets-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 3px;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+.voice-targets-title span { color: var(--neon); }
+
+.voice-targets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  max-width: 1000px;
+}
+.vt-card {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  padding: 18px 18px;
+  transition: all 0.3s;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+.vt-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.vt-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.4); }
+.vt-1::before { background: var(--neon); }
+.vt-2::before { background: var(--blue); }
+.vt-3::before { background: var(--director); }
+.vt-4::before { background: var(--parent); }
+.vt-5::before { background: var(--academy); }
+.vt-6::before { background: var(--player); }
+.vt-7::before { background: var(--neon2); }
+.vt-8::before { background: var(--coach); }
+.vt-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+.vt-items {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 2;
+}
+.vt-item::before { content: '→ '; color: var(--neon); }
+
+/* ─────────────────────────────────
+   SLIDE 7 — THE AI LAYER
+───────────────────────────────── */
+#slide-7 { background: var(--dark); }
+
+.ai-intro { max-width: 600px; margin-bottom: 52px; }
+
+.ai-truth {
+  background: rgba(200,255,0,0.04);
+  border: 1px solid rgba(200,255,0,0.15);
+  padding: 22px 28px;
+  max-width: 680px;
+  margin-bottom: 44px;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: #ccc;
+}
+.ai-truth strong { color: var(--neon); font-weight: 400; }
+
+.ai-caps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 1000px;
+}
+.ai-cap-card {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  padding: 22px 22px;
+  transition: all 0.3s;
+  cursor: default;
+}
+.ai-cap-card:hover {
+  background: var(--card2);
+  border-color: rgba(200,255,0,0.2);
+  transform: translateY(-2px);
+}
+.ac-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  color: rgba(200,255,0,0.08);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.ac-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: var(--neon);
+  margin-bottom: 8px;
+}
+.ac-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.ac-desc strong { color: var(--text); font-weight: 400; }
+
+/* ─────────────────────────────────
+   SLIDE 8 — THE 6 LOOPS
+───────────────────────────────── */
+#slide-8 { }
+
+.loops-intro { max-width: 560px; margin-bottom: 48px; }
+
+.loops-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 1000px;
+}
+.loop-card {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+  cursor: default;
+}
+.loop-card:hover { background: var(--card2); transform: translateY(-3px); }
+.loop-bg-num {
+  position: absolute;
+  top: -10px; right: 8px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 80px;
+  color: rgba(255,255,255,0.02);
+  line-height: 1;
+  user-select: none;
+}
+.loop-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.loop-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+}
+.loop-chain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.loop-node {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 2px;
+  border: 1px solid;
+}
+.loop-arrow {
+  font-size: 10px;
+  color: var(--dim);
+}
+
+/* ─────────────────────────────────
+   SLIDE 9 — BUILD ROADMAP
+───────────────────────────────── */
+#slide-9 { background: var(--dark); }
+
+.roadmap-intro { max-width: 560px; margin-bottom: 52px; }
+
+.roadmap-phases {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  max-width: 1000px;
+  background: var(--border2);
+}
+.phase {
+  background: var(--dark);
+  padding: 36px 32px;
+}
+.phase-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.phase-1 .phase-num { color: var(--neon); }
+.phase-2 .phase-num { color: rgba(200,255,0,0.4); }
+.phase-3 .phase-num { color: var(--dim); }
+.phase-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.phase-1 .phase-label { color: var(--neon); }
+.phase-2 .phase-label { color: var(--neon2); }
+.phase-3 .phase-label { color: var(--muted); }
+.phase-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.phase-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #999;
+}
+.phase-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.phase-1 .phase-dot { background: var(--neon); }
+.phase-2 .phase-dot { background: var(--neon2); opacity: 0.5; }
+.phase-3 .phase-dot { background: var(--dim); }
+
+/* ─────────────────────────────────
+   SLIDE 10 — CLOSING
+───────────────────────────────── */
+#slide-10 {
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  min-height: 100vh;
+  position: relative;
+}
+.closing-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 8vw, 100px);
+  letter-spacing: 4px;
+  line-height: 0.95;
+  margin-bottom: 28px;
+}
+.closing-title em {
+  font-style: normal;
+  color: var(--neon);
+}
+.closing-sub {
+  font-size: 18px;
+  color: var(--muted);
+  font-weight: 300;
+  max-width: 500px;
+  line-height: 1.7;
+  margin-bottom: 48px;
+}
+.closing-locked {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  max-width: 500px;
+}
+.locked-item {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-left: 2px solid var(--neon);
+  padding: 12px 24px;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  color: #888;
+}
+.locked-item strong { color: var(--text); font-weight: 400; }
+
+.closing-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(200,255,0,0.04) 0%, transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scrollPulse {
+  0%,100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+
+/* modal scroll */
+.modal::-webkit-scrollbar { width: 4px; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .slide { padding: 80px 28px; }
+  .roles-grid { grid-template-columns: 1fr 1fr; }
+  .ai-caps-grid, .loops-grid, .roadmap-phases { grid-template-columns: 1fr 1fr; }
+  .voice-targets { grid-template-columns: 1fr 1fr; }
+  .two-tracks, .problem-grid { grid-template-columns: 1fr; }
+  .voice-flow { flex-wrap: wrap; }
+  .vf-step { flex: 1 1 40%; min-width: 0; }
+  .vf-step::after { display: none; }
+  .feature-list { grid-template-columns: 1fr; }
+  .system-layer { grid-template-columns: 60px 1fr; }
+  .pipeline-stages { grid-template-columns: repeat(3,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-logo">ANGLES</div>
+  <div class="topbar-right">
+    <div class="topbar-label">Academy Operating System</div>
+    <div class="slide-counter"><span id="currentSlide">1</span> / 10</div>
+  </div>
+</div>
+
+<!-- Nav dots -->
+<div class="nav-dots" id="navDots"></div>
+
+<!-- Modal overlay -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header" id="modalHeader">
+      <div class="modal-title-group">
+        <div class="modal-eyebrow" id="modalEyebrow">ROLE DEEP DIVE</div>
+        <div class="modal-title" id="modalTitle"></div>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tabs" id="modalTabs"></div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SLIDE 1 — HERO
+══════════════════════════════ -->
+<section class="slide" id="slide-1" data-label="Intro">
+  <div class="hero-bg-text">ANGLES</div>
+  <div class="hero-eyebrow">The Future of Tennis Development</div>
+  <div class="hero-title">
+    ACADEMY<br>
+    <em>OPERATING</em><br>
+    <span class="outline">SYSTEM</span>
+  </div>
+  <p class="hero-sub">
+    The first platform built to run a tennis academy<br>
+    <strong>the way elite development actually works.</strong><br>
+    Every player. Every coach. Every decision. One intelligent machine.
+  </p>
+  <button class="hero-cta" onclick="scrollToSlide(1)">
+    See What's Possible
+    <span class="hero-cta-arrow">→</span>
+  </button>
+  <div class="hero-scroll-hint">
+    <div class="scroll-line"></div>
+    <div class="scroll-text">SCROLL</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     SLIDE 2 — THE PROBLEM
+══════════════════════════════ -->
+<section class="slide" id="slide-2" data-label="Problem">
+  <div class="problem-grid">
+    <div class="problem-left">
+      <div class="section-tag">The Brutal Reality</div>
+      <h2 class="slide-heading">The world's best coaches are <span style="color:var(--neon)">flying blind.</span></h2>
+      <p class="slide-body" style="margin-top:16px">
+        A spreadsheet here. A WhatsApp message there. Years of coaching wisdom trapped in someone's memory — and gone the moment they walk off the court. Parents in the dark. Directors guessing.
+        <br><br>
+        <strong>Talent is being wasted. Not from lack of skill — from lack of system.</strong>
+      </p>
+    </div>
+    <div class="problem-cards">
+      <div class="problem-card">
+        <div class="problem-card-label">The Coach</div>
+        <div class="problem-card-text">Sees something crucial on the court. Says nothing. Writes nothing. That observation is <strong>gone by morning</strong> — and so is its impact on the player.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-label">The Parent</div>
+        <div class="problem-card-text">Writing cheques every month with <strong>zero visibility into progress</strong>. That silence turns into doubt — and doubt turns into cancellations.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-label">The Player</div>
+        <div class="problem-card-text">Placed by gut feel. Trained without a clear development map. <strong>No baseline, no direction, no proof they're improving.</strong></div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-label">The Director</div>
+        <div class="problem-card-text">Running a complex development program <strong>from memory and intuition</strong>, while the patterns that could transform the academy hide in plain sight.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     SLIDE 3 — THE SOLUTION
+══════════════════════════════ -->
+<section class="slide" id="slide-3" data-label="Solution">
+  <div class="solution-statement">
+    <div class="section-tag">The Breakthrough</div>
+    <h2 class="slide-heading">One operating system.<br><em>Every role. Every rep. Every decision.</em><br>All connected.</h2>
+    <p class="slide-body" style="margin-top:20px">
+      Angles Academy OS is the first platform purpose-built for how tennis development actually works — fusing structured assessment, AI-powered coaching intelligence, and real-time communication into a single machine that gets smarter every single day it runs.
+    </p>
+  </div>
+  <div class="two-tracks">
+    <div class="track-card track-skill">
+      <div class="track-icon">🎯</div>
+      <div class="track-label">Path One</div>
+      <div class="track-title">SKILL TRACK</div>
+      <div class="track-desc">Where champions are built at the technical root. Every drill, every session, every rep — sequenced against a developmental blueprint and tracked with scientific precision. No more guesswork. Only intentional growth.</div>
+    </div>
+    <div class="track-card track-comp">
+      <div class="track-icon">⚡</div>
+      <div class="track-label">Path Two</div>
+      <div class="track-title">COMPETITION TRACK</div>
+      <div class="track-desc">Where skill meets pressure. A completely separate but deeply connected path — measuring match readiness, tactical maturity, and competitive instinct. Because winning isn't just about how you hit the ball. It's about who you are under pressure.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     SLIDE 4 — WHO IT SERVES
+══════════════════════════════ -->
+<section class="slide" id="slide-4" data-label="Roles">
+  <div class="roles-intro">
+    <div class="section-tag">Built For Everyone In The Building</div>
+    <h2 class="slide-heading">Five roles. <span style="color:var(--neon)">One system that finally speaks their language.</span></h2>
+    <p class="slide-body" style="margin-top:12px">For the first time, every person in the academy ecosystem — from the player on the court to the director in the office — is connected to the same living intelligence. <strong>Tap any role to see their world.</strong></p>
+  </div>
+  <div class="roles-grid">
+    <div class="role-card role-player" onclick="openModal('player')">
+      <div class="role-emoji">🎾</div>
+      <div class="role-title">PLAYER</div>
+      <div class="role-tagline">Finally knows where they stand, what they're working toward, and exactly how far they've come — in measurable, undeniable terms.</div>
+      <div class="role-cta">Explore <span>→</span></div>
+    </div>
+    <div class="role-card role-parent" onclick="openModal('parent')">
+      <div class="role-emoji">👨‍👩‍👦</div>
+      <div class="role-title">PARENT</div>
+      <div class="role-tagline">No more silence. No more doubt. Real visibility into their child's development — delivered in language they can actually understand.</div>
+      <div class="role-cta">Explore <span>→</span></div>
+    </div>
+    <div class="role-card role-coach" onclick="openModal('coach')">
+      <div class="role-emoji">📋</div>
+      <div class="role-title">COACH</div>
+      <div class="role-tagline">Their genius stays in the system forever. Their knowledge becomes the engine that drives every player forward — long after they leave the court.</div>
+      <div class="role-cta">Explore <span>→</span></div>
+    </div>
+    <div class="role-card role-director" onclick="openModal('director')">
+      <div class="role-emoji">🏛</div>
+      <div class="role-title">HEAD COACH</div>
+      <div class="role-tagline">Sees the whole program as one living organism. Makes placement and promotion decisions with the clarity that only structured data can deliver.</div>
+      <div class="role-cta">Explore <span>→</span></div>
+    </div>
+    <div class="role-card role-academy" onclick="openModal('academy')">
+      <div class="role-emoji">🏟</div>
+      <div class="role-title">ACADEMY DIRECTOR</div>
+      <div class="role-tagline">Runs the most intelligent academy in the room. Every operational decision backed by real data. Every family retained longer. Every year better than the last.</div>
+      <div class="role-cta">Explore <span>→</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     SLIDE 5 — SYSTEM MAP
+══════════════════════════════ -->
+<section class="slide" id="slide-5" data-label="System">
+  <div class="system-map">
+    <div class="system-intro">
+      <div class="section-tag">The Architecture</div>
+      <h2 class="slide-heading">14 modules.<br><span style="color:var(--neon)">One unstoppable machine.</span></h2>
+      <p class="slide-body" style="margin-top:12px">Every layer is engineered to feed the next. The deeper the foundation, the more powerful the intelligence above it. This is what it looks like when structure and AI fuse into something genuinely new.</p>
+    </div>
+    <div class="system-layers">
+      <div class="system-layer layer-intel">
+        <div class="layer-label-col"><div class="layer-label">Intelligence</div></div>
+        <div class="layer-modules">
+          <div class="layer-module"><div class="layer-module-title">AI ENGINE</div><div class="layer-module-sub">Recommendations</div></div>
+          <div class="layer-module"><div class="layer-module-title">DIRECTOR VIEW</div><div class="layer-module-sub">Academy Intelligence</div></div>
+          <div class="layer-module"><div class="layer-module-title">PARENT COMMS</div><div class="layer-module-sub">Trust + Retention</div></div>
+          <div class="layer-module"><div class="layer-module-title">COMPETITION TRACK</div><div class="layer-module-sub">Match Readiness</div></div>
+        </div>
+      </div>
+      <div class="system-layer layer-ops">
+        <div class="layer-label-col"><div class="layer-label">Operational</div></div>
+        <div class="layer-modules">
+          <div class="layer-module"><div class="layer-module-title">COACH VOICE + NOTES</div><div class="layer-module-sub">Observations</div></div>
+          <div class="layer-module"><div class="layer-module-title">ASSESSMENTS</div><div class="layer-module-sub">Measurement</div></div>
+          <div class="layer-module"><div class="layer-module-title">SESSIONS</div><div class="layer-module-sub">Daily Delivery</div></div>
+          <div class="layer-module"><div class="layer-module-title">TEMPLATES</div><div class="layer-module-sub">Structured Plans</div></div>
+          <div class="layer-module"><div class="layer-module-title">EXERCISE LIBRARY</div><div class="layer-module-sub">Drill Bank</div></div>
+        </div>
+      </div>
+      <div class="system-layer layer-core">
+        <div class="layer-label-col"><div class="layer-label">Foundation</div></div>
+        <div class="layer-modules">
+          <div class="layer-module"><div class="layer-module-title">PLAYER PROFILES</div><div class="layer-module-sub">Living Records</div></div>
+          <div class="layer-module"><div class="layer-module-title">PLACEMENT ENGINE</div><div class="layer-module-sub">Right Group, Right Time</div></div>
+          <div class="layer-module"><div class="layer-module-title">CURRICULUM SYSTEM</div><div class="layer-module-sub">Developmental Blueprint</div></div>
+          <div class="layer-module"><div class="layer-module-title">ACADEMY SETUP</div><div class="layer-module-sub">Configuration</div></div>
+        </div>
+      </div>
+      <div class="system-layer layer-infra">
+        <div class="layer-label-col"><div class="layer-label" style="color:var(--dim)">Infra</div></div>
+        <div class="layer-modules">
+          <div class="layer-module" style="flex:4"><div class="layer-module-title">DATA MODEL · IDs · PERMISSIONS · ROLES · API READINESS · VOICE INPUT · AUDIT LOG</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     SLIDE 6 — VOICE NOTE PIPELINE
+══════════════════════════════ -->
+<section class="slide" id="slide-6" data-label="Voice AI">
+  <div class="voice-intro">
+    <div class="section-tag">The Most Powerful Feature You've Never Seen Before</div>
+    <h2 class="slide-heading">A coach speaks.<br><span style="color:var(--neon)">Eight systems instantly know.</span></h2>
+    <p class="slide-body" style="margin-top:12px">Coach observations are the most valuable — and most wasted — data in any academy. The moment a coach records a voice note, our AI doesn't just save it. It <strong>understands it, structures it, and fires it simultaneously to every part of the platform that needs it.</strong> In under 10 seconds. Without the coach doing anything else.</p>
+  </div>
+
+  <div class="voice-flow">
+    <div class="vf-step">
+      <div class="vf-num">01</div>
+      <div class="vf-icon">🎙</div>
+      <div class="vf-title">COACH SPEAKS</div>
+      <div class="vf-desc">30 seconds. No typing. No forms. Just talk — during or after the session. That's the entire input required.</div>
+    </div>
+    <div class="vf-step">
+      <div class="vf-num">02</div>
+      <div class="vf-icon">📡</div>
+      <div class="vf-title">INSTANT UPLOAD</div>
+      <div class="vf-desc">Audio uploads in real time with full context attached: player, session, group, timestamp. Nothing is lost.</div>
+    </div>
+    <div class="vf-step">
+      <div class="vf-num">03</div>
+      <div class="vf-icon">🔤</div>
+      <div class="vf-title">TRANSCRIBE</div>
+      <div class="vf-desc">Whisper AI converts speech to searchable text. Every word the coach ever said — permanently in the system.</div>
+    </div>
+    <div class="vf-step">
+      <div class="vf-num">04</div>
+      <div class="vf-icon">🧠</div>
+      <div class="vf-title">AI UNDERSTANDS</div>
+      <div class="vf-desc">Claude reads the transcript and extracts every signal — strengths, weaknesses, priorities, behavioral patterns, technical flags.</div>
+    </div>
+    <div class="vf-step">
+      <div class="vf-num">05</div>
+      <div class="vf-icon">🗂</div>
+      <div class="vf-title">AUTO-CLASSIFY</div>
+      <div class="vf-desc">Technical. Tactical. Movement. Behavioral. Every insight sorted and tagged — no human intervention needed.</div>
+    </div>
+    <div class="vf-step">
+      <div class="vf-num">06</div>
+      <div class="vf-icon">⚡</div>
+      <div class="vf-title">FIRES TO 8 SYSTEMS</div>
+      <div class="vf-desc">Simultaneously. Player profile, assessments, session notes, parent comms, director dashboard, AI store, and more. All updated. All current.</div>
+    </div>
+  </div>
+
+  <div class="voice-targets-title">One note. <span>Eight systems. Simultaneously.</span></div>
+  <div class="voice-targets">
+    <div class="vt-card vt-1">
+      <div class="vt-title" style="color:var(--neon)">PLAYER PROFILE</div>
+      <div class="vt-items">
+        <div class="vt-item">Strength + weakness tags</div>
+        <div class="vt-item">Observation log entry</div>
+        <div class="vt-item">Updated priorities</div>
+        <div class="vt-item">Behavioral flags</div>
+      </div>
+    </div>
+    <div class="vt-card vt-2">
+      <div class="vt-title" style="color:var(--player)">ASSESSMENT ENGINE</div>
+      <div class="vt-items">
+        <div class="vt-item">Technical score hints</div>
+        <div class="vt-item">Reassessment trigger</div>
+        <div class="vt-item">Promotion readiness flag</div>
+        <div class="vt-item">Baseline comparison</div>
+      </div>
+    </div>
+    <div class="vt-card vt-3">
+      <div class="vt-title" style="color:var(--director)">SESSION SYSTEM</div>
+      <div class="vt-items">
+        <div class="vt-item">Session note linked</div>
+        <div class="vt-item">Next session emphasis</div>
+        <div class="vt-item">Block priority adjusted</div>
+        <div class="vt-item">Exercises suggested</div>
+      </div>
+    </div>
+    <div class="vt-card vt-4">
+      <div class="vt-title" style="color:var(--parent)">PARENT COMMS</div>
+      <div class="vt-items">
+        <div class="vt-item">AI-written summary</div>
+        <div class="vt-item">Positive framing filter</div>
+        <div class="vt-item">Coach comment snippet</div>
+        <div class="vt-item">Progress narrative</div>
+      </div>
+    </div>
+    <div class="vt-card vt-5">
+      <div class="vt-title" style="color:var(--academy)">AI CONTEXT STORE</div>
+      <div class="vt-items">
+        <div class="vt-item">Vector embedding</div>
+        <div class="vt-item">Semantic search index</div>
+        <div class="vt-item">Pattern accumulation</div>
+        <div class="vt-item">Longitudinal insight</div>
+      </div>
+    </div>
+    <div class="vt-card vt-6">
+      <div class="vt-title" style="color:var(--player)">DIRECTOR DASHBOARD</div>
+      <div class="vt-items">
+        <div class="vt-item">Note quality metric</div>
+        <div class="vt-item">Academy-wide tag trends</div>
+        <div class="vt-item">Curriculum gap detection</div>
+        <div class="vt-item">Common weakness surface</div>
+      </div>
+    </div>
+    <div class="vt-card vt-7">
+      <div class="vt-title" style="color:var(--neon2)">EXERCISE LIBRARY</div>
+      <div class="vt-items">
+        <div class="vt-item">Tag frequency tracking</div>
+        <div class="vt-item">Drill suggestion seeds</div>
+        <div class="vt-item">Usage gap detection</div>
+        <div class="vt-item">AI recommendation feed</div>
+      </div>
+    </div>
+    <div class="vt-card vt-8">
+      <div class="vt-title" style="color:var(--coach)">ONBOARDING ENGINE</div>
+      <div class="vt-items">
+        <div class="vt-item">Placement confidence update</div>
+        <div class="vt-item">Track reassignment signal</div>
+        <div class="vt-item">Level recalibration</div>
+        <div class="vt-item">Coach override log</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     SLIDE 7 — AI LAYER
+══════════════════════════════ -->
+<section class="slide" id="slide-7" data-label="AI">
+  <div class="ai-intro">
+    <div class="section-tag">The Brain of the Operation</div>
+    <h2 class="slide-heading">AI that's <span style="color:var(--neon)">genuinely useful</span><br>because the structure beneath it is genuinely solid.</h2>
+  </div>
+  <div class="ai-truth">
+    <strong>Most AI in sports tech is decoration.</strong> Ours isn't. Every recommendation, every generated summary, every pattern detection is powered by months of structured, real coaching data. The longer the system runs, <strong>the smarter it gets — and the harder it is to replicate.</strong>
+  </div>
+  <div class="ai-caps-grid">
+    <div class="ai-cap-card">
+      <div class="ac-num">01</div>
+      <div class="ac-title">PRECISION PLACEMENT</div>
+      <div class="ac-desc">Cross-references intake scores, movement data, and competition history → <strong>recommends exactly where a player belongs</strong> with a confidence score. The most important decision an academy makes — finally made with data.</div>
+    </div>
+    <div class="ai-cap-card">
+      <div class="ac-num">02</div>
+      <div class="ac-title">VOICE INTELLIGENCE</div>
+      <div class="ac-desc">30 seconds of speech → full structured intelligence distributed across 8 systems. <strong>Coach knowledge stops being ephemeral.</strong> It becomes a permanent, compounding asset.</div>
+    </div>
+    <div class="ai-cap-card">
+      <div class="ac-num">03</div>
+      <div class="ac-title">PRE-SESSION BRIEF</div>
+      <div class="ac-desc">Before every session, AI reads the last three observations and assessment trends for every player in the group → <strong>coach walks in with a plan, not a blank mind.</strong> Every session intentional from the first minute.</div>
+    </div>
+    <div class="ai-cap-card">
+      <div class="ac-num">04</div>
+      <div class="ac-title">PROGRESS PROOF</div>
+      <div class="ac-desc">Baseline vs. current assessment → AI generates a <strong>clear, undeniable before/after story</strong>. Players see their growth. Parents see it. No one needs to take anyone's word for it.</div>
+    </div>
+    <div class="ai-cap-card">
+      <div class="ac-num">05</div>
+      <div class="ac-title">PARENT UPDATES — AUTOMATED</div>
+      <div class="ac-desc">AI drafts professional, warm, specific parent communications from accumulated coaching data. <strong>Coach approves in 60 seconds.</strong> Every family gets a communication they'd pay extra for.</div>
+    </div>
+    <div class="ai-cap-card">
+      <div class="ac-num">06</div>
+      <div class="ac-title">ACADEMY-WIDE PATTERNS</div>
+      <div class="ac-desc">Detects what no human can see at scale: <strong>common weaknesses across groups, curriculum gaps, misplaced players, under-coached areas.</strong> The intelligence that turns a good director into a great one.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     SLIDE 8 — THE 6 LOOPS
+══════════════════════════════ -->
+<section class="slide" id="slide-8" data-label="Loops">
+  <div class="loops-intro">
+    <div class="section-tag">The Compounding Advantage</div>
+    <h2 class="slide-heading">6 feedback loops that make the system <span style="color:var(--neon)">impossible to replicate</span> over time.</h2>
+    <p class="slide-body" style="margin-top:12px">Each loop reinforces every other. The longer an academy runs on this OS, the more intelligent it becomes — and the wider the gap between them and every competitor still running on spreadsheets.</p>
+  </div>
+  <div class="loops-grid">
+    <div class="loop-card">
+      <div class="loop-bg-num">L1</div>
+      <div class="loop-label">Loop 1</div>
+      <div class="loop-name" style="color:var(--neon)">NEW PLAYER ACTIVATION</div>
+      <div class="loop-chain">
+        <span class="loop-node" style="border-color:rgba(200,255,0,0.3);color:var(--neon)">Intake</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(68,153,255,0.3);color:var(--player)">Assessment</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(200,100,255,0.3);color:var(--academy)">AI Rec</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(200,255,0,0.3);color:var(--neon)">Activate</span>
+      </div>
+    </div>
+    <div class="loop-card">
+      <div class="loop-bg-num">L2</div>
+      <div class="loop-label">Loop 2</div>
+      <div class="loop-name" style="color:var(--director)">DAILY COACHING</div>
+      <div class="loop-chain">
+        <span class="loop-node" style="border-color:rgba(200,255,0,0.3);color:var(--neon)">Templates</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(68,255,204,0.3);color:#44ffcc">Sessions</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(255,153,68,0.3);color:var(--director)">Voice Notes</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(200,100,255,0.3);color:var(--academy)">AI Parse</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(200,255,0,0.3);color:var(--neon)">Profile Update</span>
+      </div>
+    </div>
+    <div class="loop-card">
+      <div class="loop-bg-num">L3</div>
+      <div class="loop-label">Loop 3</div>
+      <div class="loop-name" style="color:var(--player)">PLAYER DEVELOPMENT</div>
+      <div class="loop-chain">
+        <span class="loop-node" style="border-color:rgba(68,153,255,0.3);color:var(--player)">Baseline</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(68,255,204,0.3);color:#44ffcc">Training</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(68,153,255,0.3);color:var(--player)">Reassess</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(200,100,255,0.3);color:var(--academy)">AI Delta</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(200,255,0,0.3);color:var(--neon)">New Priorities</span>
+      </div>
+    </div>
+    <div class="loop-card">
+      <div class="loop-bg-num">L4</div>
+      <div class="loop-label">Loop 4</div>
+      <div class="loop-name" style="color:#44ffcc">CURRICULUM INTELLIGENCE</div>
+      <div class="loop-chain">
+        <span class="loop-node" style="border-color:rgba(200,255,0,0.3);color:var(--neon)">Player Needs</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(68,255,204,0.3);color:#44ffcc">Exercises</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(200,100,255,0.3);color:var(--academy)">AI Patterns</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(68,255,204,0.3);color:#44ffcc">Better Curriculum</span>
+      </div>
+    </div>
+    <div class="loop-card">
+      <div class="loop-bg-num">L5</div>
+      <div class="loop-label">Loop 5</div>
+      <div class="loop-name" style="color:var(--parent)">PARENT TRUST</div>
+      <div class="loop-chain">
+        <span class="loop-node" style="border-color:rgba(68,153,255,0.3);color:var(--player)">Assessment</span>
+        <span class="loop-arrow">+</span>
+        <span class="loop-node" style="border-color:rgba(255,153,68,0.3);color:var(--director)">Coach Notes</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(200,100,255,0.3);color:var(--academy)">AI Summary</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(255,102,136,0.3);color:var(--parent)">Parent Update → Retention ↑</span>
+      </div>
+    </div>
+    <div class="loop-card">
+      <div class="loop-bg-num">L6</div>
+      <div class="loop-label">Loop 6</div>
+      <div class="loop-name" style="color:var(--academy)">ACADEMY INTELLIGENCE</div>
+      <div class="loop-chain">
+        <span class="loop-node" style="border-color:rgba(200,255,0,0.3);color:var(--neon)">All Data</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(200,100,255,0.3);color:var(--academy)">AI Aggregate</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(255,153,68,0.3);color:var(--director)">Director Visibility</span>
+        <span class="loop-arrow">→</span>
+        <span class="loop-node" style="border-color:rgba(68,255,204,0.3);color:#44ffcc">Better Decisions</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     SLIDE 9 — ROADMAP
+══════════════════════════════ -->
+<section class="slide" id="slide-9" data-label="Roadmap">
+  <div class="roadmap-intro">
+    <div class="section-tag">The Build Sequence</div>
+    <h2 class="slide-heading">Foundation first.<br><span style="color:var(--neon)">Then intelligence.<br>Then domination.</span></h2>
+    <p class="slide-body" style="margin-top:12px">You cannot build an intelligent system on weak structure. Every decision in this build sequence is intentional. Clean data in — transformative intelligence out.</p>
+  </div>
+  <div class="roadmap-phases">
+    <div class="phase phase-1">
+      <div class="phase-num">V1</div>
+      <div class="phase-label">Foundation</div>
+      <div class="phase-items">
+        <div class="phase-item"><div class="phase-dot"></div>Data model + all IDs</div>
+        <div class="phase-item"><div class="phase-dot"></div>Player profiles</div>
+        <div class="phase-item"><div class="phase-dot"></div>Onboarding + placement</div>
+        <div class="phase-item"><div class="phase-dot"></div>Assessments</div>
+        <div class="phase-item"><div class="phase-dot"></div>Coach observations</div>
+        <div class="phase-item"><div class="phase-dot"></div>Exercise library</div>
+        <div class="phase-item"><div class="phase-dot"></div>Templates + sessions</div>
+        <div class="phase-item"><div class="phase-dot"></div>Voice note capture</div>
+        <div class="phase-item"><div class="phase-dot"></div>Whisper transcription</div>
+        <div class="phase-item"><div class="phase-dot"></div>AI note parsing (Claude)</div>
+      </div>
+    </div>
+    <div class="phase phase-2">
+      <div class="phase-num">V2</div>
+      <div class="phase-label">Intelligence</div>
+      <div class="phase-items">
+        <div class="phase-item"><div class="phase-dot"></div>Reassessment cycles</div>
+        <div class="phase-item"><div class="phase-dot"></div>Parent update generation</div>
+        <div class="phase-item"><div class="phase-dot"></div>AI exercise recommendations</div>
+        <div class="phase-item"><div class="phase-dot"></div>Director dashboards</div>
+        <div class="phase-item"><div class="phase-dot"></div>Competition track</div>
+        <div class="phase-item"><div class="phase-dot"></div>Cross-player pattern detection</div>
+        <div class="phase-item"><div class="phase-dot"></div>Vector store + semantic search</div>
+        <div class="phase-item"><div class="phase-dot"></div>Promotion readiness logic</div>
+      </div>
+    </div>
+    <div class="phase phase-3">
+      <div class="phase-num">V3</div>
+      <div class="phase-label">Expansion</div>
+      <div class="phase-items">
+        <div class="phase-item"><div class="phase-dot"></div>Competition analytics</div>
+        <div class="phase-item"><div class="phase-dot"></div>Advanced promotion logic</div>
+        <div class="phase-item"><div class="phase-dot"></div>Retention predictions</div>
+        <div class="phase-item"><div class="phase-dot"></div>Cross-academy intelligence</div>
+        <div class="phase-item"><div class="phase-dot"></div>SwingCheck vision data</div>
+        <div class="phase-item"><div class="phase-dot"></div>Court management</div>
+        <div class="phase-item"><div class="phase-dot"></div>Third-party integrations</div>
+        <div class="phase-item"><div class="phase-dot"></div>Multi-academy networks</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     SLIDE 10 — CLOSING
+══════════════════════════════ -->
+<section class="slide" id="slide-10" data-label="Summary">
+  <div class="closing-bg"></div>
+  <h2 class="closing-title">
+    NOT SOFTWARE.<br>
+    <em>AN UNFAIR<br>ADVANTAGE.</em>
+  </h2>
+  <p class="closing-sub">
+    The academy that runs on structured intelligence will always out-develop, out-retain, and out-grow the one still running on instinct and spreadsheets.
+  </p>
+  <div class="closing-locked">
+    <div class="locked-item">Two connected tracks — <strong>Skill and Competition</strong> — built the way development actually works.</div>
+    <div class="locked-item">Every player has a <strong>living developmental record</strong> that gets richer every single session.</div>
+    <div class="locked-item">Coach observations are <strong>the highest-value data in the system</strong> — and now nothing is ever lost.</div>
+    <div class="locked-item">AI amplifies great structure. <strong>It cannot save bad structure.</strong> We built the structure first.</div>
+    <div class="locked-item">The system gets <strong>exponentially smarter</strong> the longer it runs. That's the moat no one can copy.</div>
+  </div>
+</section>
+
+<script>
+// ─── DATA: Role modals ───────────────────────────────────────────
+const roleData = {
+  player: {
+    color: 'var(--player)',
+    emoji: '🎾',
+    title: 'THE PLAYER',
+    eyebrow: 'Player Experience',
+    tabs: ['Their Journey', 'What They See', 'How AI Helps'],
+    content: [
+      `<div class="journey-steps">
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--player);color:var(--player)">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--player)">ENTER THE ACADEMY</div>
+            <div class="step-desc">Player arrives. The system doesn't guess where they belong — it <strong>measures</strong>. A structured intake assessment scores their skill, movement, competition readiness, and learning behavior. The result: a precise starting point, not an assumption.</div>
+            <div class="step-tags">
+              <span class="step-tag" style="border-color:rgba(68,153,255,0.3);color:var(--player)">skill scoring</span>
+              <span class="step-tag" style="border-color:rgba(68,153,255,0.3);color:var(--player)">movement scoring</span>
+              <span class="step-tag" style="border-color:rgba(68,153,255,0.3);color:var(--player)">competition scoring</span>
+            </div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--player);color:var(--player)">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--player)">GET PLACED CORRECTLY</div>
+            <div class="step-desc">AI recommends a track, group, and level based on their scores. The head coach reviews and confirms. The player starts in the right place — <strong>not too easy, not too hard</strong> — which is where real development happens.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--player);color:var(--player)">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--player)">TRAIN WITH PURPOSE</div>
+            <div class="step-desc">Every session is built from a structured curriculum aligned to their level and stage. Coaches deliver sessions that are <strong>intentional, not improvised</strong>. The player trains on what they actually need.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--player);color:var(--player)">4</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--player)">SEE THEIR PROGRESS</div>
+            <div class="step-desc">Reassessments at structured intervals compare current ability against their baseline. The player can <strong>see exactly how far they've come</strong> — in specific, measurable terms, not vague encouragement.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--player);color:var(--player)">5</div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--player)">MOVE UP WHEN READY</div>
+            <div class="step-desc">Promotion isn't based on time spent — it's based on <strong>objective readiness signals</strong> from assessments, coach observations, and competition results. Players move up when the system says they're ready.</div>
+          </div>
+        </div>
+      </div>`,
+
+      `<div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">📊</div>
+          <div class="feature-name">DEVELOPMENT DASHBOARD</div>
+          <div class="feature-desc">A visual snapshot of their current level, track, strengths, weaknesses, and development priorities. Always up to date.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📈</div>
+          <div class="feature-name">PROGRESS TIMELINE</div>
+          <div class="feature-desc">Assessment history plotted over time. They can see the arc of their development — not just where they are, but how far they've traveled.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🎯</div>
+          <div class="feature-name">CURRENT FOCUS AREAS</div>
+          <div class="feature-desc">The 2–3 things the system and their coach have identified as highest priority right now. Clear direction, not a laundry list.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-name">COMPETITION PROFILE</div>
+          <div class="feature-desc">Separate from skill track: their competitive readiness, match results, pressure handling scores, and tactical maturity rating.</div>
+        </div>
+      </div>`,
+
+      `<div class="ai-block">
+        <div class="ai-block-title">How AI Works For The Player</div>
+        <div class="ai-items">
+          <div class="ai-item"><strong>Placement accuracy:</strong> AI cross-references all intake scores to recommend the most developmentally appropriate starting point — reducing the most common (and costly) mistake in youth tennis.</div>
+          <div class="ai-item"><strong>Personalized priorities:</strong> As coach observations accumulate, AI surfaces the player's most consistent patterns — what they do well, what's holding them back — so coaching stays targeted.</div>
+          <div class="ai-item"><strong>Progress language:</strong> At reassessment, AI generates a clear comparison between where they started and where they are now — in language a 12-year-old can understand and feel proud of.</div>
+          <div class="ai-item"><strong>Promotion signals:</strong> When a player's scores and observations consistently indicate readiness, AI flags it before the coach even thinks to check — so no player stays in the wrong group too long.</div>
+        </div>
+      </div>`
+    ]
+  },
+
+  parent: {
+    color: 'var(--parent)',
+    emoji: '👨‍👩‍👦',
+    title: 'THE PARENT',
+    eyebrow: 'Parent Experience',
+    tabs: ['Their Journey', 'What They See', 'How AI Helps'],
+    content: [
+      `<div class="journey-steps">
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--parent);color:var(--parent)">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--parent)">UNDERSTAND PLACEMENT</div>
+            <div class="step-desc">When their child enters, parents receive a clear <strong>intake summary</strong> that explains exactly where their child has been placed, why, and what the path forward looks like. No more wondering why their kid is in Group B and not Group A.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--parent);color:var(--parent)">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--parent)">RECEIVE REGULAR UPDATES</div>
+            <div class="step-desc">At defined intervals — not ad hoc — parents receive <strong>structured progress updates</strong> drafted by AI from coach observations and assessment data, then reviewed and approved by the coach before sending.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--parent);color:var(--parent)">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--parent)">SEE REASSESSMENT RESULTS</div>
+            <div class="step-desc">After each reassessment cycle, parents see a <strong>before/after comparison</strong> with clear language. Not just scores — a narrative that explains what improved, what's still being worked on, and what the next focus will be.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--parent);color:var(--parent)">4</div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--parent)">TRUST THE PROCESS</div>
+            <div class="step-desc">When parents understand what's happening and why, <strong>they stop second-guessing</strong> and start trusting. That trust is retention. Parents who feel informed stay longer, refer more, and complain less.</div>
+          </div>
+        </div>
+      </div>`,
+
+      `<div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">📋</div>
+          <div class="feature-name">INTAKE EXPLANATION</div>
+          <div class="feature-desc">A clear summary of their child's initial assessment and why they were placed in their current group, track, and level.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💬</div>
+          <div class="feature-name">COACH COMMENTS</div>
+          <div class="feature-desc">AI-filtered versions of coach observations written in professional, parent-appropriate language. Not raw session notes — thoughtfully summarized.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📈</div>
+          <div class="feature-name">PROGRESS UPDATES</div>
+          <div class="feature-desc">Structured updates at reassessment intervals. Strengths, current focus areas, what's improved, what's next.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🎯</div>
+          <div class="feature-name">FOCUS AREAS</div>
+          <div class="feature-desc">What the coach is specifically working on with their child right now — so parents can reinforce it at home without guessing.</div>
+        </div>
+      </div>`,
+
+      `<div class="ai-block">
+        <div class="ai-block-title">How AI Works For The Parent</div>
+        <div class="ai-items">
+          <div class="ai-item"><strong>Update drafting:</strong> AI reads accumulated coach observations and assessment deltas → writes a professional, warm, specific update in minutes. Coach edits and approves. No blank page for the coach, no silence for the parent.</div>
+          <div class="ai-item"><strong>Tone filtering:</strong> AI is instructed to translate technical observations into parent-friendly language — no jargon, no raw criticism. Always framed around growth and specificity.</div>
+          <div class="ai-item"><strong>Consistency:</strong> Because updates are system-generated on a schedule, parents never fall through the cracks. Every family receives the same quality of communication regardless of how busy the coach is.</div>
+          <div class="ai-item"><strong>Retention driver:</strong> Research consistently shows that perceived progress and clear communication are the top drivers of program retention. AI makes this scalable across every family in the academy.</div>
+        </div>
+      </div>`
+    ]
+  },
+
+  coach: {
+    color: 'var(--coach)',
+    emoji: '📋',
+    title: 'THE COACH',
+    eyebrow: 'Coach Experience',
+    tabs: ['Their Journey', 'What They Use', 'How AI Helps'],
+    content: [
+      `<div class="journey-steps">
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--coach);color:var(--coach)">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--coach)">ARRIVE WITH CONTEXT</div>
+            <div class="step-desc">Before a session, the coach sees a <strong>session brief</strong> — who's in the group, their current priorities, what was noted last session, and what the system suggests as focus areas. Zero prep time, full context.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--coach);color:var(--coach)">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--coach)">DELIVER A STRUCTURED SESSION</div>
+            <div class="step-desc">Sessions are built from templates aligned to the curriculum. The coach has <strong>a plan that already reflects the academy's philosophy</strong> — they customize it, not create it from scratch every time.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--coach);color:var(--coach)">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--coach)">CAPTURE OBSERVATIONS INSTANTLY</div>
+            <div class="step-desc">During or right after the session, the coach records a <strong>quick voice note</strong>. No typing. No forms. 30 seconds of speech. The system does the rest — transcription, tagging, routing, and storage.</div>
+            <div class="step-tags">
+              <span class="step-tag" style="border-color:rgba(200,255,0,0.3);color:var(--coach)">voice → text</span>
+              <span class="step-tag" style="border-color:rgba(200,255,0,0.3);color:var(--coach)">auto-tagged</span>
+              <span class="step-tag" style="border-color:rgba(200,255,0,0.3);color:var(--coach)">routed to 8 destinations</span>
+            </div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--coach);color:var(--coach)">4</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--coach)">REVIEW AND ASSESS</div>
+            <div class="step-desc">At reassessment intervals, the coach uses a <strong>structured scoring framework</strong> rather than making subjective notes. The system tracks the delta automatically and presents results clearly.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--coach);color:var(--coach)">5</div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--coach)">APPROVE PARENT UPDATES</div>
+            <div class="step-desc">AI drafts the parent update from all accumulated data. The coach reads it, edits if needed, and approves. <strong>No writing required. Maximum five minutes of their time.</strong> Families get a professional communication they'd pay extra for.</div>
+          </div>
+        </div>
+      </div>`,
+
+      `<div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">🎙</div>
+          <div class="feature-name">VOICE NOTE CAPTURE</div>
+          <div class="feature-desc">The fastest way to get observations into the system. Record, done. AI handles everything after that point automatically.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📐</div>
+          <div class="feature-name">SESSION BUILDER</div>
+          <div class="feature-desc">Template-based session planning. Pull from the exercise library, sequence blocks, manage duration. The academy's curriculum philosophy embedded in every session.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">👤</div>
+          <div class="feature-name">PLAYER CARDS</div>
+          <div class="feature-desc">Full context on any player in seconds: their history, priorities, recent observations, assessment scores, and what the system recommends working on next.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📊</div>
+          <div class="feature-name">ASSESSMENT TOOL</div>
+          <div class="feature-desc">Structured scoring framework for technical, tactical, movement, and competition readiness. No subjectivity required — the rubric is built in.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">✉️</div>
+          <div class="feature-name">PARENT UPDATE REVIEW</div>
+          <div class="feature-desc">AI-drafted updates arrive in a review queue. Approve, edit, or request a new draft. Coach approval always required before anything reaches a parent.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🏃</div>
+          <div class="feature-name">GROUP VIEW</div>
+          <div class="feature-desc">See all players in a group at once: their levels, recent flags, observation history, and who's approaching a reassessment date.</div>
+        </div>
+      </div>`,
+
+      `<div class="ai-block">
+        <div class="ai-block-title">How AI Works For The Coach</div>
+        <div class="ai-items">
+          <div class="ai-item"><strong>Pre-session brief:</strong> AI reads last 3 notes + assessment trends for each player in the group → generates a focused brief so the coach walks in with a plan, not a blank mind.</div>
+          <div class="ai-item"><strong>Voice note intelligence:</strong> 30-second voice note → full structured observation with tags, priorities, and distribution to player profile, assessments, parent comms, and director dashboard. The coach's knowledge stops being ephemeral.</div>
+          <div class="ai-item"><strong>Exercise suggestions:</strong> Given a player's current weaknesses and curriculum stage, AI recommends specific exercises from the library — so coaches spend less time searching and more time coaching.</div>
+          <div class="ai-item"><strong>Parent update drafting:</strong> The hardest part of parent communication is starting. AI eliminates the blank page. Coaches review and approve — they stay in control while saving significant time every week.</div>
+        </div>
+      </div>`
+    ]
+  },
+
+  director: {
+    color: 'var(--director)',
+    emoji: '🏛',
+    title: 'THE HEAD COACH',
+    eyebrow: 'Head Coach / Director Experience',
+    tabs: ['Their View', 'What They See', 'How AI Helps'],
+    content: [
+      `<div class="journey-steps">
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--director);color:var(--director)">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--director)">SEE THE WHOLE PROGRAM</div>
+            <div class="step-desc">For the first time, the head coach can see <strong>every player, every group, every level</strong> in a single view. Not in their head — on screen. Distribution, gaps, and outliers visible immediately.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--director);color:var(--director)">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--director)">MANAGE PLACEMENTS</div>
+            <div class="step-desc">All placement decisions flow through the head coach. AI recommends, coaches submit, but the <strong>head coach confirms every placement and every promotion</strong>. Authority is clear and preserved.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--director);color:var(--director)">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--director)">DETECT PATTERNS</div>
+            <div class="step-desc">The system surfaces what would take months to notice manually: <strong>common weaknesses across a group, curriculum gaps, coaches who under-observe, players who are misplaced</strong>. Pattern detection replaces gut-feel management.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--director);color:var(--director)">4</div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--director)">IMPROVE THE CURRICULUM</div>
+            <div class="step-desc">Assessment trends + exercise usage patterns + coach observations = <strong>real data to improve the academy's developmental system</strong> over time. Not a static playbook — a living, improving curriculum.</div>
+          </div>
+        </div>
+      </div>`,
+
+      `<div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">🗺</div>
+          <div class="feature-name">ACADEMY OVERVIEW</div>
+          <div class="feature-desc">All players distributed across levels, tracks, and groups. Placement gaps visible. Reassessment pipeline at a glance.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">⚠️</div>
+          <div class="feature-name">PATTERN SURFACE</div>
+          <div class="feature-desc">AI-surfaced patterns: most common weaknesses academy-wide, groups with low observation frequency, players approaching reassessment.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">✅</div>
+          <div class="feature-name">PLACEMENT APPROVAL</div>
+          <div class="feature-desc">All AI recommendations and coach-submitted placement decisions queue here for head coach confirmation. Final authority stays human.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📚</div>
+          <div class="feature-name">CURRICULUM INTELLIGENCE</div>
+          <div class="feature-desc">Which exercises are being used most? Which skill areas are being undertrained? What's the gap between the curriculum plan and actual session delivery?</div>
+        </div>
+      </div>`,
+
+      `<div class="ai-block">
+        <div class="ai-block-title">How AI Works For The Head Coach</div>
+        <div class="ai-items">
+          <div class="ai-item"><strong>Aggregate pattern detection:</strong> AI analyzes all player assessment data and coach observations → surfaces common weaknesses across groups, identifying where the curriculum needs adjustment.</div>
+          <div class="ai-item"><strong>Curriculum gap detection:</strong> By tracking which exercises are being used vs. which areas are being assessed as weak, AI identifies disconnects between what's being taught and what's being developed.</div>
+          <div class="ai-item"><strong>Coach quality signals:</strong> AI can track observation frequency, note quality, and assessment completion rates per coach — helping the head coach identify coaching staff who need support.</div>
+          <div class="ai-item"><strong>Promotion readiness queue:</strong> AI flags players who've met promotion criteria across multiple signals — assessments, observations, competition results — so head coaches make confident, data-backed decisions.</div>
+        </div>
+      </div>`
+    ]
+  },
+
+  academy: {
+    color: 'var(--academy)',
+    emoji: '🏟',
+    title: 'ACADEMY DIRECTOR',
+    eyebrow: 'Academy Director Experience',
+    tabs: ['The Big Picture', 'What They See', 'How AI Helps'],
+    content: [
+      `<div class="journey-steps">
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--academy);color:var(--academy)">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--academy)">THE ACADEMY AS ONE ORGANISM</div>
+            <div class="step-desc">The Academy Director sees what no one else can see: <strong>the whole system operating at once</strong>. Enrollment flows, development quality, coach performance, parent retention, program gaps — all visible in one place.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--academy);color:var(--academy)">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--academy)">MAKE OPERATIONAL DECISIONS WITH DATA</div>
+            <div class="step-desc">Should we add another group? Is the Level 3 program developing players fast enough? Which coaches need support? These decisions used to require intuition. Now they're backed by <strong>months of structured data</strong>.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--academy);color:var(--academy)">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--academy)">BUILD A RETENTION MACHINE</div>
+            <div class="step-desc">Retention is a function of trust, visible progress, and professional communication. The OS <strong>systematizes all three</strong> — every parent receives structured updates, every player has a clear development path, every decision is explained.</div>
+          </div>
+        </div>
+        <div class="journey-step">
+          <div class="step-left">
+            <div class="step-num" style="border-color:var(--academy);color:var(--academy)">4</div>
+          </div>
+          <div class="step-right">
+            <div class="step-title" style="color:var(--academy)">CREATE AN UNFAIR ADVANTAGE</div>
+            <div class="step-desc">Every academy runs on people. This OS makes those people — coaches, directors, coordinators — <strong>dramatically more effective</strong>. The moat isn't technology. It's the structured intelligence that accumulates over time inside the system.</div>
+          </div>
+        </div>
+      </div>`,
+
+      `<div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">🌐</div>
+          <div class="feature-name">ACADEMY INTELLIGENCE DASHBOARD</div>
+          <div class="feature-desc">Top-level view: enrollment, development quality scores, retention metrics, curriculum performance, coach activity. The whole academy in one screen.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📉</div>
+          <div class="feature-name">PROGRAM PERFORMANCE</div>
+          <div class="feature-desc">Are players in Level 2 developing at the expected rate? Is the competition track producing match-ready players? Data, not guesswork.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔄</div>
+          <div class="feature-name">RETENTION SIGNALS</div>
+          <div class="feature-desc">Which families haven't received a progress update in 60+ days? Which players have no recent observations? Churn risk surfaced before it becomes churn.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">⚙️</div>
+          <div class="feature-name">ACADEMY CONFIGURATION</div>
+          <div class="feature-desc">Set the academy's level system, age bands, tracks, groups, and curriculum standards. The OS adapts to the academy's structure — not the other way around.</div>
+        </div>
+      </div>`,
+
+      `<div class="ai-block">
+        <div class="ai-block-title">How AI Works For The Academy Director</div>
+        <div class="ai-items">
+          <div class="ai-item"><strong>Retention prediction (V2+):</strong> AI tracks communication frequency, progress update recency, and assessment cycle completion → flags families at churn risk before they cancel.</div>
+          <div class="ai-item"><strong>Program gap analysis:</strong> Cross-referencing curriculum design against assessment outcomes and exercise usage → AI surfaces where the academy's developmental program has structural gaps.</div>
+          <div class="ai-item"><strong>Cross-academy benchmarking (V3):</strong> When multiple academies run on the OS, aggregate (anonymized) data enables benchmarking — how does your Level 3 development compare to network averages?</div>
+          <div class="ai-item"><strong>Expansion intelligence:</strong> Enrollment trends, waitlist patterns, group capacity data — AI helps directors make evidence-based decisions about when and how to grow programs.</div>
+        </div>
+      </div>`
+    ]
+  }
+};
+
+// ─── MODAL LOGIC ─────────────────────────────────────────────
+let currentTab = 0;
+
+function openModal(role) {
+  const data = roleData[role];
+  const overlay = document.getElementById('modalOverlay');
+  const title = document.getElementById('modalTitle');
+  const eyebrow = document.getElementById('modalEyebrow');
+  const tabs = document.getElementById('modalTabs');
+  const content = document.getElementById('modalContent');
+  const header = document.getElementById('modalHeader');
+
+  title.textContent = data.title;
+  title.style.color = data.color;
+  eyebrow.textContent = data.eyebrow;
+  header.style.borderBottomColor = data.color.replace(')', ',0.3)').replace('var(','rgba(').replace('--player','68,153,255').replace('--parent','255,102,136').replace('--coach','200,255,0').replace('--director','255,153,68').replace('--academy','204,136,255');
+
+  // Build tabs
+  tabs.innerHTML = data.tabs.map((t, i) =>
+    `<button class="modal-tab${i===0?' active':''}" onclick="switchTab(${i}, this)">${t}</button>`
+  ).join('');
+
+  // Build content
+  content.innerHTML = data.tabs.map((t, i) =>
+    `<div class="tab-content${i===0?' active':''}" id="tab-${i}">${data.content[i]}</div>`
+  ).join('');
+
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  currentTab = 0;
+}
+
+function switchTab(idx, btn) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + idx).classList.add('active');
+  currentTab = idx;
+}
+
+document.getElementById('modalClose').onclick = closeModal;
+document.getElementById('modalOverlay').onclick = function(e) {
+  if (e.target === this) closeModal();
+};
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ─── SCROLL LOGIC ─────────────────────────────────────────────
+const slides = document.querySelectorAll('.slide');
+const labels = [...slides].map(s => s.dataset.label || '');
+
+// Build nav dots
+const dotsContainer = document.getElementById('navDots');
+slides.forEach((s, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'nav-dot';
+  dot.innerHTML = `<div class="nav-dot-label">${labels[i]}</div>`;
+  dot.onclick = () => scrollToSlide(i);
+  dotsContainer.appendChild(dot);
+});
+
+function scrollToSlide(i) {
+  slides[i].scrollIntoView({ behavior: 'smooth' });
+}
+
+// Intersection observer for slide animations + nav
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      const idx = [...slides].indexOf(entry.target);
+      document.querySelectorAll('.nav-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === idx);
+      });
+      document.getElementById('currentSlide').textContent = idx + 1;
+    }
+  });
+}, { threshold: 0.3 });
+
+slides.forEach(s => observer.observe(s));
+
+// ─── CURSOR ───────────────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top = my + 'px';
+});
+
+function animRing() {
+  rx += (mx - rx) * 0.15;
+  ry += (my - ry) * 0.15;
+  ring.style.left = rx + 'px';
+  ring.style.top = ry + 'px';
+  requestAnimationFrame(animRing);
+}
+animRing();
+
+document.querySelectorAll('button, .role-card, .layer-module, .loop-card, .vt-card, .ai-cap-card, .problem-card, .track-card, .nav-dot').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '14px';
+    cursor.style.height = '14px';
+    ring.style.width = '44px';
+    ring.style.height = '44px';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '8px';
+    cursor.style.height = '8px';
+    ring.style.width = '32px';
+    ring.style.height = '32px';
+  });
+});
+</script>
+</body>
+</html>
