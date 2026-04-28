@@ -84,8 +84,23 @@ TypeScript: clean.
 
 ---
 
+## 2026-04-28 — Players List
+
+Built the player directory at `/director/players` (Step 1 of Phase 1).
+
+**Files created:**
+- `src/app/director/players/page.tsx` — Server Component; fetches academy_id from profiles, calls `getPlayerSummaries()`, renders page header and client component
+- `src/app/director/players/_components/PlayersDirectoryClient.tsx` — Client Component; search by name, filter by status (All / Active / Reassessment Due / On Hold / Pending), player rows with Avatar, StatusBadge, LevelBadge, last assessed date, next due date with overdue indicator, promotion-ready chip
+- `src/app/director/players/loading.tsx` — Next.js skeleton; 8 SkeletonRows inside a Card
+
+**No backend files changed.**
+**No locked files changed.**
+TypeScript: clean.
+
+---
+
 ## Next build target
 
-**Players List** — `/director/players`
+**Player Profile responsive layout** — `/director/players/[playerId]`
 
-See `docs/CURRENT_BUILD_TARGET.md` Step 1 for full specification.
+See `docs/CURRENT_BUILD_TARGET.md` Step 2 for full specification.
