@@ -1,0 +1,122 @@
+# Known Limitations
+
+**Last updated:** 2026-04-28
+
+This file documents what is currently broken, missing, or intentionally incomplete.
+These are not bugs to fix immediately — they are known gaps that future sessions should be aware of.
+
+---
+
+## Navigation gaps
+
+### Players List is missing
+- **Route:** `/director/players`
+- **Impact:** There is no way for a director to navigate to player profiles through the UI.
+  The only working path to a player profile is by knowing the player's UUID and typing it directly into the URL.
+- **Fix:** Build step 1 in `CURRENT_BUILD_TARGET.md`.
+
+### Director Dashboard is a placeholder
+- **Route:** `/director`
+- **Impact:** A director who logs in sees only a grey text message: "Director Dashboard — coming in Phase 5."
+  There is no orientation, no data, no value.
+- **Fix:** Build step 5 in `CURRENT_BUILD_TARGET.md`, after the player spine is complete.
+
+### Sidebar links to unbuilt routes
+- **Routes:** `/director/curriculum`, `/director/sessions`, `/director/competition`, `/director/intelligence`, `/director/reports`, `/director/configuration`
+- **Impact:** All six sidebar links lead to pages that do not exist (will return a Next.js 404).
+- **Fix:** Build each route in order per `CURRENT_BUILD_TARGET.md`. Do not remove the links — they are intentional placeholders.
+
+### Coach, Player, Parent portals are stubs
+- **Routes:** `/coach`, `/player`, `/parent`
+- **Impact:** These roles can log in but see placeholder text. No functionality.
+- **Fix:** Build steps 7–8 in `CURRENT_BUILD_TARGET.md`.
+
+---
+
+## Player Profile gaps
+
+### Player Profile is not mobile-safe
+- **File:** `src/app/director/players/[playerId]/page.tsx`
+- **Impact:** The `grid-cols-[260px_1fr_260px]` layout breaks on screens narrower than ~900px.
+  No responsive breakpoints defined.
+- **Fix:** Build step 2 in `CURRENT_BUILD_TARGET.md`.
+
+### Player Profile is missing tabbed sections
+- **File:** `src/app/director/players/[playerId]/page.tsx`
+- **Impact:** The spec calls for 9 tabs (Overview, Curriculum, Skill Path, Competition, Signals + Priorities,
+  Recommendations, Outcomes, Load + Fitness, Notes + Comms). Currently only Curriculum (in the center column) is built.
+  All other sections — assessments, UTR, signals, priorities, recommendations, behavior profiles, outcomes, coaching messages — have no UI.
+- **Note:** All backend queries for the missing sections are already written in `src/lib/backend/`.
+- **Fix:** Build steps 3–4 in `CURRENT_BUILD_TARGET.md`.
+
+### Back link returns to stub dashboard
+- **File:** `src/app/director/players/[playerId]/page.tsx` → `PlayerProfileHeader`
+- **Impact:** Back link points to `/director` (the placeholder), not `/director/players`.
+- **Fix:** Update when Players List is built (step 1).
+
+---
+
+## Voice pipeline
+
+### Voice UI should not be built yet
+- **Reason:** `execute_approved_action()` in the Supabase database covers only 3 of 14 action types.
+  Building a Voice Command UI on top of an incomplete execution layer would mislead users
+  into thinking actions are executing when most of them will fail silently.
+- **Specific risk:** `cancel_session`, `modify_template`, `move_player_group`, `assign_group`,
+  `create_placement_assessment`, `flag_player`, `create_player`, `create_exercise`, `adjust_session_intensity`,
+  `generate_parent_update`, and `schedule_reassessment` are not yet handled by the RPC.
+- **Fix:** Complete the RPC coverage first (a database migration task), then build the Voice Command UI.
+  Tracked as Risk R11 in `Academy_OS_Master_Build/generated/risk_register.md`.
+
+---
+
+## Data / backend
+
+### Pending actions badge is hardcoded
+- **File:** `src/app/director/layout.tsx`
+- **Impact:** `pendingCount` is always `0`. The sidebar badge for pending actions never shows a real count.
+- **Fix:** Query `v_pending_proposed_actions` count in the layout after voice pipeline is built.
+
+### `intelligence.ts` uses a different DB pattern
+- **File:** `src/lib/backend/intelligence.ts`
+- **Impact:** Unlike all other backend files (which accept `db: DB` as a parameter), `intelligence.ts`
+  calls `getSupabaseServer()` internally. This is intentional but inconsistent. Do not copy this pattern.
+- **Status:** Working. Leave as-is until explicitly refactored.
+
+### `director.ts` uses `rawDb = db as any`
+- **File:** `src/lib/backend/director.ts`
+- **Impact:** Type safety is bypassed for the complex multi-join query. This is intentional (TS2589 workaround).
+- **Status:** Working. Leave as-is.
+
+---
+
+## Documentation
+
+### Generated docs in `Academy_OS_Master_Build/generated/` are stale
+- **Files:** `frontend_inventory.md`, `backend_inventory.md`, `acceptance_report.md`
+- **Impact:** These were written before the app was built. They say "no framework, no components, no backend."
+  All three claims are false now. Do not use them as the source of current truth.
+- **Fix:** Use the files in `/docs/` (this folder) as the source of truth.
+
+### `Academy_OS_Master_Build/packages/08.../DESIGN_SYSTEM.md` describes different colors
+- **Impact:** That document uses a blue accent (`#4f8ef7`) and different base values from the implemented system.
+  The implemented system uses lime (`#C8FF00`) as the primary accent. Do not use the spec doc as color reference.
+- **Fix:** Use `tailwind.config.ts` and `src/app/globals.css` as the source of truth for design tokens.
+
+---
+
+## Error handling
+
+### No `error.tsx` boundaries
+- **Impact:** If a Supabase query fails inside a Server Component, the entire page crashes with an unhandled error.
+  There are no Next.js `error.tsx` files anywhere in the route tree.
+- **Fix:** Add `error.tsx` files at key route segments when building each module.
+
+---
+
+## Testing
+
+### No automated tests
+- **Impact:** No unit tests, no integration tests, no E2E tests. TypeScript is the only safety net.
+- **Status:** Intentional for now. Add Vitest + Playwright after core modules ship.
+- **Risk:** A broken migration or component change has no automated detection.
