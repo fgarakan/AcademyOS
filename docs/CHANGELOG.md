@@ -99,8 +99,22 @@ TypeScript: clean.
 
 ---
 
+## 2026-04-28 — Player Profile responsive layout (Step 2)
+
+Fixed the broken 3-column fixed layout at `/director/players/[playerId]`.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — replaced `grid-cols-[260px_1fr_260px]` with responsive `grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_240px]`; added `lg:col-span-2 xl:col-span-1` to Coach Focus column so it spans full width at `lg` and returns to a single column at `xl`; added `p-6` to page wrapper
+- `src/components/player/PlayerProfileHeader.tsx` — fixed back link from `/director` → `/director/players`, label from `Dashboard` → `All Players`
+
+**No backend files changed.**
+**No locked files changed.**
+TypeScript: clean.
+
+---
+
 ## Next build target
 
-**Player Profile responsive layout** — `/director/players/[playerId]`
+**Player Profile tab structure** — `/director/players/[playerId]`
 
-See `docs/CURRENT_BUILD_TARGET.md` Step 2 for full specification.
+See `docs/CURRENT_BUILD_TARGET.md` Step 3 for full specification.

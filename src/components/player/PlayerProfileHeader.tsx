@@ -20,11 +20,11 @@ export function PlayerProfileHeader({ player, curriculumSummary }: PlayerProfile
   return (
     <div className="mb-6">
       <Link
-        href="/director"
+        href="/director/players"
         className="inline-flex items-center gap-1.5 text-text-muted hover:text-text-secondary text-sm mb-4 transition-colors duration-100"
       >
         <ChevronLeft className="w-4 h-4" />
-        Dashboard
+        All Players
       </Link>
 
       <div className="flex items-start gap-4">

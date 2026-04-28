@@ -63,10 +63,10 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   }
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in p-6">
       <PlayerProfileHeader player={player} curriculumSummary={curriculumSummary} />
 
-      <div className="grid grid-cols-[260px_1fr_260px] gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_240px] gap-6 items-start">
 
         {/* Left — Player info */}
         <Card>
@@ -110,7 +110,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         </div>
 
         {/* Right — Coach Focus */}
-        <div className="space-y-4">
+        <div className="space-y-4 lg:col-span-2 xl:col-span-1">
           <p className="label-xs">Coach Focus</p>
 
           <Card>
