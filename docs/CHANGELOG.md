@@ -127,6 +127,33 @@ TypeScript: clean.
 
 ---
 
+## 2026-04-28 — Director Dashboard V1
+
+Built the command center at `/director` (Step 5 of Phase 1, built ahead of Steps 3–4 by explicit request).
+
+**Files modified:**
+- `src/app/director/page.tsx` — replaced 6-line stub with full Server Component dashboard
+
+**Data fetched (sequential per AI_BACKEND_RULES):**
+- `profiles` → `academy_id`
+- `academies` → `name` (for header)
+- `getPlayerSummaries()` → all 4 snapshot metrics + pending placement list
+- `getAcademyPriorityQueue({ limit: 5 })` → priority panel
+
+**Sections built:**
+- Header: academy name label + "Command Center" H1 + today's date
+- Snapshot metrics: Total Players / Active / Pending Placement / Needs Attention (all real data)
+- Priority Queue card: top 5 priority items with urgency badge + primary action; empty state if none
+- Pending Placement card: up to 5 pending players with status badge; empty state if none
+- Module cards: Players (live, links to `/director/players`) + 5× Coming Soon (Curriculum, Sessions, Intelligence, Reports, Configuration)
+
+**No backend files changed.**
+**No locked files changed.**
+**No fake numbers — all metrics derived from real Supabase queries.**
+TypeScript: clean.
+
+---
+
 ## Next build target
 
 **Player Profile tab structure** — `/director/players/[playerId]`
