@@ -39,7 +39,7 @@ export default async function DirectorLayout({
   return (
     <div className="flex min-h-screen">
       <SidebarNav academyName={academyName} pendingCount={pendingCount} />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 ml-60">{children}</main>
     </div>
   )
 }

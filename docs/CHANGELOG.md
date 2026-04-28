@@ -113,6 +113,20 @@ TypeScript: clean.
 
 ---
 
+## 2026-04-28 — Director layout sidebar offset fix
+
+Fixed content rendering underneath the fixed sidebar on all `/director` routes.
+
+**Files modified:**
+- `src/app/director/layout.tsx` — added `ml-60` to `<main>` so content is offset 240px right, matching the fixed sidebar width. Single global fix; no per-page hacks needed.
+
+**No backend files changed.**
+**No locked files changed.**
+**No player profile data logic changed.**
+TypeScript: clean.
+
+---
+
 ## Next build target
 
 **Player Profile tab structure** — `/director/players/[playerId]`
