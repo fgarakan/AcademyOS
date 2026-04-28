@@ -1,3 +1,4 @@
+'use client'
 import { BottomTabBar } from '@/components/nav/BottomTabBar'
 import { Home, TrendingUp, Trophy, MessageCircle } from 'lucide-react'
 
