@@ -5,6 +5,41 @@ Update this file at the end of every completed module.
 
 ---
 
+## 2026-04-29 — Multi-Tenant Access Foundation Phase 1A: Platform Role + Shell
+
+Established the minimum safe platform-owner foundation. Angles / platform owner can now log in, be routed to `/platform`, and view all academy tenants read-only.
+
+**Files created:**
+- `supabase/migrations/040_platform_roles.sql` — `platform_roles` table (user_id → platform_owner | platform_admin); RLS: users see own active row only; additive SELECT policy on `academies` so platform users can list all tenants via anon key (no service role needed)
+- `src/lib/backend/platform.ts` — two backend helpers: `getPlatformRole(db, userId)`, `getAllAcademies(db)`; rawDb cast for platform_roles (not yet in database.types.ts)
+- `src/components/nav/PlatformNav.tsx` — fixed sidebar for /platform routes; shows "Angles Platform" brand + role badge; primary nav (Tenants); coming-soon items (Tenant Management, Consultant Access, Preview Mode, Billing, Global Templates); sign-out button
+- `src/app/platform/layout.tsx` — Server Component; verifies platform role (redirects to /login if not found); renders PlatformNav + main content
+- `src/app/platform/page.tsx` — Server Component; shows Platform Command Center header with role badge; academy tenant cards (name, slug, country, timezone, is_active badge, created date); coming-soon module cards; no player data, no private data
+
+**Files modified:**
+- `src/middleware.ts` — checks platform_roles BEFORE academy_memberships; /platform routes allow only platform users (others redirected to their academy home); root `/` redirects platform users to /platform; non-platform routes with no matching academy role redirect platform users back to /platform (e.g. a platform_owner also with academy_director membership can still access /director)
+- `src/app/login/LoginForm.tsx` — checks platform_roles after successful auth; platform users immediately routed to /platform before academy membership check runs
+- `docs/CHANGELOG.md` — this entry
+
+**Constraints confirmed:**
+- No preview mode built
+- No consultant access built
+- No write guards added (deferred to Phase 1B)
+- No service role / `getSupabaseAdmin()` used in /platform routes — anon key + RLS only
+- No player data, coach notes, voice notes, AI drafts, or private observations shown
+- No modifications to profiles.academy_id, academy_memberships, database.types.ts, or any locked modules
+- No schema changes beyond migration 040
+- Existing /director, /coach, /player, /parent routing unchanged
+
+**To activate:**
+1. Apply migration 040 in Supabase Dashboard (SQL Editor)
+2. Manually INSERT a row into `platform_roles` for the platform owner's auth.users UUID
+3. Run `supabase gen types typescript` to update database.types.ts after migration
+
+TypeScript: clean.
+
+---
+
 ## 2026-04-28 — Guardrail and source-of-truth layer
 
 Created the permanent Claude Code guardrail system before further feature work.

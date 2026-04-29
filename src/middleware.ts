@@ -46,7 +46,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Get role from academy_memberships
+  // ── Platform role check (runs before academy_memberships) ──────────────────
+  // platform_roles is not yet in database.types.ts — rawDb cast required.
+  // Regenerate types after applying migration 040.
+  const rawDb = supabase as any
+  const { data: platformRoleRow } = await rawDb
+    .from('platform_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .single()
+
+  const isPlatformUser = !!(platformRoleRow as { role?: string } | null)?.role
+
+  // /platform routes: only accessible to platform users
+  if (pathname.startsWith('/platform')) {
+    if (isPlatformUser) return response
+    // Non-platform user tried /platform — redirect to their academy home
+    const { data: mem } = await supabase
+      .from('academy_memberships')
+      .select('role')
+      .eq('profile_id', user.id)
+      .eq('is_active', true)
+      .single<Pick<Tables<'academy_memberships'>, 'role'>>()
+    const url = request.nextUrl.clone()
+    url.pathname = ROLE_ROUTES[mem?.role ?? 'player'] ?? '/player'
+    return NextResponse.redirect(url)
+  }
+
+  // ── Academy membership check (existing behavior, unchanged) ───────────────
   const { data: membership } = await supabase
     .from('academy_memberships')
     .select('role')
@@ -57,14 +85,15 @@ export async function middleware(request: NextRequest) {
   const role = membership?.role ?? 'player'
   const homeRoute = ROLE_ROUTES[role] ?? '/player'
 
-  // Root → redirect to role home
+  // Root redirect
   if (pathname === '/') {
     const url = request.nextUrl.clone()
-    url.pathname = homeRoute
+    // Platform users always go to /platform from root
+    url.pathname = isPlatformUser ? '/platform' : homeRoute
     return NextResponse.redirect(url)
   }
 
-  // Enforce route access: coaches can't access /director, players can't access /coach, etc.
+  // Enforce route access
   const routeOwner = pathname.split('/')[1]
   const allowed = (() => {
     if (routeOwner === 'director') return role === 'academy_director'
@@ -76,7 +105,8 @@ export async function middleware(request: NextRequest) {
 
   if (!allowed) {
     const url = request.nextUrl.clone()
-    url.pathname = homeRoute
+    // Platform users with no matching academy role go back to /platform
+    url.pathname = isPlatformUser ? '/platform' : homeRoute
     return NextResponse.redirect(url)
   }
 

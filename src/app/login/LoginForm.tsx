@@ -31,7 +31,23 @@ export function LoginForm() {
       return
     }
 
-    // Get role to route correctly
+    // Check platform_roles first — platform users go to /platform.
+    // rawSupabase cast required: platform_roles is not yet in database.types.ts.
+    const rawSupabase = supabase as any
+    const { data: platformRoleRow } = await rawSupabase
+      .from('platform_roles')
+      .select('role')
+      .eq('user_id', data.user.id)
+      .eq('is_active', true)
+      .single()
+
+    if ((platformRoleRow as { role?: string } | null)?.role) {
+      router.push(params.get('next') ?? '/platform')
+      router.refresh()
+      return
+    }
+
+    // Get academy role to route correctly
     const { data: membership } = await supabase
       .from('academy_memberships')
       .select('role')
