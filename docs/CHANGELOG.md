@@ -5,6 +5,53 @@ Update this file at the end of every completed module.
 
 ---
 
+## 2026-04-29 — Coach Workspace Navigation V1
+
+Added safe, demo-ready shell pages for the three missing coach nav routes. Bottom nav is now fully navigable.
+
+**Files created:**
+- `src/app/coach/players/page.tsx` — async Server Component; calls `getCoachWorkspaceSummary`; renders assigned players only (filtered via `coach_group_assignments`); initials avatar + `full_name` + `group_name · level_label` + `player_status` badge; `EmptyState` fallback; no edit actions; no links to player profiles
+- `src/app/coach/sessions/page.tsx` — async Server Component; calls `getCoachWorkspaceSummary`; renders today's sessions with name, `scheduled_time`, and status badge; `EmptyState` fallback; coming-soon footer (Session plans · Attendance · Group check-in)
+- `src/app/coach/voice/page.tsx` — sync static Server Component; no Supabase imports; hero card + three disabled coming-soon tiles (Record Voice Note, Structure into Observation, Review Before Saving) + coach-review safety note; no `voice_notes` queried
+
+**No files modified** beyond this changelog.
+
+**Constraints confirmed:**
+- No migrations created
+- No schema changes
+- No database.types.ts changes
+- No middleware changes
+- No preview mode logic changes
+- No platform actions changed
+- No server actions changed
+- No backend helper changes (`coachWorkspace.ts` untouched)
+- No layout changes (`coach/layout.tsx` untouched)
+- No BottomTabBar changes
+- No player or parent portal changes
+- No service role / `getSupabaseAdmin` used
+- No write actions added
+- No `voice_notes` queried
+- No AI drafts queried
+- No fake data — real queries with `EmptyState` fallbacks; voice page is fully static
+- `player_status` used (not `status`) — verified against `v_player_summary` in `database.types.ts`
+- PreviewBanner inherited automatically from `coach/layout.tsx` on all three new routes
+- BottomTabBar highlights correctly: Players/Sessions/Voice use `startsWith`, Home uses `exact: true`
+
+TypeScript: clean.
+
+**Manual test steps:**
+1. `npm run dev`
+2. Log in as platform user → `/platform`
+3. Click "Preview as Coach" on any academy card → `/coach` loads with PreviewBanner
+4. Click "Players" tab → `/coach/players` loads; Players tab highlighted; player list or empty state; no 404
+5. Click "Sessions" tab → `/coach/sessions` loads; Sessions tab highlighted; today's sessions or empty state; no 404
+6. Click "Voice" tab → `/coach/voice` loads; Voice tab highlighted; hero card + 3 tiles + safety note; no 404
+7. Click "Home" tab → `/coach` loads; only Home tab highlighted (exact match)
+8. Click "Exit Preview" → `/platform`
+9. No runtime errors on any route
+
+---
+
 ## 2026-04-29 — Platform Preview Mode Infrastructure (Phase 1B)
 
 Enables platform users (platform_owner / platform_admin) to enter a read-only preview of any academy's portal UI, scoped to a chosen role. Writes are blocked in preview. Normal academy users are completely unaffected.
