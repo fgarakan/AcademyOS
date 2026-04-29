@@ -1,19 +1,20 @@
 #!/usr/bin/env node
 /**
- * Exercise Library — Dry-Run Inspector + Report Generator
+ * Exercise Library — Dry-Run Inspector + Live Importer
  * Reads data/airtable-import/Exercise Library-Grid view.csv,
- * transforms and validates every row, and prints what would be
- * inserted into the exercises table.
+ * transforms and validates every row, and either prints what would be
+ * inserted (dry-run) or inserts valid rows into the exercises table (live).
  *
- * THIS SCRIPT NEVER WRITES TO THE DATABASE.
- * No Supabase client. No service-role key. No inserts. Ever.
+ * DEFAULT MODE: dry-run — reads and validates only, no writes.
  *
  * Usage:
- *   node import-exercises.js
+ *   node import-exercises.js                              # dry-run (default)
+ *   node import-exercises.js --live                       # blocked (confirm flag required)
+ *   node import-exercises.js --live --confirm-live-import # live insert
  *
- * Output:
- *   - stdout: human-readable dry-run summary (unchanged)
- *   - file:   data/airtable-import/reports/exercise-import-dry-run-report.json
+ * Required env vars for live mode:
+ *   SUPABASE_URL
+ *   SUPABASE_SERVICE_ROLE_KEY
  *
  * Mapping decisions (confirmed 2026-04-29):
  *   Agility/Speed/Strength → fitness enum; original kept as tag
@@ -30,17 +31,29 @@
 const fs   = require('fs');
 const path = require('path');
 
-// Guard: abort immediately if someone passes --live
-if (process.argv.includes('--live')) {
-  console.error('ERROR: --live is not supported. This script is dry-run only.');
-  console.error('Live insert requires explicit approval. Do not add --live.');
+// ─────────────────────────────────────────────────────────────────────────────
+// Argument parsing
+// ─────────────────────────────────────────────────────────────────────────────
+
+const IS_LIVE    = process.argv.includes('--live');
+const IS_CONFIRM = process.argv.includes('--confirm-live-import');
+
+// --live without --confirm-live-import: block immediately
+if (IS_LIVE && !IS_CONFIRM) {
+  console.error('ERROR: Refusing live import without --confirm-live-import');
+  console.error('Re-run with: --live --confirm-live-import');
   process.exit(1);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
 
 const CSV_PATH    = path.resolve(__dirname, 'Exercise Library-Grid view.csv');
 const REPORT_DIR  = path.resolve(__dirname, 'reports');
 const REPORT_PATH = path.join(REPORT_DIR, 'exercise-import-dry-run-report.json');
 const ACADEMY_ID  = '00000000-0000-0000-0000-000000000001';
+const IMPORT_BATCH_TAG = 'import_batch:airtable_exercise_library_2026_04_29';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Category normalization
@@ -154,7 +167,7 @@ function transformRow(fields, csvLineNum) {
   const durationMin = parseDuration(rawDuration);
   if (name && !durationMin) errs.push(`unparseable Duration "${rawDuration}"`);
 
-  // record is the shape that WOULD be inserted — printed only, never sent anywhere
+  // record is the shape that WOULD be inserted
   const record = errs.length === 0 ? {
     academy_id:      ACADEMY_ID,
     name,
@@ -175,35 +188,18 @@ function transformRow(fields, csvLineNum) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main
+// CSV loading + classification (shared by dry-run and live)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function main() {
-  const W  = 62;
-  const HR = '─'.repeat(W);
-
-  console.log(`\n${'═'.repeat(W)}`);
-  console.log(' Academy OS — Exercise Library Dry-Run Inspector');
-  console.log(' Mode     : DRY RUN — read and validate only, no writes');
-  console.log(` Academy  : ${ACADEMY_ID}`);
-  console.log(` CSV      : ${path.basename(CSV_PATH)}`);
-  console.log(`${'═'.repeat(W)}\n`);
-
+function loadAndClassify() {
   if (!fs.existsSync(CSV_PATH)) {
     console.error(`ERROR: CSV not found at ${CSV_PATH}`);
     process.exit(1);
   }
 
-  const rawContent = fs.readFileSync(CSV_PATH, 'utf8');
-  const rawLines   = rawContent.split('\n');
-
-  // Header
+  const rawLines = fs.readFileSync(CSV_PATH, 'utf8').split('\n');
   const headerFields = parseCSVLine(rawLines[0].replace(/\r$/, ''));
-  console.log(`Header (${headerFields.length} columns):`);
-  headerFields.forEach((h, i) => console.log(`  [${i}] ${h}`));
-  console.log('');
 
-  // Classify rows
   const blankRows = [];
   const ghostRows = [];
   const parsed    = [];
@@ -214,13 +210,11 @@ function main() {
 
     const fields = parseCSVLine(line);
 
-    // Blank: every field is empty
     if (fields.every(f => !f)) {
       blankRows.push(i + 1);
       continue;
     }
 
-    // Ghost: only Status is populated, name is empty
     const hasName       = !!(fields[COL.NAME] || '').trim();
     const onlyStatusSet = !hasName &&
       fields.slice(0, COL.STATUS).every(f => !f) &&
@@ -233,8 +227,36 @@ function main() {
     parsed.push(transformRow(fields, i + 1));
   }
 
-  const valid   = parsed.filter(r => r.errs.length === 0);
-  const invalid = parsed.filter(r => r.errs.length > 0);
+  return {
+    headerFields,
+    blankRows,
+    ghostRows,
+    parsed,
+    valid:   parsed.filter(r => r.errs.length === 0),
+    invalid: parsed.filter(r => r.errs.length > 0),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dry-run mode
+// ─────────────────────────────────────────────────────────────────────────────
+
+function runDryRun() {
+  const W  = 62;
+  const HR = '─'.repeat(W);
+
+  console.log(`\n${'═'.repeat(W)}`);
+  console.log(' Academy OS — Exercise Library Dry-Run Inspector');
+  console.log(' Mode     : DRY RUN — read and validate only, no writes');
+  console.log(` Academy  : ${ACADEMY_ID}`);
+  console.log(` CSV      : ${path.basename(CSV_PATH)}`);
+  console.log(`${'═'.repeat(W)}\n`);
+
+  const { headerFields, blankRows, ghostRows, parsed, valid, invalid } = loadAndClassify();
+
+  console.log(`Header (${headerFields.length} columns):`);
+  headerFields.forEach((h, i) => console.log(`  [${i}] ${h}`));
+  console.log('');
 
   // ── Valid rows ──────────────────────────────────────────────────────────────
   console.log(HR);
@@ -285,12 +307,12 @@ function main() {
     rawCatCounts[r.categoryKey] = (rawCatCounts[r.categoryKey] || 0) + 1;
   }
   const categoryNormalization = {
-    agility_to_fitness:   rawCatCounts['agility']   || 0,
-    speed_to_fitness:     rawCatCounts['speed']     || 0,
-    strength_to_fitness:  rawCatCounts['strength']  || 0,
-    technical_direct:     rawCatCounts['technical'] || 0,
-    movement_direct:      rawCatCounts['movement']  || 0,
-    recovery_to_cool_down: rawCatCounts['recovery'] || 0,
+    agility_to_fitness:    rawCatCounts['agility']   || 0,
+    speed_to_fitness:      rawCatCounts['speed']     || 0,
+    strength_to_fitness:   rawCatCounts['strength']  || 0,
+    technical_direct:      rawCatCounts['technical'] || 0,
+    movement_direct:       rawCatCounts['movement']  || 0,
+    recovery_to_cool_down: rawCatCounts['recovery']  || 0,
   };
 
   // ── CSV duplicate name detection (case-insensitive) ──────────────────────────
@@ -356,4 +378,199 @@ function main() {
   console.log('');
 }
 
-main();
+// ─────────────────────────────────────────────────────────────────────────────
+// Live import mode
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runLive() {
+  const W  = 62;
+  const HR = '─'.repeat(W);
+
+  // ── Env var check — must happen before any network call ──────────────────────
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceKey) {
+    console.error('');
+    console.error('ERROR: Live import requires both env vars to be set:');
+    if (!supabaseUrl)  console.error('  SUPABASE_URL is missing');
+    if (!serviceKey)   console.error('  SUPABASE_SERVICE_ROLE_KEY is missing');
+    console.error('');
+    console.error('Set them before running:');
+    console.error('  SUPABASE_URL="..." SUPABASE_SERVICE_ROLE_KEY="..." node import-exercises.js --live --confirm-live-import');
+    process.exit(1);
+  }
+
+  console.log(`\n${'═'.repeat(W)}`);
+  console.log(' Academy OS — Exercise Library LIVE IMPORT');
+  console.log(' ┌────────────────────────────────────────────────┐');
+  console.log(' │   LIVE IMPORT MODE — WRITES ENABLED            │');
+  console.log(' └────────────────────────────────────────────────┘');
+  console.log(` Academy  : ${ACADEMY_ID}`);
+  console.log(` CSV      : ${path.basename(CSV_PATH)}`);
+  console.log(` Batch tag: ${IMPORT_BATCH_TAG}`);
+  console.log(`${'═'.repeat(W)}\n`);
+
+  // ── Load and classify CSV ────────────────────────────────────────────────────
+  const { blankRows, ghostRows, valid, invalid } = loadAndClassify();
+
+  console.log(HR);
+  console.log(` CSV CLASSIFICATION`);
+  console.log(HR);
+  console.log(`  Valid (passed all checks) : ${valid.length}`);
+  console.log(`  Invalid/incomplete        : ${invalid.length}`);
+  console.log(`  Blank rows                : ${blankRows.length}`);
+  console.log(`  Ghost rows                : ${ghostRows.length}`);
+  console.log('');
+
+  for (const r of invalid) {
+    console.log(`[SKIP-INVALID] line ${r.csvLineNum}: "${r.name}" — ${r.errs.join('; ')}`);
+  }
+  if (invalid.length > 0) console.log('');
+
+  // ── Connect to Supabase ──────────────────────────────────────────────────────
+  const { createClient } = require('@supabase/supabase-js');
+  // Service role key: read from env, never logged
+  const db = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  // ── Fetch existing exercise names for the academy ────────────────────────────
+  console.log(HR);
+  console.log(` DB DUPLICATE CHECK`);
+  console.log(HR);
+  console.log('  Fetching existing exercise names from DB...');
+
+  const { data: existingRows, error: fetchError } = await db
+    .from('exercises')
+    .select('name')
+    .eq('academy_id', ACADEMY_ID);
+
+  if (fetchError) {
+    console.error(`\nERROR: Failed to fetch existing exercises: ${fetchError.message}`);
+    process.exit(1);
+  }
+
+  const existingNamesLower = new Set(
+    (existingRows || []).map(r => r.name.toLowerCase())
+  );
+  console.log(`  Found ${existingNamesLower.size} existing exercise(s) in DB`);
+  console.log('');
+
+  // ── Deduplicate: partition valid rows into insert vs. skip ───────────────────
+  const toInsert  = [];
+  const dbSkipped = [];
+
+  for (const r of valid) {
+    if (existingNamesLower.has(r.name.toLowerCase())) {
+      dbSkipped.push(r);
+    } else {
+      toInsert.push(r);
+    }
+  }
+
+  for (const r of dbSkipped) {
+    console.log(`[SKIP-DB-DUPLICATE] "${r.name}"`);
+  }
+  if (dbSkipped.length > 0) console.log('');
+
+  console.log(`  To insert  : ${toInsert.length}`);
+  console.log(`  DB dupes   : ${dbSkipped.length}`);
+  console.log('');
+
+  if (toInsert.length === 0) {
+    console.log('Nothing to insert — all valid rows already exist in DB.');
+    console.log('');
+    printRollbackSQL();
+    return;
+  }
+
+  // ── Build payloads: append import batch tag to each row ──────────────────────
+  const payloads = toInsert.map(r => {
+    const existingTags = r.record.tags || [];
+    return {
+      ...r.record,
+      tags: [...existingTags, IMPORT_BATCH_TAG],
+    };
+  });
+
+  // ── Insert ───────────────────────────────────────────────────────────────────
+  console.log(HR);
+  console.log(` INSERTING ${payloads.length} ROW(S)`);
+  console.log(HR);
+
+  let insertedCount = 0;
+  const insertErrors = [];
+
+  // Insert in batches of 20 to stay well within PostgREST limits
+  const BATCH_SIZE = 20;
+  for (let i = 0; i < payloads.length; i += BATCH_SIZE) {
+    const batch = payloads.slice(i, i + BATCH_SIZE);
+    const { data: inserted, error: insertError } = await db
+      .from('exercises')
+      .insert(batch)
+      .select('id, name');
+
+    if (insertError) {
+      insertErrors.push({ batchStart: i, message: insertError.message });
+      console.error(`  [ERROR] batch starting at index ${i}: ${insertError.message}`);
+    } else {
+      insertedCount += (inserted || []).length;
+      for (const row of (inserted || [])) {
+        console.log(`  [INSERTED] "${row.name}"  id: ${row.id}`);
+      }
+    }
+  }
+
+  // ── Final summary ────────────────────────────────────────────────────────────
+  console.log('');
+  console.log(HR);
+  console.log(' LIVE IMPORT SUMMARY');
+  console.log(HR);
+  console.log(`  Inserted successfully : ${insertedCount}`);
+  console.log(`  Skipped — DB duplicate: ${dbSkipped.length}`);
+  console.log(`  Skipped — invalid     : ${invalid.length}`);
+  console.log(`  Skipped — blank       : ${blankRows.length}`);
+  console.log(`  Skipped — ghost       : ${ghostRows.length}`);
+  console.log(`  Insert errors         : ${insertErrors.length}`);
+
+  if (insertErrors.length > 0) {
+    console.log('');
+    console.log('  ERRORS:');
+    for (const e of insertErrors) {
+      console.log(`    batch@${e.batchStart}: ${e.message}`);
+    }
+  }
+
+  console.log('');
+  printRollbackSQL();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rollback SQL — printed to stdout after live import completes
+// ─────────────────────────────────────────────────────────────────────────────
+
+function printRollbackSQL() {
+  const W  = 62;
+  const HR = '─'.repeat(W);
+  console.log(HR);
+  console.log(' ROLLBACK SQL (run in Supabase SQL editor to undo import)');
+  console.log(HR);
+  console.log(`  DELETE FROM exercises`);
+  console.log(`  WHERE academy_id = '${ACADEMY_ID}'`);
+  console.log(`    AND '${IMPORT_BATCH_TAG}' = ANY(tags);`);
+  console.log('');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Entry point
+// ─────────────────────────────────────────────────────────────────────────────
+
+if (IS_LIVE && IS_CONFIRM) {
+  runLive().catch(err => {
+    console.error('\nUnhandled error during live import:', err.message || err);
+    process.exit(1);
+  });
+} else {
+  runDryRun();
+}
