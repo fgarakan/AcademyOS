@@ -1,0 +1,78 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { getSupabaseServer } from '@/lib/supabase/server'
+import { createCoachObservation, upsertPlayerDevelopmentSummary } from '@/lib/backend/notes'
+
+export async function addObservationAction(
+  playerId: string,
+  academyId: string,
+  formData: FormData
+): Promise<void> {
+  const supabase = await getSupabaseServer()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const content = (formData.get('content') as string | null)?.trim()
+  const observation_type = formData.get('observation_type') as string | null
+  const is_private = formData.get('is_private') === 'true'
+
+  if (!content) throw new Error('Observation content is required')
+  if (!observation_type) throw new Error('Observation type is required')
+
+  await createCoachObservation(supabase, {
+    academy_id: academyId,
+    player_id: playerId,
+    coach_id: user.id,
+    observation_type,
+    content,
+    is_private,
+  })
+
+  revalidatePath(`/director/players/${playerId}`)
+}
+
+export async function updateDevelopmentSummaryAction(
+  playerId: string,
+  academyId: string,
+  formData: FormData
+): Promise<void> {
+  const supabase = await getSupabaseServer()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const strengthsRaw = formData.get('current_strengths') as string | null
+  const workOnRaw = formData.get('things_to_work_on') as string | null
+  const development_focus = (formData.get('development_focus') as string | null)?.trim() || null
+  const coach_summary = (formData.get('coach_summary') as string | null)?.trim() || null
+  const student_friendly_summary =
+    (formData.get('student_friendly_summary') as string | null)?.trim() || null
+  const show_to_student = formData.get('show_to_student') === 'true'
+  const show_to_parent = formData.get('show_to_parent') === 'true'
+
+  const current_strengths = strengthsRaw
+    ? strengthsRaw.split('\n').map(s => s.trim()).filter(Boolean)
+    : []
+  const things_to_work_on = workOnRaw
+    ? workOnRaw.split('\n').map(s => s.trim()).filter(Boolean)
+    : []
+
+  await upsertPlayerDevelopmentSummary(supabase, {
+    academy_id: academyId,
+    player_id: playerId,
+    created_by: user.id,
+    updated_by: user.id,
+    current_strengths,
+    things_to_work_on,
+    development_focus,
+    coach_summary,
+    student_friendly_summary,
+    show_to_student,
+    show_to_parent,
+    source: 'manual',
+  })
+
+  revalidatePath(`/director/players/${playerId}`)
+}

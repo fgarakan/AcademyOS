@@ -1,14 +1,20 @@
 import { notFound } from 'next/navigation'
-import { Trophy, Activity, MessageSquare } from 'lucide-react'
+import { Trophy, Activity } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getPlayerById } from '@/lib/backend/players'
 import { getPlayerCurriculumDomains } from '@/lib/backend/curriculum'
+import { getCoachObservations, getPlayerDevelopmentSummary } from '@/lib/backend/notes'
 import { assignCurriculumAction, evaluateAdvancementAction } from '@/lib/actions/curriculum'
+import { addObservationAction, updateDevelopmentSummaryAction } from '@/lib/actions/notes'
 import { PlayerProfileHeader } from '@/components/player/PlayerProfileHeader'
 import { CurriculumProgressGrid } from '@/components/player/CurriculumProgressGrid'
 import { PlayerCurriculumEmptyState } from '@/components/player/PlayerCurriculumEmptyState'
 import { EvaluateAdvancementButton } from '@/components/player/EvaluateAdvancementButton'
+import { CoachObservationTimeline } from '@/components/player/CoachObservationTimeline'
+import { DevelopmentSummarySection } from '@/components/player/DevelopmentSummarySection'
+import { AddObservationForm } from '@/components/player/AddObservationForm'
+import { EditDevelopmentSummaryForm } from '@/components/player/EditDevelopmentSummaryForm'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { PlayerProfileTabs } from './_components/PlayerProfileTabs'
@@ -209,14 +215,38 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   )
 
   // ─── Tab 5: Notes ─────────────────────────────────────────────────────────
+  const observations = await getCoachObservations(supabase, params.playerId)
+  const developmentSummary = await getPlayerDevelopmentSummary(supabase, params.playerId)
+
+  const addObsAction = addObservationAction.bind(null, params.playerId, academyId)
+  const updateSummaryAction = updateDevelopmentSummaryAction.bind(null, params.playerId, academyId)
+
   const notesSlot = (
-    <Card>
-      <EmptyState
-        icon={<MessageSquare className="w-5 h-5" />}
-        title="Coach notes coming soon"
-        description="Coach observations, voice-captured notes, and session feedback will appear here."
-      />
-    </Card>
+    <div className="space-y-6">
+
+      {/* Development Summary display */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Development Summary</p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <DevelopmentSummarySection summary={developmentSummary} />
+        </CardContent>
+      </Card>
+
+      {/* Edit Development Summary form */}
+      <EditDevelopmentSummaryForm summary={developmentSummary} onSubmit={updateSummaryAction} />
+
+      {/* Observation history */}
+      <div>
+        <p className="label-xs mb-4">Observation History</p>
+        <CoachObservationTimeline observations={observations} />
+      </div>
+
+      {/* Add Observation form */}
+      <AddObservationForm onSubmit={addObsAction} />
+
+    </div>
   )
 
   return (

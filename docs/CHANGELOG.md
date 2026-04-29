@@ -185,6 +185,38 @@ TypeScript: clean.
 
 ---
 
+## 2026-04-29 — Coach Notes Foundation (Phase 1)
+
+Built the real Notes tab for coach-facing player development notes.
+
+**Files created:**
+- `supabase/migrations/039_player_development_summary.sql` — new `player_development_summary` table; full RLS (staff read/write, players/parents gated behind show_to_student/show_to_parent flags which default false)
+- `src/lib/backend/notes.ts` — four backend helpers: `getCoachObservations`, `createCoachObservation`, `getPlayerDevelopmentSummary`, `upsertPlayerDevelopmentSummary`; uses `rawDb = db as any` for the new table (types will resolve after migration + `supabase gen types`)
+- `src/lib/actions/notes.ts` — two server actions: `addObservationAction`, `updateDevelopmentSummaryAction`; authenticated, validated, revalidates player profile path
+- `src/components/player/CoachObservationTimeline.tsx` — renders coach_observations for a player in reverse-chronological order; Internal badge when is_private; empty state
+- `src/components/player/DevelopmentSummarySection.tsx` — read-only display of development summary; shows strengths, priorities, development focus, coach summary, student-facing preview with visibility labels
+- `src/components/player/AddObservationForm.tsx` — client form; observation_type dropdown (all 8 existing values), content textarea, is_private toggle (defaults true/internal)
+- `src/components/player/EditDevelopmentSummaryForm.tsx` — client form; newline-separated strengths/work-ons converted to arrays; visibility toggles rendered but disabled (future sprint gate)
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — replaced Notes tab placeholder with real UI; sequential data fetching for observations and development summary; bound server actions for forms
+
+**Constraints confirmed:**
+- No voice features built
+- No AI structuring built
+- No fake or hardcoded notes
+- Coach-only notes not exposed to player or parent routes (RLS + show_to_student/show_to_parent default false)
+- coach_observations schema untouched
+- voice_notes schema untouched
+- parent_updates schema untouched
+- No locked modules modified
+
+**Migration note:** Migration `039` must be applied and `supabase gen types typescript` run before deploying. The `player_development_summary` backend helpers use `rawDb = db as any` until types are regenerated.
+
+TypeScript: clean.
+
+---
+
 ## Next build target
 
 **Player Profile tab content** — fill Step 4 tabs with real backend data
