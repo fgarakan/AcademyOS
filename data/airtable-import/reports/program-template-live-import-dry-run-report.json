@@ -1,0 +1,742 @@
+{
+  "report_type": "program_template_guarded_import_dry_run",
+  "generated": "2026-04-29",
+  "sprint": "Sprint 8 — Program Templates Guarded Live Import Plan + Dry-Run Script",
+  "mode": "live",
+  "writes_performed": true,
+  "service_role_used": true,
+  "supabase_writes_performed": true,
+  "source_files_inspected": [
+    "data/airtable-import/Program Templates-Grid view.csv",
+    "data/airtable-import/reports/airtable-rec-id-exercise-map.json",
+    "docs/PROGRAM_TEMPLATE_IMPORT_DECISIONS.md",
+    "supabase/migrations/006_exercises_templates.sql"
+  ],
+  "decisions_applied": {
+    "block_type_mapping": {
+      "Movement": "movement",
+      "Agility": "fitness",
+      "Speed": "fitness",
+      "Games": "competition",
+      "Cool Down": "cool_down"
+    },
+    "duplicate_template_skip": {
+      "skipped": "TPL-1776243285121",
+      "canonical": "TPL-1776288406910",
+      "reason": "Identical name and Blocks JSON. Later timestamp (5:26pm vs 4:54am) is the canonical record.",
+      "documented_in": "docs/PROGRAM_TEMPLATE_IMPORT_DECISIONS.md — Section 7"
+    }
+  },
+  "schema_findings": {
+    "templates": {
+      "required_columns": [
+        "academy_id",
+        "name"
+      ],
+      "nullable_columns": [
+        "description",
+        "group_id",
+        "track",
+        "level_id",
+        "total_duration_min",
+        "tags",
+        "created_by",
+        "voice_command_id"
+      ],
+      "defaults": {
+        "is_active": true,
+        "is_default": false
+      },
+      "unique_constraints": "None on (academy_id, name) — duplicate names are schema-legal. Duplicate protection relies on airtable_id tag check.",
+      "metadata_json_field": false,
+      "airtable_id_storage": "tags TEXT[] — format: 'airtable_id:<TPL-ID>'. Same convention as exercise library import."
+    },
+    "template_blocks": {
+      "required_columns": [
+        "template_id",
+        "type",
+        "name",
+        "duration_min",
+        "order_index"
+      ],
+      "nullable_columns": [
+        "intensity",
+        "notes"
+      ],
+      "constraints": "duration_min CHECK (duration_min > 0) — all blocks have duration > 0 per source CSV",
+      "block_type_enum": [
+        "warm_up",
+        "technical",
+        "tactical",
+        "movement",
+        "fitness",
+        "competition",
+        "mental",
+        "cool_down",
+        "free"
+      ]
+    },
+    "template_block_exercises": {
+      "required_columns": [
+        "block_id",
+        "exercise_id",
+        "order_index"
+      ],
+      "nullable_columns": [
+        "duration_min",
+        "notes"
+      ],
+      "fk_note": "exercise_id NOT NULL FK → exercises(id). All 14 exercise UUIDs are resolved."
+    }
+  },
+  "duplicate_protection": {
+    "strategy": "airtable_id_tag_check",
+    "description": "Before any live insert, query: SELECT id FROM templates WHERE 'airtable_id:<TPL-ID>' = ANY(tags) AND academy_id = '<ACADEMY_ID>'. If row found, skip. This is idempotent as long as the airtable_id tag is always set on insert.",
+    "risk": "MEDIUM — tags is TEXT[]. If a template is imported without this tag, the check will not detect it. Rollback by batch tag is reliable only if the tag was set.",
+    "skip_list": [
+      "TPL-1776243285121"
+    ],
+    "tag_pattern": "airtable_id:<TPL-ID>",
+    "no_migration_required": true,
+    "migration_needed_for_stronger_protection": "A UNIQUE constraint on (academy_id, ARRAY[airtable source id]) or a dedicated source_id column would remove the risk. Not planned for this sprint."
+  },
+  "summary": {
+    "csv_template_rows_found": 3,
+    "blank_rows_skipped": 6,
+    "duplicate_templates_skipped": 1,
+    "templates_to_import": 2,
+    "template_blocks_to_import": 10,
+    "template_block_exercises_to_import": 29,
+    "unresolved_exercise_uuid_count": 0,
+    "live_import_ready": true
+  },
+  "proposed_payloads": {
+    "_note": "All payloads are proposed only. _dry_run_uuid values are random placeholders — actual UUIDs are assigned by Supabase on INSERT. template_id and block_id fields show [dry-run ref: <uuid>] to cross-reference payloads within this report.",
+    "templates": [
+      {
+        "_dry_run_uuid": "0c0b47ff-08d1-4ec3-8ca7-719cd065002d",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_csv_row": 9,
+        "_updated_date": "4/15/2026 2:25pm",
+        "academy_id": "00000000-0000-0000-0000-000000000001",
+        "name": "Green Dot — Level 1 • Day • U10",
+        "description": null,
+        "group_id": null,
+        "track": null,
+        "level_id": null,
+        "total_duration_min": 60,
+        "tags": [
+          "import_batch:airtable_program_templates_2026_04_29",
+          "source:airtable",
+          "airtable_id:TPL-1776277558005"
+        ],
+        "is_active": true,
+        "is_default": false,
+        "created_by": null
+      },
+      {
+        "_dry_run_uuid": "a1990d3d-62dd-4211-9c37-05b4a38c5984",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_csv_row": 10,
+        "_updated_date": "4/15/2026 5:26pm",
+        "academy_id": "00000000-0000-0000-0000-000000000001",
+        "name": "High Performance — Level 1 • Day • U14",
+        "description": null,
+        "group_id": null,
+        "track": null,
+        "level_id": null,
+        "total_duration_min": 60,
+        "tags": [
+          "import_batch:airtable_program_templates_2026_04_29",
+          "source:airtable",
+          "airtable_id:TPL-1776288406910"
+        ],
+        "is_active": true,
+        "is_default": false,
+        "created_by": null
+      }
+    ],
+    "template_blocks": [
+      {
+        "_dry_run_uuid": "89d10f99-45df-4a32-8601-048bb8bc7779",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Movement",
+        "_type_mapping_note": "Airtable 'Movement' → Supabase 'movement' (Sprint 7 locked mapping). Original label preserved in name column.",
+        "template_id": "[dry-run ref: 0c0b47ff-08d1-4ec3-8ca7-719cd065002d]",
+        "type": "movement",
+        "name": "Movement",
+        "duration_min": 10,
+        "order_index": 1,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "0b21ef0e-bc70-40ba-9afc-af7d9e589552",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Agility",
+        "_type_mapping_note": "Airtable 'Agility' → Supabase 'fitness' (Sprint 7 locked mapping). Original label preserved in name column.",
+        "template_id": "[dry-run ref: 0c0b47ff-08d1-4ec3-8ca7-719cd065002d]",
+        "type": "fitness",
+        "name": "Agility",
+        "duration_min": 10,
+        "order_index": 2,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "19769872-2139-4918-81d5-89ac0b4bcdad",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Speed",
+        "_type_mapping_note": "Airtable 'Speed' → Supabase 'fitness' (Sprint 7 locked mapping). Original label preserved in name column.",
+        "template_id": "[dry-run ref: 0c0b47ff-08d1-4ec3-8ca7-719cd065002d]",
+        "type": "fitness",
+        "name": "Speed",
+        "duration_min": 10,
+        "order_index": 3,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "133d6248-2929-45a9-a745-cd2c49005ce1",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Games",
+        "_type_mapping_note": "Airtable 'Games' → Supabase 'competition' (Sprint 7 locked mapping). Original label preserved in name column.",
+        "template_id": "[dry-run ref: 0c0b47ff-08d1-4ec3-8ca7-719cd065002d]",
+        "type": "competition",
+        "name": "Games",
+        "duration_min": 20,
+        "order_index": 4,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "53593c16-aaf4-4d45-9c16-4dd55776868f",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Cool Down",
+        "_type_mapping_note": "Airtable 'Cool Down' → Supabase 'cool_down' (Sprint 7 locked mapping). Original label preserved in name column.",
+        "template_id": "[dry-run ref: 0c0b47ff-08d1-4ec3-8ca7-719cd065002d]",
+        "type": "cool_down",
+        "name": "Cool Down",
+        "duration_min": 10,
+        "order_index": 5,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "a35f3046-3cbc-4c49-be65-de526a6728df",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Movement",
+        "_type_mapping_note": "Airtable 'Movement' → Supabase 'movement' (Sprint 7 locked mapping). Original label preserved in name column.",
+        "template_id": "[dry-run ref: a1990d3d-62dd-4211-9c37-05b4a38c5984]",
+        "type": "movement",
+        "name": "Movement",
+        "duration_min": 10,
+        "order_index": 1,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "fbb5fb99-01f0-4ec4-a22d-53af7c9cda34",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Agility",
+        "_type_mapping_note": "Airtable 'Agility' → Supabase 'fitness' (Sprint 7 locked mapping). Original label preserved in name column.",
+        "template_id": "[dry-run ref: a1990d3d-62dd-4211-9c37-05b4a38c5984]",
+        "type": "fitness",
+        "name": "Agility",
+        "duration_min": 10,
+        "order_index": 2,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "ea467db8-f434-45e9-864f-8f5d71773e41",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Speed",
+        "_type_mapping_note": "Airtable 'Speed' → Supabase 'fitness' (Sprint 7 locked mapping). Original label preserved in name column.",
+        "template_id": "[dry-run ref: a1990d3d-62dd-4211-9c37-05b4a38c5984]",
+        "type": "fitness",
+        "name": "Speed",
+        "duration_min": 10,
+        "order_index": 3,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "b95894d7-6f83-472a-abc1-99268969ce02",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Games",
+        "_type_mapping_note": "Airtable 'Games' → Supabase 'competition' (Sprint 7 locked mapping). Original label preserved in name column.",
+        "template_id": "[dry-run ref: a1990d3d-62dd-4211-9c37-05b4a38c5984]",
+        "type": "competition",
+        "name": "Games",
+        "duration_min": 20,
+        "order_index": 4,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "3c10ca5c-64dd-4dc0-9a71-372153e45c7d",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Cool Down",
+        "_type_mapping_note": "Airtable 'Cool Down' → Supabase 'cool_down' (Sprint 7 locked mapping). Original label preserved in name column.",
+        "template_id": "[dry-run ref: a1990d3d-62dd-4211-9c37-05b4a38c5984]",
+        "type": "cool_down",
+        "name": "Cool Down",
+        "duration_min": 10,
+        "order_index": 5,
+        "intensity": null,
+        "notes": null
+      }
+    ],
+    "template_block_exercises": [
+      {
+        "_dry_run_uuid": "545ca2ef-0110-46c8-9b70-882c8329c7be",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Movement",
+        "_source_rec_id": "rec0q2GF4MRxhCtd1",
+        "_resolved_exercise_name": "T-Drill",
+        "block_id": "[dry-run ref: 89d10f99-45df-4a32-8601-048bb8bc7779]",
+        "exercise_id": "db04b00a-a1a3-4c4a-8367-04032d6f844b",
+        "order_index": 1,
+        "duration_min": 8,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "c52c84b5-6e1a-4e82-af97-aa28be665b19",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Movement",
+        "_source_rec_id": "rec3W9YKaJadm8Ozk",
+        "_resolved_exercise_name": "Speed Ladder Crossover",
+        "block_id": "[dry-run ref: 89d10f99-45df-4a32-8601-048bb8bc7779]",
+        "exercise_id": "15bc01f3-d476-4494-93ab-82cfa68a449b",
+        "order_index": 2,
+        "duration_min": 5,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "97b4f095-4a6c-4777-8c80-8ab38f31932d",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Agility",
+        "_source_rec_id": "recZvJfD8aEJBi3vo",
+        "_resolved_exercise_name": "Mirror Drill",
+        "block_id": "[dry-run ref: 0b21ef0e-bc70-40ba-9afc-af7d9e589552]",
+        "exercise_id": "cf87c4d2-e744-4fe7-838c-5ce88be54db9",
+        "order_index": 1,
+        "duration_min": 6,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "4de27e07-fc8a-4bd1-badc-067d410e6646",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Agility",
+        "_source_rec_id": "recV2gMns2rnfiJXY",
+        "_resolved_exercise_name": "Cone Ladder Shuffle",
+        "block_id": "[dry-run ref: 0b21ef0e-bc70-40ba-9afc-af7d9e589552]",
+        "exercise_id": "df6bf97a-c358-4883-9862-fe947a56ba71",
+        "order_index": 2,
+        "duration_min": 5,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "d2ca1055-9e24-4507-84ef-04e77c316ac6",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Agility",
+        "_source_rec_id": "recMWb1o7n6zz1gLy",
+        "_resolved_exercise_name": "Reaction Ball Drill",
+        "block_id": "[dry-run ref: 0b21ef0e-bc70-40ba-9afc-af7d9e589552]",
+        "exercise_id": "47bb8deb-5c3e-4ea0-80e8-bdc49246b376",
+        "order_index": 3,
+        "duration_min": 6,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "f6879e8c-034d-444c-953f-be43be5f372b",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Speed",
+        "_source_rec_id": "recTtUgtFfPM9Wjni",
+        "_resolved_exercise_name": "Acceleration Sprint",
+        "block_id": "[dry-run ref: 19769872-2139-4918-81d5-89ac0b4bcdad]",
+        "exercise_id": "a920d96a-a1e9-4a6b-acd6-3cf636764c58",
+        "order_index": 1,
+        "duration_min": 6,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "b2145c52-e0d9-4eaf-b77b-483316524783",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Speed",
+        "_source_rec_id": "recBnZCDu6Kj7zPge",
+        "_resolved_exercise_name": "Short Court Sprints",
+        "block_id": "[dry-run ref: 19769872-2139-4918-81d5-89ac0b4bcdad]",
+        "exercise_id": "af2065d1-65d0-4fa3-9785-bca882bd8f55",
+        "order_index": 2,
+        "duration_min": 5,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "c047fbcf-0edc-4735-aced-1f1145a2626c",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Speed",
+        "_source_rec_id": "recvB51GCIXkt6Iag",
+        "_resolved_exercise_name": "First Step Quickness",
+        "block_id": "[dry-run ref: 19769872-2139-4918-81d5-89ac0b4bcdad]",
+        "exercise_id": "69cb971c-f0c3-4edb-95c5-a46e8b4d7ac3",
+        "order_index": 3,
+        "duration_min": 6,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "fae93630-5aec-47d8-b580-b802f6a2abea",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Games",
+        "_source_rec_id": "recvmwjY7SOnc6YzW",
+        "_resolved_exercise_name": "Spider Drill",
+        "block_id": "[dry-run ref: 133d6248-2929-45a9-a745-cd2c49005ce1]",
+        "exercise_id": "38c64d18-f80e-413a-bd88-6bf13a8c4f44",
+        "order_index": 1,
+        "duration_min": 8,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "e071c8d9-0645-4f9e-a621-d381c13bb9cf",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Games",
+        "_source_rec_id": "recrHe85kvMtlMC4S",
+        "_resolved_exercise_name": "Cross Cone Drill",
+        "block_id": "[dry-run ref: 133d6248-2929-45a9-a745-cd2c49005ce1]",
+        "exercise_id": "4a140218-803e-479e-8bbf-0c9c4aca5bff",
+        "order_index": 2,
+        "duration_min": 6,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "b80922fb-1fef-4a77-b003-315cfe54247f",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Games",
+        "_source_rec_id": "rec0q2GF4MRxhCtd1",
+        "_resolved_exercise_name": "T-Drill",
+        "block_id": "[dry-run ref: 133d6248-2929-45a9-a745-cd2c49005ce1]",
+        "exercise_id": "db04b00a-a1a3-4c4a-8367-04032d6f844b",
+        "order_index": 3,
+        "duration_min": 8,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "1ad872fb-59a1-4c14-8467-87317e4486d1",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Cool Down",
+        "_source_rec_id": "recx8uMV0VivQvwkC",
+        "_resolved_exercise_name": "Foam Roll – Full Body",
+        "block_id": "[dry-run ref: 53593c16-aaf4-4d45-9c16-4dd55776868f]",
+        "exercise_id": "8764e4f3-906d-4399-8a85-fa60a80c5317",
+        "order_index": 1,
+        "duration_min": 10,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "ce4f1c1f-2dbd-4c94-9dae-a8f2f2d603bd",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Cool Down",
+        "_source_rec_id": "rec97vtbilNMGl3Sd",
+        "_resolved_exercise_name": "Static Stretch Cool Down",
+        "block_id": "[dry-run ref: 53593c16-aaf4-4d45-9c16-4dd55776868f]",
+        "exercise_id": "9c80fdba-8b06-4009-855c-9047bbad5320",
+        "order_index": 2,
+        "duration_min": 10,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "e4904b64-43f3-439e-9717-96fadf492dcd",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_type_airtable": "Cool Down",
+        "_source_rec_id": "recOwDahSxkevB7Cp",
+        "_resolved_exercise_name": "Breathing Reset",
+        "block_id": "[dry-run ref: 53593c16-aaf4-4d45-9c16-4dd55776868f]",
+        "exercise_id": "dc8de874-7c57-41c8-a0ad-ac2d1d7a277f",
+        "order_index": 3,
+        "duration_min": 5,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "ec1f7ff3-6ff2-4bce-a220-7aa00f9a985a",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Movement",
+        "_source_rec_id": "rec0q2GF4MRxhCtd1",
+        "_resolved_exercise_name": "T-Drill",
+        "block_id": "[dry-run ref: a35f3046-3cbc-4c49-be65-de526a6728df]",
+        "exercise_id": "db04b00a-a1a3-4c4a-8367-04032d6f844b",
+        "order_index": 1,
+        "duration_min": 8,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "49384cd3-50a2-4a87-84ac-9d5051e89758",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Movement",
+        "_source_rec_id": "recnJDOgeCNo72ZDS",
+        "_resolved_exercise_name": "Lateral Shuffle Drill",
+        "block_id": "[dry-run ref: a35f3046-3cbc-4c49-be65-de526a6728df]",
+        "exercise_id": "d0ba25d1-eb07-47dd-a54e-91c0a7a3572e",
+        "order_index": 2,
+        "duration_min": 5,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "a17995ec-0f38-45b3-b181-23c28d5586ac",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Movement",
+        "_source_rec_id": "rec3W9YKaJadm8Ozk",
+        "_resolved_exercise_name": "Speed Ladder Crossover",
+        "block_id": "[dry-run ref: a35f3046-3cbc-4c49-be65-de526a6728df]",
+        "exercise_id": "15bc01f3-d476-4494-93ab-82cfa68a449b",
+        "order_index": 3,
+        "duration_min": 5,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "3eae4e65-f003-4900-a6cb-568726b8bb95",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Agility",
+        "_source_rec_id": "recZvJfD8aEJBi3vo",
+        "_resolved_exercise_name": "Mirror Drill",
+        "block_id": "[dry-run ref: fbb5fb99-01f0-4ec4-a22d-53af7c9cda34]",
+        "exercise_id": "cf87c4d2-e744-4fe7-838c-5ce88be54db9",
+        "order_index": 1,
+        "duration_min": 6,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "a7642c3c-409a-40cd-a060-d9504cfcd451",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Agility",
+        "_source_rec_id": "recV2gMns2rnfiJXY",
+        "_resolved_exercise_name": "Cone Ladder Shuffle",
+        "block_id": "[dry-run ref: fbb5fb99-01f0-4ec4-a22d-53af7c9cda34]",
+        "exercise_id": "df6bf97a-c358-4883-9862-fe947a56ba71",
+        "order_index": 2,
+        "duration_min": 5,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "1251e089-b8fd-4a8f-a855-8472f880de7a",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Agility",
+        "_source_rec_id": "recMWb1o7n6zz1gLy",
+        "_resolved_exercise_name": "Reaction Ball Drill",
+        "block_id": "[dry-run ref: fbb5fb99-01f0-4ec4-a22d-53af7c9cda34]",
+        "exercise_id": "47bb8deb-5c3e-4ea0-80e8-bdc49246b376",
+        "order_index": 3,
+        "duration_min": 6,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "018a1fa4-949c-4561-af65-5ee6398043df",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Speed",
+        "_source_rec_id": "recTtUgtFfPM9Wjni",
+        "_resolved_exercise_name": "Acceleration Sprint",
+        "block_id": "[dry-run ref: ea467db8-f434-45e9-864f-8f5d71773e41]",
+        "exercise_id": "a920d96a-a1e9-4a6b-acd6-3cf636764c58",
+        "order_index": 1,
+        "duration_min": 6,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "a0e495f4-bb62-40da-8171-f1a6e3b88de8",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Speed",
+        "_source_rec_id": "recBnZCDu6Kj7zPge",
+        "_resolved_exercise_name": "Short Court Sprints",
+        "block_id": "[dry-run ref: ea467db8-f434-45e9-864f-8f5d71773e41]",
+        "exercise_id": "af2065d1-65d0-4fa3-9785-bca882bd8f55",
+        "order_index": 2,
+        "duration_min": 5,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "550cd37e-6f62-4523-8d4e-6b3ad4a877b1",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Speed",
+        "_source_rec_id": "recvB51GCIXkt6Iag",
+        "_resolved_exercise_name": "First Step Quickness",
+        "block_id": "[dry-run ref: ea467db8-f434-45e9-864f-8f5d71773e41]",
+        "exercise_id": "69cb971c-f0c3-4edb-95c5-a46e8b4d7ac3",
+        "order_index": 3,
+        "duration_min": 6,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "93ba92ae-ea96-4ffe-8f7d-f906425c9274",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Games",
+        "_source_rec_id": "recvmwjY7SOnc6YzW",
+        "_resolved_exercise_name": "Spider Drill",
+        "block_id": "[dry-run ref: b95894d7-6f83-472a-abc1-99268969ce02]",
+        "exercise_id": "38c64d18-f80e-413a-bd88-6bf13a8c4f44",
+        "order_index": 1,
+        "duration_min": 8,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "4f660bfe-50b7-4c1f-afbd-5dbbf5094705",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Games",
+        "_source_rec_id": "recrHe85kvMtlMC4S",
+        "_resolved_exercise_name": "Cross Cone Drill",
+        "block_id": "[dry-run ref: b95894d7-6f83-472a-abc1-99268969ce02]",
+        "exercise_id": "4a140218-803e-479e-8bbf-0c9c4aca5bff",
+        "order_index": 2,
+        "duration_min": 6,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "e7628078-e60e-48b9-b656-452a7d775afb",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Games",
+        "_source_rec_id": "rec0q2GF4MRxhCtd1",
+        "_resolved_exercise_name": "T-Drill",
+        "block_id": "[dry-run ref: b95894d7-6f83-472a-abc1-99268969ce02]",
+        "exercise_id": "db04b00a-a1a3-4c4a-8367-04032d6f844b",
+        "order_index": 3,
+        "duration_min": 8,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "fb4c9922-93fd-4f8d-9188-81276e52439f",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Cool Down",
+        "_source_rec_id": "recx8uMV0VivQvwkC",
+        "_resolved_exercise_name": "Foam Roll – Full Body",
+        "block_id": "[dry-run ref: 3c10ca5c-64dd-4dc0-9a71-372153e45c7d]",
+        "exercise_id": "8764e4f3-906d-4399-8a85-fa60a80c5317",
+        "order_index": 1,
+        "duration_min": 10,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "3d66b34c-6187-4457-a7d4-d7b0e4177b96",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Cool Down",
+        "_source_rec_id": "rec97vtbilNMGl3Sd",
+        "_resolved_exercise_name": "Static Stretch Cool Down",
+        "block_id": "[dry-run ref: 3c10ca5c-64dd-4dc0-9a71-372153e45c7d]",
+        "exercise_id": "9c80fdba-8b06-4009-855c-9047bbad5320",
+        "order_index": 2,
+        "duration_min": 10,
+        "notes": null
+      },
+      {
+        "_dry_run_uuid": "945b2336-e6c1-4226-9041-085c4fcd7c71",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_type_airtable": "Cool Down",
+        "_source_rec_id": "recOwDahSxkevB7Cp",
+        "_resolved_exercise_name": "Breathing Reset",
+        "block_id": "[dry-run ref: 3c10ca5c-64dd-4dc0-9a71-372153e45c7d]",
+        "exercise_id": "dc8de874-7c57-41c8-a0ad-ac2d1d7a277f",
+        "order_index": 3,
+        "duration_min": 5,
+        "notes": null
+      }
+    ]
+  },
+  "skipped": [
+    {
+      "airtable_template_id": "TPL-1776243285121",
+      "csv_row": 8,
+      "reason": "duplicate_skip",
+      "canonical_id": "TPL-1776288406910",
+      "note": "Identical name and Blocks JSON as TPL-1776288406910. Earlier timestamp (4:54am vs 5:26pm). Sprint 7 decision: canonical is the later record."
+    }
+  ],
+  "blockers_for_live_import": [],
+  "warnings": [
+    {
+      "id": "WARN-1",
+      "message": "academy_id is hardcoded to seed constant '00000000-0000-0000-0000-000000000001' (Angles Tennis Academy). Verify this matches the live Supabase project before running live import."
+    },
+    {
+      "id": "WARN-2",
+      "message": "Foam Roll – Full Body (rec ID recx8uMV0VivQvwkC) uses an en dash (U+2013) in its name, not a hyphen (-). UUID was resolved correctly in Sprint 6 via exact character match."
+    },
+    {
+      "id": "WARN-3",
+      "message": "T-Drill (rec0q2GF4MRxhCtd1) appears in both the Movement block (order 1) and Games block (order 3) for both approved templates. One exercise UUID maps to two positions — this is intentional, not a data error."
+    },
+    {
+      "id": "WARN-4",
+      "message": "Agility and Speed blocks both map to type='fitness'. They share the same enum value and will appear in the same type bucket for any filter on template_blocks.type='fitness'. Distinguishable by block name only."
+    },
+    {
+      "id": "WARN-5",
+      "message": "Live insert order is mandatory: (1) templates → (2) template_blocks → (3) template_block_exercises. Steps cannot run in parallel. Supabase-returned UUIDs from step N are required for step N+1."
+    }
+  ],
+  "rollback_plan": {
+    "description": "Run steps in this order. CASCADE handles children, but explicit SQL is shown for auditability.",
+    "step_1": "DELETE FROM template_block_exercises WHERE block_id IN (SELECT tb.id FROM template_blocks tb JOIN templates t ON t.id = tb.template_id WHERE 'import_batch:airtable_program_templates_2026_04_29' = ANY(t.tags) AND t.academy_id = '00000000-0000-0000-0000-000000000001');",
+    "step_2": "DELETE FROM template_blocks WHERE template_id IN (SELECT id FROM templates WHERE 'import_batch:airtable_program_templates_2026_04_29' = ANY(tags) AND academy_id = '00000000-0000-0000-0000-000000000001');",
+    "step_3": "DELETE FROM templates WHERE 'import_batch:airtable_program_templates_2026_04_29' = ANY(tags) AND academy_id = '00000000-0000-0000-0000-000000000001';",
+    "note": "Steps 1 and 2 are redundant given ON DELETE CASCADE on template_blocks and template_block_exercises. Shown explicitly for manual verification."
+  },
+  "next_steps": [
+    "Review this dry-run report and confirm counts match expected (2 templates, 10 blocks, 29 exercises).",
+    "Confirm academy_id '00000000-0000-0000-0000-000000000001' matches the live Supabase project.",
+    "Confirm .env.local has NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY set.",
+    "To run live import after explicit approval: node scripts/import-program-templates.mjs --live --confirm-live-import",
+    "After live import: compare verification counts in report to expected counts. Run rollback SQL immediately if mismatch."
+  ],
+  "live_result": {
+    "inserted_template_ids": [
+      "40607a1a-070b-4744-97c3-69ac3f52efcf",
+      "4940db36-68e6-4108-be35-443cac40bce9"
+    ],
+    "inserted_block_ids": [
+      "5d4d5260-67f4-4bb1-8a3e-7dc048837522",
+      "394ffa7b-9f06-4be2-bd78-ca5d64dbd6f0",
+      "d2d58d01-7bd7-4079-84ac-8522d6f3fd4e",
+      "479d6f9e-7f96-4bba-b992-772cc6361cf1",
+      "45e0d438-2acb-46db-ac0d-06173087c0b3",
+      "abdf9c98-5043-4e32-9f20-bc964b5dd3d3",
+      "913b9180-9976-4422-b544-3ad0884bb474",
+      "14720110-f6f8-4331-9668-7822f5d38189",
+      "8caa6b34-4f2e-42a6-9a60-3905747287ff",
+      "e20d5457-9837-4998-bc8c-50fa54b468c9"
+    ],
+    "inserted_exercise_ids": [
+      "1f81a392-9ba8-4a7b-a3e9-a15e0087c389",
+      "b038da6e-4fdc-4a2d-9383-952951b46dd3",
+      "1847b3ca-190d-4a73-b4ae-91cf9c961ace",
+      "9ab24c13-3376-4fc6-9a6a-56c9e4195e76",
+      "9abec7fb-8a4c-4d61-9e13-ba7c8a1e04cf",
+      "550c5c14-5f5e-47a0-a5da-04568b39f28e",
+      "7d7dd7a6-5fd6-46a8-b4e9-b8a3179f37b5",
+      "142363b2-f084-4a35-93a3-0b84072977be",
+      "d9451de5-6eff-4efc-a378-8c5d46492b7d",
+      "c0eac185-ba70-4a24-b222-d22b66984b7b",
+      "9acf17d1-8702-413d-91d0-a887f99b8cc5",
+      "d96c09a9-efb1-4182-8b02-89ab4d3b951f",
+      "21245788-6f6e-499e-94c3-00dbdc609508",
+      "3a37089e-e53d-4739-a86d-8da062c89323",
+      "1a8dee54-2a35-44d1-8418-8260aec736d4",
+      "47b9ed03-ab51-4355-9a20-a8b8bc74c48e",
+      "13b6cc03-5131-42a5-b031-8d31a073a061",
+      "59fd580e-70ac-4124-973b-ef53c3284b43",
+      "eb15e16e-df4b-4047-abe8-753a117ca133",
+      "9c94e032-ee91-4092-b2b4-5bc47f49299a",
+      "fbcf63b7-d18d-4bf2-97be-6f6f0362848d",
+      "b79d8e88-3a15-4859-b687-c92ed17ec233",
+      "8d882a8e-0201-4a05-9da6-c897c30fd841",
+      "fc2cdc91-efa0-4d82-9250-4563c8ed0c3b",
+      "b779c2d7-91dd-4136-a298-c0f78982de44",
+      "8d1feb20-f09d-4a04-a520-4dccbb80ac3b",
+      "3759ba9c-d90f-47ae-892b-a7233d8e6fd6",
+      "5e495031-e021-47e1-ad69-6f291fab46de",
+      "83a31704-d340-4db1-acd9-050bafabab45"
+    ],
+    "verification": {
+      "templates_in_db": 2,
+      "template_blocks_in_db": 10,
+      "template_block_exercises_in_db": 29
+    }
+  }
+}
