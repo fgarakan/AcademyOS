@@ -154,8 +154,39 @@ TypeScript: clean.
 
 ---
 
+## 2026-04-29 — Player Profile tab structure (Step 3)
+
+Added 5-tab workspace to the Player Profile at `/director/players/[playerId]`.
+
+**Files created:**
+- `src/app/director/players/[playerId]/_components/PlayerProfileTabs.tsx` — minimal Client Component; accepts 5 `ReactNode` slots; renders `Tabs` with `scrollable` TabsList and one `TabsContent` per tab
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — refactored layout from 3-column grid into 5 named slot variables passed to `PlayerProfileTabs`
+
+**Tab breakdown:**
+1. Overview — Player Info card + Coach Focus summary (domain counts, advancement status); no action button
+2. Skill Path — EvaluateAdvancementButton + advancement eligible/blocked-by logic + CurriculumProgressGrid or PlayerCurriculumEmptyState
+3. Competition — premium `EmptyState` placeholder; no fake data
+4. Fitness / Load — premium `EmptyState` placeholder; no fake data
+5. Notes — premium `EmptyState` placeholder; no fake data; prepares for Coach Notes + Voice Notes
+
+**Architecture notes:**
+- `page.tsx` remains a Server Component; all data fetching unchanged
+- Server actions (`assignAction`, `evaluateAction`) remain bound in the Server Component and passed to child Client Components via slot content — no function references cross the Server → `PlayerProfileTabs` boundary
+- Icons (`Trophy`, `Activity`, `MessageSquare`) are imported and rendered in `page.tsx` (Server Component) as part of slot JSX; no icon function references passed as props
+- `TabsList scrollable` prop handles horizontal tab overflow on narrow viewports
+
+**No backend files changed.**
+**No Supabase files changed.**
+**No locked modules changed.**
+**No fake data added.**
+TypeScript: clean.
+
+---
+
 ## Next build target
 
-**Player Profile tab structure** — `/director/players/[playerId]`
+**Player Profile tab content** — fill Step 4 tabs with real backend data
 
-See `docs/CURRENT_BUILD_TARGET.md` Step 3 for full specification.
+See `docs/CURRENT_BUILD_TARGET.md` Step 4 for full specification.
