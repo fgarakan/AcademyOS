@@ -12,10 +12,10 @@
     "attempted": true,
     "method": "anon_read_select",
     "query": "SELECT id, name FROM exercises WHERE name IN (...14 names...)",
-    "result": "blocked_or_empty_due_to_rls",
+    "result": "resolved_by_manual_supabase_sql",
     "service_role_used": false,
     "writes_performed": false,
-    "note": "Anon key returned 0 rows. RLS on exercises table blocks anonymous reads. UUID population deferred to next sprint with authenticated read access."
+    "note": "All 14 UUIDs resolved manually via Supabase SQL Editor (Sprint 6). Query run by user in authenticated session. matched_count=14, duplicate_check=0 rows. No service role used. No writes performed."
   },
   "summary": {
     "total_unique_rec_ids": 14,
@@ -23,7 +23,8 @@
     "csv_name_matched": 14,
     "unresolved_csv_name": 0,
     "ambiguous_matches": 0,
-    "pending_uuid_count": 14,
+    "pending_uuid_count": 0,
+    "unresolved_count": 0,
     "multi_block_same_template": 1,
     "rec_ids_only_in_hp_templates": 1,
     "rec_ids_in_all_sources": 13
@@ -61,7 +62,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "T-Drill",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "db04b00a-a1a3-4c4a-8367-04032d6f844b",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -86,7 +87,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Lateral Shuffle Drill",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "d0ba25d1-eb07-47dd-a54e-91c0a7a3572e",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -120,7 +121,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Speed Ladder Crossover",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "15bc01f3-d476-4494-93ab-82cfa68a449b",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -154,7 +155,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Mirror Drill",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "cf87c4d2-e744-4fe7-838c-5ce88be54db9",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -188,7 +189,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Cone Ladder Shuffle",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "df6bf97a-c358-4883-9862-fe947a56ba71",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -222,7 +223,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Reaction Ball Drill",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "47bb8deb-5c3e-4ea0-80e8-bdc49246b376",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -256,7 +257,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Acceleration Sprint",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "a920d96a-a1e9-4a6b-acd6-3cf636764c58",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -290,7 +291,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Short Court Sprints",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "af2065d1-65d0-4fa3-9785-bca882bd8f55",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -324,7 +325,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "First Step Quickness",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "69cb971c-f0c3-4edb-95c5-a46e8b4d7ac3",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -358,7 +359,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Spider Drill",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "38c64d18-f80e-413a-bd88-6bf13a8c4f44",
       "import_batch_note": "Pre-existing in DB before batch airtable_exercise_library_2026_04_29. CSV import skipped it as a duplicate. Row exists in exercises table — UUID lookup by name will resolve cleanly."
     },
     {
@@ -392,7 +393,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Cross Cone Drill",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "4a140218-803e-479e-8bbf-0c9c4aca5bff",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -426,7 +427,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Foam Roll – Full Body",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "8764e4f3-906d-4399-8a85-fa60a80c5317",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29. Name contains en dash (–) — use exact character in UUID lookup query."
     },
     {
@@ -460,7 +461,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Static Stretch Cool Down",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "9c80fdba-8b06-4009-855c-9047bbad5320",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     },
     {
@@ -494,7 +495,7 @@
       "match_method": "exact_csv_name_match",
       "match_confidence": "high",
       "supabase_name": "Breathing Reset",
-      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "supabase_uuid": "dc8de874-7c57-41c8-a0ad-ac2d1d7a277f",
       "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
     }
   ],
@@ -504,6 +505,7 @@
     "requires": "authenticated session or service role — not anon key",
     "writes": false,
     "expected_rows_returned": 14,
-    "warning": "Foam Roll name uses en dash (– U+2013) not hyphen (-). Verify character match at lookup time."
+    "warning": "Foam Roll name uses en dash (– U+2013) not hyphen (-). Verify character match at lookup time.",
+    "status": "COMPLETE — all 14 UUIDs resolved via manual Supabase SQL Editor query in Sprint 6. matched_count=14, duplicate_check=0 rows."
   }
 }
