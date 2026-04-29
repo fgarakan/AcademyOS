@@ -85,6 +85,72 @@ export async function getPlayerDevelopmentSummary(
   return (data as PlayerDevelopmentSummary) ?? null
 }
 
+// ── Voice Notes ────────────────────────────────────────────────────────────
+// V1: transcript-first. audio_path is null. processing_status goes pending → parsed
+// once the linked observation is created.
+
+export async function createVoiceNoteWithObservation(
+  db: DB,
+  input: {
+    academy_id: string
+    player_id: string
+    author_id: string
+    transcript: string
+    observation_type: string
+    is_private: boolean
+  }
+): Promise<CoachObservation> {
+  // 1. Insert voice_notes row (no parsed_observation_id yet)
+  const { data: vnData, error: vnError } = await db
+    .from('voice_notes')
+    .insert({
+      academy_id: input.academy_id,
+      author_id: input.author_id,
+      player_id: input.player_id,
+      raw_input: input.transcript,
+      transcript: input.transcript,
+      audio_path: null,
+      processing_status: 'pending',
+    })
+    .select()
+    .single()
+
+  if (vnError) throw vnError
+  if (!vnData) throw new Error('No data returned from voice_notes insert')
+
+  // 2. Insert coach_observations row linked to the author
+  const { data: obsData, error: obsError } = await db
+    .from('coach_observations')
+    .insert({
+      academy_id: input.academy_id,
+      player_id: input.player_id,
+      coach_id: input.author_id,
+      observation_type: input.observation_type,
+      content: input.transcript,
+      is_private: input.is_private,
+    })
+    .select()
+    .single()
+
+  if (obsError) throw obsError
+  if (!obsData) throw new Error('No data returned from coach_observations insert')
+
+  const observation = obsData as CoachObservation
+
+  // 3. Update voice_notes: link observation and mark parsed
+  const { error: updateError } = await db
+    .from('voice_notes')
+    .update({
+      parsed_observation_id: observation.id,
+      processing_status: 'parsed',
+    })
+    .eq('id', vnData.id)
+
+  if (updateError) throw updateError
+
+  return observation
+}
+
 export async function upsertPlayerDevelopmentSummary(
   db: DB,
   input: {

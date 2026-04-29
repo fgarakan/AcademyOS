@@ -217,6 +217,32 @@ TypeScript: clean.
 
 ---
 
+## 2026-04-29 — Voice Note Capture MVP (transcript-first)
+
+Added transcript-first voice note capture to the Notes tab.
+
+**Files created:**
+- `src/components/player/AddVoiceNoteForm.tsx` — client form; textarea for transcript (with device dictation microcopy), observation_type dropdown, is_private toggle (default true); follows AddObservationForm pattern with useTransition
+
+**Files modified:**
+- `src/lib/backend/notes.ts` — added `createVoiceNoteWithObservation()`: three sequential queries — insert voice_notes (processing_status=pending), insert coach_observations, update voice_notes.parsed_observation_id + processing_status=parsed
+- `src/lib/actions/notes.ts` — added `addVoiceNoteAction()`: authenticates user, validates transcript and observation_type, calls createVoiceNoteWithObservation, revalidatePath
+- `src/app/director/players/[playerId]/page.tsx` — imported AddVoiceNoteForm and addVoiceNoteAction; bound server action; added AddVoiceNoteForm below AddObservationForm in notesSlot
+
+**Architecture constraints confirmed:**
+- No migration created — voice_notes already existed in migration 010 and database.types.ts
+- No schema changes — voice_notes, coach_observations, player_development_summary untouched
+- No browser recording, audio upload, Supabase Storage, transcription, or AI structuring
+- No voice command execution or proposed_actions pipeline
+- Voice notes are staff-only (existing RLS); resulting observations default is_private=true
+- No player or parent exposure
+
+**Data flow:** transcript → voice_notes row (processing_status=parsed) → coach_observations row via parsed_observation_id → appears in CoachObservationTimeline immediately
+
+TypeScript: clean.
+
+---
+
 ## Next build target
 
 **Player Profile tab content** — fill Step 4 tabs with real backend data

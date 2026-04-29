@@ -6,7 +6,7 @@ import { getPlayerById } from '@/lib/backend/players'
 import { getPlayerCurriculumDomains } from '@/lib/backend/curriculum'
 import { getCoachObservations, getPlayerDevelopmentSummary } from '@/lib/backend/notes'
 import { assignCurriculumAction, evaluateAdvancementAction } from '@/lib/actions/curriculum'
-import { addObservationAction, updateDevelopmentSummaryAction } from '@/lib/actions/notes'
+import { addObservationAction, updateDevelopmentSummaryAction, addVoiceNoteAction } from '@/lib/actions/notes'
 import { PlayerProfileHeader } from '@/components/player/PlayerProfileHeader'
 import { CurriculumProgressGrid } from '@/components/player/CurriculumProgressGrid'
 import { PlayerCurriculumEmptyState } from '@/components/player/PlayerCurriculumEmptyState'
@@ -14,6 +14,7 @@ import { EvaluateAdvancementButton } from '@/components/player/EvaluateAdvanceme
 import { CoachObservationTimeline } from '@/components/player/CoachObservationTimeline'
 import { DevelopmentSummarySection } from '@/components/player/DevelopmentSummarySection'
 import { AddObservationForm } from '@/components/player/AddObservationForm'
+import { AddVoiceNoteForm } from '@/components/player/AddVoiceNoteForm'
 import { EditDevelopmentSummaryForm } from '@/components/player/EditDevelopmentSummaryForm'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -220,6 +221,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   const addObsAction = addObservationAction.bind(null, params.playerId, academyId)
   const updateSummaryAction = updateDevelopmentSummaryAction.bind(null, params.playerId, academyId)
+  const addVoiceNoteServerAction = addVoiceNoteAction.bind(null, params.playerId, academyId)
 
   const notesSlot = (
     <div className="space-y-6">
@@ -245,6 +247,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Add Observation form */}
       <AddObservationForm onSubmit={addObsAction} />
+
+      {/* Voice Note form */}
+      <AddVoiceNoteForm onSubmit={addVoiceNoteServerAction} />
 
     </div>
   )

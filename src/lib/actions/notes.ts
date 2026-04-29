@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { createCoachObservation, upsertPlayerDevelopmentSummary } from '@/lib/backend/notes'
+import { createCoachObservation, upsertPlayerDevelopmentSummary, createVoiceNoteWithObservation } from '@/lib/backend/notes'
 
 export async function addObservationAction(
   playerId: string,
@@ -72,6 +72,40 @@ export async function updateDevelopmentSummaryAction(
     show_to_student,
     show_to_parent,
     source: 'manual',
+  })
+
+  revalidatePath(`/director/players/${playerId}`)
+}
+
+const VALID_OBSERVATION_TYPES = [
+  'general', 'technical', 'tactical', 'movement',
+  'competition', 'behavioral', 'injury_concern', 'positive_highlight',
+]
+
+export async function addVoiceNoteAction(
+  playerId: string,
+  academyId: string,
+  formData: FormData
+): Promise<void> {
+  const supabase = await getSupabaseServer()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const transcript = (formData.get('transcript') as string | null)?.trim()
+  if (!transcript) throw new Error('Transcript content is required')
+
+  const rawType = formData.get('observation_type') as string | null
+  const observation_type = rawType && VALID_OBSERVATION_TYPES.includes(rawType) ? rawType : 'general'
+  const is_private = formData.get('is_private') === 'true'
+
+  await createVoiceNoteWithObservation(supabase, {
+    academy_id: academyId,
+    player_id: playerId,
+    author_id: user.id,
+    transcript,
+    observation_type,
+    is_private,
   })
 
   revalidatePath(`/director/players/${playerId}`)
