@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
-  Globe, Building2, Users, Eye, CreditCard, BookOpen, LogOut, Shield,
+  Globe, Building2, Users, CreditCard, BookOpen, LogOut, Shield,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -14,7 +14,6 @@ const NAV_ITEMS = [
 const COMING_SOON_ITEMS = [
   { label: 'Tenant Management', icon: Building2 },
   { label: 'Consultant Access',  icon: Users },
-  { label: 'Preview Mode',       icon: Eye },
   { label: 'Billing',            icon: CreditCard },
   { label: 'Global Templates',   icon: BookOpen },
 ]

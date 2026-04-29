@@ -5,6 +5,56 @@ Update this file at the end of every completed module.
 
 ---
 
+## 2026-04-29 — Platform Preview Mode Infrastructure (Phase 1B)
+
+Enables platform users (platform_owner / platform_admin) to enter a read-only preview of any academy's portal UI, scoped to a chosen role. Writes are blocked in preview. Normal academy users are completely unaffected.
+
+**Files created:**
+- `src/lib/utils/previewMode.ts` — `PreviewRole` type, `PreviewContext` interface, `PREVIEW_COOKIE` constant; `parsePreviewCookie()` (pure, safe for Edge/middleware); `getPreviewContext()`, `isPreviewMode()`, `assertNotPreviewMode()` (Server Component / Server Action use only, via dynamic `import('next/headers')` to avoid Edge Runtime issues)
+- `src/lib/actions/platform.ts` — `enterPreviewModeAction(academyId, role)`: authenticates user, verifies platform_roles row, validates role, reads academy name, sets httpOnly `ao_preview` cookie (sameSite strict, 8-hour maxAge, secure in production), redirects to correct portal; `exitPreviewModeAction()`: deletes cookie, redirects to /platform
+- `src/components/platform/PreviewBanner.tsx` — async Server Component; reads preview context via `getPreviewContext()`; renders lime-accented banner with role, academy name, "Writes are disabled in preview." note, and Exit Preview form button; returns null when not in preview
+
+**Files modified:**
+- `src/middleware.ts` — platform user routing refactored: /platform still always accessible; root `/` still redirects to /platform; portal routes (director/coach/player/parent) now require a valid `ao_preview` cookie with matching role — no matching cookie → redirect to /platform; non-platform users are completely unaffected (their path is structurally separated and unchanged)
+- `src/app/platform/page.tsx` — each academy card now has a "Preview Portal" section with 4 buttons (Director / Coach / Player / Parent); each button binds `enterPreviewModeAction` with the academy ID and role; "Preview Mode" removed from coming-soon module cards
+- `src/app/director/layout.tsx` — `<PreviewBanner />` added above `{children}` inside `<main>`
+- `src/app/coach/layout.tsx` — `<PreviewBanner />` added above `{children}` inside `<main>`
+- `src/app/player/layout.tsx` — removed `'use client'` (layout has no hooks; BottomTabBar carries its own `'use client'`); `<PreviewBanner />` added above `{children}`
+- `src/app/parent/layout.tsx` — `<PreviewBanner />` added above `{children}` inside `<main>`
+- `src/lib/actions/notes.ts` — `await assertNotPreviewMode()` added as first line of `addObservationAction`, `updateDevelopmentSummaryAction`, `addVoiceNoteAction`; `generateNoteDraftAction` is NOT guarded (no DB write)
+- `src/lib/actions/curriculum.ts` — `await assertNotPreviewMode()` added as first line of `assignCurriculumAction`, `evaluateAdvancementAction`
+- `src/components/nav/PlatformNav.tsx` — "Preview Mode" removed from `COMING_SOON_ITEMS` (preview is now live in academy cards)
+
+**Constraints confirmed:**
+- No migrations created
+- No schema changes
+- No service role / `getSupabaseAdmin()` used
+- `ao_preview` cookie only benefits platform users (middleware ignores it for non-platform users)
+- Writes blocked in preview: `assertNotPreviewMode()` guards all 5 mutating server actions
+- Normal director/coach/player/parent users are completely unchanged
+- No coach/player/parent shell improvements built
+- No fake data created
+- No academy_memberships created or modified
+- No database roles changed
+- No RLS bypassed
+- Cross-academy live data preview deferred (RLS still uses profiles.academy_id)
+
+**Preview mode scope (Phase 1B):**
+Preview shows the portal shell and any data the authenticated platform user's own Supabase session can read via normal RLS. It does not bypass RLS or show cross-academy private data. Full cross-academy data preview is deferred to a future approved RLS migration.
+
+TypeScript: clean.
+
+**Manual test steps:**
+1. Log in as platform user → land on /platform
+2. On an academy card, click "Director" → `ao_preview` cookie set → redirected to /director with PreviewBanner visible
+3. Attempt "Assign Curriculum" or "Add Observation" → should throw "Writes are disabled in preview mode."
+4. Click "Exit Preview" → cookie deleted → redirected to /platform
+5. Repeat with Coach / Player / Parent roles — each shows correct PreviewBanner
+6. Log in as a normal academy_director → /platform should redirect to /director; `ao_preview` cookie (if present) has no effect
+7. As platform user with no preview cookie, manually visit /director → redirected to /platform
+
+---
+
 ## 2026-04-29 — Multi-Tenant Access Foundation Phase 1A: Platform Role + Shell
 
 Established the minimum safe platform-owner foundation. Angles / platform owner can now log in, be routed to `/platform`, and view all academy tenants read-only.

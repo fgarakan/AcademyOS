@@ -5,12 +5,14 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { createCoachObservation, upsertPlayerDevelopmentSummary, createVoiceNoteWithObservation } from '@/lib/backend/notes'
 import { structureCoachNote } from '@/lib/ai/structureCoachNote'
 import type { AIDraftResult } from '@/lib/ai/structureCoachNote'
+import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 
 export async function addObservationAction(
   playerId: string,
   academyId: string,
   formData: FormData
 ): Promise<void> {
+  await assertNotPreviewMode()
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -40,6 +42,7 @@ export async function updateDevelopmentSummaryAction(
   academyId: string,
   formData: FormData
 ): Promise<void> {
+  await assertNotPreviewMode()
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -114,6 +117,7 @@ export async function addVoiceNoteAction(
   academyId: string,
   formData: FormData
 ): Promise<void> {
+  await assertNotPreviewMode()
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()

@@ -1,6 +1,7 @@
 import { SidebarNav } from '@/components/nav/SidebarNav'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
+import { PreviewBanner } from '@/components/platform/PreviewBanner'
 
 export default async function DirectorLayout({
   children,
@@ -39,7 +40,10 @@ export default async function DirectorLayout({
   return (
     <div className="flex min-h-screen">
       <SidebarNav academyName={academyName} pendingCount={pendingCount} />
-      <main className="flex-1 ml-60">{children}</main>
+      <main className="flex-1 ml-60">
+        <PreviewBanner />
+        {children}
+      </main>
     </div>
   )
 }

@@ -1,12 +1,21 @@
 import type { ReactNode } from 'react'
 import { redirect } from 'next/navigation'
 import {
-  Shield, Building2, Users, Eye, CreditCard, BookOpen,
-  CheckCircle2, XCircle,
+  Shield, Building2, Users, CreditCard, BookOpen,
+  CheckCircle2, XCircle, Eye,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlatformRole, getAllAcademies } from '@/lib/backend/platform'
+import { enterPreviewModeAction } from '@/lib/actions/platform'
 import { Card, CardContent, EmptyState } from '@/components/ui'
+import type { PreviewRole } from '@/lib/utils/previewMode'
+
+const PREVIEW_ROLES: { role: PreviewRole; label: string }[] = [
+  { role: 'academy_director', label: 'Director' },
+  { role: 'coach',            label: 'Coach' },
+  { role: 'player',           label: 'Player' },
+  { role: 'parent',           label: 'Parent' },
+]
 
 export default async function PlatformDashboard() {
   const supabase = await getSupabaseServer()
@@ -118,6 +127,31 @@ export default async function PlatformDashboard() {
                     </div>
                   </div>
 
+                  {/* Preview controls */}
+                  <div className="pt-2 border-t border-border space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <Eye className="w-3 h-3 text-text-muted" />
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted">
+                        Preview Portal — reads only · writes disabled
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {PREVIEW_ROLES.map(({ role, label }) => {
+                        const action = enterPreviewModeAction.bind(null, academy.id, role)
+                        return (
+                          <form key={role} action={action}>
+                            <button
+                              type="submit"
+                              className="w-full text-xs font-medium text-text-secondary hover:text-text-primary border border-border hover:border-lime/40 rounded-lg py-1.5 px-2 bg-surface hover:bg-surface-raised transition-colors"
+                            >
+                              {label}
+                            </button>
+                          </form>
+                        )
+                      })}
+                    </div>
+                  </div>
+
                 </CardContent>
               </Card>
             ))}
@@ -131,7 +165,6 @@ export default async function PlatformDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <ComingSoonCard icon={<Building2 className="w-4 h-4" />} title="Tenant Management" />
           <ComingSoonCard icon={<Users className="w-4 h-4" />}     title="Consultant Access" />
-          <ComingSoonCard icon={<Eye className="w-4 h-4" />}        title="Preview Mode" />
           <ComingSoonCard icon={<CreditCard className="w-4 h-4" />} title="Billing" />
           <ComingSoonCard icon={<BookOpen className="w-4 h-4" />}   title="Global Templates" />
         </div>

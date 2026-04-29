@@ -1,6 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { Database, Tables } from '@/lib/supabase/database.types'
+import {
+  parsePreviewCookie,
+  PREVIEW_COOKIE,
+  type PreviewRole,
+} from '@/lib/utils/previewMode'
 
 const PUBLIC_ROUTES = ['/login', '/auth']
 const ROLE_ROUTES: Record<string, string> = {
@@ -10,6 +15,16 @@ const ROLE_ROUTES: Record<string, string> = {
   player:           '/player',
   parent:           '/parent',
 }
+
+// Maps PreviewRole to the top-level route segment it unlocks.
+const PREVIEW_ROLE_TO_SEGMENT: Record<PreviewRole, string> = {
+  academy_director: 'director',
+  coach:            'coach',
+  player:           'player',
+  parent:           'parent',
+}
+
+const PORTAL_SEGMENTS = new Set(['director', 'coach', 'player', 'parent'])
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -48,7 +63,6 @@ export async function middleware(request: NextRequest) {
 
   // ── Platform role check (runs before academy_memberships) ──────────────────
   // platform_roles is not yet in database.types.ts — rawDb cast required.
-  // Regenerate types after applying migration 040.
   const rawDb = supabase as any
   const { data: platformRoleRow } = await rawDb
     .from('platform_roles')
@@ -74,7 +88,45 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // ── Platform user routing — preview mode gates portal access ───────────────
+  if (isPlatformUser) {
+    // Root always goes to /platform for platform users
+    if (pathname === '/') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/platform'
+      return NextResponse.redirect(url)
+    }
+
+    const routeSegment = pathname.split('/')[1]
+
+    if (PORTAL_SEGMENTS.has(routeSegment)) {
+      // Portal routes require a valid matching preview cookie
+      const previewCtx = parsePreviewCookie(
+        request.cookies.get(PREVIEW_COOKIE)?.value
+      )
+
+      if (!previewCtx) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/platform'
+        return NextResponse.redirect(url)
+      }
+
+      if (PREVIEW_ROLE_TO_SEGMENT[previewCtx.role] !== routeSegment) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/platform'
+        return NextResponse.redirect(url)
+      }
+
+      return response
+    }
+
+    // Non-portal routes (e.g. API or other) — pass through
+    return response
+  }
+
   // ── Academy membership check (existing behavior, unchanged) ───────────────
+  // Non-platform users follow normal role-based routing.
+  // ao_preview cookie has no effect for non-platform users.
   const { data: membership } = await supabase
     .from('academy_memberships')
     .select('role')
@@ -88,25 +140,23 @@ export async function middleware(request: NextRequest) {
   // Root redirect
   if (pathname === '/') {
     const url = request.nextUrl.clone()
-    // Platform users always go to /platform from root
-    url.pathname = isPlatformUser ? '/platform' : homeRoute
+    url.pathname = homeRoute
     return NextResponse.redirect(url)
   }
 
   // Enforce route access
-  const routeOwner = pathname.split('/')[1]
+  const routeSegment = pathname.split('/')[1]
   const allowed = (() => {
-    if (routeOwner === 'director') return role === 'academy_director'
-    if (routeOwner === 'coach')    return ['academy_director', 'head_coach', 'coach'].includes(role)
-    if (routeOwner === 'player')   return role === 'player'
-    if (routeOwner === 'parent')   return role === 'parent'
+    if (routeSegment === 'director') return role === 'academy_director'
+    if (routeSegment === 'coach')    return ['academy_director', 'head_coach', 'coach'].includes(role)
+    if (routeSegment === 'player')   return role === 'player'
+    if (routeSegment === 'parent')   return role === 'parent'
     return true
   })()
 
   if (!allowed) {
     const url = request.nextUrl.clone()
-    // Platform users with no matching academy role go back to /platform
-    url.pathname = isPlatformUser ? '/platform' : homeRoute
+    url.pathname = homeRoute
     return NextResponse.redirect(url)
   }
 
