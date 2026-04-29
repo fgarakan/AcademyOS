@@ -1,0 +1,794 @@
+{
+  "report_type": "program_template_import_dry_run",
+  "generated": "2026-04-29",
+  "sprint": "Sprint 5 — Program Templates Dry-Run Mapping",
+  "mode": "dry_run_only",
+  "writes_performed": false,
+  "service_role_used": false,
+  "supabase_queries_performed": false,
+  "source_files_inspected": [
+    "data/airtable-import/Program Templates-Grid view.csv",
+    "data/airtable-import/Template Blocks-Grid view.csv",
+    "data/airtable-import/Blocks-Grid view.csv",
+    "data/airtable-import/reports/airtable-rec-id-exercise-map.json",
+    "supabase/migrations/006_exercises_templates.sql",
+    "supabase/migrations/002_core_identity.sql",
+    "supabase/migrations/024_seed_data.sql"
+  ],
+  "dependencies": {
+    "exercise_library_import_verified": true,
+    "rec_id_mapping_report_found": true,
+    "pending_uuid_count": 14,
+    "live_import_blocked_until_uuid_lookup": true
+  },
+  "schema_findings": {
+    "tables_inspected": ["templates", "template_blocks", "template_block_exercises", "exercises", "academies"],
+    "templates": {
+      "required_columns": ["academy_id", "name"],
+      "nullable_columns": ["description", "group_id", "track", "level_id", "total_duration_min", "tags", "created_by", "voice_command_id"],
+      "defaults": {"is_active": true, "is_default": false},
+      "unique_constraints": "none on (academy_id, name) — duplicate names are allowed by schema",
+      "foreign_keys": ["academy_id → academies(id)", "group_id → groups(id)", "level_id → academy_levels(id)", "created_by → profiles(id)"],
+      "metadata_json_field": false,
+      "import_batch_field": false,
+      "import_batch_strategy": "append string tag to tags TEXT[] column, same pattern as exercises import"
+    },
+    "template_blocks": {
+      "required_columns": ["template_id", "type", "name", "duration_min", "order_index"],
+      "nullable_columns": ["intensity", "notes"],
+      "foreign_keys": ["template_id → templates(id) ON DELETE CASCADE"],
+      "block_type_enum_values": ["warm_up", "technical", "tactical", "movement", "fitness", "competition", "mental", "cool_down", "free"],
+      "note": "template_id is NOT NULL — template must be inserted before template_blocks can be inserted"
+    },
+    "template_block_exercises": {
+      "required_columns": ["block_id", "exercise_id", "order_index"],
+      "nullable_columns": ["duration_min", "notes"],
+      "foreign_keys": [
+        "block_id → template_blocks(id) ON DELETE CASCADE",
+        "exercise_id → exercises(id) — NOT NULL, hard FK"
+      ],
+      "note": "exercise_id is NOT NULL FK — requires real UUID from exercises table. This is the primary live import blocker."
+    },
+    "rls_status": {
+      "exercises": "ENABLED — auth_is_staff() required",
+      "templates": "ENABLED — auth_is_staff() required",
+      "template_blocks": "ENABLED — staff via parent template join",
+      "template_block_exercises": "ENABLED — staff via parent template join"
+    }
+  },
+  "csv_analysis": {
+    "file": "Program Templates-Grid view.csv",
+    "total_lines_including_header": 10,
+    "header_columns": 25,
+    "header_values": [
+      "Template ID", "Template Name", "Program", "Program Type", "Default Duration Min",
+      "Version Number", "Is Current Version", "Change Reason", "Monthly Theme", "Month Number",
+      "Week Number", "Day", "Age Group", "Level", "Goal/ Focus Theme", "Focus Tags",
+      "Duplicate From", "Notes", "Status", "Blocks JSON", "Created by", "Updated Date",
+      "Daily Sessions", "Template Blocks", "Coach Notes"
+    ],
+    "blank_padding_rows": 6,
+    "blank_row_range": "rows 2–7",
+    "real_data_rows": 3,
+    "real_data_row_numbers": [8, 9, 10],
+    "duplicate_template_names": [
+      {
+        "name": "High Performance — Level 1 • Day • U14",
+        "csv_rows": [8, 10],
+        "airtable_ids": ["TPL-1776243285121", "TPL-1776288406910"],
+        "content_identical": true
+      }
+    ],
+    "columns_populated_for_all_rows": ["Template ID", "Template Name", "Blocks JSON", "Updated Date"],
+    "columns_blank_for_all_rows": [
+      "Program", "Program Type", "Default Duration Min", "Version Number", "Is Current Version",
+      "Change Reason", "Monthly Theme", "Month Number", "Week Number", "Day",
+      "Age Group", "Level", "Goal/ Focus Theme", "Focus Tags", "Duplicate From",
+      "Notes", "Status", "Created by", "Template Blocks", "Coach Notes"
+    ],
+    "daily_sessions_column": "Populated only for TPL-1776277558005 (Green Dot)"
+  },
+  "block_type_mapping": {
+    "note": "Airtable Blocks JSON uses block type labels that do not exist in the Supabase block_type enum. Mapping required before live import.",
+    "airtable_type_to_supabase_enum": {
+      "Movement": "movement",
+      "Agility": "fitness",
+      "Speed": "fitness",
+      "Games": "competition",
+      "Cool Down": "cool_down"
+    },
+    "mapping_rationale": {
+      "Movement": "Direct enum match",
+      "Agility": "'fitness' is the broadest physical conditioning bucket; 'free' is an alternative if semantic accuracy is preferred",
+      "Speed": "'fitness' same rationale as Agility",
+      "Games": "'competition' is the closest semantic match for game-based play",
+      "Cool Down": "Direct lowercase+underscore match"
+    },
+    "alternative_mapping": {
+      "Agility": "free",
+      "Speed": "free",
+      "Games": "free",
+      "note": "Using 'free' loses semantic type grouping but avoids collapsing Agility and Speed into the same type=fitness bucket. Director should confirm preferred mapping before live import."
+    },
+    "original_label_preserved_in": "name TEXT column on template_blocks"
+  },
+  "summary": {
+    "template_rows_found": 3,
+    "blank_rows_skipped": 6,
+    "templates_with_blocks_json": 3,
+    "proposed_templates": 3,
+    "proposed_template_blocks": 15,
+    "proposed_template_block_exercises": 44,
+    "unresolved_rec_ids": 0,
+    "pending_exercise_uuid_references": 14,
+    "duplicate_template_name_count": 1,
+    "live_import_ready": false
+  },
+  "templates": [
+    {
+      "source_airtable_template_id": "TPL-1776243285121",
+      "source_csv_row": 8,
+      "template_name": "High Performance — Level 1 • Day • U14",
+      "updated_date": "4/15/2026 4:54am",
+      "daily_sessions_linked": [],
+      "blocks_json_present": true,
+      "blocks_count": 5,
+      "exercise_slots_count": 15,
+      "unique_rec_ids_used": 13,
+      "duplicate_exercise_within_template": {
+        "rec_id": "rec0q2GF4MRxhCtd1",
+        "name": "T-Drill",
+        "appears_in_blocks": ["movement", "games"],
+        "note": "T-Drill intentionally used twice — once in Movement block (order 1) and once in Games block (order 3). One exercise UUID maps to both positions. Do not deduplicate."
+      },
+      "total_duration_min_derived": 60,
+      "duplicate_name_warning": true,
+      "duplicate_name_partner": "TPL-1776288406910",
+      "content_identical_to_partner": true,
+      "blocks": [
+        {
+          "block_id": "movement",
+          "type_airtable": "Movement",
+          "type_supabase": "movement",
+          "order": 1,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "rec0q2GF4MRxhCtd1", "name": "T-Drill", "order": 1, "duration_min": 8},
+            {"rec_id": "recnJDOgeCNo72ZDS", "name": "Lateral Shuffle Drill", "order": 2, "duration_min": 5},
+            {"rec_id": "rec3W9YKaJadm8Ozk", "name": "Speed Ladder Crossover", "order": 3, "duration_min": 5}
+          ]
+        },
+        {
+          "block_id": "agility",
+          "type_airtable": "Agility",
+          "type_supabase": "fitness",
+          "order": 2,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "recZvJfD8aEJBi3vo", "name": "Mirror Drill", "order": 1, "duration_min": 6},
+            {"rec_id": "recV2gMns2rnfiJXY", "name": "Cone Ladder Shuffle", "order": 2, "duration_min": 5},
+            {"rec_id": "recMWb1o7n6zz1gLy", "name": "Reaction Ball Drill", "order": 3, "duration_min": 6}
+          ]
+        },
+        {
+          "block_id": "speed",
+          "type_airtable": "Speed",
+          "type_supabase": "fitness",
+          "order": 3,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "recTtUgtFfPM9Wjni", "name": "Acceleration Sprint", "order": 1, "duration_min": 6},
+            {"rec_id": "recBnZCDu6Kj7zPge", "name": "Short Court Sprints", "order": 2, "duration_min": 5},
+            {"rec_id": "recvB51GCIXkt6Iag", "name": "First Step Quickness", "order": 3, "duration_min": 6}
+          ]
+        },
+        {
+          "block_id": "games",
+          "type_airtable": "Games",
+          "type_supabase": "competition",
+          "order": 4,
+          "duration_min": 20,
+          "exercises": [
+            {"rec_id": "recvmwjY7SOnc6YzW", "name": "Spider Drill", "order": 1, "duration_min": 8},
+            {"rec_id": "recrHe85kvMtlMC4S", "name": "Cross Cone Drill", "order": 2, "duration_min": 6},
+            {"rec_id": "rec0q2GF4MRxhCtd1", "name": "T-Drill", "order": 3, "duration_min": 8}
+          ]
+        },
+        {
+          "block_id": "cooldown",
+          "type_airtable": "Cool Down",
+          "type_supabase": "cool_down",
+          "order": 5,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "recx8uMV0VivQvwkC", "name": "Foam Roll – Full Body", "order": 1, "duration_min": 10},
+            {"rec_id": "rec97vtbilNMGl3Sd", "name": "Static Stretch Cool Down", "order": 2, "duration_min": 10},
+            {"rec_id": "recOwDahSxkevB7Cp", "name": "Breathing Reset", "order": 3, "duration_min": 5}
+          ]
+        }
+      ]
+    },
+    {
+      "source_airtable_template_id": "TPL-1776277558005",
+      "source_csv_row": 9,
+      "template_name": "Green Dot — Level 1 • Day • U10",
+      "updated_date": "4/15/2026 2:25pm",
+      "daily_sessions_linked": ["SES-1776288447246", "SES-1776362205004", "SES-1776450945036"],
+      "blocks_json_present": true,
+      "blocks_count": 5,
+      "exercise_slots_count": 14,
+      "unique_rec_ids_used": 12,
+      "duplicate_exercise_within_template": {
+        "rec_id": "rec0q2GF4MRxhCtd1",
+        "name": "T-Drill",
+        "appears_in_blocks": ["movement", "games"],
+        "note": "T-Drill intentionally used twice — once in Movement block (order 1) and once in Games block (order 3)."
+      },
+      "notable_difference_from_hp": "Movement block has only 2 exercises — Lateral Shuffle Drill (recnJDOgeCNo72ZDS) is absent",
+      "total_duration_min_derived": 60,
+      "duplicate_name_warning": false,
+      "blocks": [
+        {
+          "block_id": "movement",
+          "type_airtable": "Movement",
+          "type_supabase": "movement",
+          "order": 1,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "rec0q2GF4MRxhCtd1", "name": "T-Drill", "order": 1, "duration_min": 8},
+            {"rec_id": "rec3W9YKaJadm8Ozk", "name": "Speed Ladder Crossover", "order": 2, "duration_min": 5}
+          ]
+        },
+        {
+          "block_id": "agility",
+          "type_airtable": "Agility",
+          "type_supabase": "fitness",
+          "order": 2,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "recZvJfD8aEJBi3vo", "name": "Mirror Drill", "order": 1, "duration_min": 6},
+            {"rec_id": "recV2gMns2rnfiJXY", "name": "Cone Ladder Shuffle", "order": 2, "duration_min": 5},
+            {"rec_id": "recMWb1o7n6zz1gLy", "name": "Reaction Ball Drill", "order": 3, "duration_min": 6}
+          ]
+        },
+        {
+          "block_id": "speed",
+          "type_airtable": "Speed",
+          "type_supabase": "fitness",
+          "order": 3,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "recTtUgtFfPM9Wjni", "name": "Acceleration Sprint", "order": 1, "duration_min": 6},
+            {"rec_id": "recBnZCDu6Kj7zPge", "name": "Short Court Sprints", "order": 2, "duration_min": 5},
+            {"rec_id": "recvB51GCIXkt6Iag", "name": "First Step Quickness", "order": 3, "duration_min": 6}
+          ]
+        },
+        {
+          "block_id": "games",
+          "type_airtable": "Games",
+          "type_supabase": "competition",
+          "order": 4,
+          "duration_min": 20,
+          "exercises": [
+            {"rec_id": "recvmwjY7SOnc6YzW", "name": "Spider Drill", "order": 1, "duration_min": 8},
+            {"rec_id": "recrHe85kvMtlMC4S", "name": "Cross Cone Drill", "order": 2, "duration_min": 6},
+            {"rec_id": "rec0q2GF4MRxhCtd1", "name": "T-Drill", "order": 3, "duration_min": 8}
+          ]
+        },
+        {
+          "block_id": "cooldown",
+          "type_airtable": "Cool Down",
+          "type_supabase": "cool_down",
+          "order": 5,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "recx8uMV0VivQvwkC", "name": "Foam Roll – Full Body", "order": 1, "duration_min": 10},
+            {"rec_id": "rec97vtbilNMGl3Sd", "name": "Static Stretch Cool Down", "order": 2, "duration_min": 10},
+            {"rec_id": "recOwDahSxkevB7Cp", "name": "Breathing Reset", "order": 3, "duration_min": 5}
+          ]
+        }
+      ]
+    },
+    {
+      "source_airtable_template_id": "TPL-1776288406910",
+      "source_csv_row": 10,
+      "template_name": "High Performance — Level 1 • Day • U14",
+      "updated_date": "4/15/2026 5:26pm",
+      "daily_sessions_linked": [],
+      "blocks_json_present": true,
+      "blocks_count": 5,
+      "exercise_slots_count": 15,
+      "unique_rec_ids_used": 13,
+      "duplicate_exercise_within_template": {
+        "rec_id": "rec0q2GF4MRxhCtd1",
+        "name": "T-Drill",
+        "appears_in_blocks": ["movement", "games"]
+      },
+      "total_duration_min_derived": 60,
+      "duplicate_name_warning": true,
+      "duplicate_name_partner": "TPL-1776243285121",
+      "content_identical_to_partner": true,
+      "blocks": [
+        {
+          "block_id": "movement",
+          "type_airtable": "Movement",
+          "type_supabase": "movement",
+          "order": 1,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "rec0q2GF4MRxhCtd1", "name": "T-Drill", "order": 1, "duration_min": 8},
+            {"rec_id": "recnJDOgeCNo72ZDS", "name": "Lateral Shuffle Drill", "order": 2, "duration_min": 5},
+            {"rec_id": "rec3W9YKaJadm8Ozk", "name": "Speed Ladder Crossover", "order": 3, "duration_min": 5}
+          ]
+        },
+        {
+          "block_id": "agility",
+          "type_airtable": "Agility",
+          "type_supabase": "fitness",
+          "order": 2,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "recZvJfD8aEJBi3vo", "name": "Mirror Drill", "order": 1, "duration_min": 6},
+            {"rec_id": "recV2gMns2rnfiJXY", "name": "Cone Ladder Shuffle", "order": 2, "duration_min": 5},
+            {"rec_id": "recMWb1o7n6zz1gLy", "name": "Reaction Ball Drill", "order": 3, "duration_min": 6}
+          ]
+        },
+        {
+          "block_id": "speed",
+          "type_airtable": "Speed",
+          "type_supabase": "fitness",
+          "order": 3,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "recTtUgtFfPM9Wjni", "name": "Acceleration Sprint", "order": 1, "duration_min": 6},
+            {"rec_id": "recBnZCDu6Kj7zPge", "name": "Short Court Sprints", "order": 2, "duration_min": 5},
+            {"rec_id": "recvB51GCIXkt6Iag", "name": "First Step Quickness", "order": 3, "duration_min": 6}
+          ]
+        },
+        {
+          "block_id": "games",
+          "type_airtable": "Games",
+          "type_supabase": "competition",
+          "order": 4,
+          "duration_min": 20,
+          "exercises": [
+            {"rec_id": "recvmwjY7SOnc6YzW", "name": "Spider Drill", "order": 1, "duration_min": 8},
+            {"rec_id": "recrHe85kvMtlMC4S", "name": "Cross Cone Drill", "order": 2, "duration_min": 6},
+            {"rec_id": "rec0q2GF4MRxhCtd1", "name": "T-Drill", "order": 3, "duration_min": 8}
+          ]
+        },
+        {
+          "block_id": "cooldown",
+          "type_airtable": "Cool Down",
+          "type_supabase": "cool_down",
+          "order": 5,
+          "duration_min": 10,
+          "exercises": [
+            {"rec_id": "recx8uMV0VivQvwkC", "name": "Foam Roll – Full Body", "order": 1, "duration_min": 10},
+            {"rec_id": "rec97vtbilNMGl3Sd", "name": "Static Stretch Cool Down", "order": 2, "duration_min": 10},
+            {"rec_id": "recOwDahSxkevB7Cp", "name": "Breathing Reset", "order": 3, "duration_min": 5}
+          ]
+        }
+      ]
+    }
+  ],
+  "proposed_payloads": {
+    "_note": "All payloads are proposed only. No data was inserted. Fields containing __PENDING_*__ placeholders must be resolved before live import. The _stable_key fields are not DB columns — they are report identifiers for cross-referencing payloads.",
+    "templates": [
+      {
+        "_stable_key": "TPL-1776243285121",
+        "_source_airtable_template_id": "TPL-1776243285121",
+        "_source_csv_row": 8,
+        "_duplicate_warning": "SAME NAME AND IDENTICAL CONTENT as TPL-1776288406910 — requires user decision before live import",
+        "academy_id": "00000000-0000-0000-0000-000000000001",
+        "name": "High Performance — Level 1 • Day • U14",
+        "description": null,
+        "group_id": null,
+        "track": null,
+        "level_id": null,
+        "total_duration_min": 60,
+        "tags": ["import_batch:airtable_program_templates_2026_04_29", "source:airtable"],
+        "is_active": true,
+        "is_default": false,
+        "created_by": null,
+        "_fields_available": ["academy_id", "name", "total_duration_min", "tags", "is_active", "is_default"],
+        "_fields_null_no_data": ["description", "group_id", "track", "level_id", "created_by", "voice_command_id"],
+        "_fields_requiring_defaults": []
+      },
+      {
+        "_stable_key": "TPL-1776277558005",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_csv_row": 9,
+        "_duplicate_warning": null,
+        "academy_id": "00000000-0000-0000-0000-000000000001",
+        "name": "Green Dot — Level 1 • Day • U10",
+        "description": null,
+        "group_id": null,
+        "track": null,
+        "level_id": null,
+        "total_duration_min": 60,
+        "tags": ["import_batch:airtable_program_templates_2026_04_29", "source:airtable"],
+        "is_active": true,
+        "is_default": false,
+        "created_by": null,
+        "_fields_available": ["academy_id", "name", "total_duration_min", "tags", "is_active", "is_default"],
+        "_fields_null_no_data": ["description", "group_id", "track", "level_id", "created_by", "voice_command_id"],
+        "_fields_requiring_defaults": []
+      },
+      {
+        "_stable_key": "TPL-1776288406910",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_csv_row": 10,
+        "_duplicate_warning": "SAME NAME AND IDENTICAL CONTENT as TPL-1776243285121 — requires user decision before live import",
+        "academy_id": "00000000-0000-0000-0000-000000000001",
+        "name": "High Performance — Level 1 • Day • U14",
+        "description": null,
+        "group_id": null,
+        "track": null,
+        "level_id": null,
+        "total_duration_min": 60,
+        "tags": ["import_batch:airtable_program_templates_2026_04_29", "source:airtable"],
+        "is_active": true,
+        "is_default": false,
+        "created_by": null,
+        "_fields_available": ["academy_id", "name", "total_duration_min", "tags", "is_active", "is_default"],
+        "_fields_null_no_data": ["description", "group_id", "track", "level_id", "created_by", "voice_command_id"],
+        "_fields_requiring_defaults": []
+      }
+    ],
+    "template_blocks": [
+      {
+        "_stable_key": "TPL-1776243285121:movement",
+        "_source_airtable_template_id": "TPL-1776243285121",
+        "_source_block_id": "movement",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776243285121__",
+        "type": "movement",
+        "name": "Movement",
+        "duration_min": 10,
+        "order_index": 1,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776243285121:agility",
+        "_source_airtable_template_id": "TPL-1776243285121",
+        "_source_block_id": "agility",
+        "_type_mapping_note": "Airtable 'Agility' mapped to 'fitness' — no direct enum match. Original label preserved in name.",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776243285121__",
+        "type": "fitness",
+        "name": "Agility",
+        "duration_min": 10,
+        "order_index": 2,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776243285121:speed",
+        "_source_airtable_template_id": "TPL-1776243285121",
+        "_source_block_id": "speed",
+        "_type_mapping_note": "Airtable 'Speed' mapped to 'fitness' — no direct enum match. Original label preserved in name.",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776243285121__",
+        "type": "fitness",
+        "name": "Speed",
+        "duration_min": 10,
+        "order_index": 3,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776243285121:games",
+        "_source_airtable_template_id": "TPL-1776243285121",
+        "_source_block_id": "games",
+        "_type_mapping_note": "Airtable 'Games' mapped to 'competition' — no direct enum match. Original label preserved in name.",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776243285121__",
+        "type": "competition",
+        "name": "Games",
+        "duration_min": 20,
+        "order_index": 4,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776243285121:cooldown",
+        "_source_airtable_template_id": "TPL-1776243285121",
+        "_source_block_id": "cooldown",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776243285121__",
+        "type": "cool_down",
+        "name": "Cool Down",
+        "duration_min": 10,
+        "order_index": 5,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776277558005:movement",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_id": "movement",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776277558005__",
+        "type": "movement",
+        "name": "Movement",
+        "duration_min": 10,
+        "order_index": 1,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776277558005:agility",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_id": "agility",
+        "_type_mapping_note": "Airtable 'Agility' mapped to 'fitness'",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776277558005__",
+        "type": "fitness",
+        "name": "Agility",
+        "duration_min": 10,
+        "order_index": 2,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776277558005:speed",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_id": "speed",
+        "_type_mapping_note": "Airtable 'Speed' mapped to 'fitness'",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776277558005__",
+        "type": "fitness",
+        "name": "Speed",
+        "duration_min": 10,
+        "order_index": 3,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776277558005:games",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_id": "games",
+        "_type_mapping_note": "Airtable 'Games' mapped to 'competition'",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776277558005__",
+        "type": "competition",
+        "name": "Games",
+        "duration_min": 20,
+        "order_index": 4,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776277558005:cooldown",
+        "_source_airtable_template_id": "TPL-1776277558005",
+        "_source_block_id": "cooldown",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776277558005__",
+        "type": "cool_down",
+        "name": "Cool Down",
+        "duration_min": 10,
+        "order_index": 5,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776288406910:movement",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_id": "movement",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776288406910__",
+        "type": "movement",
+        "name": "Movement",
+        "duration_min": 10,
+        "order_index": 1,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776288406910:agility",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_id": "agility",
+        "_type_mapping_note": "Airtable 'Agility' mapped to 'fitness'",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776288406910__",
+        "type": "fitness",
+        "name": "Agility",
+        "duration_min": 10,
+        "order_index": 2,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776288406910:speed",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_id": "speed",
+        "_type_mapping_note": "Airtable 'Speed' mapped to 'fitness'",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776288406910__",
+        "type": "fitness",
+        "name": "Speed",
+        "duration_min": 10,
+        "order_index": 3,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776288406910:games",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_id": "games",
+        "_type_mapping_note": "Airtable 'Games' mapped to 'competition'",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776288406910__",
+        "type": "competition",
+        "name": "Games",
+        "duration_min": 20,
+        "order_index": 4,
+        "intensity": null,
+        "notes": null
+      },
+      {
+        "_stable_key": "TPL-1776288406910:cooldown",
+        "_source_airtable_template_id": "TPL-1776288406910",
+        "_source_block_id": "cooldown",
+        "template_id": "__PENDING_TEMPLATE_UUID:TPL-1776288406910__",
+        "type": "cool_down",
+        "name": "Cool Down",
+        "duration_min": 10,
+        "order_index": 5,
+        "intensity": null,
+        "notes": null
+      }
+    ],
+    "template_block_exercises": [
+      {"_stable_key": "TPL-1776243285121:movement:rec0q2GF4MRxhCtd1:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:movement__", "exercise_id": "__PENDING_DB_LOOKUP:rec0q2GF4MRxhCtd1:T-Drill__", "order_index": 1, "duration_min": 8, "notes": null},
+      {"_stable_key": "TPL-1776243285121:movement:recnJDOgeCNo72ZDS:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:movement__", "exercise_id": "__PENDING_DB_LOOKUP:recnJDOgeCNo72ZDS:Lateral Shuffle Drill__", "order_index": 2, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776243285121:movement:rec3W9YKaJadm8Ozk:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:movement__", "exercise_id": "__PENDING_DB_LOOKUP:rec3W9YKaJadm8Ozk:Speed Ladder Crossover__", "order_index": 3, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776243285121:agility:recZvJfD8aEJBi3vo:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:agility__", "exercise_id": "__PENDING_DB_LOOKUP:recZvJfD8aEJBi3vo:Mirror Drill__", "order_index": 1, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776243285121:agility:recV2gMns2rnfiJXY:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:agility__", "exercise_id": "__PENDING_DB_LOOKUP:recV2gMns2rnfiJXY:Cone Ladder Shuffle__", "order_index": 2, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776243285121:agility:recMWb1o7n6zz1gLy:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:agility__", "exercise_id": "__PENDING_DB_LOOKUP:recMWb1o7n6zz1gLy:Reaction Ball Drill__", "order_index": 3, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776243285121:speed:recTtUgtFfPM9Wjni:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:speed__", "exercise_id": "__PENDING_DB_LOOKUP:recTtUgtFfPM9Wjni:Acceleration Sprint__", "order_index": 1, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776243285121:speed:recBnZCDu6Kj7zPge:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:speed__", "exercise_id": "__PENDING_DB_LOOKUP:recBnZCDu6Kj7zPge:Short Court Sprints__", "order_index": 2, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776243285121:speed:recvB51GCIXkt6Iag:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:speed__", "exercise_id": "__PENDING_DB_LOOKUP:recvB51GCIXkt6Iag:First Step Quickness__", "order_index": 3, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776243285121:games:recvmwjY7SOnc6YzW:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:games__", "exercise_id": "__PENDING_DB_LOOKUP:recvmwjY7SOnc6YzW:Spider Drill__", "order_index": 1, "duration_min": 8, "notes": null},
+      {"_stable_key": "TPL-1776243285121:games:recrHe85kvMtlMC4S:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:games__", "exercise_id": "__PENDING_DB_LOOKUP:recrHe85kvMtlMC4S:Cross Cone Drill__", "order_index": 2, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776243285121:games:rec0q2GF4MRxhCtd1:3", "_note": "T-Drill second occurrence — same UUID as movement:1, intentional", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:games__", "exercise_id": "__PENDING_DB_LOOKUP:rec0q2GF4MRxhCtd1:T-Drill__", "order_index": 3, "duration_min": 8, "notes": null},
+      {"_stable_key": "TPL-1776243285121:cooldown:recx8uMV0VivQvwkC:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:cooldown__", "exercise_id": "__PENDING_DB_LOOKUP:recx8uMV0VivQvwkC:Foam Roll – Full Body__", "order_index": 1, "duration_min": 10, "notes": null},
+      {"_stable_key": "TPL-1776243285121:cooldown:rec97vtbilNMGl3Sd:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:cooldown__", "exercise_id": "__PENDING_DB_LOOKUP:rec97vtbilNMGl3Sd:Static Stretch Cool Down__", "order_index": 2, "duration_min": 10, "notes": null},
+      {"_stable_key": "TPL-1776243285121:cooldown:recOwDahSxkevB7Cp:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776243285121:cooldown__", "exercise_id": "__PENDING_DB_LOOKUP:recOwDahSxkevB7Cp:Breathing Reset__", "order_index": 3, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776277558005:movement:rec0q2GF4MRxhCtd1:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:movement__", "exercise_id": "__PENDING_DB_LOOKUP:rec0q2GF4MRxhCtd1:T-Drill__", "order_index": 1, "duration_min": 8, "notes": null},
+      {"_stable_key": "TPL-1776277558005:movement:rec3W9YKaJadm8Ozk:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:movement__", "exercise_id": "__PENDING_DB_LOOKUP:rec3W9YKaJadm8Ozk:Speed Ladder Crossover__", "order_index": 2, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776277558005:agility:recZvJfD8aEJBi3vo:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:agility__", "exercise_id": "__PENDING_DB_LOOKUP:recZvJfD8aEJBi3vo:Mirror Drill__", "order_index": 1, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776277558005:agility:recV2gMns2rnfiJXY:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:agility__", "exercise_id": "__PENDING_DB_LOOKUP:recV2gMns2rnfiJXY:Cone Ladder Shuffle__", "order_index": 2, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776277558005:agility:recMWb1o7n6zz1gLy:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:agility__", "exercise_id": "__PENDING_DB_LOOKUP:recMWb1o7n6zz1gLy:Reaction Ball Drill__", "order_index": 3, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776277558005:speed:recTtUgtFfPM9Wjni:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:speed__", "exercise_id": "__PENDING_DB_LOOKUP:recTtUgtFfPM9Wjni:Acceleration Sprint__", "order_index": 1, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776277558005:speed:recBnZCDu6Kj7zPge:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:speed__", "exercise_id": "__PENDING_DB_LOOKUP:recBnZCDu6Kj7zPge:Short Court Sprints__", "order_index": 2, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776277558005:speed:recvB51GCIXkt6Iag:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:speed__", "exercise_id": "__PENDING_DB_LOOKUP:recvB51GCIXkt6Iag:First Step Quickness__", "order_index": 3, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776277558005:games:recvmwjY7SOnc6YzW:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:games__", "exercise_id": "__PENDING_DB_LOOKUP:recvmwjY7SOnc6YzW:Spider Drill__", "order_index": 1, "duration_min": 8, "notes": null},
+      {"_stable_key": "TPL-1776277558005:games:recrHe85kvMtlMC4S:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:games__", "exercise_id": "__PENDING_DB_LOOKUP:recrHe85kvMtlMC4S:Cross Cone Drill__", "order_index": 2, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776277558005:games:rec0q2GF4MRxhCtd1:3", "_note": "T-Drill second occurrence — intentional", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:games__", "exercise_id": "__PENDING_DB_LOOKUP:rec0q2GF4MRxhCtd1:T-Drill__", "order_index": 3, "duration_min": 8, "notes": null},
+      {"_stable_key": "TPL-1776277558005:cooldown:recx8uMV0VivQvwkC:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:cooldown__", "exercise_id": "__PENDING_DB_LOOKUP:recx8uMV0VivQvwkC:Foam Roll – Full Body__", "order_index": 1, "duration_min": 10, "notes": null},
+      {"_stable_key": "TPL-1776277558005:cooldown:rec97vtbilNMGl3Sd:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:cooldown__", "exercise_id": "__PENDING_DB_LOOKUP:rec97vtbilNMGl3Sd:Static Stretch Cool Down__", "order_index": 2, "duration_min": 10, "notes": null},
+      {"_stable_key": "TPL-1776277558005:cooldown:recOwDahSxkevB7Cp:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776277558005:cooldown__", "exercise_id": "__PENDING_DB_LOOKUP:recOwDahSxkevB7Cp:Breathing Reset__", "order_index": 3, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776288406910:movement:rec0q2GF4MRxhCtd1:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:movement__", "exercise_id": "__PENDING_DB_LOOKUP:rec0q2GF4MRxhCtd1:T-Drill__", "order_index": 1, "duration_min": 8, "notes": null},
+      {"_stable_key": "TPL-1776288406910:movement:recnJDOgeCNo72ZDS:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:movement__", "exercise_id": "__PENDING_DB_LOOKUP:recnJDOgeCNo72ZDS:Lateral Shuffle Drill__", "order_index": 2, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776288406910:movement:rec3W9YKaJadm8Ozk:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:movement__", "exercise_id": "__PENDING_DB_LOOKUP:rec3W9YKaJadm8Ozk:Speed Ladder Crossover__", "order_index": 3, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776288406910:agility:recZvJfD8aEJBi3vo:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:agility__", "exercise_id": "__PENDING_DB_LOOKUP:recZvJfD8aEJBi3vo:Mirror Drill__", "order_index": 1, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776288406910:agility:recV2gMns2rnfiJXY:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:agility__", "exercise_id": "__PENDING_DB_LOOKUP:recV2gMns2rnfiJXY:Cone Ladder Shuffle__", "order_index": 2, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776288406910:agility:recMWb1o7n6zz1gLy:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:agility__", "exercise_id": "__PENDING_DB_LOOKUP:recMWb1o7n6zz1gLy:Reaction Ball Drill__", "order_index": 3, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776288406910:speed:recTtUgtFfPM9Wjni:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:speed__", "exercise_id": "__PENDING_DB_LOOKUP:recTtUgtFfPM9Wjni:Acceleration Sprint__", "order_index": 1, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776288406910:speed:recBnZCDu6Kj7zPge:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:speed__", "exercise_id": "__PENDING_DB_LOOKUP:recBnZCDu6Kj7zPge:Short Court Sprints__", "order_index": 2, "duration_min": 5, "notes": null},
+      {"_stable_key": "TPL-1776288406910:speed:recvB51GCIXkt6Iag:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:speed__", "exercise_id": "__PENDING_DB_LOOKUP:recvB51GCIXkt6Iag:First Step Quickness__", "order_index": 3, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776288406910:games:recvmwjY7SOnc6YzW:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:games__", "exercise_id": "__PENDING_DB_LOOKUP:recvmwjY7SOnc6YzW:Spider Drill__", "order_index": 1, "duration_min": 8, "notes": null},
+      {"_stable_key": "TPL-1776288406910:games:recrHe85kvMtlMC4S:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:games__", "exercise_id": "__PENDING_DB_LOOKUP:recrHe85kvMtlMC4S:Cross Cone Drill__", "order_index": 2, "duration_min": 6, "notes": null},
+      {"_stable_key": "TPL-1776288406910:games:rec0q2GF4MRxhCtd1:3", "_note": "T-Drill second occurrence — intentional", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:games__", "exercise_id": "__PENDING_DB_LOOKUP:rec0q2GF4MRxhCtd1:T-Drill__", "order_index": 3, "duration_min": 8, "notes": null},
+      {"_stable_key": "TPL-1776288406910:cooldown:recx8uMV0VivQvwkC:1", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:cooldown__", "exercise_id": "__PENDING_DB_LOOKUP:recx8uMV0VivQvwkC:Foam Roll – Full Body__", "order_index": 1, "duration_min": 10, "notes": null},
+      {"_stable_key": "TPL-1776288406910:cooldown:rec97vtbilNMGl3Sd:2", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:cooldown__", "exercise_id": "__PENDING_DB_LOOKUP:rec97vtbilNMGl3Sd:Static Stretch Cool Down__", "order_index": 2, "duration_min": 10, "notes": null},
+      {"_stable_key": "TPL-1776288406910:cooldown:recOwDahSxkevB7Cp:3", "block_id": "__PENDING_BLOCK_UUID:TPL-1776288406910:cooldown__", "exercise_id": "__PENDING_DB_LOOKUP:recOwDahSxkevB7Cp:Breathing Reset__", "order_index": 3, "duration_min": 5, "notes": null}
+    ]
+  },
+  "deduplication_analysis": {
+    "duplicate_pair": ["TPL-1776243285121", "TPL-1776288406910"],
+    "shared_name": "High Performance — Level 1 • Day • U14",
+    "blocks_json_identical": true,
+    "exercise_composition_identical": true,
+    "distinguishing_factors": {
+      "TPL-1776243285121": {"updated_date": "4/15/2026 4:54am", "daily_sessions_linked": [], "note": "Earlier timestamp"},
+      "TPL-1776288406910": {"updated_date": "4/15/2026 5:26pm", "daily_sessions_linked": [], "note": "Later timestamp — may be a re-save or accidental duplicate"}
+    },
+    "likely_cause": "Accidental duplicate creation in Airtable. Both records are identical in content. No session data differentiates them. The later record (5:26pm) may have been created by re-saving or duplicating the earlier one.",
+    "options": {
+      "A": {
+        "strategy": "Skip one as duplicate — import only TPL-1776288406910 (later, possibly canonical)",
+        "risk": "If the records were intentionally distinct (different coaches, cohorts, or seasons), the skipped record is lost with no recovery path from the CSV alone. No metadata distinguishes them."
+      },
+      "B": {
+        "strategy": "Import both with source_airtable_template_id preserved in tags",
+        "risk": "Creates two identically-named templates in Supabase. No UNIQUE constraint on (academy_id, name) prevents this technically. Director/coach confusion is likely. App queries returning 'the HP U14 template' become ambiguous."
+      },
+      "C": {
+        "strategy": "Require user decision before live import — hold both as proposed payloads",
+        "risk": "Delays live import. No data lost. User can verify in Airtable history which record is canonical before committing."
+      }
+    },
+    "recommendation": "Option C — Require user decision. The Blocks JSON being byte-for-byte identical with no session links on either record strongly suggests an Airtable accident. Verify via Airtable record history before live import. If confirmed duplicate, import only TPL-1776288406910 (later timestamp) and skip TPL-1776243285121.",
+    "live_import_gate": "blocked_until_user_decision"
+  },
+  "block_mapping_analysis": {
+    "blocks_json_is_authoritative": true,
+    "reason": "Blocks JSON contains complete structure: block ID, type, order, duration, and full exercise list with rec IDs, names, durations, and coaching notes. No other source provides this level of fidelity.",
+    "template_blocks_csv_recommendation": "Ignore for import. The Template column is blank for all 6 rows. Block order in the CSV (Warm-Up, Movement, Speed, Agility, Strength, Recovery) does not match any template's actual block structure from the JSON. This CSV is a category catalogue, not importable data.",
+    "blocks_csv_recommendation": "Ignore for import. No template_id references. No exercise assignments. Useful only as a catalogue of block name options. Not needed for Sprint 5 or Sprint 6.",
+    "block_order_source": "order field in Blocks JSON is authoritative. Maps directly to template_blocks.order_index.",
+    "block_name_normalization": "Use original Airtable type label as name (e.g., 'Agility', 'Speed', 'Games'). Do not normalize to enum value — name field is TEXT and preserves the original label.",
+    "standalone_blocks_csv_needed": false
+  },
+  "rec_id_verification": {
+    "total_unique_rec_ids_in_templates": 14,
+    "all_verified_in_sprint4_report": true,
+    "unresolved_rec_ids": 0,
+    "all_match_confidence": "high",
+    "all_supabase_uuids": "__PENDING_DB_LOOKUP__",
+    "special_notes": [
+      "rec0q2GF4MRxhCtd1 (T-Drill) appears in both Movement and Games blocks across all 3 templates — intentional, one UUID maps to multiple positions",
+      "recnJDOgeCNo72ZDS (Lateral Shuffle Drill) absent from TPL-1776277558005 (Green Dot) Movement block — confirmed correct, not an error",
+      "recx8uMV0VivQvwkC (Foam Roll – Full Body) uses en dash (U+2013), not hyphen — match at UUID lookup time must use exact character"
+    ]
+  },
+  "blockers_for_live_import": [
+    {
+      "id": "BLOCKER-1",
+      "severity": "hard",
+      "description": "All 14 exercise UUIDs are __PENDING_DB_LOOKUP__. template_block_exercises.exercise_id is NOT NULL FK → exercises(id). Cannot insert template_block_exercises without resolved UUIDs.",
+      "resolution": "Sprint 6: authenticated read SELECT id, name FROM exercises WHERE name IN (...14 names...) using service role key. Populate Sprint 4 mapping report with real UUIDs."
+    },
+    {
+      "id": "BLOCKER-2",
+      "severity": "decision_required",
+      "description": "Duplicate template name: TPL-1776243285121 and TPL-1776288406910 share identical name and blocks JSON. Cannot safely choose which to skip or whether to import both without user confirmation.",
+      "resolution": "User must verify Airtable record history and confirm: (A) skip TPL-1776243285121 and import only TPL-1776288406910, (B) import both, or (C) skip both. See deduplication_analysis for risk assessment of each option."
+    },
+    {
+      "id": "BLOCKER-3",
+      "severity": "decision_required",
+      "description": "block_type enum does not include 'Agility', 'Speed', or 'Games'. Proposed mapping: Agility→fitness, Speed→fitness, Games→competition. Alternate: all three→free. Director must confirm preferred mapping.",
+      "resolution": "User confirms block_type mapping. No migration required — existing enum values cover all options."
+    }
+  ],
+  "warnings": [
+    {
+      "id": "WARN-1",
+      "description": "templates.academy_id not in CSV. Supplied from seed data constant: 00000000-0000-0000-0000-000000000001. Verify this matches the live academy_id in the target environment before any live import."
+    },
+    {
+      "id": "WARN-2",
+      "description": "Many template fields are blank in CSV: Program, Program Type, Version Number, Age Group, Level, Goal/Focus Theme, etc. All will be NULL on insert. Nullable — will not cause import failure, but template records will be sparse."
+    },
+    {
+      "id": "WARN-3",
+      "description": "Foam Roll – Full Body (recx8uMV0VivQvwkC) uses an en dash (U+2013) in its name, not a regular hyphen. UUID lookup query must match exact character. Reference: Sprint 4 mapping report warns the same."
+    },
+    {
+      "id": "WARN-4",
+      "description": "Insert order constraint: templates must be inserted before template_blocks; template_blocks must be inserted before template_block_exercises. Cannot parallelize these three insert phases."
+    },
+    {
+      "id": "WARN-5",
+      "description": "Agility and Speed blocks both map to type='fitness' in the proposed mapping. Two blocks within the same template will share the same type enum value. Distinguishable only by name. If the UI groups by type, Agility and Speed blocks will appear in the same bucket."
+    }
+  ],
+  "recommendations": [
+    "Resolve exercise UUIDs first (Sprint 6 prerequisite) by running authenticated SELECT on exercises table using service role.",
+    "Confirm duplicate resolution for TPL-1776243285121 vs TPL-1776288406910 before Sprint 6. Recommended: check Airtable record history; if confirmed accidental duplicate, mark TPL-1776243285121 as skip_reason:duplicate_of:TPL-1776288406910 in this report and import only TPL-1776288406910.",
+    "Confirm block_type mapping for Agility, Speed, Games before Sprint 6. Recommended: fitness for Agility and Speed, competition for Games. Document decision in this report.",
+    "Sprint 6 import should use service role key and insert in strict order: (1) templates, (2) template_blocks keyed by returned template UUIDs, (3) template_block_exercises keyed by returned block UUIDs and resolved exercise UUIDs.",
+    "Rollback strategy: DELETE FROM templates WHERE 'import_batch:airtable_program_templates_2026_04_29' = ANY(tags) AND academy_id = '00000000-0000-0000-0000-000000000001'. CASCADE DELETE on template_blocks and template_block_exercises removes children automatically.",
+    "Template Blocks CSV and Blocks CSV: do not import either. Both are unusable for this purpose. Template Blocks CSV has no Template foreign key; Blocks CSV has no exercise data."
+  ],
+  "dry_run_verdict": "Structurally mappable, live import blocked only by pending exercise UUID lookup.",
+  "verdict_detail": "All 3 template rows parse cleanly. All 14 exercise rec IDs are verified in the Sprint 4 mapping report with high confidence. The Blocks JSON is complete and authoritative for all template structure. The Supabase schema supports the full import without any migration changes. The only hard technical blocker is that all 14 exercise UUIDs are __PENDING_DB_LOOKUP__ — template_block_exercises cannot be inserted until these are resolved. Two secondary decisions are required before live import: duplicate template resolution and block_type enum mapping confirmation.",
+  "next_sprint": {
+    "sprint": "Sprint 6 — Exercise UUID Population + Program Templates Live Import",
+    "prerequisite_decisions": [
+      "User confirms duplicate resolution strategy for TPL-1776243285121 vs TPL-1776288406910",
+      "User confirms block_type mapping (Agility→fitness, Speed→fitness, Games→competition)"
+    ],
+    "steps": [
+      "Step 1: Authenticated read SELECT id, name FROM exercises WHERE name IN (...14 names...) using SUPABASE_SERVICE_ROLE_KEY. Populate Sprint 4 rec ID map with real UUIDs.",
+      "Step 2: Verify all 14 UUIDs returned (expected: 14 rows). Special check for 'Foam Roll – Full Body' (en dash).",
+      "Step 3: Insert templates (2 or 3 depending on duplicate decision). Capture returned UUIDs.",
+      "Step 4: Insert template_blocks using captured template UUIDs. Capture returned block UUIDs.",
+      "Step 5: Insert template_block_exercises using captured block UUIDs and resolved exercise UUIDs.",
+      "Step 6: Verify row counts in DB: expected 2 or 3 templates, 10 or 15 template_blocks, 29 or 44 template_block_exercises.",
+      "Step 7: Write live import report. Tag all inserted templates with import_batch:airtable_program_templates_2026_04_29."
+    ],
+    "rollback_sql": "DELETE FROM templates WHERE 'import_batch:airtable_program_templates_2026_04_29' = ANY(tags) AND academy_id = '00000000-0000-0000-0000-000000000001';"
+  }
+}
