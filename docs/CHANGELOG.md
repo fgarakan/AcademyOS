@@ -356,6 +356,63 @@ TypeScript: clean.
 
 ---
 
+## 2026-04-29 — Coach / Player / Parent Shell V1
+
+Premium shell pages for all three non-director portals. Shell-only — no data queries, no private data exposure, no fake data.
+
+**Files modified:**
+- `src/app/coach/page.tsx` — Coach Hub shell: header with current date, Today's Sessions card (EmptyState + coming-soon footer), My Players + Recent Notes in sm:grid-cols-2 with "Soon" badges, 4 disabled Quick Action tiles (opacity-50 / cursor-not-allowed), On the Roadmap pills
+- `src/app/player/page.tsx` — Player Home shell: "YOUR JOURNEY" header, motivating tagline, Today's Mission (lime accent), My Skills, Wins & Streaks, Messages cards (all EmptyState), Coming Soon pill row
+- `src/app/parent/page.tsx` — Parent Home shell: "FAMILY PORTAL" header, Child's Progress (lime accent), Latest Coach Update, Session Consistency, Support at Home (static safe copy — no data), Messages & Updates cards
+
+**Constraints confirmed:**
+- No new files created
+- No migrations
+- No schema changes
+- No database.types.ts changes
+- No middleware changes
+- No preview mode logic changes
+- No platform action changes
+- No server action changes
+- No backend helper changes
+- No layout changes
+- No BottomTabBar changes
+- No Supabase queries — all three pages are plain sync Server Components
+- No async added to any page
+- No private coach notes, AI drafts, voice transcripts, or internal summaries exposed to player or parent
+- No fake data — all cards use EmptyState or safe static copy
+- PreviewBanner continues rendering from layouts (untouched)
+
+TypeScript: clean.
+
+**Manual test steps:**
+1. Log in as platform user → /platform loads
+2. Click "Preview as Coach" on any academy card
+   → /coach loads with PreviewBanner visible
+   → Coach Hub header + today's date visible
+   → Today's Sessions, My Players, Recent Notes, Quick Actions, Roadmap all visible
+   → Bottom nav: Home / Players / Sessions / Voice — all render
+   → No runtime errors
+3. Click "Exit Preview" → /platform
+4. Click "Preview as Player" on any academy card
+   → /player loads with PreviewBanner visible
+   → Player Home header + tagline visible
+   → Today's Mission, My Skills, Wins & Streaks, Messages cards visible
+   → Coming Soon pills visible
+   → Bottom nav: Home / Progress / Wins / Messages — all render
+   → No coach observations, notes, AI drafts, or voice transcripts visible
+   → No runtime errors
+5. Click "Exit Preview" → /platform
+6. Click "Preview as Parent" on any academy card
+   → /parent loads with PreviewBanner visible
+   → Parent Home header visible
+   → Child's Progress, Latest Coach Update, Session Consistency, Support at Home, Messages & Updates visible
+   → No gamified player language, no coach observations, no internal notes
+   → No runtime errors
+7. Click "Exit Preview" → /platform
+
+---
+
 ## Next build target
 
 **Player Profile tab content** — fill Step 4 tabs with real backend data
