@@ -24,7 +24,7 @@
 | `Blocks-Grid view.csv` | 588 B | 14 | 8 | 9 | Category reference only |
 | `Coach Notes-Grid view.csv` | 242 B | 4 | 14 | 0 | Schema inference only |
 | `Coaches-Grid view.csv` | 503 B | 8 | 11 | 4 | Blocked — auth |
-| `Daily Sessions-Grid view.csv` | 19,688 B | 4 | 21 | 3 | Blocked — templates + coaches |
+| `Daily Sessions-Grid view.csv` | 19,688 B | 5 | 21 | 4 | Blocked — templates + coaches |
 | `Exercise Library-Grid view.csv` | 18,618 B | 107 | 12 | 70 | **Complete** |
 | `Program Templates-Grid view.csv` | 20,352 B | 9 | 25 | 3 | Blocked — rec ID resolution |
 | `Programs-Grid view.csv` | 495 B | 10 | 10 | 9 | Blocked — mapping decision |
@@ -136,11 +136,12 @@
 
 | Session ID | Template Linked | Date | Status | Blocks JSON |
 |---|---|---|---|---|
-| SES-1776288447246 | TPL-1776277558005 | 4/15/2026 | Planned | Yes — 5 blocks, ~15 exercises |
-| SES-1776362205004 | TPL-1776277558005 | 4/16/2026 | Planned | Yes — 5 blocks, ~15 exercises |
-| SES-1776059383083 | (blank) | 4/17/2026 | (blank) | No — partial row |
+| SES-1776288447246 | TPL-1776277558005 | 4/15/2026 | Planned | Yes — 5 blocks, 14 exercise slots |
+| SES-1776362205004 | TPL-1776277558005 | 4/16/2026 | Planned | Yes — 5 blocks, 14 exercise slots |
+| SES-1776059383083 | (blank) | 4/17/2026 | (blank) | No — partial stub, no Blocks JSON |
+| SES-1776450945036 | TPL-1776277558005 | 4/17/2026 | Planned | Yes — 5 blocks, 14 exercise slots |
 
-**Ghost record:** `SES-1776450945036` appears in the Coaches and Program Templates linked fields but has no row in this CSV. Likely an Airtable grid display artifact.
+**Correction (2026-04-29):** `SES-1776450945036` is present as a full data row in the CSV (row 5). It was previously documented as a ghost record absent from this file. That was incorrect. It contains complete Blocks JSON identical to the Green Dot template (TPL-1776277558005), coach Farshad, planned duration 60 min. There are 4 data rows in Daily Sessions total — 3 with Blocks JSON and 1 partial stub without Blocks JSON (SES-1776059383083).
 
 **Session Blocks JSON structure (embedded, not relational):**
 ```
@@ -392,7 +393,7 @@ These are things that were considered and deliberately deferred. Do not implemen
 | Two templates share the same name | Program Templates (TPL-1776243285121, TPL-1776288406910) | Must dedup before import |
 | `"Day"` row is a grouping artifact | Programs CSV, last row | Drop on import |
 | `"Level 1"` row is a display artifact | Coach Notes CSV | Drop on import |
-| `SES-1776450945036` referenced but absent | Daily Sessions CSV | Ghost record — investigate |
+| ~~`SES-1776450945036` referenced but absent~~ | Daily Sessions CSV | **Corrected 2026-04-29:** Session IS present as CSV row 5 with full Blocks JSON. Not a ghost. Count corrected to 4 data rows. |
 | Player names used instead of IDs | Session Attendance.Player | Name dedup required |
 | Lines 98–108 in Exercise Library | Exercise Library CSV | Status: Approved but all other fields blank — already skipped |
 | `Block Category` blank for all blocks | Blocks CSV | Intended taxonomy never populated |

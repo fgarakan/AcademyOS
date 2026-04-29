@@ -1,0 +1,509 @@
+{
+  "report_type": "airtable_rec_id_exercise_mapping",
+  "generated": "2026-04-29",
+  "sprint": "Sprint 4 — Airtable Rec ID Exercise Mapping Dry Run",
+  "method": "exact_csv_name_match",
+  "source_files_inspected": [
+    "data/airtable-import/Program Templates-Grid view.csv",
+    "data/airtable-import/Daily Sessions-Grid view.csv",
+    "data/airtable-import/Exercise Library-Grid view.csv"
+  ],
+  "db_lookup": {
+    "attempted": true,
+    "method": "anon_read_select",
+    "query": "SELECT id, name FROM exercises WHERE name IN (...14 names...)",
+    "result": "blocked_or_empty_due_to_rls",
+    "service_role_used": false,
+    "writes_performed": false,
+    "note": "Anon key returned 0 rows. RLS on exercises table blocks anonymous reads. UUID population deferred to next sprint with authenticated read access."
+  },
+  "summary": {
+    "total_unique_rec_ids": 14,
+    "total_unique_exercise_names": 14,
+    "csv_name_matched": 14,
+    "unresolved_csv_name": 0,
+    "ambiguous_matches": 0,
+    "pending_uuid_count": 14,
+    "multi_block_same_template": 1,
+    "rec_ids_only_in_hp_templates": 1,
+    "rec_ids_in_all_sources": 13
+  },
+  "entries": [
+    {
+      "airtable_rec_id": "rec0q2GF4MRxhCtd1",
+      "airtable_name": "T-Drill",
+      "category": "Agility",
+      "subcategory": "10-12",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Movement", "Games"],
+      "multi_block_in_same_template": true,
+      "multi_block_note": "T-Drill appears twice per template — once in the Movement block and once in the Games block. One supabase_uuid maps to both positions. Do not deduplicate block assignments.",
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 4,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "T-Drill",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "recnJDOgeCNo72ZDS",
+      "airtable_name": "Lateral Shuffle Drill",
+      "category": "Agility",
+      "subcategory": "8-10",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776288406910"
+      ],
+      "appears_in_blocks": ["Movement"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 10 (TPL-1776288406910)"
+        ]
+      },
+      "source_note": "Present only in the two High Performance templates. Absent from the Green Dot template (TPL-1776277558005) and all Daily Sessions.",
+      "exercise_library_csv_row": 7,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Lateral Shuffle Drill",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "rec3W9YKaJadm8Ozk",
+      "airtable_name": "Speed Ladder Crossover",
+      "category": "Speed",
+      "subcategory": "12-14",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Movement"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 20,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Speed Ladder Crossover",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "recZvJfD8aEJBi3vo",
+      "airtable_name": "Mirror Drill",
+      "category": "Agility",
+      "subcategory": "10-12",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Agility"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 9,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Mirror Drill",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "recV2gMns2rnfiJXY",
+      "airtable_name": "Cone Ladder Shuffle",
+      "category": "Agility",
+      "subcategory": "8-10",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Agility"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 10,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Cone Ladder Shuffle",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "recMWb1o7n6zz1gLy",
+      "airtable_name": "Reaction Ball Drill",
+      "category": "Agility",
+      "subcategory": "10-12",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Agility"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 11,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Reaction Ball Drill",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "recTtUgtFfPM9Wjni",
+      "airtable_name": "Acceleration Sprint",
+      "category": "Speed",
+      "subcategory": "10-12",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Speed"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 13,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Acceleration Sprint",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "recBnZCDu6Kj7zPge",
+      "airtable_name": "Short Court Sprints",
+      "category": "Speed",
+      "subcategory": "8-10",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Speed"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 14,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Short Court Sprints",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "recvB51GCIXkt6Iag",
+      "airtable_name": "First Step Quickness",
+      "category": "Speed",
+      "subcategory": "10-12",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Speed"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 17,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "First Step Quickness",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "recvmwjY7SOnc6YzW",
+      "airtable_name": "Spider Drill",
+      "category": "Agility",
+      "subcategory": "8-10",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Games"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 2,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Spider Drill",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Pre-existing in DB before batch airtable_exercise_library_2026_04_29. CSV import skipped it as a duplicate. Row exists in exercises table — UUID lookup by name will resolve cleanly."
+    },
+    {
+      "airtable_rec_id": "recrHe85kvMtlMC4S",
+      "airtable_name": "Cross Cone Drill",
+      "category": "Agility",
+      "subcategory": "8-10",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Games"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 3,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Cross Cone Drill",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "recx8uMV0VivQvwkC",
+      "airtable_name": "Foam Roll – Full Body",
+      "category": "Recovery",
+      "subcategory": "All Ages",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Cool Down"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 61,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Foam Roll – Full Body",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29. Name contains en dash (–) — use exact character in UUID lookup query."
+    },
+    {
+      "airtable_rec_id": "rec97vtbilNMGl3Sd",
+      "airtable_name": "Static Stretch Cool Down",
+      "category": "Recovery",
+      "subcategory": "All Ages",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Cool Down"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 62,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Static Stretch Cool Down",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    },
+    {
+      "airtable_rec_id": "recOwDahSxkevB7Cp",
+      "airtable_name": "Breathing Reset",
+      "category": "Recovery",
+      "subcategory": "All Ages",
+      "appears_in": [
+        "TPL-1776243285121",
+        "TPL-1776277558005",
+        "TPL-1776288406910",
+        "SES-1776288447246",
+        "SES-1776362205004",
+        "SES-1776450945036"
+      ],
+      "appears_in_blocks": ["Cool Down"],
+      "multi_block_in_same_template": false,
+      "source_rows": {
+        "Program Templates-Grid view.csv": [
+          "row 8 (TPL-1776243285121)",
+          "row 9 (TPL-1776277558005)",
+          "row 10 (TPL-1776288406910)"
+        ],
+        "Daily Sessions-Grid view.csv": [
+          "row 2 (SES-1776288447246)",
+          "row 3 (SES-1776362205004)",
+          "row 5 (SES-1776450945036)"
+        ]
+      },
+      "exercise_library_csv_row": 63,
+      "match_method": "exact_csv_name_match",
+      "match_confidence": "high",
+      "supabase_name": "Breathing Reset",
+      "supabase_uuid": "__PENDING_DB_LOOKUP__",
+      "import_batch_note": "Inserted in batch airtable_exercise_library_2026_04_29"
+    }
+  ],
+  "next_sprint": {
+    "action": "UUID population via authenticated read-only query",
+    "query": "SELECT id, name FROM exercises WHERE name IN ('T-Drill', 'Lateral Shuffle Drill', 'Speed Ladder Crossover', 'Mirror Drill', 'Cone Ladder Shuffle', 'Reaction Ball Drill', 'Acceleration Sprint', 'Short Court Sprints', 'First Step Quickness', 'Spider Drill', 'Cross Cone Drill', 'Foam Roll – Full Body', 'Static Stretch Cool Down', 'Breathing Reset')",
+    "requires": "authenticated session or service role — not anon key",
+    "writes": false,
+    "expected_rows_returned": 14,
+    "warning": "Foam Roll name uses en dash (– U+2013) not hyphen (-). Verify character match at lookup time."
+  }
+}
