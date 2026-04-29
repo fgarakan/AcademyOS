@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { createCoachObservation, upsertPlayerDevelopmentSummary, createVoiceNoteWithObservation } from '@/lib/backend/notes'
+import { structureCoachNote } from '@/lib/ai/structureCoachNote'
+import type { AIDraftResult } from '@/lib/ai/structureCoachNote'
 
 export async function addObservationAction(
   playerId: string,
@@ -75,6 +77,31 @@ export async function updateDevelopmentSummaryAction(
   })
 
   revalidatePath(`/director/players/${playerId}`)
+}
+
+export type GenerateDraftResult =
+  | { ok: true; draft: AIDraftResult }
+  | { ok: false; error: string }
+
+export async function generateNoteDraftAction(
+  noteText: string
+): Promise<GenerateDraftResult> {
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+
+  const trimmed = noteText?.trim()
+  if (!trimmed) return { ok: false, error: 'Note text is required.' }
+
+  try {
+    const draft = await structureCoachNote(trimmed)
+    return { ok: true, draft }
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'AI structuring failed. Please try again.',
+    }
+  }
 }
 
 const VALID_OBSERVATION_TYPES = [

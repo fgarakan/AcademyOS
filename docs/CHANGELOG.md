@@ -243,6 +243,34 @@ TypeScript: clean.
 
 ---
 
+## 2026-04-29 — AI Note Structuring MVP
+
+Added coach-reviewed AI draft generation for player development summaries.
+
+**Files created:**
+- `src/lib/ai/structureCoachNote.ts` — Anthropic SDK call; `AIDraftResult` type; system prompt enforcing tennis coaching tone; JSON validation; safe error on missing API key
+- `src/components/player/AIDraftPanel.tsx` — client component; note textarea; "Draft with AI" button with loading state; editable draft fields (strengths, work-ons, focus, coach summary, student summary); confidence badge; warnings display; overwrite warning with explicit confirmation gate when existing summary has content; "Apply Draft to Summary" form submission
+
+**Files modified:**
+- `src/lib/actions/notes.ts` — added `generateNoteDraftAction()` server action; authenticated; returns `GenerateDraftResult` (ok+draft or error string); does not write to database
+- `src/app/director/players/[playerId]/page.tsx` — imported `AIDraftPanel`, `generateNoteDraftAction`; inserted `AIDraftPanel` in Notes tab between `DevelopmentSummarySection` and `EditDevelopmentSummaryForm`
+- `package.json` / `package-lock.json` — added `@anthropic-ai/sdk`
+
+**Constraints confirmed:**
+- No migration created
+- No schema changes (player_development_summary, coach_observations, voice_notes untouched)
+- No AI output auto-saved — coach must click "Apply Draft to Summary"
+- show_to_student and show_to_parent hardcoded false in apply form
+- source set to 'ai_draft' on apply
+- API key never exposed to client — call is server-side only
+- Overwrite protection: if existing summary has content, a warning block appears and coach must click confirm before the apply form is shown
+- Player and parent routes not modified
+- No fake or hardcoded AI responses
+
+TypeScript: clean.
+
+---
+
 ## Next build target
 
 **Player Profile tab content** — fill Step 4 tabs with real backend data

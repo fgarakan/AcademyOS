@@ -6,7 +6,7 @@ import { getPlayerById } from '@/lib/backend/players'
 import { getPlayerCurriculumDomains } from '@/lib/backend/curriculum'
 import { getCoachObservations, getPlayerDevelopmentSummary } from '@/lib/backend/notes'
 import { assignCurriculumAction, evaluateAdvancementAction } from '@/lib/actions/curriculum'
-import { addObservationAction, updateDevelopmentSummaryAction, addVoiceNoteAction } from '@/lib/actions/notes'
+import { addObservationAction, updateDevelopmentSummaryAction, addVoiceNoteAction, generateNoteDraftAction } from '@/lib/actions/notes'
 import { PlayerProfileHeader } from '@/components/player/PlayerProfileHeader'
 import { CurriculumProgressGrid } from '@/components/player/CurriculumProgressGrid'
 import { PlayerCurriculumEmptyState } from '@/components/player/PlayerCurriculumEmptyState'
@@ -16,6 +16,7 @@ import { DevelopmentSummarySection } from '@/components/player/DevelopmentSummar
 import { AddObservationForm } from '@/components/player/AddObservationForm'
 import { AddVoiceNoteForm } from '@/components/player/AddVoiceNoteForm'
 import { EditDevelopmentSummaryForm } from '@/components/player/EditDevelopmentSummaryForm'
+import { AIDraftPanel } from '@/components/player/AIDraftPanel'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { PlayerProfileTabs } from './_components/PlayerProfileTabs'
@@ -222,6 +223,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const addObsAction = addObservationAction.bind(null, params.playerId, academyId)
   const updateSummaryAction = updateDevelopmentSummaryAction.bind(null, params.playerId, academyId)
   const addVoiceNoteServerAction = addVoiceNoteAction.bind(null, params.playerId, academyId)
+  const generateDraftAction = generateNoteDraftAction
 
   const notesSlot = (
     <div className="space-y-6">
@@ -235,6 +237,13 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           <DevelopmentSummarySection summary={developmentSummary} />
         </CardContent>
       </Card>
+
+      {/* AI Draft panel */}
+      <AIDraftPanel
+        existingSummary={developmentSummary}
+        onGenerate={generateDraftAction}
+        onApply={updateSummaryAction}
+      />
 
       {/* Edit Development Summary form */}
       <EditDevelopmentSummaryForm summary={developmentSummary} onSubmit={updateSummaryAction} />
