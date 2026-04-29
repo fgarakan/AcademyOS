@@ -8,6 +8,11 @@ import {
   EmptyState,
   SectionHeader,
 } from '@/components/ui'
+import { getSupabaseServer } from '@/lib/supabase/server'
+import {
+  getCoachWorkspaceSummary,
+  type CoachWorkspaceSummary,
+} from '@/lib/backend/coachWorkspace'
 
 type QuickAction = { label: string; Icon: LucideIcon }
 
@@ -26,7 +31,44 @@ const ROADMAP_ITEMS = [
   'Player Follow-Ups',
 ]
 
-export default function CoachHome() {
+function playerInitials(fullName: string | null): string {
+  if (!fullName) return '?'
+  const parts = fullName.trim().split(' ')
+  const first = parts[0]?.[0] ?? ''
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : ''
+  return (first + last).toUpperCase() || '?'
+}
+
+function formatObsType(type: string): string {
+  return type.replace(/_/g, ' ')
+}
+
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+export default async function CoachHome() {
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  let summary: CoachWorkspaceSummary = {
+    profile: null,
+    assignedGroups: [],
+    assignedPlayers: [],
+    recentObservations: [],
+    todaySessions: [],
+  }
+
+  if (user) {
+    try {
+      summary = await getCoachWorkspaceSummary(supabase, user.id)
+    } catch {
+      // query failed — empty state shell still renders
+    }
+  }
+
+  const { assignedPlayers, recentObservations, todaySessions } = summary
+
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year:    'numeric',
@@ -60,12 +102,45 @@ export default function CoachHome() {
             </div>
           </CardHeader>
           <CardContent>
-            <EmptyState
-              icon={<Calendar className="w-5 h-5" />}
-              title="No sessions scheduled yet"
-              description="Your session plan will appear here once sessions are set up in the platform."
-              className="py-10"
-            />
+            {todaySessions.length > 0 ? (
+              <ul className="space-y-1">
+                {todaySessions.map(s => (
+                  <li
+                    key={s.id}
+                    className="flex items-center justify-between gap-2 py-2 border-b border-border last:border-0 last:pb-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-text-primary truncate">
+                        {s.name ?? 'Session'}
+                      </p>
+                      {s.scheduled_time && (
+                        <p className="text-xs text-text-muted">
+                          {s.scheduled_time.slice(0, 5)}
+                        </p>
+                      )}
+                    </div>
+                    <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                      s.status === 'in_progress'
+                        ? 'bg-lime/10 text-lime border-lime/30'
+                        : s.status === 'completed'
+                        ? 'bg-status-green/10 text-status-green border-status-green/30'
+                        : s.status === 'cancelled'
+                        ? 'bg-status-red/10 text-status-red border-status-red/30'
+                        : 'bg-surface-raised text-text-muted border-border'
+                    }`}>
+                      {s.status.replace('_', ' ')}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState
+                icon={<Calendar className="w-5 h-5" />}
+                title="No sessions scheduled yet"
+                description="Your session plan will appear here once sessions are set up in the platform."
+                className="py-10"
+              />
+            )}
           </CardContent>
           <CardFooter>
             <p className="text-text-muted text-xs">
@@ -90,18 +165,60 @@ export default function CoachHome() {
                   </div>
                   <p className="font-semibold text-text-primary text-sm truncate">My Players</p>
                 </div>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-lime/10 text-lime border border-lime/30 shrink-0">
-                  Soon
-                </span>
+                {assignedPlayers.length > 0 ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-surface-raised text-text-muted border border-border shrink-0">
+                    {assignedPlayers.length}{' '}
+                    {assignedPlayers.length === 1 ? 'player' : 'players'}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-lime/10 text-lime border border-lime/30 shrink-0">
+                    Soon
+                  </span>
+                )}
               </div>
             </CardHeader>
             <CardContent>
-              <EmptyState
-                icon={<Users className="w-5 h-5" />}
-                title="No players assigned yet"
-                description="Your assigned players will appear here."
-                className="py-8"
-              />
+              {assignedPlayers.length > 0 ? (
+                <>
+                  <ul className="space-y-3">
+                    {assignedPlayers.slice(0, 5).map((p, i) => {
+                      const initials = playerInitials(p.full_name)
+                      const details = (
+                        [p.group_name, p.level_label].filter(Boolean) as string[]
+                      ).join(' · ')
+                      return (
+                        <li key={p.player_id ?? i} className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-surface-raised border border-border flex items-center justify-center shrink-0">
+                            <span className="text-[11px] font-bold text-text-secondary">
+                              {initials}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-text-primary truncate">
+                              {p.full_name ?? '—'}
+                            </p>
+                            <p className="text-xs text-text-muted truncate">
+                              {details || '—'}
+                            </p>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  {assignedPlayers.length > 5 && (
+                    <p className="text-xs text-text-muted mt-3 pt-3 border-t border-border">
+                      +{assignedPlayers.length - 5} more
+                    </p>
+                  )}
+                </>
+              ) : (
+                <EmptyState
+                  icon={<Users className="w-5 h-5" />}
+                  title="No players assigned yet"
+                  description="Your assigned players will appear here."
+                  className="py-8"
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -115,20 +232,58 @@ export default function CoachHome() {
                   </div>
                   <p className="font-semibold text-text-primary text-sm truncate">Recent Notes</p>
                 </div>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-lime/10 text-lime border border-lime/30 shrink-0">
-                  Soon
-                </span>
+                {recentObservations.length === 0 && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-lime/10 text-lime border border-lime/30 shrink-0">
+                    Soon
+                  </span>
+                )}
               </div>
             </CardHeader>
             <CardContent>
-              <EmptyState
-                icon={<FileText className="w-5 h-5" />}
-                title="No notes yet"
-                description="Recent player notes will appear here."
-                className="py-8"
-              />
+              {recentObservations.length > 0 ? (
+                <ul className="space-y-3">
+                  {recentObservations.map(obs => (
+                    <li
+                      key={obs.id}
+                      className="border-b border-border pb-3 last:border-0 last:pb-0"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <p className="text-sm font-medium text-text-primary truncate">
+                          {obs.player_name}
+                        </p>
+                        <span className="text-xs text-text-muted shrink-0">
+                          {formatShortDate(obs.created_at)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                        <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-surface-raised text-text-secondary border border-border">
+                          {formatObsType(obs.observation_type)}
+                        </span>
+                        {obs.is_private && (
+                          <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-surface-raised text-text-muted border border-border">
+                            Internal
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-text-secondary leading-relaxed">
+                        {obs.content.length > 80
+                          ? obs.content.slice(0, 80) + '…'
+                          : obs.content}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState
+                  icon={<FileText className="w-5 h-5" />}
+                  title="No notes yet"
+                  description="Recent player notes will appear here."
+                  className="py-8"
+                />
+              )}
             </CardContent>
           </Card>
+
         </div>
       </div>
 

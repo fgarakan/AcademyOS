@@ -413,6 +413,48 @@ TypeScript: clean.
 
 ---
 
+## 2026-04-29 — Coach Workspace Real Data V1
+
+Replaced the static Coach Hub shell with real Supabase data. No fake data, no new schema, no service role usage.
+
+**Files created:**
+- `src/lib/backend/coachWorkspace.ts` — `getCoachWorkspaceSummary(db, userId)`: sequential RLS-respecting queries; fetches coach profile → active group assignments → assigned groups (v_group_summary) → assigned players (v_player_summary filtered by group IDs) → recent coach_observations (by coach, not voice_notes) → player name resolution → today's sessions. Returns typed `CoachWorkspaceSummary` with graceful empty fallback.
+
+**Files modified:**
+- `src/app/coach/page.tsx` — converted from static shell to async Server Component; calls `getCoachWorkspaceSummary`; Today's Sessions renders real session rows with status badge; My Players renders up to 5 assigned players with initials avatar and group/level detail; Recent Notes renders up to 5 recent coach_observations with type label, Internal badge, and truncated content; all sections fall back to `EmptyState` when no data.
+
+**Constraints confirmed:**
+- No migrations created
+- No schema changes
+- No database.types.ts changes
+- No middleware changes
+- No preview mode logic changes
+- No platform actions changed
+- No server actions changed
+- No player page, parent page, or layout changes
+- No BottomTabBar changes
+- No service role / getSupabaseAdmin used
+- No write actions added
+- No voice_notes queried
+- No AI drafts queried
+- No fake data
+- RLS not broadened
+- Unassigned players not shown — players filtered only through coach's assigned group IDs via coach_group_assignments
+
+TypeScript: clean.
+
+**Manual test steps:**
+1. `npm run dev`
+2. Log in as platform user → /platform
+3. Click "Preview as Coach" on an academy card
+   → /coach loads with PreviewBanner visible
+   → Today's Sessions: real sessions or empty state
+   → My Players: real assigned players or empty state
+   → Recent Notes: real coach_observations or empty state
+4. Click "Exit Preview" → /platform
+
+---
+
 ## Next build target
 
 **Player Profile tab content** — fill Step 4 tabs with real backend data
