@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Exercise Library — Dry-Run Inspector
+ * Exercise Library — Dry-Run Inspector + Report Generator
  * Reads data/airtable-import/Exercise Library-Grid view.csv,
  * transforms and validates every row, and prints what would be
  * inserted into the exercises table.
@@ -10,6 +10,10 @@
  *
  * Usage:
  *   node import-exercises.js
+ *
+ * Output:
+ *   - stdout: human-readable dry-run summary (unchanged)
+ *   - file:   data/airtable-import/reports/exercise-import-dry-run-report.json
  *
  * Mapping decisions (confirmed 2026-04-29):
  *   Agility/Speed/Strength → fitness enum; original kept as tag
@@ -33,8 +37,10 @@ if (process.argv.includes('--live')) {
   process.exit(1);
 }
 
-const CSV_PATH   = path.resolve(__dirname, 'Exercise Library-Grid view.csv');
-const ACADEMY_ID = '00000000-0000-0000-0000-000000000001';
+const CSV_PATH    = path.resolve(__dirname, 'Exercise Library-Grid view.csv');
+const REPORT_DIR  = path.resolve(__dirname, 'reports');
+const REPORT_PATH = path.join(REPORT_DIR, 'exercise-import-dry-run-report.json');
+const ACADEMY_ID  = '00000000-0000-0000-0000-000000000001';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Category normalization
@@ -121,6 +127,7 @@ const COL = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Row transform  (read + validate only — no database interaction)
+// Returns categoryKey so main() can count normalization stats.
 // ─────────────────────────────────────────────────────────────────────────────
 
 function transformRow(fields, csvLineNum) {
@@ -164,7 +171,7 @@ function transformRow(fields, csvLineNum) {
     level_range:     null,
   } : null;
 
-  return { csvLineNum, name: name || '(empty)', errs, record };
+  return { csvLineNum, name: name || '(empty)', errs, record, categoryKey };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -270,6 +277,82 @@ function main() {
   console.log(`  Skipped — ghost (Status only)  : ${ghostRows.length}`);
   console.log('');
   console.log('NO DATA WAS INSERTED.');
+  console.log('');
+
+  // ── Category normalization counts ────────────────────────────────────────────
+  const rawCatCounts = {};
+  for (const r of valid) {
+    rawCatCounts[r.categoryKey] = (rawCatCounts[r.categoryKey] || 0) + 1;
+  }
+  const categoryNormalization = {
+    agility_to_fitness:   rawCatCounts['agility']   || 0,
+    speed_to_fitness:     rawCatCounts['speed']     || 0,
+    strength_to_fitness:  rawCatCounts['strength']  || 0,
+    technical_direct:     rawCatCounts['technical'] || 0,
+    movement_direct:      rawCatCounts['movement']  || 0,
+    recovery_to_cool_down: rawCatCounts['recovery'] || 0,
+  };
+
+  // ── CSV duplicate name detection (case-insensitive) ──────────────────────────
+  const nameLineMap = new Map();
+  for (const r of parsed) {
+    if (r.name === '(empty)') continue;
+    const key = r.name.toLowerCase();
+    if (!nameLineMap.has(key)) nameLineMap.set(key, { name: r.name, csv_lines: [] });
+    nameLineMap.get(key).csv_lines.push(r.csvLineNum);
+  }
+  const csvDuplicateNames = [];
+  for (const entry of nameLineMap.values()) {
+    if (entry.csv_lines.length > 1) csvDuplicateNames.push(entry);
+  }
+
+  // ── Skipped rows for report ───────────────────────────────────────────────────
+  const skippedRows = [];
+  for (const r of invalid) {
+    skippedRows.push({ csv_line: r.csvLineNum, name: r.name, reason: r.errs.join('; ') });
+  }
+  if (blankRows.length > 0) {
+    skippedRows.push({
+      csv_line_range: `${blankRows[0]}–${blankRows[blankRows.length - 1]}`,
+      reason: 'blank row',
+      count: blankRows.length,
+    });
+  }
+  if (ghostRows.length > 0) {
+    skippedRows.push({
+      csv_line_range: `${ghostRows[0]}–${ghostRows[ghostRows.length - 1]}`,
+      reason: 'ghost row (Status only, no name)',
+      count: ghostRows.length,
+    });
+  }
+
+  // ── Write JSON report ────────────────────────────────────────────────────────
+  const report = {
+    generated_at:          new Date().toISOString(),
+    mode:                  'DRY_RUN',
+    no_write_confirmation: 'NO DATA WAS INSERTED',
+    csv_path:              path.basename(CSV_PATH),
+    academy_id:            ACADEMY_ID,
+    totals: {
+      total_data_rows: totalData,
+      would_insert:    valid.length,
+      skipped_invalid: invalid.length,
+      skipped_blank:   blankRows.length,
+      skipped_ghost:   ghostRows.length,
+    },
+    category_normalization: categoryNormalization,
+    csv_duplicate_names:    csvDuplicateNames,
+    db_duplicate_check: {
+      available: false,
+      reason:    'not_run_service_role_not_approved',
+    },
+    skipped_rows:   skippedRows,
+    valid_payloads: valid.map(r => r.record),
+  };
+
+  fs.mkdirSync(REPORT_DIR, { recursive: true });
+  fs.writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2), 'utf8');
+  console.log(`Report → ${path.relative(process.cwd(), REPORT_PATH)}`);
   console.log('');
 }
 

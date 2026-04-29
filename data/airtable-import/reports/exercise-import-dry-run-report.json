@@ -1,0 +1,1290 @@
+{
+  "generated_at": "2026-04-29T15:24:30.971Z",
+  "mode": "DRY_RUN",
+  "no_write_confirmation": "NO DATA WAS INSERTED",
+  "csv_path": "Exercise Library-Grid view.csv",
+  "academy_id": "00000000-0000-0000-0000-000000000001",
+  "totals": {
+    "total_data_rows": 107,
+    "would_insert": 70,
+    "skipped_invalid": 1,
+    "skipped_blank": 25,
+    "skipped_ghost": 11
+  },
+  "category_normalization": {
+    "agility_to_fitness": 10,
+    "speed_to_fitness": 12,
+    "strength_to_fitness": 13,
+    "technical_direct": 8,
+    "movement_direct": 20,
+    "recovery_to_cool_down": 7
+  },
+  "csv_duplicate_names": [],
+  "db_duplicate_check": {
+    "available": false,
+    "reason": "not_run_service_role_not_approved"
+  },
+  "skipped_rows": [
+    {
+      "csv_line": 72,
+      "name": "Leg Swings",
+      "reason": "unknown Category \"\"; unparseable Duration \"\""
+    },
+    {
+      "csv_line_range": "73–97",
+      "reason": "blank row",
+      "count": 25
+    },
+    {
+      "csv_line_range": "98–108",
+      "reason": "ghost row (Status only, no name)",
+      "count": 11
+    }
+  ],
+  "valid_payloads": [
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Spider Drill",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 8,
+      "description": "Start at center T. Sprint to each of 5 baseline balls, return each to center. Time per set.",
+      "coaching_points": "Low center of gravity. Explosive push-off from outside foot. Change of direction is the key.",
+      "instructions": "3×",
+      "equipment": [
+        "Cones"
+      ],
+      "tags": [
+        "agility",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=4sB5WxWFDgQ",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Cross Cone Drill",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 6,
+      "description": "4 cones in cross pattern. Sprint to each, return to center each time. Alternate direction.",
+      "coaching_points": "Start slow for pattern integrity. Add pace only after 3 clean sets.",
+      "instructions": "3×",
+      "equipment": [
+        "Ladders"
+      ],
+      "tags": [
+        "agility",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=6Ys5IUkqSHc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "T-Drill",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 8,
+      "description": "Cones in T shape. Sprint forward, shuffle left, shuffle right, backpedal. Timed.",
+      "coaching_points": "Drive off outside foot on shuffles. Don't cross feet. Decelerate with control.",
+      "instructions": "4×",
+      "equipment": [
+        "Med ball"
+      ],
+      "tags": [
+        "agility",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=VEdC2s-HPEM",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Figure-Eight Cone Drill",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 6,
+      "description": "Two cones 5m apart. Figure-eight pattern around cones. Fast lateral movements.",
+      "coaching_points": "Maintain low stance throughout. Eyes up. Quick directional change at each cone.",
+      "instructions": "3×",
+      "equipment": [
+        "Resistance Band"
+      ],
+      "tags": [
+        "agility",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=k0Z9h7T3KoM",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Zig-Zag Sprint",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 6,
+      "description": "6-8 cones in zigzag line. Sprint through as fast as possible. Plant and cut.",
+      "coaching_points": "Short choppy steps approaching cone. Plant hard off outside foot. Stay low.",
+      "instructions": "4×",
+      "equipment": null,
+      "tags": [
+        "agility",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=N0EeSJTBMgk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Lateral Shuffle Drill",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 5,
+      "description": "Shuffle baseline to baseline. Coach calls direction change randomly.",
+      "coaching_points": "Feet never cross. Stay in athletic stance. Quick reaction to direction cue.",
+      "instructions": "4×20s",
+      "equipment": [
+        "Lines"
+      ],
+      "tags": [
+        "agility",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=9A58n5eBBBU",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Star Drill",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 8,
+      "description": "5 cones in star shape. Sprint from center to each point and back. Timed.",
+      "coaching_points": "Explosive acceleration from center each time. Controlled deceleration at cones.",
+      "instructions": "3×",
+      "equipment": [
+        "Dots"
+      ],
+      "tags": [
+        "agility",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=4sB5WxWFDgQ",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Mirror Drill",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 6,
+      "description": "Two players face each other on service line. One leads, one mirrors lateral movement.",
+      "coaching_points": "Small quick steps. Stay low. React immediately. No anticipating.",
+      "instructions": "4×10s",
+      "equipment": null,
+      "tags": [
+        "agility",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=4sB5WxWFDgQ",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Cone Ladder Shuffle",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 5,
+      "description": "Cones in straight line. Lateral shuffle through gaps. Progress to diagonal pattern.",
+      "coaching_points": "Quick feet. Don't look down. Rhythm over speed to start.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "agility",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=9A58n5eBBBU",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Reaction Ball Drill",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 6,
+      "description": "Coach drops reaction ball. Player reacts and catches before 2nd bounce.",
+      "coaching_points": "Split step before ball drops. Stay on balls of feet. Full sprint effort.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "agility",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=6Ys5IUkqSHc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Split Step Reaction",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 6,
+      "description": "Partner tosses to random side. Player split steps then explodes to catch.",
+      "coaching_points": "Cue exactly at ball contact — not before, not after. Land low, explode wide.",
+      "instructions": "5×",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=dU6tm_gaqO4",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Acceleration Sprint",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 6,
+      "description": "Sprint baseline to service line. Max acceleration. Walk back recovery.",
+      "coaching_points": "Drive knees. Pump arms. First 3 steps are everything. Full recovery between.",
+      "instructions": "6×",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=N0EeSJTBMgk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Short Court Sprints",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 5,
+      "description": "Sprint from center mark to T and back. 10m max distance. Explosive.",
+      "coaching_points": "Stay low off the start. Decelerate with control. Rest 30s between.",
+      "instructions": "8×",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=N0EeSJTBMgk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Agility Ladder – High Knees",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 5,
+      "description": "Ladder on court. High knees through each square. Increase speed each set.",
+      "coaching_points": "Quick ground contact. Drive knees up. Arms active. Eyes forward.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=0xGfPGNPqzk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Agility Ladder – In-Out",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 5,
+      "description": "Step in and out of each ladder square laterally. Progress to diagonal.",
+      "coaching_points": "Precise foot placement first. Add speed once pattern is clean.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=0xGfPGNPqzk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "First Step Quickness",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 6,
+      "description": "Coach points direction. Player explodes 3-5 steps only. Reset.",
+      "coaching_points": "React don't anticipate. First step is widest. Drive off back foot.",
+      "instructions": "4×",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=dU6tm_gaqO4",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Resistance Band Sprint",
+      "category": "fitness",
+      "subcategory": "12-14",
+      "duration_min": 8,
+      "description": "Partner holds resistance band around waist. Sprint against resistance. Release.",
+      "coaching_points": "Lean into band. Drive arms. Maintain form under resistance.",
+      "instructions": "4×20m",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=N0EeSJTBMgk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Cone Drop Sprint",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 5,
+      "description": "Coach drops cone at random. Player sprints and picks up before rolling stops.",
+      "coaching_points": "Stay in ready position. React immediately. Full acceleration every rep.",
+      "instructions": "6×",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=6Ys5IUkqSHc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Speed Ladder Crossover",
+      "category": "fitness",
+      "subcategory": "12-14",
+      "duration_min": 5,
+      "description": "Lateral crossover step through each ladder square. Both directions.",
+      "coaching_points": "Cross lead foot over first. Quick placement. Rhythm before speed.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=0xGfPGNPqzk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Jump Rope – Single",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 5,
+      "description": "Basic single bounce jump rope. Consistent rhythm. Light on feet.",
+      "coaching_points": "Land on balls of feet. Soft knees. Small jumps. Wrists turn rope, not arms.",
+      "instructions": "3×60s",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=Ry0pHfQHNyA",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Split Squat",
+      "category": "fitness",
+      "subcategory": "12-14",
+      "duration_min": 10,
+      "description": "Front foot forward, back foot on bench or floor. Lower rear knee toward ground.",
+      "coaching_points": "Front shin vertical. Drive through front heel. Full range of motion. Control the descent.",
+      "instructions": "4×8",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=KChOCdQeEEA",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Goblet Squat",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 8,
+      "description": "Hold med ball or dumbbell at chest. Squat deep, elbows inside knees at bottom.",
+      "coaching_points": "Chest up. Heels down. Deep squat develops mobility and strength simultaneously.",
+      "instructions": "3×10",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=MxsFDhcyFyE",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Med Ball Chest Pass",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 8,
+      "description": "Partner or wall pass. Explosive push. Catch and absorb. Square stance.",
+      "coaching_points": "Full hip extension at release. Catch with soft hands. Step into throw.",
+      "instructions": "3×10",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=Qo7LxL4f5Mc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Med Ball Rotation",
+      "category": "fitness",
+      "subcategory": "12-14",
+      "duration_min": 8,
+      "description": "Rotational wall throw or partner pass. Drive from hips. Both directions.",
+      "coaching_points": "Rotation starts from hips — arms follow. Full hip extension at release.",
+      "instructions": "3×10",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=GnqOcMCPEeQ",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Med Ball Overhead Slam",
+      "category": "fitness",
+      "subcategory": "12-14",
+      "duration_min": 6,
+      "description": "Raise med ball overhead. Slam to ground explosively. Full body extension.",
+      "coaching_points": "Full extension on raise. Aggressive slam. Core braced throughout.",
+      "instructions": "3×8",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=AiHSKRhqMbg",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Single Leg RDL",
+      "category": "fitness",
+      "subcategory": "12-14",
+      "duration_min": 8,
+      "description": "Standing on one leg. Hinge at hip. Reach toward floor. Return to stand.",
+      "coaching_points": "Slow eccentric — 3 count down. Spine neutral throughout. Slight knee bend on working leg.",
+      "instructions": "3×8",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=D38LmICBbPM",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Lateral Lunge",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 8,
+      "description": "Step wide to side. Bend loading knee. Push-off back to start. Both directions.",
+      "coaching_points": "Keep stepping foot flat. Loading knee tracks over toes. Chest up.",
+      "instructions": "3×10",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=GG9-8E3-0FY",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Plank Hold",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 5,
+      "description": "Forearm plank. Straight line from head to heel. Core engaged. Breathe.",
+      "coaching_points": "Don't let hips sag or pike. Squeeze glutes. Neutral neck. Progress to longer holds.",
+      "instructions": "3×30s",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=pvIjsG5Svck",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Side Plank",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 5,
+      "description": "Forearm side plank. Hip off ground. Straight body line. Both sides.",
+      "coaching_points": "Stack feet or stagger for easier version. Don't let hip drop. Full duration.",
+      "instructions": "3×20s",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=PfnfjXi2V3Q",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Glute Bridge",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 6,
+      "description": "Lie on back, feet flat, knees bent. Drive hips up. Squeeze at top.",
+      "coaching_points": "Posterior pelvic tilt at top. Squeeze glutes hard. Controlled descent.",
+      "instructions": "3×12",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=JMSKNbNsYtM",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Banded Lateral Walk",
+      "category": "fitness",
+      "subcategory": "10-12",
+      "duration_min": 5,
+      "description": "Band around ankles or knees. Athletic stance. Lateral steps maintaining tension.",
+      "coaching_points": "Constant tension. Don't let feet come together. Small controlled steps.",
+      "instructions": "3×15",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=ByM1WG63bAk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Push-Up Progression",
+      "category": "fitness",
+      "subcategory": "8-10",
+      "duration_min": 6,
+      "description": "Standard push-up or regression (knees). Straight body line. Full range.",
+      "coaching_points": "Elbows at 45° — not flared wide. Chest to floor. Controlled descent.",
+      "instructions": "3×8",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=IODxDxX7oi4",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Med Ball Wood Chop",
+      "category": "fitness",
+      "subcategory": "12-14",
+      "duration_min": 6,
+      "description": "Diagonal pattern — high to low, both directions. Drive from core and hips.",
+      "coaching_points": "Rotation from core. Straight arms. Control the path. Both directions equal reps.",
+      "instructions": "3×10",
+      "equipment": null,
+      "tags": [
+        "strength",
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=GnqOcMCPEeQ",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Serve Footwork",
+      "category": "technical",
+      "subcategory": "8-10",
+      "duration_min": 8,
+      "description": "Phantom serve motion focusing only on foot pattern. No ball. Trophy to follow-through.",
+      "coaching_points": "Emphasize shoulder rotation before foot positioning completes. Back foot drives forward.",
+      "instructions": "4×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=wuH3s_HbAYc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Return Split Timing",
+      "category": "technical",
+      "subcategory": "10-12",
+      "duration_min": 8,
+      "description": "Coach feeds. Player split steps at contact. Explodes to ball. Focus on timing only.",
+      "coaching_points": "Split happens BEFORE coach contact. Land and react — don't wait.",
+      "instructions": "Feed 20",
+      "equipment": null,
+      "tags": [
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=dU6tm_gaqO4",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Overhead Footwork",
+      "category": "technical",
+      "subcategory": "10-12",
+      "duration_min": 8,
+      "description": "Crossover step to overhead position. Shoulder turn. Trophy position loading. No ball.",
+      "coaching_points": "Shoulder rotation must happen before foot positioning is complete.",
+      "instructions": "4×",
+      "equipment": null,
+      "tags": [
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=wuH3s_HbAYc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Volley Footwork Pattern",
+      "category": "technical",
+      "subcategory": "8-10",
+      "duration_min": 6,
+      "description": "Approach pattern from baseline to net. Split step at service line. Ready position.",
+      "coaching_points": "Small steps into net. Split exactly at bounce line. Continental grip ready.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=bTaE_tUzNRU",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Groundstroke Footwork",
+      "category": "technical",
+      "subcategory": "10-12",
+      "duration_min": 10,
+      "description": "Coach feeds to alternating sides. Player executes split, recovery step, unit turn.",
+      "coaching_points": "Recovery step after every shot. Unit turn early. Weight into the court.",
+      "instructions": "Feed 20",
+      "equipment": null,
+      "tags": [
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=bTaE_tUzNRU",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Slice Footwork",
+      "category": "technical",
+      "subcategory": "12-14",
+      "duration_min": 8,
+      "description": "Approach step pattern for backhand slice. Crossover, side-step, contact point.",
+      "coaching_points": "Stay sideways through contact. Step through the ball. High to low swing path.",
+      "instructions": "Feed 15",
+      "equipment": null,
+      "tags": [
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=bTaE_tUzNRU",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Drop Shot Recovery",
+      "category": "technical",
+      "subcategory": "12-14",
+      "duration_min": 6,
+      "description": "Coach feeds deep, then drop shot. Player sprints forward, recovers back.",
+      "coaching_points": "First step is a crossover. Sprint on toes. Recover with split step.",
+      "instructions": "Feed 10",
+      "equipment": null,
+      "tags": [
+        "difficulty:high"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=N0EeSJTBMgk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Serve and Recovery",
+      "category": "technical",
+      "subcategory": "12-14",
+      "duration_min": 10,
+      "description": "Player serves, immediately recovers to center mark before next ball is fed.",
+      "coaching_points": "Follow-through lands you forward. Drive to center. Split on second ball.",
+      "instructions": "10 serves",
+      "equipment": null,
+      "tags": [
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=wuH3s_HbAYc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Ball Juggling – Two Hands",
+      "category": "movement",
+      "subcategory": "8-10",
+      "duration_min": 5,
+      "description": "Juggle two balls simultaneously. One in each hand. Eyes up. Consistent height.",
+      "coaching_points": "Eyes up. Small controlled touches. Progress only when 20+ consecutive achieved.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=mxBQF4HXMBU",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Ball Juggling – One Hand",
+      "category": "movement",
+      "subcategory": "10-12",
+      "duration_min": 5,
+      "description": "Single hand juggle. Dominant then non-dominant. Count consecutive touches.",
+      "coaching_points": "Stay relaxed. Wrist work not arm. Consistent toss height is the key.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=mxBQF4HXMBU",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Catch and Toss Ladder",
+      "category": "movement",
+      "subcategory": "8-10",
+      "duration_min": 6,
+      "description": "Agility ladder footwork combined with ball catch from partner. Both at same time.",
+      "coaching_points": "Feet pattern first until automatic. Then add ball. Eyes cannot be on the ladder.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=mxBQF4HXMBU",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Partner Mirror – Ball",
+      "category": "movement",
+      "subcategory": "10-12",
+      "duration_min": 6,
+      "description": "Two players. Leader moves and passes ball. Follower mirrors and catches.",
+      "coaching_points": "Stay in sync. Small steps. Anticipate movement pattern.",
+      "instructions": "3×30s",
+      "equipment": null,
+      "tags": [
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=4sB5WxWFDgQ",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Racket Dribbling",
+      "category": "movement",
+      "subcategory": "8-10",
+      "duration_min": 5,
+      "description": "Dribble tennis ball on racket strings while walking, then jogging.",
+      "coaching_points": "Consistent contact point. Soft hands. Eyes up once pattern is comfortable.",
+      "instructions": "3×30s",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=mxBQF4HXMBU",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Reaction Ball Catch",
+      "category": "movement",
+      "subcategory": "10-12",
+      "duration_min": 5,
+      "description": "Partner drops reaction ball from chest. Player catches with one hand.",
+      "coaching_points": "Stay on toes. React don't anticipate. Alternate catching hand.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=6Ys5IUkqSHc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Footwork + Ball Toss",
+      "category": "movement",
+      "subcategory": "10-12",
+      "duration_min": 6,
+      "description": "Player performs lateral shuffle. Simultaneously tosses and catches ball overhead.",
+      "coaching_points": "Feet independent of hands. Don't let ball pattern disrupt footwork rhythm.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "difficulty:medium"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=4sB5WxWFDgQ",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Jump Rope – Coordination",
+      "category": "movement",
+      "subcategory": "8-10",
+      "duration_min": 5,
+      "description": "Varied jump rope patterns: single, double under attempts, lateral side-to-side.",
+      "coaching_points": "Master single bounce first. Build rhythm before attempting variations.",
+      "instructions": "3×45s",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=Ry0pHfQHNyA",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Hip Mobility Flow",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 12,
+      "description": "90-90 transitions, deep lunge with rotation, pigeon variations, hip flexor release.",
+      "coaching_points": "Move slowly through each transition. Breathe into restriction. Never force range.",
+      "instructions": "1×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=sFh6MSGrDX8",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Dynamic Warm-Up Routine",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 8,
+      "description": "Leg swings, arm circles, hip circles, walking lunges, inchworms, high knees.",
+      "coaching_points": "Controlled movement throughout. No bouncing. Increase ROM progressively.",
+      "instructions": "1×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=CHUdHs5s0gc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Hip Flexor Stretch",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 5,
+      "description": "Kneeling lunge. Drive hips forward. Reach arm opposite to back leg overhead.",
+      "coaching_points": "Square the hips first. Drive forward through hip crease. Breathe out into it.",
+      "instructions": "2×30s",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=sFh6MSGrDX8",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Thoracic Rotation",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 5,
+      "description": "Seated or quadruped thoracic rotation. Thread needle variation. Both directions.",
+      "coaching_points": "Initiate from mid-back not shoulder. Keep hips stable. Slow controlled rotation.",
+      "instructions": "2×10",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=NqNieHNFE1I",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Ankle Mobility Circuit",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 5,
+      "description": "Calf raises, ankle circles, wall ankle mobilization, toe raises.",
+      "coaching_points": "Critical for change of direction. Slow ankle circles. Full range each direction.",
+      "instructions": "2×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=CHUdHs5s0gc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Hamstring Flow",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 6,
+      "description": "Standing hamstring stretch, seated reach, lying single leg reach. Both sides.",
+      "coaching_points": "Soft knee bend. Hinge from hip not spine. Feel stretch in belly of muscle.",
+      "instructions": "1×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=sFh6MSGrDX8",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Shoulder Mobility Drill",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 5,
+      "description": "Arm circles, cross-body stretch, sleeper stretch, wall pec stretch.",
+      "coaching_points": "Critical for serve health. Sleeper stretch for posterior capsule. Slow pace.",
+      "instructions": "2×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=NqNieHNFE1I",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Yoga for Tennis – Core",
+      "category": "movement",
+      "subcategory": "12-14",
+      "duration_min": 10,
+      "description": "Boat pose, bird-dog, dead bug, plank variations. Core through stability.",
+      "coaching_points": "Breath is the foundation. Move on exhale. Hold positions, don't rush transitions.",
+      "instructions": "1×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=Bo4ej3rBbWI",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Pigeon Pose Flow",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 6,
+      "description": "Pigeon pose both sides. Walk hands forward for deeper release. Breathe.",
+      "coaching_points": "Never force this position. Use a block or folded towel under hip if needed.",
+      "instructions": "2×45s",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=sFh6MSGrDX8",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Inchworm + Reach",
+      "category": "cool_down",
+      "subcategory": "All Ages",
+      "duration_min": 5,
+      "description": "Walk hands out to plank, reach one arm up with rotation, walk back. Both sides.",
+      "coaching_points": "Slow and deliberate. Full rotation at the top. Straight-leg hamstring stretch.",
+      "instructions": "2×8",
+      "equipment": null,
+      "tags": [
+        "recovery",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=CHUdHs5s0gc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Foam Roll – Full Body",
+      "category": "cool_down",
+      "subcategory": "All Ages",
+      "duration_min": 10,
+      "description": "IT band, quads, hamstrings, calves, thoracic spine. 30-60s per area.",
+      "coaching_points": "Slow controlled rolling. Pause on tender areas. Breathe through discomfort.",
+      "instructions": "1×",
+      "equipment": null,
+      "tags": [
+        "recovery",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=OkM4cn5Pcv8",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Static Stretch Cool Down",
+      "category": "cool_down",
+      "subcategory": "All Ages",
+      "duration_min": 10,
+      "description": "Post-session static stretches. Major muscle groups. Hold 30-45s each.",
+      "coaching_points": "Only after full warm-up or post-session. Never cold static stretch.",
+      "instructions": "1×",
+      "equipment": null,
+      "tags": [
+        "recovery",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=sFh6MSGrDX8",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Breathing Reset",
+      "category": "cool_down",
+      "subcategory": "All Ages",
+      "duration_min": 5,
+      "description": "Box breathing or 4-7-8 pattern. Lying down. Eyes closed. HRV recovery.",
+      "coaching_points": "4 count in, 7 count hold, 8 count out. Progressively slower. Nervous system down-reg.",
+      "instructions": "1×",
+      "equipment": null,
+      "tags": [
+        "recovery",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=Bo4ej3rBbWI",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Lacrosse Ball Foot Roll",
+      "category": "cool_down",
+      "subcategory": "All Ages",
+      "duration_min": 5,
+      "description": "Stand on lacrosse ball. Roll full foot. Apply pressure to tender areas.",
+      "coaching_points": "Standing weight load is pressure. Find tight spots and hold 30s.",
+      "instructions": "1×",
+      "equipment": null,
+      "tags": [
+        "recovery",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=OkM4cn5Pcv8",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Active Recovery Jog",
+      "category": "cool_down",
+      "subcategory": "All Ages",
+      "duration_min": 8,
+      "description": "Easy 8-minute jog. Heart rate below 140. Conversational pace.",
+      "coaching_points": "This is recovery — not conditioning. Do not push the pace. Belly breathing.",
+      "instructions": "1×",
+      "equipment": null,
+      "tags": [
+        "recovery",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=CHUdHs5s0gc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Skipping Variations",
+      "category": "cool_down",
+      "subcategory": "All Ages",
+      "duration_min": 5,
+      "description": "Forward, backward, lateral skipping. Arms active. Light and rhythmic.",
+      "coaching_points": "Easy pace. Warm tissue, not condition. Smile — set the tone.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "recovery",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=CHUdHs5s0gc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "High Knees",
+      "category": "fitness",
+      "subcategory": "All Ages",
+      "duration_min": 3,
+      "description": "Alternate driving knees to hip height. Arms pump. On balls of feet.",
+      "coaching_points": "Knee to hip height minimum. Pump arms opposite to legs. Light ground contact.",
+      "instructions": "3×20s",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=0xGfPGNPqzk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Butt Kicks",
+      "category": "fitness",
+      "subcategory": "All Ages",
+      "duration_min": 3,
+      "description": "Heel drives back to glute while jogging forward. Quick turnover.",
+      "coaching_points": "Quick ground contact. Stay on toes. Upright posture throughout.",
+      "instructions": "3×20s",
+      "equipment": null,
+      "tags": [
+        "speed",
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=0xGfPGNPqzk",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Carioca / Grapevine",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 4,
+      "description": "Lateral movement with crossover step. Both directions. Hips rotate.",
+      "coaching_points": "Hip rotation is the key movement. Stay low. Increase speed progressively.",
+      "instructions": "3×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=9A58n5eBBBU",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Arm Circles + Swings",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 3,
+      "description": "Forward/backward circles, cross-body swings, up-down swings. Both arms.",
+      "coaching_points": "Full range of motion. Controlled. Gradually increase amplitude.",
+      "instructions": "2×",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=CHUdHs5s0gc",
+      "is_active": true,
+      "level_range": null
+    },
+    {
+      "academy_id": "00000000-0000-0000-0000-000000000001",
+      "name": "Walking Lunges",
+      "category": "movement",
+      "subcategory": "All Ages",
+      "duration_min": 4,
+      "description": "Lunge forward with each step. Tall torso. Back knee nearly touches floor.",
+      "coaching_points": "Step long enough for 90° front knee. Torso upright. Drive through front heel.",
+      "instructions": "2×10",
+      "equipment": null,
+      "tags": [
+        "difficulty:low"
+      ],
+      "video_url": "https://www.youtube.com/watch?v=L8fvypPrzzs",
+      "is_active": true,
+      "level_range": null
+    }
+  ]
+}
