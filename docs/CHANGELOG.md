@@ -2,6 +2,51 @@
 
 ---
 
+## 2026-04-30 — Sprint 29: Curriculum Requirement Domains Schema Plan
+
+**Mode:** Schema inspection + planning only. No migrations. No implementation.
+
+**Schema inspected:**
+- `curriculum_stages`, `curriculum_levels`, `skill_progressions`, `skill_domains` — global, no academy_id, no per-track breakdown
+- `progression_rules` — general level-up criteria, no academy override, no source/version tracking
+- `v_curriculum_level_requirements` — VIEW (not a table), flat criteria, no track differentiation
+- `player_curriculum_states` — academy_id present, single-level state, no per-track state
+- `player_domain_progress` — tracks mastery for 8 Skill path domains only, no competition/fitness equivalent
+- `player_progression` — flat aggregate scores (technical/tactical/competition/movement), not per-requirement
+- `player_priorities` — category enum adjacent to tracks but not curriculum-linked
+- `assessments`, `coach_observations`, `session_attendance`, `player_outcomes` — valid future evidence sources, no FK to any curriculum requirement
+- `development_track` enum (`skill | competition | fitness | combined`) confirmed to exist but NOT wired into curriculum tables
+- App homework / external evidence tables — confirmed absent from all 40 migrations
+
+**Gap confirmed:**
+- No per-pathway (Skill / Competition / Fitness) requirement rows
+- No named requirement table (only aggregate thresholds in `progression_rules`)
+- No player progress tracking per named requirement
+- No requirement-to-evidence linkage
+- No academy override mechanism for requirements
+- No parent/player visibility flags on requirements
+- No versioning on requirement definitions
+
+**Plan created:** `docs/CURRICULUM_REQUIREMENT_DOMAINS_PLAN.md`
+
+**Proposed new tables:**
+- `curriculum_requirement_domains` — 3 pathway domains (skill, competition, fitness)
+- `curriculum_track_requirements` — named requirements per level per domain, with academy override support
+- `player_requirement_progress` — per-player per-requirement status tracking
+- `requirement_evidence_links` — links coach observations, assessments, attendance, outcomes to requirements
+
+**Recommended migration sequence:** Sprint 30 (domain + requirement tables) → Sprint 31 (seed data) → Sprint 32 (progress view + UI) → Sprint 33 (evidence linking) → Sprint 34 (confirmation workflow)
+
+**No migrations created. No implementation. No source files changed.**
+
+**TypeScript check skipped** — no source files changed; check not required per sprint rules.
+
+**Files changed:**
+- `docs/CURRICULUM_REQUIREMENT_DOMAINS_PLAN.md` — created (planning document)
+- `docs/CHANGELOG.md` — this entry
+
+---
+
 ## 2026-04-30 — Sprint 28: Player Progression Requirements Read-Only V1
 
 **Schema fields confirmed:**
