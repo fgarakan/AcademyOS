@@ -140,6 +140,90 @@ export async function saveSessionExecutionAction(
   return { ok: true, error: null }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Session Recap
+// ─────────────────────────────────────────────────────────────
+
+export interface SaveSessionRecapInput {
+  sessionId: string
+  recapText: string
+}
+
+export interface SaveSessionRecapResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function saveSessionRecapAction(
+  input: SaveSessionRecapInput
+): Promise<SaveSessionRecapResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+
+  // 1. Auth
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+
+  // 2. Resolve academy_id
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  // 3. Verify session belongs to this academy
+  const { data: session } = await supabase
+    .from('sessions')
+    .select('id, coach_id')
+    .eq('id', input.sessionId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!session) return { ok: false, error: 'Session not found or access denied.' }
+
+  // 4. Verify coach access
+  const isAssignedCoach = session.coach_id === user.id
+  if (!isAssignedCoach) {
+    const { data: membership } = await supabase
+      .from('academy_memberships')
+      .select('role')
+      .eq('academy_id', academyId)
+      .eq('profile_id', user.id)
+      .eq('is_active', true)
+      .in('role', ['coach', 'head_coach', 'academy_director'])
+      .single()
+    if (!membership) return { ok: false, error: 'Not authorized to save a recap for this session.' }
+  }
+
+  // 5. Validate recap text
+  const recapText = input.recapText.trim()
+  if (!recapText) return { ok: false, error: 'Recap text cannot be empty.' }
+  if (recapText.length > 5000) return { ok: false, error: 'Recap text is too long (max 5,000 characters).' }
+
+  // 6. Insert voice_notes record
+  //    player_id omitted (null) — session-level recap, not player-specific
+  //    processing_status: 'pending' — raw input awaiting AI structuring (next sprint)
+  //    transcript: same as raw_input for V1 typed input
+  const { error: insertError } = await supabase
+    .from('voice_notes')
+    .insert({
+      academy_id: academyId,
+      author_id: user.id,
+      session_id: input.sessionId,
+      raw_input: recapText,
+      transcript: recapText,
+      processing_status: 'pending',
+    })
+
+  if (insertError) {
+    return { ok: false, error: `Failed to save recap: ${insertError.message}` }
+  }
+
+  return { ok: true, error: null }
+}
+
 export async function saveAttendanceAction(
   input: SaveAttendanceInput
 ): Promise<SaveAttendanceResult> {

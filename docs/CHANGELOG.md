@@ -2,6 +2,95 @@
 
 ---
 
+## 2026-04-30 — Sprint 17: Coach Session Recap MVP
+
+**Schema fields confirmed before coding:**
+- `voice_notes` table (migration 010) — confirmed suitable for session-level recap:
+  - `session_id UUID REFERENCES sessions(id)` — nullable, links recap to session ✓
+  - `author_id UUID REFERENCES profiles(id)` — coach who wrote it ✓
+  - `academy_id UUID NOT NULL` — multi-tenant boundary ✓
+  - `raw_input TEXT NOT NULL` — stores typed recap text ✓
+  - `transcript TEXT` — same as raw_input for V1 typed input ✓
+  - `player_id UUID` — nullable; NULL = session-level (not player-specific) ✓
+  - `processing_status TEXT DEFAULT 'pending'` — `'pending'` = raw, awaiting AI structuring ✓
+  - `audio_path TEXT` — NULL for V1; field exists for V2 voice integration ✓
+  - `parsed_observation_id UUID` — NULL until AI structures the recap (next sprint) ✓
+  - RLS: `auth_is_staff()` covers coaches, head_coaches, directors ✓
+- `coach_observations` — NOT used: `player_id NOT NULL` makes it unsuitable for session-level recaps (requires a specific player); used for per-player observations post-AI-parsing
+- `sessions.session_notes` — NOT used: already used for execution notes during the session; different semantic
+- No migration needed — `voice_notes` already exists and supports session_id + player_id=NULL pattern
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/SessionRecapPanel.tsx` — `'use client'` component. Shows lightweight session context (session name, exercises completed count, attendance summary). Textarea with placeholder example. Character count (0/5,000). Voice-ready copy: "Voice capture will be added later. For now, type the recap the same way you would say it after class." Save Recap button (disabled when empty, useTransition for pending state). Success message on save: "Recap saved. Next sprint will structure this into attendance context, session actuals, player observations, and director updates for review." Error display with AlertCircle icon.
+- `src/app/director/sessions/[sessionId]/SessionRecapSummary.tsx` — Server-renderable display component. Accepts `RecapEntry[]`. Empty state: "No coach recap recorded yet." Warning banner: "Raw coach recap — not yet AI-structured or parent-safe." Renders each recap with timestamp and whitespace-preserved text. Most recent first (sorted by caller).
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/actions.ts` — Added `SaveSessionRecapInput`, `SaveSessionRecapResult` interfaces and `saveSessionRecapAction` server action. Security chain: assertNotPreviewMode → auth → academy_id from profile → session ownership verified (academy_id match) → coach access check (session.coach_id === user or active membership in [coach, head_coach, academy_director]) → validate recap text (non-empty, max 5,000 chars) → insert voice_notes row (player_id=null, processing_status='pending', transcript=raw_input). Never updates templates, player profiles, player priorities, parent messages, or proposed_actions.
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Added step 6: fetch most recent session-level voice_note (player_id IS NULL, ordered by created_at DESC, limit 1, maybeSingle) to pre-populate recap textarea. Compute context: totalExercises, completedCount (from DB state), attendanceSummary ("N/M present" or null). Render `<SessionRecapPanel>` after the execution blocks section (always visible regardless of whether session has blocks).
+- `src/app/director/sessions/[sessionId]/page.tsx` — Added step 9: fetch voice_notes for this session (player_id IS NULL, ordered by created_at DESC, limit 5). Added "COACH RECAP" section at the bottom of the page (after ROSTER & ATTENDANCE) with `<SessionRecapSummary>`. Read-only for director.
+- `docs/CHANGELOG.md` — this entry
+
+**Coach recap behavior:**
+1. Open `/coach/sessions/[sessionId]`
+2. Scroll to SESSION RECAP section (below execution blocks and attendance)
+3. Session context shows: session name, exercises completed, attendance summary
+4. Textarea pre-populated with most recent saved recap (empty on first visit)
+5. Type recap text → Save Recap → success message with AI-structuring future hint
+6. Refresh → textarea pre-populated with most recently saved recap
+
+**Director recap visibility:**
+1. Open `/director/sessions/[sessionId]`
+2. Scroll to COACH RECAP section (below ROSTER & ATTENDANCE)
+3. If coach has saved recaps: orange warning banner + recap text with timestamps (most recent first)
+4. If no recap yet: "No coach recap recorded yet." empty state
+
+**Database write strategy:**
+- Each "Save Recap" inserts a NEW row in `voice_notes` (natural history of recap iterations)
+- On page load: most recent recap pre-populates the textarea (fetch by session_id + player_id IS NULL + ORDER BY created_at DESC LIMIT 1)
+- Director shows up to 5 most recent recaps
+- Only table written: `voice_notes`
+- Columns set: `academy_id`, `author_id`, `session_id`, `raw_input`, `transcript` (same as raw_input), `processing_status: 'pending'`
+- `player_id` omitted (null) — session-level, not player-specific
+- `audio_path` omitted (null) — V1 typed only
+- `parsed_observation_id` omitted (null) — set later by AI structuring sprint
+
+**Security checks:**
+- `assertNotPreviewMode()` — writes blocked in preview
+- Auth required
+- `academy_id` resolved from authenticated profile (never trusted from client)
+- Session verified against academy_id before write
+- Coach access: session.coach_id === user.id OR active membership in [coach, head_coach, academy_director]
+- Recap text validated server-side: non-empty, max 5,000 characters
+- No RLS bypass; no service role
+
+**What was not built:**
+- AI extraction or structuring of recap text
+- Player-specific parsed observations from recap
+- Parent-safe summaries
+- Director intelligence feed updates
+- Player profile or player priority updates
+- Automatic group recommendations
+- Coach incentive/score dashboard
+- Voice transcription integration (ElevenLabs, Whisper, browser recording)
+- File/audio upload
+- Author name display on director recap view (deferred — would require profiles join)
+
+**TypeScript:** clean (`npx tsc --noEmit` — no output)
+
+**Manual verification steps:**
+1. Ensure a generated session exists.
+2. Open `/coach/sessions/[sessionId]`.
+3. Scroll to SESSION RECAP section at the bottom.
+4. Confirm voice-ready copy is visible.
+5. Type: "Sarah was absent. Maria was present. We skipped the speed block and spent extra time on forehand grip and preparation. Maria improved when cued to set the racket earlier."
+6. Click Save Recap — confirm green success message with next-sprint note.
+7. Refresh page — confirm recap text persists in textarea.
+8. Open `/director/sessions/[sessionId]`.
+9. Scroll to COACH RECAP section — confirm raw recap appears with orange warning banner and timestamp.
+10. Confirm no player profile, parent message, template, player priority, or proposed_action rows were created.
+
+---
+
 ## 2026-04-30 — Sprint 16: Session Group Assignment V1
 
 **Schema fields confirmed before coding:**

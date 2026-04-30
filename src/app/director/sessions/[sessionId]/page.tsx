@@ -5,6 +5,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { GroupAssignmentPanel } from './GroupAssignmentPanel'
+import { SessionRecapSummary } from './SessionRecapSummary'
 
 interface PageProps {
   params: { sessionId: string }
@@ -211,6 +212,18 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
       activeGroups.push({ id: g.id, name: g.name, memberCount: countMap.get(g.id) ?? 0 })
     }
   }
+
+  // 9. Fetch session-level voice_notes (coach recaps, player_id IS NULL, most recent first)
+  interface RecapEntry { id: string; raw_input: string; created_at: string }
+  const { data: recapRows } = await supabase
+    .from('voice_notes')
+    .select('id, raw_input, created_at')
+    .eq('session_id', session.id)
+    .eq('academy_id', academyId)
+    .is('player_id', null)
+    .order('created_at', { ascending: false })
+    .limit(5)
+  const recaps: RecapEntry[] = (recapRows ?? []) as RecapEntry[]
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -430,6 +443,15 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
                 </div>
               </>
             )}
+          </CardContent>
+        </Card>
+      </div>
+      {/* Coach Recap */}
+      <div>
+        <SectionHeader title="COACH RECAP" />
+        <Card className="mt-3">
+          <CardContent className="py-4">
+            <SessionRecapSummary recaps={recaps} />
           </CardContent>
         </Card>
       </div>

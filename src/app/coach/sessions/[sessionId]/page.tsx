@@ -5,7 +5,8 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { CoachSessionExecutionClient } from './CoachSessionExecutionClient'
-import { saveSessionExecutionAction, saveAttendanceAction } from './actions'
+import { SessionRecapPanel } from './SessionRecapPanel'
+import { saveSessionExecutionAction, saveAttendanceAction, saveSessionRecapAction } from './actions'
 
 interface PageProps {
   params: { sessionId: string }
@@ -174,6 +175,25 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
     }
   }
 
+  // 6. Fetch most recent session-level recap (voice_notes with player_id IS NULL)
+  let initialRecap = ''
+  const { data: recentRecap } = await supabase
+    .from('voice_notes')
+    .select('raw_input')
+    .eq('session_id', params.sessionId)
+    .eq('academy_id', academyId)
+    .is('player_id', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  initialRecap = recentRecap?.raw_input ?? ''
+
+  // Compute context for recap panel
+  const totalExercises = exercises.length
+  const completedCount = exercises.filter(e => e.completed).length
+  const presentCount = roster.filter(p => p.currentStatus === 'present').length
+  const attendanceSummary = roster.length > 0 ? `${presentCount}/${roster.length} present` : null
+
   return (
     <div className="space-y-6 pb-10">
       <BackLink />
@@ -221,6 +241,16 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           saveAttendanceAction={saveAttendanceAction}
         />
       )}
+
+      <SessionRecapPanel
+        sessionId={session.id}
+        sessionName={session.name ?? 'Untitled Session'}
+        completedCount={completedCount}
+        totalCount={totalExercises}
+        attendanceSummary={attendanceSummary}
+        initialRecap={initialRecap}
+        saveRecapAction={saveSessionRecapAction}
+      />
     </div>
   )
 }
