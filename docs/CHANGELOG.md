@@ -2,6 +2,59 @@
 
 ---
 
+## 2026-04-30 — Sprint 30: Requirement Domain Tables Migration
+
+**Mode:** Schema migration only. No seed data. No UI. No app behavior changes.
+
+**Migration file created:** `supabase/migrations/041_requirement_domains.sql`
+
+**Tables created (4):**
+
+- `curriculum_requirement_domains` — Global reference table. Defines the three pathway domain buckets (skill, competition, fitness). `key` column has CHECK constraint. No `academy_id`. 3 rows will be seeded in Sprint 31.
+- `curriculum_track_requirements` — Named requirements per curriculum level and pathway domain. Supports global defaults (`academy_id IS NULL`) and academy-specific overrides/additions (`academy_id IS NOT NULL`). Partial unique indexes used to handle NULL uniqueness correctly.
+- `player_requirement_progress` — Per-player per-requirement status tracking. `UNIQUE(player_id, requirement_id)`. Preserves history across level advances.
+- `requirement_evidence_links` — Polymorphic evidence-to-requirement links. `evidence_id` is a soft FK (application-enforced). Immutable once created (no `updated_at`).
+
+**View created (1):**
+
+- `v_player_requirement_progress_detail` — Read-only join of all four tables. Exposes `requirement_domain_key`, `requirement_domain_label`, `level_display_name`, `level_number`, `status`, `evidence_count`, and display order fields for the player profile curriculum UI. RLS enforced on underlying tables.
+
+**RLS summary:**
+
+| Table | Read | Write |
+|---|---|---|
+| `curriculum_requirement_domains` | All authenticated | Directors/heads only (`auth_is_director_or_head()`) |
+| `curriculum_track_requirements` | All authenticated (global rows) + own academy rows | Directors/heads for own academy rows only; global rows not writable from app |
+| `player_requirement_progress` | Academy staff (`auth_is_staff()`) | Academy staff only |
+| `requirement_evidence_links` | Academy staff | Academy staff only |
+
+**Parent/player access deferred to Sprint 32.**
+
+**updated_at triggers:**
+- `trg_curriculum_req_domains_updated_at` — uses `update_updated_at_column()` (defined in migration 036)
+- `trg_curriculum_track_req_updated_at` — same function
+- `trg_player_req_progress_updated_at` — same function
+- `requirement_evidence_links` — no trigger; evidence links are immutable once created
+
+**Unique constraint approach for `curriculum_track_requirements`:**
+Standard `UNIQUE (academy_id, ...)` cannot enforce uniqueness for global rows because `NULL != NULL` in PostgreSQL. Two partial unique indexes are used instead:
+- `idx_curriculum_track_req_global_unique` — unique on `(curriculum_level_id, requirement_domain_id, title, version)` WHERE `academy_id IS NULL`
+- `idx_curriculum_track_req_academy_unique` — unique on `(academy_id, curriculum_level_id, requirement_domain_id, title, version)` WHERE `academy_id IS NOT NULL`
+
+**No seed data.** Domain rows (skill, competition, fitness) deferred to Sprint 31.
+
+**No UI changes.** `progression_rules` and `v_curriculum_level_requirements` are untouched.
+
+**Type regeneration status:** Migration not applied to live DB yet. `database.types.ts` not updated. Run `supabase gen types typescript --project-id <id> > src/lib/supabase/database.types.ts` after applying migration.
+
+**TypeScript check:** Clean (`npx tsc --noEmit` — no source files changed; no errors).
+
+**Files changed:**
+- `supabase/migrations/041_requirement_domains.sql` — created (320 lines)
+- `docs/CHANGELOG.md` — this entry
+
+---
+
 ## 2026-04-30 — Sprint 29: Curriculum Requirement Domains Schema Plan
 
 **Mode:** Schema inspection + planning only. No migrations. No implementation.
