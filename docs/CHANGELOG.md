@@ -2,6 +2,68 @@
 
 ---
 
+## 2026-04-30 — Sprint 23: Player Profile Evidence Summary V1
+
+**Schema fields confirmed:**
+
+**coach_observations** — all fields already confirmed in Sprint 22; reused for summary:
+- `observation_type`: string — grouped and counted to produce top types ✓
+- `tags`: string[] | null — flattened and counted across all observations for top themes ✓
+- `is_private`: boolean — counted for "Internal" metric ✓
+- `ai_entities`: JSONB — `ai_entities.source === 'session_recap_draft'` counted for "From Recap" metric ✓
+- `created_at`: string — first item (newest-first sort) used for "Most recent observation" ✓
+- `sessions` join present — non-null sessions counted for "Session-linked" metric ✓
+
+**What can be summarized without AI:**
+- Observations by type ✓
+- Tags by frequency ✓
+- Internal count, From Recap count, Session-linked count ✓
+- Last observation date ✓
+- Recap ratio text note ✓
+
+**Files changed:**
+- `src/app/director/players/[playerId]/CoachObservationEvidenceSummary.tsx` — new component; deterministic evidence summary
+- `src/app/director/players/[playerId]/page.tsx` — import + inserted summary above observations feed
+- `docs/CHANGELOG.md`
+
+**Implementation:**
+- Zero additional DB queries — reuses `enrichedObservations` already fetched in `page.tsx`
+- Metric grid: Total, Internal, From Recap, Session-linked
+- Most recent observation date shown
+- Top observation types (up to 3) with counts
+- Top tags/themes (up to 5) with counts
+- Deterministic recap-ratio note ("Most recent evidence comes from structured coach recaps" if ≥50% from recap)
+- Disclaimer: "Internal evidence summary. This does not change player level, priorities, or parent-facing communication."
+- Empty state: "No evidence summary yet. Applied coach observations will create the first evidence signals."
+
+**Security:**
+- Read-only — no mutations
+- No additional queries; uses same `academy_id + player_id` scoped data
+- No parent/player visibility
+
+**What was NOT built:**
+- No parent-facing or player-facing summaries
+- No level-up / progression logic
+- No automatic priorities
+- No AI summarization
+- No chart library
+- No profile field mutations
+- No observation approval workflow
+- No migrations
+
+**TypeScript:** `npx tsc --noEmit` — zero errors
+
+**Validation (manual):**
+1. Navigate to `/director/players/[playerId]` → Notes tab
+2. Confirm Evidence Summary card appears above Internal Coach Observations
+3. Confirm total, Internal, From Recap, Session-linked counts are visible
+4. Confirm top observation types and top tags appear if observations exist
+5. Confirm disclaimer copy is present
+6. Confirm empty state shows when no observations exist
+7. Confirm no player profile fields, priorities, or parent/player views changed
+
+---
+
 ## 2026-04-30 — Sprint 22: Coach Observations Player Profile Feed V1
 
 **Schema fields confirmed:**

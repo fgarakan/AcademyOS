@@ -12,6 +12,7 @@ import { CurriculumProgressGrid } from '@/components/player/CurriculumProgressGr
 import { PlayerCurriculumEmptyState } from '@/components/player/PlayerCurriculumEmptyState'
 import { EvaluateAdvancementButton } from '@/components/player/EvaluateAdvancementButton'
 import { CoachObservationsFeed, type CoachObservationRow } from './CoachObservationsFeed'
+import { CoachObservationEvidenceSummary } from './CoachObservationEvidenceSummary'
 import { DevelopmentSummarySection } from '@/components/player/DevelopmentSummarySection'
 import { AddObservationForm } from '@/components/player/AddObservationForm'
 import { AddVoiceNoteForm } from '@/components/player/AddVoiceNoteForm'
@@ -262,6 +263,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Edit Development Summary form */}
       <EditDevelopmentSummaryForm summary={developmentSummary} onSubmit={updateSummaryAction} />
+
+      {/* Evidence summary — derived from same observation data, no extra DB query */}
+      <CoachObservationEvidenceSummary observations={enrichedObservations} />
 
       {/* Internal Coach Observations feed */}
       <div>
