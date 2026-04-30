@@ -2,6 +2,124 @@
 
 ---
 
+## 2026-04-30 — Sprint 33: Orange Ball Starter Requirement Seed Migration
+
+**Mode:** Seed migration only. No UI. No player data changes. No player progress bootstrap.
+
+**Migration file created:** `supabase/migrations/043_orange_ball_starter_requirements.sql`
+
+**Orange Ball levels targeted:**
+- Orange 1 — Rally (`orange_development`, level_number=1, sort_order=4)
+- Orange 2 — Direction (`orange_development`, level_number=2, sort_order=5)
+- Orange 3 — Construction (`orange_development`, level_number=3, sort_order=6)
+
+**Rows seeded into `curriculum_track_requirements` (32 total):**
+
+| Level | Skill | Competition | Fitness | Total |
+|---|---|---|---|---|
+| Orange 1 — Rally | 4 | 3 | 3 | 10 |
+| Orange 2 — Direction | 5 | 3 | 3 | 11 |
+| Orange 3 — Construction | 4 | 4 | 3 | 11 |
+| **Total** | **13** | **10** | **9** | **32** |
+
+**Row field conventions for all 32 rows:**
+- `academy_id = NULL` — global default, not academy-specific
+- `source_type = 'global_default'`
+- `version = 1`
+- `is_active = true`
+- `evidence_policy = 'coach_confirmed'` — no automatic progression
+- `is_parent_visible_default = false`
+- `is_player_visible_default = false`
+
+**requirement_type breakdown:**
+- `'qualitative'` — 28 rows (all observation-based requirements)
+- `'attendance'` — 4 rows: Effort and readiness (O1 Fit), Session-length effort (O2 Fit), Internal match play participation (O3 Comp), Full session stamina (O3 Fit)
+
+**Attendance-type rows with numeric targets:**
+| Title | target_value | unit |
+|---|---|---|
+| Effort and readiness (O1) | 8 | sessions |
+| Session-length effort (O2) | 8 | sessions |
+| Internal match play participation (O3) | 2 | matches |
+| Full session stamina (O3) | 8 | sessions |
+
+**is_required=false rows (8 of 32):**
+- Orange 1: Basic directional intent (Skill), Effort and readiness (Fitness)
+- Orange 2: Rally under directional constraint (Skill), Serve reliability in game context (Competition), Session-length effort (Fitness)
+- Orange 3: Shot transition — defence to offence (Skill), Opponent weakness awareness (Competition), Between-point recovery routine (Fitness)
+
+**Idempotency strategy:**
+`ON CONFLICT (curriculum_level_id, requirement_domain_id, title, version) WHERE academy_id IS NULL DO NOTHING`
+Targets the partial unique index `idx_curriculum_track_req_global_unique` defined in migration 041. Safe to re-run — duplicate inserts silently skipped.
+
+**Guard clauses:** Migration raises `RAISE EXCEPTION` if any Orange Ball level or domain lookup returns NULL, preventing silent partial seeding.
+
+**Tables intentionally untouched (Sprint 33 scope):**
+- `player_requirement_progress` — no rows created
+- `requirement_evidence_links` — no rows created
+- `player` tables — unchanged
+- `player_priorities` — unchanged
+- All UI components — unchanged
+- All server actions — unchanged
+- All backend files — unchanged
+
+**Type regeneration status:** Migration not yet applied to live DB. `database.types.ts` not updated — this migration adds no new tables or columns; type shape is unchanged from Sprint 30. After applying, run:
+```
+supabase gen types typescript --project-id <your-project-id> > src/lib/supabase/database.types.ts
+```
+
+**TypeScript check:** Skipped — no source files changed. Migration and changelog only.
+
+**Validation:**
+- SQL syntax reviewed manually ✓
+- `requirement_type` values (`'qualitative'`, `'attendance'`) satisfy CHECK constraint in migration 041 ✓
+- `evidence_policy` value (`'coach_confirmed'`) satisfies CHECK constraint in migration 041 ✓
+- `source_type` value (`'global_default'`) satisfies CHECK constraint in migration 041 ✓
+- ON CONFLICT predicate matches `idx_curriculum_track_req_global_unique` partial index exactly ✓
+- `academy_id = NULL` on all rows — no academy-scoped data created ✓
+- Single-quote escaping verified for apostrophe characters in pass_condition and description fields ✓
+- Row count verified: 10 + 11 + 11 = 32 ✓
+
+**Manual verification steps (after applying migration):**
+1. Confirm requirement domains exist:
+   `SELECT key, label FROM curriculum_requirement_domains ORDER BY display_order;`
+2. Confirm Orange Ball levels exist:
+   `SELECT display_name, level_number, sort_order FROM curriculum_levels WHERE display_name ILIKE '%Orange%' ORDER BY sort_order;`
+3. Confirm seeded requirement count:
+   `SELECT COUNT(*) FROM curriculum_track_requirements WHERE academy_id IS NULL AND source_type = 'global_default' AND version = 1;`
+   — Expected: 32
+4. Confirm Orange Ball rows by level/domain:
+   ```sql
+   SELECT cl.display_name, crd.key, COUNT(*)
+   FROM curriculum_track_requirements ctr
+   JOIN curriculum_levels cl ON cl.id = ctr.curriculum_level_id
+   JOIN curriculum_requirement_domains crd ON crd.id = ctr.requirement_domain_id
+   WHERE cl.display_name ILIKE '%Orange%'
+   GROUP BY cl.display_name, crd.key
+   ORDER BY cl.display_name, crd.key;
+   ```
+   — Expected: Orange 1 (competition=3, fitness=3, skill=4), Orange 2 (competition=3, fitness=3, skill=5), Orange 3 (competition=4, fitness=3, skill=4)
+5. Confirm no player progress rows were created:
+   `SELECT COUNT(*) FROM player_requirement_progress;`
+   — Expected: 0 (or unchanged from pre-migration count)
+6. Confirm no evidence links were created:
+   `SELECT COUNT(*) FROM requirement_evidence_links;`
+   — Expected: 0 (or unchanged)
+7. Confirm no academy-specific rows were created:
+   `SELECT COUNT(*) FROM curriculum_track_requirements WHERE academy_id IS NOT NULL;`
+   — Expected: 0 (or unchanged)
+
+**Files changed:**
+- `supabase/migrations/043_orange_ball_starter_requirements.sql` — created (240 lines)
+- `docs/CHANGELOG.md` — this entry
+
+**git add command (do not commit until approved):**
+```
+git add supabase/migrations/043_orange_ball_starter_requirements.sql docs/CHANGELOG.md
+```
+
+---
+
 ## 2026-04-30 — Sprint 32: Starter Requirement Seed Pack Planning
 
 **Mode:** Planning and documentation only. No migration. No seed SQL. No UI. No player data changes.
