@@ -2,6 +2,58 @@
 
 ---
 
+## 2026-04-30 — Sprint 32: Starter Requirement Seed Pack Planning
+
+**Mode:** Planning and documentation only. No migration. No seed SQL. No UI. No player data changes.
+
+**Planning document created:** `docs/STARTER_REQUIREMENT_SEED_PACK_PLAN.md`
+
+**Schema inspection confirmed:**
+- `curriculum_levels` contains 15 rows across 5 stages
+- Orange Ball levels confirmed: `Orange 1 — Rally`, `Orange 2 — Direction`, `Orange 3 — Construction`
+- `curriculum_requirement_domains` contains 3 seeded rows: `skill`, `competition`, `fitness`
+- `curriculum_track_requirements` schema confirmed with all required columns: `requirement_type`, `measurement_method`, `target_value`, `unit`, `pass_condition`, `evidence_policy`, `is_required`, `display_order`, `is_parent_visible_default`, `is_player_visible_default`, `source_type`, `version`, `is_active`
+- `player_requirement_progress` and `requirement_evidence_links` exist with correct shape
+
+**Scope decision:** Option A — Orange Ball 1–3 only (approximately 27–45 requirement rows across 3 levels × 3 domains).
+
+**Starter requirement language drafted for:**
+- Orange 1 — Rally: 4 Skill, 3 Competition, 3 Fitness requirements (10 total)
+- Orange 2 — Direction: 5 Skill, 3 Competition, 3 Fitness requirements (11 total)
+- Orange 3 — Construction: 4 Skill, 4 Competition, 3 Fitness requirements (11 total)
+
+**Key design decisions:**
+- All starter rows: `source_type = 'global_default'`, `academy_id = NULL`, `version = 1`, `is_active = true`
+- All starter rows: `evidence_policy = 'coach_confirmed'` — no automatic promotion
+- All starter rows: `is_parent_visible_default = false`, `is_player_visible_default = false`
+- `requirement_type` leans `'qualitative'`; attendance-based requirements use `'attendance'`
+- Human approval required before Sprint 33 seeds these rows
+
+**Tables intentionally untouched (Sprint 32 scope):**
+- `curriculum_track_requirements` — no rows seeded; language plan only
+- `player_requirement_progress` — no rows created
+- `requirement_evidence_links` — no rows created
+- All player tables, player profile, player priorities — unchanged
+- All UI components — unchanged
+- All supabase migrations — unchanged
+
+**Recommended next sprints:**
+- Sprint 33 — Orange Ball Starter Requirement Seed Migration (pending human approval)
+- Sprint 34 — Player Requirement Progress Bootstrap V1
+- Sprint 35 — Player Requirement Progress Read-Only UI
+- Sprint 36 — Evidence-to-Requirement Link Drafts V1
+- Sprint 37 — Requirement Confirmation Workflow V1
+
+**TypeScript check:** Skipped — no source files changed.
+
+**Migration created:** None.
+
+**Files changed:**
+- `docs/STARTER_REQUIREMENT_SEED_PACK_PLAN.md` — created
+- `docs/CHANGELOG.md` — this entry
+
+---
+
 ## 2026-04-30 — Sprint 31: Requirement Domain Seed Pack V1
 
 **Mode:** Seed migration only. No UI. No player data changes. No track requirement content.
