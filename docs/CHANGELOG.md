@@ -2,6 +2,65 @@
 
 ---
 
+## 2026-04-30 — Sprint 28: Player Progression Requirements Read-Only V1
+
+**Schema fields confirmed:**
+- `players.current_level_id` → references `academy_levels` (academy-specific levels)
+- `player_curriculum_states.current_level_id` → references `curriculum_levels` (global curriculum spine)
+- `v_player_curriculum_detail` (already fetched as `domainRows`) has `current_level_id`, `current_level_name`, `stage`, `stage_name`, `advancement_eligible` — no extra query needed for current level display
+- `v_curriculum_level_requirements` view: has `level_id`, `sort_order`, `level_number`, `stage_name`, `min_assessment_score`, `min_domains_mastered`, `min_total_outcomes`, `min_weeks_at_level`, `requires_director_approval`, `requires_final_assessment`, `blocking_signal_types` — authenticated read confirmed
+- `curriculum_levels`: global, authenticated read, used for next-level derivation by `sort_order`
+- `progression_rules`: authenticated read, LEFT JOINed into `v_curriculum_level_requirements` — NULLs expected if rules not yet seeded for a level
+- `player_progression` (joined in `getPlayerById`): has `technical_score`, `tactical_score`, `competition_score`, `movement_score` — used as current development score context
+- `development_track` enum (`skill | competition | fitness | combined`) does NOT appear on `v_curriculum_level_requirements` — per-track requirements are NOT in schema; grouping by Skill/Competition/Fitness not supported yet
+
+**Schema decision:**
+Requirements exist as GENERAL level criteria (not per-track). Skill/Competition/Fitness grouping is schema-absent. Component shows general advancement criteria with a note that per-track breakdown comes in a future curriculum sprint. Track scores from `player_progression` displayed as context.
+
+**Files created:**
+- `src/app/director/players/[playerId]/PlayerProgressionRequirements.tsx` — read-only component; shows current curriculum level, next target level (if derivable), general advancement criteria, current development scores; no controls; no mutations
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — added `PlayerProgressionRequirements` import; added 2 sequential rawDb queries (v_curriculum_level_requirements + curriculum_levels); added `progressionScores` from already-fetched player_progression; renders `PlayerProgressionRequirements` in Notes tab above `PlayerActivePriorities`
+- `docs/CHANGELOG.md` — this entry
+
+**Data queries added (page.tsx):**
+1. `rawDb.from('v_curriculum_level_requirements').select(...).eq('level_id', curriculumSummary.current_level_id).limit(1)` — gets advancement criteria + sort_order
+2. `rawDb.from('curriculum_levels').select(...).gt('sort_order', ...).order('sort_order').limit(1)` — derives next curriculum level
+- Both queries are conditional on `curriculumSummary?.current_level_id` being non-null
+- `progressionScores = (player as any).player_progression?.[0]` — no new DB query (already joined)
+
+**Display behavior:**
+- Section appears in Notes tab, above Active Priorities
+- If no curriculum state: "No curriculum level has been assigned to this player yet."
+- Current level: shows `current_level_name` + `stage_name` from `domainRows[0]`
+- Next target: shows next `curriculum_levels` row by sort_order, or "Next target level has not been configured yet."
+- Advancement eligibility: lime banner if eligible, muted banner if not
+- Advancement criteria: table rows for each non-null requirement, or "not configured yet" message
+- Blocking signals: orange pills if any `blocking_signal_types` set
+- Track scores: 2×2 or 4-column grid of technical/tactical/competition/movement scores (hidden if all null)
+- Disclaimer: "Read-only development guidance. This does not move the player up, change priorities, or publish anything to parents."
+
+**Security checks:**
+- Uses authenticated Supabase server client (no service role)
+- `academy_id` resolved from server-side profile (existing pattern)
+- Player verified in existing code (`getPlayerById` throws → `notFound()`)
+- `curriculum_levels` and `v_curriculum_level_requirements` queries use player's `current_level_id`, not cross-academy data
+- No player, priority, observation, or proposed_action mutations
+
+**What was not built:**
+- No parent portal progression view
+- No player portal progression view
+- No level-up scoring or automatic promotion recommendation
+- No level update button or move-up workflow
+- No per-track (Skill/Competition/Fitness) requirement rows — schema does not support yet
+- No migrations
+
+**Validation:**
+- `npx tsc --noEmit` — passes, zero errors
+
+---
+
 ## 2026-04-30 — Sprint 27: Approved Priority Recommendation Application Guardrails
 
 **Schema fields confirmed:**

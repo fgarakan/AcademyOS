@@ -14,6 +14,7 @@ import { EvaluateAdvancementButton } from '@/components/player/EvaluateAdvanceme
 import { CoachObservationsFeed, type CoachObservationRow } from './CoachObservationsFeed'
 import { CoachObservationEvidenceSummary } from './CoachObservationEvidenceSummary'
 import { PlayerActivePriorities, type PlayerPriorityRow } from './PlayerActivePriorities'
+import { PlayerProgressionRequirements } from './PlayerProgressionRequirements'
 import { PriorityRecommendationDraftButton } from './PriorityRecommendationDraftButton'
 import { PriorityRecommendationDrafts, type PriorityRecommendationDraftRow } from './PriorityRecommendationDrafts'
 import { createPriorityRecommendationDraftAction } from './priorityRecommendationAction'
@@ -266,6 +267,43 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   const createDraftAction = createPriorityRecommendationDraftAction.bind(null, params.playerId)
 
+  // Progression requirements: level requirements + next level derivation.
+  // rawDb cast avoids TS2589; curriculum_levels and v_curriculum_level_requirements are
+  // readable by all authenticated users (RLS: "Authenticated read" policies on both tables).
+  let progressionRequirements: {
+    sort_order: number | null
+    level_number: number | null
+    min_assessment_score: number | null
+    min_domains_mastered: number | null
+    min_total_outcomes: number | null
+    min_weeks_at_level: number | null
+    requires_director_approval: boolean | null
+    requires_final_assessment: boolean | null
+    blocking_signal_types: string[] | null
+  } | null = null
+  let nextCurriculumLevel: { display_name: string; level_number: number; stage: string } | null = null
+
+  if (curriculumSummary?.current_level_id) {
+    const { data: reqData } = await rawDb
+      .from('v_curriculum_level_requirements')
+      .select('sort_order, level_number, min_assessment_score, min_domains_mastered, min_total_outcomes, min_weeks_at_level, requires_director_approval, requires_final_assessment, blocking_signal_types')
+      .eq('level_id', curriculumSummary.current_level_id)
+      .limit(1)
+    progressionRequirements = reqData?.[0] ?? null
+
+    if (progressionRequirements?.sort_order != null) {
+      const { data: nextLvlData } = await rawDb
+        .from('curriculum_levels')
+        .select('display_name, level_number, stage, sort_order')
+        .gt('sort_order', progressionRequirements.sort_order)
+        .order('sort_order', { ascending: true })
+        .limit(1)
+      nextCurriculumLevel = nextLvlData?.[0] ?? null
+    }
+  }
+
+  const progressionScores = (player as any).player_progression?.[0] ?? null
+
   const addObsAction = addObservationAction.bind(null, params.playerId, academyId)
   const updateSummaryAction = updateDevelopmentSummaryAction.bind(null, params.playerId, academyId)
   const addVoiceNoteServerAction = addVoiceNoteAction.bind(null, params.playerId, academyId)
@@ -293,6 +331,22 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Edit Development Summary form */}
       <EditDevelopmentSummaryForm summary={developmentSummary} onSubmit={updateSummaryAction} />
+
+      {/* Progression requirements — read-only curriculum level display, no mutation */}
+      <PlayerProgressionRequirements
+        hasCurriculumState={!!curriculumSummary}
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        currentStageName={curriculumSummary?.stage_name ?? null}
+        advancementEligible={curriculumSummary?.advancement_eligible ?? null}
+        nextLevel={nextCurriculumLevel}
+        requirements={progressionRequirements}
+        trackScores={progressionScores ? {
+          technical_score: progressionScores.technical_score ?? null,
+          tactical_score:  progressionScores.tactical_score  ?? null,
+          competition_score: progressionScores.competition_score ?? null,
+          movement_score:  progressionScores.movement_score  ?? null,
+        } : null}
+      />
 
       {/* Active priorities — read-only visibility, no mutation controls */}
       <PlayerActivePriorities priorities={activePriorities} />
