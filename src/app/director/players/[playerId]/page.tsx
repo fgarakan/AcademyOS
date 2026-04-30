@@ -26,6 +26,10 @@ import { AIDraftPanel } from '@/components/player/AIDraftPanel'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { PlayerProfileTabs } from './_components/PlayerProfileTabs'
+import { PlayerRequirementProgressReadOnly, type RequirementProgressRow } from './PlayerRequirementProgressReadOnly'
+import { EvidenceRequirementDraftButton } from './EvidenceRequirementDraftButton'
+import { EvidenceRequirementDrafts, type EvidenceRequirementDraftRow } from './EvidenceRequirementDrafts'
+import { createEvidenceRequirementLinkDraftsAction } from './evidenceRequirementDraftAction'
 
 interface PageProps {
   params: { playerId: string }
@@ -265,7 +269,43 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     .limit(5)
   const recommendationDrafts: PriorityRecommendationDraftRow[] = rawDrafts ?? []
 
+  // Evidence link drafts: pending/approved requirement_evidence_link proposed_actions for this player.
+  // rawDb cast avoids TS2589; RLS enforces academy scoping.
+  const { data: rawEvidenceDrafts } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, proposed_payload, created_at')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'requirement_evidence_link')
+    .eq('target_object_id', params.playerId)
+    .in('status', ['pending_review', 'approved', 'clarification_needed'])
+    .order('created_at', { ascending: false })
+    .limit(5)
+  const evidenceLinkDrafts: EvidenceRequirementDraftRow[] = rawEvidenceDrafts ?? []
+
+  // Requirement progress: read from v_player_requirement_progress_detail.
+  // New view not yet in database.types.ts — rawDb cast + local interface used.
+  // Type regeneration required after migrations 041–044 are applied to live DB.
+  const { data: rawRequirementProgress } = await rawDb
+    .from('v_player_requirement_progress_detail')
+    .select([
+      'progress_id', 'academy_id', 'player_id', 'curriculum_level_id', 'requirement_id',
+      'requirement_title', 'requirement_description', 'requirement_type',
+      'requirement_domain_key', 'requirement_domain_label',
+      'level_display_name', 'level_number',
+      'status', 'progress_value', 'evidence_count', 'last_evidence_at',
+      'is_required', 'is_parent_visible', 'is_player_visible',
+      'domain_display_order', 'requirement_display_order',
+    ].join(', '))
+    .eq('academy_id', academyId)
+    .eq('player_id', params.playerId)
+    .order('domain_display_order', { ascending: true })
+    .order('requirement_display_order', { ascending: true })
+  const requirementProgressRows: RequirementProgressRow[] = rawRequirementProgress ?? []
+
+  const isOrangeBallPlayer = curriculumSummary?.stage === 'orange_development'
+
   const createDraftAction = createPriorityRecommendationDraftAction.bind(null, params.playerId)
+  const createEvidenceDraftAction = createEvidenceRequirementLinkDraftsAction.bind(null, params.playerId)
 
   // Progression requirements: level requirements + next level derivation.
   // rawDb cast avoids TS2589; curriculum_levels and v_curriculum_level_requirements are
@@ -347,6 +387,31 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           movement_score:  progressionScores.movement_score  ?? null,
         } : null}
       />
+
+      {/* Requirement progress — Sprint 35 read-only view of bootstrapped requirement rows.
+          Groups by Skill / Competition / Fitness domain.
+          No mutations. Director/staff-facing only. */}
+      <PlayerRequirementProgressReadOnly
+        rows={requirementProgressRows}
+        hasCurriculumState={!!curriculumSummary}
+        isOrangeBallPlayer={isOrangeBallPlayer}
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+      />
+
+      {/* Evidence link drafts — Sprint 36 read-only display of pending drafts.
+          Draft only. No requirement_evidence_links created. No progress mutations. */}
+      <EvidenceRequirementDrafts drafts={evidenceLinkDrafts} />
+
+      {/* Create evidence link drafts — Sprint 36 deterministic matching draft only.
+          No requirement status updates. No parent/player views. Director/staff only. */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Evidence Linking</p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <EvidenceRequirementDraftButton onCreateDrafts={createEvidenceDraftAction} />
+        </CardContent>
+      </Card>
 
       {/* Active priorities — read-only visibility, no mutation controls */}
       <PlayerActivePriorities priorities={activePriorities} />

@@ -2,6 +2,66 @@
 
 ---
 
+## 2026-04-30 — Sprint 36: Evidence-to-Requirement Link Drafts V1
+
+**Mode:** Draft creation only. No mutations to evidence tables. No requirement status updates. No parent/player views.
+
+**Files created:**
+- `src/app/director/players/[playerId]/evidenceRequirementDraftAction.ts` — server action: auth chain → fetch observations → fetch requirement progress → deterministic keyword matching → insert one batch `proposed_actions` row
+- `src/app/director/players/[playerId]/EvidenceRequirementDraftButton.tsx` — client button component, same pattern as `PriorityRecommendationDraftButton`
+- `src/app/director/players/[playerId]/EvidenceRequirementDrafts.tsx` — read-only display of pending evidence link drafts on the player profile
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — imports for 3 new files; query for existing evidence link drafts; action binding; `EvidenceRequirementDrafts` + `EvidenceRequirementDraftButton` card added to notesSlot after `PlayerRequirementProgressReadOnly`
+
+**What was built:**
+- "Create Evidence Link Drafts" button in a new "Evidence Linking" card in the Notes tab of the director player profile.
+- Deterministic keyword matching — no AI API call. Uses three domain keyword families (`skill`, `competition`, `fitness`) plus tokenized requirement title/description words.
+- Matching logic: tokenizes observation tags and content; computes keyword overlap with requirement keyword sets; requires ≥1 matching keyword; confidence = 0.3 + (match_count / 10) × 0.6, capped at 0.9.
+- Caps output to 10 proposed links per click; deduplicates per (observation, requirement) pair.
+- Duplicate prevention: checks for existing `pending_review` draft with same `target_module` + `target_object_id` before creating a new batch.
+- Empty/safe states: returns descriptive messages for no observations, no requirement rows, and no matches found.
+- One batch `proposed_actions` row per click — reduces review clutter vs. per-link rows.
+- Proposed payload shape: `draft_type = requirement_evidence_link_v1`, `source = coach_observation_requirement_matching`, `links[]` with `coach_observation_id`, `requirement_progress_id`, `requirement_id`, `requirement_title`, `requirement_domain_key`, `evidence_summary`, `match_reason`, `confidence`, `is_parent_safe = false`.
+- Existing pending/approved evidence link drafts displayed above the button in "Evidence Link Drafts" section — shows link count, domain breakdown, first 5 requirement titles, and draft-only warning.
+
+**Security chain:**
+- `assertNotPreviewMode()`
+- Authenticated Supabase server client (no service role)
+- `academy_id` resolved from authenticated profile — never trusts client input
+- Active academy membership verified (`academy_director` or `head_coach` only)
+- Player verified as belonging to this academy
+- All queries scoped to `academy_id` + `player_id`
+- No RLS bypass
+
+**proposed_actions write strategy:**
+- `target_module = requirement_evidence_link`
+- `target_object_type = player`
+- `target_object_id = player.id`
+- `status = pending_review`
+- `action_type = other`
+- `voice_command_id` created via `voice_commands` relay row insert (NOT NULL constraint requires it)
+
+**What was NOT built (by design):**
+- No inserts into `requirement_evidence_links`
+- No updates to `player_requirement_progress` (evidence_count, status, last_evidence_at)
+- No updates to `coach_observations`
+- No requirement confirmation workflow
+- No "mark met" or "mark in progress" controls
+- No parent/player portal views
+- No review queue integration (deferred to next sprint)
+- No AI API calls
+- No new migrations
+- No new packages
+
+**Validation:**
+- `npx tsc --noEmit` — passes with zero errors.
+
+**Type regeneration note:**
+`database.types.ts` does not yet include `v_player_requirement_progress_detail`. Local types used in the action file are consistent with the view definition in migration 041.
+
+---
+
 ## 2026-04-30 — Sprint 35: Player Requirement Progress Read-Only UI
 
 **Mode:** Read-only UI only. No mutations. No confirmation workflow. No evidence linking.
