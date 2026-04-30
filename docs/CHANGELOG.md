@@ -5,6 +5,26 @@ Update this file at the end of every completed module.
 
 ---
 
+## 2026-04-30 — Sprint 11: Fitness Template Builder V1 (Director Edit Mode)
+
+Added director-only edit mode to the fitness template detail page. Directors can now reorder blocks, reorder exercises within blocks, and edit durations — all from the existing read-only viewer at `/director/fitness/templates/[templateId]`.
+
+**Files created:**
+- `src/app/director/fitness/templates/[templateId]/actions.ts` — Server action `saveTemplateEditsAction` with 5-step security chain (auth → academy_id → template ownership → block ID validation → exercise ID validation). Defines `TemplateOperation` type union aligned with future voice command pathway (`reorder_block`, `reorder_exercise`, `update_block_duration`, `update_exercise_duration`). Sequential per-row updates with double-lock `.eq('id') + .eq('template_id'/'block_id')`.
+- `src/app/director/fitness/templates/[templateId]/TemplateEditor.tsx` — `'use client'` component managing read/edit mode toggle. Up/down chevron buttons for block and exercise reordering (no drag/drop — no library installed). Editable `<input type="number">` for `block.duration_min` (required) and `exercise.duration_min` (nullable). Save/Cancel controls with `useTransition` for pending state. Array position → `order_index` on save.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Builds `EditableBlock[]` shape from fetched data; renders `<TemplateEditor>` instead of static block cards; removed "Read-only" lock badge (mode indicator now lives in TemplateEditor).
+
+**Constraints confirmed:**
+- No migrations created
+- No packages installed
+- No service role used
+- No RLS bypass
+- No create/delete/publish/duplicate
+- No voice UI
+- TypeScript: clean (`npx tsc --noEmit` passes with no output)
+
 ## 2026-04-29 — Coach Workspace Navigation V1
 
 Added safe, demo-ready shell pages for the three missing coach nav routes. Bottom nav is now fully navigable.

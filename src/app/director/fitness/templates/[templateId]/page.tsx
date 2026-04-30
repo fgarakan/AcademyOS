@@ -1,14 +1,15 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Lock, ArrowLeft, Clock, ChevronRight, Dumbbell } from 'lucide-react'
+import { ArrowLeft, Clock } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
+import { Card, CardContent } from '@/components/ui'
+import { TemplateEditor } from './TemplateEditor'
+import type { EditableBlock, EditableExercise } from './TemplateEditor'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
-type TemplateBlock = Tables<'template_blocks'>
 
-interface BlockExercise {
+interface RawBlockExercise {
   id: string
   block_id: string
   order_index: number
@@ -81,7 +82,7 @@ export default async function TemplateDetailPage({ params }: PageProps) {
   const blockList = blocks ?? []
   const blockIds = blockList.map(b => b.id)
 
-  let blockExercises: BlockExercise[] = []
+  let rawExercises: RawBlockExercise[] = []
 
   if (blockIds.length > 0) {
     // rawDb cast to avoid TS2589 on nested select
@@ -92,40 +93,52 @@ export default async function TemplateDetailPage({ params }: PageProps) {
       .in('block_id', blockIds)
       .order('order_index')
 
-    blockExercises = (exData ?? []) as BlockExercise[]
+    rawExercises = (exData ?? []) as RawBlockExercise[]
   }
 
-  const exercisesByBlock = new Map<string, BlockExercise[]>()
-  for (const ex of blockExercises) {
-    const arr = exercisesByBlock.get(ex.block_id) ?? []
-    arr.push(ex)
-    exercisesByBlock.set(ex.block_id, arr)
+  // Group exercises by block_id
+  const exercisesByBlock = new Map<string, EditableExercise[]>()
+  for (const row of rawExercises) {
+    const ex = row.exercises
+    const editable: EditableExercise = {
+      id: row.id,
+      exercise_id: ex?.id ?? '',
+      name: ex?.name ?? '(unknown)',
+      category: ex?.category ?? '',
+      subcategory: ex?.subcategory ?? null,
+      duration_min: row.duration_min,
+      order_index: row.order_index,
+      notes: row.notes,
+    }
+    const arr = exercisesByBlock.get(row.block_id) ?? []
+    arr.push(editable)
+    exercisesByBlock.set(row.block_id, arr)
   }
+
+  // Build the editable block shape passed to the client component
+  const editableBlocks: EditableBlock[] = blockList.map(b => ({
+    id: b.id,
+    name: b.name,
+    type: b.type,
+    duration_min: b.duration_min,
+    order_index: b.order_index,
+    exercises: exercisesByBlock.get(b.id) ?? [],
+  }))
+
+  const totalExercises = rawExercises.length
 
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader template={template} />
-      <TemplateMeta template={template} blockCount={blockList.length} exerciseCount={blockExercises.length} />
-
-      {blockList.length === 0 ? (
-        <Card>
-          <EmptyState
-            icon={<Dumbbell className="w-5 h-5" />}
-            title="No blocks found"
-            description="This template has no blocks yet."
-          />
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {blockList.map(block => (
-            <BlockCard
-              key={block.id}
-              block={block}
-              exercises={exercisesByBlock.get(block.id) ?? []}
-            />
-          ))}
-        </div>
-      )}
+      <TemplateMeta
+        template={template}
+        blockCount={blockList.length}
+        exerciseCount={totalExercises}
+      />
+      <TemplateEditor
+        templateId={params.templateId}
+        initialBlocks={editableBlocks}
+      />
     </div>
   )
 }
@@ -145,10 +158,6 @@ function PageHeader({ template }: { template: Template }) {
         {template.description && (
           <p className="text-sm text-text-secondary mt-1">{template.description}</p>
         )}
-      </div>
-      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-raised border border-border text-xs text-text-muted shrink-0">
-        <Lock className="w-3 h-3" />
-        Read-only
       </div>
     </div>
   )
@@ -219,96 +228,4 @@ function TemplateMeta({
       </CardContent>
     </Card>
   )
-}
-
-function BlockCard({ block, exercises }: { block: TemplateBlock; exercises: BlockExercise[] }) {
-  const blockTypeLabel = BLOCK_TYPE_LABELS[block.type] ?? block.type
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-mono text-text-muted w-5 text-right shrink-0">
-              {block.order_index}
-            </span>
-            <div>
-              <p className="font-semibold text-text-primary">{block.name}</p>
-              <p className="text-[10px] text-text-muted mt-0.5">
-                {blockTypeLabel}
-                {block.type !== block.name.toLowerCase().replace(/\s+/g, '_') && (
-                  <span className="text-text-muted/60"> · enum: {block.type}</span>
-                )}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-text-muted">
-            <Clock className="w-3.5 h-3.5" />
-            {block.duration_min} min
-          </div>
-        </div>
-      </CardHeader>
-
-      {exercises.length === 0 ? (
-        <CardContent className="pt-0">
-          <p className="text-xs text-text-muted italic">No exercises in this block.</p>
-        </CardContent>
-      ) : (
-        <CardContent className="pt-0">
-          <div className="space-y-2">
-            {exercises.map(ex => (
-              <ExerciseRow key={ex.id} ex={ex} />
-            ))}
-          </div>
-        </CardContent>
-      )}
-    </Card>
-  )
-}
-
-function ExerciseRow({ ex }: { ex: BlockExercise }) {
-  const exercise = ex.exercises
-
-  return (
-    <div className="flex items-center gap-3 py-2 border-t border-border first:border-0">
-      <span className="text-[10px] font-mono text-text-muted w-5 text-right shrink-0">
-        {ex.order_index}
-      </span>
-      <ChevronRight className="w-3 h-3 text-border shrink-0" />
-      <div className="flex-1 min-w-0">
-        {exercise ? (
-          <>
-            <p className="text-sm text-text-primary">{exercise.name}</p>
-            <p className="text-[10px] text-text-muted mt-0.5">
-              {exercise.category}
-              {exercise.subcategory ? ` · ${exercise.subcategory}` : ''}
-            </p>
-          </>
-        ) : (
-          <p className="text-sm text-status-red">Exercise not found</p>
-        )}
-      </div>
-      {ex.duration_min != null && (
-        <div className="flex items-center gap-1 text-xs text-text-muted shrink-0">
-          <Clock className="w-3 h-3" />
-          {ex.duration_min}min
-        </div>
-      )}
-      {ex.notes && (
-        <p className="text-[10px] text-text-muted shrink-0 max-w-[160px] truncate">{ex.notes}</p>
-      )}
-    </div>
-  )
-}
-
-const BLOCK_TYPE_LABELS: Record<string, string> = {
-  warm_up:     'Warm Up',
-  technical:   'Technical',
-  tactical:    'Tactical',
-  movement:    'Movement',
-  fitness:     'Fitness',
-  competition: 'Competition',
-  mental:      'Mental',
-  cool_down:   'Cool Down',
-  free:        'Free',
 }
