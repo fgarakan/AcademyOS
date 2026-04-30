@@ -2,6 +2,121 @@
 
 ---
 
+## 2026-04-30 — Sprint 21: Approved Draft Application Plan + Guardrails
+
+**Schema fields confirmed before coding:**
+
+**proposed_actions**
+- `status` enum: `pending_review | clarification_needed | approved | modified | rejected | executed | failed | expired` — `executed` and `failed` both valid ✓
+- `approved_by: string | null`, `approved_at: string | null` — set by Sprint 20 ✓
+- `proposed_payload: Json` — never modified by this action ✓
+- NO `executed_by`/`executed_at` directly on `proposed_actions` — those live in `action_execution_logs` ✓
+
+**action_execution_logs**
+- Has `executed_by`, `executed_at`, `status` (`success|partial|failed`), `execution_result`, `objects_created`, `error_message` ✓
+- **No INSERT RLS policy** — cannot write from application code without service role ✗ → writes go to `audit_logs` instead
+
+**coach_observations**
+- `academy_id: string` (required) ✓
+- `player_id: string` (required, NOT NULL) ✓
+- `coach_id: string` (required, NOT NULL) — uses `session.coach_id` ✓
+- `session_id: string | null` ✓
+- `content: string` (required) ✓
+- `is_private: boolean` — default `false`; application sets `true` ✓
+- `observation_type: string` — strict CHECK constraint: `general | technical | tactical | movement | competition | behavioral | injury_concern | positive_highlight` — application uses `'general'` ✓
+- `tags: string[] | null` — application passes `possible_focus` keywords ✓
+- `voice_command_id: UUID | null` — no FK constraint; application passes proposed_action's voice_command_id ✓
+- `ai_entities: JSONB | null` — application stores `{ source, proposed_action_id, requires_review: true }` for provenance ✓
+
+**sessions**
+- `coach_id: string` (NOT NULL) — always available ✓
+
+**audit_logs**
+- INSERT RLS policy: `CHECK (academy_id = auth_academy_id())` — writeable from app code ✓
+
+**Key structural constraint:**
+`PlayerObservationDraft` has `player_name` but NOT `player_id`. Player IDs come from `detected_players[].player_id` (matched by name). Only observations where `player_name === detected_player.name` are applied; others are skipped.
+
+---
+
+**Application Plan:**
+
+| Payload section | Disposition | Target table | Risk | Confirmation |
+|---|---|---|---|---|
+| `detected_players` | Supporting data only (for player_id resolution) | — | Low | Already approved |
+| `attendance_mentions` | Defer | None | High | Requires attendance-specific confirmation |
+| `session_actual_draft` | Defer | None | Medium | No session_actuals table exists yet |
+| `player_observation_drafts` | **Apply now** (confirmed player_id only) | `coach_observations` | Low | Director approval sufficient |
+| `director_summary_draft` | Defer | None | Medium | No single official target table |
+| `parent_safe_draft_candidates` | Never auto-apply | None | High | Requires parent-safe approval + delivery pipeline |
+| `warnings` | Informational only | — | — | — |
+
+---
+
+**Files created:**
+- `src/app/director/review/ApplyApprovedDraftControls.tsx` — `'use client'` component. Scope guardrail copy (required per spec): "Apply only creates internal coach observations from approved player observation drafts. It does not update attendance, parent messages, player priorities, player levels, or profiles." Apply button (lime, `PlayCircle` icon). Success message with observation count. Error display with rollback note. `useTransition` for pending state.
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — added `ApplyApprovedDraftResult` interface and `applyApprovedStructuredDraftAction` server action. Security chain: assertNotPreviewMode → auth → academy_id from profile → active director/head_coach membership → fetch proposed_action (rawDb) → verify academy_id + status=approved + target_module=session_recap_structuring → verify draft_type=session_recap_structuring_v1 → fetch session (verify academy_id, get coach_id) → build name→player_id map from detected_players → match observation drafts to player_ids (skip unmatched, skip sentinel text) → batch verify player_ids against academy → sequential inserts into coach_observations (is_private=true, observation_type='general', tags=possible_focus, ai_entities with source provenance) → write audit_logs → update proposed_actions.status='executed' only after all inserts succeed. Never touches attendance, parent messages, player priorities, player profiles, or templates.
+- `src/app/director/review/StructuredDraftCard.tsx` — imported `ApplyApprovedDraftControls`; dynamic status label in header (`approved — ready to apply` vs `pending review`); conditionally renders `ApplyApprovedDraftControls` when `draft.status === 'approved'`, `DraftDecisionControls` otherwise.
+- `src/app/director/review/page.tsx` — expanded query to `.in('status', ['pending_review', 'approved'])`; splits enriched drafts into `pendingDrafts` + `approvedDrafts`; renders "Approved — Ready to Apply" section above pending section; `PageHeader` now shows both pending count (orange) and approved count (lime); empty state only applies to pending section.
+- `docs/CHANGELOG.md` — this entry
+
+**Application write sequence (only on full success):**
+1. Insert `coach_observations` rows sequentially (one per qualifying observation)
+2. Insert into `audit_logs` (action: `session_recap.observations.applied`)
+3. Update `proposed_actions.status = 'executed'`
+If any observation insert fails: stop, do not write audit_logs, do not mark executed, return error.
+
+**Why action_execution_logs was NOT used:**
+Migration 009 creates `action_execution_logs` with only a SELECT policy for directors. There is no INSERT policy. Writes from application code would be blocked by RLS. The `execute_approved_action()` SECURITY DEFINER function writes to it, but we are not calling that RPC (it handles voice action_types, not session_recap_structuring). `audit_logs` has a working INSERT policy and is used instead.
+
+**Observation fields applied:**
+- `content` ← `obs.observation`
+- `observation_type` ← `'general'` (only safe value within CHECK constraint for recap-originated notes)
+- `is_private` ← `true` (staff-only internal observation)
+- `tags` ← `obs.possible_focus` (keyword array from structuring)
+- `session_id` ← `proposedAction.target_object_id` (the source session)
+- `coach_id` ← `session.coach_id` (the coach who ran the session)
+- `voice_command_id` ← `proposedAction.voice_command_id` (source voice command)
+- `ai_entities` ← `{ source: 'session_recap_draft', proposed_action_id, requires_review: true }`
+
+**What was NOT built:**
+- attendance_mentions → session_attendance (high risk, needs separate confirmation flow)
+- session_actual_draft → sessions or session_actuals (no session_actuals table exists)
+- director_summary_draft → any table (no clear target)
+- parent_safe_draft_candidates → parent_messages or parent_updates (requires parent-safe approval + delivery)
+- player priority updates from draft
+- player level/progression updates
+- batch apply
+- auto-apply after approval
+- edit observations before applying
+- AI API integration
+
+**TypeScript:** clean (`npx tsc --noEmit` — no output)
+
+**Manual verification steps:**
+1. Ensure a `proposed_actions` row exists with `target_module = 'session_recap_structuring'` and `status = 'approved'`.
+2. Open `/director/review`.
+3. Confirm "Approved — Ready to Apply" section appears above pending section.
+4. Confirm header shows both "N pending" (orange) and "N ready to apply" (lime) badges.
+5. Confirm approved draft card shows "approved — ready to apply" status label.
+6. Confirm guardrail copy is visible: "Apply only creates internal coach observations…"
+7. Click "Apply Approved Draft".
+8. Confirm green success message with observation count.
+9. Confirm approved section disappears from page (status became `executed`).
+10. In Supabase: confirm `coach_observations` rows were created with `is_private = true`, `observation_type = 'general'`, correct `session_id`, `coach_id`, `player_id`.
+11. Confirm `ai_entities` on each observation contains `source: 'session_recap_draft'` and `proposed_action_id`.
+12. Confirm `proposed_actions.status = 'executed'` for the applied draft.
+13. Confirm `audit_logs` row exists with `action = 'session_recap.observations.applied'`.
+14. Confirm `session_attendance` was NOT modified.
+15. Confirm player profiles were NOT modified.
+16. Confirm player priorities were NOT modified.
+17. Confirm `parent_updates` was NOT modified.
+18. Confirm templates were NOT modified.
+
+---
+
 ## 2026-04-30 — Sprint 20: Structured Draft Decision Controls V1
 
 **Schema fields confirmed before coding:**

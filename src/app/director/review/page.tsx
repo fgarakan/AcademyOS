@@ -54,7 +54,7 @@ export default async function DirectorReviewQueuePage() {
     )
   }
 
-  // 4. Fetch pending structured drafts — scoped to this academy only
+  // 4. Fetch pending + approved structured drafts — scoped to this academy only
   interface DraftRow {
     id: string
     status: string
@@ -69,10 +69,10 @@ export default async function DirectorReviewQueuePage() {
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
     .eq('academy_id', academyId)
-    .eq('status', 'pending_review')
+    .in('status', ['pending_review', 'approved'])
     .eq('target_module', 'session_recap_structuring')
     .order('created_at', { ascending: false })
-    .limit(50)
+    .limit(100)
 
   const allDrafts: DraftRow[] = (draftRows ?? []) as DraftRow[]
 
@@ -116,8 +116,8 @@ export default async function DirectorReviewQueuePage() {
     }
   }
 
-  // 8. Assemble enriched items for rendering
-  const enrichedDrafts: EnrichedDraftItem[] = filteredDrafts.map(d => {
+  // 8. Assemble enriched items for rendering — split pending vs approved
+  const allEnriched: EnrichedDraftItem[] = filteredDrafts.map(d => {
     const session = d.target_object_id ? sessionMap.get(d.target_object_id) : undefined
     return {
       id: d.id,
@@ -131,45 +131,74 @@ export default async function DirectorReviewQueuePage() {
     }
   })
 
+  const pendingDrafts = allEnriched.filter(d => d.status === 'pending_review')
+  const approvedDrafts = allEnriched.filter(d => d.status === 'approved')
+
   return (
     <div className="animate-fade-in space-y-6">
-      <PageHeader count={enrichedDrafts.length} />
+      <PageHeader pendingCount={pendingDrafts.length} approvedCount={approvedDrafts.length} />
 
-      {enrichedDrafts.length === 0 ? (
-        <Card>
-          <CardContent className="py-12">
-            <EmptyState
-              icon={<ClipboardList className="w-5 h-5" />}
-              title="No pending structured drafts yet"
-              description="When coaches save session recaps and directors structure them, they will appear here for review."
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {enrichedDrafts.map(draft => (
-            <StructuredDraftCard key={draft.id} draft={draft} />
-          ))}
-        </div>
+      {/* Approved — ready to apply */}
+      {approvedDrafts.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <p className="label-xs">Approved — Ready to Apply</p>
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+              {approvedDrafts.length}
+            </span>
+          </div>
+          <div className="space-y-4">
+            {approvedDrafts.map(draft => (
+              <StructuredDraftCard key={draft.id} draft={draft} />
+            ))}
+          </div>
+        </section>
       )}
+
+      {/* Pending review */}
+      <section className="space-y-3">
+        {approvedDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+        {pendingDrafts.length === 0 ? (
+          <Card>
+            <CardContent className="py-12">
+              <EmptyState
+                icon={<ClipboardList className="w-5 h-5" />}
+                title="No pending structured drafts"
+                description="When coaches save session recaps and directors structure them, they will appear here for review."
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {pendingDrafts.map(draft => (
+              <StructuredDraftCard key={draft.id} draft={draft} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
 }
 
-function PageHeader({ count }: { count: number }) {
+function PageHeader({ pendingCount, approvedCount }: { pendingCount: number; approvedCount: number }) {
   return (
     <div>
       <p className="label-xs mb-1">DIRECTOR</p>
       <div className="flex items-center gap-3 flex-wrap">
         <h1 className="text-2xl font-bold text-text-primary">Draft Review Queue</h1>
-        {count > 0 && (
+        {pendingCount > 0 && (
           <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
-            {count} pending
+            {pendingCount} pending
+          </span>
+        )}
+        {approvedCount > 0 && (
+          <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+            {approvedCount} ready to apply
           </span>
         )}
       </div>
       <p className="text-text-muted text-sm mt-1">
-        Structured drafts awaiting human review. Nothing has been applied to any records.
+        Structured drafts awaiting review or application. Nothing is applied automatically.
       </p>
     </div>
   )

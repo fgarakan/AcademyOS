@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import type { StructuredDraftPayload } from '@/app/director/sessions/[sessionId]/structureRecapAction'
 import { DraftDecisionControls } from './DraftDecisionControls'
+import { ApplyApprovedDraftControls } from './ApplyApprovedDraftControls'
 
 export interface EnrichedDraftItem {
   id: string
@@ -30,7 +31,8 @@ export function StructuredDraftCard({ draft }: { draft: EnrichedDraftItem }) {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-lime font-medium">
-              Structured Draft V1 · pending review
+              Structured Draft V1 ·{' '}
+              {draft.status === 'approved' ? 'approved — ready to apply' : 'pending review'}
             </p>
             {draft.sessionName && (
               <p className="text-sm font-semibold text-text-primary mt-0.5">{draft.sessionName}</p>
@@ -170,8 +172,12 @@ export function StructuredDraftCard({ draft }: { draft: EnrichedDraftItem }) {
           </div>
         )}
 
-        {/* Director decision controls */}
-        <DraftDecisionControls proposedActionId={draft.id} />
+        {/* Director controls — decision for pending, apply for approved */}
+        {draft.status === 'approved' ? (
+          <ApplyApprovedDraftControls proposedActionId={draft.id} />
+        ) : (
+          <DraftDecisionControls proposedActionId={draft.id} />
+        )}
       </CardContent>
     </Card>
   )
