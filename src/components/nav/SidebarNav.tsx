@@ -4,15 +4,16 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
-  Trophy, Brain, BarChart3, Settings, LogOut, ChevronRight
+  Trophy, Brain, BarChart3, Settings, LogOut, Dumbbell
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: 'Dashboard',    href: '/director',               icon: LayoutDashboard },
-  { label: 'Players',      href: '/director/players',        icon: Users },
-  { label: 'Curriculum',   href: '/director/curriculum',     icon: BookOpen },
-  { label: 'Sessions',     href: '/director/sessions',       icon: Calendar },
-  { label: 'Competition',  href: '/director/competition',    icon: Trophy },
+  { label: 'Dashboard',    href: '/director',                        icon: LayoutDashboard },
+  { label: 'Players',      href: '/director/players',                icon: Users },
+  { label: 'Curriculum',   href: '/director/curriculum',             icon: BookOpen },
+  { label: 'Fitness',      href: '/director/fitness/templates',      icon: Dumbbell },
+  { label: 'Sessions',     href: '/director/sessions',               icon: Calendar },
+  { label: 'Competition',  href: '/director/competition',            icon: Trophy },
 ]
 const SECONDARY_ITEMS = [
   { label: 'Intelligence', href: '/director/intelligence',   icon: Brain },
