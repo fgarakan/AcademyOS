@@ -2,6 +2,54 @@
 
 ---
 
+## 2026-04-30 — Sprint 24: Player Active Priorities Read-Only V1
+
+**Schema fields confirmed — `player_priorities`:**
+- `id`, `academy_id`, `player_id` ✓
+- `title` (string) — priority text ✓
+- `description` (string | null) — notes ✓
+- `category` (`priority_category` enum: technical_skill, tactical_skill, physical_fitness, competition_exposure, behavioral, load_management, reassessment, promotion_readiness) ✓
+- `status` (string) — plain string ✓
+- `is_active` (boolean) — active filter ✓
+- `priority_level` (string) — high / medium / low ✓
+- `priority_rank` (number) — display order ✓
+- `urgency` (string) ✓
+- `generated_at`, `updated_at` (string) — dates ✓
+
+**Query strategy:**
+- Scoped by `academy_id` + `player_id`, filtered `is_active = true`, ordered by `priority_rank ASC`
+- `rawDb` cast (same pattern as enriched observations) to avoid TS2589
+
+**Files changed:**
+- `src/app/director/players/[playerId]/PlayerActivePriorities.tsx` — new read-only component
+- `src/app/director/players/[playerId]/page.tsx` — import + query + inserted above evidence summary in Notes tab
+- `docs/CHANGELOG.md`
+
+**Implementation:**
+- Active Priorities section in the Notes tab above Development Evidence Summary
+- Priority cards: title, category badge, priority_level, urgency badge, status badge, description, generated_at / updated_at
+- Ordered by `priority_rank`
+- Empty state: "No active priorities have been set for this player yet. Future sprints will allow director-approved priorities to be created from evidence."
+- Disclaimer: "Priorities are shown for visibility only. Observations and evidence summaries do not automatically change priorities yet."
+
+**Security:**
+- Authenticated server client only — no service role
+- `academy_id` resolved from authenticated profile
+- Priorities queried only where `academy_id` + `player_id` match — no cross-academy exposure
+- Read-only — no add/edit/delete/complete controls
+
+**Not built (intentional scope boundary):**
+- No priority creation, editing, completion, or deletion
+- No AI-generated priority recommendations
+- No automatic priority updates from observations
+- No parent/player-facing priority display
+- No level-up logic
+- No migrations
+
+**Validation:** `npx tsc --noEmit` — no errors.
+
+---
+
 ## 2026-04-30 — Sprint 23: Player Profile Evidence Summary V1
 
 **Schema fields confirmed:**

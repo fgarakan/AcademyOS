@@ -13,6 +13,7 @@ import { PlayerCurriculumEmptyState } from '@/components/player/PlayerCurriculum
 import { EvaluateAdvancementButton } from '@/components/player/EvaluateAdvancementButton'
 import { CoachObservationsFeed, type CoachObservationRow } from './CoachObservationsFeed'
 import { CoachObservationEvidenceSummary } from './CoachObservationEvidenceSummary'
+import { PlayerActivePriorities, type PlayerPriorityRow } from './PlayerActivePriorities'
 import { DevelopmentSummarySection } from '@/components/player/DevelopmentSummarySection'
 import { AddObservationForm } from '@/components/player/AddObservationForm'
 import { AddVoiceNoteForm } from '@/components/player/AddVoiceNoteForm'
@@ -236,6 +237,17 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   const developmentSummary = await getPlayerDevelopmentSummary(supabase, params.playerId)
 
+  // Active priorities: scoped by academy_id + player_id, filtered to is_active = true.
+  // rawDb cast avoids TS2589; RLS enforces academy scoping at the DB level.
+  const { data: rawPriorities } = await rawDb
+    .from('player_priorities')
+    .select('id, title, description, category, status, priority_level, priority_rank, urgency, generated_at, updated_at')
+    .eq('academy_id', academyId)
+    .eq('player_id', params.playerId)
+    .eq('is_active', true)
+    .order('priority_rank', { ascending: true })
+  const activePriorities: PlayerPriorityRow[] = rawPriorities ?? []
+
   const addObsAction = addObservationAction.bind(null, params.playerId, academyId)
   const updateSummaryAction = updateDevelopmentSummaryAction.bind(null, params.playerId, academyId)
   const addVoiceNoteServerAction = addVoiceNoteAction.bind(null, params.playerId, academyId)
@@ -263,6 +275,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Edit Development Summary form */}
       <EditDevelopmentSummaryForm summary={developmentSummary} onSubmit={updateSummaryAction} />
+
+      {/* Active priorities — read-only visibility, no mutation controls */}
+      <PlayerActivePriorities priorities={activePriorities} />
 
       {/* Evidence summary — derived from same observation data, no extra DB query */}
       <CoachObservationEvidenceSummary observations={enrichedObservations} />
