@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { GroupAssignmentPanel } from './GroupAssignmentPanel'
 import { SessionRecapSummary } from './SessionRecapSummary'
+import { StructureRecapButton } from './StructureRecapButton'
+import { StructuredDraftView } from './StructuredDraftView'
+import type { StructuredDraftPayload } from './structureRecapAction'
 
 interface PageProps {
   params: { sessionId: string }
@@ -215,15 +218,42 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
 
   // 9. Fetch session-level voice_notes (coach recaps, player_id IS NULL, most recent first)
   interface RecapEntry { id: string; raw_input: string; created_at: string }
+  interface RecapEntryWithStatus extends RecapEntry { processing_status: string }
   const { data: recapRows } = await supabase
     .from('voice_notes')
-    .select('id, raw_input, created_at')
+    .select('id, raw_input, created_at, processing_status')
     .eq('session_id', session.id)
     .eq('academy_id', academyId)
     .is('player_id', null)
     .order('created_at', { ascending: false })
     .limit(5)
-  const recaps: RecapEntry[] = (recapRows ?? []) as RecapEntry[]
+  const recapsWithStatus: RecapEntryWithStatus[] = (recapRows ?? []) as RecapEntryWithStatus[]
+  const recaps: RecapEntry[] = recapsWithStatus.map(r => ({
+    id: r.id,
+    raw_input: r.raw_input,
+    created_at: r.created_at,
+  }))
+
+  // The most recent unstructured recap — used to show the "Create Structured Draft" button
+  const pendingRecap = recapsWithStatus.find(r => r.processing_status === 'pending') ?? null
+
+  // 10. Fetch existing structured drafts from proposed_actions for this session
+  interface StructuredDraftRow {
+    id: string
+    proposed_payload: unknown
+    created_at: string
+    status: string
+  }
+  const rawDb = supabase as any
+  const { data: draftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, proposed_payload, created_at, status')
+    .eq('academy_id', academyId)
+    .eq('target_object_id', session.id)
+    .eq('target_module', 'session_recap_structuring')
+    .order('created_at', { ascending: false })
+    .limit(5)
+  const structuredDrafts: StructuredDraftRow[] = (draftRows ?? []) as StructuredDraftRow[]
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -450,8 +480,34 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
       <div>
         <SectionHeader title="COACH RECAP" />
         <Card className="mt-3">
-          <CardContent className="py-4">
+          <CardContent className="py-4 space-y-4">
             <SessionRecapSummary recaps={recaps} />
+
+            {/* Structure recap button — shown only when a pending recap exists */}
+            {pendingRecap && (
+              <div className="pt-3 border-t border-border">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">
+                  AI Structuring
+                </p>
+                <StructureRecapButton
+                  voiceNoteId={pendingRecap.id}
+                  sessionId={session.id}
+                />
+              </div>
+            )}
+
+            {/* Existing structured drafts */}
+            {structuredDrafts.map(row => {
+              const payload = row.proposed_payload as unknown as StructuredDraftPayload
+              if (!payload || payload.draft_type !== 'session_recap_structuring_v1') return null
+              return (
+                <StructuredDraftView
+                  key={row.id}
+                  draft={payload}
+                  createdAt={row.created_at}
+                />
+              )
+            })}
           </CardContent>
         </Card>
       </div>
