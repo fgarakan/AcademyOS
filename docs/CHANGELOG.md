@@ -2,6 +2,97 @@
 
 ---
 
+## 2026-04-30 — Sprint 25: Priority Recommendation Drafts from Evidence V1
+
+**Schema fields confirmed:**
+
+**`proposed_actions`:**
+- `voice_command_id: string` — NOT NULL in Insert → voice_commands relay row required ✓
+- `action_type`: `Enums['action_type']` — `'other'` is valid ✓
+- `status`: `Enums['proposed_action_status']` — `'pending_review'` is valid ✓
+- `target_module: string` — free text, `'priority_recommendation'` is safe ✓
+- `target_object_type: string | null` — free text, `'player'` is safe ✓
+- `target_object_id: string | null` — holds player UUID ✓
+- `proposed_payload: Json` — stores full recommendation payload ✓
+- `action_label: string` — required, set to `"Priority Recommendation Draft"` ✓
+
+**`voice_commands` (relay row):**
+- Required FK (proposed_actions.voice_command_id is NOT NULL) → relay row created as in Sprint 18 ✓
+- `input_method: 'typed' | 'audio' | 'api'` → `'typed'` used ✓
+- `issuer_role`: `user_role` enum — `academy_director` and `head_coach` both valid ✓
+
+**`player_priorities.category`:** `priority_category` enum: `technical_skill | tactical_skill | physical_fitness | competition_exposure | behavioral | load_management | reassessment | promotion_readiness` — matches sprint tag mapping exactly ✓
+
+**`priority_category` enum vs tag mapping:** Confirmed identical. Tag→category map built from sprint spec. Tiebreaker order: technical_skill > behavioral > tactical_skill > physical_fitness > competition_exposure > load_management > reassessment > promotion_readiness.
+
+**Recommendation logic (deterministic, no AI):**
+- Tags from all coach_observations (limit 50) are counted across the whole observation set
+- Tag → category vote map applied using sprint's keyword mapping
+- Highest category by vote count wins; tiebreaker by priority order
+- If no tag votes: observation types used as fallback via second map
+- Top 2 tags → recommended title via category-specific phrase template
+- Active priority overlap: checked by scanning active priority titles for shared top tags
+- Overlap warning stored in payload when found
+- All logic in-process; no external API; no AI
+
+**`proposed_payload` shape:** `draft_type: 'priority_recommendation_v1'`, `source: 'player_evidence_summary'`, `recommended_priority: { title, description, category, priority_level: 'medium', urgency: 'normal', suggested_status: 'recommended', requires_review: true }`, `evidence: { observation_count, top_tags, top_observation_types, from_recap_count, session_linked_count, most_recent_observation_at }`, `active_priority_overlap_warning`, `warnings: ['Draft only...', 'Requires director approval...']`
+
+**Files created:**
+- `src/app/director/players/[playerId]/priorityRecommendationAction.ts` — server action `createPriorityRecommendationDraftAction(playerId)`. Security chain: assertNotPreviewMode → auth → academy_id from profile → active academy_director/head_coach membership → player ownership (verified against academy_id) → fetch coach_observations (rawDb, limit 50) → guard: no observations → error early → fetch active player_priorities (rawDb) → generate deterministic recommendation → build payload → create voice_commands relay row → insert proposed_actions (target_module='priority_recommendation', target_object_type='player', status='pending_review', action_type='other'). Never writes player_priorities, player profile fields, coach_observations, attendance, or parent views.
+- `src/app/director/players/[playerId]/PriorityRecommendationDraftButton.tsx` — `'use client'` component. "Create Priority Recommendation Draft" button with Sparkles icon. `useTransition` for pending state. "Creates a draft recommendation from internal evidence. It does not update active priorities." copy. Green success message / red error message after action completes.
+- `src/app/director/players/[playerId]/PriorityRecommendationDrafts.tsx` — read-only display of existing priority recommendation drafts for this player. Shows: "Draft Only · Not Applied" badge, status label (Pending Review / Approved / Needs Clarification), recommended title, category badge, evidence tags, overlap warning (AlertTriangle icon), created date. Returns null when no drafts. No approve/apply controls.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — 3 additions: (1) imports for 3 new files; (2) query for existing recommendation drafts (proposed_actions where target_module='priority_recommendation' + target_object_id=playerId + status in [pending_review, approved, clarification_needed], limit 5); (3) bound action `createDraftAction = createPriorityRecommendationDraftAction.bind(null, params.playerId)`; (4) in notesSlot: `<PriorityRecommendationDrafts>` and `<PriorityRecommendationDraftButton>` inserted between Evidence Summary and Internal Coach Observations feed.
+- `docs/CHANGELOG.md` — this entry
+
+**Security checks:**
+- `assertNotPreviewMode()` — writes blocked in preview
+- Auth required (no user → early return)
+- `academy_id` resolved from authenticated profile — never trusted from client
+- `academy_director` or `head_coach` active membership required
+- Player verified as belonging to academy before any processing
+- No observations → early error return (button disabled by error message)
+- `rawDb` cast only for JSONB-heavy queries (coach_observations, player_priorities, proposed_actions fetch)
+- Typed client for voice_commands and proposed_actions inserts
+- No service role; no RLS bypass
+- `proposed_actions` insert always includes `.eq('academy_id', academyId)` scoping
+
+**Not built (intentional scope boundary):**
+- No direct player_priorities insert/update
+- No priority editing, completion, or deletion
+- No approve/apply recommendation button
+- No parent/player-facing priority view
+- No review queue integration (priority recommendation drafts do not appear in /director/review — that queue filters target_module='session_recap_structuring' only)
+- No level-up logic
+- No progression score
+- No profile mutation
+- No parent-safe message generation
+- No AI API integration
+- No migrations
+- No package installs
+
+**Validation:** `npx tsc --noEmit` — no errors.
+
+**Manual verification steps:**
+1. Ensure a player has coach_observations rows with tags.
+2. Open /director/players/[playerId] → Notes tab.
+3. Confirm "Priority Recommendation" card is visible with "Create Priority Recommendation Draft" button.
+4. Confirm copy reads: "Creates a draft recommendation from internal evidence. It does not update active priorities."
+5. Click "Create Priority Recommendation Draft".
+6. Confirm green success message: "Priority recommendation draft created for review."
+7. Refresh page — confirm "Priority Recommendation Drafts" card appears with the new draft.
+8. Confirm draft shows: "Draft Only · Not Applied" badge, "Pending Review" status, recommended title, category badge, evidence tags.
+9. In Supabase: confirm proposed_actions row exists with target_module='priority_recommendation', target_object_type='player', target_object_id=player.id, status='pending_review', proposed_payload.draft_type='priority_recommendation_v1'.
+10. Confirm player_priorities was NOT modified.
+11. Confirm player profile fields were NOT modified.
+12. Confirm coach_observations were NOT modified.
+13. Confirm parent/player views were NOT modified.
+14. Open /director/review — confirm NO priority recommendation draft appears there (review queue filters session_recap_structuring only).
+15. If player has no observations, confirm button shows error: "No coach observations found..."
+
+---
+
 ## 2026-04-30 — Sprint 24: Player Active Priorities Read-Only V1
 
 **Schema fields confirmed — `player_priorities`:**

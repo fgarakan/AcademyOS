@@ -14,6 +14,9 @@ import { EvaluateAdvancementButton } from '@/components/player/EvaluateAdvanceme
 import { CoachObservationsFeed, type CoachObservationRow } from './CoachObservationsFeed'
 import { CoachObservationEvidenceSummary } from './CoachObservationEvidenceSummary'
 import { PlayerActivePriorities, type PlayerPriorityRow } from './PlayerActivePriorities'
+import { PriorityRecommendationDraftButton } from './PriorityRecommendationDraftButton'
+import { PriorityRecommendationDrafts, type PriorityRecommendationDraftRow } from './PriorityRecommendationDrafts'
+import { createPriorityRecommendationDraftAction } from './priorityRecommendationAction'
 import { DevelopmentSummarySection } from '@/components/player/DevelopmentSummarySection'
 import { AddObservationForm } from '@/components/player/AddObservationForm'
 import { AddVoiceNoteForm } from '@/components/player/AddVoiceNoteForm'
@@ -248,6 +251,21 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     .order('priority_rank', { ascending: true })
   const activePriorities: PlayerPriorityRow[] = rawPriorities ?? []
 
+  // Priority recommendation drafts: pending/approved for this player, newest first.
+  // rawDb cast avoids TS2589; RLS enforces academy scoping.
+  const { data: rawDrafts } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, proposed_payload, created_at')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'priority_recommendation')
+    .eq('target_object_id', params.playerId)
+    .in('status', ['pending_review', 'approved', 'clarification_needed'])
+    .order('created_at', { ascending: false })
+    .limit(5)
+  const recommendationDrafts: PriorityRecommendationDraftRow[] = rawDrafts ?? []
+
+  const createDraftAction = createPriorityRecommendationDraftAction.bind(null, params.playerId)
+
   const addObsAction = addObservationAction.bind(null, params.playerId, academyId)
   const updateSummaryAction = updateDevelopmentSummaryAction.bind(null, params.playerId, academyId)
   const addVoiceNoteServerAction = addVoiceNoteAction.bind(null, params.playerId, academyId)
@@ -281,6 +299,19 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Evidence summary — derived from same observation data, no extra DB query */}
       <CoachObservationEvidenceSummary observations={enrichedObservations} />
+
+      {/* Priority recommendation drafts — existing pending/approved drafts for this player */}
+      <PriorityRecommendationDrafts drafts={recommendationDrafts} />
+
+      {/* Create priority recommendation draft — deterministic, director-reviewed */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Priority Recommendation</p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <PriorityRecommendationDraftButton onCreateDraft={createDraftAction} />
+        </CardContent>
+      </Card>
 
       {/* Internal Coach Observations feed */}
       <div>
