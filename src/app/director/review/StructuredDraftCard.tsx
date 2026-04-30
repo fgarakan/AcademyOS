@@ -3,6 +3,7 @@ import { AlertTriangle, Users, Calendar, BookOpen, MessageSquare, ExternalLink }
 import { Card, CardContent } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import type { StructuredDraftPayload } from '@/app/director/sessions/[sessionId]/structureRecapAction'
+import { DraftDecisionControls } from './DraftDecisionControls'
 
 export interface EnrichedDraftItem {
   id: string
@@ -168,6 +169,9 @@ export function StructuredDraftCard({ draft }: { draft: EnrichedDraftItem }) {
             before sending
           </div>
         )}
+
+        {/* Director decision controls */}
+        <DraftDecisionControls proposedActionId={draft.id} />
       </CardContent>
     </Card>
   )

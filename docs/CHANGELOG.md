@@ -2,6 +2,93 @@
 
 ---
 
+## 2026-04-30 — Sprint 20: Structured Draft Decision Controls V1
+
+**Schema fields confirmed before coding:**
+- `proposed_actions.status` — `Enums['proposed_action_status']` — `approved`, `rejected`, `clarification_needed` all valid ✓
+- `proposed_actions.approved_by: string | null` — used for `approved` decision (no `reviewed_by_id` field; schema separates approved_by and rejected_by) ✓
+- `proposed_actions.approved_at: string | null` — used for `approved` decision ✓
+- `proposed_actions.rejected_by: string | null` — used for `rejected` decision ✓
+- `proposed_actions.rejected_at: string | null` — used for `rejected` decision ✓
+- `proposed_actions.rejection_reason: string | null` — used for `rejected` decision notes ✓
+- `proposed_actions.reviewer_notes: string | null` — used for all decisions (note: field is `reviewer_notes`, not `review_notes`; no `reviewed_at` column exists) ✓
+- `proposed_actions.proposed_payload` — never modified by this action ✓
+- No `reviewed_by_id` or `reviewed_at` columns exist; `approved_by`/`rejected_by` are the reviewer tracking fields ✓
+- No migrations needed ✓
+
+**Files created:**
+- `src/app/director/review/actions.ts` — server action `updateStructuredDraftDecisionAction`. Security chain: assertNotPreviewMode → auth → academy_id from profile → active academy membership (academy_director or head_coach only) → fetch proposed_action by ID → verify academy_id match → verify target_module = session_recap_structuring → verify status = pending_review → validate decision value → validate reviewer_notes max 1000 chars → update proposed_actions (status + reviewer tracking fields only). Never modifies proposed_payload, player profiles, attendance, parent messages, coach_observations, player priorities, or any table other than proposed_actions.
+- `src/app/director/review/DraftDecisionControls.tsx` — `'use client'` component. Three decision buttons: Approve for Application (green), Needs Clarification (orange), Reject Draft (red). Optional decision note textarea (max 1000 chars, char counter appears at 800+). Governance banner: "Approving does not apply changes yet. It only marks this draft as ready for a future application step." On success: green confirmation banner + `router.refresh()` to remove card from pending queue. Error display if action fails. `useTransition` for pending state; buttons disabled while pending.
+
+**Files modified:**
+- `src/app/director/review/StructuredDraftCard.tsx` — imported `DraftDecisionControls`; added `<DraftDecisionControls proposedActionId={draft.id} />` at the bottom of CardContent, after the parent-safe candidate count.
+- `docs/CHANGELOG.md` — this entry
+
+**Decision → DB write strategy:**
+| Decision | Columns written |
+|---|---|
+| `approved` | `status='approved'`, `approved_by=user.id`, `approved_at=now()`, `reviewer_notes` (if provided) |
+| `rejected` | `status='rejected'`, `rejected_by=user.id`, `rejected_at=now()`, `rejection_reason` (if provided), `reviewer_notes` (if provided) |
+| `clarification_needed` | `status='clarification_needed'`, `reviewer_notes` (if provided) |
+
+No other columns touched. `proposed_payload` never modified. Only `proposed_actions` written.
+
+**Security checks:**
+- `assertNotPreviewMode()` — writes blocked in preview
+- Auth required (no user → early return)
+- `academy_id` resolved from authenticated profile — never trusted from client
+- `academy_director` or `head_coach` active membership required
+- Proposed action verified to exist and belong to same academy
+- `target_module` verified = `session_recap_structuring`
+- `status` verified = `pending_review` before allowing decision (idempotency guard)
+- `decision` value validated against allowed enum
+- `reviewer_notes` validated max 1000 chars
+- No service role; no RLS bypass
+- Double `.eq('academy_id', academyId)` on the update call
+
+**After decision:**
+- Card disappears from `/director/review` on next render (query filters `status = pending_review`)
+- `router.refresh()` triggers server re-render immediately
+- Empty state appears if no pending drafts remain
+
+**What was NOT built:**
+- Apply approved drafts to player profiles
+- Apply approved drafts to attendance
+- Create parent messages
+- Create coach_observations from draft
+- Update player priorities from draft
+- Director intelligence feed writes
+- Batch approve / batch reject
+- Edit draft content
+- Clarification workflow messaging
+- Rejected draft history page
+- Parent-safe message creation or sending
+- Notifications
+- AI API integration
+- Voice transcription
+- Audio upload
+
+**TypeScript:** clean (`npx tsc --noEmit` — no output)
+
+**Manual verification steps:**
+1. Ensure at least one `proposed_actions` row exists with `target_module = 'session_recap_structuring'` and `status = 'pending_review'`.
+2. Open `/director/review`.
+3. Confirm each draft card shows decision controls: Approve for Application, Needs Clarification, Reject Draft.
+4. Confirm governance banner is visible: "Approving does not apply changes yet…"
+5. Add a decision note in the textarea.
+6. Click "Needs Clarification" on one draft.
+7. Confirm green "Decision recorded. Refreshing queue…" appears.
+8. Confirm the card disappears from the queue after refresh.
+9. In Supabase: confirm `proposed_actions.status = 'clarification_needed'` and `reviewer_notes` saved.
+10. Click "Approve for Application" on another draft.
+11. Confirm card disappears. In Supabase: confirm `status = 'approved'`, `approved_by = user.id`, `approved_at` set.
+12. Confirm `proposed_payload` was NOT modified.
+13. Confirm no player profile, attendance, coach_observation, parent message, or player priority rows changed.
+14. Confirm no template rows changed.
+15. If all cards reviewed, confirm empty state appears.
+
+---
+
 ## 2026-04-30 — Sprint 19: Structured Draft Review Queue V1
 
 **Schema fields confirmed before coding:**
