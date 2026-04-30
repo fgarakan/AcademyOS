@@ -2,6 +2,54 @@
 
 ---
 
+## 2026-04-30 — Sprint 22: Coach Observations Player Profile Feed V1
+
+**Schema fields confirmed:**
+
+**coach_observations**
+- `id`, `academy_id`, `player_id`, `coach_id`, `session_id` ✓
+- `content`, `observation_type`, `tags`, `is_private` ✓
+- `ai_entities: JSONB` — includes `{ source: 'session_recap_draft', ... }` for recap-originated rows ✓
+- `voice_command_id`, `created_at`, `updated_at` ✓
+- Can query by `academy_id + player_id` ✓; RLS: `academy_id = auth_academy_id() AND auth_is_staff()` ✓
+
+**profiles** — `display_name` available via `coach_observations_coach_id_fkey` join ✓
+
+**sessions** — `name`, `scheduled_date` available via `coach_observations_session_id_fkey` join ✓
+
+**Files changed:**
+- `src/app/director/players/[playerId]/CoachObservationsFeed.tsx` — new component; enriched read-only feed
+- `src/app/director/players/[playerId]/page.tsx` — replaced `getCoachObservations` + `CoachObservationTimeline` with enriched inline query + `CoachObservationsFeed`
+- `docs/CHANGELOG.md`
+
+**Implementation:**
+- Enriched query uses `rawDb = supabase as any` (TS2589 avoidance for multi-join select)
+- Query scoped to `academy_id + player_id`; RLS provides belt-and-suspenders academy isolation
+- Join: `profiles!coach_observations_coach_id_fkey(display_name)` for coach name
+- Join: `sessions!coach_observations_session_id_fkey(name, scheduled_date)` for session context
+- Sorted newest-first, limit 20
+- "Internal" badge when `is_private = true`
+- "From Recap" badge when `ai_entities.source = 'session_recap_draft'`
+- Tags displayed as chips
+- Coach name + session name/date shown as provenance
+- "Internal development evidence. Not parent-facing yet." label on section
+- Empty state: "No coach observations have been applied to this player yet. Approved session recap drafts will appear here after they are applied."
+
+**What was NOT built:**
+- No parent-facing or player-facing feed
+- No level-up / progression logic
+- No profile mutation
+- No priority update
+- No observation editing, deletion, or approval
+- No AI summarization
+- No batch actions
+- No migrations
+- No package installs
+
+**TypeScript check:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-04-30 — Sprint 21: Approved Draft Application Plan + Guardrails
 
 **Schema fields confirmed before coding:**

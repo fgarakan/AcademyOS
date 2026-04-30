@@ -4,14 +4,14 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getPlayerById } from '@/lib/backend/players'
 import { getPlayerCurriculumDomains } from '@/lib/backend/curriculum'
-import { getCoachObservations, getPlayerDevelopmentSummary } from '@/lib/backend/notes'
+import { getPlayerDevelopmentSummary } from '@/lib/backend/notes'
 import { assignCurriculumAction, evaluateAdvancementAction } from '@/lib/actions/curriculum'
 import { addObservationAction, updateDevelopmentSummaryAction, addVoiceNoteAction, generateNoteDraftAction } from '@/lib/actions/notes'
 import { PlayerProfileHeader } from '@/components/player/PlayerProfileHeader'
 import { CurriculumProgressGrid } from '@/components/player/CurriculumProgressGrid'
 import { PlayerCurriculumEmptyState } from '@/components/player/PlayerCurriculumEmptyState'
 import { EvaluateAdvancementButton } from '@/components/player/EvaluateAdvancementButton'
-import { CoachObservationTimeline } from '@/components/player/CoachObservationTimeline'
+import { CoachObservationsFeed, type CoachObservationRow } from './CoachObservationsFeed'
 import { DevelopmentSummarySection } from '@/components/player/DevelopmentSummarySection'
 import { AddObservationForm } from '@/components/player/AddObservationForm'
 import { AddVoiceNoteForm } from '@/components/player/AddVoiceNoteForm'
@@ -217,7 +217,22 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   )
 
   // ─── Tab 5: Notes ─────────────────────────────────────────────────────────
-  const observations = await getCoachObservations(supabase, params.playerId)
+  // Enriched observation query: academy_id + player_id scoped, with coach name and session context.
+  // rawDb cast avoids TS2589 on the multi-join select; RLS already enforces academy scoping.
+  const rawDb = supabase as any
+  const { data: rawObs } = await rawDb
+    .from('coach_observations')
+    .select([
+      'id', 'content', 'observation_type', 'tags', 'is_private', 'ai_entities', 'created_at',
+      'profiles!coach_observations_coach_id_fkey(display_name)',
+      'sessions!coach_observations_session_id_fkey(name, scheduled_date)',
+    ].join(', '))
+    .eq('academy_id', academyId)
+    .eq('player_id', params.playerId)
+    .order('created_at', { ascending: false })
+    .limit(20)
+  const enrichedObservations: CoachObservationRow[] = rawObs ?? []
+
   const developmentSummary = await getPlayerDevelopmentSummary(supabase, params.playerId)
 
   const addObsAction = addObservationAction.bind(null, params.playerId, academyId)
@@ -248,10 +263,13 @@ export default async function PlayerProfilePage({ params }: PageProps) {
       {/* Edit Development Summary form */}
       <EditDevelopmentSummaryForm summary={developmentSummary} onSubmit={updateSummaryAction} />
 
-      {/* Observation history */}
+      {/* Internal Coach Observations feed */}
       <div>
-        <p className="label-xs mb-4">Observation History</p>
-        <CoachObservationTimeline observations={observations} />
+        <p className="label-xs mb-1">Internal Coach Observations</p>
+        <p className="text-[11px] text-text-muted mb-4">
+          Internal development evidence. Not parent-facing yet.
+        </p>
+        <CoachObservationsFeed observations={enrichedObservations} />
       </div>
 
       {/* Add Observation form */}
