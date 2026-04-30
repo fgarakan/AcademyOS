@@ -21,6 +21,21 @@ export interface SaveExecutionResult {
   error: string | null
 }
 
+export interface AttendanceUpdate {
+  playerId: string
+  status: 'present' | 'absent' | 'late' | 'excused'
+}
+
+export interface SaveAttendanceInput {
+  sessionId: string
+  attendanceUpdates: AttendanceUpdate[]
+}
+
+export interface SaveAttendanceResult {
+  ok: boolean
+  error: string | null
+}
+
 export async function saveSessionExecutionAction(
   input: SaveExecutionInput
 ): Promise<SaveExecutionResult> {
@@ -119,6 +134,105 @@ export async function saveSessionExecutionAction(
       if (exError) {
         return { ok: false, error: `Failed to update exercise: ${exError.message}` }
       }
+    }
+  }
+
+  return { ok: true, error: null }
+}
+
+export async function saveAttendanceAction(
+  input: SaveAttendanceInput
+): Promise<SaveAttendanceResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+
+  // 1. Auth
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+
+  // 2. Resolve academy_id from authenticated profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  // 3. Verify session belongs to this academy and fetch group_id
+  const { data: session } = await supabase
+    .from('sessions')
+    .select('id, coach_id, group_id')
+    .eq('id', input.sessionId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!session) return { ok: false, error: 'Session not found or access denied.' }
+
+  // 4. Verify coach access
+  const isAssignedCoach = session.coach_id === user.id
+  if (!isAssignedCoach) {
+    const { data: membership } = await supabase
+      .from('academy_memberships')
+      .select('role')
+      .eq('academy_id', academyId)
+      .eq('profile_id', user.id)
+      .eq('is_active', true)
+      .in('role', ['coach', 'head_coach', 'academy_director'])
+      .single()
+    if (!membership) return { ok: false, error: 'Not authorized to update this session.' }
+  }
+
+  // 5. Require group_id — no roster means no valid player set to verify against
+  if (!session.group_id) {
+    return { ok: false, error: 'No group is assigned to this session. Attendance cannot be saved without a player roster.' }
+  }
+
+  // 6. Fetch valid player IDs from current group membership (server-side — never trust client)
+  const { data: memberships } = await supabase
+    .from('group_memberships')
+    .select('player_id')
+    .eq('group_id', session.group_id)
+    .eq('is_current', true)
+    .eq('academy_id', academyId)
+
+  const validPlayerIds = new Set((memberships ?? []).map(m => m.player_id))
+
+  // 7. Reject any submitted player ID not in the valid roster
+  for (const update of input.attendanceUpdates) {
+    if (!validPlayerIds.has(update.playerId)) {
+      return { ok: false, error: 'Invalid player ID submitted.' }
+    }
+  }
+
+  // 8. Validate statuses server-side (DB also enforces via CHECK constraint)
+  const validStatuses = new Set(['present', 'absent', 'late', 'excused'])
+  for (const update of input.attendanceUpdates) {
+    if (!validStatuses.has(update.status)) {
+      return { ok: false, error: `Invalid attendance status: ${update.status}` }
+    }
+  }
+
+  // 9. Upsert attendance records sequentially (per AI_BACKEND_RULES #5)
+  //    UNIQUE(session_id, player_id) ensures safe upsert — updates existing, inserts new.
+  //    Never touches templates, player profiles, or development priorities.
+  const now = new Date().toISOString()
+  for (const update of input.attendanceUpdates) {
+    const { error: upsertError } = await supabase
+      .from('session_attendance')
+      .upsert(
+        {
+          session_id: input.sessionId,
+          player_id: update.playerId,
+          status: update.status,
+          marked_by: user.id,
+          marked_at: now,
+        },
+        { onConflict: 'session_id,player_id' }
+      )
+
+    if (upsertError) {
+      return { ok: false, error: `Failed to save attendance: ${upsertError.message}` }
     }
   }
 

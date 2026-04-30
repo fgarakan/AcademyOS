@@ -5,7 +5,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { CoachSessionExecutionClient } from './CoachSessionExecutionClient'
-import { saveSessionExecutionAction } from './actions'
+import { saveSessionExecutionAction, saveAttendanceAction } from './actions'
 
 interface PageProps {
   params: { sessionId: string }
@@ -30,6 +30,12 @@ export interface SessionExercise {
   completed: boolean
   exerciseName: string
   exerciseCategory: string
+}
+
+export interface RosterPlayer {
+  playerId: string
+  fullName: string
+  currentStatus: 'present' | 'absent' | 'late' | 'excused' | null
 }
 
 export default async function CoachSessionDetailPage({ params }: PageProps) {
@@ -58,7 +64,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
   // 1. Fetch session — verified against academy_id
   const { data: session, error: sessionError } = await supabase
     .from('sessions')
-    .select('id, name, scheduled_date, scheduled_time, status, session_notes, coach_id, template_id, duration_min')
+    .select('id, name, scheduled_date, scheduled_time, status, session_notes, coach_id, template_id, duration_min, group_id')
     .eq('id', params.sessionId)
     .eq('academy_id', academyId)
     .single()
@@ -125,6 +131,49 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
     }))
   }
 
+  // 5. Fetch player roster and attendance
+  //    Roster source: current group members if session has group_id, otherwise empty.
+  const roster: RosterPlayer[] = []
+  if (session.group_id) {
+    const { data: memberships } = await supabase
+      .from('group_memberships')
+      .select('player_id')
+      .eq('group_id', session.group_id)
+      .eq('is_current', true)
+      .eq('academy_id', academyId)
+
+    const playerIds = (memberships ?? []).map(m => m.player_id)
+
+    if (playerIds.length > 0) {
+      const { data: players } = await supabase
+        .from('players')
+        .select('id, full_name, first_name, last_name')
+        .in('id', playerIds)
+        .eq('academy_id', academyId)
+
+      const { data: attendanceRows } = await supabase
+        .from('session_attendance')
+        .select('player_id, status')
+        .eq('session_id', session.id)
+
+      const attendanceMap = new Map<string, string>()
+      for (const a of attendanceRows ?? []) {
+        attendanceMap.set(a.player_id, a.status)
+      }
+
+      for (const p of players ?? []) {
+        const raw = attendanceMap.get(p.id) ?? null
+        roster.push({
+          playerId: p.id,
+          fullName: p.full_name ?? `${p.first_name} ${p.last_name}`,
+          currentStatus: (raw === 'present' || raw === 'absent' || raw === 'late' || raw === 'excused')
+            ? raw
+            : null,
+        })
+      }
+    }
+  }
+
   return (
     <div className="space-y-6 pb-10">
       <BackLink />
@@ -167,7 +216,9 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           initialSessionNotes={session.session_notes ?? ''}
           blocks={blockList}
           exercises={exercises}
+          roster={roster}
           saveAction={saveSessionExecutionAction}
+          saveAttendanceAction={saveAttendanceAction}
         />
       )}
     </div>

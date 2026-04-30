@@ -3,8 +3,8 @@
 import { useState, useTransition } from 'react'
 import { CheckCircle, AlertCircle, Info } from 'lucide-react'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
-import type { SaveExecutionInput, SaveExecutionResult } from './actions'
-import type { SessionBlock, SessionExercise } from './page'
+import type { SaveExecutionInput, SaveExecutionResult, SaveAttendanceInput, SaveAttendanceResult } from './actions'
+import type { SessionBlock, SessionExercise, RosterPlayer } from './page'
 
 interface Props {
   sessionId: string
@@ -12,7 +12,9 @@ interface Props {
   initialSessionNotes: string
   blocks: SessionBlock[]
   exercises: SessionExercise[]
+  roster: RosterPlayer[]
   saveAction: (input: SaveExecutionInput) => Promise<SaveExecutionResult>
+  saveAttendanceAction: (input: SaveAttendanceInput) => Promise<SaveAttendanceResult>
 }
 
 export function CoachSessionExecutionClient({
@@ -21,7 +23,9 @@ export function CoachSessionExecutionClient({
   initialSessionNotes,
   blocks,
   exercises,
+  roster,
   saveAction,
+  saveAttendanceAction,
 }: Props) {
   const [status, setStatus] = useState(initialStatus)
   const [sessionNotes, setSessionNotes] = useState(initialSessionNotes)
@@ -41,6 +45,17 @@ export function CoachSessionExecutionClient({
   const [saveResult, setSaveResult] = useState<SaveExecutionResult | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  // Attendance state — keyed by player_id
+  const [attendanceMap, setAttendanceMap] = useState<Record<string, 'present' | 'absent' | 'late' | 'excused'>>(() => {
+    const init: Record<string, 'present' | 'absent' | 'late' | 'excused'> = {}
+    for (const p of roster) {
+      if (p.currentStatus) init[p.playerId] = p.currentStatus
+    }
+    return init
+  })
+  const [attendanceResult, setAttendanceResult] = useState<SaveAttendanceResult | null>(null)
+  const [isAttendancePending, startAttendanceTransition] = useTransition()
+
   // Exercises grouped by block
   const exercisesByBlock = new Map<string, SessionExercise[]>()
   for (const ex of exercises) {
@@ -52,6 +67,26 @@ export function CoachSessionExecutionClient({
   function toggleExercise(id: string) {
     setCompletedMap(prev => ({ ...prev, [id]: !prev[id] }))
     setSaveResult(null)
+  }
+
+  function markAttendance(playerId: string, status: 'present' | 'absent' | 'late' | 'excused') {
+    setAttendanceMap(prev => ({ ...prev, [playerId]: status }))
+    setAttendanceResult(null)
+  }
+
+  function handleSaveAttendance() {
+    setAttendanceResult(null)
+    startAttendanceTransition(async () => {
+      const updates = roster
+        .filter(p => attendanceMap[p.playerId] != null)
+        .map(p => ({ playerId: p.playerId, status: attendanceMap[p.playerId] }))
+      if (updates.length === 0) {
+        setAttendanceResult({ ok: false, error: 'Mark at least one player before saving.' })
+        return
+      }
+      const result = await saveAttendanceAction({ sessionId, attendanceUpdates: updates })
+      setAttendanceResult(result)
+    })
   }
 
   function handleSave() {
@@ -77,6 +112,75 @@ export function CoachSessionExecutionClient({
 
   return (
     <div className="space-y-6">
+
+      {/* Attendance roster */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <SectionHeader title="ATTENDANCE" />
+            {roster.length > 0 && (
+              <button
+                type="button"
+                onClick={handleSaveAttendance}
+                disabled={isAttendancePending}
+                className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              >
+                {isAttendancePending ? 'Saving…' : 'Save Attendance'}
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-text-muted mt-1">
+            Attendance records who actually showed up for this planned session.
+            Player-specific development updates will be added later through coach recap and confirmed notes.
+          </p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {roster.length === 0 ? (
+            <div className="py-4 text-center">
+              <p className="text-sm text-text-muted">No players are attached to this session yet.</p>
+              <p className="text-xs text-text-muted mt-1">Player roster assignment will be added in a future sprint.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {roster.map(player => (
+                <div key={player.playerId} className="flex items-center gap-3">
+                  <p className="text-sm text-text-primary flex-1 min-w-0 truncate">{player.fullName}</p>
+                  <div className="flex gap-1 shrink-0">
+                    {(['present', 'absent', 'late', 'excused'] as const).map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => markAttendance(player.playerId, s)}
+                        className={`w-8 py-1 rounded text-[10px] font-bold uppercase border transition-all ${
+                          attendanceMap[player.playerId] === s
+                            ? attendanceActiveClass(s)
+                            : 'bg-surface-raised text-text-muted border-border hover:text-text-secondary'
+                        }`}
+                      >
+                        {s[0].toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {attendanceResult && (
+            <div className={`flex items-center gap-2 mt-3 px-3 py-2 rounded-lg text-xs ${
+              attendanceResult.ok
+                ? 'bg-status-green/10 border border-status-green/30 text-status-green'
+                : 'bg-status-red/10 border border-status-red/30 text-status-red'
+            }`}>
+              {attendanceResult.ok ? (
+                <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+              ) : (
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              )}
+              <span>{attendanceResult.ok ? 'Attendance saved.' : (attendanceResult.error ?? 'Unknown error.')}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Status + progress */}
       <Card>
@@ -252,5 +356,14 @@ function statusActiveClass(s: string) {
     in_progress: 'bg-lime/10 text-lime border-lime/50',
     completed: 'bg-status-green/10 text-status-green border-status-green/50',
     cancelled: 'bg-status-red/10 text-status-red border-status-red/50',
+  }[s] ?? 'bg-surface-raised text-text-primary border-lime/50'
+}
+
+function attendanceActiveClass(s: string) {
+  return {
+    present: 'bg-status-green/10 text-status-green border-status-green/50',
+    absent: 'bg-status-red/10 text-status-red border-status-red/50',
+    late: 'bg-status-orange/10 text-status-orange border-status-orange/50',
+    excused: 'bg-status-blue/10 text-status-blue border-status-blue/50',
   }[s] ?? 'bg-surface-raised text-text-primary border-lime/50'
 }

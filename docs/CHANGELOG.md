@@ -2,6 +2,64 @@
 
 ---
 
+## 2026-04-30 — Sprint 15: Session Attendance + Player Roster V1
+
+**Schema findings confirmed before coding:**
+- `session_attendance` ✓ — `id, session_id, player_id, status TEXT CHECK ('present','absent','late','excused'), notes, marked_by, marked_at`, `UNIQUE(session_id, player_id)`, RLS via sessions.academy_id join
+- `sessions.group_id` ✓ — nullable; currently null for template-generated sessions
+- `group_memberships` ✓ — `player_id, group_id, is_current (bool), academy_id`
+- `groups` ✓ — `id, name, academy_id, is_active`
+- `players` ✓ — `id, full_name, first_name, last_name, academy_id`
+- No TS enum for attendance status — string union `'present' | 'absent' | 'late' | 'excused'` used
+- No migrations needed
+
+**Roster source logic:**
+- `session.group_id` set → roster from `group_memberships WHERE group_id=X AND is_current=true AND academy_id=X` → joined with `players`
+- `session.group_id` null → empty roster with explanation (template-generated sessions do not assign a group yet)
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — added `group_id` to session select; sequential roster fetch (groups → group_memberships → players → session_attendance); read-only Roster & Attendance section: group name, present/absent/late/excused/unrecorded counts, per-player AttendancePill; empty states for no group_id or no members
+- `src/app/coach/sessions/[sessionId]/page.tsx` — added `group_id` to session select; exported `RosterPlayer` interface; sequential roster fetch (group_memberships → players → session_attendance); roster + existing attendance passed to CoachSessionExecutionClient; imported saveAttendanceAction
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — added `roster: RosterPlayer[]` and `saveAttendanceAction` props; attendance state (`attendanceMap` keyed by player_id, initialized from currentStatus); `isAttendancePending` / `attendanceResult` states; `markAttendance()` handler; `handleSaveAttendance()` handler (filters unset players, calls saveAttendanceAction); Attendance card rendered above execution blocks with per-player P/A/L/E buttons, result feedback; `attendanceActiveClass()` helper
+- `src/app/coach/sessions/[sessionId]/actions.ts` — added `AttendanceUpdate`, `SaveAttendanceInput`, `SaveAttendanceResult` interfaces; added `saveAttendanceAction` function
+- `docs/CHANGELOG.md` — this entry
+
+**Security chain (saveAttendanceAction):**
+- `assertNotPreviewMode()` guard
+- Auth required
+- `academy_id` resolved from authenticated profile (never trusted from client)
+- Session must belong to coach's academy
+- Coach access: either `session.coach_id === user.id` or active academy membership with allowed role
+- `session.group_id` fetched from DB (never from client input)
+- Valid player IDs fetched from `group_memberships` (is_current=true, matching group_id + academy_id)
+- All submitted player IDs verified against valid set before any write
+- Statuses server-validated against `('present','absent','late','excused')` (DB CHECK also enforces)
+- Sequential upserts (per AI_BACKEND_RULES #5) — `UNIQUE(session_id, player_id)` ensures safe insert/update
+- Only `session_attendance` updated — templates, player profiles, development priorities never touched
+
+**What was not built (deferred):**
+- Player-to-session manual assignment without a group (requires group_id or dedicated session_players table)
+- Group builder / group scheduling
+- Player profile development updates from attendance
+- Voice recap, AI note structuring
+- Parent messages
+- Attendance analytics dashboard
+- CSV import
+
+**TypeScript:** clean (`npx tsc --noEmit` — no output)
+
+**Manual verification steps:**
+1. Ensure a generated session exists.
+2. Open `/director/sessions/[sessionId]` — Roster & Attendance section appears at bottom. If session has no group, shows "No group assigned" empty state.
+3. If session has group_id: group name, present/absent/late/excused counts, and per-player pills render.
+4. Open `/coach/sessions/[sessionId]` — Attendance card appears above exercise blocks with P/A/L/E buttons per player (or empty state if no group).
+5. Mark one player Present, one Absent, one Late — click Save Attendance. Confirm green success banner.
+6. Refresh page — attendance persists. Director view reflects changes.
+7. Confirm no template table rows changed (check templates, template_blocks, template_block_exercises).
+8. Confirm no player development profile updates were made.
+
+---
+
 ## 2026-04-30 — Sprint 14: Director Session Viewer + Coach Session Execution V1
 
 **Schema findings confirmed before coding:**

@@ -49,7 +49,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
   // 1. Session — verified against academy_id to prevent cross-academy reads
   const { data: session, error: sessionError } = await supabase
     .from('sessions')
-    .select('id, name, scheduled_date, scheduled_time, status, session_notes, coach_id, template_id, duration_min')
+    .select('id, name, scheduled_date, scheduled_time, status, session_notes, coach_id, template_id, duration_min, group_id')
     .eq('id', params.sessionId)
     .eq('academy_id', academyId)
     .single()
@@ -117,6 +117,70 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
 
   const totalExercises = exercises.length
   const completedExercises = exercises.filter(e => e.completed).length
+
+  // 6. Fetch player roster and attendance (read-only for director)
+  let groupName: string | null = null
+  interface DirectorRosterPlayer {
+    playerId: string
+    fullName: string
+    status: 'present' | 'absent' | 'late' | 'excused' | null
+  }
+  const directorRoster: DirectorRosterPlayer[] = []
+
+  if (session.group_id) {
+    const { data: group } = await supabase
+      .from('groups')
+      .select('name')
+      .eq('id', session.group_id)
+      .single()
+    groupName = group?.name ?? null
+
+    const { data: memberships } = await supabase
+      .from('group_memberships')
+      .select('player_id')
+      .eq('group_id', session.group_id)
+      .eq('is_current', true)
+      .eq('academy_id', academyId)
+
+    const playerIds = (memberships ?? []).map(m => m.player_id)
+
+    if (playerIds.length > 0) {
+      const { data: players } = await supabase
+        .from('players')
+        .select('id, full_name, first_name, last_name')
+        .in('id', playerIds)
+        .eq('academy_id', academyId)
+
+      const { data: attendanceRows } = await supabase
+        .from('session_attendance')
+        .select('player_id, status')
+        .eq('session_id', session.id)
+
+      const attendanceMap = new Map<string, string>()
+      for (const a of attendanceRows ?? []) {
+        attendanceMap.set(a.player_id, a.status)
+      }
+
+      for (const p of players ?? []) {
+        const raw = attendanceMap.get(p.id) ?? null
+        directorRoster.push({
+          playerId: p.id,
+          fullName: p.full_name ?? `${p.first_name} ${p.last_name}`,
+          status: (raw === 'present' || raw === 'absent' || raw === 'late' || raw === 'excused')
+            ? raw
+            : null,
+        })
+      }
+    }
+  }
+
+  const attendanceCounts = {
+    present: directorRoster.filter(p => p.status === 'present').length,
+    absent: directorRoster.filter(p => p.status === 'absent').length,
+    late: directorRoster.filter(p => p.status === 'late').length,
+    excused: directorRoster.filter(p => p.status === 'excused').length,
+    unrecorded: directorRoster.filter(p => p.status === null).length,
+  }
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -260,7 +324,92 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           })}
         </div>
       )}
+
+      {/* Roster and attendance (read-only) */}
+      <div>
+        <SectionHeader title="ROSTER & ATTENDANCE" />
+        <Card className="mt-3">
+          <CardContent className="py-4">
+            {!session.group_id ? (
+              <div className="py-2 text-center">
+                <p className="text-sm text-text-muted">No group assigned to this session.</p>
+                <p className="text-xs text-text-muted mt-1">Player roster assignment will be added in a future sprint.</p>
+              </div>
+            ) : directorRoster.length === 0 ? (
+              <div className="py-2 text-center">
+                <p className="text-sm text-text-muted">
+                  {groupName ? `${groupName} has no current members.` : 'No current members in this group.'}
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Counts summary */}
+                <div className="flex flex-wrap gap-4 mb-4 pb-4 border-b border-border">
+                  {groupName && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Group</p>
+                      <p className="text-sm text-text-primary">{groupName}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Present</p>
+                    <p className="text-sm font-mono font-bold text-status-green">{attendanceCounts.present}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Absent</p>
+                    <p className="text-sm font-mono font-bold text-status-red">{attendanceCounts.absent}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Late</p>
+                    <p className="text-sm font-mono font-bold text-status-orange">{attendanceCounts.late}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Excused</p>
+                    <p className="text-sm font-mono font-bold text-status-blue">{attendanceCounts.excused}</p>
+                  </div>
+                  {attendanceCounts.unrecorded > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Unrecorded</p>
+                      <p className="text-sm font-mono font-bold text-text-muted">{attendanceCounts.unrecorded}</p>
+                    </div>
+                  )}
+                </div>
+                {/* Player rows */}
+                <div className="space-y-2">
+                  {directorRoster.map(player => (
+                    <div key={player.playerId} className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-text-primary flex-1 min-w-0 truncate">{player.fullName}</p>
+                      <AttendancePill status={player.status} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
+  )
+}
+
+function AttendancePill({ status }: { status: 'present' | 'absent' | 'late' | 'excused' | null }) {
+  if (!status) {
+    return (
+      <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-surface-raised text-text-muted border border-border">
+        —
+      </span>
+    )
+  }
+  const styles: Record<string, string> = {
+    present: 'bg-status-green/10 text-status-green border-status-green/30',
+    absent: 'bg-status-red/10 text-status-red border-status-red/30',
+    late: 'bg-status-orange/10 text-status-orange border-status-orange/30',
+    excused: 'bg-status-blue/10 text-status-blue border-status-blue/30',
+  }
+  return (
+    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${styles[status]}`}>
+      {status}
+    </span>
   )
 }
 
