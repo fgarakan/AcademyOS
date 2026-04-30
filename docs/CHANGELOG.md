@@ -2,6 +2,59 @@
 
 ---
 
+## 2026-04-30 — Sprint 31: Requirement Domain Seed Pack V1
+
+**Mode:** Seed migration only. No UI. No player data changes. No track requirement content.
+
+**Migration file created:** `supabase/migrations/042_requirement_domain_seed.sql`
+
+**Rows seeded into `curriculum_requirement_domains` (3):**
+
+| key | label | display_order | is_active |
+|---|---|---|---|
+| `skill` | Skill Path | 10 | true |
+| `competition` | Competition Path | 20 | true |
+| `fitness` | Fitness Path | 30 | true |
+
+**Idempotency strategy:** `ON CONFLICT (key) DO UPDATE SET` — reruns update label, description, display_order, is_active, updated_at. Safe to apply multiple times.
+
+**Tables seeded:** `curriculum_requirement_domains` only.
+
+**Tables intentionally untouched (Sprint 31 scope):**
+- `curriculum_track_requirements` — no requirement rows seeded; no level-specific content built
+- `player_requirement_progress` — no player rows created
+- `requirement_evidence_links` — no evidence rows created
+- All player tables, player profile, player priorities — unchanged
+- All UI components — unchanged
+- All app server actions — unchanged
+
+**Type regeneration status:** Migration not applied to live DB yet. `database.types.ts` not updated (seed-only migration adds no new columns or tables; type shape is unchanged from Sprint 30). Run `supabase gen types typescript --project-id <id> > src/lib/supabase/database.types.ts` after applying both migrations 041 and 042.
+
+**TypeScript check:** Skipped — no source files changed. Migration and changelog only.
+
+**Validation:**
+- SQL syntax reviewed manually — `ON CONFLICT (key)` targets the `UNIQUE` constraint defined in migration 041 ✓
+- CHECK constraint (`key IN ('skill', 'competition', 'fitness')`) satisfied by all three rows ✓
+- `display_order` values (10, 20, 30) are non-overlapping integers ✓
+- `is_active = true` for all three rows ✓
+- No RLS bypass required — migration runs as database owner ✓
+
+**Manual verification steps (after applying migration):**
+1. `SELECT key, label, display_order, is_active FROM curriculum_requirement_domains ORDER BY display_order;`
+2. Confirm exactly 3 rows: `skill / competition / fitness`
+3. Confirm labels: `Skill Path / Competition Path / Fitness Path`
+4. Confirm display_order: `10 / 20 / 30`
+5. Confirm `is_active = true` for all three
+6. `SELECT COUNT(*) FROM curriculum_track_requirements;` — should be 0
+7. `SELECT COUNT(*) FROM player_requirement_progress;` — should be 0
+8. `SELECT COUNT(*) FROM requirement_evidence_links;` — should be 0
+
+**Files changed:**
+- `supabase/migrations/042_requirement_domain_seed.sql` — created (44 lines)
+- `docs/CHANGELOG.md` — this entry
+
+---
+
 ## 2026-04-30 — Sprint 30: Requirement Domain Tables Migration
 
 **Mode:** Schema migration only. No seed data. No UI. No app behavior changes.
