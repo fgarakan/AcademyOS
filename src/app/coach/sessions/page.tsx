@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Calendar } from 'lucide-react'
 import {
   Card,
@@ -9,19 +10,39 @@ import {
 } from '@/components/ui'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getCoachWorkspaceSummary } from '@/lib/backend/coachWorkspace'
+import { formatDate } from '@/lib/utils'
+import type { Tables } from '@/lib/supabase/database.types'
 
 export default async function CoachSessionsPage() {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let todaySessions: Awaited<ReturnType<typeof getCoachWorkspaceSummary>>['todaySessions'] = []
+  type SessionSummary = Pick<Tables<'sessions'>, 'id' | 'name' | 'scheduled_date' | 'scheduled_time' | 'status'>
+
+  let todaySessions: Tables<'sessions'>[] = []
+  let upcomingSessions: SessionSummary[] = []
+  let coachId: string | null = null
 
   if (user) {
     try {
       const summary = await getCoachWorkspaceSummary(supabase, user.id)
       todaySessions = summary.todaySessions
+      coachId = summary.profile?.id ?? null
     } catch {
       // query failed — empty state renders
+    }
+
+    // Upcoming sessions (after today) for this coach
+    if (coachId) {
+      const todayDate = new Date().toISOString().slice(0, 10)
+      const { data: upcoming } = await supabase
+        .from('sessions')
+        .select('id, name, scheduled_date, scheduled_time, status')
+        .eq('coach_id', coachId)
+        .gt('scheduled_date', todayDate)
+        .order('scheduled_date', { ascending: true })
+        .limit(10)
+      upcomingSessions = upcoming ?? []
     }
   }
 
@@ -58,34 +79,9 @@ export default async function CoachSessionsPage() {
           </CardHeader>
           <CardContent>
             {todaySessions.length > 0 ? (
-              <ul className="space-y-1">
+              <ul className="space-y-0">
                 {todaySessions.map(s => (
-                  <li
-                    key={s.id}
-                    className="flex items-center justify-between gap-2 py-2 border-b border-border last:border-0 last:pb-0"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-text-primary truncate">
-                        {s.name ?? 'Session'}
-                      </p>
-                      {s.scheduled_time && (
-                        <p className="text-xs text-text-muted">
-                          {s.scheduled_time.slice(0, 5)}
-                        </p>
-                      )}
-                    </div>
-                    <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                      s.status === 'in_progress'
-                        ? 'bg-lime/10 text-lime border-lime/30'
-                        : s.status === 'completed'
-                        ? 'bg-status-green/10 text-status-green border-status-green/30'
-                        : s.status === 'cancelled'
-                        ? 'bg-status-red/10 text-status-red border-status-red/30'
-                        : 'bg-surface-raised text-text-muted border-border'
-                    }`}>
-                      {s.status.replace('_', ' ')}
-                    </span>
-                  </li>
+                  <SessionRow key={s.id} session={s} />
                 ))}
               </ul>
             ) : (
@@ -99,12 +95,79 @@ export default async function CoachSessionsPage() {
           </CardContent>
           <CardFooter>
             <p className="text-text-muted text-xs">
-              Coming soon: Session plans · Attendance · Group check-in
+              Coming soon: Attendance · Group check-in
             </p>
           </CardFooter>
         </Card>
       </div>
 
+      {/* ── Upcoming ─────────────────────────────────────────── */}
+      <div>
+        <SectionHeader title="UPCOMING" />
+        <Card>
+          <CardContent>
+            {upcomingSessions.length > 0 ? (
+              <ul className="space-y-0">
+                {upcomingSessions.map(s => (
+                  <SessionRow key={s.id} session={s} showDate />
+                ))}
+              </ul>
+            ) : (
+              <EmptyState
+                icon={<Calendar className="w-5 h-5" />}
+                title="No upcoming sessions"
+                description="Sessions scheduled after today will appear here."
+                className="py-8"
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
     </div>
+  )
+}
+
+function SessionRow({
+  session,
+  showDate = false,
+}: {
+  session: Pick<Tables<'sessions'>, 'id' | 'name' | 'scheduled_date' | 'scheduled_time' | 'status'>
+  showDate?: boolean
+}) {
+  return (
+    <li className="border-b border-border last:border-0 last:pb-0">
+      <Link
+        href={`/coach/sessions/${session.id}`}
+        className="flex items-center justify-between gap-2 py-2 group"
+      >
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-text-primary truncate group-hover:text-lime transition-colors">
+            {session.name ?? 'Session'}
+          </p>
+          <p className="text-xs text-text-muted">
+            {showDate
+              ? formatDate(session.scheduled_date)
+              : session.scheduled_time
+              ? session.scheduled_time.slice(0, 5)
+              : null}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+            session.status === 'in_progress'
+              ? 'bg-lime/10 text-lime border-lime/30'
+              : session.status === 'completed'
+              ? 'bg-status-green/10 text-status-green border-status-green/30'
+              : session.status === 'cancelled'
+              ? 'bg-status-red/10 text-status-red border-status-red/30'
+              : 'bg-surface-raised text-text-muted border-border'
+          }`}>
+            {session.status.replace('_', ' ')}
+          </span>
+          <span className="text-text-muted text-xs group-hover:text-lime transition-colors">→</span>
+        </div>
+      </Link>
+    </li>
   )
 }

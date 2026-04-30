@@ -1,5 +1,60 @@
 # Changelog
 
+---
+
+## 2026-04-30 — Sprint 14: Director Session Viewer + Coach Session Execution V1
+
+**Schema findings confirmed before coding:**
+- `sessions`: status enum `planned | in_progress | completed | cancelled` ✓, `session_notes` ✓
+- `session_blocks`: no completion/status field — block-level partial/skipped deferred, UI copy added
+- `session_block_exercises`: `completed` (boolean) ✓, `notes` ✓
+
+**Files created:**
+- `src/app/director/sessions/page.tsx` — Director sessions list. Fetches sessions for academy (newest first). Sequential batch queries: profiles for coach display names, templates for template names, session_blocks for block counts. Cards link to detail page. Empty state if no sessions.
+- `src/app/director/sessions/[sessionId]/page.tsx` — Read-only director session detail. Shows: session name/date/time/duration, coach, status, source template, session notes, progress (completed exercises / total), ordered session blocks with ordered exercises, completion dots, exercise notes. rawDb cast for nested select (session_block_exercises → exercises). Cross-academy guard: session verified against academy_id. Planned-snapshot notice banner.
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Coach session execution server page. Fetches session (academy_id verified), template name, ordered blocks, ordered exercises with names (rawDb cast). Passes data to CoachSessionExecutionClient.
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — Client component. Exercise checkboxes (completed toggle), per-exercise notes textareas, session status selector (4 statuses), session notes textarea, Save Execution button with useTransition. Progress counter (N / total). Inline block-level deferral notice. Success/error result display.
+- `src/app/coach/sessions/[sessionId]/actions.ts` — Server action `saveSessionExecutionAction`. Security chain: assertNotPreviewMode → auth → academy_id from profile → session ownership via academy_id → coach access check (session.coach_id === user or active membership in [coach, head_coach, academy_director]) → session status+notes update → session_blocks fetch to build valid block ID set → session_block_exercises fetch to build valid exercise ID set → reject any submitted exercise ID not in set → sequential per-exercise updates (completed, notes). Never touches template tables.
+
+**Files modified:**
+- `src/app/coach/sessions/page.tsx` — Added `Link` import and `formatDate`; sessions in Today section now link to `/coach/sessions/[id]`; added Upcoming section (sessions after today, ordered ascending, limit 10); extracted `SessionRow` component.
+- `docs/CHANGELOG.md` — this entry
+
+**Security chain (coach actions):**
+- `assertNotPreviewMode()` guard
+- Auth required
+- `academy_id` resolved from authenticated profile (never trusted from client)
+- Session must belong to coach's academy
+- Coach access: either `session.coach_id === user.id` or active academy membership with allowed role
+- Exercise IDs validated against this session's blocks before any update
+- Sequential updates — no Promise.all
+- Only session-layer tables updated: `sessions`, `session_block_exercises`
+- `template_blocks`, `template_block_exercises`, `templates` never touched
+
+**What was not built (deferred):**
+- Block-level partial/skipped status (not in schema — UI copy added)
+- Attendance, player roster, group scheduling
+- Voice recap, AI note structuring
+- Parent messages
+- Exercise swapping / session override reordering
+- Session generation from curriculum spine
+- Director write on session detail
+
+**TypeScript:** clean (`npx tsc --noEmit` — no output)
+
+**Manual verification steps:**
+1. Generate a session from a fitness template if none exist.
+2. Open `/director/sessions` — session appears in list with date, coach, template name, block count.
+3. Click session → `/director/sessions/[sessionId]` — blocks and exercises display in order; completion dots shown; planned-snapshot notice visible.
+4. Open `/coach/sessions` — today's session appears with → link; upcoming section shows future sessions.
+5. Click session → `/coach/sessions/[sessionId]` — blocks and exercises with checkboxes; session status buttons; notes textareas; Save Execution button.
+6. Check one exercise, add a note, change status to in_progress, click Save Execution.
+7. Refresh page — confirm changes persisted.
+8. Open `/director/sessions/[sessionId]` — confirm execution changes reflected (dot filled, note shown).
+9. Open the source fitness template → confirm template blocks unchanged.
+
+---
+
 Records completed build milestones in chronological order.
 Update this file at the end of every completed module.
 
