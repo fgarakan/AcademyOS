@@ -140,12 +140,13 @@ export default async function DirectorReviewQueuePage() {
 
   // ─── Priority recommendation drafts ─────────────────────────
 
-  // 9. Fetch pending priority recommendation drafts — scoped to this academy
+  // 9. Fetch pending + approved priority recommendation drafts — scoped to this academy
+  //    Approved drafts are included so directors can apply them here
   const { data: priorityDraftRows } = await rawDb
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
     .eq('academy_id', academyId)
-    .eq('status', 'pending_review')
+    .in('status', ['pending_review', 'approved'])
     .eq('target_module', 'priority_recommendation')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -192,7 +193,7 @@ export default async function DirectorReviewQueuePage() {
     }
   }
 
-  // 13. Assemble enriched priority draft items
+  // 13. Assemble enriched priority draft items — split pending vs approved
   const enrichedPriorityDrafts: EnrichedPriorityDraftItem[] = filteredPriorityDrafts.map(d => ({
     id: d.id,
     status: d.status,
@@ -203,12 +204,16 @@ export default async function DirectorReviewQueuePage() {
     payload: d.proposed_payload as unknown as PriorityRecommendationPayload,
   }))
 
+  const pendingPriorityDrafts = enrichedPriorityDrafts.filter(d => d.status === 'pending_review')
+  const approvedPriorityDrafts = enrichedPriorityDrafts.filter(d => d.status === 'approved')
+
   return (
     <div className="animate-fade-in space-y-8">
       <PageHeader
         pendingCount={pendingDrafts.length}
         approvedCount={approvedDrafts.length}
-        priorityPendingCount={enrichedPriorityDrafts.length}
+        priorityPendingCount={pendingPriorityDrafts.length}
+        priorityApprovedCount={approvedPriorityDrafts.length}
       />
 
       {/* ─── Session recap structured drafts ─── */}
@@ -267,33 +272,53 @@ export default async function DirectorReviewQueuePage() {
             <Target className="w-4 h-4 text-text-muted" />
             <p className="label-xs">Priority Recommendation Drafts</p>
           </div>
-          {enrichedPriorityDrafts.length > 0 && (
+          {pendingPriorityDrafts.length > 0 && (
             <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
-              {enrichedPriorityDrafts.length} pending
+              {pendingPriorityDrafts.length} pending
+            </span>
+          )}
+          {approvedPriorityDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+              {approvedPriorityDrafts.length} ready to apply
             </span>
           )}
         </div>
-        <p className="text-text-muted text-xs">
-          Drafts generated from player evidence. Approval marks them ready for a future priority-creation step — no active priorities are created here.
-        </p>
 
-        {enrichedPriorityDrafts.length === 0 ? (
-          <Card>
-            <CardContent className="py-12">
-              <EmptyState
-                icon={<Target className="w-5 h-5" />}
-                title="No pending priority recommendation drafts"
-                description="Drafts created from player evidence will appear here for review."
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {enrichedPriorityDrafts.map(draft => (
-              <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
-            ))}
-          </div>
+        {/* Approved — ready to apply */}
+        {approvedPriorityDrafts.length > 0 && (
+          <section className="space-y-3">
+            <p className="label-xs">Approved — Ready to Apply</p>
+            <div className="space-y-4">
+              {approvedPriorityDrafts.map(draft => (
+                <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          </section>
         )}
+
+        {/* Pending review */}
+        <section className="space-y-3">
+          {approvedPriorityDrafts.length > 0 && pendingPriorityDrafts.length > 0 && (
+            <p className="label-xs">Pending Review</p>
+          )}
+          {pendingPriorityDrafts.length === 0 && approvedPriorityDrafts.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<Target className="w-5 h-5" />}
+                  title="No pending priority recommendation drafts"
+                  description="Drafts created from player evidence will appear here for review."
+                />
+              </CardContent>
+            </Card>
+          ) : pendingPriorityDrafts.length > 0 ? (
+            <div className="space-y-4">
+              {pendingPriorityDrafts.map(draft => (
+                <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          ) : null}
+        </section>
       </div>
     </div>
   )
@@ -303,12 +328,15 @@ function PageHeader({
   pendingCount,
   approvedCount,
   priorityPendingCount,
+  priorityApprovedCount,
 }: {
   pendingCount: number
   approvedCount: number
   priorityPendingCount: number
+  priorityApprovedCount: number
 }) {
   const totalPending = pendingCount + priorityPendingCount
+  const totalReadyToApply = approvedCount + priorityApprovedCount
   return (
     <div>
       <p className="label-xs mb-1">DIRECTOR</p>
@@ -319,9 +347,9 @@ function PageHeader({
             {totalPending} pending
           </span>
         )}
-        {approvedCount > 0 && (
+        {totalReadyToApply > 0 && (
           <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-            {approvedCount} ready to apply
+            {totalReadyToApply} ready to apply
           </span>
         )}
       </div>

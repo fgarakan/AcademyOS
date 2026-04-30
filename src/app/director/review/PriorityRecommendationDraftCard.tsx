@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import { AlertTriangle, ExternalLink, Target } from 'lucide-react'
+import { AlertTriangle, CheckCircle, ExternalLink, Target } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { PriorityDraftDecisionControls } from './PriorityDraftDecisionControls'
+import { ApplyPriorityRecommendationControls } from './ApplyPriorityRecommendationControls'
 
 const CATEGORY_LABELS: Record<string, string> = {
   technical_skill:      'Technical Skill',
@@ -70,8 +71,8 @@ export function PriorityRecommendationDraftCard({ draft }: { draft: EnrichedPrio
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-widest text-status-orange font-medium">
-              Priority Recommendation · pending review
+            <p className={`text-[10px] uppercase tracking-widest font-medium ${draft.status === 'approved' ? 'text-lime' : 'text-status-orange'}`}>
+              Priority Recommendation · {draft.status === 'approved' ? 'approved — ready to apply' : 'pending review'}
             </p>
             {draft.playerName && (
               <p className="text-sm font-semibold text-text-primary mt-0.5">{draft.playerName}</p>
@@ -101,11 +102,18 @@ export function PriorityRecommendationDraftCard({ draft }: { draft: EnrichedPrio
           )}
         </div>
 
-        {/* Draft-only banner */}
-        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-status-orange/5 border border-status-orange/20 text-xs text-status-orange">
-          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          <span>Draft only. No active priority has been created.</span>
-        </div>
+        {/* Status banner */}
+        {draft.status === 'approved' ? (
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-lime/5 border border-lime/20 text-xs text-lime">
+            <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>Approved. No active priority created yet — click below to apply.</span>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-status-orange/5 border border-status-orange/20 text-xs text-status-orange">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>Draft only. No active priority has been created.</span>
+          </div>
+        )}
 
         {/* Recommended priority */}
         <section className="space-y-2">
@@ -169,8 +177,12 @@ export function PriorityRecommendationDraftCard({ draft }: { draft: EnrichedPrio
           </div>
         )}
 
-        {/* Decision controls */}
-        <PriorityDraftDecisionControls proposedActionId={draft.id} />
+        {/* Controls — apply for approved drafts, decision buttons for pending */}
+        {draft.status === 'approved' ? (
+          <ApplyPriorityRecommendationControls proposedActionId={draft.id} />
+        ) : (
+          <PriorityDraftDecisionControls proposedActionId={draft.id} />
+        )}
       </CardContent>
     </Card>
   )

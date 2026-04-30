@@ -2,6 +2,81 @@
 
 ---
 
+## 2026-04-30 — Sprint 27: Approved Priority Recommendation Application Guardrails
+
+**Schema fields confirmed:**
+- `proposed_actions.status` enum includes `approved` and `executed` — both confirmed present
+- `proposed_actions.target_object_type` — string, confirmed `player` for priority recommendation drafts
+- `proposed_actions.voice_command_id` — NOT NULL, passed through to audit_logs
+- `player_priorities` required insert fields: `academy_id`, `player_id`, `title`, `category` (priority_category enum)
+- `player_priorities.is_active` — boolean, default true; the player profile page filters by this field only
+- `player_priorities` has no provenance fields (`source_proposed_action_id`, `generated_by`) — provenance recorded in `audit_logs.payload`
+- `player_priorities` RLS: `"Staff manage priorities" FOR ALL` — covers INSERT for authenticated staff
+- `audit_logs` INSERT confirmed working (same pattern as sprint 21 recap action)
+- No database-level uniqueness constraint on `player_priorities` title — duplicate check is application-level
+
+**Files created:**
+- `src/app/director/review/ApplyPriorityRecommendationControls.tsx` — client component; "Create Active Priority" button; guardrail copy; calls `applyApprovedPriorityRecommendationAction`; success/error states; `router.refresh()` on success
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — added `applyApprovedPriorityRecommendationAction`; full security chain (auth → academy_id → membership → proposed_action verify → payload validate → player verify → duplicate check → insert player_priorities → audit_log → mark executed); no service role; no RLS bypass
+- `src/app/director/review/PriorityRecommendationDraftCard.tsx` — dynamic status label (pending vs approved); different banner color for approved; conditionally renders `ApplyPriorityRecommendationControls` for approved drafts, `PriorityDraftDecisionControls` for pending
+- `src/app/director/review/page.tsx` — priority draft query changed from `eq('status', 'pending_review')` to `in('status', ['pending_review', 'approved'])`; pending/approved splits computed; "Approved — Ready to Apply" section added for priority drafts; `PageHeader` updated with `priorityApprovedCount`; total ready-to-apply badge in page header now includes both session recap and priority approved counts
+
+**Files read only:**
+- `src/app/director/players/[playerId]/PlayerActivePriorities.tsx`, `priorityRecommendationAction.ts`, `page.tsx`
+- `supabase/migrations/020_player_priorities.sql`
+- `src/lib/supabase/database.types.ts`
+- `docs/CHANGELOG.md`, `docs/AI_BACKEND_RULES.md`, `docs/CURRENT_BUILD_TARGET.md`, `docs/LOCKED_MODULES.md`, `docs/KNOWN_LIMITATIONS.md`, `docs/MODULE_BUILD_PROCESS.md`
+
+**Apply behavior:**
+- Button appears only on approved priority recommendation drafts
+- Clicking "Create Active Priority" calls `applyApprovedPriorityRecommendationAction(proposedActionId)`
+- Inserts one `player_priorities` row: `is_active=true`, `status='active'`, title/description/category/priority_level/urgency from `proposed_payload.recommended_priority`, `priority_rank=max_existing+1`
+- Writes `audit_logs` row with full provenance (proposed_action_id, player_id, applied_by, source)
+- Updates `proposed_actions.status = 'executed'` only after successful insert
+- `router.refresh()` causes the applied draft to disappear from the queue (executed status excluded from query)
+- Active priority appears on `/director/players/[playerId]` Active Priorities section
+
+**Duplicate handling:**
+- Fetches active player priorities before insert
+- Normalizes title (lowercase trim) and checks for exact match
+- Returns: "An active priority with a similar title already exists for this player. No duplicate was created."
+- No insert attempted if duplicate found
+
+**Security checks:**
+- `assertNotPreviewMode`
+- Auth user required
+- `academy_id` resolved from server-side profile — never from client
+- Active academy membership verified — `academy_director` or `head_coach` only
+- `proposed_action.academy_id` verified against authenticated `academy_id`
+- `status === 'approved'` required
+- `target_module === 'priority_recommendation'` required
+- `target_object_type === 'player'` required
+- `draft_type === 'priority_recommendation_v1'` required
+- Title non-empty, ≤ 200 chars
+- Description ≤ 1000 chars
+- Category validated against full `priority_category` enum list
+- Player membership in academy verified by separate query
+
+**What was NOT built:**
+- No batch apply
+- No auto-apply after approval
+- No priority editing, completion, or deletion
+- No parent/player-facing priority view
+- No level-up logic
+- No progression score
+- No duplicate resolution UI
+- No drag-and-drop rank reordering
+- No notification or communication drafts
+- No migrations
+- No package installs
+- No AI API
+
+**TypeScript:** clean
+
+---
+
 ## 2026-04-30 — Sprint 26: Priority Recommendation Review Queue V1
 
 **Schema fields confirmed:**

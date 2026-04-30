@@ -215,6 +215,215 @@ export async function updatePriorityRecommendationDecisionAction(
 }
 
 // ─────────────────────────────────────────────────────────────
+// Apply approved priority recommendation draft
+// Creates exactly one player_priorities row from an approved draft.
+// Never auto-applies pending drafts, never updates existing priorities,
+// never touches player profiles, parent/player views, or communications.
+// ─────────────────────────────────────────────────────────────
+
+const VALID_PRIORITY_CATEGORIES = [
+  'technical_skill',
+  'tactical_skill',
+  'physical_fitness',
+  'competition_exposure',
+  'behavioral',
+  'load_management',
+  'reassessment',
+  'promotion_readiness',
+] as const
+
+type PriorityCategory = typeof VALID_PRIORITY_CATEGORIES[number]
+
+export interface ApplyApprovedPriorityRecommendationResult {
+  ok: boolean
+  error: string | null
+  priorityId: string | null
+}
+
+export async function applyApprovedPriorityRecommendationAction(
+  proposedActionId: string
+): Promise<ApplyApprovedPriorityRecommendationResult> {
+  const fail = (error: string): ApplyApprovedPriorityRecommendationResult =>
+    ({ ok: false, error, priorityId: null })
+
+  await assertNotPreviewMode()
+
+  // 1. Auth
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return fail('Not authenticated.')
+  if (!proposedActionId) return fail('Missing proposed action ID.')
+
+  // 2. Resolve academy_id from authenticated profile — never trust client input
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return fail('Academy context unavailable.')
+  const academyId = profile.academy_id
+
+  // 3. Verify active academy membership — director or head_coach only
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return fail('You do not have permission to apply priority recommendation drafts.')
+  }
+
+  // 4. Fetch proposed_action — verify academy, status, module, and type
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, target_object_type, target_object_id, proposed_payload, voice_command_id')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return fail('Proposed action not found.')
+  if (proposedAction.academy_id !== academyId) return fail('Access denied.')
+  if (proposedAction.status !== 'approved') return fail('Only approved drafts can be applied.')
+  if (proposedAction.target_module !== 'priority_recommendation') {
+    return fail('This action cannot be applied through this interface.')
+  }
+  if (proposedAction.target_object_type !== 'player') {
+    return fail('Target type mismatch — expected player.')
+  }
+
+  // 5. Validate payload structure and draft_type
+  const payload = proposedAction.proposed_payload as Record<string, unknown>
+  if (payload?.draft_type !== 'priority_recommendation_v1') {
+    return fail('Unsupported draft type.')
+  }
+
+  const rec = payload.recommended_priority as Record<string, unknown> | undefined
+  if (!rec) return fail('This recommendation draft is missing required priority details.')
+
+  const title = typeof rec.title === 'string' ? rec.title.trim() : ''
+  const description = typeof rec.description === 'string' ? rec.description.trim() : ''
+  const category = typeof rec.category === 'string' ? rec.category : ''
+  const priorityLevel = typeof rec.priority_level === 'string' ? rec.priority_level : 'medium'
+  const urgency = typeof rec.urgency === 'string' ? rec.urgency : 'normal'
+
+  if (!title) return fail('This recommendation draft is missing required priority details.')
+  if (title.length > 200) return fail('Priority title is too long (max 200 characters).')
+  if (description.length > 1000) return fail('Priority description is too long (max 1000 characters).')
+
+  if (!(VALID_PRIORITY_CATEGORIES as readonly string[]).includes(category)) {
+    return fail('Invalid category in recommendation draft.')
+  }
+  const typedCategory = category as PriorityCategory
+
+  // 6. Verify player belongs to this academy
+  const playerId = proposedAction.target_object_id as string | null
+  if (!playerId) return fail('Player reference missing from draft.')
+
+  const { data: player } = await supabase
+    .from('players')
+    .select('id')
+    .eq('id', playerId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!player) return fail('Player not found or access denied.')
+
+  // 7. Fetch active priorities: duplicate check + rank computation
+  const { data: existingPriorities } = await rawDb
+    .from('player_priorities')
+    .select('id, title, priority_rank')
+    .eq('academy_id', academyId)
+    .eq('player_id', playerId)
+    .eq('is_active', true)
+
+  const existing = (existingPriorities ?? []) as Array<{ id: string; title: string; priority_rank: number }>
+
+  // Normalize title and check for exact duplicate
+  const normalizedNew = title.toLowerCase().trim()
+  const duplicate = existing.find(p => p.title.toLowerCase().trim() === normalizedNew)
+  if (duplicate) {
+    return fail(
+      'An active priority with a similar title already exists for this player. No duplicate was created.'
+    )
+  }
+
+  // Compute new priority_rank: max existing + 1
+  const maxRank = existing.length > 0
+    ? Math.max(...existing.map(p => p.priority_rank ?? 0))
+    : 0
+  const newRank = maxRank + 1
+
+  // 8. Insert exactly one player_priorities row — the only write to player_priorities in this action
+  const { data: createdPriority, error: insertError } = await rawDb
+    .from('player_priorities')
+    .insert({
+      academy_id: academyId,
+      player_id: playerId,
+      title,
+      description: description || null,
+      category: typedCategory,
+      is_active: true,
+      priority_level: priorityLevel,
+      urgency,
+      priority_rank: newRank,
+      status: 'active',
+      confidence_score: 0.75,
+      source_signal_ids: [],
+    })
+    .select('id')
+    .single()
+
+  if (insertError || !createdPriority) {
+    return fail(`Failed to create priority: ${insertError?.message ?? 'unknown error'}`)
+  }
+
+  const priorityId = createdPriority.id as string
+
+  // 9. Write audit log — records provenance since player_priorities has no source fields
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'priority_recommendation.priority.applied',
+      target_type: 'player_priority',
+      target_id: priorityId,
+      payload: {
+        proposed_action_id: proposedActionId,
+        player_id: playerId,
+        priority_title: title,
+        category: typedCategory,
+        priority_level: priorityLevel,
+        urgency,
+        priority_rank: newRank,
+        source: 'priority_recommendation_draft',
+        applied_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: proposedAction.voice_command_id ?? null,
+    })
+
+  // 10. Mark proposed_action as executed only after successful insert
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'executed' })
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return {
+      ok: false,
+      error: `Priority created but failed to mark draft as executed: ${updateError.message}`,
+      priorityId,
+    }
+  }
+
+  return { ok: true, error: null, priorityId }
+}
+
+// ─────────────────────────────────────────────────────────────
 // Apply approved structured draft
 // Only creates coach_observations from player_observation_drafts.
 // Does NOT touch attendance, parent messages, player priorities,
