@@ -2,6 +2,95 @@
 
 ---
 
+## 2026-04-30 — Sprint 19: Structured Draft Review Queue V1
+
+**Schema fields confirmed before coding:**
+- `proposed_actions.id` — `string` ✓
+- `proposed_actions.academy_id` — `string` ✓
+- `proposed_actions.status` — `Enums['proposed_action_status']` — `'pending_review'` is a valid value ✓
+- `proposed_actions.target_module` — `string` — filterable to `'session_recap_structuring'` ✓
+- `proposed_actions.target_object_id` — `string | null` — holds session UUID ✓
+- `proposed_actions.target_object_type` — `string | null` — `'session'` (informational only) ✓
+- `proposed_actions.proposed_payload` — `Json` — holds `StructuredDraftPayload`; `draft_type` checked after fetch ✓
+- `proposed_actions.created_at` — `string` ✓
+- `proposed_actions.proposed_by_id` — `string` — FK to profiles ✓
+- `proposed_actions.voice_command_id` — `string` (NOT NULL FK — Sprint 18 creates voice_commands row) ✓
+- `sessions.id`, `sessions.name`, `sessions.scheduled_date` — confirmed ✓
+- `profiles.id`, `profiles.display_name` — confirmed (no `full_name` on profiles) ✓
+- `academy_memberships.profile_id`, `academy_memberships.role` (`user_role` enum), `academy_memberships.is_active` — confirmed ✓
+- `user_role` enum: `academy_director | head_coach | coach | player | parent` ✓
+- `proposed_action_status` enum: `pending_review | clarification_needed | approved | modified | rejected | executed | failed | expired` ✓
+- No migrations needed — all required tables and columns exist ✓
+
+**Files created:**
+- `src/app/director/review/page.tsx` — Server Component. Security chain: auth → academy_id from profile → active membership check (academy_director or head_coach) → query proposed_actions by academy_id + status=pending_review + target_module=session_recap_structuring → post-fetch filter to draft_type=session_recap_structuring_v1 → batch-fetch session names/dates → batch-fetch proposer display_names → render StructuredDraftCard list. Empty state if no pending drafts. Never mutates any table.
+- `src/app/director/review/StructuredDraftCard.tsx` — Server Component card. Exports `EnrichedDraftItem` interface and `StructuredDraftCard` component. Displays: draft label, session name/date, proposer name, created timestamp, safety banner, 4-count summary grid (detected players / attendance mentions / observation drafts / parent-safe drafts), director summary preview (3-line clamp), detected player chips, attendance mention rows with status colors, player observation previews (2-line clamp), parent-safe candidate count with note, link to source session detail.
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — added `ClipboardList` import and `Review Queue` → `/director/review` nav item between Sessions and Competition in primary nav.
+- `docs/CHANGELOG.md` — this entry
+
+**Review queue behavior:**
+1. Director opens `/director/review`
+2. Auth and academy_director/head_coach membership verified server-side
+3. All proposed_actions with status=pending_review and target_module=session_recap_structuring for this academy are fetched
+4. Each card shows: session context (name, date), proposer name, created timestamp, draft count summary, director summary preview, detected players, attendance mentions, observation drafts preview, parent-safe draft count
+5. "View Session" link on each card navigates to `/director/sessions/[sessionId]` for full session detail
+6. Empty state message if no pending drafts exist yet
+7. Sidebar nav shows "Review Queue" link with ClipboardList icon between Sessions and Competition
+
+**Database read strategy:**
+- Sequential queries per AI_BACKEND_RULES.md rule 5
+- `rawDb = supabase as any` for proposed_actions query (avoids TS2589 — same pattern as session detail page)
+- proposed_actions scoped to academy_id + status + target_module in DB query
+- draft_type filter applied in memory after fetch (JSON field — not DB-filterable)
+- Session info batch-fetched by target_object_id IN clause
+- Proposer names batch-fetched by proposed_by_id IN clause
+- All session/profile reads verified against academy_id (sessions: .eq('academy_id', academyId))
+
+**Security checks:**
+- Auth required (no user → early return)
+- academy_id resolved from authenticated profile — never trusted from client
+- academy_director or head_coach active membership verified before any data is shown
+- proposed_actions query always includes .eq('academy_id', academyId) — no cross-academy reads
+- sessions batch-fetch also filtered by .eq('academy_id', academyId)
+- No service role; no RLS bypass
+
+**What was not built:**
+- Approve/apply draft button
+- Reject/dismiss draft
+- Edit draft
+- Player profile updates from draft
+- Attendance mutation from draft
+- Parent-safe message creation or sending
+- Coach observation creation
+- Player priority updates
+- Director intelligence feed writes
+- Batch actions on multiple drafts
+- Draft notifications or badges in real-time
+- Analytics on draft processing rates
+- AI API integration
+- Voice transcription
+- Audio upload
+
+**TypeScript:** clean (`npx tsc --noEmit` — no output)
+
+**Manual verification steps:**
+1. Ensure Sprint 18 has created at least one proposed_actions row with status=pending_review.
+2. Open `/director/review`.
+3. Confirm pending structured drafts appear as cards.
+4. Confirm each card shows session name, session date, proposer name, 4-count grid, director summary preview, and safety banner.
+5. Click "View Session" link — confirm navigates to `/director/sessions/[sessionId]`.
+6. Confirm `/director/sessions/[sessionId]` still shows its own structured draft view (unchanged).
+7. Confirm no player profiles changed.
+8. Confirm no attendance changed.
+9. Confirm no parent messages were created.
+10. Confirm no proposed_actions status changed (still pending_review).
+11. Confirm "Review Queue" link appears in sidebar nav between Sessions and Competition.
+12. Confirm empty state message appears if no pending drafts exist.
+
+---
+
 ## 2026-04-30 — Sprint 17: Coach Session Recap MVP
 
 **Schema fields confirmed before coding:**
