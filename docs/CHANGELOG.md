@@ -2,6 +2,72 @@
 
 ---
 
+## 2026-04-30 — Sprint 16: Session Group Assignment V1
+
+**Schema fields confirmed before coding:**
+- `sessions.group_id` — `string | null`, present in Row/Insert/Update ✓ — supports update
+- `sessions.academy_id` — `string` ✓
+- `groups.id`, `groups.name`, `groups.academy_id`, `groups.is_active: boolean` ✓ — filterable by academy_id and is_active
+- `group_memberships.group_id`, `group_memberships.player_id`, `group_memberships.is_current`, `group_memberships.academy_id` ✓ — membership counts readable
+- `academy_memberships.role` — enum `academy_director | head_coach | coach | player | parent` ✓
+- No migrations needed — all required fields existed from Sprint 15
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/actions.ts` — `assignGroupToSessionAction` server action. Security chain: assertNotPreviewMode → auth → academy_id from profile → academy_director/head_coach membership required → session ownership verified → group verified (same academy, is_active=true) → update sessions.group_id only. Never touches templates, group_memberships, players, attendance, or player profiles.
+- `src/app/director/sessions/[sessionId]/GroupAssignmentPanel.tsx` — `'use client'` component. Shows current group if assigned, dropdown of active groups with member counts, Save Group Assignment button. Disabled until a different group is selected. Success/error inline feedback. Empty state if no active groups.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — added `GroupAssignmentPanel` import; added sequential queries for active groups (by academy_id + is_active) and their member counts (batch, single query); inserted GROUP ASSIGNMENT section (SectionHeader + Card + GroupAssignmentPanel) between session meta and blocks; updated empty-state copy for no-group roster to reference the assignment panel above.
+- `src/app/director/sessions/page.tsx` — added `group_id` to session select; added batch group name fetch (step 5); updated session card to show group name or "No group" label.
+- `docs/CHANGELOG.md` — this entry
+
+**Director group assignment behavior:**
+1. Open `/director/sessions/[sessionId]`
+2. GROUP ASSIGNMENT section appears with dropdown of active groups (each shows member count)
+3. If already assigned, current group name shown above dropdown
+4. Select a group → Save Group Assignment button activates
+5. On save: success message "Group assigned. Refresh to see the updated roster."
+6. After refresh: ROSTER & ATTENDANCE section populates from group_memberships
+
+**Database write strategy:**
+- Single `UPDATE sessions SET group_id = ? WHERE id = ? AND academy_id = ?`
+- Only column updated: `sessions.group_id`
+- No other tables written
+
+**Security checks:**
+- `assertNotPreviewMode()` — writes blocked in preview
+- Auth required
+- `academy_id` resolved from authenticated profile (never trusted from client)
+- Caller must be `academy_director` or `head_coach` in this academy (active membership)
+- Session verified against academy_id before write
+- Group verified against same academy_id and is_active=true before write
+- No RLS bypass; no service role
+
+**What was not built:**
+- Group builder / group creation UI
+- Group scheduling
+- Manual player-to-session assignment (no group)
+- Attendance analytics
+- Player profile updates from attendance
+- Voice group assignment
+- Automatic group recommendations
+- CSV import
+
+**TypeScript:** clean (`npx tsc --noEmit` — no output)
+
+**Manual verification steps:**
+1. Ensure a generated session exists.
+2. Open `/director/sessions/[sessionId]` — GROUP ASSIGNMENT section appears.
+3. Confirm current group state shown (or blank if unassigned).
+4. Select an active group from dropdown.
+5. Click Save Group Assignment — success message appears.
+6. Refresh page — group assignment persisted; ROSTER & ATTENDANCE shows players if group has current members.
+7. Open `/coach/sessions/[sessionId]` — Attendance card shows group roster.
+8. Mark attendance and save — confirm no templates, player profiles, or group membership rows changed.
+9. Check `/director/sessions` list — group name (or "No group") shown on each session card.
+
+---
+
 ## 2026-04-30 — Sprint 15: Session Attendance + Player Roster V1
 
 **Schema findings confirmed before coding:**

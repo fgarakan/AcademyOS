@@ -30,7 +30,7 @@ export default async function DirectorSessionsPage() {
   // 1. Sessions for this academy, newest first
   const { data: sessions, error: sessionsError } = await supabase
     .from('sessions')
-    .select('id, name, scheduled_date, status, coach_id, template_id')
+    .select('id, name, scheduled_date, status, coach_id, template_id, group_id')
     .eq('academy_id', academyId)
     .order('scheduled_date', { ascending: false })
 
@@ -86,6 +86,21 @@ export default async function DirectorSessionsPage() {
     }
   }
 
+  // 5. Batch-fetch group names
+  const groupIds = Array.from(
+    new Set(sessionList.map(s => s.group_id).filter((id): id is string => id !== null))
+  )
+  const groupMap = new Map<string, string>()
+  if (groupIds.length > 0) {
+    const { data: groups } = await supabase
+      .from('groups')
+      .select('id, name')
+      .in('id', groupIds)
+    for (const g of (groups ?? [])) {
+      groupMap.set(g.id, g.name)
+    }
+  }
+
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader />
@@ -106,6 +121,7 @@ export default async function DirectorSessionsPage() {
             const coachName = coachMap.get(session.coach_id) ?? 'Unknown Coach'
             const templateName = session.template_id ? (templateMap.get(session.template_id) ?? null) : null
             const blockCount = blockCountMap.get(session.id) ?? 0
+            const groupName = session.group_id ? (groupMap.get(session.group_id) ?? null) : null
 
             return (
               <Link key={session.id} href={`/director/sessions/${session.id}`} className="block group">
@@ -126,6 +142,10 @@ export default async function DirectorSessionsPage() {
                           </span>
                           <span>{coachName}</span>
                           {templateName && <span>Template: {templateName}</span>}
+                          {groupName
+                            ? <span>Group: {groupName}</span>
+                            : <span className="text-text-muted/60">No group</span>
+                          }
                           {blockCount > 0 && (
                             <span>{blockCount} block{blockCount !== 1 ? 's' : ''}</span>
                           )}

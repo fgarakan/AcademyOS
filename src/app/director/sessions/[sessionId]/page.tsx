@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Clock, Info } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
+import { GroupAssignmentPanel } from './GroupAssignmentPanel'
 
 interface PageProps {
   params: { sessionId: string }
@@ -182,6 +183,35 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     unrecorded: directorRoster.filter(p => p.status === null).length,
   }
 
+  // 7. Fetch active groups for group assignment panel
+  const { data: activeGroupsRaw } = await supabase
+    .from('groups')
+    .select('id, name')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .order('name')
+
+  // 8. Batch-fetch membership counts for each active group
+  interface GroupOption { id: string; name: string; memberCount: number }
+  const activeGroups: GroupOption[] = []
+  if ((activeGroupsRaw ?? []).length > 0) {
+    const groupIds = (activeGroupsRaw ?? []).map(g => g.id)
+    const { data: memberRows } = await supabase
+      .from('group_memberships')
+      .select('group_id')
+      .in('group_id', groupIds)
+      .eq('is_current', true)
+      .eq('academy_id', academyId)
+
+    const countMap = new Map<string, number>()
+    for (const m of memberRows ?? []) {
+      countMap.set(m.group_id, (countMap.get(m.group_id) ?? 0) + 1)
+    }
+    for (const g of activeGroupsRaw ?? []) {
+      activeGroups.push({ id: g.id, name: g.name, memberCount: countMap.get(g.id) ?? 0 })
+    }
+  }
+
   return (
     <div className="animate-fade-in space-y-6">
       <BackLink />
@@ -248,6 +278,21 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Group Assignment */}
+      <div>
+        <SectionHeader title="GROUP ASSIGNMENT" />
+        <Card className="mt-3">
+          <CardContent className="py-4">
+            <GroupAssignmentPanel
+              sessionId={session.id}
+              currentGroupId={session.group_id}
+              currentGroupName={groupName}
+              groups={activeGroups}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Blocks and exercises */}
       {blockList.length === 0 ? (
@@ -332,8 +377,8 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           <CardContent className="py-4">
             {!session.group_id ? (
               <div className="py-2 text-center">
-                <p className="text-sm text-text-muted">No group assigned to this session.</p>
-                <p className="text-xs text-text-muted mt-1">Player roster assignment will be added in a future sprint.</p>
+                <p className="text-sm text-text-muted">No group is assigned to this session yet.</p>
+                <p className="text-xs text-text-muted mt-1">Assign a group above to populate the roster and enable attendance.</p>
               </div>
             ) : directorRoster.length === 0 ? (
               <div className="py-2 text-center">
