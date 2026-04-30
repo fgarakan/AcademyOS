@@ -2,6 +2,66 @@
 
 ---
 
+## 2026-04-30 — Sprint 35: Player Requirement Progress Read-Only UI
+
+**Mode:** Read-only UI only. No mutations. No confirmation workflow. No evidence linking.
+
+**Files changed:**
+- `src/app/director/players/[playerId]/PlayerRequirementProgressReadOnly.tsx` — created
+- `src/app/director/players/[playerId]/page.tsx` — query + component integration
+
+**What was built:**
+- New `PlayerRequirementProgressReadOnly` component added to the Notes tab of the director player profile.
+- Queries `v_player_requirement_progress_detail` filtered by `academy_id` + `player_id`, ordered by `domain_display_order` then `requirement_display_order`.
+- Groups requirement rows into three domain sections: Skill Path, Competition Path, Fitness Path.
+- Each requirement card shows: title, description, status badge, required/optional badge, evidence count, requirement type, last evidence date (if any), and internal-only visibility indicator.
+- Status labels: Not Started, In Progress, Evidence Needed, Met, Waived, Blocked.
+- Domain section headers show per-status counts (met / in progress / not started).
+- Current level context displayed when rows exist.
+- Read-only disclaimer at section top.
+- Empty state when no rows exist, differentiated for Orange Ball vs. other levels.
+- Empty state when no curriculum assigned.
+
+**Security:**
+- Uses authenticated Supabase server client (no service role).
+- Resolves `academy_id` from authenticated profile.
+- Queries scoped strictly to `academy_id = current academy` and `player_id = current player`.
+- RLS on `player_requirement_progress` and `curriculum_track_requirements` enforces academy scoping at DB level.
+
+**Data fetch strategy:**
+- Server-side query in `page.tsx` using existing `rawDb` cast pattern (avoids TS2589).
+- Local `RequirementProgressRow` interface defined in the component file — used because `v_player_requirement_progress_detail` is not yet in `database.types.ts`.
+- `isOrangeBallPlayer` derived from `curriculumSummary?.stage === 'orange_development'`.
+
+**Type handling:**
+- `v_player_requirement_progress_detail` is NOT in `database.types.ts`.
+- Local TypeScript interface `RequirementProgressRow` used instead.
+- `database.types.ts` was NOT manually edited.
+- After applying migrations 041–044 to live DB, run `supabase gen types typescript` to regenerate types and remove the local interface.
+
+**What was NOT built (by design):**
+- No status update controls, no "mark met" button, no checkboxes.
+- No evidence linking controls.
+- No parent/player portal views.
+- No level-up recommendation or promotion button.
+- No AI summary.
+- No scoring logic.
+- No confirmation workflow.
+- No new migrations.
+- No new packages.
+
+**Validation:**
+- `npx tsc --noEmit` — passes with zero errors.
+
+**Type regeneration note:**
+`database.types.ts` does not yet include `v_player_requirement_progress_detail`, `player_requirement_progress`, `requirement_evidence_links`, `curriculum_requirement_domains`, or `curriculum_track_requirements`. These were added in migration 041. After applying migrations 041–044 to the live database, regenerate types with:
+```
+supabase gen types typescript --project-id <project-id> > src/lib/supabase/database.types.ts
+```
+Once types are regenerated, the local `RequirementProgressRow` interface in `PlayerRequirementProgressReadOnly.tsx` can be replaced with the generated `Tables<'v_player_requirement_progress_detail'>` type.
+
+---
+
 ## 2026-04-30 — Sprint 34: Player Requirement Progress Bootstrap V1
 
 **Mode:** Migration only. No UI. No scoring. No evidence linking. No player data changes.
