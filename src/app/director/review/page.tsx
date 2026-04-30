@@ -1,9 +1,11 @@
-import { ClipboardList } from 'lucide-react'
+import { ClipboardList, Target } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
 import type { EnrichedDraftItem } from './StructuredDraftCard'
 import type { StructuredDraftPayload } from '@/app/director/sessions/[sessionId]/structureRecapAction'
+import { PriorityRecommendationDraftCard } from './PriorityRecommendationDraftCard'
+import type { EnrichedPriorityDraftItem, PriorityRecommendationPayload } from './PriorityRecommendationDraftCard'
 
 export default async function DirectorReviewQueuePage() {
   const supabase = await getSupabaseServer()
@@ -54,6 +56,8 @@ export default async function DirectorReviewQueuePage() {
     )
   }
 
+  // ─── Session recap drafts ────────────────────────────────────
+
   // 4. Fetch pending + approved structured drafts — scoped to this academy only
   interface DraftRow {
     id: string
@@ -103,7 +107,7 @@ export default async function DirectorReviewQueuePage() {
     }
   }
 
-  // 7. Batch-fetch proposer display names
+  // 7. Batch-fetch proposer display names for session recap drafts
   const proposerIds = Array.from(new Set(filteredDrafts.map(d => d.proposed_by_id)))
   const proposerMap = new Map<string, string>()
   if (proposerIds.length > 0) {
@@ -134,61 +138,185 @@ export default async function DirectorReviewQueuePage() {
   const pendingDrafts = allEnriched.filter(d => d.status === 'pending_review')
   const approvedDrafts = allEnriched.filter(d => d.status === 'approved')
 
+  // ─── Priority recommendation drafts ─────────────────────────
+
+  // 9. Fetch pending priority recommendation drafts — scoped to this academy
+  const { data: priorityDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .eq('status', 'pending_review')
+    .eq('target_module', 'priority_recommendation')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allPriorityDraftRows: DraftRow[] = (priorityDraftRows ?? []) as DraftRow[]
+
+  // 10. Filter to priority_recommendation_v1 — checked after fetch since payload is JSON
+  const filteredPriorityDrafts = allPriorityDraftRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'priority_recommendation_v1'
+  })
+
+  // 11. Batch-fetch player names for priority drafts
+  const playerIds = Array.from(
+    new Set(
+      filteredPriorityDrafts
+        .map(d => d.target_object_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+
+  const playerMap = new Map<string, string>()
+  if (playerIds.length > 0) {
+    const { data: players } = await supabase
+      .from('players')
+      .select('id, first_name, last_name, full_name')
+      .in('id', playerIds)
+      .eq('academy_id', academyId)
+    for (const p of (players ?? [])) {
+      playerMap.set(p.id, p.full_name ?? `${p.first_name} ${p.last_name}`.trim())
+    }
+  }
+
+  // 12. Batch-fetch proposer display names for priority drafts
+  const priorityProposerIds = Array.from(new Set(filteredPriorityDrafts.map(d => d.proposed_by_id)))
+  const priorityProposerMap = new Map<string, string>()
+  if (priorityProposerIds.length > 0) {
+    const { data: priorityProposers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', priorityProposerIds)
+    for (const p of (priorityProposers ?? [])) {
+      priorityProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  // 13. Assemble enriched priority draft items
+  const enrichedPriorityDrafts: EnrichedPriorityDraftItem[] = filteredPriorityDrafts.map(d => ({
+    id: d.id,
+    status: d.status,
+    createdAt: d.created_at,
+    playerId: d.target_object_id,
+    playerName: d.target_object_id ? (playerMap.get(d.target_object_id) ?? null) : null,
+    proposerName: priorityProposerMap.get(d.proposed_by_id) ?? null,
+    payload: d.proposed_payload as unknown as PriorityRecommendationPayload,
+  }))
+
   return (
-    <div className="animate-fade-in space-y-6">
-      <PageHeader pendingCount={pendingDrafts.length} approvedCount={approvedDrafts.length} />
+    <div className="animate-fade-in space-y-8">
+      <PageHeader
+        pendingCount={pendingDrafts.length}
+        approvedCount={approvedDrafts.length}
+        priorityPendingCount={enrichedPriorityDrafts.length}
+      />
 
-      {/* Approved — ready to apply */}
-      {approvedDrafts.length > 0 && (
+      {/* ─── Session recap structured drafts ─── */}
+      <div className="space-y-6">
+        <div>
+          <p className="label-xs mb-1">Session Recap Drafts</p>
+          <p className="text-text-muted text-xs">
+            Structured session recap drafts awaiting review or application.
+          </p>
+        </div>
+
+        {/* Approved — ready to apply */}
+        {approvedDrafts.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <p className="label-xs">Approved — Ready to Apply</p>
+              <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                {approvedDrafts.length}
+              </span>
+            </div>
+            <div className="space-y-4">
+              {approvedDrafts.map(draft => (
+                <StructuredDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Pending review */}
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <p className="label-xs">Approved — Ready to Apply</p>
-            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-              {approvedDrafts.length}
-            </span>
-          </div>
-          <div className="space-y-4">
-            {approvedDrafts.map(draft => (
-              <StructuredDraftCard key={draft.id} draft={draft} />
-            ))}
-          </div>
+          {approvedDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+          {pendingDrafts.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<ClipboardList className="w-5 h-5" />}
+                  title="No pending structured drafts"
+                  description="When coaches save session recaps and directors structure them, they will appear here for review."
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {pendingDrafts.map(draft => (
+                <StructuredDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          )}
         </section>
-      )}
+      </div>
 
-      {/* Pending review */}
-      <section className="space-y-3">
-        {approvedDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
-        {pendingDrafts.length === 0 ? (
+      {/* ─── Priority recommendation drafts ─── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 pb-1 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-text-muted" />
+            <p className="label-xs">Priority Recommendation Drafts</p>
+          </div>
+          {enrichedPriorityDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+              {enrichedPriorityDrafts.length} pending
+            </span>
+          )}
+        </div>
+        <p className="text-text-muted text-xs">
+          Drafts generated from player evidence. Approval marks them ready for a future priority-creation step — no active priorities are created here.
+        </p>
+
+        {enrichedPriorityDrafts.length === 0 ? (
           <Card>
             <CardContent className="py-12">
               <EmptyState
-                icon={<ClipboardList className="w-5 h-5" />}
-                title="No pending structured drafts"
-                description="When coaches save session recaps and directors structure them, they will appear here for review."
+                icon={<Target className="w-5 h-5" />}
+                title="No pending priority recommendation drafts"
+                description="Drafts created from player evidence will appear here for review."
               />
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {pendingDrafts.map(draft => (
-              <StructuredDraftCard key={draft.id} draft={draft} />
+            {enrichedPriorityDrafts.map(draft => (
+              <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
             ))}
           </div>
         )}
-      </section>
+      </div>
     </div>
   )
 }
 
-function PageHeader({ pendingCount, approvedCount }: { pendingCount: number; approvedCount: number }) {
+function PageHeader({
+  pendingCount,
+  approvedCount,
+  priorityPendingCount,
+}: {
+  pendingCount: number
+  approvedCount: number
+  priorityPendingCount: number
+}) {
+  const totalPending = pendingCount + priorityPendingCount
   return (
     <div>
       <p className="label-xs mb-1">DIRECTOR</p>
       <div className="flex items-center gap-3 flex-wrap">
         <h1 className="text-2xl font-bold text-text-primary">Draft Review Queue</h1>
-        {pendingCount > 0 && (
+        {totalPending > 0 && (
           <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
-            {pendingCount} pending
+            {totalPending} pending
           </span>
         )}
         {approvedCount > 0 && (

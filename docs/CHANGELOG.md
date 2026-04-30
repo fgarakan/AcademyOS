@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-04-30 — Sprint 26: Priority Recommendation Review Queue V1
+
+**Schema fields confirmed:**
+- `proposed_actions.target_module` — string, used to filter `priority_recommendation`
+- `proposed_actions.status` — `proposed_action_status` enum includes `pending_review`, `approved`, `rejected`, `clarification_needed`
+- `proposed_actions.target_object_id` — player UUID for priority recommendation drafts
+- `proposed_actions.proposed_by_id` — UUID ref to `profiles.id`
+- `players.first_name`, `players.last_name`, `players.full_name` — name fields for player lookup
+- `profiles.display_name` — proposer display name
+
+**Files created:**
+- `src/app/director/review/PriorityDraftDecisionControls.tsx` — client component; approve/reject/clarification controls; calls `updatePriorityRecommendationDecisionAction`; governance copy: "Approval marks this recommendation as ready for a future priority-creation step. It does not create an active priority yet."
+- `src/app/director/review/PriorityRecommendationDraftCard.tsx` — card component; shows player name, created date, proposer, recommended priority title, category, priority level, urgency, evidence tags, observation count, overlap warning, draft-only banner, View Player Profile link
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — added `updatePriorityRecommendationDecisionAction`; guards `target_module === 'priority_recommendation'`; same security chain as existing session recap action; never touches `player_priorities`
+- `src/app/director/review/page.tsx` — added priority recommendation section: queries `proposed_actions` by `target_module = priority_recommendation` + `status = pending_review`; batch-fetches player names and proposer names; renders `PriorityRecommendationDraftCard` per draft; session recap section unchanged; added `Target` icon to `PageHeader` pending count
+
+**Files read only:**
+- `src/app/director/review/StructuredDraftCard.tsx`, `DraftDecisionControls.tsx`, `ApplyApprovedDraftControls.tsx`
+- `src/app/director/players/[playerId]/PriorityRecommendationDrafts.tsx`, `priorityRecommendationAction.ts`
+- `src/lib/supabase/database.types.ts`
+
+**What was NOT built:**
+- No `player_priorities` insert/update
+- No apply/activate button for priority recommendations
+- No active priority creation
+- No parent/player-facing view
+- No migrations
+- No package installs
+
+**TypeScript:** clean
+
+---
+
 ## 2026-04-30 — Sprint 25: Priority Recommendation Drafts from Evidence V1
 
 **Schema fields confirmed:**
