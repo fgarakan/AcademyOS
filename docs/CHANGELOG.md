@@ -5,6 +5,45 @@ Update this file at the end of every completed module.
 
 ---
 
+## 2026-04-30 — Sprint 13: Generate Session from Template
+
+Added "Generate Session" to the fitness template detail page. Directors can now turn an official fitness template into a planned session snapshot. The master template is never mutated.
+
+**Files created:**
+- `src/app/director/fitness/templates/[templateId]/generate-session-actions.ts` — Server action `generateSessionFromTemplateAction`. Security chain: assertNotPreviewMode → auth → academy_id → template ownership → coach membership validation → template blocks fetch → reject if no blocks → template exercises fetch → insert session row (status=planned, template_id preserved) → insert session_blocks sequentially (template_block_id preserved for source tracking, is_override=false) → collect inserted block IDs → insert session_block_exercises sequentially. Returns `{ sessionId, error }`. Never touches templates/template_blocks/template_block_exercises.
+- `src/app/director/fitness/templates/[templateId]/GenerateSessionPanel.tsx` — Client component. States: closed → form → generating → success/error. Form fields: session name (defaults from template name), session date (required), coach select (academy head_coach/coach profiles; falls back to director with label if none), optional notes. Success state shows generated session ID and explains that `/director/sessions` detail view is a future sprint. Error state shows inline message with AlertCircle icon.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Fetches active coaches (two sequential queries: `academy_memberships` filtered by role in [coach, head_coach] → `profiles` for display_name); adds `display_name` to initial profile select; renders `<GenerateSessionPanel>` between `<PageHeader>` and `<TemplateMeta>`.
+- `docs/CHANGELOG.md` — this entry
+
+**Snapshot strategy:**
+- `sessions.template_id` → source template reference preserved
+- `session_blocks.template_block_id` → source template block reference preserved
+- Block order, exercise order, durations, names all copied at generation time
+- Future template edits do not affect already-generated sessions (snapshot is independent)
+
+**Security constraints:**
+- `assertNotPreviewMode()` guard on server action
+- Auth required; academy_id resolved from authenticated profile
+- Template ownership verified via `academy_id` match before any read
+- Coach validated as active academy member (director's own profile passes this check)
+- Blocks must exist before generation is allowed
+- Sequential inserts — no Promise.all (per AI_BACKEND_RULES #5)
+- No service role; no RLS bypass; no template table mutations
+
+**Not built (deferred):**
+- `/director/sessions` route and session detail view
+- Coach execution / live session runner
+- Attendance, player roster, group scheduling
+- Session overrides / coach-layer changes
+- Voice recap, AI note structuring, parent messages
+- Session completion recording
+
+**TypeScript:** clean (`npx tsc --noEmit` — no output)
+
+---
+
 ## 2026-04-30 — Sprint 12: Fitness Template Builder Save Verification + Edit Hardening
 
 Hardened the Sprint 11 Fitness Template Builder. No new product features — reliability and security fixes only.

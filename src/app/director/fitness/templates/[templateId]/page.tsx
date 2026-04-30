@@ -5,6 +5,8 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
 import { TemplateEditor } from './TemplateEditor'
 import type { EditableBlock, EditableExercise } from './TemplateEditor'
+import { GenerateSessionPanel } from './GenerateSessionPanel'
+import type { CoachOption } from './GenerateSessionPanel'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
@@ -34,13 +36,15 @@ export default async function TemplateDetailPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
 
   let academyId: string | null = null
+  let currentUserName = 'Director'
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('academy_id')
+      .select('academy_id, display_name')
       .eq('id', user.id)
       .single()
     academyId = profile?.academy_id ?? null
+    currentUserName = profile?.display_name ?? 'Director'
   }
 
   if (!academyId) {
@@ -127,9 +131,35 @@ export default async function TemplateDetailPage({ params }: PageProps) {
 
   const totalExercises = rawExercises.length
 
+  // Fetch active coaches for this academy (two sequential queries per AI_BACKEND_RULES #5)
+  const { data: coachMemberships } = await supabase
+    .from('academy_memberships')
+    .select('profile_id')
+    .eq('academy_id', academyId)
+    .in('role', ['coach', 'head_coach'])
+    .eq('is_active', true)
+
+  const coachProfileIds = (coachMemberships ?? []).map(m => m.profile_id)
+  let coaches: CoachOption[] = []
+  if (coachProfileIds.length > 0) {
+    const { data: coachProfiles } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', coachProfileIds)
+    coaches = (coachProfiles ?? []).map(p => ({ id: p.id, display_name: p.display_name }))
+  }
+
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader template={template} />
+      <GenerateSessionPanel
+        templateId={params.templateId}
+        templateName={template.name}
+        hasBlocks={blockList.length > 0}
+        coaches={coaches}
+        fallbackCoachId={user!.id}
+        fallbackCoachName={currentUserName}
+      />
       <TemplateMeta
         template={template}
         blockCount={blockList.length}
