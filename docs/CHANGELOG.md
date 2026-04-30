@@ -2,6 +2,122 @@
 
 ---
 
+## 2026-04-30 — Sprint 34: Player Requirement Progress Bootstrap V1
+
+**Mode:** Migration only. No UI. No scoring. No evidence linking. No player data changes.
+
+**Migration file created:** `supabase/migrations/044_player_requirement_progress_bootstrap.sql`
+
+**Purpose:**
+Initialises empty `player_requirement_progress` rows for all players whose current curriculum state (`player_curriculum_states.current_level_id`) is assigned to one of the three Orange Ball levels seeded in Sprint 33.
+
+**Orange Ball levels targeted:**
+- Orange 1 — Rally (`orange_development`, level_number=1)
+- Orange 2 — Direction (`orange_development`, level_number=2)
+- Orange 3 — Construction (`orange_development`, level_number=3)
+
+**Bootstrap logic:**
+One row is inserted per (player, requirement) by joining:
+- `player_curriculum_states` → identifies each player's current level
+- `curriculum_levels` → filters to `stage = 'orange_development'` and `level_number IN (1, 2, 3)`
+- `curriculum_track_requirements` → selects only active global defaults (`academy_id IS NULL`, `source_type = 'global_default'`, `version = 1`, `is_active = true`)
+
+**Rows created per player (based on Sprint 33 seed):**
+| Orange Ball Level | Requirements per player |
+|---|---|
+| Orange 1 — Rally | 10 |
+| Orange 2 — Direction | 11 |
+| Orange 3 — Construction | 11 |
+
+**Default values for every inserted row:**
+- `status = 'not_started'`
+- `progress_value = NULL`
+- `evidence_count = 0`
+- `last_evidence_at = NULL`
+- `coach_confirmed_by = NULL`
+- `director_confirmed_by = NULL`
+- `confirmed_at = NULL`
+- `notes = NULL`
+- `is_parent_visible = false`
+- `is_player_visible = false`
+
+**Idempotency strategy:**
+`ON CONFLICT (player_id, requirement_id) DO NOTHING`
+Targets the UNIQUE constraint on `player_requirement_progress(player_id, requirement_id)` defined in migration 041. Safe to re-run — duplicate inserts silently skipped.
+
+**Tables intentionally untouched (Sprint 34 scope):**
+- `requirement_evidence_links` — no evidence links created
+- `player_curriculum_states` — not altered; only read as the population source
+- `players` — unchanged
+- `player_priorities` — unchanged
+- All UI components — unchanged
+- All server actions — unchanged
+- All backend files — unchanged
+
+**No new tables, views, functions, types, or indexes created.**
+
+**Type regeneration status:** Migration does not add new tables or columns. `database.types.ts` shape is unchanged from Sprint 30. After applying to live DB, run:
+```
+supabase gen types typescript --project-id <your-project-id> > src/lib/supabase/database.types.ts
+```
+
+**TypeScript check:** Skipped — no source files changed. Migration and changelog only.
+
+**Validation:**
+- SQL syntax reviewed manually ✓
+- All column names cross-checked against migration 041 (`player_requirement_progress`) and migration 036 (`player_curriculum_states`, `curriculum_levels`) ✓
+- `stage = 'orange_development'` matches the `curriculum_stage` enum defined in migration 036 ✓
+- `source_type = 'global_default'` satisfies CHECK constraint in migration 041 ✓
+- `status = 'not_started'` satisfies CHECK constraint in migration 041 ✓
+- `ON CONFLICT (player_id, requirement_id)` matches UNIQUE constraint in migration 041 ✓
+- No player data created, inferred, or modified ✓
+- No scoring logic ✓
+- No evidence links ✓
+- No parent/player visibility enabled ✓
+
+**Manual verification queries (run after migration is applied):**
+
+```sql
+-- 1. Confirm Orange Ball levels exist
+SELECT display_name, level_number, sort_order
+FROM curriculum_levels
+WHERE stage = 'orange_development'
+ORDER BY sort_order;
+
+-- 2. Confirm Orange Ball requirement definitions
+SELECT cl.display_name, COUNT(*) AS requirement_count
+FROM curriculum_track_requirements ctr
+JOIN curriculum_levels cl ON cl.id = ctr.curriculum_level_id
+WHERE cl.stage = 'orange_development'
+  AND cl.level_number IN (1,2,3)
+  AND ctr.academy_id IS NULL
+  AND ctr.source_type = 'global_default'
+GROUP BY cl.display_name
+ORDER BY cl.display_name;
+
+-- 3. Confirm player progress rows exist only for Orange curriculum players
+SELECT cl.display_name, COUNT(*) AS progress_rows
+FROM player_requirement_progress prp
+JOIN curriculum_levels cl ON cl.id = prp.curriculum_level_id
+WHERE cl.stage = 'orange_development'
+GROUP BY cl.display_name
+ORDER BY cl.display_name;
+
+-- 4. Confirm all new rows default correctly
+SELECT status, evidence_count, is_parent_visible, is_player_visible, COUNT(*)
+FROM player_requirement_progress
+GROUP BY status, evidence_count, is_parent_visible, is_player_visible;
+-- Expected: status=not_started, evidence_count=0, is_parent_visible=false, is_player_visible=false
+
+-- 5. Confirm no evidence links created
+SELECT COUNT(*) FROM requirement_evidence_links;
+
+-- 6. Confirm no player level changes (compare before/after)
+SELECT player_id, current_level_id FROM player_curriculum_states;
+```
+
+---
+
 ## 2026-04-30 — Sprint 33: Orange Ball Starter Requirement Seed Migration
 
 **Mode:** Seed migration only. No UI. No player data changes. No player progress bootstrap.
