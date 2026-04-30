@@ -5,6 +5,33 @@ Update this file at the end of every completed module.
 
 ---
 
+## 2026-04-30 — Sprint 12: Fitness Template Builder Save Verification + Edit Hardening
+
+Hardened the Sprint 11 Fitness Template Builder. No new product features — reliability and security fixes only.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/actions.ts` — Six hardening additions:
+  (1) Reject empty/missing IDs before any DB query.
+  (2) Reject duplicate block IDs in submitted payload.
+  (3) Reject duplicate exercise IDs in submitted payload.
+  (4) Reject negative duration values at server level (client also validates, now double-checked).
+  (5) Fix exercise block_id verification — now fetches `id, block_id` from DB and verifies each submitted exercise's `block_id` matches the actual DB record. Previous check only verified the exercise existed in *any* submitted block; a wrong submitted `block_id` would pass verification but cause the DB update to silently match no rows (silent data loss).
+  (6) Add server-side `order_index` normalization — sort blocks and exercises (per block) by submitted `order_index`, then reassign as clean 0-based sequential integers. Ensures no gaps, no duplicates, no negative values written to DB regardless of client input. Critical for future voice command compatibility.
+- `src/app/director/fitness/templates/[templateId]/TemplateEditor.tsx` — Three hardening additions:
+  (1) `saveSuccess` state — shows "Template saved" with check icon after successful save, auto-clears after 3 seconds.
+  (2) Master template warning — edit mode now shows: "Director edits update the official template. Coach changes during live sessions will be handled as session overrides and will not affect this master template." This is architecturally important to distinguish master-template writes from future coach session overrides.
+  (3) `confirmedBlocks` and `editBlocks` initialized with `deepCopyBlocks` (lazy initializer) so they never share object references with `initialBlocks` props from the server.
+
+**Constraints confirmed:**
+- No migrations
+- No npm install
+- No service role
+- No RLS bypass
+- No new product features (no drag/drop, create, delete, publish, voice, session generation)
+- TypeScript: clean (`npx tsc --noEmit` passes with no output)
+
+---
+
 ## 2026-04-30 — Sprint 11: Fitness Template Builder V1 (Director Edit Mode)
 
 Added director-only edit mode to the fitness template detail page. Directors can now reorder blocks, reorder exercises within blocks, and edit durations — all from the existing read-only viewer at `/director/fitness/templates/[templateId]`.

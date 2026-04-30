@@ -58,15 +58,18 @@ interface TemplateEditorProps {
 }
 
 export function TemplateEditor({ templateId, initialBlocks }: TemplateEditorProps) {
+  // Deep copy on init so confirmedBlocks and editBlocks never share object references
   const [isEditing, setIsEditing] = useState(false)
-  const [confirmedBlocks, setConfirmedBlocks] = useState<EditableBlock[]>(initialBlocks)
-  const [editBlocks, setEditBlocks] = useState<EditableBlock[]>(initialBlocks)
+  const [confirmedBlocks, setConfirmedBlocks] = useState<EditableBlock[]>(() => deepCopyBlocks(initialBlocks))
+  const [editBlocks, setEditBlocks] = useState<EditableBlock[]>(() => deepCopyBlocks(initialBlocks))
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function startEdit() {
     setEditBlocks(deepCopyBlocks(confirmedBlocks))
     setSaveError(null)
+    setSaveSuccess(false)
     setIsEditing(true)
   }
 
@@ -121,7 +124,8 @@ export function TemplateEditor({ templateId, initialBlocks }: TemplateEditorProp
   function saveEdits() {
     setSaveError(null)
 
-    // Build save payloads — array position becomes the new order_index (0-based)
+    // Build save payloads — array position becomes the new order_index (0-based).
+    // The server also normalizes these to clean sequential integers for defense-in-depth.
     const blockPayload: BlockUpdate[] = editBlocks.map((b, i) => ({
       id: b.id,
       duration_min: b.duration_min,
@@ -150,6 +154,9 @@ export function TemplateEditor({ templateId, initialBlocks }: TemplateEditorProp
       }))
       setConfirmedBlocks(confirmed)
       setIsEditing(false)
+      setSaveSuccess(true)
+      // Auto-clear success indicator after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000)
     })
   }
 
@@ -160,7 +167,15 @@ export function TemplateEditor({ templateId, initialBlocks }: TemplateEditorProp
 
       {/* Mode controls */}
       {!isEditing ? (
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+          <div>
+            {saveSuccess && (
+              <span className="flex items-center gap-1.5 text-xs text-status-green">
+                <Check className="w-3.5 h-3.5" />
+                Template saved
+              </span>
+            )}
+          </div>
           <button
             onClick={startEdit}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-raised border border-border text-xs text-text-secondary hover:text-text-primary hover:border-lime/30 transition-colors"
@@ -170,41 +185,47 @@ export function TemplateEditor({ templateId, initialBlocks }: TemplateEditorProp
           </button>
         </div>
       ) : (
-        <div className="flex items-center justify-between p-3 rounded-lg bg-surface-raised border border-lime/20">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-lime">Edit Mode</span>
-            <span className="text-[10px] text-text-muted">
-              Use ↑↓ controls to reorder blocks and exercises
-            </span>
-            {saveError && (
-              <span className="text-xs text-status-red">{saveError}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={cancelEdit}
-              disabled={isPending}
-              className="btn-ghost text-xs px-3 py-1.5 disabled:opacity-50"
-            >
-              <span className="flex items-center gap-1.5">
-                <X className="w-3.5 h-3.5" />
-                Cancel
+        <div className="space-y-2">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-surface-raised border border-lime/20">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-medium text-lime">Edit Mode</span>
+              <span className="text-[10px] text-text-muted">
+                Use ↑↓ controls to reorder blocks and exercises
               </span>
-            </button>
-            <button
-              onClick={saveEdits}
-              disabled={isPending}
-              className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
-            >
-              <span className="flex items-center gap-1.5">
-                {isPending
-                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  : <Check className="w-3.5 h-3.5" />
-                }
-                Save Changes
-              </span>
-            </button>
+              {saveError && (
+                <span className="text-xs text-status-red">{saveError}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={cancelEdit}
+                disabled={isPending}
+                className="btn-ghost text-xs px-3 py-1.5 disabled:opacity-50"
+              >
+                <span className="flex items-center gap-1.5">
+                  <X className="w-3.5 h-3.5" />
+                  Cancel
+                </span>
+              </button>
+              <button
+                onClick={saveEdits}
+                disabled={isPending}
+                className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
+              >
+                <span className="flex items-center gap-1.5">
+                  {isPending
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <Check className="w-3.5 h-3.5" />
+                  }
+                  Save Changes
+                </span>
+              </button>
+            </div>
           </div>
+          {/* Master template warning — coach session overrides are separate and will not affect this */}
+          <p className="text-[10px] text-text-muted px-1">
+            Director edits update the official template. Coach changes during live sessions will be handled as session overrides and will not affect this master template.
+          </p>
         </div>
       )}
 
