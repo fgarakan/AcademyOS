@@ -18,6 +18,8 @@ import { AttendanceExceptionDraftPanel } from './AttendanceExceptionDraftPanel'
 import type { AttendanceExceptionPayload } from './attendanceExceptionDraftAction'
 import { ClassRosterIntelligencePanel } from './ClassRosterIntelligencePanel'
 import type { PlayerIntelligenceItem } from './ClassRosterIntelligencePanel'
+import { SessionAdjustmentSuggestionsPanel } from './SessionAdjustmentSuggestionsPanel'
+import type { SuggestionRow } from './SessionAdjustmentSuggestionsPanel'
 
 interface PageProps {
   params: { sessionId: string }
@@ -414,12 +416,49 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     .limit(5)
   const attendanceDrafts: AttendanceExceptionDraftRow[] = (attendanceDraftRows ?? []) as AttendanceExceptionDraftRow[]
 
+  // 12. Fetch existing session adjustment suggestions
+  const { data: suggestionRows } = await rawDb
+    .from('session_adjustment_suggestions')
+    .select('id, suggestion_type, suggested_change, reason, players_supported, player_needs_considered, risk_level, confidence, status, target_session_block_id, curriculum_context')
+    .eq('session_id', session.id)
+    .eq('academy_id', academyId)
+    .not('status', 'in', '("rejected","dismissed")')
+    .order('created_at', { ascending: true })
+
+  const blockIdToName = new Map<string, string>()
+  const blockIdToNotes = new Map<string, string | null>()
+  for (const b of blockList) {
+    blockIdToName.set(b.id, b.name)
+    blockIdToNotes.set(b.id, b.notes ?? null)
+  }
+
+  const existingSuggestions: SuggestionRow[] = (suggestionRows ?? []).map((r: any) => ({
+    id: r.id,
+    suggestion_type: r.suggestion_type,
+    suggested_change: r.suggested_change,
+    reason: r.reason,
+    players_supported: (r.players_supported as string[]) ?? [],
+    player_needs_considered: (r.player_needs_considered as string[]) ?? [],
+    risk_level: r.risk_level,
+    confidence: r.confidence,
+    status: r.status,
+    target_session_block_id: r.target_session_block_id ?? null,
+    target_block_name: r.target_session_block_id ? (blockIdToName.get(r.target_session_block_id) ?? null) : null,
+    target_block_current_notes: r.target_session_block_id ? (blockIdToNotes.get(r.target_session_block_id) ?? null) : (session.session_notes ?? null),
+    curriculum_context: (r.curriculum_context as Record<string, string>) ?? {},
+  }))
+
   // Derived intelligence for coach briefing
   const playersWithNeeds = playerIntelligence.filter(p => p.thingsToWorkOn.length > 0)
   const playersWithPriority = playerIntelligence.filter(p => p.topPriority)
   const playersWithoutAssignment = playerIntelligence.filter(p => !p.curriculumLevelName)
   const playersUnrecorded = playerIntelligence.filter(p => p.attendanceStatus === null)
   const playersWithoutPriority = playerIntelligence.filter(p => !p.topPriority)
+
+  const suggestionPendingCount = existingSuggestions.filter(s => s.status === 'pending_review').length
+  const suggestionApprovedCount = existingSuggestions.filter(s => s.status === 'approved').length
+  const suggestionAppliedCount = existingSuggestions.filter(s => s.status === 'applied').length
+  const topSuggestions = existingSuggestions.filter(s => s.status === 'pending_review').slice(0, 3)
 
   return (
     <div className="animate-fade-in p-6 space-y-6">
@@ -544,6 +583,36 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
                 </p>
               )}
             </div>
+
+            {/* Suggested adjustments summary */}
+            {(suggestionPendingCount > 0 || suggestionApprovedCount > 0 || suggestionAppliedCount > 0) && (
+              <div className="space-y-1.5 pt-3 border-t border-border">
+                <p className="text-[9px] uppercase tracking-widest text-text-muted">Adaptive Suggestions</p>
+                {suggestionPendingCount > 0 && (
+                  <p className="text-[11px] text-text-secondary flex items-start gap-2">
+                    <span className="shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-status-blue" />
+                    {suggestionPendingCount} suggestion{suggestionPendingCount > 1 ? 's' : ''} pending review
+                  </p>
+                )}
+                {suggestionApprovedCount > 0 && (
+                  <p className="text-[11px] text-text-secondary flex items-start gap-2">
+                    <span className="shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-status-green" />
+                    {suggestionApprovedCount} approved — ready to apply
+                  </p>
+                )}
+                {suggestionAppliedCount > 0 && (
+                  <p className="text-[11px] text-text-secondary flex items-start gap-2">
+                    <span className="shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-lime" />
+                    {suggestionAppliedCount} applied to this session
+                  </p>
+                )}
+                {topSuggestions.map((s, i) => (
+                  <p key={i} className="text-[11px] text-text-muted pl-3.5 line-clamp-1">
+                    · {s.suggested_change.slice(0, 80)}{s.suggested_change.length > 80 ? '…' : ''}
+                  </p>
+                ))}
+              </div>
+            )}
 
             {/* Capture after class */}
             <div className="space-y-1.5 pt-3 border-t border-border">
@@ -837,6 +906,18 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Suggested Adjustments */}
+      <div>
+        <SectionHeader title="SUGGESTED ADJUSTMENTS" />
+        <div className="mt-3">
+          <SessionAdjustmentSuggestionsPanel
+            sessionId={session.id}
+            initialSuggestions={existingSuggestions}
+            hasGroup={!!session.group_id}
+          />
+        </div>
       </div>
 
       {/* Coach Recap */}

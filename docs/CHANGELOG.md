@@ -2,6 +2,115 @@
 
 ---
 
+## 2026-05-01 — Sprints 91–100: Adaptive Session Planning Suggestions V1
+
+**Mode:** Backend rule engine + server actions + review UI. No AI API calls. No parent/player visibility. No player level changes. No package installs. Migration: 049.
+
+**Migrations created:** `049_session_adjustment_suggestions.sql`
+
+---
+
+### Sprint 91 — Session Modification Suggestion Architecture V1
+
+**Files created:**
+- `docs/ADAPTIVE_SESSION_PLANNING_ARCHITECTURE.md` — Full architecture: product goal, source inputs, 13 suggestion types, draft lifecycle diagram, review/apply flow, guardrails, future AI-ready path, recommended schema, sprint 92–100 path.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 92 — Group Needs Aggregation Utility V1
+
+**Files created:**
+- `src/lib/session-planning/groupNeedsAggregation.ts` — `getGroupNeedsForSession()`: 11 sequential Supabase queries, aggregates player strengths/needs/priorities/curriculum/attendance into `GroupNeedsResult`.
+- `docs/GROUP_NEEDS_AGGREGATION.md` — Purpose, function signature, query list, return shape, graceful fallbacks, guardrails.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 93 — Template Block Modification Rule Engine V1
+
+**Files created:**
+- `src/lib/session-planning/sessionModificationRules.ts` — `generateSessionModificationSuggestions()`: 8 deterministic rules covering recovery, spacing, return readiness, direction, mixed levels, small class, evidence gaps, academy overrides. Returns max 8 `SuggestionDraft[]`.
+- `docs/SESSION_MODIFICATION_RULE_ENGINE.md` — Function signature, 8 rules documented, threshold logic, output limits, guardrails.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 94 — Session Adjustment Drafts V1
+
+**Files created:**
+- `supabase/migrations/049_session_adjustment_suggestions.sql` — New table with academy RLS, indexes. Status lifecycle: `pending_review → approved/rejected/dismissed → applied`.
+- `src/app/director/sessions/[sessionId]/createSessionAdjustmentSuggestionsAction.ts` — Server action: auth + academy membership check, loads session blocks and curriculum context, runs group needs aggregation and rule engine, inserts suggestions as `pending_review`, replaces prior draft batch.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 95 — Session Adjustment Review Controls V1
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/sessionAdjustmentReviewActions.ts` — `approveSuggestionAction`, `rejectSuggestionAction`, `dismissSuggestionAction` server actions with auth/academy guards.
+- `src/app/director/sessions/[sessionId]/SessionAdjustmentSuggestionsPanel.tsx` — Client panel: Generate button, suggestion cards with expand/collapse, approve/reject/dismiss controls, empty states, status pills, warning display.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Added query 12 (existing suggestions), built `existingSuggestions` with block note context, added `SUGGESTED ADJUSTMENTS` section before Coach Recap.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 96 — Apply Approved Session Adjustments V1
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/applyApprovedSessionAdjustmentAction.ts` — Server action: verifies `approved` status, appends `[Adaptive Adjustment]` to `session_blocks.notes` (or `session_notes` if no block), marks suggestion `applied`, writes `audit_logs`. Never touches `template_blocks`.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/SessionAdjustmentSuggestionsPanel.tsx` — Added "Apply to Session" button for approved suggestions.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 97 — Coach Briefing Shows Suggested Adjustments V1
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Coach Briefing now shows suggestion counts (pending/approved/applied) and top 3 pending suggestion previews.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 98 — Session Plan Diff View V1
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/SessionAdjustmentSuggestionsPanel.tsx` — Expanded suggestion card now shows before/after diff: current block notes vs. proposed adaptive adjustment text.
+- `src/app/director/sessions/[sessionId]/page.tsx` — Pass `target_block_current_notes` to suggestion rows for diff display.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 99 — Adaptive Session Planning QA V1
+
+**Files created:**
+- `docs/ADAPTIVE_SESSION_PLANNING_QA.md` — 10 test cases covering no-roster, missing summaries, recovery needs, return readiness, mixed levels, small class, apply behavior, template protection, player record protection, parent/player isolation. Guardrails matrix.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 100 — Brian Adaptive Session Demo V1
+
+**Files created:**
+- `docs/BRIAN_ADAPTIVE_SESSION_PLANNING_DEMO.md` — 10-step demo script: template → session → roster → generate suggestions → show cards → approve → apply → confirm session-only change → confirm template unchanged → confirm player records unchanged.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-01 — Sprints 81–90: Premium UI + Coach Class Intelligence V1
 
 **Mode:** UI polish, read-only coach intelligence. No AI API calls. No parent/player visibility. No player level changes. No package installs. No migrations.
