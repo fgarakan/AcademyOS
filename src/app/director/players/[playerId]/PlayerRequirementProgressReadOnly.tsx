@@ -8,6 +8,7 @@ import { RequirementProgressConfirmationControls } from './RequirementProgressCo
 import { RequirementEvidenceDetailList } from './RequirementEvidenceDetailList'
 import type { ConfirmRequirementProgressResult } from './requirementProgressConfirmationAction'
 import type { RequirementEvidenceDetailRow } from './types'
+import { LevelReadinessSummary } from './LevelReadinessSummary'
 
 // Local interface — v_player_requirement_progress_detail not yet in database.types.ts.
 // Types need regeneration after migrations 041–044 are applied to live DB.
@@ -269,6 +270,9 @@ export function PlayerRequirementProgressReadOnly({
                 <p className="text-sm font-medium text-text-primary">{currentLevelName}</p>
               </div>
             )}
+
+            {/* Level Readiness Summary — internal read-only signal. No mutations. */}
+            <LevelReadinessSummary rows={rows} currentLevelName={currentLevelName} />
 
             {/* Domain sections */}
             <div className="space-y-6">

@@ -2,6 +2,91 @@
 
 ---
 
+## 2026-05-01 — Sprint 41: Level Readiness Summary V1
+
+**Mode:** Implementation + validation. Read-only internal summary only. No mutations. No level movement. No parent/player visibility.
+
+**Schema fields confirmed:**
+
+`v_player_requirement_progress_detail` (from migration 041):
+- `progress_id`, `academy_id`, `player_id`, `curriculum_level_id`, `requirement_id` ✓
+- `requirement_title`, `requirement_description`, `requirement_type` ✓
+- `requirement_domain_key` (`skill | competition | fitness`), `requirement_domain_label` ✓
+- `level_display_name`, `level_number` ✓
+- `status` (`not_started | in_progress | evidence_needed | met | waived | blocked`) ✓
+- `progress_value`, `evidence_count`, `last_evidence_at` ✓
+- `is_required`, `is_parent_visible`, `is_player_visible` ✓
+- `domain_display_order`, `requirement_display_order` ✓
+- No new DB query needed — uses already-loaded `requirementProgressRows` from page.tsx ✓
+
+**Files created:**
+- `src/app/director/players/[playerId]/LevelReadinessSummary.tsx` — read-only summary component; accepts `rows: RequirementProgressRow[]` and `currentLevelName: string | null`; computes all values from client-side data, no new fetch; returns `null` when `rows.length === 0`
+
+**Files modified:**
+- `src/app/director/players/[playerId]/PlayerRequirementProgressReadOnly.tsx` — imports `LevelReadinessSummary`; renders it between the current level context banner and the domain sections (inside the `rows.length > 0` branch only)
+
+**Summary behavior:**
+
+*Overall counts* — computed from `requirementProgressRows`:
+- total requirements, met, in progress, evidence needed, blocked, waived, not started, total evidence links
+
+*Domain breakdown* — computed per `skill | competition | fitness` key:
+- total, met, in progress, evidence needed, blocked, not started, evidence links
+
+*Readiness label* — derived from required-row percentages, no DB write:
+| Condition | Label |
+|---|---|
+| No rows or no required rows | Not Configured |
+| 0 met and 0 total evidence | Not Started |
+| < 25% required met | Building Foundation |
+| 25–49% required met | Developing |
+| 50–74% required met | Strong Progress |
+| 75–89% required met, no blocked | Nearly Ready |
+| 75–89% required met, blocked exists | Strong Progress |
+| ≥ 90% required met, no blocked, no evidence_needed | Ready for Director Review |
+| ≥ 90% required met, blocked or evidence_needed | Nearly Ready |
+
+*Readiness explanation* — deterministic sentence derived from status counts and domain strength; no AI API.
+
+*Guardrails copy* (two locations):
+- Top: "Internal readiness signal only. This does not move the player up, change levels, or publish anything to parents."
+- Footer: four lines confirming internal-only nature and no automatic promotion.
+
+**What was NOT built (by design):**
+- No promote button, level-up approval, or promotion workflow
+- No readiness score written to DB
+- No parent/player portal changes
+- No AI API calls
+- No new migrations
+- No package installs
+- No parent communication
+- No automatic level movement of any kind
+
+**Validation:**
+- `npx tsc --noEmit` — passes with zero errors.
+
+**Manual verification steps:**
+1. Confirm an Orange Ball player has `player_requirement_progress` rows in Supabase.
+2. Open `/director/players/[playerId]` → Notes tab → Level-Up Requirements.
+3. Confirm Level Readiness Summary appears above the Skill / Competition / Fitness domain groups.
+4. Confirm current level name appears in the summary header if available.
+5. Confirm total requirement count in summary matches the visible requirement cards.
+6. Confirm Skill / Competition / Fitness domain breakdown appears.
+7. Confirm readiness label changes based on the mix of statuses (e.g. all not_started → "Not Started").
+8. Confirm no promote / level movement button exists anywhere in the summary.
+9. Confirm guardrail copy is visible at top and footer.
+10. Confirm no DB rows change from simply viewing the summary.
+11. Confirm parent/player portal views are unchanged.
+12. Confirm Sprint 39 manual confirmation controls still work.
+13. Confirm Sprint 40 evidence detail toggles still work.
+
+**git add command:**
+```
+git add src/app/director/players/[playerId]/LevelReadinessSummary.tsx src/app/director/players/[playerId]/PlayerRequirementProgressReadOnly.tsx docs/CHANGELOG.md
+```
+
+---
+
 ## 2026-05-01 — Sprint 40: Requirement Evidence Detail View V1
 
 **Mode:** Implementation + validation. Read-only evidence display. No mutations. No status changes. No parent/player visibility.
