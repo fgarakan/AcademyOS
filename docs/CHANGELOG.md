@@ -2,6 +2,113 @@
 
 ---
 
+## 2026-05-01 — Sprints 101–110: Player Import + Development Profile Onboarding V1
+
+**Mode:** CSV import with dry-run/commit flow, bulk development profile intake, onboarding review. No AI API calls. No parent/player visibility. No billing. No communications. No new migrations.
+
+**Migrations created:** None (existing schema sufficient)
+
+---
+
+### Sprint 101 — Player Import Schema Audit V1
+
+**Files created:**
+- `docs/PLAYER_IMPORT_SCHEMA_AUDIT.md` — Full audit: tables and columns, safe import fields, deferred fields, duplicate detection, group/curriculum assignment approaches, risks, sprint 102–110 path.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 102 — Player CSV Template V1
+
+**Files created:**
+- `docs/PLAYER_IMPORT_CSV_TEMPLATE.md` — Column reference, 3 example rows, import flow diagram, known limitations, what NOT to include.
+- `data/player-import/player_import_template.csv` — Ready-to-copy CSV template with example rows.
+
+**TypeScript:** Not applicable (data/docs only).
+
+---
+
+### Sprint 103 — Player Import Parsing + Dry Run Utility V1
+
+**Files created:**
+- `src/lib/player-import/playerImportParser.ts` — `runPlayerImportParsing()`, `parsePlayerImportCsv()`, `normalizePlayerImportRow()`, `validatePlayerImportRows()`. Pure TS, no DB, no AI. In-upload duplicate detection, field validation, normalization.
+- `docs/PLAYER_IMPORT_PARSER.md` — Function signatures, validation rules, normalization table, guardrails.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 104 — Player Import Dry Run + Commit Server Actions V1
+
+**Files created:**
+- `src/app/director/players/import/playerImportActions.ts` — `runPlayerImportDryRunAction()`: auth + academy check, parse, DB lookups for existing players/groups/levels/coaches, returns per-row dry-run results. `commitPlayerImportAction()`: re-validates, creates players, upserts dev summaries, creates priorities, assigns curriculum and groups. Writes audit_logs. Conservative duplicate handling.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 105 — Player Import UI V1
+
+**Files created:**
+- `src/app/director/players/import/page.tsx` — Route shell with back link and page header.
+- `src/app/director/players/import/PlayerImportClient.tsx` — Client component: CSV column guide, textarea + file upload, Run Dry Run button, DryRunReport with expandable rows, CommitSection with confirmation checkbox, ImportResultReport with links to next steps.
+
+**Files modified:**
+- `src/app/director/players/page.tsx` — Added "Import Players" button linking to /director/players/import.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 106 — Player Import Commit Flow V1
+
+**Files modified:**
+- `src/app/director/players/import/playerImportActions.ts` — `commitPlayerImportAction()` added: guarded mutations only after director confirmation; re-runs parse inside server action; creates players, dev summaries, priorities, curriculum states, group memberships; skips on errors; writes audit_logs.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 107 — Commit UI + Import Result Report V1
+
+**Files modified:**
+- `src/app/director/players/import/PlayerImportClient.tsx` — Added CommitSection with confirmation checkbox and Commit Import button; ImportResultReport with stat pills and links to Players + Development Intake.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 108 — Bulk Strengths / Needs Entry UI V1
+
+**Files created:**
+- `src/app/director/players/development-intake/developmentIntakeActions.ts` — `updatePlayerDevelopmentIntakeAction()`: upserts `player_development_summary`, deactivates old priorities and creates new one.
+- `src/app/director/players/development-intake/DevelopmentIntakeClient.tsx` — Client panel with per-player expandable intake cards (3 strengths, 3 needs, priority, notes), filter by missing data, Save per player.
+- `src/app/director/players/development-intake/page.tsx` — Server component: loads active players + dev summaries + priorities, passes to client.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 109 — Curriculum + Group Assignment Review V1
+
+**Files created:**
+- `src/app/director/players/onboarding-review/page.tsx` — Server component: loads players, checks curriculum states, group memberships, dev summaries, priorities; shows readiness bar, gap checklist with fix links, per-player readiness list with icon indicators.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 110 — Academy Player Onboarding QA + Brian Data Prep Demo V1
+
+**Files created:**
+- `docs/PLAYER_IMPORT_ONBOARDING_QA.md` — 13 test cases covering empty CSV, missing fields, duplicates, existing players, unknown groups/levels, dev profile import, commit flow, parent/player isolation, communications, coach intelligence improvements.
+- `docs/BRIAN_PLAYER_DATA_PREP_DEMO.md` — 10-step demo script: Brian gives names → import → dry run → commit → development intake → onboarding review → session with real adaptive suggestions.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-01 — Sprints 91–100: Adaptive Session Planning Suggestions V1
 
 **Mode:** Backend rule engine + server actions + review UI. No AI API calls. No parent/player visibility. No player level changes. No package installs. Migration: 049.
