@@ -32,6 +32,8 @@ import type { RequirementEvidenceDetailRow } from './types'
 import { EvidenceRequirementDraftButton } from './EvidenceRequirementDraftButton'
 import { EvidenceRequirementDrafts, type EvidenceRequirementDraftRow } from './EvidenceRequirementDrafts'
 import { createEvidenceRequirementLinkDraftsAction } from './evidenceRequirementDraftAction'
+import { LevelReadinessReviewDraftButton } from './LevelReadinessReviewDraftButton'
+import { createLevelReadinessReviewDraftAction } from './levelReadinessReviewDraftAction'
 
 interface PageProps {
   params: { playerId: string }
@@ -404,6 +406,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const createDraftAction = createPriorityRecommendationDraftAction.bind(null, params.playerId)
   const createEvidenceDraftAction = createEvidenceRequirementLinkDraftsAction.bind(null, params.playerId)
   const confirmProgressAction = confirmRequirementProgressStatusAction.bind(null, params.playerId)
+  const createReadinessReviewDraftAction = createLevelReadinessReviewDraftAction.bind(null, params.playerId)
 
   // Progression requirements: level requirements + next level derivation.
   // rawDb cast avoids TS2589; curriculum_levels and v_curriculum_level_requirements are
@@ -497,6 +500,18 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         confirmAction={confirmProgressAction}
         evidenceByProgressId={evidenceByProgressId}
       />
+
+      {/* Level readiness review draft — Sprint 43.
+          Creates a proposed_actions row for director review. No level movement.
+          Not visible to parents or players. Duplicate pending drafts are prevented. */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Level Readiness Review</p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <LevelReadinessReviewDraftButton onCreateDraft={createReadinessReviewDraftAction} />
+        </CardContent>
+      </Card>
 
       {/* Evidence link drafts — Sprint 36 read-only display of pending drafts.
           Draft only. No requirement_evidence_links created. No progress mutations. */}

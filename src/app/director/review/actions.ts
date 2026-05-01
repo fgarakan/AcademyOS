@@ -843,6 +843,489 @@ export async function applyApprovedEvidenceRequirementDraftAction(
 }
 
 // ─────────────────────────────────────────────────────────────
+// Review level readiness review draft
+// Only updates proposed_actions status + reviewer tracking fields.
+// Never touches player_curriculum_states, player level, or any level-movement table.
+// ─────────────────────────────────────────────────────────────
+
+export interface UpdateLevelReadinessReviewDecisionResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function updateLevelReadinessReviewDecisionAction(
+  proposedActionId: string,
+  decision: DraftDecision,
+  reviewNotes?: string
+): Promise<UpdateLevelReadinessReviewDecisionResult> {
+  await assertNotPreviewMode()
+
+  // 1. Auth
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+
+  // 2. Validate input
+  if (!proposedActionId) return { ok: false, error: 'Missing proposed action ID.' }
+  const allowedDecisions: DraftDecision[] = ['approved', 'rejected', 'clarification_needed']
+  if (!allowedDecisions.includes(decision)) return { ok: false, error: 'Invalid decision value.' }
+  if (reviewNotes && reviewNotes.length > 1000) {
+    return { ok: false, error: 'Review note must be 1000 characters or fewer.' }
+  }
+
+  // 3. Resolve academy_id from authenticated profile — never trust client input
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  // 4. Verify active academy membership — director or head_coach only
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to review level readiness drafts.' }
+  }
+
+  // 5. Fetch proposed_action — verify belongs to this academy, correct module, and reviewable
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_payload')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return { ok: false, error: 'Proposed action not found.' }
+  if (proposedAction.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (proposedAction.target_module !== 'level_readiness_review') {
+    return { ok: false, error: 'This action cannot be reviewed through this interface.' }
+  }
+  const payloadCheck = proposedAction.proposed_payload as Record<string, unknown>
+  if (payloadCheck?.draft_type !== 'level_readiness_review_v1') {
+    return { ok: false, error: 'Unsupported draft type.' }
+  }
+  if (proposedAction.status !== 'pending_review') {
+    return { ok: false, error: 'This draft has already been reviewed.' }
+  }
+
+  // 6. Build update payload — only updates proposed_actions status + reviewer fields
+  //    Never touches player_curriculum_states, player profiles, or any level-movement table
+  const now = new Date().toISOString()
+  let updatePayload: Record<string, unknown>
+
+  if (decision === 'approved') {
+    updatePayload = {
+      status: 'approved',
+      approved_by: user.id,
+      approved_at: now,
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  } else if (decision === 'rejected') {
+    updatePayload = {
+      status: 'rejected',
+      rejected_by: user.id,
+      rejected_at: now,
+      ...(reviewNotes ? { rejection_reason: reviewNotes, reviewer_notes: reviewNotes } : {}),
+    }
+  } else {
+    updatePayload = {
+      status: 'clarification_needed',
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update(updatePayload)
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to record decision: ${updateError.message}` }
+  }
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Apply approved level readiness review draft
+// Creates a level_movement_plan proposed_actions draft.
+// Marks the source level_readiness_review as executed.
+// NO player_curriculum_states update — that is Sprint 47.
+// NO level movement — draft only.
+// ─────────────────────────────────────────────────────────────
+
+export interface ApplyApprovedReadinessDraftResult {
+  ok: boolean
+  error: string | null
+  levelMovementPlanId: string | null
+}
+
+export async function applyApprovedReadinessDraftAction(
+  proposedActionId: string
+): Promise<ApplyApprovedReadinessDraftResult> {
+  const fail = (error: string): ApplyApprovedReadinessDraftResult =>
+    ({ ok: false, error, levelMovementPlanId: null })
+
+  await assertNotPreviewMode()
+
+  // 1. Auth
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return fail('Not authenticated.')
+  if (!proposedActionId) return fail('Missing proposed action ID.')
+
+  // 2. Resolve academy_id from authenticated profile — never trust client input
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return fail('Academy context unavailable.')
+  const academyId = profile.academy_id
+
+  // 3. Verify active academy membership — director or head_coach only
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const memberRole = membership?.role
+  if (memberRole !== 'academy_director' && memberRole !== 'head_coach') {
+    return fail('You do not have permission to apply level readiness review drafts.')
+  }
+
+  // 4. Fetch proposed_action — verify academy, status, module, and draft_type
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, target_object_type, target_object_id, proposed_payload, voice_command_id')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return fail('Proposed action not found.')
+  if (proposedAction.academy_id !== academyId) return fail('Access denied.')
+  if (proposedAction.status !== 'approved') return fail('Only approved readiness review drafts can be applied.')
+  if (proposedAction.target_module !== 'level_readiness_review') {
+    return fail('This action cannot be applied through this interface.')
+  }
+  if (proposedAction.target_object_type !== 'player') {
+    return fail('Target type mismatch — expected player.')
+  }
+
+  const payload = proposedAction.proposed_payload as Record<string, unknown>
+  if (payload?.draft_type !== 'level_readiness_review_v1') {
+    return fail('Unsupported draft type.')
+  }
+
+  // 5. Verify player belongs to this academy
+  const playerId = proposedAction.target_object_id as string | null
+  if (!playerId) return fail('Player reference missing from draft.')
+
+  const { data: player } = await supabase
+    .from('players')
+    .select('id')
+    .eq('id', playerId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!player) return fail('Player not found or access denied.')
+
+  // 6. Check for existing pending level_movement_plan draft — prevent duplicates
+  const { data: existingPlan } = await rawDb
+    .from('proposed_actions')
+    .select('id')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'level_movement_plan')
+    .eq('target_object_id', playerId)
+    .eq('status', 'pending_review')
+    .limit(1)
+
+  if (existingPlan && existingPlan.length > 0) {
+    return fail(
+      'A pending level movement plan already exists for this player. Review or dismiss the existing plan first.'
+    )
+  }
+
+  // 7. Read current level from player_curriculum_states — read-only, no mutation (Sprint 47 updates this)
+  const { data: rawCurriculumState } = await rawDb
+    .from('player_curriculum_states')
+    .select('current_level_id')
+    .eq('academy_id', academyId)
+    .eq('player_id', playerId)
+    .limit(1)
+
+  const currentLevelId: string | null = rawCurriculumState?.[0]?.current_level_id ?? null
+  if (!currentLevelId) {
+    return fail('Player does not have a current curriculum level assigned.')
+  }
+
+  // 8. Look up current level sort_order
+  const { data: currentLevelData } = await rawDb
+    .from('curriculum_levels')
+    .select('display_name, level_number, sort_order, stage')
+    .eq('id', currentLevelId)
+    .eq('academy_id', academyId)
+    .limit(1)
+
+  const currentLevel = currentLevelData?.[0] ?? null
+  if (!currentLevel) {
+    return fail('Current curriculum level not found.')
+  }
+
+  // 9. Find the next curriculum level by sort_order
+  const { data: nextLevelData } = await rawDb
+    .from('curriculum_levels')
+    .select('id, display_name, level_number, sort_order, stage')
+    .eq('academy_id', academyId)
+    .gt('sort_order', currentLevel.sort_order)
+    .order('sort_order', { ascending: true })
+    .limit(1)
+
+  const nextLevel = nextLevelData?.[0] ?? null
+  if (!nextLevel) {
+    return fail(
+      'No next curriculum level found. This player may already be at the highest configured level.'
+    )
+  }
+
+  // 10. Build level_movement_plan_v1 payload — draft only, no movement
+  const planPayload = {
+    draft_type: 'level_movement_plan_v1',
+    player_id: playerId,
+    source_readiness_review_id: proposedActionId,
+    current_level_id: currentLevelId,
+    current_level_name: currentLevel.display_name ?? null,
+    current_level_number: currentLevel.level_number ?? null,
+    current_level_sort_order: currentLevel.sort_order,
+    next_level_id: nextLevel.id,
+    next_level_name: nextLevel.display_name ?? null,
+    next_level_number: nextLevel.level_number ?? null,
+    readiness_label: payload.readiness_label ?? null,
+    met_count: payload.met_count ?? null,
+    total_required: payload.total_required ?? null,
+    evidence_count: payload.evidence_count ?? null,
+    snapshot_at: payload.snapshot_at ?? null,
+    created_at: new Date().toISOString(),
+    warnings: [
+      'Draft only. No level movement has occurred.',
+      'Director approval required before any level change.',
+      'player_curriculum_states.current_level_id has NOT been updated.',
+      'Not visible to parents or players.',
+    ],
+  }
+
+  // 11. Create voice_commands relay row
+  const { data: voiceCommand, error: vcError } = await supabase
+    .from('voice_commands')
+    .insert({
+      academy_id: academyId,
+      issuer_id: user.id,
+      issuer_role: memberRole as any,
+      input_method: 'typed',
+      raw_input: `Level movement plan draft created from approved readiness review: ${proposedActionId}`,
+      processing_status: 'processed',
+    })
+    .select('id')
+    .single()
+
+  if (vcError || !voiceCommand) {
+    return fail(`Failed to create command record: ${vcError?.message ?? 'unknown'}`)
+  }
+
+  // 12. Insert level_movement_plan proposed_actions row — status pending_review
+  //     Never writes player_curriculum_states — that is Sprint 47
+  const { data: planAction, error: planError } = await supabase
+    .from('proposed_actions')
+    .insert({
+      academy_id: academyId,
+      proposed_by_id: user.id,
+      voice_command_id: voiceCommand.id,
+      action_type: 'other',
+      action_label: 'Level Movement Plan',
+      target_module: 'level_movement_plan',
+      target_object_id: playerId,
+      target_object_type: 'player',
+      proposed_payload: planPayload as unknown as import('@/lib/supabase/database.types').Json,
+      status: 'pending_review',
+      risk_level: 'medium',
+      risk_notes: [
+        'No level movement has occurred yet.',
+        'Director approval of this plan is required before any level change.',
+        'player_curriculum_states.current_level_id will only be updated in a separate application step.',
+      ],
+    })
+    .select('id')
+    .single()
+
+  if (planError || !planAction) {
+    return fail(`Failed to create level movement plan draft: ${planError?.message ?? 'unknown'}`)
+  }
+
+  const levelMovementPlanId = planAction.id as string
+
+  // 13. Write audit log
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'level_readiness_review.plan_draft.created',
+      target_type: 'proposed_action',
+      target_id: levelMovementPlanId,
+      payload: {
+        source_readiness_review_id: proposedActionId,
+        player_id: playerId,
+        current_level_id: currentLevelId,
+        next_level_id: nextLevel.id,
+        created_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: voiceCommand.id,
+    })
+
+  // 14. Mark source level_readiness_review as executed only after plan draft is created
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'executed' })
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return {
+      ok: false,
+      error: `Level movement plan draft created but failed to mark readiness review as executed: ${updateError.message}`,
+      levelMovementPlanId,
+    }
+  }
+
+  return { ok: true, error: null, levelMovementPlanId }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Review level movement plan draft
+// Only updates proposed_actions status + reviewer tracking fields.
+// Never touches player_curriculum_states or any level-movement table.
+// Actual level movement is Sprint 47.
+// ─────────────────────────────────────────────────────────────
+
+export interface UpdateLevelMovementPlanDecisionResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function updateLevelMovementPlanDecisionAction(
+  proposedActionId: string,
+  decision: DraftDecision,
+  reviewNotes?: string
+): Promise<UpdateLevelMovementPlanDecisionResult> {
+  await assertNotPreviewMode()
+
+  // 1. Auth
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+
+  // 2. Validate input
+  if (!proposedActionId) return { ok: false, error: 'Missing proposed action ID.' }
+  const allowedDecisions: DraftDecision[] = ['approved', 'rejected', 'clarification_needed']
+  if (!allowedDecisions.includes(decision)) return { ok: false, error: 'Invalid decision value.' }
+  if (reviewNotes && reviewNotes.length > 1000) {
+    return { ok: false, error: 'Review note must be 1000 characters or fewer.' }
+  }
+
+  // 3. Resolve academy_id from authenticated profile — never trust client input
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  // 4. Verify active academy membership — director only for level movement plan
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to review level movement plans.' }
+  }
+
+  // 5. Fetch proposed_action — verify belongs to this academy, correct module, and reviewable
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_payload')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return { ok: false, error: 'Proposed action not found.' }
+  if (proposedAction.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (proposedAction.target_module !== 'level_movement_plan') {
+    return { ok: false, error: 'This action cannot be reviewed through this interface.' }
+  }
+  const payloadCheck = proposedAction.proposed_payload as Record<string, unknown>
+  if (payloadCheck?.draft_type !== 'level_movement_plan_v1') {
+    return { ok: false, error: 'Unsupported draft type.' }
+  }
+  if (proposedAction.status !== 'pending_review') {
+    return { ok: false, error: 'This draft has already been reviewed.' }
+  }
+
+  // 6. Build update payload — only updates proposed_actions status + reviewer fields
+  //    Never touches player_curriculum_states or any level-movement table
+  const now = new Date().toISOString()
+  let updatePayload: Record<string, unknown>
+
+  if (decision === 'approved') {
+    updatePayload = {
+      status: 'approved',
+      approved_by: user.id,
+      approved_at: now,
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  } else if (decision === 'rejected') {
+    updatePayload = {
+      status: 'rejected',
+      rejected_by: user.id,
+      rejected_at: now,
+      ...(reviewNotes ? { rejection_reason: reviewNotes, reviewer_notes: reviewNotes } : {}),
+    }
+  } else {
+    updatePayload = {
+      status: 'clarification_needed',
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update(updatePayload)
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to record decision: ${updateError.message}` }
+  }
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
 // Apply approved structured draft
 // Only creates coach_observations from player_observation_drafts.
 // Does NOT touch attendance, parent messages, player priorities,

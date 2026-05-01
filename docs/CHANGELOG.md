@@ -2,6 +2,80 @@
 
 ---
 
+## 2026-05-01 — Sprints 45–46: Approved Readiness Review Application Guardrails + Level Movement Plan Queue
+
+**Mode:** Proposed-actions pipeline only. No level movement. No player_curriculum_states mutation. No schema changes. No parent/player visibility.
+
+**Sprint 45 — Approved Readiness Review Creates Level Movement Plan Draft**
+
+**Files created:**
+- `src/app/director/review/ApplyApprovedReadinessDraftControls.tsx` — Client component: "Create Level Movement Plan Draft" button shown on approved readiness review cards. Calls `applyApprovedReadinessDraftAction`. No level movement occurs here.
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — Added `applyApprovedReadinessDraftAction`: validates approved level_readiness_review, reads player_curriculum_states (read-only), finds next curriculum level by sort_order, creates level_movement_plan_v1 proposed_actions row (pending_review), writes audit log, marks source readiness review executed. Never mutates player_curriculum_states.current_level_id.
+- `src/app/director/review/actions.ts` — Added `updateLevelMovementPlanDecisionAction`: updates proposed_actions status only. Never touches player_curriculum_states.
+- `src/app/director/review/LevelReadinessDraftCard.tsx` — Updated to show `ApplyApprovedReadinessDraftControls` for approved drafts (Sprint 45) instead of static text.
+
+**Sprint 46 — Level Movement Plan Drafts in Review Queue**
+
+**Files created:**
+- `src/app/director/review/LevelMovementPlanDraftDecisionControls.tsx` — Client: approve/reject/clarification controls for level movement plan drafts.
+- `src/app/director/review/LevelMovementPlanDraftCard.tsx` — Card: renders current level → next level arrow, readiness label, met/total counts, decision controls. Approved state shows "awaiting application" (Sprint 47 adds apply button).
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — Added fetch/display of level_movement_plan drafts (steps 24–28). Updated PageHeader with movement plan pending/approved counts.
+
+**What was intentionally not built:**
+- No player_curriculum_states mutation (Sprint 47)
+- No actual level movement
+- No parent/player visibility
+- No automatic promotion
+- No migrations
+- No new packages
+- Sprint 47 apply button not included in approved movement plan cards
+
+**Validation:**
+- `npx tsc --noEmit` — passes with 0 errors
+
+---
+
+## 2026-05-01 — Sprints 43–44: Level Readiness Director Review Draft V1 + Review Queue Integration
+
+**Mode:** Proposed-actions pipeline only. No level movement. No schema changes. No parent/player visibility.
+
+**Sprint 43 — Level Readiness Director Review Draft V1**
+
+**Files created:**
+- `src/app/director/players/[playerId]/levelReadinessReviewDraftAction.ts` — Server action: inserts `proposed_actions` row with `target_module=level_readiness_review`, `draft_type=level_readiness_review_v1`. Computes readiness snapshot (mirrors LevelReadinessSummary logic). Prevents duplicate pending drafts. No level movement. No player_curriculum_states mutation.
+- `src/app/director/players/[playerId]/LevelReadinessReviewDraftButton.tsx` — Client button component for triggering the draft creation.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Added "Level Readiness Review" card in the Notes tab (after PlayerRequirementProgressReadOnly). Bound server action with playerId.
+
+**Sprint 44 — Director Review Draft Queue Integration V1**
+
+**Files created:**
+- `src/app/director/review/LevelReadinessDraftDecisionControls.tsx` — Client: approve/reject/clarification controls for level readiness review drafts.
+- `src/app/director/review/LevelReadinessDraftCard.tsx` — Card component: renders readiness label, met/total counts, domain breakdown, and decision controls. Approved state shows "awaiting level movement plan" (Sprint 45 will handle application).
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — Added `updateLevelReadinessReviewDecisionAction`: updates proposed_actions status only. Never touches player_curriculum_states or any level-movement table.
+- `src/app/director/review/page.tsx` — Added fetch/display of level_readiness_review drafts (steps 19–23). Updated PageHeader to include readiness pending/approved counts.
+
+**What was intentionally not built:**
+- No level movement
+- No player_curriculum_states mutation
+- No parent/player visibility
+- No automatic promotion
+- No migrations
+- No new packages
+- Sprint 45 (approved review → level_movement_plan draft) not included
+
+**Validation:**
+- `npx tsc --noEmit` — passes with 0 errors
+
+---
+
 ## 2026-05-01 — Sprint 42: Requirement Progress Dashboard Polish + QA V1
 
 **Mode:** Polish + QA. No new core workflow. No schema changes. No new mutations. No parent/player visibility.

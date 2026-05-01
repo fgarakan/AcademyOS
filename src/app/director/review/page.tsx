@@ -1,4 +1,4 @@
-import { ClipboardList, Link2, Target } from 'lucide-react'
+import { ArrowUpCircle, ClipboardList, Link2, Target, TrendingUp } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -8,6 +8,10 @@ import { PriorityRecommendationDraftCard } from './PriorityRecommendationDraftCa
 import type { EnrichedPriorityDraftItem, PriorityRecommendationPayload } from './PriorityRecommendationDraftCard'
 import { EvidenceRequirementDraftCard } from './EvidenceRequirementDraftCard'
 import type { EnrichedEvidenceLinkDraftItem, EvidenceRequirementLinkPayload } from './EvidenceRequirementDraftCard'
+import { LevelReadinessDraftCard } from './LevelReadinessDraftCard'
+import type { EnrichedReadinessDraftItem, LevelReadinessDraftPayload } from './LevelReadinessDraftCard'
+import { LevelMovementPlanDraftCard } from './LevelMovementPlanDraftCard'
+import type { EnrichedLevelMovementPlanDraftItem, LevelMovementPlanPayload } from './LevelMovementPlanDraftCard'
 
 export default async function DirectorReviewQueuePage() {
   const supabase = await getSupabaseServer()
@@ -277,6 +281,142 @@ export default async function DirectorReviewQueuePage() {
   const pendingEvidenceDrafts = enrichedEvidenceDrafts.filter(d => d.status === 'pending_review')
   const approvedEvidenceDrafts = enrichedEvidenceDrafts.filter(d => d.status === 'approved')
 
+  // ─── Level readiness review drafts ─────────────────────────
+
+  // 19. Fetch pending + approved level readiness review drafts — scoped to this academy
+  const { data: readinessDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_review', 'approved'])
+    .eq('target_module', 'level_readiness_review')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allReadinessDraftRows: DraftRow[] = (readinessDraftRows ?? []) as DraftRow[]
+
+  // 20. Filter to level_readiness_review_v1
+  const filteredReadinessDrafts = allReadinessDraftRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'level_readiness_review_v1'
+  })
+
+  // 21. Batch-fetch player names for readiness review drafts
+  const readinessPlayerIds = Array.from(
+    new Set(
+      filteredReadinessDrafts
+        .map(d => d.target_object_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+
+  const readinessPlayerMap = new Map<string, string>()
+  if (readinessPlayerIds.length > 0) {
+    const { data: readinessPlayers } = await supabase
+      .from('players')
+      .select('id, first_name, last_name, full_name')
+      .in('id', readinessPlayerIds)
+      .eq('academy_id', academyId)
+    for (const p of (readinessPlayers ?? [])) {
+      readinessPlayerMap.set(p.id, p.full_name ?? `${p.first_name} ${p.last_name}`.trim())
+    }
+  }
+
+  // 22. Batch-fetch proposer display names for readiness review drafts
+  const readinessProposerIds = Array.from(new Set(filteredReadinessDrafts.map(d => d.proposed_by_id)))
+  const readinessProposerMap = new Map<string, string>()
+  if (readinessProposerIds.length > 0) {
+    const { data: readinessProposers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', readinessProposerIds)
+    for (const p of (readinessProposers ?? [])) {
+      readinessProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  // 23. Assemble enriched readiness draft items — split pending vs approved
+  const enrichedReadinessDrafts: EnrichedReadinessDraftItem[] = filteredReadinessDrafts.map(d => ({
+    id: d.id,
+    status: d.status,
+    createdAt: d.created_at,
+    playerId: d.target_object_id,
+    playerName: d.target_object_id ? (readinessPlayerMap.get(d.target_object_id) ?? null) : null,
+    proposerName: readinessProposerMap.get(d.proposed_by_id) ?? null,
+    payload: d.proposed_payload as unknown as LevelReadinessDraftPayload,
+  }))
+
+  const pendingReadinessDrafts = enrichedReadinessDrafts.filter(d => d.status === 'pending_review')
+  const approvedReadinessDrafts = enrichedReadinessDrafts.filter(d => d.status === 'approved')
+
+  // ─── Level movement plan drafts ─────────────────────────────
+
+  // 24. Fetch pending + approved level_movement_plan drafts — scoped to this academy
+  const { data: movementPlanRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_review', 'approved'])
+    .eq('target_module', 'level_movement_plan')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allMovementPlanRows: DraftRow[] = (movementPlanRows ?? []) as DraftRow[]
+
+  // 25. Filter to level_movement_plan_v1
+  const filteredMovementPlanDrafts = allMovementPlanRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'level_movement_plan_v1'
+  })
+
+  // 26. Batch-fetch player names for movement plan drafts
+  const movementPlanPlayerIds = Array.from(
+    new Set(
+      filteredMovementPlanDrafts
+        .map(d => d.target_object_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+
+  const movementPlanPlayerMap = new Map<string, string>()
+  if (movementPlanPlayerIds.length > 0) {
+    const { data: movementPlanPlayers } = await supabase
+      .from('players')
+      .select('id, first_name, last_name, full_name')
+      .in('id', movementPlanPlayerIds)
+      .eq('academy_id', academyId)
+    for (const p of (movementPlanPlayers ?? [])) {
+      movementPlanPlayerMap.set(p.id, p.full_name ?? `${p.first_name} ${p.last_name}`.trim())
+    }
+  }
+
+  // 27. Batch-fetch proposer display names for movement plan drafts
+  const movementPlanProposerIds = Array.from(new Set(filteredMovementPlanDrafts.map(d => d.proposed_by_id)))
+  const movementPlanProposerMap = new Map<string, string>()
+  if (movementPlanProposerIds.length > 0) {
+    const { data: movementPlanProposers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', movementPlanProposerIds)
+    for (const p of (movementPlanProposers ?? [])) {
+      movementPlanProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  // 28. Assemble enriched movement plan draft items — split pending vs approved
+  const enrichedMovementPlanDrafts: EnrichedLevelMovementPlanDraftItem[] = filteredMovementPlanDrafts.map(d => ({
+    id: d.id,
+    status: d.status,
+    createdAt: d.created_at,
+    playerId: d.target_object_id,
+    playerName: d.target_object_id ? (movementPlanPlayerMap.get(d.target_object_id) ?? null) : null,
+    proposerName: movementPlanProposerMap.get(d.proposed_by_id) ?? null,
+    payload: d.proposed_payload as unknown as LevelMovementPlanPayload,
+  }))
+
+  const pendingMovementPlanDrafts = enrichedMovementPlanDrafts.filter(d => d.status === 'pending_review')
+  const approvedMovementPlanDrafts = enrichedMovementPlanDrafts.filter(d => d.status === 'approved')
+
   return (
     <div className="animate-fade-in space-y-8">
       <PageHeader
@@ -286,6 +426,10 @@ export default async function DirectorReviewQueuePage() {
         priorityApprovedCount={approvedPriorityDrafts.length}
         evidencePendingCount={pendingEvidenceDrafts.length}
         evidenceApprovedCount={approvedEvidenceDrafts.length}
+        readinessPendingCount={pendingReadinessDrafts.length}
+        readinessApprovedCount={approvedReadinessDrafts.length}
+        movementPlanPendingCount={pendingMovementPlanDrafts.length}
+        movementPlanApprovedCount={approvedMovementPlanDrafts.length}
       />
 
       {/* ─── Session recap structured drafts ─── */}
@@ -448,6 +592,118 @@ export default async function DirectorReviewQueuePage() {
         </section>
       </div>
 
+      {/* ─── Level readiness review drafts ─── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 pb-1 border-b border-border">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-text-muted" />
+            <p className="label-xs">Level Readiness Review Drafts</p>
+          </div>
+          {pendingReadinessDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+              {pendingReadinessDrafts.length} pending
+            </span>
+          )}
+          {approvedReadinessDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+              {approvedReadinessDrafts.length} approved
+            </span>
+          )}
+        </div>
+
+        {/* Approved — level movement plan pending (Sprint 45 will handle application) */}
+        {approvedReadinessDrafts.length > 0 && (
+          <section className="space-y-3">
+            <p className="label-xs">Approved — Awaiting Level Movement Plan</p>
+            <div className="space-y-4">
+              {approvedReadinessDrafts.map(draft => (
+                <LevelReadinessDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Pending review */}
+        <section className="space-y-3">
+          {approvedReadinessDrafts.length > 0 && pendingReadinessDrafts.length > 0 && (
+            <p className="label-xs">Pending Review</p>
+          )}
+          {pendingReadinessDrafts.length === 0 && approvedReadinessDrafts.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<TrendingUp className="w-5 h-5" />}
+                  title="No pending level readiness reviews"
+                  description="Readiness review drafts created from player profiles will appear here for director review."
+                />
+              </CardContent>
+            </Card>
+          ) : pendingReadinessDrafts.length > 0 ? (
+            <div className="space-y-4">
+              {pendingReadinessDrafts.map(draft => (
+                <LevelReadinessDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      </div>
+
+      {/* ─── Level movement plan drafts ─── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 pb-1 border-b border-border">
+          <div className="flex items-center gap-2">
+            <ArrowUpCircle className="w-4 h-4 text-text-muted" />
+            <p className="label-xs">Level Movement Plan Drafts</p>
+          </div>
+          {pendingMovementPlanDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+              {pendingMovementPlanDrafts.length} pending
+            </span>
+          )}
+          {approvedMovementPlanDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+              {approvedMovementPlanDrafts.length} approved
+            </span>
+          )}
+        </div>
+
+        {/* Approved — awaiting application (Sprint 47 will add apply controls) */}
+        {approvedMovementPlanDrafts.length > 0 && (
+          <section className="space-y-3">
+            <p className="label-xs">Approved — Awaiting Level Movement Application</p>
+            <div className="space-y-4">
+              {approvedMovementPlanDrafts.map(draft => (
+                <LevelMovementPlanDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Pending review */}
+        <section className="space-y-3">
+          {approvedMovementPlanDrafts.length > 0 && pendingMovementPlanDrafts.length > 0 && (
+            <p className="label-xs">Pending Review</p>
+          )}
+          {pendingMovementPlanDrafts.length === 0 && approvedMovementPlanDrafts.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<ArrowUpCircle className="w-5 h-5" />}
+                  title="No pending level movement plans"
+                  description="Level movement plan drafts are created after a readiness review is approved. They will appear here for a final director review before any level change."
+                />
+              </CardContent>
+            </Card>
+          ) : pendingMovementPlanDrafts.length > 0 ? (
+            <div className="space-y-4">
+              {pendingMovementPlanDrafts.map(draft => (
+                <LevelMovementPlanDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      </div>
+
     </div>
   )
 }
@@ -459,6 +715,10 @@ function PageHeader({
   priorityApprovedCount,
   evidencePendingCount,
   evidenceApprovedCount,
+  readinessPendingCount,
+  readinessApprovedCount,
+  movementPlanPendingCount,
+  movementPlanApprovedCount,
 }: {
   pendingCount: number
   approvedCount: number
@@ -466,9 +726,13 @@ function PageHeader({
   priorityApprovedCount: number
   evidencePendingCount: number
   evidenceApprovedCount: number
+  readinessPendingCount: number
+  readinessApprovedCount: number
+  movementPlanPendingCount: number
+  movementPlanApprovedCount: number
 }) {
-  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount
-  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount
+  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + readinessPendingCount + movementPlanPendingCount
+  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + readinessApprovedCount + movementPlanApprovedCount
   return (
     <div>
       <p className="label-xs mb-1">DIRECTOR</p>
