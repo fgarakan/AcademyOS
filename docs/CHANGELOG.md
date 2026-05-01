@@ -2,6 +2,107 @@
 
 ---
 
+## 2026-05-01 — Sprints 81–90: Premium UI + Coach Class Intelligence V1
+
+**Mode:** UI polish, read-only coach intelligence. No AI API calls. No parent/player visibility. No player level changes. No package installs. No migrations.
+
+**Migrations created:** None
+
+---
+
+### Sprint 81 — Premium UI Audit V1
+
+**Files created:**
+- `docs/PREMIUM_UI_AUDIT.md` — Audit of 6 director/coach screens: clutter risks, hierarchy problems, quick wins, reusable patterns, design rules, recommended polish path for Sprints 82–90.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 82 — Director Curriculum Page Premium Polish V1
+
+**Files modified:**
+- `src/app/director/curriculum/page.tsx` — Academy Version promoted to primary section; How It Works numbered guide; Global Curriculum Foundation moved to bottom grid.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 83 — Academy Version Audit Premium Polish V1
+
+**Files modified:**
+- `src/app/director/curriculum/academy-version/page.tsx` — AuditStat compact horizontal strip replaces 6-box grid; attention items use calm bordered style; AuditStat helper component added at module level.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 84 — Review Queue Premium Organization V1
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — Added `p-6` container; per-category summary strip added to PageHeader showing pending/ready counts by category (Session Recaps, Priorities, Evidence, Attendance, Curriculum).
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 85 — Template Builder Premium Polish V1
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Curriculum Intelligence section moved to top of page; populate from curriculum is now primary action; helpful copy about academy version/overrides added.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 86 — Coach Session View Premium Polish V1
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Curriculum Focus moved near top; planned-snapshot notice condensed to one muted line; `p-6` container added.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 87 — Class Roster Intelligence Panel V1
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/ClassRosterIntelligencePanel.tsx` — Read-only per-player panel: name, curriculum level, source (academy/global), strengths, focus areas, top priority, attendance status. Graceful fallbacks when data is absent.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Added player intelligence queries (curriculum states, development summaries, priorities); renders ClassRosterIntelligencePanel after Group Assignment.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 88 — Player Strengths / Needs Summary Cards V1
+
+*Integrated into Sprint 87 ClassRosterIntelligencePanel — no additional files.*
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 89 — Coach Session Briefing V1
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Coach Briefing section added: deterministic synthesis of curriculum focus, class size, watch-for-today items (academy emphasis, players with needs/priorities/missing assignment), capture-after-class suggestions.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 90 — Premium Demo Readiness QA V1
+
+**Files created:**
+- `docs/PREMIUM_UI_DEMO_READINESS_QA.md` — QA checklist for all 5 screens, known limitations, remaining clutter risks, recommended future sprints.
+- `docs/BRIAN_PREMIUM_UI_AND_COACH_INTELLIGENCE_DEMO.md` — Full demo script for Brian actor: 6 steps from curriculum command center through player profile.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-01 — Sprints 71–80: Academy Curriculum Resolution + Operating Loop V1
 
 **Mode:** Backend utility, server action enhancements, read-only UI additions, docs. No AI API calls. No parent/player visibility. No player level changes. No package installs. No migrations.

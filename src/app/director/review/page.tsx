@@ -401,7 +401,7 @@ export default async function DirectorReviewQueuePage() {
   const approvedCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'approved')
 
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="animate-fade-in p-6 space-y-8">
       <PageHeader
         pendingCount={pendingDrafts.length}
         approvedCount={approvedDrafts.length}
@@ -712,25 +712,55 @@ function PageHeader({
 }) {
   const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount
   const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount
+
+  const categories = [
+    { label: 'Session Recaps', pending: pendingCount, ready: approvedCount },
+    { label: 'Priorities', pending: priorityPendingCount, ready: priorityApprovedCount },
+    { label: 'Evidence', pending: evidencePendingCount, ready: evidenceApprovedCount },
+    { label: 'Attendance', pending: attendancePendingCount, ready: attendanceApprovedCount },
+    { label: 'Curriculum', pending: curriculumOverridePendingCount, ready: curriculumOverrideApprovedCount },
+  ]
+
   return (
-    <div>
-      <p className="label-xs mb-1">DIRECTOR</p>
-      <div className="flex items-center gap-3 flex-wrap">
-        <h1 className="text-2xl font-bold text-text-primary">Draft Review Queue</h1>
-        {totalPending > 0 && (
-          <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
-            {totalPending} pending
-          </span>
-        )}
-        {totalReadyToApply > 0 && (
-          <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-            {totalReadyToApply} ready to apply
-          </span>
-        )}
+    <div className="space-y-4">
+      <div>
+        <p className="label-xs mb-1">DIRECTOR</p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-2xl font-bold text-text-primary">Draft Review Queue</h1>
+          {totalPending > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+              {totalPending} pending
+            </span>
+          )}
+          {totalReadyToApply > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+              {totalReadyToApply} ready to apply
+            </span>
+          )}
+        </div>
+        <p className="text-text-muted text-sm mt-1">
+          Structured drafts awaiting review or application. Nothing is applied automatically.
+        </p>
       </div>
-      <p className="text-text-muted text-sm mt-1">
-        Structured drafts awaiting review or application. Nothing is applied automatically.
-      </p>
+
+      {/* Per-category summary strip */}
+      <div className="flex flex-wrap gap-4 px-4 py-3 rounded-xl bg-surface-raised border border-border">
+        {categories.map(cat => (
+          <div key={cat.label} className="min-w-[80px]">
+            <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">{cat.label}</p>
+            <div className="flex items-center gap-2">
+              {cat.pending > 0 ? (
+                <span className="text-xs font-mono font-semibold text-status-orange">{cat.pending} pending</span>
+              ) : (
+                <span className="text-xs font-mono text-text-muted">—</span>
+              )}
+              {cat.ready > 0 && (
+                <span className="text-xs font-mono font-semibold text-lime">{cat.ready} ready</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

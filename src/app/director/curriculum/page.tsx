@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BookOpen, Layers, Dumbbell, Users, ChevronRight, ExternalLink } from 'lucide-react'
+import { BookOpen, Layers, Dumbbell, ChevronRight } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { Card, CardHeader, CardContent } from '@/components/ui'
@@ -109,177 +109,140 @@ export default async function DirectorCurriculumPage() {
     : null
 
   return (
-    <div className="animate-fade-in p-6 space-y-6">
+    <div className="animate-fade-in p-6 space-y-8">
 
       {/* Page header */}
       <div>
+        <p className="label-xs mb-1">DIRECTOR</p>
         <h1 className="text-2xl font-bold text-text-primary">Curriculum</h1>
-        <p className="text-text-secondary text-sm mt-1">
-          Curriculum spine, content, requirements, academy version, and voice customization.
+        <p className="text-text-secondary text-sm mt-1 max-w-lg">
+          Your academy&rsquo;s curriculum version and voice customization live here.
+          The global spine is shared and protected — your overrides stay in your version.
         </p>
       </div>
 
-      <p className="label-xs">Curriculum Content Engine</p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        {/* 1 — Global / Academy Curriculum Spine */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-lime" />
-              <p className="label-xs">Global / Academy Curriculum Spine</p>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-3">
-            <p className="text-[11px] text-text-secondary leading-relaxed">
-              The global curriculum defines levels, tracks, and named requirements across all
-              stages (Red Ball → Yellow Advanced). Academy-specific overrides can extend or
-              replace global defaults.
-            </p>
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div>
-                <p className="text-[11px] text-text-muted mb-0.5">Curriculum levels</p>
-                <p className="text-lg font-mono font-bold text-lime">{levelsCount ?? '—'}</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-text-muted mb-0.5">Track requirements</p>
-                {requirementsUnavailable ? (
-                  <p className="text-[11px] text-status-orange">{UNAVAILABLE_MSG}</p>
-                ) : (
-                  <p className="text-lg font-mono font-bold text-lime">{requirementsCount ?? '—'}</p>
-                )}
-              </div>
-            </div>
-            <Link
-              href="/director/players"
-              className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors"
-            >
-              View players <ChevronRight className="w-3 h-3" />
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* 2 — Orange Ball Starter Content */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-status-orange" />
-              <p className="label-xs">Orange Ball Starter Content</p>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-3">
-            <p className="text-[11px] text-text-secondary leading-relaxed">
-              29 global-default content items across Orange Ball levels 1–3: drills, games,
-              skills, and assessments. Each item includes coaching cues, success criteria,
-              progressions, and regressions.
-            </p>
-            {contentUnavailable || mappingsUnavailable ? (
-              <p className="text-[11px] text-status-orange">{UNAVAILABLE_MSG}</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div>
-                  <p className="text-[11px] text-text-muted mb-0.5">Content items</p>
-                  <p className="text-lg font-mono font-bold text-lime">{contentItemsCount ?? '—'}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] text-text-muted mb-0.5">Req. mappings</p>
-                  <p className="text-lg font-mono font-bold text-lime">{mappingsCount ?? '—'}</p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 3 — Curriculum-Aware Templates */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Dumbbell className="w-4 h-4 text-status-blue" />
-              <p className="label-xs">Curriculum-Aware Templates</p>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-3">
-            <p className="text-[11px] text-text-secondary leading-relaxed">
-              Session templates can be tagged with a curriculum level. The block population
-              engine fills empty block notes with matching drills, games, and coaching cues
-              from the content library.
-            </p>
-            {templatesUnavailable ? (
-              <p className="text-[11px] text-status-orange">{UNAVAILABLE_MSG}</p>
-            ) : (
-              <div className="pt-1">
-                <p className="text-[11px] text-text-muted mb-0.5">Templates with curriculum level</p>
-                <p className="text-lg font-mono font-bold text-lime">
-                  {templatesWithCurriculumCount ?? '—'}
-                </p>
-              </div>
-            )}
-            <Link
-              href="/director/fitness/templates"
-              className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors"
-            >
-              Open templates <ChevronRight className="w-3 h-3" />
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* 4 — Coach Session Curriculum Context */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-status-green" />
-              <p className="label-xs">Coach Session Curriculum Context</p>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-3">
-            <p className="text-[11px] text-text-secondary leading-relaxed">
-              Sessions generated from curriculum-aware templates display a Curriculum Focus
-              panel for the coach: level name, stage, and block notes pre-filled with drills
-              and coaching cues from the content library.
-            </p>
-            <div className="flex gap-4 pt-1">
-              <Link
-                href="/director/sessions"
-                className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors"
-              >
-                View sessions <ChevronRight className="w-3 h-3" />
-              </Link>
-              <Link
-                href="/director/review"
-                className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors"
-              >
-                Review queue <ChevronRight className="w-3 h-3" />
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 5 — Academy Curriculum Version (Sprint 63) */}
+      {/* Primary section — Academy Curriculum Version + Voice */}
+      <div className="space-y-4">
+        <p className="label-xs">Your Academy Curriculum</p>
         <AcademyCurriculumVersionCard version={versionData} />
-
-        {/* 6 — Voice Curriculum Customization (Sprint 64) */}
         <VoiceOverrideInputPanel hasActiveVersion={!!activeVersion} />
-
       </div>
 
-      {/* Quick navigation links */}
-      <div className="flex flex-wrap gap-3 pt-2">
-        {[
-          { href: '/director/curriculum/academy-version', label: 'Academy Version' },
-          { href: '/director/fitness/templates',          label: 'Templates' },
-          { href: '/director/sessions',                   label: 'Sessions' },
-          { href: '/director/players',                    label: 'Players' },
-          { href: '/director/review',                     label: 'Review Queue' },
-        ].map(link => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[11px] text-text-secondary hover:text-lime hover:border-lime transition-colors"
-          >
-            {link.label} <ExternalLink className="w-3 h-3" />
+      {/* How it works */}
+      <div className="px-5 py-4 rounded-2xl border border-border bg-surface-raised">
+        <p className="label-xs mb-3">How It Works</p>
+        <ol className="space-y-2">
+          {[
+            'Create your academy curriculum version.',
+            'Type a customization and submit it.',
+            'Approve it in the Review Queue.',
+            'Populate templates — sessions carry the academy context automatically.',
+          ].map((step, i) => (
+            <li key={i} className="flex items-start gap-3 text-[12px] text-text-secondary">
+              <span className="shrink-0 w-5 h-5 rounded-full border border-border flex items-center justify-center text-[10px] font-mono text-text-muted">
+                {i + 1}
+              </span>
+              {step}
+            </li>
+          ))}
+        </ol>
+        <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-4">
+          <Link href="/director/fitness/templates" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
+            Templates <ChevronRight className="w-3 h-3" />
           </Link>
-        ))}
+          <Link href="/director/review" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
+            Review Queue <ChevronRight className="w-3 h-3" />
+          </Link>
+          <Link href="/director/sessions" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
+            Sessions <ChevronRight className="w-3 h-3" />
+          </Link>
+          <Link href="/director/curriculum/academy-version" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
+            Academy Version <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
+      </div>
+
+      {/* Curriculum Foundation */}
+      <div className="space-y-4">
+        <p className="label-xs">Global Curriculum Foundation</p>
+        <p className="text-[11px] text-text-muted -mt-2">
+          Read-only for directors. Your academy version extends this — it is never modified by your customizations.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          {/* Curriculum Spine */}
+          <Card>
+            <CardContent className="py-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-3.5 h-3.5 text-text-muted" />
+                <p className="text-[11px] font-semibold text-text-secondary">Curriculum Spine</p>
+              </div>
+              <div className="flex gap-4">
+                <div>
+                  <p className="text-[10px] text-text-muted mb-0.5">Levels</p>
+                  <p className="text-xl font-mono font-bold text-lime">{levelsCount ?? '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-text-muted mb-0.5">Requirements</p>
+                  {requirementsUnavailable ? (
+                    <p className="text-[10px] text-text-muted">—</p>
+                  ) : (
+                    <p className="text-xl font-mono font-bold text-lime">{requirementsCount ?? '—'}</p>
+                  )}
+                </div>
+              </div>
+              <p className="text-[10px] text-text-muted">Red Ball → Yellow Advanced</p>
+            </CardContent>
+          </Card>
+
+          {/* Content Library */}
+          <Card>
+            <CardContent className="py-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Layers className="w-3.5 h-3.5 text-text-muted" />
+                <p className="text-[11px] font-semibold text-text-secondary">Content Library</p>
+              </div>
+              {contentUnavailable || mappingsUnavailable ? (
+                <p className="text-[10px] text-text-muted">Pending migration</p>
+              ) : (
+                <div className="flex gap-4">
+                  <div>
+                    <p className="text-[10px] text-text-muted mb-0.5">Items</p>
+                    <p className="text-xl font-mono font-bold text-lime">{contentItemsCount ?? '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-text-muted mb-0.5">Mappings</p>
+                    <p className="text-xl font-mono font-bold text-lime">{mappingsCount ?? '—'}</p>
+                  </div>
+                </div>
+              )}
+              <p className="text-[10px] text-text-muted">Drills, games, skills, assessments</p>
+            </CardContent>
+          </Card>
+
+          {/* Templates */}
+          <Card>
+            <CardContent className="py-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Dumbbell className="w-3.5 h-3.5 text-text-muted" />
+                <p className="text-[11px] font-semibold text-text-secondary">Curriculum Templates</p>
+              </div>
+              {templatesUnavailable ? (
+                <p className="text-[10px] text-text-muted">Pending migration</p>
+              ) : (
+                <div>
+                  <p className="text-[10px] text-text-muted mb-0.5">With curriculum level</p>
+                  <p className="text-xl font-mono font-bold text-lime">{templatesWithCurriculumCount ?? '—'}</p>
+                </div>
+              )}
+              <Link href="/director/fitness/templates" className="inline-flex items-center gap-1 text-[10px] text-text-muted hover:text-lime transition-colors">
+                Open templates <ChevronRight className="w-3 h-3" />
+              </Link>
+            </CardContent>
+          </Card>
+
+        </div>
       </div>
 
     </div>

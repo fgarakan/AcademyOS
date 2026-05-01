@@ -1,3 +1,4 @@
+import React from 'react'
 import Link from 'next/link'
 import { GitBranch, ArrowLeft, CheckCircle, AlertTriangle, BarChart2 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
@@ -30,7 +31,6 @@ export default async function AcademyCurriculumVersionPage() {
 
   const rawDb = supabase as any
 
-  // Fetch active/draft academy curriculum version
   interface VersionRow {
     id: string
     name: string
@@ -53,7 +53,6 @@ export default async function AcademyCurriculumVersionPage() {
 
   const version: VersionRow | null = versionRow ?? null
 
-  // Fetch overrides for this version
   interface OverrideRow {
     id: string
     target_type: string
@@ -89,9 +88,6 @@ export default async function AcademyCurriculumVersionPage() {
   const appliedOverrides = overrides.filter(o => o.status === 'applied')
   const rolledBackOverrides = overrides.filter(o => o.status === 'rolled_back')
   const otherOverrides = overrides.filter(o => o.status !== 'applied' && o.status !== 'rolled_back')
-
-  // ─── Sprint 79: Curriculum Connection Audit queries ──────────────────────
-  // All counts use safe fallback to null on error — never crash the page.
 
   // Templates with curriculum level set
   let templatesWithLevel = 0
@@ -138,7 +134,7 @@ export default async function AcademyCurriculumVersionPage() {
     'text-status-orange'
 
   return (
-    <div className="animate-fade-in p-6 space-y-6">
+    <div className="animate-fade-in p-6 space-y-8">
       {/* Back link */}
       <Link
         href="/director/curriculum"
@@ -151,23 +147,10 @@ export default async function AcademyCurriculumVersionPage() {
       {/* Page header */}
       <div>
         <p className="label-xs mb-1">DIRECTOR</p>
-        <div className="flex items-center gap-3 flex-wrap">
-          <GitBranch className="w-5 h-5 text-lime" />
-          <h1 className="text-2xl font-bold text-text-primary">Academy Curriculum Version</h1>
-        </div>
-        <p className="text-text-secondary text-sm mt-1">
-          Your academy&rsquo;s curriculum version and applied customizations.
+        <h1 className="text-2xl font-bold text-text-primary">Academy Curriculum Version</h1>
+        <p className="text-text-secondary text-sm mt-1 max-w-lg">
+          Your academy&rsquo;s curriculum customizations. The global spine is never changed — all overrides live here.
         </p>
-      </div>
-
-      {/* Global guardrail banner */}
-      <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-surface-raised border border-border text-[11px] text-text-muted">
-        <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-status-green" />
-        <span>
-          Your academy version is separate from the global curriculum. The global curriculum spine
-          is never edited by academy directors — all customizations are stored as overrides on this
-          version only.
-        </span>
       </div>
 
       {!version ? (
@@ -289,108 +272,89 @@ export default async function AcademyCurriculumVersionPage() {
             </div>
           )}
 
-          {/* Sprint 79 — Curriculum Connection Audit */}
+          {/* Curriculum Connection Audit */}
           <div className="space-y-4 pt-4 border-t border-border">
-            <div className="flex items-center gap-2 pb-1">
+            <div className="flex items-center gap-2">
               <BarChart2 className="w-4 h-4 text-text-muted" />
-              <p className="label-xs">Curriculum Connection Audit</p>
+              <p className="label-xs">Connection Audit</p>
             </div>
 
-            <Card>
-              <CardContent className="py-4">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {/* Compact stats strip */}
+            <div className="flex flex-wrap gap-6 px-4 py-3 rounded-xl bg-surface-raised border border-border">
+              <AuditStat
+                label="Version"
+                value="Active"
+                highlight
+                icon={<CheckCircle className="w-3 h-3 text-status-green" />}
+              />
+              <AuditStat label="Applied" value={String(appliedOverrides.length)} highlight={appliedOverrides.length > 0} />
+              <AuditStat label="Rolled back" value={String(rolledBackOverrides.length)} />
+              <AuditStat label="Templates with level" value={String(templatesWithLevel)} highlight={templatesWithLevel > 0} />
+              {templatesWithoutLevel > 0 && (
+                <AuditStat label="Templates missing level" value={String(templatesWithoutLevel)} warn />
+              )}
+              <AuditStat
+                label="Players assigned"
+                value={totalActivePlayers > 0 ? `${playersWithAssignment} / ${totalActivePlayers}` : '—'}
+                highlight={playersWithAssignment > 0}
+              />
+            </div>
 
-                  {/* Academy version */}
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Academy Version</p>
-                    {version ? (
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle className="w-3.5 h-3.5 text-status-green" />
-                        <p className="text-xs text-status-green font-semibold">Active</p>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5">
-                        <AlertTriangle className="w-3.5 h-3.5 text-status-orange" />
-                        <p className="text-xs text-status-orange">None</p>
-                      </div>
-                    )}
+            {/* Attention items */}
+            {(templatesWithoutLevel > 0 || playersWithoutAssignment > 0 || appliedOverrides.length > 0) && (
+              <div className="space-y-2">
+                {templatesWithoutLevel > 0 && (
+                  <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg border border-status-orange/20 bg-status-orange/5 text-[11px] text-text-secondary">
+                    <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5 text-status-orange" />
+                    <span>
+                      {templatesWithoutLevel} template{templatesWithoutLevel > 1 ? 's are' : ' is'} missing a curriculum level.{' '}
+                      Open each template, select a Curriculum Focus, and run block population.
+                    </span>
                   </div>
-
-                  {/* Applied overrides */}
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Applied Overrides</p>
-                    <p className={`text-lg font-mono font-bold ${appliedOverrides.length > 0 ? 'text-lime' : 'text-text-muted'}`}>
-                      {appliedOverrides.length}
-                    </p>
+                )}
+                {playersWithoutAssignment > 0 && (
+                  <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg border border-status-orange/20 bg-status-orange/5 text-[11px] text-text-secondary">
+                    <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5 text-status-orange" />
+                    <span>
+                      {playersWithoutAssignment} active player{playersWithoutAssignment > 1 ? 's have' : ' has'} no curriculum assignment.{' '}
+                      Assign a level from each player&rsquo;s Skill Path tab.
+                    </span>
                   </div>
-
-                  {/* Rolled back */}
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Rolled Back</p>
-                    <p className="text-lg font-mono font-bold text-text-muted">
-                      {rolledBackOverrides.length}
-                    </p>
+                )}
+                {appliedOverrides.length > 0 && (
+                  <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg border border-status-green/20 bg-status-green/5 text-[11px] text-text-secondary">
+                    <CheckCircle className="w-3 h-3 shrink-0 mt-0.5 text-status-green" />
+                    <span>
+                      {appliedOverrides.length} override{appliedOverrides.length > 1 ? 's are' : ' is'} active.
+                      Sessions and templates include academy curriculum context automatically.
+                    </span>
                   </div>
-
-                  {/* Templates with curriculum */}
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Templates (with level)</p>
-                    <p className={`text-lg font-mono font-bold ${templatesWithLevel > 0 ? 'text-lime' : 'text-text-muted'}`}>
-                      {templatesWithLevel}
-                    </p>
-                  </div>
-
-                  {/* Templates without */}
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Templates (no level)</p>
-                    <p className={`text-lg font-mono font-bold ${templatesWithoutLevel > 0 ? 'text-status-orange' : 'text-text-muted'}`}>
-                      {templatesWithoutLevel}
-                    </p>
-                  </div>
-
-                  {/* Players with assignment */}
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Players (assigned)</p>
-                    <p className={`text-lg font-mono font-bold ${playersWithAssignment > 0 ? 'text-lime' : 'text-text-muted'}`}>
-                      {playersWithAssignment} / {totalActivePlayers}
-                    </p>
-                  </div>
-
-                </div>
-
-                {/* Recommendations */}
-                <div className="mt-4 pt-4 border-t border-border space-y-2">
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted">Recommended Actions</p>
-                  {templatesWithoutLevel > 0 && (
-                    <div className="flex items-start gap-2 text-[11px] text-status-orange">
-                      <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
-                      <span>{templatesWithoutLevel} template{templatesWithoutLevel > 1 ? 's are' : ' is'} missing a curriculum level. Open each template and select a Curriculum Focus to enable academy-aware block population.</span>
-                    </div>
-                  )}
-                  {playersWithoutAssignment > 0 && (
-                    <div className="flex items-start gap-2 text-[11px] text-status-orange">
-                      <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
-                      <span>{playersWithoutAssignment} active player{playersWithoutAssignment > 1 ? 's have' : ' has'} no curriculum assignment. Assign a curriculum level from each player&rsquo;s Skill Path tab.</span>
-                    </div>
-                  )}
-                  {templatesWithLevel > 0 && appliedOverrides.length === 0 && (
-                    <div className="flex items-start gap-2 text-[11px] text-text-muted">
-                      <CheckCircle className="w-3 h-3 shrink-0 mt-0.5" />
-                      <span>Templates are curriculum-connected. No academy overrides active — sessions use global curriculum defaults.</span>
-                    </div>
-                  )}
-                  {appliedOverrides.length > 0 && (
-                    <div className="flex items-start gap-2 text-[11px] text-status-green">
-                      <CheckCircle className="w-3 h-3 shrink-0 mt-0.5" />
-                      <span>{appliedOverrides.length} academy override{appliedOverrides.length > 1 ? 's are' : ' is'} active. Template block population and session generation will include override context.</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+function AuditStat({ label, value, highlight, warn, icon }: {
+  label: string
+  value: string
+  highlight?: boolean
+  warn?: boolean
+  icon?: React.ReactNode
+}) {
+  return (
+    <div>
+      <p className="text-[9px] uppercase tracking-widest text-text-muted mb-0.5">{label}</p>
+      <div className="flex items-center gap-1.5">
+        {icon}
+        <p className={`text-sm font-mono font-bold ${
+          warn ? 'text-status-orange' : highlight ? 'text-lime' : 'text-text-muted'
+        }`}>{value}</p>
+      </div>
     </div>
   )
 }

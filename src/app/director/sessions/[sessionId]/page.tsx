@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, Info, GraduationCap, GitBranch } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, GraduationCap, GitBranch, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -16,6 +16,8 @@ import { StructuredDraftView } from './StructuredDraftView'
 import type { StructuredDraftPayload } from './structureRecapAction'
 import { AttendanceExceptionDraftPanel } from './AttendanceExceptionDraftPanel'
 import type { AttendanceExceptionPayload } from './attendanceExceptionDraftAction'
+import { ClassRosterIntelligencePanel } from './ClassRosterIntelligencePanel'
+import type { PlayerIntelligenceItem } from './ClassRosterIntelligencePanel'
 
 interface PageProps {
   params: { sessionId: string }
@@ -103,7 +105,6 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
         .eq('id', template.curriculum_level_id)
         .single()
       if (levelRow) {
-        // Resolve academy curriculum version + overrides for coach context (Sprint 76)
         const activeVersion = await getActiveAcademyCurriculumVersion(supabase, academyId)
         let academyVersionName: string | null = null
         let overrideSummaryLines: string[] = []
@@ -233,6 +234,102 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     unrecorded: directorRoster.filter(p => p.status === null).length,
   }
 
+  // 6b. Player intelligence — curriculum states, development summaries, priorities
+  const rosterPlayerIds = directorRoster.map(p => p.playerId)
+  const playerIntelligence: PlayerIntelligenceItem[] = directorRoster.map(p => ({
+    playerId: p.playerId,
+    fullName: p.fullName,
+    attendanceStatus: p.status,
+    curriculumLevelName: null,
+    curriculumStage: null,
+    curriculumSource: null,
+    strengths: [],
+    thingsToWorkOn: [],
+    developmentFocus: null,
+    topPriority: null,
+  }))
+
+  if (rosterPlayerIds.length > 0) {
+    const rawDb = supabase as any
+
+    const { data: csRows } = await rawDb
+      .from('player_curriculum_states')
+      .select('player_id, current_level_id, curriculum_version_id')
+      .eq('academy_id', academyId)
+      .in('player_id', rosterPlayerIds)
+
+    const curriculumStateMap = new Map<string, { level_id: string | null; has_version: boolean }>()
+    for (const row of (csRows ?? [])) {
+      curriculumStateMap.set(row.player_id, {
+        level_id: row.current_level_id ?? null,
+        has_version: !!row.curriculum_version_id,
+      })
+    }
+
+    const levelIds = Array.from(new Set(
+      Array.from(curriculumStateMap.values())
+        .map(v => v.level_id)
+        .filter((id): id is string => !!id)
+    ))
+
+    const levelNameMap = new Map<string, { display_name: string; stage: string }>()
+    if (levelIds.length > 0) {
+      const { data: levelRows } = await rawDb
+        .from('curriculum_levels')
+        .select('id, display_name, stage')
+        .in('id', levelIds)
+      for (const row of (levelRows ?? [])) {
+        levelNameMap.set(row.id, { display_name: row.display_name, stage: row.stage })
+      }
+    }
+
+    const { data: devRows } = await rawDb
+      .from('player_development_summary')
+      .select('player_id, current_strengths, things_to_work_on, development_focus')
+      .in('player_id', rosterPlayerIds)
+
+    const devMap = new Map<string, { strengths: string[]; toWorkOn: string[]; focus: string | null }>()
+    for (const row of (devRows ?? [])) {
+      devMap.set(row.player_id, {
+        strengths: (row.current_strengths as string[] | null) ?? [],
+        toWorkOn: (row.things_to_work_on as string[] | null) ?? [],
+        focus: row.development_focus ?? null,
+      })
+    }
+
+    const { data: priorityRows } = await rawDb
+      .from('player_priorities')
+      .select('player_id, title, priority_rank')
+      .in('player_id', rosterPlayerIds)
+      .eq('academy_id', academyId)
+      .eq('is_active', true)
+      .order('priority_rank', { ascending: true })
+
+    const topPriorityMap = new Map<string, string>()
+    for (const row of (priorityRows ?? [])) {
+      if (!topPriorityMap.has(row.player_id)) {
+        topPriorityMap.set(row.player_id, row.title)
+      }
+    }
+
+    for (const item of playerIntelligence) {
+      const state = curriculumStateMap.get(item.playerId)
+      if (state?.level_id) {
+        const level = levelNameMap.get(state.level_id)
+        item.curriculumLevelName = level?.display_name ?? null
+        item.curriculumStage = level?.stage ?? null
+        item.curriculumSource = state.has_version ? 'Academy version' : 'Global'
+      }
+      const dev = devMap.get(item.playerId)
+      if (dev) {
+        item.strengths = dev.strengths
+        item.thingsToWorkOn = dev.toWorkOn
+        item.developmentFocus = dev.focus
+      }
+      item.topPriority = topPriorityMap.get(item.playerId) ?? null
+    }
+  }
+
   // 7. Fetch active groups for group assignment panel
   const { data: activeGroupsRaw } = await supabase
     .from('groups')
@@ -262,7 +359,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     }
   }
 
-  // 9. Fetch session-level voice_notes (coach recaps, player_id IS NULL, most recent first)
+  // 9. Fetch session-level voice_notes
   interface RecapEntry { id: string; raw_input: string; created_at: string }
   interface RecapEntryWithStatus extends RecapEntry { processing_status: string }
   const { data: recapRows } = await supabase
@@ -280,10 +377,9 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     created_at: r.created_at,
   }))
 
-  // The most recent unstructured recap — used to show the "Create Structured Draft" button
   const pendingRecap = recapsWithStatus.find(r => r.processing_status === 'pending') ?? null
 
-  // 10. Fetch existing structured drafts from proposed_actions for this session
+  // 10. Fetch existing structured drafts
   interface StructuredDraftRow {
     id: string
     proposed_payload: unknown
@@ -301,7 +397,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     .limit(5)
   const structuredDrafts: StructuredDraftRow[] = (draftRows ?? []) as StructuredDraftRow[]
 
-  // 11. Fetch existing attendance exception drafts for this session
+  // 11. Fetch existing attendance exception drafts
   interface AttendanceExceptionDraftRow {
     id: string
     proposed_payload: unknown
@@ -318,8 +414,15 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     .limit(5)
   const attendanceDrafts: AttendanceExceptionDraftRow[] = (attendanceDraftRows ?? []) as AttendanceExceptionDraftRow[]
 
+  // Derived intelligence for coach briefing
+  const playersWithNeeds = playerIntelligence.filter(p => p.thingsToWorkOn.length > 0)
+  const playersWithPriority = playerIntelligence.filter(p => p.topPriority)
+  const playersWithoutAssignment = playerIntelligence.filter(p => !p.curriculumLevelName)
+  const playersUnrecorded = playerIntelligence.filter(p => p.attendanceStatus === null)
+  const playersWithoutPriority = playerIntelligence.filter(p => !p.topPriority)
+
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in p-6 space-y-6">
       <BackLink />
 
       {/* Session header */}
@@ -346,14 +449,130 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Planned-snapshot notice */}
-      <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-lime/5 border border-lime/20 text-xs text-text-secondary">
-        <Info className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
-        <span>
-          This is a planned session snapshot. Coach execution updates are saved to the session only
-          and do not change the master template.
-        </span>
-      </div>
+      {/* Curriculum Focus — near top for coaching context */}
+      {curriculumContext && (
+        <div>
+          <p className="label-xs mb-3">Curriculum Focus</p>
+          <Card>
+            <CardContent className="py-4 space-y-4">
+              <div className="flex items-start gap-3">
+                <GraduationCap className="w-4 h-4 text-lime shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-text-primary">{curriculumContext.levelName}</p>
+                  <p className="text-xs text-text-muted capitalize mt-0.5">
+                    {curriculumContext.levelStage.replace(/_/g, ' ')}
+                  </p>
+                </div>
+              </div>
+
+              {curriculumContext.academyVersionName && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border">
+                  <GitBranch className="w-3.5 h-3.5 text-lime shrink-0" />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted">Academy Version</p>
+                    <p className="text-xs text-text-secondary">{curriculumContext.academyVersionName}</p>
+                  </div>
+                </div>
+              )}
+
+              {curriculumContext.overrideSummaryLines.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted">
+                    Academy Customizations
+                  </p>
+                  {curriculumContext.overrideSummaryLines.map((line, i) => (
+                    <p key={i} className="text-[11px] text-text-secondary px-2 py-1 rounded bg-surface-raised border border-border">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-[10px] text-text-muted italic pt-1 border-t border-border">
+                Internal coach context only — not visible to players or parents.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Coach Briefing — deterministic synthesis, no AI */}
+      {(curriculumContext || playerIntelligence.length > 0) && (
+        <div>
+          <p className="label-xs mb-3">Coach Briefing</p>
+          <div className="px-4 py-4 rounded-xl bg-surface-raised border border-border space-y-4">
+            {/* Class */}
+            <div className="flex items-center gap-2">
+              <Users className="w-3.5 h-3.5 text-text-muted shrink-0" />
+              <p className="text-sm text-text-primary">
+                {playerIntelligence.length > 0
+                  ? `${playerIntelligence.length} player${playerIntelligence.length > 1 ? 's' : ''} in class${groupName ? ` · ${groupName}` : ''}`
+                  : groupName ?? 'No roster set'}
+              </p>
+            </div>
+
+            {/* Watch for today */}
+            <div className="space-y-1.5">
+              <p className="text-[9px] uppercase tracking-widest text-text-muted">Watch for today</p>
+              {curriculumContext?.overrideSummaryLines.map((line, i) => (
+                <p key={i} className="text-[11px] text-text-secondary flex items-start gap-2">
+                  <span className="shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-lime" />
+                  Academy emphasis: {line}
+                </p>
+              ))}
+              {playersWithNeeds.length > 0 && (
+                <p className="text-[11px] text-text-secondary flex items-start gap-2">
+                  <span className="shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-status-orange" />
+                  {playersWithNeeds.length} player{playersWithNeeds.length > 1 ? 's' : ''} with active focus areas
+                </p>
+              )}
+              {playersWithPriority.length > 0 && (
+                <p className="text-[11px] text-text-secondary flex items-start gap-2">
+                  <span className="shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-status-blue" />
+                  {playersWithPriority.length} player{playersWithPriority.length > 1 ? 's' : ''} with active priorities
+                </p>
+              )}
+              {playersWithoutAssignment.length > 0 && (
+                <p className="text-[11px] text-text-secondary flex items-start gap-2">
+                  <span className="shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-status-orange" />
+                  {playersWithoutAssignment.length} player{playersWithoutAssignment.length > 1 ? 's' : ''} without curriculum assignment
+                </p>
+              )}
+              {playersWithNeeds.length === 0 && playersWithPriority.length === 0 && playersWithoutAssignment.length === 0 && (
+                <p className="text-[11px] text-text-muted">
+                  {curriculumContext ? 'Standard curriculum focus — no specific watch items.' : 'No specific watch items.'}
+                </p>
+              )}
+            </div>
+
+            {/* Capture after class */}
+            <div className="space-y-1.5 pt-3 border-t border-border">
+              <p className="text-[9px] uppercase tracking-widest text-text-muted">Capture after class</p>
+              <p className="text-[11px] text-text-secondary flex items-start gap-2">
+                <span className="shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-text-muted" />
+                Record a session recap in the Coach Recap section below
+              </p>
+              {playersUnrecorded.length > 0 && (
+                <p className="text-[11px] text-text-secondary flex items-start gap-2">
+                  <span className="shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-status-orange" />
+                  Note attendance for {playersUnrecorded.length} unrecorded player{playersUnrecorded.length > 1 ? 's' : ''}
+                </p>
+              )}
+              {playersWithoutPriority.length > 0 && playerIntelligence.length > 0 && (
+                <p className="text-[11px] text-text-secondary flex items-start gap-2">
+                  <span className="shrink-0 mt-1 w-1.5 h-1.5 rounded-full bg-text-muted" />
+                  Consider capturing priorities for {playersWithoutPriority.length} player{playersWithoutPriority.length > 1 ? 's' : ''} from their profiles
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Snapshot notice — compact */}
+      <p className="text-[11px] text-text-muted">
+        Planned session snapshot — changes here do not affect the master template.
+      </p>
 
       {/* Session meta */}
       <Card>
@@ -385,64 +604,6 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      {/* Curriculum Context — shown when the source template has a curriculum level set */}
-      {curriculumContext && (
-        <div>
-          <SectionHeader title="CURRICULUM FOCUS" />
-          <Card className="mt-3">
-            <CardContent className="py-4 space-y-4">
-              <div className="flex items-start gap-3">
-                <GraduationCap className="w-4 h-4 text-lime shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-text-primary">{curriculumContext.levelName}</p>
-                  <p className="text-xs text-text-muted capitalize mt-0.5">
-                    {curriculumContext.levelStage.replace(/_/g, ' ')}
-                  </p>
-                </div>
-              </div>
-
-              {/* Academy curriculum version context */}
-              {curriculumContext.academyVersionName && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border">
-                  <GitBranch className="w-3.5 h-3.5 text-lime shrink-0" />
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted">Academy Version</p>
-                    <p className="text-xs text-text-secondary">{curriculumContext.academyVersionName}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Academy override summaries */}
-              {curriculumContext.overrideSummaryLines.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted">
-                    Academy Customizations
-                  </p>
-                  {curriculumContext.overrideSummaryLines.map((line, i) => (
-                    <p key={i} className="text-[11px] text-text-secondary px-2 py-1 rounded bg-surface-raised border border-border">
-                      {line}
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              <div className="pt-1 border-t border-border space-y-1">
-                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">
-                  Curriculum Notes Per Block
-                </p>
-                <p className="text-xs text-text-muted">
-                  Block notes below contain the curriculum drills, games, cues, and success criteria
-                  for this session. Review each block note for the coaching context.
-                </p>
-                <p className="text-[10px] text-text-muted italic">
-                  Internal coach context only — not visible to players or parents.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       {/* Group Assignment */}
       <div>
         <SectionHeader title="GROUP ASSIGNMENT" />
@@ -457,6 +618,24 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Class Roster Intelligence */}
+      {session.group_id && (
+        <div>
+          <SectionHeader title="CLASS ROSTER INTELLIGENCE" />
+          {directorRoster.length === 0 ? (
+            <Card className="mt-3">
+              <CardContent className="py-8 text-center">
+                <p className="text-text-muted text-sm">No current members in this group.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="mt-3">
+              <ClassRosterIntelligencePanel players={playerIntelligence} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Blocks and exercises */}
       {blockList.length === 0 ? (
@@ -552,7 +731,6 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
               </div>
             ) : (
               <>
-                {/* Counts summary */}
                 <div className="flex flex-wrap gap-4 mb-4 pb-4 border-b border-border">
                   {groupName && (
                     <div>
@@ -583,7 +761,6 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
                     </div>
                   )}
                 </div>
-                {/* Player rows */}
                 <div className="space-y-2">
                   {directorRoster.map(player => (
                     <div key={player.playerId} className="flex items-center justify-between gap-3">
@@ -597,6 +774,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           </CardContent>
         </Card>
       </div>
+
       {/* Attendance Exception Drafts */}
       <div>
         <SectionHeader title="ATTENDANCE EXCEPTIONS" />
@@ -644,7 +822,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
                           {row.status.replace('_', ' ')}
                         </span>
                       </div>
-                      <p className="text-[11px] text-text-secondary italic line-clamp-2">"{p.raw_input}"</p>
+                      <p className="text-[11px] text-text-secondary italic line-clamp-2">&ldquo;{p.raw_input}&rdquo;</p>
                       <div className="flex flex-wrap gap-3 text-[10px] text-text-muted">
                         <span>{presentCount} present</span>
                         <span>{absentCount} absent</span>
@@ -668,7 +846,6 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           <CardContent className="py-4 space-y-4">
             <SessionRecapSummary recaps={recaps} />
 
-            {/* Structure recap button — shown only when a pending recap exists */}
             {pendingRecap && (
               <div className="pt-3 border-t border-border">
                 <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">
@@ -681,7 +858,6 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Existing structured drafts */}
             {structuredDrafts.map(row => {
               const payload = row.proposed_payload as unknown as StructuredDraftPayload
               if (!payload || payload.draft_type !== 'session_recap_structuring_v1') return null

@@ -172,32 +172,25 @@ export default async function TemplateDetailPage({ params }: PageProps) {
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader template={template} />
-      <GenerateSessionPanel
-        templateId={params.templateId}
-        templateName={template.name}
-        hasBlocks={blockList.length > 0}
-        coaches={coaches}
-        fallbackCoachId={user!.id}
-        fallbackCoachName={currentUserName}
-      />
-      <TemplateMeta
-        template={template}
-        blockCount={blockList.length}
-        exerciseCount={totalExercises}
-      />
-      {/* Curriculum level selector and curriculum-aware population */}
+
+      {/* Curriculum Intelligence — primary action section */}
       <Card>
-        <CardContent className="py-4 space-y-4">
+        <CardContent className="py-5 space-y-4">
+          <div>
+            <p className="label-xs mb-1">Curriculum Intelligence</p>
+            <p className="text-[11px] text-text-muted">
+              Set the curriculum focus for this template, then populate block notes with level-appropriate drills,
+              coaching cues, and academy customizations.
+            </p>
+          </div>
           <CurriculumLevelSelector
             templateId={params.templateId}
             currentLevelId={curriculumLevelId}
             levels={curriculumLevels}
           />
           <div className="pt-3 border-t border-border space-y-2">
-            <p className="text-[10px] uppercase tracking-widest text-text-muted">Curriculum Population</p>
-            <p className="text-xs text-text-muted">
-              Writes curriculum-appropriate drills, games, and coaching cues into block notes based on the selected level.
-              Only populates blocks with empty notes.
+            <p className="text-[11px] text-text-muted">
+              Uses your academy curriculum version and approved overrides. Only populates blocks with empty notes.
             </p>
             <PopulateCurriculumBlocksButton
               templateId={params.templateId}
@@ -208,7 +201,22 @@ export default async function TemplateDetailPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      {/* Populate blocks with exercises from the exercise library */}
+      <GenerateSessionPanel
+        templateId={params.templateId}
+        templateName={template.name}
+        hasBlocks={blockList.length > 0}
+        coaches={coaches}
+        fallbackCoachId={user!.id}
+        fallbackCoachName={currentUserName}
+      />
+
+      <TemplateMeta
+        template={template}
+        blockCount={blockList.length}
+        exerciseCount={totalExercises}
+      />
+
+      {/* Exercise population */}
       <div className="space-y-2">
         <p className="text-[10px] uppercase tracking-widest text-text-muted">Exercise Population</p>
         <PopulateFitnessBlocksButton
