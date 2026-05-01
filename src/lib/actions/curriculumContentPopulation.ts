@@ -3,6 +3,12 @@
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import {
+  getActiveAcademyCurriculumVersion,
+  getAcademyOverridesForContext,
+  extractOverrideFocusTags,
+  buildOverrideSummaryLines,
+} from '@/lib/curriculum/academyCurriculumResolution'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Block type → content types that can populate it
@@ -60,8 +66,34 @@ interface ContentItem {
   regressions: string[] | null
 }
 
-function buildCurriculumNotes(levelName: string, items: ContentItem[]): string {
+interface AcademyNotesContext {
+  versionName: string | null
+  overrideSummaryLines: string[]
+  focusTags: string[]
+}
+
+function buildCurriculumNotes(
+  levelName: string,
+  items: ContentItem[],
+  academyCtx?: AcademyNotesContext,
+): string {
   const lines: string[] = [`[Curriculum: ${levelName}]`]
+
+  if (academyCtx?.versionName) {
+    lines.push(`[Academy Version: ${academyCtx.versionName}]`)
+  }
+
+  if (academyCtx?.focusTags && academyCtx.focusTags.length > 0) {
+    lines.push(`[Override Focus: ${academyCtx.focusTags.join(', ')}]`)
+  }
+
+  if (academyCtx?.overrideSummaryLines && academyCtx.overrideSummaryLines.length > 0) {
+    lines.push('')
+    lines.push('ACADEMY CUSTOMIZATIONS:')
+    for (const s of academyCtx.overrideSummaryLines) {
+      lines.push(s)
+    }
+  }
 
   const drillsAndSkills = items.filter(i =>
     ['drill', 'skill', 'warmup', 'cooldown', 'fitness', 'tactical'].includes(i.content_type)
@@ -195,6 +227,20 @@ export async function populateTemplateBlocksFromCurriculumAction(
     .single()
   const levelName: string = levelRow?.display_name ?? 'Unknown Level'
 
+  // 5a. Resolve academy curriculum version and applicable overrides (Sprint 74)
+  const activeVersion = await getActiveAcademyCurriculumVersion(supabase, academyId)
+  const applicableOverrides = await getAcademyOverridesForContext({
+    supabase,
+    academyId,
+    curriculumVersionId: activeVersion?.id ?? null,
+    levelId: curriculumLevelId,
+  })
+  const academyCtx: AcademyNotesContext = {
+    versionName: activeVersion?.name ?? null,
+    overrideSummaryLines: buildOverrideSummaryLines(applicableOverrides),
+    focusTags: extractOverrideFocusTags(applicableOverrides),
+  }
+
   // 6. Fetch template blocks
   const { data: blocks, error: blocksError } = await supabase
     .from('template_blocks')
@@ -278,8 +324,20 @@ export async function populateTemplateBlocksFromCurriculumAction(
       continue
     }
 
+    // Bias content toward override focus tags when present (deterministic: focus-tagged items first)
+    let orderedItems = matchingItems
+    if (academyCtx.focusTags.length > 0) {
+      const focusSet = new Set(academyCtx.focusTags.map(t => t.toLowerCase()))
+      const withFocus = matchingItems.filter(item =>
+        item.coach_cues?.some(c => focusSet.has(c.toLowerCase())) ||
+        focusSet.has(item.title.toLowerCase())
+      )
+      const withoutFocus = matchingItems.filter(item => !withFocus.includes(item))
+      orderedItems = [...withFocus, ...withoutFocus]
+    }
+
     // Build structured notes and write to the block
-    const notes = buildCurriculumNotes(levelName, matchingItems)
+    const notes = buildCurriculumNotes(levelName, orderedItems, academyCtx)
 
     const { error: updateError } = await supabase
       .from('template_blocks')

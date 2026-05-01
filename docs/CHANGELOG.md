@@ -2,6 +2,112 @@
 
 ---
 
+## 2026-05-01 — Sprints 71–80: Academy Curriculum Resolution + Operating Loop V1
+
+**Mode:** Backend utility, server action enhancements, read-only UI additions, docs. No AI API calls. No parent/player visibility. No player level changes. No package installs. No migrations.
+
+**Migrations created:** None
+
+---
+
+### Sprint 71 — Academy Curriculum Resolution Engine V1
+
+**Files created:**
+- `src/lib/curriculum/academyCurriculumResolution.ts` — Resolution utility: `getActiveAcademyCurriculumVersion`, `resolveAcademyCurriculumContext`, `getAcademyOverridesForContext`, `extractOverrideFocusTags`, `buildOverrideSummaryLines`. Deterministic, read-only, no mutations.
+- `docs/ACADEMY_CURRICULUM_RESOLUTION_ENGINE.md` — Architecture doc: resolution rules, function signatures, security notes, V1 limitations.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 72 — Player Curriculum Assignment Review V1
+
+**Files created:**
+- `src/app/director/players/[playerId]/PlayerCurriculumAssignmentCard.tsx` — Read-only card: shows academy curriculum version source, assigned level, active override count, override summaries, warnings. Links to /director/curriculum.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Imports `resolveAcademyCurriculumContext` and `PlayerCurriculumAssignmentCard`. Calls resolution utility per page load. Card added to skillPath slot above CurriculumProgressGrid.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 73 — Group Curriculum Assignment V1
+
+**Files created:**
+- `docs/GROUP_CURRICULUM_ASSIGNMENT_PLAN.md` — Documents that groups use `level_id → academy_levels` (not `curriculum_levels`). Gap analysis: three options (migration, join table, inference). V1: no code change, group resolution deferred.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 74 — Template Uses Academy Curriculum Version V1
+
+**Files modified:**
+- `src/lib/actions/curriculumContentPopulation.ts` — Imports resolution utility. Fetches active academy version + overrides after resolving curriculum level. `buildCurriculumNotes` extended with `AcademyNotesContext` param: includes `[Academy Version:]`, `[Override Focus:]`, and `ACADEMY CUSTOMIZATIONS:` sections in block notes. Content items biased toward override focus tags (focus-tagged items appear first, deterministically).
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 75 — Session Generation Uses Academy Curriculum Version V1
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/generate-session-actions.ts` — Imports resolution utility. After resolving curriculum level name, fetches active academy version and override summaries. `session_notes` prefix now includes `[Academy Version:]` and `[Academy Overrides: N active]` lines with summaries.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 76 — Coach Session View Shows Academy-Specific Overrides V1
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Imports resolution utility. `CurriculumContext` interface extended with `academyVersionName` and `overrideSummaryLines`. CURRICULUM FOCUS section shows: academy version badge (GitBranch icon), override summaries under "Academy Customizations", "Internal coach context only" guardrail note.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 77 — Player Profile Uses Academy Curriculum Version V1
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Requirements source indicator added in notes slot above `PlayerProgressionRequirements`: shows green/grey dot, curriculum version name or "Global curriculum defaults", active override count in lime.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 78 — Evidence Links Resolve Against Academy Curriculum V1
+
+**Files created:**
+- `docs/EVIDENCE_ACADEMY_CURRICULUM_RESOLUTION_PLAN.md` — Current state, proposed V2 resolution logic, files to modify in V2, guardrails, dependencies. Implementation deferred — safe V1 fallback documented.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 79 — Curriculum Version Consistency Audit V1
+
+**Files modified:**
+- `src/app/director/curriculum/academy-version/page.tsx` — Added "Curriculum Connection Audit" section: queries template count with/without curriculum level, player count with/without assignment. Shows stats grid + recommendation cards (orange warnings for gaps, green confirmation when connected).
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 80 — Academy Curriculum Operating Loop QA + Brian Demo V1
+
+**Files created:**
+- `docs/ACADEMY_CURRICULUM_OPERATING_LOOP_QA.md` — Full QA checklist for Sprints 71–80: resolution engine, player assignment, group gap, template population, session generation, coach view, player requirements, evidence, audit, security.
+- `docs/BRIAN_ACADEMY_CURRICULUM_OPERATING_LOOP_DEMO.md` — 8-step demo script: curriculum version confirm → template population with override context → session generation → session view → player profile → requirements source → audit → global master confirmation.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — Sprint 71–80 entries added.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-01 — Sprints 61–70: Academy Curriculum Clone + Voice Customization V1
 
 **Mode:** Architecture doc, schema migration, server actions, UI components. No AI API calls. No parent/player visibility. No player level changes. No package installs.

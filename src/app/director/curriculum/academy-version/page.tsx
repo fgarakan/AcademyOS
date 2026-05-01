@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { GitBranch, ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react'
+import { GitBranch, ArrowLeft, CheckCircle, AlertTriangle, BarChart2 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
@@ -89,6 +89,48 @@ export default async function AcademyCurriculumVersionPage() {
   const appliedOverrides = overrides.filter(o => o.status === 'applied')
   const rolledBackOverrides = overrides.filter(o => o.status === 'rolled_back')
   const otherOverrides = overrides.filter(o => o.status !== 'applied' && o.status !== 'rolled_back')
+
+  // ─── Sprint 79: Curriculum Connection Audit queries ──────────────────────
+  // All counts use safe fallback to null on error — never crash the page.
+
+  // Templates with curriculum level set
+  let templatesWithLevel = 0
+  let templatesWithoutLevel = 0
+  const { data: templateAuditRows } = await rawDb
+    .from('templates')
+    .select('curriculum_level_id')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+  if (templateAuditRows) {
+    templatesWithLevel = (templateAuditRows as Array<{ curriculum_level_id: string | null }>)
+      .filter(t => !!t.curriculum_level_id).length
+    templatesWithoutLevel = (templateAuditRows as Array<{ curriculum_level_id: string | null }>)
+      .filter(t => !t.curriculum_level_id).length
+  }
+
+  // Players with curriculum assignment
+  let playersWithAssignment = 0
+  let playersWithoutAssignment = 0
+  const { data: playerCountRows } = await rawDb
+    .from('players')
+    .select('id')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+  const totalActivePlayers = (playerCountRows as Array<{ id: string }> | null)?.length ?? 0
+
+  if (totalActivePlayers > 0) {
+    const playerIds = (playerCountRows as Array<{ id: string }>).map(p => p.id)
+    const { data: assignedRows } = await rawDb
+      .from('player_curriculum_states')
+      .select('player_id')
+      .eq('academy_id', academyId)
+      .in('player_id', playerIds)
+    const assignedIds = new Set(
+      ((assignedRows ?? []) as Array<{ player_id: string }>).map(r => r.player_id)
+    )
+    playersWithAssignment = assignedIds.size
+    playersWithoutAssignment = totalActivePlayers - assignedIds.size
+  }
 
   const statusColor =
     version?.status === 'active' ? 'text-status-green' :
@@ -246,6 +288,107 @@ export default async function AcademyCurriculumVersionPage() {
               </div>
             </div>
           )}
+
+          {/* Sprint 79 — Curriculum Connection Audit */}
+          <div className="space-y-4 pt-4 border-t border-border">
+            <div className="flex items-center gap-2 pb-1">
+              <BarChart2 className="w-4 h-4 text-text-muted" />
+              <p className="label-xs">Curriculum Connection Audit</p>
+            </div>
+
+            <Card>
+              <CardContent className="py-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+
+                  {/* Academy version */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Academy Version</p>
+                    {version ? (
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle className="w-3.5 h-3.5 text-status-green" />
+                        <p className="text-xs text-status-green font-semibold">Active</p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-status-orange" />
+                        <p className="text-xs text-status-orange">None</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Applied overrides */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Applied Overrides</p>
+                    <p className={`text-lg font-mono font-bold ${appliedOverrides.length > 0 ? 'text-lime' : 'text-text-muted'}`}>
+                      {appliedOverrides.length}
+                    </p>
+                  </div>
+
+                  {/* Rolled back */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Rolled Back</p>
+                    <p className="text-lg font-mono font-bold text-text-muted">
+                      {rolledBackOverrides.length}
+                    </p>
+                  </div>
+
+                  {/* Templates with curriculum */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Templates (with level)</p>
+                    <p className={`text-lg font-mono font-bold ${templatesWithLevel > 0 ? 'text-lime' : 'text-text-muted'}`}>
+                      {templatesWithLevel}
+                    </p>
+                  </div>
+
+                  {/* Templates without */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Templates (no level)</p>
+                    <p className={`text-lg font-mono font-bold ${templatesWithoutLevel > 0 ? 'text-status-orange' : 'text-text-muted'}`}>
+                      {templatesWithoutLevel}
+                    </p>
+                  </div>
+
+                  {/* Players with assignment */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Players (assigned)</p>
+                    <p className={`text-lg font-mono font-bold ${playersWithAssignment > 0 ? 'text-lime' : 'text-text-muted'}`}>
+                      {playersWithAssignment} / {totalActivePlayers}
+                    </p>
+                  </div>
+
+                </div>
+
+                {/* Recommendations */}
+                <div className="mt-4 pt-4 border-t border-border space-y-2">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted">Recommended Actions</p>
+                  {templatesWithoutLevel > 0 && (
+                    <div className="flex items-start gap-2 text-[11px] text-status-orange">
+                      <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                      <span>{templatesWithoutLevel} template{templatesWithoutLevel > 1 ? 's are' : ' is'} missing a curriculum level. Open each template and select a Curriculum Focus to enable academy-aware block population.</span>
+                    </div>
+                  )}
+                  {playersWithoutAssignment > 0 && (
+                    <div className="flex items-start gap-2 text-[11px] text-status-orange">
+                      <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                      <span>{playersWithoutAssignment} active player{playersWithoutAssignment > 1 ? 's have' : ' has'} no curriculum assignment. Assign a curriculum level from each player&rsquo;s Skill Path tab.</span>
+                    </div>
+                  )}
+                  {templatesWithLevel > 0 && appliedOverrides.length === 0 && (
+                    <div className="flex items-start gap-2 text-[11px] text-text-muted">
+                      <CheckCircle className="w-3 h-3 shrink-0 mt-0.5" />
+                      <span>Templates are curriculum-connected. No academy overrides active — sessions use global curriculum defaults.</span>
+                    </div>
+                  )}
+                  {appliedOverrides.length > 0 && (
+                    <div className="flex items-start gap-2 text-[11px] text-status-green">
+                      <CheckCircle className="w-3 h-3 shrink-0 mt-0.5" />
+                      <span>{appliedOverrides.length} academy override{appliedOverrides.length > 1 ? 's are' : ' is'} active. Template block population and session generation will include override context.</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </>
       )}
     </div>

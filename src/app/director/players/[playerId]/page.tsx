@@ -26,6 +26,8 @@ import { AIDraftPanel } from '@/components/player/AIDraftPanel'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { PlayerProfileTabs } from './_components/PlayerProfileTabs'
+import { PlayerCurriculumAssignmentCard } from './PlayerCurriculumAssignmentCard'
+import { resolveAcademyCurriculumContext } from '@/lib/curriculum/academyCurriculumResolution'
 import { PlayerRequirementProgressReadOnly, type RequirementProgressRow } from './PlayerRequirementProgressReadOnly'
 import { confirmRequirementProgressStatusAction } from './requirementProgressConfirmationAction'
 import type { RequirementEvidenceDetailRow } from './types'
@@ -73,6 +75,13 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const domainRows = await getPlayerCurriculumDomains(supabase, params.playerId, academyId)
   const hasCurriculum = domainRows.length > 0
   const curriculumSummary = domainRows[0] ?? null
+
+  // Resolve academy curriculum context for this player (Sprints 72 + 77)
+  const academyCurriculumCtx = await resolveAcademyCurriculumContext({
+    supabase,
+    academyId,
+    playerId: params.playerId,
+  })
 
   const assignAction = assignCurriculumAction.bind(null, params.playerId, academyId)
   const evaluateAction = evaluateAdvancementAction.bind(null, params.playerId, academyId)
@@ -164,6 +173,17 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   // ─── Tab 2: Skill Path ────────────────────────────────────────────────────
   const skillPathSlot = (
     <div className="space-y-6">
+
+      {/* Curriculum assignment — Sprint 72: shows academy version source and overrides */}
+      <PlayerCurriculumAssignmentCard
+        usingAcademyVersion={academyCurriculumCtx.usingAcademyVersion}
+        curriculumVersionName={academyCurriculumCtx.curriculumVersionName}
+        curriculumVersionId={academyCurriculumCtx.curriculumVersionId}
+        fallbackReason={academyCurriculumCtx.fallbackReason}
+        levelName={academyCurriculumCtx.levelName ?? curriculumSummary?.current_level_name ?? null}
+        applicableOverrides={academyCurriculumCtx.applicableOverrides}
+        warnings={academyCurriculumCtx.warnings}
+      />
 
       {/* Advancement action card */}
       <Card>
@@ -486,6 +506,24 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Edit Development Summary form */}
       <EditDevelopmentSummaryForm summary={developmentSummary} onSubmit={updateSummaryAction} />
+
+      {/* Curriculum source indicator for requirements — Sprint 77 */}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface-raised text-[11px] text-text-muted">
+        <span className={academyCurriculumCtx.usingAcademyVersion ? 'text-status-green' : 'text-text-muted'}>●</span>
+        <span>
+          Requirements source:{' '}
+          <span className="font-semibold text-text-secondary">
+            {academyCurriculumCtx.usingAcademyVersion
+              ? academyCurriculumCtx.curriculumVersionName
+              : 'Global curriculum defaults'}
+          </span>
+          {academyCurriculumCtx.applicableOverrides.length > 0 && (
+            <span className="ml-1 text-lime">
+              · {academyCurriculumCtx.applicableOverrides.length} override{academyCurriculumCtx.applicableOverrides.length > 1 ? 's' : ''} active
+            </span>
+          )}
+        </span>
+      </div>
 
       {/* Progression requirements — read-only curriculum level display, no mutation */}
       <PlayerProgressionRequirements

@@ -2,6 +2,11 @@
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import {
+  getActiveAcademyCurriculumVersion,
+  getAcademyOverridesForContext,
+  buildOverrideSummaryLines,
+} from '@/lib/curriculum/academyCurriculumResolution'
 
 export interface GenerateSessionInput {
   templateId: string
@@ -58,6 +63,23 @@ export async function generateSessionFromTemplateAction(
     curriculumLevelName = levelRow?.display_name ?? null
   }
 
+  // 3b. Resolve academy curriculum version for session context header (Sprint 75)
+  let academyVersionName: string | null = null
+  let overrideSummaryLines: string[] = []
+  if (template.curriculum_level_id) {
+    const activeVersion = await getActiveAcademyCurriculumVersion(supabase, academyId)
+    if (activeVersion) {
+      academyVersionName = activeVersion.name
+      const overrides = await getAcademyOverridesForContext({
+        supabase,
+        academyId,
+        curriculumVersionId: activeVersion.id,
+        levelId: template.curriculum_level_id,
+      })
+      overrideSummaryLines = buildOverrideSummaryLines(overrides)
+    }
+  }
+
   // 4. Validate coach is an active member of this academy
   //    Director's own profile passes this check (they are also a member)
   const { data: coachMembership } = await supabase
@@ -97,9 +119,19 @@ export async function generateSessionFromTemplateAction(
   //    Coach changes happen on session_blocks/session_block_exercises only, never here.
   //    Curriculum level name is prepended to session_notes so the coach can see
   //    the curriculum focus without needing to query the template separately.
-  const curriculumPrefix = curriculumLevelName
-    ? `[Curriculum: ${curriculumLevelName}]\n\n`
-    : ''
+  const curriculumLines: string[] = []
+  if (curriculumLevelName) {
+    curriculumLines.push(`[Curriculum: ${curriculumLevelName}]`)
+    if (academyVersionName) {
+      curriculumLines.push(`[Academy Version: ${academyVersionName}]`)
+    }
+    if (overrideSummaryLines.length > 0) {
+      curriculumLines.push(`[Academy Overrides: ${overrideSummaryLines.length} active]`)
+      curriculumLines.push(...overrideSummaryLines)
+    }
+    curriculumLines.push('')
+  }
+  const curriculumPrefix = curriculumLines.join('\n')
   const finalSessionNotes = curriculumPrefix + (input.sessionNotes?.trim() ?? '')
   const { data: session, error: sessionError } = await supabase
     .from('sessions')

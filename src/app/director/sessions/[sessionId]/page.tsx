@@ -1,9 +1,14 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, Info, GraduationCap } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Info, GraduationCap, GitBranch } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
+import {
+  getActiveAcademyCurriculumVersion,
+  getAcademyOverridesForContext,
+  buildOverrideSummaryLines,
+} from '@/lib/curriculum/academyCurriculumResolution'
 import { GroupAssignmentPanel } from './GroupAssignmentPanel'
 import { SessionRecapSummary } from './SessionRecapSummary'
 import { StructureRecapButton } from './StructureRecapButton'
@@ -77,6 +82,8 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
   interface CurriculumContext {
     levelName: string
     levelStage: string
+    academyVersionName: string | null
+    overrideSummaryLines: string[]
   }
   let curriculumContext: CurriculumContext | null = null
 
@@ -96,9 +103,25 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
         .eq('id', template.curriculum_level_id)
         .single()
       if (levelRow) {
+        // Resolve academy curriculum version + overrides for coach context (Sprint 76)
+        const activeVersion = await getActiveAcademyCurriculumVersion(supabase, academyId)
+        let academyVersionName: string | null = null
+        let overrideSummaryLines: string[] = []
+        if (activeVersion) {
+          academyVersionName = activeVersion.name
+          const overrides = await getAcademyOverridesForContext({
+            supabase,
+            academyId,
+            curriculumVersionId: activeVersion.id,
+            levelId: template.curriculum_level_id,
+          })
+          overrideSummaryLines = buildOverrideSummaryLines(overrides)
+        }
         curriculumContext = {
           levelName: levelRow.display_name,
           levelStage: levelRow.stage,
+          academyVersionName,
+          overrideSummaryLines,
         }
       }
     }
@@ -367,7 +390,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
         <div>
           <SectionHeader title="CURRICULUM FOCUS" />
           <Card className="mt-3">
-            <CardContent className="py-4">
+            <CardContent className="py-4 space-y-4">
               <div className="flex items-start gap-3">
                 <GraduationCap className="w-4 h-4 text-lime shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
@@ -377,13 +400,42 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
                   </p>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-border space-y-1">
+
+              {/* Academy curriculum version context */}
+              {curriculumContext.academyVersionName && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border">
+                  <GitBranch className="w-3.5 h-3.5 text-lime shrink-0" />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted">Academy Version</p>
+                    <p className="text-xs text-text-secondary">{curriculumContext.academyVersionName}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Academy override summaries */}
+              {curriculumContext.overrideSummaryLines.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted">
+                    Academy Customizations
+                  </p>
+                  {curriculumContext.overrideSummaryLines.map((line, i) => (
+                    <p key={i} className="text-[11px] text-text-secondary px-2 py-1 rounded bg-surface-raised border border-border">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-1 border-t border-border space-y-1">
                 <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">
                   Curriculum Notes Per Block
                 </p>
                 <p className="text-xs text-text-muted">
                   Block notes below contain the curriculum drills, games, cues, and success criteria
                   for this session. Review each block note for the coaching context.
+                </p>
+                <p className="text-[10px] text-text-muted italic">
+                  Internal coach context only — not visible to players or parents.
                 </p>
               </div>
             </CardContent>
