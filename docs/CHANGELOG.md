@@ -2,6 +2,101 @@
 
 ---
 
+## 2026-05-01 — Sprints 111–120: Real Demo Sandbox + Brian Interactive Tour V1
+
+**Mode:** Real demo sandbox seeded into director's academy with `[DEMO]` prefix tagging. Interactive tour page with status, player roster, curriculum preview, session preview, adaptive suggestions preview. Full reset/delete flow with cascade safety. No migration. No parent/player visibility. No communications.
+
+**Migrations created:** None (naming convention isolation; existing schema sufficient)
+
+---
+
+### Sprint 111 — Demo Sandbox Architecture + Guardrails V1
+
+**Files created:**
+- `docs/DEMO_SANDBOX_ARCHITECTURE.md` — Purpose, isolation strategy, cascade delete map, forbidden records, how demo connects to real workflows, recommended sprint path.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 112 — Demo Data Tagging + Reset Strategy V1
+
+**Files created:**
+- `docs/DEMO_SANDBOX_RESET_STRATEGY.md` — Naming convention tagging strategy, step-by-step delete order, safety guarantees, confirmation requirements, audit trail.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 113 — Demo Seed Pack V1
+
+**Files created:**
+- `src/app/director/demo/demoSandboxActions.ts` — `createOrResetDemoSandboxAction()`: seeds 6 demo players with dev profiles + priorities + group memberships + curriculum states + demo group + demo template (5 blocks) + demo session (5 blocks) + demo curriculum version + override. `resetDemoSandboxAction()`: cascade-safe delete in correct FK order. `getDemoSandboxStatusAction()`: query current sandbox state for page. All actions scoped to `[DEMO]` prefix.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 114 — Demo Reset / Delete Flow V1
+
+**Files created:**
+- `src/app/director/demo/DemoSandboxControls.tsx` — Client component with create/reset/delete buttons, confirmation checkbox, result/warning display, page reload on completion.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 115 — Brian Demo Tour Landing Page V1
+
+**Files created:**
+- `src/app/director/demo/page.tsx` — Server component; loads sandbox status; renders all demo tour sections (status, what this shows, demo flow steps, quick links).
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 116 — Demo Player + Development Profile Walkthrough V1
+
+**Files modified:**
+- `src/app/director/demo/page.tsx` — Added "Sample Player Data" section with per-player cards showing strengths, needs, and priority. Links to player import, development intake, onboarding review.
+
+---
+
+### Sprint 117 — Demo Curriculum + Voice Customization Walkthrough V1
+
+**Files modified:**
+- `src/app/director/demo/page.tsx` — Added "Curriculum Customization Preview" section with sample director prompt, 3-step explanation, deep links to curriculum and review queue.
+
+---
+
+### Sprint 118 — Demo Session + Coach Intelligence Walkthrough V1
+
+**Files modified:**
+- `src/app/director/demo/page.tsx` — Added "Coach Session Preview" section with demo session status, checklist of what session page shows, link to open demo session.
+
+---
+
+### Sprint 119 — Demo Adaptive Suggestions Interactive Preview V1
+
+**Files modified:**
+- `src/app/director/demo/page.tsx` — Added "Adaptive Suggestions Preview" section with 3 example suggestion cards, guardrail explanation, link to demo session for real generation.
+
+---
+
+### Sprint 120 — Brian Interactive Demo QA + Script V1
+
+**Files created:**
+- `docs/DEMO_SANDBOX_QA.md` — 16 QA test cases covering creation, players, group, dev profiles, curriculum, template, session, suggestions, apply flow, reset, real data safety, parent/player isolation, communications.
+- `docs/BRIAN_INTERACTIVE_DEMO_SCRIPT.md` — 14-step interactive demo script with exact actions, speaking points, and key properties to reinforce.
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — Added "Demo Tour" link with FlaskConical icon.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** Clean (exit 0).
+
+---
+
 ## 2026-05-01 — Sprints 101–110: Player Import + Development Profile Onboarding V1
 
 **Mode:** CSV import with dry-run/commit flow, bulk development profile intake, onboarding review. No AI API calls. No parent/player visibility. No billing. No communications. No new migrations.

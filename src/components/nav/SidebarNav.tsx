@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
-  Trophy, Brain, BarChart3, Settings, LogOut, Dumbbell, ClipboardList
+  Trophy, Brain, BarChart3, Settings, LogOut, Dumbbell, ClipboardList, FlaskConical
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { label: 'Sessions',     href: '/director/sessions',               icon: Calendar },
   { label: 'Review Queue', href: '/director/review',                 icon: ClipboardList },
   { label: 'Competition',  href: '/director/competition',            icon: Trophy },
+  { label: 'Demo Tour',    href: '/director/demo',                   icon: FlaskConical },
 ]
 const SECONDARY_ITEMS = [
   { label: 'Intelligence', href: '/director/intelligence',   icon: Brain },
