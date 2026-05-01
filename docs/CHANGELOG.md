@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-01 — Sprint 60.5: Director Curriculum Landing Page V1
+
+**Mode:** Read-only page only. No schema changes. No migrations. No mutations. No package installs.
+
+### Sprint 60.5 — Director Curriculum Landing Page V1
+
+**Files created:**
+- `src/app/director/curriculum/page.tsx` — Read-only landing page at `/director/curriculum`. Fixes the 404 for that route. Resolves `academy_id` from `profiles` using existing director page patterns. Shows 5 section cards: Global / Academy Curriculum Spine, Orange Ball Starter Content, Curriculum-Aware Templates, Coach Session Curriculum Context, and Next steps. Queries `curriculum_levels` (typed), `curriculum_track_requirements` (rawDb), `curriculum_content_items` (rawDb), `curriculum_content_requirement_mappings` (rawDb), and `templates.curriculum_level_id` (rawDb) — all with error checks; shows "Not available until curriculum migrations are applied." if any new-table query fails. Links to `/director/fitness/templates`, `/director/sessions`, `/director/players`, `/director/review`.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-01 — Sprints 51–60: Curriculum Content Engine V1
 
 **Mode:** New schema, seed data, server actions, and UI components. No AI API calls. No parent/player visibility. No player level changes. No package installs.
