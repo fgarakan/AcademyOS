@@ -2,6 +2,75 @@
 
 ---
 
+## 2026-05-01 — Sprint 38: Approved Evidence Link Application Guardrails
+
+**Mode:** Implementation + validation. Guarded application only. No requirement status mutation. No automatic progress confirmation.
+
+**Files created:**
+- `src/app/director/review/ApplyEvidenceRequirementDraftControls.tsx` — client component: "Create Official Evidence Links" button with guardrail copy; calls `applyApprovedEvidenceRequirementDraftAction`; pending + success + error states; refreshes router on success
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — added `applyApprovedEvidenceRequirementDraftAction` server action (full security chain, duplicate check, inserts, progress update, audit log, proposed_actions → executed)
+- `src/app/director/review/EvidenceRequirementDraftCard.tsx` — approved drafts now render `ApplyEvidenceRequirementDraftControls` instead of static lime banner; pending drafts still show `EvidenceRequirementDraftDecisionControls`; status banner is now conditional (lime for approved, orange for pending)
+- `src/app/director/review/page.tsx` — added `evidenceApprovedCount` to `PageHeader` props and `totalReadyToApply`; updated section label from "Ready for Future Evidence Application" to "Approved — Ready to Apply"; updated badge text from "approved" to "ready to apply"
+
+**Apply action — `applyApprovedEvidenceRequirementDraftAction`:**
+- Security chain: `assertNotPreviewMode` → auth → resolve `academy_id` from profile → verify active membership (director/head_coach) → fetch `proposed_action` → verify `academy_id`, `status = approved`, `target_module = requirement_evidence_link`, `target_object_type = player`, `draft_type = requirement_evidence_link_v1` → verify player belongs to same academy
+- Payload validation: validates each link has `coach_observation_id`, `requirement_progress_id`, `requirement_id`, `evidence_type = coach_observation`; confidence between 0–1 if present
+- Cross-verification: fetches `coach_observations` and `player_requirement_progress` — verifies both belong to same academy + player; verifies `requirement_id` in link matches the progress row's `requirement_id`
+- Duplicate protection: application-level check on `(academy_id, player_id, requirement_id, evidence_type, evidence_id)` — no unique constraint on `requirement_evidence_links`; skips duplicates silently; returns error if all are duplicates
+
+**Database write strategy:**
+- Inserts `requirement_evidence_links` rows for non-duplicate links
+  - `evidence_type = 'coach_observation'`, `evidence_id = coach_observation_id`, `is_parent_safe = false`
+- Updates `player_requirement_progress` for each affected progress row:
+  - `evidence_count` = actual SELECT COUNT(*) from `requirement_evidence_links` (idempotent — safe to retry)
+  - `last_evidence_at` = max `created_at` among all evidence links for that progress row
+  - `status` is NOT changed — requirement confirmation is a separate future workflow
+- Writes to `audit_logs` (action: `requirement_evidence_link.applied`) — `action_execution_logs` has no INSERT RLS
+- Marks `proposed_actions.status = executed` after all writes succeed
+
+**UI behavior:**
+- Button label: "Create Official Evidence Links"
+- Pending state: "Creating evidence links…"
+- Success: "Official evidence links created." + `router.refresh()`
+- After refresh: executed drafts drop from queue (query filters `status IN (pending_review, approved)`)
+- Error states: "Only approved evidence link drafts can be applied." / "This draft does not contain valid evidence links." / "All proposed evidence links already exist. No duplicates were created."
+
+**What was NOT built (by design):**
+- No mark requirements met
+- No mark requirement in_progress
+- No change to `player_requirement_progress.status`
+- No level-up recommendation
+- No player level or profile field mutations
+- No parent/player portal views or communication
+- No AI API calls
+- No migrations
+- No package installs
+- No batch apply-all
+
+**Validation:**
+- `npx tsc --noEmit` — passes with zero errors.
+
+**Manual verification steps:**
+1. Confirm at least one `proposed_actions` row with `target_module = requirement_evidence_link`, `status = approved`, `draft_type = requirement_evidence_link_v1`
+2. Open `/director/review`
+3. Confirm approved evidence draft shows "Create Official Evidence Links" button with guardrail copy
+4. Click "Create Official Evidence Links"
+5. Confirm success message "Official evidence links created."
+6. Confirm `requirement_evidence_links` rows exist: `evidence_type = coach_observation`, `evidence_id = coach_observation_id` from payload, `requirement_id` matches payload, `player_requirement_progress_id` matches payload, `is_parent_safe = false`
+7. Confirm `player_requirement_progress.evidence_count` updated
+8. Confirm `player_requirement_progress.last_evidence_at` updated
+9. Confirm `player_requirement_progress.status` did NOT change
+10. Confirm player level did NOT change
+11. Confirm `coach_observations` did NOT change
+12. Confirm parent/player views did NOT change
+13. Confirm `proposed_actions.status = executed`
+14. Try applying same draft again or navigate back — confirm duplicates are blocked/skipped safely
+15. Confirm session recap and priority recommendation sections still work correctly
+
+---
+
 ## 2026-05-01 — Sprint 37: Evidence Requirement Draft Review Queue V1
 
 **Mode:** Review visibility and decision controls only. No official evidence-link application. No requirement progress mutation.

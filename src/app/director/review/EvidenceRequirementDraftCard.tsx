@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { AlertTriangle, CheckCircle, ExternalLink, Link2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { EvidenceRequirementDraftDecisionControls } from './EvidenceRequirementDraftDecisionControls'
+import { ApplyEvidenceRequirementDraftControls } from './ApplyEvidenceRequirementDraftControls'
 
 const DOMAIN_LABELS: Record<string, string> = {
   skill:       'Skill',
@@ -87,14 +88,21 @@ export function EvidenceRequirementDraftCard({ draft }: { draft: EnrichedEvidenc
           )}
         </div>
 
-        {/* Draft-only warnings — required sprint copy */}
-        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-status-orange/5 border border-status-orange/20 text-xs text-status-orange">
-          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
-            <p>Draft only. No official evidence links have been created.</p>
-            <p>Approval does not update requirement status or mark anything complete.</p>
+        {/* Status banner */}
+        {draft.status === 'approved' ? (
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-lime/5 border border-lime/20 text-xs text-lime">
+            <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>Approved. No official evidence links created yet — click below to apply.</span>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-status-orange/5 border border-status-orange/20 text-xs text-status-orange">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p>Draft only. No official evidence links have been created.</p>
+              <p>Approval does not update requirement status or mark anything complete.</p>
+            </div>
+          </div>
+        )}
 
         {/* Proposed link count + domain breakdown */}
         <div className="flex flex-wrap items-end gap-6">
@@ -155,20 +163,12 @@ export function EvidenceRequirementDraftCard({ draft }: { draft: EnrichedEvidenc
           </section>
         )}
 
-        {/* Approved status banner */}
-        {draft.status === 'approved' && (
-          <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-lime/5 border border-lime/20 text-xs text-lime">
-            <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            <span>
-              Approved for future evidence application. No official evidence links have been created yet.
-            </span>
-          </div>
-        )}
-
-        {/* Decision controls — pending drafts only */}
-        {draft.status === 'pending_review' && (
+        {/* Controls — apply for approved drafts, decision buttons for pending */}
+        {draft.status === 'approved' ? (
+          <ApplyEvidenceRequirementDraftControls proposedActionId={draft.id} />
+        ) : draft.status === 'pending_review' ? (
           <EvidenceRequirementDraftDecisionControls proposedActionId={draft.id} />
-        )}
+        ) : null}
 
       </CardContent>
     </Card>

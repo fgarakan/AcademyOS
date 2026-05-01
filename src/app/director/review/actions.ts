@@ -542,6 +542,307 @@ export async function updateEvidenceRequirementDraftDecisionAction(
 }
 
 // ─────────────────────────────────────────────────────────────
+// Apply approved evidence requirement link draft
+// Inserts official requirement_evidence_links rows.
+// Updates player_requirement_progress evidence_count + last_evidence_at only.
+// Never marks requirements met, changes player level, or touches parent/player views.
+// ─────────────────────────────────────────────────────────────
+
+export interface ApplyApprovedEvidenceRequirementDraftResult {
+  ok: boolean
+  error: string | null
+  evidenceLinksCreated: number
+  skippedDuplicates: number
+}
+
+export async function applyApprovedEvidenceRequirementDraftAction(
+  proposedActionId: string
+): Promise<ApplyApprovedEvidenceRequirementDraftResult> {
+  const fail = (error: string): ApplyApprovedEvidenceRequirementDraftResult =>
+    ({ ok: false, error, evidenceLinksCreated: 0, skippedDuplicates: 0 })
+
+  await assertNotPreviewMode()
+
+  // 1. Auth
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return fail('Not authenticated.')
+  if (!proposedActionId) return fail('Missing proposed action ID.')
+
+  // 2. Resolve academy_id from authenticated profile — never trust client input
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return fail('Academy context unavailable.')
+  const academyId = profile.academy_id
+
+  // 3. Verify active academy membership — director or head_coach only
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return fail('You do not have permission to apply evidence link drafts.')
+  }
+
+  // 4. Fetch proposed_action — verify academy, status, module, type, and draft_type
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, target_object_type, target_object_id, proposed_payload, voice_command_id')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return fail('Proposed action not found.')
+  if (proposedAction.academy_id !== academyId) return fail('Access denied.')
+  if (proposedAction.status !== 'approved') {
+    return fail('Only approved evidence link drafts can be applied.')
+  }
+  if (proposedAction.target_module !== 'requirement_evidence_link') {
+    return fail('This action cannot be applied through this interface.')
+  }
+  if (proposedAction.target_object_type !== 'player') {
+    return fail('Target type mismatch — expected player.')
+  }
+
+  // 5. Validate payload structure and draft_type
+  const payload = proposedAction.proposed_payload as Record<string, unknown>
+  if (payload?.draft_type !== 'requirement_evidence_link_v1') {
+    return fail('Unsupported draft type.')
+  }
+
+  const rawLinks = payload.links
+  if (!Array.isArray(rawLinks) || rawLinks.length === 0) {
+    return fail('This draft does not contain valid evidence links.')
+  }
+
+  // 6. Verify player belongs to this academy
+  const playerId = proposedAction.target_object_id as string | null
+  if (!playerId) return fail('Player reference missing from draft.')
+
+  const { data: player } = await supabase
+    .from('players')
+    .select('id')
+    .eq('id', playerId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!player) return fail('Player not found or access denied.')
+
+  // 7. Validate and normalize each link — reject structurally invalid entries
+  type RawLink = Record<string, unknown>
+  type ValidatedLink = {
+    coach_observation_id: string
+    requirement_progress_id: string
+    requirement_id: string
+    evidence_summary: string
+    confidence: number | null
+    weight: number | null
+  }
+
+  const validatedLinks: ValidatedLink[] = []
+  for (const raw of rawLinks as RawLink[]) {
+    if (typeof raw.coach_observation_id !== 'string' || !raw.coach_observation_id) continue
+    if (typeof raw.requirement_progress_id !== 'string' || !raw.requirement_progress_id) continue
+    if (typeof raw.requirement_id !== 'string' || !raw.requirement_id) continue
+    if (raw.evidence_type !== 'coach_observation') continue
+
+    const confidence = typeof raw.confidence === 'number' ? raw.confidence : null
+    if (confidence !== null && (confidence < 0 || confidence > 1)) continue
+
+    const weight = typeof raw.weight === 'number' ? raw.weight : null
+
+    validatedLinks.push({
+      coach_observation_id: raw.coach_observation_id as string,
+      requirement_progress_id: raw.requirement_progress_id as string,
+      requirement_id: raw.requirement_id as string,
+      evidence_summary: typeof raw.evidence_summary === 'string' ? raw.evidence_summary : '',
+      confidence,
+      weight,
+    })
+  }
+
+  if (validatedLinks.length === 0) {
+    return fail('This draft does not contain valid evidence links.')
+  }
+
+  // 8. Verify coach_observations belong to this academy + player
+  const obsIds = Array.from(new Set(validatedLinks.map(l => l.coach_observation_id)))
+  const { data: verifiedObs } = await rawDb
+    .from('coach_observations')
+    .select('id')
+    .in('id', obsIds)
+    .eq('academy_id', academyId)
+    .eq('player_id', playerId)
+
+  const verifiedObsSet = new Set(
+    ((verifiedObs ?? []) as Array<{ id: string }>).map(o => o.id)
+  )
+
+  // 9. Verify player_requirement_progress rows belong to this academy + player
+  //    and build a map of progress_id → requirement_id for cross-validation
+  const progressIds = Array.from(new Set(validatedLinks.map(l => l.requirement_progress_id)))
+  const { data: verifiedProgress } = await rawDb
+    .from('player_requirement_progress')
+    .select('id, requirement_id')
+    .in('id', progressIds)
+    .eq('academy_id', academyId)
+    .eq('player_id', playerId)
+
+  const progressRequirementMap = new Map<string, string>()
+  for (const p of (verifiedProgress ?? []) as Array<{ id: string; requirement_id: string }>) {
+    progressRequirementMap.set(p.id, p.requirement_id)
+  }
+
+  // Filter to links that pass all three verifications:
+  // — coach_observation belongs to academy + player
+  // — player_requirement_progress belongs to academy + player
+  // — requirement_id in the link matches the progress row's requirement_id
+  const crossVerifiedLinks = validatedLinks.filter(l => {
+    if (!verifiedObsSet.has(l.coach_observation_id)) return false
+    const progressReqId = progressRequirementMap.get(l.requirement_progress_id)
+    if (!progressReqId) return false
+    return progressReqId === l.requirement_id
+  })
+
+  if (crossVerifiedLinks.length === 0) {
+    return fail('No valid evidence links could be verified. Check player and observation data.')
+  }
+
+  // 10. Application-level duplicate check — no unique constraint on requirement_evidence_links
+  //     Deduplicates on (academy_id, player_id, requirement_id, evidence_type, evidence_id)
+  const { data: existingLinks } = await rawDb
+    .from('requirement_evidence_links')
+    .select('evidence_id, requirement_id')
+    .eq('academy_id', academyId)
+    .eq('player_id', playerId)
+    .eq('evidence_type', 'coach_observation')
+    .in('evidence_id', obsIds)
+
+  const existingPairs = new Set<string>()
+  for (const el of (existingLinks ?? []) as Array<{ evidence_id: string; requirement_id: string }>) {
+    existingPairs.add(`${el.requirement_id}:${el.evidence_id}`)
+  }
+
+  const toInsert = crossVerifiedLinks.filter(
+    l => !existingPairs.has(`${l.requirement_id}:${l.coach_observation_id}`)
+  )
+  const skippedDuplicates = crossVerifiedLinks.length - toInsert.length
+
+  if (toInsert.length === 0) {
+    return fail('All proposed evidence links already exist. No duplicates were created.')
+  }
+
+  // 11. Insert official requirement_evidence_links rows
+  //     is_parent_safe = false for V1 — never exposed to parent/player portals
+  const insertRows = toInsert.map(l => ({
+    academy_id: academyId,
+    player_id: playerId,
+    requirement_id: l.requirement_id,
+    player_requirement_progress_id: l.requirement_progress_id,
+    evidence_type: 'coach_observation',
+    evidence_id: l.coach_observation_id,
+    evidence_summary: l.evidence_summary || null,
+    confidence: l.confidence,
+    weight: l.weight,
+    created_by: user.id,
+    is_parent_safe: false,
+  }))
+
+  const { data: insertedLinks, error: insertError } = await rawDb
+    .from('requirement_evidence_links')
+    .insert(insertRows)
+    .select('id, player_requirement_progress_id, created_at')
+
+  if (insertError) {
+    return fail(`Failed to create evidence links: ${insertError.message}`)
+  }
+
+  type InsertedLink = { id: string; player_requirement_progress_id: string | null; created_at: string }
+  const inserted = (insertedLinks ?? []) as InsertedLink[]
+  const evidenceLinksCreated = inserted.length
+
+  // 12. Update player_requirement_progress: evidence_count + last_evidence_at
+  //     Recalculate from actual table count (idempotent — safe to retry)
+  //     DO NOT update status — requirement confirmation is a separate workflow
+  const affectedProgressIds = Array.from(
+    new Set(
+      inserted
+        .map(l => l.player_requirement_progress_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+
+  for (const progressId of affectedProgressIds) {
+    const { data: countRows } = await rawDb
+      .from('requirement_evidence_links')
+      .select('id, created_at')
+      .eq('player_requirement_progress_id', progressId)
+      .eq('academy_id', academyId)
+
+    const rows = (countRows ?? []) as Array<{ id: string; created_at: string }>
+    if (rows.length === 0) continue
+
+    const actualCount = rows.length
+    const lastAt = rows.reduce(
+      (max, r) => (r.created_at > max ? r.created_at : max),
+      rows[0].created_at
+    )
+
+    await rawDb
+      .from('player_requirement_progress')
+      .update({ evidence_count: actualCount, last_evidence_at: lastAt })
+      .eq('id', progressId)
+      .eq('academy_id', academyId)
+  }
+
+  // 13. Write audit log — action_execution_logs has no INSERT RLS, so use audit_logs
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'requirement_evidence_link.applied',
+      target_type: 'requirement_evidence_link',
+      target_id: playerId,
+      payload: {
+        proposed_action_id: proposedActionId,
+        player_id: playerId,
+        evidence_links_created: evidenceLinksCreated,
+        skipped_duplicates: skippedDuplicates,
+        progress_rows_updated: affectedProgressIds.length,
+        source: 'evidence_requirement_link_draft_v1',
+        applied_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: proposedAction.voice_command_id ?? null,
+    })
+
+  // 14. Mark proposed_action as executed only after all writes succeed
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'executed' })
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return {
+      ok: false,
+      error: `Evidence links created but failed to mark draft as executed: ${updateError.message}`,
+      evidenceLinksCreated,
+      skippedDuplicates,
+    }
+  }
+
+  return { ok: true, error: null, evidenceLinksCreated, skippedDuplicates }
+}
+
+// ─────────────────────────────────────────────────────────────
 // Apply approved structured draft
 // Only creates coach_observations from player_observation_drafts.
 // Does NOT touch attendance, parent messages, player priorities,

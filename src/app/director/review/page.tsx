@@ -285,6 +285,7 @@ export default async function DirectorReviewQueuePage() {
         priorityPendingCount={pendingPriorityDrafts.length}
         priorityApprovedCount={approvedPriorityDrafts.length}
         evidencePendingCount={pendingEvidenceDrafts.length}
+        evidenceApprovedCount={approvedEvidenceDrafts.length}
       />
 
       {/* ─── Session recap structured drafts ─── */}
@@ -405,15 +406,15 @@ export default async function DirectorReviewQueuePage() {
           )}
           {approvedEvidenceDrafts.length > 0 && (
             <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-              {approvedEvidenceDrafts.length} approved
+              {approvedEvidenceDrafts.length} ready to apply
             </span>
           )}
         </div>
 
-        {/* Approved — awaiting future evidence application */}
+        {/* Approved — ready to apply */}
         {approvedEvidenceDrafts.length > 0 && (
           <section className="space-y-3">
-            <p className="label-xs">Approved — Ready for Future Evidence Application</p>
+            <p className="label-xs">Approved — Ready to Apply</p>
             <div className="space-y-4">
               {approvedEvidenceDrafts.map(draft => (
                 <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
@@ -457,15 +458,17 @@ function PageHeader({
   priorityPendingCount,
   priorityApprovedCount,
   evidencePendingCount,
+  evidenceApprovedCount,
 }: {
   pendingCount: number
   approvedCount: number
   priorityPendingCount: number
   priorityApprovedCount: number
   evidencePendingCount: number
+  evidenceApprovedCount: number
 }) {
   const totalPending = pendingCount + priorityPendingCount + evidencePendingCount
-  const totalReadyToApply = approvedCount + priorityApprovedCount
+  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount
   return (
     <div>
       <p className="label-xs mb-1">DIRECTOR</p>
