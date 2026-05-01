@@ -28,6 +28,7 @@ import { formatDate } from '@/lib/utils'
 import { PlayerProfileTabs } from './_components/PlayerProfileTabs'
 import { PlayerRequirementProgressReadOnly, type RequirementProgressRow } from './PlayerRequirementProgressReadOnly'
 import { confirmRequirementProgressStatusAction } from './requirementProgressConfirmationAction'
+import type { RequirementEvidenceDetailRow } from './types'
 import { EvidenceRequirementDraftButton } from './EvidenceRequirementDraftButton'
 import { EvidenceRequirementDrafts, type EvidenceRequirementDraftRow } from './EvidenceRequirementDrafts'
 import { createEvidenceRequirementLinkDraftsAction } from './evidenceRequirementDraftAction'
@@ -303,6 +304,101 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     .order('requirement_display_order', { ascending: true })
   const requirementProgressRows: RequirementProgressRow[] = rawRequirementProgress ?? []
 
+  // Sprint 40: fetch official requirement_evidence_links for this player's progress rows.
+  // Scoped to academy_id + player_id. rawDb cast: table not yet in database.types.ts.
+  // Sequential queries per AI_BACKEND_RULES.md rule 5.
+  const evidenceByProgressId: Record<string, RequirementEvidenceDetailRow[]> = {}
+
+  if (requirementProgressRows.length > 0) {
+    const progressIds = requirementProgressRows.map(r => r.progress_id)
+
+    type RawEvidenceLink = {
+      id: string
+      requirement_id: string
+      player_requirement_progress_id: string | null
+      evidence_type: string
+      evidence_id: string
+      evidence_summary: string | null
+      confidence: number | null
+      weight: number | null
+      created_by: string | null
+      created_at: string
+      is_parent_safe: boolean
+    }
+
+    const { data: rawEvidenceLinks } = await rawDb
+      .from('requirement_evidence_links')
+      .select('id, requirement_id, player_requirement_progress_id, evidence_type, evidence_id, evidence_summary, confidence, weight, created_by, created_at, is_parent_safe')
+      .eq('academy_id', academyId)
+      .eq('player_id', params.playerId)
+      .in('player_requirement_progress_id', progressIds)
+      .order('created_at', { ascending: false })
+
+    const evidenceLinks: RawEvidenceLink[] = rawEvidenceLinks ?? []
+
+    // Fetch coach_observation snippets — scoped to academy_id + player_id for security
+    type ObsSnippet = { id: string; content: string; observation_type: string; created_at: string }
+    const obsByEvidenceId: Record<string, ObsSnippet> = {}
+
+    const obsEvidence = evidenceLinks.filter(e => e.evidence_type === 'coach_observation')
+    if (obsEvidence.length > 0) {
+      const obsIds = obsEvidence.map(e => e.evidence_id)
+      const { data: rawObsSnippets } = await rawDb
+        .from('coach_observations')
+        .select('id, content, observation_type, created_at')
+        .in('id', obsIds)
+        .eq('academy_id', academyId)
+        .eq('player_id', params.playerId)
+      for (const obs of (rawObsSnippets ?? []) as ObsSnippet[]) {
+        obsByEvidenceId[obs.id] = obs
+      }
+    }
+
+    // Fetch creator display names
+    type CreatorRow = { id: string; display_name: string | null }
+    const creatorNameById: Record<string, string> = {}
+
+    const creatorIds = Array.from(new Set(
+      evidenceLinks.filter(e => e.created_by).map(e => e.created_by as string)
+    ))
+    if (creatorIds.length > 0) {
+      const { data: rawCreators } = await rawDb
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', creatorIds)
+      for (const c of (rawCreators ?? []) as CreatorRow[]) {
+        if (c.display_name) creatorNameById[c.id] = c.display_name
+      }
+    }
+
+    // Build evidenceByProgressId map with enrichments
+    for (const e of evidenceLinks) {
+      const obs = e.evidence_type === 'coach_observation' ? obsByEvidenceId[e.evidence_id] : undefined
+      const enriched: RequirementEvidenceDetailRow = {
+        id:                             e.id,
+        requirement_id:                 e.requirement_id,
+        player_requirement_progress_id: e.player_requirement_progress_id,
+        evidence_type:                  e.evidence_type,
+        evidence_id:                    e.evidence_id,
+        evidence_summary:               e.evidence_summary,
+        confidence:                     e.confidence,
+        weight:                         e.weight,
+        created_by:                     e.created_by,
+        created_at:                     e.created_at,
+        is_parent_safe:                 e.is_parent_safe,
+        observation_content:            obs?.content ?? null,
+        observation_type:               obs?.observation_type ?? null,
+        observation_created_at:         obs?.created_at ?? null,
+        creator_display_name:           e.created_by ? (creatorNameById[e.created_by] ?? null) : null,
+      }
+      const pid = e.player_requirement_progress_id
+      if (pid) {
+        if (!evidenceByProgressId[pid]) evidenceByProgressId[pid] = []
+        evidenceByProgressId[pid].push(enriched)
+      }
+    }
+  }
+
   const isOrangeBallPlayer = curriculumSummary?.stage === 'orange_development'
 
   const createDraftAction = createPriorityRecommendationDraftAction.bind(null, params.playerId)
@@ -399,6 +495,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         isOrangeBallPlayer={isOrangeBallPlayer}
         currentLevelName={curriculumSummary?.current_level_name ?? null}
         confirmAction={confirmProgressAction}
+        evidenceByProgressId={evidenceByProgressId}
       />
 
       {/* Evidence link drafts — Sprint 36 read-only display of pending drafts.

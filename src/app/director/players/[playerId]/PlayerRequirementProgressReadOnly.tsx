@@ -1,10 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { EyeOff } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { RequirementProgressConfirmationControls } from './RequirementProgressConfirmationControls'
+import { RequirementEvidenceDetailList } from './RequirementEvidenceDetailList'
 import type { ConfirmRequirementProgressResult } from './requirementProgressConfirmationAction'
+import type { RequirementEvidenceDetailRow } from './types'
 
 // Local interface — v_player_requirement_progress_detail not yet in database.types.ts.
 // Types need regeneration after migrations 041–044 are applied to live DB.
@@ -79,15 +82,20 @@ interface Props {
   isOrangeBallPlayer: boolean
   currentLevelName: string | null
   confirmAction?: ConfirmAction
+  evidenceByProgressId?: Record<string, RequirementEvidenceDetailRow[]>
 }
 
 function RequirementCard({
   row,
   confirmAction,
+  evidenceRows,
 }: {
   row: RequirementProgressRow
   confirmAction?: ConfirmAction
+  evidenceRows?: RequirementEvidenceDetailRow[]
 }) {
+  const [showEvidence, setShowEvidence] = useState(false)
+  const hasEvidence = (evidenceRows && evidenceRows.length > 0) || row.evidence_count > 0
   const statusLabel  = STATUS_LABELS[row.status]  ?? row.status
   const statusColors = STATUS_COLORS[row.status]  ?? 'text-text-muted border-border'
   const typeLabel    = TYPE_LABELS[row.requirement_type] ?? row.requirement_type
@@ -131,6 +139,30 @@ function RequirementCard({
         )}
       </div>
 
+      {/* Evidence section — read-only, staff-only, no mutations */}
+      <div className="pt-2 border-t border-border space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] uppercase tracking-widest text-text-muted">Evidence</p>
+          {hasEvidence && (
+            <button
+              type="button"
+              onClick={() => setShowEvidence(v => !v)}
+              className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+            >
+              {showEvidence
+                ? 'Hide'
+                : `Show ${evidenceRows?.length ?? row.evidence_count} item${(evidenceRows?.length ?? row.evidence_count) !== 1 ? 's' : ''}`}
+            </button>
+          )}
+        </div>
+        {(!hasEvidence || showEvidence) && (
+          <RequirementEvidenceDetailList
+            rows={evidenceRows ?? []}
+            evidenceCount={row.evidence_count}
+          />
+        )}
+      </div>
+
       {/* Confirmation controls — director/head_coach only; not visible to parent/player */}
       {confirmAction && (
         <RequirementProgressConfirmationControls
@@ -147,10 +179,12 @@ function DomainSection({
   domainKey,
   rows,
   confirmAction,
+  evidenceByProgressId,
 }: {
   domainKey: string
   rows: RequirementProgressRow[]
   confirmAction?: ConfirmAction
+  evidenceByProgressId?: Record<string, RequirementEvidenceDetailRow[]>
 }) {
   if (rows.length === 0) return null
 
@@ -179,7 +213,12 @@ function DomainSection({
       {/* Requirement cards */}
       <div className="space-y-2">
         {rows.map(row => (
-          <RequirementCard key={row.progress_id} row={row} confirmAction={confirmAction} />
+          <RequirementCard
+            key={row.progress_id}
+            row={row}
+            confirmAction={confirmAction}
+            evidenceRows={evidenceByProgressId?.[row.progress_id]}
+          />
         ))}
       </div>
     </div>
@@ -192,6 +231,7 @@ export function PlayerRequirementProgressReadOnly({
   isOrangeBallPlayer,
   currentLevelName,
   confirmAction,
+  evidenceByProgressId,
 }: Props) {
   return (
     <Card>
@@ -238,6 +278,7 @@ export function PlayerRequirementProgressReadOnly({
                   domainKey={domainKey}
                   rows={rows.filter(r => r.requirement_domain_key === domainKey)}
                   confirmAction={confirmAction}
+                  evidenceByProgressId={evidenceByProgressId}
                 />
               ))}
             </div>

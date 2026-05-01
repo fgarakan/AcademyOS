@@ -2,6 +2,78 @@
 
 ---
 
+## 2026-05-01 — Sprint 40: Requirement Evidence Detail View V1
+
+**Mode:** Implementation + validation. Read-only evidence display. No mutations. No status changes. No parent/player visibility.
+
+**Files created:**
+- `src/app/director/players/[playerId]/types.ts` — `RequirementEvidenceDetailRow` interface (local type; `requirement_evidence_links` not yet in `database.types.ts`)
+- `src/app/director/players/[playerId]/RequirementEvidenceDetailList.tsx` — read-only evidence display component; renders each evidence link with type badge, confidence %, created date, internal indicator, evidence summary, coach observation snippet, and creator name
+
+**Files modified:**
+- `src/app/director/players/[playerId]/PlayerRequirementProgressReadOnly.tsx` — imported `useState`, `RequirementEvidenceDetailList`, `RequirementEvidenceDetailRow`; added `evidenceByProgressId?: Record<string, RequirementEvidenceDetailRow[]>` to `Props`; threaded through `DomainSection` → `RequirementCard`; `RequirementCard` now has toggle state (`showEvidence`) and renders a collapsible Evidence section above the confirmation controls
+- `src/app/director/players/[playerId]/page.tsx` — imported `RequirementEvidenceDetailRow`; after `requirementProgressRows` loads, sequentially fetches: (1) `requirement_evidence_links` scoped to `academy_id + player_id + player_requirement_progress_id IN progressIds`; (2) `coach_observations` snippets for `evidence_type = 'coach_observation'` scoped to `academy_id + player_id`; (3) creator `display_name` from `profiles`; builds `evidenceByProgressId` map with enrichments; passes to `PlayerRequirementProgressReadOnly`
+
+**Evidence display UX:**
+- Each requirement card has an "Evidence" section header below the meta row, above the confirmation controls
+- If no evidence: static "No official evidence linked yet."
+- If evidence exists: collapsed by default, "Show N item(s)" toggle button to expand
+- Expanded view shows each evidence row: type badge, confidence %, date, internal indicator (EyeOff), evidence summary text, coach observation snippet (observation type label + date + up to 250-char content excerpt), creator name
+- "Internal evidence only. Not visible to parents or players." copy shown when expanded
+- If `evidence_count > 0` but rows fail to load: warning "Evidence count exists, but details could not be loaded."
+
+**Coach observation snippet:**
+- Fetched from `coach_observations` table scoped to `academy_id + player_id`
+- Matched by `evidence_id` (soft FK from `requirement_evidence_links.evidence_id`)
+- Shows `observation_type`, `created_at`, and up to 250 chars of `content`
+- Not exposed to parent/player views — staff portal only
+
+**Data fetching:**
+- Server-side in `page.tsx` (server component)
+- Sequential queries per `AI_BACKEND_RULES.md` rule 5
+- `rawDb = supabase as any` cast used — `requirement_evidence_links` not yet in `database.types.ts`
+- No service role. All queries go through authenticated session with RLS enforced.
+
+**Security:**
+- `academy_id` resolved from authenticated session profile — never from client input
+- Evidence links queried with `academy_id + player_id` double-scope
+- Observation snippets queried with same `academy_id + player_id` scope
+- Cross-academy data not accessible
+
+**Sprint 39 confirmation controls:**
+- Untouched. Status picker, note textarea, Confirm Status button, and `router.refresh()` all continue to work.
+
+**What was NOT built (by design):**
+- No evidence creation, editing, deletion, or unlinking
+- No automatic requirement status updates from evidence
+- No level-up readiness scoring or promotion workflow
+- No parent/player portal views
+- No `is_parent_safe` toggle
+- No AI API calls
+- No new migrations
+- No package installs
+- No parent communication
+
+**Validation:**
+- `npx tsc --noEmit` — passes with zero errors.
+
+**Manual verification steps:**
+1. Confirm migrations 041–044 applied to live DB
+2. Confirm at least one Orange Ball player has `player_requirement_progress` rows
+3. Confirm at least one requirement has official `requirement_evidence_links` from Sprint 38
+4. Open `/director/players/[playerId]` → Notes tab → Level-Up Requirements
+5. Confirm requirements with `evidence_count > 0` show "Show N item(s)" toggle
+6. Click toggle — confirm evidence details expand: summary, type, confidence, date, internal indicator
+7. If evidence_type = `coach_observation`, confirm observation snippet appears
+8. Confirm requirements with no evidence show "No official evidence linked yet."
+9. Click "Hide" — confirm evidence collapses
+10. Confirm status confirmation controls (Sprint 39) still work
+11. Confirm `requirement_evidence_links` rows are unchanged
+12. Confirm `player_requirement_progress.evidence_count` / `status` unchanged from viewing
+13. Confirm parent/player views unchanged
+
+---
+
 ## 2026-05-01 — Sprint 39: Requirement Progress Confirmation Workflow V1
 
 **Mode:** Implementation + validation. Manual confirmation only. No automatic status inference. No level movement. No parent/player visibility.
