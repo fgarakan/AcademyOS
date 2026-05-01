@@ -37,13 +37,26 @@ export async function generateSessionFromTemplateAction(
   const academyId = profile.academy_id
 
   // 3. Verify template belongs to this academy — prevents cross-academy writes
-  const { data: template } = await supabase
+  //    Also fetch curriculum_level_id (added in migration 045, not in database.types.ts)
+  const rawDb = supabase as any
+  const { data: template } = await rawDb
     .from('templates')
-    .select('id, name')
+    .select('id, name, curriculum_level_id')
     .eq('id', input.templateId)
     .eq('academy_id', academyId)
     .single()
   if (!template) return { sessionId: null, error: 'Template not found or access denied.' }
+
+  // 3a. Resolve curriculum level name if template has one — prepended to session_notes
+  let curriculumLevelName: string | null = null
+  if (template.curriculum_level_id) {
+    const { data: levelRow } = await rawDb
+      .from('curriculum_levels')
+      .select('display_name')
+      .eq('id', template.curriculum_level_id)
+      .single()
+    curriculumLevelName = levelRow?.display_name ?? null
+  }
 
   // 4. Validate coach is an active member of this academy
   //    Director's own profile passes this check (they are also a member)
@@ -82,6 +95,12 @@ export async function generateSessionFromTemplateAction(
   //    template_id preserved so the session knows its source template.
   //    status='planned' — this is a planned lesson plan snapshot, not a live session.
   //    Coach changes happen on session_blocks/session_block_exercises only, never here.
+  //    Curriculum level name is prepended to session_notes so the coach can see
+  //    the curriculum focus without needing to query the template separately.
+  const curriculumPrefix = curriculumLevelName
+    ? `[Curriculum: ${curriculumLevelName}]\n\n`
+    : ''
+  const finalSessionNotes = curriculumPrefix + (input.sessionNotes?.trim() ?? '')
   const { data: session, error: sessionError } = await supabase
     .from('sessions')
     .insert({
@@ -90,7 +109,7 @@ export async function generateSessionFromTemplateAction(
       template_id: input.templateId,
       name: input.name.trim() || template.name,
       scheduled_date: input.scheduledDate,
-      session_notes: input.sessionNotes?.trim() || null,
+      session_notes: finalSessionNotes.trim() || null,
       status: 'planned',
       created_by: user.id,
     })

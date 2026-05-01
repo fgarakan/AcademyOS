@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, Info } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Info, GraduationCap } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -72,15 +72,36 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     .single()
   if (coachProfile) coachName = coachProfile.display_name
 
-  // 3. Template name (if sourced from one)
+  // 3. Template name + curriculum context (if sourced from a curriculum-tagged template)
   let templateName: string | null = null
+  interface CurriculumContext {
+    levelName: string
+    levelStage: string
+  }
+  let curriculumContext: CurriculumContext | null = null
+
   if (session.template_id) {
-    const { data: template } = await supabase
+    const rawDbSession = supabase as any
+    const { data: template } = await rawDbSession
       .from('templates')
-      .select('name')
+      .select('name, curriculum_level_id')
       .eq('id', session.template_id)
       .single()
     templateName = template?.name ?? null
+
+    if (template?.curriculum_level_id) {
+      const { data: levelRow } = await rawDbSession
+        .from('curriculum_levels')
+        .select('display_name, stage')
+        .eq('id', template.curriculum_level_id)
+        .single()
+      if (levelRow) {
+        curriculumContext = {
+          levelName: levelRow.display_name,
+          levelStage: levelRow.stage,
+        }
+      }
+    }
   }
 
   // 4. Session blocks ordered by order_index
@@ -340,6 +361,35 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Curriculum Context — shown when the source template has a curriculum level set */}
+      {curriculumContext && (
+        <div>
+          <SectionHeader title="CURRICULUM FOCUS" />
+          <Card className="mt-3">
+            <CardContent className="py-4">
+              <div className="flex items-start gap-3">
+                <GraduationCap className="w-4 h-4 text-lime shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-text-primary">{curriculumContext.levelName}</p>
+                  <p className="text-xs text-text-muted capitalize mt-0.5">
+                    {curriculumContext.levelStage.replace(/_/g, ' ')}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-border space-y-1">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">
+                  Curriculum Notes Per Block
+                </p>
+                <p className="text-xs text-text-muted">
+                  Block notes below contain the curriculum drills, games, cues, and success criteria
+                  for this session. Review each block note for the coaching context.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Group Assignment */}
       <div>

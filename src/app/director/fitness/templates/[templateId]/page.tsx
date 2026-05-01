@@ -8,6 +8,9 @@ import type { EditableBlock, EditableExercise } from './TemplateEditor'
 import { GenerateSessionPanel } from './GenerateSessionPanel'
 import type { CoachOption } from './GenerateSessionPanel'
 import { PopulateFitnessBlocksButton } from './PopulateFitnessBlocksButton'
+import { PopulateCurriculumBlocksButton } from './PopulateCurriculumBlocksButton'
+import { CurriculumLevelSelector } from './CurriculumLevelSelector'
+import type { CurriculumLevelOption } from './CurriculumLevelSelector'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
@@ -66,6 +69,22 @@ export default async function TemplateDetailPage({ params }: PageProps) {
   if (templateError || !template) {
     notFound()
   }
+
+  // Fetch curriculum_level_id — new column not in database.types.ts
+  const rawDbOuter = supabase as any
+  const { data: templateCurriculumRow } = await rawDbOuter
+    .from('templates')
+    .select('curriculum_level_id')
+    .eq('id', params.templateId)
+    .single()
+  const curriculumLevelId: string | null = templateCurriculumRow?.curriculum_level_id ?? null
+
+  // Fetch all curriculum levels for the selector
+  const { data: curriculumLevelsRaw } = await rawDbOuter
+    .from('curriculum_levels')
+    .select('id, display_name, stage')
+    .order('sort_order')
+  const curriculumLevels: CurriculumLevelOption[] = (curriculumLevelsRaw ?? []) as CurriculumLevelOption[]
 
   const { data: blocks, error: blocksError } = await supabase
     .from('template_blocks')
@@ -166,6 +185,29 @@ export default async function TemplateDetailPage({ params }: PageProps) {
         blockCount={blockList.length}
         exerciseCount={totalExercises}
       />
+      {/* Curriculum level selector and curriculum-aware population */}
+      <Card>
+        <CardContent className="py-4 space-y-4">
+          <CurriculumLevelSelector
+            templateId={params.templateId}
+            currentLevelId={curriculumLevelId}
+            levels={curriculumLevels}
+          />
+          <div className="pt-3 border-t border-border space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-text-muted">Curriculum Population</p>
+            <p className="text-xs text-text-muted">
+              Writes curriculum-appropriate drills, games, and coaching cues into block notes based on the selected level.
+              Only populates blocks with empty notes.
+            </p>
+            <PopulateCurriculumBlocksButton
+              templateId={params.templateId}
+              hasBlocks={blockList.length > 0}
+              hasCurriculumLevel={!!curriculumLevelId}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Populate blocks with exercises from the exercise library */}
       <div className="space-y-2">
         <p className="text-[10px] uppercase tracking-widest text-text-muted">Exercise Population</p>

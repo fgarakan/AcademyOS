@@ -2,6 +2,115 @@
 
 ---
 
+## 2026-05-01 — Sprints 51–60: Curriculum Content Engine V1
+
+**Mode:** New schema, seed data, server actions, and UI components. No AI API calls. No parent/player visibility. No player level changes. No package installs.
+
+**Migrations created:** 045, 046, 047
+
+---
+
+### Sprint 51 — Curriculum Content Model Audit V1
+
+**Files created:**
+- `docs/CURRICULUM_CONTENT_MODEL_AUDIT.md` — Audit of existing curriculum spine, requirements, exercise/template schema. Documents what exists, what is missing, recommended new tables, risk assessment, and Sprint 52–60 path.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 52 — Drill / Game / Skill Content Schema Plan V1
+
+**Files created:**
+- `docs/CURRICULUM_CONTENT_SCHEMA_PLAN.md` — Full schema definition for `curriculum_content_items` and `curriculum_content_requirement_mappings`. Includes field list, RLS strategy, index plan, content type → block type mapping, and implementation roadmap.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 53 — Curriculum Content Tables / Seed Structure V1
+
+**Files created:**
+- `supabase/migrations/045_curriculum_content_library.sql` — Creates `curriculum_content_items` (drills, games, skills, assessments with coaching metadata), `curriculum_content_requirement_mappings` (content → requirement FK links), and adds `curriculum_level_id` column to `templates`. Full RLS, indexes, update_at trigger.
+
+**TypeScript:** Not applicable (SQL migration only).
+
+---
+
+### Sprint 54 — Orange Ball Curriculum Content Pack V1
+
+**Files created:**
+- `supabase/migrations/046_orange_ball_content_pack.sql` — Seeds 29 global-default content items across Orange 1 (9), Orange 2 (10), Orange 3 (10). All items include success criteria, coach cues, progressions, regressions, parent-safe names.
+- `docs/ORANGE_BALL_CURRICULUM_CONTENT_PACK.md` — Describes the content pack: content counts, content quality notes, block type mapping reference.
+
+**TypeScript:** Not applicable (SQL migration + docs only).
+
+---
+
+### Sprint 55 — Content-to-Requirement Mapping V1
+
+**Files created:**
+- `supabase/migrations/047_content_requirement_mappings_seed.sql` — Maps 29 Orange Ball content items to 32 Orange Ball requirements using develops/assesses/reinforces mapping types. Idempotent via ON CONFLICT DO NOTHING. Guards: resolves all IDs by natural key, skips silently if any ID is missing.
+
+**TypeScript:** Not applicable (SQL migration only).
+
+---
+
+### Sprint 56 — Curriculum-Aware Template Block Population V1
+
+**Files created:**
+- `src/lib/actions/curriculumContentPopulation.ts` — Server action `populateTemplateBlocksFromCurriculumAction`. Reads template's `curriculum_level_id`, fetches matching content items, writes structured curriculum notes (drills, games, cues, success criteria) to `template_blocks.notes` for each empty block. Skips blocks with existing notes. Returns per-block results.
+- `src/app/director/fitness/templates/[templateId]/PopulateCurriculumBlocksButton.tsx` — Client button that calls the population action. Shows per-block detail expandable results.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Added imports for `PopulateCurriculumBlocksButton` and `CurriculumLevelSelector`.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 57 — Director Template Builder Curriculum Focus Selector V1
+
+**Files created:**
+- `src/app/director/fitness/templates/[templateId]/setCurriculumLevelAction.ts` — Server action to update `templates.curriculum_level_id`. Auth + role + academy + level ID validation. Revalidates template page path.
+- `src/app/director/fitness/templates/[templateId]/CurriculumLevelSelector.tsx` — Client component with grouped dropdown (by stage), Save button, saved confirmation. Uses `useTransition` for optimistic UX.
+- `docs/CURRICULUM_TEMPLATE_POPULATION_LIMITATIONS.md` — Documents 4 known V1 limitations: no exercise row insertion, rawDb cast for new column, no force-refresh, Orange Ball only.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Fetches `curriculum_level_id` and all curriculum levels. Renders `CurriculumLevelSelector` and `PopulateCurriculumBlocksButton` in a new Curriculum card above the Exercise Population section.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 58 — Generated Session Plan from Curriculum Template V1
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/generate-session-actions.ts` — Now fetches `curriculum_level_id` from the template alongside name. If a curriculum level exists, its name is prepended to `session.session_notes` as `[Curriculum: {levelName}]`. Block notes (already containing curriculum content from Sprint 56) are copied to session_blocks.notes unchanged — curriculum context flows automatically.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 59 — Coach Session Curriculum Context V1
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Extended template fetch to also read `curriculum_level_id`. Resolves level `display_name` and `stage`. Renders a `CURRICULUM FOCUS` section card above Group Assignment showing the level name, stage, and a note that block notes contain curriculum content for the coach.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 60 — Curriculum Content QA + Demo Readiness V1
+
+**Files created:**
+- `docs/CURRICULUM_CONTENT_ENGINE_QA.md` — QA checklist: schema checks, TypeScript check, 10-step manual walkthrough, known limitations table, expected git status.
+- `docs/BRIAN_CURRICULUM_DEMO_SCRIPT.md` — 8-scene demo script for director persona. Covers: requirements → content → mappings → template level selector → block population → session generation → curriculum context panel → player progress loop.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-01 — Claude Code Operating System Setup
 
 **Mode:** Config/docs only. No runtime behavior changed. No schema changes. No package installs.
