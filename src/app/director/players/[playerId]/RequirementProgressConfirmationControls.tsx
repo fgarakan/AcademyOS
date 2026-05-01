@@ -71,6 +71,13 @@ export function RequirementProgressConfirmationControls({
         ))}
       </div>
 
+      {/* Show current saved status when the user has selected something different */}
+      {selectedStatus !== currentStatus && (
+        <p className="text-[10px] text-text-muted">
+          Current saved: {STATUS_OPTIONS.find(o => o.value === currentStatus)?.label ?? currentStatus}
+        </p>
+      )}
+
       {/* Optional note */}
       <textarea
         value={note}

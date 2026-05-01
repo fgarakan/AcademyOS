@@ -191,6 +191,8 @@ function DomainSection({
 
   const metCount         = rows.filter(r => r.status === 'met').length
   const inProgressCount  = rows.filter(r => r.status === 'in_progress').length
+  const evNeededCount    = rows.filter(r => r.status === 'evidence_needed').length
+  const blockedCount     = rows.filter(r => r.status === 'blocked').length
   const notStartedCount  = rows.filter(r => r.status === 'not_started').length
 
   return (
@@ -200,14 +202,12 @@ function DomainSection({
         <p className="text-[11px] uppercase tracking-widest text-text-muted">
           {DOMAIN_LABELS[domainKey] ?? domainKey}
         </p>
-        <div className="flex gap-2 text-[11px]">
-          {metCount > 0 && (
-            <span className="text-lime">{metCount} met</span>
-          )}
-          {inProgressCount > 0 && (
-            <span className="text-status-blue">{inProgressCount} in progress</span>
-          )}
-          <span className="text-text-muted">{notStartedCount} not started</span>
+        <div className="flex flex-wrap gap-x-2 gap-y-1 text-[11px]">
+          {metCount > 0 && <span className="text-lime">{metCount} met</span>}
+          {inProgressCount > 0 && <span className="text-status-blue">{inProgressCount} in progress</span>}
+          {evNeededCount > 0 && <span className="text-status-orange">{evNeededCount} evidence needed</span>}
+          {blockedCount > 0 && <span className="text-status-red">{blockedCount} blocked</span>}
+          {notStartedCount > 0 && <span className="text-text-muted">{notStartedCount} not started</span>}
         </div>
       </div>
 
@@ -261,16 +261,6 @@ export function PlayerRequirementProgressReadOnly({
           )
         ) : (
           <>
-            {/* Current level context */}
-            {currentLevelName && (
-              <div className="bg-surface-raised border border-border rounded px-4 py-3">
-                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">
-                  Displaying requirements for
-                </p>
-                <p className="text-sm font-medium text-text-primary">{currentLevelName}</p>
-              </div>
-            )}
-
             {/* Level Readiness Summary — internal read-only signal. No mutations. */}
             <LevelReadinessSummary rows={rows} currentLevelName={currentLevelName} />
 

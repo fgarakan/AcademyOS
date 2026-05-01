@@ -185,16 +185,22 @@ export function LevelReadinessSummary({ rows, currentLevelName }: Props) {
       {/* Deterministic explanation */}
       <p className="text-xs text-text-secondary leading-relaxed">{explanation}</p>
 
-      {/* Overall counts */}
+      {/* Overall counts — zero-value rows hidden except totals */}
       <div>
         <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Overall</p>
         <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-          {overallItems.map(item => (
-            <div key={item.label} className="flex items-center justify-between">
-              <span className="text-[11px] text-text-muted">{item.label}</span>
-              <span className={`text-xs font-mono font-bold ${item.color}`}>{item.value}</span>
-            </div>
-          ))}
+          {overallItems
+            .filter(item =>
+              item.label === 'Total requirements' ||
+              item.label === 'Total evidence links' ||
+              item.value > 0
+            )
+            .map(item => (
+              <div key={item.label} className="flex items-center justify-between">
+                <span className="text-[11px] text-text-muted">{item.label}</span>
+                <span className={`text-xs font-mono font-bold ${item.color}`}>{item.value}</span>
+              </div>
+            ))}
         </div>
       </div>
 
@@ -217,12 +223,14 @@ export function LevelReadinessSummary({ rows, currentLevelName }: Props) {
                 <div key={d.key} className="bg-surface-raised border border-border rounded p-3 space-y-1.5">
                   <p className="text-[11px] font-medium text-text-primary">{d.label}</p>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                    {domainItems.map(item => (
-                      <div key={item.label} className="flex items-center justify-between">
-                        <span className="text-[10px] text-text-muted">{item.label}</span>
-                        <span className={`text-[11px] font-mono font-bold ${item.color}`}>{item.value}</span>
-                      </div>
-                    ))}
+                    {domainItems
+                      .filter(item => item.label === 'Total' || item.value > 0)
+                      .map(item => (
+                        <div key={item.label} className="flex items-center justify-between">
+                          <span className="text-[10px] text-text-muted">{item.label}</span>
+                          <span className={`text-[11px] font-mono font-bold ${item.color}`}>{item.value}</span>
+                        </div>
+                      ))}
                   </div>
                 </div>
               )
@@ -230,18 +238,6 @@ export function LevelReadinessSummary({ rows, currentLevelName }: Props) {
           </div>
         </div>
       )}
-
-      {/* Footer guardrails */}
-      <div className="pt-2 border-t border-border space-y-0.5">
-        {[
-          'This summary is internal.',
-          'It is based on requirement status and evidence counts.',
-          'It does not automatically move the player up.',
-          'Promotion requires a future director-approved level movement workflow.',
-        ].map(line => (
-          <p key={line} className="text-[10px] text-text-muted">{line}</p>
-        ))}
-      </div>
 
     </div>
   )

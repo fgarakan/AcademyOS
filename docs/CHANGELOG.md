@@ -2,6 +2,73 @@
 
 ---
 
+## 2026-05-01 — Sprint 42: Requirement Progress Dashboard Polish + QA V1
+
+**Mode:** Polish + QA. No new core workflow. No schema changes. No new mutations. No parent/player visibility.
+
+**Objective:** Improve visual hierarchy, reduce redundancy, and improve scannability of the director-facing Level-Up Requirements section without changing any business logic.
+
+**Files inspected:**
+- `src/app/director/players/[playerId]/PlayerRequirementProgressReadOnly.tsx`
+- `src/app/director/players/[playerId]/LevelReadinessSummary.tsx`
+- `src/app/director/players/[playerId]/RequirementEvidenceDetailList.tsx`
+- `src/app/director/players/[playerId]/RequirementProgressConfirmationControls.tsx`
+- `src/app/director/players/[playerId]/types.ts`
+- `src/app/director/players/[playerId]/page.tsx`
+- `src/components/ui/index.ts`
+
+**Files changed:**
+- `src/app/director/players/[playerId]/PlayerRequirementProgressReadOnly.tsx`
+- `src/app/director/players/[playerId]/LevelReadinessSummary.tsx`
+- `src/app/director/players/[playerId]/RequirementProgressConfirmationControls.tsx`
+- `docs/CHANGELOG.md`
+
+**Polish applied:**
+
+*`PlayerRequirementProgressReadOnly.tsx`*
+- Removed the redundant "Displaying requirements for / [level name]" banner — `LevelReadinessSummary` already shows the current level name in its header, making the banner a visual duplicate.
+- `DomainSection` header now shows `evidence_needed` and `blocked` counts alongside `met` / `in_progress` / `not_started`, all guarded behind `> 0` so clean domain headers show nothing unnecessary. Previously "0 not started" always appeared even when all requirements were met.
+
+*`LevelReadinessSummary.tsx`*
+- Removed the 4-line footer guardrail block. The top guardrail ("Internal readiness signal only…") in the same component already covers the intent. Removing the footer reduces repetition without removing the guardrail.
+- Overall counts: zero-value rows now hidden except "Total requirements" and "Total evidence links" (always shown for reference). Removes visual noise on players with no blocked/evidence_needed rows.
+- Domain breakdown: zero-value stats now hidden except "Total" per domain. A domain with all requirements met no longer lists every other status at 0.
+
+*`RequirementProgressConfirmationControls.tsx`*
+- Added a "Current saved: [label]" indicator that appears below the status picker only when the user has selected a different status than the current DB value. Previously, once you clicked a different status option, there was no visual reminder of what the current saved state was.
+
+**What was not changed:**
+- No server action logic touched
+- No readiness label calculation changed
+- No evidence application behavior changed
+- No requirement confirmation behavior changed
+- No parent/player visibility
+- No migrations
+- No new packages
+- `RequirementEvidenceDetailList.tsx` — clean, no changes needed
+- `types.ts` — clean, no changes needed
+
+**Validation:**
+- `npx tsc --noEmit` — passes with 0 errors
+
+**Manual QA checklist (to verify before commit):**
+1. Open `/director/players/[playerId]` → Notes tab
+2. Confirm Level-Up Requirements section hierarchy: Summary → Domains → Cards → Evidence → Confirmation
+3. Confirm Level Readiness Summary appears above domain groups (no duplicate level name banner above it)
+4. Confirm domain headers show only non-zero counts
+5. Confirm Overall counts in summary hide zero-value statuses (except totals)
+6. Confirm domain breakdown stats are compact (no "Blocked: 0" rows)
+7. Confirm evidence toggle still works
+8. Confirm "No official evidence linked yet" shows on cards with no evidence
+9. Confirm status picker shows "Current saved: X" when a different option is selected
+10. Confirm no promote / level movement button exists
+11. Confirm no parent/player visibility controls
+12. Confirm viewing page does not mutate DB
+13. Confirm Sprint 36 evidence draft button still appears
+14. Confirm Sprint 40 evidence details still display when toggled
+
+---
+
 ## 2026-05-01 — Sprint 41: Level Readiness Summary V1
 
 **Mode:** Implementation + validation. Read-only internal summary only. No mutations. No level movement. No parent/player visibility.
