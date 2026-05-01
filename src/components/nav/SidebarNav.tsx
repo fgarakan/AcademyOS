@@ -5,17 +5,18 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
   Trophy, Brain, BarChart3, Settings, LogOut, Dumbbell, ClipboardList, FlaskConical,
-  ChevronRight,
+  ChevronRight, LayoutTemplate,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
 const FOUNDATION_ITEMS = [
-  { label: 'Dashboard',    href: '/director',                        icon: LayoutDashboard },
-  { label: 'Players',      href: '/director/players',                icon: Users },
-  { label: 'Curriculum',   href: '/director/curriculum',             icon: BookOpen },
-  { label: 'Fitness',      href: '/director/fitness/templates',      icon: Dumbbell },
-  { label: 'Sessions',     href: '/director/sessions',               icon: Calendar },
-  { label: 'Review Queue', href: '/director/review',                 icon: ClipboardList },
+  { label: 'Dashboard',       href: '/director',                   icon: LayoutDashboard },
+  { label: 'Players',         href: '/director/players',           icon: Users },
+  { label: 'Curriculum',      href: '/director/curriculum',        icon: BookOpen },
+  { label: 'Class Templates', href: '/director/class-templates',   icon: LayoutTemplate },
+  { label: 'Fitness OS',      href: '/director/fitness/templates', icon: Dumbbell },
+  { label: 'Sessions',        href: '/director/sessions',          icon: Calendar },
+  { label: 'Review Queue',    href: '/director/review',            icon: ClipboardList },
 ]
 
 const INTELLIGENCE_ITEMS = [

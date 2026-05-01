@@ -2,6 +2,54 @@
 
 ---
 
+## 2026-05-01 — Sprints 136–145: Fitness OS Template Builder + Class Template Separation V1
+
+**Mode:** Fitness OS product build — UI + server actions + library utilities. No migrations.
+
+**Migrations created:** None
+
+### Sprint 136 — Fitness/Class Template Separation Audit V1
+- Created `docs/FITNESS_TEMPLATE_SEPARATION_AUDIT.md` — Full audit of template mixing problem, data risks, table strategy, and implementation plan for Sprints 137–145.
+
+### Sprint 137 — Route + Navigation Separation V1
+- Created `src/app/director/class-templates/page.tsx` — Read-only class templates page filtering out fitness_template:true-tagged templates.
+- Modified `src/components/nav/SidebarNav.tsx` — Added "Class Templates" nav item (LayoutTemplate icon) and renamed "Fitness" → "Fitness OS".
+
+### Sprint 138 — Fitness Block Taxonomy V1
+- Created `src/lib/fitness/fitnessBlockTypes.ts` — Exports FITNESS_BLOCK_TYPES, FitnessBlockType, getFitnessBlockLabel, getFitnessBlockAccent, getFitnessBlockBorderAccent, getDbBlockType, inferFitnessBlockType, getDefaultBlockDuration, getFitnessBlockIntent, defaultFitnessTemplateBlockOrder.
+- Created `docs/FITNESS_BLOCK_TAXONOMY.md` — Documents 8 fitness block types, DB mapping strategy, template type tags, and distinction from curriculum blocks.
+
+### Sprint 139 — Fitness Exercise Pool + Default Exercise Matching V1
+- Created `src/lib/fitness/fitnessExerciseMatching.ts` — Exports getDefaultExercisesForFitnessBlock, matchExerciseToFitnessBlock, getFallbackFitnessExercises, getExercisesForFitnessBlock. Deterministic keyword + category scoring, 3-exercise default, fallback placeholders never inserted into DB.
+
+### Sprint 140 — Fitness Template Builder Data Actions V1
+- Created `src/app/director/fitness/fitnessTemplateActions.ts` — Server actions: createFitnessTemplateAction, addFitnessBlockAction (auto-populates exercises), removeFitnessBlockAction, reorderFitnessBlocksAction, addExerciseToFitnessBlockAction, removeExerciseFromFitnessBlockAction, swapExerciseInFitnessBlockAction, updateFitnessBlockNotesAction. All role-checked (director/head_coach), academy-scoped, fitness-template-verified.
+
+### Sprint 141 — Fitness Template Builder UI V1
+- Modified `src/app/director/fitness/templates/page.tsx` — Full rewrite. Fitness OS command page. Filters to fitness_template:true only. Stat cards, type labels, New Fitness Template CTA, premium card list.
+- Created `src/app/director/fitness/templates/new/page.tsx` — New template creation page.
+- Created `src/app/director/fitness/templates/new/NewFitnessTemplateForm.tsx` — Client form: name, template type picker, description, duration. Redirects to builder on success.
+
+### Sprint 142 — Fitness Template Detail / Block Builder V1
+- Modified `src/app/director/fitness/templates/[templateId]/page.tsx` — Full rewrite. Fitness block builder for fitness templates. Non-fitness templates show a class template notice. Passes blocks and exercise library to client.
+- Created `src/app/director/fitness/templates/[templateId]/fitnessBuilderTypes.ts` — Shared TypeScript interfaces: FitnessBlock, FitnessExercise, ExerciseLibraryItem.
+- Created `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` — Client component: add/remove/reorder blocks, remove exercises, open switcher, observation panel with VoiceTextInput.
+
+### Sprint 143 — Fitness Exercise Switcher V1
+- Created `src/app/director/fitness/templates/[templateId]/FitnessExerciseSwitcher.tsx` — Modal: shows matching exercises first (labeled "Match"), search filter, select replacement, confirm swap. Does not touch exercise library.
+
+### Sprint 144 — Fitness Voice Observation Drafts V1
+- Observations stored in `template_blocks.notes` via `updateFitnessBlockNotesAction` (in Sprint 140 actions file).
+- Observation UI in FitnessTemplateBuilderClient: MessageSquare button per block, VoiceTextInput panel, save/cancel. Internal only — no player mutation, no communications.
+
+### Sprint 145 — Fitness OS QA + Demo Script V1
+- Created `docs/FITNESS_OS_TEMPLATE_BUILDER_QA.md` — 16-item QA test list covering separation, creation, block management, exercise swaps, library safety, observations, and TypeScript.
+- Created `docs/FITNESS_OS_DEMO_SCRIPT.md` — 10-step demo walkthrough from template creation through voice observations.
+- Modified `docs/CHANGELOG.md` — This entry.
+- TypeScript: ✓ clean (exit 0)
+
+---
+
 ## 2026-05-01 — Sprints 126–135: Premium UI System Alignment + Manus Aesthetic Match V1
 
 **Mode:** UI/aesthetic alignment sprint — no backend changes, no migrations.
