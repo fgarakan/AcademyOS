@@ -3,6 +3,8 @@
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { EyeOff } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { RequirementProgressConfirmationControls } from './RequirementProgressConfirmationControls'
+import type { ConfirmRequirementProgressResult } from './requirementProgressConfirmationAction'
 
 // Local interface — v_player_requirement_progress_detail not yet in database.types.ts.
 // Types need regeneration after migrations 041–044 are applied to live DB.
@@ -65,14 +67,27 @@ const DOMAIN_LABELS: Record<string, string> = {
   fitness:     'Fitness Path',
 }
 
+type ConfirmAction = (
+  progressId: string,
+  newStatus: string,
+  note?: string
+) => Promise<ConfirmRequirementProgressResult>
+
 interface Props {
   rows: RequirementProgressRow[]
   hasCurriculumState: boolean
   isOrangeBallPlayer: boolean
   currentLevelName: string | null
+  confirmAction?: ConfirmAction
 }
 
-function RequirementCard({ row }: { row: RequirementProgressRow }) {
+function RequirementCard({
+  row,
+  confirmAction,
+}: {
+  row: RequirementProgressRow
+  confirmAction?: ConfirmAction
+}) {
   const statusLabel  = STATUS_LABELS[row.status]  ?? row.status
   const statusColors = STATUS_COLORS[row.status]  ?? 'text-text-muted border-border'
   const typeLabel    = TYPE_LABELS[row.requirement_type] ?? row.requirement_type
@@ -115,6 +130,15 @@ function RequirementCard({ row }: { row: RequirementProgressRow }) {
           </span>
         )}
       </div>
+
+      {/* Confirmation controls — director/head_coach only; not visible to parent/player */}
+      {confirmAction && (
+        <RequirementProgressConfirmationControls
+          progressId={row.progress_id}
+          currentStatus={row.status}
+          confirmAction={confirmAction}
+        />
+      )}
     </div>
   )
 }
@@ -122,9 +146,11 @@ function RequirementCard({ row }: { row: RequirementProgressRow }) {
 function DomainSection({
   domainKey,
   rows,
+  confirmAction,
 }: {
   domainKey: string
   rows: RequirementProgressRow[]
+  confirmAction?: ConfirmAction
 }) {
   if (rows.length === 0) return null
 
@@ -153,7 +179,7 @@ function DomainSection({
       {/* Requirement cards */}
       <div className="space-y-2">
         {rows.map(row => (
-          <RequirementCard key={row.progress_id} row={row} />
+          <RequirementCard key={row.progress_id} row={row} confirmAction={confirmAction} />
         ))}
       </div>
     </div>
@@ -165,6 +191,7 @@ export function PlayerRequirementProgressReadOnly({
   hasCurriculumState,
   isOrangeBallPlayer,
   currentLevelName,
+  confirmAction,
 }: Props) {
   return (
     <Card>
@@ -210,6 +237,7 @@ export function PlayerRequirementProgressReadOnly({
                   key={domainKey}
                   domainKey={domainKey}
                   rows={rows.filter(r => r.requirement_domain_key === domainKey)}
+                  confirmAction={confirmAction}
                 />
               ))}
             </div>

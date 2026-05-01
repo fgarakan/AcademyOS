@@ -2,6 +2,77 @@
 
 ---
 
+## 2026-05-01 — Sprint 39: Requirement Progress Confirmation Workflow V1
+
+**Mode:** Implementation + validation. Manual confirmation only. No automatic status inference. No level movement. No parent/player visibility.
+
+**Files created:**
+- `src/app/director/players/[playerId]/requirementProgressConfirmationAction.ts` — `confirmRequirementProgressStatusAction` server action (security chain, status validation, confirmer field logic, audit log)
+- `src/app/director/players/[playerId]/RequirementProgressConfirmationControls.tsx` — client component: status picker buttons, optional note textarea, guardrail copy, save button with pending state, success/error feedback, `router.refresh()` on success
+
+**Files modified:**
+- `src/app/director/players/[playerId]/PlayerRequirementProgressReadOnly.tsx` — added `ConfirmAction` type alias, added `confirmAction?` prop to `Props`; threaded `confirmAction` through `DomainSection` → `RequirementCard`; `RequirementCard` renders `RequirementProgressConfirmationControls` when `confirmAction` is present
+- `src/app/director/players/[playerId]/page.tsx` — imported `confirmRequirementProgressStatusAction`; bound it with `params.playerId` via `.bind()`; passed as `confirmAction` to `PlayerRequirementProgressReadOnly`
+
+**Server action — `confirmRequirementProgressStatusAction`:**
+- Signature: `confirmRequirementProgressStatusAction(playerId, progressId, newStatus, note?)`
+- `playerId` bound from server component; `progressId`, `newStatus`, `note` supplied by client
+- Security chain: `assertNotPreviewMode` → auth → resolve `academy_id` from `profiles` → verify active membership (director/head_coach only) → verify player belongs to academy → fetch `player_requirement_progress` → verify `academy_id` + `player_id` match → validate `newStatus` ∈ allowed values → validate note ≤ 1000 chars
+- Database writes: updates `player_requirement_progress` (status, notes if provided, confirmer fields); writes `audit_logs`
+- No service role. No RLS bypass. All writes go through the anon client with active RLS.
+
+**Confirmer field logic:**
+- `newStatus = 'met'` + role `academy_director` → `director_confirmed_by = user.id`, `confirmed_at = now()`
+- `newStatus = 'met'` + role `head_coach` → `coach_confirmed_by = user.id`, `confirmed_at = now()`
+- Moving FROM `met` to any other status → clears `confirmed_at`, `director_confirmed_by`, `coach_confirmed_by`
+- Neither old nor new status is `met` → confirmer fields left unchanged
+
+**Notes handling:**
+- If `note` provided → `notes = note.trim()` (empty string → `null`)
+- If `note` not provided → existing notes preserved (field excluded from update payload)
+
+**Audit log:**
+- Action: `requirement_progress.status_confirmed`
+- Target type: `player_requirement_progress`
+- Payload: `player_id`, `old_status`, `new_status`, `note_present`, `evidence_count`, `role`, `confirmed_by`
+
+**Evidence display:**
+- Existing `evidence_count` and `last_evidence_at` already shown in each requirement row
+- Detailed expandable evidence display deferred to Sprint 40
+
+**What was NOT built (by design):**
+- No automatic status change based on `evidence_count`
+- No level-up recommendation
+- No player level or profile field mutations
+- No player priorities mutation
+- No parent/player portal views or `is_parent_visible`/`is_player_visible` controls
+- No parent communication
+- No AI API calls
+- No new migrations
+- No package installs
+- No batch confirmation
+- No drag-and-drop
+
+**Validation:**
+- `npx tsc --noEmit` — passes with zero errors.
+
+**Manual verification steps:**
+1. Confirm migrations 041–044 applied to live DB
+2. Confirm an Orange Ball player has `player_requirement_progress` rows
+3. Open `/director/players/[playerId]` → Notes tab → Level-Up Requirements section
+4. Each requirement card now shows status picker buttons + note field + guardrail copy
+5. Change one status from `not_started` to `in_progress` → click "Confirm Status"
+6. Confirm success message "Status confirmed." and page refreshes
+7. Confirm `player_requirement_progress.status` updated in DB
+8. Confirm `player_requirement_progress.evidence_count` did NOT change
+9. Confirm `requirement_evidence_links` did NOT change
+10. Confirm player level did NOT change
+11. Change one status to `met` → confirm `confirmed_at` + confirmer field set in DB
+12. Check `audit_logs` for `requirement_progress.status_confirmed` entry
+13. Confirm parent/player views unchanged
+
+---
+
 ## 2026-05-01 — Sprint 38: Approved Evidence Link Application Guardrails
 
 **Mode:** Implementation + validation. Guarded application only. No requirement status mutation. No automatic progress confirmation.

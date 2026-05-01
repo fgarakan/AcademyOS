@@ -27,6 +27,7 @@ import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { PlayerProfileTabs } from './_components/PlayerProfileTabs'
 import { PlayerRequirementProgressReadOnly, type RequirementProgressRow } from './PlayerRequirementProgressReadOnly'
+import { confirmRequirementProgressStatusAction } from './requirementProgressConfirmationAction'
 import { EvidenceRequirementDraftButton } from './EvidenceRequirementDraftButton'
 import { EvidenceRequirementDrafts, type EvidenceRequirementDraftRow } from './EvidenceRequirementDrafts'
 import { createEvidenceRequirementLinkDraftsAction } from './evidenceRequirementDraftAction'
@@ -306,6 +307,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   const createDraftAction = createPriorityRecommendationDraftAction.bind(null, params.playerId)
   const createEvidenceDraftAction = createEvidenceRequirementLinkDraftsAction.bind(null, params.playerId)
+  const confirmProgressAction = confirmRequirementProgressStatusAction.bind(null, params.playerId)
 
   // Progression requirements: level requirements + next level derivation.
   // rawDb cast avoids TS2589; curriculum_levels and v_curriculum_level_requirements are
@@ -388,14 +390,15 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         } : null}
       />
 
-      {/* Requirement progress — Sprint 35 read-only view of bootstrapped requirement rows.
+      {/* Requirement progress — Sprint 35 read-only view, Sprint 39 adds manual confirmation.
           Groups by Skill / Competition / Fitness domain.
-          No mutations. Director/staff-facing only. */}
+          Director/head_coach can manually confirm status. No automatic level movement. */}
       <PlayerRequirementProgressReadOnly
         rows={requirementProgressRows}
         hasCurriculumState={!!curriculumSummary}
         isOrangeBallPlayer={isOrangeBallPlayer}
         currentLevelName={curriculumSummary?.current_level_name ?? null}
+        confirmAction={confirmProgressAction}
       />
 
       {/* Evidence link drafts — Sprint 36 read-only display of pending drafts.
