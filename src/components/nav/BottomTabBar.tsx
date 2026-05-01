@@ -38,7 +38,13 @@ export function BottomTabBar({ items }: { items: TabItem[] }) {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border z-40 safe-area-bottom">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-40 safe-area-bottom"
+      style={{
+        background: 'var(--bg-sidebar)',
+        borderTop: '1px solid var(--border-subtle)',
+      }}
+    >
       <div className="flex">
         {items.map(item => {
           const Icon = ICON_MAP[item.iconKey]
@@ -51,10 +57,10 @@ export function BottomTabBar({ items }: { items: TabItem[] }) {
               href={item.href}
               className={cn(
                 'flex-1 flex flex-col items-center gap-1 py-3 px-2 transition-colors duration-100',
-                isActive ? 'text-lime' : 'text-text-muted'
+                isActive ? 'text-lime' : 'text-text-muted hover:text-text-secondary'
               )}
             >
-              {Icon && <Icon className="w-5 h-5" />}
+              {Icon && <Icon className={cn('w-5 h-5', isActive && 'drop-shadow-[0_0_6px_rgba(17,217,223,0.4)]')} />}
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           )

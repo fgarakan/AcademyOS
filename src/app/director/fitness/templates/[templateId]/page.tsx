@@ -170,7 +170,7 @@ export default async function TemplateDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in p-6 space-y-6">
       <PageHeader template={template} />
 
       {/* Curriculum Intelligence — primary action section */}
@@ -244,9 +244,10 @@ function PageHeader({ template }: { template: Template }) {
           <ArrowLeft className="w-3.5 h-3.5" />
           Fitness Templates
         </Link>
-        <h1 className="text-2xl font-bold text-text-primary">{template.name}</h1>
+        <p className="page-eyebrow">Template</p>
+        <h1 className="page-title">{template.name}</h1>
         {template.description && (
-          <p className="text-sm text-text-secondary mt-1">{template.description}</p>
+          <p className="page-subtitle">{template.description}</p>
         )}
       </div>
     </div>

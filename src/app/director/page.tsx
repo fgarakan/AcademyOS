@@ -105,10 +105,16 @@ export default async function DirectorDashboard() {
     <div className="p-6 space-y-8 animate-fade-in">
 
       {/* ── Header ─────────────────────────────────────────── */}
-      <div>
-        <p className="label-xs">{academyName}</p>
-        <h1 className="text-3xl font-bold text-text-primary mt-1">Command Center</h1>
-        <p className="text-text-secondary text-sm mt-1">{today}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="page-eyebrow">{academyName}</p>
+          <h1 className="page-title text-3xl">Command Center</h1>
+          <p className="page-subtitle">{today}</p>
+        </div>
+        <Link href="/director/players" className="btn-lime text-sm hidden sm:inline-flex items-center gap-2">
+          <Users className="w-4 h-4" />
+          Players
+        </Link>
       </div>
 
       {/* ── Snapshot metrics ───────────────────────────────── */}
@@ -280,7 +286,7 @@ export default async function DirectorDashboard() {
 
       {/* ── Module cards ───────────────────────────────────── */}
       <div>
-        <p className="label-xs mb-4">Modules</p>
+        <p className="label-xs mb-4">Academy Modules</p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <LiveModuleCard
             icon={<Users className="w-4 h-4 text-lime" />}
@@ -292,8 +298,18 @@ export default async function DirectorDashboard() {
             }
             href="/director/players"
           />
-          <ComingSoonCard icon={<BookOpen className="w-4 h-4" />} title="Curriculum" />
-          <ComingSoonCard icon={<Calendar className="w-4 h-4" />} title="Sessions" />
+          <LiveModuleCard
+            icon={<BookOpen className="w-4 h-4 text-lime" />}
+            title="Curriculum"
+            description="Developmental spine + versions"
+            href="/director/curriculum"
+          />
+          <LiveModuleCard
+            icon={<Calendar className="w-4 h-4 text-lime" />}
+            title="Sessions"
+            description="Session library + coach briefings"
+            href="/director/sessions"
+          />
           <ComingSoonCard icon={<Brain className="w-4 h-4" />}    title="Intelligence" />
           <ComingSoonCard icon={<BarChart3 className="w-4 h-4" />} title="Reports" />
           <ComingSoonCard icon={<Settings className="w-4 h-4" />}  title="Configuration" />
@@ -315,8 +331,8 @@ function LiveModuleCard({
   href: string
 }) {
   return (
-    <Link href={href} className="block">
-      <div className="bg-surface border border-lime/20 rounded-2xl p-5 h-full hover:border-lime/40 hover:shadow-lime transition-all duration-150 group">
+    <Link href={href} className="block group">
+      <div className="bg-surface border border-lime/15 rounded-2xl p-5 h-full hover:border-lime/30 hover:shadow-cyan transition-all duration-150">
         <div className="flex items-start justify-between mb-3">
           <div className="w-9 h-9 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center">
             {icon}
@@ -337,7 +353,7 @@ function LiveModuleCard({
 
 function ComingSoonCard({ icon, title }: { icon: ReactNode; title: string }) {
   return (
-    <div className="bg-surface border border-border rounded-2xl p-5 opacity-50">
+    <div className="bg-surface border border-border/40 rounded-2xl p-5 opacity-35">
       <div className="flex items-start justify-between mb-3">
         <div className="w-9 h-9 rounded-xl bg-surface-raised border border-border flex items-center justify-center text-text-muted">
           {icon}
@@ -346,8 +362,8 @@ function ComingSoonCard({ icon, title }: { icon: ReactNode; title: string }) {
           Soon
         </span>
       </div>
-      <p className="font-semibold text-text-primary">{title}</p>
-      <p className="text-xs text-text-muted mt-1">Coming in a future release</p>
+      <p className="font-semibold text-text-secondary">{title}</p>
+      <p className="text-xs text-text-muted mt-1">Coming soon</p>
     </div>
   )
 }

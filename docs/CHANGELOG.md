@@ -2,6 +2,137 @@
 
 ---
 
+## 2026-05-01 — Sprints 126–135: Premium UI System Alignment + Manus Aesthetic Match V1
+
+**Mode:** UI/aesthetic alignment sprint — no backend changes, no migrations.
+
+**Migrations created:** None
+
+### Sprint 126 — UI Audit + Design System Plan V1
+- Created `docs/PREMIUM_UI_SYSTEM_AUDIT.md` — Full audit of current styling architecture, component inventory, routes requiring polish, safest update paths, design token targets.
+
+### Sprint 127 — Global Theme Tokens + Base Surface V1
+- Modified `tailwind.config.ts` — Changed primary accent `lime` token from lime green (#C8FF00) to cyan (#11d9df). Deepened background tokens to near-black Manus aesthetic. Added `status.purple` (#b56cff), `shadow.cyan`, updated all surface/border/text colors.
+- Modified `src/app/globals.css` — Added comprehensive CSS variables (--bg-app, --accent-cyan, --border-subtle, etc.). Added new utility classes: `.page-eyebrow`, `.page-title`, `.page-subtitle`, `.label-xs-cyan`, `.pill-*`, `.input-base`, `.table-card`, updated `.btn-lime` (dark text, glow), `.btn-ghost`, `.btn-danger`.
+- Modified `src/app/layout.tsx` — Updated themeColor to new base color.
+- Created `docs/PREMIUM_UI_STYLE_GUIDE.md` — Full style guide with colors, typography, spacing, card/button/table/form/sidebar/top-bar rules.
+
+### Sprint 128 — Shared Shell, Sidebar, and Top Bar V1
+- Modified `src/components/nav/SidebarNav.tsx` — Section labels (FOUNDATION / INTELLIGENCE / SYSTEM), active nav with left accent + cyan pill, bottom user card with circular avatar, name/email, sign-out icon. Accepts `userDisplayName` and `userEmail` props.
+- Modified `src/app/director/layout.tsx` — Passes `userDisplayName` and `userEmail` to SidebarNav.
+
+### Sprint 129 — Shared UI Components Polish V1
+- Modified `src/components/ui/Card.tsx` — hover uses `shadow-cyan`, CardFooter uses CSS variable border.
+- Modified `src/components/ui/MetricCard.tsx` — updated variant borders, optional icon slot.
+- Modified `src/components/ui/StatusBadge.tsx` — updated border opacities.
+- Modified `src/components/ui/Table.tsx` — CSS variable-based dividers.
+- Modified `src/components/ui/Tabs.tsx` — active state cyan, inactive hover subtle border.
+- Modified `src/components/ui/Avatar.tsx` — cyan initials on dark bg.
+- Modified `src/components/ui/SearchFilterBar.tsx` — premium focus ring, FilterChip updated.
+- Modified `src/components/ui/EmptyState.tsx` — icon container uses cyan soft bg.
+- Modified `src/components/nav/BottomTabBar.tsx` — icon glow on active, sidebar bg.
+
+### Sprint 130 — Director Dashboard + Demo Tour Polish V1
+- Modified `src/app/director/page.tsx` — Premium header with `page-eyebrow`, CTA button, Curriculum + Sessions promoted to Live modules.
+- Modified `src/app/director/demo/page.tsx` — Premium eyebrow header.
+
+### Sprint 131 — Players + Player Profile Polish V1
+- Modified `src/app/director/players/page.tsx` — Premium header with eyebrow.
+- Modified `src/app/director/players/_components/PlayersDirectoryClient.tsx` — `table-card` wrapper with CSS variable dividers.
+- Modified `src/app/director/players/import/page.tsx` — Premium eyebrow header.
+- Modified `src/app/director/players/development-intake/page.tsx` — Premium eyebrow header.
+- Modified `src/app/director/players/onboarding-review/page.tsx` — Premium eyebrow header (both states).
+
+### Sprint 132 — Curriculum + Templates + Exercise Library Polish V1
+- Modified `src/app/director/curriculum/page.tsx` — Premium eyebrow header.
+- Modified `src/app/director/curriculum/academy-version/page.tsx` — Premium eyebrow header.
+- Modified `src/app/director/fitness/templates/page.tsx` — Premium eyebrow header, p-6 padding.
+- Modified `src/app/director/fitness/templates/[templateId]/page.tsx` — Premium eyebrow header, p-6 padding.
+
+### Sprint 133 — Sessions + Coach Workflow Polish V1
+- Modified `src/app/director/sessions/page.tsx` — Premium eyebrow header, p-6 padding.
+- Modified `src/app/director/sessions/[sessionId]/page.tsx` — Premium eyebrow header.
+- Modified `src/app/coach/page.tsx` — Premium eyebrow header.
+- Modified `src/app/coach/players/page.tsx` — Premium eyebrow header.
+- Modified `src/app/coach/sessions/page.tsx` — Premium eyebrow header.
+- Modified `src/app/coach/sessions/[sessionId]/page.tsx` — Premium eyebrow header.
+- Modified `src/app/coach/voice/page.tsx` — Premium eyebrow header.
+- Modified `src/components/voice/VoiceTextInput.tsx` — Premium textarea with rounded-xl, focus ring.
+
+### Sprint 134 — Intelligence, Reporting, Parent Comms, Settings Polish V1
+- Modified `src/app/director/review/page.tsx` — Premium eyebrow header, updated badge opacities.
+- Modified `src/app/parent/page.tsx` — Premium eyebrow header.
+- Modified `src/app/player/page.tsx` — Premium eyebrow header.
+
+### Sprint 135 — Whole-App UI QA + Consistency Pass V1
+- Created `docs/PREMIUM_UI_QA.md` — Routes checked, visual updates completed, known remaining polish items, mobile/responsive notes, accessibility notes.
+- TypeScript: **Clean** — zero errors.
+
+---
+
+## 2026-05-01 — Sprints 121–125: Voice Input Demo Layer V1
+
+**Mode:** Safe browser-native voice-to-text input layer. No autonomous voice execution. No external AI APIs. All voice input feeds existing human-review workflows. Microphone → transcript → editable text box → manual submit → existing draft pipeline.
+
+**Migrations created:** None (voice_notes table already exists)
+
+---
+
+### Sprint 121 — Voice Input Architecture + Guardrails V1
+
+**Files created:**
+- `docs/VOICE_INPUT_DEMO_LAYER_ARCHITECTURE.md` — Purpose, safe voice model, supported workflows, browser Web Speech API approach, fallback typing, guardrails, privacy notes, no external AI policy, sprint path, known browser limitations.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 122 — Reusable VoiceTextInput Component V1
+
+**Files created:**
+- `src/components/voice/VoiceTextInput.tsx` — Reusable voice-to-text textarea component with start/stop listening, transcript append, editable text, clear button, graceful microphone error handling, browser support detection, and calm fallback for unsupported browsers.
+- `docs/VOICE_TEXT_INPUT_COMPONENT.md` — Component props, behavior, implementation notes, usage example, guardrails.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 123 — Voice Curriculum Command Demo Integration V1
+
+**Files modified:**
+- `src/app/director/curriculum/VoiceOverrideInputPanel.tsx` — Replaced raw textarea with `VoiceTextInput`. Manual submit flow unchanged. Added "Speak or type. The OS creates a draft for review — nothing changes automatically." copy. No auto-submit. No AI API.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 124 — Voice Coach Recap Demo Integration V1
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/saveSessionVoiceNoteAction.ts` — Server action to save a session-level voice_note (author_id, session_id, null player_id, raw_input, status: pending). Auth, academy_id scoping, and coach role verification enforced.
+- `src/app/director/sessions/[sessionId]/VoiceCoachRecapInput.tsx` — Voice-enabled coach recap input. VoiceTextInput + Save Recap button + success message. No auto-submit. No player mutations.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Added VoiceCoachRecapInput to the COACH RECAP section (above recap history). Added conditional display for recaps list.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 125 — Voice Demo QA + Brian Script V1
+
+**Files created:**
+- `docs/VOICE_INPUT_DEMO_QA.md` — 14-item manual QA checklist covering voice support, no-voice fallback, microphone denial, transcript editing, no auto-submit, draft-only submission, no external API, no parent/player visibility, no communication, no curriculum/template/player mutation.
+- `docs/BRIAN_VOICE_DEMO_SCRIPT.md` — Full demo script: sandbox setup, curriculum voice prompt, coach recap voice prompt, key talking points, what NOT to say.
+
+**Files modified:**
+- `docs/BRIAN_INTERACTIVE_DEMO_SCRIPT.md` — Added "Voice Demo Add-On" section at the end with Step A (curriculum voice) and Step B (recap voice) and core guardrail talking point.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-01 — Sprints 111–120: Real Demo Sandbox + Brian Interactive Tour V1
 
 **Mode:** Real demo sandbox seeded into director's academy with `[DEMO]` prefix tagging. Interactive tour page with status, player roster, curriculum preview, session preview, adaptive suggestions preview. Full reset/delete flow with cascade safety. No migration. No parent/player visibility. No communications.

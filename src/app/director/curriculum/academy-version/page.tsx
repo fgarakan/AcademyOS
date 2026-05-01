@@ -146,9 +146,9 @@ export default async function AcademyCurriculumVersionPage() {
 
       {/* Page header */}
       <div>
-        <p className="label-xs mb-1">DIRECTOR</p>
-        <h1 className="text-2xl font-bold text-text-primary">Academy Curriculum Version</h1>
-        <p className="text-text-secondary text-sm mt-1 max-w-lg">
+        <p className="page-eyebrow">Curriculum</p>
+        <h1 className="page-title">Academy Curriculum Version</h1>
+        <p className="page-subtitle max-w-lg">
           Your academy&rsquo;s curriculum customizations. The global spine is never changed — all overrides live here.
         </p>
       </div>

@@ -11,13 +11,14 @@ interface MetricCardProps {
   variant?: 'default' | 'alert' | 'warning' | 'positive'
   className?: string
   action?: string
+  icon?: ReactNode
 }
 
 const variants = {
-  default:  { number: 'text-lime', ring: '' },
-  alert:    { number: 'text-status-red', ring: 'border-status-red/30' },
-  warning:  { number: 'text-status-orange', ring: 'border-status-orange/30' },
-  positive: { number: 'text-status-green', ring: 'border-status-green/30' },
+  default:  { number: 'text-lime',         ring: 'border-border' },
+  alert:    { number: 'text-status-red',   ring: 'border-status-red/25' },
+  warning:  { number: 'text-status-orange', ring: 'border-status-orange/25' },
+  positive: { number: 'text-status-green', ring: 'border-status-green/25' },
 }
 
 export function MetricCard({
@@ -29,6 +30,7 @@ export function MetricCard({
   variant = 'default',
   className,
   action,
+  icon,
 }: MetricCardProps) {
   const v = variants[variant]
 
@@ -37,13 +39,16 @@ export function MetricCard({
       className={cn(
         'bg-surface border rounded-2xl p-5 flex flex-col gap-2',
         'transition-all duration-150',
-        (href || onClick) && 'cursor-pointer hover:border-lime/30 hover:shadow-lime',
-        v.ring || 'border-border',
+        (href || onClick) && 'cursor-pointer hover:border-lime/25 hover:shadow-cyan',
+        v.ring,
         className
       )}
       onClick={onClick}
     >
-      <p className="label-xs">{label}</p>
+      <div className="flex items-center justify-between">
+        <p className="label-xs">{label}</p>
+        {icon && <div className="text-text-muted">{icon}</div>}
+      </div>
       <p className={cn('font-mono font-bold leading-none', v.number,
         typeof value === 'number' && value > 99 ? 'text-4xl' : 'text-5xl'
       )}>

@@ -7,11 +7,9 @@ export default function ParentHome() {
 
       {/* ── Header ───────────────────────────────────────────── */}
       <div className="pt-2">
-        <p className="label-xs mb-1">FAMILY PORTAL</p>
-        <h1 className="text-2xl font-bold text-text-primary">Parent Home</h1>
-        <p className="text-text-secondary text-sm mt-1">
-          Stay connected to your child's tennis development.
-        </p>
+        <p className="page-eyebrow">Family Portal</p>
+        <h1 className="page-title">Parent Home</h1>
+        <p className="page-subtitle">Stay connected to your child's tennis development.</p>
       </div>
 
       {/* ── Child's Progress ──────────────────────────────────── */}

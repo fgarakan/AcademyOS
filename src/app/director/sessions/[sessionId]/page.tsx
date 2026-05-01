@@ -20,6 +20,7 @@ import { ClassRosterIntelligencePanel } from './ClassRosterIntelligencePanel'
 import type { PlayerIntelligenceItem } from './ClassRosterIntelligencePanel'
 import { SessionAdjustmentSuggestionsPanel } from './SessionAdjustmentSuggestionsPanel'
 import type { SuggestionRow } from './SessionAdjustmentSuggestionsPanel'
+import { VoiceCoachRecapInput } from './VoiceCoachRecapInput'
 
 interface PageProps {
   params: { sessionId: string }
@@ -465,26 +466,27 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
       <BackLink />
 
       {/* Session header */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-2xl font-bold text-text-primary">
-            {session.name ?? 'Untitled Session'}
-          </h1>
-          <SessionStatusPill status={session.status} />
-        </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-text-muted mt-1">
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" />
-            {formatDate(session.scheduled_date)}
-            {session.scheduled_time && ` · ${session.scheduled_time.slice(0, 5)}`}
-          </span>
-          {session.duration_min && (
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="page-eyebrow">Session</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <h1 className="page-title">{session.name ?? 'Untitled Session'}</h1>
+            <SessionStatusPill status={session.status} />
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-text-muted mt-1.5">
             <span className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
-              {session.duration_min} min
+              <Calendar className="w-3.5 h-3.5" />
+              {formatDate(session.scheduled_date)}
+              {session.scheduled_time && ` · ${session.scheduled_time.slice(0, 5)}`}
             </span>
-          )}
-          <span>Coach: {coachName}</span>
+            {session.duration_min && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                {session.duration_min} min
+              </span>
+            )}
+            <span>Coach: {coachName}</span>
+          </div>
         </div>
       </div>
 
@@ -925,7 +927,16 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
         <SectionHeader title="COACH RECAP" />
         <Card className="mt-3">
           <CardContent className="py-4 space-y-4">
-            <SessionRecapSummary recaps={recaps} />
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-3">Add Recap</p>
+              <VoiceCoachRecapInput sessionId={session.id} />
+            </div>
+
+            {recaps.length > 0 && (
+              <div className="pt-3 border-t border-border">
+                <SessionRecapSummary recaps={recaps} />
+              </div>
+            )}
 
             {pendingRecap && (
               <div className="pt-3 border-t border-border">

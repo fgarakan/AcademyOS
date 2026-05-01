@@ -9,9 +9,9 @@ export default function PlayerHome() {
 
       {/* ── Header ───────────────────────────────────────────── */}
       <div className="pt-2">
-        <p className="label-xs mb-1">YOUR JOURNEY</p>
-        <h1 className="text-2xl font-bold text-text-primary">Player Home</h1>
-        <p className="text-text-secondary text-sm mt-1">Show up. Level up. Every day.</p>
+        <p className="page-eyebrow">Your Journey</p>
+        <h1 className="page-title">Player Home</h1>
+        <p className="page-subtitle">Show up. Level up. Every day.</p>
       </div>
 
       {/* ── Today's Mission ───────────────────────────────────── */}

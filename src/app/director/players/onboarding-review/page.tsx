@@ -109,8 +109,9 @@ export default async function OnboardingReviewPage() {
           All Players
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Onboarding Review</h1>
-          <p className="text-sm text-text-secondary mt-1">Check which players are ready for coach intelligence.</p>
+          <p className="page-eyebrow">Players</p>
+          <h1 className="page-title">Onboarding Review</h1>
+          <p className="page-subtitle">Check which players are ready for coach intelligence.</p>
         </div>
         <Card>
           <CardContent className="py-12 text-center space-y-3">
@@ -208,10 +209,9 @@ export default async function OnboardingReviewPage() {
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Onboarding Review</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Check which players are set up and ready for coach intelligence.
-        </p>
+        <p className="page-eyebrow">Players</p>
+        <h1 className="page-title">Onboarding Review</h1>
+        <p className="page-subtitle">Check which players are set up and ready for coach intelligence.</p>
       </div>
 
       {/* Summary */}

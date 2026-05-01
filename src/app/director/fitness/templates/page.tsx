@@ -96,7 +96,7 @@ export default async function FitnessTemplatesPage() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="p-6 animate-fade-in space-y-6">
       <PageHeader />
       <div className="space-y-3">
         {templates.map(template => (
@@ -114,14 +114,13 @@ export default async function FitnessTemplatesPage() {
 
 function PageHeader() {
   return (
-    <div className="flex items-start justify-between">
+    <div className="flex items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Fitness Templates</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Imported program templates — read-only imported template viewer
-        </p>
+        <p className="page-eyebrow">Director</p>
+        <h1 className="page-title">Fitness Templates</h1>
+        <p className="page-subtitle">Imported program templates</p>
       </div>
-      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-raised border border-border text-xs text-text-muted">
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface-raised border border-border text-xs text-text-muted shrink-0">
         <Lock className="w-3 h-3" />
         Read-only
       </div>

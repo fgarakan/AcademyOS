@@ -1,5 +1,5 @@
 'use client'
-import { Search, Filter } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type ReactNode } from 'react'
 
@@ -19,8 +19,8 @@ export function SearchFilterBar({
   className,
 }: SearchFilterBarProps) {
   return (
-    <div className={cn('flex gap-2', className)}>
-      <div className="relative flex-1">
+    <div className={cn('flex gap-2 flex-wrap', className)}>
+      <div className="relative flex-1 min-w-[200px]">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
         <input
           type="text"
@@ -28,15 +28,15 @@ export function SearchFilterBar({
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           className={cn(
-            'w-full pl-9 pr-4 py-2 rounded-xl text-sm',
+            'w-full pl-9 pr-4 py-2.5 rounded-xl text-sm',
             'bg-surface-raised border border-border',
             'text-text-primary placeholder:text-text-muted',
-            'focus:outline-none focus:border-lime/50 transition-colors'
+            'focus:outline-none focus:ring-2 focus:ring-lime/25 focus:border-lime/40 transition-colors'
           )}
         />
       </div>
       {filters && (
-        <div className="flex gap-2">{filters}</div>
+        <div className="flex gap-2 flex-wrap">{filters}</div>
       )}
     </div>
   )
@@ -57,8 +57,8 @@ export function FilterChip({
       className={cn(
         'px-3 py-2 rounded-xl text-sm font-medium border transition-all duration-100',
         active
-          ? 'bg-lime/10 border-lime/40 text-lime'
-          : 'bg-surface-raised border-border text-text-muted hover:text-text-secondary'
+          ? 'bg-lime/10 border-lime/35 text-lime'
+          : 'bg-surface-raised border-border text-text-muted hover:text-text-secondary hover:border-border-strong'
       )}
     >
       {label}

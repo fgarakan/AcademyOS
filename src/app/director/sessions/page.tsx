@@ -102,7 +102,7 @@ export default async function DirectorSessionsPage() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="p-6 animate-fade-in space-y-6">
       <PageHeader />
 
       {sessionList.length === 0 ? (
@@ -169,11 +169,9 @@ export default async function DirectorSessionsPage() {
 function PageHeader() {
   return (
     <div>
-      <p className="label-xs mb-1">DIRECTOR</p>
-      <h1 className="text-2xl font-bold text-text-primary">Sessions</h1>
-      <p className="text-text-muted text-sm mt-1">
-        Generated session snapshots for this academy.
-      </p>
+      <p className="page-eyebrow">Director</p>
+      <h1 className="page-title">Sessions</h1>
+      <p className="page-subtitle">Generated session snapshots for this academy.</p>
     </div>
   )
 }

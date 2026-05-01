@@ -38,8 +38,8 @@ export default async function CoachPlayersPage() {
 
       {/* ── Header ───────────────────────────────────────────── */}
       <div>
-        <p className="label-xs mb-1">YOUR PLAYERS</p>
-        <h1 className="text-2xl font-bold text-text-primary">My Players</h1>
+        <p className="page-eyebrow">Your Players</p>
+        <h1 className="page-title">My Players</h1>
         <p className="text-text-muted text-sm mt-1">
           Players assigned to your groups will appear here.
         </p>

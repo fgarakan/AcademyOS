@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Academy OS',
   description: 'Voice-driven tennis academy operating system',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
-  themeColor: '#0A0A0A',
+  themeColor: '#030506',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

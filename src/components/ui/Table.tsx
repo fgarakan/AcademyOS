@@ -10,11 +10,15 @@ export function Table({ children, className }: { children: ReactNode; className?
 }
 
 export function TableHeader({ children }: { children: ReactNode }) {
-  return <thead>{children}</thead>
+  return (
+    <thead style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+      {children}
+    </thead>
+  )
 }
 
 export function TableBody({ children }: { children: ReactNode }) {
-  return <tbody className="divide-y divide-border">{children}</tbody>
+  return <tbody className="divide-y" style={{ '--tw-divide-opacity': '1', borderColor: 'var(--border-subtle)' } as React.CSSProperties}>{children}</tbody>
 }
 
 export function TableRow({
@@ -42,7 +46,7 @@ export function TableRow({
 
 export function TableHead({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <th className={cn('px-4 py-2.5 text-left label-xs text-text-muted font-medium', className)}>
+    <th className={cn('px-4 py-3 text-left label-xs text-text-muted font-medium', className)}>
       {children}
     </th>
   )
@@ -50,7 +54,7 @@ export function TableHead({ children, className }: { children: ReactNode; classN
 
 export function TableCell({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <td className={cn('px-4 py-3 text-text-secondary', className)}>
+    <td className={cn('px-4 py-3.5 text-text-secondary', className)}>
       {children}
     </td>
   )

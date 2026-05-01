@@ -81,9 +81,9 @@ export default async function CoachHome() {
 
       {/* ── Header ───────────────────────────────────────────── */}
       <div>
-        <p className="label-xs mb-1">YOUR WORKSPACE</p>
-        <h1 className="text-2xl font-bold text-text-primary">Coach Hub</h1>
-        <p className="text-text-muted text-sm mt-1">{today}</p>
+        <p className="page-eyebrow">Your Workspace</p>
+        <h1 className="page-title">Coach Hub</h1>
+        <p className="page-subtitle">{today}</p>
       </div>
 
       {/* ── Today ────────────────────────────────────────────── */}

@@ -25,8 +25,8 @@ export default function CoachVoicePage() {
 
       {/* ── Header ───────────────────────────────────────────── */}
       <div>
-        <p className="label-xs mb-1">VOICE NOTES</p>
-        <h1 className="text-2xl font-bold text-text-primary">Voice Notes</h1>
+        <p className="page-eyebrow">Voice Notes</p>
+        <h1 className="page-title">Voice Notes</h1>
         <p className="text-text-muted text-sm mt-1">
           Faster coach notes — no typing required.
         </p>

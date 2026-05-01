@@ -32,11 +32,14 @@ export function TabsList({ children, className, scrollable = false }: {
   scrollable?: boolean
 }) {
   return (
-    <div className={cn(
-      'flex gap-1 border-b border-border',
-      scrollable && 'overflow-x-auto scrollbar-none',
-      className
-    )}>
+    <div
+      className={cn(
+        'flex gap-0.5',
+        scrollable && 'overflow-x-auto scrollbar-none',
+        className
+      )}
+      style={{ borderBottom: '1px solid var(--border-subtle)' }}
+    >
       {children}
     </div>
   )
@@ -56,7 +59,7 @@ export function TabsTrigger({ value, children, className }: {
         'px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all duration-150 border-b-2 -mb-px',
         isActive
           ? 'text-lime border-lime'
-          : 'text-text-muted border-transparent hover:text-text-secondary',
+          : 'text-text-muted border-transparent hover:text-text-secondary hover:border-border',
         className
       )}
     >

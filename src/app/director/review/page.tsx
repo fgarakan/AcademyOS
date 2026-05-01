@@ -724,21 +724,21 @@ function PageHeader({
   return (
     <div className="space-y-4">
       <div>
-        <p className="label-xs mb-1">DIRECTOR</p>
+        <p className="page-eyebrow">Director</p>
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold text-text-primary">Draft Review Queue</h1>
+          <h1 className="page-title">Draft Review Queue</h1>
           {totalPending > 0 && (
-            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/25">
               {totalPending} pending
             </span>
           )}
           {totalReadyToApply > 0 && (
-            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/25">
               {totalReadyToApply} ready to apply
             </span>
           )}
         </div>
-        <p className="text-text-muted text-sm mt-1">
+        <p className="page-subtitle">
           Structured drafts awaiting review or application. Nothing is applied automatically.
         </p>
       </div>

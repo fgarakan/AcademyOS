@@ -200,11 +200,11 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
 
       {/* Session header */}
       <div>
-        <p className="label-xs mb-1">SESSION</p>
-        <h1 className="text-xl font-bold text-text-primary">
+        <p className="page-eyebrow">Session</p>
+        <h1 className="page-title text-xl">
           {session.name ?? 'Untitled Session'}
         </h1>
-        <p className="text-text-muted text-sm mt-1">
+        <p className="page-subtitle">
           {formatDate(session.scheduled_date)}
           {session.scheduled_time && ` · ${session.scheduled_time.slice(0, 5)}`}
           {session.duration_min && ` · ${session.duration_min} min`}

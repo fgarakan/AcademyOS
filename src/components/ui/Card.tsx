@@ -13,8 +13,8 @@ export function Card({ children, className, onClick, hover = false }: CardProps)
     <div
       onClick={onClick}
       className={cn(
-        'bg-surface border border-border rounded-2xl',
-        hover && 'cursor-pointer transition-all duration-150 hover:border-lime/30 hover:shadow-lime',
+        'bg-surface border border-border rounded-2xl transition-all duration-150',
+        hover && 'cursor-pointer hover:border-lime/25 hover:shadow-cyan',
         onClick && 'cursor-pointer',
         className
       )}
@@ -42,7 +42,7 @@ export function CardContent({ children, className }: { children: ReactNode; clas
 
 export function CardFooter({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('px-5 py-3 border-t border-border', className)}>
+    <div className={cn('px-5 py-3', className)} style={{ borderTop: '1px solid var(--border-subtle)' }}>
       {children}
     </div>
   )

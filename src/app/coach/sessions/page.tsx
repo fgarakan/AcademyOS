@@ -57,8 +57,8 @@ export default async function CoachSessionsPage() {
 
       {/* ── Header ───────────────────────────────────────────── */}
       <div>
-        <p className="label-xs mb-1">SESSIONS</p>
-        <h1 className="text-2xl font-bold text-text-primary">Sessions</h1>
+        <p className="page-eyebrow">Sessions</p>
+        <h1 className="page-title">Sessions</h1>
         <p className="text-text-muted text-sm mt-1">{today}</p>
       </div>
 

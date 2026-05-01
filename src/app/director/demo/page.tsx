@@ -48,11 +48,9 @@ export default async function DemoTourPage() {
 
       {/* Header */}
       <div>
-        <p className="label-xs mb-1">DEMO TOUR</p>
-        <h1 className="text-2xl font-bold text-text-primary">Academy OS Demo Tour</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Preview how Academy OS works once your player data is uploaded.
-        </p>
+        <p className="page-eyebrow">Demo Tour</p>
+        <h1 className="page-title">Academy OS Demo Tour</h1>
+        <p className="page-subtitle">Preview how Academy OS works once your player data is uploaded.</p>
       </div>
 
       <SandboxBanner />

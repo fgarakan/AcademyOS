@@ -113,9 +113,9 @@ export default async function DirectorCurriculumPage() {
 
       {/* Page header */}
       <div>
-        <p className="label-xs mb-1">DIRECTOR</p>
-        <h1 className="text-2xl font-bold text-text-primary">Curriculum</h1>
-        <p className="text-text-secondary text-sm mt-1 max-w-lg">
+        <p className="page-eyebrow">Director</p>
+        <h1 className="page-title">Curriculum</h1>
+        <p className="page-subtitle max-w-lg">
           Your academy&rsquo;s curriculum version and voice customization live here.
           The global spine is shared and protected — your overrides stay in your version.
         </p>

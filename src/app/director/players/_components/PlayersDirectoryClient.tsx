@@ -105,8 +105,8 @@ export function PlayersDirectoryClient({ players }: Props) {
           description="Try a different name or filter."
         />
       ) : (
-        <Card>
-          <ul className="divide-y divide-border">
+        <div className="table-card">
+          <ul style={{ '--divide-color': 'var(--border-subtle)' } as React.CSSProperties}>
             {filtered.map((player, idx) => {
               if (!player.player_id) return null
               const badge = playerStatusBadge(player.player_status)
@@ -115,7 +115,7 @@ export function PlayersDirectoryClient({ players }: Props) {
               const isLast = idx === filtered.length - 1
 
               return (
-                <li key={player.player_id}>
+                <li key={player.player_id} style={!isFirst ? { borderTop: '1px solid var(--border-subtle)' } : {}}>
                   <Link
                     href={`/director/players/${player.player_id}`}
                     className={[
@@ -190,7 +190,7 @@ export function PlayersDirectoryClient({ players }: Props) {
               )
             })}
           </ul>
-        </Card>
+        </div>
       )}
 
       {filtered.length > 0 && (
