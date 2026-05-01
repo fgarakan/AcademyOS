@@ -2,6 +2,49 @@
 
 ---
 
+## 2026-05-01 — Sprints 146–155: Director Dashboard Command Cards + Drilldowns + Private Lesson Requests V1
+
+**Mode:** Director dashboard command layer. No npm installs. No AI API calls. No communications sent.
+
+**Migrations created:** `supabase/migrations/050_private_lesson_requests.sql`
+
+### Sprint 146 — Architecture Audit V1
+- Created `docs/DIRECTOR_DASHBOARD_COMMAND_CARDS_ARCHITECTURE.md` — Full audit: current dashboard state, available data, command card plan, drilldown plans, private lesson request plan, alerts plan, schema gaps, implementation order.
+
+### Sprint 147 — Dashboard Top Command Cards V1
+- Modified `src/app/director/page.tsx` — Full rewrite. 5 CommandCards (Active Players/Academy Improvement/Sessions/Private Lessons/Academy Alerts), Academy Alerts middle panel, 4 QuickAction bottom tiles. rawDb pattern for private_lesson_requests.
+
+### Sprint 148 — Active Players Drilldown V1
+- Created `src/app/director/players/active/page.tsx` — Active players list with summary cards (total, with focus, missing summary, needs review), player table with focus areas and score delta, links to player profiles.
+
+### Sprint 149 — Academy Improvement Drilldown V1
+- Created `src/app/director/improvement/page.tsx` — Improvement metrics using v_player_summary.score_delta. Summary cards, player table with trend chips, UTR note, links to player profiles.
+
+### Sprint 150 — Sessions Drilldown V1
+- Created `src/app/director/sessions/overview/page.tsx` — Current week sessions with summary cards (sessions, participants, completed, missing recap), session list with coach/group/status/recap status.
+
+### Sprint 151 — Private Lesson Requests Schema V1
+- Created `supabase/migrations/050_private_lesson_requests.sql` — private_lesson_requests table with RLS (directors/head coaches only). Status: new/reviewing/assigned/scheduled/declined/completed.
+- Created `docs/PRIVATE_LESSON_REQUESTS_ARCHITECTURE.md` — Schema docs, guardrails, status values, deferred parent write access.
+
+### Sprint 152 — Private Lesson Requests Director Queue V1
+- Created `src/app/director/private-lessons/page.tsx` — Director queue with summary cards, expandable request cards.
+- Created `src/app/director/private-lessons/PrivateLessonRequestCard.tsx` — Client component: expand/collapse, status update, director notes.
+- Created `src/app/director/private-lessons/privateLessonActions.ts` — Server actions: updatePrivateLessonStatusAction, updateDirectorNotesAction.
+
+### Sprint 153 — Parent Portal Private Lesson Preview V1
+- Modified `src/app/parent/page.tsx` — Added "Request a Private Lesson" preview card. Form fields shown but disabled. Submit button disabled. No live submission wired.
+
+### Sprint 154 — Academy Alerts Command Center V1
+- Created `src/app/director/alerts/page.tsx` — Deterministic alert aggregation (no AI). 6 alert types. Category filters. Severity-coded cards with why/action/link. Summary row.
+
+### Sprint 155 — Positive Development Language + Dashboard QA V1
+- Created `docs/DIRECTOR_DASHBOARD_COMMAND_CARDS_QA.md` — 13 QA tests covering all sprint deliverables.
+- Created `docs/POSITIVE_DEVELOPMENT_LANGUAGE_GUIDE.md` — Approved language terms, parent/player examples, implementation checklist.
+- TypeScript: clean (0 errors).
+
+---
+
 ## 2026-05-01 — Sprints 136–145: Fitness OS Template Builder + Class Template Separation V1
 
 **Mode:** Fitness OS product build — UI + server actions + library utilities. No migrations.

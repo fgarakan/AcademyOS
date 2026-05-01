@@ -1,17 +1,19 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import {
-  Users, BookOpen, Calendar, Brain, BarChart3, Settings,
-  ChevronRight, Activity, Clock,
+  Users, BookOpen, Calendar, ChevronRight, Activity,
+  Clock, Mic, Brain, AlertTriangle, TrendingUp, BookMarked,
+  GraduationCap,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
-import { getAcademyPriorityQueue } from '@/lib/backend/dashboard'
+import { getAcademyPriorityQueue, getReassessmentPipeline } from '@/lib/backend/dashboard'
 import {
   Card, CardHeader, CardContent, CardFooter,
-  MetricCard, EmptyState, Avatar, StatusBadge,
+  EmptyState, Avatar, StatusBadge,
 } from '@/components/ui'
 import { urgencyToLabel } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -60,7 +62,6 @@ export default async function DirectorDashboard() {
     )
   }
 
-  // Sequential queries — AI_BACKEND_RULES rule #5
   const { data: profile } = await supabase
     .from('profiles')
     .select('academy_id')
@@ -87,15 +88,58 @@ export default async function DirectorDashboard() {
 
   const players = await getPlayerSummaries(supabase, academyId)
   const priorityQueue = await getAcademyPriorityQueue(supabase, academyId, { limit: 5 })
+  const reassessmentPipeline = await getReassessmentPipeline(supabase, academyId)
 
-  // Derived metrics — all from real Supabase data, no fake numbers
-  const totalPlayers    = players.length
+  // Player counts
   const activePlayers   = players.filter(p => p.player_status === 'active').length
   const pendingCount    = players.filter(p => isPending(p.player_status)).length
   const attentionCount  = players.filter(
     p => p.player_status === 'on_hold' || p.player_status === 'reassessment_due'
   ).length
   const pendingList     = players.filter(p => isPending(p.player_status)).slice(0, 5)
+
+  // Academy improvement: average score_delta for active players
+  const activePl = players.filter(p => p.player_status === 'active')
+  const withDelta = activePl.filter(p => p.score_delta !== null && p.score_delta !== undefined)
+  const improvingCount = withDelta.filter(p => (p.score_delta ?? 0) > 0).length
+  const avgDelta = withDelta.length > 0
+    ? Math.round(withDelta.reduce((s, p) => s + (p.score_delta ?? 0), 0) / withDelta.length * 10) / 10
+    : null
+
+  // Sessions this week
+  const now = new Date()
+  const weekStart = new Date(now)
+  weekStart.setDate(now.getDate() - now.getDay())
+  weekStart.setHours(0, 0, 0, 0)
+  const weekStartStr = weekStart.toISOString().split('T')[0]
+  const weekEndStr = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+    .toISOString().split('T')[0]
+
+  const { data: weekSessions } = await supabase
+    .from('sessions')
+    .select('id, name, scheduled_date, status, coach_id, group_id')
+    .eq('academy_id', academyId)
+    .gte('scheduled_date', weekStartStr)
+    .lt('scheduled_date', weekEndStr)
+
+  const sessionsThisWeek = (weekSessions ?? []).length
+
+  // Private lesson requests — rawDb cast since table may not be in generated types yet
+  const rawDb = supabase as any
+  const { data: plrData } = await rawDb
+    .from('private_lesson_requests')
+    .select('id, status')
+    .eq('academy_id', academyId)
+
+  const allRequests = (plrData ?? []) as Array<{ id: string; status: string }>
+  const newRequests = allRequests.filter(r => r.status === 'new').length
+
+  // Deterministic alert count
+  const missingFocus = activePl.filter(p => !p.focus_areas || p.focus_areas.length === 0).length
+  const reassessmentDue = reassessmentPipeline.filter(
+    r => r.urgency === 'overdue' || r.urgency === 'due_soon'
+  ).length
+  const totalAlerts = missingFocus + attentionCount + reassessmentDue + newRequests
 
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -117,34 +161,47 @@ export default async function DirectorDashboard() {
         </Link>
       </div>
 
-      {/* ── Snapshot metrics ───────────────────────────────── */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <MetricCard
-          label="Total Players"
-          value={totalPlayers}
-          sublabel="All registered"
-          href="/director/players"
-          action="View all"
-        />
-        <MetricCard
-          label="Active"
+      {/* ── Top Command Cards ─────────────────────────────── */}
+      <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+        <CommandCard
+          label="Active Players"
           value={activePlayers}
           sublabel="Currently training"
-          variant="positive"
+          href="/director/players/active"
+          accentColor="lime"
+          icon={<Users className="w-4 h-4" />}
         />
-        <MetricCard
-          label="Pending Placement"
-          value={pendingCount}
-          sublabel="Awaiting onboarding"
-          variant={pendingCount > 0 ? 'warning' : 'default'}
-          href={pendingCount > 0 ? '/director/players' : undefined}
-          action={pendingCount > 0 ? 'Review' : undefined}
+        <CommandCard
+          label="Academy Improvement"
+          value={avgDelta !== null ? (avgDelta > 0 ? `+${avgDelta}` : String(avgDelta)) : '—'}
+          sublabel={withDelta.length > 0 ? `${improvingCount} of ${activePlayers} improving` : 'No assessment data yet'}
+          href="/director/improvement"
+          accentColor={avgDelta !== null && avgDelta > 0 ? 'green' : 'default'}
+          icon={<TrendingUp className="w-4 h-4" />}
         />
-        <MetricCard
-          label="Needs Attention"
-          value={attentionCount}
-          sublabel="On hold or reassessment due"
-          variant={attentionCount > 0 ? 'alert' : 'default'}
+        <CommandCard
+          label="Sessions"
+          value={sessionsThisWeek}
+          sublabel="This week"
+          href="/director/sessions/overview"
+          accentColor="lime"
+          icon={<Calendar className="w-4 h-4" />}
+        />
+        <CommandCard
+          label="Private Lessons"
+          value={newRequests}
+          sublabel={newRequests === 1 ? '1 new request' : newRequests > 0 ? `${newRequests} new requests` : 'No new requests'}
+          href="/director/private-lessons"
+          accentColor={newRequests > 0 ? 'orange' : 'default'}
+          icon={<GraduationCap className="w-4 h-4" />}
+        />
+        <CommandCard
+          label="Academy Alerts"
+          value={totalAlerts}
+          sublabel={totalAlerts > 0 ? 'Items needing attention' : 'All clear'}
+          href="/director/alerts"
+          accentColor={totalAlerts > 0 ? 'red' : 'default'}
+          icon={<AlertTriangle className="w-4 h-4" />}
         />
       </div>
 
@@ -212,10 +269,10 @@ export default async function DirectorDashboard() {
           {priorityQueue.length > 0 && (
             <CardFooter>
               <Link
-                href="/director/players"
+                href="/director/players/active"
                 className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
               >
-                View all players →
+                View all active players →
               </Link>
             </CardFooter>
           )}
@@ -284,35 +341,84 @@ export default async function DirectorDashboard() {
 
       </div>
 
-      {/* ── Module cards ───────────────────────────────────── */}
+      {/* ── Academy Alerts detailed middle section ──────────── */}
+      <AcademyAlertsPanel
+        missingFocusCount={missingFocus}
+        attentionCount={attentionCount}
+        reassessmentDueCount={reassessmentDue}
+        newRequestsCount={newRequests}
+        pendingCount={pendingCount}
+        sessions={weekSessions ?? []}
+      />
+
+      {/* ── Sessions this week ──────────────────────────────── */}
+      {(weekSessions ?? []).length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold text-text-primary">Sessions This Week</h2>
+                <p className="text-xs text-text-muted mt-0.5">Scheduled and completed sessions</p>
+              </div>
+              <Link
+                href="/director/sessions/overview"
+                className="text-xs text-lime hover:opacity-80 font-medium"
+              >
+                View all →
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-1">
+              {(weekSessions ?? []).slice(0, 4).map(session => (
+                <Link
+                  key={session.id}
+                  href={`/director/sessions/${session.id}`}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-text-primary truncate">
+                      {session.name ?? 'Untitled Session'}
+                    </p>
+                    <p className="text-xs text-text-muted">{formatDate(session.scheduled_date)}</p>
+                  </div>
+                  <SessionStatusPill status={session.status} />
+                  <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Bottom Quick Actions ────────────────────────────── */}
       <div>
-        <p className="label-xs mb-4">Academy Modules</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <LiveModuleCard
+        <p className="label-xs mb-4">Quick Actions</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <QuickActionCard
             icon={<Users className="w-4 h-4 text-lime" />}
-            title="Players"
-            description={
-              totalPlayers > 0
-                ? `${totalPlayers} player${totalPlayers !== 1 ? 's' : ''} registered`
-                : 'Player directory'
-            }
-            href="/director/players"
+            title="Onboarding Flow"
+            description="Add or import players and complete placement."
+            href="/director/players/import"
           />
-          <LiveModuleCard
+          <QuickActionCard
             icon={<BookOpen className="w-4 h-4 text-lime" />}
-            title="Curriculum"
-            description="Developmental spine + versions"
-            href="/director/curriculum"
+            title="Class Templates"
+            description="Build academy class and session templates."
+            href="/director/class-templates"
           />
-          <LiveModuleCard
-            icon={<Calendar className="w-4 h-4 text-lime" />}
-            title="Sessions"
-            description="Session library + coach briefings"
-            href="/director/sessions"
+          <QuickActionCard
+            icon={<Mic className="w-4 h-4 text-lime" />}
+            title="Voice Note AI"
+            description="Capture coach notes and structure them."
+            href="/director/review"
           />
-          <ComingSoonCard icon={<Brain className="w-4 h-4" />}    title="Intelligence" />
-          <ComingSoonCard icon={<BarChart3 className="w-4 h-4" />} title="Reports" />
-          <ComingSoonCard icon={<Settings className="w-4 h-4" />}  title="Configuration" />
+          <QuickActionCard
+            icon={<Brain className="w-4 h-4 text-lime" />}
+            title="Academy Intelligence"
+            description="Review alerts, trends, and recommendations."
+            href="/director/alerts"
+          />
         </div>
       </div>
 
@@ -320,9 +426,56 @@ export default async function DirectorDashboard() {
   )
 }
 
-// ── Sub-components ─────────────────────────────────────────────
+// ── Command Card ────────────────────────────────────────────────
 
-function LiveModuleCard({
+type AccentColor = 'lime' | 'green' | 'orange' | 'red' | 'default'
+
+const ACCENT_CLASSES: Record<AccentColor, { number: string; border: string; hover: string }> = {
+  lime:    { number: 'text-lime',          border: 'border-lime/20',         hover: 'hover:border-lime/40' },
+  green:   { number: 'text-status-green',  border: 'border-status-green/20', hover: 'hover:border-status-green/40' },
+  orange:  { number: 'text-status-orange', border: 'border-status-orange/20',hover: 'hover:border-status-orange/40' },
+  red:     { number: 'text-status-red',    border: 'border-status-red/20',   hover: 'hover:border-status-red/40' },
+  default: { number: 'text-text-primary',  border: 'border-border',          hover: 'hover:border-lime/20' },
+}
+
+function CommandCard({
+  label,
+  value,
+  sublabel,
+  href,
+  accentColor = 'default',
+  icon,
+}: {
+  label: string
+  value: string | number
+  sublabel?: string
+  href: string
+  accentColor?: AccentColor
+  icon?: ReactNode
+}) {
+  const ac = ACCENT_CLASSES[accentColor]
+  return (
+    <Link href={href} className="block group">
+      <div className={`bg-surface rounded-2xl p-5 border ${ac.border} ${ac.hover} hover:shadow-cyan transition-all duration-150 h-full flex flex-col gap-2`}>
+        <div className="flex items-center justify-between">
+          <p className="label-xs">{label}</p>
+          {icon && <span className={`${ac.number} opacity-60`}>{icon}</span>}
+        </div>
+        <p className={`font-mono font-bold leading-none text-5xl ${ac.number} ${String(value).length > 3 ? 'text-4xl' : ''}`}>
+          {value}
+        </p>
+        {sublabel && <p className="text-text-secondary text-xs">{sublabel}</p>}
+        <p className={`${ac.number} text-xs font-medium mt-auto group-hover:translate-x-0.5 transition-transform`}>
+          View details →
+        </p>
+      </div>
+    </Link>
+  )
+}
+
+// ── Quick Action Card ───────────────────────────────────────────
+
+function QuickActionCard({
   icon, title, description, href,
 }: {
   icon: ReactNode
@@ -337,11 +490,8 @@ function LiveModuleCard({
           <div className="w-9 h-9 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center">
             {icon}
           </div>
-          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-lime/10 text-lime border border-lime/20">
-            Live
-          </span>
         </div>
-        <p className="font-semibold text-text-primary">{title}</p>
+        <p className="font-semibold text-text-primary text-sm">{title}</p>
         <p className="text-xs text-text-secondary mt-1">{description}</p>
         <p className="text-lime text-xs font-medium mt-3 group-hover:translate-x-0.5 transition-transform">
           Open →
@@ -351,19 +501,169 @@ function LiveModuleCard({
   )
 }
 
-function ComingSoonCard({ icon, title }: { icon: ReactNode; title: string }) {
+// ── Academy Alerts Panel (middle section) ───────────────────────
+
+interface SessionRow {
+  id: string
+  name: string | null
+  scheduled_date: string
+  status: string
+  coach_id: string
+  group_id: string | null
+}
+
+function AcademyAlertsPanel({
+  missingFocusCount,
+  attentionCount,
+  reassessmentDueCount,
+  newRequestsCount,
+  pendingCount,
+  sessions,
+}: {
+  missingFocusCount: number
+  attentionCount: number
+  reassessmentDueCount: number
+  newRequestsCount: number
+  pendingCount: number
+  sessions: SessionRow[]
+}) {
+  const completedMissingNotes = sessions.filter(
+    s => s.status === 'completed' && false // session_notes check requires full fetch; shown via alerts page
+  ).length
+
+  type Severity = 'high' | 'medium' | 'low'
+
+  interface AlertItem {
+    severity: Severity
+    title: string
+    why: string
+    href: string
+    count: number
+  }
+
+  const alerts: AlertItem[] = [
+    missingFocusCount > 0 && {
+      severity: 'medium' as Severity,
+      title: `${missingFocusCount} player${missingFocusCount !== 1 ? 's' : ''} missing current focus`,
+      why: 'Players without focus areas cannot receive targeted coaching.',
+      href: '/director/players/active',
+      count: missingFocusCount,
+    },
+    attentionCount > 0 && {
+      severity: 'high' as Severity,
+      title: `${attentionCount} player${attentionCount !== 1 ? 's' : ''} needing attention`,
+      why: 'Players on hold or due for reassessment are not progressing.',
+      href: '/director/players/active',
+      count: attentionCount,
+    },
+    reassessmentDueCount > 0 && {
+      severity: 'high' as Severity,
+      title: `${reassessmentDueCount} player${reassessmentDueCount !== 1 ? 's' : ''} due for reassessment`,
+      why: 'Overdue reassessments delay curriculum progression.',
+      href: '/director/improvement',
+      count: reassessmentDueCount,
+    },
+    newRequestsCount > 0 && {
+      severity: 'medium' as Severity,
+      title: `${newRequestsCount} private lesson request${newRequestsCount !== 1 ? 's' : ''} waiting`,
+      why: 'Parent requests need director review and routing.',
+      href: '/director/private-lessons',
+      count: newRequestsCount,
+    },
+    pendingCount > 0 && {
+      severity: 'low' as Severity,
+      title: `${pendingCount} player${pendingCount !== 1 ? 's' : ''} pending placement`,
+      why: 'New players cannot join groups until placement is complete.',
+      href: '/director/players',
+      count: pendingCount,
+    },
+  ].filter(Boolean) as AlertItem[]
+
+  const sevColor: Record<Severity, string> = {
+    high:   'bg-status-red/10 border-status-red/20 text-status-red',
+    medium: 'bg-status-orange/10 border-status-orange/20 text-status-orange',
+    low:    'bg-surface-raised border-border text-text-muted',
+  }
+  const sevLabel: Record<Severity, string> = {
+    high: 'Urgent', medium: 'Review', low: 'Info',
+  }
+
   return (
-    <div className="bg-surface border border-border/40 rounded-2xl p-5 opacity-35">
-      <div className="flex items-start justify-between mb-3">
-        <div className="w-9 h-9 rounded-xl bg-surface-raised border border-border flex items-center justify-center text-text-muted">
-          {icon}
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-text-primary">Academy Alerts</h2>
+            <p className="text-xs text-text-muted mt-0.5">Items that need director attention</p>
+          </div>
+          {alerts.length > 0 && (
+            <span className="font-mono text-status-orange text-xl font-bold leading-none">
+              {alerts.length}
+            </span>
+          )}
         </div>
-        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-surface-raised text-text-muted border border-border">
-          Soon
-        </span>
-      </div>
-      <p className="font-semibold text-text-secondary">{title}</p>
-      <p className="text-xs text-text-muted mt-1">Coming soon</p>
-    </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {alerts.length === 0 ? (
+          <EmptyState
+            icon={<Activity className="w-5 h-5" />}
+            title="All clear"
+            description="No alerts at this time. Academy is on track."
+            className="py-8"
+          />
+        ) : (
+          <div className="space-y-2">
+            {alerts.map((alert, i) => (
+              <Link key={i} href={alert.href} className="block group">
+                <div className="flex items-start gap-3 px-3 py-3 rounded-xl border border-transparent hover:bg-surface-raised hover:border-border transition-all">
+                  <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${sevColor[alert.severity]}`}>
+                    {sevLabel[alert.severity]}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-text-primary">{alert.title}</p>
+                    <p className="text-xs text-text-muted mt-0.5">{alert.why}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0 mt-1" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </CardContent>
+      <CardFooter>
+        <Link
+          href="/director/alerts"
+          className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
+        >
+          View full alerts center →
+        </Link>
+      </CardFooter>
+    </Card>
   )
 }
+
+// ── Session status pill ─────────────────────────────────────────
+
+function SessionStatusPill({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    planned:     'bg-surface-raised text-text-muted border-border',
+    in_progress: 'bg-lime/10 text-lime border-lime/30',
+    completed:   'bg-status-green/10 text-status-green border-status-green/30',
+    cancelled:   'bg-status-red/10 text-status-red border-status-red/30',
+  }
+  const label: Record<string, string> = {
+    planned: 'Planned', in_progress: 'In Progress',
+    completed: 'Completed', cancelled: 'Cancelled',
+  }
+  return (
+    <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${styles[status] ?? styles.planned}`}>
+      {label[status] ?? status}
+    </span>
+  )
+}
+
+// ── Unused imports cleanup ──────────────────────────────────────
+
+// BookMarked was imported for future use — keep to avoid repeated import churn
+const _unused = BookMarked
+void _unused
