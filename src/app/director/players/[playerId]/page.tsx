@@ -32,6 +32,7 @@ import type { RequirementEvidenceDetailRow } from './types'
 import { EvidenceRequirementDraftButton } from './EvidenceRequirementDraftButton'
 import { EvidenceRequirementDrafts, type EvidenceRequirementDraftRow } from './EvidenceRequirementDrafts'
 import { createEvidenceRequirementLinkDraftsAction } from './evidenceRequirementDraftAction'
+import { FitnessHomeworkRecommendationButton } from './FitnessHomeworkRecommendationButton'
 
 interface PageProps {
   params: { playerId: string }
@@ -219,13 +220,29 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   // ─── Tab 4: Fitness / Load ────────────────────────────────────────────────
   const fitnessSlot = (
-    <Card>
-      <EmptyState
-        icon={<Activity className="w-5 h-5" />}
-        title="Fitness & load tracking coming soon"
-        description="Training load, physical assessments, and conditioning metrics will appear here."
-      />
-    </Card>
+    <div className="space-y-6">
+      <Card>
+        <EmptyState
+          icon={<Activity className="w-5 h-5" />}
+          title="Fitness & load tracking coming soon"
+          description="Training load, physical assessments, and conditioning metrics will appear here."
+        />
+      </Card>
+
+      {/* At-home fitness homework recommendation — internal draft only */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">At-Home Fitness Homework</p>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-2">
+          <p className="text-[11px] text-text-muted">
+            Generates an internal recommendation draft based on attendance gaps, assessments, and coach notes.
+            Draft is for director review only — not published to player or parent.
+          </p>
+          <FitnessHomeworkRecommendationButton playerId={params.playerId} />
+        </CardContent>
+      </Card>
+    </div>
   )
 
   // ─── Tab 5: Notes ─────────────────────────────────────────────────────────

@@ -116,3 +116,94 @@ These rules exist in `docs/AI_BACKEND_RULES.md` and are repeated here for visibi
 3. Read `src/components/ui/index.ts` to see what UI components are available.
 4. Check `docs/CURRENT_BUILD_TARGET.md` to confirm what the active build target is.
 5. Do not write code until you have stated a plan and had it confirmed.
+
+---
+
+## Sprint execution protocol
+
+For every sprint, follow this exact sequence:
+
+1. Read the five required docs listed at the top of this file.
+2. Read `src/app/director/players/[playerId]/page.tsx` for component/query pattern.
+3. Read `src/components/ui/index.ts` for available components.
+4. State a short plan: files to create/modify, one-line description of each, any risks, whether a migration is needed.
+5. **Stop. Wait for confirmation before writing any code.**
+6. Implement only the files named in the confirmed plan.
+7. Run `npx tsc --noEmit`. Fix only errors caused by sprint changes.
+8. Re-run `npx tsc --noEmit` until clean.
+9. Run `git status --short`. Confirm only intended files changed.
+10. Update `docs/CHANGELOG.md` with a dated entry.
+11. Provide the exact `git add` command listing each file by name.
+12. Provide the exact commit message: `Sprint NN — Short description`.
+13. **Stop. Do not commit. Wait for the user to explicitly say "commit".**
+
+---
+
+## Git hygiene
+
+- Never `git add .` or `git add -A`. Stage only sprint-specific files by name.
+- Never stage unrelated modified files.
+- Never commit without explicit user instruction.
+- Never push unless the user explicitly asks.
+- Never amend a published commit.
+- Never force-push.
+- Never bypass hooks (`--no-verify`).
+
+---
+
+## Security and product guardrails
+
+These rules apply to every sprint, every session. No exceptions without explicit user approval in the sprint prompt.
+
+**Never do without explicit sprint approval:**
+- Install npm packages
+- Create or modify database migrations
+- Create tables without RLS
+- Use service role or bypass RLS in any query
+- Expose parent/player data to unauthorized roles
+- Trigger automatic player level movement
+- Make external AI API calls
+- Send communications (email, push, SMS, Slack)
+- Present fake/seed data as real
+- Hide mutations (all state changes go through `proposed_actions` or `audit_logs`)
+
+**Core operating model — never violate:**
+> AI proposes → Director/Head Coach approves → System records → System executes
+
+**Protected files — never edit unless sprint explicitly names them:**
+- `.env.local`
+- `src/lib/supabase/database.types.ts` (only updated via `supabase gen types`)
+- `supabase/migrations/*` (only added when sprint explicitly allows a migration)
+- `index.html`
+- `data/airtable-import/reports/*`
+- `data/airtable-import/*.csv`
+- `.next/`
+- `node_modules/`
+
+---
+
+## Validation requirement
+
+Every sprint must end with a clean TypeScript check:
+
+```bash
+npx tsc --noEmit
+```
+
+Do not mark a sprint complete while TypeScript errors exist in files you touched.
+
+---
+
+## Available project commands
+
+Invoke with `/command-name` (e.g. `/academy-sprint Sprint 43 — Voice Attendance Exception Drafts V1`).
+
+| Command | Purpose |
+|---|---|
+| `/academy-sprint` | Full sprint execution workflow |
+| `/academy-guardrails` | Product safety checklist before committing |
+| `/supabase-sprint` | Supabase-specific sprint protocol |
+| `/review-queue-workflow` | proposed_actions / director review queue patterns |
+| `/voice-workflow` | Voice-first workflow patterns |
+
+See `docs/CLAUDE_CODE_OPERATING_SYSTEM.md` for the full usage guide.

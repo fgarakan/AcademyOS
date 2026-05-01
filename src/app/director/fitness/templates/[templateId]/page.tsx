@@ -7,6 +7,7 @@ import { TemplateEditor } from './TemplateEditor'
 import type { EditableBlock, EditableExercise } from './TemplateEditor'
 import { GenerateSessionPanel } from './GenerateSessionPanel'
 import type { CoachOption } from './GenerateSessionPanel'
+import { PopulateFitnessBlocksButton } from './PopulateFitnessBlocksButton'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
@@ -165,6 +166,15 @@ export default async function TemplateDetailPage({ params }: PageProps) {
         blockCount={blockList.length}
         exerciseCount={totalExercises}
       />
+      {/* Populate blocks with exercises from the exercise library */}
+      <div className="space-y-2">
+        <p className="text-[10px] uppercase tracking-widest text-text-muted">Exercise Population</p>
+        <PopulateFitnessBlocksButton
+          templateId={params.templateId}
+          hasBlocks={blockList.length > 0}
+        />
+      </div>
+
       <TemplateEditor
         templateId={params.templateId}
         initialBlocks={editableBlocks}

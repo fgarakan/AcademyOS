@@ -2,6 +2,141 @@
 
 ---
 
+## 2026-05-01 — Claude Code Operating System Setup
+
+**Mode:** Config/docs only. No runtime behavior changed. No schema changes. No package installs.
+
+**Purpose:** Set up reusable Claude Code skills, subagent definitions, guardrails, and documentation to make future Academy OS sprints safer and more autonomous.
+
+**Files created:**
+- `CLAUDE.md` — appended sprint execution protocol, git hygiene rules, security guardrails, protected files list, TypeScript validation requirement, and available commands reference
+- `.claude/commands/academy-sprint.md` — invokable `/academy-sprint` skill: full sprint execution workflow with inspect → plan → implement → validate → report phases
+- `.claude/commands/academy-guardrails.md` — invokable `/academy-guardrails` skill: product safety checklist (data visibility, mutations, communications, RLS, scope)
+- `.claude/commands/supabase-sprint.md` — invokable `/supabase-sprint` skill: Supabase-specific sprint protocol (academy_id scoping, proposed_actions pattern, migration rules, type handling)
+- `.claude/commands/review-queue-workflow.md` — invokable `/review-queue-workflow` skill: standard draft → review → approve → apply pattern with code templates
+- `.claude/commands/voice-workflow.md` — invokable `/voice-workflow` skill: voice-first patterns, ambiguity handling, attendance exception example
+- `.claude/agents/schema-auditor.md` — read-only schema review subagent (migration necessity, academy_id scoping, RLS coverage, type alignment)
+- `.claude/agents/guardrail-auditor.md` — read-only product safety review subagent (visibility leaks, auto-mutations, communications, RLS bypass, audit trail)
+- `docs/CLAUDE_CODE_OPERATING_SYSTEM.md` — human-readable guide: command reference, sprint patterns, batch sprint workflow, commit strategy, stop conditions
+- `docs/CLAUDE_CODE_HOOKS_PLAN.md` — documented-only hooks plan: 6 recommended hooks (TypeScript check, protected file warning, git status, package install guard, .env guard, database.types.ts guard)
+
+**Validation:**
+- `npx tsc --noEmit` — not affected (docs/config only, no source files modified)
+- `git status --short` — only intentional files in scope
+
+---
+
+## 2026-05-01 — Sprints 43–50: Attendance Exception Workflow + Fitness Gap + Recommendation Drafts
+
+**Mode:** New features. No schema changes. No parent/player visibility. No AI API calls.
+
+**Architecture pattern honored throughout:** Voice creates → UI confirms → DB structures → System executes. All writes go through `proposed_actions` pipeline. All drafts start at `pending_review`.
+
+---
+
+### Sprint 43 — Voice Attendance Exception Drafts V1
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/attendanceExceptionDraftAction.ts`
+- `src/app/director/sessions/[sessionId]/AttendanceExceptionDraftPanel.tsx`
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx`
+
+Rule-based attendance exception parser. Detects "everyone except X" pattern, extracts absent names, flags unrostered attendees (e.g. "Jeremy showed up"). Creates `proposed_actions` draft with `target_module = 'attendance_exception'` and `status = 'pending_review'`. Session detail page shows existing drafts with status pills.
+
+---
+
+### Sprint 44 — Attendance Exception Director Review Queue V1
+
+**Files created:**
+- `src/app/director/review/AttendanceExceptionDraftCard.tsx`
+- `src/app/director/review/AttendanceExceptionDraftDecisionControls.tsx`
+
+**Files modified:**
+- `src/app/director/review/page.tsx`
+
+Review queue now displays attendance exception drafts in a dedicated section. Each card shows raw input, parsed rostered attendance, and unrostered attendee warnings. Decision controls (Approve / Needs Clarification / Reject) follow the same pattern as existing draft controls.
+
+---
+
+### Sprint 45 — Attendance Exception Decision Controls V1
+
+**Files created:**
+- `src/app/director/review/ApplyApprovedAttendanceExceptionControls.tsx`
+
+**Files modified:**
+- `src/app/director/review/actions.ts`
+
+Added `updateAttendanceExceptionDraftDecisionAction` and `applyApprovedAttendanceExceptionAction`. Apply action upserts `session_attendance` rows for rostered players only (`on_conflict: session_id,player_id`), writes audit_log, marks draft `executed`. Unrostered attendees (e.g. Jeremy) are never applied.
+
+---
+
+### Sprint 46 — Fitness Template Block Exercise Population V1
+
+**Files created:**
+- `src/app/director/fitness/templates/[templateId]/populateFitnessBlocksAction.ts`
+- `src/app/director/fitness/templates/[templateId]/PopulateFitnessBlocksButton.tsx`
+- `docs/FITNESS_EXPOSURE_TRACKING_PLAN.md`
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/page.tsx`
+
+"Populate Blocks with Exercises" button on template detail page. Matches exercises from the exercise library to each block by category and duration budget. Already-populated blocks are skipped. Returns per-block result counts.
+
+---
+
+### Sprint 47 — Fitness Assessment + Attendance Gap Logic Plan V1
+
+**Files created:**
+- `src/lib/fitness/gapLogic.ts`
+- `docs/FITNESS_GAP_LOGIC_PLAN.md`
+
+Pure deterministic utility: `computeFitnessGaps(inputs: GapInputs): FitnessGapAssessment`. No DB access, no AI API. Scores 8 fitness categories from assessment dimensions, missed session exposure, completed exercise categories, and coach note tags. Respects overtraining signals and injury constraints. Top gaps capped at 3.
+
+---
+
+### Sprint 48 — At-Home Fitness Recommendation Drafts V1
+
+**Files created:**
+- `src/app/director/players/[playerId]/fitnessHomeworkRecommendationAction.ts`
+- `src/app/director/players/[playerId]/FitnessHomeworkRecommendationButton.tsx`
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx`
+
+Director-triggered server action that reads attendance, assessments, coach notes, and active signals, calls `computeFitnessGaps()`, and creates a `fitness_homework_recommendation_v1` proposed_actions draft. Internal only — not visible to player or parent until explicit director approval and publication.
+
+---
+
+### Sprint 49 — Parent/Player-Safe Fitness Homework Draft V1
+
+**Files created:**
+- `src/app/director/players/[playerId]/parentPlayerFitnessHomeworkDraftAction.ts`
+
+Converts an approved internal fitness recommendation into a `parent_player_fitness_homework_summary_v1` draft. Uses safe category language templates (no medical terminology). Status: `pending_review` — never auto-published.
+
+---
+
+### Sprint 50 — Internal Development Loop QA + Demo Readiness
+
+**Files created:**
+- `docs/INTERNAL_DEVELOPMENT_LOOP_QA.md`
+
+Full QA checklist and 7-step demo script covering the complete flow: fitness template → populate blocks → attendance exception → director review → apply → coach observations as evidence → requirement progress → fitness gap recommendation.
+
+**Known limitations at Sprint 50:**
+- Fitness recommendation drafts not yet shown in the director review queue (next sprint)
+- No parent/player publication pathway yet
+- Fitness exposure aggregation not pre-aggregated (computable from existing tables)
+- Unrostered attendee decision UI not yet built
+- Coach workspace attendance recording not yet built
+
+**Validation:**
+- `npx tsc --noEmit` — passes with 0 errors
+
+---
+
 ## 2026-05-01 — Sprint 42: Requirement Progress Dashboard Polish + QA V1
 
 **Mode:** Polish + QA. No new core workflow. No schema changes. No new mutations. No parent/player visibility.

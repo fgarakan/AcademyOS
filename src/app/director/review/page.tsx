@@ -1,4 +1,4 @@
-import { ClipboardList, Link2, Target } from 'lucide-react'
+import { Calendar, ClipboardList, Link2, Target, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -8,6 +8,9 @@ import { PriorityRecommendationDraftCard } from './PriorityRecommendationDraftCa
 import type { EnrichedPriorityDraftItem, PriorityRecommendationPayload } from './PriorityRecommendationDraftCard'
 import { EvidenceRequirementDraftCard } from './EvidenceRequirementDraftCard'
 import type { EnrichedEvidenceLinkDraftItem, EvidenceRequirementLinkPayload } from './EvidenceRequirementDraftCard'
+import { AttendanceExceptionDraftCard } from './AttendanceExceptionDraftCard'
+import type { EnrichedAttendanceExceptionDraftItem } from './AttendanceExceptionDraftCard'
+import type { AttendanceExceptionPayload } from '@/app/director/sessions/[sessionId]/attendanceExceptionDraftAction'
 
 export default async function DirectorReviewQueuePage() {
   const supabase = await getSupabaseServer()
@@ -277,6 +280,78 @@ export default async function DirectorReviewQueuePage() {
   const pendingEvidenceDrafts = enrichedEvidenceDrafts.filter(d => d.status === 'pending_review')
   const approvedEvidenceDrafts = enrichedEvidenceDrafts.filter(d => d.status === 'approved')
 
+  // ─── Attendance exception drafts ─────────────────────────────
+
+  // 19. Fetch pending + approved attendance exception drafts — scoped to this academy
+  const { data: attendanceExceptionRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_review', 'approved'])
+    .eq('target_module', 'attendance_exception')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allAttendanceExceptionRows: DraftRow[] = (attendanceExceptionRows ?? []) as DraftRow[]
+
+  // 20. Filter to attendance_exception_v1
+  const filteredAttendanceDrafts = allAttendanceExceptionRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'attendance_exception_v1'
+  })
+
+  // 21. Batch-fetch session names for attendance exception drafts
+  const attendanceSessionIds = Array.from(
+    new Set(
+      filteredAttendanceDrafts
+        .map(d => d.target_object_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+
+  const attendanceSessionMap = new Map<string, { id: string; name: string | null; scheduled_date: string }>()
+  if (attendanceSessionIds.length > 0) {
+    const { data: aSessions } = await supabase
+      .from('sessions')
+      .select('id, name, scheduled_date')
+      .in('id', attendanceSessionIds)
+      .eq('academy_id', academyId)
+    for (const s of (aSessions ?? [])) {
+      attendanceSessionMap.set(s.id, s)
+    }
+  }
+
+  // 22. Batch-fetch proposer display names
+  const attendanceProposerIds = Array.from(new Set(filteredAttendanceDrafts.map(d => d.proposed_by_id)))
+  const attendanceProposerMap = new Map<string, string>()
+  if (attendanceProposerIds.length > 0) {
+    const { data: aProposers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', attendanceProposerIds)
+    for (const p of (aProposers ?? [])) {
+      attendanceProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  // 23. Assemble enriched attendance exception draft items
+  const enrichedAttendanceDrafts: EnrichedAttendanceExceptionDraftItem[] = filteredAttendanceDrafts.map(d => {
+    const sess = d.target_object_id ? attendanceSessionMap.get(d.target_object_id) : undefined
+    return {
+      id: d.id,
+      status: d.status,
+      createdAt: d.created_at,
+      sessionId: d.target_object_id,
+      sessionName: sess?.name ?? null,
+      sessionDate: sess?.scheduled_date ?? null,
+      proposerName: attendanceProposerMap.get(d.proposed_by_id) ?? null,
+      payload: d.proposed_payload as unknown as AttendanceExceptionPayload,
+    }
+  })
+
+  const pendingAttendanceDrafts = enrichedAttendanceDrafts.filter(d => d.status === 'pending_review')
+  const approvedAttendanceDrafts = enrichedAttendanceDrafts.filter(d => d.status === 'approved')
+
   return (
     <div className="animate-fade-in space-y-8">
       <PageHeader
@@ -286,6 +361,8 @@ export default async function DirectorReviewQueuePage() {
         priorityApprovedCount={approvedPriorityDrafts.length}
         evidencePendingCount={pendingEvidenceDrafts.length}
         evidenceApprovedCount={approvedEvidenceDrafts.length}
+        attendancePendingCount={pendingAttendanceDrafts.length}
+        attendanceApprovedCount={approvedAttendanceDrafts.length}
       />
 
       {/* ─── Session recap structured drafts ─── */}
@@ -448,6 +525,60 @@ export default async function DirectorReviewQueuePage() {
         </section>
       </div>
 
+      {/* ─── Attendance exception drafts ─── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 pb-1 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-text-muted" />
+            <p className="label-xs">Attendance Exception Drafts</p>
+          </div>
+          {pendingAttendanceDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+              {pendingAttendanceDrafts.length} pending
+            </span>
+          )}
+          {approvedAttendanceDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+              {approvedAttendanceDrafts.length} ready to apply
+            </span>
+          )}
+        </div>
+
+        {approvedAttendanceDrafts.length > 0 && (
+          <section className="space-y-3">
+            <p className="label-xs">Approved — Ready to Apply</p>
+            <div className="space-y-4">
+              {approvedAttendanceDrafts.map(draft => (
+                <AttendanceExceptionDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="space-y-3">
+          {approvedAttendanceDrafts.length > 0 && pendingAttendanceDrafts.length > 0 && (
+            <p className="label-xs">Pending Review</p>
+          )}
+          {pendingAttendanceDrafts.length === 0 && approvedAttendanceDrafts.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<Users className="w-5 h-5" />}
+                  title="No pending attendance exception drafts"
+                  description="When coaches record attendance exceptions from sessions, they will appear here for review."
+                />
+              </CardContent>
+            </Card>
+          ) : pendingAttendanceDrafts.length > 0 ? (
+            <div className="space-y-4">
+              {pendingAttendanceDrafts.map(draft => (
+                <AttendanceExceptionDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      </div>
+
     </div>
   )
 }
@@ -459,6 +590,8 @@ function PageHeader({
   priorityApprovedCount,
   evidencePendingCount,
   evidenceApprovedCount,
+  attendancePendingCount,
+  attendanceApprovedCount,
 }: {
   pendingCount: number
   approvedCount: number
@@ -466,9 +599,11 @@ function PageHeader({
   priorityApprovedCount: number
   evidencePendingCount: number
   evidenceApprovedCount: number
+  attendancePendingCount: number
+  attendanceApprovedCount: number
 }) {
-  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount
-  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount
+  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount
+  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount
   return (
     <div>
       <p className="label-xs mb-1">DIRECTOR</p>

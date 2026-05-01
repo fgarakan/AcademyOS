@@ -9,6 +9,8 @@ import { SessionRecapSummary } from './SessionRecapSummary'
 import { StructureRecapButton } from './StructureRecapButton'
 import { StructuredDraftView } from './StructuredDraftView'
 import type { StructuredDraftPayload } from './structureRecapAction'
+import { AttendanceExceptionDraftPanel } from './AttendanceExceptionDraftPanel'
+import type { AttendanceExceptionPayload } from './attendanceExceptionDraftAction'
 
 interface PageProps {
   params: { sessionId: string }
@@ -255,6 +257,23 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     .limit(5)
   const structuredDrafts: StructuredDraftRow[] = (draftRows ?? []) as StructuredDraftRow[]
 
+  // 11. Fetch existing attendance exception drafts for this session
+  interface AttendanceExceptionDraftRow {
+    id: string
+    proposed_payload: unknown
+    created_at: string
+    status: string
+  }
+  const { data: attendanceDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, proposed_payload, created_at, status')
+    .eq('academy_id', academyId)
+    .eq('target_object_id', session.id)
+    .eq('target_module', 'attendance_exception')
+    .order('created_at', { ascending: false })
+    .limit(5)
+  const attendanceDrafts: AttendanceExceptionDraftRow[] = (attendanceDraftRows ?? []) as AttendanceExceptionDraftRow[]
+
   return (
     <div className="animate-fade-in space-y-6">
       <BackLink />
@@ -476,6 +495,70 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           </CardContent>
         </Card>
       </div>
+      {/* Attendance Exception Drafts */}
+      <div>
+        <SectionHeader title="ATTENDANCE EXCEPTIONS" />
+        <Card className="mt-3">
+          <CardContent className="py-4 space-y-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">
+                Record Attendance Exception
+              </p>
+              <p className="text-xs text-text-muted mb-3">
+                Describe who was here, who was absent, and any unrostered visitors. Creates a draft for director review — no attendance is recorded automatically.
+              </p>
+              <AttendanceExceptionDraftPanel
+                sessionId={session.id}
+                hasGroup={!!session.group_id}
+                rosterCount={directorRoster.length}
+              />
+            </div>
+
+            {attendanceDrafts.length > 0 && (
+              <div className="pt-3 border-t border-border space-y-3">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted">
+                  Recent Exception Drafts
+                </p>
+                {attendanceDrafts.map(row => {
+                  const p = row.proposed_payload as unknown as AttendanceExceptionPayload
+                  if (p?.draft_type !== 'attendance_exception_v1') return null
+                  const absentCount = p.rostered_attendance?.filter(r => r.proposed_status === 'absent').length ?? 0
+                  const presentCount = p.rostered_attendance?.filter(r => r.proposed_status === 'present').length ?? 0
+                  const unrosteredCount = p.unrostered_attendees?.length ?? 0
+                  const statusColors: Record<string, string> = {
+                    pending_review: 'bg-status-orange/10 text-status-orange border-status-orange/30',
+                    approved: 'bg-lime/10 text-lime border-lime/30',
+                    rejected: 'bg-status-red/10 text-status-red border-status-red/30',
+                    executed: 'bg-status-green/10 text-status-green border-status-green/30',
+                  }
+                  const pill = statusColors[row.status] ?? 'bg-surface-raised text-text-muted border-border'
+                  return (
+                    <div key={row.id} className="p-3 rounded-lg bg-surface-raised border border-border space-y-2">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <p className="text-xs text-text-muted">
+                          {new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${pill}`}>
+                          {row.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-text-secondary italic line-clamp-2">"{p.raw_input}"</p>
+                      <div className="flex flex-wrap gap-3 text-[10px] text-text-muted">
+                        <span>{presentCount} present</span>
+                        <span>{absentCount} absent</span>
+                        {unrosteredCount > 0 && (
+                          <span className="text-status-orange">{unrosteredCount} unrostered</span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Coach Recap */}
       <div>
         <SectionHeader title="COACH RECAP" />
