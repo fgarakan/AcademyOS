@@ -1,8 +1,10 @@
 import Link from 'next/link'
-import { BookOpen, Layers, Dumbbell, Users, Clock, ChevronRight, ExternalLink } from 'lucide-react'
+import { BookOpen, Layers, Dumbbell, Users, ChevronRight, ExternalLink } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { Card, CardHeader, CardContent } from '@/components/ui'
+import { AcademyCurriculumVersionCard } from './AcademyCurriculumVersionCard'
+import { VoiceOverrideInputPanel } from './VoiceOverrideInputPanel'
 
 const UNAVAILABLE_MSG = 'Not available until curriculum migrations are applied.'
 
@@ -62,6 +64,50 @@ export default async function DirectorCurriculumPage() {
     .not('curriculum_level_id', 'is', null)
   const templatesUnavailable = !!templatesError
 
+  // academy_curriculum_versions — migration 048, may not be applied
+  interface VersionRow {
+    id: string
+    name: string
+    status: string
+    version_number: number
+    cloned_from_global_at: string | null
+    activated_at: string | null
+  }
+  const { data: versionRow, error: versionError } = await rawDb
+    .from('academy_curriculum_versions')
+    .select('id, name, status, version_number, cloned_from_global_at, activated_at')
+    .eq('academy_id', academyId)
+    .in('status', ['active', 'draft'])
+    .order('version_number', { ascending: false })
+    .limit(1)
+    .single()
+
+  const activeVersion: VersionRow | null = versionError ? null : (versionRow ?? null)
+
+  // academy_curriculum_overrides count for the active version
+  let overrideCount = 0
+  if (activeVersion?.id) {
+    const { count } = await rawDb
+      .from('academy_curriculum_overrides')
+      .select('*', { count: 'exact', head: true })
+      .eq('academy_id', academyId)
+      .eq('curriculum_version_id', activeVersion.id)
+      .eq('status', 'applied')
+    overrideCount = count ?? 0
+  }
+
+  const versionData = activeVersion
+    ? {
+        id: activeVersion.id,
+        name: activeVersion.name,
+        status: activeVersion.status,
+        version_number: activeVersion.version_number,
+        cloned_from_global_at: activeVersion.cloned_from_global_at,
+        activated_at: activeVersion.activated_at,
+        override_count: overrideCount,
+      }
+    : null
+
   return (
     <div className="animate-fade-in p-6 space-y-6">
 
@@ -69,7 +115,7 @@ export default async function DirectorCurriculumPage() {
       <div>
         <h1 className="text-2xl font-bold text-text-primary">Curriculum</h1>
         <p className="text-text-secondary text-sm mt-1">
-          Curriculum spine, content, requirements, and template generation.
+          Curriculum spine, content, requirements, academy version, and voice customization.
         </p>
       </div>
 
@@ -209,46 +255,22 @@ export default async function DirectorCurriculumPage() {
           </CardContent>
         </Card>
 
-        {/* 5 — Next: Academy Curriculum Clone + Voice Customization */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-text-muted" />
-              <p className="label-xs">Next: Academy Curriculum Clone + Voice Customization</p>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0 space-y-3">
-            <p className="text-[11px] text-text-secondary leading-relaxed">
-              Upcoming: directors will be able to clone the global curriculum spine into an
-              academy-specific override, author custom requirements, and use voice commands
-              to adjust curriculum focus per player group.
-            </p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1">
-              {[
-                { label: 'Academy curriculum clone',        status: 'Planned' },
-                { label: 'Custom requirement authoring',    status: 'Planned' },
-                { label: 'Voice-driven curriculum focus',   status: 'Planned (Step 9)' },
-                { label: 'Parent-visible curriculum progress', status: 'Planned (Phase 3)' },
-              ].map(item => (
-                <div key={item.label} className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-text-muted shrink-0" />
-                  <span className="text-[11px] text-text-secondary">{item.label}</span>
-                  <span className="text-[11px] text-text-muted">— {item.status}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* 5 — Academy Curriculum Version (Sprint 63) */}
+        <AcademyCurriculumVersionCard version={versionData} />
+
+        {/* 6 — Voice Curriculum Customization (Sprint 64) */}
+        <VoiceOverrideInputPanel hasActiveVersion={!!activeVersion} />
 
       </div>
 
       {/* Quick navigation links */}
       <div className="flex flex-wrap gap-3 pt-2">
         {[
-          { href: '/director/fitness/templates', label: 'Templates' },
-          { href: '/director/sessions',          label: 'Sessions' },
-          { href: '/director/players',           label: 'Players' },
-          { href: '/director/review',            label: 'Review Queue' },
+          { href: '/director/curriculum/academy-version', label: 'Academy Version' },
+          { href: '/director/fitness/templates',          label: 'Templates' },
+          { href: '/director/sessions',                   label: 'Sessions' },
+          { href: '/director/players',                    label: 'Players' },
+          { href: '/director/review',                     label: 'Review Queue' },
         ].map(link => (
           <Link
             key={link.href}

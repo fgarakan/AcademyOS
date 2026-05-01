@@ -1,4 +1,4 @@
-import { Calendar, ClipboardList, Link2, Target, Users } from 'lucide-react'
+import { BookOpen, Calendar, ClipboardList, Link2, Target, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -11,6 +11,9 @@ import type { EnrichedEvidenceLinkDraftItem, EvidenceRequirementLinkPayload } fr
 import { AttendanceExceptionDraftCard } from './AttendanceExceptionDraftCard'
 import type { EnrichedAttendanceExceptionDraftItem } from './AttendanceExceptionDraftCard'
 import type { AttendanceExceptionPayload } from '@/app/director/sessions/[sessionId]/attendanceExceptionDraftAction'
+import { CurriculumOverrideDraftCard } from './CurriculumOverrideDraftCard'
+import type { EnrichedCurriculumOverrideDraftItem } from './CurriculumOverrideDraftCard'
+import type { CurriculumOverrideDraftPayload } from '@/lib/actions/curriculumOverrideDraft'
 
 export default async function DirectorReviewQueuePage() {
   const supabase = await getSupabaseServer()
@@ -352,6 +355,51 @@ export default async function DirectorReviewQueuePage() {
   const pendingAttendanceDrafts = enrichedAttendanceDrafts.filter(d => d.status === 'pending_review')
   const approvedAttendanceDrafts = enrichedAttendanceDrafts.filter(d => d.status === 'approved')
 
+  // ─── Curriculum override drafts ────────────────────────────────
+
+  // 24. Fetch pending + approved curriculum override drafts — scoped to this academy
+  const { data: curriculumOverrideDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_review', 'approved'])
+    .eq('target_module', 'curriculum_override')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allCurriculumOverrideDraftRows: DraftRow[] = (curriculumOverrideDraftRows ?? []) as DraftRow[]
+
+  // 25. Filter to curriculum_override_v1
+  const filteredCurriculumOverrideDrafts = allCurriculumOverrideDraftRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'curriculum_override_v1'
+  })
+
+  // 26. Batch-fetch proposer display names
+  const curriculumProposerIds = Array.from(new Set(filteredCurriculumOverrideDrafts.map(d => d.proposed_by_id)))
+  const curriculumProposerMap = new Map<string, string>()
+  if (curriculumProposerIds.length > 0) {
+    const { data: cProposers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', curriculumProposerIds)
+    for (const p of (cProposers ?? [])) {
+      curriculumProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  // 27. Assemble enriched curriculum override draft items
+  const enrichedCurriculumOverrideDrafts: EnrichedCurriculumOverrideDraftItem[] = filteredCurriculumOverrideDrafts.map(d => ({
+    id: d.id,
+    status: d.status,
+    createdAt: d.created_at,
+    proposerName: curriculumProposerMap.get(d.proposed_by_id) ?? null,
+    payload: d.proposed_payload as unknown as CurriculumOverrideDraftPayload,
+  }))
+
+  const pendingCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'pending_review')
+  const approvedCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'approved')
+
   return (
     <div className="animate-fade-in space-y-8">
       <PageHeader
@@ -363,6 +411,8 @@ export default async function DirectorReviewQueuePage() {
         evidenceApprovedCount={approvedEvidenceDrafts.length}
         attendancePendingCount={pendingAttendanceDrafts.length}
         attendanceApprovedCount={approvedAttendanceDrafts.length}
+        curriculumOverridePendingCount={pendingCurriculumOverrideDrafts.length}
+        curriculumOverrideApprovedCount={approvedCurriculumOverrideDrafts.length}
       />
 
       {/* ─── Session recap structured drafts ─── */}
@@ -579,6 +629,60 @@ export default async function DirectorReviewQueuePage() {
         </section>
       </div>
 
+      {/* ─── Curriculum override drafts ─── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 pb-1 border-b border-border">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-text-muted" />
+            <p className="label-xs">Curriculum Override Drafts</p>
+          </div>
+          {pendingCurriculumOverrideDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+              {pendingCurriculumOverrideDrafts.length} pending
+            </span>
+          )}
+          {approvedCurriculumOverrideDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+              {approvedCurriculumOverrideDrafts.length} ready to apply
+            </span>
+          )}
+        </div>
+
+        {approvedCurriculumOverrideDrafts.length > 0 && (
+          <section className="space-y-3">
+            <p className="label-xs">Approved — Ready to Apply</p>
+            <div className="space-y-4">
+              {approvedCurriculumOverrideDrafts.map(draft => (
+                <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="space-y-3">
+          {approvedCurriculumOverrideDrafts.length > 0 && pendingCurriculumOverrideDrafts.length > 0 && (
+            <p className="label-xs">Pending Review</p>
+          )}
+          {pendingCurriculumOverrideDrafts.length === 0 && approvedCurriculumOverrideDrafts.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<BookOpen className="w-5 h-5" />}
+                  title="No pending curriculum override drafts"
+                  description="Voice curriculum customizations typed on the Curriculum page will appear here for review."
+                />
+              </CardContent>
+            </Card>
+          ) : pendingCurriculumOverrideDrafts.length > 0 ? (
+            <div className="space-y-4">
+              {pendingCurriculumOverrideDrafts.map(draft => (
+                <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      </div>
+
     </div>
   )
 }
@@ -592,6 +696,8 @@ function PageHeader({
   evidenceApprovedCount,
   attendancePendingCount,
   attendanceApprovedCount,
+  curriculumOverridePendingCount,
+  curriculumOverrideApprovedCount,
 }: {
   pendingCount: number
   approvedCount: number
@@ -601,9 +707,11 @@ function PageHeader({
   evidenceApprovedCount: number
   attendancePendingCount: number
   attendanceApprovedCount: number
+  curriculumOverridePendingCount: number
+  curriculumOverrideApprovedCount: number
 }) {
-  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount
-  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount
+  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount
+  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount
   return (
     <div>
       <p className="label-xs mb-1">DIRECTOR</p>

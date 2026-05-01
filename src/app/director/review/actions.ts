@@ -1327,3 +1327,305 @@ export async function applyApprovedAttendanceExceptionAction(
 
   return { ok: true, error: null, attendanceRowsUpserted, skippedUnknown }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Review curriculum override draft
+// Only updates proposed_actions status + reviewer tracking fields.
+// Never touches curriculum tables, academy_curriculum_overrides,
+// or any other table.
+// ─────────────────────────────────────────────────────────────
+
+export interface UpdateCurriculumOverrideDraftDecisionResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function updateCurriculumOverrideDraftDecisionAction(
+  proposedActionId: string,
+  decision: DraftDecision,
+  reviewNotes?: string,
+): Promise<UpdateCurriculumOverrideDraftDecisionResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+
+  if (!proposedActionId) return { ok: false, error: 'Missing proposed action ID.' }
+  const allowed: DraftDecision[] = ['approved', 'rejected', 'clarification_needed']
+  if (!allowed.includes(decision)) return { ok: false, error: 'Invalid decision value.' }
+  if (reviewNotes && reviewNotes.length > 1000) {
+    return { ok: false, error: 'Review note must be 1000 characters or fewer.' }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to review curriculum override drafts.' }
+  }
+
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_payload')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return { ok: false, error: 'Proposed action not found.' }
+  if (proposedAction.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (proposedAction.target_module !== 'curriculum_override') {
+    return { ok: false, error: 'This action cannot be reviewed through this interface.' }
+  }
+  const payloadCheck = proposedAction.proposed_payload as Record<string, unknown>
+  if (payloadCheck?.draft_type !== 'curriculum_override_v1') {
+    return { ok: false, error: 'Unsupported draft type.' }
+  }
+  if (proposedAction.status !== 'pending_review') {
+    return { ok: false, error: 'This draft has already been reviewed.' }
+  }
+
+  const now = new Date().toISOString()
+  let updatePayload: Record<string, unknown>
+
+  if (decision === 'approved') {
+    updatePayload = {
+      status: 'approved',
+      approved_by: user.id,
+      approved_at: now,
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  } else if (decision === 'rejected') {
+    updatePayload = {
+      status: 'rejected',
+      rejected_by: user.id,
+      rejected_at: now,
+      ...(reviewNotes ? { rejection_reason: reviewNotes, reviewer_notes: reviewNotes } : {}),
+    }
+  } else {
+    updatePayload = {
+      status: 'clarification_needed',
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update(updatePayload)
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to record decision: ${updateError.message}` }
+  }
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Apply approved curriculum override draft
+// Creates exactly one academy_curriculum_overrides row from an
+// approved curriculum_override_v1 proposed_action.
+// Never edits global curriculum tables, player profiles,
+// templates, or parent/player views.
+// ─────────────────────────────────────────────────────────────
+
+export interface ApplyApprovedCurriculumOverrideDraftResult {
+  ok: boolean
+  error: string | null
+  overrideId: string | null
+}
+
+export async function applyApprovedCurriculumOverrideDraftAction(
+  proposedActionId: string,
+): Promise<ApplyApprovedCurriculumOverrideDraftResult> {
+  const fail = (error: string): ApplyApprovedCurriculumOverrideDraftResult =>
+    ({ ok: false, error, overrideId: null })
+
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return fail('Not authenticated.')
+  if (!proposedActionId) return fail('Missing proposed action ID.')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return fail('Academy context unavailable.')
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return fail('You do not have permission to apply curriculum override drafts.')
+  }
+
+  const rawDb = supabase as any
+
+  // Fetch and validate proposed_action
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, target_object_type, target_object_id, proposed_payload, approved_by, approved_at, voice_command_id')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return fail('Proposed action not found.')
+  if (proposedAction.academy_id !== academyId) return fail('Access denied.')
+  if (proposedAction.status !== 'approved') return fail('Only approved drafts can be applied.')
+  if (proposedAction.target_module !== 'curriculum_override') {
+    return fail('This action cannot be applied through this interface.')
+  }
+  if (proposedAction.target_object_type !== 'academy_curriculum_version') {
+    return fail('Target type mismatch — expected academy_curriculum_version.')
+  }
+
+  const payload = proposedAction.proposed_payload as Record<string, unknown>
+  if (payload?.draft_type !== 'curriculum_override_v1') {
+    return fail('Unsupported draft type.')
+  }
+
+  // Verify the academy curriculum version exists and belongs to this academy
+  const curriculumVersionId = proposedAction.target_object_id as string | null
+  if (!curriculumVersionId) return fail('Curriculum version reference missing from draft.')
+
+  const { data: version } = await rawDb
+    .from('academy_curriculum_versions')
+    .select('id, status')
+    .eq('id', curriculumVersionId)
+    .eq('academy_id', academyId)
+    .single()
+
+  if (!version) return fail('Academy curriculum version not found or access denied.')
+
+  // Extract parsed fields from payload
+  const parsedLevel = typeof payload.parsed_level === 'string' ? payload.parsed_level : null
+  const parsedPathway = typeof payload.parsed_pathway === 'string' ? payload.parsed_pathway : null
+  const parsedFocus = Array.isArray(payload.parsed_focus) ? payload.parsed_focus : []
+  const parsedScope = typeof payload.parsed_scope === 'string' ? payload.parsed_scope : 'academy'
+  const rawInput = typeof payload.raw_input === 'string' ? payload.raw_input : null
+  const proposedChangeSummary = typeof payload.proposed_change_summary === 'string' ? payload.proposed_change_summary : ''
+
+  // Determine override_type: emphasis_shift for content focus changes
+  const overrideType = parsedFocus.length > 0 ? 'emphasis_shift' : 'update'
+
+  // Determine scope value — validate against allowed values
+  const allowedScopes = ['academy', 'level', 'group', 'program', 'session'] as const
+  type ScopeType = typeof allowedScopes[number]
+  const safeScope: ScopeType = (allowedScopes as readonly string[]).includes(parsedScope ?? '')
+    ? (parsedScope as ScopeType)
+    : 'academy'
+
+  // Validate pathway value
+  const allowedPathways = ['skill', 'competition', 'fitness', 'mixed'] as const
+  type PathwayType = typeof allowedPathways[number]
+  const safePathway: PathwayType | null = parsedPathway && (allowedPathways as readonly string[]).includes(parsedPathway)
+    ? (parsedPathway as PathwayType)
+    : null
+
+  // Build proposed_change JSONB
+  const proposedChange = {
+    parsed_level: parsedLevel,
+    parsed_focus: parsedFocus,
+    parsed_scope: parsedScope,
+    summary: proposedChangeSummary,
+    source_draft_id: proposedActionId,
+  }
+
+  const now = new Date().toISOString()
+
+  // Insert academy_curriculum_overrides row
+  const { data: created, error: insertError } = await rawDb
+    .from('academy_curriculum_overrides')
+    .insert({
+      academy_id: academyId,
+      curriculum_version_id: curriculumVersionId,
+      target_type: 'level',
+      target_id: null,
+      override_type: overrideType,
+      scope: safeScope,
+      pathway: safePathway,
+      original_snapshot: null,
+      proposed_change: proposedChange,
+      applied_change: proposedChange,
+      override_reason: proposedChangeSummary,
+      source: 'voice',
+      raw_input: rawInput,
+      status: 'applied',
+      created_by: user.id,
+      approved_by: proposedAction.approved_by ?? user.id,
+      approved_at: proposedAction.approved_at ?? now,
+      applied_by: user.id,
+      applied_at: now,
+    })
+    .select('id')
+    .single()
+
+  if (insertError || !created) {
+    return fail(`Failed to create override record: ${insertError?.message ?? 'unknown error'}`)
+  }
+
+  const overrideId = created.id as string
+
+  // Write audit log
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'curriculum_override.applied',
+      target_type: 'academy_curriculum_override',
+      target_id: overrideId,
+      payload: {
+        proposed_action_id: proposedActionId,
+        curriculum_version_id: curriculumVersionId,
+        override_id: overrideId,
+        override_type: overrideType,
+        scope: safeScope,
+        parsed_level: parsedLevel,
+        parsed_focus: parsedFocus,
+        applied_by: user.id,
+        source: 'curriculum_override_draft_v1',
+      },
+      source_type: 'ui',
+      voice_command_id: proposedAction.voice_command_id ?? null,
+    })
+
+  // Mark proposed_action as executed
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'executed' })
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return {
+      ok: false,
+      error: `Override created but failed to mark draft as executed: ${updateError.message}`,
+      overrideId,
+    }
+  }
+
+  return { ok: true, error: null, overrideId }
+}

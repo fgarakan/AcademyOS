@@ -2,6 +2,116 @@
 
 ---
 
+## 2026-05-01 — Sprints 61–70: Academy Curriculum Clone + Voice Customization V1
+
+**Mode:** Architecture doc, schema migration, server actions, UI components. No AI API calls. No parent/player visibility. No player level changes. No package installs.
+
+**Migrations created:** 048
+
+---
+
+### Sprint 61 — Academy Curriculum Clone Architecture Plan V1
+
+**Files created:**
+- `docs/ACADEMY_CURRICULUM_CLONE_ARCHITECTURE.md` — Architecture document: global master model, academy instance model, clone strategy (reference + overrides, no physical duplication), versioning, rollback, audit strategy, risk assessment, Sprint 62–70 path.
+
+**TypeScript:** Not applicable (docs only).
+
+---
+
+### Sprint 62 — Academy Curriculum Clone Schema V1
+
+**Files created:**
+- `supabase/migrations/048_academy_curriculum_clone.sql` — Creates `academy_curriculum_versions` (per-academy lightweight reference pointer) and `academy_curriculum_overrides` (structured delta records). Full RLS (staff read, director/head_coach write), indexes, updated_at triggers.
+
+**TypeScript:** Not applicable (SQL migration only).
+
+---
+
+### Sprint 63 — Academy Curriculum Clone Flow V1
+
+**Files created:**
+- `src/lib/actions/academyCurriculumClone.ts` — `createAcademyCurriculumCloneAction()`: resolves academy_id from auth profile, checks for existing active version, creates academy_curriculum_versions row (version_number=1, status=active), writes audit log.
+- `src/app/director/curriculum/AcademyCurriculumVersionCard.tsx` — Client component: shows active version status + override count, or "Create" button if none exists.
+
+**Files modified:**
+- `src/app/director/curriculum/page.tsx` — Added `AcademyCurriculumVersionCard` (queries academy_curriculum_versions + override count) and `VoiceOverrideInputPanel`. Added "Academy Version" to quick-nav links.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 64 — Voice Curriculum Override Draft Parser V1
+
+**Files created:**
+- `src/lib/actions/curriculumOverrideDraft.ts` — `createCurriculumOverrideDraftAction(rawInput)`: deterministic parser (no AI) for level names, pathway words, focus keywords, scope words. Creates `proposed_actions` row with `target_module = 'curriculum_override'`.
+- `src/app/director/curriculum/VoiceOverrideInputPanel.tsx` — Client component: textarea input, submit to `createCurriculumOverrideDraftAction`, shows draft created confirmation.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 65 — Curriculum Override Review Queue V1
+
+**Files created:**
+- `src/app/director/review/CurriculumOverrideDraftCard.tsx` — Shows raw input, parsed level/pathway/focus/scope, proposed change summary, affected targets, warnings, clarification questions. Shows decision controls for pending, apply controls for approved.
+- `src/app/director/review/CurriculumOverrideDraftDecisionControls.tsx` — Client component: approve / reject / clarification_needed buttons for curriculum override drafts.
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — Added `updateCurriculumOverrideDraftDecisionAction()` and `applyApprovedCurriculumOverrideDraftAction()`.
+- `src/app/director/review/page.tsx` — Added curriculum override draft fetch (step 24–27), enriched items assembly, "Curriculum Override Drafts" section, updated `PageHeader` props.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 66 — Approved Curriculum Override Application Guardrails V1
+
+**Files created:**
+- `src/app/director/review/ApplyCurriculumOverrideDraftControls.tsx` — Client component: "Apply Academy Curriculum Override" button calling `applyApprovedCurriculumOverrideDraftAction`.
+
+**TypeScript:** Clean. (Action in actions.ts, Sprint 65.)
+
+---
+
+### Sprint 67 — Academy Curriculum Version + Override List V1
+
+**Files created:**
+- `src/app/director/curriculum/academy-version/page.tsx` — Read-only director view: version summary card, applied overrides list, rolled-back overrides list, guardrail copy. Uses `CurriculumOverrideDiffCard` and `RollbackOverrideButton`.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 68 — Curriculum Diff / Impact Preview V1
+
+**Files created:**
+- `src/app/director/curriculum/academy-version/CurriculumOverrideDiffCard.tsx` — Before/after comparison per override. Shows original_snapshot or "Global default", applied change summary, downstream impact preview ("Impact partially inferred"), rollback button for applied overrides.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 69 — Rollback Academy Override V1
+
+**Files created:**
+- `src/lib/actions/rollbackCurriculumOverride.ts` — `rollbackAcademyCurriculumOverrideAction(overrideId)`: verifies auth/academy/role/status, inserts rollback record (`rollback_of_override_id` set), marks original as `rolled_back`, writes audit log.
+- `src/app/director/curriculum/academy-version/RollbackOverrideButton.tsx` — Client component: two-click confirm rollback flow.
+
+**TypeScript:** Clean.
+
+---
+
+### Sprint 70 — Academy Curriculum Clone + Voice Customization QA / Demo V1
+
+**Files created:**
+- `docs/ACADEMY_CURRICULUM_CLONE_QA.md` — QA checklist covering all 9 workflow steps, security checks, and known V1 limitations.
+- `docs/BRIAN_CURRICULUM_VOICE_CUSTOMIZATION_DEMO.md` — Full 10-step demo script from global curriculum view through rollback, with expected behavior at each step.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-01 — Sprint 60.5: Director Curriculum Landing Page V1
 
 **Mode:** Read-only page only. No schema changes. No migrations. No mutations. No package installs.
