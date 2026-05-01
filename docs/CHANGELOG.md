@@ -2,6 +2,70 @@
 
 ---
 
+## 2026-05-01 — Sprint 37: Evidence Requirement Draft Review Queue V1
+
+**Mode:** Review visibility and decision controls only. No official evidence-link application. No requirement progress mutation.
+
+**Files created:**
+- `src/app/director/review/EvidenceRequirementDraftDecisionControls.tsx` — client component: approve / needs clarification / reject buttons; calls `updateEvidenceRequirementDraftDecisionAction`; optional decision note (max 1000 chars); refreshes router on success
+- `src/app/director/review/EvidenceRequirementDraftCard.tsx` — display card: player name, proposer, created date, status, proposed link count, domain breakdown (skill / competition / fitness), first 5 requirement titles with domain tag + confidence %, evidence summaries; draft-only warnings; View Player Profile link; decision controls for pending drafts; approved banner for approved drafts
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — added evidence link draft fetch (steps 14–18); player name batch lookup; proposer batch lookup; enriched item assembly; "Evidence Link Drafts" section with pending + optional approved subsection; updated `PageHeader` to include `evidencePendingCount` in total pending badge
+
+**Review queue behavior:**
+- New "Evidence Link Drafts" section appears after the existing Priority Recommendation Drafts section on `/director/review`
+- Fetches `proposed_actions` where `target_module = requirement_evidence_link`, `status IN (pending_review, approved)`, `academy_id = current academy`
+- Post-fetch filter: `proposed_payload.draft_type = requirement_evidence_link_v1`
+- Pending drafts shown in main subsection with decision controls
+- Approved drafts shown in "Approved — Ready for Future Evidence Application" subsection; no apply button
+- Empty state shown when no pending or approved evidence link drafts exist
+
+**Decision behavior:**
+- `updateEvidenceRequirementDraftDecisionAction` (already in `actions.ts` from Sprint 36) handles approve / reject / clarification_needed
+- Updates only `proposed_actions.status` + reviewer tracking fields (`approved_by`, `approved_at`, `rejected_by`, `rejected_at`, `reviewer_notes`, `rejection_reason`)
+- Verifies: authenticated user, academy membership (director or head_coach), `academy_id` match, `target_module = requirement_evidence_link`, `target_object_type = player`, `draft_type = requirement_evidence_link_v1`, `status = pending_review`
+
+**Database read/write strategy:**
+- Reads: `proposed_actions`, `players` (name lookup), `profiles` (proposer name lookup) — all scoped to `academy_id`
+- Writes: `proposed_actions` reviewer fields only
+- No writes to: `requirement_evidence_links`, `player_requirement_progress`, `coach_observations`, player profiles, or any other table
+
+**Security checks:**
+- `assertNotPreviewMode()`
+- Authenticated Supabase server client (no service role)
+- `academy_id` resolved from authenticated profile — never trusts client input
+- Active academy membership verified (`academy_director` or `head_coach` only)
+- `proposed_actions.academy_id` verified against session academy
+- `target_module`, `target_object_type`, `draft_type` verified before any update
+- `status = pending_review` required — already-reviewed drafts blocked
+
+**What was NOT built (by design):**
+- No "Apply Evidence Links" button
+- No inserts into `requirement_evidence_links`
+- No updates to `player_requirement_progress` (evidence_count, last_evidence_at, status)
+- No coach_observations mutations
+- No player level or profile field mutations
+- No parent/player portal views
+- No AI API calls
+- No migrations
+- No package installs
+
+**Validation:**
+- `npx tsc --noEmit` — passes with zero errors.
+
+**Manual verification steps:**
+1. Confirm at least one `proposed_actions` row exists with `target_module = requirement_evidence_link`, `status = pending_review`, `draft_type = requirement_evidence_link_v1`
+2. Open `/director/review`
+3. Confirm "Evidence Link Drafts" section appears below Priority Recommendation Drafts
+4. Confirm card shows player name, link count, requirement titles, domain breakdown, draft-only warnings
+5. Click "View Player Profile" — confirm navigates to `/director/players/[playerId]`
+6. Click "Needs Clarification" or "Approve" — confirm `proposed_actions.status` updates only
+7. Confirm `requirement_evidence_links`, `player_requirement_progress`, `coach_observations` unchanged
+8. Confirm existing session recap and priority review sections still work correctly
+
+---
+
 ## 2026-04-30 — Sprint 36: Evidence-to-Requirement Link Drafts V1
 
 **Mode:** Draft creation only. No mutations to evidence tables. No requirement status updates. No parent/player views.

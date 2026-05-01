@@ -1,4 +1,4 @@
-import { ClipboardList, Target } from 'lucide-react'
+import { ClipboardList, Link2, Target } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -6,6 +6,8 @@ import type { EnrichedDraftItem } from './StructuredDraftCard'
 import type { StructuredDraftPayload } from '@/app/director/sessions/[sessionId]/structureRecapAction'
 import { PriorityRecommendationDraftCard } from './PriorityRecommendationDraftCard'
 import type { EnrichedPriorityDraftItem, PriorityRecommendationPayload } from './PriorityRecommendationDraftCard'
+import { EvidenceRequirementDraftCard } from './EvidenceRequirementDraftCard'
+import type { EnrichedEvidenceLinkDraftItem, EvidenceRequirementLinkPayload } from './EvidenceRequirementDraftCard'
 
 export default async function DirectorReviewQueuePage() {
   const supabase = await getSupabaseServer()
@@ -207,6 +209,74 @@ export default async function DirectorReviewQueuePage() {
   const pendingPriorityDrafts = enrichedPriorityDrafts.filter(d => d.status === 'pending_review')
   const approvedPriorityDrafts = enrichedPriorityDrafts.filter(d => d.status === 'approved')
 
+  // ─── Evidence requirement link drafts ─────────────────────────
+
+  // 14. Fetch pending + approved evidence requirement link drafts — scoped to this academy
+  const { data: evidenceDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_review', 'approved'])
+    .eq('target_module', 'requirement_evidence_link')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allEvidenceDraftRows: DraftRow[] = (evidenceDraftRows ?? []) as DraftRow[]
+
+  // 15. Filter to requirement_evidence_link_v1 — checked after fetch since payload is JSON
+  const filteredEvidenceDrafts = allEvidenceDraftRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'requirement_evidence_link_v1'
+  })
+
+  // 16. Batch-fetch player names for evidence link drafts
+  const evidencePlayerIds = Array.from(
+    new Set(
+      filteredEvidenceDrafts
+        .map(d => d.target_object_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+
+  const evidencePlayerMap = new Map<string, string>()
+  if (evidencePlayerIds.length > 0) {
+    const { data: evidencePlayers } = await supabase
+      .from('players')
+      .select('id, first_name, last_name, full_name')
+      .in('id', evidencePlayerIds)
+      .eq('academy_id', academyId)
+    for (const p of (evidencePlayers ?? [])) {
+      evidencePlayerMap.set(p.id, p.full_name ?? `${p.first_name} ${p.last_name}`.trim())
+    }
+  }
+
+  // 17. Batch-fetch proposer display names for evidence link drafts
+  const evidenceProposerIds = Array.from(new Set(filteredEvidenceDrafts.map(d => d.proposed_by_id)))
+  const evidenceProposerMap = new Map<string, string>()
+  if (evidenceProposerIds.length > 0) {
+    const { data: evidenceProposers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', evidenceProposerIds)
+    for (const p of (evidenceProposers ?? [])) {
+      evidenceProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  // 18. Assemble enriched evidence link draft items — split pending vs approved
+  const enrichedEvidenceDrafts: EnrichedEvidenceLinkDraftItem[] = filteredEvidenceDrafts.map(d => ({
+    id: d.id,
+    status: d.status,
+    createdAt: d.created_at,
+    playerId: d.target_object_id,
+    playerName: d.target_object_id ? (evidencePlayerMap.get(d.target_object_id) ?? null) : null,
+    proposerName: evidenceProposerMap.get(d.proposed_by_id) ?? null,
+    payload: d.proposed_payload as unknown as EvidenceRequirementLinkPayload,
+  }))
+
+  const pendingEvidenceDrafts = enrichedEvidenceDrafts.filter(d => d.status === 'pending_review')
+  const approvedEvidenceDrafts = enrichedEvidenceDrafts.filter(d => d.status === 'approved')
+
   return (
     <div className="animate-fade-in space-y-8">
       <PageHeader
@@ -214,6 +284,7 @@ export default async function DirectorReviewQueuePage() {
         approvedCount={approvedDrafts.length}
         priorityPendingCount={pendingPriorityDrafts.length}
         priorityApprovedCount={approvedPriorityDrafts.length}
+        evidencePendingCount={pendingEvidenceDrafts.length}
       />
 
       {/* ─── Session recap structured drafts ─── */}
@@ -320,6 +391,62 @@ export default async function DirectorReviewQueuePage() {
           ) : null}
         </section>
       </div>
+      {/* ─── Evidence link drafts ─── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 pb-1 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Link2 className="w-4 h-4 text-text-muted" />
+            <p className="label-xs">Evidence Link Drafts</p>
+          </div>
+          {pendingEvidenceDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+              {pendingEvidenceDrafts.length} pending
+            </span>
+          )}
+          {approvedEvidenceDrafts.length > 0 && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+              {approvedEvidenceDrafts.length} approved
+            </span>
+          )}
+        </div>
+
+        {/* Approved — awaiting future evidence application */}
+        {approvedEvidenceDrafts.length > 0 && (
+          <section className="space-y-3">
+            <p className="label-xs">Approved — Ready for Future Evidence Application</p>
+            <div className="space-y-4">
+              {approvedEvidenceDrafts.map(draft => (
+                <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Pending review */}
+        <section className="space-y-3">
+          {approvedEvidenceDrafts.length > 0 && pendingEvidenceDrafts.length > 0 && (
+            <p className="label-xs">Pending Review</p>
+          )}
+          {pendingEvidenceDrafts.length === 0 && approvedEvidenceDrafts.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<Link2 className="w-5 h-5" />}
+                  title="No pending evidence link drafts"
+                  description="Drafts created from player requirement pages will appear here for review."
+                />
+              </CardContent>
+            </Card>
+          ) : pendingEvidenceDrafts.length > 0 ? (
+            <div className="space-y-4">
+              {pendingEvidenceDrafts.map(draft => (
+                <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      </div>
+
     </div>
   )
 }
@@ -329,13 +456,15 @@ function PageHeader({
   approvedCount,
   priorityPendingCount,
   priorityApprovedCount,
+  evidencePendingCount,
 }: {
   pendingCount: number
   approvedCount: number
   priorityPendingCount: number
   priorityApprovedCount: number
+  evidencePendingCount: number
 }) {
-  const totalPending = pendingCount + priorityPendingCount
+  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount
   const totalReadyToApply = approvedCount + priorityApprovedCount
   return (
     <div>
