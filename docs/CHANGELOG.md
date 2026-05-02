@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-02 — Sprint 189: Curriculum Seed Migration
+
+**Mode:** Migration only. No UI built. No app routes modified. No new tables. No schema changes. No npm installs.
+
+**Migrations created:** `supabase/migrations/053_curriculum_seed.sql`
+
+**TypeScript result:** `npx tsc --noEmit` — 0 errors
+
+### Sprint 189 — Curriculum Seed Migration V1
+- Created `scripts/generate-curriculum-seed-sql.py` — Python generator that reads all 7 validated xlsx source files and produces `supabase/migrations/053_curriculum_seed.sql`. Applies all normalization mappings from Sprint 188 validation report. Uses level lookup subqueries (never hardcoded UUIDs). Strips Swinget [PROPOSED:] annotation from gate notes. Parses JSONB coaching_cues from pipe-delimited source strings. Covers all 10 curriculum foundation tables.
+- Created `supabase/migrations/053_curriculum_seed.sql` — Seeds all curriculum foundation tables. 10,468 lines, 528 KB. All inserts use ON CONFLICT DO NOTHING for idempotency.
+
+**Row counts per table:**
+- `curriculum_levels`: 15 display-name UPDATE statements
+- `curriculum_archetypes`: 8 rows (A1–A8)
+- `curriculum_failure_modes`: 14 rows (FM-01–FM-14)
+- `curriculum_gates`: 57 rows (full)
+- `curriculum_coach_language`: 120 rows (full — 15 stages × 8 domains)
+- `curriculum_drills`: 152 rows (full)
+- `curriculum_drill_tags`: 614 rows
+- `curriculum_competition_track`: 15 rows (full)
+- `curriculum_fitness_guidance`: 15 rows (full)
+- `curriculum_volume_guidance`: 15 rows (full)
+- `drill_gate_mappings`: 0 rows (intentionally deferred — strategy not confirmed)
+
+**Product-tool grep result:** CLEAN in all data fields. Two SQL comment-only references (header and strip-note), one confirmed false positive (`'First-volley closing the angle.'` — tennis coaching term, not The Angle™ product).
+
+---
+
 ## 2026-05-02 — Sprint 188: Curriculum Spreadsheet Validation + Normalized Seed Preview
 
 **Mode:** Validation and preview only. No migrations created. No data inserted. No UI built. No app routes modified. No npm installs.
