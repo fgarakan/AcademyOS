@@ -1,7 +1,7 @@
 # Fitness OS Template Builder — Demo Script
 
-**Sprint:** 145
-**Date:** 2026-05-01
+**Sprint:** 165 (originally Sprint 145, updated for Sprint 156-165 batch)
+**Date:** 2026-05-02
 **Route:** `/director/fitness/templates`
 
 ---

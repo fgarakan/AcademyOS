@@ -143,3 +143,7 @@ const INTENT_DESCRIPTIONS: Record<FitnessBlockType, string> = {
 export function getFitnessBlockIntent(type: FitnessBlockType): string {
   return INTENT_DESCRIPTIONS[type]
 }
+
+export function isFitnessBlockType(value: unknown): value is FitnessBlockType {
+  return typeof value === 'string' && FITNESS_BLOCK_TYPES.includes(value as FitnessBlockType)
+}

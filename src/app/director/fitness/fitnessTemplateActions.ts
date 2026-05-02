@@ -439,6 +439,54 @@ export async function swapExerciseInFitnessBlockAction(
 }
 
 // ─────────────────────────────────────────────────────────────
+// updateFitnessExercisePrescriptionAction
+// Updates duration_min and/or notes on a template_block_exercise row.
+// Does not alter the global exercise library item.
+// ─────────────────────────────────────────────────────────────
+
+export async function updateFitnessExercisePrescriptionAction(
+  templateId: string,
+  blockId: string,
+  templateBlockExerciseId: string,
+  prescription: { durationMin?: number | null; notes?: string | null },
+): Promise<{ ok: boolean; error: string | null }> {
+  const auth = await resolveAcademyAndRole()
+  if (!auth.ok) return { ok: false, error: auth.error }
+  const { supabase, academyId } = auth
+
+  const rawDb = supabase as any
+
+  const { data: template } = await rawDb
+    .from('templates')
+    .select('id, tags')
+    .eq('id', templateId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!template) return { ok: false, error: 'Template not found or access denied.' }
+  const tags: string[] = template.tags ?? []
+  if (!tags.includes('fitness_template:true')) {
+    return { ok: false, error: 'This template is not a fitness template.' }
+  }
+
+  const updatePayload: Record<string, unknown> = {}
+  if (prescription.durationMin !== undefined) updatePayload.duration_min = prescription.durationMin
+  if (prescription.notes !== undefined) updatePayload.notes = prescription.notes?.trim() || null
+
+  if (Object.keys(updatePayload).length === 0) return { ok: true, error: null }
+
+  const { error } = await rawDb
+    .from('template_block_exercises')
+    .update(updatePayload)
+    .eq('id', templateBlockExerciseId)
+    .eq('block_id', blockId)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/director/fitness/templates/${templateId}`)
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
 // updateFitnessBlockNotesAction
 // Stores director/coach observations in template_blocks.notes
 // ─────────────────────────────────────────────────────────────

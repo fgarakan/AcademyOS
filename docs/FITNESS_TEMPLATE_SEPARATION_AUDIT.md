@@ -1,8 +1,8 @@
 # Fitness / Class Template Separation Audit
 
-**Sprint:** 136
-**Date:** 2026-05-01
-**Status:** Audit complete — implementation plan below
+**Sprint:** 156 (originally Sprint 136, updated for Sprint 156-165 batch)
+**Date:** 2026-05-02
+**Status:** Audit complete — implementation executed in Sprints 136-145, re-validated in Sprints 156-165
 
 ---
 
@@ -144,16 +144,16 @@ A migration would only be needed if:
 
 ---
 
-## Implementation Plan for Sprints 137–145
+## Implementation Plan (Sprints 136-145 / re-executed as 156-165)
 
-| Sprint | Task |
-|---|---|
-| 137 | Route + nav separation. Add Class Templates route. Update sidebar. Scope Fitness page to fitness_template:true. |
-| 138 | Fitness block taxonomy. `src/lib/fitness/fitnessBlockTypes.ts`. Docs. |
-| 139 | Exercise matching. `src/lib/fitness/fitnessExerciseMatching.ts`. Map fitness blocks to exercises. |
-| 140 | Server actions. Create/add/remove/reorder blocks and exercises. Use existing tables. |
-| 141 | Fitness OS list page rewrite. Premium Fitness OS command page. |
-| 142 | Fitness template detail / block builder. Full builder UI. |
-| 143 | Exercise switcher modal. Swap exercise within a block. |
-| 144 | Voice observation drafts. Capture observations as block notes. |
-| 145 | QA doc, demo script, CHANGELOG, TypeScript check. |
+| Sprint | Sprint 136-145 | Sprint 156-165 | Status |
+|---|---|---|---|
+| Route + nav separation | 137 | 157 | Complete |
+| Fitness block taxonomy | 138 | 158 | Complete — `isFitnessBlockType` added in 158 |
+| Exercise matching engine | 139 | 159 | Complete — `normalizeFitnessExerciseCategory` + docs added in 159 |
+| Server actions | 140 | 160 | Complete — `updateFitnessExercisePrescriptionAction` added in 160 |
+| Fitness OS list page | 141 | 161 | Complete |
+| Block builder UI | 142 | 162 | Complete |
+| Exercise switcher modal | 143 | 163 | Complete |
+| Voice observation drafts | 144 | 164 | Complete |
+| QA doc + demo script | 145 | 165 | Complete |

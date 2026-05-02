@@ -1,7 +1,7 @@
 # Fitness OS Template Builder — QA Tests
 
-**Sprint:** 145
-**Date:** 2026-05-01
+**Sprint:** 165 (originally Sprint 145, updated for Sprint 156-165 batch)
+**Date:** 2026-05-02
 
 ---
 
@@ -185,3 +185,31 @@ npx tsc --noEmit
 ```
 
 **Pass:** Zero errors in sprint-touched files.
+
+---
+
+### 17. `isFitnessBlockType` correctly validates values
+
+```ts
+isFitnessBlockType('movement')          // true
+isFitnessBlockType('recovery_cool_down') // true
+isFitnessBlockType('technical')          // false (class block type)
+isFitnessBlockType('')                   // false
+isFitnessBlockType(42)                   // false
+```
+
+**Pass:** Function correctly narrows to `FitnessBlockType` union.
+
+---
+
+### 18. `normalizeFitnessExerciseCategory` maps legacy values correctly
+
+```ts
+normalizeFitnessExerciseCategory('warm up')       // 'warm_up'
+normalizeFitnessExerciseCategory('cool-down')     // 'cool_down'
+normalizeFitnessExerciseCategory('conditioning')  // 'fitness'
+normalizeFitnessExerciseCategory('movement')      // 'movement'
+normalizeFitnessExerciseCategory('technique')     // 'technical'
+```
+
+**Pass:** Normalized values match DB `exercise_category` enum values.

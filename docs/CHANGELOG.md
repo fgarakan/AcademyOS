@@ -2,6 +2,48 @@
 
 ---
 
+## 2026-05-02 — Sprints 156–165: Fitness OS Template Builder + Class Template Separation V1 (Completion Pass)
+
+**Mode:** Fitness OS product completion — utility functions, server action, and docs. No npm installs. No AI API calls. No migrations.
+
+**Migrations created:** None
+
+### Sprint 156 — Fitness/Class Template Separation Audit V1
+- Updated `docs/FITNESS_TEMPLATE_SEPARATION_AUDIT.md` — Revised sprint reference from 136 to 156. Updated implementation plan table to map 136-145 → 156-165 with completion status.
+
+### Sprint 157 — Class Templates Route + Navigation Separation V1
+- No changes needed. `src/app/director/class-templates/page.tsx` and sidebar separation confirmed complete from Sprint 137.
+
+### Sprint 158 — Fitness Block Taxonomy V1
+- Modified `src/lib/fitness/fitnessBlockTypes.ts` — Added `isFitnessBlockType(value)` type guard export.
+
+### Sprint 159 — Fitness Exercise Matching Engine V1
+- Modified `src/lib/fitness/fitnessExerciseMatching.ts` — Added `normalizeFitnessExerciseCategory(value)` export for normalizing legacy category strings to DB enum values.
+- Created `docs/FITNESS_EXERCISE_MATCHING_ENGINE.md` — Documents scoring algorithm, block→keyword mappings, fallback exercise policy, all exported functions, category normalization table, and guardrails.
+
+### Sprint 160 — Fitness Template Data Model + Actions V1
+- Modified `src/app/director/fitness/fitnessTemplateActions.ts` — Added `updateFitnessExercisePrescriptionAction` to update `duration_min` and `notes` on a template_block_exercise row without touching the global exercise library.
+
+### Sprint 161 — Fitness Template List Page V1
+- No changes needed. Page confirmed complete from Sprint 141.
+
+### Sprint 162 — Fitness Template Detail / Block Builder V1
+- No changes needed. FitnessTemplateBuilderClient, FitnessBlockCard, ExerciseRow, observation panel confirmed complete from Sprint 142.
+
+### Sprint 163 — Fitness Exercise Switcher V1
+- No changes needed. FitnessExerciseSwitcher confirmed complete from Sprint 143.
+
+### Sprint 164 — Fitness Voice/Text Observation Drafts V1
+- No changes needed. VoiceTextInput observation panel confirmed complete from Sprint 144.
+
+### Sprint 165 — Fitness OS QA + Brian Demo Script V1
+- Updated `docs/FITNESS_OS_TEMPLATE_BUILDER_QA.md` — Updated sprint reference to 165. Added QA items 17 (isFitnessBlockType validation) and 18 (normalizeFitnessExerciseCategory).
+- Updated `docs/FITNESS_OS_DEMO_SCRIPT.md` — Updated sprint reference to 165.
+- Modified `docs/CHANGELOG.md` — This entry.
+- TypeScript: ✓ clean (exit 0)
+
+---
+
 ## 2026-05-01 — Sprints 146–155: Director Dashboard Command Cards + Drilldowns + Private Lesson Requests V1
 
 **Mode:** Director dashboard command layer. No npm installs. No AI API calls. No communications sent.

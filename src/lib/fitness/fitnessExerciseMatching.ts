@@ -178,3 +178,18 @@ export function getExercisesForFitnessBlock(
   const fallbacks = getFallbackFitnessExercises(blockType).slice(0, remaining)
   return [...real, ...fallbacks]
 }
+
+// Normalize raw exercise category strings to standard DB enum values.
+// Handles common free-text or legacy category values from imports.
+export function normalizeFitnessExerciseCategory(value: string): string {
+  const v = value.toLowerCase().trim()
+  if (v === 'warm up' || v === 'warm-up' || v === 'warm_up') return 'warm_up'
+  if (v === 'cool down' || v === 'cool-down' || v === 'cool_down' || v === 'cooldown') return 'cool_down'
+  if (v === 'movement' || v === 'move') return 'movement'
+  if (v === 'fitness' || v === 'physical' || v === 'conditioning') return 'fitness'
+  if (v === 'technical' || v === 'technique') return 'technical'
+  if (v === 'tactical' || v === 'tactics') return 'tactical'
+  if (v === 'competition' || v === 'competitive') return 'competition'
+  if (v === 'mental' || v === 'psychological') return 'mental'
+  return value
+}
