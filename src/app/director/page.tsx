@@ -3,7 +3,7 @@ import Link from 'next/link'
 import {
   Users, BookOpen, Calendar, ChevronRight, Activity,
   Clock, Mic, Brain, AlertTriangle, TrendingUp, BookMarked,
-  GraduationCap,
+  GraduationCap, Sparkles,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
@@ -133,6 +133,16 @@ export default async function DirectorDashboard() {
 
   const allRequests = (plrData ?? []) as Array<{ id: string; status: string }>
   const newRequests = allRequests.filter(r => r.status === 'new').length
+
+  // AI Suggestions pending count
+  const { data: suggestionCountData } = await rawDb
+    .from('academy_suggestions')
+    .select('priority')
+    .eq('academy_id', academyId)
+    .eq('status', 'pending')
+  const pendingSuggestions = (suggestionCountData ?? []) as Array<{ priority: string }>
+  const pendingSuggestionsCount = pendingSuggestions.length
+  const highPrioritySuggestionsCount = pendingSuggestions.filter(s => s.priority === 'high').length
 
   // Deterministic alert count
   const missingFocus = activePl.filter(p => !p.focus_areas || p.focus_areas.length === 0).length
@@ -341,15 +351,72 @@ export default async function DirectorDashboard() {
 
       </div>
 
-      {/* ── Academy Alerts detailed middle section ──────────── */}
-      <AcademyAlertsPanel
-        missingFocusCount={missingFocus}
-        attentionCount={attentionCount}
-        reassessmentDueCount={reassessmentDue}
-        newRequestsCount={newRequests}
-        pendingCount={pendingCount}
-        sessions={weekSessions ?? []}
-      />
+      {/* ── Academy Alerts + AI Suggestions ────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+        <AcademyAlertsPanel
+          missingFocusCount={missingFocus}
+          attentionCount={attentionCount}
+          reassessmentDueCount={reassessmentDue}
+          newRequestsCount={newRequests}
+          pendingCount={pendingCount}
+          sessions={weekSessions ?? []}
+        />
+
+        {/* AI Suggestions card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold text-text-primary flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-lime" />
+                  AI Suggestions
+                </h2>
+                <p className="text-xs text-text-muted mt-0.5">Suggested actions for review</p>
+              </div>
+              {pendingSuggestionsCount > 0 && (
+                <span className="font-mono text-lime text-xl font-bold leading-none">
+                  {pendingSuggestionsCount}
+                </span>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {pendingSuggestionsCount === 0 ? (
+              <EmptyState
+                icon={<Brain className="w-5 h-5" />}
+                title="No pending suggestions"
+                description="Generate suggestions to surface recommended actions from current academy data."
+                className="py-8"
+              />
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs text-text-secondary">
+                    {pendingSuggestionsCount} suggestion{pendingSuggestionsCount !== 1 ? 's' : ''} pending review
+                  </span>
+                  {highPrioritySuggestionsCount > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-status-orange/10 border-status-orange/20 text-status-orange">
+                      <AlertTriangle className="w-2.5 h-2.5" />
+                      {highPrioritySuggestionsCount} high priority
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-text-muted px-1">
+                  Nothing changes until you review and accept each suggestion.
+                </p>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Link
+              href="/director/ai-suggestions"
+              className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
+            >
+              {pendingSuggestionsCount > 0 ? 'Review suggestions →' : 'Open AI Suggestions →'}
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
 
       {/* ── Sessions this week ──────────────────────────────── */}
       {(weekSessions ?? []).length > 0 && (
@@ -414,10 +481,10 @@ export default async function DirectorDashboard() {
             href="/director/review"
           />
           <QuickActionCard
-            icon={<Brain className="w-4 h-4 text-lime" />}
+            icon={<Sparkles className="w-4 h-4 text-lime" />}
             title="Academy Intelligence"
-            description="Review alerts, trends, and recommendations."
-            href="/director/alerts"
+            description="Review AI suggestions, trends, and recommendations."
+            href="/director/ai-suggestions"
           />
         </div>
       </div>

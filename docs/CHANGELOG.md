@@ -2,6 +2,101 @@
 
 ---
 
+## 2026-05-02 — Sprints 176–185: AI Suggestion Review Engine + Director Approval Cards V1
+
+**Mode:** AI suggestion infrastructure — deterministic generation, director review page, lifecycle actions, dashboard card. No npm installs. No external AI API. No parent/player publishing. No level mutations. No auto-applying suggestions.
+
+**Migrations created:** `supabase/migrations/051_academy_suggestions.sql`
+
+**TypeScript result:** `npx tsc --noEmit` — 0 errors
+
+### Sprint 176 — AI Suggestion System Architecture Audit V1
+- Created `docs/AI_SUGGESTION_REVIEW_ENGINE_ARCHITECTURE.md` — Full audit of existing review queues, adaptive suggestions, data sources. Includes recommended `academy_suggestions` table schema, suggestion types, impact preview model, accept/deny/defer lifecycle, V1 safe behaviors, audit plan, and implementation plan.
+
+### Sprint 177 — AI Suggestions Data Model V1
+- Created `supabase/migrations/051_academy_suggestions.sql` — `academy_suggestions` table with all lifecycle fields (status, priority, confidence, evidence JSONB, impact_preview JSONB, proposed_changes JSONB, will_not_change JSONB, review tracking). RLS policies for director/head_coach roles only. 3 performance indexes.
+- Created `docs/ACADEMY_SUGGESTIONS_DATA_MODEL.md` — Schema documentation.
+
+### Sprint 178 — Suggestion Generation Helpers V1
+- Created `src/lib/suggestions/suggestionTypes.ts` — Type definitions: `AcademySuggestionType`, `AcademySuggestionPriority`, `AcademySuggestionConfidence`, `AcademySuggestionStatus`, `AcademySuggestionDraft`, `AcademySuggestionRow`, display label maps and CSS class maps.
+- Created `src/lib/suggestions/generateAcademySuggestions.ts` — Deterministic suggestion generators (pure functions, no DB calls, no AI API): `buildPlayerFocusMissingSuggestions`, `buildPrivateLessonPendingSuggestions`, `buildParentSafeSummaryOpportunitySuggestions`, `buildLevelReadinessReviewSuggestions`, `buildReassessmentFollowupSuggestions`, `buildAcademySuggestionDrafts`.
+
+### Sprint 179 — Suggestion Server Actions V1
+- Created `src/app/director/ai-suggestions/suggestionActions.ts` — Server actions: `generateAcademySuggestionsAction` (fetch + dedup + insert), `acceptSuggestionAction`, `denySuggestionAction`, `deferSuggestionAction`, `markSuggestionAppliedAction`. All academy-scoped and role-checked. No auto-mutation on accept.
+
+### Sprint 180 — Director AI Suggestions Dashboard Card V1
+- Modified `src/app/director/page.tsx` — Added AI Suggestions card alongside Academy Alerts panel (2-column layout). Queries `academy_suggestions` for pending count and high-priority count. Updated Academy Intelligence quick action to link to `/director/ai-suggestions`.
+- Modified `src/components/nav/SidebarNav.tsx` — Added "AI Suggestions" nav item under Intelligence section with Sparkles icon.
+
+### Sprint 181 — AI Suggestions Review Page V1
+- Created `src/app/director/ai-suggestions/page.tsx` — Full review page: eyebrow/title/subtitle header, "Generate Suggestions" form button, summary stat cards (Pending/High Priority/Accepted/Deferred), filter tabs by status, guardrail note ("nothing changes automatically"), SuggestionCard list with bound server actions. Empty state per status. `SummaryStatCard` local component.
+
+### Sprint 182 — Suggestion Card Component + Impact Preview V1
+- Created `src/components/suggestions/SuggestionCard.tsx` — Client component with expand/collapse, Accept/Deny/Defer actions, inline note textarea for deny/defer, `useTransition` for async state, action result messages. Positive development language throughout.
+- Created `src/components/suggestions/ImpactPreviewPanel.tsx` — Presentational component showing Evidence, "If accepted" (lime panel), "Will not change" (surface-raised panel), "Recommended next step". Exports `parseSuggestionImpactPreview` helper.
+
+### Sprint 183 — Safe Accept/Deny/Defer Workflow V1
+- Implemented in `suggestionActions.ts` — Accept only marks status + returns nextStep from impact_preview. Deny/Defer store optional review_note. All actions verify academy ownership via membership check. `revalidatePath` keeps counts fresh.
+
+### Sprint 184 — Suggestion Audit + Duplicate Prevention V1
+- Duplicate prevention enforced in `generateAcademySuggestionsAction` via composite key `suggestion_type:entity_type:entity_id` checked against in-memory Set.
+- `reviewed_by`, `reviewed_at`, `review_note` populated on all review actions.
+- Created `docs/AI_SUGGESTION_LIFECYCLE_AND_AUDIT.md` — Lifecycle states, duplicate prevention design, accepted vs applied distinction, V1 safety rules per type, future audit_logs integration plan, RLS enforcement summary.
+
+### Sprint 185 — AI Suggestions QA + Brian Demo Script V1
+- Created `docs/AI_SUGGESTIONS_QA.md` — 21-item QA checklist covering UI rendering, generation, dedup, card interactions, accept/deny/defer, safety guardrails, TypeScript.
+- Created `docs/AI_SUGGESTIONS_BRIAN_DEMO_SCRIPT.md` — 10-step demo script: dashboard card → review page → generate → expand card → evidence → impact preview → accept → deny → defer → filter tabs.
+- Updated `docs/CHANGELOG.md` — this entry.
+
+---
+
+## 2026-05-02 — Sprints 166–175: Player + Parent Development Profile Experience V1
+
+**Mode:** UI/UX build — development profile components, parent/player safe previews, dashboard drilldown language. No npm installs. No AI API calls. No migrations. No parent/player publishing. No level mutations.
+
+**Migrations created:** None
+
+**TypeScript result:** `npx tsc --noEmit` — 0 errors
+
+### Sprint 166 — Player Profile Experience Audit V1
+- Created `docs/PLAYER_PARENT_DEVELOPMENT_PROFILE_EXPERIENCE_AUDIT.md` — Full audit of current player profile data sources, visibility gaps, and component opportunities. Maps `current_strengths` → Doing Well, `things_to_work_on` → Working On, `development_focus` → Current Focus.
+
+### Sprint 167 — Player Development Summary Card V1
+- Created `src/components/player/DevelopmentProfileSummaryCard.tsx` — Internal coach-facing development summary card. Adapts `player_development_summary` + `player_priorities` into Doing Well / Working On / Current Focus / Next Step sections. Shows "Internal coach view" badge.
+
+### Sprint 168 — Doing Well / Working On / Current Focus Sections V1
+- Created `src/components/player/DevelopmentFocusSections.tsx` — Four-section presentational component (Doing Well, Working On, Current Focus, Next Step) with positive development language and color-coded icons.
+- Modified `src/components/player/DevelopmentSummarySection.tsx` — Updated labels: "Current Strengths" → "Doing Well", "Things to Work On" → "Working On", "Development Focus" → "Current Focus", "Coach Summary" → "Coach Insight", "Student-Facing Preview" → "Player Preview".
+
+### Sprint 169 — Progress Evidence + Recent Notes Timeline V1
+- Created `src/components/player/ProgressEvidenceTimeline.tsx` — Timeline of coach observations with Internal/Coach note visibility pills. Truncates content at 180 chars. Shows observation type, coach name, session context.
+
+### Sprint 170 — Coach-Facing Player Snapshot V1
+- Created `src/components/player/CoachPlayerSnapshot.tsx` — Pre-session coach view: Current Focus, Doing Well, Working On, Next Priority, Recent Note with date. Answers "what to focus on with this player today."
+
+### Sprint 171 — Parent-Safe Player Progress Preview V1
+- Created `src/components/player/ParentSafeProgressPreview.tsx` — Parent portal card with "Preview only" Lock badge. Empty state: "Progress summaries will appear here after coach/director review." Never exposes raw coach notes.
+- Modified `src/app/parent/page.tsx` — Replaced generic "Child's Progress" card with `ParentSafeProgressPreview`.
+
+### Sprint 172 — Player Mission View Preview V1
+- Created `src/components/player/PlayerMissionPreview.tsx` — Player portal mission card. Your Strength / Your Mission / Next Win sections. Empty state: "Your next mission will appear after your coach reviews your progress."
+- Modified `src/app/player/page.tsx` — Replaced generic "Today's Mission" card with `PlayerMissionPreview`.
+
+### Sprint 173 — Level-Up Requirements / Next Level Progress V1
+- Created `src/components/player/LevelProgressCard.tsx` — Sidebar card showing current level, next target level, advancement status (CheckCircle2 / Clock), and director approval requirement.
+
+### Sprint 174 — Dashboard Drilldown Integration V1
+- Modified `src/app/director/players/[playerId]/page.tsx` — Added `DevelopmentProfileSummaryCard` to Overview tab left column; added `LevelProgressCard` to Overview sidebar; added `CoachPlayerSnapshot` at top of Notes tab; added `ProgressEvidenceTimeline` in Notes tab. Moved `rawDb`, `developmentSummary`, `activePriorities`, `progressionRequirements`, and `nextCurriculumLevel` queries before `overviewSlot`.
+- Modified `src/app/director/players/active/page.tsx` — Updated "Working on:" label to "Current Focus" to match development profile language.
+- Modified `src/app/director/improvement/page.tsx` — Added "Working On" label above focus area text in player rows.
+
+### Sprint 175 — Player/Parent Development Experience QA + Demo Script V1
+- Created `docs/PLAYER_PARENT_DEVELOPMENT_PROFILE_EXPERIENCE_QA.md` — 15-item QA checklist covering all components, safety guardrails, and TypeScript.
+- Created `docs/PLAYER_PARENT_DEVELOPMENT_PROFILE_DEMO_SCRIPT.md` — 10-step demo sequence from Director Dashboard through parent/player previews with guardrail explanation.
+- Updated `docs/CHANGELOG.md` — This entry.
+
+---
+
 ## 2026-05-02 — Sprints 156–165: Fitness OS Template Builder + Class Template Separation V1 (Completion Pass)
 
 **Mode:** Fitness OS product completion — utility functions, server action, and docs. No npm installs. No AI API calls. No migrations.
