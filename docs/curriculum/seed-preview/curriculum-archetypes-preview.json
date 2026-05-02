@@ -1,0 +1,87 @@
+{
+  "generated": "2026-05-02T22:45:23.537Z",
+  "sprint": 188,
+  "count": 8,
+  "rows": [
+    {
+      "tag": "A1",
+      "name": "Early Developer",
+      "age_band": "8–10",
+      "entry_stage": "Red 2",
+      "profile": "Athletic for age, started young (5–6), parents engaged, accelerated through Red foundation in 6–9 months. Loves training, wants to play matches now. Coordination is ahead of decision-making — can hit the ball cleaner than they can read where to put it.",
+      "competition_track_posture": "Wants competition early. Parent often pushes for tournament entry before Skill Track is gated. Competition Track Stage 2 is the realistic ceiling at entry.",
+      "key_risks": "Skill Track outpaces decision-making — coach gets seduced by clean ball-striking and skips tactical evidence gates. Burnout risk if competition ramped too early. The Yellow 2 → Yellow 3 transition is the most likely future stall (decision-making catches up or doesn't).",
+      "curriculum_protection": "Decision-making evidence in tactical gates must be enforced regardless of ball-striking quality. Competition Track must be capped independently."
+    },
+    {
+      "tag": "A2",
+      "name": "Late Developer",
+      "age_band": "12–14",
+      "entry_stage": "Orange 1",
+      "profile": "Started at 11–12 in a school program. Coordination is still maturing, but cognition, attention span, and tactical comprehension are well ahead of typical Orange 1. Body is ahead of the typical color-band age but motor skill is behind it. Often embarrassed to be 'on Orange' next to younger peers.",
+      "competition_track_posture": "Holds Competition Track at Stage 1–2 for a long time even as Skill Track moves. Match-readiness lags because exposure was late. Adult-style match etiquette is fine; rally-tolerance under pressure is the gap.",
+      "key_risks": "Stage labels are demoralizing — coach must reframe with stage-tier language ('Foundation tier'), not 'you're on Red.' [PROPOSED:] AOS UI should hide color-band labels for players entering past age 12 and surface only the .1/.2/.3 tier, with rationale shown to Director only. Otherwise risk: drop-out before Green 1.",
+      "curriculum_protection": "Self-image and dignity. Coach-facing translation must lead with what they're doing well at their actual stage, not what they 'should' be doing for their age."
+    },
+    {
+      "tag": "A3",
+      "name": "Performance-Oriented",
+      "age_band": "13–16",
+      "entry_stage": "Yellow 1",
+      "profile": "Confirmed pathway player. UTR or national ranking ambition. Trains 4–6 sessions/wk plus matches plus fitness. Has a clear external goal (sectional, national, college). Mentality is intense but vulnerable to outcome-fixation.",
+      "competition_track_posture": "Competition Track is at parity with Skill Track or slightly ahead. ACR injury risk tracking is non-negotiable. Tournament-aware taper rules will fire frequently.",
+      "key_risks": "Plateaus at Yellow 3 → HP 1 are common — the gate from 'good Yellow player' to 'HP-readiness' is where most pathway players actually stop. Curriculum must specify what HP 1 entry evidence looks like beyond 'wins matches.'",
+      "curriculum_protection": "Honest evidence over flattering evidence. ACR thresholds. Mentality column must carry pressure-tolerance and self-coaching content from Yellow 1 onward."
+    },
+    {
+      "tag": "A4",
+      "name": "Recreation-Oriented",
+      "age_band": "10–14",
+      "entry_stage": "Orange 2",
+      "profile": "Tennis is one of three or four activities. 1–2 sessions/wk, plays for fun, no tournament ambition. Parent values social and physical-development outcomes more than ranking. Will likely cap at Green 3 or Yellow 1 by choice.",
+      "competition_track_posture": "Competition Track stays at low-stakes internal academy events. Will not pursue USTA tournament play. Pressure-tolerance gates do not apply in the same way.",
+      "key_risks": "The curriculum's gate-based progression can stall a recreation player at Orange 3 → Green 1 because the Competition column gate (e.g., 'plays internal round-robin with score, sustains effort across 3 matches') is not something they're showing up enough times to earn. They look 'stuck' on the data even though they're well-served by their actual experience.",
+      "curriculum_protection": "[PROPOSED:] AOS should support a 'Recreation flag' on the player record that reframes Competition gates as optional rather than blocking, while keeping Skill Track gates intact. Otherwise the platform misreports their progress."
+    },
+    {
+      "tag": "A5",
+      "name": "High-Pressure Family Context",
+      "age_band": "9–13",
+      "entry_stage": "Green 1",
+      "profile": "Talented player, parent driving the developmental timeline aggressively. Demands promotion conversations every 6–8 weeks. Player is technically capable but shows mentality flags — tightens in matches, post-loss avoidance, fragile around evidence-of-error feedback.",
+      "competition_track_posture": "Parent wants Competition Track ahead of Skill Track. Three-party competition entry approval workflow (Director / Coach / Parent) will fire repeatedly with Coach and Director in 'hold' position against parent push.",
+      "key_risks": "Director-Coach-Parent friction. The curriculum is the shield — gates have to be objective enough that 'we're not promoting yet' is defensible. If gates are soft, parent wins the argument and player is promoted prematurely. This is the single highest-stakes test of gate specification quality.",
+      "curriculum_protection": "Gate objectivity. Mentality column evidence (composure, error-recovery, between-point routine adherence). [PROPOSED:] AOS should log every promotion request with the evidence cited so Director has audit trail."
+    },
+    {
+      "tag": "A6",
+      "name": "Transfer-In Mid-Stage",
+      "age_band": "12–15",
+      "entry_stage": "Green 2 (claimed) / Green 1 (validated)",
+      "profile": "Transferring from another academy, claimed at 'intermediate' or higher by previous coach. Brings coaching habits — some good, some incompatible with Angles methodology (grip differences, swing organization, court mapping vocabulary they don't share).",
+      "competition_track_posture": "Has match experience that may be ahead of their Skill Track validated stage. Competition Track may legitimately enter at parity with old academy claim while Skill Track is regressed for re-grounding.",
+      "key_risks": "Onboarding assessment can't be 'see where they fit' — must be a structured intake. [PROPOSED:] Angles intake protocol = Swing Check (Behind / Between Legs / Green Zone diagnostic on forehand) + 3-rally tactical observation + a written self-assessment from the player. Otherwise curriculum places them at the wrong stage and either bores them (placed too low) or exposes gaps (placed too high).",
+      "curriculum_protection": "Two-track independence. Skill Track regression is not punishment — it's re-grounding. Coach-facing translation must communicate this to the player and parent in framing that doesn't read as demotion."
+    },
+    {
+      "tag": "A7",
+      "name": "Injury-Return",
+      "age_band": "any",
+      "entry_stage": "Stage prior to injury, but with capped volume",
+      "profile": "Cleared by medical to return to tennis. Was at, say, Yellow 2 before injury. Movement, fitness, and confidence are all behind their Skill Track stage. ACR is starting from zero — recent acute load is low while chronic load (pre-injury) is being phased out of the rolling window.",
+      "competition_track_posture": "Competition Track must be paused for a defined window. Tournament-aware taper rules apply but inverted — taper is the default state, not the exception. Match-play evidence cannot be collected in the return window.",
+      "key_risks": "Skill Track gates rely on rally-volume and match-volume evidence the player cannot produce yet. Without an explicit return-to-play modifier, curriculum marks them as regressed when they're actually progressing through a constrained load envelope.",
+      "curriculum_protection": "[PROPOSED:] AOS Load Management module needs an explicit Return-to-Play state (separate from injury risk state) that suspends gate evaluation and substitutes load-progression milestones from the Fitness Path until a re-entry assessment is passed. Skill Track stage label is preserved through the return window."
+    },
+    {
+      "tag": "A8",
+      "name": "Gap-Year / Late-Start Adult-Adjacent",
+      "age_band": "16–20+",
+      "entry_stage": "Orange 1 (motor) / Green 3 (cognition, fitness)",
+      "profile": "Adolescent or young adult starting tennis seriously for the first time. Could be a transfer from another sport (often baseball or hockey for boys, soccer for both). Athletic, attentive, motivated, but zero tennis-specific motor patterning. Mismatch between motor stage and every other dimension is extreme.",
+      "competition_track_posture": "[PROPOSED:] Competition Track is opened only after Skill Track reaches Green 1 to avoid pattern-poisoning under match pressure. Until then, internal controlled-condition matches only.",
+      "key_risks": "Color-band labeling causes the worst dignity injury of any archetype — a 16-year-old tagged 'Orange 1' next to 9-year-olds. The 'late-start adult-adjacent' track must use only sub-stage tier language and bypass the color label entirely in player- and parent-facing surfaces. Director-facing data preserves the color band for cohort comparison.",
+      "curriculum_protection": "Dignity. Pace of progression. Curriculum needs to allow accelerated movement through Red and Orange because cognition and athleticism let this archetype skip the volume thresholds that exist for 8-year-olds."
+    }
+  ]
+}

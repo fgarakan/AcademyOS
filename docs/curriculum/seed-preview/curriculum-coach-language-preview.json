@@ -1,0 +1,967 @@
+{
+  "generated": "2026-05-02T22:45:23.537Z",
+  "sprint": 188,
+  "count": 120,
+  "rows": [
+    {
+      "stage": "Red 1",
+      "domain": "Technical",
+      "doing_well": "Tracking the ball with eyes and stepping toward it.",
+      "working_on": "Holding the racquet in one consistent grip during a rally.",
+      "current_focus": "Letting the racquet swing through the contact, not stop at the ball.",
+      "next_step": "Adding a small turn of the shoulders before the swing."
+    },
+    {
+      "stage": "Red 1",
+      "domain": "Tactical",
+      "doing_well": "Hitting the ball back to the coach's general direction.",
+      "working_on": "Aiming for the bigger target (the back of the court).",
+      "current_focus": "Choosing one place to send the ball before swinging.",
+      "next_step": "Recognizing 'mine' vs 'not mine' on the bounce."
+    },
+    {
+      "stage": "Red 1",
+      "domain": "Movement",
+      "doing_well": "Showing up engaged and tries every locomotor pattern.",
+      "working_on": "Smooth transitions between animal walks and runs.",
+      "current_focus": "Quality of the movement shape (low, wide, balanced).",
+      "next_step": "Adding a racquet to coordination drills."
+    },
+    {
+      "stage": "Red 1",
+      "domain": "Competition",
+      "doing_well": "Stays on court and re-engages after losing a rally.",
+      "working_on": "Cooperating in target games (counting to 5, counting to 10).",
+      "current_focus": "Finishing a 5-rally cooperative point.",
+      "next_step": "Saying numbers (point counting) during cooperative games."
+    },
+    {
+      "stage": "Red 1",
+      "domain": "Mentality",
+      "doing_well": "Listens, follows directions, comes back to the line.",
+      "working_on": "Trying again after a missed shot without giving up.",
+      "current_focus": "Having fun with the activity.",
+      "next_step": "Recognizing 'I tried' as the success metric."
+    },
+    {
+      "stage": "Red 1",
+      "domain": "Fitness",
+      "doing_well": "Keeps moving for 30+ minutes without stopping.",
+      "working_on": "Coordination patterns (skipping, hopping, galloping).",
+      "current_focus": "Variety of movement shapes.",
+      "next_step": "Doing patterns at slightly higher tempo."
+    },
+    {
+      "stage": "Red 1",
+      "domain": "Recovery",
+      "doing_well": "Sips water during sessions when reminded.",
+      "working_on": "Building a hydration habit between drills.",
+      "current_focus": "Recognizing 'tired' and asking for rest when needed.",
+      "next_step": "Drinking water without being asked."
+    },
+    {
+      "stage": "Red 1",
+      "domain": "Lifestyle",
+      "doing_well": "Arrives ready to play.",
+      "working_on": "Putting on shoes, tying laces, carrying own racquet.",
+      "current_focus": "Caring for own equipment (racquet stays in the bag, not on the ground).",
+      "next_step": "Getting water bottle and snack ready before sessions."
+    },
+    {
+      "stage": "Red 2",
+      "domain": "Technical",
+      "doing_well": "Continental grip on serves and volleys, eastern on groundstrokes.",
+      "working_on": "Consistent unit-turn before forehand and backhand.",
+      "current_focus": "Following through to the opposite shoulder.",
+      "next_step": "Adding the left hand on the throat for backhand prep."
+    },
+    {
+      "stage": "Red 2",
+      "domain": "Tactical",
+      "doing_well": "Aiming for crosscourt vs down-the-line on command.",
+      "working_on": "Choosing target before contact rather than reacting.",
+      "current_focus": "Using the bigger crosscourt diagonal as the default target.",
+      "next_step": "Recognizing short ball vs deep ball and stepping in on short."
+    },
+    {
+      "stage": "Red 2",
+      "domain": "Movement",
+      "doing_well": "Split-step on coach's contact most of the time.",
+      "working_on": "Recovery step toward the middle after a shot.",
+      "current_focus": "Sideways shuffle for short distances.",
+      "next_step": "Adding a crossover step when the ball is wider."
+    },
+    {
+      "stage": "Red 2",
+      "domain": "Competition",
+      "doing_well": "Self-scores a first-to-7 game and says the score before each point.",
+      "working_on": "Honest line calls on close balls.",
+      "current_focus": "Walking back to the line composed after losing a point.",
+      "next_step": "Pre-point breath before serving and returning."
+    },
+    {
+      "stage": "Red 2",
+      "domain": "Mentality",
+      "doing_well": "Reset between points without external prompts.",
+      "working_on": "Letting go of the last point quickly.",
+      "current_focus": "Naming what you did well after a point, not just what went wrong.",
+      "next_step": "Building a one-word focus cue ('breathe', 'ready', 'go')."
+    },
+    {
+      "stage": "Red 2",
+      "domain": "Fitness",
+      "doing_well": "Continuous play for 30-45 minutes.",
+      "working_on": "Coordination plus reaction games.",
+      "current_focus": "First-step quickness from a split-step.",
+      "next_step": "Adding short-sprint repeats to warm-ups."
+    },
+    {
+      "stage": "Red 2",
+      "domain": "Recovery",
+      "doing_well": "Hydrates before, during, and after sessions.",
+      "working_on": "Recognizing the difference between energized and tired.",
+      "current_focus": "Sleeping by a consistent bedtime.",
+      "next_step": "Adding a post-session snack routine."
+    },
+    {
+      "stage": "Red 2",
+      "domain": "Lifestyle",
+      "doing_well": "Packs own bag for sessions.",
+      "working_on": "Showing up 5-10 minutes early to warm up.",
+      "current_focus": "Putting equipment back where it belongs after the session.",
+      "next_step": "Bringing a water bottle and a snack without reminders."
+    },
+    {
+      "stage": "Red 3",
+      "domain": "Technical",
+      "doing_well": "Topspin starting to appear on forehand under control.",
+      "working_on": "Backhand unit-turn with both hands for two-hand players.",
+      "current_focus": "Serve toss out front and contact above shoulder.",
+      "next_step": "First-volley contact in front of the body."
+    },
+    {
+      "stage": "Red 3",
+      "domain": "Tactical",
+      "doing_well": "Three-shot patterns (e.g., crosscourt, crosscourt, line).",
+      "working_on": "Recognizing offense vs defense based on incoming ball depth.",
+      "current_focus": "Stepping inside the baseline on a short ball.",
+      "next_step": "Choosing to recover to the bisector after each shot."
+    },
+    {
+      "stage": "Red 3",
+      "domain": "Movement",
+      "doing_well": "Split-step on every coach contact.",
+      "working_on": "Recovery step toward the bisector consistently.",
+      "current_focus": "Crossover step on wide balls.",
+      "next_step": "Adding open-stance on the forehand for wide balls."
+    },
+    {
+      "stage": "Red 3",
+      "domain": "Competition",
+      "doing_well": "Plays a 3-game match without losing composure.",
+      "working_on": "Saying the score before serving and after each point.",
+      "current_focus": "First external Red Ball event without anxiety.",
+      "next_step": "Walking calmly between points regardless of score."
+    },
+    {
+      "stage": "Red 3",
+      "domain": "Mentality",
+      "doing_well": "Composure on a string of 2-3 lost points.",
+      "working_on": "Pre-point routine appears under low pressure.",
+      "current_focus": "Holding focus for full 5-min match.",
+      "next_step": "Naming a one-word reset after a missed shot."
+    },
+    {
+      "stage": "Red 3",
+      "domain": "Fitness",
+      "doing_well": "Continuous play 45 min with no breakdown in form.",
+      "working_on": "5-10m sprints with full recovery.",
+      "current_focus": "Reactive change-of-direction in cone drills.",
+      "next_step": "Adding a 30-min off-court session 2x/week."
+    },
+    {
+      "stage": "Red 3",
+      "domain": "Recovery",
+      "doing_well": "Cool-down stretch after sessions.",
+      "working_on": "Hydration and nutrition routine.",
+      "current_focus": "Bedtime consistency 5 nights/week.",
+      "next_step": "Adding 1-2 active recovery sessions/week."
+    },
+    {
+      "stage": "Red 3",
+      "domain": "Lifestyle",
+      "doing_well": "Manages own equipment fully.",
+      "working_on": "Arriving 10 min early consistently.",
+      "current_focus": "Communicating with coach about how a session felt.",
+      "next_step": "Setting one tennis goal for the term."
+    },
+    {
+      "stage": "Orange 1",
+      "domain": "Technical",
+      "doing_well": "Topspin forehand with full unit turn and finish.",
+      "working_on": "Two-hand backhand with both arms driving through.",
+      "current_focus": "Serve with rhythm — toss, drop, contact in one motion.",
+      "next_step": "Slice backhand introduction for control balls."
+    },
+    {
+      "stage": "Orange 1",
+      "domain": "Tactical",
+      "doing_well": "Crosscourt as default. Line shot is intentional, not random.",
+      "working_on": "First serve plus one (serve, then a forehand).",
+      "current_focus": "Recognizing the short ball trigger and stepping in.",
+      "next_step": "Defending the line with crosscourt recovery."
+    },
+    {
+      "stage": "Orange 1",
+      "domain": "Movement",
+      "doing_well": "Split-step + first step under control.",
+      "working_on": "Open-stance forehand on wide balls.",
+      "current_focus": "Recovery to the bisector adjusts based on shot direction.",
+      "next_step": "Crossover step appears on wide balls without prompting."
+    },
+    {
+      "stage": "Orange 1",
+      "domain": "Competition",
+      "doing_well": "Best-of-3 short sets without composure breakdown.",
+      "working_on": "Pre-point routine in matches under normal pressure.",
+      "current_focus": "First external Orange Ball event with a clear pre-match focus.",
+      "next_step": "Game plan articulation: one tactical intention per match."
+    },
+    {
+      "stage": "Orange 1",
+      "domain": "Mentality",
+      "doing_well": "Reset routine after every point in a match.",
+      "working_on": "Adjusting focus when leading vs trailing.",
+      "current_focus": "Naming an emotion ('frustrated', 'tired', 'focused') in the moment.",
+      "next_step": "Building a between-point breath cue."
+    },
+    {
+      "stage": "Orange 1",
+      "domain": "Fitness",
+      "doing_well": "Continuous play 60 min.",
+      "working_on": "Multi-directional first-step quickness.",
+      "current_focus": "Light medicine ball work for core and rotation.",
+      "next_step": "Adding a 3rd off-court session per week."
+    },
+    {
+      "stage": "Orange 1",
+      "domain": "Recovery",
+      "doing_well": "Foam rolling intro after sessions.",
+      "working_on": "Sleep tracking via parent-reported bedtime.",
+      "current_focus": "Active recovery 1x/week.",
+      "next_step": "Adding hydration goals (water-volume target)."
+    },
+    {
+      "stage": "Orange 1",
+      "domain": "Lifestyle",
+      "doing_well": "Showing up to sessions ready and on time.",
+      "working_on": "Communicating with coach about session intent.",
+      "current_focus": "Family meals and sleep routine support.",
+      "next_step": "Setting a pre-event routine 24 hrs before tournaments."
+    },
+    {
+      "stage": "Orange 2",
+      "domain": "Technical",
+      "doing_well": "Heavy topspin forehand on demand.",
+      "working_on": "Backhand depth under pressure.",
+      "current_focus": "Serve toss consistency.",
+      "next_step": "First-volley closing the angle."
+    },
+    {
+      "stage": "Orange 2",
+      "domain": "Tactical",
+      "doing_well": "Three-pattern game plan articulated before matches.",
+      "working_on": "Score-state awareness (4-2 vs 2-4).",
+      "current_focus": "Approach + first volley as a planned pattern.",
+      "next_step": "Identifying opponent's weaker side and exploiting it."
+    },
+    {
+      "stage": "Orange 2",
+      "domain": "Movement",
+      "doing_well": "Split-step + first step + recovery as a sequence.",
+      "working_on": "Open-stance and neutral-stance forehand both available.",
+      "current_focus": "Lateral shuffle for short distances, crossover for wider.",
+      "next_step": "Forward movement to short-ball trigger."
+    },
+    {
+      "stage": "Orange 2",
+      "domain": "Competition",
+      "doing_well": "Game plan in writing or verbally before a match.",
+      "working_on": "Score-state adjustment (different shot selection up vs down).",
+      "current_focus": "Doubles match readiness (positioning, shot selection).",
+      "next_step": "Two-question post-match review with coach."
+    },
+    {
+      "stage": "Orange 2",
+      "domain": "Mentality",
+      "doing_well": "Self-talk audit (what's the internal voice saying?).",
+      "working_on": "Reframe routine after a lost game.",
+      "current_focus": "Holding focus through changeovers.",
+      "next_step": "Building a confidence anchor (a phrase or memory)."
+    },
+    {
+      "stage": "Orange 2",
+      "domain": "Fitness",
+      "doing_well": "Continuous play 60-75 min.",
+      "working_on": "Multi-directional speed circuits.",
+      "current_focus": "Core strength and rotation power.",
+      "next_step": "Adding tempo runs once per week."
+    },
+    {
+      "stage": "Orange 2",
+      "domain": "Recovery",
+      "doing_well": "Active recovery routine 2x/week.",
+      "working_on": "Sleep 8-10 hours per night.",
+      "current_focus": "Nutrition before and after sessions.",
+      "next_step": "Adding a stretching routine pre-bed."
+    },
+    {
+      "stage": "Orange 2",
+      "domain": "Lifestyle",
+      "doing_well": "Owns warm-up routine for sessions.",
+      "working_on": "Communicates with coach about how matches felt.",
+      "current_focus": "Balancing tennis with school and rest.",
+      "next_step": "Setting a 3-month tennis goal with the coach."
+    },
+    {
+      "stage": "Orange 3",
+      "domain": "Technical",
+      "doing_well": "Forehand and backhand both reliable under pace.",
+      "working_on": "Serve with placement (first serve direction on demand).",
+      "current_focus": "First-volley and approach combination.",
+      "next_step": "Slice backhand as a control or change-of-pace shot."
+    },
+    {
+      "stage": "Orange 3",
+      "domain": "Tactical",
+      "doing_well": "Five-pattern library identified and named.",
+      "working_on": "Pattern selection based on score state and opponent style.",
+      "current_focus": "Endgame patterns (closing volleys, overheads).",
+      "next_step": "First-strike forehand off the serve."
+    },
+    {
+      "stage": "Orange 3",
+      "domain": "Movement",
+      "doing_well": "Split-step + first step + recovery as instinct.",
+      "working_on": "Stance choice based on ball position and time.",
+      "current_focus": "Forward and backward movement to short and deep balls.",
+      "next_step": "Defensive sliding on hard court when needed."
+    },
+    {
+      "stage": "Orange 3",
+      "domain": "Competition",
+      "doing_well": "Pattern-based briefing before each match.",
+      "working_on": "Recognizing close vs runaway score states.",
+      "current_focus": "Adjusting after a string of lost points.",
+      "next_step": "Self-reffed match without disputes."
+    },
+    {
+      "stage": "Orange 3",
+      "domain": "Mentality",
+      "doing_well": "Reset routine + reframe routine.",
+      "working_on": "Cue word for high-pressure points.",
+      "current_focus": "Body-language audit (composure visible to others).",
+      "next_step": "Building a personal style statement."
+    },
+    {
+      "stage": "Orange 3",
+      "domain": "Fitness",
+      "doing_well": "Continuous play 75 min with no form breakdown.",
+      "working_on": "Multi-directional speed + reactive cone work.",
+      "current_focus": "Conditioning circuits 2x/week.",
+      "next_step": "Adding deload week every 4 weeks."
+    },
+    {
+      "stage": "Orange 3",
+      "domain": "Recovery",
+      "doing_well": "Active recovery + foam rolling routine.",
+      "working_on": "Sleep + nutrition tracked.",
+      "current_focus": "Hydration goals met daily.",
+      "next_step": "Adding a pre-bed mobility flow."
+    },
+    {
+      "stage": "Orange 3",
+      "domain": "Lifestyle",
+      "doing_well": "Independent pre-session and pre-match routines.",
+      "working_on": "Coordinating tennis schedule with school commitments.",
+      "current_focus": "Communicating clearly about how training is going.",
+      "next_step": "Setting a 6-month roadmap with the coach."
+    },
+    {
+      "stage": "Green 1",
+      "domain": "Technical",
+      "doing_well": "Topspin forehand and backhand with depth and pace.",
+      "working_on": "Serve with two paces (first serve heavy, second serve safe).",
+      "current_focus": "Volley and overhead under match pressure.",
+      "next_step": "Slice backhand and drop shot for variety."
+    },
+    {
+      "stage": "Green 1",
+      "domain": "Tactical",
+      "doing_well": "Three-pattern game plan executed in matches.",
+      "working_on": "First-strike forehand identified and used.",
+      "current_focus": "Approach + volley pattern available.",
+      "next_step": "Defending and counter-attacking from stretched positions."
+    },
+    {
+      "stage": "Green 1",
+      "domain": "Movement",
+      "doing_well": "Split-step + recovery + footwork sequences instinctive.",
+      "working_on": "Defensive sliding and recovery.",
+      "current_focus": "Forward to net + recovery back to baseline.",
+      "next_step": "Cross-court running forehand on the run."
+    },
+    {
+      "stage": "Green 1",
+      "domain": "Competition",
+      "doing_well": "Owns pre-match warm-up routine (15 min).",
+      "working_on": "Three-pattern game plan in own words.",
+      "current_focus": "Match-tiebreak pressure handling.",
+      "next_step": "Body-language reset after a lost game."
+    },
+    {
+      "stage": "Green 1",
+      "domain": "Mentality",
+      "doing_well": "Pre-match focus routine standardized.",
+      "working_on": "Cue word holds under pressure points.",
+      "current_focus": "Body-language reset after lost games.",
+      "next_step": "Building a 'one-point focus' habit on big points."
+    },
+    {
+      "stage": "Green 1",
+      "domain": "Fitness",
+      "doing_well": "Continuous play 90 min.",
+      "working_on": "First-step quickness + reactive sprints.",
+      "current_focus": "Light strength block (bodyweight + bands + light dumbbells).",
+      "next_step": "Adding a 4th off-court session per week."
+    },
+    {
+      "stage": "Green 1",
+      "domain": "Recovery",
+      "doing_well": "Active recovery 2x/week + foam rolling daily.",
+      "working_on": "Sleep 8-10 hours, nutrition tracked.",
+      "current_focus": "Hydration + electrolytes during sessions.",
+      "next_step": "Adding a contrast bath or ice routine."
+    },
+    {
+      "stage": "Green 1",
+      "domain": "Lifestyle",
+      "doing_well": "Independent across warm-up, match-prep, and review.",
+      "working_on": "Communicating with coach about training intent.",
+      "current_focus": "Balancing school, tennis, and rest.",
+      "next_step": "Setting yearly goals with coach and family."
+    },
+    {
+      "stage": "Green 2",
+      "domain": "Technical",
+      "doing_well": "Full-set scoring tolerance — strokes hold up across 6-game sets.",
+      "working_on": "Serve with placement and pace.",
+      "current_focus": "Volley + overhead reliable under match pressure.",
+      "next_step": "Slice and drop shot used tactically."
+    },
+    {
+      "stage": "Green 2",
+      "domain": "Tactical",
+      "doing_well": "First-strike + construction patterns both available.",
+      "working_on": "Score-state adjustments mid-match.",
+      "current_focus": "Approach + volley + recovery sequence.",
+      "next_step": "Reading opponent patterns in real time."
+    },
+    {
+      "stage": "Green 2",
+      "domain": "Movement",
+      "doing_well": "Defensive sliding + recovery + counter-attack.",
+      "working_on": "Forward to net + closing angle + recovery.",
+      "current_focus": "Lateral shuffles and crossover steps both as tools.",
+      "next_step": "Plyometric work appearing in conditioning."
+    },
+    {
+      "stage": "Green 2",
+      "domain": "Competition",
+      "doing_well": "Mid-match strategy adjustment when down a break.",
+      "working_on": "Body-language reset between every point.",
+      "current_focus": "Multi-day tournament across a weekend.",
+      "next_step": "Sectional-level event with full pre-match preparation."
+    },
+    {
+      "stage": "Green 2",
+      "domain": "Mentality",
+      "doing_well": "Self-talk audit and adjustment.",
+      "working_on": "Periodization awareness (peak weeks vs train weeks).",
+      "current_focus": "Mid-match reframe after losing a set.",
+      "next_step": "Adding a visualization routine pre-event."
+    },
+    {
+      "stage": "Green 2",
+      "domain": "Fitness",
+      "doing_well": "Continuous play 90-120 min.",
+      "working_on": "Strength block with light dumbbells and bands.",
+      "current_focus": "Sport-specific intervals on court.",
+      "next_step": "Adding a 5th off-court session per week."
+    },
+    {
+      "stage": "Green 2",
+      "domain": "Recovery",
+      "doing_well": "Active recovery + foam rolling + soft tissue work.",
+      "working_on": "Sleep tracking with pre-bed routine.",
+      "current_focus": "Nutrition timing around sessions.",
+      "next_step": "Adding a recovery audit (1-10 score) daily."
+    },
+    {
+      "stage": "Green 2",
+      "domain": "Lifestyle",
+      "doing_well": "Independent in tournament prep and review.",
+      "working_on": "Communication with coach is two-way (not just receiving).",
+      "current_focus": "School coordination with travel calendar.",
+      "next_step": "Setting 12-month vision with coach."
+    },
+    {
+      "stage": "Green 3",
+      "domain": "Technical",
+      "doing_well": "Strokes hold up across 3 best-of-3 matches in a weekend.",
+      "working_on": "Serve with placement, pace, and spin variation.",
+      "current_focus": "Volley, overhead, and approach all available under pressure.",
+      "next_step": "Drop shot and slice used at right moments."
+    },
+    {
+      "stage": "Green 3",
+      "domain": "Tactical",
+      "doing_well": "Five-pattern library matched to game style.",
+      "working_on": "Style identification (counterpuncher, aggressive baseliner, all-court).",
+      "current_focus": "Endgame patterns (closing volleys, defensive lobs).",
+      "next_step": "Win/loss patterns by opponent style tracked."
+    },
+    {
+      "stage": "Green 3",
+      "domain": "Movement",
+      "doing_well": "Plyometric work integrated into conditioning.",
+      "working_on": "Defensive + counter-attack + neutralizing transitions.",
+      "current_focus": "Forward to net + closing volley + recovery.",
+      "next_step": "Movement quality holds across long matches."
+    },
+    {
+      "stage": "Green 3",
+      "domain": "Competition",
+      "doing_well": "Tournament weekend with full plan, in-event log, and review.",
+      "working_on": "National-qualifier event experience.",
+      "current_focus": "Recognizing which game-styles are problems and bringing them to training.",
+      "next_step": "Sectional ranking established."
+    },
+    {
+      "stage": "Green 3",
+      "domain": "Mentality",
+      "doing_well": "Cue word + reset + reframe as a system.",
+      "working_on": "Style statement (a 1-sentence identity).",
+      "current_focus": "Mid-match recovery from a 2-set deficit (in best-of-3 third-set scenarios).",
+      "next_step": "Adding pre-event visualization routine."
+    },
+    {
+      "stage": "Green 3",
+      "domain": "Fitness",
+      "doing_well": "Continuous play 90+ min across multiple matches.",
+      "working_on": "Strength block with light dumbbells, kettlebells, bands.",
+      "current_focus": "Sport-specific intervals + plyometrics.",
+      "next_step": "Adding double periodization (two annual peaks)."
+    },
+    {
+      "stage": "Green 3",
+      "domain": "Recovery",
+      "doing_well": "Active recovery + soft tissue + sleep tracking + nutrition.",
+      "working_on": "Recovery routine standardized post-session and post-match.",
+      "current_focus": "Sleep 8-10 hrs nightly with pre-bed routine.",
+      "next_step": "Adding HRV or load tracking if available."
+    },
+    {
+      "stage": "Green 3",
+      "domain": "Lifestyle",
+      "doing_well": "Tournament logistics (check-in, schedule, food) handled independently.",
+      "working_on": "Communication with coach about training and competition.",
+      "current_focus": "School-tennis-rest balance owned.",
+      "next_step": "Setting 18-month roadmap with coach."
+    },
+    {
+      "stage": "Yellow 1",
+      "domain": "Technical",
+      "doing_well": "Yellow-ball pace and weight adapted to.",
+      "working_on": "Heavy and flat shape calibrated.",
+      "current_focus": "Serve plus one with first-strike forehand.",
+      "next_step": "Volley, overhead, and approach reliable under match pressure."
+    },
+    {
+      "stage": "Yellow 1",
+      "domain": "Tactical",
+      "doing_well": "First-strike + construction + counter-attack patterns all available.",
+      "working_on": "Pre-match scouting (when info available).",
+      "current_focus": "Score-state and recovery patterns identified.",
+      "next_step": "Style refinement (clearer about own identity)."
+    },
+    {
+      "stage": "Yellow 1",
+      "domain": "Movement",
+      "doing_well": "Defensive + counter + offensive transitions all instinctive.",
+      "working_on": "Plyometric maintenance with sprint training.",
+      "current_focus": "Forward to net under match pressure.",
+      "next_step": "Movement quality holds at yellow-ball pace."
+    },
+    {
+      "stage": "Yellow 1",
+      "domain": "Competition",
+      "doing_well": "Pre-match scouting routine.",
+      "working_on": "Game plan written one-page format.",
+      "current_focus": "Recovery between same-day matches.",
+      "next_step": "Level 5 national event with documented review."
+    },
+    {
+      "stage": "Yellow 1",
+      "domain": "Mentality",
+      "doing_well": "One-point focus on big points.",
+      "working_on": "Periodization awareness across the year.",
+      "current_focus": "Recovery routine pre-bed and post-event.",
+      "next_step": "Adding journaling or daily log."
+    },
+    {
+      "stage": "Yellow 1",
+      "domain": "Fitness",
+      "doing_well": "Strength block with barbell work under qualified S&C.",
+      "working_on": "Sport-specific intervals at match pace.",
+      "current_focus": "Plyometrics and sled work.",
+      "next_step": "Adding double periodization aligned with calendar."
+    },
+    {
+      "stage": "Yellow 1",
+      "domain": "Recovery",
+      "doing_well": "Sleep 8-10 hrs + recovery audit + nutrition tracking.",
+      "working_on": "Soft tissue work + active recovery 2-3x/week.",
+      "current_focus": "Hydration and electrolyte routine.",
+      "next_step": "Adding contrast or ice baths post-event."
+    },
+    {
+      "stage": "Yellow 1",
+      "domain": "Lifestyle",
+      "doing_well": "Independent across travel, food, and routine.",
+      "working_on": "Communicates with coach about wins, losses, and patterns.",
+      "current_focus": "School flexibility for travel.",
+      "next_step": "Setting 2-year vision with coach and family."
+    },
+    {
+      "stage": "Yellow 2",
+      "domain": "Technical",
+      "doing_well": "Strokes hold up at full yellow-ball pace.",
+      "working_on": "Heavy/flat calibration on demand.",
+      "current_focus": "Serve plus one + recovery as a sequence.",
+      "next_step": "Drop shot disguise and tactical layers."
+    },
+    {
+      "stage": "Yellow 2",
+      "domain": "Tactical",
+      "doing_well": "Five-pattern library expanded with style nuances.",
+      "working_on": "Periodization mapping to tournament calendar.",
+      "current_focus": "First-strike forehand variations.",
+      "next_step": "Game-style recognition (counterpuncher, aggressive baseliner, all-court, big-server)."
+    },
+    {
+      "stage": "Yellow 2",
+      "domain": "Movement",
+      "doing_well": "Movement holds across multi-day events.",
+      "working_on": "Sprint work + plyometrics + reactive footwork.",
+      "current_focus": "Defensive sliding + counter-attack + recovery.",
+      "next_step": "Forward movement to net with closing angle."
+    },
+    {
+      "stage": "Yellow 2",
+      "domain": "Competition",
+      "doing_well": "National Level 4 event with documented plan and review.",
+      "working_on": "Multi-match same-day recovery.",
+      "current_focus": "Periodization across competition cycles.",
+      "next_step": "Sectional or regional ranking."
+    },
+    {
+      "stage": "Yellow 2",
+      "domain": "Mentality",
+      "doing_well": "Self-talk audit + reframe + cue word.",
+      "working_on": "Pre-event visualization routine.",
+      "current_focus": "Mid-match reframe after a set deficit.",
+      "next_step": "Building a personal mental skills routine."
+    },
+    {
+      "stage": "Yellow 2",
+      "domain": "Fitness",
+      "doing_well": "Strength block + power development + Olympic lift derivatives.",
+      "working_on": "Sport-specific intervals + plyometrics + sled work.",
+      "current_focus": "Sport-specific aerobic ceiling work.",
+      "next_step": "Adding triple periodization for top-tier events."
+    },
+    {
+      "stage": "Yellow 2",
+      "domain": "Recovery",
+      "doing_well": "Sleep + nutrition + recovery audit standardized.",
+      "working_on": "Soft tissue + active recovery + sleep tracking.",
+      "current_focus": "Travel-specific recovery protocols.",
+      "next_step": "Adding HRV monitoring if available."
+    },
+    {
+      "stage": "Yellow 2",
+      "domain": "Lifestyle",
+      "doing_well": "Tournament logistics fully owned.",
+      "working_on": "Coach communication is daily during peaks.",
+      "current_focus": "School online or hybrid where needed.",
+      "next_step": "Setting a 3-year vision with family."
+    },
+    {
+      "stage": "Yellow 3",
+      "domain": "Technical",
+      "doing_well": "Strokes hold up under national-level match pressure.",
+      "working_on": "Pace + spin + placement on demand.",
+      "current_focus": "Style fully visible across matches.",
+      "next_step": "Tactical layer in shot selection."
+    },
+    {
+      "stage": "Yellow 3",
+      "domain": "Tactical",
+      "doing_well": "Game-style identified and refined.",
+      "working_on": "Pre-match scouting standardized.",
+      "current_focus": "Adjustment routine when down or up significantly.",
+      "next_step": "Pattern execution under pressure."
+    },
+    {
+      "stage": "Yellow 3",
+      "domain": "Movement",
+      "doing_well": "Movement holds across 3-5 day events.",
+      "working_on": "Sprint + plyometric + reactive footwork integrated.",
+      "current_focus": "Defensive + offensive transitions seamless.",
+      "next_step": "Pro-style movement quality emerging."
+    },
+    {
+      "stage": "Yellow 3",
+      "domain": "Competition",
+      "doing_well": "National Level 3 event with full pre/in/post-event plan.",
+      "working_on": "Multi-day tournament management.",
+      "current_focus": "ITF junior event experience (if HP-bound).",
+      "next_step": "National ranking established."
+    },
+    {
+      "stage": "Yellow 3",
+      "domain": "Mentality",
+      "doing_well": "Mental skills routine standardized.",
+      "working_on": "Identity statement holds under pressure.",
+      "current_focus": "Recovery from a loss within 24 hours.",
+      "next_step": "Setting performance + outcome goals separately."
+    },
+    {
+      "stage": "Yellow 3",
+      "domain": "Fitness",
+      "doing_well": "Power development + Olympic lift derivatives at moderate load.",
+      "working_on": "Sport-specific intervals at match pace.",
+      "current_focus": "Plyometric maintenance.",
+      "next_step": "Adding individualized programming."
+    },
+    {
+      "stage": "Yellow 3",
+      "domain": "Recovery",
+      "doing_well": "Recovery system: sleep + nutrition + soft tissue + active recovery + HRV.",
+      "working_on": "Travel-specific protocols.",
+      "current_focus": "Pre-event taper routine.",
+      "next_step": "Adding individualized recovery markers."
+    },
+    {
+      "stage": "Yellow 3",
+      "domain": "Lifestyle",
+      "doing_well": "Tournament travel and logistics fully independent.",
+      "working_on": "Coach communication is daily during competition cycles.",
+      "current_focus": "School arrangements support tennis schedule.",
+      "next_step": "Career path conversation begins (pro vs college)."
+    },
+    {
+      "stage": "HP 1",
+      "domain": "Technical",
+      "doing_well": "Strokes at international junior level.",
+      "working_on": "Pace, spin, placement, disguise integrated.",
+      "current_focus": "Style + signature shots clearly identified.",
+      "next_step": "Specialty shots (spin variation, drop shots) as differentiators."
+    },
+    {
+      "stage": "HP 1",
+      "domain": "Tactical",
+      "doing_well": "Game-style + 5-pattern library + opponent scouting.",
+      "working_on": "Match construction over hours.",
+      "current_focus": "Pre-match plan + in-match adjustments.",
+      "next_step": "International-level tactical awareness."
+    },
+    {
+      "stage": "HP 1",
+      "domain": "Movement",
+      "doing_well": "Pro-style movement quality.",
+      "working_on": "Sprint + plyometric + reactive footwork.",
+      "current_focus": "Multi-surface adaptation (hard, clay, grass).",
+      "next_step": "Movement holds across a 5-day event."
+    },
+    {
+      "stage": "HP 1",
+      "domain": "Competition",
+      "doing_well": "ITF G4-G5 event with full pre/in/post-event plan.",
+      "working_on": "Pro-style routines pre-match.",
+      "current_focus": "Self-scouting and opponent scouting.",
+      "next_step": "Career planning conversations."
+    },
+    {
+      "stage": "HP 1",
+      "domain": "Mentality",
+      "doing_well": "Mental skills routine pro-level.",
+      "working_on": "Identity statement + style + signature signature.",
+      "current_focus": "Recovery from setbacks (loss, injury, travel).",
+      "next_step": "Performance-on-demand routine."
+    },
+    {
+      "stage": "HP 1",
+      "domain": "Fitness",
+      "doing_well": "Pro-style off-court program individualized.",
+      "working_on": "Strength + power + speed + endurance integrated.",
+      "current_focus": "Triple periodization with ITF calendar.",
+      "next_step": "Individualized markers and load monitoring."
+    },
+    {
+      "stage": "HP 1",
+      "domain": "Recovery",
+      "doing_well": "Recovery is a system (sleep + nutrition + soft tissue + breath + HRV).",
+      "working_on": "Travel-specific protocols.",
+      "current_focus": "Pre-event taper standardized.",
+      "next_step": "Individualized recovery markers tracked."
+    },
+    {
+      "stage": "HP 1",
+      "domain": "Lifestyle",
+      "doing_well": "Pro-style daily routines.",
+      "working_on": "School online or hybrid.",
+      "current_focus": "Family role shifts to support, not logistics.",
+      "next_step": "Pro vs college path conversation in motion."
+    },
+    {
+      "stage": "HP 2",
+      "domain": "Technical",
+      "doing_well": "Strokes at junior international top-100 level.",
+      "working_on": "Signature shots clearly differentiate the player.",
+      "current_focus": "Surface adaptation reliable.",
+      "next_step": "Specialty shots refined."
+    },
+    {
+      "stage": "HP 2",
+      "domain": "Tactical",
+      "doing_well": "Match construction over best-of-3 to best-of-5.",
+      "working_on": "Opponent scouting and self-scouting routine.",
+      "current_focus": "Pre-match plan + in-match + post-match cycle.",
+      "next_step": "International-level tactical IQ."
+    },
+    {
+      "stage": "HP 2",
+      "domain": "Movement",
+      "doing_well": "Pro-style movement maintained across a tournament.",
+      "working_on": "Multi-surface and multi-style adaptation.",
+      "current_focus": "Sprint + plyometric maintenance.",
+      "next_step": "Movement holds at junior-slam level."
+    },
+    {
+      "stage": "HP 2",
+      "domain": "Competition",
+      "doing_well": "ITF G3 event with full plan and review.",
+      "working_on": "Junior slam exposure.",
+      "current_focus": "Self-scouting + opponent scouting routine.",
+      "next_step": "Junior top-100 ranking targeted."
+    },
+    {
+      "stage": "HP 2",
+      "domain": "Mentality",
+      "doing_well": "Mental skills routine maintained on the road.",
+      "working_on": "Identity + style + recovery routine.",
+      "current_focus": "Performance-on-demand at slams.",
+      "next_step": "Career planning is active."
+    },
+    {
+      "stage": "HP 2",
+      "domain": "Fitness",
+      "doing_well": "Pro-style program with travel-period adjustments.",
+      "working_on": "Triple periodization with calendar awareness.",
+      "current_focus": "Individualized programming.",
+      "next_step": "Adding pro-tour preview blocks."
+    },
+    {
+      "stage": "HP 2",
+      "domain": "Recovery",
+      "doing_well": "Travel-specific recovery system.",
+      "working_on": "Sleep + nutrition + soft tissue + breath + HRV.",
+      "current_focus": "Pre-event taper standardized.",
+      "next_step": "Recovery is part of the daily plan, not an afterthought."
+    },
+    {
+      "stage": "HP 2",
+      "domain": "Lifestyle",
+      "doing_well": "Travel coach or coach team established.",
+      "working_on": "Pro-style daily routines on the road.",
+      "current_focus": "Family role is emotional support.",
+      "next_step": "Career commitment (pro path or college path) clarifying."
+    },
+    {
+      "stage": "HP 3",
+      "domain": "Technical",
+      "doing_well": "Strokes at junior slam main draw level.",
+      "working_on": "Differentiating signature shots.",
+      "current_focus": "Surface adaptation across hard, clay, grass.",
+      "next_step": "Pro-tour stroke integrity emerging."
+    },
+    {
+      "stage": "HP 3",
+      "domain": "Tactical",
+      "doing_well": "Pro-style match construction.",
+      "working_on": "Pro-tour level scouting and adjustment.",
+      "current_focus": "Best-of-5 match management at slams.",
+      "next_step": "Pro-tour tactical layer."
+    },
+    {
+      "stage": "HP 3",
+      "domain": "Movement",
+      "doing_well": "Pro-tour movement quality.",
+      "working_on": "Multi-surface + multi-style adaptation.",
+      "current_focus": "Sprint + plyometric + maintenance program.",
+      "next_step": "Movement at pro level for futures and challenger events."
+    },
+    {
+      "stage": "HP 3",
+      "domain": "Competition",
+      "doing_well": "Junior slam main draw or pro-futures event with full plan and review.",
+      "working_on": "Pro-style preparation and recovery.",
+      "current_focus": "Career planning (pro path or college path) decided.",
+      "next_step": "Pro-tour or top-program college transition."
+    },
+    {
+      "stage": "HP 3",
+      "domain": "Mentality",
+      "doing_well": "Pro-style mental skills routine.",
+      "working_on": "Identity + style + recovery integrated.",
+      "current_focus": "Career commitment in place.",
+      "next_step": "Pro-tour mindset emerging."
+    },
+    {
+      "stage": "HP 3",
+      "domain": "Fitness",
+      "doing_well": "Pro-tour S&C program.",
+      "working_on": "Sport-specific work coordinated with on-court training.",
+      "current_focus": "Pro-tour calendar awareness.",
+      "next_step": "Adding tour-coach handoff."
+    },
+    {
+      "stage": "HP 3",
+      "domain": "Recovery",
+      "doing_well": "Pro-tour recovery system.",
+      "working_on": "Sleep + nutrition + soft tissue + breath + HRV + load monitoring.",
+      "current_focus": "Travel-specific protocols at pro level.",
+      "next_step": "Recovery is professionalized."
+    },
+    {
+      "stage": "HP 3",
+      "domain": "Lifestyle",
+      "doing_well": "Pro-style daily routines fully established.",
+      "working_on": "Travel coach or tour coach in place.",
+      "current_focus": "Career path (pro or college) committed to.",
+      "next_step": "Pro-tour or top-program college transition."
+    }
+  ]
+}

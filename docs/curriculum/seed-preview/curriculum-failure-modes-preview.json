@@ -1,0 +1,147 @@
+{
+  "generated": "2026-05-02T22:45:23.535Z",
+  "sprint": 188,
+  "count": 14,
+  "rows": [
+    {
+      "failure_mode_id": "FM-01",
+      "severity": "CRITICAL",
+      "affected_stage": "Orange 3 → Green 1",
+      "affected_archetype": "A1 Early Developer",
+      "risk_description": "Tactical / decision-making gate can be overridden in practice when ball-striking quality is high. Coach is biased to promote on the visible signal. Result: player promoted to Green 1 without tactical evidence; Yellow 2 stall is then amplified.",
+      "required_response": "Tactical evidence count must be a hard block on Orange 3 → Green 1 promotion regardless of technical evidence quality. AOS UI must show both evidence streams side-by-side at the promotion-decision screen and require explicit override with rationale if technical is green and tactical is amber/red.",
+      "target_piece": "Piece 2 (Gates), Piece 4 (Tactical), AOS UI",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-02",
+      "severity": "HIGH",
+      "affected_stage": "Orange 1 (entry)",
+      "affected_archetype": "A2 Late Developer, A8 Gap-Year",
+      "risk_description": "Color-band labeling causes dignity injury for entrants whose entry age is well past the typical color-band age. 'Orange' next to 9-year-olds when player is 13 or 17 reads as humiliation, drives drop-out before Green 1.",
+      "required_response": "[PROPOSED:] AOS player-facing UI suppresses color-band label when entry age > 12. Surfaces only sub-stage tier ('Foundation tier'). Director-facing data preserves color band for cohort comparison and reporting. Coach-facing language guidance (Piece 8) carries explicit framing for late-entry conversations.",
+      "target_piece": "Piece 8 (Coach-facing translation), AOS UI",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-03",
+      "severity": "HIGH",
+      "affected_stage": "Orange 1 → Orange 2",
+      "affected_archetype": "A2 Late Developer",
+      "risk_description": "Curriculum Technical column at Orange 2 assumes 6–12 months of prior Red exposure. Late developer entered at Orange 1 without that volume; standard transition window is too short. Curriculum reports stall when reality is appropriate pacing.",
+      "required_response": "[PROPOSED:] Piece 9 volume guidance must include archetype-aware modifiers. Late-developer Orange 1 → Orange 2 transition window extends 30–50%. Volume-replacement modifier specifies what late-entry warm-up content back-fills the missing Red exposure.",
+      "target_piece": "Piece 9 (Volume guidance)",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-04",
+      "severity": "CRITICAL",
+      "affected_stage": "Yellow 3 → HP 1",
+      "affected_archetype": "A3 Performance-Oriented",
+      "risk_description": "HP 1 entry evidence is currently under-specified. Curriculum risks defaulting to 'wins matches' as the de facto gate, which (a) flatters the wrong players and (b) misses pattern-execution durability and self-coaching evidence that actually predict HP-stage success.",
+      "required_response": "Piece 2 must specify HP 1 entry gate as multi-domain: pattern-execution consistency under pressure (Tactical), recovery protocol adherence (Fitness), self-coaching evidence (Mentality), and match-result trend (Competition). All four required, none individually sufficient.",
+      "target_piece": "Piece 2 (Gates), Piece 6 (Competition Track)",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-05",
+      "severity": "HIGH",
+      "affected_stage": "Yellow 2 → Yellow 3",
+      "affected_archetype": "A3 Performance-Oriented, A5 High-Pressure Family",
+      "risk_description": "Mentality column observables for pressure-tolerance and process-orientation are not yet specified at the cell level. Curriculum is vulnerable to outcome-fixation drift in archetypes most likely to suffer from it.",
+      "required_response": "[PROPOSED:] Mentality column at Yellow 1, Yellow 2, Yellow 3 must include explicit observables: between-point routine adherence (count and protocol), process-vs-outcome self-talk (coach-observed, frequency-rated), error-recovery behaviors (next-point lookback test). Each observable specified at the gate level in Piece 2.",
+      "target_piece": "Piece 2 (Gates), 15×8 Matrix Mentality column",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-06",
+      "severity": "HIGH",
+      "affected_stage": "Orange 3 → Green 1, Green 3 → Yellow 1",
+      "affected_archetype": "A4 Recreation-Oriented",
+      "risk_description": "Competition column gates require match-volume that recreation players don't generate. Curriculum reports stall when reality is the player has chosen a different developmental shape. Platform misrepresents the parent's actual satisfaction.",
+      "required_response": "[PROPOSED:] AOS player record carries a 'Recreation' flag. When set, Competition column gates downgrade from blocking to advisory; Skill Track gates remain in force. Player progress data shows both 'Skill Track stage' and 'Competition Track stage' independently with no implicit penalty for the latter being deliberately frozen.",
+      "target_piece": "Piece 6 (Competition Track), AOS data model",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-07",
+      "severity": "MEDIUM",
+      "affected_stage": "Green 3 (terminal for archetype)",
+      "affected_archetype": "A4 Recreation-Oriented",
+      "risk_description": "Curriculum has no explicit 'Healthy Plateau' state. A recreation player who caps at Green 3 by choice is reported the same as a player stalled at Green 3 by gate failure. Director reports look misleadingly negative.",
+      "required_response": "[PROPOSED:] AOS player record carries a 'Healthy Plateau' state, distinct from 'Stalled'. Plateau is set explicitly by the Director with a rationale and is presented in dashboards as a deliberate choice, not a failure mode.",
+      "target_piece": "AOS data model, Director dashboard",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-08",
+      "severity": "CRITICAL",
+      "affected_stage": "Green 2, Green 3, Yellow 1",
+      "affected_archetype": "A5 High-Pressure Family",
+      "risk_description": "Director must defend promotion-hold decisions against parent pressure. If gate specification is soft or evidence is not preserved, parent wins the argument by default. This is the single highest-stakes test of gate quality in the system.",
+      "required_response": "[PROPOSED:] Every promotion request must require evidence citation against the specific gate criterion in question. AOS preserves audit trail visible to all three roles (Director, Coach, Parent). Three-party competition entry approval workflow logs each refusal with the gate-evidence basis. Coach-facing translation language (Piece 8) supplies non-confrontational scripts for these conversations.",
+      "target_piece": "Piece 2 (Gates), Piece 8 (Coach-facing), AOS workflow",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-09",
+      "severity": "HIGH",
+      "affected_stage": "Intake (any stage entry)",
+      "affected_archetype": "A6 Transfer-In",
+      "risk_description": "Intake assessment is currently not protocolized. 'See where they fit' is subjective and under-evidenced. Result: transfer-ins are placed at the wrong stage and either bored (placed too low) or exposed (placed too high).",
+      "required_response": "[PROPOSED:] Angles intake protocol = Swing Check (Behind / Between Legs / Green Zone diagnostic on forehand) + 3-rally tactical observation + player written self-assessment. Output: validated Skill Track placement + separate Comp Track placement, with the two intentionally allowed to differ.",
+      "target_piece": "AOS intake module, Piece 2 (Gates)",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-10",
+      "severity": "MEDIUM",
+      "affected_stage": "Green 1, Green 2 (re-grounding for transfers)",
+      "affected_archetype": "A6 Transfer-In",
+      "risk_description": "Mid-stage transfers may need 'tightening of the foundation' that reads as demotion if framed wrong. Curriculum has no explicit re-grounding language.",
+      "required_response": "Coach-facing translation (Piece 8) specifies framing for re-grounding phases — 'tightening the foundation' rather than 'going back.' Two-track independence lets Comp Track stay where match experience supports it while Skill Track does the technical work. Make this explicit in the Piece 8 language guide.",
+      "target_piece": "Piece 8 (Coach-facing translation)",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-11",
+      "severity": "CRITICAL",
+      "affected_stage": "Any stage during return-to-play window",
+      "affected_archetype": "A7 Injury-Return",
+      "risk_description": "Skill Track gates rely on rally-volume and match-volume evidence the returning player cannot produce in the return window. Without explicit Return-to-Play state, curriculum marks player as regressed when they are actually progressing through a constrained load envelope. ACR injury risk model also misreads the ramp-up if not differentiated from healthy chronic load.",
+      "required_response": "[PROPOSED:] AOS Load Management module adds explicit 'Return-to-Play' state, separate from 'Injury Risk' state. When set: Skill Track stage label preserved, Skill Track gate evaluation suspended, Fitness Path load-progression milestones substitute as evidence-of-progress. Re-entry assessment (Swing Check + load tolerance test + match-simulation) gates exit from Return-to-Play state.",
+      "target_piece": "Piece 7 (Fitness Path), AOS Load Management module",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-12",
+      "severity": "HIGH",
+      "affected_stage": "Orange 1 → Green 1 (accelerated)",
+      "affected_archetype": "A8 Gap-Year / Late-Start",
+      "risk_description": "Volume thresholds in Piece 9 are calibrated for color-band age groups. A late-start adult-adjacent player with strong cognition and athletic base can clear stage criteria in 30–50% of typical volume. Curriculum that enforces standard volume creates artificial drag and wastes the player's pacing advantage.",
+      "required_response": "[PROPOSED:] Piece 9 specifies archetype-aware volume modifiers. Late-start adult-adjacent archetype runs on accelerated volume thresholds at Red and Orange stages. Volume floor still exists (motor patterning needs reps regardless of cognition) but ceiling is elevated.",
+      "target_piece": "Piece 9 (Volume guidance)",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-13",
+      "severity": "MEDIUM",
+      "affected_stage": "Pre-Green 1",
+      "affected_archetype": "A8 Gap-Year / Late-Start",
+      "risk_description": "Opening Competition Track too early for late-starter with immature motor patterns risks pattern-poisoning under match pressure. Standard Competition Track entry rules don't differentiate by archetype.",
+      "required_response": "[PROPOSED:] Competition Track entry rule for A8: opens only at Skill Track Green 1 entry, not earlier. Until then, internal controlled-condition matches only — no external tournament play. Piece 6 (Competition Track) specifies this as an archetype-aware rule, not a global one.",
+      "target_piece": "Piece 6 (Competition Track)",
+      "is_addressed": false
+    },
+    {
+      "failure_mode_id": "FM-14",
+      "severity": "MEDIUM",
+      "affected_stage": "All stages",
+      "affected_archetype": "All archetypes (cross-cutting)",
+      "risk_description": "The 15-stage matrix as currently scoped does not surface archetype context to the coach at the moment of decision. Coach reads gate evidence in isolation. All archetype-specific adjustments above will fail to land if the AOS UI doesn't carry the archetype tag forward into every relevant screen.",
+      "required_response": "[PROPOSED:] AOS player record includes a primary archetype tag (and optional secondary). Every stage-progression and gate-evaluation screen surfaces the archetype tag and any archetype-specific modifiers in effect (volume-extended, Recreation flag, Return-to-Play state, label-suppressed, accelerated-volume). This is the integration point that makes the archetype work observable rather than aspirational.",
+      "target_piece": "AOS data model (cross-cutting)",
+      "is_addressed": false
+    }
+  ]
+}

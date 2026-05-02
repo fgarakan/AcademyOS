@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-02 — Sprint 188: Curriculum Spreadsheet Validation + Normalized Seed Preview
+
+**Mode:** Validation and preview only. No migrations created. No data inserted. No UI built. No app routes modified. No npm installs.
+
+**Migrations created:** None. Validation precedes migration 053.
+
+**TypeScript result:** `npx tsc --noEmit` — 0 errors
+
+### Sprint 188 — Curriculum Spreadsheet Validation + Normalized Seed Preview V1
+- Created `scripts/validate-curriculum-seed-sources.mjs` — Validation script using openpyxl (Python) for xlsx parsing. Validates 7 source files (57 sheets), 86 constraint checks: file existence, sheet presence, required columns, row counts, unique IDs, domain values, stage values, archetype tags, failure mode IDs, product-tool leakage. Outputs normalized preview JSON files and a markdown validation report.
+- Created `docs/curriculum/seed-validation-report.md` — Full validation report. 86 checks passed, 0 failed, 6 warnings. All 8 tables confirmed ready for migration 053. Normalization mappings documented. Product-tool leakage clean in all core fields.
+- Created `docs/curriculum/seed-preview/curriculum-gates-preview.json` — 57 gate rows with domain_raw and domain_normalized fields.
+- Created `docs/curriculum/seed-preview/curriculum-drills-preview.json` — First 20 of 152 drill rows (normalized).
+- Created `docs/curriculum/seed-preview/curriculum-coach-language-preview.json` — All 120 coach language entries.
+- Created `docs/curriculum/seed-preview/curriculum-archetypes-preview.json` — All 8 archetype rows.
+- Created `docs/curriculum/seed-preview/curriculum-failure-modes-preview.json` — All 14 failure mode rows.
+
+**Normalization mappings required at seed time:**
+- Gates domain: "Movement / Athletic" → "Movement", "Mentality / Learning Behavior" → "Mentality", "Tactical (Court Mapping)" → "Tactical"
+- Gates evaluator: "Coach + Director" → "Director" (19 gates)
+- Gates To: "Out (Living-as-a-Pro)" → NULL (to_level_id IS NULL, HP3 exit gate)
+- Fitness phase: descriptive names → migration enum values
+
+**Product-tool leakage result:** CLEAN in all core data fields. One informational [PROPOSED:] note in Gates Notes column (RED1__RED2__02) flagged as non-blocking warning. One false positive ("closing the angle" = tennis term) documented and excluded.
+
+---
+
 ## 2026-05-02 — Sprints 176–185: AI Suggestion Review Engine + Director Approval Cards V1
 
 **Mode:** AI suggestion infrastructure — deterministic generation, director review page, lifecycle actions, dashboard card. No npm installs. No external AI API. No parent/player publishing. No level mutations. No auto-applying suggestions.

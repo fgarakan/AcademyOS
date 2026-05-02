@@ -1,0 +1,351 @@
+{
+  "generated": "2026-05-02T22:45:23.536Z",
+  "sprint": 188,
+  "total_rows": 152,
+  "preview_rows": 20,
+  "note": "First 20 of 152 drills. Full coaching_cues, setup, procedure fields omitted for brevity.",
+  "rows": [
+    {
+      "drill_id": "DRILL_RED1_MOV_001",
+      "name": "Animal Walks Warm-Up",
+      "stage_min": "Red 1",
+      "stage_max": "Red 2",
+      "domain": "Movement",
+      "session_block": "Warm-Up",
+      "objective": "Build coordination and athletic vocabulary through varied locomotor patterns.",
+      "duration_minutes": 8,
+      "players_needed": 4,
+      "tags": [
+        "warm-up",
+        "fms",
+        "coordination",
+        "multi-sport",
+        "red-band"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED1_MOV_002",
+      "name": "Catch and Throw Stations",
+      "stage_min": "Red 1",
+      "stage_max": "Red 2",
+      "domain": "Movement",
+      "session_block": "Train",
+      "objective": "Develop hand-eye coordination as a foundation for racquet skills.",
+      "duration_minutes": 12,
+      "players_needed": 6,
+      "tags": [
+        "fms",
+        "catching",
+        "throwing",
+        "coordination",
+        "red-band"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED1_TEC_003",
+      "name": "Bounce-Hit-Catch Solo",
+      "stage_min": "Red 1",
+      "stage_max": "Red 2",
+      "domain": "Technical",
+      "session_block": "Focus",
+      "objective": "Introduce racquet contact through a self-paced bounce-hit-catch sequence.",
+      "duration_minutes": 6,
+      "players_needed": 1,
+      "tags": [
+        "racquet-skills",
+        "solo",
+        "red-band",
+        "first-contact"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED1_COM_004",
+      "name": "Rally Game King of the Court Modified",
+      "stage_min": "Red 1",
+      "stage_max": "Red 2",
+      "domain": "Competition",
+      "session_block": "Game",
+      "objective": "First exposure to a rally-based winner format with peer interaction.",
+      "duration_minutes": 10,
+      "players_needed": 4,
+      "tags": [
+        "competition",
+        "rally",
+        "modified-scoring",
+        "red-band"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED1_MEN_005",
+      "name": "Listening Line",
+      "stage_min": "Red 1",
+      "stage_max": "Red 2",
+      "domain": "Mentality",
+      "session_block": "Warm-Up",
+      "objective": "Build sustained-attention capacity and instruction-following.",
+      "duration_minutes": 5,
+      "players_needed": 4,
+      "tags": [
+        "attention",
+        "listening",
+        "mentality",
+        "red-band"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED2_TEC_006",
+      "name": "Drop-Hit Rally to Coach",
+      "stage_min": "Red 2",
+      "stage_max": "Red 3",
+      "domain": "Technical",
+      "session_block": "Focus",
+      "objective": "Build a controlled rally start from a self-feed.",
+      "duration_minutes": 8,
+      "players_needed": 2,
+      "tags": [
+        "rally",
+        "drop-hit",
+        "red-band",
+        "technical"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED2_TEC_007",
+      "name": "Target Zone Tap-Down",
+      "stage_min": "Red 2",
+      "stage_max": "Orange 1",
+      "domain": "Technical",
+      "session_block": "Train",
+      "objective": "Introduce 'where the ball goes' as a concept through visible target zones.",
+      "duration_minutes": 10,
+      "players_needed": 2,
+      "tags": [
+        "targets",
+        "direction",
+        "red-band",
+        "technical"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED2_MOV_008",
+      "name": "Side-Shuffle Recovery",
+      "stage_min": "Red 2",
+      "stage_max": "Orange 1",
+      "domain": "Movement",
+      "session_block": "Warm-Up",
+      "objective": "Introduce lateral movement and the idea of returning to a ready position.",
+      "duration_minutes": 6,
+      "players_needed": 1,
+      "tags": [
+        "movement",
+        "recovery",
+        "lateral",
+        "red-band"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED2_COM_009",
+      "name": "First-to-Five Rally Points",
+      "stage_min": "Red 2",
+      "stage_max": "Red 3",
+      "domain": "Competition",
+      "session_block": "Game",
+      "objective": "Modified-scoring competition that rewards rally length, not winners.",
+      "duration_minutes": 12,
+      "players_needed": 2,
+      "tags": [
+        "competition",
+        "modified-scoring",
+        "scoring-literacy",
+        "red-band"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED2_MEN_010",
+      "name": "What Did You Notice",
+      "stage_min": "Red 2",
+      "stage_max": "Orange 1",
+      "domain": "Mentality",
+      "session_block": "Train",
+      "objective": "Build a basic self-observation habit after a rally.",
+      "duration_minutes": 5,
+      "players_needed": 1,
+      "tags": [
+        "reflection",
+        "self-awareness",
+        "mentality",
+        "red-band"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED3_COM_011",
+      "name": "Modified Mini-Match",
+      "stage_min": "Red 3",
+      "stage_max": "Orange 1",
+      "domain": "Competition",
+      "session_block": "Game",
+      "objective": "Full-arc mini-match exposure with modified scoring and full self-management.",
+      "duration_minutes": 15,
+      "players_needed": 2,
+      "tags": [
+        "competition",
+        "match-play",
+        "self-management",
+        "red-band"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED3_TEC_012",
+      "name": "Forehand Backhand Recognition",
+      "stage_min": "Red 3",
+      "stage_max": "Orange 1",
+      "domain": "Technical",
+      "session_block": "Focus",
+      "objective": "Reinforce automatic side-recognition: ball on this side = this stroke.",
+      "duration_minutes": 8,
+      "players_needed": 2,
+      "tags": [
+        "recognition",
+        "decision-making",
+        "red-band",
+        "technical"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED3_MOV_013",
+      "name": "Recovery Run-Touch-Return",
+      "stage_min": "Red 3",
+      "stage_max": "Orange 1",
+      "domain": "Movement",
+      "session_block": "Train",
+      "objective": "Build the recovery habit between shots.",
+      "duration_minutes": 8,
+      "players_needed": 1,
+      "tags": [
+        "recovery",
+        "movement",
+        "red-band",
+        "first-strike-prep"
+      ]
+    },
+    {
+      "drill_id": "DRILL_RED3_MEN_014",
+      "name": "Sportsmanship Checklist",
+      "stage_min": "Red 3",
+      "stage_max": "Orange 1",
+      "domain": "Mentality",
+      "session_block": "Game",
+      "objective": "Make match-day behaviors explicit and visible.",
+      "duration_minutes": 20,
+      "players_needed": 2,
+      "tags": [
+        "match-behavior",
+        "sportsmanship",
+        "mentality",
+        "red-band"
+      ]
+    },
+    {
+      "drill_id": "DRILL_ORANGE1_TEC_015",
+      "name": "Crosscourt Forehand Cooperation",
+      "stage_min": "Orange 1",
+      "stage_max": "Orange 2",
+      "domain": "Technical",
+      "session_block": "Focus",
+      "objective": "First sustained crosscourt rally as a named target zone.",
+      "duration_minutes": 12,
+      "players_needed": 2,
+      "tags": [
+        "crosscourt",
+        "cooperation",
+        "orange-band",
+        "rally"
+      ]
+    },
+    {
+      "drill_id": "DRILL_ORANGE1_TEC_016",
+      "name": "Crosscourt Backhand Cooperation",
+      "stage_min": "Orange 1",
+      "stage_max": "Orange 2",
+      "domain": "Technical",
+      "session_block": "Focus",
+      "objective": "Mirror of the crosscourt forehand drill on the backhand wing.",
+      "duration_minutes": 12,
+      "players_needed": 2,
+      "tags": [
+        "crosscourt",
+        "backhand",
+        "orange-band",
+        "rally"
+      ]
+    },
+    {
+      "drill_id": "DRILL_ORANGE1_TAC_017",
+      "name": "Direction Change Game",
+      "stage_min": "Orange 1",
+      "stage_max": "Orange 2",
+      "domain": "Tactical",
+      "session_block": "Train",
+      "objective": "Introduce direction-change as a tactical decision.",
+      "duration_minutes": 10,
+      "players_needed": 2,
+      "tags": [
+        "direction-change",
+        "tactical",
+        "orange-band",
+        "patterns"
+      ]
+    },
+    {
+      "drill_id": "DRILL_ORANGE1_COM_018",
+      "name": "Round-Robin Mini-Tournament",
+      "stage_min": "Orange 1",
+      "stage_max": "Orange 2",
+      "domain": "Competition",
+      "session_block": "Game",
+      "objective": "Multi-opponent competition exposure in a single session.",
+      "duration_minutes": 30,
+      "players_needed": 4,
+      "tags": [
+        "competition",
+        "round-robin",
+        "orange-band",
+        "multi-opponent"
+      ]
+    },
+    {
+      "drill_id": "DRILL_ORANGE1_MOV_019",
+      "name": "Split-Step Reaction",
+      "stage_min": "Orange 1",
+      "stage_max": "Orange 2",
+      "domain": "Movement",
+      "session_block": "Warm-Up",
+      "objective": "Build the split-step habit on opponent contact.",
+      "duration_minutes": 8,
+      "players_needed": 1,
+      "tags": [
+        "split-step",
+        "reaction",
+        "movement",
+        "orange-band"
+      ]
+    },
+    {
+      "drill_id": "DRILL_ORANGE1_MEN_020",
+      "name": "Three Goals for the Session",
+      "stage_min": "Orange 1",
+      "stage_max": "Orange 2",
+      "domain": "Mentality",
+      "session_block": "Warm-Up",
+      "objective": "Habit of session-level intent.",
+      "duration_minutes": 5,
+      "players_needed": 1,
+      "tags": [
+        "goal-setting",
+        "mentality",
+        "reflection",
+        "orange-band"
+      ]
+    }
+  ]
+}
