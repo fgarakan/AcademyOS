@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Mic, Send, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Send, AlertTriangle, CheckCircle } from 'lucide-react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
+import { VoiceTextInput } from '@/components/voice/VoiceTextInput'
 import { createCurriculumOverrideDraftAction } from '@/lib/actions/curriculumOverrideDraft'
 
 interface Props {
@@ -32,16 +33,13 @@ export function VoiceOverrideInputPanel({ hasActiveVersion }: Props) {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Mic className="w-4 h-4 text-lime" />
-          <p className="label-xs">Voice Curriculum Customization</p>
+          <p className="label-xs">Curriculum Customization</p>
         </div>
-      </CardHeader>
-      <CardContent className="pt-0 space-y-3">
-        <p className="text-[11px] text-text-secondary leading-relaxed">
-          Tell the OS what you want to change in your academy curriculum. The OS will parse your
-          intent and create a draft for your review. Nothing changes until you approve.
+        <p className="text-[11px] text-text-muted mt-1">
+          Speak or type. The OS creates a draft for review — nothing changes automatically.
         </p>
-
+      </CardHeader>
+      <CardContent className="pt-0 space-y-4">
         {!hasActiveVersion && (
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-status-orange/5 border border-status-orange/20 text-[11px] text-status-orange">
             <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
@@ -51,23 +49,18 @@ export function VoiceOverrideInputPanel({ hasActiveVersion }: Props) {
           </div>
         )}
 
-        <div className="space-y-2">
-          <p className="text-[11px] text-text-muted italic">
-            Example: &ldquo;For our Orange 2 kids, I want more return-of-serve work before they move to Orange 3.&rdquo;
-          </p>
-          <textarea
-            value={inputText}
-            onChange={e => setInputText(e.target.value)}
-            disabled={isPending || !hasActiveVersion}
-            rows={3}
-            maxLength={2000}
-            placeholder="Describe the curriculum change you want…"
-            className="w-full bg-surface-raised border border-border rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-lime/40 disabled:opacity-50"
-          />
-          {inputText.length > 1600 && (
-            <p className="text-[10px] text-text-muted text-right">{inputText.length}/2000</p>
-          )}
-        </div>
+        <p className="text-[11px] text-text-muted italic">
+          Example: &ldquo;For our Orange 2 players, I want more return-of-serve readiness before Orange 3.&rdquo;
+        </p>
+
+        <VoiceTextInput
+          value={inputText}
+          onChange={setInputText}
+          placeholder="Describe the curriculum change you want…"
+          disabled={isPending || !hasActiveVersion}
+          minRows={3}
+          helperText="Speak or type. The OS creates a draft for review — nothing changes automatically."
+        />
 
         <div className="flex items-center gap-3">
           <button
@@ -95,7 +88,7 @@ export function VoiceOverrideInputPanel({ hasActiveVersion }: Props) {
           <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5 text-status-orange" />
           <span>
             Draft only. Nothing is applied until you review and approve in the Review Queue.
-            Voice parsing is deterministic — no AI is called.
+            No AI is called.
           </span>
         </div>
       </CardContent>
