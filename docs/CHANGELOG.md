@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-03 — Sprint 211: Curriculum Gate Evidence Tracking V1
+
+**Mode:** New components + server action. No schema changes. No migrations. No auto-advancement.
+
+**What was built:**
+- `GateEvidenceButton.tsx` — director-only client component. "Record evidence" inline form per gate row. Submits to `proposed_actions` for review. Shows success/error state.
+- `recordGateEvidenceAction.ts` — server action scoped to director/head_coach. Inserts `proposed_actions` with `action_type = 'other'` and payload `{ subtype: 'curriculum_gate_observation', gate_id, gate_criterion, evidence_text, player_id }`. Requires approval.
+- `PlayerLevelRequirementsCard.tsx` — added optional `gateActions?: Record<string, ReactNode>` prop. Renders action slot below each gate row. Removed "coming next" placeholder.
+- Player profile page wires `GateEvidenceButton` into each gate row via `gateActions` map.
+
+**Safety:** Evidence goes to `proposed_actions` with `requires_approval = true`. Nothing changes until director approves. No auto-advancement triggered.
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/app/director/players/[playerId]/GateEvidenceButton.tsx` — Client component for inline evidence recording.
+- `src/app/director/players/[playerId]/recordGateEvidenceAction.ts` — Server action for evidence draft creation.
+
+### Files modified
+- `src/components/player/PlayerLevelRequirementsCard.tsx` — Added `gateActions` prop; removed placeholder text.
+- `src/app/director/players/[playerId]/page.tsx` — Imports GateEvidenceButton; passes gateActions map to requirements card.
+
+---
+
 ## 2026-05-03 — Sprint 210: Coach Workspace Live Session Curriculum Context
 
 **Mode:** UI enrichment. No schema changes. No migrations. Read-only curriculum data.

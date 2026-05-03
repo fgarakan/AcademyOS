@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 
 const DOMAIN_COLOR: Record<string, string> = {
@@ -41,6 +42,7 @@ interface Props {
   currentLevelName: string | null
   nextLevelName: string | null
   hasCurriculumState: boolean
+  gateActions?: Record<string, ReactNode>
 }
 
 export function PlayerLevelRequirementsCard({
@@ -48,6 +50,7 @@ export function PlayerLevelRequirementsCard({
   currentLevelName,
   nextLevelName,
   hasCurriculumState,
+  gateActions,
 }: Props) {
   if (!hasCurriculumState) {
     return (
@@ -127,18 +130,13 @@ export function PlayerLevelRequirementsCard({
                       </span>
                     )}
                   </div>
+                  {gateActions?.[g.id]}
                 </div>
               ))}
             </div>
           </div>
         ))}
 
-        {/* Evidence tracking placeholder */}
-        <div className="px-3 py-2 rounded-lg border border-border/50 bg-surface-raised/50 text-center">
-          <p className="text-[10px] text-text-muted">
-            Evidence tracking coming next — gates are read-only
-          </p>
-        </div>
       </CardContent>
     </Card>
   )

@@ -35,6 +35,7 @@ import { PlayerRequirementProgressReadOnly, type RequirementProgressRow } from '
 import { confirmRequirementProgressStatusAction } from './requirementProgressConfirmationAction'
 import type { RequirementEvidenceDetailRow } from './types'
 import { EvidenceRequirementDraftButton } from './EvidenceRequirementDraftButton'
+import { GateEvidenceButton } from './GateEvidenceButton'
 import { EvidenceRequirementDrafts, type EvidenceRequirementDraftRow } from './EvidenceRequirementDrafts'
 import { createEvidenceRequirementLinkDraftsAction } from './evidenceRequirementDraftAction'
 import { FitnessHomeworkRecommendationButton } from './FitnessHomeworkRecommendationButton'
@@ -385,12 +386,24 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         </Card>
       )}
 
-      {/* Level requirements — Sprint 197: read-only gate list for current level */}
+      {/* Level requirements with director gate evidence buttons */}
       <PlayerLevelRequirementsCard
         gates={levelGates}
         currentLevelName={curriculumSummary?.current_level_name ?? null}
         nextLevelName={nextCurriculumLevel?.display_name ?? null}
         hasCurriculumState={hasCurriculum}
+        gateActions={Object.fromEntries(
+          levelGates.map(g => [
+            g.id,
+            <GateEvidenceButton
+              key={g.id}
+              playerId={params.playerId}
+              academyId={academyId}
+              gateId={g.id}
+              gateCriterion={g.criterion}
+            />,
+          ])
+        )}
       />
 
     </div>
