@@ -78,6 +78,51 @@ FITNESS_PHASE_NORM = {
     "High Performance / Pro Transition": "high_performance",
 }
 
+# ── Product-language stripping ──────────────────────────────────────────────────
+#
+# Removes the literal "[PROPOSED:]" marker and Angles product/tool names from any
+# text field before it is written to the seed SQL.
+#
+# Rules:
+#   - "[PROPOSED:]" prefix is removed; the sentence that follows is kept.
+#   - "Swing Check app", "SwingCheck", "Swing Check" → "a video assessment protocol"
+#   - "Swinget" → "a rotational training tool"
+#   - "The Angle™" (with trademark symbol) → "the Angles methodology"
+#   - "The Angle device" / "The Angle product" / "The Angle tool" → "the Angles methodology"
+#   - Normal tennis phrases ("closing the angle", "short angle", "create an angle",
+#     "crosscourt angle") are NEVER touched — "angle" as court geometry is allowed.
+#   - "Angles intake protocol" → "intake protocol"
+#
+_PRODUCT_SUBS = [
+    # Remove [PROPOSED:] marker, keep the rest of the sentence
+    (re.compile(r"\[PROPOSED:\]\s*", re.IGNORECASE), ""),
+    # "Swing Check app" / "SwingCheck app"
+    (re.compile(r"Swing\s*Check\s+app", re.IGNORECASE), "a video assessment protocol"),
+    # "Swing Check (…zone/diagnostic…)" — product diagnostic framework
+    (re.compile(r"Swing\s*Check\s*\([^)]*\)", re.IGNORECASE), "a standardized movement assessment"),
+    # Remaining bare "Swing Check" / "SwingCheck"
+    (re.compile(r"Swing\s*Check", re.IGNORECASE), "a video assessment protocol"),
+    # "Swinget"
+    (re.compile(r"Swinget", re.IGNORECASE), "a rotational training tool"),
+    # "The Angle™" — only with explicit trademark symbol
+    (re.compile(r"The\s+Angle™"), "the Angles methodology"),
+    # "The Angle device/product/tool/app" — explicit product-noun context
+    (re.compile(r"\bThe\s+Angle\s+(?:device|product|tool|app|system)\b", re.IGNORECASE), "the Angles methodology"),
+    # "Angles intake protocol" → "intake protocol"
+    (re.compile(r"Angles\s+intake\s+protocol", re.IGNORECASE), "intake protocol"),
+]
+
+def strip_product_refs(text):
+    """Strip [PROPOSED:] markers and Angles product/tool names from a text field."""
+    if not text:
+        return text
+    s = str(text)
+    for pattern, replacement in _PRODUCT_SUBS:
+        s = pattern.sub(replacement, s)
+    s = s.strip()
+    return s if s else None
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def esc(s):
@@ -236,8 +281,8 @@ def gen_archetypes():
         tag  = row.get("Tag") or ""
         name = row.get("Name") or ""
         entry = row.get("Entry Stage") or ""
-        desc = row.get("Profile") or ""
-        protect = row.get("What Curriculum Must Protect") or ""
+        desc = strip_product_refs(row.get("Profile") or "")
+        protect = strip_product_refs(row.get("What Curriculum Must Protect") or "")
         rows_sql.append(
             f"  ({esc(tag)}, {esc(name)}, {esc(entry)}, {esc(desc)}, {esc(protect)})"
         )
@@ -255,7 +300,8 @@ def gen_failure_modes():
     lines.append("-- ============================================================")
     lines.append("-- SECTION 3: curriculum_failure_modes (14 rows)")
     lines.append("-- Source: AOS_Curriculum_StressTest.xlsx — Failure Modes sheet")
-    lines.append("-- These are engineering requirements, not runtime data.")
+    lines.append("-- Engineering requirements. [PROPOSED:] markers stripped; content kept.")
+    lines.append("-- Product/tool names stripped from risk_description + required_response.")
     lines.append("-- is_addressed starts false — updated manually when resolved.")
     lines.append("-- ============================================================")
     lines.append("")
@@ -269,8 +315,8 @@ def gen_failure_modes():
         severity = row.get("Severity") or ""
         stage    = row.get("Stages") or ""
         archetype = row.get("Archetypes") or ""
-        gap      = row.get("Gap") or ""
-        fix      = row.get("Recommended Fix") or ""
+        gap      = strip_product_refs(row.get("Gap") or "")
+        fix      = strip_product_refs(row.get("Recommended Fix") or "")
         piece    = row.get("Target Piece") or ""
         # affected_components from Target Piece
         components = f"ARRAY[{esc(piece)}]" if piece else "NULL"
@@ -316,14 +362,7 @@ def gen_gates():
         evaluator = "Director" if "+" in evaluator_raw else evaluator_raw
         cadence = row.get("Cadence") or ""
         notes_raw = row.get("Notes") or ""
-        # Strip product-tool [PROPOSED:] annotations from notes
-        notes = None
-        if notes_raw:
-            clean = re.sub(r"\[PROPOSED:\][^\n]*swinget[^\n]*", "", notes_raw, flags=re.IGNORECASE).strip()
-            clean = re.sub(r"\[PROPOSED:\][^\n]*swing\s*check[^\n]*", "", clean, flags=re.IGNORECASE).strip()
-            clean = re.sub(r"\[PROPOSED:\][^\n]*the angle[^\n]*", "", clean, flags=re.IGNORECASE).strip()
-            if clean:
-                notes = clean
+        notes = strip_product_refs(notes_raw) or None
         sort_order = i + 1
         to_ref = "NULL" if (not to_s or "Out" in to_s) else level_ref(to_s)
         lines.append(f"INSERT INTO curriculum_gates")
@@ -362,10 +401,10 @@ def gen_coach_language():
     for row in data:
         stage   = row.get("Stage") or ""
         domain  = row.get("Domain") or ""
-        dw      = row.get("Doing Well") or ""
-        wo      = row.get("Working On") or ""
-        cf      = row.get("Current Focus") or ""
-        ns      = row.get("Next Step") or ""
+        dw      = strip_product_refs(row.get("Doing Well") or "")
+        wo      = strip_product_refs(row.get("Working On") or "")
+        cf      = strip_product_refs(row.get("Current Focus") or "")
+        ns      = strip_product_refs(row.get("Next Step") or "")
         lines.append(f"INSERT INTO curriculum_coach_language")
         lines.append(f"  (level_id, domain, doing_well, working_on, current_focus, next_step)")
         lines.append(f"VALUES (")
@@ -393,19 +432,19 @@ def gen_drills():
     lines.append("")
     for row in lib_data:
         drill_id   = row.get("drill_id") or ""
-        name       = row.get("name") or ""
+        name       = strip_product_refs(row.get("name") or "")
         stage_min  = row.get("stage_min") or ""
         stage_max  = row.get("stage_max") or ""
         domain     = row.get("domain") or ""
         s_block    = row.get("session_block") or ""
-        objective  = row.get("objective") or ""
-        setup      = row.get("setup") or ""
-        procedure  = row.get("procedure") or ""
-        cues_raw   = row.get("coaching_cues") or ""
+        objective  = strip_product_refs(row.get("objective") or "")
+        setup      = strip_product_refs(row.get("setup") or "")
+        procedure  = strip_product_refs(row.get("procedure") or "")
+        cues_raw   = strip_product_refs(row.get("coaching_cues") or "")
         cues       = parse_coaching_cues(cues_raw)
-        prog_easy  = row.get("progression_easier") or ""
-        prog_hard  = row.get("progression_harder") or ""
-        success_c  = row.get("success_criteria") or ""
+        prog_easy  = strip_product_refs(row.get("progression_easier") or "")
+        prog_hard  = strip_product_refs(row.get("progression_harder") or "")
+        success_c  = strip_product_refs(row.get("success_criteria") or "")
         dur_raw    = row.get("duration_minutes")
         _dur_val   = int(float(dur_raw)) if dur_raw else 0
         dur_sql    = str(_dur_val) if _dur_val >= 1 else "NULL"
@@ -482,16 +521,16 @@ def gen_competition_track():
     lines.append("")
     for row in data:
         stage    = row.get("Stage") or ""
-        mfmt     = row.get("Match Format") or ""
-        scoring  = row.get("Scoring") or ""
-        density  = row.get("Point Density") or ""
-        opp_pool = row.get("Opponent Pool") or ""
-        t_cad    = row.get("Tournament Cadence") or ""
-        wl_tgt   = row.get("Win:Loss Target") or ""
-        c_behav  = row.get("Competition Behaviors") or ""
-        p_role   = row.get("Parent Role") or ""
-        c_role   = row.get("Coach Role") or ""
-        t_signal = row.get("Transition Signal (toward next stage)") or ""
+        mfmt     = strip_product_refs(row.get("Match Format") or "")
+        scoring  = strip_product_refs(row.get("Scoring") or "")
+        density  = strip_product_refs(row.get("Point Density") or "")
+        opp_pool = strip_product_refs(row.get("Opponent Pool") or "")
+        t_cad    = strip_product_refs(row.get("Tournament Cadence") or "")
+        wl_tgt   = strip_product_refs(row.get("Win:Loss Target") or "")
+        c_behav  = strip_product_refs(row.get("Competition Behaviors") or "")
+        p_role   = strip_product_refs(row.get("Parent Role") or "")
+        c_role   = strip_product_refs(row.get("Coach Role") or "")
+        t_signal = strip_product_refs(row.get("Transition Signal (toward next stage)") or "")
         lines.append(f"INSERT INTO curriculum_competition_track")
         lines.append(f"  (level_id, match_format, scoring_system, point_density, opponent_pool,")
         lines.append(f"   tournament_cadence, win_loss_target, competition_behaviors,")
@@ -530,12 +569,12 @@ def gen_fitness_guidance():
         stage    = row.get("Stage") or ""
         phase_raw = row.get("Fitness Phase") or ""
         phase    = FITNESS_PHASE_NORM.get(phase_raw, phase_raw.lower().replace(" ", "_"))
-        energy   = row.get("Energy Systems") or ""
-        strength = row.get("Strength") or ""
-        key_tests_raw = row.get("Key Tests") or ""
-        primary_focus = row.get("Primary Focus") or ""
-        speed    = row.get("Speed") or ""
-        endurance = row.get("Endurance") or ""
+        energy   = strip_product_refs(row.get("Energy Systems") or "")
+        strength = strip_product_refs(row.get("Strength") or "")
+        key_tests_raw = strip_product_refs(row.get("Key Tests") or "")
+        primary_focus = strip_product_refs(row.get("Primary Focus") or "")
+        speed    = strip_product_refs(row.get("Speed") or "")
+        endurance = strip_product_refs(row.get("Endurance") or "")
         # Build coaching_notes from primary focus + speed + endurance summary
         notes_parts = [p for p in [primary_focus, f"Speed: {speed}" if speed else None, f"Endurance: {endurance}" if endurance else None] if p]
         coaching_notes = " | ".join(notes_parts) if notes_parts else None
@@ -582,8 +621,8 @@ def gen_volume_guidance():
         months    = row.get("Typical Stage Duration (months)") or ""
         reassess  = row.get("Reassessment Cadence") or ""
         acr_raw   = row.get("ACR Target") or ""
-        deload    = row.get("Deload Cadence") or ""
-        overload  = row.get("Overload Flags") or ""
+        deload    = strip_product_refs(row.get("Deload Cadence") or "")
+        overload  = strip_product_refs(row.get("Overload Flags") or "")
 
         wh_min, wh_max       = parse_range_numeric(wk_hours)
         sess_min, sess_max   = parse_range_int(sessions)

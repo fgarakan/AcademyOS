@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-03 — Sprint 190 Follow-up: Remove product language from curriculum seed data
+
+**Mode:** Follow-up hotfix. No UI. No schema changes. No new tables. No npm installs.
+
+**Migrations regenerated:** `supabase/migrations/053_curriculum_seed.sql`
+
+**Product-language audit result:** CLEAN — all 10 seed sections pass `scripts/audit-curriculum-product-language.mjs`. Zero Swinget / Swing Check / SwingCheck / The Angle™ / `[PROPOSED:]` markers in any data field. Allowed tennis phrase `'First-volley closing the angle.'` intact.
+
+**`[PROPOSED:]` handling:** Markers stripped from all fields; planning content retained. Applies to `curriculum_archetypes.primary_curriculum_protection` and `curriculum_failure_modes.required_response`.
+
+**Swing Check in failure_modes:** Replaced with generic descriptions (`a standardized movement assessment`, `a video assessment protocol`).
+
+**TypeScript result:** 0 errors.
+
+**QA:** 38/38 checks pass. Audit script: PASS.
+
+**Supabase rerun required:** Migration 053 uses `ON CONFLICT DO NOTHING` — already-inserted rows won't update. To apply the cleaned data, truncate `curriculum_archetypes` and `curriculum_failure_modes` before rerunning, or run targeted UPDATEs. See QA report §12b for exact SQL.
+
+### Files changed
+- `scripts/generate-curriculum-seed-sql.py` — Added `strip_product_refs()` helper; applied to all text fields in all section generators; simplified gate notes stripping to use same helper.
+- `supabase/migrations/053_curriculum_seed.sql` — Regenerated; [PROPOSED:] and product names stripped from all data fields.
+- `scripts/audit-curriculum-product-language.mjs` — New. Dedicated product-language audit script covering all 10 seed sections with allowed-phrase exceptions.
+- `scripts/qa-curriculum-seed-migration.mjs` — Updated: [PROPOSED:] check now requires zero across all data lines.
+- `docs/curriculum/curriculum-seed-import-qa.md` — Updated: sections 8, 12b, 13 reflect follow-up hotfix.
+
+---
+
 ## 2026-05-03 — Sprint 190 Hotfix: Fix curriculum seed drill duration handling
 
 **Mode:** Hotfix. No UI. No schema changes. No new tables.

@@ -154,14 +154,12 @@ checkTrue('No "The Angle™" product references in data (tennis phrase allowed)'
   badAngles.length === 0,
   badAngles.length === 0 ? '"closing the angle" tennis phrase is only match' : badAngles.map(m=>m[0]).join(', '));
 
-// [PROPOSED:] - allowed only in archetypes/failure_modes sections (before SECTION 4)
-const prePlanning = content.slice(0, content.indexOf('-- SECTION 4:'));
-const postPlanning = content.slice(content.indexOf('-- SECTION 4:'));
-const proposedInCore = postPlanning.split('\n')
+// [PROPOSED:] - must be zero across ALL data lines (stripped by generator as of Sprint 190 follow-up)
+const allProposed = content.split('\n')
   .filter(l => l.includes('[PROPOSED:]') && !l.trimStart().startsWith('--'));
-checkTrue('[PROPOSED:] markers only in archetypes/failure_modes (not in core tables)',
-  proposedInCore.length === 0,
-  proposedInCore.length > 0 ? `Found in core sections: ${proposedInCore.length} lines` : 'clean');
+checkTrue('No [PROPOSED:] markers in any data line',
+  allProposed.length === 0,
+  allProposed.length > 0 ? `Found: ${allProposed.length} lines` : 'clean');
 
 // ── 6. Level display names ──────────────────────────────────────────────────
 console.log('\n=== Level Display Names ===');

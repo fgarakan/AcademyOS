@@ -5,7 +5,9 @@
 **Mode:** Static SQL QA (live migration apply deferred — see Section 4)
 **Final Readiness:** PASS WITH LIMITATIONS
 
-> **Hotfix applied 2026-05-03:** Supabase SQL Editor initially rejected the seed migration with a CHECK constraint violation on `curriculum_drills_duration_minutes_check` (drill `DRILL_YELLOW2_COM_061`, `duration_minutes = 0`). See Section 11 for details. Migration was regenerated; all 38 QA checks still pass.
+> **Hotfix applied 2026-05-03 (duration):** Supabase SQL Editor initially rejected the seed migration with a CHECK constraint violation on `curriculum_drills_duration_minutes_check` (drill `DRILL_YELLOW2_COM_061`, `duration_minutes = 0`). See Section 11 for details. Migration was regenerated; all 38 QA checks still pass.
+>
+> **Follow-up hotfix applied 2026-05-03 (product language):** Generator updated to strip `[PROPOSED:]` markers and Angles product/tool names from all curriculum data fields. Migration 053 regenerated. Audit script `scripts/audit-curriculum-product-language.mjs` created. All 10 seed sections pass product-language audit. **Migration 053 must be rerun in Supabase to apply the cleaned data.** See Section 12b.
 
 ---
 
@@ -237,12 +239,16 @@ VALUES (
 | `The Angle™` | 0 hits | — |
 | `the angle` phrase | 1 hit — ALLOWED | `'First-volley closing the angle.'` in `curriculum_coach_language.next_step` (Orange 2 / Technical). Documented as a tennis coaching term (closing the shot angle), not a product reference. |
 
-**`[PROPOSED:]` marker containment:**
-- All `[PROPOSED:]` markers confirmed in sections 2–3 only (`curriculum_archetypes`, `curriculum_failure_modes`).
-- Zero `[PROPOSED:]` markers in gates, drills, coach language, competition track, fitness guidance, or volume guidance sections.
+**`[PROPOSED:]` marker status (after Sprint 190 follow-up):**
+- Zero `[PROPOSED:]` markers in any data line across all 10 sections.
+- Generator now strips the `[PROPOSED:]` literal from all text fields before writing to SQL.
+- Underlying planning content is preserved; only the marker text is removed.
+- Audit script `scripts/audit-curriculum-product-language.mjs` enforces this.
 
-**Why `[PROPOSED:]` in archetypes/failure_modes is acceptable:**
-These tables store engineering requirements and planning notes — they are not coach-facing or player-facing curriculum content. The `[PROPOSED:]` annotations in `primary_curriculum_protection` and `required_response` columns are by design: they describe what future AOS modules would need to implement to address each archetype risk. They are referenced by developers and directors only, not surfaced in coaching or player views.
+**`Swing Check` in `curriculum_failure_modes` (after Sprint 190 follow-up):**
+- `curriculum_failure_modes.required_response` previously contained `Swing Check` in [PROPOSED:] planning text for FM-09 and FM-11.
+- Generator now replaces `Swing Check (Behind/Between Legs/Green Zone diagnostic)` → `a standardized movement assessment` and bare `Swing Check` → `a video assessment protocol`.
+- All 10 sections CLEAN per audit script.
 
 ---
 
@@ -317,6 +323,56 @@ Post-fix drill duration distribution:
 - 0 drills have `duration_minutes = 0`
 
 All 38 QA checks still pass on the regenerated migration.
+
+---
+
+## 12b. Product-Language Follow-up Fix (Sprint 190)
+
+**Found:** `[PROPOSED:]` markers and `Swing Check` product references in `curriculum_archetypes` and `curriculum_failure_modes` data fields.
+
+**Changes to `scripts/generate-curriculum-seed-sql.py`:**
+
+1. Added `strip_product_refs()` helper with ordered substitution rules:
+   - `[PROPOSED:]` marker removed; sentence content retained
+   - `Swing Check (Behind/…/Green Zone diagnostic)` → `a standardized movement assessment`
+   - `Swing Check app` → `a video assessment protocol`
+   - `Swing Check` / `SwingCheck` → `a video assessment protocol`
+   - `Swinget` → `a rotational training tool`
+   - `The Angle™` (with trademark) → `the Angles methodology`
+   - `The Angle device/product/tool/app` → `the Angles methodology`
+   - `Angles intake protocol` → `intake protocol`
+   - Normal tennis phrases (`closing the angle`, `short angle`, etc.) — **never touched**
+
+2. `strip_product_refs()` applied to all text fields in all section generators:
+   - `gen_archetypes()`: `description`, `primary_curriculum_protection`
+   - `gen_failure_modes()`: `risk_description`, `required_response`
+   - `gen_gates()`: `notes` (replaces previous one-off regex)
+   - `gen_drills()`: `name`, `objective`, `setup`, `procedure`, `coaching_cues`, `progression_easier`, `progression_harder`, `success_criteria`
+   - `gen_coach_language()`: `doing_well`, `working_on`, `current_focus`, `next_step`
+   - `gen_competition_track()`: all text fields
+   - `gen_fitness_guidance()`: `energy_systems`, `strength`, `key_tests`, `primary_focus`, `speed`, `endurance`
+   - `gen_volume_guidance()`: `deload_cadence`, `overload_flags`
+
+3. QA script `scripts/qa-curriculum-seed-migration.mjs` updated: `[PROPOSED:]` check now requires **zero** across all lines (not just core sections).
+
+4. Created `scripts/audit-curriculum-product-language.mjs` — dedicated product-language audit covering all 10 seed sections, with explicit allowed-phrase exceptions.
+
+**Audit result:** All 10 sections CLEAN. Tennis phrase `'First-volley closing the angle.'` intact.
+
+**Migration 053 regenerated.** The previously-applied seed data in Supabase contains the old `[PROPOSED:]` text and `Swing Check` references. The migration uses `ON CONFLICT DO NOTHING` — it will not overwrite existing rows. **To apply the cleaned data, truncate and reseed, or run targeted UPDATEs.** See rerun note below.
+
+### Rerun Note
+
+Because migration 053 uses `ON CONFLICT DO NOTHING`, rerunning it will not update rows that were already inserted. To apply the cleaned `[PROPOSED:]`-free data to the already-applied remote database, run the following in the Supabase SQL Editor before rerunning migration 053:
+
+```sql
+TRUNCATE curriculum_archetypes CASCADE;
+TRUNCATE curriculum_failure_modes CASCADE;
+```
+
+Then rerun migration 053. All other tables (gates, drills, coach_language, competition, fitness, volume) were already clean and do not need truncation.
+
+Alternatively, run targeted UPDATEs for only the affected rows (A4, A5, A7 in archetypes; all 14 FM rows in failure_modes).
 
 ---
 
