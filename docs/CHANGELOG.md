@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-05-03 — Sprint 190: Curriculum Seed QA + Import Validation
+
+**Mode:** QA only. No UI built. No app routes modified. No migrations created. No schema changes. No npm installs.
+
+**Migrations created:** None.
+
+**TypeScript result:** `npx tsc --noEmit` — 0 errors
+
+**QA script:** `scripts/qa-curriculum-seed-migration.mjs` — 38 static checks, 0 failures.
+
+**Live migration apply:** Could not execute — Supabase CLI not installed, no local Supabase instance, migrations 052 and 053 not yet applied to remote. Static QA substituted.
+
+**Product-tool leakage result:** CLEAN in all core data fields. No Swinget, SwingCheck, Swing Check app, or The Angle™ references. `[PROPOSED:]` markers confirmed contained to archetypes and failure_modes sections only.
+
+**Final readiness decision:** PASS WITH LIMITATIONS — static QA passes; live apply pending manual execution.
+
+### Sprint 190 — Curriculum Seed QA V1
+- Created `scripts/qa-curriculum-seed-migration.mjs` — Static QA script for migration 053. Parses SQL file and runs 38 checks: row counts per table, idempotency, HP3 exit gate, stage enum validity, product-tool leakage in core fields, `[PROPOSED:]` marker containment, all 15 display names, deferred table confirmation.
+- Created `docs/curriculum/curriculum-seed-import-qa.md` — Full QA report. Documents static pass, live apply limitation, manual apply commands, row count SQL for post-apply verification, domain distribution audit, leakage analysis, and next sprint recommendation.
+
+**Static row counts verified:**
+- `curriculum_levels` UPDATEs: 15
+- `curriculum_archetypes`: 8
+- `curriculum_failure_modes`: 14
+- `curriculum_gates`: 57
+- `curriculum_coach_language`: 120
+- `curriculum_drills`: 152 (full)
+- `curriculum_drill_tags`: 614
+- `curriculum_competition_track`: 15
+- `curriculum_fitness_guidance`: 15
+- `curriculum_volume_guidance`: 15
+- `drill_gate_mappings`: 0 (intentionally empty)
+
+---
+
 ## 2026-05-02 — Sprint 189: Curriculum Seed Migration
 
 **Mode:** Migration only. No UI built. No app routes modified. No new tables. No schema changes. No npm installs.
