@@ -5,6 +5,8 @@
 **Mode:** Static SQL QA (live migration apply deferred — see Section 4)
 **Final Readiness:** PASS WITH LIMITATIONS
 
+> **Hotfix applied 2026-05-03:** Supabase SQL Editor initially rejected the seed migration with a CHECK constraint violation on `curriculum_drills_duration_minutes_check` (drill `DRILL_YELLOW2_COM_061`, `duration_minutes = 0`). See Section 11 for details. Migration was regenerated; all 38 QA checks still pass.
+
 ---
 
 ## 1. Summary
@@ -267,7 +269,22 @@ npx tsc --noEmit
 
 ## 11. Issues Found
 
-None in static QA.
+**Hotfix — Sprint 190 (found during live apply attempt):**
+
+Supabase SQL Editor rejected the initial seed migration with:
+
+```
+new row for relation "curriculum_drills" violates check constraint
+"curriculum_drills_duration_minutes_check"
+```
+
+Failed row: `DRILL_YELLOW2_COM_061`, `duration_minutes = 0`
+
+Root cause: The generator (`scripts/generate-curriculum-seed-sql.py`, line 410) used:
+```python
+dur_sql = str(int(float(dur_raw))) if dur_raw else "NULL"
+```
+This coerced a source value of `0` to the string `"0"` rather than `"NULL"`. Migration 052 defines a CHECK constraint requiring `duration_minutes > 0` when not null.
 
 **Pre-existing (resolved in Sprint 189 before this sprint):**
 - `RED3__ORANGE1__03` gate notes contained `[PROPOSED:] If Swing Check app is available...` — fixed: notes set to NULL, generator regex updated to `swing\s*check` to prevent recurrence.
@@ -276,7 +293,30 @@ None in static QA.
 
 ## 12. Fixes Made
 
-None in Sprint 190. All static checks passed without modification.
+**Hotfix applied 2026-05-03 — Sprint 190:**
+
+File: `scripts/generate-curriculum-seed-sql.py`
+
+Change:
+```python
+# Before
+dur_raw    = row.get("duration_minutes")
+dur_sql    = str(int(float(dur_raw))) if dur_raw else "NULL"
+
+# After
+dur_raw    = row.get("duration_minutes")
+_dur_val   = int(float(dur_raw)) if dur_raw else 0
+dur_sql    = str(_dur_val) if _dur_val >= 1 else "NULL"
+```
+
+Effect: Any `duration_minutes` source value that is 0, blank, or unparseable now writes `NULL` instead of `0`. Migration 053 was regenerated.
+
+Post-fix drill duration distribution:
+- 145 drills have a numeric `duration_minutes` value
+- 7 drills have `duration_minutes = NULL` (source was 0 or blank)
+- 0 drills have `duration_minutes = 0`
+
+All 38 QA checks still pass on the regenerated migration.
 
 ---
 

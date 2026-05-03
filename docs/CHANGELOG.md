@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-03 — Sprint 190 Hotfix: Fix curriculum seed drill duration handling
+
+**Mode:** Hotfix. No UI. No schema changes. No new tables.
+
+**Migrations regenerated:** `supabase/migrations/053_curriculum_seed.sql`
+
+**Root cause:** `DRILL_YELLOW2_COM_061` had `duration_minutes = 0`, violating migration 052 CHECK constraint `curriculum_drills_duration_minutes_check`. Generator coerced source value `0` to SQL `0` instead of `NULL`.
+
+**Fix:** `scripts/generate-curriculum-seed-sql.py` — duration coercion changed so any value `< 1` (including 0 and blank) produces SQL `NULL`.
+
+**Result:** 7 drills now have `duration_minutes = NULL`; 145 have a valid positive value; 0 have `duration_minutes = 0`. QA script: 38/38 checks pass. TypeScript: 0 errors.
+
+---
+
 ## 2026-05-03 — Sprint 190: Curriculum Seed QA + Import Validation
 
 **Mode:** QA only. No UI built. No app routes modified. No migrations created. No schema changes. No npm installs.

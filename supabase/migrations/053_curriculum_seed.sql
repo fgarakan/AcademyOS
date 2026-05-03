@@ -190,6 +190,7 @@ ON CONFLICT (failure_mode_id) DO NOTHING;
 -- Evaluator normalization: Coach + Director → Director
 -- HP3 exit: to_level_id = NULL (no next stage)
 -- Notes: Swinget [PROPOSED:] reference stripped from RED1__RED2__02
+-- Notes: Swing Check app [PROPOSED:] reference stripped from RED3__ORANGE1__03
 -- ============================================================
 
 INSERT INTO curriculum_gates
@@ -4190,7 +4191,7 @@ VALUES (
   'Coach manages schedule fully; reduce block to 4 weeks.',
   'Player co-builds schedule; introduce scouting layer for harder opponents.',
   'Block ends within 2.5:1 to 3.5:1 W:L window.',
-  0,
+  NULL,
   1,
   'global_default',
   true
@@ -4320,7 +4321,7 @@ VALUES (
   'Reduce to 3-week block; coach manages all phases.',
   'Add scouting phase; introduce 8-week double-tournament prep.',
   'Player completes the block with peak-week match performance at planned level.',
-  0,
+  NULL,
   1,
   'global_default',
   true
@@ -4606,7 +4607,7 @@ VALUES (
   'Reduce to 2 protocol items; coach reminds daily.',
   'Add HRV-based load auto-regulation; introduce nutrition specialist consultation.',
   'Protocol adherence at 80%+ for 28 consecutive days.',
-  0,
+  NULL,
   1,
   'global_default',
   true
@@ -4632,7 +4633,7 @@ VALUES (
   'Coach travels for first trip; reduce to single tournament.',
   'Multi-week swing with no coach contact; introduce trip-debrief presentation.',
   'Player completes a tournament trip with pre-match routine adherence and post-trip insights.',
-  0,
+  NULL,
   1,
   'global_default',
   true
@@ -4684,7 +4685,7 @@ VALUES (
   'Reduce to 3-day block; one demand layer per day.',
   'Add a 6th day with multi-layer demand; introduce media-pressure layer.',
   'Player completes 5-day block with stable performance baseline.',
-  0,
+  NULL,
   1,
   'global_default',
   true
@@ -4736,7 +4737,7 @@ VALUES (
   'Reduce to double-periodization plan as foundation.',
   'Add surface-specific overlay; introduce micro-cycle within each phase.',
   'Player articulates the full year plan with phase-specific fitness emphasis.',
-  0,
+  NULL,
   1,
   'global_default',
   true
@@ -4788,7 +4789,7 @@ VALUES (
   'Reduce to 3-week swing; coach travels.',
   'Extend swing; introduce double-week back-to-back tournament.',
   'Player completes the swing with stable performance and integrates lessons.',
-  0,
+  NULL,
   1,
   'global_default',
   true

@@ -407,7 +407,8 @@ def gen_drills():
         prog_hard  = row.get("progression_harder") or ""
         success_c  = row.get("success_criteria") or ""
         dur_raw    = row.get("duration_minutes")
-        dur_sql    = str(int(float(dur_raw))) if dur_raw else "NULL"
+        _dur_val   = int(float(dur_raw)) if dur_raw else 0
+        dur_sql    = str(_dur_val) if _dur_val >= 1 else "NULL"
         players_raw = row.get("players_needed")
         players_sql = str(int(float(players_raw))) if players_raw else "NULL"
 
