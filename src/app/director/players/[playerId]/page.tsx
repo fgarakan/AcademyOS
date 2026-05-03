@@ -707,7 +707,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   )
 
   return (
-    <div className="animate-fade-in p-6">
+    <div className="animate-fade-in p-4 sm:p-6 max-w-5xl">
       <PlayerProfileHeader player={player} curriculumSummary={curriculumSummary} />
       <PlayerProfileTabs
         overview={overviewSlot}

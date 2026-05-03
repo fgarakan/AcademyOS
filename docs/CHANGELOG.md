@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-03 — Sprint 203: Player Profile Responsive Layout
+
+**Mode:** UI-only. No data changes.
+
+**What was improved:**
+- Player profile outer container: `p-6` → `p-4 sm:p-6` for smaller mobile padding.
+- Added `max-w-5xl` cap to prevent runaway width on large monitors.
+- Back link to `/director/players` already present in `PlayerProfileHeader`.
+- Responsive `grid-cols-1 xl:grid-cols-[1fr_240px]` already in place for overview tab.
+
+**TypeScript:** 0 errors.
+
+### Files changed
+- `src/app/director/players/[playerId]/page.tsx` — Responsive padding and max-width.
+
+---
+
 ## 2026-05-03 — Sprint 202: Players List Curriculum Enrichment
 
 **Mode:** UI + server data. No schema changes. No migrations.
