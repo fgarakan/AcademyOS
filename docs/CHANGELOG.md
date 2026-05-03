@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-03 — Recovery Sprint 207: Session Template Curriculum Level Picker V1
+
+**Mode:** UI wiring. No schema changes. No migrations. No auto-changes to existing templates.
+
+**What was built:**
+- Template detail page (`fitness/templates/[templateId]/page.tsx`) now fetches all 15 `curriculum_levels` and renders `CurriculumLevelSelector` for every template (fitness and class). Directors can assign a level, which saves to `templates.curriculum_level_id` via the existing `setCurriculumLevelAction`.
+- Helper copy: "Assign a level to power session curriculum context and coach cues." / "Sessions generated from this template will show curriculum context for [level]."
+- Empty state shown when no curriculum levels are seeded.
+- Class templates list (`class-templates/page.tsx`) now shows a lime curriculum level badge when a template has a level assigned.
+- `rawDb` cast hoisted to function scope in template detail page (was scoped inside an `if` block).
+
+**Why this matters:** Director session pages already read `template.curriculum_level_id` and pass it to `SessionCurriculumContextPanel`. This sprint closes the gap — directors can now set the level without touching the DB directly.
+
+**Safety:** Director-explicit action only. No auto-changes. No auto-population of drills. The column exists in DB (migration 045); generated types do not reflect it — rawDb used throughout.
+
+**TypeScript:** 0 errors. QA: 38/38. Product-language: PASS.
+
+### Files modified
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Added curriculum level fetch, rendered CurriculumLevelSelector, hoisted rawDb.
+- `src/app/director/class-templates/page.tsx` — Added rawDb fetch with curriculum_level_id; shows level badge in template list rows.
+
+---
+
 ## 2026-05-03 — Sprint 211: Curriculum Gate Evidence Tracking V1
 
 **Mode:** New components + server action. No schema changes. No migrations. No auto-advancement.

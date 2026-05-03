@@ -2,8 +2,9 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Clock, Activity } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { Card, CardContent } from '@/components/ui'
+import { Card, CardContent, CardHeader } from '@/components/ui'
 import { FitnessTemplateBuilderClient } from './FitnessTemplateBuilderClient'
+import { CurriculumLevelSelector, type CurriculumLevelOption } from './CurriculumLevelSelector'
 import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 import type { FitnessBlock, FitnessExercise, ExerciseLibraryItem } from './fitnessBuilderTypes'
 import type { Tables } from '@/lib/supabase/database.types'
@@ -98,9 +99,10 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
     } | null
   }
 
+  const rawDb = supabase as any
+
   let rawExercises: RawTBE[] = []
   if (blockIds.length > 0) {
-    const rawDb = supabase as any
     const { data: exData } = await rawDb
       .from('template_block_exercises')
       .select('id, block_id, order_index, duration_min, notes, exercises(id, name, category, subcategory, duration_min)')
@@ -157,6 +159,26 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
   const typeLabel = getTemplateTypeLabel(tags)
   const totalExercises = rawExercises.length
 
+  // Curriculum level for this template — curriculum_level_id not in generated types, use rawDb
+  const curriculumLevelId: string | null = (template as any).curriculum_level_id ?? null
+
+  const { data: curriculumLevelsData } = await rawDb
+    .from('curriculum_levels')
+    .select('id, display_name, stage, sort_order')
+    .order('sort_order', { ascending: true })
+
+  const curriculumLevels: CurriculumLevelOption[] = (curriculumLevelsData ?? []).map(
+    (l: { id: string; display_name: string; stage: string }) => ({
+      id: l.id,
+      display_name: l.display_name,
+      stage: l.stage,
+    })
+  )
+
+  const currentLevelName = curriculumLevelId
+    ? (curriculumLevels.find(l => l.id === curriculumLevelId)?.display_name ?? null)
+    : null
+
   return (
     <div className="p-6 animate-fade-in space-y-6">
       <PageHeader template={template} typeLabel={typeLabel} isFitnessTemplate={isFitnessTemplate} />
@@ -169,6 +191,39 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
         exerciseCount={totalExercises}
         isFitnessTemplate={isFitnessTemplate}
       />
+
+      {/* Curriculum Level — available for all templates */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Curriculum Context</p>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-2">
+          {curriculumLevels.length > 0 ? (
+            <>
+              <CurriculumLevelSelector
+                templateId={params.templateId}
+                currentLevelId={curriculumLevelId}
+                levels={curriculumLevels}
+              />
+              {currentLevelName && (
+                <p className="text-[10px] text-text-muted">
+                  Sessions generated from this template will show curriculum context for{' '}
+                  <span className="text-lime">{currentLevelName}</span>.
+                </p>
+              )}
+              {!currentLevelName && (
+                <p className="text-[10px] text-text-muted">
+                  Assign a level to power session curriculum context and coach cues.
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-[11px] text-text-muted">
+              No curriculum levels available. Seed the curriculum to enable this feature.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Non-fitness template warning */}
       {!isFitnessTemplate && (

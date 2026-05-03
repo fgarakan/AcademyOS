@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import { BookOpen, Clock } from 'lucide-react'
+import { BookOpen, Clock, GraduationCap } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
+type TemplateWithLevel = Template & { curriculum_level_id: string | null }
 
 export default async function ClassTemplatesPage() {
   const supabase = await getSupabaseServer()
@@ -29,17 +30,33 @@ export default async function ClassTemplatesPage() {
     )
   }
 
-  const { data: templates, error } = await supabase
+  const rawDb = supabase as any
+  const { data: templatesRaw, error } = await rawDb
     .from('templates')
-    .select('*')
+    .select('*, curriculum_level_id')
     .eq('academy_id', academyId)
     .order('name')
 
+  const templates = (templatesRaw ?? []) as TemplateWithLevel[]
+
   // Class templates: all templates that do NOT have the fitness_template:true tag
-  const classTemplates = (templates ?? []).filter(t => {
+  const classTemplates = templates.filter(t => {
     const tags = t.tags ?? []
     return !tags.includes('fitness_template:true')
   })
+
+  // Build curriculum level name map for templates that have one assigned
+  const curriculumLevelNameMap: Record<string, string> = {}
+  const levelIds = Array.from(new Set(classTemplates.map(t => t.curriculum_level_id).filter(Boolean) as string[]))
+  if (levelIds.length > 0) {
+    const { data: levelRows } = await rawDb
+      .from('curriculum_levels')
+      .select('id, display_name')
+      .in('id', levelIds)
+    for (const l of (levelRows ?? [])) {
+      curriculumLevelNameMap[l.id] = l.display_name
+    }
+  }
 
   const blockCountByTemplate = new Map<string, number>()
   const exerciseCountByTemplate = new Map<string, number>()
@@ -100,6 +117,7 @@ export default async function ClassTemplatesPage() {
               template={template}
               blockCount={blockCountByTemplate.get(template.id) ?? 0}
               exerciseCount={exerciseCountByTemplate.get(template.id) ?? 0}
+              curriculumLevelName={template.curriculum_level_id ? (curriculumLevelNameMap[template.curriculum_level_id] ?? null) : null}
             />
           ))}
         </div>
@@ -124,10 +142,12 @@ function TemplateRow({
   template,
   blockCount,
   exerciseCount,
+  curriculumLevelName,
 }: {
-  template: Template
+  template: TemplateWithLevel
   blockCount: number
   exerciseCount: number
+  curriculumLevelName: string | null
 }) {
   const importBatchTag = template.tags?.find(t => t.startsWith('import_batch:'))
   const airtableIdTag = template.tags?.find(t => t.startsWith('airtable_id:'))
@@ -138,7 +158,15 @@ function TemplateRow({
         <CardContent className="py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-text-primary text-sm">{template.name}</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-semibold text-text-primary text-sm">{template.name}</p>
+                {curriculumLevelName && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-lime/20 bg-lime/5 text-lime">
+                    <GraduationCap className="w-2.5 h-2.5" />
+                    {curriculumLevelName}
+                  </span>
+                )}
+              </div>
               <div className="flex flex-wrap gap-3 mt-1">
                 {template.track && (
                   <span className="text-[10px] uppercase tracking-widest text-text-muted">{template.track}</span>
