@@ -4,6 +4,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
 import { CurriculumExplorer } from '@/components/curriculum/CurriculumExplorer'
+import { CurriculumDemoFlowPanel } from '@/components/curriculum/CurriculumDemoFlowPanel'
 import { AcademyCurriculumVersionCard } from './AcademyCurriculumVersionCard'
 import { VoiceOverrideInputPanel } from './VoiceOverrideInputPanel'
 
@@ -103,6 +104,9 @@ export default async function DirectorCurriculumPage() {
         <AcademyCurriculumVersionCard version={versionData} />
         <VoiceOverrideInputPanel hasActiveVersion={!!activeVersion} />
       </section>
+
+      {/* Demo flow — collapsible how-to guide for directors */}
+      <CurriculumDemoFlowPanel />
 
       {/* How it works */}
       <div className="px-5 py-4 rounded-2xl border border-border bg-surface-raised">

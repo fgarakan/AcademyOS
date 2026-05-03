@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-03 — Sprint 200: Director Curriculum Demo Flow V1
+
+**Mode:** UI-only. No schema changes. No new migrations. No fake data inserted.
+
+**What was built:**
+- `CurriculumDemoFlowPanel` — new collapsible component on `/director/curriculum` with a 7-step demo walk-through: choose a level → read gates → browse drills → read coach language → open a player → see level requirements → open a session with curriculum context. Each step links to the relevant page. Collapsed by default.
+- No fake data inserted — all CTAs link to real pages; explorer uses live seed data.
+- Product-language audit: CLEAN.
+
+**TypeScript result:** 0 errors.
+
+### Files changed
+- `src/components/curriculum/CurriculumDemoFlowPanel.tsx` — New. Collapsible 7-step demo flow panel.
+- `src/app/director/curriculum/page.tsx` — Added `CurriculumDemoFlowPanel` above the "How it works" section.
+
+---
+
 ## 2026-05-03 — Sprint 199: AI Suggestions From Curriculum Gaps V1
 
 **Mode:** Logic + UI. No schema changes. No new migrations. No AI API calls. No npm installs.
