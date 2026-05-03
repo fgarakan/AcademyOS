@@ -12,6 +12,7 @@ import { SearchFilterBar } from '@/components/ui/SearchFilterBar'
 import { FilterChip } from '@/components/ui/SearchFilterBar'
 import { formatRelativeDate, formatDate } from '@/lib/utils'
 import type { VPlayerSummary } from '@/lib/backend/players'
+import type { PlayerCurriculumEntry } from '../page'
 
 type StatusBadgeStatus = 'action_needed' | 'needs_attention' | 'check_in' | 'on_track' | 'complete' | 'building' | 'warning' | 'info'
 type StatusFilter = 'all' | 'active' | 'reassessment_due' | 'on_hold' | 'pending'
@@ -38,8 +39,25 @@ function isOverdue(dateStr: string | null): boolean {
   return new Date(dateStr) < new Date()
 }
 
+const STAGE_LABEL: Record<string, string> = {
+  red_foundation:    'Red',
+  orange_development:'Orange',
+  green_performance: 'Green',
+  yellow_competitive:'Yellow',
+  high_performance:  'HP',
+}
+
+const STAGE_COLOR: Record<string, string> = {
+  red_foundation:    'text-red-400 border-red-400/30 bg-red-400/5',
+  orange_development:'text-amber-400 border-amber-400/30 bg-amber-400/5',
+  green_performance: 'text-green-400 border-green-400/30 bg-green-400/5',
+  yellow_competitive:'text-yellow-300 border-yellow-300/30 bg-yellow-300/5',
+  high_performance:  'text-violet-400 border-violet-400/30 bg-violet-400/5',
+}
+
 interface Props {
   players: VPlayerSummary[]
+  curriculumMap?: Record<string, PlayerCurriculumEntry>
 }
 
 const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
@@ -50,7 +68,7 @@ const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'pending',           label: 'Pending' },
 ]
 
-export function PlayersDirectoryClient({ players }: Props) {
+export function PlayersDirectoryClient({ players, curriculumMap = {} }: Props) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
@@ -114,6 +132,8 @@ export function PlayersDirectoryClient({ players }: Props) {
               const isFirst = idx === 0
               const isLast = idx === filtered.length - 1
 
+              const curricEntry = player.player_id ? curriculumMap[player.player_id] : undefined
+
               return (
                 <li key={player.player_id} style={!isFirst ? { borderTop: '1px solid var(--border-subtle)' } : {}}>
                   <Link
@@ -136,7 +156,7 @@ export function PlayersDirectoryClient({ players }: Props) {
                           {player.full_name ?? '—'}
                         </span>
                         <StatusBadge status={badge.status} label={badge.label} size="sm" />
-                        {player.promotion_ready && (
+                        {(curricEntry?.advancementEligible || player.promotion_ready) && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-lime/10 border border-lime/30 text-lime">
                             <Zap className="w-3 h-3" />
                             Ready to advance
@@ -150,9 +170,18 @@ export function PlayersDirectoryClient({ players }: Props) {
                       </p>
                     </div>
 
-                    {/* Level badge — hidden on small screens */}
-                    <div className="hidden sm:flex flex-col items-end gap-1 shrink-0 w-36">
-                      {player.current_track ? (
+                    {/* Curriculum level badge — prefers new system, falls back to old */}
+                    <div className="hidden sm:flex flex-col items-end gap-1 shrink-0 w-40">
+                      {curricEntry ? (
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${STAGE_COLOR[curricEntry.stage] ?? 'text-text-muted border-border bg-surface-raised'}`}>
+                            {STAGE_LABEL[curricEntry.stage] ?? curricEntry.stage}
+                          </span>
+                          <span className="text-[10px] text-text-secondary text-right leading-snug">
+                            {curricEntry.levelName}
+                          </span>
+                        </div>
+                      ) : player.current_track ? (
                         <LevelBadge
                           stage={player.current_track}
                           levelName={player.level_label ?? undefined}

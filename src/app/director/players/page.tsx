@@ -4,6 +4,12 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { PlayersDirectoryClient } from './_components/PlayersDirectoryClient'
 
+export interface PlayerCurriculumEntry {
+  levelName: string
+  stage: string
+  advancementEligible: boolean
+}
+
 export default async function PlayersPage() {
   const supabase = await getSupabaseServer()
 
@@ -29,6 +35,52 @@ export default async function PlayersPage() {
 
   const players = await getPlayerSummaries(supabase, academyId)
 
+  // Enrich with new curriculum system data from player_curriculum_states + curriculum_levels.
+  // rawDb avoids TS2589 on multi-join; RLS enforces academy scoping.
+  const rawDb = supabase as any
+  const curriculumMap: Record<string, PlayerCurriculumEntry> = {}
+
+  const playerIds = players.map(p => p.player_id).filter(Boolean) as string[]
+  if (playerIds.length > 0) {
+    const { data: stateRows } = await rawDb
+      .from('player_curriculum_states')
+      .select('player_id, current_level_id, advancement_eligible')
+      .eq('academy_id', academyId)
+      .in('player_id', playerIds)
+
+    if (stateRows && stateRows.length > 0) {
+      const levelIds = stateRows
+        .map((r: { current_level_id: string | null }) => r.current_level_id)
+        .filter(Boolean) as string[]
+
+      const { data: levelRows } = levelIds.length > 0
+        ? await rawDb
+            .from('curriculum_levels')
+            .select('id, display_name, stage')
+            .in('id', levelIds)
+        : { data: [] }
+
+      const levelMap = new Map<string, { display_name: string; stage: string }>(
+        (levelRows ?? []).map((l: { id: string; display_name: string; stage: string }) => [l.id, l])
+      )
+
+      for (const row of stateRows as Array<{ player_id: string; current_level_id: string | null; advancement_eligible: boolean }>) {
+        if (!row.player_id || !row.current_level_id) continue
+        const level = levelMap.get(row.current_level_id)
+        if (!level) continue
+        curriculumMap[row.player_id] = {
+          levelName: level.display_name,
+          stage: level.stage,
+          advancementEligible: row.advancement_eligible ?? false,
+        }
+      }
+    }
+  }
+
+  const missingCurriculumCount = playerIds.filter(
+    id => !curriculumMap[id]
+  ).length
+
   return (
     <div className="p-6 animate-fade-in space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -42,6 +94,11 @@ export default async function PlayersPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {missingCurriculumCount > 0 && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-status-orange/30 bg-status-orange/5 text-[11px] text-status-orange">
+              {missingCurriculumCount} without curriculum level
+            </span>
+          )}
           <Link
             href="/director/players/import"
             className="btn-ghost flex items-center gap-2 text-sm"
@@ -52,7 +109,7 @@ export default async function PlayersPage() {
         </div>
       </div>
 
-      <PlayersDirectoryClient players={players} />
+      <PlayersDirectoryClient players={players} curriculumMap={curriculumMap} />
     </div>
   )
 }

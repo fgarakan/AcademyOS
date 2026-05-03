@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-03 — Sprint 202: Players List Curriculum Enrichment
+
+**Mode:** UI + server data. No schema changes. No migrations.
+
+**What was built:**
+- `PlayersPage`: fetches `player_curriculum_states` + `curriculum_levels` for all active players; builds `curriculumMap` record; shows "N without curriculum level" badge in header when any players are missing.
+- `PlayersDirectoryClient`: accepts `curriculumMap` prop; shows new-curriculum stage badge + level name (from migration 052 tables) when available; falls back to old `LevelBadge` from `v_player_summary`; shows "Ready to advance" badge from new `advancement_eligible` field.
+
+**TypeScript:** 0 errors. QA: 38/38. Product-language: PASS.
+
+### Files changed
+- `src/app/director/players/page.tsx` — Added curriculum state fetch and `curriculumMap` prop.
+- `src/app/director/players/_components/PlayersDirectoryClient.tsx` — New curriculum badge + `curriculumMap` prop.
+
+---
+
 ## 2026-05-03 — Sprint 201: Curriculum Integration QA + Polish
 
 **Mode:** Polish + docs. No schema changes. No new migrations.
