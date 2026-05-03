@@ -44,6 +44,7 @@ import { LevelProgressCard } from '@/components/player/LevelProgressCard'
 import { CoachPlayerSnapshot } from '@/components/player/CoachPlayerSnapshot'
 import { ProgressEvidenceTimeline } from '@/components/player/ProgressEvidenceTimeline'
 import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
+import { ParentGuidancePreviewPanel } from './ParentGuidancePreviewPanel'
 import type { QaDrillRow, QaCoachLanguageRow } from '@/lib/player/playerProgressQa'
 
 interface PageProps {
@@ -782,6 +783,15 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Voice Note form */}
       <AddVoiceNoteForm onSubmit={addVoiceNoteServerAction} />
+
+      {/* Parent Guidance Preview — director-only, read-only, not sent */}
+      <ParentGuidancePreviewPanel
+        playerFirstName={player.first_name ?? null}
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        nextLevelName={nextCurriculumLevel?.display_name ?? null}
+        currentFocus={qaCoachLanguage[0]?.current_focus ?? null}
+        parentSupportTip={null}
+      />
 
     </div>
   )

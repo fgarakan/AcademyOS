@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-03 — Sprint 223: Parent Guidance Preview V1
+
+**Mode:** Director-only preview. No emails. No parent portal. No writes. No AI.
+
+**What was built:**
+- `ParentGuidancePreviewPanel.tsx` — director-side client component on Notes tab of player profile:
+  - "What your child is working on" — from curriculum level + coach language current_focus (sanitized)
+  - "Next target" — shown if nextLevelName exists
+  - "How to support this week" — from parent_support_tip or safe fallback
+  - "What to say after practice" — 3 fixed suggestions
+  - "What not to over-focus on" — 3 pressure-reducing reminders
+  - "Pressure-reducing note" — personalized with first name
+  - Badge: "Director preview — not sent"
+  - Guardrail note: "No parent communication is sent from this preview."
+- All text runs through `sanitizeParentFacingText()` from `parentSafeResponseRules.ts`.
+- Uses `player.first_name`, `curriculum_level`, `curriculum_coach_language.current_focus` only — no raw coach notes.
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/app/director/players/[playerId]/ParentGuidancePreviewPanel.tsx` — parent guidance preview client component.
+
+### Files modified
+- `src/app/director/players/[playerId]/page.tsx` — import + panel added to Notes tab.
+
+---
+
 ## 2026-05-03 — Sprint 222: Director Command Center Guardrail Integration V1
 
 **Mode:** Additive UI + server-side guard. No new tables. No migrations.
