@@ -21,6 +21,7 @@ import type { PlayerIntelligenceItem } from './ClassRosterIntelligencePanel'
 import { SessionAdjustmentSuggestionsPanel } from './SessionAdjustmentSuggestionsPanel'
 import type { SuggestionRow } from './SessionAdjustmentSuggestionsPanel'
 import { VoiceCoachRecapInput } from './VoiceCoachRecapInput'
+import { SessionCurriculumContextPanel, SessionNoCurriculumContextPanel } from '@/components/curriculum/SessionCurriculumContextPanel'
 
 interface PageProps {
   params: { sessionId: string }
@@ -127,6 +128,64 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           academyVersionName,
           overrideSummaryLines,
         }
+      }
+    }
+  }
+
+  // 3b. Extended curriculum data for session context panel (Sprint 198).
+  // Fetches top gates, top drills, top coach language for the session's curriculum level.
+  interface SessionCurriculumExtra {
+    levelId: string
+    topGates: { id: string; domain: string; criterion: string; threshold: string }[]
+    topDomains: string[]
+    topDrills: { id: string; name: string; domain: string; session_block: string; objective: string; duration_minutes: number | null }[]
+    topLanguage: { id: string; domain: string; current_focus: string }[]
+  }
+  let sessionCurriculumExtra: SessionCurriculumExtra | null = null
+
+  if (curriculumContext && session.template_id) {
+    const rawDbEx = supabase as any
+    // Get template.curriculum_level_id again (already known from the curriculumContext block)
+    const { data: tpl } = await rawDbEx
+      .from('templates')
+      .select('curriculum_level_id')
+      .eq('id', session.template_id)
+      .single()
+
+    const lvlId: string | null = tpl?.curriculum_level_id ?? null
+
+    if (lvlId) {
+      const { data: gatesData } = await rawDbEx
+        .from('curriculum_gates')
+        .select('id, domain, criterion, threshold')
+        .eq('from_level_id', lvlId)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .limit(4)
+
+      const { data: drillsData } = await rawDbEx
+        .from('curriculum_drills')
+        .select('id, name, domain, session_block, objective, duration_minutes')
+        .eq('level_min_id', lvlId)
+        .eq('is_active', true)
+        .is('academy_id', null)
+        .limit(3)
+
+      const { data: languageData } = await rawDbEx
+        .from('curriculum_coach_language')
+        .select('id, domain, current_focus')
+        .eq('level_id', lvlId)
+        .limit(3)
+
+      const gates = gatesData ?? []
+      const topDomains: string[] = Array.from(new Set(gates.map((g: { domain: string }) => g.domain)))
+
+      sessionCurriculumExtra = {
+        levelId: lvlId,
+        topGates: gates,
+        topDomains,
+        topDrills: drillsData ?? [],
+        topLanguage: languageData ?? [],
       }
     }
   }
@@ -534,6 +593,27 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
               </p>
             </CardContent>
           </Card>
+
+          {/* Extended curriculum context — gates, drills, coach language (Sprint 198) */}
+          {sessionCurriculumExtra && (
+            <SessionCurriculumContextPanel
+              levelId={sessionCurriculumExtra.levelId}
+              levelName={curriculumContext.levelName}
+              levelStage={curriculumContext.levelStage}
+              topGates={sessionCurriculumExtra.topGates}
+              topDomains={sessionCurriculumExtra.topDomains}
+              topDrills={sessionCurriculumExtra.topDrills}
+              topLanguage={sessionCurriculumExtra.topLanguage}
+            />
+          )}
+        </div>
+      )}
+
+      {/* No curriculum context — graceful empty state (Sprint 198) */}
+      {!curriculumContext && (
+        <div>
+          <p className="label-xs mb-3">Curriculum Context</p>
+          <SessionNoCurriculumContextPanel />
         </div>
       )}
 

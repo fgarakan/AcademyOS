@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-03 — Sprint 198: Session Planning Curriculum Context V1
+
+**Mode:** UI-only. No schema changes. No new migrations. No npm installs.
+
+**Audit:** Session page at `/director/sessions/[sessionId]` already had a "Curriculum Focus" card showing level name + stage + academy overrides. It already fetches `template.curriculum_level_id`.
+
+**What was added:**
+- `SessionCurriculumContextPanel` — new component showing top domains, active gates (up to 4), recommended drills (up to 3), coach language cues (up to 3 domains). "Full explorer" link to /director/curriculum. Read-only. Internal coach context only.
+- `SessionNoCurriculumContextPanel` — graceful empty state when session has no curriculum level assigned.
+- Session page: queries added for gates/drills/coach language for the session's curriculum level (using rawDb pattern). Both panels rendered in the session view — context panel below existing curriculum focus card; no-context panel when template has no level.
+
+**Safety:** Read-only. No mutations. No template changes. No auto-generation.
+
+**TypeScript result:** 0 errors.
+
+### Files changed
+- `src/components/curriculum/SessionCurriculumContextPanel.tsx` — New. Session-scoped curriculum context panel.
+- `src/app/director/sessions/[sessionId]/page.tsx` — Added extended curriculum data queries and panel renders.
+
+---
+
 ## 2026-05-03 — Sprint 197: Player Level Requirements Read-Only View V1
 
 **Mode:** UI-only. No schema changes. No new migrations. No npm installs.
