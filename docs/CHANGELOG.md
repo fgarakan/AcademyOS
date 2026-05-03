@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-03 — Sprint 195: Coach Language Layer UX V1
+
+**Mode:** UI-only. No schema changes. No new migrations. No AI calls.
+
+**Changes to `CurriculumLevelDetailPanel.tsx`:**
+- CoachLanguageTab: added three-view toggle — Coach View / Parent-Safe Draft / Player-Friendly Draft.
+- Coach View: unchanged full language (doing_well / working_on / current_focus / next_step).
+- Parent-Safe Draft: deterministic subset — "What's going well" (doing_well) + "What we're working toward" (next_step). Orange draft banner. Not published.
+- Player-Friendly Draft: deterministic subset — "Your mission this level" (current_focus). Blue draft banner. Not published.
+- All views read-only, clearly marked as draft/preview. Zero AI involvement.
+
+**Product-language audit:** CLEAN.
+**TypeScript result:** 0 errors.
+
+### Files changed
+- `src/components/curriculum/CurriculumLevelDetailPanel.tsx` — CoachLanguageTab upgraded with three-view toggle and draft preview banners.
+
+---
+
 ## 2026-05-03 — Sprint 194: Curriculum Drill/Game Library UX V1
 
 **Mode:** UI-only. No schema changes. No new migrations. No npm installs.

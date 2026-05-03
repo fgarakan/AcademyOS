@@ -496,7 +496,11 @@ function DrillsTab({ drills }: { drills: CurriculumDrill[] }) {
 
 // ─── Coach language tab ───────────────────────────────────────────────────────
 
+type LanguageView = 'coach' | 'parent' | 'player'
+
 function CoachLanguageTab({ coachLanguage }: { coachLanguage: CurriculumCoachLanguage[] }) {
+  const [view, setView] = useState<LanguageView>('coach')
+
   if (coachLanguage.length === 0) {
     return (
       <div className="py-10 text-center">
@@ -505,31 +509,110 @@ function CoachLanguageTab({ coachLanguage }: { coachLanguage: CurriculumCoachLan
     )
   }
 
+  const views: { key: LanguageView; label: string }[] = [
+    { key: 'coach',  label: 'Coach View' },
+    { key: 'parent', label: 'Parent-Safe Draft' },
+    { key: 'player', label: 'Player-Friendly Draft' },
+  ]
+
   return (
     <div className="space-y-3">
-      {coachLanguage.map(cl => (
-        <div
-          key={cl.id}
-          className="rounded-lg border border-border bg-surface-raised px-4 py-3"
-        >
-          <p className={`text-[10px] font-semibold uppercase tracking-wide mb-2.5 ${DOMAIN_COLOR[cl.domain] ?? 'text-text-muted'}`}>
-            {cl.domain}
+
+      {/* View switcher */}
+      <div className="flex gap-1.5 flex-wrap">
+        {views.map(v => (
+          <button
+            key={v.key}
+            onClick={() => setView(v.key)}
+            className={`px-2.5 py-1 rounded border text-[10px] font-medium transition-all ${
+              view === v.key
+                ? 'border-lime/40 bg-lime/10 text-lime'
+                : 'border-border text-text-muted hover:text-text-secondary'
+            }`}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Draft preview banners */}
+      {view === 'parent' && (
+        <div className="px-3 py-2 rounded-lg border border-status-orange/30 bg-status-orange/5">
+          <p className="text-[10px] text-status-orange font-medium">Draft preview — not published to parents</p>
+          <p className="text-[10px] text-text-muted mt-0.5">
+            Shows coach language reframed as parent context. Review before sharing. No automatic delivery.
           </p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-            {[
-              { label: 'Doing well',    value: cl.doing_well },
-              { label: 'Working on',    value: cl.working_on },
-              { label: 'Current focus', value: cl.current_focus },
-              { label: 'Next step',     value: cl.next_step },
-            ].map(({ label, value }) => (
-              <div key={label}>
-                <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">{label}</p>
-                <p className="text-[10px] text-text-secondary leading-relaxed italic">&ldquo;{value}&rdquo;</p>
-              </div>
-            ))}
-          </div>
         </div>
-      ))}
+      )}
+      {view === 'player' && (
+        <div className="px-3 py-2 rounded-lg border border-status-blue/30 bg-status-blue/5">
+          <p className="text-[10px] text-status-blue font-medium">Draft preview — not published to players</p>
+          <p className="text-[10px] text-text-muted mt-0.5">
+            Shows the coaching focus as a player-facing mission. Review before sharing. No automatic delivery.
+          </p>
+        </div>
+      )}
+
+      {/* Language cards */}
+      {coachLanguage.map(cl => {
+        const domainColor = DOMAIN_COLOR[cl.domain] ?? 'text-text-muted'
+
+        if (view === 'coach') {
+          return (
+            <div key={cl.id} className="rounded-lg border border-border bg-surface-raised px-4 py-3">
+              <p className={`text-[10px] font-semibold uppercase tracking-wide mb-2.5 ${domainColor}`}>
+                {cl.domain}
+              </p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+                {[
+                  { label: 'Doing well',    value: cl.doing_well },
+                  { label: 'Working on',    value: cl.working_on },
+                  { label: 'Current focus', value: cl.current_focus },
+                  { label: 'Next step',     value: cl.next_step },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">{label}</p>
+                    <p className="text-[10px] text-text-secondary leading-relaxed italic">&ldquo;{value}&rdquo;</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
+
+        if (view === 'parent') {
+          return (
+            <div key={cl.id} className="rounded-lg border border-status-orange/20 bg-surface-raised px-4 py-3">
+              <p className={`text-[10px] font-semibold uppercase tracking-wide mb-2.5 ${domainColor}`}>
+                {cl.domain}
+              </p>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">What&apos;s going well</p>
+                  <p className="text-[10px] text-text-secondary leading-relaxed italic">&ldquo;{cl.doing_well}&rdquo;</p>
+                </div>
+                <div>
+                  <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">What we&apos;re working toward</p>
+                  <p className="text-[10px] text-text-secondary leading-relaxed italic">&ldquo;{cl.next_step}&rdquo;</p>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        // Player view
+        return (
+          <div key={cl.id} className="rounded-lg border border-status-blue/20 bg-surface-raised px-4 py-3">
+            <p className={`text-[10px] font-semibold uppercase tracking-wide mb-2.5 ${domainColor}`}>
+              {cl.domain}
+            </p>
+            <div>
+              <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">Your mission this level</p>
+              <p className="text-[10px] text-text-secondary leading-relaxed italic">&ldquo;{cl.current_focus}&rdquo;</p>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
