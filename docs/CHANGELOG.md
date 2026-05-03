@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-03 — Sprint 229: Player Individual Development Plan Model V1
+
+**Mode:** New pure helper + doc. No DB calls. No AI. No migration. No routes changed.
+
+### Files created
+- `docs/player-development/individual-development-plan-model.md` — full spec for the IDP object, role views, safety rules, and computation sources
+- `src/lib/player/individualDevelopmentPlan.ts` — pure helper exporting `IndividualDevelopmentPlan`, `IdpRoleView`, `IdpTrainingGap`, `IdpKnowledgeGap`, `buildIndividualDevelopmentPlan()`, `buildRoleSpecificIdpView()`, `getIdpSafetyNote()`
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS, zero forbidden references
+- `qa-command-parser.mjs` — 24/24 passed
+
+**TypeScript:** 0 errors.
+
+---
+
 ## 2026-05-03 — Sprint 228: Conversational OS QA + Polish V1
 
 **Mode:** Polish and safety pass only. No schema changes. No migrations. No writes. No AI. No new routes.
