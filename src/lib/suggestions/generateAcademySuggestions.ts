@@ -267,6 +267,102 @@ export function buildReassessmentFollowupSuggestions(
     })
 }
 
+// ── Curriculum gap generators (Sprint 199) ────────────────────────────────────
+
+export interface PlayerCurriculumStateInput {
+  player_id: string
+  player_name: string | null
+  current_level_id: string | null
+  current_level_name: string | null
+  days_since_update: number | null
+}
+
+export function buildNoCurriculumAssignmentSuggestions(
+  states: PlayerCurriculumStateInput[]
+): AcademySuggestionDraft[] {
+  return states
+    .filter(s => !s.current_level_id)
+    .map(s => {
+      const name = s.player_name ?? 'This player'
+      return {
+        suggestion_type: 'curriculum_gap' as const,
+        title: `Assign curriculum level for ${name}`,
+        summary: `${name} is an active player with no curriculum level assigned. Assigning a level enables gate tracking, coach language, and session planning context.`,
+        priority: 'medium' as AcademySuggestionPriority,
+        confidence: 'high' as const,
+        entity_type: 'player',
+        entity_id: s.player_id,
+        evidence: [
+          {
+            type: 'curriculum_state',
+            description: `${name} has no curriculum level in player_curriculum_states.`,
+          },
+        ],
+        impact_preview: {
+          if_accepted: [
+            'Director is routed to the Skill Path tab to assign a curriculum level',
+            'Gate requirements become visible on the player profile',
+            'Session curriculum context activates for sessions this player attends',
+          ],
+          next_step: `Open the player profile for ${name} and assign a curriculum level in the Skill Path tab.`,
+        },
+        proposed_changes: {
+          player_id: s.player_id,
+          action: 'assign_curriculum_level',
+        },
+        will_not_change: [
+          'Player level is not changed automatically',
+          'No parent or player notification is sent',
+        ],
+      }
+    })
+}
+
+export function buildCurriculumProgressStaleSuggestions(
+  states: PlayerCurriculumStateInput[],
+  staleThresholdDays = 60
+): AcademySuggestionDraft[] {
+  return states
+    .filter(s => s.current_level_id && s.days_since_update !== null && s.days_since_update >= staleThresholdDays)
+    .map(s => {
+      const name = s.player_name ?? 'This player'
+      const days = s.days_since_update ?? 0
+      const level = s.current_level_name ?? 'current level'
+      return {
+        suggestion_type: 'curriculum_gap' as const,
+        title: `Review curriculum progress for ${name}`,
+        summary: `${name} has been at ${level} for ${days} days without a curriculum review. Consider evaluating gate progress or scheduling a reassessment.`,
+        priority: days >= 90 ? 'high' as AcademySuggestionPriority : 'medium' as AcademySuggestionPriority,
+        confidence: 'medium' as const,
+        entity_type: 'player',
+        entity_id: s.player_id,
+        evidence: [
+          {
+            type: 'curriculum_state',
+            description: `Last curriculum state update was ${days} days ago at ${level}.`,
+          },
+        ],
+        impact_preview: {
+          if_accepted: [
+            'Director is routed to the player profile Skill Path tab',
+            'Gate requirements are visible for director review',
+            'Advancement eligibility can be re-evaluated',
+          ],
+          next_step: `Open the player profile for ${name} and review gate progress in the Skill Path tab.`,
+        },
+        proposed_changes: {
+          player_id: s.player_id,
+          action: 'review_curriculum_progress',
+        },
+        will_not_change: [
+          'Player level is not changed automatically',
+          'No parent or player notification is sent',
+          'No gate progress is modified',
+        ],
+      }
+    })
+}
+
 // ── Master generator: combines all generators ────────────────────────────────
 
 export interface AcademySuggestionDraftInputs {
@@ -274,13 +370,16 @@ export interface AcademySuggestionDraftInputs {
   privateLessonRequests: PrivateLessonRequestInput[]
   developmentSummaries: DevelopmentSummaryInput[]
   reassessmentPipeline: ReassessmentPipelineInput[]
+  playerCurriculumStates?: PlayerCurriculumStateInput[]
 }
 
 export function buildAcademySuggestionDrafts(inputs: AcademySuggestionDraftInputs): AcademySuggestionDraft[] {
-  const { players, privateLessonRequests, developmentSummaries, reassessmentPipeline } = inputs
+  const { players, privateLessonRequests, developmentSummaries, reassessmentPipeline, playerCurriculumStates = [] } = inputs
   return [
     ...buildLevelReadinessReviewSuggestions(players),    // high priority first
     ...buildReassessmentFollowupSuggestions(reassessmentPipeline),
+    ...buildCurriculumProgressStaleSuggestions(playerCurriculumStates),
+    ...buildNoCurriculumAssignmentSuggestions(playerCurriculumStates),
     ...buildPrivateLessonPendingSuggestions(privateLessonRequests),
     ...buildPlayerFocusMissingSuggestions(players),
     ...buildParentSafeSummaryOpportunitySuggestions(developmentSummaries),

@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-03 — Sprint 199: AI Suggestions From Curriculum Gaps V1
+
+**Mode:** Logic + UI. No schema changes. No new migrations. No AI API calls. No npm installs.
+
+**Audit:** Existing `academy_suggestions` table + `SuggestionCard` component + `generateAcademySuggestionsAction` already handles suggestion lifecycle with accept/deny/defer. Suggestion types include `curriculum_gap`.
+
+**What was added to `generateAcademySuggestions.ts`:**
+- `PlayerCurriculumStateInput` interface.
+- `buildNoCurriculumAssignmentSuggestions()` — generates `curriculum_gap` suggestions for active players with no curriculum level assigned.
+- `buildCurriculumProgressStaleSuggestions()` — generates `curriculum_gap` suggestions for players at a level for ≥60 days without review (high priority at ≥90 days).
+- `AcademySuggestionDraftInputs` extended with optional `playerCurriculumStates`.
+- `buildAcademySuggestionDrafts()` updated to call both new generators.
+
+**What was added to `suggestionActions.ts`:**
+- Fetches `player_curriculum_states` (current_level_id, updated_at) for all active players.
+- Fetches curriculum level names for enrichment.
+- Passes `playerCurriculumStates` to `buildAcademySuggestionDrafts`.
+- Duplicate-prevention via existing existingSet is preserved.
+
+**Safety:** No auto-writes. No auto-promotions. No AI calls. Suggestions are pending_review; directors accept/deny via existing review UI.
+
+**TypeScript result:** 0 errors.
+
+### Files changed
+- `src/lib/suggestions/generateAcademySuggestions.ts` — Added curriculum gap generators and input type.
+- `src/app/director/ai-suggestions/suggestionActions.ts` — Added curriculum state fetch and pass to generator.
+
+---
+
 ## 2026-05-03 — Sprint 198: Session Planning Curriculum Context V1
 
 **Mode:** UI-only. No schema changes. No new migrations. No npm installs.

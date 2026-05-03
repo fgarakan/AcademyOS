@@ -13,6 +13,7 @@ import {
   type PrivateLessonRequestInput,
   type DevelopmentSummaryInput,
   type ReassessmentPipelineInput,
+  type PlayerCurriculumStateInput,
 } from '@/lib/suggestions/generateAcademySuggestions'
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
@@ -144,12 +145,75 @@ export async function generateAcademySuggestionsAction(): Promise<{ created?: nu
     )
   )
 
+  // Fetch curriculum states for active players (Sprint 199: curriculum gap signals)
+  // rawDb cast avoids TS2589 on multi-join; RLS enforces academy scoping.
+  const playerIds = players.map(p => p.player_id).filter((id): id is string => id !== null)
+  const playerCurriculumStates: PlayerCurriculumStateInput[] = []
+
+  if (playerIds.length > 0) {
+    const { data: pcsData } = await rawDb
+      .from('player_curriculum_states')
+      .select('player_id, current_level_id, updated_at')
+      .eq('academy_id', academyId)
+      .in('player_id', playerIds)
+
+    const { data: levelRows } = pcsData && pcsData.length > 0
+      ? await rawDb
+          .from('curriculum_levels')
+          .select('id, display_name')
+          .in('id', pcsData.map((s: { current_level_id: string | null }) => s.current_level_id).filter(Boolean))
+      : { data: [] }
+
+    const levelNameMap = new Map<string, string>(
+      (levelRows ?? []).map((l: { id: string; display_name: string }) => [l.id, l.display_name])
+    )
+
+    const pcsMap = new Map<string, { current_level_id: string | null; updated_at: string | null }>(
+      (pcsData ?? []).map((s: { player_id: string; current_level_id: string | null; updated_at: string | null }) =>
+        [s.player_id, { current_level_id: s.current_level_id, updated_at: s.updated_at }]
+      )
+    )
+
+    const now = Date.now()
+    for (const playerId of playerIds) {
+      const pcs = pcsMap.get(playerId)
+      const playerName = playerNameMap.get(playerId) ?? null
+      const currentLevelId = pcs?.current_level_id ?? null
+      const updatedAt = pcs?.updated_at ?? null
+      const daysSinceUpdate = updatedAt
+        ? Math.floor((now - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24))
+        : null
+
+      playerCurriculumStates.push({
+        player_id: playerId,
+        player_name: playerName,
+        current_level_id: currentLevelId,
+        current_level_name: currentLevelId ? (levelNameMap.get(currentLevelId) ?? null) : null,
+        days_since_update: currentLevelId ? daysSinceUpdate : null,
+      })
+    }
+
+    // Active players with no curriculum state row at all
+    for (const playerId of playerIds) {
+      if (!pcsMap.has(playerId)) {
+        playerCurriculumStates.push({
+          player_id: playerId,
+          player_name: playerNameMap.get(playerId) ?? null,
+          current_level_id: null,
+          current_level_name: null,
+          days_since_update: null,
+        })
+      }
+    }
+  }
+
   // Generate drafts
   const drafts = buildAcademySuggestionDrafts({
     players,
     privateLessonRequests,
     developmentSummaries,
     reassessmentPipeline,
+    playerCurriculumStates,
   })
 
   // Insert non-duplicate suggestions
