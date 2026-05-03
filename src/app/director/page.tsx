@@ -144,6 +144,22 @@ export default async function DirectorDashboard() {
   const pendingSuggestionsCount = pendingSuggestions.length
   const highPrioritySuggestionsCount = pendingSuggestions.filter(s => s.priority === 'high').length
 
+  // Curriculum coverage
+  const { data: curricStateRows } = await rawDb
+    .from('player_curriculum_states')
+    .select('player_id')
+    .eq('academy_id', academyId)
+  const playersWithLevel = (curricStateRows ?? []).length
+  const playersWithoutLevel = Math.max(0, activePlayers - playersWithLevel)
+
+  const { data: curricGapData } = await rawDb
+    .from('academy_suggestions')
+    .select('id')
+    .eq('academy_id', academyId)
+    .eq('status', 'pending')
+    .eq('suggestion_type', 'curriculum_gap')
+  const curricGapCount = (curricGapData ?? []).length
+
   // Deterministic alert count
   const missingFocus = activePl.filter(p => !p.focus_areas || p.focus_areas.length === 0).length
   const reassessmentDue = reassessmentPipeline.filter(
@@ -214,6 +230,36 @@ export default async function DirectorDashboard() {
           icon={<AlertTriangle className="w-4 h-4" />}
         />
       </div>
+
+      {/* ── Curriculum Intelligence ───────────────────────── */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center gap-2 mb-3">
+            <GraduationCap className="w-4 h-4 text-lime" />
+            <p className="label-xs">Curriculum Coverage</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <Link href="/director/players" className="group">
+              <div className="bg-surface-raised rounded-xl px-4 py-3 border border-border hover:border-lime/30 transition-colors">
+                <p className="font-mono font-bold text-3xl text-lime leading-none">{playersWithLevel}</p>
+                <p className="text-xs text-text-secondary mt-1">With curriculum level</p>
+              </div>
+            </Link>
+            <Link href="/director/players" className="group">
+              <div className={`bg-surface-raised rounded-xl px-4 py-3 border transition-colors ${playersWithoutLevel > 0 ? 'border-status-orange/30 hover:border-status-orange/50' : 'border-border hover:border-lime/30'}`}>
+                <p className={`font-mono font-bold text-3xl leading-none ${playersWithoutLevel > 0 ? 'text-status-orange' : 'text-text-muted'}`}>{playersWithoutLevel}</p>
+                <p className="text-xs text-text-secondary mt-1">Missing level</p>
+              </div>
+            </Link>
+            <Link href="/director/ai-suggestions" className="group hidden sm:block">
+              <div className={`bg-surface-raised rounded-xl px-4 py-3 border transition-colors ${curricGapCount > 0 ? 'border-lime/20 hover:border-lime/40' : 'border-border hover:border-lime/30'}`}>
+                <p className={`font-mono font-bold text-3xl leading-none ${curricGapCount > 0 ? 'text-lime' : 'text-text-muted'}`}>{curricGapCount}</p>
+                <p className="text-xs text-text-secondary mt-1">Curriculum gap suggestions</p>
+              </div>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── Priority panel + Pending placement ─────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

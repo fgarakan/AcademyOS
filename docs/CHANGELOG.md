@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-03 — Sprint 208: Director Dashboard Curriculum Intelligence
+
+**Mode:** UI + data fetch. No schema changes. No migrations. No mutations.
+
+**What was built:**
+- Curriculum coverage section on director dashboard: players with assigned level, players missing level, curriculum gap suggestion count.
+- Data fetched from `player_curriculum_states` (count per academy) and `academy_suggestions` (filtered by `suggestion_type = 'curriculum_gap'` and `status = 'pending'`).
+- Missing-level count shown in orange when > 0; gap suggestions link to `/director/ai-suggestions`; player counts link to `/director/players`.
+
+**Safety:** Read-only display. No mutations. No auto-promotion.
+
+**TypeScript:** 0 errors.
+
+### Files changed
+- `src/app/director/page.tsx` — Added curriculum coverage data fetch and intelligence section UI.
+
+---
+
 ## 2026-05-03 — Sprint 204: Player Curriculum Level Assignment UI
 
 **Mode:** UI + server action. No schema changes. No migrations. No auto-promotion.
