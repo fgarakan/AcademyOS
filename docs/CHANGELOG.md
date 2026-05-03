@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-03 — Sprint 224: Command Center Draft Visibility V1
+
+**Mode:** Read-only draft display. No new tables. No migrations. No writes.
+
+**What was built:**
+- `RecentDraftsPanel` — new sub-component in `CommandCenterClient.tsx`:
+  - Shows recent command-created `proposed_actions` with `target_module = 'director_command'`
+  - Displays: status badge (color-coded), intent label, command text, "what would happen", "will not do" list, created time
+  - Empty state if no drafts yet
+  - Link to `/director/review` from each pending draft
+  - Link to review queue in header
+- `page.tsx` — fetches `recentDrafts` from `proposed_actions` scoped by `academy_id`; passes to `CommandCenterClient`
+
+**TypeScript:** 0 errors.
+
+### Files modified
+- `src/app/director/command-center/CommandCenterClient.tsx` — `RecentDraft` type, `RecentDraftsPanel` component, `recentDrafts` prop wired.
+- `src/app/director/command-center/page.tsx` — query for recent command drafts passed to client.
+
+---
+
 ## 2026-05-03 — Sprint 223: Parent Guidance Preview V1
 
 **Mode:** Director-only preview. No emails. No parent portal. No writes. No AI.

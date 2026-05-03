@@ -54,6 +54,24 @@ export default async function CommandCenterPage() {
 
   const curriculumLevels: { id: string; display_name: string; stage: string }[] = levelRows ?? []
 
+  // Fetch recent command-created proposed_actions (Sprint 224)
+  const { data: recentDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_module, proposed_payload, created_at')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'director_command')
+    .in('status', ['pending_review', 'approved', 'rejected'])
+    .order('created_at', { ascending: false })
+    .limit(8)
+
+  const recentDrafts: {
+    id: string
+    status: string
+    target_module: string
+    proposed_payload: Record<string, unknown> | null
+    created_at: string
+  }[] = recentDraftRows ?? []
+
   return (
     <div className="animate-fade-in p-6 space-y-6 max-w-3xl">
       <PageHeader pendingDraftCount={pendingDraftCount ?? 0} />
@@ -61,6 +79,7 @@ export default async function CommandCenterPage() {
       <CommandCenterClient
         recentCommands={recentCommands}
         curriculumLevels={curriculumLevels}
+        recentDrafts={recentDrafts}
       />
     </div>
   )
