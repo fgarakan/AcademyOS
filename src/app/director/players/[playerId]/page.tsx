@@ -43,6 +43,8 @@ import { DevelopmentProfileSummaryCard } from '@/components/player/DevelopmentPr
 import { LevelProgressCard } from '@/components/player/LevelProgressCard'
 import { CoachPlayerSnapshot } from '@/components/player/CoachPlayerSnapshot'
 import { ProgressEvidenceTimeline } from '@/components/player/ProgressEvidenceTimeline'
+import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
+import type { QaDrillRow, QaCoachLanguageRow } from '@/lib/player/playerProgressQa'
 
 interface PageProps {
   params: { playerId: string }
@@ -214,6 +216,27 @@ export default async function PlayerProfilePage({ params }: PageProps) {
       stage: l.stage,
     })
   )
+
+  // Player Q&A data: drills and coach language for current level (Sprint 218, read-only)
+  let qaTopDrills: QaDrillRow[] = []
+  let qaCoachLanguage: QaCoachLanguageRow[] = []
+
+  if (curriculumSummary?.current_level_id) {
+    const { data: drillsData } = await rawDb
+      .from('curriculum_drills')
+      .select('id, name, domain, session_block, objective')
+      .eq('level_min_id', curriculumSummary.current_level_id)
+      .eq('is_active', true)
+      .order('session_block', { ascending: true })
+      .limit(5)
+    qaTopDrills = drillsData ?? []
+
+    const { data: clData } = await rawDb
+      .from('curriculum_coach_language')
+      .select('domain, doing_well, working_on, current_focus, next_step')
+      .eq('level_id', curriculumSummary.current_level_id)
+    qaCoachLanguage = clData ?? []
+  }
 
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
@@ -656,6 +679,17 @@ export default async function PlayerProfilePage({ params }: PageProps) {
       <p className="text-[10px] text-text-muted leading-relaxed border-t border-border pt-3">
         Evidence tracking is review-based. All gate evidence and requirement links go to the director review queue before they count toward advancement. Nothing advances automatically.
       </p>
+
+      {/* Player Q&A Preview — director-only, deterministic, read-only */}
+      <PlayerQaPreviewPanel
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        currentLevelStage={curriculumSummary?.stage ?? null}
+        nextLevelName={nextCurriculumLevel?.display_name ?? null}
+        hasCurriculumState={hasCurriculum}
+        gates={levelGates}
+        drills={qaTopDrills}
+        coachLanguage={qaCoachLanguage}
+      />
 
     </div>
   )

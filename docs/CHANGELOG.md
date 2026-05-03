@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-05-03 — Sprint 218: Player Progress Q&A Preview V1
+
+**Mode:** Read-only director preview. No AI calls. No writes. No parent/player exposure.
+
+**What was built:**
+- `playerProgressQa.ts` — pure deterministic Q&A helper. Exports:
+  - `PlayerProgressQuestionIntent` — 6 intents: `current_level`, `next_level`, `level_requirements`, `what_to_practice`, `level_meaning`, `unknown`
+  - `parsePlayerProgressQuestion(question)` — keyword-based intent detection
+  - `buildPlayerProgressAnswer(intent, input)` — deterministic answers from curriculum level, gates, drills, coach language
+  - Answer shape: `question_intent`, `title`, `answer`, `bullets`, `next_mission`, `safety_note`, `source_labels`, `blocked_reason`
+- `PlayerQaPreviewPanel.tsx` — director-only client component added to the Skill Path tab. Features:
+  - 4 sample question buttons: "What level am I?", "What do I need to do next?", "How do I move up?", "What should I practice?"
+  - Custom question input
+  - Answer card with intent label, bullets, next mission, source labels
+  - "Director preview — read-only" badge
+  - Guardrail note: "Uses curriculum level, gates, drills, and coach language only. Internal notes are not shown."
+- `page.tsx` updated with two new sequential queries: `curriculum_drills` (top 5 by level_min_id) and `curriculum_coach_language` (all domains for current level).
+
+**Safety:** Read-only only. No mutations. No external AI. No parent/player portal exposure. Player portal remains a stub.
+
+**Supported questions:** current_level · next_level · level_requirements · what_to_practice · level_meaning · unknown fallback
+
+**QA scripts:** qa-curriculum-seed-migration.mjs (38/38) · audit-curriculum-product-language.mjs (PASS) · qa-command-parser.mjs (24/24)
+
+**Product language:** CLEAN — no Swinget, SwingCheck, The Angle, or [PROPOSED:] in sprint files.
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/lib/player/playerProgressQa.ts` — pure Q&A helper: intent detection + deterministic answer builder.
+- `src/app/director/players/[playerId]/PlayerQaPreviewPanel.tsx` — client component: interactive Q&A preview panel with director badge.
+
+### Files modified
+- `src/app/director/players/[playerId]/page.tsx` — added drills + coach language queries; `PlayerQaPreviewPanel` added to Skill Path tab.
+
+---
+
 ## 2026-05-03 — Sprint 217: Parent-Safe Response Rules V1
 
 **Mode:** New utility module + spec doc. No DB calls, no UI, no side effects.

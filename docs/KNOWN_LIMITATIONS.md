@@ -136,6 +136,23 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Player Q&A (Sprint 218)
+
+### Player Q&A is director-preview only — player portal not exposed
+- **Location:** Skill Path tab of `/director/players/[playerId]`
+- **Impact:** Player portal (`/player`) remains a stub. Players cannot directly access the Q&A. The preview exists only for directors to preview what player-facing answers would look like.
+- **Fix:** Build real player portal (step 9+ in build order) and wire up with role-scoped data access before exposing to real players.
+
+### Player Q&A answers are deterministic — no AI personalization
+- **Impact:** Answers are built from curriculum level, gates, drills, and coach language using keyword matching and template logic. No AI inference, no personalized feedback, no voice analysis.
+- **Fix:** Add AI-layer after player portal is built and approved.
+
+### Player Q&A drills show level_min_id match only
+- **Impact:** Only drills where `level_min_id` = current level ID are returned. Drills with a wider range (e.g., spanning multiple levels) may not appear.
+- **Fix:** Add range query when more drill-to-level matching logic is needed.
+
+---
+
 ## Testing
 
 ### No automated tests
