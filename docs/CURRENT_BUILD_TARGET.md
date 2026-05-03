@@ -1,7 +1,7 @@
 # Current Build Target
 
-**Last updated:** 2026-04-28
-**Current phase:** Phase 1 — Director-facing player operating spine
+**Last updated:** 2026-05-03
+**Current phase:** Phase 1 — Director-facing player operating spine + Conversational OS Foundation (Sprints 219–228 complete)
 
 ---
 
@@ -16,6 +16,19 @@ Everything the director needs to operate the academy day-to-day.
 ---
 
 ## Build order
+
+### Conversational OS Foundation — COMPLETE (Sprints 219–228)
+- Curriculum learning module model + UI preview (`/director/curriculum/learning`)
+- Role-aware chat guardrails (`src/lib/commands/roleGuardrails.ts`)
+- Director Command Center with guardrails + draft visibility
+- Parent guidance preview (director-side, not sent)
+- Coach recap review improvements
+- Player Q&A learning module integration
+- Conversational OS master plan documented
+
+See `docs/conversational-os/conversational-os-master-plan.md` for full architecture.
+
+---
 
 ### Step 1 — Players List `/director/players` ← NEXT
 Build the player list page so the director can navigate to player profiles.

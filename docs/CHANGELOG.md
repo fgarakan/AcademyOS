@@ -2,6 +2,45 @@
 
 ---
 
+## 2026-05-03 — Sprint 227: Conversational OS Documentation + Locked Principles V1
+
+**Mode:** Docs only. No app code. No schema changes. No migrations.
+
+**What was built:**
+- `docs/conversational-os/conversational-os-master-plan.md` — new locked-principles document containing:
+  - North star and core operating principle
+  - Role-specific experiences (academy_director, head_coach, coach, player, parent)
+  - Full command lifecycle diagram with intent type table
+  - Approval model table (what requires approval)
+  - Data safety model (role isolation + audit requirements)
+  - Player Q&A model (safe data sources, answer intents)
+  - Parent guidance model (safe fields, never-exposed fields)
+  - Curriculum learning module model (fields, computation source)
+  - Coach recap model (flow, outputs)
+  - 10-item hard list of what must never happen automatically
+  - Next build order (Sprints 229–238)
+- `docs/CURRENT_BUILD_TARGET.md` — date + phase updated; Conversational OS Foundation section added marking Sprints 219–228 complete
+- `docs/LOCKED_MODULES.md` — date updated; four new locked modules added (parentSafeResponseRules, learningModules, roleGuardrails, master plan); "usable but incomplete" table expanded; "not built yet" table corrected for routes that now exist
+- `docs/KNOWN_LIMITATIONS.md` — date updated; new Conversational OS section added with six specific limitations (player portal empty state, parent portal empty state, no full chat UI, modules director-preview only, draft execution limited, parent guidance not yet sendable)
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS, zero forbidden references
+- `qa-command-parser.mjs` — 24/24 passed
+- Product language scan on Sprint 227 doc files — CLEAN
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `docs/conversational-os/conversational-os-master-plan.md` — conversational OS architecture + locked principles.
+
+### Files modified
+- `docs/CURRENT_BUILD_TARGET.md` — phase update + completed foundation section.
+- `docs/LOCKED_MODULES.md` — new stable modules, corrected route table.
+- `docs/KNOWN_LIMITATIONS.md` — new conversational OS limitations section.
+
+---
+
 ## 2026-05-03 — Sprint 226: Learning Modules → Player Next Mission V1
 
 **Mode:** Pure helper update + UI display. No DB writes. No AI calls. No migrations.

@@ -1,6 +1,6 @@
 # Known Limitations
 
-**Last updated:** 2026-04-28
+**Last updated:** 2026-05-03
 
 This file documents what is currently broken, missing, or intentionally incomplete.
 These are not bugs to fix immediately — they are known gaps that future sessions should be aware of.
@@ -150,6 +150,39 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 ### Player Q&A drills show level_min_id match only
 - **Impact:** Only drills where `level_min_id` = current level ID are returned. Drills with a wider range (e.g., spanning multiple levels) may not appear.
 - **Fix:** Add range query when more drill-to-level matching logic is needed.
+
+---
+
+## Conversational OS (Sprints 219–228)
+
+### Player portal Q&A uses empty-state components only
+- **File:** `src/app/player/page.tsx`, `src/components/player/PlayerMissionPreview.tsx`
+- **Impact:** `PlayerMissionPreview` renders on the player home page but all props are null — player sees the empty state. No live curriculum data is fetched for the player portal yet.
+- **Fix:** Sprint 229 — Player Portal Q&A with live role-scoped data access.
+
+### Parent portal progress uses empty-state components only
+- **File:** `src/app/parent/page.tsx`, `src/components/player/ParentSafeProgressPreview.tsx`
+- **Impact:** `ParentSafeProgressPreview` renders but all props are empty — parent sees the empty state. No approved progress data is passed yet.
+- **Fix:** Sprint 230 — Parent Portal Progress with real approved data.
+
+### Role-aware chat guardrails are enforcement-only — no full chat UI
+- **File:** `src/lib/commands/roleGuardrails.ts`
+- **Impact:** Guardrail functions are used by the command center and Q&A preview. There is no standalone role-aware chat interface for coaches, players, or parents.
+- **Fix:** Build role-specific chat UI after player portal and parent portal are functional.
+
+### Learning modules are director-preview only — not persisted
+- **File:** `src/app/director/curriculum/learning/page.tsx`, `src/lib/curriculum/learningModules.ts`
+- **Impact:** Modules are generated in-memory at request time. They are never stored in the database. No player or parent can see them directly.
+- **Fix:** Sprint 236 — Curriculum Module Player Preview. Requires player portal to be functional first.
+
+### Command Center draft execution is limited
+- **Impact:** `execute_approved_action()` in the database covers only 3 of 14 action types. Command-created `proposed_actions` with `target_module = 'director_command'` have no execution path yet.
+- **Fix:** Extend the RPC coverage before building full command execution. Tracked as part of Voice Command Center (Step 9).
+
+### Parent guidance preview is director-only — not sent
+- **File:** `src/app/director/players/[playerId]/ParentGuidancePreviewPanel.tsx`
+- **Impact:** The panel shows a director what a parent-safe summary would look like. There is no mechanism to send it yet.
+- **Fix:** Sprint 237 — Parent Communication Draft Queue.
 
 ---
 
