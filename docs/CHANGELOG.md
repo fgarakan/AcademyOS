@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-03 — Sprint 192: Curriculum Explorer Full Level Detail UX
+
+**Mode:** UI-only. No schema changes. No new migrations. No npm installs.
+
+**Route:** `/director/curriculum` — expanded level detail panel within existing explorer.
+
+**Changes:**
+- `CurriculumLevelDetailPanel.tsx` rewritten as `'use client'` component with full tabbed detail view.
+- Four tabs per selected level: Gates | Drills | Coach Language | Fitness & Comp.
+- Gates tab: all gates grouped by domain, expandable rows showing threshold/evaluator/cadence/evidence_window/recording_method/notes. HP3 final exit gate badge. Level-up requirements framing.
+- Drills tab: domain filter pills, all drills with expandable rows showing setup/coaching cues/progressions/success_criteria.
+- Coach Language tab: all domains, all four fields (doing well / working on / current focus / next step) in 2-col grid.
+- Fitness & Comp tab: detailed Volume, Fitness, Competition cards with all available fields.
+- Empty states per section when data is absent.
+- Product-language audit: CLEAN.
+
+**TypeScript result:** 0 errors.
+
+**QA:** 38/38 curriculum seed checks pass. Product-language audit: PASS.
+
+### Files changed
+- `src/components/curriculum/CurriculumLevelDetailPanel.tsx` — Rewritten. Full tabbed detail panel replacing the previous preview-only layout.
+
+---
+
 ## 2026-05-02 — Sprint 191: Build premium curriculum explorer
 
 **Mode:** UI-only. No schema changes. No new migrations. No npm installs.
