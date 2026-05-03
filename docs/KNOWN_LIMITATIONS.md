@@ -116,13 +116,13 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ## Curriculum integration (Sprints 192–201)
 
-### Curriculum level assignment has no UI
-- **Impact:** Players can be shown their current curriculum level (player profile sidebar card) but there is no UI to assign or change a level. The `player_curriculum_states` table exists but requires direct DB manipulation.
-- **Fix:** Build a level-assignment flow in a future sprint (director selects level from curriculum explorer, saves to `player_curriculum_states`).
+### Curriculum level assignment — RESOLVED (Sprint 204)
+- Director can assign or change a player's curriculum level from the Skill Path tab via `CurriculumLevelPickerCard`.
+- Explicit director action only. No auto-promotion.
 
-### Session curriculum context requires template to have a level assigned
-- **Impact:** `SessionCurriculumContextPanel` only renders content if the session's template has a `curriculum_level_id`. Sessions linked to templates without a level show the "no context" empty state.
-- **Fix:** Assign a curriculum level to session templates via the template editor (not yet built).
+### Session curriculum context requires template to have a level assigned — RESOLVED (Sprint 207)
+- Directors can now assign a curriculum level to any session template from the template detail page (`/director/fitness/templates/[templateId]`).
+- `SessionCurriculumContextPanel` will show context once a level is assigned. Templates without a level still show the "no context" empty state until a director sets one.
 
 ### Drill detail panel does not show `procedure` field
 - **Impact:** `curriculum_drills.procedure` is not fetched by `getCurriculumExplorerData()` (locked backend file). The drill expanded panel shows setup, cues, progressions, and success criteria but not procedure.

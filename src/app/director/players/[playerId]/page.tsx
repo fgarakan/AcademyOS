@@ -322,93 +322,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   )
 
   // ─── Tab 2: Skill Path ────────────────────────────────────────────────────
-  const skillPathSlot = (
-    <div className="space-y-6">
-
-      {/* Curriculum level picker — director assigns/changes the active curriculum level */}
-      {allCurriculumLevels.length > 0 && (
-        <CurriculumLevelPickerCard
-          playerId={params.playerId}
-          academyId={academyId}
-          currentLevelId={curriculumSummary?.current_level_id ?? null}
-          currentLevelName={curriculumSummary?.current_level_name ?? null}
-          levels={allCurriculumLevels}
-        />
-      )}
-
-      {/* Curriculum assignment — Sprint 72: shows academy version source and overrides */}
-      <PlayerCurriculumAssignmentCard
-        usingAcademyVersion={academyCurriculumCtx.usingAcademyVersion}
-        curriculumVersionName={academyCurriculumCtx.curriculumVersionName}
-        curriculumVersionId={academyCurriculumCtx.curriculumVersionId}
-        fallbackReason={academyCurriculumCtx.fallbackReason}
-        levelName={academyCurriculumCtx.levelName ?? curriculumSummary?.current_level_name ?? null}
-        applicableOverrides={academyCurriculumCtx.applicableOverrides}
-        warnings={academyCurriculumCtx.warnings}
-      />
-
-      {/* Advancement action card */}
-      <Card>
-        <CardContent className="py-4 space-y-4">
-          <EvaluateAdvancementButton onEvaluate={evaluateAction} />
-
-          {curriculumSummary?.advancement_eligible && (
-            <p className="text-xs text-lime">Player meets advancement criteria.</p>
-          )}
-
-          {hasCurriculum && !curriculumSummary?.advancement_eligible && blockedBy.length === 0 && (
-            <p className="text-xs text-text-muted">
-              Run evaluation to check advancement eligibility.
-            </p>
-          )}
-
-          {blockedBy.length > 0 && (
-            <div>
-              <p className="text-[11px] uppercase tracking-widest text-text-muted mb-2">Blocked by</p>
-              <ul className="space-y-1">
-                {blockedBy.map((item, i) => (
-                  <li key={i} className="text-xs text-status-orange flex gap-2">
-                    <span className="shrink-0">·</span>{item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Curriculum grid or empty state */}
-      {hasCurriculum ? (
-        <CurriculumProgressGrid rows={domainRows} />
-      ) : (
-        <Card>
-          <PlayerCurriculumEmptyState onAssign={assignAction} />
-        </Card>
-      )}
-
-      {/* Level requirements with director gate evidence buttons */}
-      <PlayerLevelRequirementsCard
-        gates={levelGates}
-        currentLevelName={curriculumSummary?.current_level_name ?? null}
-        nextLevelName={nextCurriculumLevel?.display_name ?? null}
-        hasCurriculumState={hasCurriculum}
-        gateActions={Object.fromEntries(
-          levelGates.map(g => [
-            g.id,
-            <GateEvidenceButton
-              key={g.id}
-              playerId={params.playerId}
-              academyId={academyId}
-              gateId={g.id}
-              gateCriterion={g.criterion}
-            />,
-          ])
-        )}
-      />
-
-    </div>
-  )
-
   // ─── Tab 3: Competition ───────────────────────────────────────────────────
   const competitionSlot = (
     <Card>
@@ -613,6 +526,140 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const addVoiceNoteServerAction = addVoiceNoteAction.bind(null, params.playerId, academyId)
   const generateDraftAction = generateNoteDraftAction
 
+  // ─── Tab 2: Skill Path ────────────────────────────────────────────────────
+  // Declared here so all required variables (progressionScores, requirementProgressRows,
+  // evidenceByProgressId, confirmProgressAction, createEvidenceDraftAction, etc.) are in scope.
+  const skillPathSlot = (
+    <div className="space-y-6">
+
+      {/* Curriculum level picker — director assigns/changes the active curriculum level */}
+      {allCurriculumLevels.length > 0 && (
+        <CurriculumLevelPickerCard
+          playerId={params.playerId}
+          academyId={academyId}
+          currentLevelId={curriculumSummary?.current_level_id ?? null}
+          currentLevelName={curriculumSummary?.current_level_name ?? null}
+          levels={allCurriculumLevels}
+        />
+      )}
+
+      {/* Curriculum assignment — shows academy version source and overrides */}
+      <PlayerCurriculumAssignmentCard
+        usingAcademyVersion={academyCurriculumCtx.usingAcademyVersion}
+        curriculumVersionName={academyCurriculumCtx.curriculumVersionName}
+        curriculumVersionId={academyCurriculumCtx.curriculumVersionId}
+        fallbackReason={academyCurriculumCtx.fallbackReason}
+        levelName={academyCurriculumCtx.levelName ?? curriculumSummary?.current_level_name ?? null}
+        applicableOverrides={academyCurriculumCtx.applicableOverrides}
+        warnings={academyCurriculumCtx.warnings}
+      />
+
+      {/* Advancement action card */}
+      <Card>
+        <CardContent className="py-4 space-y-4">
+          <EvaluateAdvancementButton onEvaluate={evaluateAction} />
+
+          {curriculumSummary?.advancement_eligible && (
+            <p className="text-xs text-lime">Player meets advancement criteria.</p>
+          )}
+
+          {hasCurriculum && !curriculumSummary?.advancement_eligible && blockedBy.length === 0 && (
+            <p className="text-xs text-text-muted">
+              Run evaluation to check advancement eligibility.
+            </p>
+          )}
+
+          {blockedBy.length > 0 && (
+            <div>
+              <p className="text-[11px] uppercase tracking-widest text-text-muted mb-2">Blocked by</p>
+              <ul className="space-y-1">
+                {blockedBy.map((item, i) => (
+                  <li key={i} className="text-xs text-status-orange flex gap-2">
+                    <span className="shrink-0">·</span>{item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Curriculum grid or empty state */}
+      {hasCurriculum ? (
+        <CurriculumProgressGrid rows={domainRows} />
+      ) : (
+        <Card>
+          <PlayerCurriculumEmptyState onAssign={assignAction} />
+        </Card>
+      )}
+
+      {/* Level requirements with director gate evidence buttons */}
+      <PlayerLevelRequirementsCard
+        gates={levelGates}
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        nextLevelName={nextCurriculumLevel?.display_name ?? null}
+        hasCurriculumState={hasCurriculum}
+        gateActions={Object.fromEntries(
+          levelGates.map(g => [
+            g.id,
+            <GateEvidenceButton
+              key={g.id}
+              playerId={params.playerId}
+              academyId={academyId}
+              gateId={g.id}
+              gateCriterion={g.criterion}
+            />,
+          ])
+        )}
+      />
+
+      {/* Advancement score thresholds — what numbers are needed to exit this level */}
+      <PlayerProgressionRequirements
+        hasCurriculumState={!!curriculumSummary}
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        currentStageName={curriculumSummary?.stage_name ?? null}
+        advancementEligible={curriculumSummary?.advancement_eligible ?? null}
+        nextLevel={nextCurriculumLevel}
+        requirements={progressionRequirements}
+        trackScores={progressionScores ? {
+          technical_score: progressionScores.technical_score ?? null,
+          tactical_score:  progressionScores.tactical_score  ?? null,
+          competition_score: progressionScores.competition_score ?? null,
+          movement_score:  progressionScores.movement_score  ?? null,
+        } : null}
+      />
+
+      {/* Requirement progress — director read-only view with manual confirmation */}
+      <PlayerRequirementProgressReadOnly
+        rows={requirementProgressRows}
+        hasCurriculumState={!!curriculumSummary}
+        isOrangeBallPlayer={isOrangeBallPlayer}
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        confirmAction={confirmProgressAction}
+        evidenceByProgressId={evidenceByProgressId}
+      />
+
+      {/* Evidence link drafts — pending/approved requirement evidence links */}
+      <EvidenceRequirementDrafts drafts={evidenceLinkDrafts} />
+
+      {/* Create evidence link drafts */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Evidence Linking</p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <EvidenceRequirementDraftButton onCreateDrafts={createEvidenceDraftAction} />
+        </CardContent>
+      </Card>
+
+      {/* Guardrail */}
+      <p className="text-[10px] text-text-muted leading-relaxed border-t border-border pt-3">
+        Evidence tracking is review-based. All gate evidence and requirement links go to the director review queue before they count toward advancement. Nothing advances automatically.
+      </p>
+
+    </div>
+  )
+
   const notesSlot = (
     <div className="space-y-6">
 
@@ -664,45 +711,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           )}
         </span>
       </div>
-
-      {/* Progression requirements — read-only curriculum level display, no mutation */}
-      <PlayerProgressionRequirements
-        hasCurriculumState={!!curriculumSummary}
-        currentLevelName={curriculumSummary?.current_level_name ?? null}
-        currentStageName={curriculumSummary?.stage_name ?? null}
-        advancementEligible={curriculumSummary?.advancement_eligible ?? null}
-        nextLevel={nextCurriculumLevel}
-        requirements={progressionRequirements}
-        trackScores={progressionScores ? {
-          technical_score: progressionScores.technical_score ?? null,
-          tactical_score:  progressionScores.tactical_score  ?? null,
-          competition_score: progressionScores.competition_score ?? null,
-          movement_score:  progressionScores.movement_score  ?? null,
-        } : null}
-      />
-
-      {/* Requirement progress — Sprint 35 read-only view, Sprint 39 adds manual confirmation. */}
-      <PlayerRequirementProgressReadOnly
-        rows={requirementProgressRows}
-        hasCurriculumState={!!curriculumSummary}
-        isOrangeBallPlayer={isOrangeBallPlayer}
-        currentLevelName={curriculumSummary?.current_level_name ?? null}
-        confirmAction={confirmProgressAction}
-        evidenceByProgressId={evidenceByProgressId}
-      />
-
-      {/* Evidence link drafts — Sprint 36 read-only display of pending drafts. */}
-      <EvidenceRequirementDrafts drafts={evidenceLinkDrafts} />
-
-      {/* Create evidence link drafts — Sprint 36 deterministic matching draft only. */}
-      <Card>
-        <CardHeader>
-          <p className="label-xs">Evidence Linking</p>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <EvidenceRequirementDraftButton onCreateDrafts={createEvidenceDraftAction} />
-        </CardContent>
-      </Card>
 
       {/* Active priorities — read-only visibility, no mutation controls */}
       <PlayerActivePriorities priorities={activePriorities} />

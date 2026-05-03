@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-03 — Recovery Sprint 206: Skill Path Tab Content V1
+
+**Mode:** Tab content reorganization. No schema changes. No migrations. No mutations.
+
+**What was built:**
+- Moved `PlayerProgressionRequirements` (advancement score thresholds), `PlayerRequirementProgressReadOnly` (requirement progress with evidence), `EvidenceRequirementDrafts`, and `EvidenceRequirementDraftButton` from the Notes tab into the Skill Path tab where they belong.
+- `skillPathSlot` declaration moved to after all required data fetches so all variables (`requirementProgressRows`, `evidenceByProgressId`, `confirmProgressAction`, `createEvidenceDraftAction`, `progressionScores`) are in scope.
+- Skill Path tab now shows the full director view: level picker → version source → advancement → curriculum grid → gate requirements with evidence → advancement thresholds → requirement progress → evidence linking → review-based guardrail.
+- `DevelopmentSummarySection` labels polished: "Current Strengths" → "Doing Well", "Things to Work On" → "Working On", "Development Focus" → "Current Focus", "Coach Summary" → "Coach Insight", "Student-Facing Preview" → "Player Preview", "Visible to student" → "Visible to player".
+- Notes tab cleaned: removed curriculum-specific progression content that now lives in Skill Path tab; retains development summary, AI draft, observations feed, priorities, voice, evidence timeline.
+
+**Safety:** UI reorganization only. No new queries. No new mutations. No schema changes.
+
+**TypeScript:** 0 errors. QA: 38/38. Product-language: PASS.
+
+### Files modified
+- `src/app/director/players/[playerId]/page.tsx` — skillPathSlot reorganized with full content; moved from pre-fetch position to post-fetch position.
+- `src/components/player/DevelopmentSummarySection.tsx` — Label polishing for director clarity.
+
+---
+
 ## 2026-05-03 — Recovery Sprint 205: Player Profile Tab Structure V1
 
 **Mode:** Audit + documentation. No code changes required.

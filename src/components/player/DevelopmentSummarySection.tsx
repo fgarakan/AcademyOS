@@ -42,7 +42,7 @@ export function DevelopmentSummarySection({ summary }: Props) {
     <div className="space-y-5">
       {summary.current_strengths.length > 0 && (
         <div>
-          <p className="label-xs mb-2">Current Strengths</p>
+          <p className="label-xs mb-2">Doing Well</p>
           <ul className="space-y-1.5">
             {summary.current_strengths.map((s, i) => (
               <li key={i} className="flex gap-2 text-sm text-text-secondary">
@@ -56,11 +56,11 @@ export function DevelopmentSummarySection({ summary }: Props) {
 
       {summary.things_to_work_on.length > 0 && (
         <div>
-          <p className="label-xs mb-2">Things to Work On</p>
+          <p className="label-xs mb-2">Working On</p>
           <ul className="space-y-1.5">
             {summary.things_to_work_on.map((s, i) => (
               <li key={i} className="flex gap-2 text-sm text-text-secondary">
-                <span className="text-status-orange shrink-0">·</span>
+                <span className="text-status-blue shrink-0">·</span>
                 <span>{s}</span>
               </li>
             ))}
@@ -70,7 +70,7 @@ export function DevelopmentSummarySection({ summary }: Props) {
 
       {summary.development_focus && (
         <div>
-          <p className="label-xs mb-1">Development Focus</p>
+          <p className="label-xs mb-1">Current Focus</p>
           <p className="text-sm text-text-secondary leading-relaxed">{summary.development_focus}</p>
         </div>
       )}
@@ -78,7 +78,7 @@ export function DevelopmentSummarySection({ summary }: Props) {
       {summary.coach_summary && (
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <p className="label-xs">Coach Summary</p>
+            <p className="label-xs">Coach Insight</p>
             <span className="text-[10px] text-status-orange uppercase tracking-wide">Internal</span>
           </div>
           <p className="text-sm text-text-secondary leading-relaxed">{summary.coach_summary}</p>
@@ -88,9 +88,9 @@ export function DevelopmentSummarySection({ summary }: Props) {
       {summary.student_friendly_summary && (
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <p className="label-xs">Student-Facing Preview</p>
+            <p className="label-xs">Player Preview</p>
             <span className="text-[10px] text-text-muted uppercase tracking-wide">
-              {summary.show_to_student ? 'Visible to student' : 'Hidden until enabled'}
+              {summary.show_to_student ? 'Visible to player' : 'Hidden until enabled'}
             </span>
           </div>
           <p className="text-sm text-text-secondary leading-relaxed">
