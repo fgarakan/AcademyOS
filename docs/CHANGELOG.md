@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-03 — Sprint 204: Player Curriculum Level Assignment UI
+
+**Mode:** UI + server action. No schema changes. No migrations. No auto-promotion.
+
+**What was built:**
+- `setCurriculumLevelAction.ts` — new `'use server'` action scoped to director/head_coach; calls existing `assign_player_curriculum_state` RPC with explicit `p_level_id`; validates membership and level existence before write.
+- `CurriculumLevelPickerCard.tsx` — select all 15 curriculum levels grouped by stage; Save button only enabled when selection changed; shows level preview before save; success/error state; guardrail copy: "This does not auto-promote the player."
+- `page.tsx` — fetches all 15 `curriculum_levels` on load; renders `CurriculumLevelPickerCard` at top of Skill Path tab.
+
+**Safety:** Explicit director action only. No automatic level change. No parent/player notification. No AI.
+
+**TypeScript:** 0 errors. QA: 38/38. Product-language: PASS.
+
+### Files changed
+- `src/app/director/players/[playerId]/setCurriculumLevelAction.ts` — New server action for curriculum level assignment.
+- `src/app/director/players/[playerId]/CurriculumLevelPickerCard.tsx` — New UI component for level selection.
+- `src/app/director/players/[playerId]/page.tsx` — Fetches levels list; adds picker to Skill Path tab.
+
+---
+
 ## 2026-05-03 — Sprint 203: Player Profile Responsive Layout
 
 **Mode:** UI-only. No data changes.

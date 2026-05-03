@@ -4,6 +4,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getPlayerById } from '@/lib/backend/players'
 import { getPlayerCurriculumDomains } from '@/lib/backend/curriculum'
+import { CurriculumLevelPickerCard, type CurriculumLevelOption } from './CurriculumLevelPickerCard'
 import { getPlayerDevelopmentSummary } from '@/lib/backend/notes'
 import { assignCurriculumAction, evaluateAdvancementAction } from '@/lib/actions/curriculum'
 import { addObservationAction, updateDevelopmentSummaryAction, addVoiceNoteAction, generateNoteDraftAction } from '@/lib/actions/notes'
@@ -200,6 +201,19 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     levelGates = gatesData ?? []
   }
 
+  // All 15 curriculum levels for the level picker.
+  const { data: allLevelsData } = await rawDb
+    .from('curriculum_levels')
+    .select('id, display_name, stage, sort_order')
+    .order('sort_order', { ascending: true })
+  const allCurriculumLevels: CurriculumLevelOption[] = (allLevelsData ?? []).map(
+    (l: { id: string; display_name: string; stage: string }) => ({
+      id: l.id,
+      display_name: l.display_name,
+      stage: l.stage,
+    })
+  )
+
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6 items-start">
@@ -309,6 +323,17 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   // ─── Tab 2: Skill Path ────────────────────────────────────────────────────
   const skillPathSlot = (
     <div className="space-y-6">
+
+      {/* Curriculum level picker — director assigns/changes the active curriculum level */}
+      {allCurriculumLevels.length > 0 && (
+        <CurriculumLevelPickerCard
+          playerId={params.playerId}
+          academyId={academyId}
+          currentLevelId={curriculumSummary?.current_level_id ?? null}
+          currentLevelName={curriculumSummary?.current_level_name ?? null}
+          levels={allCurriculumLevels}
+        />
+      )}
 
       {/* Curriculum assignment — Sprint 72: shows academy version source and overrides */}
       <PlayerCurriculumAssignmentCard
