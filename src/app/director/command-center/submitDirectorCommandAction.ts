@@ -3,6 +3,7 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { parseAcademyCommand, type ParsedCommandResult } from '@/lib/commands/parseAcademyCommand'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import { canRoleUseIntent, type SupportedRole } from '@/lib/commands/roleGuardrails'
 import type { Json } from '@/lib/supabase/database.types'
 
 type SubmitMode = 'parse_only' | 'create_draft'
@@ -51,6 +52,15 @@ export async function submitDirectorCommandAction(
 
   // 4. Parse the command — deterministic, no external AI
   const parsed = parseAcademyCommand(commandText.trim())
+
+  // 4a. Role guardrail check — verify this role may use the parsed intent
+  const guardrailRole: SupportedRole =
+    role === 'academy_director' ? 'academy_director' : 'head_coach'
+  if (!canRoleUseIntent(guardrailRole, parsed.intent_type)) {
+    return {
+      error: `The ${guardrailRole} role does not have permission to use the "${parsed.intent_type}" command.`,
+    }
+  }
 
   if (mode === 'parse_only') {
     return { error: null, parsed }

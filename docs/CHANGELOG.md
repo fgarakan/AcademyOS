@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-03 — Sprint 222: Director Command Center Guardrail Integration V1
+
+**Mode:** Additive UI + server-side guard. No new tables. No migrations.
+
+**What was built:**
+- `CommandCenterClient.tsx` — replaced single role check with rich guardrail block:
+  - "Academy Director — allowed" badge via `getRoleDisplayName` + `canRoleUseIntent`
+  - "Creates review draft only — requires your approval" badge for action intents
+  - "Query only — no draft created" badge for read-only intents
+  - Director boundary sentence via `getSafeResponseBoundary`
+  - Added 2 new example commands: group draft + director note
+- `submitDirectorCommandAction.ts` — added `canRoleUseIntent` server-side guardrail before draft creation. Returns error if role is blocked (e.g. unknown role attempts action).
+
+**TypeScript:** 0 errors.
+
+### Files modified
+- `src/app/director/command-center/CommandCenterClient.tsx` — guardrail badges + new examples.
+- `src/app/director/command-center/submitDirectorCommandAction.ts` — server-side role guardrail.
+
+---
+
 ## 2026-05-03 — Sprint 221: Role-Aware Chat Guardrails V1
 
 **Mode:** Pure helper + spec doc + light UI integration. No DB calls. No migrations.

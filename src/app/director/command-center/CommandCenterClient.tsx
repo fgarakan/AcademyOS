@@ -1,10 +1,16 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Terminal, Send, Clock, ChevronRight, Loader2, ArrowRight } from 'lucide-react'
+import { Terminal, Send, Clock, ChevronRight, Loader2, ArrowRight, ShieldCheck } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import { submitDirectorCommandAction } from './submitDirectorCommandAction'
 import type { ParsedCommandResult } from '@/lib/commands/parseAcademyCommand'
+import {
+  intentRequiresApproval,
+  getSafeResponseBoundary,
+  getRoleDisplayName,
+  canRoleUseIntent,
+} from '@/lib/commands/roleGuardrails'
 
 interface RecentCommand {
   id: string
@@ -29,8 +35,10 @@ const EXAMPLE_COMMANDS = [
   'Who is ready to advance?',
   'What are the requirements for Orange 2?',
   'Create a session draft for Orange 2 focused on movement',
+  'Create a group draft for competitive Red 3 players',
   'Show curriculum gap suggestions',
   'Summarize players due for reassessment',
+  'Record a note: review group sizes before Saturday',
 ]
 
 const INTENT_LABELS: Record<string, string> = {
@@ -240,10 +248,27 @@ export function CommandCenterClient({ recentCommands, curriculumLevels }: Props)
               </div>
             )}
 
-            {/* Role check */}
-            <div className="flex items-center gap-2 text-[11px] text-text-muted">
-              <span className="text-status-green">✓</span>
-              Required role: <span className="font-semibold text-text-secondary">{result.role_required}</span>
+            {/* Guardrail block */}
+            <div className="space-y-2 pt-1">
+              {/* Role allowed badge */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-status-green/30 bg-status-green/5 text-[10px] text-status-green">
+                  <ShieldCheck className="w-3 h-3" />
+                  {getRoleDisplayName('academy_director')} — {canRoleUseIntent('academy_director', result.intent_type) ? 'allowed' : 'blocked'}
+                </div>
+                {intentRequiresApproval(result.intent_type) ? (
+                  <span className="px-2 py-1 rounded-lg border border-status-orange/30 bg-status-orange/5 text-[10px] text-status-orange">
+                    Creates review draft only — requires your approval
+                  </span>
+                ) : (
+                  <span className="px-2 py-1 rounded-lg border border-status-blue/30 bg-status-blue/5 text-[10px] text-status-blue">
+                    Query only — no draft created
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-text-muted leading-relaxed">
+                {getSafeResponseBoundary('academy_director')}
+              </p>
             </div>
 
             {/* Draft creation — only for non-query action intents */}
