@@ -6,6 +6,14 @@ import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import type { SaveExecutionInput, SaveExecutionResult, SaveAttendanceInput, SaveAttendanceResult } from './actions'
 import type { SessionBlock, SessionExercise, RosterPlayer } from './page'
 
+const STAGE_TEXT: Record<string, string> = {
+  red_foundation:     'text-red-400',
+  orange_development: 'text-amber-400',
+  green_performance:  'text-green-400',
+  yellow_competitive: 'text-yellow-300',
+  high_performance:   'text-violet-400',
+}
+
 interface Props {
   sessionId: string
   initialStatus: 'planned' | 'in_progress' | 'completed' | 'cancelled'
@@ -144,7 +152,14 @@ export function CoachSessionExecutionClient({
             <div className="space-y-2">
               {roster.map(player => (
                 <div key={player.playerId} className="flex items-center gap-3">
-                  <p className="text-sm text-text-primary flex-1 min-w-0 truncate">{player.fullName}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-text-primary truncate">{player.fullName}</p>
+                    {player.curriculumLevelName && (
+                      <p className={`text-[10px] font-medium mt-0.5 ${STAGE_TEXT[player.curriculumStage ?? ''] ?? 'text-text-muted'}`}>
+                        {player.curriculumLevelName}
+                      </p>
+                    )}
+                  </div>
                   <div className="flex gap-1 shrink-0">
                     {(['present', 'absent', 'late', 'excused'] as const).map(s => (
                       <button

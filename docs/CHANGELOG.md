@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-03 — Sprint 210: Coach Workspace Live Session Curriculum Context
+
+**Mode:** UI enrichment. No schema changes. No migrations. Read-only curriculum data.
+
+**What was built:**
+- Coach session page now fetches `player_curriculum_states` + `curriculum_levels` for all roster players.
+- `RosterPlayer` interface extended with `curriculumLevelName` and `curriculumStage`.
+- Attendance roster in `CoachSessionExecutionClient` shows each player's curriculum level in stage color below their name.
+- Stage colors: red (Red Foundation), amber (Orange Development), green (Green Performance), yellow (Yellow Competitive), violet (High Performance).
+
+**Safety:** Read-only fetch. No mutations. Academy-scoped query.
+
+**TypeScript:** 0 errors.
+
+### Files changed
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Added curriculum state fetch; extended RosterPlayer interface.
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — Added STAGE_TEXT map; renders curriculum level below player name.
+
+---
+
 ## 2026-05-03 — Sprint 209: Placement Engine V1
 
 **Mode:** New page + server actions. No schema changes. No migrations.

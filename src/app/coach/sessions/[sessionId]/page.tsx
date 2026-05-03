@@ -37,6 +37,8 @@ export interface RosterPlayer {
   playerId: string
   fullName: string
   currentStatus: 'present' | 'absent' | 'late' | 'excused' | null
+  curriculumLevelName: string | null
+  curriculumStage: string | null
 }
 
 export default async function CoachSessionDetailPage({ params }: PageProps) {
@@ -162,14 +164,36 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         attendanceMap.set(a.player_id, a.status)
       }
 
+      // Curriculum levels for roster players
+      const curricMap: Record<string, { levelName: string; stage: string }> = {}
+      if (playerIds.length > 0) {
+        const rawDb2 = supabase as any
+        const { data: stateRows } = await rawDb2
+          .from('player_curriculum_states')
+          .select('player_id, curriculum_levels(display_name, stage)')
+          .eq('academy_id', academyId)
+          .in('player_id', playerIds)
+        for (const row of (stateRows ?? [])) {
+          if (row.curriculum_levels) {
+            curricMap[row.player_id] = {
+              levelName: row.curriculum_levels.display_name,
+              stage: row.curriculum_levels.stage,
+            }
+          }
+        }
+      }
+
       for (const p of players ?? []) {
         const raw = attendanceMap.get(p.id) ?? null
+        const curric = curricMap[p.id] ?? null
         roster.push({
           playerId: p.id,
           fullName: p.full_name ?? `${p.first_name} ${p.last_name}`,
           currentStatus: (raw === 'present' || raw === 'absent' || raw === 'late' || raw === 'excused')
             ? raw
             : null,
+          curriculumLevelName: curric?.levelName ?? null,
+          curriculumStage: curric?.stage ?? null,
         })
       }
     }
