@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-03 — Sprint 212: Conversational Command Architecture Audit
+
+**Mode:** Audit + documentation. No code changes.
+
+**What was documented:**
+- Full map of existing command-like systems: voice notes + structuring, AI suggestions, proposed_actions lifecycle, director review queue.
+- proposed_actions schema: action_type DB enum, target_module string, voice_command_id FK requirement.
+- Role/membership patterns: director/head_coach write paths, coach session paths, player/parent stubs.
+- Parent/player portal current state (both stub-only).
+- Safe V1 command intents for the command center (8 intents).
+- Blocked command intents (6 categories).
+- No-code next sprint plan for Sprints 213–221.
+- Architecture principle confirmation: voice/text creates → proposed_actions/drafts → director approves.
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `docs/conversational-os/conversational-command-architecture-audit.md` — Full architecture audit for conversational OS foundation.
+
+---
+
 ## 2026-05-03 — Recovery Sprint 206: Skill Path Tab Content V1
 
 **Mode:** Tab content reorganization. No schema changes. No migrations. No mutations.
