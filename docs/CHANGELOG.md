@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-03 — Sprint 226: Learning Modules → Player Next Mission V1
+
+**Mode:** Pure helper update + UI display. No DB writes. No AI calls. No migrations.
+
+**What was built:**
+- `playerProgressQa.ts` — updated `PlayerProgressQaAnswer` with `mini_challenge`, `reflection_question`, `try_this` fields (nullable); `PlayerProgressQaInput` now accepts optional `learningModuleHint`; `what_to_practice` answer populates these from the hint if available; graceful fallback if no hint
+- `PlayerQaPreviewPanel.tsx` — now shows "Mission", "Try this", "This week's challenge", "Reflection" sections below the answer when the `what_to_practice` intent is active
+- `page.tsx` (player profile) — computes `qaLearningModuleHint` from `buildModuleForLevelDomain()` using first coach language entry; passed to `PlayerQaPreviewPanel`
+- `components/player/PlayerMissionPreview.tsx` — new component for player home page showing strength, mission, next win, current level (empty state if all null)
+- `app/player/page.tsx` — uses `PlayerMissionPreview` replacing old placeholder card
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/components/player/PlayerMissionPreview.tsx` — player-facing mission display component.
+
+### Files modified
+- `src/lib/player/playerProgressQa.ts` — `QaLearningModuleHint` type, new answer fields, learning module integration.
+- `src/app/director/players/[playerId]/PlayerQaPreviewPanel.tsx` — Mission/Try this/Reflection sections.
+- `src/app/director/players/[playerId]/page.tsx` — import `buildModuleForLevelDomain`, compute `qaLearningModuleHint`, pass to panel.
+- `src/app/player/page.tsx` — `PlayerMissionPreview` replacing placeholder.
+
+---
+
 ## 2026-05-03 — Sprint 225: Coach Recap Director Review Preview V1
 
 **Mode:** Read-only display improvement. No new tables. No migrations. No writes.

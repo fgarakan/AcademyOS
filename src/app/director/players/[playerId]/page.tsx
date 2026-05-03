@@ -45,7 +45,8 @@ import { CoachPlayerSnapshot } from '@/components/player/CoachPlayerSnapshot'
 import { ProgressEvidenceTimeline } from '@/components/player/ProgressEvidenceTimeline'
 import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
 import { ParentGuidancePreviewPanel } from './ParentGuidancePreviewPanel'
-import type { QaDrillRow, QaCoachLanguageRow } from '@/lib/player/playerProgressQa'
+import type { QaDrillRow, QaCoachLanguageRow, QaLearningModuleHint } from '@/lib/player/playerProgressQa'
+import { buildModuleForLevelDomain, type LearningModuleDomain } from '@/lib/curriculum/learningModules'
 
 interface PageProps {
   params: { playerId: string }
@@ -237,6 +238,44 @@ export default async function PlayerProfilePage({ params }: PageProps) {
       .select('domain, doing_well, working_on, current_focus, next_step')
       .eq('level_id', curriculumSummary.current_level_id)
     qaCoachLanguage = clData ?? []
+  }
+
+  // Build learning module hint for Player Q&A "what_to_practice" answer (Sprint 226)
+  // Uses first coach language entry to pick the most relevant domain module — no DB calls.
+  let qaLearningModuleHint: QaLearningModuleHint | null = null
+  if (curriculumSummary?.current_level_id && qaCoachLanguage.length > 0) {
+    const firstCl = qaCoachLanguage[0]
+    const validDomains: LearningModuleDomain[] = [
+      'Technical', 'Tactical', 'Movement', 'Competition',
+      'Mentality', 'Fitness', 'Recovery', 'Lifestyle',
+    ]
+    const domain = validDomains.includes(firstCl.domain as LearningModuleDomain)
+      ? (firstCl.domain as LearningModuleDomain)
+      : 'Technical'
+    try {
+      const mod = buildModuleForLevelDomain({
+        levelId: curriculumSummary.current_level_id,
+        levelName: curriculumSummary.current_level_name ?? 'Current Level',
+        levelStage: curriculumSummary.stage ?? '',
+        domain,
+        gates: levelGates.map((g: any) => ({
+          id: g.id, from_level_id: curriculumSummary.current_level_id!, domain: g.domain,
+          criterion: g.criterion, threshold: g.threshold ?? '',
+        })),
+        drills: qaTopDrills.map((d: any) => ({
+          id: d.id, level_min_id: curriculumSummary.current_level_id!, domain: d.domain,
+          name: d.name, objective: d.objective,
+        })),
+        coachLang: { level_id: curriculumSummary.current_level_id!, ...firstCl },
+      })
+      qaLearningModuleHint = {
+        mini_challenge: mod.mini_challenge,
+        reflection_question: mod.reflection_question,
+        try_this: mod.try_this,
+      }
+    } catch {
+      // graceful fallback — hint stays null
+    }
   }
 
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
@@ -690,6 +729,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         gates={levelGates}
         drills={qaTopDrills}
         coachLanguage={qaCoachLanguage}
+        learningModuleHint={qaLearningModuleHint}
       />
 
     </div>

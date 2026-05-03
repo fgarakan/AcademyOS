@@ -1,5 +1,6 @@
-import { Zap, TrendingUp, Trophy, MessageCircle } from 'lucide-react'
+import { TrendingUp, Trophy, MessageCircle } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
+import { PlayerMissionPreview } from '@/components/player/PlayerMissionPreview'
 
 const COMING_SOON = ['Progress tracking', 'Skill badges', 'Competition log']
 
@@ -15,27 +16,12 @@ export default function PlayerHome() {
       </div>
 
       {/* ── Today's Mission ───────────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
-              <Zap className="w-4 h-4 text-lime" />
-            </div>
-            <div>
-              <p className="font-semibold text-text-primary text-sm">Today's Mission</p>
-              <p className="text-text-muted text-xs">What your coach has set for you today</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <EmptyState
-            icon={<Zap className="w-5 h-5" />}
-            title="No mission set for today"
-            description="Check back after your next session with your coach."
-            className="py-10"
-          />
-        </CardContent>
-      </Card>
+      <PlayerMissionPreview
+        strength={null}
+        mission={null}
+        nextWin={null}
+        currentLevel={null}
+      />
 
       {/* ── My Skills ─────────────────────────────────────────── */}
       <Card>

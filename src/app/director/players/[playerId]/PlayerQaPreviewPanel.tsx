@@ -133,8 +133,29 @@ export function PlayerQaPreviewPanel(props: Props) {
 
             {answer.next_mission && (
               <div className="pt-2 border-t border-border">
-                <p className="text-[10px] text-text-muted mb-0.5">Next mission</p>
+                <p className="text-[10px] text-text-muted mb-0.5">Mission</p>
                 <p className="text-[11px] text-lime font-medium">{answer.next_mission}</p>
+              </div>
+            )}
+
+            {answer.try_this && (
+              <div>
+                <p className="text-[10px] text-text-muted mb-0.5">Try this</p>
+                <p className="text-[11px] text-text-secondary leading-relaxed">{answer.try_this}</p>
+              </div>
+            )}
+
+            {answer.mini_challenge && (
+              <div>
+                <p className="text-[10px] text-text-muted mb-0.5">This week&apos;s challenge</p>
+                <p className="text-[11px] text-text-secondary leading-relaxed">{answer.mini_challenge}</p>
+              </div>
+            )}
+
+            {answer.reflection_question && (
+              <div>
+                <p className="text-[10px] text-text-muted mb-0.5">Reflection</p>
+                <p className="text-[11px] text-text-secondary italic leading-relaxed">{answer.reflection_question}</p>
               </div>
             )}
 

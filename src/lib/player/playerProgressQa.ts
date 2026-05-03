@@ -1,4 +1,4 @@
-// Player Progress Q&A — Sprint 218
+// Player Progress Q&A — Sprint 218 / updated Sprint 226
 // Pure deterministic helper. No DB calls. No AI. No side effects. No writes.
 // Used by PlayerQaPreviewPanel (director preview only — player portal not yet built).
 
@@ -36,6 +36,12 @@ export interface QaCoachLanguageRow {
   next_step: string
 }
 
+export interface QaLearningModuleHint {
+  mini_challenge: string
+  reflection_question: string
+  try_this: string | null
+}
+
 export interface PlayerProgressQaInput {
   currentLevelName: string | null
   currentLevelStage: string | null
@@ -44,6 +50,7 @@ export interface PlayerProgressQaInput {
   gates: QaGateRow[]
   drills: QaDrillRow[]
   coachLanguage: QaCoachLanguageRow[]
+  learningModuleHint?: QaLearningModuleHint | null
 }
 
 export interface PlayerProgressQaAnswer {
@@ -52,6 +59,9 @@ export interface PlayerProgressQaAnswer {
   answer: string
   bullets: string[]
   next_mission: string | null
+  mini_challenge: string | null
+  reflection_question: string | null
+  try_this: string | null
   safety_note: string | null
   source_labels: string[]
   blocked_reason: string | null
@@ -80,6 +90,9 @@ export function buildPlayerProgressAnswer(
         'Your academy has not assigned a curriculum level yet. A coach or director can set your starting point.',
       bullets: [],
       next_mission: null,
+      mini_challenge: null,
+      reflection_question: null,
+      try_this: null,
       safety_note: null,
       source_labels: [],
       blocked_reason: null,
@@ -100,6 +113,9 @@ export function buildPlayerProgressAnswer(
         answer: `You are currently in ${levelName}${stage ? ` — ${stage} stage` : ''}.${nextName ? ` Your next target is ${nextName}.` : ''}`,
         bullets: nextName ? [`Next target: ${nextName}`] : [],
         next_mission: nextName ? `Keep building toward ${nextName}` : null,
+        mini_challenge: null,
+        reflection_question: null,
+        try_this: null,
         safety_note: null,
         source_labels: ['curriculum level', 'player curriculum state'],
         blocked_reason: null,
@@ -119,6 +135,9 @@ export function buildPlayerProgressAnswer(
           : `You are in ${levelName}. Focus on the skill areas your coach has outlined and keep showing up.`,
         bullets: focusPhrases,
         next_mission: focusPhrases[0] ?? null,
+        mini_challenge: null,
+        reflection_question: null,
+        try_this: null,
         safety_note: null,
         source_labels: ['curriculum level', 'coach language'],
         blocked_reason: null,
@@ -136,6 +155,9 @@ export function buildPlayerProgressAnswer(
             : `Talk with your coach — they will walk you through exactly what to focus on for your next step.`,
         bullets: gateTexts,
         next_mission: gateTexts[0] ?? null,
+        mini_challenge: null,
+        reflection_question: null,
+        try_this: null,
         safety_note: null,
         source_labels: ['curriculum gates', 'curriculum level'],
         blocked_reason: null,
@@ -147,6 +169,9 @@ export function buildPlayerProgressAnswer(
         .slice(0, 5)
         .map((d) => `${d.name} — ${d.objective}`)
       const topFocus = input.coachLanguage[0]?.current_focus ?? null
+      const hint = input.learningModuleHint ?? null
+      const sourceLabels: string[] = ['curriculum drills', 'coach language']
+      if (hint) sourceLabels.push('curriculum learning module')
       return {
         question_intent: 'what_to_practice',
         title: 'What to work on right now',
@@ -158,8 +183,11 @@ export function buildPlayerProgressAnswer(
             ? drillLines
             : ['Ask your coach to walk you through your current drill set.'],
         next_mission: topFocus,
+        mini_challenge: hint?.mini_challenge ?? null,
+        reflection_question: hint?.reflection_question ?? null,
+        try_this: hint?.try_this ?? null,
         safety_note: null,
-        source_labels: ['curriculum drills', 'coach language'],
+        source_labels: sourceLabels,
         blocked_reason: null,
       }
     }
@@ -182,6 +210,9 @@ export function buildPlayerProgressAnswer(
           ...workingOn.slice(0, 2).map((s) => `Working on: ${s}`),
         ],
         next_mission: null,
+        mini_challenge: null,
+        reflection_question: null,
+        try_this: null,
         safety_note: null,
         source_labels: ['curriculum level', 'coach language'],
         blocked_reason: null,
@@ -201,6 +232,9 @@ export function buildPlayerProgressAnswer(
           'What does this level mean?',
         ],
         next_mission: null,
+        mini_challenge: null,
+        reflection_question: null,
+        try_this: null,
         safety_note: null,
         source_labels: [],
         blocked_reason: null,
