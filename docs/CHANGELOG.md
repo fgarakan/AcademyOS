@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-03 — Sprint 230: Player Portal Live Development Plan V1
+
+**Mode:** Player portal auth + IDP integration. No schema changes. No migrations. Read-only.
+
+**What was built:**
+- `/player` route now resolves auth user → `players.profile_id` → player record
+- If no mapping exists, shows safe empty state with "ask your coach to connect your profile" message
+- If mapping exists, fetches curriculum state, gates, drills, coach language, active priorities
+- Builds `IndividualDevelopmentPlan` using `buildIndividualDevelopmentPlan()`
+- Renders player role view: Today's Mission, What to Work On, What to Understand, Next Evidence to Show, This Week's Challenge (learning module), Q&A answer
+- All data is player-safe: no coach observations, no assessment scores, no other-player data
+
+**Known limitation:** `players.profile_id` may not be set in current data. If not set, player sees safe empty state.
+
+**QA results:**
+- `audit-curriculum-product-language.mjs` — PASS
+- TypeScript: 0 errors
+
+### Files modified
+- `src/app/player/page.tsx` — auth + IDP resolution, live development plan sections
+
+---
+
 ## 2026-05-03 — Sprint 229: Player Individual Development Plan Model V1
 
 **Mode:** New pure helper + doc. No DB calls. No AI. No migration. No routes changed.
