@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-03 — Sprint 196: Player Profile Curriculum Connection V1
+
+**Mode:** UI-only. No schema changes. No new migrations. No npm installs.
+
+**What was built:**
+- `PlayerCurriculumCard` — new component showing Skill Track level, Competition Track level (from `player_curriculum_states.competition_track_level_id`), Fitness phase (from `player_curriculum_states.fitness_path_phase`), next target level, and "Explore" link to `/director/curriculum`. Premium empty state when no curriculum assigned.
+- Player profile Overview tab sidebar: `PlayerCurriculumCard` added above existing `LevelProgressCard`.
+- Player profile page: added sequential queries for `competition_track_level_id` and `fitness_path_phase` from `player_curriculum_states` using `rawDb` pattern; fetches competition track level name from `curriculum_levels`.
+
+**Safety:** Read-only. No level assignment. No data writes. RLS enforced via academy_id + player_id scoping. rawDb cast used only for cross-table joins where TS2589 would occur.
+
+**TypeScript result:** 0 errors.
+
+### Files changed
+- `src/components/player/PlayerCurriculumCard.tsx` — New. Curriculum track summary card.
+- `src/app/director/players/[playerId]/page.tsx` — Added competition/fitness curriculum state query and `PlayerCurriculumCard` render in Overview sidebar.
+
+---
+
 ## 2026-05-03 — Sprint 195: Coach Language Layer UX V1
 
 **Mode:** UI-only. No schema changes. No new migrations. No AI calls.

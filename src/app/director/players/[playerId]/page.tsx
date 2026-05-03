@@ -27,6 +27,7 @@ import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { PlayerProfileTabs } from './_components/PlayerProfileTabs'
 import { PlayerCurriculumAssignmentCard } from './PlayerCurriculumAssignmentCard'
+import { PlayerCurriculumCard } from '@/components/player/PlayerCurriculumCard'
 import { resolveAcademyCurriculumContext } from '@/lib/curriculum/academyCurriculumResolution'
 import { PlayerRequirementProgressReadOnly, type RequirementProgressRow } from './PlayerRequirementProgressReadOnly'
 import { confirmRequirementProgressStatusAction } from './requirementProgressConfirmationAction'
@@ -35,6 +36,10 @@ import { EvidenceRequirementDraftButton } from './EvidenceRequirementDraftButton
 import { EvidenceRequirementDrafts, type EvidenceRequirementDraftRow } from './EvidenceRequirementDrafts'
 import { createEvidenceRequirementLinkDraftsAction } from './evidenceRequirementDraftAction'
 import { FitnessHomeworkRecommendationButton } from './FitnessHomeworkRecommendationButton'
+import { DevelopmentProfileSummaryCard } from '@/components/player/DevelopmentProfileSummaryCard'
+import { LevelProgressCard } from '@/components/player/LevelProgressCard'
+import { CoachPlayerSnapshot } from '@/components/player/CoachPlayerSnapshot'
+import { ProgressEvidenceTimeline } from '@/components/player/ProgressEvidenceTimeline'
 
 interface PageProps {
   params: { playerId: string }
@@ -94,41 +99,145 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     not_started: domainRows.filter(r => r.status === 'not_started').length,
   }
 
+  // rawDb cast avoids TS2589 on multi-join selects; RLS already enforces academy scoping.
+  const rawDb = supabase as any
+
+  const developmentSummary = await getPlayerDevelopmentSummary(supabase, params.playerId)
+
+  // Active priorities: scoped by academy_id + player_id, filtered to is_active = true.
+  const { data: rawPriorities } = await rawDb
+    .from('player_priorities')
+    .select('id, title, description, category, status, priority_level, priority_rank, urgency, generated_at, updated_at')
+    .eq('academy_id', academyId)
+    .eq('player_id', params.playerId)
+    .eq('is_active', true)
+    .order('priority_rank', { ascending: true })
+  const activePriorities: PlayerPriorityRow[] = rawPriorities ?? []
+
+  // Progression requirements: level requirements + next level derivation.
+  // curriculum_levels and v_curriculum_level_requirements are readable by all authenticated users.
+  let progressionRequirements: {
+    sort_order: number | null
+    level_number: number | null
+    min_assessment_score: number | null
+    min_domains_mastered: number | null
+    min_total_outcomes: number | null
+    min_weeks_at_level: number | null
+    requires_director_approval: boolean | null
+    requires_final_assessment: boolean | null
+    blocking_signal_types: string[] | null
+  } | null = null
+  let nextCurriculumLevel: { display_name: string; level_number: number; stage: string } | null = null
+
+  if (curriculumSummary?.current_level_id) {
+    const { data: reqData } = await rawDb
+      .from('v_curriculum_level_requirements')
+      .select('sort_order, level_number, min_assessment_score, min_domains_mastered, min_total_outcomes, min_weeks_at_level, requires_director_approval, requires_final_assessment, blocking_signal_types')
+      .eq('level_id', curriculumSummary.current_level_id)
+      .limit(1)
+    progressionRequirements = reqData?.[0] ?? null
+
+    if (progressionRequirements?.sort_order != null) {
+      const { data: nextLvlData } = await rawDb
+        .from('curriculum_levels')
+        .select('display_name, level_number, stage, sort_order')
+        .gt('sort_order', progressionRequirements.sort_order)
+        .order('sort_order', { ascending: true })
+        .limit(1)
+      nextCurriculumLevel = nextLvlData?.[0] ?? null
+    }
+  }
+
+  // Extended curriculum state: competition track level + fitness path phase (migration 052 fields).
+  // These columns were added via ADD COLUMN IF NOT EXISTS — safe to query even if migration is partial.
+  let competitionTrackLevelName: string | null = null
+  let fitnessPathPhase: string | null = null
+
+  if (hasCurriculum) {
+    const { data: pcsRow } = await rawDb
+      .from('player_curriculum_states')
+      .select('competition_track_level_id, fitness_path_phase')
+      .eq('player_id', params.playerId)
+      .eq('academy_id', academyId)
+      .limit(1)
+    const pcs = pcsRow?.[0] ?? null
+
+    fitnessPathPhase = pcs?.fitness_path_phase ?? null
+
+    if (pcs?.competition_track_level_id) {
+      const { data: ctLevel } = await rawDb
+        .from('curriculum_levels')
+        .select('display_name')
+        .eq('id', pcs.competition_track_level_id)
+        .single()
+      competitionTrackLevelName = ctLevel?.display_name ?? null
+    }
+  }
+
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6 items-start">
 
-      {/* Player Info */}
-      <Card>
-        <CardHeader>
-          <p className="label-xs">Player Info</p>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-0">
-          <div>
-            <p className="text-[11px] text-text-muted mb-0.5">Status</p>
-            <p className="text-sm text-text-primary capitalize">
-              {player.status?.replace(/_/g, ' ') ?? '—'}
-            </p>
-          </div>
-          <div>
-            <p className="text-[11px] text-text-muted mb-0.5">Joined</p>
-            <p className="text-sm text-text-primary">{formatDate(player.join_date)}</p>
-          </div>
-          <div>
-            <p className="text-[11px] text-text-muted mb-0.5">Date of birth</p>
-            <p className="text-sm text-text-primary">{formatDate(player.date_of_birth)}</p>
-          </div>
-          {player.notes && (
-            <div>
-              <p className="text-[11px] text-text-muted mb-0.5">Notes</p>
-              <p className="text-sm text-text-secondary leading-relaxed">{player.notes}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Left column: player info + development summary */}
+      <div className="space-y-6">
 
-      {/* Coach Focus summary */}
+        {/* Player Info */}
+        <Card>
+          <CardHeader>
+            <p className="label-xs">Player Info</p>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-0">
+            <div>
+              <p className="text-[11px] text-text-muted mb-0.5">Status</p>
+              <p className="text-sm text-text-primary capitalize">
+                {player.status?.replace(/_/g, ' ') ?? '—'}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] text-text-muted mb-0.5">Joined</p>
+              <p className="text-sm text-text-primary">{formatDate(player.join_date)}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-text-muted mb-0.5">Date of birth</p>
+              <p className="text-sm text-text-primary">{formatDate(player.date_of_birth)}</p>
+            </div>
+            {player.notes && (
+              <div>
+                <p className="text-[11px] text-text-muted mb-0.5">Notes</p>
+                <p className="text-sm text-text-secondary leading-relaxed">{player.notes}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Development Profile Summary — internal coach view */}
+        <DevelopmentProfileSummaryCard summary={developmentSummary} priorities={activePriorities} />
+
+      </div>
+
+      {/* Right sidebar */}
       <div className="space-y-4">
+
+        {/* Curriculum card — Skill Track + Competition Track + Fitness + link to /director/curriculum */}
+        <PlayerCurriculumCard
+          skillTrackLevelName={curriculumSummary?.current_level_name ?? null}
+          skillTrackStage={curriculumSummary?.stage ?? null}
+          competitionTrackLevelName={competitionTrackLevelName}
+          fitnessPathPhase={fitnessPathPhase}
+          nextLevelName={nextCurriculumLevel?.display_name ?? null}
+          hasCurriculumState={hasCurriculum}
+        />
+
+        {/* Level Progress */}
+        <LevelProgressCard
+          currentLevelName={curriculumSummary?.current_level_name ?? null}
+          currentStage={curriculumSummary?.stage ?? null}
+          nextLevelName={nextCurriculumLevel?.display_name ?? null}
+          advancementEligible={curriculumSummary?.advancement_eligible ?? null}
+          hasCurriculumState={!!curriculumSummary}
+          requiresDirectorApproval={progressionRequirements?.requires_director_approval ?? null}
+        />
+
         <p className="label-xs">Coach Focus</p>
 
         <Card>
@@ -165,6 +274,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
             </CardContent>
           </Card>
         )}
+
       </div>
 
     </div>
@@ -268,7 +378,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   // ─── Tab 5: Notes ─────────────────────────────────────────────────────────
   // Enriched observation query: academy_id + player_id scoped, with coach name and session context.
   // rawDb cast avoids TS2589 on the multi-join select; RLS already enforces academy scoping.
-  const rawDb = supabase as any
   const { data: rawObs } = await rawDb
     .from('coach_observations')
     .select([
@@ -281,19 +390,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     .order('created_at', { ascending: false })
     .limit(20)
   const enrichedObservations: CoachObservationRow[] = rawObs ?? []
-
-  const developmentSummary = await getPlayerDevelopmentSummary(supabase, params.playerId)
-
-  // Active priorities: scoped by academy_id + player_id, filtered to is_active = true.
-  // rawDb cast avoids TS2589; RLS enforces academy scoping at the DB level.
-  const { data: rawPriorities } = await rawDb
-    .from('player_priorities')
-    .select('id, title, description, category, status, priority_level, priority_rank, urgency, generated_at, updated_at')
-    .eq('academy_id', academyId)
-    .eq('player_id', params.playerId)
-    .eq('is_active', true)
-    .order('priority_rank', { ascending: true })
-  const activePriorities: PlayerPriorityRow[] = rawPriorities ?? []
 
   // Priority recommendation drafts: pending/approved for this player, newest first.
   // rawDb cast avoids TS2589; RLS enforces academy scoping.
@@ -309,7 +405,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const recommendationDrafts: PriorityRecommendationDraftRow[] = rawDrafts ?? []
 
   // Evidence link drafts: pending/approved requirement_evidence_link proposed_actions for this player.
-  // rawDb cast avoids TS2589; RLS enforces academy scoping.
   const { data: rawEvidenceDrafts } = await rawDb
     .from('proposed_actions')
     .select('id, status, proposed_payload, created_at')
@@ -323,7 +418,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   // Requirement progress: read from v_player_requirement_progress_detail.
   // New view not yet in database.types.ts — rawDb cast + local interface used.
-  // Type regeneration required after migrations 041–044 are applied to live DB.
   const { data: rawRequirementProgress } = await rawDb
     .from('v_player_requirement_progress_detail')
     .select([
@@ -342,8 +436,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const requirementProgressRows: RequirementProgressRow[] = rawRequirementProgress ?? []
 
   // Sprint 40: fetch official requirement_evidence_links for this player's progress rows.
-  // Scoped to academy_id + player_id. rawDb cast: table not yet in database.types.ts.
-  // Sequential queries per AI_BACKEND_RULES.md rule 5.
   const evidenceByProgressId: Record<string, RequirementEvidenceDetailRow[]> = {}
 
   if (requirementProgressRows.length > 0) {
@@ -442,41 +534,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const createEvidenceDraftAction = createEvidenceRequirementLinkDraftsAction.bind(null, params.playerId)
   const confirmProgressAction = confirmRequirementProgressStatusAction.bind(null, params.playerId)
 
-  // Progression requirements: level requirements + next level derivation.
-  // rawDb cast avoids TS2589; curriculum_levels and v_curriculum_level_requirements are
-  // readable by all authenticated users (RLS: "Authenticated read" policies on both tables).
-  let progressionRequirements: {
-    sort_order: number | null
-    level_number: number | null
-    min_assessment_score: number | null
-    min_domains_mastered: number | null
-    min_total_outcomes: number | null
-    min_weeks_at_level: number | null
-    requires_director_approval: boolean | null
-    requires_final_assessment: boolean | null
-    blocking_signal_types: string[] | null
-  } | null = null
-  let nextCurriculumLevel: { display_name: string; level_number: number; stage: string } | null = null
-
-  if (curriculumSummary?.current_level_id) {
-    const { data: reqData } = await rawDb
-      .from('v_curriculum_level_requirements')
-      .select('sort_order, level_number, min_assessment_score, min_domains_mastered, min_total_outcomes, min_weeks_at_level, requires_director_approval, requires_final_assessment, blocking_signal_types')
-      .eq('level_id', curriculumSummary.current_level_id)
-      .limit(1)
-    progressionRequirements = reqData?.[0] ?? null
-
-    if (progressionRequirements?.sort_order != null) {
-      const { data: nextLvlData } = await rawDb
-        .from('curriculum_levels')
-        .select('display_name, level_number, stage, sort_order')
-        .gt('sort_order', progressionRequirements.sort_order)
-        .order('sort_order', { ascending: true })
-        .limit(1)
-      nextCurriculumLevel = nextLvlData?.[0] ?? null
-    }
-  }
-
   const progressionScores = (player as any).player_progression?.[0] ?? null
 
   const addObsAction = addObservationAction.bind(null, params.playerId, academyId)
@@ -486,6 +543,17 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   const notesSlot = (
     <div className="space-y-6">
+
+      {/* Coach Snapshot — pre-session overview for coaches */}
+      <CoachPlayerSnapshot
+        currentFocus={developmentSummary?.development_focus ?? null}
+        doingWell={developmentSummary?.current_strengths ?? []}
+        workingOn={developmentSummary?.things_to_work_on ?? []}
+        topPriority={activePriorities[0]?.title ?? null}
+        recentNote={(enrichedObservations[0] as any)?.content ?? null}
+        recentNoteDate={(enrichedObservations[0] as any)?.created_at ?? null}
+        updatedAt={developmentSummary?.updated_at ?? null}
+      />
 
       {/* Development Summary display */}
       <Card>
@@ -541,9 +609,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         } : null}
       />
 
-      {/* Requirement progress — Sprint 35 read-only view, Sprint 39 adds manual confirmation.
-          Groups by Skill / Competition / Fitness domain.
-          Director/head_coach can manually confirm status. No automatic level movement. */}
+      {/* Requirement progress — Sprint 35 read-only view, Sprint 39 adds manual confirmation. */}
       <PlayerRequirementProgressReadOnly
         rows={requirementProgressRows}
         hasCurriculumState={!!curriculumSummary}
@@ -553,12 +619,10 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         evidenceByProgressId={evidenceByProgressId}
       />
 
-      {/* Evidence link drafts — Sprint 36 read-only display of pending drafts.
-          Draft only. No requirement_evidence_links created. No progress mutations. */}
+      {/* Evidence link drafts — Sprint 36 read-only display of pending drafts. */}
       <EvidenceRequirementDrafts drafts={evidenceLinkDrafts} />
 
-      {/* Create evidence link drafts — Sprint 36 deterministic matching draft only.
-          No requirement status updates. No parent/player views. Director/staff only. */}
+      {/* Create evidence link drafts — Sprint 36 deterministic matching draft only. */}
       <Card>
         <CardHeader>
           <p className="label-xs">Evidence Linking</p>
@@ -586,6 +650,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           <PriorityRecommendationDraftButton onCreateDraft={createDraftAction} />
         </CardContent>
       </Card>
+
+      {/* Progress Evidence Timeline */}
+      <ProgressEvidenceTimeline items={enrichedObservations as any} />
 
       {/* Internal Coach Observations feed */}
       <div>
