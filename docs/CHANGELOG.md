@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-02 — Sprint 191: Build premium curriculum explorer
+
+**Mode:** UI-only. No schema changes. No new migrations. No npm installs.
+
+**Route:** `/director/curriculum` — rewrites the existing director curriculum page.
+
+**New UI:** Premium Curriculum Explorer with:
+- Summary bar: 15 levels, 57 gates, 152 drills, 120 coach language entries, product-clean badge
+- Stage navigation tabs: Red / Orange / Green / Yellow / HP with level counts
+- Level card list (left panel): stage-color accented, gates + drills count per level, lime glow on selection
+- Level detail panel (right panel): exit gates by domain, drills preview, coach language sample, competition/fitness/volume snapshot
+- Graceful degradation when migration 052 tables are not yet applied
+
+**Data loading:** All curriculum tables loaded server-side via `getCurriculumExplorerData()`. Client component manages selection state only. No direct DB queries in client code.
+
+**Existing features preserved:** `AcademyCurriculumVersionCard` + `VoiceOverrideInputPanel` moved to secondary section below the explorer.
+
+**TypeScript result:** 0 errors.
+
+**QA:** 38/38 curriculum seed checks pass. Product-language audit: PASS.
+
+### Files changed
+- `src/lib/backend/curriculumExplorer.ts` — New. Types + `getCurriculumExplorerData()` for migration 052 tables via rawDb pattern.
+- `src/components/curriculum/CurriculumExplorer.tsx` — New. Client component with stage nav and level selection state.
+- `src/components/curriculum/CurriculumLevelDetailPanel.tsx` — New. Detail panel: gates, drills, coach language, competition/fitness/volume.
+- `src/app/director/curriculum/page.tsx` — Rewritten. Server component loads explorer data; mounts CurriculumExplorer; keeps existing version card and voice panel.
+
+---
+
 ## 2026-05-03 — Sprint 190 Follow-up: Remove product language from curriculum seed data
 
 **Mode:** Follow-up hotfix. No UI. No schema changes. No new tables. No npm installs.
