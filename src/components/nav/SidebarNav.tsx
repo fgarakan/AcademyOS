@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
   Trophy, Brain, BarChart3, Settings, LogOut, Dumbbell, ClipboardList, FlaskConical,
-  ChevronRight, LayoutTemplate, Sparkles,
+  ChevronRight, LayoutTemplate, Sparkles, Terminal,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
@@ -20,6 +20,7 @@ const FOUNDATION_ITEMS = [
 ]
 
 const INTELLIGENCE_ITEMS = [
+  { label: 'Command Center', href: '/director/command-center', icon: Terminal },
   { label: 'AI Suggestions', href: '/director/ai-suggestions', icon: Sparkles },
   { label: 'Intelligence',   href: '/director/intelligence',   icon: Brain },
   { label: 'Competition',    href: '/director/competition',    icon: Trophy },

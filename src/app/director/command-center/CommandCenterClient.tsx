@@ -1,0 +1,356 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+import { Terminal, Send, Clock, ChevronRight, Loader2, ArrowRight } from 'lucide-react'
+import { Card, CardContent, CardHeader } from '@/components/ui'
+import { submitDirectorCommandAction } from './submitDirectorCommandAction'
+import type { ParsedCommandResult } from '@/lib/commands/parseAcademyCommand'
+
+interface RecentCommand {
+  id: string
+  raw_input: string
+  processing_status: string
+  created_at: string
+}
+
+interface CurriculumLevel {
+  id: string
+  display_name: string
+  stage: string
+}
+
+interface Props {
+  recentCommands: RecentCommand[]
+  curriculumLevels: CurriculumLevel[]
+}
+
+const EXAMPLE_COMMANDS = [
+  'Show players missing curriculum levels',
+  'Who is ready to advance?',
+  'What are the requirements for Orange 2?',
+  'Create a session draft for Orange 2 focused on movement',
+  'Show curriculum gap suggestions',
+  'Summarize players due for reassessment',
+]
+
+const INTENT_LABELS: Record<string, string> = {
+  show_players_missing_curriculum_level: 'Show players missing curriculum',
+  show_curriculum_gap_suggestions: 'Show curriculum gap suggestions',
+  create_session_draft: 'Create session draft',
+  create_group_draft: 'Create group draft',
+  record_director_note: 'Record director note',
+  ask_curriculum_level_requirements: 'Look up curriculum level requirements',
+  summarize_reassessment_pipeline: 'Summarize reassessment pipeline',
+  show_advancement_eligible: 'Show advancement-eligible players',
+  unknown: 'Unknown command',
+}
+
+export function CommandCenterClient({ recentCommands, curriculumLevels }: Props) {
+  const [input, setInput] = useState('')
+  const [result, setResult] = useState<ParsedCommandResult | null>(null)
+  const [draftCreated, setDraftCreated] = useState<{ id: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isParsing, startParseTransition] = useTransition()
+  const [isCreatingDraft, startDraftTransition] = useTransition()
+
+  function handleExample(example: string) {
+    setInput(example)
+    setResult(null)
+    setDraftCreated(null)
+    setError(null)
+  }
+
+  function handleParse() {
+    if (!input.trim()) return
+    setResult(null)
+    setDraftCreated(null)
+    setError(null)
+
+    startParseTransition(async () => {
+      const res = await submitDirectorCommandAction(input.trim(), 'parse_only')
+      if (res.error) {
+        setError(res.error)
+      } else if (res.parsed) {
+        setResult(res.parsed)
+      }
+    })
+  }
+
+  function handleCreateDraft() {
+    if (!result || !input.trim()) return
+    startDraftTransition(async () => {
+      const res = await submitDirectorCommandAction(input.trim(), 'create_draft')
+      if (res.error) {
+        setError(res.error)
+      } else if (res.draftId) {
+        setDraftCreated({ id: res.draftId })
+      }
+    })
+  }
+
+  const canCreateDraft =
+    result &&
+    result.intent_type !== 'unknown' &&
+    result.requires_confirmation &&
+    !result.will_not_do?.includes('query_only')
+
+  const isQueryOnly =
+    result &&
+    (result.intent_type === 'show_players_missing_curriculum_level' ||
+      result.intent_type === 'show_curriculum_gap_suggestions' ||
+      result.intent_type === 'ask_curriculum_level_requirements' ||
+      result.intent_type === 'show_advancement_eligible' ||
+      result.intent_type === 'summarize_reassessment_pipeline')
+
+  return (
+    <div className="space-y-6">
+
+      {/* Command input */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Terminal className="w-4 h-4 text-lime" />
+            <p className="label-xs">Command Input</p>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-3">
+          <div className="relative">
+            <textarea
+              value={input}
+              onChange={e => { setInput(e.target.value); setResult(null); setDraftCreated(null); setError(null) }}
+              onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleParse() }}
+              rows={3}
+              placeholder="Type what you want done…  e.g. 'Show players missing curriculum levels' or 'Create a session draft for Orange 2'"
+              className="w-full bg-surface-raised border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/50 resize-none"
+              disabled={isParsing || isCreatingDraft}
+            />
+            <p className="absolute bottom-2 right-3 text-[10px] text-text-muted pointer-events-none">⌘↵ to parse</p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleParse}
+              disabled={isParsing || isCreatingDraft || !input.trim()}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg btn-lime text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isParsing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              {isParsing ? 'Parsing…' : 'Parse Command'}
+            </button>
+            <p className="text-[11px] text-text-muted">
+              Parses your command into a structured intent. Nothing changes until you approve.
+            </p>
+          </div>
+
+          {error && (
+            <p className="text-xs text-status-red">{error}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Parsed result */}
+      {result && (
+        <Card>
+          <CardHeader>
+            <p className="label-xs">Parsed Intent</p>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-4">
+
+            {/* Intent + confidence */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className={[
+                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border',
+                result.intent_type === 'unknown'
+                  ? 'border-status-orange/30 bg-status-orange/5 text-status-orange'
+                  : 'border-lime/30 bg-lime/5 text-lime',
+              ].join(' ')}>
+                <Terminal className="w-3 h-3" />
+                {INTENT_LABELS[result.intent_type] ?? result.intent_type}
+              </span>
+              <span className={[
+                'text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border',
+                result.confidence === 'high' ? 'border-status-green/30 text-status-green' :
+                result.confidence === 'medium' ? 'border-status-orange/30 text-status-orange' :
+                'border-border text-text-muted',
+              ].join(' ')}>
+                {result.confidence} confidence
+              </span>
+              {isQueryOnly && (
+                <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border border-status-blue/30 text-status-blue">
+                  Query — no action taken
+                </span>
+              )}
+            </div>
+
+            {/* Extracted entities */}
+            {Object.keys(result.extracted_entities ?? {}).length > 0 && (
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Extracted</p>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(result.extracted_entities ?? {}).map(([key, value]) => (
+                    <span key={key} className="px-2 py-1 rounded-lg bg-surface-raised border border-border text-xs text-text-secondary">
+                      <span className="text-text-muted">{key}:</span>{' '}
+                      <span className="font-medium">{String(value)}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Missing information */}
+            {(result.missing_information ?? []).length > 0 && (
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Missing Information</p>
+                <ul className="space-y-0.5">
+                  {result.missing_information!.map((item, i) => (
+                    <li key={i} className="text-xs text-status-orange flex gap-1.5">
+                      <span className="shrink-0">·</span>{item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* What would happen */}
+            {result.suggested_next_step && (
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">What Would Happen</p>
+                <p className="text-xs text-text-secondary leading-relaxed">{result.suggested_next_step}</p>
+              </div>
+            )}
+
+            {/* What will NOT happen */}
+            {(result.will_not_do ?? []).length > 0 && (
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Will Not Do</p>
+                <ul className="space-y-0.5">
+                  {result.will_not_do!.map((item, i) => (
+                    <li key={i} className="text-xs text-text-muted flex gap-1.5">
+                      <span className="shrink-0 text-status-red">✕</span>{item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Query result / direct answer for query intents */}
+            {result.query_result && (
+              <div className="px-4 py-3 rounded-xl border border-border bg-surface-raised">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Result</p>
+                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">{result.query_result}</p>
+              </div>
+            )}
+
+            {/* Role check */}
+            <div className="flex items-center gap-2 text-[11px] text-text-muted">
+              <span className="text-status-green">✓</span>
+              Required role: <span className="font-semibold text-text-secondary">{result.role_required}</span>
+            </div>
+
+            {/* Draft creation — only for non-query action intents */}
+            {canCreateDraft && !isQueryOnly && !draftCreated && (
+              <div className="pt-3 border-t border-border">
+                <button
+                  onClick={handleCreateDraft}
+                  disabled={isCreatingDraft}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg btn-lime text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCreatingDraft
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <ArrowRight className="w-3.5 h-3.5" />
+                  }
+                  {isCreatingDraft ? 'Creating draft…' : 'Create Review Draft'}
+                </button>
+                <p className="text-[10px] text-text-muted mt-1.5">
+                  Creates a draft in the Review Queue. Nothing happens until you approve it there.
+                </p>
+              </div>
+            )}
+
+            {draftCreated && (
+              <div className="flex items-center gap-3 pt-3 border-t border-border">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-status-green/10 border border-status-green/30 text-xs text-status-green">
+                  ✓ Draft created in review queue
+                </div>
+                <a href="/director/review" className="text-xs text-lime hover:underline flex items-center gap-1">
+                  View Review Queue <ChevronRight className="w-3 h-3" />
+                </a>
+              </div>
+            )}
+
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Example commands */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Example Commands</p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="space-y-2">
+            {EXAMPLE_COMMANDS.map(example => (
+              <button
+                key={example}
+                onClick={() => handleExample(example)}
+                className="w-full text-left flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-border hover:border-lime/30 hover:bg-lime/3 transition-colors group"
+              >
+                <span className="text-sm text-text-secondary group-hover:text-text-primary transition-colors">
+                  {example}
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime transition-colors shrink-0" />
+              </button>
+            ))}
+          </div>
+
+          {curriculumLevels.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Available Curriculum Levels</p>
+              <div className="flex flex-wrap gap-1.5">
+                {curriculumLevels.map(l => (
+                  <span key={l.id} className="px-2 py-0.5 rounded text-[10px] border border-border text-text-muted">
+                    {l.display_name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent command history */}
+      {recentCommands.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5 text-text-muted" />
+              <p className="label-xs">Recent Commands</p>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-2">
+            {recentCommands.map(cmd => (
+              <button
+                key={cmd.id}
+                onClick={() => handleExample(cmd.raw_input)}
+                className="w-full text-left flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-border hover:border-border/80 transition-colors group"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-text-secondary truncate">{cmd.raw_input}</p>
+                  <p className="text-[10px] text-text-muted mt-0.5">
+                    {new Date(cmd.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <ChevronRight className="w-3 h-3 text-text-muted shrink-0" />
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Guardrail */}
+      <p className="text-[10px] text-text-muted leading-relaxed border-t border-border pt-3">
+        The Command Center is read-only for query intents. For action intents, it creates a pending draft in the Review Queue.
+        Nothing is applied automatically. All drafts require director approval before any change is made.
+      </p>
+    </div>
+  )
+}

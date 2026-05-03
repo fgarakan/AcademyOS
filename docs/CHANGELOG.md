@@ -2,6 +2,62 @@
 
 ---
 
+## 2026-05-03 — Sprint 215: Director Commands to Review Drafts V1
+
+**Mode:** Server action. Creates proposed_actions from parsed director commands. No auto-execution.
+
+**What was built:**
+- `submitDirectorCommandAction` — parses command text using `parseAcademyCommand`, then for action intents creates `voice_commands` + `proposed_actions` rows (status: pending_review). Query-only intents return parsed result only with no DB write. Role-checked: director/head_coach only.
+- `CommandCenterClient` wires up "Create Review Draft" button for action intents. Shows draft created confirmation + link to /director/review.
+
+**Safety:** All drafts: status=pending_review. Nothing executes until director approves from /director/review. Query intents write nothing.
+
+**TypeScript:** 0 errors.
+
+### Files created/modified
+- `src/app/director/command-center/submitDirectorCommandAction.ts` — server action: parse → voice_commands → proposed_actions.
+
+---
+
+## 2026-05-03 — Sprint 214: Command Intent Parser V1
+
+**Mode:** New library module + QA script. No DB calls. No side effects.
+
+**What was built:**
+- `src/lib/commands/parseAcademyCommand.ts` — deterministic regex-based parser supporting 8 intent types: show_players_missing_curriculum_level, show_curriculum_gap_suggestions, show_advancement_eligible, create_session_draft, create_group_draft, record_director_note, ask_curriculum_level_requirements, summarize_reassessment_pipeline, unknown.
+- Returns: intent_type, confidence (high/medium/low), extracted_entities (level, focus, note_text), missing_information, suggested_next_step, requires_confirmation, role_required, will_not_do.
+- Curriculum level extraction via regex: matches "Orange 2", "Green 1", "High Performance 3" patterns.
+- `scripts/qa-command-parser.mjs` — 24 test cases, all passing.
+
+**TypeScript:** 0 errors. QA: 24/24 passed.
+
+### Files created
+- `src/lib/commands/parseAcademyCommand.ts` — deterministic command intent parser.
+- `scripts/qa-command-parser.mjs` — 24-case QA script.
+
+---
+
+## 2026-05-03 — Sprint 213: Director Command Center UI V1
+
+**Mode:** New route + UI. Read-only except for parse/draft actions.
+
+**What was built:**
+- `/director/command-center` — premium dark UI: command input textarea (⌘↵ to parse), example commands list, recent command history from voice_commands, available curriculum levels reference strip, pending draft count link to review queue.
+- `CommandCenterClient` — client component: parse command → show intent/confidence/entities/what-would-happen/will-not-do; "Create Review Draft" button for action intents; confirmation link to review queue.
+- Sidebar nav: "Command Center" added to Intelligence section.
+- Page header: operating principle strip "Voice creates → UI confirms → Database structures → System executes."
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/app/director/command-center/page.tsx` — Server component; fetches recent commands, curriculum levels.
+- `src/app/director/command-center/CommandCenterClient.tsx` — Client UI for command input and intent preview.
+
+### Files modified
+- `src/components/nav/SidebarNav.tsx` — Added Command Center to Intelligence section.
+
+---
+
 ## 2026-05-03 — Sprint 212: Conversational Command Architecture Audit
 
 **Mode:** Audit + documentation. No code changes.
