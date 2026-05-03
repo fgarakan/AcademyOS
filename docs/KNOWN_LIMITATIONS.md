@@ -114,6 +114,28 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Curriculum integration (Sprints 192–201)
+
+### Curriculum level assignment has no UI
+- **Impact:** Players can be shown their current curriculum level (player profile sidebar card) but there is no UI to assign or change a level. The `player_curriculum_states` table exists but requires direct DB manipulation.
+- **Fix:** Build a level-assignment flow in a future sprint (director selects level from curriculum explorer, saves to `player_curriculum_states`).
+
+### Session curriculum context requires template to have a level assigned
+- **Impact:** `SessionCurriculumContextPanel` only renders content if the session's template has a `curriculum_level_id`. Sessions linked to templates without a level show the "no context" empty state.
+- **Fix:** Assign a curriculum level to session templates via the template editor (not yet built).
+
+### Drill detail panel does not show `procedure` field
+- **Impact:** `curriculum_drills.procedure` is not fetched by `getCurriculumExplorerData()` (locked backend file). The drill expanded panel shows setup, cues, progressions, and success criteria but not procedure.
+- **Fix:** Unlock and update `src/lib/backend/curriculumExplorer.ts` to include `procedure` in the drill select.
+
+### "Use in session" drill button is disabled
+- **Impact:** Each drill row in the explorer shows a disabled "Use in session" button. Session builder integration is a future sprint.
+
+### Curriculum explorer is Director-only
+- **Impact:** Coaches have no access to the curriculum explorer. The `/director/curriculum` route is restricted to the director role.
+
+---
+
 ## Testing
 
 ### No automated tests

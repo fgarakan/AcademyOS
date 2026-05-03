@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-03 — Sprint 201: Curriculum Integration QA + Polish
+
+**Mode:** Polish + docs. No schema changes. No new migrations.
+
+**QA results:**
+- `node scripts/qa-curriculum-seed-migration.mjs` — 38/38 checks passed.
+- `node scripts/audit-curriculum-product-language.mjs` — PASS. Zero product/tool references. Allowed tennis phrases intact.
+- `npx tsc --noEmit` — 0 errors.
+
+**What was fixed:**
+- `CurriculumExplorer`: Level list and detail panel now stack on mobile (`flex-col md:flex-row`). Left column width responsive (`w-full md:w-56`).
+- `CurriculumExplorer`: `shadow-lime` (undefined class) replaced with `shadow-[0_0_8px_rgba(200,255,0,0.15)]` for selected level card glow.
+
+**Docs updated:**
+- `docs/KNOWN_LIMITATIONS.md` — Added curriculum integration section covering: level assignment has no UI, session context requires template level, drill `procedure` field not fetched, "Use in session" disabled, explorer is Director-only.
+
+### Files changed
+- `src/components/curriculum/CurriculumExplorer.tsx` — Responsive two-panel layout; fixed shadow class.
+- `docs/KNOWN_LIMITATIONS.md` — Added curriculum integration limitations section.
+
+---
+
 ## 2026-05-03 — Sprint 200: Director Curriculum Demo Flow V1
 
 **Mode:** UI-only. No schema changes. No new migrations. No fake data inserted.

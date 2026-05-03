@@ -187,10 +187,10 @@ export function CurriculumExplorer({ data }: Props) {
       </div>
 
       {/* Two-panel layout */}
-      <div className="flex gap-4 items-start">
+      <div className="flex flex-col md:flex-row gap-4 items-start">
 
         {/* Level card list */}
-        <div className="flex flex-col gap-2 w-56 shrink-0">
+        <div className="flex flex-col gap-2 w-full md:w-56 md:shrink-0">
           {stageLevels.map(level => {
             const cfg = STAGE_CONFIG[level.stage as Stage]
             const isSelected = selectedLevelId === level.id
@@ -202,7 +202,7 @@ export function CurriculumExplorer({ data }: Props) {
                 onClick={() => setSelectedLevelId(isSelected ? null : level.id)}
                 className={`text-left w-full px-4 py-3 rounded-xl border transition-all ${
                   isSelected
-                    ? 'border-lime bg-lime/5 shadow-lime'
+                    ? 'border-lime bg-lime/5 shadow-[0_0_8px_rgba(200,255,0,0.15)]'
                     : `${cfg.borderCard} bg-surface hover:bg-surface-raised hover:border-border`
                 }`}
               >
