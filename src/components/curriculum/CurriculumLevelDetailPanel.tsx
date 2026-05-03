@@ -45,6 +45,25 @@ const STAGE_COLOR: Record<string, string> = {
   high_performance: 'text-violet-400',
 }
 
+// Gate type badge: maps OBSERVATION / RESULT / RATE / COUNT / CHECKLIST / TIME_WINDOW
+const GATE_TYPE_BADGE: Record<string, string> = {
+  OBSERVATION:  'text-sky-400   border-sky-400/30   bg-sky-400/5',
+  RESULT:       'text-lime      border-lime/30       bg-lime/5',
+  RATE:         'text-indigo-400 border-indigo-400/30 bg-indigo-400/5',
+  COUNT:        'text-emerald-400 border-emerald-400/30 bg-emerald-400/5',
+  CHECKLIST:    'text-orange-400 border-orange-400/30 bg-orange-400/5',
+  TIME_WINDOW:  'text-purple-400 border-purple-400/30 bg-purple-400/5',
+}
+
+const GATE_TYPE_LABEL: Record<string, string> = {
+  OBSERVATION:  'Observation',
+  RESULT:       'Result',
+  RATE:         'Rate',
+  COUNT:        'Count',
+  CHECKLIST:    'Checklist',
+  TIME_WINDOW:  'Time window',
+}
+
 // ─── Level summary header ─────────────────────────────────────────────────────
 
 function LevelHeader({
@@ -116,10 +135,22 @@ function LevelHeader({
 
 // ─── Gate row (expandable) ────────────────────────────────────────────────────
 
+function GateBadge({ text, className }: { text: string; className: string }) {
+  return (
+    <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${className}`}>
+      {text}
+    </span>
+  )
+}
+
 function GateRow({ gate }: { gate: CurriculumGate }) {
   const [expanded, setExpanded] = useState(false)
   const isExitGate = gate.to_level_id === null
-  const hasDetail = gate.evidence_window || gate.recording_method || gate.notes
+  const hasDetail = !!(gate.evidence_window || gate.recording_method || gate.notes)
+
+  const gateTypeKey = gate.gate_type?.toUpperCase() ?? ''
+  const typeBadgeClass = GATE_TYPE_BADGE[gateTypeKey] ?? 'text-text-muted border-border bg-surface-raised'
+  const typeLabel = GATE_TYPE_LABEL[gateTypeKey] ?? gate.gate_type
 
   return (
     <div
@@ -131,7 +162,7 @@ function GateRow({ gate }: { gate: CurriculumGate }) {
         onClick={() => hasDetail && setExpanded(!expanded)}
         className={`w-full text-left px-3 py-2.5 flex items-start gap-2 ${hasDetail ? 'cursor-pointer' : 'cursor-default'}`}
       >
-        <span className="shrink-0 mt-0.5 w-3">
+        <span className="shrink-0 mt-1 w-3">
           {hasDetail && (
             expanded
               ? <ChevronDown className="w-3 h-3 text-text-muted" />
@@ -139,60 +170,59 @@ function GateRow({ gate }: { gate: CurriculumGate }) {
           )}
         </span>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap mb-1">
-            <span
-              className={`text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded border ${
-                gate.gate_type === 'skill'
-                  ? 'text-sky-400 border-sky-400/30 bg-sky-400/5'
-                  : 'text-orange-400 border-orange-400/30 bg-orange-400/5'
-              }`}
-            >
-              {gate.gate_type}
-            </span>
+
+          {/* Badge row */}
+          <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+            <GateBadge text={typeLabel} className={typeBadgeClass} />
             {isExitGate && (
-              <span className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded border text-violet-400 border-violet-400/30 bg-violet-400/5">
-                final exit
-              </span>
-            )}
-          </div>
-          <p className="text-[11px] text-text-secondary leading-snug">{gate.criterion}</p>
-          <div className="flex flex-wrap gap-3 mt-1.5">
-            {gate.threshold && (
-              <span className="text-[10px] text-text-muted">
-                Threshold: <span className="text-text-secondary">{gate.threshold}</span>
-              </span>
+              <GateBadge
+                text="final exit"
+                className="text-violet-400 border-violet-400/30 bg-violet-400/5"
+              />
             )}
             {gate.evaluator && (
-              <span className="text-[10px] text-text-muted">
-                Evaluator: <span className="text-text-secondary">{gate.evaluator}</span>
-              </span>
+              <GateBadge
+                text={gate.evaluator}
+                className="text-text-muted border-border bg-surface"
+              />
             )}
             {gate.cadence && (
-              <span className="text-[10px] text-text-muted">
-                Cadence: <span className="text-text-secondary">{gate.cadence}</span>
-              </span>
+              <GateBadge
+                text={gate.cadence}
+                className="text-text-muted border-border bg-surface"
+              />
             )}
           </div>
+
+          {/* Criterion */}
+          <p className="text-[11px] text-text-secondary leading-snug">{gate.criterion}</p>
+
+          {/* Threshold */}
+          {gate.threshold && (
+            <p className="text-[10px] text-text-muted mt-1.5">
+              Target: <span className="text-lime font-mono">{gate.threshold}</span>
+            </p>
+          )}
         </div>
       </button>
 
       {expanded && hasDetail && (
-        <div className="px-4 pb-3 pt-2 border-t border-border/40 grid grid-cols-2 gap-2">
+        <div className="px-4 pb-3 pt-2 border-t border-border/40 grid grid-cols-2 gap-2.5">
           {gate.evidence_window && (
             <div>
-              <p className="text-[10px] text-text-muted">Evidence window</p>
-              <p className="text-[11px] text-text-secondary">{gate.evidence_window}</p>
+              <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">Evidence window</p>
+              <p className="text-[10px] text-text-secondary">{gate.evidence_window}</p>
             </div>
           )}
           {gate.recording_method && (
             <div>
-              <p className="text-[10px] text-text-muted">Recording method</p>
-              <p className="text-[11px] text-text-secondary">{gate.recording_method}</p>
+              <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">Recording method</p>
+              <p className="text-[10px] text-text-secondary">{gate.recording_method}</p>
             </div>
           )}
           {gate.notes && (
-            <div className="col-span-2">
-              <p className="text-[10px] text-text-muted">Notes</p>
+            <div className="col-span-2 pt-1 border-t border-border/30">
+              <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">Notes</p>
               <p className="text-[10px] text-text-secondary italic leading-relaxed">{gate.notes}</p>
             </div>
           )}
@@ -220,12 +250,20 @@ function GatesTab({ gates }: { gates: CurriculumGate[] }) {
   }, {})
 
   const domainCount = Object.keys(gatesByDomain).length
+  const hasExitGate = gates.some(g => g.to_level_id === null)
 
   return (
     <div className="space-y-4">
-      <p className="text-[11px] text-text-muted">
-        Level-up requirements — {gates.length} gate{gates.length !== 1 ? 's' : ''} across {domainCount} domain{domainCount !== 1 ? 's' : ''}
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[12px] font-medium text-text-primary">Level-up requirements</p>
+          <p className="text-[11px] text-text-muted mt-0.5">
+            {gates.length} gate{gates.length !== 1 ? 's' : ''} · {domainCount} domain{domainCount !== 1 ? 's' : ''}
+            {hasExitGate && ' · includes final exit gate'}
+          </p>
+        </div>
+        <p className="text-[10px] text-text-muted shrink-0">Evidence tracking coming</p>
+      </div>
       {Object.entries(gatesByDomain).map(([domain, domainGates]) => (
         <div key={domain}>
           <div

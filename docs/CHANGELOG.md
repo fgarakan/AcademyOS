@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-03 — Sprint 193: Curriculum Gates UX V1
+
+**Mode:** UI-only. No schema changes. No new migrations. No npm installs.
+
+**Changes to `CurriculumLevelDetailPanel.tsx`:**
+- Fixed gate_type badge: now handles actual DB values — OBSERVATION, RESULT, RATE, COUNT, CHECKLIST, TIME_WINDOW — each with distinct color.
+- Added `GateBadge` helper component for reusable pill styling.
+- Evaluator and cadence now render as visual badge pills in each gate row.
+- Threshold shown with lime monospace font for visual hierarchy.
+- Gates tab header upgraded: "Level-up requirements" title, gate count, domain count, final exit gate indicator.
+- "Evidence tracking coming" placeholder framing per sprint spec.
+
+**Product-language audit:** CLEAN.
+**TypeScript result:** 0 errors.
+
+### Files changed
+- `src/components/curriculum/CurriculumLevelDetailPanel.tsx` — Gate type badge map, evaluator/cadence badges, gates tab header upgrade.
+
+---
+
 ## 2026-05-03 — Sprint 192: Curriculum Explorer Full Level Detail UX
 
 **Mode:** UI-only. No schema changes. No new migrations. No npm installs.
