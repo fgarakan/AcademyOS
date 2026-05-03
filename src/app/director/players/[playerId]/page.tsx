@@ -28,6 +28,7 @@ import { formatDate } from '@/lib/utils'
 import { PlayerProfileTabs } from './_components/PlayerProfileTabs'
 import { PlayerCurriculumAssignmentCard } from './PlayerCurriculumAssignmentCard'
 import { PlayerCurriculumCard } from '@/components/player/PlayerCurriculumCard'
+import { PlayerLevelRequirementsCard } from '@/components/player/PlayerLevelRequirementsCard'
 import { resolveAcademyCurriculumContext } from '@/lib/curriculum/academyCurriculumResolution'
 import { PlayerRequirementProgressReadOnly, type RequirementProgressRow } from './PlayerRequirementProgressReadOnly'
 import { confirmRequirementProgressStatusAction } from './requirementProgressConfirmationAction'
@@ -172,6 +173,31 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         .single()
       competitionTrackLevelName = ctLevel?.display_name ?? null
     }
+  }
+
+  // Curriculum gates for current level: "Requirements to advance" (Sprint 197).
+  // Read-only — gates where from_level_id = current Skill Track level.
+  interface CurriculumGateRow {
+    id: string
+    domain: string
+    criterion: string
+    gate_type: string
+    threshold: string
+    evaluator: string
+    cadence: string
+    evidence_window: string | null
+    sort_order: number
+  }
+  let levelGates: CurriculumGateRow[] = []
+
+  if (curriculumSummary?.current_level_id) {
+    const { data: gatesData } = await rawDb
+      .from('curriculum_gates')
+      .select('id, domain, criterion, gate_type, threshold, evaluator, cadence, evidence_window, sort_order')
+      .eq('from_level_id', curriculumSummary.current_level_id)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+    levelGates = gatesData ?? []
   }
 
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
@@ -333,6 +359,14 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           <PlayerCurriculumEmptyState onAssign={assignAction} />
         </Card>
       )}
+
+      {/* Level requirements — Sprint 197: read-only gate list for current level */}
+      <PlayerLevelRequirementsCard
+        gates={levelGates}
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        nextLevelName={nextCurriculumLevel?.display_name ?? null}
+        hasCurriculumState={hasCurriculum}
+      />
 
     </div>
   )

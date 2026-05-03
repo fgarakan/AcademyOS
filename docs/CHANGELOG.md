@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-03 — Sprint 197: Player Level Requirements Read-Only View V1
+
+**Mode:** UI-only. No schema changes. No new migrations. No npm installs.
+
+**What was built:**
+- `PlayerLevelRequirementsCard` — new component showing gate-based requirements to advance from current Skill Track level. Gates grouped by domain; each row shows criterion, threshold (lime), evaluator, evidence window. Evidence tracking placeholder at bottom. Empty states for no curriculum / no gates.
+- Player profile Skill Path tab: `PlayerLevelRequirementsCard` added after `CurriculumProgressGrid`.
+- Player profile page: query added for gates where `from_level_id = curriculumSummary.current_level_id`, `is_active = true`, ordered by sort_order.
+
+**Safety:** Read-only. No gate completion tracking. No auto-promotions. No fabricated progress.
+
+**TypeScript result:** 0 errors.
+
+### Files changed
+- `src/components/player/PlayerLevelRequirementsCard.tsx` — New. Gate-based requirements to advance.
+- `src/app/director/players/[playerId]/page.tsx` — Added gates query and `PlayerLevelRequirementsCard` render in Skill Path tab.
+
+---
+
 ## 2026-05-03 — Sprint 196: Player Profile Curriculum Connection V1
 
 **Mode:** UI-only. No schema changes. No new migrations. No npm installs.
