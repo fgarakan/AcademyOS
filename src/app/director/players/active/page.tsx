@@ -153,11 +153,11 @@ export default async function ActivePlayersPage() {
                       <p className="text-text-muted text-xs truncate">{player.coach_name ?? 'No coach'}</p>
                     </div>
 
-                    {/* Current focus */}
+                    {/* Current focus / working on */}
                     <div className="min-w-0 flex-1">
                       {player.focus_areas && player.focus_areas.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          <span className="text-[10px] uppercase tracking-widest text-text-muted mr-1">Working on:</span>
+                          <span className="text-[10px] uppercase tracking-widest text-text-muted mr-1">Current Focus</span>
                           {player.focus_areas.slice(0, 2).map((area: string, i: number) => (
                             <span
                               key={i}

@@ -1,5 +1,6 @@
-import { TrendingUp, MessageSquare, Calendar, Heart, Bell, GraduationCap, Lock } from 'lucide-react'
+import { MessageSquare, Calendar, Heart, Bell, GraduationCap, Lock } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
+import { ParentSafeProgressPreview } from '@/components/player/ParentSafeProgressPreview'
 
 export default function ParentHome() {
   return (
@@ -13,27 +14,13 @@ export default function ParentHome() {
       </div>
 
       {/* ── Child's Progress ──────────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
-              <TrendingUp className="w-4 h-4 text-lime" />
-            </div>
-            <div>
-              <p className="font-semibold text-text-primary text-sm">Child's Progress</p>
-              <p className="text-text-muted text-xs">How your child is advancing</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <EmptyState
-            icon={<TrendingUp className="w-5 h-5" />}
-            title="Progress updates will appear here"
-            description="As your child advances through the program, their progress will be shared here."
-            className="py-10"
-          />
-        </CardContent>
-      </Card>
+      <ParentSafeProgressPreview
+        doingWell={[]}
+        workingOn={[]}
+        currentFocus={null}
+        nextStep={null}
+        isPreviewOnly={false}
+      />
 
       {/* ── Latest Coach Update ───────────────────────────────── */}
       <Card>

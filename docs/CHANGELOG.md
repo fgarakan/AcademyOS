@@ -2,6 +2,52 @@
 
 ---
 
+## 2026-05-03 — Sprint 228: Conversational OS QA + Polish V1
+
+**Mode:** Polish and safety pass only. No schema changes. No migrations. No writes. No AI. No new routes.
+
+**Routes audited:**
+- `/director/command-center` — guardrail badges, "requires approval" labels, query-only labels, draft visibility panel, bottom guardrail note: all correct
+- `/director/curriculum/learning` — "Learning Module Preview — read-only" badge, director eyebrow, no player/parent data exposure: correct
+- `/director/players/[playerId]` Q&A preview — "Director preview — read-only" badge, Mission/Try this/Reflection sections: correct
+- `/director/players/[playerId]` parent guidance preview — "Director preview — not sent" badge, bottom privacy note: correct
+- `/director/review` StructuredDraftCard — "Will change if approved" / "Will not change automatically" panels, source recap, safety banner: correct (Sprint 225)
+- `/player` — `PlayerMissionPreview` shows clean empty state, no internal data: correct
+- `/parent` — `ParentSafeProgressPreview` shows clean empty state, no internal data: **fix applied** (see below)
+- `/director/improvement` — "Working On" label polish, "No development focus set" empty text: correct
+- `/director/players/active` — "Current Focus" label replacing "Working on:": correct
+
+**Safety fix applied:**
+- `src/app/parent/page.tsx`: Changed `isPreviewOnly={true}` → `isPreviewOnly={false}`. The `isPreviewOnly` flag shows a "Preview only" badge — correct for the director-side preview in `ParentGuidancePreviewPanel`, but wrong on the parent portal where the parent is viewing their own data. Parent portal should not display director-internal language. Empty state wording is unchanged.
+
+**What was built:**
+- `src/components/player/ParentSafeProgressPreview.tsx` — new parent-safe progress component. Accepts `doingWell`, `workingOn`, `currentFocus`, `nextStep` props. Shows clean empty state when all empty. Shows "Doing Well" / "Working On" / "Current Focus" / "Next Step" sections when data is present. No raw coach notes. No scores. No internal fields.
+
+**No issues found in:**
+- All "requires approval" and "query only" labels in command center
+- All "preview only" / "not sent" labels on director-side panels
+- All empty states on player and parent portal
+- All privacy boundaries (no coach notes, no scores, no observations exposed to player/parent)
+- Product/tool language scan: CLEAN across all Sprint 228 files
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS, zero forbidden references
+- `qa-command-parser.mjs` — 24/24 passed
+- Product language scan (Sprint 228 files) — CLEAN
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/components/player/ParentSafeProgressPreview.tsx` — parent-safe progress display component for parent portal.
+
+### Files modified
+- `src/app/parent/page.tsx` — `ParentSafeProgressPreview` replaces old placeholder card; `isPreviewOnly={false}` corrected.
+- `src/app/director/improvement/page.tsx` — "Working On" label and "No development focus set" empty text polish.
+- `src/app/director/players/active/page.tsx` — "Current Focus" label polish.
+
+---
+
 ## 2026-05-03 — Sprint 227: Conversational OS Documentation + Locked Principles V1
 
 **Mode:** Docs only. No app code. No schema changes. No migrations.

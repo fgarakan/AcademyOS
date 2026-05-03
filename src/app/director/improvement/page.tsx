@@ -193,14 +193,17 @@ export default async function ImprovementPage() {
                       <p className="text-text-muted text-xs truncate">{player.coach_name ?? '—'}</p>
                     </div>
 
-                    {/* Current focus */}
+                    {/* Current focus / working on */}
                     <div className="min-w-0 flex-1 hidden sm:block">
                       {player.focus_areas && player.focus_areas.length > 0 ? (
-                        <span className="text-text-secondary text-xs truncate">
-                          {player.focus_areas[0]}
-                        </span>
+                        <div>
+                          <span className="text-[10px] uppercase tracking-widest text-text-muted block mb-0.5">Working On</span>
+                          <span className="text-text-secondary text-xs truncate block">
+                            {player.focus_areas[0]}
+                          </span>
+                        </div>
                       ) : (
-                        <span className="text-text-muted text-xs italic">No focus set</span>
+                        <span className="text-text-muted text-xs italic">No development focus set</span>
                       )}
                     </div>
                   </div>
