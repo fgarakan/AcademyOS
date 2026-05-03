@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-03 — Sprint 194: Curriculum Drill/Game Library UX V1
+
+**Mode:** UI-only. No schema changes. No new migrations. No npm installs.
+
+**Changes to `CurriculumLevelDetailPanel.tsx`:**
+- DrillsTab: added session_block filter (in addition to existing domain filter) using shared `FilterPills` helper.
+- DrillRow: shows full session_block name (not truncated 3-char code), all existing detail fields.
+- "Use in session" disabled placeholder button on each drill row — tooltip indicates session builder is coming.
+- Live count display: "Showing X of Y drills" with empty-filter messaging.
+- No backend changes — `curriculumExplorer.ts` locked per AI_BACKEND_RULES.md #9.
+
+**Product-language audit:** CLEAN.
+**TypeScript result:** 0 errors.
+
+### Files changed
+- `src/components/curriculum/CurriculumLevelDetailPanel.tsx` — DrillRow and DrillsTab upgraded with session_block filter, full block label, "Use in session" placeholder.
+
+---
+
 ## 2026-05-03 — Sprint 193: Curriculum Gates UX V1
 
 **Mode:** UI-only. No schema changes. No new migrations. No npm installs.

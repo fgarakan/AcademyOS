@@ -287,10 +287,10 @@ function GatesTab({ gates }: { gates: CurriculumGate[] }) {
 
 function DrillRow({ drill }: { drill: CurriculumDrill }) {
   const [expanded, setExpanded] = useState(false)
-  const badgeClass = DOMAIN_BADGE[drill.domain] ?? 'text-text-muted border-border bg-surface-raised'
+  const domainBadge = DOMAIN_BADGE[drill.domain] ?? 'text-text-muted border-border bg-surface-raised'
 
   const hasCues = drill.coaching_cues != null && Object.keys(drill.coaching_cues).length > 0
-  const hasDetail = drill.setup || hasCues || drill.progression_easier || drill.progression_harder || drill.success_criteria
+  const hasDetail = !!(drill.setup || hasCues || drill.progression_easier || drill.progression_harder || drill.success_criteria)
 
   return (
     <div
@@ -300,25 +300,26 @@ function DrillRow({ drill }: { drill: CurriculumDrill }) {
     >
       <div className="px-3 py-2.5 flex items-start gap-2">
         {hasDetail ? (
-          <button onClick={() => setExpanded(!expanded)} className="shrink-0 mt-0.5">
+          <button onClick={() => setExpanded(!expanded)} className="shrink-0 mt-1">
             {expanded
               ? <ChevronDown className="w-3 h-3 text-text-muted" />
               : <ChevronRight className="w-3 h-3 text-text-muted" />
             }
           </button>
         ) : (
-          <span className="shrink-0 w-3 mt-0.5" />
+          <span className="shrink-0 w-3 mt-1" />
         )}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-            <span className={`text-[9px] font-mono uppercase tracking-wide px-1 py-0.5 rounded border ${badgeClass}`}>
-              {drill.session_block.slice(0, 3).toUpperCase()}
+          {/* Badge row */}
+          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${domainBadge}`}>
+              {drill.session_block}
             </span>
-            <span className={`text-[9px] font-mono px-1 py-0.5 rounded border ${badgeClass}`}>
+            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${domainBadge}`}>
               {drill.domain}
             </span>
             {drill.duration_minutes != null && (
-              <span className="text-[9px] text-text-muted font-mono">{drill.duration_minutes}min</span>
+              <span className="text-[9px] text-text-muted font-mono">{drill.duration_minutes} min</span>
             )}
             {drill.players_needed != null && (
               <span className="text-[9px] text-text-muted font-mono">{drill.players_needed}p</span>
@@ -327,19 +328,27 @@ function DrillRow({ drill }: { drill: CurriculumDrill }) {
           <p className="text-[11px] font-medium text-text-primary leading-snug">{drill.name}</p>
           <p className="text-[10px] text-text-secondary leading-snug mt-0.5">{drill.objective}</p>
         </div>
+        {/* Use in session — disabled placeholder */}
+        <button
+          disabled
+          title="Session builder coming in a future sprint"
+          className="shrink-0 mt-1 px-2 py-0.5 rounded border border-border text-[9px] text-text-muted cursor-not-allowed opacity-50"
+        >
+          Use in session
+        </button>
       </div>
 
       {expanded && hasDetail && (
         <div className="px-4 pb-3 pt-2 border-t border-border/40 space-y-2.5">
           {drill.setup && (
             <div>
-              <p className="text-[10px] text-text-muted font-medium mb-0.5">Setup</p>
+              <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">Setup</p>
               <p className="text-[10px] text-text-secondary leading-relaxed">{drill.setup}</p>
             </div>
           )}
           {hasCues && drill.coaching_cues && (
             <div>
-              <p className="text-[10px] text-text-muted font-medium mb-1">Coaching cues</p>
+              <p className="text-[9px] uppercase tracking-wide text-text-muted mb-1">Coaching cues</p>
               <div className="space-y-1">
                 {Object.entries(drill.coaching_cues).map(([key, cue]) => (
                   <div key={key} className="flex items-start gap-2">
@@ -354,13 +363,13 @@ function DrillRow({ drill }: { drill: CurriculumDrill }) {
             <div className="grid grid-cols-2 gap-2">
               {drill.progression_easier && (
                 <div>
-                  <p className="text-[10px] text-text-muted font-medium mb-0.5">Easier progression</p>
+                  <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">Easier</p>
                   <p className="text-[10px] text-text-secondary leading-snug">{drill.progression_easier}</p>
                 </div>
               )}
               {drill.progression_harder && (
                 <div>
-                  <p className="text-[10px] text-text-muted font-medium mb-0.5">Harder progression</p>
+                  <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">Harder</p>
                   <p className="text-[10px] text-text-secondary leading-snug">{drill.progression_harder}</p>
                 </div>
               )}
@@ -368,7 +377,7 @@ function DrillRow({ drill }: { drill: CurriculumDrill }) {
           )}
           {drill.success_criteria && (
             <div>
-              <p className="text-[10px] text-text-muted font-medium mb-0.5">Success criteria</p>
+              <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">Success criteria</p>
               <p className="text-[10px] text-text-secondary leading-relaxed">{drill.success_criteria}</p>
             </div>
           )}
@@ -380,8 +389,58 @@ function DrillRow({ drill }: { drill: CurriculumDrill }) {
 
 // ─── Drills tab ───────────────────────────────────────────────────────────────
 
+function FilterPills({
+  label,
+  options,
+  value,
+  onChange,
+  countOf,
+  total,
+}: {
+  label: string
+  options: string[]
+  value: string
+  onChange: (v: string) => void
+  countOf: (v: string) => number
+  total: number
+}) {
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-[9px] uppercase tracking-wide text-text-muted shrink-0">{label}:</span>
+      <button
+        onClick={() => onChange('all')}
+        className={`px-2 py-0.5 rounded border text-[9px] font-medium transition-all ${
+          value === 'all'
+            ? 'border-lime/40 bg-lime/10 text-lime'
+            : 'border-border text-text-muted hover:text-text-secondary'
+        }`}
+      >
+        All ({total})
+      </button>
+      {options.map(opt => {
+        const isActive = value === opt
+        const color = DOMAIN_COLOR[opt] ?? 'text-text-secondary'
+        return (
+          <button
+            key={opt}
+            onClick={() => onChange(opt)}
+            className={`px-2 py-0.5 rounded border text-[9px] font-medium transition-all ${
+              isActive
+                ? `${color} border-current/40 bg-current/5`
+                : 'border-border text-text-muted hover:text-text-secondary'
+            }`}
+          >
+            {opt} ({countOf(opt)})
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function DrillsTab({ drills }: { drills: CurriculumDrill[] }) {
   const [domainFilter, setDomainFilter] = useState<string>('all')
+  const [blockFilter, setBlockFilter] = useState<string>('all')
 
   if (drills.length === 0) {
     return (
@@ -392,45 +451,45 @@ function DrillsTab({ drills }: { drills: CurriculumDrill[] }) {
   }
 
   const domains = Array.from(new Set(drills.map(d => d.domain))).sort()
-  const filtered = domainFilter === 'all' ? drills : drills.filter(d => d.domain === domainFilter)
+  const blocks = Array.from(new Set(drills.map(d => d.session_block))).sort()
+
+  const filtered = drills.filter(d => {
+    const domainMatch = domainFilter === 'all' || d.domain === domainFilter
+    const blockMatch = blockFilter === 'all' || d.session_block === blockFilter
+    return domainMatch && blockMatch
+  })
 
   return (
     <div className="space-y-3">
-      {/* Domain filter pills */}
-      <div className="flex gap-1.5 flex-wrap">
-        <button
-          onClick={() => setDomainFilter('all')}
-          className={`px-2 py-1 rounded border text-[10px] font-medium transition-all ${
-            domainFilter === 'all'
-              ? 'border-lime/40 bg-lime/10 text-lime'
-              : 'border-border text-text-muted hover:text-text-secondary'
-          }`}
-        >
-          All ({drills.length})
-        </button>
-        {domains.map(d => {
-          const count = drills.filter(x => x.domain === d).length
-          const isActive = domainFilter === d
-          const color = DOMAIN_COLOR[d] ?? 'text-text-muted'
-          return (
-            <button
-              key={d}
-              onClick={() => setDomainFilter(d)}
-              className={`px-2 py-1 rounded border text-[10px] font-medium transition-all ${
-                isActive
-                  ? `${color} border-current/40 bg-current/5`
-                  : 'border-border text-text-muted hover:text-text-secondary'
-              }`}
-            >
-              {d} ({count})
-            </button>
-          )
-        })}
-      </div>
+      {/* Domain filter */}
+      <FilterPills
+        label="Domain"
+        options={domains}
+        value={domainFilter}
+        onChange={v => { setDomainFilter(v) }}
+        countOf={v => drills.filter(d => d.domain === v && (blockFilter === 'all' || d.session_block === blockFilter)).length}
+        total={blockFilter === 'all' ? drills.length : drills.filter(d => d.session_block === blockFilter).length}
+      />
+      {/* Session block filter */}
+      <FilterPills
+        label="Block"
+        options={blocks}
+        value={blockFilter}
+        onChange={v => { setBlockFilter(v) }}
+        countOf={v => drills.filter(d => d.session_block === v && (domainFilter === 'all' || d.domain === domainFilter)).length}
+        total={domainFilter === 'all' ? drills.length : drills.filter(d => d.domain === domainFilter).length}
+      />
 
-      <div className="space-y-1.5">
-        {filtered.map(d => <DrillRow key={d.id} drill={d} />)}
-      </div>
+      <p className="text-[10px] text-text-muted">
+        Showing {filtered.length} of {drills.length} drills
+        {filtered.length === 0 && ' — try a different filter combination'}
+      </p>
+
+      {filtered.length > 0 && (
+        <div className="space-y-1.5">
+          {filtered.map(d => <DrillRow key={d.id} drill={d} />)}
+        </div>
+      )}
     </div>
   )
 }
