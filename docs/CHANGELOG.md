@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-03 — Sprint 209: Placement Engine V1
+
+**Mode:** New page + server actions. No schema changes. No migrations.
+
+**What was built:**
+- `/director/placement` — new director-only page listing all pending-placement players.
+- `PlacementEngineClient.tsx` — client UI: per-player card with create-draft form (group + track + optional level + notes); review/approve existing draft; activate approved player.
+- `placementDraftAction.ts` — three server actions scoped to director/head_coach: `createPlacementDraftAction` (inserts `placement_recommendations`), `approvePlacementDraftAction` (updates status to 'approved'), `activatePlayerAction` (calls `finalize_player_placement` RPC).
+- Deterministic track suggestion: age < 16 → Skill, age 16+ → Competition (director can override).
+- Status summary chips: "needs draft", "awaiting approval", "ready to activate".
+
+**Safety:** `finalize_player_placement()` called only after director explicitly approves. No auto-activation. All actions validate director/head_coach membership before executing.
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/app/director/placement/page.tsx` — Server component; fetches pending players, groups, levels, existing recs.
+- `src/app/director/placement/PlacementEngineClient.tsx` — Client UI for the full placement flow.
+- `src/app/director/placement/placementDraftAction.ts` — Server actions: create, approve, activate.
+
+---
+
 ## 2026-05-03 — Sprint 208: Director Dashboard Curriculum Intelligence
 
 **Mode:** UI + data fetch. No schema changes. No migrations. No mutations.
