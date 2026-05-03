@@ -5,8 +5,9 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { CoachSessionExecutionClient } from './CoachSessionExecutionClient'
-import { SessionRecapPanel } from './SessionRecapPanel'
+import { CoachRecapCommandPanel } from './CoachRecapCommandPanel'
 import { saveSessionExecutionAction, saveAttendanceAction, saveSessionRecapAction } from './actions'
+import { structureCoachRecapAction } from './structureCoachRecapAction'
 
 interface PageProps {
   params: { sessionId: string }
@@ -266,7 +267,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         />
       )}
 
-      <SessionRecapPanel
+      <CoachRecapCommandPanel
         sessionId={session.id}
         sessionName={session.name ?? 'Untitled Session'}
         completedCount={completedCount}
@@ -274,6 +275,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         attendanceSummary={attendanceSummary}
         initialRecap={initialRecap}
         saveRecapAction={saveSessionRecapAction}
+        structureRecapAction={structureCoachRecapAction}
       />
     </div>
   )

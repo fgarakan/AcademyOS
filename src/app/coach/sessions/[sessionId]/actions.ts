@@ -152,6 +152,7 @@ export interface SaveSessionRecapInput {
 export interface SaveSessionRecapResult {
   ok: boolean
   error: string | null
+  voiceNoteId?: string | null
 }
 
 export async function saveSessionRecapAction(
@@ -204,9 +205,9 @@ export async function saveSessionRecapAction(
 
   // 6. Insert voice_notes record
   //    player_id omitted (null) — session-level recap, not player-specific
-  //    processing_status: 'pending' — raw input awaiting AI structuring (next sprint)
+  //    processing_status: 'pending' — raw input awaiting structuring
   //    transcript: same as raw_input for V1 typed input
-  const { error: insertError } = await supabase
+  const { data: voiceNoteRow, error: insertError } = await supabase
     .from('voice_notes')
     .insert({
       academy_id: academyId,
@@ -216,12 +217,14 @@ export async function saveSessionRecapAction(
       transcript: recapText,
       processing_status: 'pending',
     })
+    .select('id')
+    .single()
 
   if (insertError) {
     return { ok: false, error: `Failed to save recap: ${insertError.message}` }
   }
 
-  return { ok: true, error: null }
+  return { ok: true, error: null, voiceNoteId: voiceNoteRow?.id ?? null }
 }
 
 export async function saveAttendanceAction(

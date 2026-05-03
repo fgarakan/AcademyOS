@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-03 — Sprint 216: Coach Recap Command Center V1
+
+**Mode:** Rule-based structuring. No external AI. All results require director review.
+
+**What was built:**
+- `structureCoachRecapAction` — server action on coach session page. Authenticates coach, fetches session roster, runs deterministic keyword structuring (absence/late/skill phrase detection per player), creates `voice_commands` + `proposed_actions` (target_module='session_recap_structuring', status='pending_review'), marks voice_note as 'structured'.
+- `CoachRecapCommandPanel` — client component replacing `SessionRecapPanel`. Shows real-time client-side signal preview as coach types (absence/late/skill keywords). "Save Recap" → returns `voiceNoteId`. "Structure Now" button appears after save → calls structuring action → shows attendance mentions, observation count, link to /director/review.
+- `saveSessionRecapAction` updated to return `voiceNoteId` via `.select('id').single()`.
+
+**Safety:** structureCoachRecapAction checks `processing_status === 'structured'` to prevent double-structuring. All structured drafts require director approval before any records change. No player profiles, attendance records, or priorities were modified.
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/app/coach/sessions/[sessionId]/structureCoachRecapAction.ts` — server action: roster build → rule-based structuring → voice_commands + proposed_actions.
+- `src/app/coach/sessions/[sessionId]/CoachRecapCommandPanel.tsx` — client component: real-time signal preview + save + structure flow.
+
+### Files modified
+- `src/app/coach/sessions/[sessionId]/actions.ts` — `SaveSessionRecapResult` now includes `voiceNoteId`; `saveSessionRecapAction` returns it.
+- `src/app/coach/sessions/[sessionId]/page.tsx` — replaced `SessionRecapPanel` with `CoachRecapCommandPanel`; imports `structureCoachRecapAction`.
+
+---
+
 ## 2026-05-03 — Sprint 215: Director Commands to Review Drafts V1
 
 **Mode:** Server action. Creates proposed_actions from parsed director commands. No auto-execution.
