@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-03 — Sprint 220: Curriculum Learning Modules UI V1
+
+**Mode:** Read-only director preview. No AI. No writes. No player/parent exposure.
+
+**What was built:**
+- `/director/curriculum/learning` page — server component fetches all levels, gates, drills, coach language; calls `buildLearningModulePreviews()`; passes modules to client.
+- `LearningModulesClient.tsx` — client component: stage/domain/level filters, grouped module cards, expandable detail (why it matters, key idea, watch for, try this, mini challenge, reflection, parent tip, source labels).
+- Link added from `/director/curriculum` footer to `/director/curriculum/learning`.
+- Badge: "Learning Module Preview — read-only".
+- Stats strip: module count, level count, domain count, gates, drills.
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/app/director/curriculum/learning/page.tsx` — server page: auth + data fetch + module build.
+- `src/app/director/curriculum/learning/LearningModulesClient.tsx` — client: filters + expandable module cards.
+
+### Files modified
+- `src/app/director/curriculum/page.tsx` — added "Learning Modules" link in footer nav.
+
+---
+
 ## 2026-05-03 — Sprint 219: Curriculum Learning Module Model V1
 
 **Mode:** Pure helper + spec doc. No DB calls. No UI. No side effects.

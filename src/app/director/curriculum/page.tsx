@@ -136,6 +136,9 @@ export default async function DirectorCurriculumPage() {
           <Link href="/director/curriculum/academy-version" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
             Academy Version <ChevronRight className="w-3 h-3" />
           </Link>
+          <Link href="/director/curriculum/learning" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
+            Learning Modules <ChevronRight className="w-3 h-3" />
+          </Link>
         </div>
       </div>
 
