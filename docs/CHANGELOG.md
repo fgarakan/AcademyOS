@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-03 — Sprint 221: Role-Aware Chat Guardrails V1
+
+**Mode:** Pure helper + spec doc + light UI integration. No DB calls. No migrations.
+
+**What was built:**
+- `roleGuardrails.ts` — 6 exported functions governing role-based command/data access:
+  - `canRoleUseIntent(role, intentType)` — boolean permission check
+  - `intentRequiresApproval(intentType)` — true for create_session_draft, create_group_draft, record_director_note
+  - `canExposeFieldToRole(role, fieldOrCategory)` — data access gate
+  - `getBlockedReason(role, intentType)` — human-readable block message
+  - `getSafeResponseBoundary(role)` — one-sentence boundary description per role
+  - `getRoleDisplayName(role)` — display name for role
+- `role-aware-chat-guardrails.md` — full spec: permission matrix, intent map, field exposure table, parent/player privacy rules, child-safety principles, audit log requirements.
+- Light integration: `PlayerQaPreviewPanel` now shows player-safe boundary note via `getSafeResponseBoundary('player')`.
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/lib/commands/roleGuardrails.ts` — role permission helper.
+- `docs/conversational-os/role-aware-chat-guardrails.md` — guardrail spec.
+
+### Files modified
+- `src/app/director/players/[playerId]/PlayerQaPreviewPanel.tsx` — added player-safe boundary note.
+
+---
+
 ## 2026-05-03 — Sprint 220: Curriculum Learning Modules UI V1
 
 **Mode:** Read-only director preview. No AI. No writes. No player/parent exposure.

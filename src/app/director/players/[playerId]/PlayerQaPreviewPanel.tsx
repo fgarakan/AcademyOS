@@ -13,6 +13,7 @@ import {
   type PlayerProgressQaInput,
   type PlayerProgressQaAnswer,
 } from '@/lib/player/playerProgressQa'
+import { getSafeResponseBoundary } from '@/lib/commands/roleGuardrails'
 
 const SAMPLE_QUESTIONS = [
   'What level am I?',
@@ -58,6 +59,9 @@ export function PlayerQaPreviewPanel(props: Props) {
         </div>
         <p className="text-[10px] text-text-muted mt-1 leading-relaxed">
           Uses curriculum level, gates, drills, and coach language only. Internal notes are not shown.
+        </p>
+        <p className="text-[9px] text-text-muted mt-0.5 italic">
+          Player boundary: {getSafeResponseBoundary('player')}
         </p>
       </CardHeader>
 
