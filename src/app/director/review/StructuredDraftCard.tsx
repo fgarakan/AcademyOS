@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { AlertTriangle, Users, Calendar, BookOpen, MessageSquare, ExternalLink } from 'lucide-react'
+import { AlertTriangle, Users, Calendar, BookOpen, MessageSquare, ExternalLink, CheckCircle2, XCircle, FileText, Activity } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import type { StructuredDraftPayload } from '@/app/director/sessions/[sessionId]/structureRecapAction'
@@ -162,6 +162,28 @@ export function StructuredDraftCard({ draft }: { draft: EnrichedDraftItem }) {
           </section>
         )}
 
+        {/* Session actual draft — what changed from plan */}
+        {payload.session_actual_draft?.actual_focus && payload.session_actual_draft.actual_focus.length > 0 && (
+          <section className="space-y-1.5">
+            <p className="label-xs flex items-center gap-1.5">
+              <Activity className="w-3 h-3" />
+              Session Focus (from recap)
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {payload.session_actual_draft.actual_focus.map((f, i) => (
+                <span key={i} className="text-[11px] px-2 py-0.5 rounded-full bg-surface-raised border border-border text-text-secondary">
+                  {f}
+                </span>
+              ))}
+            </div>
+            {payload.session_actual_draft.skipped_or_reduced.length > 0 && (
+              <p className="text-[10px] text-text-muted">
+                Skipped or reduced: {payload.session_actual_draft.skipped_or_reduced.join(', ')}
+              </p>
+            )}
+          </section>
+        )}
+
         {/* Parent-safe candidate count */}
         {payload.parent_safe_draft_candidates.length > 0 && (
           <div className="flex items-center gap-1.5 text-xs text-text-muted">
@@ -170,6 +192,22 @@ export function StructuredDraftCard({ draft }: { draft: EnrichedDraftItem }) {
             {payload.parent_safe_draft_candidates.length !== 1 ? 's' : ''} — review required
             before sending
           </div>
+        )}
+
+        {/* What will change if approved */}
+        <WillChangePanel payload={payload} />
+
+        {/* Source recap */}
+        {payload.raw_recap && (
+          <section className="space-y-1.5">
+            <p className="label-xs flex items-center gap-1.5">
+              <FileText className="w-3 h-3" />
+              Source Recap
+            </p>
+            <p className="text-[11px] text-text-muted leading-relaxed line-clamp-4 italic">
+              &ldquo;{payload.raw_recap}&rdquo;
+            </p>
+          </section>
         )}
 
         {/* Director controls — decision for pending, apply for approved */}
@@ -188,6 +226,59 @@ function CountStat({ label, value }: { label: string; value: number }) {
     <div>
       <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">{label}</p>
       <p className="text-lg font-mono font-bold text-lime">{value}</p>
+    </div>
+  )
+}
+
+function WillChangePanel({ payload }: { payload: StructuredDraftPayload }) {
+  const willChange: string[] = []
+  const willNotChange: string[] = [
+    'Player curriculum levels',
+    'Published parent communications',
+    'Advancement decisions',
+  ]
+
+  if (payload.attendance_mentions.length > 0)
+    willChange.push(`${payload.attendance_mentions.length} attendance record(s) flagged for director confirmation`)
+  if (payload.player_observation_drafts.length > 0)
+    willChange.push(`${payload.player_observation_drafts.length} player observation draft(s) added to review queue`)
+  if (payload.parent_safe_draft_candidates.length > 0)
+    willChange.push(`${payload.parent_safe_draft_candidates.length} parent-safe draft(s) staged — require separate approval before sending`)
+  if (payload.director_summary_draft)
+    willChange.push('Director summary draft saved for review')
+
+  if (willChange.length === 0) return null
+
+  return (
+    <div className="grid sm:grid-cols-2 gap-3">
+      <section className="space-y-1.5">
+        <p className="label-xs flex items-center gap-1.5">
+          <CheckCircle2 className="w-3 h-3 text-status-green" />
+          Will change if approved
+        </p>
+        <ul className="space-y-1">
+          {willChange.map((item, i) => (
+            <li key={i} className="flex gap-1.5 text-[11px] text-text-secondary">
+              <span className="text-status-green shrink-0 mt-0.5">✓</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="space-y-1.5">
+        <p className="label-xs flex items-center gap-1.5">
+          <XCircle className="w-3 h-3 text-status-red" />
+          Will not change automatically
+        </p>
+        <ul className="space-y-1">
+          {willNotChange.map((item, i) => (
+            <li key={i} className="flex gap-1.5 text-[11px] text-text-muted">
+              <span className="text-status-red shrink-0 mt-0.5">✕</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   )
 }

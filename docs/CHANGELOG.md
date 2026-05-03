@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-03 — Sprint 225: Coach Recap Director Review Preview V1
+
+**Mode:** Read-only display improvement. No new tables. No migrations. No writes.
+
+**What was built:**
+- `StructuredDraftCard.tsx` — improved display for session recap proposed_actions:
+  - **Source Recap** section: shows truncated raw coach voice recap in italics
+  - **Session Focus** section: shows `session_actual_draft.actual_focus` tags + skipped items
+  - **Will change if approved** panel: lists specific records flagged (attendance, observations, parent drafts, director summary)
+  - **Will not change automatically** panel: explicitly calls out curriculum levels, parent communications, advancement decisions
+- Uses `CheckCircle2`, `XCircle`, `FileText`, `Activity` icons to make sections visually distinct
+
+**TypeScript:** 0 errors.
+
+### Files modified
+- `src/app/director/review/StructuredDraftCard.tsx` — added source recap, session focus, will/won't change panels.
+
+---
+
 ## 2026-05-03 — Sprint 224: Command Center Draft Visibility V1
 
 **Mode:** Read-only draft display. No new tables. No migrations. No writes.
