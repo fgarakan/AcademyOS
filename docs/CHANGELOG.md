@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-03 — Sprint 219: Curriculum Learning Module Model V1
+
+**Mode:** Pure helper + spec doc. No DB calls. No UI. No side effects.
+
+**What was built:**
+- `learningModules.ts` — deterministic module builder from curriculum data. Exports:
+  - `LearningModuleDomain` — 8 domain types
+  - `CurriculumLearningModule` — full module shape (16 fields)
+  - `buildLearningModulePreviews(input)` — generates all modules for all level+domain combos
+  - `buildModuleForLevelDomain(input)` — single module for one level+domain
+  - `getLearningModuleSafetyNote(role)` — role-appropriate safety note text
+- `curriculum-learning-module-model.md` — spec: module structure, domain table, language rules, generation rules.
+- Modules generated from: `curriculum_levels` × `curriculum_coach_language` × `curriculum_gates` × `curriculum_drills`
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/lib/curriculum/learningModules.ts` — pure learning module builder helper.
+- `docs/curriculum/curriculum-learning-module-model.md` — module structure spec.
+
+---
+
 ## 2026-05-03 — Sprint 218: Player Progress Q&A Preview V1
 
 **Mode:** Read-only director preview. No AI calls. No writes. No parent/player exposure.
