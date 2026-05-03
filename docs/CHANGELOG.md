@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-03 — Sprint 217: Parent-Safe Response Rules V1
+
+**Mode:** New utility module + spec doc. No DB calls, no UI, no side effects.
+
+**What was built:**
+- `parentSafeResponseRules.ts` — four exported functions governing parent-facing communication:
+  - `canShowParentField(fieldName)` — runtime gate against a field allowlist (7 safe fields)
+  - `sanitizeParentFacingText(text)` — replaces 11 harsh/clinical phrases + strips internal annotations
+  - `getParentSafeToneGuidelines()` — 10 guidelines for coach-facing UI copy and future AI prompts
+  - `buildParentSupportGuidanceDraft(params)` — constructs parent-safe session summary (handles absent/late/present with skill focus + sanitized observation)
+- `parent-safe-response-rules.md` — full spec: field allowlist, sanitization table, tone rules, draft examples, integration points.
+
+**Safety:** No communications sent. No parent portal changes. All output requires director/coach review before use.
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `src/lib/communications/parentSafeResponseRules.ts` — parent-safe response utility module.
+- `docs/conversational-os/parent-safe-response-rules.md` — field allowlist, sanitization rules, tone guidelines, integration map.
+
+---
+
 ## 2026-05-03 — Sprint 216: Coach Recap Command Center V1
 
 **Mode:** Rule-based structuring. No external AI. All results require director review.
