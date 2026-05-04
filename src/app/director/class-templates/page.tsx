@@ -153,7 +153,7 @@ function TemplateRow({
   const airtableIdTag = template.tags?.find(t => t.startsWith('airtable_id:'))
 
   return (
-    <Link href={`/director/fitness/templates/${template.id}`} className="block">
+    <Link href={`/director/class-templates/${template.id}`} className="block">
       <Card hover>
         <CardContent className="py-4">
           <div className="flex items-center justify-between gap-4">

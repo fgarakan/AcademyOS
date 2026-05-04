@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-04 — Sprint 256: Class Template Curriculum Picker V1
+
+**Mode:** New page + client component + server action. No migrations. No schema changes.
+
+**What was built:**
+- Class template detail page at `/director/class-templates/[templateId]` — was previously missing
+- `ClassTemplateCurriculumSelector` — curriculum level dropdown + save for class templates; revalidates class-template path (not fitness-template path)
+- `setCurriculumLevelAction` (class-template scoped) — same security model as fitness version; revalidates both `class-templates/[id]` and `class-templates`
+- Block list panel: read-only view of template blocks with exercises and durations
+- Fixed class templates list page: links now go to `/director/class-templates/[id]` instead of `/director/fitness/templates/[id]`
+
+**Files created:**
+- `src/app/director/class-templates/[templateId]/page.tsx` — class template detail page
+- `src/app/director/class-templates/[templateId]/setCurriculumLevelAction.ts` — server action with correct revalidation path
+- `src/app/director/class-templates/[templateId]/ClassTemplateCurriculumSelector.tsx` — curriculum picker client component
+
+**Files modified:**
+- `src/app/director/class-templates/page.tsx` — fixed template row link href from fitness to class-templates path
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS
+- `qa-command-parser.mjs` — 24/24 passed
+- `qa-voice-intake-structure.mjs` — 15/15 passed
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 255: Class Template Curriculum Link Model V1
 
 **Mode:** Server utility library. No migrations. No UI changes.
