@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-04 — Sprint 247: Voice Intake Review Panel V1
+
+**Mode:** New card component + server action + review page tab. No schema changes. No migrations. No execution step — V1 approval records the director's review decision only.
+
+**What was built:**
+- `VoiceIntakeDraftCard` — full-detail display card for voice intake proposed_actions: transcript, cleaned summary, role/context, confidence, safety flags, detected intents, extracted entities, suggested destinations, recommended action, what would change, what would not change, source note
+- Inline `VoiceIntakeDecisionControls` — approve / needs clarification / reject with optional note; calls new server action
+- New `updateVoiceIntakeDraftDecisionAction` — verifies academy_id, role (director/head_coach), target_module = voice_intake, draft_type = voice_intake_v1, status = pending_review; updates status + reviewer tracking fields only
+- Voice Intake tab added to Director Review Queue: fetch, PageHeader stats, tab trigger, tab content with approved/pending sections and EmptyState
+
+**Files created:**
+- `src/app/director/review/VoiceIntakeDraftCard.tsx` — Client Component: display card + decision controls for voice intake drafts
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — add `updateVoiceIntakeDraftDecisionAction`
+- `src/app/director/review/page.tsx` — import + fetch voice_intake drafts (steps 28–31), add to PageHeader, defaultTab, TabsTrigger, and TabsContent
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 246: Voice Intake to Proposed Actions V1
 
 **Mode:** Server action + UI wiring. No schema changes. No migrations. All voice intake drafts route through proposed_actions pipeline — always pending_review, never auto-executed.

@@ -14,6 +14,8 @@ import type { AttendanceExceptionPayload } from '@/app/director/sessions/[sessio
 import { CurriculumOverrideDraftCard } from './CurriculumOverrideDraftCard'
 import type { EnrichedCurriculumOverrideDraftItem } from './CurriculumOverrideDraftCard'
 import type { CurriculumOverrideDraftPayload } from '@/lib/actions/curriculumOverrideDraft'
+import { VoiceIntakeDraftCard } from './VoiceIntakeDraftCard'
+import type { EnrichedVoiceIntakeDraftItem, VoiceIntakeDraftPayload } from './VoiceIntakeDraftCard'
 
 export default async function DirectorReviewQueuePage() {
   const supabase = await getSupabaseServer()
@@ -400,6 +402,52 @@ export default async function DirectorReviewQueuePage() {
   const pendingCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'pending_review')
   const approvedCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'approved')
 
+  // ─── Voice intake drafts ───────────────────────────────────────
+
+  // 28. Fetch pending + approved voice intake drafts — scoped to this academy
+  const { data: voiceIntakeDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, proposed_payload, created_at, proposed_by_id, risk_level')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_review', 'approved'])
+    .eq('target_module', 'voice_intake')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allVoiceIntakeDraftRows: Array<DraftRow & { risk_level: string | null }> = (voiceIntakeDraftRows ?? []) as Array<DraftRow & { risk_level: string | null }>
+
+  // 29. Filter to voice_intake_v1 — checked after fetch since payload is JSON
+  const filteredVoiceIntakeDrafts = allVoiceIntakeDraftRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'voice_intake_v1'
+  })
+
+  // 30. Batch-fetch proposer display names for voice intake drafts
+  const voiceIntakeProposerIds = Array.from(new Set(filteredVoiceIntakeDrafts.map(d => d.proposed_by_id)))
+  const voiceIntakeProposerMap = new Map<string, string>()
+  if (voiceIntakeProposerIds.length > 0) {
+    const { data: viProposers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', voiceIntakeProposerIds)
+    for (const p of (viProposers ?? [])) {
+      voiceIntakeProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  // 31. Assemble enriched voice intake draft items
+  const enrichedVoiceIntakeDrafts: EnrichedVoiceIntakeDraftItem[] = filteredVoiceIntakeDrafts.map(d => ({
+    id: d.id,
+    status: d.status,
+    createdAt: d.created_at,
+    proposerName: voiceIntakeProposerMap.get(d.proposed_by_id) ?? null,
+    riskLevel: d.risk_level ?? null,
+    payload: d.proposed_payload as unknown as VoiceIntakeDraftPayload,
+  }))
+
+  const pendingVoiceIntakeDrafts = enrichedVoiceIntakeDrafts.filter(d => d.status === 'pending_review')
+  const approvedVoiceIntakeDrafts = enrichedVoiceIntakeDrafts.filter(d => d.status === 'approved')
+
   // Compute default tab — first category with pending items, fallback to session_recaps
   const defaultTab = [
     { value: 'session_recaps', pending: pendingDrafts.length },
@@ -407,6 +455,7 @@ export default async function DirectorReviewQueuePage() {
     { value: 'evidence', pending: pendingEvidenceDrafts.length },
     { value: 'attendance', pending: pendingAttendanceDrafts.length },
     { value: 'curriculum', pending: pendingCurriculumOverrideDrafts.length },
+    { value: 'voice_intake', pending: pendingVoiceIntakeDrafts.length },
   ].find(t => t.pending > 0)?.value ?? 'session_recaps'
 
   return (
@@ -422,6 +471,8 @@ export default async function DirectorReviewQueuePage() {
         attendanceApprovedCount={approvedAttendanceDrafts.length}
         curriculumOverridePendingCount={pendingCurriculumOverrideDrafts.length}
         curriculumOverrideApprovedCount={approvedCurriculumOverrideDrafts.length}
+        voiceIntakePendingCount={pendingVoiceIntakeDrafts.length}
+        voiceIntakeApprovedCount={approvedVoiceIntakeDrafts.length}
       />
 
       <Tabs defaultValue={defaultTab}>
@@ -459,6 +510,13 @@ export default async function DirectorReviewQueuePage() {
               label="Curriculum"
               pending={pendingCurriculumOverrideDrafts.length}
               ready={approvedCurriculumOverrideDrafts.length}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="voice_intake">
+            <TabLabel
+              label="Voice Intake"
+              pending={pendingVoiceIntakeDrafts.length}
+              ready={approvedVoiceIntakeDrafts.length}
             />
           </TabsTrigger>
         </TabsList>
@@ -667,6 +725,47 @@ export default async function DirectorReviewQueuePage() {
             )}
           </section>
         </TabsContent>
+
+        {/* ─── Voice Intake tab ─── */}
+        <TabsContent value="voice_intake" className="pt-6 space-y-4">
+          {approvedVoiceIntakeDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Approved</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                  {approvedVoiceIntakeDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {approvedVoiceIntakeDrafts.map(draft => (
+                  <VoiceIntakeDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
+          <section className="space-y-3">
+            {approvedVoiceIntakeDrafts.length > 0 && pendingVoiceIntakeDrafts.length > 0 && (
+              <p className="label-xs">Pending Review</p>
+            )}
+            {pendingVoiceIntakeDrafts.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <EmptyState
+                    icon={<Calendar className="w-5 h-5" />}
+                    title="No pending voice intake drafts"
+                    description="When directors or coaches submit voice intake drafts from the Command Center or session pages, they will appear here for review."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingVoiceIntakeDrafts.map(draft => (
+                  <VoiceIntakeDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
       </Tabs>
     </div>
   )
@@ -709,6 +808,8 @@ function PageHeader({
   attendanceApprovedCount,
   curriculumOverridePendingCount,
   curriculumOverrideApprovedCount,
+  voiceIntakePendingCount,
+  voiceIntakeApprovedCount,
 }: {
   pendingCount: number
   approvedCount: number
@@ -720,9 +821,11 @@ function PageHeader({
   attendanceApprovedCount: number
   curriculumOverridePendingCount: number
   curriculumOverrideApprovedCount: number
+  voiceIntakePendingCount: number
+  voiceIntakeApprovedCount: number
 }) {
-  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount
-  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount
+  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount
+  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount
 
   const categories = [
     { label: 'Session Recaps', pending: pendingCount, ready: approvedCount },
@@ -730,6 +833,7 @@ function PageHeader({
     { label: 'Evidence', pending: evidencePendingCount, ready: evidenceApprovedCount },
     { label: 'Attendance', pending: attendancePendingCount, ready: attendanceApprovedCount },
     { label: 'Curriculum', pending: curriculumOverridePendingCount, ready: curriculumOverrideApprovedCount },
+    { label: 'Voice Intake', pending: voiceIntakePendingCount, ready: voiceIntakeApprovedCount },
   ]
 
   return (

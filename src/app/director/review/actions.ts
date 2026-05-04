@@ -1436,6 +1436,113 @@ export async function updateCurriculumOverrideDraftDecisionAction(
 }
 
 // ─────────────────────────────────────────────────────────────
+// Review voice intake draft
+// Only updates proposed_actions status + reviewer tracking fields.
+// No execute step for voice_intake in V1 — approving records director's
+// review decision. Downstream execution is handled by future sprints.
+// ─────────────────────────────────────────────────────────────
+
+export interface UpdateVoiceIntakeDraftDecisionResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function updateVoiceIntakeDraftDecisionAction(
+  proposedActionId: string,
+  decision: DraftDecision,
+  reviewNotes?: string,
+): Promise<UpdateVoiceIntakeDraftDecisionResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+
+  if (!proposedActionId) return { ok: false, error: 'Missing proposed action ID.' }
+  const allowed: DraftDecision[] = ['approved', 'rejected', 'clarification_needed']
+  if (!allowed.includes(decision)) return { ok: false, error: 'Invalid decision value.' }
+  if (reviewNotes && reviewNotes.length > 1000) {
+    return { ok: false, error: 'Review note must be 1000 characters or fewer.' }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to review voice intake drafts.' }
+  }
+
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_payload')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return { ok: false, error: 'Proposed action not found.' }
+  if (proposedAction.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (proposedAction.target_module !== 'voice_intake') {
+    return { ok: false, error: 'This action cannot be reviewed through this interface.' }
+  }
+  const payloadCheck = proposedAction.proposed_payload as Record<string, unknown>
+  if (payloadCheck?.draft_type !== 'voice_intake_v1') {
+    return { ok: false, error: 'Unsupported draft type.' }
+  }
+  if (proposedAction.status !== 'pending_review') {
+    return { ok: false, error: 'This draft has already been reviewed.' }
+  }
+
+  const now = new Date().toISOString()
+  let updatePayload: Record<string, unknown>
+
+  if (decision === 'approved') {
+    updatePayload = {
+      status: 'approved',
+      approved_by: user.id,
+      approved_at: now,
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  } else if (decision === 'rejected') {
+    updatePayload = {
+      status: 'rejected',
+      rejected_by: user.id,
+      rejected_at: now,
+      ...(reviewNotes ? { rejection_reason: reviewNotes, reviewer_notes: reviewNotes } : {}),
+    }
+  } else {
+    updatePayload = {
+      status: 'clarification_needed',
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update(updatePayload)
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to record decision: ${updateError.message}` }
+  }
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
 // Apply approved curriculum override draft
 // Creates exactly one academy_curriculum_overrides row from an
 // approved curriculum_override_v1 proposed_action.
