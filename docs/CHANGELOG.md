@@ -2,6 +2,39 @@
 
 ---
 
+## 2026-05-03 — Sprint 232: Training Gap Detection V1
+
+**Mode:** Pure helper library + display component. No DB calls. No AI. No migrations. No writes.
+
+**What was built:**
+- `detectTrainingGaps(input)` — pure function returning `IdpTrainingGap[]` from player load and attendance data
+- 8 gap types: `insufficient_data`, `overload_risk`, `low_session_frequency`, `high_absence_rate`, `domain_imbalance`, `undertraining`, `gate_evidence_exposure`, `load_declining`
+- All inputs sourced from `player_load_aggregation` fields (confirmed in DB schema)
+- `insufficient_data` returned when all numeric load fields are null — never throws or crashes
+- Gaps sorted by severity: high → medium → low → insufficient_data
+- `TrainingGapCard` component: director/coach facing, `showRoleNote` prop, severity-colored icons
+- Spec doc: input sources, gap types, severity thresholds, role visibility rules, safety rules
+- Training gaps are NEVER surfaced to player or parent views
+
+**Safety boundaries:**
+- `role_note` content is internal operational language — never exposed to player or parent
+- No deficit framing in user-visible descriptions
+- No product/tool names in any gap text
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS, zero forbidden references
+- `qa-command-parser.mjs` — 24/24 passed
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `docs/player-development/training-gap-detection.md` — spec: inputs, gap types, severity thresholds, role rules, safety
+- `src/lib/gaps/trainingGapDetection.ts` — pure `detectTrainingGaps()` helper
+- `src/components/player/TrainingGapCard.tsx` — director/coach gap display card
+
+---
+
 ## 2026-05-03 — Sprint 231: Parent Approved Development Plan Portal V1
 
 **Mode:** Parent portal auth + IDP integration. No schema changes. No migrations. Read-only.
