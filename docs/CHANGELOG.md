@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-04 — Sprint 255: Class Template Curriculum Link Model V1
+
+**Mode:** Server utility library. No migrations. No UI changes.
+
+**What was built:**
+- `curriculumTemplateLinks.ts` — server-side utility for resolving curriculum context from class templates
+- `getCurriculumLevelForTemplate()` — fetches the `curriculum_level_id` assigned to a template, returns level metadata
+- `getCurriculumContentForLevel()` — fetches content items from `curriculum_content_items` for a level; supports optional section filter
+- `getTemplateCurriculumContext()` — full context resolver combining level + content + formatted summary
+- `formatCurriculumContextText()` — formats curriculum context for embedding in session_notes at generation time
+- `getAllCurriculumLevels()` — all levels ordered by sort_order, for powering picker dropdowns
+- All queries use `rawDb = supabase as any` since `curriculum_level_id` and `curriculum_content_items` are not in generated types
+
+**Files created:**
+- `src/lib/templates/curriculumTemplateLinks.ts` — curriculum context resolver utility
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 254: Fitness Template Auto-Populate Suggestions V1
 
 **Mode:** Pure utility library. No migrations. No DB access. No AI calls.
