@@ -1,19 +1,33 @@
 # Current Build Target
 
 **Last updated:** 2026-05-04
-**Current phase:** Phase 1 — Director-facing player operating spine + IDP + Gap Engine (Sprints 219–239 complete)
+**Current phase:** Phase 1 — Director-facing player operating spine + Voice Intake OS Foundation (Sprints 219–249 complete)
 
 ---
 
 ## Active target
 
-**Fitness / Load tab content** — Sprint 239 complete.
+**Voice Intake OS Foundation** — Sprint 249 complete.
 
 Next up: **Competition tab content** — UTR history, match results, tournament records.
 
 ---
 
 ## Build order — current state
+
+### Voice Intake OS Foundation — COMPLETE (Sprints 240–249)
+- Architecture audit + north star document (`docs/conversational-os/voice-intake-architecture.md`)
+- `VoiceIntakePanel` component — controlled voice/text input with role badge, safety note, examples
+- `VoiceIntakeTypes` — full typed model for `VoiceIntakeDraft`, intents, destinations, safety flags
+- `structureVoiceIntake()` — deterministic structuring; intent detection, entity extraction, safety flags, confidence
+- Coach voice structuring wired into `CoachRecapCommandPanel`
+- `voiceDestinationRouter.ts` — 14 destination definitions, role restrictions, risk levels
+- `createVoiceIntakeDraftAction` — proposed_actions pipeline integration; always `pending_review`
+- Voice Intake tab in Director Review Queue with `VoiceIntakeDraftCard` and decision controls
+- `voiceRoleGuardrails.ts` — explicit intent permission matrix; defense-in-depth filtering in structurer
+- Demo flow and QA documentation
+
+---
 
 ### Conversational OS Foundation — COMPLETE (Sprints 219–228)
 - Curriculum learning module model + UI preview (`/director/curriculum/learning`)
@@ -98,10 +112,14 @@ Route: `/coach` — coach sessions workspace partially built (Sprints 237–238)
 
 ---
 
-### Step 9 — Voice Command Center
-Build only after `execute_approved_action()` RPC covers all 15 action types (currently 11 of 15).
+### Step 9 — Voice Command Center (execution layer)
+Voice Intake OS Foundation (Sprints 240–249) is complete — inputs, structuring, routing, review queue, and safety guardrails are all built.
 
-See `docs/conversational-os/approved-action-execution-coverage-plan.md` for remaining 4 types.
+Remaining work before full voice execution:
+- Extend `execute_approved_action()` RPC to cover voice intake action types (currently 11 of 15 total action types)
+- Sprint 250+ — voice intake execution routing: approved voice intake drafts trigger specific downstream actions
+- See `docs/conversational-os/approved-action-execution-coverage-plan.md` for remaining action types
+- See `docs/conversational-os/voice-intake-demo-flow.md` for V1 limitations and AI/STT integration path
 
 ---
 

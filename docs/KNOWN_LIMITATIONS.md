@@ -1,6 +1,6 @@
 # Known Limitations
 
-**Last updated:** 2026-05-03
+**Last updated:** 2026-05-04
 
 This file documents what is currently broken, missing, or intentionally incomplete.
 These are not bugs to fix immediately — they are known gaps that future sessions should be aware of.
@@ -58,15 +58,15 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ## Voice pipeline
 
-### Voice UI should not be built yet
-- **Reason:** `execute_approved_action()` in the Supabase database covers only 3 of 14 action types.
-  Building a Voice Command UI on top of an incomplete execution layer would mislead users
-  into thinking actions are executing when most of them will fail silently.
-- **Specific risk:** `cancel_session`, `modify_template`, `move_player_group`, `assign_group`,
-  `create_placement_assessment`, `flag_player`, `create_player`, `create_exercise`, `adjust_session_intensity`,
-  `generate_parent_update`, and `schedule_reassessment` are not yet handled by the RPC.
-- **Fix:** Complete the RPC coverage first (a database migration task), then build the Voice Command UI.
-  Tracked as Risk R11 in `Academy_OS_Master_Build/generated/risk_register.md`.
+### Voice Intake OS Foundation is complete — V1 limitations remain
+- **Status:** Sprints 240–249 complete. Input, structuring, routing, review queue, safety guardrails all built.
+- **V1 does not execute actions.** Approving a voice intake draft records the director's review decision but triggers no downstream execution. Creating a session plan, attendance exception, or player observation from a voice intake requires Sprint 250+ execution routing.
+- **No real STT.** Browser `SpeechRecognition` API (Chrome/Edge only) is used for voice capture. Falls back to text input on unsupported browsers. Production voice should use a dedicated STT service.
+- **Intent detection is deterministic.** Pattern matching only — no AI inference. Long or ambiguous transcripts may produce `unknown` or miss secondary intents.
+- **Player names are not resolved to IDs.** Extracted names (e.g., "Lucas") are heuristic matches, not resolved to actual `player_id` UUIDs. Resolution to roster records is a future sprint.
+- **No multi-turn context.** Each voice submission is stateless.
+- **execute_approved_action() covers 11 of 15 action types.** The remaining 4 voice action types are not yet handled by the RPC. See `docs/conversational-os/approved-action-execution-coverage-plan.md`.
+- **Fix path:** See `docs/conversational-os/voice-intake-demo-flow.md` for the full AI/STT integration roadmap.
 
 ---
 
@@ -176,8 +176,8 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - **Fix:** Sprint 236 — Curriculum Module Player Preview. Requires player portal to be functional first.
 
 ### Command Center draft execution is limited
-- **Impact:** `execute_approved_action()` in the database covers only 3 of 14 action types. Command-created `proposed_actions` with `target_module = 'director_command'` have no execution path yet.
-- **Fix:** Extend the RPC coverage before building full command execution. Tracked as part of Voice Command Center (Step 9).
+- **Impact:** `execute_approved_action()` in the database covers 11 of 15 action types. Command-created `proposed_actions` with `target_module = 'director_command'` or `target_module = 'voice_intake'` have no execution path for the remaining types.
+- **Fix:** Extend the RPC coverage in Sprint 250+ before building full command execution. Voice intake foundation is complete — execution routing is the next layer.
 
 ### Parent guidance preview is director-only — not sent
 - **File:** `src/app/director/players/[playerId]/ParentGuidancePreviewPanel.tsx`

@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-04 — Sprint 249: Voice Intake Demo and QA V1
+
+**Mode:** Docs only. No code changes. No migrations. No schema changes. Closes the Voice Intake OS Foundation block (Sprints 240–249).
+
+**What was built:**
+- Demo flow document covering director Command Center, coach session workspace, and director review queue — with raw transcript examples, structured output examples, safety invariants, safety flags reference, role permission matrix, QA checklist, V1 limitations, and AI/STT integration path
+- `CURRENT_BUILD_TARGET.md` updated — Voice Intake OS Foundation marked complete; Competition tab identified as next target; Step 9 (Voice Command Center execution) updated to reflect foundation complete
+- `KNOWN_LIMITATIONS.md` updated — "Voice UI should not be built yet" replaced with accurate V1 limitations; Command Center execution note updated from "3 of 14" to "11 of 15" action types
+- `LOCKED_MODULES.md` updated — date updated; `voiceRoleGuardrails.ts`, `voiceIntakeTypes.ts`, `voice-intake-architecture.md` added as locked; voice structurer, router, panel, and review card added as "usable but incomplete"; voice intake execution routing entry added
+
+**QA results:**
+- `qa-voice-intake-structure.mjs` — 15/15 passed
+- `qa-command-parser.mjs` — 24/24 passed
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS, zero product/tool references
+
+**Files created:**
+- `docs/conversational-os/voice-intake-demo-flow.md` — full demo script + safety reference + V1 limitations + AI integration path
+
+**Files modified:**
+- `docs/CURRENT_BUILD_TARGET.md` — Voice Intake OS Foundation block added as complete
+- `docs/KNOWN_LIMITATIONS.md` — voice pipeline limitations updated for V1 reality
+- `docs/LOCKED_MODULES.md` — new voice intake modules catalogued
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 248: Voice Safety and Role Guardrails V1
 
 **Mode:** New pure utility module + defense-in-depth integration. No DB calls. No migrations. No UI changes.

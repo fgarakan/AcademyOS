@@ -1,6 +1,6 @@
 # Locked Modules
 
-**Last updated:** 2026-05-03
+**Last updated:** 2026-05-04
 
 This file defines what can and cannot be touched in any given session.
 Read before writing any code.
@@ -29,7 +29,10 @@ A task description must name the specific file to unlock it.
 | Parent-safe response rules | `src/lib/communications/parentSafeResponseRules.ts` | Stable. Defines allowed/blocked parent-facing content. Do not weaken safety rules. |
 | Curriculum learning modules | `src/lib/curriculum/learningModules.ts` | Pure helper. No DB calls. No AI. All outputs are deterministic. Do not add external dependencies. |
 | Role guardrails | `src/lib/commands/roleGuardrails.ts` | Stable permission model. Do not add permissions without explicit sprint authorization. |
+| Voice role guardrails | `src/lib/voice/voiceRoleGuardrails.ts` | Voice intent permission matrix. Do not weaken role restrictions without explicit sprint authorization. |
+| Voice intake types | `src/lib/voice/voiceIntakeTypes.ts` | Canonical type definitions for voice intake system. All voice modules depend on this. |
 | Conversational OS master plan | `docs/conversational-os/conversational-os-master-plan.md` | Locked principles document. Update only when architecture changes. |
+| Voice intake architecture | `docs/conversational-os/voice-intake-architecture.md` | North star document for Sprints 240–249. Update only when V2 architecture decisions are made. |
 
 ---
 
@@ -43,7 +46,11 @@ Always run `npx tsc --noEmit` after any change.
 |---|---|---|---|
 | Player Profile | `src/app/director/players/[playerId]/page.tsx`, `src/components/player/` | Tab layout, curriculum, advancement, Q&A preview, parent guidance preview | Additional tab content, responsive fixes |
 | Player Q&A helper | `src/lib/player/playerProgressQa.ts` | Handles 5 intents, learning module hint support | New intents, additional answer fields — do not weaken safety note logic |
-| Director Command Center | `src/app/director/command-center/` | Parse, guardrail, draft creation, draft visibility | New example commands, intent label additions |
+| Director Command Center | `src/app/director/command-center/` | Parse, guardrail, draft creation, draft visibility, voice structuring, review draft button | New example commands, intent label additions |
+| Voice intake structurer | `src/lib/voice/structureVoiceIntake.ts` | Deterministic structuring, safety flags, NEVER_AUTOMATIC invariants, role-guardrail filtering | New intent patterns, entity extractors — do not weaken safety flag detection |
+| Voice destination router | `src/lib/voice/voiceDestinationRouter.ts` | 14 destination definitions, role restrictions, risk levels | New destinations if sprints add new modules |
+| Voice Intake Panel | `src/components/voice/VoiceIntakePanel.tsx` | Controlled text/voice input with role badge and safety note | Props additions only |
+| Voice Intake Review Card | `src/app/director/review/VoiceIntakeDraftCard.tsx` | Display card + decision controls for voice intake review queue | Field additions, display polish |
 | Coach Recap Review | `src/app/director/review/StructuredDraftCard.tsx` | Shows attendance, observations, session focus, will/won't change panels | Additional field display only — no approval logic changes |
 | Curriculum Learning Module UI | `src/app/director/curriculum/learning/page.tsx` | Director preview by level/domain with filters | Read-only additions only |
 | UI component library | `src/components/ui/` | 15+ components exported | New components if needed — check existing ones first |
@@ -61,7 +68,7 @@ Always run `npx tsc --noEmit` after any change.
 | Curriculum Explorer | `/director/curriculum` | Built — explorer, level detail, version cards | Drill detail procedure field, "use in session" |
 | Curriculum Learning Modules | `/director/curriculum/learning` | Built (Sprint 220) — director preview by level/domain | Persist modules, player-facing exposure |
 | Director Command Center | `/director/command-center` | Built (Sprint 213+) — parse, guardrail, draft, draft visibility | Full AI execution layer |
-| Director Review Queue | `/director/review` | Built — structured, priority, evidence, attendance, curriculum drafts | Streamlined one-click approve flow |
+| Director Review Queue | `/director/review` | Built — structured, priority, evidence, attendance, curriculum, voice intake drafts | Streamlined one-click approve flow, voice intake execution routing |
 | Sessions screen | `/director/sessions` | Stub with some components | Full session builder (Step 7) |
 | Competition screen | `/director/competition` | Does not exist | Future |
 | Intelligence screen | `/director/intelligence` | Does not exist | Future |
@@ -73,7 +80,7 @@ Always run `npx tsc --noEmit` after any change.
 | Coach voice | `/coach/voice` | Does not exist | Step 9 |
 | Player portal | `/player` | Stub with PlayerMissionPreview (empty state) | Player Q&A with live data (Sprint 229) |
 | Parent portal | `/parent` | Stub with ParentSafeProgressPreview (empty state) | Parent progress with approved data (Sprint 230) |
-| Voice Command Center | Anywhere | Spec only — no full execution layer | Step 9 (after execute_approved_action RPC complete) |
+| Voice Intake Execution Routing | Anywhere | Foundation complete (Sprints 240–249). Execution layer not yet built. | Sprint 250+ — approved voice intake drafts trigger downstream module creation |
 | Placement Engine UI | Anywhere | Spec only — no UI | Step 6 |
 
 ---
