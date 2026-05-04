@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-04 — Sprint 250: Competition Tab Content V1
+
+**Mode:** UI build. No migrations. No schema changes. Academy-scoped reads only.
+
+**What was built:**
+- Competition tab in player profile now shows live UTR data instead of a placeholder empty state
+- UTR profile card: singles/doubles UTR, win rate, wins/losses, matches played (90d + YTD), last match date
+- UTR trend chart: lime line chart of last 12 UTR readings with delta on latest reading
+- UTR insights: active insights with delta indicators and period windows
+- Match results list: last 10 matches with result badge, opponent name + UTR, score, tournament, surface, UTR impact
+- Empty state shown when no competition data exists for the player
+
+**Files created:**
+- `src/components/player/UtrHistoryChart.tsx` — `'use client'` recharts line chart for UTR history trend (isolated to keep page.tsx server-compatible)
+- `src/components/player/PlayerCompetitionTab.tsx` — server-compatible competition tab component; accepts pre-fetched UTR data as props
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — added 4 sequential UTR queries (profile, history, matches, insights) after load queries; replaced competition placeholder with `<PlayerCompetitionTab />`
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 249: Voice Intake Demo and QA V1
 
 **Mode:** Docs only. No code changes. No migrations. No schema changes. Closes the Voice Intake OS Foundation block (Sprints 240–249).

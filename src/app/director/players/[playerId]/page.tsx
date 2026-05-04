@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { Trophy } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getPlayerById } from '@/lib/backend/players'
@@ -52,6 +51,8 @@ import { detectKnowledgeGaps } from '@/lib/gaps/knowledgeGapDetection'
 import { buildDirectorGapGuidance } from '@/lib/gaps/roleSpecificGapGuidance'
 import { GapGuidanceSummaryCard } from '@/components/player/GapGuidanceSummaryCard'
 import { PlayerLoadTab } from '@/components/player/PlayerLoadTab'
+import { PlayerCompetitionTab, type UtrProfileData, type UtrMatchRow, type UtrInsightRow } from '@/components/player/PlayerCompetitionTab'
+import type { UtrHistoryPoint } from '@/components/player/UtrHistoryChart'
 
 interface PageProps {
   params: { playerId: string }
@@ -299,6 +300,69 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     .maybeSingle()
   const playerLoad = loadRow ?? null
 
+  // UTR profile — one row per player (optional), scoped by player_id + academy_id.
+  const { data: utrProfileRaw } = await rawDb
+    .from('player_utr_profiles')
+    .select('utr_singles, utr_doubles, utr_status, win_rate_90d, wins_90d, losses_90d, matches_played_90d, matches_played_ytd, last_match_date, last_synced_at')
+    .eq('player_id', params.playerId)
+    .eq('academy_id', academyId)
+    .maybeSingle()
+  const utrProfile: UtrProfileData | null = utrProfileRaw ?? null
+
+  // UTR history — last 12 readings, most recent first, used for the trend chart.
+  const { data: utrHistoryRaw } = await rawDb
+    .from('player_utr_history')
+    .select('utr_value, utr_type, utr_status, captured_at, delta_from_previous')
+    .eq('player_id', params.playerId)
+    .eq('academy_id', academyId)
+    .order('captured_at', { ascending: false })
+    .limit(12)
+  const utrHistory: UtrHistoryPoint[] = (utrHistoryRaw ?? []).map((r: any) => ({
+    captured_at: r.captured_at,
+    utr_value: r.utr_value,
+    utr_type: r.utr_type,
+    delta_from_previous: r.delta_from_previous ?? null,
+  }))
+
+  // UTR matches — last 10 results, most recent first.
+  const { data: utrMatchesRaw } = await rawDb
+    .from('player_utr_matches')
+    .select('id, match_date, opponent_name, opponent_utr, result, score, tournament_name, surface, utr_impact')
+    .eq('player_id', params.playerId)
+    .eq('academy_id', academyId)
+    .order('match_date', { ascending: false })
+    .limit(10)
+  const utrMatches: UtrMatchRow[] = (utrMatchesRaw ?? []).map((r: any) => ({
+    id: r.id,
+    match_date: r.match_date,
+    opponent_name: r.opponent_name ?? null,
+    opponent_utr: r.opponent_utr ?? null,
+    result: r.result,
+    score: r.score ?? null,
+    tournament_name: r.tournament_name ?? null,
+    surface: r.surface ?? null,
+    utr_impact: r.utr_impact ?? null,
+  }))
+
+  // UTR insights — active insights only, most recent first.
+  const { data: utrInsightsRaw } = await rawDb
+    .from('player_utr_insights')
+    .select('id, insight_type, insight_text, delta, utr_current, period_days, calculated_at')
+    .eq('player_id', params.playerId)
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .order('calculated_at', { ascending: false })
+    .limit(5)
+  const utrInsights: UtrInsightRow[] = (utrInsightsRaw ?? []).map((r: any) => ({
+    id: r.id,
+    insight_type: r.insight_type,
+    insight_text: r.insight_text,
+    delta: r.delta ?? null,
+    utr_current: r.utr_current ?? null,
+    period_days: r.period_days ?? null,
+    calculated_at: r.calculated_at,
+  }))
+
   // Gap detection — pure helpers, no DB calls, deterministic.
   const trainingGaps = detectTrainingGaps({
     player_id: params.playerId,
@@ -439,13 +503,12 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   // ─── Tab 2: Skill Path ────────────────────────────────────────────────────
   // ─── Tab 3: Competition ───────────────────────────────────────────────────
   const competitionSlot = (
-    <Card>
-      <EmptyState
-        icon={<Trophy className="w-5 h-5" />}
-        title="Competition tracking coming soon"
-        description="Match results, UTR history, and tournament records will appear here."
-      />
-    </Card>
+    <PlayerCompetitionTab
+      utrProfile={utrProfile}
+      utrHistory={utrHistory}
+      utrMatches={utrMatches}
+      utrInsights={utrInsights}
+    />
   )
 
   // ─── Tab 4: Fitness / Load ────────────────────────────────────────────────

@@ -9,7 +9,7 @@
 
 **Voice Intake OS Foundation** — Sprint 249 complete.
 
-Next up: **Competition tab content** — UTR history, match results, tournament records.
+Next up: **Step 5 — Director Dashboard** `/director` or **Step 6 — Placement Engine**.
 
 ---
 
@@ -76,7 +76,7 @@ Full player directory with search, status filter, curriculum level badge, assess
 | Skill Path | Complete — level picker, assignment card, gap guidance, advancement, gates, Q&A preview |
 | Notes | Complete — observations feed, priorities, evidence timeline, voice note, parent guidance preview |
 | Fitness / Load | Complete (Sprint 239) — volume, domain mix, intensity, fatigue risk, trend, overload alert |
-| Competition | **← NEXT** — UTR history, match results, tournament records |
+| Competition | Complete (Sprint 250) — UTR profile, trend chart, match results, insights |
 
 Data available:
 - `src/lib/backend/utr.ts` — UTR history, insights
