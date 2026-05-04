@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-04 — Sprint 251: Template Population Architecture Audit
+
+**Mode:** Audit and docs only. No code changes. No migrations.
+
+**What was audited:**
+- Exercise storage: `exercises` table, `exercise_category` enum, `is_active` flag, academy scoping
+- Exercise import: `import-exercises.js` was run in DRY RUN mode only — 70 exercises were never inserted; only 14 seeded exercises exist
+- Fitness template population: query, matching logic, and RLS are correct; failure is pure data gap
+- FitnessBlockType taxonomy vs DB `block_type` enum: two separate type systems, mapped in `fitnessBlockTypes.ts`
+- `templates` table: has two level columns (`level_id` → old academy_levels, `curriculum_level_id` → new curriculum_levels)
+- `curriculum_content_items` table: exists (migration 045) but not in generated types
+- Class template builder: list page exists, detail/builder page does NOT exist
+- Session generation: works; copies template_blocks → session_blocks; curriculum level embedded as text in session_notes
+- Schema gaps: no structured `curriculum_source_id` on `template_blocks`; `database.types.ts` not regenerated after migration 045
+
+**Files created:**
+- `docs/templates/template-population-architecture-audit.md` — comprehensive architecture map for Sprints 252–260
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS
+- `qa-command-parser.mjs` — 24/24 passed
+- `qa-voice-intake-structure.mjs` — 15/15 passed
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 250: Competition Tab Content V1
 
 **Mode:** UI build. No migrations. No schema changes. Academy-scoped reads only.
