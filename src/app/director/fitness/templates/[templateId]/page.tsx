@@ -103,12 +103,14 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
   const rawDb = supabase as any
 
   let rawExercises: RawTBE[] = []
+  let blockExercisesQueryError: string | null = null
   if (blockIds.length > 0) {
-    const { data: exData } = await rawDb
+    const { data: exData, error: tbeError } = await rawDb
       .from('template_block_exercises')
       .select('id, block_id, order_index, duration_min, notes, exercises(id, name, category, subcategory, duration_min)')
       .in('block_id', blockIds)
       .order('order_index')
+    if (tbeError) blockExercisesQueryError = tbeError.message
     rawExercises = (exData ?? []) as RawTBE[]
   }
 
@@ -291,6 +293,7 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
             exerciseLibrary={exerciseLibrary}
             libraryQueryError={libraryError?.message ?? null}
             totalExercisesInAcademy={totalExercisesInAcademy ?? 0}
+            blockExercisesQueryError={blockExercisesQueryError}
           />
         </>
       )}

@@ -125,9 +125,14 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - `SessionCurriculumContextPanel` will show context once a level is assigned. Templates without a level still show the "no context" empty state until a director sets one.
 
 ### `templates.curriculum_level_id` column not in generated types (Sprint 261)
-- **Status:** Migration 045 added `curriculum_level_id` to the `templates` table, but `database.types.ts` has not been regenerated. The column may or may not exist in the live database.
-- **Impact:** All template queries now use `select('*')` which is safe regardless — if the column exists, it's returned; if not, it's absent with no DB error. Curriculum link features (curriculum level selector on templates, session curriculum cues) work when the column exists. When absent, templates show "Not linked yet" in curriculum link UI.
-- **Fix:** Run `supabase gen types typescript` after confirming migration 045 is applied to the live database, then regenerate `src/lib/supabase/database.types.ts`.
+- **Status:** Migration 045 added `curriculum_level_id` to the `templates` table, but the column **does not exist in the live database** and `database.types.ts` has not been regenerated.
+- **Impact:** Clicking Save in the Curriculum Context selector on fitness templates now shows a muted message ("Curriculum source persistence is not enabled yet — migration 045 pending") instead of a red Supabase error. Selection is not persisted. Session curriculum cues will not be linked to templates until the migration is applied.
+- **Fix:** Apply migration 045 to the live Supabase database, then run `supabase gen types typescript` to regenerate `src/lib/supabase/database.types.ts`.
+
+### `template_block_exercises` had missing RLS policies — RESOLVED in migration 055
+- **Status:** `template_block_exercises` was created in migration 006 with `ENABLE ROW LEVEL SECURITY` but no SELECT/INSERT/UPDATE/DELETE policies. All authenticated-user access was silently blocked. Migration 055 adds the missing policies.
+- **Impact before fix:** Auto-populate silently failed on every insert, returned "Blocks already populated" incorrectly. Block exercises never rendered. The `populateFitnessTemplateBlocksAction` now returns an explicit error if all inserts fail, and the page surfaces a diagnostic banner if the join query fails.
+- **Fix:** Apply `supabase/migrations/055_template_block_exercises_rls.sql` to the live Supabase instance. Until applied, the populate feature and block exercise rendering remain blocked.
 
 ### Preview mode write actions previously threw uncaught errors — RESOLVED (Sprint 261)
 - **Status:** Server Actions that guard writes with `assertNotPreviewMode()` now catch the throw and return `{ error: 'Writes are disabled in preview mode.' }` instead of propagating the exception to the client. Preview banner ("Writes are disabled in preview.") displays in the director layout when in preview mode.

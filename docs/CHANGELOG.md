@@ -2,6 +2,62 @@
 
 ---
 
+## 2026-05-04 — Fix fitness template director write flow
+
+**Mode:** Bug fix. One new migration (055). No schema changes beyond adding missing RLS policies.
+
+**Issue 1 — Curriculum level save crashed with Supabase schema error:**
+- Root cause: `setCurriculumLevelAction.ts` called `.update({ curriculum_level_id: ... })` on the `templates` table. The column exists only in migration 045, which has not been applied to the live database. Supabase PostgREST returned: "Could not find the 'curriculum_level_id' column of 'templates' in the schema cache."
+- The action passed this raw error string directly to `CurriculumLevelSelector`, which displayed it as a red error message.
+- Fix: `setCurriculumLevelAction` now detects the "Could not find / schema cache" error pattern and returns `{ error: null, notPersisted: true }` instead of the raw Supabase message.
+- `CurriculumLevelSelector` now shows a muted info message ("Curriculum source persistence is not enabled yet — migration 045 pending. Selection is not saved.") instead of a red crash error.
+- The save button still works; the action still runs; it simply informs the director that the selection is not persisted until the migration is applied.
+
+**Issue 2 — Auto-populate said "Blocks already populated" but blocks showed 0 exercises:**
+- Root cause: `template_block_exercises` was created in migration 006 with `ENABLE ROW LEVEL SECURITY` but **zero RLS policies were ever defined for it**. PostgreSQL denies all access by default when RLS is enabled and no policy matches. All SELECT and INSERT calls on `template_block_exercises` by authenticated users were silently returning empty data / failing.
+- The populate action's deduplication check (`SELECT block_id, exercise_id FROM template_block_exercises`) returned 0 rows (RLS denial silently returned null). So `existingByBlock` was empty, and `fresh` always had candidates.
+- Inserts then failed silently (no INSERT policy either). `exercisesAdded` stayed 0, but `totalInsertAttempts` would be non-zero.
+- Previously: action returned `{ ok: true, totalExercisesAdded: 0, ... }`, which the client UI rendered as "Blocks already populated — no new exercises added." This message was wrong — blocks were NOT populated.
+- The page join query (`template_block_exercises` → `exercises`) also failed silently (no error was captured), so blocks always showed "No exercises in this block."
+- Fixes:
+  1. **Migration 055** adds `SELECT` and `ALL` policies for `template_block_exercises`, scoped to staff members via the `block → template → academy_id` chain.
+  2. `populateFitnessBlocksAction.ts` now tracks `totalInsertAttempts` and `totalInsertFailures`. If every attempted insert fails, it returns `{ ok: false, error: 'Could not save exercises — database error: ...' }` instead of silently succeeding with 0 exercises.
+  3. `page.tsx` now captures the `tbeError` from the join query and passes it as `blockExercisesQueryError` to `FitnessTemplateBuilderClient`.
+  4. `FitnessTemplateBuilderClient.tsx` shows a new diagnostic banner when `blockExercisesQueryError` is present: "Block exercise data unavailable: [error]. Contact your admin — a database policy may be missing."
+
+**Migration 055 — required for Issue 2 to be fully resolved:**
+- File: `supabase/migrations/055_template_block_exercises_rls.sql`
+- Non-destructive. Adds two new policies only. Does not modify any existing data or existing policies.
+- **This migration must be applied to the live Supabase instance before the populate feature will work.**
+- Apply via: Supabase SQL editor → paste and run the file contents, OR `supabase db push` if CLI is configured.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/setCurriculumLevelAction.ts` — detect schema-cache error, return `notPersisted` flag
+- `src/app/director/fitness/templates/[templateId]/CurriculumLevelSelector.tsx` — handle `notPersisted`, show muted limitation message
+- `src/app/director/fitness/templates/[templateId]/populateFitnessBlocksAction.ts` — track insert errors, return failure when all inserts fail
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — capture `tbeError`, pass `blockExercisesQueryError` to client
+- `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` — add `blockExercisesQueryError` prop + diagnostic banner
+
+**Files created:**
+- `supabase/migrations/055_template_block_exercises_rls.sql` — missing RLS policies for `template_block_exercises`
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+**QA scripts:** All 4 QA scripts passed (38/38, 0 failures, 24/24, 15/15).
+
+**Manual test checklist (requires migration 055 applied first):**
+- [ ] `/director/fitness/templates` loads for brian@dabul.test
+- [ ] Open any fitness template
+- [ ] 83 exercises badge appears
+- [ ] Curriculum Context selector: clicking Save shows muted "persistence not enabled" message, not red error
+- [ ] Populate Blocks with Exercises: adds exercises when blocks have none
+- [ ] After populate, summary exercise count matches visible block exercises
+- [ ] Hard refresh keeps populated exercises visible
+- [ ] Add Exercise picker opens and shows exercises
+- [ ] No preview-mode error (Brian is not in preview mode)
+
+---
+
 ## 2026-05-04 — Sprint 263: Exercise Library Data Resolution + Activation V1
 
 **Mode:** Data audit + UI improvement. No migrations. No schema changes.

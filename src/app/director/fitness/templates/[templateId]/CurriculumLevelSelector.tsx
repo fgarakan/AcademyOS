@@ -28,6 +28,7 @@ export function CurriculumLevelSelector({ templateId, currentLevelId, levels }: 
   const [selectedId, setSelectedId] = useState<string | null>(currentLevelId)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notPersisted, setNotPersisted] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const currentLevel = levels.find(l => l.id === selectedId)
@@ -37,16 +38,22 @@ export function CurriculumLevelSelector({ templateId, currentLevelId, levels }: 
     setSelectedId(val)
     setSaved(false)
     setError(null)
+    setNotPersisted(false)
   }
 
   function handleSave() {
     startTransition(async () => {
       const result = await setCurriculumLevelAction(templateId, selectedId)
-      if (result.error) {
+      if (result.notPersisted) {
+        setNotPersisted(true)
+        setError(null)
+      } else if (result.error) {
         setError(result.error)
+        setNotPersisted(false)
       } else {
         setSaved(true)
         setError(null)
+        setNotPersisted(false)
       }
     })
   }
@@ -112,10 +119,15 @@ export function CurriculumLevelSelector({ templateId, currentLevelId, levels }: 
       {saved && !hasChanged && (
         <p className="text-[11px] text-status-green">Curriculum level saved.</p>
       )}
+      {notPersisted && (
+        <p className="text-[11px] text-text-muted">
+          Curriculum source persistence is not enabled yet — migration 045 pending. Selection is not saved.
+        </p>
+      )}
       {error && (
         <p className="text-[11px] text-status-red">{error}</p>
       )}
-      {!selectedId && (
+      {!selectedId && !notPersisted && (
         <p className="text-[11px] text-text-muted">
           Select a curriculum level to enable curriculum-aware block population.
         </p>

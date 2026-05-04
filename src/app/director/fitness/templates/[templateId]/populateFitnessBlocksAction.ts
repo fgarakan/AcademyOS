@@ -154,6 +154,9 @@ export async function populateFitnessTemplateBlocksAction(
   // 8. For each block, select and insert matching exercises
   const blockResults: BlockPopulationResult[] = []
   let totalExercisesAdded = 0
+  let firstInsertError: string | null = null
+  let totalInsertAttempts = 0
+  let totalInsertFailures = 0
 
   for (const block of blockList) {
     const categories = BLOCK_TO_EXERCISE_CATEGORY[block.type] ?? []
@@ -205,7 +208,7 @@ export async function populateFitnessTemplateBlocksAction(
       toInsert.push({ exercise: fallback, duration: fallback.duration_min ?? DEFAULT_EXERCISE_DURATION })
     }
 
-    // Insert template_block_exercises
+    // Insert template_block_exercises — track errors explicitly
     let exercisesAdded = 0
     const currentMaxOrder: number = existingForBlock.size
 
@@ -219,7 +222,13 @@ export async function populateFitnessTemplateBlocksAction(
           order_index: currentMaxOrder + i,
           duration_min: duration,
         })
-      if (!insertError) exercisesAdded++
+      totalInsertAttempts++
+      if (!insertError) {
+        exercisesAdded++
+      } else {
+        totalInsertFailures++
+        if (!firstInsertError) firstInsertError = insertError.message
+      }
     }
 
     const durationUsed = toInsert.reduce((sum, t) => sum + t.duration, 0)
@@ -234,6 +243,11 @@ export async function populateFitnessTemplateBlocksAction(
       durationBudgetMin: block.duration_min,
       durationUsedMin: durationUsed,
     })
+  }
+
+  // If every attempted insert failed, surface the error rather than silently returning ok
+  if (totalInsertAttempts > 0 && totalInsertFailures === totalInsertAttempts && firstInsertError) {
+    return fail(`Could not save exercises — database error: ${firstInsertError}`)
   }
 
   return {

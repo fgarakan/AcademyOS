@@ -7,7 +7,7 @@ import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 export async function setCurriculumLevelAction(
   templateId: string,
   curriculumLevelId: string | null,
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null; notPersisted?: boolean }> {
   try { await assertNotPreviewMode() } catch { return { error: 'Writes are disabled in preview mode.' } }
 
   const supabase = await getSupabaseServer()
@@ -66,7 +66,16 @@ export async function setCurriculumLevelAction(
     .eq('id', templateId)
     .eq('academy_id', academyId)
 
-  if (updateError) return { error: `Failed to update curriculum level: ${updateError.message}` }
+  if (updateError) {
+    // curriculum_level_id column not yet in live schema (migration 045 pending)
+    if (
+      updateError.message?.includes('Could not find') ||
+      updateError.message?.includes('schema cache')
+    ) {
+      return { error: null, notPersisted: true }
+    }
+    return { error: `Failed to update curriculum level: ${updateError.message}` }
+  }
 
   revalidatePath(`/director/fitness/templates/${templateId}`)
   return { error: null }

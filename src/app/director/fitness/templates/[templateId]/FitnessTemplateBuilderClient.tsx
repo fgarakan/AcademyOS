@@ -33,6 +33,7 @@ interface FitnessTemplateBuilderClientProps {
   exerciseLibraryCount?: number
   libraryQueryError?: string | null
   totalExercisesInAcademy?: number
+  blockExercisesQueryError?: string | null
 }
 
 export function FitnessTemplateBuilderClient({
@@ -42,6 +43,7 @@ export function FitnessTemplateBuilderClient({
   exerciseLibraryCount,
   libraryQueryError,
   totalExercisesInAcademy = 0,
+  blockExercisesQueryError,
 }: FitnessTemplateBuilderClientProps) {
   const libraryCount = exerciseLibraryCount ?? exerciseLibrary.length
   const [blocks, setBlocks] = useState<FitnessBlock[]>(initialBlocks)
@@ -179,6 +181,16 @@ export function FitnessTemplateBuilderClient({
                 ? `${totalExercisesInAcademy} exercise${totalExercisesInAcademy !== 1 ? 's' : ''} found but none are active. Update exercise is_active status to enable auto-population.`
                 : 'Exercise library is empty for this academy. Blocks will be created without exercises. Use the "Auto-Populate Exercises" button above once exercises are imported.'
             }
+          </span>
+        </div>
+      )}
+
+      {/* Block exercises query error — typically indicates missing RLS policy on template_block_exercises */}
+      {!!blockExercisesQueryError && (
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-status-orange/20 bg-status-orange/5 text-xs text-status-orange">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>
+            Block exercise data unavailable: {blockExercisesQueryError}. Contact your admin — a database policy may be missing.
           </span>
         </div>
       )}
