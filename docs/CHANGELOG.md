@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-04 — Sprint 241: Universal Voice Button UI V1
+
+**Mode:** New component + minimal client component edit. No schema changes. No migrations. No AI. No DB writes.
+
+**What was built:**
+- `VoiceIntakePanel` — reusable controlled voice/text intake component; wraps `VoiceTextInput` with role badge, context label, submit button, safety note, optional examples list
+- Replaced raw textarea card in Director Command Center with `VoiceIntakePanel`; preserved all existing parse, draft creation, example, history behavior
+- `handleParse` updated to accept optional text override (prevents state race on submit)
+- Coach integration deferred to Sprint 244 per sprint plan
+
+**Files created:**
+- `src/components/voice/VoiceIntakePanel.tsx` — controlled voice/text intake panel; role prop, contextLabel, value/onChange/onSubmit, optional examples, safety guardrail note
+
+**Files modified:**
+- `src/app/director/command-center/CommandCenterClient.tsx` — import VoiceIntakePanel, replace textarea card, update handleParse signature
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 240: Voice Intake Architecture Audit
 
 **Mode:** Docs only. No code. No schema changes. No migrations. No UI.

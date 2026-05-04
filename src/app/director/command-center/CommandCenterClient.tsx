@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Terminal, Send, Clock, ChevronRight, Loader2, ArrowRight, ShieldCheck, FileText } from 'lucide-react'
+import { Terminal, Clock, ChevronRight, Loader2, ArrowRight, ShieldCheck, FileText } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import { submitDirectorCommandAction } from './submitDirectorCommandAction'
 import type { ParsedCommandResult } from '@/lib/commands/parseAcademyCommand'
@@ -11,6 +11,7 @@ import {
   getRoleDisplayName,
   canRoleUseIntent,
 } from '@/lib/commands/roleGuardrails'
+import { VoiceIntakePanel } from '@/components/voice/VoiceIntakePanel'
 
 interface RecentCommand {
   id: string
@@ -77,14 +78,15 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
     setError(null)
   }
 
-  function handleParse() {
-    if (!input.trim()) return
+  function handleParse(text?: string) {
+    const commandText = (text ?? input).trim()
+    if (!commandText) return
     setResult(null)
     setDraftCreated(null)
     setError(null)
 
     startParseTransition(async () => {
-      const res = await submitDirectorCommandAction(input.trim(), 'parse_only')
+      const res = await submitDirectorCommandAction(commandText, 'parse_only')
       if (res.error) {
         setError(res.error)
       } else if (res.parsed) {
@@ -122,47 +124,28 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
   return (
     <div className="space-y-6">
 
-      {/* Command input */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-lime" />
-            <p className="label-xs">Command Input</p>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0 space-y-3">
-          <div className="relative">
-            <textarea
-              value={input}
-              onChange={e => { setInput(e.target.value); setResult(null); setDraftCreated(null); setError(null) }}
-              onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleParse() }}
-              rows={3}
-              placeholder="Type what you want done…  e.g. 'Show players missing curriculum levels' or 'Create a session draft for Orange 2'"
-              className="w-full bg-surface-raised border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/50 resize-none"
-              disabled={isParsing || isCreatingDraft}
-            />
-            <p className="absolute bottom-2 right-3 text-[10px] text-text-muted pointer-events-none">⌘↵ to parse</p>
-          </div>
+      {/* Command input — VoiceIntakePanel */}
+      <VoiceIntakePanel
+        role="academy_director"
+        contextLabel="Director Command Center"
+        value={input}
+        onChange={v => { setInput(v); setResult(null); setDraftCreated(null); setError(null) }}
+        onSubmit={text => { setInput(text); handleParse(text) }}
+        placeholder="Speak or type what you want done… e.g. 'Create a session draft for Orange 2 focused on movement'"
+        submitLabel={isParsing ? 'Parsing…' : 'Parse Command'}
+        disabled={isParsing || isCreatingDraft}
+      />
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleParse}
-              disabled={isParsing || isCreatingDraft || !input.trim()}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg btn-lime text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isParsing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-              {isParsing ? 'Parsing…' : 'Parse Command'}
-            </button>
-            <p className="text-[11px] text-text-muted">
-              Parses your command into a structured intent. Nothing changes until you approve.
-            </p>
-          </div>
+      {isParsing && (
+        <div className="flex items-center gap-2 text-xs text-text-muted">
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-lime" />
+          Parsing command…
+        </div>
+      )}
 
-          {error && (
-            <p className="text-xs text-status-red">{error}</p>
-          )}
-        </CardContent>
-      </Card>
+      {error && (
+        <p className="text-xs text-status-red">{error}</p>
+      )}
 
       {/* Parsed result */}
       {result && (
