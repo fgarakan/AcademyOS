@@ -253,15 +253,21 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
       {isFitnessTemplate && (
         <>
           <div>
-            <p className="label-xs mb-2">Fitness Blocks</p>
+            <div className="flex items-center gap-3 mb-2">
+              <p className="label-xs">Fitness Blocks</p>
+              {exerciseLibrary.length > 0 && (
+                <span className="text-[10px] font-mono text-lime px-2 py-0.5 rounded-full border border-lime/20 bg-lime/5">
+                  {exerciseLibrary.length} exercise{exerciseLibrary.length !== 1 ? 's' : ''} available
+                </span>
+              )}
+            </div>
             <p className="text-[11px] text-text-muted">
               Add movement, agility, speed, strength, coordination, mobility, and recovery blocks.
-              {exerciseLibrary.length > 0
-                ? ` Exercise library has ${exerciseLibrary.length} approved exercises available.`
-                : (totalExercisesInAcademy ?? 0) > 0
-                  ? ` Exercise library has ${totalExercisesInAcademy} exercise${totalExercisesInAcademy !== 1 ? 's' : ''} but none are marked active — update exercise is_active status to enable auto-population.`
+              {exerciseLibrary.length === 0 && (
+                (totalExercisesInAcademy ?? 0) > 0
+                  ? ` ${totalExercisesInAcademy} exercise${totalExercisesInAcademy !== 1 ? 's' : ''} found in library but none are active — update exercise is_active status to enable auto-population.`
                   : ' Exercise library is empty — import exercises to enable auto-population.'
-              }
+              )}
             </p>
           </div>
 

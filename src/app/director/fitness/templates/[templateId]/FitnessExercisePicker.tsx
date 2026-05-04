@@ -34,6 +34,13 @@ export function FitnessExercisePicker({
 
   const blockLabel = fitnessBlockType ? getFitnessBlockLabel(fitnessBlockType) : blockName
 
+  const matchCount = useMemo(() => {
+    if (!fitnessBlockType) return 0
+    return exerciseLibrary.filter(ex =>
+      matchExerciseToFitnessBlock({ ...ex, tags: ex.tags ?? null }, fitnessBlockType)
+    ).length
+  }, [exerciseLibrary, fitnessBlockType])
+
   const sortedExercises = useMemo(() => {
     if (!fitnessBlockType) return [...exerciseLibrary].sort((a, b) => a.name.localeCompare(b.name))
     const matches = exerciseLibrary.filter(ex =>
@@ -106,10 +113,38 @@ export function FitnessExercisePicker({
           </div>
         </div>
 
+        {/* Count + clear */}
+        <div className="flex items-center justify-between px-3 py-1.5 shrink-0 border-b border-border">
+          <span className="text-[10px] text-text-muted">
+            {filtered.length === 0
+              ? 'No results'
+              : `${filtered.length} exercise${filtered.length !== 1 ? 's' : ''}`
+            }
+            {fitnessBlockType && matchCount > 0 && !query && (
+              <span className="text-lime/80">
+                {' '}· {matchCount} {blockLabel} match{matchCount !== 1 ? 'es' : ''}
+              </span>
+            )}
+          </span>
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="text-[10px] text-lime hover:underline"
+            >
+              Clear search
+            </button>
+          )}
+        </div>
+
         {/* Exercise list */}
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
           {filtered.length === 0 ? (
-            <p className="text-xs text-text-muted text-center py-6">No exercises found.</p>
+            <p className="text-xs text-text-muted text-center py-6">
+              {query
+                ? `No exercises match "${query}" — try clearing the search.`
+                : 'No exercises found for this block type.'
+              }
+            </p>
           ) : (
             filtered.map(ex => {
               const isMatch = fitnessBlockType

@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-05-04 — Sprint 263: Exercise Library Data Resolution + Activation V1
+
+**Mode:** Data audit + UI improvement. No migrations. No schema changes.
+
+**Root cause identified and resolved:**
+- Architecture audit (Sprint 251) stated exercise import was dry-run only — no data inserted.
+- Sprint 263 live check confirmed: **83 exercises already in DB** (14 seed + 69 Airtable import). All `is_active = true`.
+- The import was run in a previous sprint (commit `ff8f834`).
+- Exercises ARE present. If the fitness template builder shows empty library for a logged-in director, the cause is **RLS**: the director's `profiles.academy_id` doesn't match the demo academy, or their `academy_memberships` row is inactive/missing.
+
+**Data confirmation:**
+- 70 Airtable exercises: all had `Status = "Approved"` in CSV → all inserted with `is_active = true`
+- Import script is idempotent — re-running inserts 0 rows (all 70 exist as DB duplicates)
+- Rollback SQL: `DELETE FROM exercises WHERE academy_id = '00000000-0000-0000-0000-000000000001' AND 'import_batch:airtable_exercise_library_2026_04_29' = ANY(tags)`
+
+**UI improvements:**
+- Active exercise count now shown as a lime badge when exercises are available (previously buried in inline text)
+- Fitness template builder count text cleaned up: badge when present, specific message when empty
+- Exercise picker now shows: result count, block-type match count, "Clear search" button when search is active
+- "No exercises found" message now distinguishes search-filtered vs no data
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Count badge, cleaned up empty-state text
+- `src/app/director/fitness/templates/[templateId]/FitnessExercisePicker.tsx` — Count row, match count, clear search, better no-results message
+
+**Files created:**
+- `docs/templates/exercise-library-resolution.md` — Full resolution document: table schema, data state, import status, RLS condition, root cause, fix applied, remaining actions
+
+**Validation results:**
+- `npx tsc --noEmit` → CLEAN
+- `qa-curriculum-seed-migration.mjs` → 38/38 passed
+- `audit-curriculum-product-language.mjs` → PASS
+- `qa-command-parser.mjs` → 24/24 passed
+- `qa-voice-intake-structure.mjs` → 15/15 passed
+
+---
+
 ## 2026-05-04 — Sprint 262: Fitness Exercise Library Diagnostic
 
 **Mode:** Bug fix + diagnostic improvement. No migrations. No schema changes.

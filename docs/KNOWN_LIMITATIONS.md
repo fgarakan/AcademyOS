@@ -138,12 +138,13 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - **Impact:** Class template detail shows a read-only block list. Blocks cannot be added, removed, or reordered from the class template detail page. Only the curriculum level can be assigned.
 - **Fix:** Future sprint — build class template block editor (lower priority than fitness template system).
 
-### Fitness exercise library — diagnostic improved (Sprint 262)
-- **Status:** The exercise library query in the fitness template builder now captures errors and shows a total-count diagnostic to distinguish "no exercises imported" from "exercises exist but inactive."
-- **If `is_active = false` for all exercises:** Banner shows total count and instructs director to update `is_active` status.
-- **If query errors (e.g. RLS):** Banner shows the error message text.
-- **If truly empty:** Banner shows the existing import guidance.
-- **Remaining gap:** RLS-blocked results look identical to "truly empty" — both return count 0 since RLS applies to the count query as well.
+### Fitness exercise library — RESOLVED (Sprint 263)
+- **Status:** 83 exercises confirmed in DB for demo academy `00000000-0000-0000-0000-000000000001`. All active (`is_active = true`). Import confirmed complete via live check 2026-05-04.
+- **Import:** 14 seed exercises (migration 024) + 69 Airtable exercises (`data/airtable-import/import-exercises.js`).
+- **If library appears empty to a logged-in director:** The cause is RLS. Either the director's `profiles.academy_id` does not match the demo academy, or their `academy_memberships` row is inactive or missing. The Sprint 262 total-count diagnostic will show 0 in both the active query and the total-count query in this case (RLS applies to both). Check the director's profile and membership in Supabase.
+- **If library is truly empty (no exercises at all):** Run `cd data/airtable-import && SUPABASE_URL="..." SUPABASE_SERVICE_ROLE_KEY="..." node import-exercises.js --live --confirm-live-import`
+- **UI:** Exercise count shown as a lime badge when exercises are available. Picker shows result count and "Clear search" button when filter is active. See `docs/templates/exercise-library-resolution.md` for full details.
+- **Remaining gap:** No director-facing activation UI exists for exercises with `is_active = false`. Activation requires direct DB access or Supabase dashboard.
 
 ### Drill detail panel does not show `procedure` field
 - **Impact:** `curriculum_drills.procedure` is not fetched by `getCurriculumExplorerData()` (locked backend file). The drill expanded panel shows setup, cues, progressions, and success criteria but not procedure.
