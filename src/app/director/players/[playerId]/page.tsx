@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { Trophy, Activity } from 'lucide-react'
+import { Trophy } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getPlayerById } from '@/lib/backend/players'
@@ -51,6 +51,7 @@ import { detectTrainingGaps } from '@/lib/gaps/trainingGapDetection'
 import { detectKnowledgeGaps } from '@/lib/gaps/knowledgeGapDetection'
 import { buildDirectorGapGuidance } from '@/lib/gaps/roleSpecificGapGuidance'
 import { GapGuidanceSummaryCard } from '@/components/player/GapGuidanceSummaryCard'
+import { PlayerLoadTab } from '@/components/player/PlayerLoadTab'
 
 interface PageProps {
   params: { playerId: string }
@@ -282,14 +283,17 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     }
   }
 
-  // Player load aggregation — one row per player (UNIQUE constraint), used for training gap detection.
+  // Player load aggregation — one row per player (UNIQUE constraint), used for training gap detection + Fitness tab.
   const { data: loadRow } = await rawDb
     .from('player_load_aggregation')
     .select([
-      'sessions_7d', 'sessions_28d', 'duration_28d_min',
+      'sessions_7d', 'sessions_28d', 'duration_7d_min', 'duration_28d_min',
       'skill_sessions_28d', 'fitness_sessions_28d', 'competition_sessions_28d',
       'overload_flag', 'fatigue_risk_score', 'fatigue_risk_label',
       'load_trend_7d', 'absences_7d',
+      'avg_intensity_7d', 'avg_intensity_28d',
+      'avg_perceived_load_7d', 'avg_perceived_load_28d',
+      'high_intensity_blocks_7d', 'calculated_at',
     ].join(', '))
     .eq('player_id', params.playerId)
     .maybeSingle()
@@ -447,13 +451,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   // ─── Tab 4: Fitness / Load ────────────────────────────────────────────────
   const fitnessSlot = (
     <div className="space-y-6">
-      <Card>
-        <EmptyState
-          icon={<Activity className="w-5 h-5" />}
-          title="Fitness & load tracking coming soon"
-          description="Training load, physical assessments, and conditioning metrics will appear here."
-        />
-      </Card>
+      <PlayerLoadTab load={playerLoad} />
 
       {/* At-home fitness homework recommendation — internal draft only */}
       <Card>

@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-04 — Sprint 239: Fitness / Load Tab Content
+
+**Mode:** New component + minimal page edit. No schema changes. No migrations. No AI. No mutations.
+
+**What was built:**
+- `PlayerLoadTab` — director-internal display component for `player_load_aggregation` data
+  - Overload alert banner (shown only when `overload_flag = true`)
+  - Training Volume card: sessions 7d/28d, duration 7d/28d, absences 7d (color-coded at thresholds)
+  - Session Domain Mix card: skill / fitness / competition session counts (28d)
+  - Intensity & Fatigue card: avg intensity 7d/28d, perceived load, high-intensity blocks, fatigue risk label + score, load trend with directional icon
+  - "No load data" empty state when no `player_load_aggregation` row exists
+  - "Last calculated" timestamp for data freshness
+- Expanded `loadRow` select in player profile page to include `duration_7d_min`, `avg_intensity_7d`, `avg_intensity_28d`, `avg_perceived_load_7d`, `avg_perceived_load_28d`, `high_intensity_blocks_7d`, `calculated_at`
+- Replaced "Fitness & load tracking coming soon" empty state with live `<PlayerLoadTab>` render
+- `FitnessHomeworkRecommendationButton` kept below the load tab as a director action
+
+**Files created:**
+- `src/components/player/PlayerLoadTab.tsx` — load metrics display component with overload alert, volume, domain mix, intensity & fatigue sections
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — expand load query (7 additional fields), swap fitnessSlot empty state for PlayerLoadTab, remove unused Activity import, add PlayerLoadTab import
+- `docs/CURRENT_BUILD_TARGET.md` — updated to reflect actual build state (steps 1–5 and IDP engine complete; Competition tab is next)
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 238: Polish IDP and Gap Engine Demo
 
 **Mode:** UI wiring + documentation. No schema changes. No migrations. No new components.
