@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-04 — Sprint 3: Quick capture context routing
+
+**Files modified:**
+- `src/components/capture/QuickCaptureDrawer.tsx` — full context routing: `/director/players/[id]` → Player Observation; `/director/players` → General Player Directory Note; `/director` → Director Capture; other → General Capture. Added destination override: player context shows "Change to General Draft" link. Refined route hints per context.
+
+**Context rules implemented:**
+- Player profile → auto-detects Player Observation, saves as internal coach observation
+- Player directory → General Player Directory Note, directs user to open a profile
+- Director root → Director Capture, general acknowledgment
+- Other director pages → General Capture with review inbox coming soon note
+- User can override Player Observation → General Draft without losing their text
+
+**TypeScript:** clean, zero errors.
+
+---
+
 ## 2026-05-04 — Sprint 2: Director quick capture button
 
 **Files created:**

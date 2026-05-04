@@ -17,27 +17,47 @@ const OBS_TYPES = [
   { value: 'positive_highlight', label: 'Positive Highlight' },
 ]
 
-interface CaptureContext {
-  type: 'player_observation' | 'general'
+type DestType = 'player_observation' | 'general'
+
+interface DetectedContext {
+  autoType: DestType
   playerId: string | null
-  label: string
-  hint: string
+  autoLabel: string
+  routeHint: string
 }
 
-function detectContext(pathname: string): CaptureContext {
-  const m = pathname.match(/^\/director\/players\/([^/?#]+)/)
-  if (m && m[1] && UUID_RE.test(m[1])) {
+function detectRouteContext(pathname: string): DetectedContext {
+  const playerMatch = pathname.match(/^\/director\/players\/([^/?#]+)/)
+  if (playerMatch && playerMatch[1] && UUID_RE.test(playerMatch[1])) {
     return {
-      type: 'player_observation',
-      playerId: m[1],
-      label: 'Player Observation',
-      hint: 'Saves as internal coach observation — not visible to parents or students.',
+      autoType:  'player_observation',
+      playerId:  playerMatch[1],
+      autoLabel: 'Player Observation',
+      routeHint: 'Player profile detected',
     }
   }
   if (pathname.startsWith('/director/players')) {
-    return { type: 'general', playerId: null, label: 'Player Directory', hint: 'Open a player profile to capture a player observation.' }
+    return {
+      autoType:  'general',
+      playerId:  null,
+      autoLabel: 'General Player Directory Note',
+      routeHint: 'Player directory — open a player profile to save a player observation.',
+    }
   }
-  return { type: 'general', playerId: null, label: 'General Capture', hint: 'Review routing coming soon — capture will be saved to your review inbox.' }
+  if (pathname === '/director' || pathname === '/director/') {
+    return {
+      autoType:  'general',
+      playerId:  null,
+      autoLabel: 'Director Capture',
+      routeHint: 'Director dashboard',
+    }
+  }
+  return {
+    autoType:  'general',
+    playerId:  null,
+    autoLabel: 'General Capture',
+    routeHint: 'Unrouted — will appear in review inbox.',
+  }
 }
 
 interface Props {
@@ -48,21 +68,26 @@ interface Props {
 
 export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
   const pathname = usePathname()
-  const ctx = detectContext(pathname)
+  const detected = detectRouteContext(pathname)
+
+  // Allow user to override destination away from auto-detected (e.g., save general instead of player obs)
+  const [destOverride, setDestOverride] = useState<DestType | null>(null)
+  const activeType: DestType = destOverride ?? detected.autoType
 
   const formRef = useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  function reset() {
+  function resetForm() {
     setError(null)
     setSuccess(false)
+    setDestOverride(null)
     formRef.current?.reset()
   }
 
   function handleClose() {
-    reset()
+    resetForm()
     onClose()
   }
 
@@ -72,10 +97,13 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
     setSuccess(false)
     const formData = new FormData(e.currentTarget)
 
-    if (ctx.type === 'player_observation' && ctx.playerId) {
+    const canSaveObservation =
+      activeType === 'player_observation' && detected.playerId
+
+    if (canSaveObservation) {
       startTransition(async () => {
         try {
-          await addObservationAction(ctx.playerId!, academyId, formData)
+          await addObservationAction(detected.playerId!, academyId, formData)
           setSuccess(true)
           setTimeout(handleClose, 1200)
         } catch (err) {
@@ -89,8 +117,11 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
     }
   }
 
+  const activeLabel =
+    activeType === 'player_observation' ? 'Player Observation' : detected.autoLabel
+
   const modalTitle =
-    ctx.type === 'player_observation'
+    activeType === 'player_observation'
       ? 'Quick Capture — Player Observation'
       : 'Quick Capture'
 
@@ -98,17 +129,45 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
     <Modal open={open} onClose={handleClose} title={modalTitle} size="md">
       <div className="space-y-4">
 
-        {/* Context badge */}
-        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-surface-raised border border-border">
-          <span className={`label-xs shrink-0 ${ctx.type === 'player_observation' ? 'text-lime' : 'text-text-muted'}`}>
-            {ctx.label}
-          </span>
-          <span className="text-xs text-text-muted leading-relaxed ml-auto text-right">{ctx.hint}</span>
+        {/* Context indicator */}
+        <div className="rounded-lg bg-surface-raised border border-border px-3 py-2.5 space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className={`label-xs ${activeType === 'player_observation' ? 'text-lime' : 'text-text-muted'}`}>
+              {activeLabel}
+            </span>
+            <span className="text-[10px] text-text-muted">{detected.routeHint}</span>
+          </div>
+
+          {/* Destination override — only available when player context was auto-detected */}
+          {detected.autoType === 'player_observation' && (
+            <div className="flex items-center gap-2">
+              {destOverride === 'general' ? (
+                <>
+                  <span className="text-[11px] text-status-orange">Switched to General Draft</span>
+                  <button
+                    type="button"
+                    onClick={() => setDestOverride(null)}
+                    className="text-[11px] text-text-muted underline underline-offset-2 hover:text-text-primary transition-colors"
+                  >
+                    Restore Player Observation
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDestOverride('general')}
+                  className="text-[11px] text-text-muted underline underline-offset-2 hover:text-text-primary transition-colors"
+                >
+                  Change to General Draft instead
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
 
-          {ctx.type === 'player_observation' && (
+          {activeType === 'player_observation' && (
             <div>
               <label className="block text-[11px] text-text-muted mb-1.5">Type</label>
               <select
@@ -125,7 +184,7 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
 
           <div>
             <label className="block text-[11px] text-text-muted mb-1.5">
-              {ctx.type === 'player_observation' ? 'Observation' : 'Note or transcript'}
+              {activeType === 'player_observation' ? 'Observation' : 'Note or transcript'}
             </label>
             <textarea
               name="content"
@@ -133,7 +192,7 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
               rows={6}
               autoFocus
               placeholder={
-                ctx.type === 'player_observation'
+                activeType === 'player_observation'
                   ? 'Describe what you observed, or paste a voice transcript…'
                   : 'Type a note or paste a transcript. Routing will be available in the review inbox.'
               }
@@ -141,7 +200,7 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
             />
           </div>
 
-          {ctx.type === 'player_observation' && (
+          {activeType === 'player_observation' && (
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -154,10 +213,18 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
             </label>
           )}
 
+          {activeType === 'general' && (
+            <p className="text-[11px] text-text-muted">
+              General captures will appear in your review inbox (coming in Sprint 4). No data is lost.
+            </p>
+          )}
+
           {error && <p className="text-xs text-status-red">{error}</p>}
           {success && (
             <p className="text-xs text-status-green">
-              {ctx.type === 'player_observation' ? 'Observation saved.' : 'Captured — check review inbox soon.'}
+              {activeType === 'player_observation'
+                ? 'Observation saved.'
+                : 'Captured — check review inbox soon.'}
             </p>
           )}
 
@@ -175,7 +242,11 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
               disabled={isPending}
               className="btn-lime flex-1 disabled:opacity-50"
             >
-              {isPending ? 'Saving…' : ctx.type === 'player_observation' ? 'Save Observation' : 'Capture'}
+              {isPending
+                ? 'Saving…'
+                : activeType === 'player_observation'
+                ? 'Save Observation'
+                : 'Capture'}
             </button>
           </div>
 
