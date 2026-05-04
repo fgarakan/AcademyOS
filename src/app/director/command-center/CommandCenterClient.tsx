@@ -13,8 +13,9 @@ import {
 } from '@/lib/commands/roleGuardrails'
 import { VoiceIntakePanel } from '@/components/voice/VoiceIntakePanel'
 import { structureVoiceIntake } from '@/lib/voice/structureVoiceIntake'
-import type { VoiceIntakeStructureResult } from '@/lib/voice/voiceIntakeTypes'
-import { routeVoiceIntakeDraft, getDestinationRiskLevel } from '@/lib/voice/voiceDestinationRouter'
+import type { VoiceIntakeStructureResult, VoiceIntakeDraft } from '@/lib/voice/voiceIntakeTypes'
+import { routeVoiceIntakeDraft } from '@/lib/voice/voiceDestinationRouter'
+import { createVoiceIntakeDraftAction } from './createVoiceIntakeDraftAction'
 
 interface RecentCommand {
   id: string
@@ -81,12 +82,17 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
   const [error, setError] = useState<string | null>(null)
   const [isParsing, startParseTransition] = useTransition()
   const [isCreatingDraft, startDraftTransition] = useTransition()
+  const [voiceDraftId, setVoiceDraftId] = useState<string | null>(null)
+  const [voiceDraftError, setVoiceDraftError] = useState<string | null>(null)
+  const [isCreatingVoiceDraft, startVoiceDraftTransition] = useTransition()
 
   function handleExample(example: string) {
     setInput(example)
     setResult(null)
     setVoiceResult(null)
     setDraftCreated(null)
+    setVoiceDraftId(null)
+    setVoiceDraftError(null)
     setError(null)
   }
 
@@ -95,6 +101,8 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
     if (!commandText) return
     setResult(null)
     setDraftCreated(null)
+    setVoiceDraftId(null)
+    setVoiceDraftError(null)
     setError(null)
 
     // Run client-side voice structuring immediately
@@ -111,6 +119,18 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
         setError(res.error)
       } else if (res.parsed) {
         setResult(res.parsed)
+      }
+    })
+  }
+
+  function handleCreateVoiceDraft(draft: VoiceIntakeDraft) {
+    setVoiceDraftError(null)
+    startVoiceDraftTransition(async () => {
+      const res = await createVoiceIntakeDraftAction(draft)
+      if (res.error) {
+        setVoiceDraftError(res.error)
+      } else if (res.draftId) {
+        setVoiceDraftId(res.draftId)
       }
     })
   }
@@ -149,7 +169,7 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
         role="academy_director"
         contextLabel="Director Command Center"
         value={input}
-        onChange={v => { setInput(v); setResult(null); setVoiceResult(null); setDraftCreated(null); setError(null) }}
+        onChange={v => { setInput(v); setResult(null); setVoiceResult(null); setDraftCreated(null); setVoiceDraftId(null); setVoiceDraftError(null); setError(null) }}
         onSubmit={text => { setInput(text); handleParse(text) }}
         placeholder="Speak or type what you want done… e.g. 'Create a session draft for Orange 2 focused on movement'"
         examples={DIRECTOR_VOICE_EXAMPLES}
@@ -169,7 +189,15 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
       )}
 
       {/* Voice structure result */}
-      {voiceResult && <VoiceStructuredResultCard result={voiceResult} />}
+      {voiceResult && (
+        <VoiceStructuredResultCard
+          result={voiceResult}
+          onCreateDraft={() => handleCreateVoiceDraft(voiceResult.draft)}
+          isCreatingDraft={isCreatingVoiceDraft}
+          voiceDraftId={voiceDraftId}
+          voiceDraftError={voiceDraftError}
+        />
+      )}
 
       {/* Parsed result */}
       {result && (
@@ -448,7 +476,19 @@ const SAFETY_DISPLAY: Record<string, { label: string; color: string }> = {
   cross_player_leak_risk: { label: 'Multiple players — review scope', color: 'text-status-orange border-status-orange/30 bg-status-orange/5' },
 }
 
-function VoiceStructuredResultCard({ result }: { result: VoiceIntakeStructureResult }) {
+function VoiceStructuredResultCard({
+  result,
+  onCreateDraft,
+  isCreatingDraft,
+  voiceDraftId,
+  voiceDraftError,
+}: {
+  result: VoiceIntakeStructureResult
+  onCreateDraft: () => void
+  isCreatingDraft: boolean
+  voiceDraftId: string | null
+  voiceDraftError: string | null
+}) {
   const { draft, parse_warnings } = result
   if (draft.detected_intents[0] === 'unknown' && draft.extracted_entities.length === 0) return null
 
@@ -595,6 +635,41 @@ function VoiceStructuredResultCard({ result }: { result: VoiceIntakeStructureRes
             {parse_warnings.map((w, i) => (
               <p key={i} className="text-[10px] text-status-orange leading-relaxed">{w}</p>
             ))}
+          </div>
+        )}
+
+        {/* Create voice intake review draft */}
+        {!voiceDraftId && (
+          <div className="pt-3 border-t border-border">
+            <button
+              type="button"
+              onClick={onCreateDraft}
+              disabled={isCreatingDraft}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg btn-lime text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCreatingDraft
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <ArrowRight className="w-3.5 h-3.5" />
+              }
+              {isCreatingDraft ? 'Creating draft…' : 'Create Review Draft'}
+            </button>
+            {voiceDraftError && (
+              <p className="text-[10px] text-status-red mt-1.5">{voiceDraftError}</p>
+            )}
+            <p className="text-[10px] text-text-muted mt-1.5">
+              Sends this voice intake to the review queue. Nothing changes until you approve it there.
+            </p>
+          </div>
+        )}
+
+        {voiceDraftId && (
+          <div className="flex items-center gap-3 pt-3 border-t border-border">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-status-green/10 border border-status-green/30 text-xs text-status-green">
+              ✓ Voice intake draft created
+            </div>
+            <a href="/director/review" className="text-xs text-lime hover:underline flex items-center gap-1">
+              View Review Queue <ChevronRight className="w-3 h-3" />
+            </a>
           </div>
         )}
 

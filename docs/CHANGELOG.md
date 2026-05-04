@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-04 — Sprint 246: Voice Intake to Proposed Actions V1
+
+**Mode:** Server action + UI wiring. No schema changes. No migrations. All voice intake drafts route through proposed_actions pipeline — always pending_review, never auto-executed.
+
+**What was built:**
+- Server action creates a `voice_commands` row (required FK) then a `proposed_actions` row with `target_module = 'voice_intake'`, `action_type = 'other'`, `status = 'pending_review'`
+- Risk level auto-set: `medium` if safety flags present, `low` otherwise
+- Director command center wires the action: "Create Review Draft" button appears after voice structuring result; shows success state with "View Review Queue" link on creation
+- Reset state on new input: voiceDraftId and voiceDraftError cleared on any text change
+
+**Files created:**
+- `src/app/director/command-center/createVoiceIntakeDraftAction.ts` — server action: auth → academy_id → role check → voice_commands INSERT → proposed_actions INSERT
+
+**Files modified:**
+- `src/app/director/command-center/CommandCenterClient.tsx` — import action, add voiceDraftId/voiceDraftError/isCreatingVoiceDraft state, handleCreateVoiceDraft(), update VoiceStructuredResultCard to accept and render draft creation button + success state
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 245: Voice Destination Router V1
 
 **Mode:** New pure helper. No DB calls. No UI page changes. No migrations.
