@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-04 — Sprint 240: Voice Intake Architecture Audit
+
+**Mode:** Docs only. No code. No schema changes. No migrations. No UI.
+
+**What was built:**
+- Full voice intake architecture document defining the V1 Voice Intake OS foundation
+- North star, role-specific voice sources, director and coach voice examples
+- Supported V1 intents (8 director, 8 coach, 1 shared)
+- Destination module catalogue (14 destinations with risk levels and approval rules)
+- `VoiceIntakeDraft` typed shape with all fields, supporting types, safety flags
+- Approval rules matrix, safety rules (10 unconditional blocks)
+- `proposed_actions` mapping pattern for voice intake drafts
+- What must never happen automatically (10 rules)
+- Text input fallback rationale
+- Future AI/STT integration plan (V2 STT, V3 AI enrichment, V4 real-time session voice)
+- Build order for Sprints 241–249 with titles and descriptions
+- Architecture diagram (full pipeline)
+- Relationship to existing pipeline components
+- Known V1 limitations
+
+**Files created:**
+- `docs/conversational-os/voice-intake-architecture.md` — complete voice intake OS architecture
+
+**TypeScript:** Clean — no code changes; `npx tsc --noEmit` baseline passes.
+
+---
+
 ## 2026-05-04 — Sprint 239: Fitness / Load Tab Content
 
 **Mode:** New component + minimal page edit. No schema changes. No migrations. No AI. No mutations.
