@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-05-04 — Sprint 234: Role-Specific Gap Guidance V1
+
+**Mode:** Pure helper library + display component. No DB calls. No AI. No migrations. No writes.
+
+**What was built:**
+- `buildRoleSpecificGapGuidance(input)` — pure function translating `IdpTrainingGap[]` and `IdpKnowledgeGap[]` into role-appropriate `RoleSpecificGapGuidance`
+- `buildDirectorGapGuidance(...)` and `buildCoachGapGuidance(...)` — convenience wrappers
+- 8 training gap types × 2 roles = distinct action and rationale text per role
+- 7 knowledge gap types × 2 roles = distinct action and rationale text per role
+- Priority tiers: `act_now` (immediate) → `monitor` (watch closely) → `informational` (contextual)
+- `top_action` derived from first `act_now` item, or first `monitor` item if none
+- `insufficient_data` training gaps produce no guidance item (null — no data to act on)
+- `GapGuidanceSummaryCard` component: top action in lime-bordered box, items grouped by priority, source and domain badges
+- Director and coach roles only — player and parent never receive gap guidance
+
+**Safety boundaries enforced:**
+- No automatic actions triggered by guidance items
+- No player or parent data exposed
+- No raw coach notes, session content, or internal staff names in guidance text
+- Guidance is informational only — director/coach must act manually
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS, zero forbidden references
+- `qa-command-parser.mjs` — 24/24 passed
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `docs/player-development/role-specific-gap-guidance.md` — spec: inputs, outputs, priority tiers, role mapping tables, examples, safety rules, future integration points
+- `src/lib/gaps/roleSpecificGapGuidance.ts` — pure helper with per-role guidance translation for all training and knowledge gap types
+- `src/components/player/GapGuidanceSummaryCard.tsx` — director/coach gap guidance card with top action highlight and priority-grouped item list
+
+---
+
 ## 2026-05-03 — Sprint 233: Knowledge Gap Detection V1
 
 **Mode:** Pure helper library + display component. No DB calls. No AI. No migrations. No writes.
