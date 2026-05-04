@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-04 — Sprint 236: Expand Approved Action Execution Coverage
+
+**Mode:** Migration + documentation. No app-layer changes. No UI changes.
+
+**What was built:**
+- Extended `execute_approved_action()` RPC from 5 to 11 handled action types (of 15 in the enum)
+- New WHEN clauses: `modify_session`, `create_template`, `modify_template`, `create_placement_assessment`, `adjust_session_intensity`, `flag_player`
+- `create_placement_assessment` side-effects: advances player from `pending_placement` → `placement_in_progress`
+- `flag_player` sets `player_progression.promotion_flagged_at/by` — does not change `player_status` enum
+- `adjust_session_intensity` updates ALL blocks in the session (not block-by-block)
+- All new cases write to `action_execution_logs` and `audit_logs` via existing boilerplate
+- Deferred: `generate_parent_update`, `create_player`, `create_exercise` (rationale documented)
+- Coverage plan doc maps all 15 action types, payload contracts, and remaining unblock path
+
+**Files created:**
+- `supabase/migrations/054_execute_approved_action_expansion.sql` — CREATE OR REPLACE FUNCTION with 6 new WHEN clauses
+- `docs/conversational-os/approved-action-execution-coverage-plan.md` — full coverage map, payload contracts, deferred type rationale
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors (SQL migration — no TS impact).
+
+---
+
 ## 2026-05-04 — Sprint 235: Improve Director Review Decision UX
 
 **Mode:** UI refactor only. No schema changes. No migrations. No new queries. No mutations.
