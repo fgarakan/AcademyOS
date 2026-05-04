@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-04 — Sprint 235: Improve Director Review Decision UX
+
+**Mode:** UI refactor only. No schema changes. No migrations. No new queries. No mutations.
+
+**What was built:**
+- Replaced the 5-section scrolling layout in the director review page with tab navigation
+- 5 tabs: Session Recaps, Priorities, Evidence, Attendance, Curriculum
+- `defaultTab` computed server-side — director always lands on the first category with pending items
+- `TabLabel` helper renders orange pending count badges and lime ready count badges inline in tab triggers
+- All 27 data-fetching steps kept 100% identical — no logic changes, only layout restructure
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — converted scrolling layout to `<Tabs>` with 5 `<TabsTrigger>` / `<TabsContent>` pairs
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 234: Role-Specific Gap Guidance V1
 
 **Mode:** Pure helper library + display component. No DB calls. No AI. No migrations. No writes.
