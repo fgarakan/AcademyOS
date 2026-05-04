@@ -1,3 +1,5 @@
+'use client'
+
 import { MessageSquare } from 'lucide-react'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -27,9 +29,10 @@ export interface CoachObservationRow {
 
 interface Props {
   observations: CoachObservationRow[]
+  onSelectForDraft?: (text: string) => void
 }
 
-export function CoachObservationsFeed({ observations }: Props) {
+export function CoachObservationsFeed({ observations, onSelectForDraft }: Props) {
   if (observations.length === 0) {
     return (
       <Card>
@@ -105,6 +108,19 @@ export function CoachObservationsFeed({ observations }: Props) {
                       {tag}
                     </span>
                   ))}
+                </div>
+              )}
+
+              {/* Use for Draft */}
+              {onSelectForDraft && (
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={() => onSelectForDraft(obs.content)}
+                    className="text-[11px] text-text-muted hover:text-lime transition-colors"
+                  >
+                    Use for Draft →
+                  </button>
                 </div>
               )}
 

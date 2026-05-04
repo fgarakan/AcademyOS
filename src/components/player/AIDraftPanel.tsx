@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Sparkles, AlertTriangle } from 'lucide-react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import type { AIDraftResult } from '@/lib/ai/structureCoachNote'
@@ -11,6 +11,7 @@ interface Props {
   existingSummary: PlayerDevelopmentSummary | null
   onGenerate: (noteText: string) => Promise<GenerateDraftResult>
   onApply: (formData: FormData) => Promise<void>
+  initialText?: string
 }
 
 const CONFIDENCE_STYLES: Record<AIDraftResult['confidence'], string> = {
@@ -30,8 +31,12 @@ function summaryHasContent(s: PlayerDevelopmentSummary | null): boolean {
   )
 }
 
-export function AIDraftPanel({ existingSummary, onGenerate, onApply }: Props) {
+export function AIDraftPanel({ existingSummary, onGenerate, onApply, initialText }: Props) {
   const [noteText, setNoteText] = useState('')
+
+  useEffect(() => {
+    if (initialText) setNoteText(initialText)
+  }, [initialText])
   const [isGenerating, startGenerate] = useTransition()
   const [isApplying, startApply] = useTransition()
   const [generateError, setGenerateError] = useState<string | null>(null)

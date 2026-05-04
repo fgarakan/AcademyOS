@@ -11,7 +11,8 @@ import { PlayerProfileHeader } from '@/components/player/PlayerProfileHeader'
 import { CurriculumProgressGrid } from '@/components/player/CurriculumProgressGrid'
 import { PlayerCurriculumEmptyState } from '@/components/player/PlayerCurriculumEmptyState'
 import { EvaluateAdvancementButton } from '@/components/player/EvaluateAdvancementButton'
-import { CoachObservationsFeed, type CoachObservationRow } from './CoachObservationsFeed'
+import { type CoachObservationRow } from './CoachObservationsFeed'
+import { NotesAIDraftSection } from './NotesAIDraftSection'
 import { CoachObservationEvidenceSummary } from './CoachObservationEvidenceSummary'
 import { PlayerActivePriorities, type PlayerPriorityRow } from './PlayerActivePriorities'
 import { PlayerProgressionRequirements } from './PlayerProgressionRequirements'
@@ -22,7 +23,6 @@ import { DevelopmentSummarySection } from '@/components/player/DevelopmentSummar
 import { AddObservationForm } from '@/components/player/AddObservationForm'
 import { AddVoiceNoteForm } from '@/components/player/AddVoiceNoteForm'
 import { EditDevelopmentSummaryForm } from '@/components/player/EditDevelopmentSummaryForm'
-import { AIDraftPanel } from '@/components/player/AIDraftPanel'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { PlayerProfileTabs } from './_components/PlayerProfileTabs'
@@ -871,8 +871,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      {/* AI Draft panel */}
-      <AIDraftPanel
+      {/* AI Draft panel + observations — connected via NotesAIDraftSection */}
+      <NotesAIDraftSection
+        observations={enrichedObservations}
         existingSummary={developmentSummary}
         onGenerate={generateDraftAction}
         onApply={updateSummaryAction}
@@ -920,15 +921,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Progress Evidence Timeline */}
       <ProgressEvidenceTimeline items={enrichedObservations as any} />
-
-      {/* Internal Coach Observations feed */}
-      <div>
-        <p className="label-xs mb-1">Internal Coach Observations</p>
-        <p className="text-[11px] text-text-muted mb-4">
-          Internal development evidence. Not parent-facing yet.
-        </p>
-        <CoachObservationsFeed observations={enrichedObservations} />
-      </div>
 
       {/* Add Observation form */}
       <AddObservationForm onSubmit={addObsAction} />

@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-05-04 — Connect coach observations to AI Draft Panel
+
+**Sprint:** AI Note Structuring MVP — observation-to-draft connection.
+
+**What changed:**
+- Each coach observation card in the Notes tab now shows a "Use for Draft →" button.
+- Clicking it prefills the AI Draft Panel textarea with that observation's text.
+- Director still must click "Draft with AI" manually — no auto-generation.
+- AI output remains draft-only: `show_to_student=false`, `show_to_parent=false`, saved only after director clicks "Apply Draft to Summary".
+- `CoachObservationsFeed` and `AIDraftPanel` are now rendered together via a thin `NotesAIDraftSection` client component that holds the shared prefill state.
+
+**No migration. No new backend. No AI prompt changes.**
+
+**Files modified:**
+- `src/app/director/players/[playerId]/CoachObservationsFeed.tsx` — add `'use client'`, `onSelectForDraft` prop, "Use for Draft →" button per card
+- `src/components/player/AIDraftPanel.tsx` — add `initialText` prop, sync via `useEffect`
+- `src/app/director/players/[playerId]/page.tsx` — replace separate `AIDraftPanel` + `CoachObservationsFeed` with `NotesAIDraftSection`
+
+**Files created:**
+- `src/app/director/players/[playerId]/NotesAIDraftSection.tsx` — thin client component holding `prefillText` state
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+**Manual test steps:**
+1. Open `/director/players`, open any player profile, go to Notes tab.
+2. Scroll to "Internal Coach Observations". Click "Use for Draft →" on any observation card.
+3. Scroll up — AI Draft Panel textarea is prefilled with that observation's text.
+4. Click "Draft with AI". Review the structured output.
+5. Edit fields as needed. Click "Apply Draft to Summary".
+6. Confirm Development Summary updates only after explicit apply — no auto-save.
+7. Confirm show_to_student / show_to_parent are `false` (hidden fields in form).
+
+---
+
 ## 2026-05-04 — Fix fitness template director write flow
 
 **Mode:** Bug fix. One new migration (055). No schema changes beyond adding missing RLS policies.
