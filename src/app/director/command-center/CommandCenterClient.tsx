@@ -14,6 +14,7 @@ import {
 import { VoiceIntakePanel } from '@/components/voice/VoiceIntakePanel'
 import { structureVoiceIntake } from '@/lib/voice/structureVoiceIntake'
 import type { VoiceIntakeStructureResult } from '@/lib/voice/voiceIntakeTypes'
+import { routeVoiceIntakeDraft, getDestinationRiskLevel } from '@/lib/voice/voiceDestinationRouter'
 
 interface RecentCommand {
   id: string
@@ -528,17 +529,27 @@ function VoiceStructuredResultCard({ result }: { result: VoiceIntakeStructureRes
           </div>
         )}
 
-        {/* Suggested destinations */}
+        {/* Suggested destinations with risk levels from router */}
         {draft.suggested_destinations.length > 0 && (
           <div>
             <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Suggested Destinations</p>
             <div className="flex flex-wrap gap-2">
-              {draft.suggested_destinations.map(dest => (
-                <span key={dest} className="px-2 py-1 rounded-lg border border-border text-[10px] text-text-secondary">
-                  {DEST_DISPLAY[dest] ?? dest}
-                </span>
-              ))}
+              {routeVoiceIntakeDraft(draft).map(rec => {
+                const riskColor = rec.risk_level === 'high' ? 'border-status-red/30 text-status-red' :
+                  rec.risk_level === 'medium' ? 'border-status-orange/30 text-status-orange' :
+                  'border-border text-text-secondary'
+                return (
+                  <span
+                    key={rec.module}
+                    className={`px-2 py-1 rounded-lg border text-[10px] ${rec.is_primary ? 'bg-lime/5 border-lime/20 text-lime' : riskColor}`}
+                    title={rec.why_useful}
+                  >
+                    {rec.label}{rec.is_primary ? ' ★' : ''}
+                  </span>
+                )
+              })}
             </div>
+            <p className="text-[10px] text-text-muted mt-1.5">★ = recommended primary destination</p>
           </div>
         )}
 

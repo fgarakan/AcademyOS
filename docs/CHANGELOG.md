@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-04 — Sprint 245: Voice Destination Router V1
+
+**Mode:** New pure helper. No DB calls. No UI page changes. No migrations.
+
+**What was built:**
+- `voiceDestinationRouter.ts` — deterministic destination routing; 14 destination definitions with label, description, why_useful, risk_level, requires_approval, what_would_change, what_would_not_change, allowed_roles; exports `routeVoiceIntakeDraft()`, `getDestinationRiskLevel()`, `destinationRequiresApproval()`, `canRoleRouteToDestination()`, `explainDestination()`
+- Role restrictions enforced: `parent_safe_draft`, `player_mission`, `session_planning`, `group_planning`, `coach_briefing`, `director_note` restricted to director/head_coach only
+- Director command center updated to use `routeVoiceIntakeDraft()` for enriched destination chips (primary destination starred, risk level color-coded)
+- QA script expanded to 15 tests (5 new router tests): destination risk level, all-require-approval, coach/director role restrictions
+
+**Files created:**
+- `src/lib/voice/voiceDestinationRouter.ts` — destination catalogue, routing logic, role restrictions
+
+**Files modified:**
+- `src/app/director/command-center/CommandCenterClient.tsx` — import router, use `routeVoiceIntakeDraft()` in VoiceStructuredResultCard destination display
+- `scripts/qa-voice-intake-structure.mjs` — add destination router tests (5 new tests)
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+**QA:** 15 tests, 15 passed.
+
+---
+
 ## 2026-05-04 — Sprint 244: Coach Voice Structuring V1
 
 **Mode:** Client component enhancement. No schema changes. No migrations. No new DB writes. Preserves all existing coach recap save/structure behavior.

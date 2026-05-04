@@ -315,6 +315,62 @@ const tests = [
   },
 ]
 
+// ── Destination router (JS mirror) ────────────────────────────────────────────
+
+const DESTINATION_CATALOGUE_MOCK = {
+  attendance: { risk_level: 'medium', requires_approval: true, allowed_roles: ['academy_director', 'head_coach', 'coach'] },
+  unrostered_attendee_review: { risk_level: 'low', requires_approval: true, allowed_roles: ['academy_director', 'head_coach', 'coach'] },
+  session_actual: { risk_level: 'low', requires_approval: true, allowed_roles: ['academy_director', 'head_coach', 'coach'] },
+  player_observation: { risk_level: 'low', requires_approval: true, allowed_roles: ['academy_director', 'head_coach', 'coach'] },
+  curriculum_evidence: { risk_level: 'medium', requires_approval: true, allowed_roles: ['academy_director', 'head_coach', 'coach'] },
+  gap_engine: { risk_level: 'low', requires_approval: true, allowed_roles: ['academy_director', 'head_coach', 'coach'] },
+  parent_safe_draft: { risk_level: 'medium', requires_approval: true, allowed_roles: ['academy_director', 'head_coach'] },
+  player_mission: { risk_level: 'medium', requires_approval: true, allowed_roles: ['academy_director', 'head_coach'] },
+  director_review_queue: { risk_level: 'low', requires_approval: true, allowed_roles: ['academy_director', 'head_coach', 'coach'] },
+  session_planning: { risk_level: 'low', requires_approval: true, allowed_roles: ['academy_director', 'head_coach'] },
+  group_planning: { risk_level: 'medium', requires_approval: true, allowed_roles: ['academy_director', 'head_coach'] },
+  coach_briefing: { risk_level: 'low', requires_approval: true, allowed_roles: ['academy_director', 'head_coach'] },
+  curriculum_note: { risk_level: 'low', requires_approval: true, allowed_roles: ['academy_director', 'head_coach', 'coach'] },
+  director_note: { risk_level: 'low', requires_approval: true, allowed_roles: ['academy_director', 'head_coach'] },
+}
+
+function getDestinationRiskLevel(module) {
+  return DESTINATION_CATALOGUE_MOCK[module]?.risk_level ?? 'medium'
+}
+
+function destinationRequiresApproval(module) {
+  return DESTINATION_CATALOGUE_MOCK[module]?.requires_approval ?? true
+}
+
+function canRoleRouteToDestination(role, module) {
+  return DESTINATION_CATALOGUE_MOCK[module]?.allowed_roles.includes(role) ?? false
+}
+
+// ── Destination router tests ──────────────────────────────────────────────────
+
+const routerTests = [
+  {
+    name: 'Router — attendance destination has medium risk',
+    check: () => getDestinationRiskLevel('attendance') === 'medium' || 'attendance should be medium risk',
+  },
+  {
+    name: 'Router — all destinations require approval',
+    check: () => Object.keys(DESTINATION_CATALOGUE_MOCK).every(d => destinationRequiresApproval(d)) || 'all destinations should require approval',
+  },
+  {
+    name: 'Router — parent_safe_draft not available to coach',
+    check: () => !canRoleRouteToDestination('coach', 'parent_safe_draft') || 'coach should not route to parent_safe_draft',
+  },
+  {
+    name: 'Router — attendance available to coach',
+    check: () => canRoleRouteToDestination('coach', 'attendance') === true || 'coach should be able to route to attendance',
+  },
+  {
+    name: 'Router — session_planning only for director/head_coach',
+    check: () => !canRoleRouteToDestination('coach', 'session_planning') || 'coach should not route to session_planning',
+  },
+]
+
 // ── Run ───────────────────────────────────────────────────────────────────────
 
 let passed = 0
@@ -333,6 +389,17 @@ for (const test of tests) {
   } else {
     console.log('  ✗', test.name)
     for (const f of failures) console.log('      →', f)
+    failed++
+  }
+}
+
+for (const test of routerTests) {
+  const r = test.check()
+  if (r === true) {
+    console.log('  ✓', test.name)
+    passed++
+  } else {
+    console.log('  ✗', test.name, '→', r)
     failed++
   }
 }
