@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-04 — Sprint 238: Polish IDP and Gap Engine Demo
+
+**Mode:** UI wiring + documentation. No schema changes. No migrations. No new components.
+
+**What was built:**
+- Wired full gap detection into the director player profile Skill Path tab
+- One new `player_load_aggregation` query (`.maybeSingle()`, gracefully handles missing data)
+- Runs `detectTrainingGaps()`, `detectKnowledgeGaps()`, `buildDirectorGapGuidance()` per player page load (all pure helpers, no AI)
+- `GapGuidanceSummaryCard` rendered in Skill Path tab after curriculum assignment card — shows top action, all items by priority, director-internal label
+- Created comprehensive demo script covering director flow, coach flow, all gap types, safety rules, file locations, pre-conditions for each demo scenario
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — added 4 imports, 1 load query, 3 gap detection calls, 1 `GapGuidanceSummaryCard` render in Skill Path tab
+
+**Files created:**
+- `docs/player-development/idp-gap-engine-demo.md` — full demo script: architecture summary, pre-conditions, director flow, coach flow, gap type reference, priority tiers, safety rules, file locations, known limitations
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 237: Add Gap Context to Coach Session Workspace
 
 **Mode:** New component + minimal page modification. No schema changes. No migrations. No mutations.

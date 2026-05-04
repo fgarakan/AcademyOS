@@ -47,6 +47,10 @@ import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
 import { ParentGuidancePreviewPanel } from './ParentGuidancePreviewPanel'
 import type { QaDrillRow, QaCoachLanguageRow, QaLearningModuleHint } from '@/lib/player/playerProgressQa'
 import { buildModuleForLevelDomain, type LearningModuleDomain } from '@/lib/curriculum/learningModules'
+import { detectTrainingGaps } from '@/lib/gaps/trainingGapDetection'
+import { detectKnowledgeGaps } from '@/lib/gaps/knowledgeGapDetection'
+import { buildDirectorGapGuidance } from '@/lib/gaps/roleSpecificGapGuidance'
+import { GapGuidanceSummaryCard } from '@/components/player/GapGuidanceSummaryCard'
 
 interface PageProps {
   params: { playerId: string }
@@ -277,6 +281,50 @@ export default async function PlayerProfilePage({ params }: PageProps) {
       // graceful fallback — hint stays null
     }
   }
+
+  // Player load aggregation — one row per player (UNIQUE constraint), used for training gap detection.
+  const { data: loadRow } = await rawDb
+    .from('player_load_aggregation')
+    .select([
+      'sessions_7d', 'sessions_28d', 'duration_28d_min',
+      'skill_sessions_28d', 'fitness_sessions_28d', 'competition_sessions_28d',
+      'overload_flag', 'fatigue_risk_score', 'fatigue_risk_label',
+      'load_trend_7d', 'absences_7d',
+    ].join(', '))
+    .eq('player_id', params.playerId)
+    .maybeSingle()
+  const playerLoad = loadRow ?? null
+
+  // Gap detection — pure helpers, no DB calls, deterministic.
+  const trainingGaps = detectTrainingGaps({
+    player_id: params.playerId,
+    sessions_7d:              playerLoad?.sessions_7d ?? null,
+    sessions_28d:             playerLoad?.sessions_28d ?? null,
+    duration_28d_min:         playerLoad?.duration_28d_min ?? null,
+    skill_sessions_28d:       playerLoad?.skill_sessions_28d ?? null,
+    fitness_sessions_28d:     playerLoad?.fitness_sessions_28d ?? null,
+    competition_sessions_28d: playerLoad?.competition_sessions_28d ?? null,
+    overload_flag:            playerLoad?.overload_flag ?? null,
+    fatigue_risk_score:       playerLoad?.fatigue_risk_score ?? null,
+    fatigue_risk_label:       playerLoad?.fatigue_risk_label ?? null,
+    load_trend_7d:            playerLoad?.load_trend_7d ?? null,
+    absences_7d:              playerLoad?.absences_7d ?? null,
+    current_level:            curriculumSummary?.current_level_name ?? null,
+    current_stage:            curriculumSummary?.stage ?? null,
+    open_gate_count:          levelGates.length,
+  })
+
+  const knowledgeGaps = detectKnowledgeGaps({
+    player_id:              params.playerId,
+    current_level:          curriculumSummary?.current_level_name ?? null,
+    current_stage:          curriculumSummary?.stage ?? null,
+    open_gates:             levelGates.map(g => ({ domain: g.domain, criterion: g.criterion })),
+    has_coach_language:     qaCoachLanguage.length > 0,
+    coach_language_domains: qaCoachLanguage.map(cl => cl.domain),
+    available_drill_count:  qaTopDrills.length,
+  })
+
+  const directorGapGuidance = buildDirectorGapGuidance(params.playerId, trainingGaps, knowledgeGaps)
 
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
@@ -616,6 +664,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         applicableOverrides={academyCurriculumCtx.applicableOverrides}
         warnings={academyCurriculumCtx.warnings}
       />
+
+      {/* Gap Guidance — director internal, not visible to player or parent */}
+      <GapGuidanceSummaryCard guidance={directorGapGuidance} />
 
       {/* Advancement action card */}
       <Card>
