@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Sparkles, AlertTriangle } from 'lucide-react'
+import { Sparkles, AlertTriangle, Settings } from 'lucide-react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import type { AIDraftResult } from '@/lib/ai/structureCoachNote'
 import type { GenerateDraftResult } from '@/lib/actions/notes'
@@ -125,7 +125,14 @@ export function AIDraftPanel({ existingSummary, onGenerate, onApply, initialText
         </button>
 
         {generateError && (
-          <p className="text-xs text-status-red">{generateError}</p>
+          generateError.toLowerCase().includes('not configured') || generateError.toLowerCase().includes('not available') ? (
+            <div className="flex items-start gap-2 rounded border border-status-orange/30 bg-status-orange/5 px-3 py-2.5">
+              <Settings className="w-3.5 h-3.5 text-status-orange shrink-0 mt-0.5" />
+              <p className="text-xs text-status-orange leading-relaxed">{generateError}</p>
+            </div>
+          ) : (
+            <p className="text-xs text-status-red">{generateError}</p>
+          )
         )}
 
         {/* Draft preview + apply */}

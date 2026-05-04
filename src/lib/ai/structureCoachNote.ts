@@ -48,8 +48,8 @@ function isValidDraft(obj: unknown): obj is AIDraftResult {
 
 export async function structureCoachNote(noteText: string): Promise<AIDraftResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY is not configured.')
+  if (!apiKey || apiKey.startsWith('your_') || apiKey === '') {
+    throw new Error('AI Draft is not available — ANTHROPIC_API_KEY is not configured. Contact your platform admin to enable AI features.')
   }
 
   const model = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-6'

@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-04 — Sprint 1: Lock notes AI flow
+
+**Files modified:**
+- `src/app/director/players/[playerId]/CoachObservationsFeed.tsx` — fix misleading empty state (previously said "session recap drafts", now correctly describes all observation sources)
+- `src/lib/ai/structureCoachNote.ts` — improve missing API key error to be actionable: detects blank/placeholder keys, shows "contact admin" message
+- `src/components/player/AIDraftPanel.tsx` — distinguish setup errors (orange warning with settings icon) from AI errors (red text)
+
+**No migration. No new backend. No schema changes.**
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+**Flow audit:**
+- Manual observation add ✅ works, saves internally
+- Voice note transcript add ✅ works, saves internally
+- "Use for Draft →" prefills AI panel ✅
+- "Draft with AI" requires explicit click ✅
+- AI output is editable before applying ✅
+- "Apply Draft to Summary" requires explicit click ✅
+- show_to_student = false (hard-coded hidden field) ✅
+- show_to_parent = false (hard-coded hidden field) ✅
+- No player/parent exposure ✅
+- Missing API key shows actionable error ✅
+
+---
+
 ## 2026-05-04 — Connect coach observations to AI Draft Panel
 
 **Sprint:** AI Note Structuring MVP — observation-to-draft connection.

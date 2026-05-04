@@ -38,8 +38,8 @@ export function CoachObservationsFeed({ observations, onSelectForDraft }: Props)
       <Card>
         <EmptyState
           icon={<MessageSquare className="w-5 h-5" />}
-          title="No coach observations have been applied to this player yet"
-          description="Approved session recap drafts will appear here after they are applied."
+          title="No observations yet"
+          description="Add a manual observation or voice note below. Session recap observations also appear here after a recap is applied."
         />
       </Card>
     )
