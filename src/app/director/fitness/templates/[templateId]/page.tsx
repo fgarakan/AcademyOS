@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, Activity } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import { FitnessTemplateBuilderClient } from './FitnessTemplateBuilderClient'
+import { PopulateFitnessBlocksButton } from './PopulateFitnessBlocksButton'
 import { CurriculumLevelSelector, type CurriculumLevelOption } from './CurriculumLevelSelector'
 import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 import type { FitnessBlock, FitnessExercise, ExerciseLibraryItem } from './fitnessBuilderTypes'
@@ -248,9 +249,27 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
             <p className="label-xs mb-2">Fitness Blocks</p>
             <p className="text-[11px] text-text-muted">
               Add movement, agility, speed, strength, coordination, mobility, and recovery blocks.
-              Each block auto-populates with matching exercises from your exercise library.
+              {exerciseLibrary.length > 0
+                ? ` Exercise library has ${exerciseLibrary.length} approved exercises available.`
+                : ' Exercise library is empty — import exercises to enable auto-population.'
+              }
             </p>
           </div>
+
+          {/* Populate all blocks from exercise library */}
+          <Card>
+            <CardHeader>
+              <p className="label-xs">Auto-Populate Exercises</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <PopulateFitnessBlocksButton
+                templateId={params.templateId}
+                hasBlocks={fitnessBlocks.length > 0}
+                exerciseLibraryCount={exerciseLibrary.length}
+              />
+            </CardContent>
+          </Card>
+
           <FitnessTemplateBuilderClient
             templateId={params.templateId}
             initialBlocks={fitnessBlocks}

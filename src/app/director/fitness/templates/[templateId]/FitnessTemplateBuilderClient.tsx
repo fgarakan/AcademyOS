@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import {
   ChevronUp, ChevronDown, Plus, Trash2, RefreshCw,
-  Clock, MessageSquare, Check, Loader2, X, Activity,
+  Clock, MessageSquare, Check, Loader2, X, Activity, AlertCircle,
 } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { VoiceTextInput } from '@/components/voice/VoiceTextInput'
@@ -29,13 +29,16 @@ interface FitnessTemplateBuilderClientProps {
   templateId: string
   initialBlocks: FitnessBlock[]
   exerciseLibrary: ExerciseLibraryItem[]
+  exerciseLibraryCount?: number
 }
 
 export function FitnessTemplateBuilderClient({
   templateId,
   initialBlocks,
   exerciseLibrary,
+  exerciseLibraryCount,
 }: FitnessTemplateBuilderClientProps) {
+  const libraryCount = exerciseLibraryCount ?? exerciseLibrary.length
   const [blocks, setBlocks] = useState<FitnessBlock[]>(initialBlocks)
   const [isPending, startTransition] = useTransition()
   const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
@@ -143,6 +146,17 @@ export function FitnessTemplateBuilderClient({
         ].join(' ')}>
           <span>{statusMsg.text}</span>
           <button onClick={() => setStatusMsg(null)}><X className="w-3.5 h-3.5" /></button>
+        </div>
+      )}
+
+      {/* Exercise library diagnostic banner */}
+      {libraryCount === 0 && (
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-status-orange/20 bg-status-orange/5 text-xs text-status-orange">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>
+            Exercise library is empty for this academy. Blocks will be created without exercises.
+            Use the "Auto-Populate Exercises" button above once exercises are imported.
+          </span>
         </div>
       )}
 
@@ -378,7 +392,13 @@ function FitnessBlockCard({
         )}
 
         {block.exercises.length === 0 ? (
-          <p className="text-xs text-text-muted italic py-2">No exercises in this block.</p>
+          <p className="text-xs text-text-muted italic py-2">
+            No exercises in this block.
+            {_exerciseLibrary.length === 0
+              ? ' Exercise library is empty — import exercises and use Auto-Populate above.'
+              : ' Use Auto-Populate above or switch/add exercises from the library.'
+            }
+          </p>
         ) : (
           <div className="space-y-0">
             {block.exercises.map((ex, exIdx) => (

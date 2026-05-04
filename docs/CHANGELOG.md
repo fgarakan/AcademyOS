@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-04 — Sprint 252: Fix Fitness Exercise Library Population
+
+**Mode:** UI wiring + action result improvements. No migrations. No schema changes.
+
+**Root cause resolved:**
+- Exercises ARE present in DB (83 rows) — dry run report was misleading
+- Real gap: `PopulateFitnessBlocksButton` was never imported or mounted on the fitness template detail page
+- No diagnostic visibility for library size in the builder UI
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/populateFitnessBlocksAction.ts` — added `exercisesInLibrary` field to result type and final return
+- `src/app/director/fitness/templates/[templateId]/PopulateFitnessBlocksButton.tsx` — added `exerciseLibraryCount` prop; improved success/empty state messaging with library count badge
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — wired `PopulateFitnessBlocksButton` into page (new "Auto-Populate Exercises" card); dynamic library count in description text
+- `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` — added orange warning banner when library is empty; context-aware "no exercises" message per block
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS
+- `qa-command-parser.mjs` — 24/24 passed
+- `qa-voice-intake-structure.mjs` — 15/15 passed
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 251: Template Population Architecture Audit
 
 **Mode:** Audit and docs only. No code changes. No migrations.

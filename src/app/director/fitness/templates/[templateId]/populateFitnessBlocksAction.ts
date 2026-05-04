@@ -38,6 +38,7 @@ export interface PopulateFitnessBlocksResult {
   error: string | null
   blocksProcessed: number
   totalExercisesAdded: number
+  exercisesInLibrary: number
   blockResults: BlockPopulationResult[]
 }
 
@@ -49,7 +50,7 @@ export async function populateFitnessTemplateBlocksAction(
   templateId: string,
 ): Promise<PopulateFitnessBlocksResult> {
   const fail = (error: string): PopulateFitnessBlocksResult =>
-    ({ ok: false, error, blocksProcessed: 0, totalExercisesAdded: 0, blockResults: [] })
+    ({ ok: false, error, blocksProcessed: 0, totalExercisesAdded: 0, exercisesInLibrary: 0, blockResults: [] })
 
   await assertNotPreviewMode()
 
@@ -240,6 +241,7 @@ export async function populateFitnessTemplateBlocksAction(
     error: null,
     blocksProcessed: blockList.length,
     totalExercisesAdded,
+    exercisesInLibrary: exerciseList.length,
     blockResults,
   }
 }
