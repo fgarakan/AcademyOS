@@ -2,6 +2,44 @@
 
 ---
 
+## 2026-05-03 — Sprint 231: Parent Approved Development Plan Portal V1
+
+**Mode:** Parent portal auth + IDP integration. No schema changes. No migrations. Read-only.
+
+**What was built:**
+- `/parent` route resolves auth user → `guardians.profile_id` → `player_guardians` → linked active player
+- If no guardian record exists for the user, shows safe empty state with account-linking instructions
+- If no player is linked to the guardian, shows safe empty state
+- If mapping found: fetches curriculum state, next level, coach language (sanitized via `sanitizeParentFacingText`), active priorities
+- Builds `IndividualDevelopmentPlan` via `buildIndividualDevelopmentPlan()`
+- Renders parent role view via `buildRoleSpecificIdpView(plan, 'parent')` → `IdpParentView`
+- Approved data banner: "This view uses approved development information only." (from `approved_data_note`)
+- Child's Progress card: maps `what_child_is_working_on` and `next_development_step` to `ParentSafeProgressPreview`
+- Live sections: Why It Matters, How to Support This Week, What to Say After Practice, What Not to Over-Focus On
+- Safety note footer: from `IdpParentView.safety_note`
+- All data passes through `sanitizeParentFacingText` — no raw coach notes, no scores, no rankings
+
+**Safety boundaries:**
+- No raw coach observations or internal notes exposed
+- No assessment scores or percentile ranks
+- No ranking or comparison to other players
+- No unapproved content — all text derived from curriculum-level coach language only
+- `isPreviewOnly={false}` on `ParentSafeProgressPreview` — parent sees their own data, not a director preview
+
+**Known limitation:** Guardian-to-player mapping (`guardians.profile_id` + `player_guardians`) may not be populated in the current database. Parents without a linked guardian record see the empty state with account-linking instructions.
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS, zero forbidden references
+- `qa-command-parser.mjs` — 24/24 passed
+
+**TypeScript:** 0 errors.
+
+### Files modified
+- `src/app/parent/page.tsx` — converted to async Server Component; guardian → player resolution; live IDP parent view sections; safe empty states
+
+---
+
 ## 2026-05-03 — Sprint 230: Player Portal Live Development Plan V1
 
 **Mode:** Player portal auth + IDP integration. No schema changes. No migrations. Read-only.

@@ -155,15 +155,15 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ## Conversational OS (Sprints 219–228)
 
-### Player portal Q&A uses empty-state components only
-- **File:** `src/app/player/page.tsx`, `src/components/player/PlayerMissionPreview.tsx`
-- **Impact:** `PlayerMissionPreview` renders on the player home page but all props are null — player sees the empty state. No live curriculum data is fetched for the player portal yet.
-- **Fix:** Sprint 229 — Player Portal Q&A with live role-scoped data access.
+### Player portal shows empty state when profile_id is not linked
+- **File:** `src/app/player/page.tsx`
+- **Impact:** `/player` resolves auth user → `players.profile_id`. If no player record has `profile_id` set to the logged-in user, the player sees a safe empty state prompting them to ask their coach or director to connect their profile. Live development plan is only visible when the player-to-profile mapping is set.
+- **Fix:** Director or coach must set `profile_id` on the player record to the player's auth user ID.
 
-### Parent portal progress uses empty-state components only
-- **File:** `src/app/parent/page.tsx`, `src/components/player/ParentSafeProgressPreview.tsx`
-- **Impact:** `ParentSafeProgressPreview` renders but all props are empty — parent sees the empty state. No approved progress data is passed yet.
-- **Fix:** Sprint 230 — Parent Portal Progress with real approved data.
+### Parent portal guardian-to-player mapping may not be populated
+- **File:** `src/app/parent/page.tsx`
+- **Impact:** `/parent` now resolves auth user → `guardians.profile_id` → `player_guardians` → linked player and renders a live IDP parent view. However, if no guardian record is linked to the auth user in the `guardians` table (via `profile_id`), or no player is linked via `player_guardians`, the parent sees a safe empty state prompting them to contact the director. Live development guidance is only visible when the guardian-to-player mapping is set.
+- **Fix:** Director must link parent accounts to guardian records and assign players via `player_guardians`.
 
 ### Role-aware chat guardrails are enforcement-only — no full chat UI
 - **File:** `src/lib/commands/roleGuardrails.ts`
