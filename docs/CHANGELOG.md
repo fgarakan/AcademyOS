@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-04 — Sprint 258: Template Preview and Source Traceability V1
+
+**Mode:** Pure utility library. No migrations. No DB access. No AI calls.
+
+**What was built:**
+- `templateSourceTraceability.ts` — parses template tags and provides source traceability for templates and session blocks
+- `parseTemplateTags()` — extracts import_batch, airtable_id, template_type, isFitnessTemplate from template tags array
+- `buildTemplateSourceInfo()` — combines tag data + curriculum level into a structured TemplateSourceInfo
+- `formatTemplateOriginBadge()` — short label for display: "Imported", "Fitness OS", "Manual", "Curriculum-Linked"
+- `formatTemplateSourceDescription()` — full one-line source description for UI tooltips and audit views
+- Session block traceability: `sessionBlockIsTraceable()`, `formatSessionBlockSourceLabel()`, `formatSessionBlockProvenance()`
+- Covers the `session_blocks.template_block_id` → `template_blocks.id` chain documented in database.types.ts
+
+**Files created:**
+- `src/lib/templates/templateSourceTraceability.ts` — source traceability utility
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 257: Curriculum to Template Block Recommendations V1
 
 **Mode:** Pure utility library. No migrations. No DB access. No AI calls.
