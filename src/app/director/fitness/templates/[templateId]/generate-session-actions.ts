@@ -7,6 +7,7 @@ import {
   getAcademyOverridesForContext,
   buildOverrideSummaryLines,
 } from '@/lib/curriculum/academyCurriculumResolution'
+import { getCurriculumContentForLevel } from '@/lib/templates/curriculumTemplateLinks'
 
 export interface GenerateSessionInput {
   templateId: string
@@ -54,6 +55,7 @@ export async function generateSessionFromTemplateAction(
 
   // 3a. Resolve curriculum level name if template has one — prepended to session_notes
   let curriculumLevelName: string | null = null
+  let curriculumCoachCues: string[] = []
   if (template.curriculum_level_id) {
     const { data: levelRow } = await rawDb
       .from('curriculum_levels')
@@ -61,6 +63,20 @@ export async function generateSessionFromTemplateAction(
       .eq('id', template.curriculum_level_id)
       .single()
     curriculumLevelName = levelRow?.display_name ?? null
+
+    // Fetch coach language cues for richer session context
+    const contentItems = await getCurriculumContentForLevel(
+      template.curriculum_level_id,
+      supabase,
+      ['curriculum_coach_language', 'curriculum_gates'],
+    )
+    const coachLangItems = contentItems
+      .filter(i => i.section === 'curriculum_coach_language')
+      .slice(0, 4)
+      .map(i => i.content)
+    if (coachLangItems.length > 0) {
+      curriculumCoachCues = coachLangItems
+    }
   }
 
   // 3b. Resolve academy curriculum version for session context header (Sprint 75)
@@ -128,6 +144,9 @@ export async function generateSessionFromTemplateAction(
     if (overrideSummaryLines.length > 0) {
       curriculumLines.push(`[Academy Overrides: ${overrideSummaryLines.length} active]`)
       curriculumLines.push(...overrideSummaryLines)
+    }
+    if (curriculumCoachCues.length > 0) {
+      curriculumLines.push(`[Coach Cues: ${curriculumCoachCues.join(' · ')}]`)
     }
     curriculumLines.push('')
   }

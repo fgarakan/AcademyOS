@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-04 — Sprint 259: Session Generation From Curriculum-Linked Templates V1
+
+**Mode:** Server action enhancement. No migrations. No schema changes.
+
+**What was built:**
+- Session generation now embeds curriculum coach language cues in session_notes when a template has a curriculum level assigned
+- Added `[Coach Cues: ...]` line to the curriculum prefix in session_notes — up to 4 coach language cues from `curriculum_content_items` (section: curriculum_coach_language)
+- Uses `getCurriculumContentForLevel()` from the new `curriculumTemplateLinks.ts` utility
+- Session notes format: `[Curriculum: Level Name]` → `[Academy Version: ...]` → `[Coach Cues: ...]` → user notes
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/generate-session-actions.ts` — added curriculum content query and coach cues line to session notes prefix
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS
+- `qa-command-parser.mjs` — 24/24 passed
+- `qa-voice-intake-structure.mjs` — 15/15 passed
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 258: Template Preview and Source Traceability V1
 
 **Mode:** Pure utility library. No migrations. No DB access. No AI calls.
