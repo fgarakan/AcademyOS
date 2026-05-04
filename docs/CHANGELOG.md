@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-04 — Sprint 242: Voice Intake Draft Model V1
+
+**Mode:** New pure helpers + QA script. No DB calls. No AI. No UI changes. No migrations.
+
+**What was built:**
+- `VoiceIntakeTypes` — complete type definitions: VoiceIntakeRole, VoiceIntakeContext, VoiceIntakeIntentType (16 values), VoiceDestinationModule (14 values), VoiceSafetyFlag (7 values), VoiceExtractedEntity, VoiceIntakeDraft, VoiceIntakeStructureInput, VoiceIntakeStructureResult
+- `structureVoiceIntake()` — deterministic structuring helper; cleans transcript; detects 8 director + 8 coach intents via pattern matching; extracts player names, group names, curriculum levels, focus keywords; scores confidence; builds destination list; generates what_would_change and what_would_not_change (6 unconditional rules); sets safety_flags (7 types); infers gap links; returns VoiceIntakeStructureResult
+- `qa-voice-intake-structure.mjs` — 10-case QA script; pure JS mirror; covers director commands, coach commands, safety flag detection, what_would_not_change invariants, empty and unknown inputs
+- Fixed safety flag detection: parent exposure pattern now handles "parent...update" word order; level change detection handles "move [name] up" patterns
+
+**Files created:**
+- `src/lib/voice/voiceIntakeTypes.ts` — all voice intake TypeScript types
+- `src/lib/voice/structureVoiceIntake.ts` — deterministic voice intake structuring helper
+- `scripts/qa-voice-intake-structure.mjs` — QA test script (10 tests, all passing)
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+**QA:** 10 tests, 10 passed.
+
+---
+
 ## 2026-05-04 — Sprint 241: Universal Voice Button UI V1
 
 **Mode:** New component + minimal client component edit. No schema changes. No migrations. No AI. No DB writes.
