@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-04 — Sprint 244: Coach Voice Structuring V1
+
+**Mode:** Client component enhancement. No schema changes. No migrations. No new DB writes. Preserves all existing coach recap save/structure behavior.
+
+**What was built:**
+- `CoachRecapCommandPanel` enhanced: raw textarea replaced with `VoiceTextInput` (adds browser SpeechRecognition with text fallback to coach recap input)
+- `structureVoiceIntake()` wired as a `useMemo` in `CoachRecapCommandPanel` — runs client-side whenever recap text ≥ 15 characters, no async, no DB
+- `CoachVoiceStructureDisplay` component — shows coach-specific structure preview: detected intents (attendance exception, unrostered attendee, player observation, gate evidence, session recap, gap signal, parent safe candidate, director alert), player name mentions, gap signal links, "will not change" safety note
+- All existing save/structure/review flow preserved untouched
+- Coach examples supported by intent patterns: "except Sarah", "Jeremy showed up", "Lucas recovered", "Maya understood the pattern"
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachRecapCommandPanel.tsx` — import VoiceTextInput + structureVoiceIntake; replace textarea with VoiceTextInput; add voiceStructure useMemo; add CoachVoiceStructureDisplay
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 243: Director Voice Structuring V1
 
 **Mode:** Client component wiring. No schema changes. No migrations. No DB writes from new code.

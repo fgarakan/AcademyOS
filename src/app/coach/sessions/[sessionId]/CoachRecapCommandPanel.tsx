@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
-import { CheckCircle, AlertCircle, Zap, ExternalLink, Eye } from 'lucide-react'
+import { CheckCircle, AlertCircle, Zap, ExternalLink, Eye, ShieldCheck } from 'lucide-react'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import type { SaveSessionRecapInput, SaveSessionRecapResult } from './actions'
 import type { StructureCoachRecapResult } from './structureCoachRecapAction'
+import { VoiceTextInput } from '@/components/voice/VoiceTextInput'
+import { structureVoiceIntake } from '@/lib/voice/structureVoiceIntake'
 
 // Client-side keyword detection for real-time signal preview (UX only — server is authoritative)
 const ABSENCE_PHRASES = ['was absent', 'did not show', "didn't show", 'absent today', 'no show', 'not present', 'missed the session', 'not here', "wasn't here", 'did not attend', "didn't attend"]
@@ -52,6 +54,16 @@ export function CoachRecapCommandPanel({
   const hasSignals = signals.hasAbsence || signals.hasLate || signals.skills.length > 0
   const saved = saveResult?.ok === true && !!voiceNoteId
   const canStructure = saved && !(structureResult?.ok === true)
+
+  // Client-side voice structure preview (display only — no DB writes)
+  const voiceStructure = useMemo(() => {
+    if (recapText.trim().length < 15) return null
+    return structureVoiceIntake({
+      role: 'coach',
+      transcript: recapText,
+      context: { page: 'coach-session', session_id: sessionId, academy_id: '' },
+    })
+  }, [recapText, sessionId])
 
   function handleTextChange(value: string) {
     setRecapText(value)
@@ -103,18 +115,17 @@ export function CoachRecapCommandPanel({
           )}
         </div>
 
-        {/* Recap textarea */}
-        <textarea
+        {/* Recap input — VoiceTextInput with voice capture */}
+        <VoiceTextInput
           value={recapText}
-          onChange={e => handleTextChange(e.target.value)}
-          placeholder="Example: Everyone was here except Sarah. Jeremy showed up late. We worked on forehand grip and preparation. Lucas recovered better after wide balls. Maria was inconsistent on serve but showed great effort."
-          rows={5}
-          maxLength={5000}
-          className="w-full text-sm bg-surface-raised border border-border rounded-lg px-3 py-2.5 text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-lime/50 transition-colors"
+          onChange={handleTextChange}
+          placeholder="Example: Everyone was here except Sarah. Jeremy showed up late. We worked on forehand grip and preparation. Lucas recovered better after wide balls."
+          minRows={5}
+          helperText="Voice creates text. Save recap, then structure into a director review draft."
         />
 
         <div className="flex items-center justify-between">
-          <p className="text-[10px] text-text-muted">{recapText.length}/5,000</p>
+          <p className="text-[10px] text-text-muted">{recapText.length}/2000</p>
           {hasSignals && (
             <span className="text-[10px] text-lime/70 flex items-center gap-1">
               <Eye className="w-3 h-3" />
@@ -140,6 +151,11 @@ export function CoachRecapCommandPanel({
             </div>
             <p className="text-[10px] text-text-muted">Preview only — server structuring extracts player-level signals for director review.</p>
           </div>
+        )}
+
+        {/* Coach voice structure preview — display only, no DB writes */}
+        {voiceStructure && voiceStructure.draft.detected_intents[0] !== 'unknown' && (
+          <CoachVoiceStructureDisplay result={voiceStructure} />
         )}
 
         {/* Save result */}
@@ -238,5 +254,86 @@ export function CoachRecapCommandPanel({
 
       </CardContent>
     </Card>
+  )
+}
+
+// ── Coach Voice Structure Display ─────────────────────────────────────────────
+// Display-only. No DB writes. Shows what structureVoiceIntake() detected from the recap.
+
+import type { VoiceIntakeStructureResult } from '@/lib/voice/voiceIntakeTypes'
+
+const COACH_INTENT_DISPLAY: Record<string, string> = {
+  record_attendance_exception: 'Attendance exception',
+  flag_unrostered_attendee: 'Unrostered attendee',
+  create_player_observation: 'Player observation',
+  create_gate_evidence_draft: 'Gate evidence candidate',
+  create_session_recap: 'Session recap',
+  create_gap_signal: 'Training gap signal',
+  create_parent_safe_candidate: 'Parent safe candidate',
+  alert_director: 'Director alert',
+}
+
+function CoachVoiceStructureDisplay({ result }: { result: VoiceIntakeStructureResult }) {
+  const { draft } = result
+  const coachIntents = draft.detected_intents.filter(i => COACH_INTENT_DISPLAY[i])
+  const hasContent = coachIntents.length > 0 || draft.affected_players.length > 0 || draft.gap_links.length > 0
+
+  if (!hasContent) return null
+
+  return (
+    <div className="rounded-xl border border-lime/15 bg-lime/3 px-3 py-3 space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-[10px] uppercase tracking-widest text-lime/70">Voice Structure Preview</p>
+        <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
+          <ShieldCheck className="w-3 h-3 text-lime/60" />
+          Review draft only — not visible to players
+        </div>
+      </div>
+
+      {/* Detected coach intents */}
+      {coachIntents.length > 0 && (
+        <div>
+          <p className="text-[10px] text-text-muted mb-1.5">Detected</p>
+          <div className="flex flex-wrap gap-1.5">
+            {coachIntents.map(intent => (
+              <span key={intent} className="px-2 py-0.5 rounded-full border border-lime/20 bg-lime/5 text-[10px] text-lime">
+                {COACH_INTENT_DISPLAY[intent]}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Player mentions */}
+      {draft.affected_players.length > 0 && (
+        <div>
+          <p className="text-[10px] text-text-muted mb-1">Players mentioned</p>
+          <div className="flex flex-wrap gap-1.5">
+            {draft.affected_players.map(p => (
+              <span key={p} className="px-2 py-0.5 rounded-full border border-border text-[10px] text-text-secondary">{p}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Gap signals */}
+      {draft.gap_links.length > 0 && (
+        <div>
+          <p className="text-[10px] text-text-muted mb-1">Gap signals</p>
+          <div className="flex flex-wrap gap-1.5">
+            {draft.gap_links.map(g => (
+              <span key={g} className="px-2 py-0.5 rounded-full border border-border text-[10px] text-text-muted">{g.replace(/_/g, ' ')}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* What would not change */}
+      <div className="pt-1 border-t border-lime/10">
+        <p className="text-[10px] text-text-muted">
+          No parent message sent · No level change · No roster change — all require director approval
+        </p>
+      </div>
+    </div>
   )
 }
