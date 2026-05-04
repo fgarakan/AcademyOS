@@ -12,6 +12,8 @@ import {
   canRoleUseIntent,
 } from '@/lib/commands/roleGuardrails'
 import { VoiceIntakePanel } from '@/components/voice/VoiceIntakePanel'
+import { structureVoiceIntake } from '@/lib/voice/structureVoiceIntake'
+import type { VoiceIntakeStructureResult } from '@/lib/voice/voiceIntakeTypes'
 
 interface RecentCommand {
   id: string
@@ -51,6 +53,13 @@ const EXAMPLE_COMMANDS = [
   'Record a note: review group sizes before Saturday',
 ]
 
+const DIRECTOR_VOICE_EXAMPLES = [
+  'Create an Orange 2 session focused on movement recovery for next Tuesday.',
+  'I want Orange 2 coaches watching Lucas and Maya for wide-ball recovery next week.',
+  'Draft a parent update explaining what Orange 2 is working on this month.',
+  'Show me players missing curriculum evidence in the backhand domain.',
+]
+
 const INTENT_LABELS: Record<string, string> = {
   show_players_missing_curriculum_level: 'Show players missing curriculum',
   show_curriculum_gap_suggestions: 'Show curriculum gap suggestions',
@@ -66,6 +75,7 @@ const INTENT_LABELS: Record<string, string> = {
 export function CommandCenterClient({ recentCommands, curriculumLevels, recentDrafts }: Props) {
   const [input, setInput] = useState('')
   const [result, setResult] = useState<ParsedCommandResult | null>(null)
+  const [voiceResult, setVoiceResult] = useState<VoiceIntakeStructureResult | null>(null)
   const [draftCreated, setDraftCreated] = useState<{ id: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isParsing, startParseTransition] = useTransition()
@@ -74,6 +84,7 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
   function handleExample(example: string) {
     setInput(example)
     setResult(null)
+    setVoiceResult(null)
     setDraftCreated(null)
     setError(null)
   }
@@ -84,6 +95,14 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
     setResult(null)
     setDraftCreated(null)
     setError(null)
+
+    // Run client-side voice structuring immediately
+    const structured = structureVoiceIntake({
+      role: 'academy_director',
+      transcript: commandText,
+      context: { page: 'command-center', academy_id: '' },
+    })
+    setVoiceResult(structured)
 
     startParseTransition(async () => {
       const res = await submitDirectorCommandAction(commandText, 'parse_only')
@@ -129,9 +148,10 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
         role="academy_director"
         contextLabel="Director Command Center"
         value={input}
-        onChange={v => { setInput(v); setResult(null); setDraftCreated(null); setError(null) }}
+        onChange={v => { setInput(v); setResult(null); setVoiceResult(null); setDraftCreated(null); setError(null) }}
         onSubmit={text => { setInput(text); handleParse(text) }}
         placeholder="Speak or type what you want done… e.g. 'Create a session draft for Orange 2 focused on movement'"
+        examples={DIRECTOR_VOICE_EXAMPLES}
         submitLabel={isParsing ? 'Parsing…' : 'Parse Command'}
         disabled={isParsing || isCreatingDraft}
       />
@@ -146,6 +166,9 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
       {error && (
         <p className="text-xs text-status-red">{error}</p>
       )}
+
+      {/* Voice structure result */}
+      {voiceResult && <VoiceStructuredResultCard result={voiceResult} />}
 
       {/* Parsed result */}
       {result && (
@@ -372,6 +395,200 @@ export function CommandCenterClient({ recentCommands, curriculumLevels, recentDr
         Nothing is applied automatically. All drafts require director approval before any change is made.
       </p>
     </div>
+  )
+}
+
+// ── Voice Structured Result Card ──────────────────────────────────────────────
+
+const INTENT_DISPLAY: Record<string, string> = {
+  create_session_draft: 'Session Draft',
+  create_group_draft: 'Group Draft',
+  set_group_focus: 'Set Group Focus',
+  create_player_review_request: 'Player Review Request',
+  create_parent_safe_draft: 'Parent Safe Draft',
+  summarize_curriculum_gaps: 'Curriculum Gap Summary',
+  create_coach_briefing: 'Coach Briefing',
+  record_director_note: 'Director Note',
+  record_attendance_exception: 'Attendance Exception',
+  flag_unrostered_attendee: 'Unrostered Attendee Flag',
+  create_player_observation: 'Player Observation',
+  create_gate_evidence_draft: 'Gate Evidence Draft',
+  create_session_recap: 'Session Recap',
+  create_gap_signal: 'Gap Signal',
+  create_parent_safe_candidate: 'Parent Safe Candidate',
+  alert_director: 'Director Alert',
+  unknown: 'Unknown',
+}
+
+const DEST_DISPLAY: Record<string, string> = {
+  attendance: 'Attendance',
+  unrostered_attendee_review: 'Unrostered Review',
+  session_actual: 'Session Actual',
+  player_observation: 'Player Observation',
+  curriculum_evidence: 'Curriculum Evidence',
+  gap_engine: 'Gap Engine',
+  parent_safe_draft: 'Parent Safe Draft',
+  player_mission: 'Player Mission',
+  director_review_queue: 'Review Queue',
+  session_planning: 'Session Planning',
+  group_planning: 'Group Planning',
+  coach_briefing: 'Coach Briefing',
+  curriculum_note: 'Curriculum Note',
+  director_note: 'Director Note',
+}
+
+const SAFETY_DISPLAY: Record<string, { label: string; color: string }> = {
+  parent_exposure_risk: { label: 'Parent exposure risk', color: 'text-status-orange border-status-orange/30 bg-status-orange/5' },
+  auto_execution_requested: { label: 'Auto-execution blocked', color: 'text-status-red border-status-red/30 bg-status-red/5' },
+  level_change_requested: { label: 'Level change flagged', color: 'text-status-orange border-status-orange/30 bg-status-orange/5' },
+  parent_send_requested: { label: 'Parent send blocked', color: 'text-status-red border-status-red/30 bg-status-red/5' },
+  roster_mutation_requested: { label: 'Roster mutation blocked', color: 'text-status-red border-status-red/30 bg-status-red/5' },
+  billing_enrollment_risk: { label: 'Billing/enrollment risk', color: 'text-status-red border-status-red/30 bg-status-red/5' },
+  cross_player_leak_risk: { label: 'Multiple players — review scope', color: 'text-status-orange border-status-orange/30 bg-status-orange/5' },
+}
+
+function VoiceStructuredResultCard({ result }: { result: VoiceIntakeStructureResult }) {
+  const { draft, parse_warnings } = result
+  if (draft.detected_intents[0] === 'unknown' && draft.extracted_entities.length === 0) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <p className="label-xs">Voice Structure</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={[
+              'px-2 py-0.5 rounded-full border text-[10px]',
+              draft.confidence === 'high' ? 'border-status-green/30 text-status-green' :
+              draft.confidence === 'medium' ? 'border-status-orange/30 text-status-orange' :
+              'border-border text-text-muted',
+            ].join(' ')}>
+              {draft.confidence} confidence
+            </span>
+            {draft.requires_review && (
+              <span className="px-2 py-0.5 rounded-full border border-status-orange/30 bg-status-orange/5 text-[10px] text-status-orange">
+                Review draft only — requires approval
+              </span>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0 space-y-4">
+
+        {/* Cleaned summary */}
+        {draft.cleaned_summary && (
+          <div className="px-3 py-2.5 rounded-xl bg-surface-raised border border-border">
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">What you said</p>
+            <p className="text-sm text-text-secondary leading-relaxed">{draft.cleaned_summary}</p>
+          </div>
+        )}
+
+        {/* Safety flags */}
+        {draft.safety_flags.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Safety Flags</p>
+            <div className="flex flex-wrap gap-2">
+              {draft.safety_flags.map(flag => {
+                const d = SAFETY_DISPLAY[flag]
+                return d ? (
+                  <span key={flag} className={`px-2.5 py-1 rounded-lg border text-[10px] font-medium ${d.color}`}>
+                    {d.label}
+                  </span>
+                ) : null
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Detected intents */}
+        {draft.detected_intents.length > 0 && draft.detected_intents[0] !== 'unknown' && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Detected Intents</p>
+            <div className="flex flex-wrap gap-2">
+              {draft.detected_intents.map(intent => (
+                <span key={intent} className="px-2.5 py-1 rounded-lg bg-lime/5 border border-lime/20 text-[10px] text-lime">
+                  {INTENT_DISPLAY[intent] ?? intent}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Extracted entities */}
+        {draft.extracted_entities.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Extracted</p>
+            <div className="flex flex-wrap gap-2">
+              {draft.extracted_entities.map((ent, i) => (
+                <span key={i} className="px-2 py-1 rounded-lg bg-surface-raised border border-border text-xs text-text-secondary">
+                  <span className="text-text-muted">{ent.type}:</span> {ent.value}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Suggested destinations */}
+        {draft.suggested_destinations.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Suggested Destinations</p>
+            <div className="flex flex-wrap gap-2">
+              {draft.suggested_destinations.map(dest => (
+                <span key={dest} className="px-2 py-1 rounded-lg border border-border text-[10px] text-text-secondary">
+                  {DEST_DISPLAY[dest] ?? dest}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recommended primary action */}
+        {draft.recommended_primary_action && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Recommended Action</p>
+            <p className="text-xs text-text-secondary leading-relaxed">{draft.recommended_primary_action}</p>
+          </div>
+        )}
+
+        {/* What would change */}
+        {draft.what_would_change.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">What Would Change (if approved)</p>
+            <ul className="space-y-0.5">
+              {draft.what_would_change.map((item, i) => (
+                <li key={i} className="text-xs text-text-secondary flex gap-1.5">
+                  <span className="text-lime shrink-0">→</span>{item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* What will NOT change */}
+        {draft.what_would_not_change.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Will Not Change Automatically</p>
+            <ul className="space-y-0.5">
+              {draft.what_would_not_change.slice(0, 4).map((item, i) => (
+                <li key={i} className="text-[10px] text-text-muted flex gap-1.5">
+                  <span className="text-status-red shrink-0">✕</span>{item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Parse warnings */}
+        {parse_warnings.length > 0 && (
+          <div className="pt-1 border-t border-border">
+            {parse_warnings.map((w, i) => (
+              <p key={i} className="text-[10px] text-status-orange leading-relaxed">{w}</p>
+            ))}
+          </div>
+        )}
+
+      </CardContent>
+    </Card>
   )
 }
 

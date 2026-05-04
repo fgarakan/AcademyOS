@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-04 — Sprint 243: Director Voice Structuring V1
+
+**Mode:** Client component wiring. No schema changes. No migrations. No DB writes from new code.
+
+**What was built:**
+- `structureVoiceIntake()` wired into Director Command Center — runs client-side on every VoiceIntakePanel submit
+- Director voice examples added to VoiceIntakePanel: Orange 2 session, group focus watching, parent update, evidence summary
+- `VoiceStructuredResultCard` component — shows full voice intake draft: cleaned summary, safety flags, detected intents (chips), extracted entities, suggested destinations, recommended primary action, what would change (if approved), what would not change (always-blocked list), parse warnings
+- Safety flags shown with color coding (orange/red) inline before intents
+- "Review draft only — requires approval" badge on requires_review drafts
+- Confidence badge (high/medium/low) with color coding
+- VoiceIntakePanel onChange now also clears voiceResult
+
+**Files modified:**
+- `src/app/director/command-center/CommandCenterClient.tsx` — import structureVoiceIntake + types; add voiceResult state; update handleParse to call structureVoiceIntake client-side; add VoiceStructuredResultCard; add DIRECTOR_VOICE_EXAMPLES; pass examples to VoiceIntakePanel
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 242: Voice Intake Draft Model V1
 
 **Mode:** New pure helpers + QA script. No DB calls. No AI. No UI changes. No migrations.
