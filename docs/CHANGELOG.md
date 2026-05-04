@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-05-03 — Sprint 233: Knowledge Gap Detection V1
+
+**Mode:** Pure helper library + display component. No DB calls. No AI. No migrations. No writes.
+
+**What was built:**
+- `detectKnowledgeGaps(input)` — pure function returning `IdpKnowledgeGap[]` from curriculum, gate, and coach language data
+- 7 gap types: `no_curriculum_level`, `insufficient_data`, `no_coach_language`, `no_drills_available`, `domain_gap_cluster`, `many_open_gates`, `no_module_domain_match`
+- Domain normalizer maps raw gate domains to `LearningModuleDomain` for `suggested_module_domain` — fuzzy keyword match with `'Technical'` fallback
+- `domain_gap_cluster` detects when ≥ 70% of open gates concentrate in one domain
+- `many_open_gates` triggers at 5+ open gates (broad coverage gap)
+- `KnowledgeGapCard` component: director/coach facing, severity-colored icons, lime badge for `suggested_module_domain`
+- Gaps sorted: high → medium → low → insufficient_data
+- Knowledge gaps are NEVER surfaced to player or parent views
+
+**TypeScript fixes applied:**
+- `IdpKnowledgeGap` has no `role_note` field — operational detail moved into `description` field
+- Replaced `Map`/`Set` iterator spread with array-based `Object.entries()` approach (ES5 compat)
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS, zero forbidden references
+- `qa-command-parser.mjs` — 24/24 passed
+
+**TypeScript:** 0 errors.
+
+### Files created
+- `docs/player-development/knowledge-gap-detection.md` — spec: inputs, 7 gap types, severity rules, domain mapping, role visibility, safety
+- `src/lib/gaps/knowledgeGapDetection.ts` — pure `detectKnowledgeGaps()` helper with domain normalizer
+- `src/components/player/KnowledgeGapCard.tsx` — director/coach knowledge gap display card
+
+---
+
 ## 2026-05-03 — Sprint 232: Training Gap Detection V1
 
 **Mode:** Pure helper library + display component. No DB calls. No AI. No migrations. No writes.
