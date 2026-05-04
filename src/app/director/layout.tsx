@@ -1,6 +1,7 @@
 import { SidebarNav } from '@/components/nav/SidebarNav'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { PreviewBanner } from '@/components/platform/PreviewBanner'
+import { QuickCaptureButton } from '@/components/capture/QuickCaptureButton'
 
 export default async function DirectorLayout({
   children,
@@ -14,6 +15,7 @@ export default async function DirectorLayout({
   } = await supabase.auth.getUser()
 
   let academyName = ''
+  let academyId = ''
   let pendingCount = 0
   let userEmail = ''
   let userDisplayName = ''
@@ -32,6 +34,8 @@ export default async function DirectorLayout({
     }
 
     if (profile?.academy_id) {
+      academyId = profile.academy_id
+
       const { data: academy } = await supabase
         .from('academies')
         .select('name')
@@ -56,6 +60,7 @@ export default async function DirectorLayout({
         <PreviewBanner />
         {children}
       </main>
+      {academyId && <QuickCaptureButton academyId={academyId} />}
     </div>
   )
 }

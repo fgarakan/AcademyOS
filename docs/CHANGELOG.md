@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-04 — Sprint 2: Director quick capture button
+
+**Files created:**
+- `src/components/capture/QuickCaptureButton.tsx` — fixed FAB button (bottom-right, lime pill) that opens the capture modal
+- `src/components/capture/QuickCaptureDrawer.tsx` — context-aware capture modal; reads usePathname to detect player profile context; saves as internal observation on player routes; acknowledges general captures without backend write
+
+**Files modified:**
+- `src/app/director/layout.tsx` — extract academyId, render QuickCaptureButton at bottom of layout
+
+**Behavior:**
+- On `/director/players/[playerId]` → shows "Player Observation" context, saves as internal coach observation after explicit click
+- On all other director routes → shows "General Capture", acknowledges capture, routes review inbox coming in Sprint 4
+- No auto-routing, no auto-save, no parent/player exposure
+
+**TypeScript:** clean, zero errors.
+
+---
+
 ## 2026-05-04 — Sprint 1: Lock notes AI flow
 
 **Files modified:**
