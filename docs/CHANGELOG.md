@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-04 — Sprint 260: Template Population QA and Demo Loop V1
+
+**Mode:** Documentation + validation. No code changes. No migrations.
+
+**Validation results:**
+- `npx tsc --noEmit` → CLEAN
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `qa-command-parser.mjs` — 24/24 passed
+- `audit-curriculum-product-language.mjs` — PASS
+- `qa-voice-intake-structure.mjs` — 15/15 passed
+
+**Files created:**
+- `docs/templates/template-population-demo-flow.md` — complete demo flow for fitness template, class template, and session generation paths; library utility reference; known gaps
+
+**Known gaps documented:**
+- `database.types.ts` not regenerated (curriculum fields use rawDb)
+- Class template block editing not yet built
+- Recommendation engines not surfaced in UI
+- Template source badges not rendered
+- Session notes curriculum cues are text-only (no structured DB field)
+
+---
+
 ## 2026-05-04 — Sprint 259: Session Generation From Curriculum-Linked Templates V1
 
 **Mode:** Server action enhancement. No migrations. No schema changes.
