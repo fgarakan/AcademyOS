@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-04 — Sprint 254: Fitness Template Auto-Populate Suggestions V1
+
+**Mode:** Pure utility library. No migrations. No DB access. No AI calls.
+
+**What was built:**
+- `fitnessExerciseRecommendations.ts` — ranked exercise suggestion engine for fitness block types
+- `rankExercisesForBlock()`: scores all library exercises for a given block type, returns sorted list with reasons and fit level (strong/moderate/weak)
+- `getBlockRecommendations()`: fills a duration budget with best-matching exercises, excludes already-assigned exercises, returns budget accounting
+- Reasons are human-readable strings ("Category 'movement' matches…", "Name contains 'agility'…") suitable for UI tooltips and future director summaries
+
+**Files created:**
+- `src/lib/templates/fitnessExerciseRecommendations.ts` — ranked recommendation utility
+
+**QA results:** TypeScript clean — no QA scripts needed (pure utility, no DB/UI changes).
+
+---
+
 ## 2026-05-04 — Sprint 253: Fitness Template Exercise Picker V1
 
 **Mode:** UI component. No migrations. No schema changes.
