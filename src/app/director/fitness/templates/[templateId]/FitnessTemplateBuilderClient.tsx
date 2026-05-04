@@ -31,6 +31,8 @@ interface FitnessTemplateBuilderClientProps {
   initialBlocks: FitnessBlock[]
   exerciseLibrary: ExerciseLibraryItem[]
   exerciseLibraryCount?: number
+  libraryQueryError?: string | null
+  totalExercisesInAcademy?: number
 }
 
 export function FitnessTemplateBuilderClient({
@@ -38,6 +40,8 @@ export function FitnessTemplateBuilderClient({
   initialBlocks,
   exerciseLibrary,
   exerciseLibraryCount,
+  libraryQueryError,
+  totalExercisesInAcademy = 0,
 }: FitnessTemplateBuilderClientProps) {
   const libraryCount = exerciseLibraryCount ?? exerciseLibrary.length
   const [blocks, setBlocks] = useState<FitnessBlock[]>(initialBlocks)
@@ -165,12 +169,16 @@ export function FitnessTemplateBuilderClient({
       )}
 
       {/* Exercise library diagnostic banner */}
-      {libraryCount === 0 && (
+      {(libraryCount === 0 || !!libraryQueryError) && (
         <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-status-orange/20 bg-status-orange/5 text-xs text-status-orange">
           <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>
-            Exercise library is empty for this academy. Blocks will be created without exercises.
-            Use the "Auto-Populate Exercises" button above once exercises are imported.
+            {libraryQueryError
+              ? `Exercise library query error: ${libraryQueryError}`
+              : totalExercisesInAcademy > 0
+                ? `${totalExercisesInAcademy} exercise${totalExercisesInAcademy !== 1 ? 's' : ''} found but none are active. Update exercise is_active status to enable auto-population.`
+                : 'Exercise library is empty for this academy. Blocks will be created without exercises. Use the "Auto-Populate Exercises" button above once exercises are imported.'
+            }
           </span>
         </div>
       )}

@@ -138,6 +138,13 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - **Impact:** Class template detail shows a read-only block list. Blocks cannot be added, removed, or reordered from the class template detail page. Only the curriculum level can be assigned.
 - **Fix:** Future sprint — build class template block editor (lower priority than fitness template system).
 
+### Fitness exercise library — diagnostic improved (Sprint 262)
+- **Status:** The exercise library query in the fitness template builder now captures errors and shows a total-count diagnostic to distinguish "no exercises imported" from "exercises exist but inactive."
+- **If `is_active = false` for all exercises:** Banner shows total count and instructs director to update `is_active` status.
+- **If query errors (e.g. RLS):** Banner shows the error message text.
+- **If truly empty:** Banner shows the existing import guidance.
+- **Remaining gap:** RLS-blocked results look identical to "truly empty" — both return count 0 since RLS applies to the count query as well.
+
 ### Drill detail panel does not show `procedure` field
 - **Impact:** `curriculum_drills.procedure` is not fetched by `getCurriculumExplorerData()` (locked backend file). The drill expanded panel shows setup, cues, progressions, and success criteria but not procedure.
 - **Fix:** Unlock and update `src/lib/backend/curriculumExplorer.ts` to include `procedure` in the drill select.

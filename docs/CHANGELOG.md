@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-04 — Sprint 262: Fitness Exercise Library Diagnostic
+
+**Mode:** Bug fix + diagnostic improvement. No migrations. No schema changes.
+
+**Root cause identified:**
+The fitness template builder's exercise library query (`is_active = true`) silently discarded its Supabase error and provided no distinction between:
+1. No exercises in DB for this academy
+2. Exercises exist but `is_active = false` (e.g. imported but not approved)
+3. A Supabase/RLS query error returning empty results
+
+Result: the page showed "Exercise library is empty" for all three cases with no diagnostic information.
+
+**Fix applied:**
+Added a diagnostic total-count query (without `is_active` filter) alongside the active-exercises query. The count query distinguishes case 1 from case 2. The library error is now surfaced to the client component for case 3. All three empty-state paths now show different, actionable messages.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Capture `libraryError`, add total-count query, pass both to client; update server-rendered hint text to show inactive-vs-empty distinction
+- `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` — Accept `libraryQueryError` and `totalExercisesInAcademy` props; update diagnostic banner to show specific message per case
+
+**Validation results:**
+- `npx tsc --noEmit` → CLEAN
+
+**Known remaining gap:**
+If RLS blocks the exercises query (e.g. `auth_is_staff()` returns false for the logged-in user), both the active-count and total-count queries return 0 via RLS row filtering. The page would show "Exercise library is empty" even if exercises exist — indistinguishable from case 1 without service-role access.
+
+---
+
 ## 2026-05-04 — Sprint 261: Template System Stabilization + Runtime QA V1
 
 **Mode:** Bug fixes + new route. No migrations. No schema changes.

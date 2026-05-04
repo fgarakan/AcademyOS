@@ -141,7 +141,7 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
   }))
 
   // Fetch exercise library for switcher
-  const { data: libraryData } = await supabase
+  const { data: libraryData, error: libraryError } = await supabase
     .from('exercises')
     .select('id, name, category, subcategory, duration_min, tags')
     .eq('academy_id', academyId)
@@ -156,6 +156,13 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
     duration_min: ex.duration_min,
     tags: ex.tags,
   }))
+
+  // Diagnostic: count all exercises for this academy regardless of is_active.
+  // Distinguishes "no exercises imported" from "exercises exist but marked inactive".
+  const { count: totalExercisesInAcademy } = await supabase
+    .from('exercises')
+    .select('id', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
 
   const typeLabel = getTemplateTypeLabel(tags)
   const totalExercises = rawExercises.length
@@ -251,7 +258,9 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
               Add movement, agility, speed, strength, coordination, mobility, and recovery blocks.
               {exerciseLibrary.length > 0
                 ? ` Exercise library has ${exerciseLibrary.length} approved exercises available.`
-                : ' Exercise library is empty — import exercises to enable auto-population.'
+                : (totalExercisesInAcademy ?? 0) > 0
+                  ? ` Exercise library has ${totalExercisesInAcademy} exercise${totalExercisesInAcademy !== 1 ? 's' : ''} but none are marked active — update exercise is_active status to enable auto-population.`
+                  : ' Exercise library is empty — import exercises to enable auto-population.'
               }
             </p>
           </div>
@@ -274,6 +283,8 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
             templateId={params.templateId}
             initialBlocks={fitnessBlocks}
             exerciseLibrary={exerciseLibrary}
+            libraryQueryError={libraryError?.message ?? null}
+            totalExercisesInAcademy={totalExercisesInAcademy ?? 0}
           />
         </>
       )}
