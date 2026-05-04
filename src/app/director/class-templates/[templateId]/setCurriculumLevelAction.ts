@@ -8,7 +8,7 @@ export async function setCurriculumLevelAction(
   templateId: string,
   curriculumLevelId: string | null,
 ): Promise<{ error: string | null }> {
-  await assertNotPreviewMode()
+  try { await assertNotPreviewMode() } catch { return { error: 'Writes are disabled in preview mode.' } }
 
   const supabase = await getSupabaseServer()
   const rawDb = supabase as any

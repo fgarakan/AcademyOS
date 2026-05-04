@@ -2,6 +2,55 @@
 
 ---
 
+## 2026-05-04 — Sprint 261: Template System Stabilization + Runtime QA V1
+
+**Mode:** Bug fixes + new route. No migrations. No schema changes.
+
+**Sprint status before continuation:** NOT STARTED — last commit was Sprint 260.
+
+**Root causes fixed:**
+1. `class-templates` list and detail pages crashed with "column templates.curriculum_level_id does not exist" — caused by PostgREST rejecting explicit column names that don't exist in the live DB. Fixed by changing `.select('*, curriculum_level_id')` to `.select('*')` in two files.
+2. `generate-session-actions.ts` had the same explicit column issue (`.select('id, name, curriculum_level_id')`). Fixed by using `.select('*')` — column is included when present, silently absent when not.
+3. `assertNotPreviewMode()` in four Server Actions threw uncaught errors when invoked in preview mode, causing client-side crashes. Fixed by wrapping each call in try/catch and returning a safe `{ error: 'Writes are disabled in preview mode.' }` result.
+4. `createFitnessTemplateAction` had no preview mode guard at all. Fixed by adding an `isPreviewMode()` check at the top that returns a friendly error.
+5. `/director/class-templates/new` did not exist. Created the page, form, and server action.
+
+**Files modified:**
+- `src/app/director/class-templates/page.tsx` — Fix `select('*')`, add "+ New Class Template" button
+- `src/app/director/class-templates/[templateId]/page.tsx` — Fix `select('*')`
+- `src/app/director/fitness/fitnessTemplateActions.ts` — Add `isPreviewMode` guard to `createFitnessTemplateAction`
+- `src/app/director/fitness/templates/[templateId]/generate-session-actions.ts` — Wrap `assertNotPreviewMode`, fix column select
+- `src/app/director/fitness/templates/[templateId]/populateFitnessBlocksAction.ts` — Wrap `assertNotPreviewMode`
+- `src/app/director/fitness/templates/[templateId]/setCurriculumLevelAction.ts` — Wrap `assertNotPreviewMode`
+- `src/app/director/class-templates/[templateId]/setCurriculumLevelAction.ts` — Wrap `assertNotPreviewMode`
+
+**Files created:**
+- `src/app/director/class-templates/createClassTemplateAction.ts` — Server action: preview guard, auth, role check, insert
+- `src/app/director/class-templates/new/page.tsx` — Create class template page
+- `src/app/director/class-templates/new/NewClassTemplateForm.tsx` — Client form
+
+**Validation results:**
+- `npx tsc --noEmit` → CLEAN
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `qa-command-parser.mjs` — 24/24 passed
+- `audit-curriculum-product-language.mjs` — PASS
+- `qa-voice-intake-structure.mjs` — 15/15 passed
+
+**Manual test checklist (static analysis):**
+- `/director/class-templates` — no longer crashes on `curriculum_level_id` column error
+- `/director/class-templates/new` — now exists and loads
+- `/director/fitness/templates` — unaffected (query uses `*` already)
+- `/director/fitness/templates/new` — `createFitnessTemplateAction` now returns friendly error in preview mode
+- `/director/sessions` — unaffected (reads only, no preview mode risk)
+- Preview mode — all write actions return `{ error: 'Writes are disabled in preview mode.' }` instead of throwing
+- `assertNotPreviewMode()` preserved in all actions — not removed or bypassed
+
+**Remaining limitations:**
+- `templates.curriculum_level_id` column not in `database.types.ts` (migration 045 not applied to live DB). All queries now use `select('*')` which is safe regardless of column presence. When column exists, curriculum links work. When absent, curriculum link UI shows "Not linked yet".
+- Class template block editing not yet built (class template detail shows read-only block list).
+
+---
+
 ## 2026-05-04 — Sprint 260: Template Population QA and Demo Loop V1
 
 **Mode:** Documentation + validation. No code changes. No migrations.

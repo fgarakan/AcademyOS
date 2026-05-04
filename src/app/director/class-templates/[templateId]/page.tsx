@@ -39,7 +39,7 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
 
   const { data: templateRaw, error: templateError } = await rawDb
     .from('templates')
-    .select('*, curriculum_level_id')
+    .select('*')
     .eq('id', params.templateId)
     .eq('academy_id', academyId)
     .single()

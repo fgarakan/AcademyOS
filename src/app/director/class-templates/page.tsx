@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BookOpen, Clock, GraduationCap } from 'lucide-react'
+import { BookOpen, Clock, GraduationCap, Plus } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import type { Tables } from '@/lib/supabase/database.types'
@@ -33,7 +33,7 @@ export default async function ClassTemplatesPage() {
   const rawDb = supabase as any
   const { data: templatesRaw, error } = await rawDb
     .from('templates')
-    .select('*, curriculum_level_id')
+    .select('*')
     .eq('academy_id', academyId)
     .order('name')
 
@@ -93,7 +93,16 @@ export default async function ClassTemplatesPage() {
 
   return (
     <div className="p-6 animate-fade-in space-y-6">
-      <PageHeader />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader />
+        <Link
+          href="/director/class-templates/new"
+          className="inline-flex items-center gap-1.5 btn-lime text-xs px-3 py-2 shrink-0"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          New Class Template
+        </Link>
+      </div>
 
       {error && (
         <p className="text-status-red text-sm">Failed to load templates: {error.message}</p>

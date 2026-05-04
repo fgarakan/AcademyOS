@@ -25,7 +25,7 @@ export interface GenerateSessionResult {
 export async function generateSessionFromTemplateAction(
   input: GenerateSessionInput
 ): Promise<GenerateSessionResult> {
-  await assertNotPreviewMode()
+  try { await assertNotPreviewMode() } catch { return { sessionId: null, error: 'Writes are disabled in preview mode.' } }
 
   const supabase = await getSupabaseServer()
 
@@ -43,11 +43,11 @@ export async function generateSessionFromTemplateAction(
   const academyId = profile.academy_id
 
   // 3. Verify template belongs to this academy — prevents cross-academy writes
-  //    Also fetch curriculum_level_id (added in migration 045, not in database.types.ts)
+  //    Use select('*') so curriculum_level_id is included when the column exists; absent columns are safely undefined.
   const rawDb = supabase as any
   const { data: template } = await rawDb
     .from('templates')
-    .select('id, name, curriculum_level_id')
+    .select('*')
     .eq('id', input.templateId)
     .eq('academy_id', academyId)
     .single()

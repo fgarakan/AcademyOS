@@ -52,7 +52,7 @@ export async function populateFitnessTemplateBlocksAction(
   const fail = (error: string): PopulateFitnessBlocksResult =>
     ({ ok: false, error, blocksProcessed: 0, totalExercisesAdded: 0, exercisesInLibrary: 0, blockResults: [] })
 
-  await assertNotPreviewMode()
+  try { await assertNotPreviewMode() } catch { return fail('Writes are disabled in preview mode.') }
 
   const supabase = await getSupabaseServer()
 

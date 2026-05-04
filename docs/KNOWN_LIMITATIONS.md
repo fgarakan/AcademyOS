@@ -124,6 +124,20 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - Directors can now assign a curriculum level to any session template from the template detail page (`/director/fitness/templates/[templateId]`).
 - `SessionCurriculumContextPanel` will show context once a level is assigned. Templates without a level still show the "no context" empty state until a director sets one.
 
+### `templates.curriculum_level_id` column not in generated types (Sprint 261)
+- **Status:** Migration 045 added `curriculum_level_id` to the `templates` table, but `database.types.ts` has not been regenerated. The column may or may not exist in the live database.
+- **Impact:** All template queries now use `select('*')` which is safe regardless — if the column exists, it's returned; if not, it's absent with no DB error. Curriculum link features (curriculum level selector on templates, session curriculum cues) work when the column exists. When absent, templates show "Not linked yet" in curriculum link UI.
+- **Fix:** Run `supabase gen types typescript` after confirming migration 045 is applied to the live database, then regenerate `src/lib/supabase/database.types.ts`.
+
+### Preview mode write actions previously threw uncaught errors — RESOLVED (Sprint 261)
+- **Status:** Server Actions that guard writes with `assertNotPreviewMode()` now catch the throw and return `{ error: 'Writes are disabled in preview mode.' }` instead of propagating the exception to the client. Preview banner ("Writes are disabled in preview.") displays in the director layout when in preview mode.
+- **Impact resolved:** Clicking save/create buttons in preview mode now shows a friendly error message instead of crashing the page.
+
+### Class template block editing not built
+- **File:** `src/app/director/class-templates/[templateId]/page.tsx`
+- **Impact:** Class template detail shows a read-only block list. Blocks cannot be added, removed, or reordered from the class template detail page. Only the curriculum level can be assigned.
+- **Fix:** Future sprint — build class template block editor (lower priority than fitness template system).
+
 ### Drill detail panel does not show `procedure` field
 - **Impact:** `curriculum_drills.procedure` is not fetched by `getCurriculumExplorerData()` (locked backend file). The drill expanded panel shows setup, cues, progressions, and success criteria but not procedure.
 - **Fix:** Unlock and update `src/lib/backend/curriculumExplorer.ts` to include `procedure` in the drill select.

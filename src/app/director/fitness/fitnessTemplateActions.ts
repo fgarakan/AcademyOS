@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
+import { isPreviewMode } from '@/lib/utils/previewMode'
 import {
   getFitnessBlockLabel,
   getDbBlockType,
@@ -75,6 +76,9 @@ export interface CreateFitnessTemplateResult {
 export async function createFitnessTemplateAction(
   input: CreateFitnessTemplateInput,
 ): Promise<CreateFitnessTemplateResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, error: 'Writes are disabled in preview mode.', templateId: null }
+  }
   const auth = await resolveAcademyAndRole()
   if (!auth.ok) return { ok: false, error: auth.error, templateId: null }
   const { supabase, userId, academyId } = auth
