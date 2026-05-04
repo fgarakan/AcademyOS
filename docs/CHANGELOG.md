@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-04 — Sprint 257: Curriculum to Template Block Recommendations V1
+
+**Mode:** Pure utility library. No migrations. No DB access. No AI calls.
+
+**What was built:**
+- `curriculumBlockRecommendations.ts` — maps curriculum stage/fitness phase to recommended session block sequences
+- `getRecommendedBlocksForStage()`: returns recommended blocks (type, duration, emphasis, rationale) for a given stage and session duration
+- `getRecommendedBlocksForFitnessPhase()`: same but accepts fitness phase string from `curriculum_fitness_guidance`
+- `stageForFitnessPhase()`: maps fitness phase → curriculum stage
+- All 5 stages covered: Red Foundation through High Performance, with evidence-based block sequences and rationale text
+- Durations are proportional to total session time (not hardcoded), so a 60-min session vs 90-min session produces correct block sizes
+
+**Files created:**
+- `src/lib/templates/curriculumBlockRecommendations.ts` — block recommendation utility
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 256: Class Template Curriculum Picker V1
 
 **Mode:** New page + client component + server action. No migrations. No schema changes.
