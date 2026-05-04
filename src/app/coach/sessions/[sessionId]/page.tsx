@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { CoachSessionExecutionClient } from './CoachSessionExecutionClient'
 import { CoachRecapCommandPanel } from './CoachRecapCommandPanel'
+import { CoachSessionGapBriefPanel } from './CoachSessionGapBriefPanel'
 import { saveSessionExecutionAction, saveAttendanceAction, saveSessionRecapAction } from './actions'
 import { structureCoachRecapAction } from './structureCoachRecapAction'
 
@@ -219,6 +220,12 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
   const presentCount = roster.filter(p => p.currentStatus === 'present').length
   const attendanceSummary = roster.length > 0 ? `${presentCount}/${roster.length} present` : null
 
+  // Build roster name map for gap brief panel
+  const rosterNames: Record<string, string> = {}
+  for (const p of roster) {
+    rosterNames[p.playerId] = p.fullName
+  }
+
   return (
     <div className="space-y-6 pb-10">
       <BackLink />
@@ -264,6 +271,14 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           roster={roster}
           saveAction={saveSessionExecutionAction}
           saveAttendanceAction={saveAttendanceAction}
+        />
+      )}
+
+      {roster.length > 0 && (
+        <CoachSessionGapBriefPanel
+          playerIds={roster.map(p => p.playerId)}
+          academyId={academyId}
+          rosterNames={rosterNames}
         />
       )}
 

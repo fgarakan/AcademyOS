@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-04 — Sprint 237: Add Gap Context to Coach Session Workspace
+
+**Mode:** New component + minimal page modification. No schema changes. No migrations. No mutations.
+
+**What was built:**
+- `CoachSessionGapBriefPanel` — Async Server Component; fetches load aggregation and curriculum gap data for all roster players; runs `detectTrainingGaps()`, `detectKnowledgeGaps()`, `buildCoachGapGuidance()` per player (all pure helpers from Sprints 232–234)
+- 5 sequential Supabase queries: load aggregation, curriculum states, gates, coach language, drill counts
+- Compact per-player row: player name + level label + top_action text + act_now/monitor priority badge + "+N more" overflow count
+- Panel renders null when roster is empty; shows EmptyState when no gaps detected for any roster player
+- Coach-internal safety label — "not visible to players" — displayed in card header
+- Wired into `/coach/sessions/[sessionId]` between execution client and recap panel
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionGapBriefPanel.tsx` — async Server Component with gap brief rendering
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — import panel, build rosterNames map, render panel before CoachRecapCommandPanel
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 236: Expand Approved Action Execution Coverage
 
 **Mode:** Migration + documentation. No app-layer changes. No UI changes.
