@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-04 — Sprint 248: Voice Safety and Role Guardrails V1
+
+**Mode:** New pure utility module + defense-in-depth integration. No DB calls. No migrations. No UI changes.
+
+**What was built:**
+- `voiceRoleGuardrails.ts` — voice intent permission matrix; director-only intents (create_session_draft, create_group_draft, set_group_focus, create_player_review_request, create_parent_safe_draft, summarize_curriculum_gaps, create_coach_briefing, record_director_note); coach intents (record_attendance_exception, flag_unrostered_attendee, create_player_observation, create_gate_evidence_draft, create_session_recap, create_gap_signal, create_parent_safe_candidate, alert_director); exports: `canRoleCreateVoiceIntent()`, `getVoiceBlockedReason()`, `getVoiceIntentsForRole()`, `isVoiceActionIntent()`, `voiceIntentRequiresApproval()`, `isHardBlockedAutoIntent()`
+- `structureVoiceIntake.ts` updated with defense-in-depth filter: after `detectIntentsForRole()`, every detected intent is re-checked against `canRoleCreateVoiceIntent()`; blocked intents are removed and a `parse_warning` is added; if all intents are blocked, falls back to `unknown`
+
+**Files created:**
+- `src/lib/voice/voiceRoleGuardrails.ts` — voice intent permission matrix and guardrail functions
+
+**Files modified:**
+- `src/lib/voice/structureVoiceIntake.ts` — import and integrate `canRoleCreateVoiceIntent()` + `getVoiceBlockedReason()` as defense-in-depth post-detection filter
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 247: Voice Intake Review Panel V1
 
 **Mode:** New card component + server action + review page tab. No schema changes. No migrations. No execution step — V1 approval records the director's review decision only.

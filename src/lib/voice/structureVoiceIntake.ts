@@ -13,6 +13,7 @@ import type {
   VoiceIntakeStructureInput,
   VoiceIntakeStructureResult,
 } from './voiceIntakeTypes'
+import { canRoleCreateVoiceIntent, getVoiceBlockedReason } from './voiceRoleGuardrails'
 
 // ── Text cleaning ─────────────────────────────────────────────────────────────
 
@@ -440,7 +441,22 @@ export function structureVoiceIntake(input: VoiceIntakeStructureInput): VoiceInt
   const curriculumLevels = extractCurriculumLevels(cleaned)
   const focusKeywords = extractFocusKeywords(cleaned)
   const safetyFlags = detectSafetyFlags(cleaned)
-  const detectedIntents = detectIntentsForRole(cleaned, role)
+  const rawIntents = detectIntentsForRole(cleaned, role)
+
+  // Defense-in-depth: filter intents through role guardrail table.
+  // detectIntentsForRole already does role-based detection, but this
+  // provides an explicit second check against the permission matrix.
+  const blockedWarnings: string[] = []
+  const detectedIntents = rawIntents.filter(intent => {
+    if (canRoleCreateVoiceIntent(role, intent)) return true
+    const reason = getVoiceBlockedReason(role, intent)
+    if (reason) blockedWarnings.push(`Blocked: ${reason}`)
+    return false
+  })
+  // If all intents were filtered out, keep 'unknown'
+  if (detectedIntents.length === 0) detectedIntents.push('unknown')
+  for (const w of blockedWarnings) warnings.push(w)
+
   const entities = buildEntities(cleaned, playerNames, groupNames, curriculumLevels, focusKeywords)
   const confidence = scoreConfidence(detectedIntents, entities, cleaned)
 
