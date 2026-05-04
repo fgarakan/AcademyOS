@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-04 — Sprint 253: Fitness Template Exercise Picker V1
+
+**Mode:** UI component. No migrations. No schema changes.
+
+**What was built:**
+- `FitnessExercisePicker` modal — searchable exercise picker for manually adding exercises to fitness template blocks
+- Sorts best-category-match exercises first, then alphabetically; search filters by name/category/subcategory
+- Calls existing `addExerciseToFitnessBlockAction`; reloads page on success
+- "Add Exercise" dashed button added to bottom of each fitness block card (only shown when library has exercises)
+
+**Files created:**
+- `src/app/director/fitness/templates/[templateId]/FitnessExercisePicker.tsx` — add-exercise modal component
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` — wired picker state + modal, added "Add Exercise" button to FitnessBlockCard, updated empty block message
+
+**QA results:**
+- `qa-curriculum-seed-migration.mjs` — 38/38 passed
+- `audit-curriculum-product-language.mjs` — PASS
+- `qa-command-parser.mjs` — 24/24 passed
+- `qa-voice-intake-structure.mjs` — 15/15 passed
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-04 — Sprint 252: Fix Fitness Exercise Library Population
 
 **Mode:** UI wiring + action result improvements. No migrations. No schema changes.

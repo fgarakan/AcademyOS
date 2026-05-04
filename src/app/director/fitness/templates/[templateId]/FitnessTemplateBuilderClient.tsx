@@ -15,6 +15,7 @@ import {
   updateFitnessBlockNotesAction,
 } from '@/app/director/fitness/fitnessTemplateActions'
 import { FitnessExerciseSwitcher } from './FitnessExerciseSwitcher'
+import { FitnessExercisePicker } from './FitnessExercisePicker'
 import {
   FITNESS_BLOCK_TYPES,
   getFitnessBlockLabel,
@@ -47,6 +48,11 @@ export function FitnessTemplateBuilderClient({
     blockId: string
     tbeId: string
     fitnessBlockType: FitnessBlockType
+  } | null>(null)
+  const [pickerTarget, setPickerTarget] = useState<{
+    blockId: string
+    blockName: string
+    fitnessBlockType: FitnessBlockType | null
   } | null>(null)
   const [observationBlockId, setObservationBlockId] = useState<string | null>(null)
   const [observationDraft, setObservationDraft] = useState('')
@@ -111,6 +117,15 @@ export function FitnessTemplateBuilderClient({
 
   function handleSwitchComplete() {
     setSwitcherTarget(null)
+    window.location.reload()
+  }
+
+  function openPicker(blockId: string, blockName: string, fitnessBlockType: FitnessBlockType | null) {
+    setPickerTarget({ blockId, blockName, fitnessBlockType })
+  }
+
+  function handlePickComplete() {
+    setPickerTarget(null)
     window.location.reload()
   }
 
@@ -183,6 +198,7 @@ export function FitnessTemplateBuilderClient({
             onRemoveBlock={handleRemoveBlock}
             onRemoveExercise={handleRemoveExercise}
             onOpenSwitcher={openSwitcher}
+            onOpenPicker={openPicker}
             onOpenObservation={openObservation}
             templateId={templateId}
             exerciseLibrary={exerciseLibrary}
@@ -277,6 +293,19 @@ export function FitnessTemplateBuilderClient({
           onComplete={handleSwitchComplete}
         />
       )}
+
+      {/* Exercise picker modal */}
+      {pickerTarget && (
+        <FitnessExercisePicker
+          templateId={templateId}
+          blockId={pickerTarget.blockId}
+          blockName={pickerTarget.blockName}
+          fitnessBlockType={pickerTarget.fitnessBlockType}
+          exerciseLibrary={exerciseLibrary}
+          onClose={() => setPickerTarget(null)}
+          onComplete={handlePickComplete}
+        />
+      )}
     </div>
   )
 }
@@ -294,6 +323,7 @@ function FitnessBlockCard({
   onRemoveBlock,
   onRemoveExercise,
   onOpenSwitcher,
+  onOpenPicker,
   onOpenObservation,
   templateId: _templateId,
   exerciseLibrary: _exerciseLibrary,
@@ -306,6 +336,7 @@ function FitnessBlockCard({
   onRemoveBlock: (blockId: string) => void
   onRemoveExercise: (blockId: string, tbeId: string) => void
   onOpenSwitcher: (blockId: string, tbeId: string, ft: FitnessBlockType) => void
+  onOpenPicker: (blockId: string, blockName: string, ft: FitnessBlockType | null) => void
   onOpenObservation: (blockId: string, notes: string | null) => void
   templateId: string
   exerciseLibrary: ExerciseLibraryItem[]
@@ -396,7 +427,7 @@ function FitnessBlockCard({
             No exercises in this block.
             {_exerciseLibrary.length === 0
               ? ' Exercise library is empty — import exercises and use Auto-Populate above.'
-              : ' Use Auto-Populate above or switch/add exercises from the library.'
+              : ' Use Auto-Populate above or add exercises manually.'
             }
           </p>
         ) : (
@@ -414,6 +445,17 @@ function FitnessBlockCard({
               />
             ))}
           </div>
+        )}
+
+        {_exerciseLibrary.length > 0 && (
+          <button
+            onClick={() => onOpenPicker(block.id, block.name, block.fitnessBlockType)}
+            disabled={isPending}
+            className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border hover:border-lime/30 text-[11px] text-text-muted hover:text-lime transition-colors disabled:opacity-50"
+          >
+            <Plus className="w-3 h-3" />
+            Add Exercise
+          </button>
         )}
       </CardContent>
     </Card>
