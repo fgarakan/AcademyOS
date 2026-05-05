@@ -4,7 +4,8 @@ import { useState, useTransition } from 'react'
 import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy } from 'lucide-react'
 import { saveSessionRecapAction } from './actions'
 import { saveWrapUpDraftAction, type BlockCompletionDraft } from './saveWrapUpDraftAction'
-import type { SessionBlock } from './page'
+import { saveWrapUpObservationsAction, type PlayerObservationInput } from './saveWrapUpObservationsAction'
+import type { SessionBlock, RosterPlayer } from './page'
 
 // ─────────────────────────────────────────────────────────────
 // Step definitions
@@ -64,14 +65,23 @@ interface Props {
   sessionId: string
   sessionName: string
   blocks: SessionBlock[]
+  roster: RosterPlayer[]
   onClose: () => void
+}
+
+// Player note for wrap-up: keyed by playerId
+interface PlayerNote {
+  playerId: string
+  playerName: string
+  note: string
+  type: 'positive' | 'needs_attention'
 }
 
 // ─────────────────────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────────────────────
 
-export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, onClose }: Props) {
+export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onClose }: Props) {
   const [stepIndex, setStepIndex] = useState(0)
   const [answers, setAnswers] = useState<string[]>(STEPS.map(() => ''))
   // block completion: 'completed' | 'skipped' | 'modified' per block
@@ -80,6 +90,8 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, onClose }: P
     for (const b of blocks) init[b.id] = 'completed'
     return init
   })
+  // player notes: indexed by playerId
+  const [playerNotes, setPlayerNotes] = useState<Record<string, PlayerNote>>({})
   const [phase, setPhase] = useState<'questions' | 'summary' | 'saved'>('questions')
   const [saveError, setSaveError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -151,7 +163,18 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, onClose }: P
         nextFocus: answers[5] ?? '',
         groupNote: answers[1] ?? '',
       })
-      // Best-effort: proceed to saved state even if structured draft fails
+      // 3. Save player observations (best-effort, is_private = true)
+      const playerObservations: PlayerObservationInput[] = Object.values(playerNotes)
+        .filter(n => n.note.trim())
+        .map(n => ({
+          playerId: n.playerId,
+          playerName: n.playerName,
+          note: n.note.trim(),
+          observationType: n.type === 'positive' ? 'positive' : 'needs_attention',
+        }))
+      if (playerObservations.length > 0) {
+        await saveWrapUpObservationsAction(sessionId, playerObservations)
+      }
 
       setPhase('saved')
     })
@@ -217,6 +240,52 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, onClose }: P
                         </select>
                       </div>
                     ))}
+                  </div>
+                )}
+                {/* Player note fields for standouts / attention */}
+                {(s.key === 'standouts' || s.key === 'attention') && roster.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    <p className="text-[9px] uppercase tracking-widest text-text-muted">
+                      {s.key === 'standouts' ? 'Add player notes (optional)' : 'Flag for next session (optional)'}
+                    </p>
+                    {roster.map(p => {
+                      const noteType: 'positive' | 'needs_attention' = s.key === 'standouts' ? 'positive' : 'needs_attention'
+                      const key = `${p.playerId}:${noteType}`
+                      const existing = playerNotes[key]
+                      return (
+                        <div key={key} className="flex items-start gap-2">
+                          <span className="text-[10px] text-text-secondary mt-1.5 w-20 shrink-0 truncate">
+                            {p.fullName.split(' ')[0]}
+                          </span>
+                          <input
+                            type="text"
+                            value={existing?.note ?? ''}
+                            onChange={e => {
+                              const note = e.target.value
+                              setPlayerNotes(prev => {
+                                if (!note) {
+                                  const next = { ...prev }
+                                  delete next[key]
+                                  return next
+                                }
+                                return {
+                                  ...prev,
+                                  [key]: {
+                                    playerId: p.playerId,
+                                    playerName: p.fullName,
+                                    note,
+                                    type: noteType,
+                                  },
+                                }
+                              })
+                            }}
+                            placeholder={s.key === 'standouts' ? 'What stood out?' : 'What needs attention?'}
+                            className="flex-1 text-[11px] bg-surface-raised border border-border rounded px-2 py-1 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/40"
+                          />
+                        </div>
+                      )
+                    })}
+                    <p className="text-[9px] text-text-muted">Saved as internal coach notes — not visible to players or parents.</p>
                   </div>
                 )}
               </div>

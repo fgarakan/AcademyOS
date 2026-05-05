@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-05 — Sprint 14: Coach Wrap-Up → Player Observation Drafts V1
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/saveWrapUpObservationsAction.ts` — server action that saves player observations from wrap-up to `coach_observations`. Verifies coach role, verifies each player belongs to same academy and is active, inserts with `is_private: true`. Never parent/player-facing.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — added `roster: RosterPlayer[]` prop and `playerNotes` state. Summary step now shows per-player note inputs under "Who stood out?" and "Who needs attention?" questions. Notes keyed by `playerId:type`. On save, calls `saveWrapUpObservationsAction` (best-effort after raw recap save).
+- `src/app/coach/sessions/[sessionId]/CoachSessionActions.tsx` — added `roster` prop, passes to `CoachWrapUpDrawer`.
+- `src/app/coach/sessions/[sessionId]/page.tsx` — passes `roster` to `CoachSessionActions`.
+
+**Safety:** `is_private: true` always. Player membership verified server-side. No parent/player exposure. ✅
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 13: Coach Wrap-Up → Session Actual Draft V1
 
 **Files created:**
