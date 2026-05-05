@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-05 — Sprint 35: Director Dashboard Pending Coach Wrap-Ups Signal
+
+**Files modified:**
+- `src/app/director/page.tsx` — Added `pendingWrapUpsCount` query (proposed_actions where target_module = 'session_wrap_up_v1' and status = 'pending_review'). Wired into `totalAlerts` count. Added `pendingWrapUpsCount` prop to `AcademyAlertsPanel`. Added new alert entry: "X coach wrap-ups awaiting review" linking to `/director/review` when count > 0.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 34: Parent Private Lesson Request V1
 
 **Files created:**

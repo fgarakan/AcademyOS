@@ -160,12 +160,21 @@ export default async function DirectorDashboard() {
     .eq('suggestion_type', 'curriculum_gap')
   const curricGapCount = (curricGapData ?? []).length
 
+  // Pending coach wrap-ups awaiting director review
+  const { data: pendingWrapUpData } = await rawDb
+    .from('proposed_actions')
+    .select('id')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'session_wrap_up_v1')
+    .eq('status', 'pending_review')
+  const pendingWrapUpsCount = (pendingWrapUpData ?? []).length
+
   // Deterministic alert count
   const missingFocus = activePl.filter(p => !p.focus_areas || p.focus_areas.length === 0).length
   const reassessmentDue = reassessmentPipeline.filter(
     r => r.urgency === 'overdue' || r.urgency === 'due_soon'
   ).length
-  const totalAlerts = missingFocus + attentionCount + reassessmentDue + newRequests
+  const totalAlerts = missingFocus + attentionCount + reassessmentDue + newRequests + pendingWrapUpsCount
 
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -405,6 +414,7 @@ export default async function DirectorDashboard() {
           reassessmentDueCount={reassessmentDue}
           newRequestsCount={newRequests}
           pendingCount={pendingCount}
+          pendingWrapUpsCount={pendingWrapUpsCount}
           sessions={weekSessions ?? []}
         />
 
@@ -631,6 +641,7 @@ function AcademyAlertsPanel({
   reassessmentDueCount,
   newRequestsCount,
   pendingCount,
+  pendingWrapUpsCount,
   sessions,
 }: {
   missingFocusCount: number
@@ -638,6 +649,7 @@ function AcademyAlertsPanel({
   reassessmentDueCount: number
   newRequestsCount: number
   pendingCount: number
+  pendingWrapUpsCount: number
   sessions: SessionRow[]
 }) {
   const completedMissingNotes = sessions.filter(
@@ -675,6 +687,13 @@ function AcademyAlertsPanel({
       why: 'Overdue reassessments delay curriculum progression.',
       href: '/director/improvement',
       count: reassessmentDueCount,
+    },
+    pendingWrapUpsCount > 0 && {
+      severity: 'medium' as Severity,
+      title: `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting review`,
+      why: 'Coach session wrap-ups are in the review queue and have not been approved.',
+      href: '/director/review',
+      count: pendingWrapUpsCount,
     },
     newRequestsCount > 0 && {
       severity: 'medium' as Severity,
