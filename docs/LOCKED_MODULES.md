@@ -72,7 +72,7 @@ Always run `npx tsc --noEmit` after any change.
 | Sessions screen | `/director/sessions` | **Built** — list + full session detail | Session builder/generator |
 | Coach workspace | `/coach` | **Built** — real data from coachWorkspace, today's sessions, observations | Full wrap-up persistence (Sprint 28) |
 | Coach sessions | `/coach/sessions` | **Built** — list + full session detail with wrap-up | Two recap UIs coexist (Sprint 28 fix) |
-| Coach players | `/coach/players` | **Built** — player list | Deep player profile view (Sprint 32) |
+| Coach players | `/coach/players` | **Built** — player list with deep link to `/coach/players/[playerId]` | Notes list, gamification |
 | Player portal | `/player` | **Built** — live IDP, what to work on, mini challenge, Q&A | Requires profile_id linkage; progress history; gamification |
 | Parent portal | `/parent` | **Built** — live IDP parent view, why it matters, how to support | Requires guardian linkage; attendance data (Sprint 33) |
 

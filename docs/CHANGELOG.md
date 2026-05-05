@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-05 — Sprint 32: Coach → Player Profile Deep Link
+
+**Files created:**
+- `src/app/coach/players/[playerId]/page.tsx` — Coach player profile page. Fetches player data (name, curriculum level, coach language, top priority, recent observations, group name). Uses `CoachPlayerSnapshot` component to render the coaching snapshot. Shows last 5 coach observations.
+
+**Files modified:**
+- `src/app/coach/players/page.tsx` — Wrapped each player row in a `<Link href="/coach/players/[playerId]">` with ChevronRight indicator and hover highlight. Updated footer copy. Added `Link`, `ChevronRight` imports.
+- `docs/LOCKED_MODULES.md` — Updated coach players entry to reflect the deep link is built.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 31: Review Queue Priority Inbox Redesign
 
 **Files modified:**
