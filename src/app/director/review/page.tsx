@@ -18,6 +18,9 @@ import { VoiceIntakeDraftCard } from './VoiceIntakeDraftCard'
 import type { EnrichedVoiceIntakeDraftItem, VoiceIntakeDraftPayload } from './VoiceIntakeDraftCard'
 import { GeneralCaptureDraftCard } from './GeneralCaptureDraftCard'
 import type { GeneralCaptureItem, PlayerOption } from './GeneralCaptureDraftCard'
+import { WrapUpDraftCard } from './WrapUpDraftCard'
+import type { EnrichedWrapUpDraftItem } from './WrapUpDraftCard'
+import type { SessionActualDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpDraftAction'
 
 export default async function DirectorReviewQueuePage() {
   const supabase = await getSupabaseServer()
@@ -495,6 +498,73 @@ export default async function DirectorReviewQueuePage() {
     last_name: p.last_name,
   }))
 
+  // ─── Session wrap-up drafts (coach wrap-up guided recap) ─────
+
+  const { data: wrapUpRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_review', 'approved', 'clarification_needed'])
+    .eq('target_module', 'session_wrap_up_v1')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allWrapUpRows: DraftRow[] = (wrapUpRows ?? []) as DraftRow[]
+
+  const filteredWrapUpDrafts = allWrapUpRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'session_actual_v1'
+  })
+
+  const wrapUpSessionIds = Array.from(
+    new Set(
+      filteredWrapUpDrafts
+        .map(d => d.target_object_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+
+  const wrapUpSessionMap = new Map<string, { id: string; name: string | null; scheduled_date: string }>()
+  if (wrapUpSessionIds.length > 0) {
+    const { data: wuSessions } = await supabase
+      .from('sessions')
+      .select('id, name, scheduled_date')
+      .in('id', wrapUpSessionIds)
+      .eq('academy_id', academyId)
+    for (const s of (wuSessions ?? [])) {
+      wrapUpSessionMap.set(s.id, s)
+    }
+  }
+
+  const wrapUpProposerIds = Array.from(new Set(filteredWrapUpDrafts.map(d => d.proposed_by_id)))
+  const wrapUpProposerMap = new Map<string, string>()
+  if (wrapUpProposerIds.length > 0) {
+    const { data: wuProposers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', wrapUpProposerIds)
+    for (const p of (wuProposers ?? [])) {
+      wrapUpProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  const enrichedWrapUpDrafts: EnrichedWrapUpDraftItem[] = filteredWrapUpDrafts.map(d => {
+    const sess = d.target_object_id ? wrapUpSessionMap.get(d.target_object_id) : undefined
+    return {
+      id: d.id,
+      status: d.status,
+      createdAt: d.created_at,
+      sessionId: d.target_object_id,
+      sessionName: sess?.name ?? null,
+      sessionDate: sess?.scheduled_date ?? null,
+      proposerName: wrapUpProposerMap.get(d.proposed_by_id) ?? null,
+      payload: d.proposed_payload as unknown as SessionActualDraftPayload,
+    }
+  })
+
+  const pendingWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'pending_review')
+  const approvedWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'approved')
+
   // Compute default tab — first category with pending items, fallback to session_recaps
   const defaultTab = [
     { value: 'session_recaps', pending: pendingDrafts.length },
@@ -503,6 +573,7 @@ export default async function DirectorReviewQueuePage() {
     { value: 'attendance', pending: pendingAttendanceDrafts.length },
     { value: 'curriculum', pending: pendingCurriculumOverrideDrafts.length },
     { value: 'voice_intake', pending: pendingVoiceIntakeDrafts.length },
+    { value: 'wrap_ups', pending: pendingWrapUpDrafts.length },
     { value: 'captures', pending: generalCaptures.length },
   ].find(t => t.pending > 0)?.value ?? 'session_recaps'
 
@@ -521,6 +592,8 @@ export default async function DirectorReviewQueuePage() {
         curriculumOverrideApprovedCount={approvedCurriculumOverrideDrafts.length}
         voiceIntakePendingCount={pendingVoiceIntakeDrafts.length}
         voiceIntakeApprovedCount={approvedVoiceIntakeDrafts.length}
+        wrapUpPendingCount={pendingWrapUpDrafts.length}
+        wrapUpApprovedCount={approvedWrapUpDrafts.length}
         captureCount={generalCaptures.length}
       />
 
@@ -566,6 +639,13 @@ export default async function DirectorReviewQueuePage() {
               label="Voice Intake"
               pending={pendingVoiceIntakeDrafts.length}
               ready={approvedVoiceIntakeDrafts.length}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="wrap_ups">
+            <TabLabel
+              label="Session Wrap-Ups"
+              pending={pendingWrapUpDrafts.length}
+              ready={approvedWrapUpDrafts.length}
             />
           </TabsTrigger>
           <TabsTrigger value="captures">
@@ -782,6 +862,47 @@ export default async function DirectorReviewQueuePage() {
           </section>
         </TabsContent>
 
+        {/* ─── Session Wrap-Ups tab ─── */}
+        <TabsContent value="wrap_ups" className="pt-6 space-y-4">
+          {approvedWrapUpDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Approved — Apply Coming Next</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                  {approvedWrapUpDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {approvedWrapUpDrafts.map(draft => (
+                  <WrapUpDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
+          <section className="space-y-3">
+            {approvedWrapUpDrafts.length > 0 && pendingWrapUpDrafts.length > 0 && (
+              <p className="label-xs">Pending Review</p>
+            )}
+            {pendingWrapUpDrafts.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <EmptyState
+                    icon={<ClipboardList className="w-5 h-5" />}
+                    title="No pending session wrap-up drafts"
+                    description="When coaches complete the guided wrap-up after a session, their summary will appear here for director review."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingWrapUpDrafts.map(draft => (
+                  <WrapUpDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+
         {/* ─── Captures tab ─── */}
         <TabsContent value="captures" className="pt-6 space-y-4">
           <section className="space-y-3">
@@ -889,6 +1010,8 @@ function PageHeader({
   curriculumOverrideApprovedCount,
   voiceIntakePendingCount,
   voiceIntakeApprovedCount,
+  wrapUpPendingCount,
+  wrapUpApprovedCount,
   captureCount,
 }: {
   pendingCount: number
@@ -903,10 +1026,12 @@ function PageHeader({
   curriculumOverrideApprovedCount: number
   voiceIntakePendingCount: number
   voiceIntakeApprovedCount: number
+  wrapUpPendingCount: number
+  wrapUpApprovedCount: number
   captureCount: number
 }) {
-  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + captureCount
-  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount
+  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + wrapUpPendingCount + captureCount
+  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount + wrapUpApprovedCount
 
   const categories = [
     { label: 'Session Recaps', pending: pendingCount, ready: approvedCount },
@@ -915,6 +1040,7 @@ function PageHeader({
     { label: 'Attendance', pending: attendancePendingCount, ready: attendanceApprovedCount },
     { label: 'Curriculum', pending: curriculumOverridePendingCount, ready: curriculumOverrideApprovedCount },
     { label: 'Voice Intake', pending: voiceIntakePendingCount, ready: voiceIntakeApprovedCount },
+    { label: 'Session Wrap-Ups', pending: wrapUpPendingCount, ready: wrapUpApprovedCount },
     { label: 'Captures', pending: captureCount, ready: 0 },
   ]
 

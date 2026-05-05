@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-05 — Sprint 18: Director Review Queue — Session Wrap-Up Drafts V1
+
+**Files created:**
+- `src/app/director/review/WrapUpDraftCard.tsx` — Display card for session_wrap_up_v1 proposed_actions. Shows session name, date, proposer, block completion (completed/modified/skipped), changes note, next focus, group note, raw attendance context, warnings, safety notice. Embeds `WrapUpDraftDecisionControls`.
+- `src/app/director/review/WrapUpDraftDecisionControls.tsx` — Client component for approve/reject/clarification on wrap-up drafts. Calls `updateWrapUpDraftDecisionAction`.
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — Added `updateWrapUpDraftDecisionAction` server action. Validates academy membership (director/head_coach only), verifies target_module = 'session_wrap_up_v1', updates status only. Never writes to sessions, session_blocks, attendance, or any other table.
+- `src/app/director/review/page.tsx` — Added "Session Wrap-Ups" tab to review queue. Queries proposed_actions for target_module = 'session_wrap_up_v1' and draft_type = 'session_actual_v1'. Enriches with session names and proposer names. Renders pending/approved sections with WrapUpDraftCard. Updated PageHeader and defaultTab logic.
+
+**Safety:** Read-only display. No session data modified. No attendance changed. No template touched. Apply action deferred to Sprint 19. Director must explicitly click Approve/Reject — nothing automatic.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 17: Verify Session Exercise Rendering
 
 **Audit only — no code changes.**
