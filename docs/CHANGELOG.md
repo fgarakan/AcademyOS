@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-05 — Sprint 7: Migration 056 Live Verification Audit
+
+**Audit result:** Cannot verify from development environment — Supabase CLI is not configured in this workspace.
+
+**Manual verification steps (run in Supabase SQL Editor):**
+```sql
+SELECT policyname FROM pg_policies WHERE tablename = 'session_block_exercises';
+```
+Expected: `"Staff see session block exercises"` and `"Staff manage session block exercises"`. If empty, apply `supabase/migrations/056_session_block_exercises_rls.sql`.
+
+**Files changed:**
+- `docs/KNOWN_LIMITATIONS.md` — updated migration 056 entry with verification SQL, Sprint 8/9 impact corrections, and manual verification instructions
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** `npx tsc --noEmit` — clean (docs-only sprint, no code changes).
+
+---
+
 ## 2026-05-05 — Migration 056: session_block_exercises RLS policies
 
 **Why:** `session_block_exercises` was created in migration 007 with `ENABLE ROW LEVEL SECURITY` but zero policies — identical to the `template_block_exercises` gap fixed in migration 055. PostgreSQL silently returns empty arrays on SELECT and returns an explicit RLS violation on INSERT, blocking all session generation that involves exercises and causing session detail pages to render blocks without exercises.
