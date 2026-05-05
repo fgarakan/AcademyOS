@@ -55,6 +55,7 @@ import { PlayerCompetitionTab, type UtrProfileData, type UtrMatchRow, type UtrIn
 import { PlayerTrainingExposureTimeline } from '@/components/player/PlayerTrainingExposureTimeline'
 import { PlayerGapSummaryPanel } from '@/components/player/PlayerGapSummaryPanel'
 import type { UtrHistoryPoint } from '@/components/player/UtrHistoryChart'
+import { GuardianLinkingPanel, type LinkedGuardian } from './GuardianLinkingPanel'
 
 interface PageProps {
   params: { playerId: string }
@@ -456,6 +457,36 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   const directorGapGuidance = buildDirectorGapGuidance(params.playerId, trainingGaps, knowledgeGaps)
 
+  // ─── Guardian data (Sprint 40) ───────────────────────────────────────────
+  // Fetch guardians linked to this player via player_guardians + guardians tables.
+  // Academy-scoped: guardians.academy_id must match.
+  const { data: guardianLinkRows } = await rawDb
+    .from('player_guardians')
+    .select('guardian_id, guardians!player_guardians_guardian_id_fkey(id, first_name, last_name, email, relationship, profile_id, academy_id)')
+    .eq('player_id', params.playerId)
+
+  const linkedGuardians: LinkedGuardian[] = ((guardianLinkRows ?? []) as Array<{
+    guardian_id: string
+    guardians: {
+      id: string
+      first_name: string
+      last_name: string
+      email: string | null
+      relationship: string
+      profile_id: string | null
+      academy_id: string
+    } | null
+  }>)
+    .filter(row => row.guardians?.academy_id === academyId)
+    .map(row => ({
+      guardianId: row.guardians!.id,
+      firstName: row.guardians!.first_name,
+      lastName: row.guardians!.last_name,
+      email: row.guardians!.email,
+      relationship: row.guardians!.relationship,
+      profileId: row.guardians!.profile_id,
+    }))
+
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6 items-start">
@@ -537,6 +568,13 @@ export default async function PlayerProfilePage({ params }: PageProps) {
             )}
           </CardContent>
         </Card>
+
+        {/* Guardian / Parent Access panel (Sprint 40) */}
+        <GuardianLinkingPanel
+          playerId={params.playerId}
+          academyId={academyId}
+          linkedGuardians={linkedGuardians}
+        />
 
         {hasCurriculum && (
           <Card>

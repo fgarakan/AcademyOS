@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-05 — Sprint 40: Parent Guardian Linking UI
+
+Added guardian/parent access panel to the director player profile Overview tab.
+
+**Files created:**
+- `src/app/director/players/[playerId]/guardianLinkingAction.ts` — Server actions: `linkGuardianToPlayerAction` (find or create guardian, create player_guardians link) and `unlinkGuardianFromPlayerAction` (remove link); both academy-scoped with director/head_coach auth check
+- `src/app/director/players/[playerId]/GuardianLinkingPanel.tsx` — Client component; shows linked guardians with portal status; inline form to add guardian by first/last name + email + relationship; unlink button per guardian
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Added guardian data fetch (player_guardians join guardians, academy_id scoped); renders `GuardianLinkingPanel` in Overview right sidebar
+
+**Safety:** No automatic account creation. No email sending. Guardian portal access is activated only when parent signs up with linked email. Director explicit action required. Academy-scoped.
+
+TypeScript: clean.
+
+---
+
 ## 2026-05-05 — Sprint 39: Director Player Filters + Bulk Actions
 
 Added group and curriculum stage filter chips to the player directory. Derived from already-loaded player data — no extra DB query.
