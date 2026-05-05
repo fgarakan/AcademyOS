@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { CheckCircle, AlertCircle, Info } from 'lucide-react'
+import { CheckCircle, AlertCircle, Info, Play, Square } from 'lucide-react'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import type { SaveExecutionInput, SaveExecutionResult, SaveAttendanceInput, SaveAttendanceResult } from './actions'
 import type { SessionBlock, SessionExercise, RosterPlayer } from './page'
@@ -115,11 +115,58 @@ export function CoachSessionExecutionClient({
     })
   }
 
+  function handleQuickStatusChange(newStatus: 'in_progress' | 'completed') {
+    setSaveResult(null)
+    startTransition(async () => {
+      const exerciseUpdates = exercises.map(ex => ({
+        id: ex.id,
+        completed: completedMap[ex.id] ?? false,
+        notes: notesMap[ex.id]?.trim() || null,
+      }))
+      const result = await saveAction({
+        sessionId,
+        status: newStatus,
+        sessionNotes: sessionNotes.trim() || null,
+        exerciseUpdates,
+      })
+      if (result.ok) setStatus(newStatus)
+      setSaveResult(result)
+    })
+  }
+
   const totalExercises = exercises.length
   const completedCount = Object.values(completedMap).filter(Boolean).length
 
   return (
     <div className="space-y-6">
+
+      {/* ── Start / End Session CTA ───────────────────────── */}
+      {(status === 'planned' || status === 'in_progress') && (
+        <div>
+          {status === 'planned' && (
+            <button
+              type="button"
+              onClick={() => handleQuickStatusChange('in_progress')}
+              disabled={isPending}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-lime/10 border border-lime/30 text-lime font-semibold text-sm hover:bg-lime/20 transition-colors disabled:opacity-50"
+            >
+              <Play className="w-4 h-4" />
+              {isPending ? 'Starting…' : 'Start Session'}
+            </button>
+          )}
+          {status === 'in_progress' && (
+            <button
+              type="button"
+              onClick={() => handleQuickStatusChange('completed')}
+              disabled={isPending}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-status-green/10 border border-status-green/30 text-status-green font-semibold text-sm hover:bg-status-green/20 transition-colors disabled:opacity-50"
+            >
+              <Square className="w-4 h-4" />
+              {isPending ? 'Ending…' : 'End Session'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Attendance roster */}
       <Card>

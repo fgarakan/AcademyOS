@@ -24,6 +24,7 @@ import { VoiceCoachRecapInput } from './VoiceCoachRecapInput'
 import { SessionCurriculumContextPanel, SessionNoCurriculumContextPanel } from '@/components/curriculum/SessionCurriculumContextPanel'
 import { PlannedVsActualDiffPanel } from './PlannedVsActualDiffPanel'
 import { SessionExposureSummaryPanel } from './SessionExposureSummaryPanel'
+import { DirectorSessionStatusCTA } from './DirectorSessionStatusCTA'
 
 interface PageProps {
   params: { sessionId: string }
@@ -571,6 +572,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
             <span>Coach: {coachName}</span>
           </div>
         </div>
+        <DirectorSessionStatusCTA sessionId={session.id} initialStatus={session.status} />
       </div>
 
       {/* Curriculum Focus — near top for coaching context */}
