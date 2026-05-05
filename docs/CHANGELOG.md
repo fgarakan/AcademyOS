@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-05 — Sprint 20: Planned vs Actual Session Diff V1
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/PlannedVsActualDiffPanel.tsx` — Read-only diff panel. Matches each planned session block to its actual completion status from the latest coach wrap-up draft. Shows completed/modified/skipped/unknown per block with inline notes. Displays changes note, next focus, group note. Renders empty state if no wrap-up exists. Safety notice confirms template/curriculum are unchanged.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Added query 13: fetches latest proposed_action with target_module = session_wrap_up_v1 for this session. Added `PlannedVsActualDiffPanel` import and "PLANNED VS ACTUAL" section before Coach Recap.
+
+**Safety:** Read-only display only. No session data changed. Template and curriculum untouched. Blocks matched by ID first, then name — transparent empty/unknown state if unmatched.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 19: Apply Session Actual Draft V1
 
 **Files created:**

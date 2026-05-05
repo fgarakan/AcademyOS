@@ -22,6 +22,7 @@ import { SessionAdjustmentSuggestionsPanel } from './SessionAdjustmentSuggestion
 import type { SuggestionRow } from './SessionAdjustmentSuggestionsPanel'
 import { VoiceCoachRecapInput } from './VoiceCoachRecapInput'
 import { SessionCurriculumContextPanel, SessionNoCurriculumContextPanel } from '@/components/curriculum/SessionCurriculumContextPanel'
+import { PlannedVsActualDiffPanel } from './PlannedVsActualDiffPanel'
 
 interface PageProps {
   params: { sessionId: string }
@@ -507,6 +508,28 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     target_block_current_notes: r.target_session_block_id ? (blockIdToNotes.get(r.target_session_block_id) ?? null) : (session.session_notes ?? null),
     curriculum_context: (r.curriculum_context as Record<string, string>) ?? {},
   }))
+
+  // 13. Fetch latest session wrap-up draft for planned vs actual diff panel
+  interface WrapUpDraftRow {
+    id: string
+    proposed_payload: unknown
+    status: string
+    created_at: string
+  }
+  const { data: wrapUpRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, proposed_payload, status, created_at')
+    .eq('academy_id', academyId)
+    .eq('target_object_id', session.id)
+    .eq('target_module', 'session_wrap_up_v1')
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  const latestWrapUp: WrapUpDraftRow | null = (wrapUpRows ?? [])[0] ?? null
+  const wrapUpPayload = latestWrapUp
+    ? (latestWrapUp.proposed_payload as import('@/app/coach/sessions/[sessionId]/saveWrapUpDraftAction').SessionActualDraftPayload)
+    : null
+  const wrapUpStatus: string | null = latestWrapUp?.status ?? null
 
   // Derived intelligence for coach briefing
   const playersWithNeeds = playerIntelligence.filter(p => p.thingsToWorkOn.length > 0)
@@ -1012,6 +1035,18 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
             sessionId={session.id}
             initialSuggestions={existingSuggestions}
             hasGroup={!!session.group_id}
+          />
+        </div>
+      </div>
+
+      {/* Planned vs Actual */}
+      <div>
+        <SectionHeader title="PLANNED VS ACTUAL" />
+        <div className="mt-3">
+          <PlannedVsActualDiffPanel
+            plannedBlocks={blockList}
+            wrapUpPayload={wrapUpPayload}
+            wrapUpStatus={wrapUpStatus}
           />
         </div>
       </div>
