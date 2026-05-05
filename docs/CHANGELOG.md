@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-05 — Migration 056: session_block_exercises RLS policies
+
+**Why:** `session_block_exercises` was created in migration 007 with `ENABLE ROW LEVEL SECURITY` but zero policies — identical to the `template_block_exercises` gap fixed in migration 055. PostgreSQL silently returns empty arrays on SELECT and returns an explicit RLS violation on INSERT, blocking all session generation that involves exercises and causing session detail pages to render blocks without exercises.
+
+**What it fixes:**
+- `generateSessionFromTemplateAction` step 9 (INSERT into `session_block_exercises`) now succeeds for templates with exercises — sessions generate fully.
+- Session detail pages (`/director/sessions/[sessionId]`, `/coach/sessions/[sessionId]`) can now read block exercises via the `session_blocks → session_block_exercises` join.
+- Coach session execution (`saveSessionExecutionAction`) can now read and update per-exercise completion state.
+
+**File created:**
+- `supabase/migrations/056_session_block_exercises_rls.sql` — adds two policies to `session_block_exercises`:
+  - `"Staff see session block exercises"` — SELECT, scoped through `block_id → session_blocks → sessions → academy_id = auth_academy_id() AND auth_is_staff()`
+  - `"Staff manage session block exercises"` — ALL (INSERT/UPDATE/DELETE/SELECT), same scope
+
+**Non-destructive:** Adds policies only. No table changes, no data changes, no drops.
+
+**How to apply to live Supabase:**
+1. Open your Supabase project → SQL Editor
+2. Paste and run the full contents of `supabase/migrations/056_session_block_exercises_rls.sql`
+3. Verify: attempt to generate a session from a template that has exercises — it should succeed and return a `sessionId`
+
+**Files changed:**
+- `supabase/migrations/056_session_block_exercises_rls.sql` — created
+- `docs/CHANGELOG.md` — this entry
+- `docs/KNOWN_LIMITATIONS.md` — updated status from "requires migration 056" to "migration 056 created; must be applied to live Supabase"
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 6: Sessions Tab Population Audit + Fix
 
 **Root cause identified:**
