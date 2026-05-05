@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-05 — Sprint 38: Coach Session Roster Inline Attendance
+
+Audit confirmed: inline attendance controls were already built as part of Sprint 29 in `CoachSessionExecutionClient.tsx`.
+
+**No code changes needed.** Inline P/A/L/E buttons per roster player, batch Save Attendance action, and success/error feedback are all present.
+
+TypeScript: clean (no changes).
+
+---
+
 ## 2026-05-05 — Sprint 37: Placement Engine V1
 
 The Placement Engine was already fully built at `/director/placement/`. Sprint 37 surfaces it in navigation.
