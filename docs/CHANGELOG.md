@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-05 — Sprint 26: Curriculum Customization Assistant Architecture V1
+
+**Files created:**
+- `docs/curriculum-customization-assistant-architecture.md` — Full architecture for the guided curriculum customization assistant UX layer. Covers: product goal (structured guided front-end on existing `academy_curriculum_overrides` system), one-question-at-a-time director experience (scope → target → current value → impact preview → submit), 8 supported customization targets (level gates, progression requirements, key questions, exercises, drills, coach cues, assessment criteria, parent/player explanations), override draft model (reuses existing proposed_actions → director review → apply pipeline unchanged), 5 scope prompts (session / group / level / whole academy / consultant/Brian master), source preservation (global master and Brian master read-only), versioning (each override is a new row with rollback_of_override_id), rollback (proposed_action → review → apply, no immediate undo), diff/compare using buildOverrideSummaryLines(), downstream impact preview (templates, sessions, assessments, player gaps, gap class questions, parent/player explanations), future schema needs (consultant mode, per-session override, history UI, conflict detection), sprint sequence (Sprints 27-33+).
+
+**Files modified:**
+- `docs/CHANGELOG.md`
+
+**No code changes.** Architecture-only sprint. VoiceOverrideInputPanel remains the current input mechanism. No assistant UI built — architecture design only. Brian master fully read-only in V1. Consultant mode not implemented.
+
+**TypeScript:** No code changes — no type check required.
+
+---
+
 ## 2026-05-05 — Sprint 25: Gap Class / Knowledge Check Architecture V1
 
 **Files created:**
