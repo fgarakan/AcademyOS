@@ -40,6 +40,7 @@ export function GenerateSessionPanel({
   )
   const [notes, setNotes] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const [formWarning, setFormWarning] = useState<string | null>(null)
   const [generatedId, setGeneratedId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -49,6 +50,7 @@ export function GenerateSessionPanel({
     setCoachId(coaches.length > 0 ? coaches[0].id : fallbackCoachId)
     setNotes('')
     setFormError(null)
+    setFormWarning(null)
     setGeneratedId(null)
     setOpen(true)
   }
@@ -79,10 +81,11 @@ export function GenerateSessionPanel({
         sessionNotes: notes.trim() || null,
       })
 
-      if (result.error) {
-        setFormError(result.error)
-      } else {
+      if (result.sessionId) {
         setGeneratedId(result.sessionId)
+        if (result.error) setFormWarning(result.error)
+      } else if (result.error) {
+        setFormError(result.error)
       }
     })
   }
@@ -109,7 +112,7 @@ export function GenerateSessionPanel({
     )
   }
 
-  // --- Success state ---
+  // --- Success state (may include exercise warning if migration 056 not applied) ---
   if (generatedId) {
     return (
       <Card>
@@ -123,6 +126,12 @@ export function GenerateSessionPanel({
               <p className="text-xs text-text-secondary">
                 A planned session snapshot was created from this template. The master template is unchanged.
               </p>
+              {formWarning && (
+                <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-status-orange/10 border border-status-orange/30">
+                  <AlertCircle className="w-3.5 h-3.5 text-status-orange shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-status-orange">{formWarning}</p>
+                </div>
+              )}
               <Link
                 href={`/director/sessions/${generatedId}`}
                 className="flex items-center gap-1.5 text-xs text-lime hover:opacity-80 transition-opacity font-medium"

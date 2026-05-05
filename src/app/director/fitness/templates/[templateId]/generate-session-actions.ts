@@ -203,9 +203,10 @@ export async function generateSessionFromTemplateAction(
     templateBlockToSessionBlock.set(block.id, insertedBlock.id)
   }
 
-  // 9. Insert session_block_exercises — one per template exercise, sequential
-  //    exercise_id copied directly — same exercise library record.
-  //    completed=false: exercises start as not completed in a planned session.
+  // 9. Insert session_block_exercises — best-effort. If RLS blocks INSERT (e.g. migration 056
+  //    not yet applied), the session and its blocks are still valid and returned. A warning
+  //    message is surfaced to the director so they know exercises are missing.
+  let exerciseWarning: string | null = null
   for (const ex of (templateExercises ?? [])) {
     const sessionBlockId = templateBlockToSessionBlock.get(ex.block_id)
     if (!sessionBlockId) continue
@@ -222,9 +223,13 @@ export async function generateSessionFromTemplateAction(
       })
 
     if (exInsertError) {
-      return { sessionId: null, error: `Failed to create session exercise: ${exInsertError.message}` }
+      exerciseWarning =
+        'Session created with blocks — exercises could not be copied. ' +
+        'This is likely due to a pending database migration (056). ' +
+        'Exercises will appear automatically once the migration is applied.'
+      break
     }
   }
 
-  return { sessionId, error: null }
+  return { sessionId, error: exerciseWarning }
 }

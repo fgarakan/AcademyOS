@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-05 — Sprint 8: Session Generation Live QA + Repair
+
+**Root fix:** Exercise INSERT (step 9 of `generateSessionFromTemplateAction`) was treating RLS failure as a hard error, returning `{ sessionId: null }` even though the session and blocks were already created. This left orphaned sessions that directors could not navigate to.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/generate-session-actions.ts` — Step 9 is now best-effort: if `session_block_exercises` INSERT fails (e.g. migration 056 not yet applied), a warning message is returned alongside the valid `sessionId`. Session and blocks are always returned on success.
+- `src/app/director/fitness/templates/[templateId]/GenerateSessionPanel.tsx` — Added `formWarning` state. Success path now shows the session link regardless of exercise warning. If warning is present, an orange info box describes the pending migration.
+
+**What was NOT changed:** No migration, no RLS, no schema, no auth. ✅
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 7: Migration 056 Live Verification Audit
 
 **Audit result:** Cannot verify from development environment — Supabase CLI is not configured in this workspace.
