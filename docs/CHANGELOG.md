@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-05 — Sprint 19: Apply Session Actual Draft V1
+
+**Files created:**
+- `src/app/director/review/applyWrapUpDraftAction.ts` — Server action that applies an approved session wrap-up draft. Verifies director/head_coach role, fetches the approved proposed_action (target_module = session_wrap_up_v1), builds session_notes from the wrap-up payload (blocks, changes, next focus, group note), writes to sessions.session_notes, advances session status to completed if planned/in_progress, marks proposed_action as executed, writes audit_log. No template, curriculum, attendance, or player profile changes.
+- `src/app/director/review/ApplyWrapUpDraftControls.tsx` — Client component with "Apply Session Actual" button. Shows scope guardrail, success/error state. Calls `applyWrapUpDraftAction`.
+
+**Files modified:**
+- `src/app/director/review/WrapUpDraftCard.tsx` — Replaced "apply coming in future sprint" banner with live `ApplyWrapUpDraftControls` for approved drafts.
+
+**Safety:** Explicit director click required. Preserves planned session and template. Does not delete draft. Does not change parent/player views. Does not alter curriculum. Audit logged. TypeScript: `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 18: Director Review Queue — Session Wrap-Up Drafts V1
 
 **Files created:**

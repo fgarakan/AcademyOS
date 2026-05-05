@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import type { SessionActualDraftPayload, BlockCompletionDraft } from '@/app/coach/sessions/[sessionId]/saveWrapUpDraftAction'
 import { WrapUpDraftDecisionControls } from './WrapUpDraftDecisionControls'
+import { ApplyWrapUpDraftControls } from './ApplyWrapUpDraftControls'
 
 export interface EnrichedWrapUpDraftItem {
   id: string
@@ -209,10 +210,7 @@ export function WrapUpDraftCard({ draft }: { draft: EnrichedWrapUpDraftItem }) {
           <WrapUpDraftDecisionControls proposedActionId={draft.id} />
         )}
         {draft.status === 'approved' && (
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-lime/5 border border-lime/20 text-xs text-lime">
-            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-            <span>Approved — apply action will be available in a future sprint.</span>
-          </div>
+          <ApplyWrapUpDraftControls proposedActionId={draft.id} />
         )}
       </CardContent>
     </Card>
