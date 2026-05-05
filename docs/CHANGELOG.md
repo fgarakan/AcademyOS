@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-05 — Sprint 11: Coach Wrap-Up Assistant Architecture Audit
+
+**Files created:**
+- `docs/coach-wrap-up-assistant-architecture.md` — product goal, 6-question minimum recap checklist, data flow diagram, storage options (voice_notes / proposed_actions / coach_observations), approval model, draft vs official boundary, role visibility matrix, V1 sprint sequence, migration needs (none required), technical implementation plan, safety invariants.
+
+**Key finding:** No new migration is required for V1. All storage uses existing tables.
+
+**TypeScript:** `npx tsc --noEmit` — clean (docs-only sprint).
+
+---
+
 ## 2026-05-05 — Sprint 10: Coach Session Execution View V1
 
 **Files created:**
