@@ -214,3 +214,165 @@
 | Session-only changes | "Approved adjustments live in the session — the template is protected." |
 | 2-minute dev intake | "Two minutes per class group is all it takes." |
 | Named, specific | "The suggestions are named. The briefing names the kids. Not generic." |
+
+---
+
+## Voice Demo Add-On (Sprint 125)
+
+Add this section after the Adaptive Session Planning demo when voice input is ready.
+
+**Say:**
+> "One more thing. The system can also take voice input. Not autonomous commands — voice-to-text that you review and approve. Like this."
+
+### Step A — Curriculum customization by voice
+
+**Navigate to:** `/director/curriculum`
+
+**Click:** "Start speaking" in the Curriculum Customization panel.
+
+**Say into microphone:**
+> "For our Orange 2 players, I want more return-of-serve readiness before Orange 3."
+
+**Point out:**
+- Transcript appears in the text box
+- Fully editable before submission
+- Click "Create Override Draft" manually
+
+**Say:**
+> "Voice captured the intent. You review it. You submit it. It creates a draft — not a live change."
+
+### Step B — Coach recap by voice
+
+**Navigate to:** `/director/sessions/[demo-session-id]`
+
+**Scroll to:** COACH RECAP section
+
+**Click:** "Start speaking"
+
+**Say into microphone:**
+> "Everyone was here except Sarah. Mia improved recovery after wide balls. Leo still needs better contact spacing."
+
+**Click:** "Save Recap"
+
+**Say:**
+> "Voice creates text. The OS structures it. Humans approve before anything changes."
+
+### Voice guardrail to reinforce
+
+> "Nothing happens automatically. The voice button is just a faster way to type. Every action still goes through the same review and approval process. Your data is always under director control."
+
+For the full voice demo script, see `docs/BRIAN_VOICE_DEMO_SCRIPT.md`.
+
+---
+
+## Coach Operating Loop Add-On (Sprints 10–15)
+
+Add this section after the Voice Demo when showing the full session execution loop.
+
+### Setup
+
+Log in as a **coach** user (not director). Navigate to `/coach/sessions`.
+
+---
+
+### Step C1: Coach Session List
+
+**Navigate to:** `/coach/sessions`
+
+**Say:**
+> "This is what a coach sees when they log in. All their sessions, scoped to the academy. They can't see anything outside their role."
+
+**Point out:**
+- Session cards with name, date, status
+- "In Progress" vs "Planned" status pills
+
+---
+
+### Step C2: Open a Session
+
+**Click a session with a roster.**
+
+**Say:**
+> "Each session comes from a template. Blocks are pre-planned. The coach sees who's rostered, what the group is working on, and what gaps were flagged at the player level."
+
+**Point out:**
+- Session snapshot notice ("Planned session snapshot — coach updates don't change the template")
+- Block list
+- Roster with attendance selectors
+- Gap Brief panel showing player development gaps
+
+---
+
+### Step C3: Mark Attendance
+
+**Set one player to "Absent."**
+
+**Click Save.**
+
+**Say:**
+> "Attendance is explicit. Every player is clicked. The coach confirms each status — not just who's missing. It saves immediately. The director can see attendance across all sessions in real time."
+
+---
+
+### Step C4: Run the Wrap-Up
+
+**Scroll to Session Actions → Click "Wrap Up Session."**
+
+**Say:**
+> "After the session, the coach taps Wrap Up. Six questions. Takes about two minutes. The system doesn't guess — it asks."
+
+**Walk through the questions:**
+- Q1: Attendance (any absences, unrostered players)
+- Q2: Did you complete all planned blocks?
+- Q3: What changed or got skipped?
+- Q4: Who stood out today?
+- Q5: Who needs follow-up next session?
+- Q6: What should the next session focus on?
+
+**Say:**
+> "Every question has a placeholder example. The coach can skip any question. Nothing is saved until they tap Save Recap."
+
+---
+
+### Step C5: Review and Save
+
+**Tap "Review" on the last question.**
+
+**Point out on the summary screen:**
+- All answers in one view
+- Block completion selectors (Completed / Modified / Skipped per block)
+- Player note fields under "Who stood out" and "Who needs attention"
+- Attendance confirmation with per-player dropdowns
+
+**Say:**
+> "The summary screen is where they confirm. They can change block completion status, add player-level notes, and verify attendance. None of this goes to players or parents — it's internal coach notes."
+
+**Tap "Save Attendance" for the attendance section.**
+
+**Tap "Save Recap."**
+
+**Say:**
+> "One tap saves three things: the raw text recap, a structured session actual draft for director review, and any player observation notes. All under director review — nothing automatic."
+
+---
+
+### Step C6: Director Sees the Draft
+
+**Log back in as director. Navigate to `/director/review`.**
+
+**Say:**
+> "The director now sees the coach's session wrap-up as a pending review draft. Not a live change — a proposal. The director can approve, reject, or edit. That's the loop."
+
+---
+
+### Coach Operating Loop — Key Properties to Reinforce
+
+| Property | What to Say |
+|---|---|
+| Coach role is scoped | "Coaches only see their sessions and roster. No cross-academy access." |
+| Nothing saves until explicit tap | "Every action is coach-initiated. No background mutations." |
+| Recap drives three saves | "Raw text + structured draft + player notes — one tap." |
+| Director still reviews | "Wrap-up creates a draft. The director approves before anything is official." |
+| Player notes are private | "Not visible to players or parents. Internal only." |
+
+For the full manual test checklist covering this loop, see `docs/V1_MANUAL_TEST_CHECKLIST.md`.

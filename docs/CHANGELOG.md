@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-05 — Sprint 16: Brian Demo Hardening + V1 Operating Loop QA
+
+**Files created:**
+- `docs/V1_MANUAL_TEST_CHECKLIST.md` — step-by-step manual test checklist for the V1 coach operating loop (Sprints 10–15). Covers session list, execution, attendance, quick note, wrap-up 6-question flow, summary review, save path, and director review. Documents known V1 limitations.
+
+**Files modified:**
+- `docs/BRIAN_INTERACTIVE_DEMO_SCRIPT.md` — added "Coach Operating Loop Add-On" section (Steps C1–C6) covering coached-scoped session view, attendance marking, guided wrap-up flow, summary review, and director draft visibility. Added coach loop key property table. Reference to `V1_MANUAL_TEST_CHECKLIST.md`.
+- `docs/KNOWN_LIMITATIONS.md` — added "Coach Wrap-Up V1" section documenting: wrap-up state not persisted between opens, unrostered attendees cannot be added from wrap-up, sequential save failure behavior, dual recap UI (CoachRecapCommandPanel + CoachWrapUpDrawer) potential confusion, and attendance saved independently of recap.
+
+**No code changes. Doc-only sprint.**
+
+**TypeScript:** No new code — no type check required.
+
+---
+
+## 2026-05-05 — Sprint 15: Attendance Exception Drafts from Wrap-Up V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — added `attendanceMap` state (defaults each roster player to their existing status or 'present'); added `handleSaveAttendance()` function calling `saveAttendanceAction`; summary review step now shows per-player attendance selector with Present/Absent/Late/Excused options and a dedicated "Save Attendance" button (independent of wrap-up save). Clear note directs unrostered players to director review panel. Added `saveAttendanceAction, AttendanceUpdate` import from `'./actions'`.
+
+**Safety:** Attendance save is isolated — does not block or depend on wrap-up recap save. Players verified server-side in `saveAttendanceAction`. Unrostered players explicitly excluded with visible UI note. No migration, no new tables, no RLS changes. ✅
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 14: Coach Wrap-Up → Player Observation Drafts V1
 
 **Files created:**

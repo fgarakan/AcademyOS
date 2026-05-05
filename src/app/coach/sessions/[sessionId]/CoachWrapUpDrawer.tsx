@@ -5,6 +5,7 @@ import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy } from 'lucide-react
 import { saveSessionRecapAction } from './actions'
 import { saveWrapUpDraftAction, type BlockCompletionDraft } from './saveWrapUpDraftAction'
 import { saveWrapUpObservationsAction, type PlayerObservationInput } from './saveWrapUpObservationsAction'
+import { saveAttendanceAction, type AttendanceUpdate } from './actions'
 import type { SessionBlock, RosterPlayer } from './page'
 
 // ─────────────────────────────────────────────────────────────
@@ -92,6 +93,15 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
   })
   // player notes: indexed by playerId
   const [playerNotes, setPlayerNotes] = useState<Record<string, PlayerNote>>({})
+  // attendance status per player: defaults to 'present' for each roster player
+  const [attendanceMap, setAttendanceMap] = useState<Record<string, 'present' | 'absent' | 'late' | 'excused'>>(() => {
+    const init: Record<string, 'present' | 'absent' | 'late' | 'excused'> = {}
+    for (const p of roster) init[p.playerId] = p.currentStatus ?? 'present'
+    return init
+  })
+  const [attendanceSaved, setAttendanceSaved] = useState(false)
+  const [attendanceError, setAttendanceError] = useState<string | null>(null)
+  const [isAttendancePending, startAttendanceTransition] = useTransition()
   const [phase, setPhase] = useState<'questions' | 'summary' | 'saved'>('questions')
   const [saveError, setSaveError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -119,6 +129,22 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
     } else if (stepIndex > 0) {
       setStepIndex(i => i - 1)
     }
+  }
+
+  function handleSaveAttendance() {
+    setAttendanceError(null)
+    const updates: AttendanceUpdate[] = roster.map(p => ({
+      playerId: p.playerId,
+      status: attendanceMap[p.playerId] ?? 'present',
+    }))
+    startAttendanceTransition(async () => {
+      const result = await saveAttendanceAction({ sessionId, attendanceUpdates: updates })
+      if (result.ok) {
+        setAttendanceSaved(true)
+      } else {
+        setAttendanceError(result.error ?? 'Could not save attendance.')
+      }
+    })
   }
 
   function buildSummaryText(): string {
@@ -214,6 +240,59 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
             <p className="text-xs text-text-muted">Review your wrap-up before saving. Nothing is official yet.</p>
           </div>
           <div className="px-5 py-4 space-y-5">
+            {/* Attendance section — explicit per-player confirmation */}
+            {roster.length > 0 && (
+              <div className="p-3 rounded-xl bg-surface-raised border border-border space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted">Attendance</p>
+                  {attendanceSaved && (
+                    <span className="text-[10px] text-status-green font-semibold">Saved ✓</span>
+                  )}
+                </div>
+                <p className="text-[10px] text-text-muted leading-snug">
+                  Your answer: &ldquo;{answers[0]?.trim() || 'Not answered'}&rdquo;
+                  — confirm each player below before saving.
+                </p>
+                <div className="space-y-1.5">
+                  {roster.map(p => (
+                    <div key={p.playerId} className="flex items-center gap-2">
+                      <span className="text-xs text-text-secondary flex-1 truncate">{p.fullName}</span>
+                      <select
+                        value={attendanceMap[p.playerId] ?? 'present'}
+                        onChange={e => setAttendanceMap(prev => ({
+                          ...prev,
+                          [p.playerId]: e.target.value as 'present' | 'absent' | 'late' | 'excused',
+                        }))}
+                        disabled={attendanceSaved || isAttendancePending}
+                        className="text-[10px] bg-surface border border-border rounded px-2 py-0.5 text-text-secondary focus:outline-none focus:border-lime/40 disabled:opacity-50"
+                      >
+                        <option value="present">Present</option>
+                        <option value="absent">Absent</option>
+                        <option value="late">Late</option>
+                        <option value="excused">Excused</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+                {attendanceError && (
+                  <p className="text-[10px] text-status-red">{attendanceError}</p>
+                )}
+                {!attendanceSaved && (
+                  <button
+                    onClick={handleSaveAttendance}
+                    disabled={isAttendancePending}
+                    className="flex items-center gap-1.5 text-xs btn-lime px-3 py-1.5 disabled:opacity-50"
+                  >
+                    {isAttendancePending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                    {isAttendancePending ? 'Saving…' : 'Save Attendance'}
+                  </button>
+                )}
+                <p className="text-[9px] text-text-muted">
+                  Unrostered players must go to director review — use the Attendance Exceptions panel in the session detail view.
+                </p>
+              </div>
+            )}
+
             {STEPS.map((s, i) => (
               <div key={s.key}>
                 <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">{s.question}</p>
