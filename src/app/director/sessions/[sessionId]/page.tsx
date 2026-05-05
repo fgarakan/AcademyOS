@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, GraduationCap, GitBranch, Users } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, GraduationCap, GitBranch, Users, AlertTriangle } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -740,10 +740,15 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
               />
             )}
           </div>
-          {templateName && (
+          {templateName && session.template_id && (
             <div className="mt-4 pt-4 border-t border-border">
               <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Source Template</p>
-              <p className="text-sm text-text-secondary">{templateName}</p>
+              <Link
+                href={`/director/fitness/templates/${session.template_id}`}
+                className="text-sm text-lime hover:opacity-80 transition-opacity"
+              >
+                {templateName} →
+              </Link>
             </div>
           )}
           {session.session_notes && (
@@ -798,6 +803,15 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
       ) : (
         <div className="space-y-4">
           <SectionHeader title="SESSION BLOCKS" />
+          {blockList.length > 0 && totalExercises === 0 && (
+            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-status-orange/10 border border-status-orange/30">
+              <AlertTriangle className="w-3.5 h-3.5 text-status-orange shrink-0 mt-0.5" />
+              <p className="text-[11px] text-status-orange leading-snug">
+                Blocks are loaded — exercises are not showing. This usually means migration 056 has not been applied to your Supabase instance yet. Open Supabase → SQL Editor, verify with:
+                <span className="font-mono"> SELECT policyname FROM pg_policies WHERE tablename = 'session_block_exercises';</span>
+              </p>
+            </div>
+          )}
           {blockList.map((block, idx) => {
             const blockExercises = exercisesByBlock.get(block.id) ?? []
             return (

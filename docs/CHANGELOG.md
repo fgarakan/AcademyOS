@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-05 — Sprint 9: Session Detail View V1 Polish
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — (1) Source Template field is now a clickable link to `/director/fitness/templates/{template_id}` instead of plain text. (2) A migration-pending warning banner is shown when blocks exist but exercises are 0, with the exact verification SQL. Added `AlertTriangle` icon import.
+
+**What was NOT changed:** No migration, no RLS, no schema, no new components. ✅
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 8: Session Generation Live QA + Repair
 
 **Root fix:** Exercise INSERT (step 9 of `generateSessionFromTemplateAction`) was treating RLS failure as a hard error, returning `{ sessionId: null }` even though the session and blocks were already created. This left orphaned sessions that directors could not navigate to.
