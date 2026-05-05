@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-05 — Sprint 24: Assessment → Curriculum Requirement Link Audit
+
+**Files created:**
+- `docs/assessment-curriculum-gap-architecture.md` — Architecture audit documenting: current schema map (assessments, curriculum levels, requirement evidence links), five gap categories and their data quality, Gap 1-4 missing links (no assessment→requirement domain mapping, no per-requirement gate, unstructured scores_detail, assessment evidence type not wired), recommended `assessment_requirement_criteria` table, approval model (proposed_actions → director review → requirement_evidence_link), PlayerGapSummaryPanel connection, Gap Class connection, future migration requirements.
+
+**Files modified:**
+- `docs/CHANGELOG.md`
+
+**No code changes.** Docs-only sprint. All gap confirmation via assessment data requires a future migration sprint with explicit approval.
+
+**TypeScript:** No code changes — no type check required.
+
+---
+
 ## 2026-05-05 — Sprint 23: Player Gap Summary V1
 
 **Files created:**
