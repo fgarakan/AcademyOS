@@ -16,6 +16,7 @@ import type { PlayerCurriculumEntry } from '../page'
 
 type StatusBadgeStatus = 'action_needed' | 'needs_attention' | 'check_in' | 'on_track' | 'complete' | 'building' | 'warning' | 'info'
 type StatusFilter = 'all' | 'active' | 'reassessment_due' | 'on_hold' | 'pending'
+type StageFilter = 'all' | string
 
 function playerStatusBadge(status: string | null): { status: StatusBadgeStatus; label: string } {
   switch (status) {
@@ -71,6 +72,33 @@ const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
 export function PlayersDirectoryClient({ players, curriculumMap = {} }: Props) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [groupFilter, setGroupFilter] = useState<string>('all')
+  const [stageFilter, setStageFilter] = useState<StageFilter>('all')
+
+  const distinctGroups = useMemo(() => {
+    const seen = new Set<string>()
+    const groups: string[] = []
+    for (const p of players) {
+      if (p.group_name && !seen.has(p.group_name)) {
+        seen.add(p.group_name)
+        groups.push(p.group_name)
+      }
+    }
+    return groups.sort()
+  }, [players])
+
+  const distinctStages = useMemo(() => {
+    const seen = new Set<string>()
+    const stages: string[] = []
+    for (const p of players) {
+      const stage = p.player_id ? curriculumMap[p.player_id]?.stage : undefined
+      if (stage && !seen.has(stage)) {
+        seen.add(stage)
+        stages.push(stage)
+      }
+    }
+    return stages
+  }, [players, curriculumMap])
 
   const filtered = useMemo(() => {
     return players.filter(p => {
@@ -84,9 +112,16 @@ export function PlayersDirectoryClient({ players, curriculumMap = {} }: Props) {
           ? isPending(p.player_status)
           : p.player_status === statusFilter
 
-      return matchesName && matchesStatus
+      const matchesGroup =
+        groupFilter === 'all' ? true : p.group_name === groupFilter
+
+      const playerStage = p.player_id ? curriculumMap[p.player_id]?.stage : undefined
+      const matchesStage =
+        stageFilter === 'all' ? true : playerStage === stageFilter
+
+      return matchesName && matchesStatus && matchesGroup && matchesStage
     })
-  }, [players, search, statusFilter])
+  }, [players, search, statusFilter, groupFilter, stageFilter, curriculumMap])
 
   const hasPlayers = players.length > 0
 
@@ -106,6 +141,42 @@ export function PlayersDirectoryClient({ players, curriculumMap = {} }: Props) {
                 onClick={() => setStatusFilter(f.key)}
               />
             ))}
+            {distinctGroups.length > 0 && (
+              <>
+                <span className="text-text-muted/40 select-none">·</span>
+                <FilterChip
+                  label="All groups"
+                  active={groupFilter === 'all'}
+                  onClick={() => setGroupFilter('all')}
+                />
+                {distinctGroups.map(g => (
+                  <FilterChip
+                    key={g}
+                    label={g}
+                    active={groupFilter === g}
+                    onClick={() => setGroupFilter(g)}
+                  />
+                ))}
+              </>
+            )}
+            {distinctStages.length > 0 && (
+              <>
+                <span className="text-text-muted/40 select-none">·</span>
+                <FilterChip
+                  label="All stages"
+                  active={stageFilter === 'all'}
+                  onClick={() => setStageFilter('all')}
+                />
+                {distinctStages.map(s => (
+                  <FilterChip
+                    key={s}
+                    label={STAGE_LABEL[s] ?? s}
+                    active={stageFilter === s}
+                    onClick={() => setStageFilter(s)}
+                  />
+                ))}
+              </>
+            )}
           </>
         }
       />

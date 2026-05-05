@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-05 — Sprint 39: Director Player Filters + Bulk Actions
+
+Added group and curriculum stage filter chips to the player directory. Derived from already-loaded player data — no extra DB query.
+
+**Files modified:**
+- `src/app/director/players/_components/PlayersDirectoryClient.tsx` — Added `groupFilter` and `stageFilter` state; derived distinct groups + stages from loaded player data; added FilterChip rows for group and stage; updated `filtered` useMemo to apply all four filter dimensions
+
+**Bulk actions:** Not added — no safe non-destructive bulk action exists that maps to existing schema without migration.
+
+TypeScript: clean.
+
+---
+
 ## 2026-05-05 — Sprint 38: Coach Session Roster Inline Attendance
 
 Audit confirmed: inline attendance controls were already built as part of Sprint 29 in `CoachSessionExecutionClient.tsx`.
