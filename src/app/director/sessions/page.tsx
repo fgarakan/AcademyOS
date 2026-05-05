@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Calendar } from 'lucide-react'
+import { Calendar, Zap } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -107,12 +107,27 @@ export default async function DirectorSessionsPage() {
 
       {sessionList.length === 0 ? (
         <Card>
-          <CardContent className="py-12">
+          <CardContent className="py-12 space-y-4">
             <EmptyState
               icon={<Calendar className="w-5 h-5" />}
               title="No sessions yet"
-              description="Generate a session from a fitness template to get started."
+              description="Sessions are generated from fitness templates. Open a template, add blocks, then click Generate Session."
             />
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <Link
+                href="/director/fitness/templates"
+                className="flex items-center gap-1.5 text-xs btn-lime px-4 py-2"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                Go to Fitness Templates
+              </Link>
+              <Link
+                href="/director/class-templates"
+                className="text-xs text-text-muted hover:text-text-secondary transition-colors underline underline-offset-2"
+              >
+                Class Templates
+              </Link>
+            </div>
           </CardContent>
         </Card>
       ) : (

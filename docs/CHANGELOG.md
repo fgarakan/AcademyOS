@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-05 — Sprint 6: Sessions Tab Population Audit + Fix
+
+**Root cause identified:**
+- `session_block_exercises` table has RLS ENABLED (migration 007) but **zero policies** — identical to `template_block_exercises` gap fixed in migration 055. This silently blocks all SELECT queries and returns an RLS violation on INSERT when a template has exercises. Session generation fails at step 9; blocks render without exercises. Fix requires migration 056 (not applied — documented in KNOWN_LIMITATIONS.md).
+- Secondary: `GenerateSessionPanel` success state had stale "future sprint" copy discouraging navigation; sessions empty states had no navigation links.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/GenerateSessionPanel.tsx` — replaced stale success copy ("future sprint") with live "Open session →" link and "View all sessions" link
+- `src/app/director/sessions/page.tsx` — improved empty state: descriptive text, btn-lime link to `/director/fitness/templates`, secondary link to `/director/class-templates`
+- `src/app/director/sessions/overview/page.tsx` — added "View all sessions →" and "Generate from template" links to empty state
+- `docs/KNOWN_LIMITATIONS.md` — documented `session_block_exercises` RLS gap, impact on session generation and detail page, exact policy template for migration 056, and workaround
+
+**What was NOT changed:**
+- No migration. No RLS change. No schema change. No auth/middleware change. ✅
+- `session_block_exercises` RLS gap documented but deferred to migration 056. ✅
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 5: Route Capture to Player V1
 
 **Files modified:**

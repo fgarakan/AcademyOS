@@ -129,6 +129,15 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - **Impact:** Clicking Save in the Curriculum Context selector on fitness templates now shows a muted message ("Curriculum source persistence is not enabled yet — migration 045 pending") instead of a red Supabase error. Selection is not persisted. Session curriculum cues will not be linked to templates until the migration is applied.
 - **Fix:** Apply migration 045 to the live Supabase database, then run `supabase gen types typescript` to regenerate `src/lib/supabase/database.types.ts`.
 
+### `session_block_exercises` has missing RLS policies — BLOCKS session generation — requires migration 056
+
+- **Status:** `session_block_exercises` was created in migration 007 with `ALTER TABLE session_block_exercises ENABLE ROW LEVEL SECURITY` but **no SELECT, INSERT, UPDATE, or DELETE policies were ever defined** — the same gap that `template_block_exercises` had (fixed in migration 055).
+- **Impact on session generation:** `generateSessionFromTemplateAction` (step 9) attempts to INSERT exercises into `session_block_exercises`. If migration 055 has been applied (making template exercises readable), this INSERT will fail with an RLS violation. The session and blocks are created (steps 7–8) but the action returns `{ sessionId: null, error: "Failed to create session exercise: new row violates row-level security policy..." }`. Directors see an error, not a success state.
+- **Impact on session detail:** The session detail page joins `session_blocks → session_block_exercises`. The join returns an empty array (RLS filters all rows silently). Session blocks render but exercises are always missing.
+- **Impact on session list:** The sessions list page at `/director/sessions` is unaffected — it only queries `sessions` and `session_blocks` which have correct policies.
+- **Fix required:** Apply migration 056 (to be written) which adds the equivalent policies to `session_block_exercises` that migration 055 added to `template_block_exercises`. Template: `EXISTS (SELECT 1 FROM session_blocks sb JOIN sessions s ON s.id = sb.session_id WHERE sb.id = session_block_exercises.block_id AND s.academy_id = auth_academy_id() AND auth_is_staff())`.
+- **Workaround until fixed:** Generate sessions only from templates that have blocks but no exercises — the exercise step is skipped if `templateExercises` is empty. Sessions will appear in the list but blocks will have no exercises.
+
 ### `template_block_exercises` had missing RLS policies — RESOLVED in migration 055
 - **Status:** `template_block_exercises` was created in migration 006 with `ENABLE ROW LEVEL SECURITY` but no SELECT/INSERT/UPDATE/DELETE policies. All authenticated-user access was silently blocked. Migration 055 adds the missing policies.
 - **Impact before fix:** Auto-populate silently failed on every insert, returned "Blocks already populated" incorrectly. Block exercises never rendered. The `populateFitnessTemplateBlocksAction` now returns an explicit error if all inserts fail, and the page surfaces a diagnostic banner if the join query fails.

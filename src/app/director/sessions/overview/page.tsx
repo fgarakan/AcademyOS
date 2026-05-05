@@ -179,12 +179,20 @@ export default async function SessionsOverviewPage() {
         </CardHeader>
         <CardContent>
           {sessions.length === 0 ? (
-            <div className="py-12 text-center">
-              <Calendar className="w-8 h-8 text-text-muted mx-auto mb-3" />
+            <div className="py-12 text-center space-y-3">
+              <Calendar className="w-8 h-8 text-text-muted mx-auto" />
               <p className="text-text-secondary text-sm">No sessions scheduled this week.</p>
-              <p className="text-text-muted text-xs mt-1">
+              <p className="text-text-muted text-xs">
                 {weekStartStr} – {weekEndStr}
               </p>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                <Link href="/director/sessions" className="text-xs text-lime hover:opacity-80 font-medium transition-opacity">
+                  View all sessions →
+                </Link>
+                <Link href="/director/fitness/templates" className="text-xs text-text-muted hover:text-text-secondary transition-colors underline underline-offset-2">
+                  Generate from template
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="divide-y divide-border">

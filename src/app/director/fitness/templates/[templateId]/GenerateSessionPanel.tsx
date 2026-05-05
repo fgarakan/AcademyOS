@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Calendar, Check, X, Loader2, Zap, AlertCircle } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRight, Calendar, Check, X, Loader2, Zap, AlertCircle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { generateSessionFromTemplateAction } from './generate-session-actions'
 
@@ -122,12 +123,20 @@ export function GenerateSessionPanel({
               <p className="text-xs text-text-secondary">
                 A planned session snapshot was created from this template. The master template is unchanged.
               </p>
-              <p className="text-[10px] font-mono text-text-muted bg-surface-raised border border-border rounded px-2 py-1 inline-block">
-                Session ID: {generatedId}
-              </p>
+              <Link
+                href={`/director/sessions/${generatedId}`}
+                className="flex items-center gap-1.5 text-xs text-lime hover:opacity-80 transition-opacity font-medium"
+              >
+                Open session →
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+              <Link
+                href="/director/sessions"
+                className="text-[10px] text-text-muted hover:text-text-secondary transition-colors underline underline-offset-2"
+              >
+                View all sessions
+              </Link>
               <p className="text-[10px] text-text-muted">
-                The session detail view will be available at{' '}
-                <span className="font-mono">/director/sessions</span> in a future sprint.
                 Coach changes to the session will be saved as session overrides and will not affect this master template.
               </p>
             </div>
