@@ -8,7 +8,6 @@ import { parsePlayerProgressQuestion, buildPlayerProgressAnswer } from '@/lib/pl
 import { buildModuleForLevelDomain } from '@/lib/curriculum/learningModules'
 import type { LearningModuleDomain } from '@/lib/curriculum/learningModules'
 
-const COMING_SOON = ['Progress tracking', 'Skill badges', 'Competition log']
 
 export default async function PlayerHome() {
   const supabase = await getSupabaseServer()
@@ -497,20 +496,6 @@ export default async function PlayerHome() {
         </CardContent>
       </Card>
 
-      {/* ── Coming Soon ───────────────────────────────────────── */}
-      <div className="pt-1 pb-2">
-        <p className="label-xs mb-3">COMING SOON</p>
-        <div className="flex flex-wrap gap-2">
-          {COMING_SOON.map(item => (
-            <span
-              key={item}
-              className="px-3 py-1 rounded-full text-xs text-text-muted border border-border bg-surface-raised"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
 
     </div>
   )

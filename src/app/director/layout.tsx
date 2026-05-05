@@ -45,6 +45,16 @@ export default async function DirectorLayout({
       if (academy?.name) {
         academyName = academy.name
       }
+
+      // Real pending count — all proposed_actions pending review for this academy
+      const rawDb = supabase as any
+      const { count } = await rawDb
+        .from('proposed_actions')
+        .select('id', { count: 'exact', head: true })
+        .eq('academy_id', profile.academy_id)
+        .eq('status', 'pending_review')
+
+      pendingCount = count ?? 0
     }
   }
 

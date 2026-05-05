@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-05 — Sprint 27: Emergency UX Polish + Broken Signal Fixes
+
+**Files modified:**
+- `src/app/director/layout.tsx` — Replaced hardcoded `pendingCount = 0` with real query from `proposed_actions` where `status = 'pending_review'` for the academy. Sidebar badge now reflects actual pending review items.
+- `src/app/coach/page.tsx` — Replaced four disabled "Coming soon" Quick Action tiles with two real navigation links (My Sessions → `/coach/sessions`, My Players → `/coach/players`). Today's session list items are now clickable links to `/coach/sessions/[sessionId]`. Removed "On the Roadmap" section entirely. Replaced footer "Coming soon" copy with "View all sessions →" link.
+- `src/app/player/page.tsx` — Removed "Coming Soon" pills section (Progress tracking, Skill badges, Competition log) that was visible to players.
+- `src/app/parent/page.tsx` — Removed disabled/locked Private Lesson Request form card that was shown with Coming Soon label and grayed-out inputs. Removed unused `GraduationCap` and `Lock` imports.
+- `docs/LOCKED_MODULES.md` — Updated "Not built yet" section to reflect current reality: Dashboard, Players List, Coach Workspace, Sessions, Coach Sessions, Player Portal, and Parent Portal are all built. Added "Partially built" table with accurate status and remaining work.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+**What was intentionally not built:**
+- Review queue tab counts — already existed (TabLabel component already had pending/ready badges).
+- Full Private Lesson Request — deferred to Sprint 34.
+
+---
+
 ## 2026-05-05 — Sprint 26: Curriculum Customization Assistant Architecture V1
 
 **Files created:**

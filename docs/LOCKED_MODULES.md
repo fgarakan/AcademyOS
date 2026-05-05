@@ -59,29 +59,36 @@ Always run `npx tsc --noEmit` after any change.
 
 ---
 
+## Partially built — exist but incomplete
+
+| Module | Route | Status | What remains |
+|---|---|---|---|
+| Director Dashboard | `/director` | **Built** — Command Center, Priority Queue, Alerts, Sessions, AI Suggestions | Sidebar pending count now live (Sprint 27) |
+| Players List | `/director/players` | **Built** — directory with search, status filter, curriculum badge | Bulk actions, group filter |
+| Curriculum Explorer | `/director/curriculum` | **Built** — explorer, level detail, version cards, voice override panel | Drill `procedure` field, guided customization assistant |
+| Curriculum Learning Modules | `/director/curriculum/learning` | **Built** — director preview by level/domain | Not persisted to DB; player-facing exposure not built |
+| Director Command Center | `/director/command-center` | **Built** — parse, guardrail, draft, draft visibility | Full AI execution layer |
+| Director Review Queue | `/director/review` | **Built** — all 8 tab types with count badges | Voice intake execution routing |
+| Sessions screen | `/director/sessions` | **Built** — list + full session detail | Session builder/generator |
+| Coach workspace | `/coach` | **Built** — real data from coachWorkspace, today's sessions, observations | Full wrap-up persistence (Sprint 28) |
+| Coach sessions | `/coach/sessions` | **Built** — list + full session detail with wrap-up | Two recap UIs coexist (Sprint 28 fix) |
+| Coach players | `/coach/players` | **Built** — player list | Deep player profile view (Sprint 32) |
+| Player portal | `/player` | **Built** — live IDP, what to work on, mini challenge, Q&A | Requires profile_id linkage; progress history; gamification |
+| Parent portal | `/parent` | **Built** — live IDP parent view, why it matters, how to support | Requires guardian linkage; attendance data (Sprint 33) |
+
 ## Not built yet — do not assume these exist
 
 | Module | Route | Status | When to build |
 |---|---|---|---|
-| Director Dashboard | `/director` | Stub — placeholder text only | Step 5 in CURRENT_BUILD_TARGET.md |
-| Players List | `/director/players` | Stub — placeholder text only | Step 1 — NEXT |
-| Curriculum Explorer | `/director/curriculum` | Built — explorer, level detail, version cards | Drill detail procedure field, "use in session" |
-| Curriculum Learning Modules | `/director/curriculum/learning` | Built (Sprint 220) — director preview by level/domain | Persist modules, player-facing exposure |
-| Director Command Center | `/director/command-center` | Built (Sprint 213+) — parse, guardrail, draft, draft visibility | Full AI execution layer |
-| Director Review Queue | `/director/review` | Built — structured, priority, evidence, attendance, curriculum, voice intake drafts | Streamlined one-click approve flow, voice intake execution routing |
-| Sessions screen | `/director/sessions` | Stub with some components | Full session builder (Step 7) |
 | Competition screen | `/director/competition` | Does not exist | Future |
 | Intelligence screen | `/director/intelligence` | Does not exist | Future |
 | Reports screen | `/director/reports` | Does not exist | Phase 5 |
 | Configuration screen | `/director/configuration` | Does not exist | Phase 4+ |
-| Coach workspace | `/coach` | Stub — placeholder only | Step 8 |
-| Coach players | `/coach/players` | Does not exist | Step 8 |
-| Coach sessions | `/coach/sessions` | Does not exist | Step 8 |
-| Coach voice | `/coach/voice` | Does not exist | Step 9 |
-| Player portal | `/player` | Stub with PlayerMissionPreview (empty state) | Player Q&A with live data (Sprint 229) |
-| Parent portal | `/parent` | Stub with ParentSafeProgressPreview (empty state) | Parent progress with approved data (Sprint 230) |
-| Voice Intake Execution Routing | Anywhere | Foundation complete (Sprints 240–249). Execution layer not yet built. | Sprint 250+ — approved voice intake drafts trigger downstream module creation |
-| Placement Engine UI | Anywhere | Spec only — no UI | Step 6 |
+| Coach voice | `/coach/voice` | Does not exist | Future |
+| Placement Engine UI | `/director/placement` | Scaffolded; not complete | Step 6 |
+| Voice Intake Execution Routing | Anywhere | Foundation complete. Execution layer not yet built. | Sprint 250+ |
+| Gap Class Modules | Anywhere | Architecture only (Sprint 25) | Requires schema approval |
+| Curriculum Customization Assistant | `/director/curriculum` | Architecture only (Sprint 26) | Sprint 27+ build sequence |
 
 ---
 

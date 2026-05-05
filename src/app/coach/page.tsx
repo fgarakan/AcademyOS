@@ -1,5 +1,5 @@
-import { Calendar, Users, FileText, Plus, Mic, Layers } from 'lucide-react'
-import { type LucideIcon } from 'lucide-react'
+import { Calendar, Users, FileText, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 import {
   Card,
   CardHeader,
@@ -13,23 +13,6 @@ import {
   getCoachWorkspaceSummary,
   type CoachWorkspaceSummary,
 } from '@/lib/backend/coachWorkspace'
-
-type QuickAction = { label: string; Icon: LucideIcon }
-
-const QUICK_ACTIONS: QuickAction[] = [
-  { label: 'Add Observation', Icon: Plus },
-  { label: 'Voice Note',      Icon: Mic },
-  { label: 'View Sessions',   Icon: Calendar },
-  { label: 'View Players',    Icon: Users },
-]
-
-const ROADMAP_ITEMS = [
-  'Sessions',
-  'Attendance',
-  'Group Plans',
-  'Voice Notes',
-  'Player Follow-Ups',
-]
 
 function playerInitials(fullName: string | null): string {
   if (!fullName) return '?'
@@ -105,31 +88,36 @@ export default async function CoachHome() {
             {todaySessions.length > 0 ? (
               <ul className="space-y-1">
                 {todaySessions.map(s => (
-                  <li
-                    key={s.id}
-                    className="flex items-center justify-between gap-2 py-2 border-b border-border last:border-0 last:pb-0"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-text-primary truncate">
-                        {s.name ?? 'Session'}
-                      </p>
-                      {s.scheduled_time && (
-                        <p className="text-xs text-text-muted">
-                          {s.scheduled_time.slice(0, 5)}
+                  <li key={s.id}>
+                    <Link
+                      href={`/coach/sessions/${s.id}`}
+                      className="flex items-center justify-between gap-2 py-2 px-1 rounded-xl hover:bg-surface-raised transition-colors group border-b border-border last:border-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate group-hover:text-lime transition-colors">
+                          {s.name ?? 'Session'}
                         </p>
-                      )}
-                    </div>
-                    <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                      s.status === 'in_progress'
-                        ? 'bg-lime/10 text-lime border-lime/30'
-                        : s.status === 'completed'
-                        ? 'bg-status-green/10 text-status-green border-status-green/30'
-                        : s.status === 'cancelled'
-                        ? 'bg-status-red/10 text-status-red border-status-red/30'
-                        : 'bg-surface-raised text-text-muted border-border'
-                    }`}>
-                      {s.status.replace('_', ' ')}
-                    </span>
+                        {s.scheduled_time && (
+                          <p className="text-xs text-text-muted">
+                            {s.scheduled_time.slice(0, 5)}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                          s.status === 'in_progress'
+                            ? 'bg-lime/10 text-lime border-lime/30'
+                            : s.status === 'completed'
+                            ? 'bg-status-green/10 text-status-green border-status-green/30'
+                            : s.status === 'cancelled'
+                            ? 'bg-status-red/10 text-status-red border-status-red/30'
+                            : 'bg-surface-raised text-text-muted border-border'
+                        }`}>
+                          {s.status.replace('_', ' ')}
+                        </span>
+                        <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime transition-colors" />
+                      </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -143,9 +131,9 @@ export default async function CoachHome() {
             )}
           </CardContent>
           <CardFooter>
-            <p className="text-text-muted text-xs">
-              Coming soon: Session plan · Attendance · Group check-in
-            </p>
+            <Link href="/coach/sessions" className="text-xs text-lime hover:opacity-80 font-medium">
+              View all sessions →
+            </Link>
           </CardFooter>
         </Card>
       </div>
@@ -291,42 +279,26 @@ export default async function CoachHome() {
       <div>
         <SectionHeader title="QUICK ACTIONS" />
         <div className="grid grid-cols-2 gap-3">
-          {QUICK_ACTIONS.map(({ label, Icon }) => (
-            <div
-              key={label}
-              className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface border border-border opacity-50 cursor-not-allowed select-none"
-            >
-              <div className="w-9 h-9 rounded-xl bg-surface-raised border border-border flex items-center justify-center">
-                <Icon className="w-4 h-4 text-text-muted" />
+          <Link href="/coach/sessions" className="block group">
+            <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface border border-lime/20 hover:border-lime/40 hover:bg-surface-raised transition-all">
+              <div className="w-9 h-9 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-lime" />
               </div>
-              <span className="text-xs font-medium text-text-secondary text-center leading-tight">
-                {label}
-              </span>
-              <span className="text-[10px] text-text-muted">Coming soon</span>
+              <span className="text-xs font-medium text-text-primary text-center leading-tight">My Sessions</span>
+              <ChevronRight className="w-3 h-3 text-lime group-hover:translate-x-0.5 transition-transform" />
             </div>
-          ))}
+          </Link>
+          <Link href="/coach/players" className="block group">
+            <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface border border-border hover:border-lime/30 hover:bg-surface-raised transition-all">
+              <div className="w-9 h-9 rounded-xl bg-surface-raised border border-border flex items-center justify-center">
+                <Users className="w-4 h-4 text-text-muted" />
+              </div>
+              <span className="text-xs font-medium text-text-secondary text-center leading-tight">My Players</span>
+              <ChevronRight className="w-3 h-3 text-text-muted group-hover:text-lime group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </Link>
         </div>
       </div>
-
-      {/* ── Roadmap ───────────────────────────────────────────── */}
-      <Card>
-        <CardContent className="pt-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Layers className="w-3.5 h-3.5 text-text-muted" />
-            <p className="label-xs">ON THE ROADMAP</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {ROADMAP_ITEMS.map(item => (
-              <span
-                key={item}
-                className="px-3 py-1 rounded-full text-xs text-text-muted border border-border bg-surface-raised"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
     </div>
   )
