@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-05 — Sprint 34: Parent Private Lesson Request V1
+
+**Files created:**
+- `src/app/parent/requestPrivateLessonAction.ts` — Server action that validates the lesson request form and inserts a `proposed_action` with `target_module = 'parent_lesson_request'` and `status = 'pending_review'`. Never directly schedules anything. Follows the proposed_actions pipeline.
+- `src/app/parent/PrivateLessonRequestCard.tsx` — Client component with a functional lesson request form: preferred day (required), preferred time (optional), focus area (required), additional notes (optional). Shows success state after submission. Shows error if action fails.
+
+**Files modified:**
+- `src/app/parent/page.tsx` — Imported `PrivateLessonRequestCard` and added it below the Messages card when `parentView && linkedPlayerFirstName` are set.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 33: Parent Attendance + Session Consistency Data
 
 **Files modified:**

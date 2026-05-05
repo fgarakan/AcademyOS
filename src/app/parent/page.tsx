@@ -1,6 +1,7 @@
 import { MessageSquare, Calendar, Heart, Bell, BookOpen, ShieldCheck, TrendingUp } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { ParentSafeProgressPreview } from '@/components/player/ParentSafeProgressPreview'
+import { PrivateLessonRequestCard } from './PrivateLessonRequestCard'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { buildIndividualDevelopmentPlan, buildRoleSpecificIdpView } from '@/lib/player/individualDevelopmentPlan'
 import type { IdpParentView } from '@/lib/player/individualDevelopmentPlan'
@@ -468,6 +469,11 @@ export default async function ParentHome() {
           />
         </CardContent>
       </Card>
+
+      {/* ── Private Lesson Request ───────────────────────────────── */}
+      {parentView && linkedPlayerFirstName && (
+        <PrivateLessonRequestCard playerFirstName={linkedPlayerFirstName} />
+      )}
 
       {/* ── Safety note ───────────────────────────────────────────── */}
       {parentView && (
