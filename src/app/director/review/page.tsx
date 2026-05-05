@@ -17,7 +17,7 @@ import type { CurriculumOverrideDraftPayload } from '@/lib/actions/curriculumOve
 import { VoiceIntakeDraftCard } from './VoiceIntakeDraftCard'
 import type { EnrichedVoiceIntakeDraftItem, VoiceIntakeDraftPayload } from './VoiceIntakeDraftCard'
 import { GeneralCaptureDraftCard } from './GeneralCaptureDraftCard'
-import type { GeneralCaptureItem } from './GeneralCaptureDraftCard'
+import type { GeneralCaptureItem, PlayerOption } from './GeneralCaptureDraftCard'
 
 export default async function DirectorReviewQueuePage() {
   const supabase = await getSupabaseServer()
@@ -480,6 +480,21 @@ export default async function DirectorReviewQueuePage() {
     academyId,
   }))
 
+  // ─── Active players for capture routing ────────────────────────
+  const { data: playerRows } = await supabase
+    .from('players')
+    .select('id, full_name, first_name, last_name')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .order('full_name')
+
+  const playerOptions: PlayerOption[] = (playerRows ?? []).map(p => ({
+    id: p.id,
+    full_name: p.full_name,
+    first_name: p.first_name,
+    last_name: p.last_name,
+  }))
+
   // Compute default tab — first category with pending items, fallback to session_recaps
   const defaultTab = [
     { value: 'session_recaps', pending: pendingDrafts.length },
@@ -783,7 +798,7 @@ export default async function DirectorReviewQueuePage() {
             ) : (
               <div className="space-y-4">
                 {generalCaptures.map(capture => (
-                  <GeneralCaptureDraftCard key={capture.id} capture={capture} />
+                  <GeneralCaptureDraftCard key={capture.id} capture={capture} players={playerOptions} />
                 ))}
               </div>
             )}

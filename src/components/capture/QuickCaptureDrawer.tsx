@@ -203,7 +203,7 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
               placeholder={
                 activeType === 'player_observation'
                   ? 'Describe what you observed, or paste a voice transcript…'
-                  : 'Type a note or paste a transcript. Routing will be available in the review inbox.'
+                  : 'Type or dictate a note. Use your keyboard mic if you want to speak.'
               }
               className="w-full bg-surface-raised border border-border rounded px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime resize-none"
             />

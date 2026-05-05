@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-05 — Sprint 5: Route Capture to Player V1
+
+**Files modified:**
+- `src/lib/actions/capture.ts` — add `routeGeneralCaptureToPlayerAction(captureId, academyId, playerId)`: verifies director/head_coach membership; fetches capture confirming it belongs to this academy and is unrouted; verifies player is active in same academy; creates `coach_observation` with `is_private: true`; updates `voice_note` with `player_id`, `processing_status: 'routed'`, `parsed_observation_id` for traceability; revalidates `/director/review` and `/director/players/[playerId]`
+- `src/app/director/review/GeneralCaptureDraftCard.tsx` — replaced disabled stub with live player picker: expandable Route to Player panel with player dropdown, confirm button, cancel; internal-only label; loading/error states; card hides on success. Exports `PlayerOption` type.
+- `src/app/director/review/page.tsx` — fetches active players for routing dropdown (`players` table, `is_active: true`, ordered by `full_name`); passes `playerOptions` to each `GeneralCaptureDraftCard`; imports `PlayerOption` type.
+- `src/components/capture/QuickCaptureButton.tsx` — button label updated from "Capture" to "Quick Capture"
+- `src/components/capture/QuickCaptureDrawer.tsx` — general-capture placeholder updated to "Type or dictate a note. Use your keyboard mic if you want to speak." (removes false implication of browser audio recording)
+
+**Safety:**
+- Route action verifies director/head_coach role before writing. ✅
+- Both capture and player verified to belong to same academy before any write. ✅
+- `coach_observation` created with `is_private: true` — never parent/player-facing. ✅
+- Original `voice_note` is never deleted — `processing_status: 'routed'` preserves traceability. ✅
+- `parsed_observation_id` links voice_note ↔ observation for full audit trail. ✅
+- No migration, no RLS change, no schema change, no auth/middleware change. ✅
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 4: Quick Capture Review Inbox V1
 
 **Files created:**

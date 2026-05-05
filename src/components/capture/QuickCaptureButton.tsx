@@ -19,7 +19,7 @@ export function QuickCaptureButton({ academyId }: Props) {
         className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-lime text-black font-semibold text-sm shadow-lg hover:bg-lime/90 active:scale-95 transition-all select-none"
       >
         <Plus className="w-4 h-4 shrink-0" />
-        Capture
+        Quick Capture
       </button>
 
       <QuickCaptureDrawer
