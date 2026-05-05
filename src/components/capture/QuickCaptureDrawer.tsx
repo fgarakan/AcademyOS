@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useRef, useState, useTransition } from 'react'
 import { Modal } from '@/components/ui'
 import { addObservationAction } from '@/lib/actions/notes'
+import { saveGeneralCaptureAction } from '@/lib/actions/capture'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -111,9 +112,17 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
         }
       })
     } else {
-      // General capture — no backend route yet; acknowledge and close
-      setSuccess(true)
-      setTimeout(handleClose, 1400)
+      // General capture — persist to voice_notes for review inbox
+      const content = (formData.get('content') as string | null)?.trim() ?? ''
+      startTransition(async () => {
+        try {
+          await saveGeneralCaptureAction(academyId, content)
+          setSuccess(true)
+          setTimeout(handleClose, 1200)
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to save capture')
+        }
+      })
     }
   }
 
@@ -215,7 +224,7 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
 
           {activeType === 'general' && (
             <p className="text-[11px] text-text-muted">
-              General captures will appear in your review inbox (coming in Sprint 4). No data is lost.
+              Saved to your review inbox at Director → Draft Review Queue. Route to a player from there.
             </p>
           )}
 
@@ -224,7 +233,7 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
             <p className="text-xs text-status-green">
               {activeType === 'player_observation'
                 ? 'Observation saved.'
-                : 'Captured — check review inbox soon.'}
+                : 'Saved to review inbox.'}
             </p>
           )}
 

@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-05 — Sprint 4: Quick Capture Review Inbox V1
+
+**Files created:**
+- `src/lib/actions/capture.ts` — two Server Actions: `saveGeneralCaptureAction` writes a general capture to `voice_notes` with `player_id: null`, `session_id: null`, `processing_status: 'pending_review'`; `dismissGeneralCaptureAction` sets `processing_status: 'dismissed'`
+- `src/app/director/review/GeneralCaptureDraftCard.tsx` — client card for an unrouted capture: shows timestamp, author, full content; live Dismiss button; disabled "Route to Player" stub labelled Sprint 5
+
+**Files modified:**
+- `src/components/capture/QuickCaptureDrawer.tsx` — general-path now calls `saveGeneralCaptureAction` via `useTransition`; success message changed to "Saved to review inbox."; holding-message updated to direct user to review queue
+- `src/app/director/review/page.tsx` — adds Captures tab; queries `voice_notes` where `player_id IS NULL AND processing_status = 'pending_review'`; batch-fetches author names; renders `GeneralCaptureDraftCard` list with empty state; wires capture count into `PageHeader` and `defaultTab` logic; adds Captures to summary strip
+
+**Persistence:**
+- General captures land in `voice_notes` (existing table, `player_id` nullable). No migration. No new table. No RLS change.
+- `processing_status: 'pending_review'` marks them as actionable in the inbox.
+- Dismiss sets `processing_status: 'dismissed'` — soft delete, no data loss.
+
+**Safety:**
+- No parent/player data involved. ✅
+- Director sees only own academy's captures (academy_id scoped). ✅
+- Nothing is auto-routed or auto-applied. ✅
+- "Route to Player" is disabled stub — deferred to Sprint 5. ✅
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-04 — Sprint 3: Quick capture context routing
 
 **Files modified:**

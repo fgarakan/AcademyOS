@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, ClipboardList, Link2, Target, Users } from 'lucide-react'
+import { BookOpen, Calendar, ClipboardList, Inbox, Link2, Target, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -16,6 +16,8 @@ import type { EnrichedCurriculumOverrideDraftItem } from './CurriculumOverrideDr
 import type { CurriculumOverrideDraftPayload } from '@/lib/actions/curriculumOverrideDraft'
 import { VoiceIntakeDraftCard } from './VoiceIntakeDraftCard'
 import type { EnrichedVoiceIntakeDraftItem, VoiceIntakeDraftPayload } from './VoiceIntakeDraftCard'
+import { GeneralCaptureDraftCard } from './GeneralCaptureDraftCard'
+import type { GeneralCaptureItem } from './GeneralCaptureDraftCard'
 
 export default async function DirectorReviewQueuePage() {
   const supabase = await getSupabaseServer()
@@ -448,6 +450,36 @@ export default async function DirectorReviewQueuePage() {
   const pendingVoiceIntakeDrafts = enrichedVoiceIntakeDrafts.filter(d => d.status === 'pending_review')
   const approvedVoiceIntakeDrafts = enrichedVoiceIntakeDrafts.filter(d => d.status === 'approved')
 
+  // ─── General captures (unrouted Quick Captures) ────────────────
+  const { data: captureRows } = await supabase
+    .from('voice_notes')
+    .select('id, raw_input, created_at, author_id')
+    .eq('academy_id', academyId)
+    .is('player_id', null)
+    .eq('processing_status', 'pending_review')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const captureAuthorIds = Array.from(new Set((captureRows ?? []).map(r => r.author_id)))
+  const captureAuthorMap = new Map<string, string>()
+  if (captureAuthorIds.length > 0) {
+    const { data: captureAuthors } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', captureAuthorIds)
+    for (const p of (captureAuthors ?? [])) {
+      captureAuthorMap.set(p.id, p.display_name)
+    }
+  }
+
+  const generalCaptures: GeneralCaptureItem[] = (captureRows ?? []).map(r => ({
+    id: r.id,
+    content: r.raw_input,
+    createdAt: r.created_at,
+    authorName: captureAuthorMap.get(r.author_id) ?? null,
+    academyId,
+  }))
+
   // Compute default tab — first category with pending items, fallback to session_recaps
   const defaultTab = [
     { value: 'session_recaps', pending: pendingDrafts.length },
@@ -456,6 +488,7 @@ export default async function DirectorReviewQueuePage() {
     { value: 'attendance', pending: pendingAttendanceDrafts.length },
     { value: 'curriculum', pending: pendingCurriculumOverrideDrafts.length },
     { value: 'voice_intake', pending: pendingVoiceIntakeDrafts.length },
+    { value: 'captures', pending: generalCaptures.length },
   ].find(t => t.pending > 0)?.value ?? 'session_recaps'
 
   return (
@@ -473,6 +506,7 @@ export default async function DirectorReviewQueuePage() {
         curriculumOverrideApprovedCount={approvedCurriculumOverrideDrafts.length}
         voiceIntakePendingCount={pendingVoiceIntakeDrafts.length}
         voiceIntakeApprovedCount={approvedVoiceIntakeDrafts.length}
+        captureCount={generalCaptures.length}
       />
 
       <Tabs defaultValue={defaultTab}>
@@ -517,6 +551,13 @@ export default async function DirectorReviewQueuePage() {
               label="Voice Intake"
               pending={pendingVoiceIntakeDrafts.length}
               ready={approvedVoiceIntakeDrafts.length}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="captures">
+            <TabLabel
+              label="Captures"
+              pending={generalCaptures.length}
+              ready={0}
             />
           </TabsTrigger>
         </TabsList>
@@ -726,6 +767,29 @@ export default async function DirectorReviewQueuePage() {
           </section>
         </TabsContent>
 
+        {/* ─── Captures tab ─── */}
+        <TabsContent value="captures" className="pt-6 space-y-4">
+          <section className="space-y-3">
+            {generalCaptures.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <EmptyState
+                    icon={<Inbox className="w-5 h-5" />}
+                    title="No unrouted captures"
+                    description="Quick captures made outside a player profile will appear here. Use the + Capture button anywhere in the director area to add one."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {generalCaptures.map(capture => (
+                  <GeneralCaptureDraftCard key={capture.id} capture={capture} />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+
         {/* ─── Voice Intake tab ─── */}
         <TabsContent value="voice_intake" className="pt-6 space-y-4">
           {approvedVoiceIntakeDrafts.length > 0 && (
@@ -810,6 +874,7 @@ function PageHeader({
   curriculumOverrideApprovedCount,
   voiceIntakePendingCount,
   voiceIntakeApprovedCount,
+  captureCount,
 }: {
   pendingCount: number
   approvedCount: number
@@ -823,8 +888,9 @@ function PageHeader({
   curriculumOverrideApprovedCount: number
   voiceIntakePendingCount: number
   voiceIntakeApprovedCount: number
+  captureCount: number
 }) {
-  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount
+  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + captureCount
   const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount
 
   const categories = [
@@ -834,6 +900,7 @@ function PageHeader({
     { label: 'Attendance', pending: attendancePendingCount, ready: attendanceApprovedCount },
     { label: 'Curriculum', pending: curriculumOverridePendingCount, ready: curriculumOverrideApprovedCount },
     { label: 'Voice Intake', pending: voiceIntakePendingCount, ready: voiceIntakeApprovedCount },
+    { label: 'Captures', pending: captureCount, ready: 0 },
   ]
 
   return (
