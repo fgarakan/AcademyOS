@@ -4,14 +4,16 @@ import { useState } from 'react'
 import { Plus, ClipboardList } from 'lucide-react'
 import { QuickCaptureDrawer } from '@/components/capture/QuickCaptureDrawer'
 import { CoachWrapUpDrawer } from './CoachWrapUpDrawer'
+import type { SessionBlock } from './page'
 
 interface Props {
   sessionId: string
   academyId: string
   sessionName: string
+  blocks: SessionBlock[]
 }
 
-export function CoachSessionActions({ sessionId, academyId, sessionName }: Props) {
+export function CoachSessionActions({ sessionId, academyId, sessionName, blocks }: Props) {
   const [captureOpen, setCaptureOpen] = useState(false)
   const [wrapUpOpen, setWrapUpOpen] = useState(false)
 
@@ -59,6 +61,7 @@ export function CoachSessionActions({ sessionId, academyId, sessionName }: Props
         <CoachWrapUpDrawer
           sessionId={sessionId}
           sessionName={sessionName}
+          blocks={blocks}
           onClose={() => setWrapUpOpen(false)}
         />
       )}

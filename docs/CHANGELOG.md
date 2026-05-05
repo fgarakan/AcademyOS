@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-05 — Sprint 13: Coach Wrap-Up → Session Actual Draft V1
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/saveWrapUpDraftAction.ts` — server action that saves a structured session actual draft to `proposed_actions` (target_module = 'session_wrap_up_v1'). Includes block completion status, changes note, next focus, and raw answers. Requires `voice_commands` FK record (same pattern as attendance exception). Draft status = 'pending_review'. No official session records updated.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — added `blocks: SessionBlock[]` prop; block completion state (completed/skipped/modified per block); block status selectors shown in summary review step; `handleSave` now calls both `saveSessionRecapAction` (raw text) and `saveWrapUpDraftAction` (structured draft, best-effort).
+- `src/app/coach/sessions/[sessionId]/CoachSessionActions.tsx` — added `blocks: SessionBlock[]` prop; passes to `CoachWrapUpDrawer`.
+- `src/app/coach/sessions/[sessionId]/page.tsx` — passes `blockList` to `CoachSessionActions`.
+
+**Safety:** Draft only. No session_blocks, templates, or attendance records modified. ✅
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 12: Coach Wrap-Up Guided Recap UI V1
 
 **Files created:**

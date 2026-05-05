@@ -298,6 +298,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         sessionId={session.id}
         academyId={academyId}
         sessionName={session.name ?? 'Untitled Session'}
+        blocks={blockList}
       />
     </div>
   )

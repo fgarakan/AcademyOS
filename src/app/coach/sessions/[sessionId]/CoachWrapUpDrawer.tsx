@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react'
 import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy } from 'lucide-react'
 import { saveSessionRecapAction } from './actions'
+import { saveWrapUpDraftAction, type BlockCompletionDraft } from './saveWrapUpDraftAction'
+import type { SessionBlock } from './page'
 
 // ─────────────────────────────────────────────────────────────
 // Step definitions
@@ -61,6 +63,7 @@ const STEPS: WrapUpStep[] = [
 interface Props {
   sessionId: string
   sessionName: string
+  blocks: SessionBlock[]
   onClose: () => void
 }
 
@@ -68,9 +71,15 @@ interface Props {
 // Main component
 // ─────────────────────────────────────────────────────────────
 
-export function CoachWrapUpDrawer({ sessionId, sessionName, onClose }: Props) {
+export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, onClose }: Props) {
   const [stepIndex, setStepIndex] = useState(0)
   const [answers, setAnswers] = useState<string[]>(STEPS.map(() => ''))
+  // block completion: 'completed' | 'skipped' | 'modified' per block
+  const [blockStatus, setBlockStatus] = useState<Record<string, 'completed' | 'skipped' | 'modified'>>(() => {
+    const init: Record<string, 'completed' | 'skipped' | 'modified'> = {}
+    for (const b of blocks) init[b.id] = 'completed'
+    return init
+  })
   const [phase, setPhase] = useState<'questions' | 'summary' | 'saved'>('questions')
   const [saveError, setSaveError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -120,12 +129,31 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, onClose }: Props) {
     setSaveError(null)
     const recapText = buildSummaryText()
     startTransition(async () => {
-      const result = await saveSessionRecapAction({ sessionId, recapText })
-      if (result.ok) {
-        setPhase('saved')
-      } else {
-        setSaveError(result.error ?? 'Save failed. Try copying the summary instead.')
+      // 1. Save raw text recap to voice_notes
+      const recapResult = await saveSessionRecapAction({ sessionId, recapText })
+      if (!recapResult.ok) {
+        setSaveError(recapResult.error ?? 'Save failed. Try copying the summary instead.')
+        return
       }
+
+      // 2. Save structured session actual draft to proposed_actions (best-effort)
+      const blockCompletion: BlockCompletionDraft[] = blocks.map(b => ({
+        block_id: b.id,
+        block_name: b.name,
+        status: blockStatus[b.id] ?? 'completed',
+        note: '',
+      }))
+      await saveWrapUpDraftAction(sessionId, sessionName, blockCompletion, {
+        attendance: answers[0] ?? '',
+        changes: answers[2] ?? '',
+        standouts: answers[3] ?? '',
+        attention: answers[4] ?? '',
+        nextFocus: answers[5] ?? '',
+        groupNote: answers[1] ?? '',
+      })
+      // Best-effort: proceed to saved state even if structured draft fails
+
+      setPhase('saved')
     })
   }
 
@@ -169,6 +197,28 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, onClose }: Props) {
                 <p className={`text-sm ${answers[i]?.trim() ? 'text-text-primary' : 'text-text-muted italic'}`}>
                   {answers[i]?.trim() || 'Skipped'}
                 </p>
+                {/* Block completion editor after the "blocks" question */}
+                {s.key === 'blocks' && blocks.length > 0 && (
+                  <div className="mt-2 space-y-1.5">
+                    {blocks.map(b => (
+                      <div key={b.id} className="flex items-center gap-2">
+                        <span className="text-xs text-text-secondary flex-1 truncate">{b.name}</span>
+                        <select
+                          value={blockStatus[b.id] ?? 'completed'}
+                          onChange={e => setBlockStatus(prev => ({
+                            ...prev,
+                            [b.id]: e.target.value as 'completed' | 'skipped' | 'modified',
+                          }))}
+                          className="text-[10px] bg-surface-raised border border-border rounded px-2 py-0.5 text-text-secondary focus:outline-none focus:border-lime/40"
+                        >
+                          <option value="completed">Completed</option>
+                          <option value="modified">Modified</option>
+                          <option value="skipped">Skipped</option>
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
