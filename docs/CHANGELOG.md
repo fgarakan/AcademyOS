@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-05 — Sprint 12: Coach Wrap-Up Guided Recap UI V1
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — full-screen guided recap overlay. Six questions, one at a time. Text answers. Progress bar. Back/Next navigation. Summary review step with Copy to clipboard fallback. Save calls `saveSessionRecapAction` → `voice_notes` table. Saved state with confirmation.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionActions.tsx` — enabled Wrap Up Session button. Imports and conditionally renders `CoachWrapUpDrawer`.
+
+**Coach experience:** "Let's wrap this up quickly. I'll ask a few questions and turn it into notes for review."
+Six guided questions → summary review → one tap to save. Nothing is saved until explicit save.
+
+**Storage:** `voice_notes` (existing table). `processing_status = 'pending'`. Director sees it in recap history. No new schema.
+
+**What was NOT changed:** No migration, no RLS, no new tables, no parent/player exposure. ✅
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 11: Coach Wrap-Up Assistant Architecture Audit
 
 **Files created:**
