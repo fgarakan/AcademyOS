@@ -132,16 +132,16 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 ### `session_block_exercises` has missing RLS policies — migration 056 created, must be applied to live Supabase
 
 - **Status:** `session_block_exercises` was created in migration 007 with `ALTER TABLE session_block_exercises ENABLE ROW LEVEL SECURITY` but **no SELECT, INSERT, UPDATE, or DELETE policies were ever defined** — the same gap that `template_block_exercises` had (fixed in migration 055). Migration 056 (`supabase/migrations/056_session_block_exercises_rls.sql`) adds the missing policies. **The live database still needs this migration applied.**
-- **Verification status (Sprint 7 audit):** Cannot be verified automatically — Supabase CLI is not configured in the development environment. To verify manually, open Supabase → SQL Editor and run:
+- **Code-side: fully ready (Sprint 17 audit):** Session generation, director session detail, and coach session detail are all fully implemented with graceful degradation. No further code changes needed — only the live DB migration application is pending.
+- **Verification status:** Cannot be verified automatically — Supabase CLI is not configured in the development environment. To verify manually, open Supabase → SQL Editor and run:
   ```sql
   SELECT policyname FROM pg_policies WHERE tablename = 'session_block_exercises';
   ```
   If the result includes `"Staff see session block exercises"` and `"Staff manage session block exercises"`, the migration is applied. If the result is empty, migration 056 must be applied.
-- **Impact on session generation (until applied):** `generateSessionFromTemplateAction` step 9 INSERT into `session_block_exercises` fails with an RLS violation. As of Sprint 8, the action now treats exercise insertion as best-effort: the session and blocks are created and `sessionId` is returned. A warning message is shown alongside the success link. Exercises will appear once migration 056 is applied.
-- **Impact on session detail (until applied):** The session detail page joins `session_blocks → session_block_exercises`. The join returns an empty array (RLS filters silently). Session blocks render but exercises are always missing. A "migration pending" notice is shown when blocks have no exercises (added Sprint 9).
-- **Impact on session list:** The sessions list page at `/director/sessions` is unaffected — it only queries `sessions` and `session_blocks` which have correct policies.
-- **Fix:** Apply `supabase/migrations/056_session_block_exercises_rls.sql` to the live Supabase instance via the SQL Editor. Paste the full file contents and run.
-- **Workaround (Sprint 8+):** Session generation now succeeds even if exercise copy fails. Sessions appear in the list with blocks intact. Exercises will be empty until migration 056 is applied.
+- **Impact on session generation (until applied):** `generateSessionFromTemplateAction` step 9 INSERT into `session_block_exercises` fails with an RLS violation. The action treats exercise insertion as best-effort: the session and blocks are created and `sessionId` is returned. An orange warning is shown alongside the success link. Exercises will appear once migration 056 is applied.
+- **Impact on session detail (until applied):** Session blocks render but exercises are always missing. An orange "migration pending" warning is shown when blocks exist but exercises are empty (both director and coach session detail pages).
+- **Impact on session list:** The sessions list at `/director/sessions` is unaffected — it only queries `sessions` and `session_blocks` which have correct policies.
+- **Fix:** Apply `supabase/migrations/056_session_block_exercises_rls.sql` to the live Supabase instance via the SQL Editor. Paste the full file contents and run. No code changes needed after application — exercises will render automatically.
 
 ### `template_block_exercises` had missing RLS policies — RESOLVED in migration 055
 - **Status:** `template_block_exercises` was created in migration 006 with `ENABLE ROW LEVEL SECURITY` but no SELECT/INSERT/UPDATE/DELETE policies. All authenticated-user access was silently blocked. Migration 055 adds the missing policies.

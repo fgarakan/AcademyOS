@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-05 — Sprint 17: Verify Session Exercise Rendering
+
+**Audit only — no code changes.**
+
+Verified:
+- `generateSessionFromTemplateAction` correctly returns `sessionId` even when exercise INSERT fails (best-effort step 9, Sprint 8).
+- Director session detail (`/director/sessions/[sessionId]/page.tsx`) shows blocks and exercises when available; displays orange migration warning when blocks exist but exercises are empty.
+- Coach session detail (`/coach/sessions/[sessionId]/page.tsx`) same behavior.
+- `GenerateSessionPanel.tsx` shows an orange warning box alongside the generated session link when exercises could not be copied.
+- All links to generated sessions work correctly.
+- No stale "future sprint" messages found — all copy is current.
+
+Migration 056 verification remains manual (Supabase CLI not available in dev). SQL check documented in `KNOWN_LIMITATIONS.md`.
+
+**Files modified:**
+- `docs/KNOWN_LIMITATIONS.md` — updated migration 056 entry with "code-side: fully ready" status; clarified impact notes for director and coach pages; confirmed no further code changes needed after migration is applied.
+
+**TypeScript:** No code changes — no type check required.
+
+---
+
 ## 2026-05-05 — Sprint 16: Brian Demo Hardening + V1 Operating Loop QA
 
 **Files created:**
