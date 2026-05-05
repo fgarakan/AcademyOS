@@ -13,6 +13,14 @@ export default async function ParentHome() {
   let parentView: IdpParentView | null = null
   let noMappingReason: string | null = null
   let linkedPlayerFirstName: string | null = null
+  interface AttendanceStat {
+    totalRecorded: number
+    presentCount: number
+    absentCount: number
+    lateCount: number
+    recentSessions: Array<{ date: string; sessionName: string | null; status: string }>
+  }
+  let attendanceStat: AttendanceStat | null = null
 
   if (user) {
     const rawDb = supabase as any
@@ -149,6 +157,55 @@ export default async function ParentHome() {
             })
 
             parentView = buildRoleSpecificIdpView(plan, 'parent') as IdpParentView
+
+            // 7. Session attendance — last 60 days (parent-safe: their own child only)
+            const sixtyDaysAgo = new Date()
+            sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+            const sixtyDaysAgoStr = sixtyDaysAgo.toISOString().slice(0, 10)
+
+            const { data: attendanceRows } = await rawDb
+              .from('session_attendance')
+              .select('status, session_id')
+              .eq('player_id', playerRow.id)
+              .eq('academy_id', academyId)
+              .limit(30)
+
+            const attendanceData = (attendanceRows ?? []) as Array<{ status: string; session_id: string }>
+
+            if (attendanceData.length > 0) {
+              const sessionIds = attendanceData.map(r => r.session_id)
+              const { data: sessionRows } = await rawDb
+                .from('sessions')
+                .select('id, name, scheduled_date')
+                .in('id', sessionIds)
+                .gte('scheduled_date', sixtyDaysAgoStr)
+                .order('scheduled_date', { ascending: false })
+                .limit(30)
+
+              const sessionDateMap = new Map<string, { name: string | null; scheduled_date: string }>()
+              for (const s of (sessionRows ?? [])) {
+                sessionDateMap.set(s.id, { name: s.name ?? null, scheduled_date: s.scheduled_date })
+              }
+
+              const recentAttendance = attendanceData
+                .filter(r => sessionDateMap.has(r.session_id))
+                .slice(0, 10)
+
+              attendanceStat = {
+                totalRecorded: recentAttendance.length,
+                presentCount: recentAttendance.filter(r => r.status === 'present' || r.status === 'late').length,
+                absentCount: recentAttendance.filter(r => r.status === 'absent').length,
+                lateCount: recentAttendance.filter(r => r.status === 'late').length,
+                recentSessions: recentAttendance.slice(0, 5).map(r => {
+                  const s = sessionDateMap.get(r.session_id)
+                  return {
+                    date: s?.scheduled_date ?? '',
+                    sessionName: s?.name ?? null,
+                    status: r.status,
+                  }
+                }),
+              }
+            }
           }
         }
       }
@@ -321,17 +378,71 @@ export default async function ParentHome() {
             </div>
             <div>
               <p className="font-semibold text-text-primary text-sm">Session Consistency</p>
-              <p className="text-text-muted text-xs">Attendance and participation</p>
+              <p className="text-text-muted text-xs">Attendance over the past 60 days</p>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <EmptyState
-            icon={<Calendar className="w-5 h-5" />}
-            title="Attendance will appear here"
-            description="Session consistency and attendance data will be shared here."
-            className="py-8"
-          />
+          {attendanceStat && attendanceStat.totalRecorded > 0 ? (
+            <div className="space-y-4">
+              {/* Summary row */}
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-mono font-bold text-lime">{attendanceStat.presentCount}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Attended</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-mono font-bold text-text-secondary">{attendanceStat.totalRecorded}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Recorded</p>
+                </div>
+                {attendanceStat.totalRecorded > 0 && (
+                  <div className="flex-1">
+                    <div className="h-2 bg-surface-raised rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-lime rounded-full transition-all"
+                        style={{ width: `${Math.round((attendanceStat.presentCount / attendanceStat.totalRecorded) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-text-muted mt-1">
+                      {Math.round((attendanceStat.presentCount / attendanceStat.totalRecorded) * 100)}% attendance rate
+                    </p>
+                  </div>
+                )}
+              </div>
+              {/* Recent session list */}
+              {attendanceStat.recentSessions.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted">Recent Sessions</p>
+                  {attendanceStat.recentSessions.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 py-1 border-b border-border last:border-0">
+                      <div className="min-w-0">
+                        <p className="text-xs text-text-secondary truncate">{s.sessionName ?? 'Session'}</p>
+                        <p className="text-[10px] text-text-muted">{s.date}</p>
+                      </div>
+                      <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border shrink-0 ${
+                        s.status === 'present'
+                          ? 'bg-status-green/10 text-status-green border-status-green/30'
+                          : s.status === 'late'
+                          ? 'bg-status-orange/10 text-status-orange border-status-orange/30'
+                          : s.status === 'excused'
+                          ? 'bg-status-blue/10 text-status-blue border-status-blue/30'
+                          : 'bg-status-red/10 text-status-red border-status-red/30'
+                      }`}>
+                        {s.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <EmptyState
+              icon={<Calendar className="w-5 h-5" />}
+              title="No attendance recorded yet"
+              description="Session attendance will appear here once sessions have been recorded."
+              className="py-8"
+            />
+          )}
         </CardContent>
       </Card>
 

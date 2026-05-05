@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-05 — Sprint 33: Parent Attendance + Session Consistency Data
+
+**Files modified:**
+- `src/app/parent/page.tsx` — Added live attendance data to the "Session Consistency" card. Fetches `session_attendance` records for the linked player (last 60 days), joins with sessions for date and name, computes present/absent/late counts and attendance rate. Shows lime progress bar, percentage, and list of last 5 sessions with color-coded status badges. Falls back to "No attendance recorded yet" empty state when no records exist or account not linked.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 32: Coach → Player Profile Deep Link
 
 **Files created:**
