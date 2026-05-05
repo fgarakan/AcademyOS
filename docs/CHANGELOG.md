@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-05 — Sprint 21: Curriculum Exposure Tracking V1
+
+**Files created:**
+- `src/lib/curriculum/exposureTracking.ts` — Deterministic exposure candidate helper. `deriveSessionExposureCandidates()` takes players (with attendance status), planned blocks, and optional wrap-up block_completion. Returns per-player: likely exposed blocks, possible missed exposure blocks, confidence label, note. No DB writes — candidates only.
+- `src/app/director/sessions/[sessionId]/SessionExposureSummaryPanel.tsx` — Director-only read-only panel. Shows per-player exposure confidence (likely/missed/unknown). Summary strip with counts. Confidence key. Safety note confirming no gap records are created.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Added `SessionExposureSummaryPanel` import and "CURRICULUM EXPOSURE (V1)" section on session detail, passing existing directorRoster, blockList, and wrapUpPayload.
+
+**Safety:** Read-only display. No exposure records written. No gap records created. No parent/player exposure. No migration. Internal director view only. Data sourced entirely from already-loaded page data.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 20: Planned vs Actual Session Diff V1
 
 **Files created:**

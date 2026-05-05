@@ -23,6 +23,7 @@ import type { SuggestionRow } from './SessionAdjustmentSuggestionsPanel'
 import { VoiceCoachRecapInput } from './VoiceCoachRecapInput'
 import { SessionCurriculumContextPanel, SessionNoCurriculumContextPanel } from '@/components/curriculum/SessionCurriculumContextPanel'
 import { PlannedVsActualDiffPanel } from './PlannedVsActualDiffPanel'
+import { SessionExposureSummaryPanel } from './SessionExposureSummaryPanel'
 
 interface PageProps {
   params: { sessionId: string }
@@ -1047,6 +1048,22 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
             plannedBlocks={blockList}
             wrapUpPayload={wrapUpPayload}
             wrapUpStatus={wrapUpStatus}
+          />
+        </div>
+      </div>
+
+      {/* Curriculum Exposure Candidates */}
+      <div>
+        <SectionHeader title="CURRICULUM EXPOSURE (V1)" />
+        <div className="mt-3">
+          <SessionExposureSummaryPanel
+            players={directorRoster.map(p => ({
+              playerId: p.playerId,
+              playerName: p.fullName,
+              attendanceStatus: p.status,
+            }))}
+            blocks={blockList}
+            wrapUpPayload={wrapUpPayload}
           />
         </div>
       </div>
