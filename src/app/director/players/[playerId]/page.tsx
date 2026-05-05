@@ -53,6 +53,7 @@ import { GapGuidanceSummaryCard } from '@/components/player/GapGuidanceSummaryCa
 import { PlayerLoadTab } from '@/components/player/PlayerLoadTab'
 import { PlayerCompetitionTab, type UtrProfileData, type UtrMatchRow, type UtrInsightRow } from '@/components/player/PlayerCompetitionTab'
 import { PlayerTrainingExposureTimeline } from '@/components/player/PlayerTrainingExposureTimeline'
+import { PlayerGapSummaryPanel } from '@/components/player/PlayerGapSummaryPanel'
 import type { UtrHistoryPoint } from '@/components/player/UtrHistoryChart'
 
 interface PageProps {
@@ -792,6 +793,15 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Gap Guidance — director internal, not visible to player or parent */}
       <GapGuidanceSummaryCard guidance={directorGapGuidance} />
+
+      {/* Gap Summary V1 — consolidated inferred gaps with confidence labels */}
+      <PlayerGapSummaryPanel
+        trainingGaps={trainingGaps}
+        knowledgeGaps={knowledgeGaps}
+        exposureTimeline={exposureTimeline}
+        playerLoad={playerLoad}
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+      />
 
       {/* Advancement action card */}
       <Card>

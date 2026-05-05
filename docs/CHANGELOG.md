@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-05 — Sprint 23: Player Gap Summary V1
+
+**Files created:**
+- `src/components/player/PlayerGapSummaryPanel.tsx` — Director-only, read-only gap summary panel. Consolidates: exposure gaps (from attendance timeline), training gaps (from detectTrainingGaps), knowledge gaps (from detectKnowledgeGaps), fitness gap placeholder (from load data). Shows each gap with confidence label: possible / needs review / confirmed. Derives "Recommended Next Focus" from highest-priority gap. Safety guardrail note confirms internal-only, no automatic level changes.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Added `PlayerGapSummaryPanel` import. Added panel in Skill Path tab after GapGuidanceSummaryCard, passing trainingGaps, knowledgeGaps, exposureTimeline, playerLoad, currentLevelName.
+
+**Safety:** Director internal only. No parent/player exposure. No AI auto decisions. No promotion/level movement. No migration. Read-only suggestions only.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 22: Player Training Exposure Timeline V1
 
 **Files created:**
