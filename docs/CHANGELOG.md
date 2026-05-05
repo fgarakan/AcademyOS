@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-05 — Sprint 37: Placement Engine V1
+
+The Placement Engine was already fully built at `/director/placement/`. Sprint 37 surfaces it in navigation.
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — Added `UserPlus` import and "Placement" link to FOUNDATION_ITEMS
+
+**Placement flow:** pending player list → create draft → director approve → activate via `finalize_player_placement()` RPC.
+
+TypeScript: clean.
+
+---
+
 ## 2026-05-05 — Sprint 36: Curriculum Explorer Procedure Field + Use in Session Polish
 
 **Files modified:**

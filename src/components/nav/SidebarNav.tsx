@@ -5,13 +5,14 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
   Trophy, Brain, BarChart3, Settings, LogOut, Dumbbell, ClipboardList, FlaskConical,
-  ChevronRight, LayoutTemplate, Sparkles, Terminal,
+  ChevronRight, LayoutTemplate, Sparkles, Terminal, UserPlus,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
 const FOUNDATION_ITEMS = [
   { label: 'Dashboard',       href: '/director',                   icon: LayoutDashboard },
   { label: 'Players',         href: '/director/players',           icon: Users },
+  { label: 'Placement',       href: '/director/placement',         icon: UserPlus },
   { label: 'Curriculum',      href: '/director/curriculum',        icon: BookOpen },
   { label: 'Class Templates', href: '/director/class-templates',   icon: LayoutTemplate },
   { label: 'Fitness OS',      href: '/director/fitness/templates', icon: Dumbbell },
