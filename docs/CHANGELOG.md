@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-05 — Sprint 25: Gap Class / Knowledge Check Architecture V1
+
+**Files created:**
+- `docs/gap-class-knowledge-check-architecture.md` — Full architecture for Gap Class learning layer. Covers: product goal, student-facing positive framing ("Next Mission" not "Gap Class"), parent-safe language rules, director approval model (gap → proposed_action → approve → module), curriculum requirement linkage, question bank model, learning module model, knowledge check model, gap→module flow, Angles App reinforcement hook, Brian curriculum override impact, role permissions, data safety, future schema proposal (gap_class_modules / gap_class_questions / gap_class_knowledge_checks), V1 sprint sequence, known limitations.
+
+**Files modified:**
+- `docs/CHANGELOG.md`
+
+**No code changes.** Architecture-only sprint. No player-facing UI. No gap auto-assignment. No schema created.
+
+**TypeScript:** No code changes — no type check required.
+
+---
+
 ## 2026-05-05 — Sprint 24: Assessment → Curriculum Requirement Link Audit
 
 **Files created:**
