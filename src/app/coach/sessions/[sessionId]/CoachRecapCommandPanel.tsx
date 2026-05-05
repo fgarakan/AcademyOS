@@ -97,9 +97,9 @@ export function CoachRecapCommandPanel({
   return (
     <Card>
       <CardHeader>
-        <SectionHeader title="COACH RECAP" />
+        <SectionHeader title="QUICK NOTE" />
         <p className="text-xs text-text-muted mt-1">
-          Describe the session in your own words — who was present, what you covered, what you noticed. Structure extracts signals into a director review draft.
+          Leave a quick note about anything you want to flag. For a full end-of-session debrief, use the guided Wrap-Up above.
         </p>
       </CardHeader>
       <CardContent className="pt-0 space-y-3">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy } from 'lucide-react'
 import { saveSessionRecapAction } from './actions'
 import { saveWrapUpDraftAction, type BlockCompletionDraft } from './saveWrapUpDraftAction'
@@ -106,6 +106,48 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
   const [saveError, setSaveError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [draftRestored, setDraftRestored] = useState(false)
+
+  const draftKey = `wrapup_draft_${sessionId}`
+
+  // Restore draft from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey)
+      if (!raw) return
+      const draft = JSON.parse(raw) as {
+        stepIndex?: number
+        answers?: string[]
+        blockStatus?: Record<string, 'completed' | 'skipped' | 'modified'>
+        playerNotes?: Record<string, PlayerNote>
+        attendanceMap?: Record<string, 'present' | 'absent' | 'late' | 'excused'>
+        phase?: 'questions' | 'summary'
+      }
+      if (typeof draft.stepIndex === 'number') setStepIndex(draft.stepIndex)
+      if (Array.isArray(draft.answers) && draft.answers.length === STEPS.length) setAnswers(draft.answers)
+      if (draft.blockStatus) setBlockStatus(draft.blockStatus)
+      if (draft.playerNotes) setPlayerNotes(draft.playerNotes)
+      if (draft.attendanceMap) setAttendanceMap(draft.attendanceMap)
+      if (draft.phase === 'summary') setPhase('summary')
+      setDraftRestored(true)
+    } catch { /* ignore corrupt drafts */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey])
+
+  // Auto-save draft to localStorage whenever relevant state changes
+  useEffect(() => {
+    if (phase === 'saved') return
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({
+        stepIndex,
+        answers,
+        blockStatus,
+        playerNotes,
+        attendanceMap,
+        phase,
+      }))
+    } catch { /* ignore quota errors */ }
+  }, [draftKey, stepIndex, answers, blockStatus, playerNotes, attendanceMap, phase])
 
   const isLastQuestion = stepIndex === STEPS.length - 1
   const currentStep = STEPS[stepIndex]
@@ -202,6 +244,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
         await saveWrapUpObservationsAction(sessionId, playerObservations)
       }
 
+      try { localStorage.removeItem(draftKey) } catch { /* ignore */ }
       setPhase('saved')
     })
   }
@@ -448,6 +491,9 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
 
         <p className="text-[10px] text-text-muted">
           Tap Next to continue — you can go back at any time. Nothing is saved until you tap Save Recap.
+          {(draftRestored || answers.some(a => a.trim())) && (
+            <span className="ml-1 text-lime/60">Draft saved locally.</span>
+          )}
         </p>
       </div>
 

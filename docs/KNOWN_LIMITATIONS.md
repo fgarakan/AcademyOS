@@ -72,10 +72,9 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ## Data / backend
 
-### Pending actions badge is hardcoded
+### Pending actions badge — RESOLVED (Sprint 27)
 - **File:** `src/app/director/layout.tsx`
-- **Impact:** `pendingCount` is always `0`. The sidebar badge for pending actions never shows a real count.
-- **Fix:** Query `v_pending_proposed_actions` count in the layout after voice pipeline is built.
+- **Status:** `pendingCount` is now queried live from `proposed_actions` where `status = 'pending_review'` and scoped to `academy_id`.
 
 ### `intelligence.ts` uses a different DB pattern
 - **File:** `src/lib/backend/intelligence.ts`
@@ -229,11 +228,6 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ## Coach Wrap-Up V1 (Sprints 12–15)
 
-### Wrap-up state is not persisted between opens
-- **File:** `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx`
-- **Impact:** If a coach closes the drawer mid-session (before tapping Save Recap), all 6 question answers and player notes are lost. The drawer re-opens empty.
-- **Fix:** Persist draft answers to localStorage or `session_storage` keyed by `sessionId`. Future sprint.
-
 ### Unrostered attendees cannot be captured via wrap-up drawer
 - **Impact:** The wrap-up attendance section only shows players currently rostered in the session's group. A player who attended but is not in the group cannot be added from this screen.
 - **Fix:** Use the Director review queue's Attendance Exceptions panel to flag unrostered attendees. The wrap-up's Q1 answer ("Was anyone missing or added today?") can note the name in free text, which is stored in the raw voice_notes recap for director follow-up.
@@ -242,10 +236,10 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - **Impact:** Step 1 (raw recap → `voice_notes`) is required. If it fails, steps 2 and 3 are skipped. Steps 2 (structured draft) and 3 (player observations) are best-effort after step 1.
 - **Fix:** Copy button in summary provides a clipboard fallback if the full save fails.
 
-### Two recap UIs on the same session page (potential confusion)
-- **Impact:** Both `CoachRecapCommandPanel` (free-form voice/text) and `CoachWrapUpDrawer` (guided 6-question) save recaps to `voice_notes`. A coach using both in one session will create two voice_note records. The director review queue will show both.
-- **Status:** Intentional — free-form panel is the quick/async option; guided drawer is the end-of-session structured option. No de-duplication logic exists.
-- **Fix:** Consider a single recap entry point in a future sprint, or add a UI note distinguishing the two modes.
+### Two recap UIs on the same session page
+- **Impact:** Both `CoachRecapCommandPanel` (now labeled "Quick Note") and `CoachWrapUpDrawer` (guided 6-question "Coach Wrap-Up") save recaps to `voice_notes`. A coach using both in one session will create two voice_note records. The director review queue will show both.
+- **Status:** Intentional — Quick Note is the async/freeform option; guided Wrap-Up is the end-of-session structured option. Labels now distinguish the two modes clearly.
+- **Fix:** No further fix needed. De-duplication in the review queue is a potential future polish.
 
 ### Attendance saved independently of wrap-up recap
 - **Impact:** The "Save Attendance" button in the wrap-up summary saves attendance to `session_attendance` immediately. This is independent of the "Save Recap" button. Coaches can save attendance without completing the full recap, or vice versa.

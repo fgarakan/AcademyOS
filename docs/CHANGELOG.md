@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-05 — Sprint 29: Session Status + Start/End Session CTA
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/DirectorSessionStatusCTA.tsx` — Client component rendering a "Start Session" (planned→in_progress) or "End Session" (in_progress→completed) CTA button for the director session detail page.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — Added `handleQuickStatusChange()` helper and prominent Start/End Session CTAs at the top of the component. Start Session (lime) shown when `status === 'planned'`; End Session (green) shown when `status === 'in_progress'`. Both immediately call `saveAction` and update local status on success. Added `Play` and `Square` imports.
+- `src/app/director/sessions/[sessionId]/actions.ts` — Added `updateSessionStatusAction` server action (director/head_coach auth, academy_id scoped, status-only update).
+- `src/app/director/sessions/[sessionId]/page.tsx` — Imported and placed `DirectorSessionStatusCTA` in the session header right-hand side.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
+## 2026-05-05 — Sprint 28: Coach Wrap-Up Persistence + Single Recap Entry Point
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Added localStorage auto-save/restore keyed by `sessionId`. Drawer now restores all 6 question answers, block statuses, player notes, attendance map, and current phase (questions/summary) when reopened mid-session. Draft is cleared from localStorage only after successful Save Recap. Added "Draft saved locally" indicator text in the questions footer when any answer has content or a draft was restored.
+- `src/app/coach/sessions/[sessionId]/CoachRecapCommandPanel.tsx` — Renamed section header from "COACH RECAP" to "QUICK NOTE". Updated subtitle copy to distinguish it from the guided Wrap-Up: "Leave a quick note about anything you want to flag. For a full end-of-session debrief, use the guided Wrap-Up above."
+- `docs/KNOWN_LIMITATIONS.md` — Removed "Wrap-up state is not persisted between opens" (resolved). Updated "Two recap UIs" entry to reflect new "Quick Note" label and clarify intentional distinction. Updated "Pending actions badge" entry to RESOLVED (Sprint 27).
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 27: Emergency UX Polish + Broken Signal Fixes
 
 **Files modified:**
