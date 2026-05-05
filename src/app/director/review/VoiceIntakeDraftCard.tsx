@@ -8,10 +8,11 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Mic, ShieldCheck, AlertTriangle, CheckCircle, XCircle, HelpCircle } from 'lucide-react'
+import { Mic, ShieldCheck, AlertTriangle, CheckCircle, XCircle, HelpCircle, Zap, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import { updateVoiceIntakeDraftDecisionAction } from './actions'
 import type { DraftDecision } from './actions'
+import { executeVoiceIntakeDraftAction } from './executeVoiceIntakeDraftAction'
 
 export interface VoiceIntakeDraftPayload {
   draft_type: 'voice_intake_v1'
@@ -352,15 +353,59 @@ export function VoiceIntakeDraftCard({ draft }: { draft: EnrichedVoiceIntakeDraf
           <VoiceIntakeDecisionControls proposedActionId={draft.id} />
         )}
 
-        {/* Approved non-pending status note */}
+        {/* Approved — show Execute controls */}
         {draft.status === 'approved' && (
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-status-green/10 border border-status-green/30 text-xs text-status-green">
-            <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-            Reviewed and approved. Execution routing will be available in a future update.
-          </div>
+          <VoiceIntakeExecuteControls proposedActionId={draft.id} />
         )}
 
       </CardContent>
     </Card>
+  )
+}
+
+function VoiceIntakeExecuteControls({ proposedActionId }: { proposedActionId: string }) {
+  const [result, setResult] = useState<{ ok: boolean; error: string | null; executedType: string | null } | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+
+  function handleExecute() {
+    setResult(null)
+    startTransition(async () => {
+      const res = await executeVoiceIntakeDraftAction(proposedActionId)
+      setResult(res)
+      if (res.ok) router.refresh()
+    })
+  }
+
+  if (result?.ok) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-status-green/10 border border-status-green/30 text-xs text-status-green">
+        <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+        Executed: {result.executedType?.replace(/_/g, ' ')} — internal record created.
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-status-green/10 border border-status-green/30 text-xs text-status-green">
+        <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+        Approved. Ready to execute — creates an internal record from this capture.
+      </div>
+      <button
+        onClick={handleExecute}
+        disabled={isPending}
+        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-lime text-base hover:bg-lime/90 transition-all disabled:opacity-50"
+      >
+        {isPending
+          ? <><Loader2 className="w-4 h-4 animate-spin" /> Executing…</>
+          : <><Zap className="w-4 h-4" /> Execute — Create Internal Record</>}
+      </button>
+      {result?.error && (
+        <p className="text-[11px] text-status-red flex items-start gap-1.5">
+          <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />{result.error}
+        </p>
+      )}
+    </div>
   )
 }

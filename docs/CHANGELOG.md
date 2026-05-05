@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-05 — Sprint 41: Voice Intake Execution Routing V1
+
+Extended approved voice intake drafts to execute safe downstream actions.
+
+**Files created:**
+- `src/app/director/review/executeVoiceIntakeDraftAction.ts` — Server action: verifies approval status + director/head_coach role, dispatches execution for safe intents: `create_player_observation` / `record_director_note` / `create_gap_signal` / `alert_director` → create `coach_observations` (is_private=true); `create_session_recap` → create `voice_notes` for session if session_id present in context. Marks proposed_action as `applied` on success.
+
+**Files modified:**
+- `src/app/director/review/VoiceIntakeDraftCard.tsx` — Added `VoiceIntakeExecuteControls` component shown for approved drafts. Previously showed static "future update" note. Now shows "Execute — Create Internal Record" button. Imports `Zap`, `Loader2` from lucide-react.
+
+**Intents executed:** `create_player_observation`, `record_director_note`, `create_gap_signal`, `alert_director`, `create_session_recap`
+
+**Intents not yet executed:** `create_session_draft`, `create_group_draft`, `set_group_focus`, `create_parent_safe_draft`, `create_gate_evidence_draft` — require manual handling or future sprints.
+
+**Safety:** No parent/player exposure. No automatic level changes. Director approval required before execution. Player names in `affected_players` are heuristic strings — not resolved to player_id (observation has `player_id = null` with player names included in content).
+
+TypeScript: clean.
+
+---
+
 ## 2026-05-05 — Sprint 40: Parent Guardian Linking UI
 
 Added guardian/parent access panel to the director player profile Overview tab.
