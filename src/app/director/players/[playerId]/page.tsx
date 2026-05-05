@@ -52,6 +52,7 @@ import { buildDirectorGapGuidance } from '@/lib/gaps/roleSpecificGapGuidance'
 import { GapGuidanceSummaryCard } from '@/components/player/GapGuidanceSummaryCard'
 import { PlayerLoadTab } from '@/components/player/PlayerLoadTab'
 import { PlayerCompetitionTab, type UtrProfileData, type UtrMatchRow, type UtrInsightRow } from '@/components/player/PlayerCompetitionTab'
+import { PlayerTrainingExposureTimeline } from '@/components/player/PlayerTrainingExposureTimeline'
 import type { UtrHistoryPoint } from '@/components/player/UtrHistoryChart'
 
 interface PageProps {
@@ -363,6 +364,66 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     calculated_at: r.calculated_at,
   }))
 
+  // Training exposure timeline — last 60 days of session attendance + session details.
+  const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: attendanceRows } = await rawDb
+    .from('session_attendance')
+    .select('session_id, status, marked_at')
+    .eq('player_id', params.playerId)
+    .gte('marked_at', sixtyDaysAgo)
+    .order('marked_at', { ascending: false })
+    .limit(30)
+
+  interface ExposureTimelineItem {
+    sessionId: string
+    sessionName: string | null
+    sessionDate: string
+    attendanceStatus: string
+    blockCount: number
+    observationCount: number
+  }
+
+  const exposureTimeline: ExposureTimelineItem[] = []
+
+  if ((attendanceRows ?? []).length > 0) {
+    const attendedSessionIds = (attendanceRows as Array<{ session_id: string; status: string; marked_at: string }>)
+      .map(r => r.session_id)
+    const statusBySid = new Map<string, string>()
+    for (const r of (attendanceRows as Array<{ session_id: string; status: string; marked_at: string }>) ?? []) {
+      statusBySid.set(r.session_id, r.status)
+    }
+
+    const { data: sessionRows } = await supabase
+      .from('sessions')
+      .select('id, name, scheduled_date')
+      .in('id', attendedSessionIds)
+      .eq('academy_id', academyId)
+      .order('scheduled_date', { ascending: false })
+
+    if ((sessionRows ?? []).length > 0) {
+      const { data: blockCountRows } = await rawDb
+        .from('session_blocks')
+        .select('session_id')
+        .in('session_id', attendedSessionIds)
+
+      const blockCountBySid = new Map<string, number>()
+      for (const b of (blockCountRows ?? []) as Array<{ session_id: string }>) {
+        blockCountBySid.set(b.session_id, (blockCountBySid.get(b.session_id) ?? 0) + 1)
+      }
+
+      for (const sess of (sessionRows ?? [])) {
+        exposureTimeline.push({
+          sessionId: sess.id,
+          sessionName: sess.name,
+          sessionDate: sess.scheduled_date,
+          attendanceStatus: statusBySid.get(sess.id) ?? 'unknown',
+          blockCount: blockCountBySid.get(sess.id) ?? 0,
+          observationCount: 0, // observation counts require join after enrichedObservations is available
+        })
+      }
+    }
+  }
+
   // Gap detection — pure helpers, no DB calls, deterministic.
   const trainingGaps = detectTrainingGaps({
     player_id: params.playerId,
@@ -515,6 +576,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const fitnessSlot = (
     <div className="space-y-6">
       <PlayerLoadTab load={playerLoad} />
+
+      {/* Training Exposure Timeline — last 60 days, director-only */}
+      <PlayerTrainingExposureTimeline items={exposureTimeline} playerId={params.playerId} />
 
       {/* At-home fitness homework recommendation — internal draft only */}
       <Card>

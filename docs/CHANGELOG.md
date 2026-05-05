@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-05 — Sprint 22: Player Training Exposure Timeline V1
+
+**Files created:**
+- `src/components/player/PlayerTrainingExposureTimeline.tsx` — Director-only read-only timeline card. Shows last 60 days of session attendance per player: date, session name, attendance status pill, exposure inference (likely exposed vs possible missed), block count, link to session detail. Empty state if no attendance. V1 note about observation count deferral.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Added session_attendance query (last 60 days), session join, session_blocks count per session. Builds `exposureTimeline[]` array. Added `PlayerTrainingExposureTimeline` import and render in Fitness/Load tab.
+
+**Safety:** Read-only. Internal director view only. No parent/player exposure. No migration. No gap records created. Observation count deferred to future sprint (requires enrichedObservations ordering fix).
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 21: Curriculum Exposure Tracking V1
 
 **Files created:**
