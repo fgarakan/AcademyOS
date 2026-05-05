@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/utils'
 import { CoachSessionExecutionClient } from './CoachSessionExecutionClient'
 import { CoachRecapCommandPanel } from './CoachRecapCommandPanel'
 import { CoachSessionGapBriefPanel } from './CoachSessionGapBriefPanel'
+import { CoachSessionActions } from './CoachSessionActions'
 import { saveSessionExecutionAction, saveAttendanceAction, saveSessionRecapAction } from './actions'
 import { structureCoachRecapAction } from './structureCoachRecapAction'
 
@@ -291,6 +292,12 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         initialRecap={initialRecap}
         saveRecapAction={saveSessionRecapAction}
         structureRecapAction={structureCoachRecapAction}
+      />
+
+      <CoachSessionActions
+        sessionId={session.id}
+        academyId={academyId}
+        sessionName={session.name ?? 'Untitled Session'}
       />
     </div>
   )

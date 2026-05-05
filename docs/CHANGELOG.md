@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-05 — Sprint 10: Coach Session Execution View V1
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionActions.tsx` — client component with two action cards: "Quick Note" (opens QuickCaptureDrawer inline, avoids conflict with mobile tab bar) and "Wrap Up Session" (placeholder, enabled in Sprint 12).
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — imports and renders `CoachSessionActions` at the bottom of the session page, passing `sessionId`, `academyId`, `sessionName`.
+
+**Design rationale:** QuickCaptureButton (director) is a fixed floating button that conflicts with the coach bottom tab bar. Coach session uses an inline grid card instead, rendering `QuickCaptureDrawer` directly without the fixed-position trigger.
+
+**What was NOT changed:** No migration, no RLS, no schema. ✅
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 9: Session Detail View V1 Polish
 
 **Files modified:**
