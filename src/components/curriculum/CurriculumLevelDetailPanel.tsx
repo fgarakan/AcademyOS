@@ -290,7 +290,7 @@ function DrillRow({ drill }: { drill: CurriculumDrill }) {
   const domainBadge = DOMAIN_BADGE[drill.domain] ?? 'text-text-muted border-border bg-surface-raised'
 
   const hasCues = drill.coaching_cues != null && Object.keys(drill.coaching_cues).length > 0
-  const hasDetail = !!(drill.setup || hasCues || drill.progression_easier || drill.progression_harder || drill.success_criteria)
+  const hasDetail = !!(drill.setup || drill.procedure || hasCues || drill.progression_easier || drill.progression_harder || drill.success_criteria)
 
   return (
     <div
@@ -328,14 +328,13 @@ function DrillRow({ drill }: { drill: CurriculumDrill }) {
           <p className="text-[11px] font-medium text-text-primary leading-snug">{drill.name}</p>
           <p className="text-[10px] text-text-secondary leading-snug mt-0.5">{drill.objective}</p>
         </div>
-        {/* Use in session — disabled placeholder */}
-        <button
-          disabled
-          title="Session builder coming in a future sprint"
-          className="shrink-0 mt-1 px-2 py-0.5 rounded border border-border text-[9px] text-text-muted cursor-not-allowed opacity-50"
+        {/* Use in session — coming when session builder is built */}
+        <span
+          title="Session builder coming soon"
+          className="shrink-0 mt-1 px-2 py-0.5 rounded border border-border text-[9px] text-text-muted opacity-40 select-none"
         >
-          Use in session
-        </button>
+          + Session
+        </span>
       </div>
 
       {expanded && hasDetail && (
@@ -344,6 +343,21 @@ function DrillRow({ drill }: { drill: CurriculumDrill }) {
             <div>
               <p className="text-[9px] uppercase tracking-wide text-text-muted mb-0.5">Setup</p>
               <p className="text-[10px] text-text-secondary leading-relaxed">{drill.setup}</p>
+            </div>
+          )}
+          {drill.procedure && (
+            <div>
+              <p className="text-[9px] uppercase tracking-wide text-text-muted mb-1">Procedure</p>
+              <ol className="space-y-1">
+                {drill.procedure.split(' | ').map((step, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="shrink-0 w-4 h-4 rounded-full border border-border flex items-center justify-center text-[8px] font-mono text-text-muted leading-none">
+                      {i + 1}
+                    </span>
+                    <p className="text-[10px] text-text-secondary leading-relaxed">{step.replace(/^\d+\.\s*/, '')}</p>
+                  </li>
+                ))}
+              </ol>
             </div>
           )}
           {hasCues && drill.coaching_cues && (

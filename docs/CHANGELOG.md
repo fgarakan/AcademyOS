@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-05 — Sprint 36: Curriculum Explorer Procedure Field + Use in Session Polish
+
+**Files modified:**
+- `src/lib/backend/curriculumExplorer.ts` — Added `procedure: string | null` to `CurriculumDrill` type. Added `procedure` to the drill select query in `getCurriculumExplorerData`.
+- `src/components/curriculum/CurriculumLevelDetailPanel.tsx` — Added `drill.procedure` to `hasDetail` check. Added numbered Procedure steps display in the drill expanded section (splits on ` | ` separator from seed data). Polished "Use in session" placeholder: changed from a disabled `<button>` to a `<span>` with cleaner label `+ Session`.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 35: Director Dashboard Pending Coach Wrap-Ups Signal
 
 **Files modified:**

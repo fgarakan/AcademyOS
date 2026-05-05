@@ -32,6 +32,7 @@ export type CurriculumDrill = {
   session_block: string
   objective: string
   setup: string | null
+  procedure: string | null
   coaching_cues: Record<string, string> | null
   progression_easier: string | null
   progression_harder: string | null
@@ -128,7 +129,7 @@ export async function getCurriculumExplorerData(db: DB): Promise<CurriculumExplo
       .order('sort_order', { ascending: true }),
     rawDb
       .from('curriculum_drills')
-      .select('id,drill_id,academy_id,name,level_min_id,level_max_id,domain,session_block,objective,setup,coaching_cues,progression_easier,progression_harder,success_criteria,duration_minutes,players_needed,source_type,is_active')
+      .select('id,drill_id,academy_id,name,level_min_id,level_max_id,domain,session_block,objective,setup,procedure,coaching_cues,progression_easier,progression_harder,success_criteria,duration_minutes,players_needed,source_type,is_active')
       .eq('is_active', true)
       .is('academy_id', null)
       .order('drill_id', { ascending: true }),
