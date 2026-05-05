@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-05 — Sprint 31: Review Queue Priority Inbox Redesign
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — Three improvements: (1) Computed `oldestPendingDates` per category (last item in each pending array since sorted newest-first = oldest). (2) Updated `PageHeader` to accept and render oldest pending age per category in the summary strip using a new `relativeAge()` helper ("2h ago", "3d ago"). (3) Added "All caught up" green banner above the tabs when total pending count is zero. Added `CheckCircle` import.
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 30: Error Boundaries + Toast System
 
 **Files created:**

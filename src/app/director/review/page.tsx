@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, ClipboardList, Inbox, Link2, Target, Users } from 'lucide-react'
+import { BookOpen, Calendar, CheckCircle, ClipboardList, Inbox, Link2, Target, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -565,6 +565,18 @@ export default async function DirectorReviewQueuePage() {
   const pendingWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'pending_review')
   const approvedWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'approved')
 
+  // Oldest pending date per category (arrays are sorted newest-first, so last item = oldest)
+  const oldestPendingDates = {
+    session_recaps: pendingDrafts.at(-1)?.createdAt ?? null,
+    priorities: pendingPriorityDrafts.at(-1)?.createdAt ?? null,
+    evidence: pendingEvidenceDrafts.at(-1)?.createdAt ?? null,
+    attendance: pendingAttendanceDrafts.at(-1)?.createdAt ?? null,
+    curriculum: pendingCurriculumOverrideDrafts.at(-1)?.createdAt ?? null,
+    voice_intake: pendingVoiceIntakeDrafts.at(-1)?.createdAt ?? null,
+    wrap_ups: pendingWrapUpDrafts.at(-1)?.createdAt ?? null,
+    captures: generalCaptures.at(-1)?.createdAt ?? null,
+  }
+
   // Compute default tab — first category with pending items, fallback to session_recaps
   const defaultTab = [
     { value: 'session_recaps', pending: pendingDrafts.length },
@@ -595,7 +607,22 @@ export default async function DirectorReviewQueuePage() {
         wrapUpPendingCount={pendingWrapUpDrafts.length}
         wrapUpApprovedCount={approvedWrapUpDrafts.length}
         captureCount={generalCaptures.length}
+        oldestPendingDates={oldestPendingDates}
       />
+
+      {/* All clear state — shown above tabs when no pending items remain */}
+      {(
+        pendingDrafts.length + pendingPriorityDrafts.length + pendingEvidenceDrafts.length +
+        pendingAttendanceDrafts.length + pendingCurriculumOverrideDrafts.length +
+        pendingVoiceIntakeDrafts.length + pendingWrapUpDrafts.length + generalCaptures.length
+      ) === 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/10 border border-status-green/20">
+          <CheckCircle className="w-4 h-4 text-status-green shrink-0" />
+          <p className="text-sm text-status-green font-medium">
+            All caught up — no pending items in the queue.
+          </p>
+        </div>
+      )}
 
       <Tabs defaultValue={defaultTab}>
         <TabsList scrollable>
@@ -1013,6 +1040,7 @@ function PageHeader({
   wrapUpPendingCount,
   wrapUpApprovedCount,
   captureCount,
+  oldestPendingDates,
 }: {
   pendingCount: number
   approvedCount: number
@@ -1029,19 +1057,20 @@ function PageHeader({
   wrapUpPendingCount: number
   wrapUpApprovedCount: number
   captureCount: number
+  oldestPendingDates: Record<string, string | null>
 }) {
   const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + wrapUpPendingCount + captureCount
   const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount + wrapUpApprovedCount
 
   const categories = [
-    { label: 'Session Recaps', pending: pendingCount, ready: approvedCount },
-    { label: 'Priorities', pending: priorityPendingCount, ready: priorityApprovedCount },
-    { label: 'Evidence', pending: evidencePendingCount, ready: evidenceApprovedCount },
-    { label: 'Attendance', pending: attendancePendingCount, ready: attendanceApprovedCount },
-    { label: 'Curriculum', pending: curriculumOverridePendingCount, ready: curriculumOverrideApprovedCount },
-    { label: 'Voice Intake', pending: voiceIntakePendingCount, ready: voiceIntakeApprovedCount },
-    { label: 'Session Wrap-Ups', pending: wrapUpPendingCount, ready: wrapUpApprovedCount },
-    { label: 'Captures', pending: captureCount, ready: 0 },
+    { key: 'session_recaps', label: 'Session Recaps', pending: pendingCount, ready: approvedCount },
+    { key: 'priorities', label: 'Priorities', pending: priorityPendingCount, ready: priorityApprovedCount },
+    { key: 'evidence', label: 'Evidence', pending: evidencePendingCount, ready: evidenceApprovedCount },
+    { key: 'attendance', label: 'Attendance', pending: attendancePendingCount, ready: attendanceApprovedCount },
+    { key: 'curriculum', label: 'Curriculum', pending: curriculumOverridePendingCount, ready: curriculumOverrideApprovedCount },
+    { key: 'voice_intake', label: 'Voice Intake', pending: voiceIntakePendingCount, ready: voiceIntakeApprovedCount },
+    { key: 'wrap_ups', label: 'Session Wrap-Ups', pending: wrapUpPendingCount, ready: wrapUpApprovedCount },
+    { key: 'captures', label: 'Captures', pending: captureCount, ready: 0 },
   ]
 
   return (
@@ -1068,22 +1097,41 @@ function PageHeader({
 
       {/* Per-category summary strip */}
       <div className="flex flex-wrap gap-4 px-4 py-3 rounded-xl bg-surface-raised border border-border">
-        {categories.map(cat => (
-          <div key={cat.label} className="min-w-[80px]">
-            <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">{cat.label}</p>
-            <div className="flex items-center gap-2">
-              {cat.pending > 0 ? (
-                <span className="text-xs font-mono font-semibold text-status-orange">{cat.pending} pending</span>
-              ) : (
-                <span className="text-xs font-mono text-text-muted">—</span>
-              )}
-              {cat.ready > 0 && (
-                <span className="text-xs font-mono font-semibold text-lime">{cat.ready} ready</span>
-              )}
+        {categories.map(cat => {
+          const oldest = oldestPendingDates[cat.key] ?? null
+          return (
+            <div key={cat.label} className="min-w-[80px]">
+              <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">{cat.label}</p>
+              <div className="flex flex-col gap-0.5">
+                {cat.pending > 0 ? (
+                  <>
+                    <span className="text-xs font-mono font-semibold text-status-orange">{cat.pending} pending</span>
+                    {oldest && (
+                      <span className="text-[9px] text-text-muted">{relativeAge(oldest)}</span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-xs font-mono text-text-muted">—</span>
+                )}
+                {cat.ready > 0 && (
+                  <span className="text-xs font-mono font-semibold text-lime">{cat.ready} ready</span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
+}
+
+function relativeAge(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 2) return 'just now'
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) return `${diffHr}h ago`
+  const diffDay = Math.floor(diffHr / 24)
+  return `${diffDay}d ago`
 }
