@@ -106,10 +106,9 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ## Error handling
 
-### No `error.tsx` boundaries
-- **Impact:** If a Supabase query fails inside a Server Component, the entire page crashes with an unhandled error.
-  There are no Next.js `error.tsx` files anywhere in the route tree.
-- **Fix:** Add `error.tsx` files at key route segments when building each module.
+### Error boundaries — RESOLVED (Sprint 30)
+- **Status:** `error.tsx` boundaries added at `/director`, `/coach`, `/player`, and `/parent` route segments. Supabase query failures in Server Components now show a user-friendly "Something went wrong / Try again" screen instead of crashing the full page.
+- **Remaining gap:** Nested route segments (e.g., `/director/players/[playerId]`, `/coach/sessions/[sessionId]`) do not have their own error boundaries. Errors inside those sub-routes will bubble to the nearest parent boundary.
 
 ---
 

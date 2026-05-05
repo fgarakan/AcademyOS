@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-05 — Sprint 30: Error Boundaries + Toast System
+
+**Files created:**
+- `src/components/ui/Toast.tsx` — Context-based toast system. `ToastProvider` wraps the app; `useToast()` hook fires `success`, `error`, or `info` toasts. 4s auto-dismiss, X dismiss button. No external library.
+- `src/app/director/error.tsx` — Next.js error boundary for /director route segment.
+- `src/app/coach/error.tsx` — Next.js error boundary for /coach route segment.
+- `src/app/player/error.tsx` — Next.js error boundary for /player route segment.
+- `src/app/parent/error.tsx` — Next.js error boundary for /parent route segment.
+
+**Files modified:**
+- `src/app/layout.tsx` — Imported `ToastProvider` from `@/components/ui/Toast` and wrapped `{children}` with it.
+- `src/components/ui/index.ts` — Exported `ToastProvider`, `useToast`, and `ToastType`.
+- `docs/KNOWN_LIMITATIONS.md` — Marked "No error.tsx boundaries" as RESOLVED. Added remaining gap note (nested sub-routes not yet covered).
+
+**TypeScript:** `npx tsc --noEmit` — clean, zero errors.
+
+---
+
 ## 2026-05-05 — Sprint 29: Session Status + Start/End Session CTA
 
 **Files created:**
