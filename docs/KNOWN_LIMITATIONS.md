@@ -292,10 +292,16 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - **Impact on session list:** The sessions list at `/director/sessions` is unaffected — it only queries `sessions` and `session_blocks` which have correct policies.
 - **Fix:** Apply `supabase/migrations/056_session_block_exercises_rls.sql` to the live Supabase instance via the SQL Editor. Paste the full file contents and run. No code changes needed after application — exercises will render automatically.
 
-### `template_block_exercises` had missing RLS policies — RESOLVED in migration 055
-- **Status:** `template_block_exercises` was created in migration 006 with `ENABLE ROW LEVEL SECURITY` but no SELECT/INSERT/UPDATE/DELETE policies. All authenticated-user access was silently blocked. Migration 055 adds the missing policies.
-- **Impact before fix:** Auto-populate silently failed on every insert, returned "Blocks already populated" incorrectly. Block exercises never rendered. The `populateFitnessTemplateBlocksAction` now returns an explicit error if all inserts fail, and the page surfaces a diagnostic banner if the join query fails.
-- **Fix:** Apply `supabase/migrations/055_template_block_exercises_rls.sql` to the live Supabase instance. Until applied, the populate feature and block exercise rendering remain blocked.
+### `template_block_exercises` missing RLS policies — migration 058 pending live application
+
+- **Status:** `template_block_exercises` was created in migration 006 with `ENABLE ROW LEVEL SECURITY` but no SELECT/INSERT/UPDATE/DELETE policies. Migration 055 was written to fix this but was never applied to the live database before migrations 056–057 were committed. Migration 058 supersedes 055 with idempotent DROP/CREATE guards and explicit `WITH CHECK` on INSERT and UPDATE. **Migration 058 must be applied to the live Supabase instance.**
+- **Error before fix:** Director clicks "Populate Blocks with Exercises" → `populateFitnessTemplateBlocksAction` → INSERT into `template_block_exercises` → "new row violates row-level security policy for table template_block_exercises".
+- **Fix:** Open Supabase → SQL Editor, paste the full contents of `supabase/migrations/058_template_block_exercises_rls.sql`, and Run. No code changes or restart needed. The migrate is idempotent — safe to run even if migration 055 was partially applied.
+- **Verification:** After applying, run in SQL Editor:
+  ```sql
+  SELECT policyname FROM pg_policies WHERE tablename = 'template_block_exercises' ORDER BY policyname;
+  ```
+  Expect four rows: `"Staff delete template block exercises"`, `"Staff insert template block exercises"`, `"Staff see template block exercises"`, `"Staff update template block exercises"`.
 
 ### Preview mode write actions previously threw uncaught errors — RESOLVED (Sprint 261)
 - **Status:** Server Actions that guard writes with `assertNotPreviewMode()` now catch the throw and return `{ error: 'Writes are disabled in preview mode.' }` instead of propagating the exception to the client. Preview banner ("Writes are disabled in preview.") displays in the director layout when in preview mode.

@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-06 — Sprint 89: Fix template block exercise RLS
+
+Root cause: `template_block_exercises` was created in migration 006 with RLS enabled but no policies. Migration 055 wrote the correct fix but was never applied to the live database. Migration 058 supersedes 055 with idempotent `DROP POLICY IF EXISTS` guards and separate SELECT / INSERT / UPDATE / DELETE policies (explicit `WITH CHECK` on INSERT and UPDATE), scoped through `block_id → template_blocks → templates → academy_id`. No app code changes — the `populateFitnessTemplateBlocksAction` was already correct.
+
+**Root cause confirmed:** PostgreSQL denies all access when RLS is active and no policy matches, producing "new row violates row-level security policy for table template_block_exercises" on every INSERT attempt.
+
+**Files created:**
+- `supabase/migrations/058_template_block_exercises_rls.sql` — Idempotent RLS policies for template_block_exercises: SELECT, INSERT (WITH CHECK), UPDATE (WITH CHECK), DELETE. Supersedes migration 055.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — This entry.
+- `docs/KNOWN_LIMITATIONS.md` — Updated template_block_exercises section; migration 058 is now the canonical live-DB fix.
+
+**TypeScript:** clean (no TS changes).
+
+**To activate:** Apply `supabase/migrations/058_template_block_exercises_rls.sql` to the live Supabase instance via SQL Editor. Paste the full file and Run. No restart required.
+
+---
+
 ## 2026-05-06 — Sprint 88: Live Transcription Activation + gitignore
 
 Created `.gitignore` (was entirely missing — `.env.local` was untracked but unprotected). Now covers: `.env.local`, `.env`, `.next/`, `node_modules/`, `tsconfig.tsbuildinfo`, `supabase/.temp/`, `.vscode/`, OS artifacts. Confirmed `OPENAI_API_KEY` is NOT yet in `.env.local` — manual key addition required. Confirmed endpoint reads key via `process.env.OPENAI_API_KEY` (server-side only, safe). TypeScript clean.
