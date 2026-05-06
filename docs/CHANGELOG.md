@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 51: Parent Lesson Request Status Tracker
+
+Added a status tracker card to the parent portal so parents can see the current state of their most recent private lesson request without contacting the academy.
+
+**Files modified:**
+- `src/app/parent/page.tsx` — Added `LessonRequestStatus` interface. Fetches the parent's latest `proposed_actions` row where `target_module = 'parent_lesson_request'`. Maps internal statuses (`pending_review`, `approved`, `applied`, `rejected`, `dismissed`) to parent-safe labels. Renders a status card above `PrivateLessonRequestCard` showing status badge, preferred day, focus area, and submission date.
+
+**Safety:** Reads only the parent's own `proposed_actions` rows (`proposed_by_id = user.id`). No internal coach notes, no raw DB mutations. Status labels are parent-safe (no internal terminology). No schema changes.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 50: Player Portal Mission View V1
 
 Improved the player portal with a "What to ask your coach" prompt card, an encouragement footer, and a friendlier no-link empty state.

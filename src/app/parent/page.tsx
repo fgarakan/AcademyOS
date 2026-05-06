@@ -22,6 +22,14 @@ export default async function ParentHome() {
     recentSessions: Array<{ date: string; sessionName: string | null; status: string }>
   }
   let attendanceStat: AttendanceStat | null = null
+  interface LessonRequestStatus {
+    preferredDay: string | null
+    focusArea: string | null
+    submittedAt: string
+    status: string
+    parentSafeStatus: string
+  }
+  let latestLessonRequest: LessonRequestStatus | null = null
 
   if (user) {
     const rawDb = supabase as any
@@ -172,6 +180,39 @@ export default async function ParentHome() {
               .limit(30)
 
             const attendanceData = (attendanceRows ?? []) as Array<{ status: string; session_id: string }>
+
+            // 8. Lesson request status — most recent request submitted by this parent (via proposed_actions)
+            const { data: lessonRows } = await rawDb
+              .from('proposed_actions')
+              .select('status, proposed_payload, created_at')
+              .eq('academy_id', academyId)
+              .eq('proposed_by_id', user!.id)
+              .eq('target_module', 'parent_lesson_request')
+              .order('created_at', { ascending: false })
+              .limit(1)
+
+            const lessonRow = (lessonRows ?? [])[0] as {
+              status: string
+              proposed_payload: any
+              created_at: string
+            } | undefined
+
+            if (lessonRow) {
+              const STATUS_MAP: Record<string, string> = {
+                pending_review: 'Submitted — under review',
+                approved: 'Under review',
+                applied: 'Assigned',
+                rejected: 'Declined',
+                dismissed: 'Closed',
+              }
+              latestLessonRequest = {
+                preferredDay: lessonRow.proposed_payload?.preferred_day ?? null,
+                focusArea: lessonRow.proposed_payload?.focus_area ?? null,
+                submittedAt: lessonRow.created_at,
+                status: lessonRow.status,
+                parentSafeStatus: STATUS_MAP[lessonRow.status] ?? 'Under review',
+              }
+            }
 
             if (attendanceData.length > 0) {
               const sessionIds = attendanceData.map(r => r.session_id)
@@ -470,9 +511,58 @@ export default async function ParentHome() {
         </CardContent>
       </Card>
 
-      {/* ── Private Lesson Request ───────────────────────────────── */}
+      {/* ── Private Lesson Request + Status ─────────────────────── */}
       {parentView && linkedPlayerFirstName && (
-        <PrivateLessonRequestCard playerFirstName={linkedPlayerFirstName} />
+        <>
+          {latestLessonRequest && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
+                    <MessageSquare className="w-4 h-4 text-text-muted" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-text-primary text-sm">Private Lesson Request</p>
+                    <p className="text-text-muted text-xs">Your most recent request</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-surface-raised border border-border">
+                  <p className="text-xs text-text-secondary">Status</p>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                    latestLessonRequest.status === 'applied' || latestLessonRequest.status === 'approved'
+                      ? 'bg-status-green/10 text-status-green border-status-green/30'
+                      : latestLessonRequest.status === 'rejected' || latestLessonRequest.status === 'dismissed'
+                      ? 'bg-status-red/10 text-status-red border-status-red/30'
+                      : 'bg-status-orange/10 text-status-orange border-status-orange/30'
+                  }`}>
+                    {latestLessonRequest.parentSafeStatus}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  {latestLessonRequest.preferredDay && (
+                    <div>
+                      <p className="label-xs text-text-muted mb-0.5">Preferred day</p>
+                      <p className="text-text-secondary">{latestLessonRequest.preferredDay}</p>
+                    </div>
+                  )}
+                  {latestLessonRequest.focusArea && (
+                    <div>
+                      <p className="label-xs text-text-muted mb-0.5">Focus area</p>
+                      <p className="text-text-secondary">{latestLessonRequest.focusArea}</p>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-text-muted">
+                  Submitted {new Date(latestLessonRequest.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.
+                  Your director will follow up directly.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          <PrivateLessonRequestCard playerFirstName={linkedPlayerFirstName} />
+        </>
       )}
 
       {/* ── Safety note ───────────────────────────────────────────── */}
