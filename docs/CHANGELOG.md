@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-06 — Sprint 96: Session Actuals Normalized Schema Plan
+
+Created `docs/session-actuals-normalized-schema-plan.md` documenting the full normalized schema for session actuals: `session_actuals`, `session_actual_blocks`, `session_actual_exercises`, `session_actual_attendance`. Includes audit trail, parent/player visibility flag design, RLS policy patterns, AI readiness hooks, and migration plan (059–063). No migration applied — requires explicit STOP + approval before proceeding.
+
+**Files created:**
+- `docs/session-actuals-normalized-schema-plan.md` — Full schema plan: tables, columns, RLS, parent-safety, AI readiness, migration sequence.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean (no code changes).
+
+---
+
 ## 2026-05-06 — Sprint 95: Planned vs Actual Session Diff V1
 
 Enhanced `PlannedVsActualDiffPanel` to also show exercise-level actuals from `session_block_exercises`. Each block row now expands inline to list its exercises with Done/Skipped/Modified icons, exercise names, and coach notes (the `[Skipped]`/`[Modified]` prefixes from Sprint 94 are detected and displayed with appropriate color-coding). Panel is read-only. Updated director session detail page to pass `sessionExercises` to the panel.
