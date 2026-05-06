@@ -1,8 +1,8 @@
 # V1 Manual Test Checklist — Coach Operating Loop + Assistant Demo
 
-**Sprint:** 77
+**Sprint:** 80
 **Date:** 2026-05-06
-**Scope:** Sprints 67–77 — role-based UX simplification, coach session mobile layout, director mission control, coach assistant text flow, voice output, director assistant command center, review cards, personality guidelines, demo polish, voice input V1
+**Scope:** Sprints 67–80 — role-based UX, mobile layout, director mission control, coach assistant, voice output, director assistant, review cards, personality, demo polish, voice input, transcription architecture, transcription endpoint, audio recorder UI
 
 ---
 
@@ -21,6 +21,9 @@
 | S75 | Personality guidelines | `docs/assistant-personality-and-voice-guidelines.md` present. `src/lib/assistant/personality.ts` present. |
 | S76 | Sidebar clean | Intelligence, Competition, Reports, Configuration removed from sidebar. Only built routes shown. |
 | S77 | Voice input | "Speak" mic button visible below textarea in question step (Chrome/Edge). Tapping starts listening. Transcript appends to answer. Unsupported browsers show fallback note. |
+| S78 | Architecture doc | `docs/voice-transcription-security-architecture.md` present. Covers data flow, hard rules, security controls, privacy, STT provider, cost controls. |
+| S79 | Transcription endpoint | `POST /api/coach/sessions/[sessionId]/transcribe` returns 503 when `OPENAI_API_KEY` not set. Returns transcript when key is set and audio is valid. Does not store audio. |
+| S80 | Audio recorder UI | "Record" button appears in question step alongside "Browser Dictation". Tapping Record asks for mic permission. Timer counts up. Tapping Stop sends audio to endpoint. "Transcribing…" shows. Transcript appends to answer. Error shows if endpoint unavailable. "Audio is used only to create a transcript and is not saved." copy visible. |
 
 ---
 

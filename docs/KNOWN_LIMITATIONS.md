@@ -7,6 +7,17 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Coach Audio Recorder UI (Sprint 80)
+
+### AudioRecorderButton requires OPENAI_API_KEY for server transcription
+- **File:** `src/components/assistant/AudioRecorderButton.tsx`
+- **Impact:** Uses `MediaRecorder` to capture audio and sends it to `/api/coach/sessions/[sessionId]/transcribe`. When the server transcription endpoint returns a 503 (no API key), an inline error message is shown: "Production transcription is not configured. You can still type or use browser dictation." The existing `VoiceInputButton` (browser SpeechRecognition) remains as a secondary option labeled "Browser Dictation."
+- **Audio storage:** None. Audio blob lives in browser memory only. Discarded immediately after endpoint responds.
+- **Supported browsers:** Any browser that supports `MediaRecorder` and `getUserMedia` (Chrome, Edge, Firefox, Safari 14.1+).
+- **Fallback:** Coach can always type, or use the "Browser Dictation" button (Chrome/Edge SpeechRecognition only).
+
+---
+
 ## Secure Transcription Endpoint (Sprint 79)
 
 ### Production transcription endpoint built but gated by OPENAI_API_KEY

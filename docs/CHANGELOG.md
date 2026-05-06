@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-06 — Sprint 80: Coach Audio Recorder UI V1
+
+Added `AudioRecorderButton` — a production-ready MediaRecorder component that captures a short audio clip, sends it to the Sprint 79 transcription endpoint, receives the transcript, and appends it to the current answer textarea. Shows timer (max 60s), "Transcribing…" state, and a safe error message when the endpoint is not configured. The existing `VoiceInputButton` (browser SpeechRecognition) is retained as "Browser Dictation" option. Privacy copy: "Audio is used only to create a transcript and is not saved. Review and edit before saving. Nothing is saved until you tap Save Wrap-Up."
+
+**Files created:**
+- `src/components/assistant/AudioRecorderButton.tsx` — MediaRecorder UI: record, stop, auto-stop at 60s, timer, transcribing state, endpoint call, error handling.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Imported `AudioRecorderButton`; added it above `VoiceInputButton` in the question step; both options visible with "or" separator.
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 80 limitation.
+- `docs/V1_MANUAL_TEST_CHECKLIST.md` — Updated sprint number to 80; added S78/S79/S80 checks.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 79: Secure Coach Transcription Endpoint V1
 
 Added a secure server-side API route that receives a short audio clip, sends it to OpenAI Whisper, returns the transcript, and discards the audio. Auth, academy membership, session access, role, MIME type, and file size are all checked before the STT call. When `OPENAI_API_KEY` is not configured, returns a safe 503. No audio is written to storage. No transcript is logged. No OpenAI SDK dependency — uses plain `fetch` + `FormData`.
