@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 64: Director Player List Assessment Context
+
+Enhanced the player directory list to show each player's most recent overall assessment score and score delta alongside the last-assessed date.
+
+**Files modified:**
+- `src/app/director/players/_components/PlayersDirectoryClient.tsx` — Assessment column (hidden on small screens) now shows: overall_score as a large mono number, score_delta with +/- sign in green/red, last-assessed relative date, and next-due date. `overall_score` and `score_delta` are already present on `VPlayerSummary` from `v_player_summary` view — no additional fetch needed.
+
+**Safety:** Director-only read. No mutations. No schema changes. Score data is already fetched via existing `getPlayerSummaries` call.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 63: Parent Portal Attendance History Polish
 
 Polished the "Session Consistency" card in the parent portal: formatted dates, humanized status labels, and surfaced the late-attendance count.

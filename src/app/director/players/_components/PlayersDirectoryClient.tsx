@@ -263,22 +263,32 @@ export function PlayersDirectoryClient({ players, curriculumMap = {} }: Props) {
                       )}
                     </div>
 
-                    {/* Assessment dates — hidden on small screens */}
-                    <div className="hidden md:flex flex-col items-end gap-1 shrink-0 w-40 text-right">
+                    {/* Assessment context — hidden on small screens */}
+                    <div className="hidden md:flex flex-col items-end gap-1 shrink-0 w-44 text-right">
+                      {player.overall_score !== null ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-sm font-bold text-text-primary">{player.overall_score}</span>
+                          {player.score_delta !== null && player.score_delta !== 0 && (
+                            <span className={`text-[10px] font-semibold ${player.score_delta > 0 ? 'text-status-green' : 'text-status-red'}`}>
+                              {player.score_delta > 0 ? '+' : ''}{player.score_delta}
+                            </span>
+                          )}
+                        </div>
+                      ) : null}
                       {player.last_assessed_at ? (
-                        <span className="text-xs text-text-secondary">
-                          Last: {formatRelativeDate(player.last_assessed_at)}
+                        <span className="text-xs text-text-muted">
+                          {formatRelativeDate(player.last_assessed_at)}
                         </span>
                       ) : (
                         <span className="text-xs text-text-muted">Never assessed</span>
                       )}
-                      {player.next_assessment_due ? (
-                        <span className={[
-                          'text-xs',
-                          nextDueOverdue ? 'text-status-red font-medium' : 'text-text-muted',
-                        ].join(' ')}>
-                          Due: {formatDate(player.next_assessment_due)}
-                          {nextDueOverdue && ' · overdue'}
+                      {player.next_assessment_due && nextDueOverdue ? (
+                        <span className="text-[11px] text-status-red font-medium">
+                          Due {formatDate(player.next_assessment_due)} · overdue
+                        </span>
+                      ) : player.next_assessment_due ? (
+                        <span className="text-[11px] text-text-muted">
+                          Due {formatDate(player.next_assessment_due)}
                         </span>
                       ) : null}
                     </div>
