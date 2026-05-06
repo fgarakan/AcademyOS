@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-06 — Sprint 99: AI Suggestion Data Readiness Audit
+
+Audited every data domain in Academy OS for AI lesson planning and suggestion readiness. Documented per-domain status (template structure, session planned data, session actuals, coach notes, attendance, player observations, assessments, curriculum), identified the top 10 data fields needed next (priority-ranked), listed the 6 critical gaps that block AI suggestions today, defined 8 safe AI suggestion guardrails (never auto-apply, never mutate curriculum, confidence gate, minimum session count, director override always wins), and recommended the next 3 actions (migrations 059–063, persist block status, add source_template_version). No code changes — audit only.
+
+**Files created:**
+- `docs/ai-suggestion-data-readiness-audit.md` — Full domain audit, top-10 field priority list, guardrails, and next-action recommendations.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 98: Template Version History Readiness
 
 Template version history doesn't exist yet — no `template_versions` table, no version column. Added a placeholder "Version History" card to the fitness template detail page showing created/modified dates and an internal note: "Template version history is not yet enabled — apply migration 064 to activate." Created `docs/template-version-history-plan.md` documenting proposed `template_versions` + `template_version_blocks` tables, migration plan (064–068), RLS patterns, and the UI design.
