@@ -24,6 +24,7 @@
 | S78 | Architecture doc | `docs/voice-transcription-security-architecture.md` present. Covers data flow, hard rules, security controls, privacy, STT provider, cost controls. |
 | S79 | Transcription endpoint | `POST /api/coach/sessions/[sessionId]/transcribe` returns 503 when `OPENAI_API_KEY` not set. Returns transcript when key is set and audio is valid. Does not store audio. |
 | S80 | Audio recorder UI | "Record" button appears in question step alongside "Browser Dictation". Tapping Record asks for mic permission. Timer counts up. Tapping Stop sends audio to endpoint. "Transcribing…" shows. Transcript appends to answer. Error shows if endpoint unavailable. "Audio is used only to create a transcript and is not saved." copy visible. |
+| S85 | Director voice intake | `/director/command-center` shows text input + "Speak" button above suggestion chips. Speaking "review" or "wrap-ups" auto-selects corresponding chip. Speaking unknown term shows fallback: "I can help with: review, wrap-ups, attendance…". Typing Enter also matches. Nothing executes automatically. |
 
 ---
 

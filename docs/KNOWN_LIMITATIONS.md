@@ -7,6 +7,16 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Director Assistant Voice Intake (Sprint 85)
+
+### Voice command routing is deterministic — no AI NLU
+- **File:** `src/app/director/command-center/DirectorAssistantPanel.tsx`
+- **Impact:** Voice transcription fills the text input. `matchVoiceToSuggestion()` uses keyword matching (7 topic patterns) to select the corresponding suggestion chip response. Complex or ambiguous commands (e.g. "what's going on with the under-12s") will not match and show the fallback note. There is no multi-turn context and no memory between voice sessions.
+- **Browser support:** Voice uses `SpeechRecognition` / `webkitSpeechRecognition` — Chrome/Edge only. Unsupported browsers show a fallback note. The text input works on all browsers.
+- **No auto-actions:** Matching a voice command to a suggestion shows the response card but does not execute anything.
+
+---
+
 ## Apply Approved Wrap-Up (Sprint 84)
 
 ### applyWrapUpDraftAction writes to sessions.session_notes — full session actuals table not yet built

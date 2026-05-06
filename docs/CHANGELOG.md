@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-06 — Sprint 85: Director Assistant Voice Draft Intake V1
+
+Added voice input and a text command field to the Director Assistant Panel. A text input + `VoiceInputButton` now appears at the top of the panel. Spoken or typed commands are matched deterministically to the 7 existing suggestion topics (review, wrap-ups, attendance, assessment, placement, curriculum, sessions) — no AI required. On a match, the corresponding response card activates automatically. On no match, a safe fallback: "I can help with: review, wrap-ups, attendance, players, assessment, curriculum, and sessions." No command executes automatically. Typing Enter also triggers matching. Nothing is saved. No external API.
+
+**Files modified:**
+- `src/app/director/command-center/DirectorAssistantPanel.tsx` — Added `VoiceInputButton`, text input, `VOICE_ROUTES` matcher, command state, unmatched fallback.
+- `docs/V1_MANUAL_TEST_CHECKLIST.md` — Added S85 check.
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 85 note.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 84: Apply Approved Wrap-Up to Session Actuals
 
 The apply-to-session-actuals action was already fully built (`applyWrapUpDraftAction`). This sprint confirms the full flow: approved wrap-up → Apply button → session notes written + session marked completed + audit log written + proposed_action marked executed. Updated stale copy in `WrapUpDraftCard` safety note ("Apply action (Sprint 19) will be required" → accurate description of actual flow). Planned session and template remain untouched. Parent/player exposure: none. Migration: not required — `session_notes` and `status` columns exist.

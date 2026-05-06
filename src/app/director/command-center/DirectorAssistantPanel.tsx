@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { ClipboardList, Users, AlertTriangle, Calendar, BookOpen } from 'lucide-react'
+import { ClipboardList, Users, AlertTriangle, Calendar, BookOpen, Info } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { AssistantActionCard } from '@/components/assistant/AssistantActionCard'
+import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
 import type { RiskLevel } from '@/components/assistant/AssistantActionCard'
 
 interface Props {
@@ -136,6 +137,27 @@ const SUGGESTIONS: AssistantSuggestion[] = [
   },
 ]
 
+// Deterministic voice command routing — no AI required
+const VOICE_ROUTES: { patterns: string[]; id: string }[] = [
+  { patterns: ['review', 'needs review', 'what needs', 'today', 'queue', 'pending'], id: 'review_today' },
+  { patterns: ['wrap-up', 'wrap up', 'wrapup', 'session notes', 'coach notes', 'coach wrap'], id: 'wrap_ups' },
+  { patterns: ['attendance', 'absent', 'missing', 'absence'], id: 'attendance_concerns' },
+  { patterns: ['assessment', 'reassessment', 'evaluate', 'assessment due'], id: 'assessment_due' },
+  { patterns: ['placement', 'new player', 'new players', 'awaiting', 'placed'], id: 'pending_placements' },
+  { patterns: ['curriculum', 'customize', 'customise', 'level', 'drill', 'modify'], id: 'curriculum' },
+  { patterns: ['session', 'create session', 'template', 'generate session'], id: 'sessions' },
+]
+
+function matchVoiceToSuggestion(transcript: string): string | null {
+  const lower = transcript.toLowerCase()
+  for (const route of VOICE_ROUTES) {
+    if (route.patterns.some(p => lower.includes(p))) {
+      return route.id
+    }
+  }
+  return null
+}
+
 export function DirectorAssistantPanel({
   pendingWrapUpsCount,
   pendingPlacementsCount,
@@ -143,6 +165,8 @@ export function DirectorAssistantPanel({
   pendingReviewCount,
 }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [commandText, setCommandText] = useState('')
+  const [voiceUnmatched, setVoiceUnmatched] = useState(false)
 
   const props = { pendingWrapUpsCount, pendingPlacementsCount, assessmentDueCount, pendingReviewCount }
   const activeSuggestion = SUGGESTIONS.find(s => s.id === activeId)
@@ -157,6 +181,54 @@ export function DirectorAssistantPanel({
           <p className="text-xs text-text-muted mt-0.5">
             Select a question for a deterministic answer and direct action link. No AI required.
           </p>
+        </div>
+
+        {/* Voice / text command input */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={commandText}
+              onChange={e => {
+                setCommandText(e.target.value)
+                setVoiceUnmatched(false)
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && commandText.trim()) {
+                  const match = matchVoiceToSuggestion(commandText)
+                  if (match) {
+                    setActiveId(match)
+                    setVoiceUnmatched(false)
+                  } else {
+                    setVoiceUnmatched(true)
+                  }
+                }
+              }}
+              placeholder="Ask something or use the buttons below…"
+              className="flex-1 text-xs bg-surface-raised border border-border rounded-xl px-3 py-2 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/40"
+            />
+            <VoiceInputButton
+              label="Speak"
+              appendMode={false}
+              onTranscript={transcript => {
+                setCommandText(transcript)
+                setVoiceUnmatched(false)
+                const match = matchVoiceToSuggestion(transcript)
+                if (match) {
+                  setActiveId(match)
+                  setVoiceUnmatched(false)
+                } else {
+                  setVoiceUnmatched(true)
+                }
+              }}
+            />
+          </div>
+          {voiceUnmatched && (
+            <div className="flex items-start gap-1.5 px-3 py-2 rounded-lg bg-surface-raised border border-border text-[11px] text-text-muted">
+              <Info className="w-3 h-3 shrink-0 mt-0.5" />
+              <span>I can help with: review, wrap-ups, attendance, players, assessment, curriculum, and sessions. Try one of the options below.</span>
+            </div>
+          )}
         </div>
 
         {/* Suggestion chips */}
