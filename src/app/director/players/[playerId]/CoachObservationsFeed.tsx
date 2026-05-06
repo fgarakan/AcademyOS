@@ -39,7 +39,7 @@ export function CoachObservationsFeed({ observations, onSelectForDraft }: Props)
         <EmptyState
           icon={<MessageSquare className="w-5 h-5" />}
           title="No observations yet"
-          description="Add a manual observation or voice note below. Session recap observations also appear here after a recap is applied."
+          description="Add a coach observation or voice transcript above to begin building this player's development record. Session recap observations also appear here after a recap is applied."
         />
       </Card>
     )
@@ -111,15 +111,15 @@ export function CoachObservationsFeed({ observations, onSelectForDraft }: Props)
                 </div>
               )}
 
-              {/* Use for Draft */}
+              {/* Use for AI Draft */}
               {onSelectForDraft && (
                 <div className="flex justify-end pt-1">
                   <button
                     type="button"
                     onClick={() => onSelectForDraft(obs.content)}
-                    className="text-[11px] text-text-muted hover:text-lime transition-colors"
+                    className="text-[11px] text-lime hover:text-lime/80 transition-colors font-medium"
                   >
-                    Use for Draft →
+                    Use this note for AI Draft ↓
                   </button>
                 </div>
               )}

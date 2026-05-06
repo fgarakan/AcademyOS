@@ -20,10 +20,8 @@ import { PriorityRecommendationDraftButton } from './PriorityRecommendationDraft
 import { PriorityRecommendationDrafts, type PriorityRecommendationDraftRow } from './PriorityRecommendationDrafts'
 import { createPriorityRecommendationDraftAction } from './priorityRecommendationAction'
 import { DevelopmentSummarySection } from '@/components/player/DevelopmentSummarySection'
-import { AddObservationForm } from '@/components/player/AddObservationForm'
-import { AddVoiceNoteForm } from '@/components/player/AddVoiceNoteForm'
 import { EditDevelopmentSummaryForm } from '@/components/player/EditDevelopmentSummaryForm'
-import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
+import { Card, CardHeader, CardContent } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { PlayerProfileTabs } from './_components/PlayerProfileTabs'
 import { PlayerCurriculumAssignmentCard } from './PlayerCurriculumAssignmentCard'
@@ -1098,12 +1096,14 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      {/* AI Draft panel + observations — connected via NotesAIDraftSection */}
+      {/* Notes workflow: Capture → Structure → Review → Apply */}
       <NotesAIDraftSection
         observations={enrichedObservations}
         existingSummary={developmentSummary}
         onGenerate={generateDraftAction}
         onApply={updateSummaryAction}
+        onSubmitObservation={addObsAction}
+        onSubmitVoiceNote={addVoiceNoteServerAction}
       />
 
       {/* Edit Development Summary form */}
@@ -1148,12 +1148,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Progress Evidence Timeline */}
       <ProgressEvidenceTimeline items={enrichedObservations as any} />
-
-      {/* Add Observation form */}
-      <AddObservationForm onSubmit={addObsAction} />
-
-      {/* Voice Note form */}
-      <AddVoiceNoteForm onSubmit={addVoiceNoteServerAction} />
 
       {/* Parent Guidance Preview — director-only, read-only, not sent */}
       <ParentGuidancePreviewPanel

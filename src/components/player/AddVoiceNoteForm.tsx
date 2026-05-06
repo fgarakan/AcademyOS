@@ -46,12 +46,12 @@ export function AddVoiceNoteForm({ onSubmit }: Props) {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Mic className="w-3.5 h-3.5 text-lime" />
-          <p className="label-xs">Add Voice Note</p>
+          <p className="label-xs">Transcript-First Voice Note</p>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
         <p className="text-xs text-text-muted mb-4">
-          Use your device&apos;s dictation feature or paste a transcript. Saved as an internal observation.
+          Use device dictation or paste a transcript. Audio recording is not yet enabled — this is transcript-first. Saved as an internal observation linked to this player.
         </p>
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <div>

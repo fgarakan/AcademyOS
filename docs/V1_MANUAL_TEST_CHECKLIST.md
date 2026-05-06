@@ -280,3 +280,99 @@
 - **Unrostered attendees** (players not in the group) cannot be captured via the wrap-up drawer — they must be noted in the free-form recap and flagged via the director's Attendance Exceptions panel.
 - **Player names in observations are stored as strings**, not resolved to player IDs in the structured draft (session_wrap_up_v1). The `coach_observations` records do link to actual `player_id`.
 - **Wrap-up state is not persisted** between opens. If the drawer is closed mid-session, answers are lost. Copy is the fallback.
+
+---
+
+## Sprint 101 — Coach Notes + AI Draft Flow (2026-05-06)
+
+**Scope:** Notes tab on `/director/players/[playerId]` — Capture → Structure → Review → Apply workflow.
+
+### Workflow header and safety banner
+
+| # | Check | Expected |
+|---|---|---|
+| 1 | Open Notes tab | Workflow banner visible at top: "Notes Workflow · 1 Capture → 2 Structure → 3 Review → 4 Apply" |
+| 2 | Read safety note | "Internal only. Nothing in this workflow is shown to players or parents unless separately approved by a director." |
+
+### Step 1 — Capture: Add Manual Coach Observation
+
+| # | Check | Expected |
+|---|---|---|
+| 3 | Locate "Add Coach Observation" card | Card is visible in Step 1 — Capture section, above the observations feed |
+| 4 | See helper text | "Saved internally. Not visible to players or parents unless separately approved." |
+| 5 | Fill in Type + Observation, leave "Internal only" checked, tap "Add Observation" | "Observation saved." green success message. Form resets. |
+| 6 | Scroll to observations feed | New observation appears at top of the feed (may require page refresh if server-rendered) |
+
+### Step 1 — Capture: Add Transcript-First Voice Note
+
+| # | Check | Expected |
+|---|---|---|
+| 7 | Locate "Transcript-First Voice Note" card | Card is visible below the observation form in Step 1 |
+| 8 | See helper text | "Use device dictation or paste a transcript. Audio recording is not yet enabled — this is transcript-first." |
+| 9 | Use device dictation or paste text into Transcript field, tap "Save Voice Note" | "Voice note saved." green success message. Form resets. |
+| 10 | Scroll to observations feed | New voice note appears (may require page refresh). No audio was recorded or stored. |
+
+### Step 2 — Structure: Use Observation for AI Draft
+
+| # | Check | Expected |
+|---|---|---|
+| 11 | Find any observation in the feed | Each card shows "Use this note for AI Draft ↓" button in lime |
+| 12 | Click "Use this note for AI Draft ↓" on an observation | AI Draft panel textarea is pre-filled with the observation text |
+| 13 | Confirm downward arrow direction | The ↓ arrow indicates the draft panel is below the observations feed (correct flow) |
+
+### Step 3 — AI Draft: Generate with Key Configured
+
+| # | Check | Expected |
+|---|---|---|
+| 14 | Ensure `ANTHROPIC_API_KEY` is set in `.env.local` | Key present; dev server restarted after setting |
+| 15 | With text in the textarea, click "Draft with AI" | Button shows "Drafting…" while pending |
+| 16 | Draft returns | Confidence badge (high/medium/low) visible. Draft fields pre-filled: strengths, priorities, focus, coach summary, student-friendly summary |
+| 17 | Check AI Draft panel header | Shows "Internal only" badge in orange |
+| 18 | Check panel helper text | "AI creates a draft — not an official update. Review each field before applying." |
+
+### Step 3 — AI Draft: Not-Configured Fallback
+
+| # | Check | Expected |
+|---|---|---|
+| 19 | Remove `ANTHROPIC_API_KEY` from `.env.local` and restart dev server | Key absent |
+| 20 | Click "Draft with AI" | Orange warning box appears with Settings icon: "AI Draft is not configured..." or similar not-configured message |
+| 21 | No data is sent | Confirm no API call to Anthropic occurred (check server logs — no Anthropic request should appear) |
+
+### Step 3 — AI Draft: Overwrite Warning
+
+| # | Check | Expected |
+|---|---|---|
+| 22 | Player has an existing development summary | Summary card shows content |
+| 23 | Generate a draft | Orange overwrite warning: "This will replace the current development summary. Review carefully before applying." |
+| 24 | Click "I understand — show apply form" | Edit form appears for review |
+
+### Step 4 — Apply Draft to Summary
+
+| # | Check | Expected |
+|---|---|---|
+| 25 | Edit any field in the draft form | Changes are reflected in the textarea |
+| 26 | Click "Apply Draft to Summary" | Button shows "Applying…" while pending |
+| 27 | Success state | "Draft applied. Development summary updated." in green |
+| 28 | Refresh the page | Development Summary card shows updated content with "AI Draft Applied" badge |
+| 29 | Verify internal-only | Applied summary card shows "Internal" badge in orange |
+
+### Verify show_to_student and show_to_parent remain false
+
+| # | Check | Expected |
+|---|---|---|
+| 30 | In Supabase dashboard, query `player_development_summary` for this player | `show_to_student = false`, `show_to_parent = false`, `source = 'ai_draft'` |
+| 31 | Open `/player` portal for this player (if profile_id is linked) | No development summary fields from the Notes workflow appear |
+| 32 | Open `/parent` portal for a linked guardian | No raw coach notes, observations, or draft content appears |
+
+### Empty state checks
+
+| # | Check | Expected |
+|---|---|---|
+| 33 | Player with no observations | Feed shows "No observations yet. Add a coach observation or voice transcript above…" |
+| 34 | Player with no development summary | Summary card shows "No development summary yet. Add observations above, then use AI Draft…" |
+
+### Manual test pass criteria
+
+All checks 1–34 pass, or any failure is documented with root cause.
+TypeScript is clean (`npx tsc --noEmit` exits 0).
+No migration created. No schema changed. No parent/player data exposed.

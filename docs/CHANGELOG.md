@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-06 — Sprint 101: Coach Notes + AI Draft UX Polish + Manual Test Hardening
+
+UX polish pass on the Notes tab in `/director/players/[playerId]`. Reordered the workflow so Capture forms appear before the AI Draft panel. Added a workflow banner ("Capture → Structure → Review → Apply"), internal safety badge, and clearer copy throughout. Folded AddObservationForm and AddVoiceNoteForm into NotesAIDraftSection so capture is in the correct position in the flow. Added Sprint 101 manual test checklist (34 checks). No schema, migration, database.types.ts, auth, parent/player, or AI prompt changes.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/NotesAIDraftSection.tsx` — major rework: workflow header, internal safety banner, Capture → Structure → Review → Apply layout, AddObservationForm and AddVoiceNoteForm folded in with new props
+- `src/app/director/players/[playerId]/CoachObservationsFeed.tsx` — "Use this note for AI Draft ↓" button (was muted text link), better empty state
+- `src/components/player/AIDraftPanel.tsx` — "Internal only" badge, helper copy: "AI creates a draft — not an official update", note that applying saves to internal summary only
+- `src/components/player/AddVoiceNoteForm.tsx` — header renamed "Transcript-First Voice Note", copy clarifies transcript-first, no audio recording
+- `src/components/player/AddObservationForm.tsx` — header renamed "Add Coach Observation", helper copy added
+- `src/components/player/DevelopmentSummarySection.tsx` — "Applied Development Summary" header with "Internal" badge and "AI Draft Applied" badge, improved empty states
+- `src/app/director/players/[playerId]/page.tsx` — two new props on NotesAIDraftSection (onSubmitObservation, onSubmitVoiceNote), removed redundant standalone form renders, removed unused imports
+- `docs/V1_MANUAL_TEST_CHECKLIST.md` — Sprint 101 section added (34 checks: capture, voice note, AI draft, overwrite, apply, show_to_student/parent verification, empty states)
+- `docs/CHANGELOG.md` — this entry
+
+**Guardrails confirmed:**
+- No schema or migration created
+- No database.types.ts changes
+- No AI prompt or Anthropic API logic modified
+- No parent/player route exposure
+- No voice recording or audio upload added
+- `show_to_student` and `show_to_parent` remain `false` on all AI-applied drafts (unchanged)
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 100: AI Note Structuring MVP — Security Hardening
 
 Added staff membership gate to `generateNoteDraftAction` in `src/lib/actions/notes.ts`. The action now verifies the caller holds an active `academy_director`, `head_coach`, or `coach` membership before calling the Anthropic API. Non-staff authenticated users receive a safe error message and the note text is never forwarded to the external API. TypeScript clean. No schema, migration, or database.types.ts changes. No player/parent exposure changes.

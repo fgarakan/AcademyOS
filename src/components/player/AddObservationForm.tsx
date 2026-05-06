@@ -43,9 +43,12 @@ export function AddObservationForm({ onSubmit }: Props) {
   return (
     <Card>
       <CardHeader>
-        <p className="label-xs">Add Observation</p>
+        <p className="label-xs">Add Coach Observation</p>
       </CardHeader>
       <CardContent className="pt-0">
+        <p className="text-xs text-text-muted mb-4">
+          Saved internally. Not visible to players or parents unless separately approved.
+        </p>
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-[11px] text-text-muted mb-1.5">Type</label>

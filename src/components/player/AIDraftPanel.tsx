@@ -91,19 +91,21 @@ export function AIDraftPanel({ existingSummary, onGenerate, onApply, initialText
         <div className="flex items-center gap-2">
           <Sparkles className="w-3.5 h-3.5 text-lime" />
           <p className="label-xs">AI Draft</p>
-          <span className="text-[10px] text-text-muted uppercase tracking-wide ml-auto">
-            Coach review required
-          </span>
+          <span className="text-[10px] text-status-orange uppercase tracking-wide ml-auto">Internal only</span>
         </div>
       </CardHeader>
       <CardContent className="pt-0 space-y-4">
+
+        <p className="text-xs text-text-muted leading-relaxed">
+          AI creates a draft — not an official update. Review each field before applying. Applying saves to the internal development summary only. Nothing is shared with players or parents.
+        </p>
 
         {/* Input */}
         <div>
           <label className="block text-[11px] text-text-muted mb-1.5">
             Note text
             <span className="ml-1 font-normal normal-case">
-              (paste an observation, voice transcript, or type a note)
+              (paste an observation or voice transcript, or click &ldquo;Use this note for AI Draft&rdquo; on an observation above)
             </span>
           </label>
           <textarea
