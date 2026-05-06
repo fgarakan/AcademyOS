@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-06 — Sprint 103: Gate Evidence Foundation Schema
+
+Schema-only sprint. Creates the `player_gate_status` table and extends `requirement_evidence_links` with a nullable `gate_id` column, establishing the foundation for per-player curriculum gate progress tracking.
+
+**Migration created:**
+- `supabase/migrations/059_player_gate_status.sql` — `player_gate_status` table with 6-state status lifecycle, `gate_criterion_snapshot` freeze field, `is_player_visible`/`is_parent_visible` flags defaulting false; nullable `gate_id` extension on `requirement_evidence_links`; bootstrap INSERT for existing active players; RLS (staff see + staff manage); updated_at trigger; 6 indexes
+
+**Docs created:**
+- `docs/gate-evidence-foundation.md` — purpose, field reference, status lifecycle, snapshot rationale, bootstrap strategy, RLS model, safety guarantees, next sprints
+
+**Docs updated:**
+- `docs/CHANGELOG.md` — this entry
+- `docs/KNOWN_LIMITATIONS.md` — migration 059 pending live application
+
+**Guardrails confirmed:**
+- No UI changes
+- No parent/player exposure (`is_player_visible` and `is_parent_visible` default false; no portal reads this table)
+- No level movement logic
+- No AI decision-making
+- No changes to existing `assessments`, `curriculum_gates`, `requirement_evidence_links` behavior
+- No changes to `database.types.ts` (regenerate after migration applied to live DB)
+- `requirement_evidence_links.requirement_id` remains NOT NULL (Sprint 104 will address gate-only evidence path)
+
+**TypeScript:** clean — no application code changed.
+
+---
+
 ## 2026-05-06 — Sprint 101: Coach Notes + AI Draft UX Polish + Manual Test Hardening
 
 UX polish pass on the Notes tab in `/director/players/[playerId]`. Reordered the workflow so Capture forms appear before the AI Draft panel. Added a workflow banner ("Capture → Structure → Review → Apply"), internal safety badge, and clearer copy throughout. Folded AddObservationForm and AddVoiceNoteForm into NotesAIDraftSection so capture is in the correct position in the flow. Added Sprint 101 manual test checklist (34 checks). No schema, migration, database.types.ts, auth, parent/player, or AI prompt changes.

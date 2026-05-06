@@ -292,6 +292,27 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - **Impact on session list:** The sessions list at `/director/sessions` is unaffected — it only queries `sessions` and `session_blocks` which have correct policies.
 - **Fix:** Apply `supabase/migrations/056_session_block_exercises_rls.sql` to the live Supabase instance via the SQL Editor. Paste the full file contents and run. No code changes needed after application — exercises will render automatically.
 
+### `player_gate_status` and `requirement_evidence_links.gate_id` — migration 059 pending live application
+
+- **Status:** Migration 059 (`supabase/migrations/059_player_gate_status.sql`) creates the `player_gate_status` table and adds a nullable `gate_id` column to `requirement_evidence_links`. **The live database still needs this migration applied.**
+- **Impact until applied:** No per-player gate progress rows exist. Gate evidence continues to flow through `proposed_actions` via the existing `recordGateEvidenceAction` stopgap (Sprint 103 did not change application code). Sprint 104 server action rewrite will not function until this migration is applied.
+- **Bootstrap rows:** The migration includes an idempotent bootstrap INSERT that seeds `not_started` `player_gate_status` rows for all players with an active `player_curriculum_states` record. This runs automatically as part of the migration.
+- **Known constraint:** `requirement_evidence_links.requirement_id` remains NOT NULL. Gate-only evidence rows (no matching track requirement) cannot be stored in `requirement_evidence_links` without a `requirement_id`. Sprint 104 must resolve this before rewriting `recordGateEvidenceAction`.
+- **Fix:** Open Supabase → SQL Editor, paste the full contents of `supabase/migrations/059_player_gate_status.sql`, and Run.
+- **Verification after applying:**
+  ```sql
+  SELECT policyname FROM pg_policies WHERE tablename = 'player_gate_status' ORDER BY policyname;
+  -- Expect: "Staff manage player gate status", "Staff see player gate status"
+
+  SELECT COUNT(*) FROM player_gate_status;
+  -- Expect: > 0 if any players have a player_curriculum_states row with gates at their level
+
+  SELECT column_name FROM information_schema.columns
+  WHERE table_name = 'requirement_evidence_links' AND column_name = 'gate_id';
+  -- Expect: one row returned
+  ```
+- **Type regeneration:** After applying, run `supabase gen types typescript` to regenerate `src/lib/supabase/database.types.ts`. Do not edit the types file manually.
+
 ### `template_block_exercises` missing RLS policies — migration 058 pending live application
 
 - **Status:** `template_block_exercises` was created in migration 006 with `ENABLE ROW LEVEL SECURITY` but no SELECT/INSERT/UPDATE/DELETE policies. Migration 055 was written to fix this but was never applied to the live database before migrations 056–057 were committed. Migration 058 supersedes 055 with idempotent DROP/CREATE guards and explicit `WITH CHECK` on INSERT and UPDATE. **Migration 058 must be applied to the live Supabase instance.**
