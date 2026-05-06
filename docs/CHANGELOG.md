@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-06 — Sprint 77: Coach Assistant Voice Input V1
+
+Added browser-native voice input to every question step in the Coach Wrap-Up assistant. A "Speak" mic button appears below the answer textarea. When tapped, it uses `SpeechRecognition` / `webkitSpeechRecognition` to capture speech and appends the transcript to the existing answer. On unsupported browsers (Firefox, iOS Safari), the button is replaced with a clear fallback note. No audio is recorded, stored, or uploaded. No external API. Coach reviews and edits every transcript before saving. The existing save flow is unchanged.
+
+**Files created:**
+- `src/components/assistant/VoiceInputButton.tsx` — Reusable client component; browser SpeechRecognition only; idle/listening/unsupported states; appends transcript to existing answer; fallback note on unsupported browsers.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Imported and placed `VoiceInputButton` below the answer textarea on every question step.
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 77 voice input limitations section.
+- `docs/V1_MANUAL_TEST_CHECKLIST.md` — Updated to Sprint 77; added S77 quick check row, Sprint 77 voice input checks table, and known voice input limitations section.
+- `docs/BRIAN_INTERACTIVE_DEMO_SCRIPT.md` — Added optional Step 7b for voice input demo with speak-and-review script.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 76: End-to-End Assistant Demo Polish
 
 Cleaned up sidebar navigation to show only built routes. Removed unbuilt items (Intelligence, Competition, Reports, Configuration) from director sidebar. Updated the manual test checklist with a full Sprint 67–76 quick-check table and 13-step assistant demo flow. Updated the Brian interactive demo script with a structured 10-step assistant demo path covering both director and coach views. Added Sprint 72 voice output and Sprint 73 director assistant limitations to the known limitations doc.

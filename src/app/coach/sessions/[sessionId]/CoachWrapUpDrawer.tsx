@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy, Plus, Volume2, VolumeX } from 'lucide-react'
+import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
 import { saveSessionRecapAction } from './actions'
 import { saveWrapUpDraftAction, type BlockCompletionDraft } from './saveWrapUpDraftAction'
 import { saveWrapUpObservationsAction, type PlayerObservationInput } from './saveWrapUpObservationsAction'
@@ -755,6 +756,15 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
           rows={4}
           autoFocus
           className="w-full bg-surface-raised border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/40 resize-none"
+        />
+
+        <VoiceInputButton
+          onTranscript={transcript => {
+            const prev = answers[stepIndex]
+            const separator = prev.trim() ? ' ' : ''
+            setAnswer(stepIndex, prev + separator + transcript)
+          }}
+          appendMode
         />
 
         <p className="text-[10px] text-text-muted">

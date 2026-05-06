@@ -95,6 +95,26 @@ Tap the "Voice" toggle button.
 
 ---
 
+### Step 7b — (Optional, Chrome/Edge only) Voice input
+Below the answer field, tap the "Speak" mic button.
+
+**Say into the phone:**
+> "Everyone was here, we completed the movement and forehand blocks, Sarah needs help with grip."
+
+**Point out:**
+- Button turns red and shows "Listening…" while active
+- Transcript appears in the answer field when speaking stops
+- Coach can edit the text before tapping Next
+- Small note: "You can speak your answer, then edit before saving."
+
+**Say:**
+> "The coach can now speak answers directly into the assistant. The browser converts speech to text — no audio is recorded, nothing is uploaded. The coach reviews and edits the transcript before anything saves."
+
+**Guardrail to emphasise:**
+> "This is voice-to-text only. The coach still reviews every answer. Nothing is saved until they tap Save Wrap-Up."
+
+---
+
 ### Step 8 — Coach completes wrap-up and reviews summary
 Complete all 6 questions. Arrive at the summary phase.
 

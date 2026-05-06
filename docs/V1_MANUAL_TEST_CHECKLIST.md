@@ -1,12 +1,12 @@
 # V1 Manual Test Checklist — Coach Operating Loop + Assistant Demo
 
-**Sprint:** 76
+**Sprint:** 77
 **Date:** 2026-05-06
-**Scope:** Sprints 67–76 — role-based UX simplification, coach session mobile layout, director mission control, coach assistant text flow, voice output, director assistant command center, review cards, personality guidelines, demo polish
+**Scope:** Sprints 67–77 — role-based UX simplification, coach session mobile layout, director mission control, coach assistant text flow, voice output, director assistant command center, review cards, personality guidelines, demo polish, voice input V1
 
 ---
 
-## Sprint 67–76 Quick Check
+## Sprint 67–77 Quick Check
 
 | Check | Area | Expected |
 |---|---|---|
@@ -20,6 +20,7 @@
 | S74 | AssistantActionCard | Response card shows: suggested action, why, expandable "What changes?", risk badge, safety note, dismiss, action link. |
 | S75 | Personality guidelines | `docs/assistant-personality-and-voice-guidelines.md` present. `src/lib/assistant/personality.ts` present. |
 | S76 | Sidebar clean | Intelligence, Competition, Reports, Configuration removed from sidebar. Only built routes shown. |
+| S77 | Voice input | "Speak" mic button visible below textarea in question step (Chrome/Edge). Tapping starts listening. Transcript appends to answer. Unsupported browsers show fallback note. |
 
 ---
 
@@ -49,6 +50,33 @@
 - Voice reads assistant prompt questions only — not answers, notes, or summaries.
 - Voice is off by default. No autoplay.
 - Not all browsers support `speechSynthesis`. Falls back silently (no toggle shown on unsupported browsers).
+
+---
+
+## Sprint 77 Voice Input Checks
+
+| Step | Action | Expected |
+|---|---|---|
+| 77.1 | Open wrap-up drawer in Chrome/Edge | "Speak" mic button visible below answer textarea |
+| 77.2 | Tap "Speak" | Button turns red, shows "Listening…", page microphone permission prompt may appear first time |
+| 77.3 | Say: "Everyone was here, we completed the movement and forehand blocks, Sarah needs help with grip." | Transcript appears appended to the answer textarea |
+| 77.4 | Edit the transcript text | Textarea accepts manual edits normally |
+| 77.5 | Tap "Stop" while listening | Recognition stops, transcript is inserted, state returns to idle |
+| 77.6 | Tap Next | Proceeds to next question; voice input available on each question |
+| 77.7 | Complete all 6 questions with voice answers | Summary phase shows all transcribed answers |
+| 77.8 | Tap Save Wrap-Up | Saves normally — voice input does not change the save flow |
+| 77.9 | Open in Firefox or iOS Safari | "Speak" button is hidden; note reads: "Voice input is not supported in this browser. You can still type or use your keyboard dictation." |
+| 77.10 | Verify no audio recorded | No audio blob, no network request for audio, no storage of raw audio |
+
+## Known Voice Input Limitations (Sprint 77)
+
+- Browser `SpeechRecognition` / `webkitSpeechRecognition` only — Chrome and Edge supported, Firefox and iOS Safari not supported.
+- Single-shot recognition — each tap starts one recognition session that ends when the coach stops speaking or taps Stop.
+- No interim/streaming results — transcript appears only after the utterance ends.
+- No audio stored. No audio uploaded. Transcription is entirely in-browser.
+- No Whisper, no ElevenLabs, no external STT backend.
+- Coach must review and can edit the transcript before saving.
+- Nothing saves automatically from voice input.
 
 ---
 

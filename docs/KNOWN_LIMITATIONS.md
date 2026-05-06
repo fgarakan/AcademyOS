@@ -7,6 +7,18 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Coach Assistant Voice Input (Sprint 77)
+
+### Voice input is browser-native only — no STT backend
+- **File:** `src/components/assistant/VoiceInputButton.tsx`
+- **Impact:** Voice input uses `window.SpeechRecognition` / `window.webkitSpeechRecognition`. Supported in Chrome and Edge. Not available in Firefox or iOS Safari. Mic button is hidden on unsupported browsers with a fallback note.
+- **Limitation:** Single-shot mode only — recognition starts on tap, ends when the coach stops speaking. No continuous streaming. No interim results. No Whisper, no ElevenLabs, no external API.
+- **Audio storage:** None. No audio is recorded, uploaded, or stored. Transcription happens entirely in the browser.
+- **Fallback:** Coach can type normally or use device-native keyboard dictation on any browser.
+- **Fix path:** Sprint 80+ — integrate Whisper API or similar STT backend for broader browser support and better accuracy.
+
+---
+
 ## Coach Assistant Voice Output (Sprint 72)
 
 ### Voice output is prototype-only — browser speechSynthesis
