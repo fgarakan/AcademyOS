@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-06 — Sprint 53: Coach Player List Sort + Context
+
+Upgraded the coach player list with client-side sort controls (name / group / level / last assessed) and added focus_areas chips and last-assessed date display.
+
+**Files created:**
+- `src/app/coach/players/CoachPlayersClient.tsx` — Client component. Four sort buttons (name, group, level desc, last assessed desc). Player rows now show focus area chips (up to 3, overflow count badge), group name, and level label. Last assessed date shows when sorted by that key.
+
+**Files modified:**
+- `src/app/coach/players/page.tsx` — Server component now maps `assignedPlayers` to a plain serializable shape and passes it to `CoachPlayersClient`. All fetch logic unchanged.
+
+**Safety:** Read-only. No mutations. No schema changes. No voice pipeline bypass.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 52: Director Signals Dashboard V1
 
 Added `/director/signals` page aggregating four attention buckets: players without a group, players without a curriculum level, pending coach wrap-up drafts, and new private lesson requests. Each bucket is a card with linked rows routing to the relevant page. Sidebar now includes a "Signals" nav item.
