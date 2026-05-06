@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 83: Director Wrap-Up Approve/Reject Polish
+
+The director review queue approve/reject controls for session wrap-up drafts were fully built in prior sprints. This sprint confirms and polishes: `WrapUpDraftDecisionControls` (Approve, Reject, Needs Clarification + optional note), `updateWrapUpDraftDecisionAction` (full auth/academy/session checks, safe status transitions), `ApplyWrapUpDraftControls` (apply button post-approval), and `applyWrapUpDraftAction` (session notes write + audit log). Updated decision copy to be clearer: "Nothing changes until you explicitly apply. No player, parent, or curriculum record is touched by this action."
+
+**Files modified:**
+- `src/app/director/review/WrapUpDraftDecisionControls.tsx` — Updated decision warning copy.
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 83 note.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 82: Voice Privacy Audit Readiness
 
 Added best-effort audit log writes to the transcription endpoint — event metadata only (academy, user, session, provider, file size, `audio_retained: false`). Transcript text and audio are never logged. Created `docs/voice-audit-log-plan.md` documenting current coverage, planned future fields (no schema change needed — all fit in existing `payload` JSONB), and the planned director voice privacy settings card. Privacy UI copy is already in `AudioRecorderButton`.

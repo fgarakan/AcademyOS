@@ -44,8 +44,7 @@ export function WrapUpDraftDecisionControls({ proposedActionId }: Props) {
       <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border text-[11px] text-text-muted">
         <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5 text-status-orange" />
         <span>
-          Approving marks this wrap-up summary as reviewed. Apply action (Sprint 19) will write
-          the official session actual — nothing changes automatically.
+          Approving marks this wrap-up as reviewed. Use the Apply button that appears next to write the official session actual. Rejecting records your decision — the draft is preserved but not applied. Nothing changes until you explicitly apply. No player, parent, or curriculum record is touched by this action.
         </span>
       </div>
 

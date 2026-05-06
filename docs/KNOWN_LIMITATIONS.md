@@ -7,6 +7,14 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Director Wrap-Up Review (Sprint 83)
+
+### Approve/Reject controls are built and functional
+- **Files:** `src/app/director/review/WrapUpDraftDecisionControls.tsx`, `src/app/director/review/actions.ts` (`updateWrapUpDraftDecisionAction`), `src/app/director/review/ApplyWrapUpDraftControls.tsx`, `src/app/director/review/applyWrapUpDraftAction.ts`
+- **Status:** Fully implemented. Approve → marks `proposed_action.status = 'approved'`. Apply (separate button, post-approval) → writes session notes, marks session `completed`, writes audit log, marks `proposed_action.status = 'executed'`. Reject → marks `proposed_action.status = 'rejected'`. Clarification Needed → marks `'clarification_needed'`. All transitions include optional reviewer note. No parent/player exposure. No curriculum/template mutation.
+
+---
+
 ## Voice Privacy Settings (Sprint 82)
 
 ### No director voice settings UI yet
