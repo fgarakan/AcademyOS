@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-06 — Sprint 49: Director Session Builder from Template V1
+
+Added a dedicated session creation page (`/director/sessions/new`) with template picker, date, coach, and notes. Uses existing `generateSessionFromTemplateAction`.
+
+**Files created:**
+- `src/app/director/sessions/new/page.tsx` — Server component: fetches all academy templates + coaches, renders `SessionFromTemplateForm`. Empty state links to `/director/fitness/templates`.
+- `src/app/director/sessions/new/SessionFromTemplateForm.tsx` — Client component: template selector (all templates, any category), session name (pre-filled from template), date picker, coach selector, optional notes, create button. On success shows confirmation with link to new session.
+
+**Files modified:**
+- `src/app/director/sessions/page.tsx` — Added "New Session" button in `PageHeader` linking to `/director/sessions/new`. Made header a flex row (title + button).
+
+**Safety:** Uses existing `generateSessionFromTemplateAction` — that action verifies auth, academy scope, and does not overwrite any template. Explicit director click required.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 48: Coach Block Status Persistence Readiness
 
 Wired block status from live session execution into the Wrap-Up drawer via localStorage. Documented missing DB persistence.

@@ -183,10 +183,19 @@ export default async function DirectorSessionsPage() {
 
 function PageHeader() {
   return (
-    <div>
-      <p className="page-eyebrow">Director</p>
-      <h1 className="page-title">Sessions</h1>
-      <p className="page-subtitle">Generated session snapshots for this academy.</p>
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <p className="page-eyebrow">Director</p>
+        <h1 className="page-title">Sessions</h1>
+        <p className="page-subtitle">Generated session snapshots for this academy.</p>
+      </div>
+      <Link
+        href="/director/sessions/new"
+        className="btn-lime flex items-center gap-1.5 text-xs px-3 py-2 shrink-0 mt-1"
+      >
+        <Zap className="w-3.5 h-3.5" />
+        New Session
+      </Link>
     </div>
   )
 }
