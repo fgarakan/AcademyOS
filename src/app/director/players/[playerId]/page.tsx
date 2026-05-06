@@ -58,6 +58,7 @@ import type { UtrHistoryPoint } from '@/components/player/UtrHistoryChart'
 import { GuardianLinkingPanel, type LinkedGuardian } from './GuardianLinkingPanel'
 import { PlayerPortalLinkPanel } from './PlayerPortalLinkPanel'
 import { QuickAssessmentPanel } from './QuickAssessmentPanel'
+import { QuickAssessmentHistoryCard } from './QuickAssessmentHistoryCard'
 
 interface PageProps {
   params: { playerId: string }
@@ -506,6 +507,44 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     }
   }
 
+  // ─── Recent ad-hoc assessments ────────────────────────────────────────────
+  interface AdHocAssessmentRow {
+    id: string
+    assessed_date: string
+    technical_score: number | null
+    tactical_score: number | null
+    movement_score: number | null
+    competition_score: number | null
+    behavioral_score: number | null
+    notes: string | null
+    assessed_by: string
+  }
+  const { data: adHocRows } = await rawDb
+    .from('assessments')
+    .select('id, assessed_date, technical_score, tactical_score, movement_score, competition_score, behavioral_score, notes, assessed_by')
+    .eq('player_id', params.playerId)
+    .eq('academy_id', academyId)
+    .eq('type', 'ad_hoc')
+    .order('created_at', { ascending: false })
+    .limit(3)
+
+  const rawAdHoc = (adHocRows ?? []) as AdHocAssessmentRow[]
+  const adHocAssessorIds = Array.from(new Set(rawAdHoc.map(r => r.assessed_by)))
+  const assessorNameMap = new Map<string, string>()
+  if (adHocAssessorIds.length > 0) {
+    const { data: assessorProfiles } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', adHocAssessorIds)
+    for (const p of (assessorProfiles ?? [])) {
+      assessorNameMap.set(p.id, p.display_name)
+    }
+  }
+  const adHocAssessments = rawAdHoc.map(r => ({
+    ...r,
+    assessed_by_name: assessorNameMap.get(r.assessed_by) ?? null,
+  }))
+
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6 items-start">
@@ -547,6 +586,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
         {/* Quick Assessment — director ad-hoc domain rating */}
         <QuickAssessmentPanel playerId={params.playerId} />
+
+        {/* Quick Assessment history */}
+        <QuickAssessmentHistoryCard assessments={adHocAssessments} />
 
       </div>
 

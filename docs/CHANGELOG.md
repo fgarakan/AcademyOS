@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-06 — Sprint 58: Director Quick Assessment History Card
+
+Added a "Quick Rating History" card to the director player profile Overview tab, showing the last 3 ad-hoc assessments with date, domain labels, note snippet, and assessor name.
+
+**Files created:**
+- `src/app/director/players/[playerId]/QuickAssessmentHistoryCard.tsx` — Pure display component. Shows last 3 ad-hoc assessments. Converts raw scores (25/50/75/100) back to labels (Needs support/Developing/Solid/Strong) with color coding. Shows note snippet with line-clamp. Empty state when no ratings exist yet.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Added `QuickAssessmentHistoryCard` import. Added fetch: queries `assessments` for `type = 'ad_hoc'`, `player_id`, `academy_id`, ordered by `created_at DESC`, limit 3. Batch-fetches assessor display names. Passes enriched array to `QuickAssessmentHistoryCard` in Overview left column below `QuickAssessmentPanel`.
+
+**Safety:** Director-only read. No parent/player exposure. No schema changes. No level movement.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 57: Session Block Status Persistence — Migration Plan
 
 **STOPPED FOR MIGRATION APPROVAL.** Frontend implementation gated on migration approval and type regeneration.
