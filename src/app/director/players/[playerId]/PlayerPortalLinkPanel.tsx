@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Link2, Link2Off, User, AlertTriangle } from 'lucide-react'
+import { Link2, Link2Off, User, AlertTriangle, Copy, Check } from 'lucide-react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { linkPlayerPortalAction, unlinkPlayerPortalAction } from './playerPortalLinkAction'
 
@@ -10,6 +10,7 @@ interface Props {
   linkedProfileId: string | null
   linkedProfileEmail?: string | null
   linkedProfileName?: string | null
+  playerName?: string | null
 }
 
 export function PlayerPortalLinkPanel({
@@ -17,6 +18,7 @@ export function PlayerPortalLinkPanel({
   linkedProfileId,
   linkedProfileEmail,
   linkedProfileName,
+  playerName,
 }: Props) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -25,6 +27,7 @@ export function PlayerPortalLinkPanel({
   const [currentEmail, setCurrentEmail] = useState(linkedProfileEmail ?? null)
   const [currentName, setCurrentName] = useState(linkedProfileName ?? null)
   const [isPending, startTransition] = useTransition()
+  const [copied, setCopied] = useState(false)
 
   function handleLink() {
     if (!email.trim()) return
@@ -57,6 +60,23 @@ export function PlayerPortalLinkPanel({
       } else {
         setError(res.error ?? 'Failed to unlink account.')
       }
+    })
+  }
+
+  function handleCopyInstructions() {
+    const name = playerName ?? 'the player'
+    const text = [
+      `Portal access instructions for ${name}:`,
+      '',
+      '1. Go to the academy portal and click "Sign Up".',
+      `2. Use the email address that will be entered in the Player Portal Access panel below.`,
+      '3. Once signed up, ask your director to link the account from the player profile.',
+      '',
+      'Portal access gives the player a personal view of their training mission, session history, and goals.',
+    ].join('\n')
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
     })
   }
 
@@ -99,8 +119,28 @@ export function PlayerPortalLinkPanel({
           </>
         ) : (
           <>
+            {/* Invite guidance — no email system yet */}
+            <div className="p-2 rounded bg-surface-raised border border-border space-y-1.5">
+              <p className="text-[10px] uppercase tracking-widest text-text-muted">Invite instructions</p>
+              <p className="text-[11px] text-text-secondary leading-snug">
+                No email invite system is configured. Share these steps with the player:
+              </p>
+              <ol className="text-[10px] text-text-muted space-y-0.5 list-decimal list-inside leading-relaxed">
+                <li>Sign up at the academy portal</li>
+                <li>Use their assigned email address</li>
+                <li>Ask the director to link the account here</li>
+              </ol>
+              <button
+                onClick={handleCopyInstructions}
+                className="flex items-center gap-1 text-[10px] text-lime hover:opacity-80 transition-opacity mt-1"
+              >
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {copied ? 'Copied' : 'Copy invite instructions'}
+              </button>
+            </div>
+
             <p className="text-[11px] text-text-muted leading-snug">
-              Link a player account by email so they can access the player portal. The account must already exist.
+              Once they&apos;ve signed up, enter their email below to link the account.
             </p>
             <input
               type="email"

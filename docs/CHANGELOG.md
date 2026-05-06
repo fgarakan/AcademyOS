@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-06 — Sprint 47: Director Player Invite Flow V1
+
+Added portal invite guidance to the Player Portal Access panel. No email system exists — directors get copy-to-clipboard instructions to share with players manually.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/PlayerPortalLinkPanel.tsx` — Added `playerName` prop. When portal is NOT linked, shows "Invite instructions" section with numbered steps, and a "Copy invite instructions" button that writes a formatted plaintext message to clipboard (player name, signup steps, what to do after). Replaced generic "account must already exist" note with clearer flow.
+- `src/app/director/players/[playerId]/page.tsx` — Pass `player.full_name` as `playerName` prop to `PlayerPortalLinkPanel`.
+
+**Not built:** Real email sending — no email provider is configured. Manual instructions are the correct V1.
+
+**Safety:** No external service. No account creation. No schema changes. Clipboard only.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 46: Coach Wrap-Up → Observation Auto-Draft
 
 Added assisted "Add note from recap" section in the coach Wrap-Up summary phase. V1 uses manual assisted flow — no AI parsing.

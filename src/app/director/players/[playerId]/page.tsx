@@ -600,6 +600,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           linkedProfileId={player.profile_id ?? null}
           linkedProfileEmail={linkedPortalEmail}
           linkedProfileName={linkedPortalName}
+          playerName={player.full_name ?? null}
         />
 
         {hasCurriculum && (
