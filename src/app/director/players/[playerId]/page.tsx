@@ -56,6 +56,7 @@ import { PlayerTrainingExposureTimeline } from '@/components/player/PlayerTraini
 import { PlayerGapSummaryPanel } from '@/components/player/PlayerGapSummaryPanel'
 import type { UtrHistoryPoint } from '@/components/player/UtrHistoryChart'
 import { GuardianLinkingPanel, type LinkedGuardian } from './GuardianLinkingPanel'
+import { PlayerPortalLinkPanel } from './PlayerPortalLinkPanel'
 
 interface PageProps {
   params: { playerId: string }
@@ -487,6 +488,23 @@ export default async function PlayerProfilePage({ params }: PageProps) {
       profileId: row.guardians!.profile_id,
     }))
 
+  // ─── Player portal profile (Sprint 44) ──────────────────────────────────
+  // Fetch profile linked to players.profile_id to show email/name in the panel.
+  let linkedPortalEmail: string | null = null
+  let linkedPortalName: string | null = null
+  if (player.profile_id) {
+    const { data: portalProfile } = await rawDb
+      .from('profiles')
+      .select('email, display_name')
+      .eq('id', player.profile_id)
+      .eq('academy_id', academyId)
+      .single()
+    if (portalProfile) {
+      linkedPortalEmail = portalProfile.email ?? null
+      linkedPortalName = portalProfile.display_name ?? null
+    }
+  }
+
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6 items-start">
@@ -574,6 +592,14 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           playerId={params.playerId}
           academyId={academyId}
           linkedGuardians={linkedGuardians}
+        />
+
+        {/* Player Portal Access panel (Sprint 44) */}
+        <PlayerPortalLinkPanel
+          playerId={params.playerId}
+          linkedProfileId={player.profile_id ?? null}
+          linkedProfileEmail={linkedPortalEmail}
+          linkedProfileName={linkedPortalName}
         />
 
         {hasCurriculum && (

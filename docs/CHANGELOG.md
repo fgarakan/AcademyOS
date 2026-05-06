@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-06 — Sprint 44: Player Portal Profile Linkage UI
+
+Added Player Portal Access panel to the director player profile Overview tab, below the Guardian linking panel.
+
+**Files created:**
+- `src/app/director/players/[playerId]/playerPortalLinkAction.ts` — Server actions: `linkPlayerPortalAction` (find profile by email in academy, set `players.profile_id`) and `unlinkPlayerPortalAction` (set `players.profile_id = null`). Both academy-scoped with director/head_coach auth check.
+- `src/app/director/players/[playerId]/PlayerPortalLinkPanel.tsx` — Client component: shows linked portal status (profile email + name); inline email form to link by email; unlink button; warning that this controls player portal access; no invite or email sending.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Added `PlayerPortalLinkPanel` import. Added portal profile fetch (profile email + display_name from `players.profile_id`). Renders `PlayerPortalLinkPanel` in Overview right column.
+
+**Safety:** No automatic account creation. No email sending. Uses existing `players.profile_id` column. Player portal access is controlled by this link — warning shown to director. Academy-scoped.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 43: Director Private Lesson Request Review + Accept
 
 Audit confirmed: director private lesson review with full accept/decline/notes UI was already built in commit `66bc146` as part of the director dashboard drilldown work.
