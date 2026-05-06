@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import {
   ChevronUp, ChevronDown, Plus, Trash2, RefreshCw,
   Clock, MessageSquare, Check, Loader2, X, Activity, AlertCircle,
@@ -47,6 +47,11 @@ export function FitnessTemplateBuilderClient({
 }: FitnessTemplateBuilderClientProps) {
   const libraryCount = exerciseLibraryCount ?? exerciseLibrary.length
   const [blocks, setBlocks] = useState<FitnessBlock[]>(initialBlocks)
+
+  // Sync client state when server delivers new data after router.refresh()
+  useEffect(() => {
+    setBlocks(initialBlocks)
+  }, [initialBlocks])
   const [isPending, startTransition] = useTransition()
   const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
   const [addingBlock, setAddingBlock] = useState(false)

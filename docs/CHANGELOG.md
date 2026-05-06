@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-06 — Sprint 90: Template Auto-Populate Live UI Refresh
+
+Root cause: `FitnessTemplateBuilderClient` initializes `useState(initialBlocks)` once on mount. After `populateFitnessTemplateBlocksAction` succeeds and `router.refresh()` is called, the Server Component re-renders with new blocks data but React does not reset existing state — exercises never appeared without a hard reload.
+
+Fix: Added `useEffect(() => { setBlocks(initialBlocks) }, [initialBlocks])` to sync client state whenever the server delivers new props. `router.refresh()` was already in place in `PopulateFitnessBlocksButton` — only the client-state sync was missing.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` — Added `useEffect` import + state sync on `initialBlocks` change.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 89: Fix template block exercise RLS
 
 Root cause: `template_block_exercises` was created in migration 006 with RLS enabled but no policies. Migration 055 wrote the correct fix but was never applied to the live database. Migration 058 supersedes 055 with idempotent `DROP POLICY IF EXISTS` guards and separate SELECT / INSERT / UPDATE / DELETE policies (explicit `WITH CHECK` on INSERT and UPDATE), scoped through `block_id → template_blocks → templates → academy_id`. No app code changes — the `populateFitnessTemplateBlocksAction` was already correct.
