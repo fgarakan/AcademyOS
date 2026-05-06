@@ -38,7 +38,15 @@ export function CoachSessionExecutionClient({
   const [status, setStatus] = useState(initialStatus)
   const [sessionNotes, setSessionNotes] = useState(initialSessionNotes)
 
-  // Keyed by exercise id
+  // Per-exercise status: done / skipped / modified / planned
+  // Persisted via completedMap (done+modified→true, skipped+planned→false) when saving.
+  type ExerciseStatus = 'planned' | 'done' | 'skipped' | 'modified'
+  const [exerciseStatusMap, setExerciseStatusMap] = useState<Record<string, ExerciseStatus>>(() => {
+    const init: Record<string, ExerciseStatus> = {}
+    for (const ex of exercises) init[ex.id] = ex.completed ? 'done' : 'planned'
+    return init
+  })
+  // completedMap is derived from exerciseStatusMap for backward-compat with handleSave
   const [completedMap, setCompletedMap] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {}
     for (const ex of exercises) init[ex.id] = ex.completed
@@ -94,9 +102,16 @@ export function CoachSessionExecutionClient({
     exercisesByBlock.set(ex.block_id, list)
   }
 
-  function toggleExercise(id: string) {
-    setCompletedMap(prev => ({ ...prev, [id]: !prev[id] }))
+  function setExerciseStatus(id: string, s: ExerciseStatus) {
+    setExerciseStatusMap(prev => ({ ...prev, [id]: s }))
+    setCompletedMap(prev => ({ ...prev, [id]: s === 'done' || s === 'modified' }))
     setSaveResult(null)
+  }
+
+  function toggleExercise(id: string) {
+    const current = exerciseStatusMap[id] ?? 'planned'
+    const next = current === 'done' ? 'planned' : 'done'
+    setExerciseStatus(id, next)
   }
 
   function markAttendance(playerId: string, status: 'present' | 'absent' | 'late' | 'excused') {
@@ -122,11 +137,24 @@ export function CoachSessionExecutionClient({
   function handleSave() {
     setSaveResult(null)
     startTransition(async () => {
-      const exerciseUpdates = exercises.map(ex => ({
-        id: ex.id,
-        completed: completedMap[ex.id] ?? false,
-        notes: notesMap[ex.id]?.trim() || null,
-      }))
+      const exerciseUpdates = exercises.map(ex => {
+        const exStatus = exerciseStatusMap[ex.id] ?? 'planned'
+        const rawNotes = notesMap[ex.id]?.trim() || ''
+        // Prepend status label only for skipped/modified to aid director diff view
+        let notes: string | null = rawNotes || null
+        if (exStatus === 'skipped' && rawNotes && !rawNotes.startsWith('[Skipped]')) {
+          notes = `[Skipped] ${rawNotes}`
+        } else if (exStatus === 'skipped' && !rawNotes) {
+          notes = '[Skipped]'
+        } else if (exStatus === 'modified' && rawNotes && !rawNotes.startsWith('[Modified]')) {
+          notes = `[Modified] ${rawNotes}`
+        }
+        return {
+          id: ex.id,
+          completed: completedMap[ex.id] ?? false,
+          notes,
+        }
+      })
       const result = await saveAction({
         sessionId,
         status,
@@ -144,7 +172,7 @@ export function CoachSessionExecutionClient({
         id: ex.id,
         completed: completedMap[ex.id] ?? false,
         notes: notesMap[ex.id]?.trim() || null,
-      }))
+      })) as Array<{ id: string; completed: boolean; notes: string | null }>
       const result = await saveAction({
         sessionId,
         status: newStatus,
@@ -157,7 +185,8 @@ export function CoachSessionExecutionClient({
   }
 
   const totalExercises = exercises.length
-  const completedCount = Object.values(completedMap).filter(Boolean).length
+  const completedCount = Object.values(exerciseStatusMap).filter(s => s === 'done' || s === 'modified').length
+  const skippedCount = Object.values(exerciseStatusMap).filter(s => s === 'skipped').length
 
   return (
     <div className="space-y-6">
@@ -293,8 +322,14 @@ export function CoachSessionExecutionClient({
             <div>
               <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Progress</p>
               <p className="text-sm font-mono font-bold text-lime">
-                {completedCount} / {totalExercises} exercises completed
+                {completedCount} / {totalExercises} exercises done
+                {skippedCount > 0 && (
+                  <span className="text-status-red ml-2 text-xs font-normal">
+                    · {skippedCount} skipped
+                  </span>
+                )}
               </p>
+              <p className="text-[10px] text-text-muted mt-0.5">Session edits only — master template is unchanged.</p>
             </div>
           )}
 
@@ -380,54 +415,83 @@ export function CoachSessionExecutionClient({
 
               {blockExercises.length > 0 ? (
                 <CardContent className="pt-0 space-y-3">
-                  {blockExercises.map(ex => (
-                    <div key={ex.id} className="space-y-2">
-                      <button
-                        type="button"
-                        onClick={() => toggleExercise(ex.id)}
-                        className="w-full flex items-start gap-3 text-left group"
-                      >
-                        <div className={`mt-0.5 w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center transition-all ${
-                          completedMap[ex.id]
-                            ? 'bg-status-green border-status-green'
-                            : 'border-border bg-surface-raised group-hover:border-lime/50'
-                        }`}>
-                          {completedMap[ex.id] && (
-                            <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
-                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium transition-colors ${
-                            completedMap[ex.id] ? 'text-text-muted line-through' : 'text-text-primary'
-                          }`}>
-                            {ex.exerciseName}
-                          </p>
-                          {ex.exerciseCategory && (
-                            <p className="text-[10px] uppercase tracking-wider text-text-muted">
-                              {ex.exerciseCategory}
+                  {blockExercises.map((ex, exIdx) => {
+                    const exStatus = exerciseStatusMap[ex.id] ?? 'planned'
+                    return (
+                      <div key={ex.id} className="space-y-2 border-t border-border first:border-0 pt-2 first:pt-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-sm font-medium ${
+                              exStatus === 'done' ? 'text-text-muted line-through' :
+                              exStatus === 'skipped' ? 'text-status-red/70 line-through' :
+                              exStatus === 'modified' ? 'text-status-orange' :
+                              'text-text-primary'
+                            }`}>
+                              <span className="text-[10px] font-mono text-text-muted mr-1.5">{exIdx + 1}.</span>
+                              {ex.exerciseName}
                             </p>
-                          )}
+                            {ex.exerciseCategory && (
+                              <p className="text-[10px] uppercase tracking-wider text-text-muted">
+                                {ex.exerciseCategory}
+                                {ex.duration_min ? ` · ${ex.duration_min} min` : ''}
+                              </p>
+                            )}
+                          </div>
+                          {/* Exercise status buttons — session-level only, template unchanged */}
+                          <div className="flex gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setExerciseStatus(ex.id, exStatus === 'done' ? 'planned' : 'done')}
+                              className={`text-[10px] px-2 py-0.5 rounded border font-medium transition-colors ${
+                                exStatus === 'done'
+                                  ? 'bg-status-green/10 border-status-green/40 text-status-green'
+                                  : 'bg-surface border-border text-text-muted hover:border-status-green/40 hover:text-status-green'
+                              }`}
+                            >
+                              Done
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setExerciseStatus(ex.id, exStatus === 'modified' ? 'planned' : 'modified')}
+                              className={`text-[10px] px-2 py-0.5 rounded border font-medium transition-colors ${
+                                exStatus === 'modified'
+                                  ? 'bg-status-orange/10 border-status-orange/40 text-status-orange'
+                                  : 'bg-surface border-border text-text-muted hover:border-status-orange/40 hover:text-status-orange'
+                              }`}
+                            >
+                              Modified
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setExerciseStatus(ex.id, exStatus === 'skipped' ? 'planned' : 'skipped')}
+                              className={`text-[10px] px-2 py-0.5 rounded border font-medium transition-colors ${
+                                exStatus === 'skipped'
+                                  ? 'bg-status-red/10 border-status-red/40 text-status-red'
+                                  : 'bg-surface border-border text-text-muted hover:border-status-red/40 hover:text-status-red'
+                              }`}
+                            >
+                              Skip
+                            </button>
+                          </div>
                         </div>
-                        {ex.duration_min && (
-                          <p className="text-xs font-mono text-text-muted shrink-0">{ex.duration_min} min</p>
-                        )}
-                      </button>
-                      <div className="pl-8">
+                        {/* Session note for this exercise */}
                         <textarea
                           value={notesMap[ex.id] ?? ''}
                           onChange={e => {
                             setNotesMap(prev => ({ ...prev, [ex.id]: e.target.value }))
                             setSaveResult(null)
                           }}
-                          placeholder="Add note…"
+                          placeholder={
+                            exStatus === 'skipped' ? 'Skip reason…' :
+                            exStatus === 'modified' ? 'What changed…' :
+                            'Session note…'
+                          }
                           rows={1}
                           className="w-full text-xs bg-surface-raised border border-border rounded-lg px-2.5 py-1.5 text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-lime/50 transition-colors"
                         />
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </CardContent>
               ) : (
                 <CardContent className="pt-0">

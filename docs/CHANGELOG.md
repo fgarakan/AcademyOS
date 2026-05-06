@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-06 — Sprint 94: Coach Live Session Exercise Editing V1
+
+Added explicit Done / Modified / Skip status buttons per exercise in `CoachSessionExecutionClient`. Previously exercises only had a boolean checkbox; now each exercise shows three status buttons. Status maps to `session_block_exercises.completed` (done/modified→true, skipped→false) and prepends `[Skipped]` or `[Modified]` to notes so the director diff view can distinguish them. Added skipped-count to the progress display. Added "Session edits only — master template is unchanged" safety label. All changes affect `session_block_exercises` only — `template_block_exercises` is never touched.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — Added `exerciseStatusMap`, `setExerciseStatus`, Done/Modified/Skip buttons per exercise, skipped-count display, safety label.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 93: Coach Assigned Sessions View Polish
 
 Rewrote `CoachSessionsPage` (`/coach/sessions`) to show Today / Upcoming / Completed clearly. Today sessions render as prominent cards with an "Open" CTA button; active sessions get a lime highlight. Upcoming and Completed use compact rows with status badges. Removed the "Coming soon" footer. Added a recent-completed-sessions query. Hides cancelled sessions from Upcoming.
