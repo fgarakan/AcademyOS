@@ -1,8 +1,8 @@
 # V1 Manual Test Checklist — Coach Operating Loop + Assistant Demo
 
-**Sprint:** 80
+**Sprint:** 87
 **Date:** 2026-05-06
-**Scope:** Sprints 67–80 — role-based UX, mobile layout, director mission control, coach assistant, voice output, director assistant, review cards, personality, demo polish, voice input, transcription architecture, transcription endpoint, audio recorder UI
+**Scope:** Sprints 67–87 — role-based UX, mobile layout, director mission control, coach assistant, voice output, director assistant, review cards, personality, demo polish, voice input, transcription architecture, transcription endpoint, audio recorder UI, name guardrails, audit log, wrap-up approve/apply, director voice intake, TTS plan, demo hardening
 
 ---
 
@@ -25,6 +25,8 @@
 | S79 | Transcription endpoint | `POST /api/coach/sessions/[sessionId]/transcribe` returns 503 when `OPENAI_API_KEY` not set. Returns transcript when key is set and audio is valid. Does not store audio. |
 | S80 | Audio recorder UI | "Record" button appears in question step alongside "Browser Dictation". Tapping Record asks for mic permission. Timer counts up. Tapping Stop sends audio to endpoint. "Transcribing…" shows. Transcript appends to answer. Error shows if endpoint unavailable. "Audio is used only to create a transcript and is not saved." copy visible. |
 | S85 | Director voice intake | `/director/command-center` shows text input + "Speak" button above suggestion chips. Speaking "review" or "wrap-ups" auto-selects corresponding chip. Speaking unknown term shows fallback: "I can help with: review, wrap-ups, attendance…". Typing Enter also matches. Nothing executes automatically. |
+| S86 | TTS stop button | "Stop" button appears next to "Voice on" toggle when voice output is active. Tapping Stop cancels speech synthesis. `docs/assistant-tts-upgrade-plan.md` present. |
+| S87 | Demo hardening | Full demo flow works end-to-end. All voice copy is clear about audio not being stored. Error states visible and safe. `docs/BRIAN_INTERACTIVE_DEMO_SCRIPT.md` updated to Sprint 87 flow. |
 
 ---
 
@@ -81,6 +83,45 @@
 - No Whisper, no ElevenLabs, no external STT backend.
 - Coach must review and can edit the transcript before saving.
 - Nothing saves automatically from voice input.
+
+---
+
+## Sprint 78–87 Voice + Approval Loop Checks
+
+| Step | Area | Action | Expected |
+|---|---|---|---|
+| 78.1 | Architecture doc | Check file exists | `docs/voice-transcription-security-architecture.md` present and complete |
+| 79.1 | Transcription endpoint | Call `POST /api/coach/sessions/{id}/transcribe` without key | Returns 503 + "Production transcription is not configured. You can still type or use browser dictation." |
+| 79.2 | Auth guard | Call endpoint unauthenticated | Returns 401 |
+| 79.3 | MIME guard | Send wrong MIME type | Returns 415 Unsupported Media Type |
+| 79.4 | Size guard | Send file >4MB | Returns 413 |
+| 80.1 | Record button | Open wrap-up drawer | "Record" button visible in question step |
+| 80.2 | Record flow | Tap Record | Mic permission prompt (first time). Timer starts. |
+| 80.3 | Stop flow | Tap Stop | "Transcribing…" appears. Transcript (or error) appears in textarea. |
+| 80.4 | No-key fallback | With no OPENAI_API_KEY | Error: "Production transcription is not configured. You can still type or use browser dictation." |
+| 80.5 | Privacy copy | At rest | "Audio is used only to create a transcript and is not saved." visible below Record button |
+| 80.6 | Auto-stop | Let recording exceed 60s | Recording stops automatically at 60s |
+| 80.7 | Both options | Question step | "Record" and "Browser Dictation" both visible with "or" separator |
+| 81.1 | Name detection (match) | Speak/type a roster player name in an answer | Summary shows "Roster names mentioned" card with player's name |
+| 81.2 | Name detection (no-match) | Type a name not on roster | Summary shows orange warning: "Name not on roster — do not save as player note unless you confirm" |
+| 81.3 | Common words excluded | Type "Today Everyone completed" | "Today" and "Everyone" not flagged as unmatched names |
+| 82.1 | Audit log | Successful transcription with key | audit_logs row created: action=voice_transcription.completed, audio_retained=false |
+| 82.2 | No transcript in audit | Check audit log row | payload does NOT contain transcript text |
+| 83.1 | Approve button | Open pending wrap-up in review queue | Approve, Reject, Needs Clarification buttons visible |
+| 83.2 | Approve action | Tap Approve | Status changes to approved. Apply button appears. |
+| 83.3 | Reject action | Tap Reject | Status changes to rejected. Item preserved (not deleted). |
+| 84.1 | Apply action | Tap Apply on approved item | Session notes updated. Session marked completed. Audit log written. proposed_action.status = executed. |
+| 84.2 | Template safe | After apply | Template blocks unchanged. Curriculum unchanged. Player profiles unchanged. |
+| 85.1 | Director voice | `/director/command-center` Speak "review" | "What needs review today?" chip activates. Response card shown. |
+| 85.2 | Director text | Type "wrap up" in input + Enter | "Show pending coach wrap-ups" chip activates. |
+| 85.3 | Unknown fallback | Speak something unrelated | Fallback note: "I can help with: review, wrap-ups, attendance, players, assessment, curriculum, and sessions." |
+| 85.4 | No auto-action | Voice command matched | Response card shown. No data changed. No page navigated automatically. |
+| 86.1 | Stop button | Enable voice output in wrap-up | "Stop" button appears next to "Voice on" toggle |
+| 86.2 | Stop cancels speech | Tap Stop while speaking | Speech synthesis cancels immediately |
+| 86.3 | TTS plan doc | Check file | `docs/assistant-tts-upgrade-plan.md` present |
+| 87.1 | Parent portal safe | After completing full voice flow | `/parent` shows no internal coach notes. No raw observations. No voice transcript. |
+| 87.2 | Player portal safe | After completing full voice flow | `/player` shows no coach observations. No attendance flags for individuals. |
+| 87.3 | Audio never stored | Full flow | No audio blob in browser storage (check Application → IndexedDB → Local Storage). No audio in Supabase storage. |
 
 ---
 

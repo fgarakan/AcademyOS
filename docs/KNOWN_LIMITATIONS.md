@@ -7,6 +7,16 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Voice Demo Hardening (Sprint 87)
+
+### Voice flow is demo-ready but requires OPENAI_API_KEY for production transcription
+- **Status:** Full end-to-end flow documented and UI-complete. Coach audio recording → secure endpoint → Whisper transcript → coach edits → wrap-up save → director review → approve → apply. All states handle gracefully when API key is absent.
+- **Remaining gap for live transcription:** Set `OPENAI_API_KEY` in server environment.
+- **Parent/player safety:** Verified — no internal coach notes, transcript, or observations reach parent or player portals through any voice action.
+- **Manual QA:** 35-check test table added to `docs/V1_MANUAL_TEST_CHECKLIST.md` covering Sprints 78–87.
+
+---
+
 ## TTS Upgrade Readiness (Sprint 86)
 
 ### Production TTS is documented but not yet built

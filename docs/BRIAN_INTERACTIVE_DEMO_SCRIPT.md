@@ -1,7 +1,153 @@
 # Brian Interactive Demo Script
 
-**Sprint:** 76
+**Sprint:** 87
 **Date:** 2026-05-06
+
+---
+
+## Voice Assistant Demo Path (Sprints 67–87) — Production
+
+This is the recommended demo for showing the full voice-assisted wrap-up and review workflow.
+
+### Pre-demo setup
+- Log in as a coach user
+- Have one session in `/coach/sessions` in "planned" or "in_progress" state
+- Session should have a roster of 2–5 players
+- Director account available for the review section
+- (Optional) Set `OPENAI_API_KEY` in `.env.local` to demo live Whisper transcription
+
+---
+
+### Step 1 — Director opens Command Center
+Navigate to `/director/command-center` as director.
+
+**Say:**
+> "The director starts here. One text or voice command to see what needs attention."
+
+**Demo voice input:**
+Speak "what needs review" into the Speak button.
+> "I just said 'what needs review' — the system matched it and surfaced the review queue count. No AI required."
+
+**Point out:**
+- Text + voice input at top of assistant panel
+- "What needs review today?" chip auto-selected
+- Response card with live count, why, action link
+
+---
+
+### Step 2 — Director sees pending wrap-ups
+Tap "Open Review Queue" → wrap-ups tab.
+
+**Say:**
+> "Every coach wrap-up is here — nothing becomes official without director review."
+
+---
+
+### Step 3 — Switch to coach session
+Open a session in `/coach/sessions`. Navigate to session detail.
+
+**Say:**
+> "The coach sees a clean session page. The most important action is the lime button at the top."
+
+---
+
+### Step 4 — Coach opens Wrap-Up
+Tap "Wrap Up Session."
+
+**Say:**
+> "Six questions. Under 60 seconds. The assistant asks one at a time."
+
+**Point out:**
+- "Academy OS asks" prefix
+- Progress bar
+- "Under 60 sec" label
+
+---
+
+### Step 5 — Coach answers Q1 with voice
+Tap the "Record" button below the answer textarea.
+Speak: "Everyone was here."
+Tap Stop.
+
+**Say:**
+> "The coach recorded a short audio clip. It was sent to a secure server, transcribed by Whisper, and the audio was immediately discarded. The transcript appears here — the coach can edit it before saving."
+
+**Point out:**
+- Timer showing recording duration
+- "Transcribing…" state
+- Transcript appears in textarea
+- Privacy copy: "Audio is used only to create a transcript and is not saved."
+
+**If OPENAI_API_KEY not set:**
+> "In this environment, the transcription endpoint is not configured. You'll see a clear fallback message. The coach can still type or use the 'Browser Dictation' option on Chrome/Edge."
+
+---
+
+### Step 6 — Coach uses quick answer or browser dictation
+For Q2, tap "All completed" quick button.
+For Q3, tap "Browser Dictation" and speak an answer.
+
+**Say:**
+> "Multiple input modes: quick buttons for yes/no, production audio recorder, and browser dictation as a fallback. The coach always edits before saving."
+
+---
+
+### Step 7 — Coach reaches summary
+Complete all 6 questions and reach the summary phase.
+
+**Point out:**
+- "Here's what I understood" header
+- Block completion counts
+- "Not shared with parents or players" note
+- Name detection: if a name was spoken, roster match or warning is shown
+- "Save Wrap-Up" button
+
+**Say:**
+> "Before saving, the coach reviews a clean summary. If they mentioned a name not on the roster, the system flags it. Nothing is official yet."
+
+---
+
+### Step 8 — Coach saves wrap-up
+Tap "Save Wrap-Up."
+
+**Say:**
+> "Saved. Recap goes to director review. No parent notification. No level change. No template modified."
+
+---
+
+### Step 9 — Director approves
+As director, navigate to `/director/review` → wrap-ups tab.
+
+**Say:**
+> "The wrap-up is here. The director sees the structured summary — block completions, changes from plan, next focus, and flagged players."
+
+**Point out:**
+- Approve button
+- Optional decision note
+- "Nothing changes until you explicitly apply" copy
+- Apply button (post-approval)
+
+---
+
+### Step 10 — Director applies wrap-up
+Tap Approve, then Apply.
+
+**Say:**
+> "Approved. Apply writes the coach summary to session notes and marks the session completed. An audit log is written. Template, curriculum, attendance records, and player profiles are untouched."
+
+---
+
+### Bonus: Parent/player portals are unchanged
+Navigate to `/parent` and `/player`.
+
+**Say:**
+> "Parents and players see zero change from any of this. The system controls what each role can see — internal coach observations never leak."
+
+---
+
+## Demo in one sentence
+
+> "The coach speaks. The system transcribes safely, the coach reviews, saves, and the director approves — nothing is permanent without human confirmation at every step."
 
 ---
 

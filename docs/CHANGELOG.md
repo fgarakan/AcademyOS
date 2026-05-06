@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-06 — Sprint 87: End-to-End Voice Assistant Demo Hardening
+
+Hardened the full voice assistant demo flow (Sprints 78–87) for production demo readiness. Updated Brian demo script with a complete 10-step voice+approval path covering: director voice command, coach audio recording, transcript review, name guardrails, wrap-up save, director approve/apply. Added a comprehensive Sprint 78–87 QA checklist covering 35 test cases: transcription endpoint guards (auth, MIME, size), audio recorder states, name detection, audit log, approve/reject/apply controls, director voice routing, TTS stop button, parent/player portal safety. Updated documentation for current sprint scope.
+
+**Files modified:**
+- `docs/BRIAN_INTERACTIVE_DEMO_SCRIPT.md` — Complete voice+approval demo path (Sprints 67–87).
+- `docs/V1_MANUAL_TEST_CHECKLIST.md` — Updated to Sprint 87; added 35-check Sprint 78–87 QA table.
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 87 note.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 86: Assistant Voice Quality + TTS Upgrade Readiness
 
 Documented the full production TTS upgrade plan including: why browser `speechSynthesis` is prototype-only, production TTS options (OpenAI TTS recommended, ElevenLabs premium), voice personality spec per role, what can/cannot be spoken aloud, cost controls, caching policy, academy voice settings design, accessibility rules, and a phased implementation roadmap (V2: OpenAI TTS, V3: ElevenLabs). Added "Stop Speaking" button next to the voice toggle in CoachWrapUpDrawer — visible only when voice output is active. Updated assistant-personality-and-voice-guidelines.md with link to TTS upgrade plan.
