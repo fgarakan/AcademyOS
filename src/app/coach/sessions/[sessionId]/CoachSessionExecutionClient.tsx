@@ -50,6 +50,17 @@ export function CoachSessionExecutionClient({
     return init
   })
 
+  // Block progress state — keyed by block id; stored locally, feeds into Wrap-Up
+  const [blockStatusMap, setBlockStatusMap] = useState<Record<string, 'planned' | 'in_progress' | 'completed' | 'skipped' | 'modified'>>(() => {
+    const init: Record<string, 'planned' | 'in_progress' | 'completed' | 'skipped' | 'modified'> = {}
+    for (const b of blocks) init[b.id] = 'planned'
+    return init
+  })
+
+  function setBlockStatus(blockId: string, s: 'planned' | 'in_progress' | 'completed' | 'skipped' | 'modified') {
+    setBlockStatusMap(prev => ({ ...prev, [blockId]: s }))
+  }
+
   const [saveResult, setSaveResult] = useState<SaveExecutionResult | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -289,11 +300,23 @@ export function CoachSessionExecutionClient({
         </CardContent>
       </Card>
 
-      {/* Block-level note */}
-      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border text-xs text-text-muted">
-        <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        <span>Block-level partial/skipped tracking will be added in a later sprint. Use exercise completion and session notes for V1.</span>
-      </div>
+      {/* Block progress summary */}
+      {blocks.length > 0 && (() => {
+        const completed = blocks.filter(b => blockStatusMap[b.id] === 'completed').length
+        const skipped = blocks.filter(b => blockStatusMap[b.id] === 'skipped').length
+        const modified = blocks.filter(b => blockStatusMap[b.id] === 'modified').length
+        return (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border text-xs text-text-muted">
+            <Info className="w-3.5 h-3.5 shrink-0 text-lime" />
+            <span>
+              Blocks: <span className="text-status-green font-medium">{completed} done</span>
+              {skipped > 0 && <>, <span className="text-status-orange font-medium">{skipped} skipped</span></>}
+              {modified > 0 && <>, <span className="text-status-blue font-medium">{modified} modified</span></>}
+              {' · Mark status per block below'}
+            </span>
+          </div>
+        )
+      })()}
 
       {/* Blocks + exercises */}
       <div className="space-y-4">
@@ -315,6 +338,23 @@ export function CoachSessionExecutionClient({
                 {block.notes && (
                   <p className="text-xs text-text-muted mt-1">{block.notes}</p>
                 )}
+                {/* Per-block status tracker — local state, feeds into Wrap-Up */}
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {(['planned', 'in_progress', 'completed', 'skipped', 'modified'] as const).map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setBlockStatus(block.id, s)}
+                      className={`text-[10px] px-2 py-0.5 rounded border font-medium transition-colors ${
+                        blockStatusMap[block.id] === s
+                          ? blockStatusActiveClass(s)
+                          : 'bg-surface border-border text-text-muted hover:border-text-muted'
+                      }`}
+                    >
+                      {blockStatusLabel(s)}
+                    </button>
+                  ))}
+                </div>
               </CardHeader>
 
               {blockExercises.length > 0 ? (
@@ -427,5 +467,19 @@ function attendanceActiveClass(s: string) {
     absent: 'bg-status-red/10 text-status-red border-status-red/50',
     late: 'bg-status-orange/10 text-status-orange border-status-orange/50',
     excused: 'bg-status-blue/10 text-status-blue border-status-blue/50',
+  }[s] ?? 'bg-surface-raised text-text-primary border-lime/50'
+}
+
+function blockStatusLabel(s: string): string {
+  return { planned: 'Planned', in_progress: 'Active', completed: 'Done', skipped: 'Skipped', modified: 'Modified' }[s] ?? s
+}
+
+function blockStatusActiveClass(s: string): string {
+  return {
+    planned: 'bg-surface-raised text-text-secondary border-lime/30',
+    in_progress: 'bg-lime/10 text-lime border-lime/50',
+    completed: 'bg-status-green/10 text-status-green border-status-green/40',
+    skipped: 'bg-status-orange/10 text-status-orange border-status-orange/40',
+    modified: 'bg-status-blue/10 text-status-blue border-status-blue/40',
   }[s] ?? 'bg-surface-raised text-text-primary border-lime/50'
 }

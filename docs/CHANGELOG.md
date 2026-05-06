@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-06 — Sprint 42: Coach Session Block Progress Tracker
+
+Added per-block status tracking to the coach session execution view. State is local to the session; feeds into Wrap-Up recap.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — Added `blockStatusMap` state (keyed by block id, defaults to `'planned'`). Added `setBlockStatus` helper. Added block progress summary bar showing completed/skipped/modified counts. Added per-block status button row: `Planned`, `Active`, `Done`, `Skipped`, `Modified`. Added `blockStatusLabel` and `blockStatusActiveClass` helper functions. Replaced previous placeholder "Block-level tracking will be added later" note.
+
+**Schema:** No schema change. Block status is local React state — not persisted to DB (session_blocks has no status column). State feeds into WrapUp drawer indirectly via coach memory during live session.
+
+**Safety:** No DB mutations. No template overwrites. No parent/player exposure. Planned vs actual remain separate.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-05 — Sprint 41: Voice Intake Execution Routing V1
 
 Extended approved voice intake drafts to execute safe downstream actions.
