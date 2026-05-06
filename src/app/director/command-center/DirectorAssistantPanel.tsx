@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronRight, ClipboardList, Users, AlertTriangle, Calendar, BookOpen, ShieldCheck } from 'lucide-react'
-import Link from 'next/link'
+import { ClipboardList, Users, AlertTriangle, Calendar, BookOpen } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
+import { AssistantActionCard } from '@/components/assistant/AssistantActionCard'
+import type { RiskLevel } from '@/components/assistant/AssistantActionCard'
 
 interface Props {
   pendingWrapUpsCount: number
@@ -22,6 +23,9 @@ interface AssistantSuggestion {
 interface AssistantResponse {
   summary: string
   why: string
+  whatWillChange?: string
+  visibility?: string
+  riskLevel?: RiskLevel
   action: { label: string; href: string }
   safetyNote?: string
 }
@@ -36,6 +40,9 @@ const SUGGESTIONS: AssistantSuggestion[] = [
         ? 'No pending drafts. The review queue is clear.'
         : `${pendingReviewCount} item${pendingReviewCount !== 1 ? 's' : ''} waiting for your review — including ${pendingWrapUpsCount > 0 ? `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''}` : 'pending drafts'}.`,
       why: 'Coach wrap-ups and other drafts require director review before anything becomes official.',
+      whatWillChange: 'Each item you approve updates the relevant record. Rejected items are discarded.',
+      visibility: 'Director only until approved.',
+      riskLevel: 'medium' as RiskLevel,
       action: { label: 'Open Review Queue', href: '/director/review' },
       safetyNote: 'Nothing changes until you approve each item.',
     }),
@@ -49,6 +56,9 @@ const SUGGESTIONS: AssistantSuggestion[] = [
         ? 'No coach wrap-ups waiting. All recent sessions have been reviewed.'
         : `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} submitted and waiting for your review.`,
       why: 'Coaches submitted their end-of-session notes. Review to approve attendance, observations, and flags.',
+      whatWillChange: 'Approved wrap-ups update session records and may flag players for follow-up.',
+      visibility: 'Coach + Director (internal). Not shared with parents or players.',
+      riskLevel: 'medium' as RiskLevel,
       action: { label: 'Review Wrap-Ups', href: '/director/review' },
       safetyNote: 'Coach notes are internal — not shared with parents or players until approved.',
     }),
@@ -60,6 +70,9 @@ const SUGGESTIONS: AssistantSuggestion[] = [
     response: () => ({
       summary: 'Players with 2 or more absences in the last 30 days are flagged in Signals.',
       why: 'Attendance patterns are an early indicator of engagement or family challenges.',
+      whatWillChange: 'Viewing signals does not change any records.',
+      visibility: 'Director only.',
+      riskLevel: 'low' as RiskLevel,
       action: { label: 'View Signals', href: '/director/signals' },
     }),
   },
@@ -72,6 +85,8 @@ const SUGGESTIONS: AssistantSuggestion[] = [
         ? 'No players are currently flagged as reassessment due.'
         : `${assessmentDueCount} player${assessmentDueCount !== 1 ? 's' : ''} flagged as reassessment due.`,
       why: 'Overdue assessments prevent curriculum progression and accurate coaching.',
+      visibility: 'Director + Head Coach.',
+      riskLevel: 'medium' as RiskLevel,
       action: { label: 'View Players', href: '/director/players' },
       safetyNote: 'Reassessments require explicit director or head coach initiation.',
     }),
@@ -85,6 +100,8 @@ const SUGGESTIONS: AssistantSuggestion[] = [
         ? 'All players have been placed. No pending placements.'
         : `${pendingPlacementsCount} player${pendingPlacementsCount !== 1 ? 's' : ''} created and waiting for placement to be completed.`,
       why: 'New players cannot join groups or receive coaching plans until placement is done.',
+      visibility: 'Director only.',
+      riskLevel: 'medium' as RiskLevel,
       action: { label: 'View Players', href: '/director/players' },
       safetyNote: 'Players activate only after placement is finalised by a director.',
     }),
@@ -96,8 +113,11 @@ const SUGGESTIONS: AssistantSuggestion[] = [
     response: () => ({
       summary: 'Curriculum customisation tools are in the Curriculum Explorer.',
       why: 'Curriculum levels, drills, and progressions can be viewed and customised per academy.',
+      whatWillChange: 'Changes to curriculum levels affect all players assigned to that level.',
+      visibility: 'Director only.',
+      riskLevel: 'high' as RiskLevel,
       action: { label: 'Open Curriculum Explorer', href: '/director/curriculum' },
-      safetyNote: 'Curriculum changes are director-only and do not affect ongoing sessions.',
+      safetyNote: 'Curriculum changes are director-only and do not affect ongoing sessions immediately.',
     }),
   },
   {
@@ -107,6 +127,9 @@ const SUGGESTIONS: AssistantSuggestion[] = [
     response: () => ({
       summary: 'Session generation is available from the Sessions screen. Choose a template and schedule a date.',
       why: 'Sessions generated from templates preserve block structure and coach notes.',
+      whatWillChange: 'A new session is created in planned state. Blocks are copied from the template.',
+      visibility: 'Director + assigned Coach.',
+      riskLevel: 'low' as RiskLevel,
       action: { label: 'Go to Sessions', href: '/director/sessions' },
       safetyNote: 'Generating a session does not notify coaches automatically.',
     }),
@@ -155,31 +178,18 @@ export function DirectorAssistantPanel({
           ))}
         </div>
 
-        {/* Response card */}
+        {/* Response card using AssistantActionCard */}
         {activeResponse && activeSuggestion && (
-          <div className="rounded-xl border border-lime/20 bg-lime/3 px-4 py-4 space-y-3 animate-fade-in">
-            <div>
-              <p className="text-[9px] uppercase tracking-widest text-lime/60 mb-1">Response</p>
-              <p className="text-sm text-text-primary">{activeResponse.summary}</p>
-            </div>
-            <div>
-              <p className="text-[9px] uppercase tracking-widest text-text-muted mb-0.5">Why it matters</p>
-              <p className="text-xs text-text-secondary">{activeResponse.why}</p>
-            </div>
-            {activeResponse.safetyNote && (
-              <div className="flex items-start gap-2 text-[10px] text-text-muted">
-                <ShieldCheck className="w-3 h-3 text-lime/60 shrink-0 mt-0.5" />
-                <span>{activeResponse.safetyNote}</span>
-              </div>
-            )}
-            <Link
-              href={activeResponse.action.href}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-lime hover:opacity-80 transition-opacity"
-            >
-              {activeResponse.action.label}
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          <AssistantActionCard
+            suggestedAction={activeResponse.summary}
+            why={activeResponse.why}
+            whatWillChange={activeResponse.whatWillChange}
+            visibility={activeResponse.visibility}
+            riskLevel={activeResponse.riskLevel}
+            primaryAction={activeResponse.action}
+            safetyNote={activeResponse.safetyNote}
+            onDismiss={() => setActiveId(null)}
+          />
         )}
       </CardContent>
     </Card>

@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-06 — Sprint 74: Director Assistant Review/Approval Cards
+
+Created reusable `AssistantActionCard` component. Updated `DirectorAssistantPanel` to use it for all suggestion responses. Each response now shows: suggested action summary, why it matters, what will change (expandable), visibility scope, risk level badge, action link, safety note, and dismiss button.
+
+**Files created:**
+- `src/components/assistant/AssistantActionCard.tsx` — Reusable director assistant card with suggested action, why, what changes (expandable), visibility, risk level badge, action link, dismiss.
+
+**Files modified:**
+- `src/app/director/command-center/DirectorAssistantPanel.tsx` — Switched inline response card to `AssistantActionCard`. Added `whatWillChange`, `visibility`, `riskLevel` fields to each suggestion response.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 73: Director Assistant Command Center V1
 
 Added a deterministic Director Assistant panel above the existing Command Center. Shows 7 suggested queries the director can tap — each produces a real-data inline response: count summary, why it matters, action link, and safety note. No AI required. Queries are: what needs review, pending wrap-ups, attendance concerns, players needing assessment, pending placements, curriculum, session from template. Updated the command center page to fetch assistant counts (wrap-ups, placements, assessment due).
