@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-06 — Sprint 100: AI Note Structuring MVP — Security Hardening
+
+Added staff membership gate to `generateNoteDraftAction` in `src/lib/actions/notes.ts`. The action now verifies the caller holds an active `academy_director`, `head_coach`, or `coach` membership before calling the Anthropic API. Non-staff authenticated users receive a safe error message and the note text is never forwarded to the external API. TypeScript clean. No schema, migration, or database.types.ts changes. No player/parent exposure changes.
+
+**Files modified:**
+- `src/lib/actions/notes.ts` — added `academy_memberships` active-staff check before `structureCoachNote()` call
+- `docs/CHANGELOG.md` — this entry
+- `docs/CURRENT_BUILD_TARGET.md` — AI Note Structuring MVP marked complete
+
+**Guardrails confirmed:**
+- Raw note text is not logged
+- AI API call only occurs after staff check passes
+- `show_to_student` and `show_to_parent` remain `false` on all AI-applied drafts
+- No player or parent routes modified
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 99: AI Suggestion Data Readiness Audit
 
 Audited every data domain in Academy OS for AI lesson planning and suggestion readiness. Documented per-domain status (template structure, session planned data, session actuals, coach notes, attendance, player observations, assessments, curriculum), identified the top 10 data fields needed next (priority-ranked), listed the 6 critical gaps that block AI suggestions today, defined 8 safe AI suggestion guardrails (never auto-apply, never mutate curriculum, confidence gate, minimum session count, director override always wins), and recommended the next 3 actions (migrations 059–063, persist block status, add source_template_version). No code changes — audit only.

@@ -96,6 +96,21 @@ export async function generateNoteDraftAction(
   const trimmed = noteText?.trim()
   if (!trimmed) return { ok: false, error: 'Note text is required.' }
 
+  // Verify caller holds an active staff membership before sending note to external AI.
+  // academy_director, head_coach, and coach are the only roles permitted.
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('id')
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .in('role', ['academy_director', 'head_coach', 'coach'])
+    .limit(1)
+    .maybeSingle()
+
+  if (!membership) {
+    return { ok: false, error: 'AI note structuring is only available to academy staff.' }
+  }
+
   try {
     const draft = await structureCoachNote(trimmed)
     return { ok: true, draft }

@@ -15,6 +15,16 @@ Next up: **Step 5 — Director Dashboard** `/director` or **Step 6 — Placement
 
 ## Build order — current state
 
+### AI Note Structuring MVP — COMPLETE (Sprint 100)
+- `src/lib/ai/structureCoachNote.ts` — Anthropic Claude integration; JSON schema output; confidence score; graceful fallback when `ANTHROPIC_API_KEY` absent
+- `src/lib/actions/notes.ts` — `generateNoteDraftAction`; staff membership gate (director/head_coach/coach only); note text never reaches API unless gate passes
+- `src/components/player/AIDraftPanel.tsx` — draft UI: textarea input, "Draft with AI" button, confidence badge, warnings, overwrite guard, 5-field editable form, "Apply Draft to Summary" button
+- `src/app/director/players/[playerId]/NotesAIDraftSection.tsx` — glue: AIDraftPanel + CoachObservationsFeed with "Use for Draft →" per observation
+- Notes tab in player profile wired: observations prefill draft panel; applying draft writes `player_development_summary` with `source='ai_draft'`, `show_to_student=false`, `show_to_parent=false`
+- **Activation:** set `ANTHROPIC_API_KEY` in `.env.local`; feature degrades gracefully (orange warning) when key absent
+
+---
+
 ### Voice Intake OS Foundation — COMPLETE (Sprints 240–249)
 - Architecture audit + north star document (`docs/conversational-os/voice-intake-architecture.md`)
 - `VoiceIntakePanel` component — controlled voice/text input with role badge, safety note, examples
