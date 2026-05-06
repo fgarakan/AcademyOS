@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 55: Player Portal Recent Session History V1
+
+Added a "Recent Sessions" card to the player portal showing the player's last 10 sessions (last 60 days) with date and attendance status in player-safe language.
+
+**Files modified:**
+- `src/app/player/page.tsx` — Added `Calendar` and `CheckCircle` imports. Declared `recentSessionHistory` array. Inside the linked-player block, queries `session_attendance` for the player's own rows (no notes, academy-scoped), then batch-fetches `sessions` by ID for name and date. Builds a sorted array of `{ sessionName, date, status }`. Renders "Recent Sessions" card in the idpView section after the encouragement footer. Status shown as: Attended / Attended late / Excused / Not attended — no internal notes, no raw coach data.
+
+**Safety:** Player sees only their own attendance (scoped by `player_id = playerRow.id` and `academy_id`). No coach notes. No internal session payload. No schema changes. No voice pipeline bypass.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 54: Director Review Queue Batch Actions V1
 
 Added batch dismiss controls to the Voice Intake and Captures tabs of the review queue. Directors can now select multiple items, see a confirmation banner, and dismiss them in one action.

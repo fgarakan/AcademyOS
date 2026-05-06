@@ -1,4 +1,4 @@
-import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight, HelpCircle, Sparkles } from 'lucide-react'
+import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight, HelpCircle, Sparkles, Calendar, CheckCircle } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { PlayerMissionPreview } from '@/components/player/PlayerMissionPreview'
 import { getSupabaseServer } from '@/lib/supabase/server'
@@ -18,6 +18,12 @@ export default async function PlayerHome() {
   let idpView: IdpPlayerView | null = null
   let playerFirstName: string | null = null
   let noMappingReason: string | null = null
+  interface SessionHistoryItem {
+    sessionName: string | null
+    date: string
+    status: string
+  }
+  let recentSessionHistory: SessionHistoryItem[] = []
 
   if (user) {
     const rawDb = supabase as any
@@ -200,6 +206,48 @@ export default async function PlayerHome() {
         })
 
         idpView = buildRoleSpecificIdpView(plan, 'player') as IdpPlayerView
+
+        // 6. Session attendance history — last 60 days, player-safe (no notes)
+        const sixtyDaysAgo = new Date()
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+        const sixtyDaysAgoStr = sixtyDaysAgo.toISOString().slice(0, 10)
+
+        const { data: attendanceRows } = await rawDb
+          .from('session_attendance')
+          .select('status, session_id')
+          .eq('player_id', playerRow.id)
+          .eq('academy_id', academyId)
+          .limit(15)
+
+        const attendanceData = (attendanceRows ?? []) as Array<{ status: string; session_id: string }>
+        if (attendanceData.length > 0) {
+          const sessionIds = attendanceData.map(r => r.session_id)
+          const { data: sessionRows } = await rawDb
+            .from('sessions')
+            .select('id, name, scheduled_date')
+            .in('id', sessionIds)
+            .gte('scheduled_date', sixtyDaysAgoStr)
+            .order('scheduled_date', { ascending: false })
+            .limit(10)
+
+          const sessionMap = new Map<string, { name: string | null; scheduled_date: string }>()
+          for (const s of (sessionRows ?? [])) {
+            sessionMap.set(s.id, { name: s.name, scheduled_date: s.scheduled_date })
+          }
+
+          recentSessionHistory = attendanceData
+            .map(r => {
+              const sess = sessionMap.get(r.session_id)
+              if (!sess) return null
+              return {
+                sessionName: sess.name,
+                date: sess.scheduled_date,
+                status: r.status,
+              }
+            })
+            .filter((r): r is SessionHistoryItem => r !== null)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        }
       }
     }
   }
@@ -467,6 +515,61 @@ export default async function PlayerHome() {
               Your coach updates this plan as you grow. Keep showing up — every session counts.
             </p>
           </div>
+
+          {/* Recent session history */}
+          {recentSessionHistory.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
+                    <Calendar className="w-4 h-4 text-text-muted" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-text-primary text-sm">Recent Sessions</p>
+                    <p className="text-text-muted text-xs">Your last {recentSessionHistory.length} sessions</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="divide-y divide-border">
+                  {recentSessionHistory.map((item, i) => {
+                    const statusLabel =
+                      item.status === 'present' ? 'Attended'
+                      : item.status === 'late' ? 'Attended late'
+                      : item.status === 'excused' ? 'Excused'
+                      : 'Not attended'
+                    const statusColor =
+                      item.status === 'present' ? 'text-status-green'
+                      : item.status === 'late' ? 'text-status-orange'
+                      : item.status === 'excused' ? 'text-status-blue'
+                      : 'text-text-muted'
+                    return (
+                      <div key={i} className="flex items-center justify-between gap-3 py-2.5">
+                        <div className="min-w-0">
+                          <p className="text-sm text-text-primary truncate">
+                            {item.sessionName ?? 'Session'}
+                          </p>
+                          <p className="text-xs text-text-muted">
+                            {new Date(item.date).toLocaleDateString('en-US', {
+                              weekday: 'short', month: 'short', day: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {item.status === 'present' && (
+                            <CheckCircle className="w-3 h-3 text-status-green" />
+                          )}
+                          <span className={`text-[11px] font-semibold ${statusColor}`}>
+                            {statusLabel}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
 
