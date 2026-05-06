@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 61: Signals Dashboard Attendance Concern Signal
+
+Added an "Attendance concerns" signal bucket to `/director/signals`. Surfaces players with 2 or more absences in the last 30 days, sorted by absence count descending. Links to each player's profile.
+
+**Files modified:**
+- `src/app/director/signals/page.tsx` — Added `AttendanceConcernSignal` interface. Fetches recent session IDs for the academy (last 30 days), then queries `session_attendance` for `status = 'absent'` against those session IDs, aggregates by player_id in JS, filters for 2+ absences, batch-fetches names from `v_player_summary`. Renders new "Attendance concerns" `SignalSection` with red accent between wrap-ups and lesson requests. Extended `SignalSection` accent type union and maps to include `red`.
+
+**Safety:** Director-only read. No mutations. No schema changes. No parent/player exposure.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 60: Director Player Assessment History Section
 
 Added a full "Assessment History" card to the director player profile Notes tab, showing the last 10 assessments across all types (intake, quarterly, reassessment, promotion, ad_hoc).

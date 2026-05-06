@@ -4,6 +4,12 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 
+interface AttendanceConcernSignal {
+  player_id: string
+  full_name: string | null
+  absence_count: number
+}
+
 interface PlayerSignal {
   player_id: string
   full_name: string | null
@@ -96,7 +102,52 @@ export default async function SignalsPage() {
     player_full_name: r.player?.full_name ?? null,
   })) as LessonSignal[]
 
-  const totalSignals = missingFocus.length + needingAttention.length + pendingWrapUps.length + newLessons.length
+  // 5. Attendance concerns: players with 2+ absences in last 30 days
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const { data: recentSessionData } = await rawDb
+    .from('sessions')
+    .select('id')
+    .eq('academy_id', academyId)
+    .gte('scheduled_date', thirtyDaysAgo)
+
+  const recentSessionIds = ((recentSessionData ?? []) as { id: string }[]).map(s => s.id)
+  const attendanceConcerns: AttendanceConcernSignal[] = []
+
+  if (recentSessionIds.length > 0) {
+    const { data: absenceData } = await rawDb
+      .from('session_attendance')
+      .select('player_id')
+      .in('session_id', recentSessionIds)
+      .eq('status', 'absent')
+
+    const absenceCounts = new Map<string, number>()
+    for (const row of ((absenceData ?? []) as { player_id: string }[])) {
+      absenceCounts.set(row.player_id, (absenceCounts.get(row.player_id) ?? 0) + 1)
+    }
+
+    const concernPlayerIds = Array.from(absenceCounts.entries())
+      .filter(([, count]) => count >= 2)
+      .map(([id]) => id)
+
+    if (concernPlayerIds.length > 0) {
+      const { data: concernPlayers } = await rawDb
+        .from('v_player_summary')
+        .select('player_id, full_name')
+        .eq('academy_id', academyId)
+        .in('player_id', concernPlayerIds)
+
+      for (const p of ((concernPlayers ?? []) as { player_id: string; full_name: string | null }[])) {
+        attendanceConcerns.push({
+          player_id: p.player_id,
+          full_name: p.full_name,
+          absence_count: absenceCounts.get(p.player_id) ?? 0,
+        })
+      }
+      attendanceConcerns.sort((a, b) => b.absence_count - a.absence_count)
+    }
+  }
+
+  const totalSignals = missingFocus.length + needingAttention.length + pendingWrapUps.length + newLessons.length + attendanceConcerns.length
 
   return (
     <div className="p-6 animate-fade-in space-y-6">
@@ -185,6 +236,26 @@ export default async function SignalsPage() {
         </SignalSection>
       )}
 
+      {/* Attendance concerns */}
+      {attendanceConcerns.length > 0 && (
+        <SignalSection
+          icon={<AlertCircle className="w-4 h-4 text-status-red" />}
+          title="Attendance concerns"
+          count={attendanceConcerns.length}
+          accent="red"
+          hint="Players with 2 or more absences in the last 30 days."
+        >
+          {attendanceConcerns.map(p => (
+            <SignalRow
+              key={p.player_id}
+              href={`/director/players/${p.player_id}`}
+              primary={p.full_name ?? 'Unknown'}
+              secondary={`${p.absence_count} absence${p.absence_count !== 1 ? 's' : ''} in 30 days`}
+            />
+          ))}
+        </SignalSection>
+      )}
+
       {/* New lesson requests */}
       {newLessons.length > 0 && (
         <SignalSection
@@ -219,7 +290,7 @@ function SignalSection({
   icon: React.ReactNode
   title: string
   count: number
-  accent: 'orange' | 'blue' | 'lime' | 'green'
+  accent: 'orange' | 'blue' | 'lime' | 'green' | 'red'
   hint: string
   children: React.ReactNode
 }) {
@@ -228,12 +299,14 @@ function SignalSection({
     blue: 'bg-status-blue/10 border-status-blue/20',
     lime: 'bg-lime/10 border-lime/20',
     green: 'bg-status-green/10 border-status-green/20',
+    red: 'bg-status-red/10 border-status-red/20',
   }
   const countClasses: Record<string, string> = {
     orange: 'text-status-orange',
     blue: 'text-status-blue',
     lime: 'text-lime',
     green: 'text-status-green',
+    red: 'text-status-red',
   }
   return (
     <Card>
