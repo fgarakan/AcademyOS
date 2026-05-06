@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-06 — Sprint 72: Coach Assistant Voice Output Prototype
+
+Added browser `speechSynthesis` voice output toggle to the Coach Wrap-Up assistant. When enabled, the assistant reads each question aloud as the coach steps through the flow. Toggle is only shown when `speechSynthesis` is available in the browser. Default off. Safety note: "Voice output only. You still type or use your device keyboard." No recording, no STT, no external API.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Added `voiceEnabled` state, `Volume2`/`VolumeX` icons, voice toggle button (shown only when browser supports speechSynthesis), `useEffect` to speak questions on step change and cancel on unmount/disable.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 71: Coach Assistant Review Summary V1
 
 Enhanced the wrap-up summary phase to show a clear "Here's what I understood" assistant summary: block completion counts, queued observations count, next focus preview, and which content will go to director review. Added "Not shared with parents or players" lock note. Renamed "Save Recap" button to "Save Wrap-Up". Changed "Back" to "Edit". Added "Save as quick note" secondary option when some questions are unanswered.

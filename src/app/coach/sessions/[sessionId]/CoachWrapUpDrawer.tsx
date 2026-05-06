@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy, Plus } from 'lucide-react'
+import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy, Plus, Volume2, VolumeX } from 'lucide-react'
 import { saveSessionRecapAction } from './actions'
 import { saveWrapUpDraftAction, type BlockCompletionDraft } from './saveWrapUpDraftAction'
 import { saveWrapUpObservationsAction, type PlayerObservationInput } from './saveWrapUpObservationsAction'
@@ -165,6 +165,32 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
       }))
     } catch { /* ignore quota errors */ }
   }, [draftKey, stepIndex, answers, blockStatus, playerNotes, attendanceMap, phase])
+
+  // Voice output — browser speechSynthesis only. No recording, no STT, no external API.
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
+
+  // Speak current question when voice is enabled or step changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+    if (!voiceEnabled || phase !== 'questions') {
+      window.speechSynthesis.cancel()
+      return
+    }
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(STEPS[stepIndex]?.question ?? '')
+    utterance.rate = 0.9
+    utterance.pitch = 1
+    window.speechSynthesis.speak(utterance)
+  }, [voiceEnabled, stepIndex, phase])
+
+  // Cancel speech on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   const isLastQuestion = stepIndex === STEPS.length - 1
   const currentStep = STEPS[stepIndex]
@@ -643,8 +669,30 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
           <p className="text-[10px] uppercase tracking-widest text-text-muted">
             Question {stepIndex + 1} of {STEPS.length}
           </p>
-          <p className="text-[10px] text-text-muted">Under 60 sec</p>
+          <div className="flex items-center gap-2">
+            <p className="text-[10px] text-text-muted">Under 60 sec</p>
+            {typeof window !== 'undefined' && 'speechSynthesis' in window && (
+              <button
+                type="button"
+                onClick={() => setVoiceEnabled(v => !v)}
+                title={voiceEnabled ? 'Turn off voice' : 'Read questions aloud'}
+                className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border transition-colors ${
+                  voiceEnabled
+                    ? 'border-lime/30 bg-lime/10 text-lime'
+                    : 'border-border text-text-muted hover:border-lime/20 hover:text-text-secondary'
+                }`}
+              >
+                {voiceEnabled ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
+                {voiceEnabled ? 'Voice on' : 'Voice'}
+              </button>
+            )}
+          </div>
         </div>
+        {voiceEnabled && (
+          <p className="text-[9px] text-text-muted mt-1">
+            Voice output only. You still type or use your device keyboard.
+          </p>
+        )}
       </div>
 
       {/* Question content */}
