@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-06 — Sprint 43: Director Private Lesson Request Review + Accept
+
+Audit confirmed: director private lesson review with full accept/decline/notes UI was already built in commit `66bc146` as part of the director dashboard drilldown work.
+
+**Files verified (no changes needed):**
+- `src/app/director/private-lessons/page.tsx` — Shows all lesson requests, counts by status, renders `PrivateLessonRequestCard` per request
+- `src/app/director/private-lessons/PrivateLessonRequestCard.tsx` — Expandable card with: player/parent/coach info, preferred days/times, goal, notes; inline status selector (new → reviewing → assigned → scheduled → declined → completed); director notes textarea with save; all transitions persist via server action
+- `src/app/director/private-lessons/privateLessonActions.ts` — `updatePrivateLessonStatusAction` and `updateDirectorNotesAction` — both academy-scoped, director/head_coach role-gated
+
+**Safety:** No automatic communication. No billing. Director explicit action required. Status changes only; no calendar events created.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 42: Coach Session Block Progress Tracker
 
 Added per-block status tracking to the coach session execution view. State is local to the session; feeds into Wrap-Up recap.
