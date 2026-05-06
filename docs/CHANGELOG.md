@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-06 — Sprint 75: Assistant Personality + Voice System Guidelines
+
+Documented the complete assistant personality, language rules, safety boundaries, and future voice direction. Covers all four roles: coach, director, parent, player. Includes voice output rules, ElevenLabs future spec, and 4 example prompt scripts. Also created an internal constants file with wrap-up questions, speech settings, and role-specific language maps.
+
+**Files created:**
+- `docs/assistant-personality-and-voice-guidelines.md` — Full personality and voice guidelines doc (8 sections).
+- `src/lib/assistant/personality.ts` — Internal constants: wrap-up questions, speech settings, parent/player language maps.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 74: Director Assistant Review/Approval Cards
 
 Created reusable `AssistantActionCard` component. Updated `DirectorAssistantPanel` to use it for all suggestion responses. Each response now shows: suggested action summary, why it matters, what will change (expandable), visibility scope, risk level badge, action link, safety note, and dismiss button.
