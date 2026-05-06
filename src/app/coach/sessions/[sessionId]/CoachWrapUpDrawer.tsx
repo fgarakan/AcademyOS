@@ -104,6 +104,8 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
   const [isAttendancePending, startAttendanceTransition] = useTransition()
   const [phase, setPhase] = useState<'questions' | 'summary' | 'saved'>('questions')
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [observationsSaved, setObservationsSaved] = useState<number | null>(null)
+  const [observationsError, setObservationsError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [draftRestored, setDraftRestored] = useState(false)
@@ -256,7 +258,11 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
           observationType: n.type === 'positive' ? 'positive' : 'needs_attention',
         }))
       if (playerObservations.length > 0) {
-        await saveWrapUpObservationsAction(sessionId, playerObservations)
+        const obsResult = await saveWrapUpObservationsAction(sessionId, playerObservations)
+        setObservationsSaved(obsResult.savedCount)
+        if (!obsResult.ok || obsResult.error) {
+          setObservationsError(`${obsResult.savedCount} of ${playerObservations.length} observations saved.`)
+        }
       }
 
       try { localStorage.removeItem(draftKey) } catch { /* ignore */ }
@@ -277,6 +283,14 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
             <p className="text-sm text-text-muted">
               Your recap has been saved for director review. Nothing official has been changed.
             </p>
+            {observationsSaved !== null && observationsSaved > 0 && (
+              <p className="text-xs text-status-green">
+                {observationsSaved} player observation{observationsSaved !== 1 ? 's' : ''} saved.
+              </p>
+            )}
+            {observationsError && (
+              <p className="text-xs text-status-orange">{observationsError}</p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -508,6 +522,11 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
         <div className="px-5 py-4 border-t border-border space-y-3">
           {saveError && (
             <p className="text-xs text-status-red">{saveError}</p>
+          )}
+          {Object.values(playerNotes).filter(n => n.note.trim()).length > 0 && (
+            <p className="text-[10px] text-text-muted px-1">
+              {Object.values(playerNotes).filter(n => n.note.trim()).length} player observation{Object.values(playerNotes).filter(n => n.note.trim()).length !== 1 ? 's' : ''} queued — will save with recap.
+            </p>
           )}
           <div className="flex items-center gap-3">
             <button

@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-06 — Sprint 59: Coach Wrap-Up Player Notes Persistence Verification
+
+Verified `saveWrapUpObservationsAction` is correct and working. Improved coach feedback: queued observation count is shown before save, and saved/error count is shown in the confirmation state.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Added `observationsSaved` and `observationsError` state. Captured result of `saveWrapUpObservationsAction` and stored count. Added "X observations queued" notice above Save Recap button. Added "X observations saved" or partial-error message in saved confirmation state.
+
+**What was verified:** `saveWrapUpObservationsAction` already correctly: authenticates, resolves academy_id, verifies coach role, verifies session belongs to academy, verifies each player, inserts into `coach_observations` with `is_private = true`. No fix needed — only surfaced result to coach.
+
+**Safety:** Coach explicit Save required. Notes stay internal (`is_private = true`). No parent/player exposure. No schema changes.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 58: Director Quick Assessment History Card
 
 Added a "Quick Rating History" card to the director player profile Overview tab, showing the last 3 ad-hoc assessments with date, domain labels, note snippet, and assessor name.
