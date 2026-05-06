@@ -1,9 +1,19 @@
 # Known Limitations
 
-**Last updated:** 2026-05-04
+**Last updated:** 2026-05-06
 
 This file documents what is currently broken, missing, or intentionally incomplete.
 These are not bugs to fix immediately — they are known gaps that future sessions should be aware of.
+
+---
+
+## Coach session block status (Sprint 48)
+
+### Block progress does not persist to the database
+- **File:** `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx`
+- **Impact:** Block status (planned / active / done / skipped / modified) is stored in local React state and written to localStorage (`session_block_status_${sessionId}`). It is NOT persisted to the `session_blocks` table because that table has no `status` or `progress` column.
+- **Workaround (Sprint 48):** The execution client writes block statuses to localStorage; the WrapUp drawer reads them on open and pre-populates its own block status selectors.
+- **Fix needed:** Add a `status` column to `session_blocks` table via a new migration and a server action to persist block status on each coach tap.
 
 ---
 

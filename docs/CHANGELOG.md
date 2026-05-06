@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-06 — Sprint 48: Coach Block Status Persistence Readiness
+
+Wired block status from live session execution into the Wrap-Up drawer via localStorage. Documented missing DB persistence.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — `setBlockStatus` now writes to `session_block_status_${sessionId}` in localStorage on every coach tap, mapping `planned`/`in_progress` → `'completed'`, `skipped` → `'skipped'`, `modified` → `'modified'` for the Wrap-Up format.
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — On mount, after restoring the wrap-up draft, also reads `session_block_status_${sessionId}` from localStorage. If the wrap-up draft has no existing `blockStatus`, pre-populates from the execution client's saved statuses.
+- `docs/KNOWN_LIMITATIONS.md` — Added section documenting that `session_blocks` has no `status` column; block statuses are localStorage-only until a migration adds the column.
+
+**Schema:** No change. `session_blocks` does not have a `status` field. Migration required to persist to DB.
+
+**Safety:** localStorage only. No DB writes. No parent/player exposure.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 47: Director Player Invite Flow V1
 
 Added portal invite guidance to the Player Portal Access panel. No email system exists — directors get copy-to-clipboard instructions to share with players manually.

@@ -58,7 +58,18 @@ export function CoachSessionExecutionClient({
   })
 
   function setBlockStatus(blockId: string, s: 'planned' | 'in_progress' | 'completed' | 'skipped' | 'modified') {
-    setBlockStatusMap(prev => ({ ...prev, [blockId]: s }))
+    setBlockStatusMap(prev => {
+      const next = { ...prev, [blockId]: s }
+      // Write to localStorage so WrapUp drawer can pre-populate block statuses
+      try {
+        const wrapUpStatus: Record<string, 'completed' | 'skipped' | 'modified'> = {}
+        for (const [id, status] of Object.entries(next)) {
+          wrapUpStatus[id] = status === 'skipped' ? 'skipped' : status === 'modified' ? 'modified' : 'completed'
+        }
+        localStorage.setItem(`session_block_status_${sessionId}`, JSON.stringify(wrapUpStatus))
+      } catch { /* ignore storage errors */ }
+      return next
+    })
   }
 
   const [saveResult, setSaveResult] = useState<SaveExecutionResult | null>(null)

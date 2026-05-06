@@ -117,23 +117,34 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
   // Restore draft from localStorage on mount
   useEffect(() => {
     try {
+      // First: restore wrap-up draft (recap answers, attendance, phase)
       const raw = localStorage.getItem(draftKey)
-      if (!raw) return
-      const draft = JSON.parse(raw) as {
-        stepIndex?: number
-        answers?: string[]
-        blockStatus?: Record<string, 'completed' | 'skipped' | 'modified'>
-        playerNotes?: Record<string, PlayerNote>
-        attendanceMap?: Record<string, 'present' | 'absent' | 'late' | 'excused'>
-        phase?: 'questions' | 'summary'
+      if (raw) {
+        const draft = JSON.parse(raw) as {
+          stepIndex?: number
+          answers?: string[]
+          blockStatus?: Record<string, 'completed' | 'skipped' | 'modified'>
+          playerNotes?: Record<string, PlayerNote>
+          attendanceMap?: Record<string, 'present' | 'absent' | 'late' | 'excused'>
+          phase?: 'questions' | 'summary'
+        }
+        if (typeof draft.stepIndex === 'number') setStepIndex(draft.stepIndex)
+        if (Array.isArray(draft.answers) && draft.answers.length === STEPS.length) setAnswers(draft.answers)
+        if (draft.blockStatus) setBlockStatus(draft.blockStatus)
+        if (draft.playerNotes) setPlayerNotes(draft.playerNotes)
+        if (draft.attendanceMap) setAttendanceMap(draft.attendanceMap)
+        if (draft.phase === 'summary') setPhase('summary')
+        setDraftRestored(true)
       }
-      if (typeof draft.stepIndex === 'number') setStepIndex(draft.stepIndex)
-      if (Array.isArray(draft.answers) && draft.answers.length === STEPS.length) setAnswers(draft.answers)
-      if (draft.blockStatus) setBlockStatus(draft.blockStatus)
-      if (draft.playerNotes) setPlayerNotes(draft.playerNotes)
-      if (draft.attendanceMap) setAttendanceMap(draft.attendanceMap)
-      if (draft.phase === 'summary') setPhase('summary')
-      setDraftRestored(true)
+      // Second: if execution client wrote live block statuses, pre-populate (only when no wrap-up draft blockStatus exists)
+      const blockStatusRaw = localStorage.getItem(`session_block_status_${sessionId}`)
+      if (blockStatusRaw && !JSON.parse(raw ?? '{}').blockStatus) {
+        const executionBlockStatus = JSON.parse(blockStatusRaw) as Record<string, 'completed' | 'skipped' | 'modified'>
+        if (executionBlockStatus && typeof executionBlockStatus === 'object') {
+          setBlockStatus(prev => ({ ...prev, ...executionBlockStatus }))
+          setDraftRestored(true)
+        }
+      }
     } catch { /* ignore corrupt drafts */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftKey])
