@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-06 — Sprint 52: Director Signals Dashboard V1
+
+Added `/director/signals` page aggregating four attention buckets: players without a group, players without a curriculum level, pending coach wrap-up drafts, and new private lesson requests. Each bucket is a card with linked rows routing to the relevant page. Sidebar now includes a "Signals" nav item.
+
+**Files created:**
+- `src/app/director/signals/page.tsx` — Server component. Queries `v_player_summary` (active players missing group or level), `proposed_actions` (pending `session_wrap_up_v1`), and `private_lesson_requests` (status `new`). Renders a signal card per bucket with row links. Shows "All clear" state when no signals exist.
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — Added `Activity` icon import and "Signals" link (`/director/signals`) to `FOUNDATION_ITEMS`, between "Sessions" and "Review Queue".
+
+**Safety:** Read-only queries, academy-scoped. No mutations. No schema changes. No voice pipeline bypass.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 51: Parent Lesson Request Status Tracker
 
 Added a status tracker card to the parent portal so parents can see the current state of their most recent private lesson request without contacting the academy.

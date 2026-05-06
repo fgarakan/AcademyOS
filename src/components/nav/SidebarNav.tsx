@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
   Trophy, Brain, BarChart3, Settings, LogOut, Dumbbell, ClipboardList, FlaskConical,
-  ChevronRight, LayoutTemplate, Sparkles, Terminal, UserPlus,
+  ChevronRight, LayoutTemplate, Sparkles, Terminal, UserPlus, Activity,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
@@ -17,6 +17,7 @@ const FOUNDATION_ITEMS = [
   { label: 'Class Templates', href: '/director/class-templates',   icon: LayoutTemplate },
   { label: 'Fitness OS',      href: '/director/fitness/templates', icon: Dumbbell },
   { label: 'Sessions',        href: '/director/sessions',          icon: Calendar },
+  { label: 'Signals',         href: '/director/signals',           icon: Activity },
   { label: 'Review Queue',    href: '/director/review',            icon: ClipboardList },
 ]
 
