@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Info, AlertTriangle } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
+import { Card, CardContent } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { CoachSessionExecutionClient } from './CoachSessionExecutionClient'
 import { CoachRecapCommandPanel } from './CoachRecapCommandPanel'
@@ -276,15 +276,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         />
       )}
 
-      {roster.length > 0 && (
-        <CoachSessionGapBriefPanel
-          playerIds={roster.map(p => p.playerId)}
-          academyId={academyId}
-          rosterNames={rosterNames}
-        />
-      )}
-
-      {/* Attendance completion prompt */}
+      {/* Attendance completion prompt — shown before gap brief so coach sees it early */}
       {roster.length > 0 && unmarkedAttendanceCount > 0 && (
         <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-status-orange/5 border border-status-orange/30">
           <AlertTriangle className="w-4 h-4 text-status-orange shrink-0 mt-0.5" />
@@ -293,12 +285,22 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
               {unmarkedAttendanceCount} player{unmarkedAttendanceCount !== 1 ? 's' : ''} not yet marked
             </p>
             <p className="text-xs text-text-muted mt-0.5">
-              Mark attendance above before saving your recap.
+              Scroll up to mark attendance before wrapping up.
             </p>
           </div>
         </div>
       )}
 
+      {/* Wrap Up / Quick Note — primary session CTAs before inline note panel */}
+      <CoachSessionActions
+        sessionId={session.id}
+        academyId={academyId}
+        sessionName={session.name ?? 'Untitled Session'}
+        blocks={blockList}
+        roster={roster}
+      />
+
+      {/* Inline Quick Note panel */}
       <CoachRecapCommandPanel
         sessionId={session.id}
         sessionName={session.name ?? 'Untitled Session'}
@@ -310,13 +312,13 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         structureRecapAction={structureCoachRecapAction}
       />
 
-      <CoachSessionActions
-        sessionId={session.id}
-        academyId={academyId}
-        sessionName={session.name ?? 'Untitled Session'}
-        blocks={blockList}
-        roster={roster}
-      />
+      {roster.length > 0 && (
+        <CoachSessionGapBriefPanel
+          playerIds={roster.map(p => p.playerId)}
+          academyId={academyId}
+          rosterNames={rosterNames}
+        />
+      )}
     </div>
   )
 }

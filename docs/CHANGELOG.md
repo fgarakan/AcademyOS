@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-06 — Sprint 68: Coach Session Mobile Masterclass Layout
+
+Restructured the coach session page to improve the mobile experience: attendance prompt now appears before the gap brief panel, "Wrap Up Session" is a full-width lime primary CTA, and "Quick Note" is a secondary ghost button. The gap brief panel moves to the bottom of the page.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Reordered: attendance prompt → session actions (wrap up CTA) → recap panel → gap brief. Removed unused `CardHeader`/`SectionHeader` imports.
+- `src/app/coach/sessions/[sessionId]/CoachSessionActions.tsx` — Redesigned layout: full-width lime "Wrap Up Session" primary button, small ghost "Quick Note" secondary button. Removed 2-column icon tile grid.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 67: Role-Based UX Simplification Audit
 
 Created a full audit of all four role experiences (director, coach, parent, player) documenting what is clear, what is cluttered, mobile risks, language gaps, and the assistant integration strategy. Includes Top 20 UX simplification fixes and recommended design rules.

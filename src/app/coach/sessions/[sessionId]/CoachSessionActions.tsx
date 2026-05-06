@@ -19,38 +19,26 @@ export function CoachSessionActions({ sessionId, academyId, sessionName, blocks,
   const [wrapUpOpen, setWrapUpOpen] = useState(false)
 
   return (
-    <div className="space-y-3">
-      <p className="text-[10px] uppercase tracking-widest text-text-muted">Session Actions</p>
+    <div className="space-y-2">
+      <p className="text-[10px] uppercase tracking-widest text-text-muted">Wrap Up</p>
 
-      <div className="grid grid-cols-2 gap-3">
-        {/* Quick Note — opens inline capture drawer */}
-        <button
-          onClick={() => setCaptureOpen(true)}
-          className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface border border-border hover:border-lime/30 transition-colors group"
-        >
-          <div className="w-9 h-9 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center group-hover:bg-lime/20 transition-colors">
-            <Plus className="w-4 h-4 text-lime" />
-          </div>
-          <span className="text-xs font-medium text-text-secondary text-center leading-tight group-hover:text-text-primary transition-colors">
-            Quick Note
-          </span>
-          <span className="text-[10px] text-text-muted">Capture a thought</span>
-        </button>
+      {/* Primary CTA — Wrap Up Session */}
+      <button
+        onClick={() => setWrapUpOpen(true)}
+        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-lime text-black font-bold text-sm hover:bg-lime/90 transition-colors"
+      >
+        <ClipboardList className="w-4 h-4" />
+        Wrap Up Session
+      </button>
 
-        {/* Wrap Up Session */}
-        <button
-          onClick={() => setWrapUpOpen(true)}
-          className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface border border-border hover:border-lime/30 transition-colors group"
-        >
-          <div className="w-9 h-9 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center group-hover:bg-lime/20 transition-colors">
-            <ClipboardList className="w-4 h-4 text-lime" />
-          </div>
-          <span className="text-xs font-medium text-text-secondary text-center leading-tight group-hover:text-text-primary transition-colors">
-            Wrap Up Session
-          </span>
-          <span className="text-[10px] text-text-muted">Guided recap</span>
-        </button>
-      </div>
+      {/* Secondary — Quick Note */}
+      <button
+        onClick={() => setCaptureOpen(true)}
+        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium text-text-secondary border border-border hover:border-lime/30 hover:text-text-primary transition-colors"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        Quick Note
+      </button>
 
       <QuickCaptureDrawer
         open={captureOpen}
