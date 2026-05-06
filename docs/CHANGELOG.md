@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-06 — Sprint 88: Live Transcription Activation + gitignore
+
+Created `.gitignore` (was entirely missing — `.env.local` was untracked but unprotected). Now covers: `.env.local`, `.env`, `.next/`, `node_modules/`, `tsconfig.tsbuildinfo`, `supabase/.temp/`, `.vscode/`, OS artifacts. Confirmed `OPENAI_API_KEY` is NOT yet in `.env.local` — manual key addition required. Confirmed endpoint reads key via `process.env.OPENAI_API_KEY` (server-side only, safe). TypeScript clean.
+
+**Live transcription smoke test:** Cannot be run automatically — requires manual steps: add key to `.env.local`, restart dev server, open coach session, tap Record, speak, tap Stop, verify transcript appears. Full QA checklist is in `docs/V1_MANUAL_TEST_CHECKLIST.md` (Sprint 78–87 checks, rows 79.1–80.7).
+
+**Files created:**
+- `.gitignore` — Full Next.js gitignore: env files, build output, node_modules, IDE, OS, Supabase temp.
+
+**Files modified:**
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 88 limitation.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 87: End-to-End Voice Assistant Demo Hardening
 
 Hardened the full voice assistant demo flow (Sprints 78–87) for production demo readiness. Updated Brian demo script with a complete 10-step voice+approval path covering: director voice command, coach audio recording, transcript review, name guardrails, wrap-up save, director approve/apply. Added a comprehensive Sprint 78–87 QA checklist covering 35 test cases: transcription endpoint guards (auth, MIME, size), audio recorder states, name detection, audit log, approve/reject/apply controls, director voice routing, TTS stop button, parent/player portal safety. Updated documentation for current sprint scope.

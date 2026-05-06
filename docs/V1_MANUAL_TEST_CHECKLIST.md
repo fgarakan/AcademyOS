@@ -27,6 +27,7 @@
 | S85 | Director voice intake | `/director/command-center` shows text input + "Speak" button above suggestion chips. Speaking "review" or "wrap-ups" auto-selects corresponding chip. Speaking unknown term shows fallback: "I can help with: review, wrap-ups, attendance…". Typing Enter also matches. Nothing executes automatically. |
 | S86 | TTS stop button | "Stop" button appears next to "Voice on" toggle when voice output is active. Tapping Stop cancels speech synthesis. `docs/assistant-tts-upgrade-plan.md` present. |
 | S87 | Demo hardening | Full demo flow works end-to-end. All voice copy is clear about audio not being stored. Error states visible and safe. `docs/BRIAN_INTERACTIVE_DEMO_SCRIPT.md` updated to Sprint 87 flow. |
+| S88 | gitignore + env | `.gitignore` exists. `git check-ignore .env.local` returns a match. `OPENAI_API_KEY` present in `.env.local` (add manually). Transcription returns `{ ok: true, transcript }` when key is set. Returns safe 503 when key is absent. |
 
 ---
 

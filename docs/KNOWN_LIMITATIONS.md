@@ -7,6 +7,17 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Live Transcription Activation (Sprint 88)
+
+### OPENAI_API_KEY must be added to .env.local manually
+- **Status:** Transcription endpoint is built and safe. `.gitignore` created (was missing — now protects `.env.local` and other sensitive files). `OPENAI_API_KEY` is not yet set in local environment.
+- **To activate:** Add `OPENAI_API_KEY=sk-...` to `.env.local`, then restart the dev server.
+- **Verification:** Call `POST /api/coach/sessions/{id}/transcribe` with a valid audio blob. If key is correct, returns `{ ok: true, transcript: "..." }`. If key missing or wrong, returns 503 or 502.
+- **Key safety:** `OPENAI_API_KEY` is read via `process.env.OPENAI_API_KEY` (no `NEXT_PUBLIC_` prefix). Never exposed to the browser.
+- **gitignore:** `.gitignore` now exists and covers `.env.local`, `.env`, `.next/`, `node_modules/`, `tsconfig.tsbuildinfo`, `supabase/.temp/`.
+
+---
+
 ## Voice Demo Hardening (Sprint 87)
 
 ### Voice flow is demo-ready but requires OPENAI_API_KEY for production transcription
