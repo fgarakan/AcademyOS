@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition, useMemo } from 'react'
-import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy, Plus, Volume2, VolumeX, AlertTriangle, User } from 'lucide-react'
+import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy, Plus, Volume2, VolumeX, AlertTriangle, User, Square } from 'lucide-react'
 import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
 import { AudioRecorderButton } from '@/components/assistant/AudioRecorderButton'
 import { saveSessionRecapAction } from './actions'
@@ -743,19 +743,36 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
           <div className="flex items-center gap-2">
             <p className="text-[10px] text-text-muted">Under 60 sec</p>
             {typeof window !== 'undefined' && 'speechSynthesis' in window && (
-              <button
-                type="button"
-                onClick={() => setVoiceEnabled(v => !v)}
-                title={voiceEnabled ? 'Turn off voice' : 'Read questions aloud'}
-                className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border transition-colors ${
-                  voiceEnabled
-                    ? 'border-lime/30 bg-lime/10 text-lime'
-                    : 'border-border text-text-muted hover:border-lime/20 hover:text-text-secondary'
-                }`}
-              >
-                {voiceEnabled ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
-                {voiceEnabled ? 'Voice on' : 'Voice'}
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setVoiceEnabled(v => !v)}
+                  title={voiceEnabled ? 'Turn off voice' : 'Read questions aloud'}
+                  className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-lg border transition-colors ${
+                    voiceEnabled
+                      ? 'border-lime/30 bg-lime/10 text-lime'
+                      : 'border-border text-text-muted hover:border-lime/20 hover:text-text-secondary'
+                  }`}
+                >
+                  {voiceEnabled ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
+                  {voiceEnabled ? 'Voice on' : 'Voice'}
+                </button>
+                {voiceEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined' && window.speechSynthesis) {
+                        window.speechSynthesis.cancel()
+                      }
+                    }}
+                    title="Stop speaking"
+                    className="flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-lg border border-status-red/30 bg-status-red/5 text-status-red/70 hover:bg-status-red/10 transition-colors"
+                  >
+                    <Square className="w-2.5 h-2.5" />
+                    Stop
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

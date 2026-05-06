@@ -7,6 +7,15 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## TTS Upgrade Readiness (Sprint 86)
+
+### Production TTS is documented but not yet built
+- **Plan:** `docs/assistant-tts-upgrade-plan.md`
+- **Impact:** Voice output still uses browser `speechSynthesis` (prototype only). Planned upgrade: OpenAI TTS (V2) → ElevenLabs (V3 optional). V2 requires `OPENAI_API_KEY` to be set and a `/api/assistant/speak` endpoint to be built. A "Stop Speaking" button now appears next to the voice toggle when active in CoachWrapUpDrawer.
+- **Pre-V2 requirements:** DPA for OpenAI, server-side TTS endpoint, academy voice settings schema.
+
+---
+
 ## Director Assistant Voice Intake (Sprint 85)
 
 ### Voice command routing is deterministic — no AI NLU

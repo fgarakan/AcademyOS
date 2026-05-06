@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-06 — Sprint 86: Assistant Voice Quality + TTS Upgrade Readiness
+
+Documented the full production TTS upgrade plan including: why browser `speechSynthesis` is prototype-only, production TTS options (OpenAI TTS recommended, ElevenLabs premium), voice personality spec per role, what can/cannot be spoken aloud, cost controls, caching policy, academy voice settings design, accessibility rules, and a phased implementation roadmap (V2: OpenAI TTS, V3: ElevenLabs). Added "Stop Speaking" button next to the voice toggle in CoachWrapUpDrawer — visible only when voice output is active. Updated assistant-personality-and-voice-guidelines.md with link to TTS upgrade plan.
+
+**Files created:**
+- `docs/assistant-tts-upgrade-plan.md` — Full TTS upgrade plan: options, voice spec, safety rules, cost controls, implementation roadmap.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Added "Stop" button next to voice toggle; imported `Square` icon.
+- `docs/assistant-personality-and-voice-guidelines.md` — Added section 7 link to TTS upgrade plan.
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 86 note.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 85: Director Assistant Voice Draft Intake V1
 
 Added voice input and a text command field to the Director Assistant Panel. A text input + `VoiceInputButton` now appears at the top of the panel. Spoken or typed commands are matched deterministically to the 7 existing suggestion topics (review, wrap-ups, attendance, assessment, placement, curriculum, sessions) — no AI required. On a match, the corresponding response card activates automatically. On no match, a safe fallback: "I can help with: review, wrap-ups, attendance, players, assessment, curriculum, and sessions." No command executes automatically. Typing Enter also triggers matching. Nothing is saved. No external API.

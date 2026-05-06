@@ -159,7 +159,15 @@ These apply to the browser `speechSynthesis` prototype and any future ElevenLabs
 
 ---
 
-## 7. Future ElevenLabs / Production Voice Spec
+## 7. Production TTS Upgrade Plan
+
+See `docs/assistant-tts-upgrade-plan.md` for the full upgrade roadmap.
+
+**Summary:** Browser `speechSynthesis` is prototype only. V2 will use OpenAI TTS (reuses existing API key, server-side, cached). V3 may use ElevenLabs for brand-quality voice. All TTS must be server-side, never client-side API key. See the upgrade plan doc for cost controls, caching policy, and safety rules.
+
+---
+
+## 7b. Legacy ElevenLabs / Production Voice Spec
 
 When Academy OS moves to a dedicated TTS service:
 
