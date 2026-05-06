@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-06 — Sprint 69: Director Mission Control Dashboard Polish
+
+Fixed all broken dashboard card links (were pointing to non-existent routes). Added "Today's Priorities" section header. Renamed "Voice Note AI" quick action to "Review Queue". Renamed "Academy Intelligence" quick action to "Signals". Removed dead code (`completedMissingNotes` with `false` predicate, stale `BookMarked` unused import). Fixed all alert panel hrefs to use existing routes.
+
+**Files modified:**
+- `src/app/director/page.tsx` — Fixed broken hrefs, added "Today's Priorities" label, renamed quick actions, removed dead code, replaced `BookMarked` stale import.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 68: Coach Session Mobile Masterclass Layout
 
 Restructured the coach session page to improve the mobile experience: attendance prompt now appears before the gap brief panel, "Wrap Up Session" is a full-width lime primary CTA, and "Quick Note" is a secondary ghost button. The gap brief panel moves to the bottom of the page.

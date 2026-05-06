@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import {
   Users, BookOpen, Calendar, ChevronRight, Activity,
-  Clock, Mic, Brain, AlertTriangle, TrendingUp, BookMarked,
+  Clock, Mic, Brain, AlertTriangle, TrendingUp,
   GraduationCap, Sparkles,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
@@ -196,48 +196,51 @@ export default async function DirectorDashboard() {
         </Link>
       </div>
 
-      {/* ── Top Command Cards ─────────────────────────────── */}
-      <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
-        <CommandCard
-          label="Active Players"
-          value={activePlayers}
-          sublabel="Currently training"
-          href="/director/players/active"
-          accentColor="lime"
-          icon={<Users className="w-4 h-4" />}
-        />
-        <CommandCard
-          label="Academy Improvement"
-          value={avgDelta !== null ? (avgDelta > 0 ? `+${avgDelta}` : String(avgDelta)) : '—'}
-          sublabel={withDelta.length > 0 ? `${improvingCount} of ${activePlayers} improving` : 'No assessment data yet'}
-          href="/director/improvement"
-          accentColor={avgDelta !== null && avgDelta > 0 ? 'green' : 'default'}
-          icon={<TrendingUp className="w-4 h-4" />}
-        />
-        <CommandCard
-          label="Sessions"
-          value={sessionsThisWeek}
-          sublabel="This week"
-          href="/director/sessions/overview"
-          accentColor="lime"
-          icon={<Calendar className="w-4 h-4" />}
-        />
-        <CommandCard
-          label="Private Lessons"
-          value={newRequests}
-          sublabel={newRequests === 1 ? '1 new request' : newRequests > 0 ? `${newRequests} new requests` : 'No new requests'}
-          href="/director/private-lessons"
-          accentColor={newRequests > 0 ? 'orange' : 'default'}
-          icon={<GraduationCap className="w-4 h-4" />}
-        />
-        <CommandCard
-          label="Academy Alerts"
-          value={totalAlerts}
-          sublabel={totalAlerts > 0 ? 'Items needing attention' : 'All clear'}
-          href="/director/alerts"
-          accentColor={totalAlerts > 0 ? 'red' : 'default'}
-          icon={<AlertTriangle className="w-4 h-4" />}
-        />
+      {/* ── Today's Priorities ────────────────────────────── */}
+      <div>
+        <p className="label-xs mb-4">Today's Priorities</p>
+        <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+          <CommandCard
+            label="Active Players"
+            value={activePlayers}
+            sublabel="Currently training"
+            href="/director/players"
+            accentColor="lime"
+            icon={<Users className="w-4 h-4" />}
+          />
+          <CommandCard
+            label="Academy Improvement"
+            value={avgDelta !== null ? (avgDelta > 0 ? `+${avgDelta}` : String(avgDelta)) : '—'}
+            sublabel={withDelta.length > 0 ? `${improvingCount} of ${activePlayers} improving` : 'No assessment data yet'}
+            href="/director/players"
+            accentColor={avgDelta !== null && avgDelta > 0 ? 'green' : 'default'}
+            icon={<TrendingUp className="w-4 h-4" />}
+          />
+          <CommandCard
+            label="Sessions"
+            value={sessionsThisWeek}
+            sublabel="This week"
+            href="/director/sessions"
+            accentColor="lime"
+            icon={<Calendar className="w-4 h-4" />}
+          />
+          <CommandCard
+            label="Lesson Requests"
+            value={newRequests}
+            sublabel={newRequests === 1 ? '1 new request' : newRequests > 0 ? `${newRequests} new requests` : 'No new requests'}
+            href="/director/review"
+            accentColor={newRequests > 0 ? 'orange' : 'default'}
+            icon={<GraduationCap className="w-4 h-4" />}
+          />
+          <CommandCard
+            label="Needs Attention"
+            value={totalAlerts}
+            sublabel={totalAlerts > 0 ? 'Items to review' : 'All clear'}
+            href="/director/signals"
+            accentColor={totalAlerts > 0 ? 'red' : 'default'}
+            icon={<AlertTriangle className="w-4 h-4" />}
+          />
+        </div>
       </div>
 
       {/* ── Curriculum Intelligence ───────────────────────── */}
@@ -260,7 +263,7 @@ export default async function DirectorDashboard() {
                 <p className="text-xs text-text-secondary mt-1">Missing level</p>
               </div>
             </Link>
-            <Link href="/director/ai-suggestions" className="group hidden sm:block">
+            <Link href="/director/signals" className="group hidden sm:block">
               <div className={`bg-surface-raised rounded-xl px-4 py-3 border transition-colors ${curricGapCount > 0 ? 'border-lime/20 hover:border-lime/40' : 'border-border hover:border-lime/30'}`}>
                 <p className={`font-mono font-bold text-3xl leading-none ${curricGapCount > 0 ? 'text-lime' : 'text-text-muted'}`}>{curricGapCount}</p>
                 <p className="text-xs text-text-secondary mt-1">Curriculum gap suggestions</p>
@@ -465,7 +468,7 @@ export default async function DirectorDashboard() {
           </CardContent>
           <CardFooter>
             <Link
-              href="/director/ai-suggestions"
+              href="/director/signals"
               className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
             >
               {pendingSuggestionsCount > 0 ? 'Review suggestions →' : 'Open AI Suggestions →'}
@@ -484,7 +487,7 @@ export default async function DirectorDashboard() {
                 <p className="text-xs text-text-muted mt-0.5">Scheduled and completed sessions</p>
               </div>
               <Link
-                href="/director/sessions/overview"
+                href="/director/sessions"
                 className="text-xs text-lime hover:opacity-80 font-medium"
               >
                 View all →
@@ -532,15 +535,15 @@ export default async function DirectorDashboard() {
           />
           <QuickActionCard
             icon={<Mic className="w-4 h-4 text-lime" />}
-            title="Voice Note AI"
-            description="Capture coach notes and structure them."
+            title="Review Queue"
+            description="Review coach wrap-ups, drafts, and pending actions."
             href="/director/review"
           />
           <QuickActionCard
             icon={<Sparkles className="w-4 h-4 text-lime" />}
-            title="Academy Intelligence"
-            description="Review AI suggestions, trends, and recommendations."
-            href="/director/ai-suggestions"
+            title="Signals"
+            description="View academy-wide signals, attendance concerns, and gaps."
+            href="/director/signals"
           />
         </div>
       </div>
@@ -652,10 +655,6 @@ function AcademyAlertsPanel({
   pendingWrapUpsCount: number
   sessions: SessionRow[]
 }) {
-  const completedMissingNotes = sessions.filter(
-    s => s.status === 'completed' && false // session_notes check requires full fetch; shown via alerts page
-  ).length
-
   type Severity = 'high' | 'medium' | 'low'
 
   interface AlertItem {
@@ -671,21 +670,21 @@ function AcademyAlertsPanel({
       severity: 'medium' as Severity,
       title: `${missingFocusCount} player${missingFocusCount !== 1 ? 's' : ''} missing current focus`,
       why: 'Players without focus areas cannot receive targeted coaching.',
-      href: '/director/players/active',
+      href: '/director/players',
       count: missingFocusCount,
     },
     attentionCount > 0 && {
       severity: 'high' as Severity,
       title: `${attentionCount} player${attentionCount !== 1 ? 's' : ''} needing attention`,
       why: 'Players on hold or due for reassessment are not progressing.',
-      href: '/director/players/active',
+      href: '/director/players',
       count: attentionCount,
     },
     reassessmentDueCount > 0 && {
       severity: 'high' as Severity,
       title: `${reassessmentDueCount} player${reassessmentDueCount !== 1 ? 's' : ''} due for reassessment`,
       why: 'Overdue reassessments delay curriculum progression.',
-      href: '/director/improvement',
+      href: '/director/players',
       count: reassessmentDueCount,
     },
     pendingWrapUpsCount > 0 && {
@@ -699,7 +698,7 @@ function AcademyAlertsPanel({
       severity: 'medium' as Severity,
       title: `${newRequestsCount} private lesson request${newRequestsCount !== 1 ? 's' : ''} waiting`,
       why: 'Parent requests need director review and routing.',
-      href: '/director/private-lessons',
+      href: '/director/review',
       count: newRequestsCount,
     },
     pendingCount > 0 && {
@@ -764,10 +763,10 @@ function AcademyAlertsPanel({
       </CardContent>
       <CardFooter>
         <Link
-          href="/director/alerts"
+          href="/director/signals"
           className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
         >
-          View full alerts center →
+          View all signals →
         </Link>
       </CardFooter>
     </Card>
@@ -794,8 +793,3 @@ function SessionStatusPill({ status }: { status: string }) {
   )
 }
 
-// ── Unused imports cleanup ──────────────────────────────────────
-
-// BookMarked was imported for future use — keep to avoid repeated import churn
-const _unused = BookMarked
-void _unused
