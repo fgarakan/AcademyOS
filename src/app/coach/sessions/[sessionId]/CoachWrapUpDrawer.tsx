@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy } from 'lucide-react'
+import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy, Plus } from 'lucide-react'
 import { saveSessionRecapAction } from './actions'
 import { saveWrapUpDraftAction, type BlockCompletionDraft } from './saveWrapUpDraftAction'
 import { saveWrapUpObservationsAction, type PlayerObservationInput } from './saveWrapUpObservationsAction'
@@ -107,6 +107,10 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
   const [copied, setCopied] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [draftRestored, setDraftRestored] = useState(false)
+  // "Add note from recap" form state — in summary phase
+  const [recapNotePlayer, setRecapNotePlayer] = useState<string>('')
+  const [recapNoteType, setRecapNoteType] = useState<'positive' | 'needs_attention'>('positive')
+  const [recapNoteText, setRecapNoteText] = useState<string>('')
 
   const draftKey = `wrapup_draft_${sessionId}`
 
@@ -333,6 +337,81 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
                 <p className="text-[9px] text-text-muted">
                   Unrostered players must go to director review — use the Attendance Exceptions panel in the session detail view.
                 </p>
+              </div>
+            )}
+
+            {/* Add note from recap — assisted player observation draft */}
+            {roster.length > 0 && (
+              <div className="p-3 rounded-xl bg-surface-raised border border-border space-y-3">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted">Add note from recap (optional)</p>
+                <p className="text-[10px] text-text-muted leading-snug">
+                  Select a player, choose note type, and write or paste text from your recap. Saves as an internal coach observation — not visible to players or parents.
+                </p>
+                <div className="flex gap-2">
+                  <select
+                    value={recapNotePlayer}
+                    onChange={e => setRecapNotePlayer(e.target.value)}
+                    className="flex-1 text-[11px] bg-surface border border-border rounded px-2 py-1.5 text-text-primary focus:outline-none focus:border-lime/40"
+                  >
+                    <option value="">Select player…</option>
+                    {roster.map(p => (
+                      <option key={p.playerId} value={p.playerId}>{p.fullName}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={recapNoteType}
+                    onChange={e => setRecapNoteType(e.target.value as 'positive' | 'needs_attention')}
+                    className="text-[11px] bg-surface border border-border rounded px-2 py-1.5 text-text-primary focus:outline-none focus:border-lime/40"
+                  >
+                    <option value="positive">Positive</option>
+                    <option value="needs_attention">Needs attention</option>
+                  </select>
+                </div>
+                <textarea
+                  value={recapNoteText}
+                  onChange={e => setRecapNoteText(e.target.value)}
+                  placeholder="Type observation or paste from recap above…"
+                  rows={2}
+                  className="w-full text-[11px] bg-surface border border-border rounded px-2 py-1.5 text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-lime/40"
+                />
+                <button
+                  type="button"
+                  disabled={!recapNotePlayer || !recapNoteText.trim()}
+                  onClick={() => {
+                    const player = roster.find(p => p.playerId === recapNotePlayer)
+                    if (!player || !recapNoteText.trim()) return
+                    const key = `${recapNotePlayer}:${recapNoteType}`
+                    setPlayerNotes(prev => ({
+                      ...prev,
+                      [key]: {
+                        playerId: recapNotePlayer,
+                        playerName: player.fullName,
+                        note: recapNoteText.trim(),
+                        type: recapNoteType,
+                      },
+                    }))
+                    setRecapNoteText('')
+                    setRecapNotePlayer('')
+                  }}
+                  className="flex items-center gap-1.5 text-xs btn-lime px-3 py-1.5 disabled:opacity-40"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add note
+                </button>
+                {/* Show queued notes */}
+                {Object.values(playerNotes).length > 0 && (
+                  <div className="space-y-1 pt-1 border-t border-border">
+                    <p className="text-[9px] uppercase tracking-widest text-text-muted">Queued observations</p>
+                    {Object.values(playerNotes).map(n => (
+                      <div key={`${n.playerId}:${n.type}`} className="flex items-start gap-2 text-[10px]">
+                        <span className={`shrink-0 font-medium ${n.type === 'positive' ? 'text-status-green' : 'text-status-orange'}`}>
+                          {n.type === 'positive' ? '+' : '!'}
+                        </span>
+                        <span className="text-text-secondary truncate">{n.playerName}: {n.note}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

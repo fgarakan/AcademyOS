@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-06 — Sprint 46: Coach Wrap-Up → Observation Auto-Draft
+
+Added assisted "Add note from recap" section in the coach Wrap-Up summary phase. V1 uses manual assisted flow — no AI parsing.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Added `recapNotePlayer`, `recapNoteType`, `recapNoteText` local state for the quick note form. Added `Plus` icon import. Added "Add note from recap" panel in the summary phase: player selector from session roster, note type selector (positive / needs attention), free-text area, "Add note" button that pushes the observation into `playerNotes` (same mechanism as inline step notes). Added "Queued observations" list showing all pending observations. Notes are saved as `coach_observations` (is_private = true) when coach taps "Save Recap" via existing `saveWrapUpObservationsAction`.
+
+**Safety:** Internal-only. No parent/player visibility. Coach explicit action required per note. Saves only when "Save Recap" is pressed. No AI inference — coach types the note manually.
+
+**Not built:** Deterministic name extraction from recap text (requires NLP or fuzzy matching — deferred to V2).
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 45: Session Block Exercise RLS Migration Gate
 
 Added migration 056 diagnostic warning to the coach session execution view, matching the existing gate already present in the director session detail.
