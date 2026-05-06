@@ -7,6 +7,16 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Voice Transcription Architecture (Sprint 78)
+
+### Production voice transcription is documented but not yet wired to a live STT key
+- **File:** `docs/voice-transcription-security-architecture.md`
+- **Impact:** The security architecture, data flow, and privacy controls are documented. The Whisper endpoint and AudioRecorder UI will be built in Sprints 79–80. Until `OPENAI_API_KEY` is set in the environment, the endpoint returns a safe 503 fallback.
+- **Scope:** V1 is intentionally narrow — Coach Wrap-Up question answers only. Not a generic voice assistant.
+- **Fix path:** Set `OPENAI_API_KEY` in `.env.local` (local) or Vercel environment (production) after Sprint 79 endpoint is deployed.
+
+---
+
 ## Coach Assistant Voice Input (Sprint 77)
 
 ### Voice input is browser-native only — no STT backend

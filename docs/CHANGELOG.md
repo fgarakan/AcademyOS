@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-06 — Sprint 78: Voice Transcription Security Architecture
+
+Documented the production voice transcription architecture, security controls, and privacy rules for the Coach Wrap-Up audio input path. Defines the complete data flow from MediaRecorder to Whisper API to transcript-in-textarea, with explicit rules for no audio storage, no auto-save, no parent/player exposure, and no client-side API keys. Includes cost controls, STT provider decision, fallback chain, and future hardening roadmap.
+
+**Files created:**
+- `docs/voice-transcription-security-architecture.md` — Full architecture doc: product goal, data flow, hard rules, security controls, privacy/junior safety, STT provider spec, cost controls, future roadmap.
+
+**Files modified:**
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 78 voice transcription architecture limitation.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean (docs-only sprint).
+
+---
+
 ## 2026-05-06 — Sprint 77: Coach Assistant Voice Input V1
 
 Added browser-native voice input to every question step in the Coach Wrap-Up assistant. A "Speak" mic button appears below the answer textarea. When tapped, it uses `SpeechRecognition` / `webkitSpeechRecognition` to capture speech and appends the transcript to the existing answer. On unsupported browsers (Firefox, iOS Safari), the button is replaced with a clear fallback note. No audio is recorded, stored, or uploaded. No external API. Coach reviews and edits every transcript before saving. The existing save flow is unchanged.
