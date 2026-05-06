@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-06 — Sprint 70: Coach Assistant Text Flow V1
+
+Enhanced the Coach Wrap-Up flow to feel like a guided assistant: added "Academy OS asks" question label, quick-answer shortcut buttons for yes/no questions (attendance, block completion), added "Under 60 sec" time label next to step counter, renamed header to "Assistant · Wrap-Up". All existing persistence and navigation unchanged.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Added assistant framing ("Academy OS asks" label, "Under 60 sec" tag, "Assistant · Wrap-Up" header), quick-answer buttons for attendance and blocks questions that pre-fill and advance automatically.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 69: Director Mission Control Dashboard Polish
 
 Fixed all broken dashboard card links (were pointing to non-existent routes). Added "Today's Priorities" section header. Renamed "Voice Note AI" quick action to "Review Queue". Renamed "Academy Intelligence" quick action to "Signals". Removed dead code (`completedMissingNotes` with `false` predicate, stale `BookMarked` unused import). Fixed all alert panel hrefs to use existing routes.

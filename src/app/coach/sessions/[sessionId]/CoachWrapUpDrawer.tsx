@@ -575,25 +575,72 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
             />
           ))}
         </div>
-        <p className="text-[10px] uppercase tracking-widest text-text-muted">
-          Question {stepIndex + 1} of {STEPS.length}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] uppercase tracking-widest text-text-muted">
+            Question {stepIndex + 1} of {STEPS.length}
+          </p>
+          <p className="text-[10px] text-text-muted">Under 60 sec</p>
+        </div>
       </div>
 
       {/* Question content */}
-      <div className="flex-1 px-5 space-y-5">
+      <div className="flex-1 px-5 space-y-4 overflow-y-auto">
         <div>
-          <p className="text-base font-semibold text-text-primary leading-snug mb-2">
+          <p className="text-[9px] uppercase tracking-widest text-lime/70 mb-1">Academy OS asks</p>
+          <p className="text-base font-semibold text-text-primary leading-snug mb-1.5">
             {currentStep.question}
           </p>
           <p className="text-xs text-text-muted">{currentStep.hint}</p>
         </div>
 
+        {/* Quick-answer shortcuts for yes/no questions */}
+        {currentStep.key === 'attendance' && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => { setAnswer(stepIndex, 'Everyone was here.'); goNext() }}
+              className="flex-1 text-xs py-2 px-3 rounded-xl border border-status-green/30 bg-status-green/5 text-status-green hover:bg-status-green/10 transition-colors"
+            >
+              ✓ Everyone here
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!answers[stepIndex].trim()) setAnswer(stepIndex, 'Someone was missing — ')
+              }}
+              className="flex-1 text-xs py-2 px-3 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 transition-colors"
+            >
+              Someone was missing…
+            </button>
+          </div>
+        )}
+
+        {currentStep.key === 'blocks' && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => { setAnswer(stepIndex, 'Yes, all blocks completed.'); goNext() }}
+              className="flex-1 text-xs py-2 px-3 rounded-xl border border-status-green/30 bg-status-green/5 text-status-green hover:bg-status-green/10 transition-colors"
+            >
+              ✓ All completed
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!answers[stepIndex].trim()) setAnswer(stepIndex, 'We skipped — ')
+              }}
+              className="flex-1 text-xs py-2 px-3 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 transition-colors"
+            >
+              Some were skipped…
+            </button>
+          </div>
+        )}
+
         <textarea
           value={answers[stepIndex]}
           onChange={e => setAnswer(stepIndex, e.target.value)}
           placeholder={currentStep.placeholder}
-          rows={5}
+          rows={4}
           autoFocus
           className="w-full bg-surface-raised border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/40 resize-none"
         />
@@ -649,7 +696,7 @@ function WrapUpShell({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-text-muted">Coach Wrap-Up</p>
+          <p className="text-[10px] uppercase tracking-widest text-text-muted">Assistant · Wrap-Up</p>
           <p className="text-sm font-semibold text-text-primary mt-0.5 truncate max-w-[240px]">
             {sessionName}
           </p>
