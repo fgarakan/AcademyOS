@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-06 — Sprint 67: Role-Based UX Simplification Audit
+
+Created a full audit of all four role experiences (director, coach, parent, player) documenting what is clear, what is cluttered, mobile risks, language gaps, and the assistant integration strategy. Includes Top 20 UX simplification fixes and recommended design rules.
+
+**Files created:**
+- `docs/role-based-ux-simplification-audit.md` — Full role-based UX audit with 7 sections and 20 prioritised fixes.
+
+**TypeScript:** no code changes — audit doc only.
+
+---
+
 ## 2026-05-06 — Sprint 66: Director New Player Wizard V1
 
 Added a single-player creation form at `/director/players/new`. Directors can add a player with name, date of birth, gender, and optional notes. Player is created with `pending_placement` status and the director is redirected to the new player profile.
