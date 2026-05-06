@@ -304,12 +304,61 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
   }
 
   // ── Summary / review state ───────────────────────────────────
+  const queuedObsCount = Object.values(playerNotes).filter(n => n.note.trim()).length
+  const nextFocusText = answers[5]?.trim()
+  const completedBlocks = blocks.filter(b => (blockStatus[b.id] ?? 'completed') === 'completed').length
+  const skippedBlocks = blocks.filter(b => blockStatus[b.id] === 'skipped').length
+  const modifiedBlocks = blocks.filter(b => blockStatus[b.id] === 'modified').length
+
   if (phase === 'summary') {
     return (
       <WrapUpShell sessionName={sessionName} onClose={onClose} showClose>
         <div className="flex-1 overflow-y-auto">
-          <div className="px-5 py-4 border-b border-border">
-            <p className="text-xs text-text-muted">Review your wrap-up before saving. Nothing is official yet.</p>
+          {/* Assistant summary header */}
+          <div className="px-5 py-4 border-b border-border space-y-3">
+            <div>
+              <p className="text-[9px] uppercase tracking-widest text-lime/70 mb-0.5">Assistant · Summary</p>
+              <p className="text-sm font-semibold text-text-primary">Here's what I understood</p>
+              <p className="text-xs text-text-muted mt-0.5">Review before saving. Nothing is official yet.</p>
+            </div>
+            {/* What will happen summary */}
+            <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-2">
+              {blocks.length > 0 && (
+                <div className="flex items-start gap-2 text-xs">
+                  <span className="text-lime mt-0.5">→</span>
+                  <span className="text-text-secondary">
+                    <span className="text-text-primary font-medium">{completedBlocks}</span> blocks completed
+                    {skippedBlocks > 0 && <>, <span className="text-status-orange font-medium">{skippedBlocks}</span> skipped</>}
+                    {modifiedBlocks > 0 && <>, <span className="text-text-primary font-medium">{modifiedBlocks}</span> modified</>}
+                  </span>
+                </div>
+              )}
+              {queuedObsCount > 0 && (
+                <div className="flex items-start gap-2 text-xs">
+                  <span className="text-lime mt-0.5">→</span>
+                  <span className="text-text-secondary">
+                    <span className="text-text-primary font-medium">{queuedObsCount}</span> player observation{queuedObsCount !== 1 ? 's' : ''} queued
+                  </span>
+                </div>
+              )}
+              {nextFocusText && (
+                <div className="flex items-start gap-2 text-xs">
+                  <span className="text-lime mt-0.5">→</span>
+                  <span className="text-text-secondary">Next focus: <span className="text-text-primary">{nextFocusText.slice(0, 60)}{nextFocusText.length > 60 ? '…' : ''}</span></span>
+                </div>
+              )}
+              <div className="flex items-start gap-2 text-xs">
+                <span className="text-lime mt-0.5">→</span>
+                <span className="text-text-secondary">Wrap-up recap will be saved for <span className="text-text-primary font-medium">director review only</span></span>
+              </div>
+            </div>
+            {/* What will NOT be shared */}
+            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface border border-border text-[10px] text-text-muted">
+              <span className="text-text-muted mt-0.5 shrink-0">🔒</span>
+              <span>
+                <span className="text-text-secondary font-medium">Not shared with parents or players:</span> your wrap-up answers, player observations, and block notes. These stay internal.
+              </span>
+            </div>
           </div>
           <div className="px-5 py-4 space-y-5">
             {/* Attendance section — explicit per-player confirmation */}
@@ -523,9 +572,9 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
           {saveError && (
             <p className="text-xs text-status-red">{saveError}</p>
           )}
-          {Object.values(playerNotes).filter(n => n.note.trim()).length > 0 && (
+          {queuedObsCount > 0 && (
             <p className="text-[10px] text-text-muted px-1">
-              {Object.values(playerNotes).filter(n => n.note.trim()).length} player observation{Object.values(playerNotes).filter(n => n.note.trim()).length !== 1 ? 's' : ''} queued — will save with recap.
+              {queuedObsCount} player observation{queuedObsCount !== 1 ? 's' : ''} queued — will save with recap.
             </p>
           )}
           <div className="flex items-center gap-3">
@@ -535,7 +584,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
               className="btn-ghost flex items-center gap-1.5 text-sm px-3 py-2 disabled:opacity-50"
             >
               <ChevronLeft className="w-4 h-4" />
-              Back
+              Edit
             </button>
             <div className="flex-1" />
             <button
@@ -552,9 +601,24 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
               className="btn-lime flex items-center gap-1.5 text-sm px-4 py-2 disabled:opacity-50"
             >
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              {isPending ? 'Saving…' : 'Save Recap'}
+              {isPending ? 'Saving…' : 'Save Wrap-Up'}
             </button>
           </div>
+          {/* Save as quick note — for incomplete wrap-ups */}
+          {answers.filter(a => a.trim()).length < STEPS.length && (
+            <p className="text-[10px] text-text-muted text-center">
+              Only answered some questions?{' '}
+              <button
+                type="button"
+                disabled={isPending || !answers.some(a => a.trim())}
+                onClick={handleSave}
+                className="text-lime underline disabled:opacity-40"
+              >
+                Save as quick note
+              </button>
+              {' '}— saves what you have.
+            </p>
+          )}
         </div>
       </WrapUpShell>
     )

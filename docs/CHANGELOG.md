@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-06 — Sprint 71: Coach Assistant Review Summary V1
+
+Enhanced the wrap-up summary phase to show a clear "Here's what I understood" assistant summary: block completion counts, queued observations count, next focus preview, and which content will go to director review. Added "Not shared with parents or players" lock note. Renamed "Save Recap" button to "Save Wrap-Up". Changed "Back" to "Edit". Added "Save as quick note" secondary option when some questions are unanswered.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Enhanced summary phase header with assistant summary block, visibility note, save/not-save clarity. Added "Save as quick note" fallback for incomplete wrap-ups.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 70: Coach Assistant Text Flow V1
 
 Enhanced the Coach Wrap-Up flow to feel like a guided assistant: added "Academy OS asks" question label, quick-answer shortcut buttons for yes/no questions (attendance, block completion), added "Under 60 sec" time label next to step counter, renamed header to "Assistant · Wrap-Up". All existing persistence and navigation unchanged.
