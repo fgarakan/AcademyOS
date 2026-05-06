@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 81: Transcript Player Name Guardrails
+
+Added deterministic name detection to the Coach Wrap-Up summary review phase. When the coach reaches the summary, all answers are scanned for capitalized words. Words matched to session roster first names are listed as "Roster names mentioned." Words that look like names but are not on the roster trigger an orange warning: "We heard a name that is not on this session roster. Do not save as a player note unless you confirm who it is." No AI, no external calls, no auto-actions. Detection filters out common non-name words (days, months, generic terms).
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Added `COMMON_NON_NAMES` constant, `useMemo`-based name detection, name guardrail UI panel in summary phase.
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 81 limitation.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 80: Coach Audio Recorder UI V1
 
 Added `AudioRecorderButton` — a production-ready MediaRecorder component that captures a short audio clip, sends it to the Sprint 79 transcription endpoint, receives the transcript, and appends it to the current answer textarea. Shows timer (max 60s), "Transcribing…" state, and a safe error message when the endpoint is not configured. The existing `VoiceInputButton` (browser SpeechRecognition) is retained as "Browser Dictation" option. Privacy copy: "Audio is used only to create a transcript and is not saved. Review and edit before saving. Nothing is saved until you tap Save Wrap-Up."

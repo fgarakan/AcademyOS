@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
-import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy, Plus, Volume2, VolumeX } from 'lucide-react'
+import { useState, useEffect, useTransition, useMemo } from 'react'
+import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy, Plus, Volume2, VolumeX, AlertTriangle, User } from 'lucide-react'
 import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
 import { AudioRecorderButton } from '@/components/assistant/AudioRecorderButton'
 import { saveSessionRecapAction } from './actions'
@@ -59,6 +59,15 @@ const STEPS: WrapUpStep[] = [
     placeholder: 'Serve placement and consistency under pressure. Build on today\'s forehand work.',
   },
 ]
+
+// Common non-name capitalized words to exclude from name detection
+const COMMON_NON_NAMES = new Set([
+  'everyone', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august',
+  'september', 'october', 'november', 'december', 'yes', 'no', 'ok',
+  'today', 'tomorrow', 'next', 'last', 'session', 'block', 'coach', 'player',
+  'group', 'team', 'all', 'some', 'none', 'one', 'two', 'three', 'four', 'five',
+])
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -338,6 +347,38 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
   const skippedBlocks = blocks.filter(b => blockStatus[b.id] === 'skipped').length
   const modifiedBlocks = blocks.filter(b => blockStatus[b.id] === 'modified').length
 
+  // Name detection — deterministic text matching only, no AI
+  const nameGuardrail = useMemo(() => {
+    const fullText = answers.join(' ')
+    const rosterFirstNames = new Set(
+      roster.map(p => p.fullName.split(' ')[0]).filter(n => n.length >= 2)
+    )
+    const rosterFullNames = new Map(
+      roster.map(p => [p.fullName.toLowerCase(), p])
+    )
+    const rosterFirstNameMap = new Map(
+      roster.map(p => [p.fullName.split(' ')[0].toLowerCase(), p])
+    )
+
+    // Extract capitalized words (likely names)
+    const capitalized = fullText.match(/\b[A-Z][a-z]{1,}/g) ?? []
+    const uniqueCapitalized = Array.from(new Set(capitalized))
+
+    const matched: string[] = []
+    const unmatched: string[] = []
+
+    for (const word of uniqueCapitalized) {
+      const lower = word.toLowerCase()
+      if (rosterFirstNameMap.has(lower) || rosterFullNames.has(lower)) {
+        matched.push(word)
+      } else if (!COMMON_NON_NAMES.has(lower) && rosterFirstNames.size > 0) {
+        unmatched.push(word)
+      }
+    }
+
+    return { matched, unmatched, hasWarning: unmatched.length > 0 }
+  }, [answers, roster])
+
   if (phase === 'summary') {
     return (
       <WrapUpShell sessionName={sessionName} onClose={onClose} showClose>
@@ -387,6 +428,34 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
                 <span className="text-text-secondary font-medium">Not shared with parents or players:</span> your wrap-up answers, player observations, and block notes. These stay internal.
               </span>
             </div>
+
+            {/* Name guardrail — deterministic text matching only */}
+            {(nameGuardrail.matched.length > 0 || nameGuardrail.unmatched.length > 0) && (
+              <div className="space-y-2">
+                {nameGuardrail.matched.length > 0 && (
+                  <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border">
+                    <User className="w-3 h-3 shrink-0 mt-0.5 text-text-muted" />
+                    <div className="space-y-0.5 min-w-0">
+                      <p className="text-[10px] text-text-secondary font-medium">Roster names mentioned</p>
+                      <p className="text-[10px] text-text-muted">
+                        {nameGuardrail.matched.join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {nameGuardrail.unmatched.length > 0 && (
+                  <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-status-orange/5 border border-status-orange/20">
+                    <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5 text-status-orange" />
+                    <div className="space-y-0.5 min-w-0">
+                      <p className="text-[10px] text-status-orange font-medium">Name not on roster</p>
+                      <p className="text-[10px] text-text-muted leading-snug">
+                        <span className="font-medium text-text-secondary">{nameGuardrail.unmatched.join(', ')}</span> — not matched to this session roster. Do not save as a player note unless you confirm who this is.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div className="px-5 py-4 space-y-5">
             {/* Attendance section — explicit per-player confirmation */}

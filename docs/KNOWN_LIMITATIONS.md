@@ -7,6 +7,16 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Transcript Player Name Guardrails (Sprint 81)
+
+### Name detection is heuristic — false positives possible
+- **File:** `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx`
+- **Impact:** Capitalized words in wrap-up answers are matched against session roster first names. Unmatched capitalized words that are not in the common-words exclusion list show an orange warning in the summary. This is a deterministic text heuristic — it does not understand context, so it may warn on place names, nicknames, or proper nouns. The coach must confirm who is being referenced before adding a player note.
+- **Limitation:** Multi-word names (e.g., "Van der Berg") may not be fully matched. Middle names are not matched. Names shorter than 2 characters are skipped.
+- **No auto-action:** The guardrail is advisory only. No player observation is created automatically.
+
+---
+
 ## Coach Audio Recorder UI (Sprint 80)
 
 ### AudioRecorderButton requires OPENAI_API_KEY for server transcription
