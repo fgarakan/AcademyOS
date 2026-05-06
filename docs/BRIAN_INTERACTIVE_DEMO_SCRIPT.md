@@ -1,7 +1,145 @@
 # Brian Interactive Demo Script
 
-**Sprint:** 120
-**Date:** 2026-05-01
+**Sprint:** 76
+**Date:** 2026-05-06
+
+---
+
+## Assistant Demo Path (Sprints 67–76)
+
+This is the recommended 10-step demo for showing the Academy OS assistant experience.
+
+### Pre-demo setup
+- Log in as the academy director
+- Have one session in the coach view (at `/coach/sessions`) with a roster
+- The session should be in "planned" or "in_progress" state
+
+### Step 1 — Director opens Mission Control
+Navigate to `/director/command-center`.
+
+**Say:**
+> "This is where the director starts their day. The system tells them what needs attention — no hunting through menus."
+
+**Point out:**
+- "Ask what needs attention" panel at the top
+- Seven pre-loaded question chips
+
+---
+
+### Step 2 — Director asks what needs review
+Tap "What needs review today?"
+
+**Say:**
+> "I just asked the system what needs my attention. It gives me a real answer from live data — no AI inference needed for this."
+
+**Point out:**
+- The response card showing pending count
+- "Why it matters" section
+- "What changes?" expandable detail
+- Risk level badge
+- Safety note: "Nothing changes until you approve each item"
+- Action link to Review Queue
+
+---
+
+### Step 3 — Director reviews pending wrap-ups
+Tap "Open Review Queue". Show the pending wrap-ups tab.
+
+**Say:**
+> "Every coach wrap-up from last session is here, waiting for my review. Nothing becomes official until I sign off."
+
+---
+
+### Step 4 — Switch to coach view
+Open a new tab or sign in as a coach. Navigate to `/coach/sessions` and open a session.
+
+**Say:**
+> "Now let's see what the coach sees. The session page has a clear mobile-first layout — the most important action is right at the top."
+
+**Point out:**
+- Full-width lime "Wrap Up Session" button
+- Attendance prompt (if any unmarked players)
+- Session blocks with status controls
+
+---
+
+### Step 5 — Coach opens the Assistant Wrap-Up
+Tap "Wrap Up Session".
+
+**Say:**
+> "The assistant asks one question at a time. Under 60 seconds for a typical session."
+
+**Point out:**
+- "Assistant · Wrap-Up" header
+- "Academy OS asks" prefix on the question
+- Step progress indicator ("Question 1 of 6")
+- "Under 60 sec" label
+
+---
+
+### Step 6 — Coach uses quick-answer buttons
+On Q1, tap "✓ Everyone here".
+
+**Say:**
+> "Quick answers for yes/no questions. The coach doesn't have to type if it's a simple yes."
+
+**Continue to Q2.** Show the blocks question quick buttons too.
+
+---
+
+### Step 7 — (Optional) Voice output
+Tap the "Voice" toggle button.
+
+**Say:**
+> "The assistant can read questions aloud — useful on a phone at courtside. Voice output only. No recording. The coach still types or dictates via their device keyboard."
+
+---
+
+### Step 8 — Coach completes wrap-up and reviews summary
+Complete all 6 questions. Arrive at the summary phase.
+
+**Say:**
+> "Before saving, the coach sees exactly what the system understood: blocks completed, who was flagged, what the next focus should be — and most importantly, what will NOT be shared with parents or players."
+
+**Point out:**
+- "Here's what I understood" header
+- Block completion counts
+- "Not shared with parents or players" lock note
+- "Save Wrap-Up" button (primary) and "Save as quick note" (fallback)
+
+---
+
+### Step 9 — Coach saves wrap-up
+Tap "Save Wrap-Up".
+
+**Say:**
+> "Saved. Recap goes to the director review queue. Nothing else changed. No parent notification. No level change. Just a clean record."
+
+---
+
+### Step 10 — Return to Director view
+Navigate back to `/director/review` as the director.
+
+**Say:**
+> "And here it is — the coach's wrap-up is now in the queue, waiting for review. The director sees the full structured summary, can approve or reject, and nothing becomes permanent until they do."
+
+---
+
+### Bonus: Parent and player portals
+Navigate to `/parent` (as a parent user) and `/player` (as a player user).
+
+**Say:**
+> "Parents see their child's development plan in plain English — no scores, no internal notes. Players see their current level and what to work on. The system controls what each role can see."
+
+---
+
+## Demo in one sentence
+
+> "The coach tells the OS what happened. The OS asks the right questions, builds a clean summary, and puts it in the director's review queue. Nothing becomes official without human approval."
+
+---
+
+## Original Demo Script (Sprint 120)
 
 ---
 

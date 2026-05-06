@@ -7,6 +7,25 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Coach Assistant Voice Output (Sprint 72)
+
+### Voice output is prototype-only — browser speechSynthesis
+- **File:** `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx`
+- **Impact:** Voice output uses `window.speechSynthesis` (Chrome/Edge support). Not available on iOS Safari. No ElevenLabs or production TTS. Voice toggle is hidden on unsupported browsers.
+- **Limitation:** Reads assistant prompt questions only. Cannot read summaries, notes, or observations aloud (by design — safety rule).
+- **Fix path:** Sprint 77+ — integrate ElevenLabs or similar TTS for production voice. See `docs/assistant-personality-and-voice-guidelines.md` for voice spec.
+
+---
+
+## Director Assistant Panel (Sprint 73)
+
+### Director assistant responses are deterministic — no AI inference
+- **File:** `src/app/director/command-center/DirectorAssistantPanel.tsx`
+- **Impact:** Responses are based on live DB counts (pending wrap-ups, pending placements, etc.) and pre-written copy. There is no AI inference, no natural language understanding, and no personalization.
+- **Fix path:** Sprint 77+ — wire real AI layer when query pattern and guardrails are confirmed. The deterministic V1 response structure (summary + why + what changes + risk) is designed to match what an AI response would look like.
+
+---
+
 ## Coach session block status (Sprint 48)
 
 ### Block progress does not persist to the database

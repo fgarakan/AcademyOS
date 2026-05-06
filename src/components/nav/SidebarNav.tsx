@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
-  Trophy, Brain, BarChart3, Settings, LogOut, Dumbbell, ClipboardList, FlaskConical,
+  LogOut, Dumbbell, ClipboardList, FlaskConical,
   ChevronRight, LayoutTemplate, Sparkles, Terminal, UserPlus, Activity,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
@@ -24,14 +24,10 @@ const FOUNDATION_ITEMS = [
 const INTELLIGENCE_ITEMS = [
   { label: 'Command Center', href: '/director/command-center', icon: Terminal },
   { label: 'AI Suggestions', href: '/director/ai-suggestions', icon: Sparkles },
-  { label: 'Intelligence',   href: '/director/intelligence',   icon: Brain },
-  { label: 'Competition',    href: '/director/competition',    icon: Trophy },
-  { label: 'Reports',        href: '/director/reports',        icon: BarChart3 },
 ]
 
 const SYSTEM_ITEMS = [
-  { label: 'Configuration', href: '/director/configuration', icon: Settings },
-  { label: 'Demo Tour',     href: '/director/demo',          icon: FlaskConical },
+  { label: 'Demo Tour', href: '/director/demo', icon: FlaskConical },
 ]
 
 interface SidebarNavProps {

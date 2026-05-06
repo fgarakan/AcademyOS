@@ -1,8 +1,58 @@
-# V1 Manual Test Checklist — Coach Operating Loop
+# V1 Manual Test Checklist — Coach Operating Loop + Assistant Demo
 
-**Sprint:** 16
-**Date:** 2026-05-05
-**Scope:** Sprints 10–15 features — coach session execution, wrap-up guided recap, attendance, player observations, session actual draft
+**Sprint:** 76
+**Date:** 2026-05-06
+**Scope:** Sprints 67–76 — role-based UX simplification, coach session mobile layout, director mission control, coach assistant text flow, voice output, director assistant command center, review cards, personality guidelines, demo polish
+
+---
+
+## Sprint 67–76 Quick Check
+
+| Check | Area | Expected |
+|---|---|---|
+| S67 | Audit doc exists | `docs/role-based-ux-simplification-audit.md` present |
+| S68 | Coach session mobile layout | "Wrap Up Session" is a full-width lime button. Attendance prompt appears before gap brief. |
+| S69 | Director dashboard links | All command card links go to existing routes (no 404s). "Today's Priorities" label visible. |
+| S70 | Coach assistant text flow | Wrap-Up header shows "Assistant · Wrap-Up". Questions show "Academy OS asks" label. Quick buttons on Q1 and Q2. |
+| S71 | Coach review summary | Summary phase shows "Here's what I understood", block counts, queued observations, "Not shared with parents" note. "Save Wrap-Up" button (renamed from "Save Recap"). "Save as quick note" option if incomplete. |
+| S72 | Voice output | Voice toggle button appears in step header (when `speechSynthesis` supported). "Under 60 sec" label visible. Toggling ON speaks the current question. Toggling OFF cancels speech. |
+| S73 | Director assistant panel | `/director/command-center` shows "Ask what needs attention" panel with 7 suggestion chips. Tapping a chip shows a deterministic response. |
+| S74 | AssistantActionCard | Response card shows: suggested action, why, expandable "What changes?", risk badge, safety note, dismiss, action link. |
+| S75 | Personality guidelines | `docs/assistant-personality-and-voice-guidelines.md` present. `src/lib/assistant/personality.ts` present. |
+| S76 | Sidebar clean | Intelligence, Competition, Reports, Configuration removed from sidebar. Only built routes shown. |
+
+---
+
+## Assistant Demo Flow (End-to-End)
+
+| Step | Role | Action | Expected |
+|---|---|---|---|
+| 1 | Director | Open `/director/command-center` | "Ask what needs attention" assistant panel visible |
+| 2 | Director | Tap "What needs review today?" | Deterministic response card appears with pending count, why, action link to review queue |
+| 3 | Director | Tap "Open Review Queue" | Routes to `/director/review` |
+| 4 | Director | (optional) Tap "Show pending coach wrap-ups" | Response shows pending wrap-up count and safety note |
+| 5 | Coach | Open a session in `/coach/sessions` | "Wrap Up Session" lime button visible near top of page |
+| 6 | Coach | Tap "Wrap Up Session" | Full-screen "Assistant · Wrap-Up" drawer opens |
+| 7 | Coach | Answer Q1 with quick button "Everyone here" | Advances to Q2 automatically |
+| 8 | Coach | Complete remaining questions | Progress bar fills. Questions show "Academy OS asks" label. |
+| 9 | Coach | Reach summary | "Here's what I understood" header. Block counts. "Not shared" note. |
+| 10 | Coach | Tap "Save Wrap-Up" | Saves to director review queue. Routes back. |
+| 11 | Director | Return to `/director/review` | New wrap-up item visible in queue |
+| 12 | Parent | Open `/parent` | Development plan visible. No raw coach notes. Session history humanised. |
+| 13 | Player | Open `/player` | "Current Level" card. "What to Work On" section. No score or assessment data. |
+
+---
+
+## Known Voice Output Limitations (Sprint 72)
+
+- Voice toggle only appears when `window.speechSynthesis` is available (Chrome/Edge; not on iOS Safari).
+- Voice reads assistant prompt questions only — not answers, notes, or summaries.
+- Voice is off by default. No autoplay.
+- Not all browsers support `speechSynthesis`. Falls back silently (no toggle shown on unsupported browsers).
+
+---
+
+## Original Sprint 10–15 Checklist
 
 ---
 

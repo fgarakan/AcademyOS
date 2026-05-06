@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-06 — Sprint 76: End-to-End Assistant Demo Polish
+
+Cleaned up sidebar navigation to show only built routes. Removed unbuilt items (Intelligence, Competition, Reports, Configuration) from director sidebar. Updated the manual test checklist with a full Sprint 67–76 quick-check table and 13-step assistant demo flow. Updated the Brian interactive demo script with a structured 10-step assistant demo path covering both director and coach views. Added Sprint 72 voice output and Sprint 73 director assistant limitations to the known limitations doc.
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — Removed 4 unbuilt nav items and their unused icon imports (`Brain`, `Trophy`, `BarChart3`, `Settings`).
+- `docs/V1_MANUAL_TEST_CHECKLIST.md` — Updated to Sprint 76. Added Sprint 67–76 quick-check table, 13-step assistant demo flow table, and known voice output limitations section.
+- `docs/BRIAN_INTERACTIVE_DEMO_SCRIPT.md` — Added 10-step "Assistant Demo Path (Sprints 67–76)" with pre-demo setup, step scripts, and one-sentence demo summary.
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 72 voice output limitation and Sprint 73 director assistant deterministic limitation.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 75: Assistant Personality + Voice System Guidelines
 
 Documented the complete assistant personality, language rules, safety boundaries, and future voice direction. Covers all four roles: coach, director, parent, player. Includes voice output rules, ElevenLabs future spec, and 4 example prompt scripts. Also created an internal constants file with wrap-up questions, speech settings, and role-specific language maps.
