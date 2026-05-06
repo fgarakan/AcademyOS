@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-06 — Sprint 93: Coach Assigned Sessions View Polish
+
+Rewrote `CoachSessionsPage` (`/coach/sessions`) to show Today / Upcoming / Completed clearly. Today sessions render as prominent cards with an "Open" CTA button; active sessions get a lime highlight. Upcoming and Completed use compact rows with status badges. Removed the "Coming soon" footer. Added a recent-completed-sessions query. Hides cancelled sessions from Upcoming.
+
+**Files modified:**
+- `src/app/coach/sessions/page.tsx` — Full rewrite with three-section layout, SessionCard + SessionRow components, completed sessions query.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 92: Generate Session from Fitness Template V1
 
 Wired the existing `GenerateSessionPanel` (previously built but not rendered) into the fitness template detail page. The director can now click "Create Session from Template," choose a date, coach, and optional notes, and generate a dated session that is a copy of the template at that moment. The master template is unchanged. Exercises and blocks are copied via `generateSessionFromTemplateAction`. A link to the created session is shown on success. Added coaches data fetch (all active academy_director/head_coach/coach members) to the server component.
