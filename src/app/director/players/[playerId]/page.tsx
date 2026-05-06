@@ -59,6 +59,7 @@ import { GuardianLinkingPanel, type LinkedGuardian } from './GuardianLinkingPane
 import { PlayerPortalLinkPanel } from './PlayerPortalLinkPanel'
 import { QuickAssessmentPanel } from './QuickAssessmentPanel'
 import { QuickAssessmentHistoryCard } from './QuickAssessmentHistoryCard'
+import { AssessmentHistoryCard } from './AssessmentHistoryCard'
 
 interface PageProps {
   params: { playerId: string }
@@ -543,6 +544,47 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const adHocAssessments = rawAdHoc.map(r => ({
     ...r,
     assessed_by_name: assessorNameMap.get(r.assessed_by) ?? null,
+  }))
+
+  // ─── Assessment history (all types, last 10) ──────────────────────────────
+  interface AssessmentHistoryRow {
+    id: string
+    assessed_date: string
+    type: 'intake' | 'quarterly' | 'reassessment' | 'promotion' | 'ad_hoc'
+    overall_score: number | null
+    technical_score: number | null
+    tactical_score: number | null
+    movement_score: number | null
+    competition_score: number | null
+    behavioral_score: number | null
+    notes: string | null
+    assessed_by: string
+    is_baseline: boolean
+    promotion_ready: boolean
+  }
+  const { data: allAssessmentRows } = await rawDb
+    .from('assessments')
+    .select('id, assessed_date, type, overall_score, technical_score, tactical_score, movement_score, competition_score, behavioral_score, notes, assessed_by, is_baseline, promotion_ready')
+    .eq('player_id', params.playerId)
+    .eq('academy_id', academyId)
+    .order('assessed_date', { ascending: false })
+    .limit(10)
+
+  const rawAllAssessments = (allAssessmentRows ?? []) as AssessmentHistoryRow[]
+  const allAssessorIds = Array.from(new Set(rawAllAssessments.map(r => r.assessed_by)))
+  const allAssessorNameMap = new Map<string, string>()
+  if (allAssessorIds.length > 0) {
+    const { data: allAssessorProfiles } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', allAssessorIds)
+    for (const p of (allAssessorProfiles ?? [])) {
+      allAssessorNameMap.set(p.id, p.display_name)
+    }
+  }
+  const allAssessments = rawAllAssessments.map(r => ({
+    ...r,
+    assessed_by_name: allAssessorNameMap.get(r.assessed_by) ?? null,
   }))
 
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
@@ -1121,6 +1163,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         currentFocus={qaCoachLanguage[0]?.current_focus ?? null}
         parentSupportTip={null}
       />
+
+      {/* Full assessment history — all types, last 10 */}
+      <AssessmentHistoryCard assessments={allAssessments} />
 
     </div>
   )

@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-06 — Sprint 60: Director Player Assessment History Section
+
+Added a full "Assessment History" card to the director player profile Notes tab, showing the last 10 assessments across all types (intake, quarterly, reassessment, promotion, ad_hoc).
+
+**Files created:**
+- `src/app/director/players/[playerId]/AssessmentHistoryCard.tsx` — Display component. Shows each assessment with a type badge (color-coded per type), date, overall score, domain scores (Tech/Tact/Mvmt/Comp/Bhvr) as numeric values with score-based color coding, notes snippet, assessor name, baseline and promotion-ready flags. Empty state when no assessments exist.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Added `AssessmentHistoryCard` import. Added fetch: queries `assessments` for all types for this player, ordered by `assessed_date DESC`, limit 10. Batch-fetches assessor display names. Passes enriched array to `AssessmentHistoryCard` at the bottom of the Notes tab.
+
+**Safety:** Director-only read. No parent/player exposure. No schema changes. No level movement.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 59: Coach Wrap-Up Player Notes Persistence Verification
 
 Verified `saveWrapUpObservationsAction` is correct and working. Improved coach feedback: queued observation count is shown before save, and saved/error count is shown in the confirmation state.
