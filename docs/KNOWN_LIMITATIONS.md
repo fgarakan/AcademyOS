@@ -7,6 +7,17 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Apply Approved Wrap-Up (Sprint 84)
+
+### applyWrapUpDraftAction writes to sessions.session_notes — full session actuals table not yet built
+- **File:** `src/app/director/review/applyWrapUpDraftAction.ts`
+- **Impact:** Applying an approved wrap-up writes a structured text summary to `sessions.session_notes` and advances `sessions.status` to `completed`. This is a safe, reversible text write — no schema migration required. A dedicated `session_actuals` table with normalized fields (per-block outcomes, attendance deltas, coach-to-parent links) would provide richer reporting but is not yet built.
+- **What is safe:** Session notes, session status, audit log write, proposed_action status = executed.
+- **What is not affected:** Template, template blocks, curriculum, attendance records, player profiles, parent/player portals.
+- **Fix path:** When `session_actuals` table is designed and migrated, extend `applyWrapUpDraftAction` to populate normalized fields in addition to `session_notes`.
+
+---
+
 ## Director Wrap-Up Review (Sprint 83)
 
 ### Approve/Reject controls are built and functional

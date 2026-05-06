@@ -199,9 +199,8 @@ export function WrapUpDraftCard({ draft }: { draft: EnrichedWrapUpDraftItem }) {
         <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border text-[11px] text-text-muted">
           <Info className="w-3 h-3 shrink-0 mt-0.5" />
           <span>
-            This is a coach-submitted session summary. No session data has been changed.
-            Planned session and template are untouched. Apply action (Sprint 19) will be required
-            to write an official session actual.
+            This is a coach-submitted session summary. No session data has been changed yet.
+            Planned session and template are untouched. Approve, then use the Apply button to write the official session actual. Rejecting this draft records your decision but takes no further action.
           </span>
         </div>
 

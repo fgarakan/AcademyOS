@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 84: Apply Approved Wrap-Up to Session Actuals
+
+The apply-to-session-actuals action was already fully built (`applyWrapUpDraftAction`). This sprint confirms the full flow: approved wrap-up → Apply button → session notes written + session marked completed + audit log written + proposed_action marked executed. Updated stale copy in `WrapUpDraftCard` safety note ("Apply action (Sprint 19) will be required" → accurate description of actual flow). Planned session and template remain untouched. Parent/player exposure: none. Migration: not required — `session_notes` and `status` columns exist.
+
+**Files modified:**
+- `src/app/director/review/WrapUpDraftCard.tsx` — Updated safety note to describe actual apply flow.
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 84 note.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 83: Director Wrap-Up Approve/Reject Polish
 
 The director review queue approve/reject controls for session wrap-up drafts were fully built in prior sprints. This sprint confirms and polishes: `WrapUpDraftDecisionControls` (Approve, Reject, Needs Clarification + optional note), `updateWrapUpDraftDecisionAction` (full auth/academy/session checks, safe status transitions), `ApplyWrapUpDraftControls` (apply button post-approval), and `applyWrapUpDraftAction` (session notes write + audit log). Updated decision copy to be clearer: "Nothing changes until you explicitly apply. No player, parent, or curriculum record is touched by this action."
