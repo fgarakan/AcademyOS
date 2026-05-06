@@ -264,6 +264,27 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
+      {/* Template Version History — placeholder until migration 064 is applied */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Version History</p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-[11px] text-text-muted">
+            Template version history is not yet enabled.{' '}
+            <span className="text-text-secondary">
+              Each save will create an immutable version snapshot once migration 064 is applied.
+            </span>{' '}
+            Created: {new Date(template.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            {(template as any).updated_at && template.created_at !== (template as any).updated_at && (
+              <span className="ml-2 text-text-muted">
+                · Last modified: {new Date((template as any).updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+              </span>
+            )}
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Template Settings — edit metadata + duplicate */}
       <TemplateMetaEditorCard
         templateId={params.templateId}

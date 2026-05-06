@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-06 — Sprint 98: Template Version History Readiness
+
+Template version history doesn't exist yet — no `template_versions` table, no version column. Added a placeholder "Version History" card to the fitness template detail page showing created/modified dates and an internal note: "Template version history is not yet enabled — apply migration 064 to activate." Created `docs/template-version-history-plan.md` documenting proposed `template_versions` + `template_version_blocks` tables, migration plan (064–068), RLS patterns, and the UI design.
+
+**Files created:**
+- `docs/template-version-history-plan.md` — Full version history plan: tables, migration sequence, RLS, UI spec.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Added Version History placeholder card.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 97: Session Archive Timeline V1
 
 Created `/director/sessions/archive` page — a read-only timeline of completed sessions grouped by month. Each session card shows date, coach, group, duration, and a preview of `session_notes`. Timeline uses a vertical line + dot visual. Links to full session detail. Added "Archive" button to the sessions list page header.
