@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-06 — Sprint 82: Voice Privacy Audit Readiness
+
+Added best-effort audit log writes to the transcription endpoint — event metadata only (academy, user, session, provider, file size, `audio_retained: false`). Transcript text and audio are never logged. Created `docs/voice-audit-log-plan.md` documenting current coverage, planned future fields (no schema change needed — all fit in existing `payload` JSONB), and the planned director voice privacy settings card. Privacy UI copy is already in `AudioRecorderButton`.
+
+**Files created:**
+- `docs/voice-audit-log-plan.md` — Current audit coverage, planned future fields, privacy card spec.
+
+**Files modified:**
+- `src/app/api/coach/sessions/[sessionId]/transcribe/route.ts` — Added best-effort `audit_logs` write after successful transcription.
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 82 limitation.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 81: Transcript Player Name Guardrails
 
 Added deterministic name detection to the Coach Wrap-Up summary review phase. When the coach reaches the summary, all answers are scanned for capitalized words. Words matched to session roster first names are listed as "Roster names mentioned." Words that look like names but are not on the roster trigger an orange warning: "We heard a name that is not on this session roster. Do not save as a player note unless you confirm who it is." No AI, no external calls, no auto-actions. Detection filters out common non-name words (days, months, generic terms).

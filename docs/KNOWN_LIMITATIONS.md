@@ -7,6 +7,16 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Voice Privacy Settings (Sprint 82)
+
+### No director voice settings UI yet
+- **Plan:** `docs/voice-audit-log-plan.md`
+- **Impact:** There is no `/director/configuration` screen where an academy director can see voice transcription status (configured/not configured) or disable it. Voice privacy is enforced in code (no audio stored, audit log written) but not yet visible in the UI.
+- **Fix path:** Build the director configuration screen (Phase 4+) and add a read-only voice privacy card. The card spec is in `docs/voice-audit-log-plan.md`.
+- **Current state:** Audit log writes are active. Privacy copy is in the recorder UI. No raw transcript or audio is ever stored.
+
+---
+
 ## Transcript Player Name Guardrails (Sprint 81)
 
 ### Name detection is heuristic — false positives possible

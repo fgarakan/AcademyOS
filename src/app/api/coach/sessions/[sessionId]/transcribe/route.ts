@@ -141,7 +141,29 @@ export async function POST(
       )
     }
 
-    // 10. Return transcript — audio is not stored, not logged
+    // 10. Write audit log — metadata only, never transcript or audio
+    const rawDb = supabase as any
+    rawDb.from('audit_logs').insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'voice_transcription.completed',
+      target_type: 'session',
+      target_id: sessionId,
+      target_label: `session:${sessionId}`,
+      payload: {
+        provider: 'openai_whisper',
+        audio_retained: false,
+        file_size_bytes: audioFile.size,
+        mime_type: mimeType,
+        success: true,
+      },
+      source_type: 'voice',
+    }).then(() => {
+      // best-effort — do not block response on audit write
+    }).catch(() => {
+      // ignore audit write failures
+    })
+
     console.log(`[transcribe] ok session=${sessionId} user=${user.id} bytes=${audioFile.size}`)
     return NextResponse.json({ ok: true, transcript })
   } catch (err) {
