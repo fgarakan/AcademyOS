@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 63: Parent Portal Attendance History Polish
+
+Polished the "Session Consistency" card in the parent portal: formatted dates, humanized status labels, and surfaced the late-attendance count.
+
+**Files modified:**
+- `src/app/parent/page.tsx` — Attendance list: formatted raw ISO date strings to "Mon, Apr 15" style using `toLocaleDateString`. Humanized status labels: `present` → "Attended", `late` → "Attended late", `excused` → "Excused", `absent` → "Missed". Removed uppercase raw status badge; `absent` now uses a neutral muted style rather than alarming red. Added late count sentence ("N sessions attended late") above the session list when `lateCount > 0`. Replaced `null` session name fallback from "Session" to "Training session".
+
+**Safety:** Parent-safe. Read-only display changes only. No schema changes. No score or internal note exposure.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 62: Player Portal Current Curriculum Level Card
 
 Added a "Current Level" card to the player portal, positioned above "What to Work On". Shows the player's current level name prominently with stage label and the next level name when available.

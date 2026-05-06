@@ -451,29 +451,45 @@ export default async function ParentHome() {
                   </div>
                 )}
               </div>
+              {/* Late count — shown only if relevant */}
+              {attendanceStat.lateCount > 0 && (
+                <p className="text-xs text-status-orange">
+                  {attendanceStat.lateCount} session{attendanceStat.lateCount !== 1 ? 's' : ''} attended late
+                </p>
+              )}
               {/* Recent session list */}
               {attendanceStat.recentSessions.length > 0 && (
                 <div className="space-y-1.5">
                   <p className="text-[10px] uppercase tracking-widest text-text-muted">Recent Sessions</p>
-                  {attendanceStat.recentSessions.map((s, i) => (
-                    <div key={i} className="flex items-center justify-between gap-2 py-1 border-b border-border last:border-0">
-                      <div className="min-w-0">
-                        <p className="text-xs text-text-secondary truncate">{s.sessionName ?? 'Session'}</p>
-                        <p className="text-[10px] text-text-muted">{s.date}</p>
+                  {attendanceStat.recentSessions.map((s, i) => {
+                    const statusLabel =
+                      s.status === 'present' ? 'Attended'
+                      : s.status === 'late' ? 'Attended late'
+                      : s.status === 'excused' ? 'Excused'
+                      : 'Missed'
+                    const formattedDate = s.date
+                      ? new Date(s.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                      : ''
+                    return (
+                      <div key={i} className="flex items-center justify-between gap-2 py-1 border-b border-border last:border-0">
+                        <div className="min-w-0">
+                          <p className="text-xs text-text-secondary truncate">{s.sessionName ?? 'Training session'}</p>
+                          <p className="text-[10px] text-text-muted">{formattedDate}</p>
+                        </div>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
+                          s.status === 'present'
+                            ? 'bg-status-green/10 text-status-green border-status-green/30'
+                            : s.status === 'late'
+                            ? 'bg-status-orange/10 text-status-orange border-status-orange/30'
+                            : s.status === 'excused'
+                            ? 'bg-status-blue/10 text-status-blue border-status-blue/30'
+                            : 'bg-surface-raised text-text-muted border-border'
+                        }`}>
+                          {statusLabel}
+                        </span>
                       </div>
-                      <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border shrink-0 ${
-                        s.status === 'present'
-                          ? 'bg-status-green/10 text-status-green border-status-green/30'
-                          : s.status === 'late'
-                          ? 'bg-status-orange/10 text-status-orange border-status-orange/30'
-                          : s.status === 'excused'
-                          ? 'bg-status-blue/10 text-status-blue border-status-blue/30'
-                          : 'bg-status-red/10 text-status-red border-status-red/30'
-                      }`}>
-                        {s.status}
-                      </span>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
