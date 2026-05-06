@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 95: Planned vs Actual Session Diff V1
+
+Enhanced `PlannedVsActualDiffPanel` to also show exercise-level actuals from `session_block_exercises`. Each block row now expands inline to list its exercises with Done/Skipped/Modified icons, exercise names, and coach notes (the `[Skipped]`/`[Modified]` prefixes from Sprint 94 are detected and displayed with appropriate color-coding). Panel is read-only. Updated director session detail page to pass `sessionExercises` to the panel.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/PlannedVsActualDiffPanel.tsx` — Added `sessionExercises` prop, exercise grouping, and exercise-level diff rows under each block.
+- `src/app/director/sessions/[sessionId]/page.tsx` — Pass `sessionExercises` mapped from existing `exercises` data to `PlannedVsActualDiffPanel`.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 94: Coach Live Session Exercise Editing V1
 
 Added explicit Done / Modified / Skip status buttons per exercise in `CoachSessionExecutionClient`. Previously exercises only had a boolean checkbox; now each exercise shows three status buttons. Status maps to `session_block_exercises.completed` (done/modified→true, skipped→false) and prepends `[Skipped]` or `[Modified]` to notes so the director diff view can distinguish them. Added skipped-count to the progress display. Added "Session edits only — master template is unchanged" safety label. All changes affect `session_block_exercises` only — `template_block_exercises` is never touched.

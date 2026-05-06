@@ -1050,6 +1050,15 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
             plannedBlocks={blockList}
             wrapUpPayload={wrapUpPayload}
             wrapUpStatus={wrapUpStatus}
+            sessionExercises={exercises.map(ex => ({
+              id: ex.id,
+              block_id: ex.block_id,
+              exerciseName: ex.exercises?.name ?? 'Unknown Exercise',
+              exerciseCategory: ex.exercises?.category ?? '',
+              completed: ex.completed,
+              notes: ex.notes,
+              duration_min: ex.duration_min,
+            }))}
           />
         </div>
       </div>
