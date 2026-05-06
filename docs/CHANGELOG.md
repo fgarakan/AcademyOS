@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-06 — Sprint 54: Director Review Queue Batch Actions V1
+
+Added batch dismiss controls to the Voice Intake and Captures tabs of the review queue. Directors can now select multiple items, see a confirmation banner, and dismiss them in one action.
+
+**Files created:**
+- `src/app/director/review/batchReviewActions.ts` — Two server actions: `batchDismissVoiceIntakeAction` (sets `proposed_actions.status = 'dismissed'` for selected voice intake items) and `batchDismissCapturesAction` (sets `voice_notes.processing_status = 'dismissed'`). Both require director/head_coach auth, academy scope, max 50 items, and `assertNotPreviewMode`.
+- `src/app/director/review/VoiceIntakeBatchPanel.tsx` — Client component replacing the pending section of the Voice Intake tab. Shows select-all toggle, "Dismiss N selected" button, inline confirmation banner with cancel, and optimistic dismissed-state tracking (dismissed items disappear without page reload).
+- `src/app/director/review/CapturesBatchPanel.tsx` — Same pattern for the Captures tab, calling `batchDismissCapturesAction`.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — Added imports for `VoiceIntakeBatchPanel` and `CapturesBatchPanel`. Replaced pending voice intake loop with `<VoiceIntakeBatchPanel pending={pendingVoiceIntakeDrafts} />`. Replaced captures loop with `<CapturesBatchPanel captures={generalCaptures} players={playerOptions} />`. Removed now-unused `GeneralCaptureDraftCard` value import (type import retained).
+
+**Safety:** Batch dismiss only — no approve/apply/execute. Academy scoped. Director/head_coach only. Max 50 items. No schema changes. No voice pipeline bypass. No parent/player exposure. No official records modified.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 53: Coach Player List Sort + Context
 
 Upgraded the coach player list with client-side sort controls (name / group / level / last assessed) and added focus_areas chips and last-assessed date display.

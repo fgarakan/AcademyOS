@@ -16,11 +16,12 @@ import type { EnrichedCurriculumOverrideDraftItem } from './CurriculumOverrideDr
 import type { CurriculumOverrideDraftPayload } from '@/lib/actions/curriculumOverrideDraft'
 import { VoiceIntakeDraftCard } from './VoiceIntakeDraftCard'
 import type { EnrichedVoiceIntakeDraftItem, VoiceIntakeDraftPayload } from './VoiceIntakeDraftCard'
-import { GeneralCaptureDraftCard } from './GeneralCaptureDraftCard'
 import type { GeneralCaptureItem, PlayerOption } from './GeneralCaptureDraftCard'
 import { WrapUpDraftCard } from './WrapUpDraftCard'
 import type { EnrichedWrapUpDraftItem } from './WrapUpDraftCard'
 import type { SessionActualDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpDraftAction'
+import { VoiceIntakeBatchPanel } from './VoiceIntakeBatchPanel'
+import { CapturesBatchPanel } from './CapturesBatchPanel'
 
 export default async function DirectorReviewQueuePage() {
   const supabase = await getSupabaseServer()
@@ -944,11 +945,7 @@ export default async function DirectorReviewQueuePage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {generalCaptures.map(capture => (
-                  <GeneralCaptureDraftCard key={capture.id} capture={capture} players={playerOptions} />
-                ))}
-              </div>
+              <CapturesBatchPanel captures={generalCaptures} players={playerOptions} />
             )}
           </section>
         </TabsContent>
@@ -985,11 +982,7 @@ export default async function DirectorReviewQueuePage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {pendingVoiceIntakeDrafts.map(draft => (
-                  <VoiceIntakeDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
+              <VoiceIntakeBatchPanel pending={pendingVoiceIntakeDrafts} />
             )}
           </section>
         </TabsContent>
