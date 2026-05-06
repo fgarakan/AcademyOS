@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-06 — Sprint 56: Director Assessment Quick Rating V1
+
+Added a "Quick Assessment" panel to the director player profile Overview tab. Directors can rate any combination of the 5 domains (Technical, Tactical, Movement, Competition, Behavioral) on a 4-point scale (Needs support / Developing / Solid / Strong) with an optional note, and save it as an ad-hoc assessment record.
+
+**Files created:**
+- `src/app/director/players/[playerId]/quickAssessmentAction.ts` — Server action. Validates auth, academy scope, and director/head_coach role. Verifies player belongs to academy. Inserts `assessments` row with `type = 'ad_hoc'`, `is_baseline = false`, `promotion_ready = false`. Maps ratings 1–4 to scores 25/50/75/100. At least one domain required. Notes capped at 500 chars. Revalidates player profile path.
+- `src/app/director/players/[playerId]/QuickAssessmentPanel.tsx` — Client component. Grid of 5 domains × 4 rating buttons. Toggle-select (click same button to deselect). Color-coded selected state. Optional note textarea. Submit calls `quickAssessmentAction`. On success shows confirmation and "Add another" button to reset.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Added `QuickAssessmentPanel` import and placed `<QuickAssessmentPanel playerId={params.playerId} />` in the Overview tab left column, after `DevelopmentProfileSummaryCard`.
+
+**Safety:** Director explicit submit only. `promotion_ready = false` forced. No automatic level movement. No parent/player exposure. No schema changes. No voice pipeline bypass.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 55: Player Portal Recent Session History V1
 
 Added a "Recent Sessions" card to the player portal showing the player's last 10 sessions (last 60 days) with date and attendance status in player-safe language.

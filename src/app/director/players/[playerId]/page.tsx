@@ -57,6 +57,7 @@ import { PlayerGapSummaryPanel } from '@/components/player/PlayerGapSummaryPanel
 import type { UtrHistoryPoint } from '@/components/player/UtrHistoryChart'
 import { GuardianLinkingPanel, type LinkedGuardian } from './GuardianLinkingPanel'
 import { PlayerPortalLinkPanel } from './PlayerPortalLinkPanel'
+import { QuickAssessmentPanel } from './QuickAssessmentPanel'
 
 interface PageProps {
   params: { playerId: string }
@@ -543,6 +544,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
         {/* Development Profile Summary — internal coach view */}
         <DevelopmentProfileSummaryCard summary={developmentSummary} priorities={activePriorities} />
+
+        {/* Quick Assessment — director ad-hoc domain rating */}
+        <QuickAssessmentPanel playerId={params.playerId} />
 
       </div>
 
