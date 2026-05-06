@@ -189,13 +189,21 @@ function PageHeader() {
         <h1 className="page-title">Sessions</h1>
         <p className="page-subtitle">Generated session snapshots for this academy.</p>
       </div>
-      <Link
-        href="/director/sessions/new"
-        className="btn-lime flex items-center gap-1.5 text-xs px-3 py-2 shrink-0 mt-1"
-      >
-        <Zap className="w-3.5 h-3.5" />
-        New Session
-      </Link>
+      <div className="flex items-center gap-2 shrink-0 mt-1">
+        <Link
+          href="/director/sessions/archive"
+          className="btn-ghost flex items-center gap-1.5 text-xs px-3 py-2"
+        >
+          Archive
+        </Link>
+        <Link
+          href="/director/sessions/new"
+          className="btn-lime flex items-center gap-1.5 text-xs px-3 py-2"
+        >
+          <Zap className="w-3.5 h-3.5" />
+          New Session
+        </Link>
+      </div>
     </div>
   )
 }

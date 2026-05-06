@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-06 — Sprint 97: Session Archive Timeline V1
+
+Created `/director/sessions/archive` page — a read-only timeline of completed sessions grouped by month. Each session card shows date, coach, group, duration, and a preview of `session_notes`. Timeline uses a vertical line + dot visual. Links to full session detail. Added "Archive" button to the sessions list page header.
+
+**Files created:**
+- `src/app/director/sessions/archive/page.tsx` — Read-only completed-sessions timeline, grouped by month.
+
+**Files modified:**
+- `src/app/director/sessions/page.tsx` — Added Archive link to PageHeader.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 96: Session Actuals Normalized Schema Plan
 
 Created `docs/session-actuals-normalized-schema-plan.md` documenting the full normalized schema for session actuals: `session_actuals`, `session_actual_blocks`, `session_actual_exercises`, `session_actual_attendance`. Includes audit trail, parent/player visibility flag design, RLS policy patterns, AI readiness hooks, and migration plan (059–063). No migration applied — requires explicit STOP + approval before proceeding.
