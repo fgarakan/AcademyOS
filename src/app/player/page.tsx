@@ -18,6 +18,8 @@ export default async function PlayerHome() {
   let idpView: IdpPlayerView | null = null
   let playerFirstName: string | null = null
   let noMappingReason: string | null = null
+  let currentLevelStage: string | null = null
+  let nextLevelDisplayName: string | null = null
   interface SessionHistoryItem {
     sessionName: string | null
     date: string
@@ -81,6 +83,7 @@ export default async function PlayerHome() {
             .single()
           currentLevelName = lvl?.display_name ?? null
           currentStage = lvl?.stage ?? null
+          currentLevelStage = currentStage
 
           // Next level
           if (lvl?.sort_order != null) {
@@ -91,6 +94,7 @@ export default async function PlayerHome() {
               .order('sort_order', { ascending: true })
               .limit(1)
             nextLevelName = nextLvl?.[0]?.display_name ?? null
+            nextLevelDisplayName = nextLevelName
           }
 
           // Open gates
@@ -331,6 +335,34 @@ export default async function PlayerHome() {
       {/* ── Live Development Plan ────────────────────────────── */}
       {idpView && (
         <>
+          {/* Current Level Card */}
+          {idpView.current_level && (
+            <Card>
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
+                      <TrendingUp className="w-5 h-5 text-lime" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Current Level</p>
+                      <p className="font-bold text-text-primary text-base leading-tight">{idpView.current_level}</p>
+                      {currentLevelStage && (
+                        <p className="text-xs text-text-muted capitalize">{currentLevelStage.replace(/_/g, ' ')} stage</p>
+                      )}
+                    </div>
+                  </div>
+                  {nextLevelDisplayName && (
+                    <div className="text-right shrink-0">
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Next Level</p>
+                      <p className="text-xs text-text-secondary font-medium">{nextLevelDisplayName}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* What to Practice */}
           {idpView.what_to_practice.length > 0 && (
             <Card>

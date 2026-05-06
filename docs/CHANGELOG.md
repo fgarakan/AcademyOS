@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 62: Player Portal Current Curriculum Level Card
+
+Added a "Current Level" card to the player portal, positioned above "What to Work On". Shows the player's current level name prominently with stage label and the next level name when available.
+
+**Files modified:**
+- `src/app/player/page.tsx` — Added `currentLevelStage` and `nextLevelDisplayName` outer-scope variables (assigned inside the curriculum fetch block). Added a "Current Level" card in the `idpView &&` section: lime icon, current level name, stage label, next level name on the right. Renders only when `idpView.current_level` is set.
+
+**Safety:** Player-safe. Reads only level name and stage from curriculum_levels, which are already fetched for IDP. No internal assessment data, notes, or score exposure.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 61: Signals Dashboard Attendance Concern Signal
 
 Added an "Attendance concerns" signal bucket to `/director/signals`. Surfaces players with 2 or more absences in the last 30 days, sorted by absence count descending. Links to each player's profile.
