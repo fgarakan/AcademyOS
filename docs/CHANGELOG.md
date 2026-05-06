@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 65: Coach Session Attendance Completion Prompt
+
+Added an attendance completion prompt to the coach session detail page. When roster players have not yet been marked, an orange banner appears above the Recap panel reminding the coach to complete attendance before saving.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Added `AlertTriangle` lucide import. Computed `unmarkedAttendanceCount` (roster players where `currentStatus === null`). Added orange banner between the session execution section and `CoachRecapCommandPanel`: shows count of unmarked players, visible only when `roster.length > 0 && unmarkedAttendanceCount > 0`.
+
+**Safety:** Coach-only view. Read-only prompt — no mutations. No schema changes.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 64: Director Player List Assessment Context
 
 Enhanced the player directory list to show each player's most recent overall assessment score and score delta alongside the last-assessed date.

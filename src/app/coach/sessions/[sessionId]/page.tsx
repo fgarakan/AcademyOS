@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Info } from 'lucide-react'
+import { ArrowLeft, Info, AlertTriangle } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -220,6 +220,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
   const completedCount = exercises.filter(e => e.completed).length
   const presentCount = roster.filter(p => p.currentStatus === 'present').length
   const attendanceSummary = roster.length > 0 ? `${presentCount}/${roster.length} present` : null
+  const unmarkedAttendanceCount = roster.filter(p => p.currentStatus === null).length
 
   // Build roster name map for gap brief panel
   const rosterNames: Record<string, string> = {}
@@ -281,6 +282,21 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           academyId={academyId}
           rosterNames={rosterNames}
         />
+      )}
+
+      {/* Attendance completion prompt */}
+      {roster.length > 0 && unmarkedAttendanceCount > 0 && (
+        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-status-orange/5 border border-status-orange/30">
+          <AlertTriangle className="w-4 h-4 text-status-orange shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-status-orange font-medium">
+              {unmarkedAttendanceCount} player{unmarkedAttendanceCount !== 1 ? 's' : ''} not yet marked
+            </p>
+            <p className="text-xs text-text-muted mt-0.5">
+              Mark attendance above before saving your recap.
+            </p>
+          </div>
+        </div>
       )}
 
       <CoachRecapCommandPanel
