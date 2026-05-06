@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-06 — Sprint 57: Session Block Status Persistence — Migration Plan
+
+**STOPPED FOR MIGRATION APPROVAL.** Frontend implementation gated on migration approval and type regeneration.
+
+Audited `session_blocks` schema — confirmed no `actual_status`, `status`, or `progress` column exists. A migration is required before server action and frontend persistence can be built.
+
+**Files created:**
+- `docs/session-block-status-persistence-plan.md` — Full plan: root cause, proposed column definition, RLS analysis, post-approval implementation plan, rollback instructions, decision checklist.
+- `supabase/migrations/057_session_block_status.sql` — PROPOSAL ONLY (not applied). Adds `actual_status TEXT NOT NULL DEFAULT 'planned' CHECK (IN 'planned','in_progress','completed','skipped','modified')` to `session_blocks`. No new RLS policies needed (existing staff ALL policy covers it via session→academy chain). Includes rollback instructions.
+
+**What was intentionally NOT built:**
+- Server action `updateBlockStatusAction` — blocked on migration approval
+- `CoachSessionExecutionClient` persistence wiring — blocked
+- `CoachWrapUpDrawer` server read — blocked
+- `database.types.ts` update — must be regenerated via `supabase gen types` after migration is applied, not manually edited
+
+**Next step:** Apply `supabase/migrations/057_session_block_status.sql` to live Supabase, regenerate types, then approve Sprint 57 continuation.
+
+---
+
 ## 2026-05-06 — Sprint 56: Director Assessment Quick Rating V1
 
 Added a "Quick Assessment" panel to the director player profile Overview tab. Directors can rate any combination of the 5 domains (Technical, Tactical, Movement, Competition, Behavioral) on a 4-point scale (Needs support / Developing / Solid / Strong) with an optional note, and save it as an ad-hoc assessment record.
