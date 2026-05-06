@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Upload, Users } from 'lucide-react'
+import { Upload, Users, UserPlus } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { PlayersDirectoryClient } from './_components/PlayersDirectoryClient'
@@ -99,6 +99,13 @@ export default async function PlayersPage() {
               {missingCurriculumCount} without curriculum level
             </span>
           )}
+          <Link
+            href="/director/players/new"
+            className="btn-lime flex items-center gap-2 text-sm"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add player
+          </Link>
           <Link
             href="/director/players/import"
             className="btn-ghost flex items-center gap-2 text-sm"

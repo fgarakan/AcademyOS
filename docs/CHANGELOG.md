@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-06 — Sprint 66: Director New Player Wizard V1
+
+Added a single-player creation form at `/director/players/new`. Directors can add a player with name, date of birth, gender, and optional notes. Player is created with `pending_placement` status and the director is redirected to the new player profile.
+
+**Files created:**
+- `src/app/director/players/new/page.tsx` — Simple server component: back link, page header, Card wrapping `NewPlayerForm`.
+- `src/app/director/players/new/NewPlayerForm.tsx` — Client form: first name, last name, date of birth (required), gender select, notes textarea. Calls `createPlayerAction` and shows error inline on failure.
+- `src/app/director/players/new/createPlayerAction.ts` — Server action: authenticates user, resolves academy_id from profiles, verifies role (director/head_coach via academy_memberships), validates required fields, inserts players row with `status = 'pending_placement'`, redirects to `/director/players/${id}`.
+
+**Files modified:**
+- `src/app/director/players/page.tsx` — Added `UserPlus` import and "Add player" lime button linking to `/director/players/new`, placed to the left of the existing Import button.
+
+**Safety:** Director/head_coach only. Role verified via `academy_memberships`. `academy_id` from auth profile — never from user input. No RLS bypass. New player starts at `pending_placement` — placement engine controls activation.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 65: Coach Session Attendance Completion Prompt
 
 Added an attendance completion prompt to the coach session detail page. When roster players have not yet been marked, an orange banner appears above the Recap panel reminding the coach to complete attendance before saving.
