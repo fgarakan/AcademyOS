@@ -7,6 +7,16 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 ---
 
+## Secure Transcription Endpoint (Sprint 79)
+
+### Production transcription endpoint built but gated by OPENAI_API_KEY
+- **File:** `src/app/api/coach/sessions/[sessionId]/transcribe/route.ts`
+- **Impact:** The endpoint is fully built with auth, academy membership, session access, MIME type, and file size checks. When `OPENAI_API_KEY` is not set, returns a safe 503 with "Production transcription is not configured. You can still type or use browser dictation." No audio is stored. No transcript is logged.
+- **Fix path:** Set `OPENAI_API_KEY` in `.env.local` (local) or server environment (production) to enable live Whisper transcription.
+- **No OpenAI SDK required:** Uses plain `fetch` + `FormData` against `https://api.openai.com/v1/audio/transcriptions`.
+
+---
+
 ## Voice Transcription Architecture (Sprint 78)
 
 ### Production voice transcription is documented but not yet wired to a live STT key

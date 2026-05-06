@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-06 — Sprint 79: Secure Coach Transcription Endpoint V1
+
+Added a secure server-side API route that receives a short audio clip, sends it to OpenAI Whisper, returns the transcript, and discards the audio. Auth, academy membership, session access, role, MIME type, and file size are all checked before the STT call. When `OPENAI_API_KEY` is not configured, returns a safe 503. No audio is written to storage. No transcript is logged. No OpenAI SDK dependency — uses plain `fetch` + `FormData`.
+
+**Files created:**
+- `src/app/api/coach/sessions/[sessionId]/transcribe/route.ts` — POST endpoint: auth, academy, session access, staff role check, MIME/size validation, Whisper call, transcript response.
+
+**Files modified:**
+- `docs/KNOWN_LIMITATIONS.md` — Added Sprint 79 endpoint limitation.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 78: Voice Transcription Security Architecture
 
 Documented the production voice transcription architecture, security controls, and privacy rules for the Coach Wrap-Up audio input path. Defines the complete data flow from MediaRecorder to Whisper API to transcript-in-textarea, with explicit rules for no audio storage, no auto-save, no parent/player exposure, and no client-side API keys. Includes cost controls, STT provider decision, fallback chain, and future hardening roadmap.
