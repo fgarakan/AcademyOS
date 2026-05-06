@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-06 — Sprint 73: Director Assistant Command Center V1
+
+Added a deterministic Director Assistant panel above the existing Command Center. Shows 7 suggested queries the director can tap — each produces a real-data inline response: count summary, why it matters, action link, and safety note. No AI required. Queries are: what needs review, pending wrap-ups, attendance concerns, players needing assessment, pending placements, curriculum, session from template. Updated the command center page to fetch assistant counts (wrap-ups, placements, assessment due).
+
+**Files created:**
+- `src/app/director/command-center/DirectorAssistantPanel.tsx` — Client component with suggestion chips and deterministic response cards.
+
+**Files modified:**
+- `src/app/director/command-center/page.tsx` — Added 3 additional count queries, passes counts to `DirectorAssistantPanel`, renders panel above CommandCenterClient.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 72: Coach Assistant Voice Output Prototype
 
 Added browser `speechSynthesis` voice output toggle to the Coach Wrap-Up assistant. When enabled, the assistant reads each question aloud as the coach steps through the flow. Toggle is only shown when `speechSynthesis` is available in the browser. Default off. Safety note: "Voice output only. You still type or use your device keyboard." No recording, no STT, no external API.

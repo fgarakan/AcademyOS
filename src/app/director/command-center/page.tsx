@@ -1,6 +1,7 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { CommandCenterClient } from './CommandCenterClient'
+import { DirectorAssistantPanel } from './DirectorAssistantPanel'
 import { Terminal } from 'lucide-react'
 
 export default async function CommandCenterPage() {
@@ -54,6 +55,26 @@ export default async function CommandCenterPage() {
 
   const curriculumLevels: { id: string; display_name: string; stage: string }[] = levelRows ?? []
 
+  // Assistant panel counts — deterministic responses
+  const { count: pendingWrapUpsCount } = await rawDb
+    .from('proposed_actions')
+    .select('id', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+    .eq('target_module', 'session_wrap_up_v1')
+    .eq('status', 'pending_review')
+
+  const { count: pendingPlacementsCount } = await rawDb
+    .from('players')
+    .select('id', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+    .eq('status', 'pending_placement')
+
+  const { count: assessmentDueCount } = await rawDb
+    .from('players')
+    .select('id', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+    .eq('status', 'reassessment_due')
+
   // Fetch recent command-created proposed_actions (Sprint 224)
   const { data: recentDraftRows } = await rawDb
     .from('proposed_actions')
@@ -75,6 +96,13 @@ export default async function CommandCenterPage() {
   return (
     <div className="animate-fade-in p-6 space-y-6 max-w-3xl">
       <PageHeader pendingDraftCount={pendingDraftCount ?? 0} />
+
+      <DirectorAssistantPanel
+        pendingWrapUpsCount={pendingWrapUpsCount ?? 0}
+        pendingPlacementsCount={pendingPlacementsCount ?? 0}
+        assessmentDueCount={assessmentDueCount ?? 0}
+        pendingReviewCount={pendingDraftCount ?? 0}
+      />
 
       <CommandCenterClient
         recentCommands={recentCommands}
