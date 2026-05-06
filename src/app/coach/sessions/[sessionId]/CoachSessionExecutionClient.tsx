@@ -321,6 +321,16 @@ export function CoachSessionExecutionClient({
       {/* Blocks + exercises */}
       <div className="space-y-4">
         <SectionHeader title="EXERCISES" />
+        {/* Migration gate: blocks loaded but no exercises — likely migration 056 not applied */}
+        {blocks.length > 0 && exercises.length === 0 && (
+          <div className="flex items-start gap-2 px-3 py-3 rounded-lg bg-status-orange/5 border border-status-orange/20 text-xs text-status-orange">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>
+              Session exercises are missing. This usually means migration 056 has not been applied to your Supabase instance.
+              Verify with: <code className="font-mono text-[10px]">SELECT policyname FROM pg_policies WHERE tablename = &apos;session_block_exercises&apos;;</code>
+            </span>
+          </div>
+        )}
         {blocks.map((block, idx) => {
           const blockExercises = exercisesByBlock.get(block.id) ?? []
           return (

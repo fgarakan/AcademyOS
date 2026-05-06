@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-06 — Sprint 45: Session Block Exercise RLS Migration Gate
+
+Added migration 056 diagnostic warning to the coach session execution view, matching the existing gate already present in the director session detail.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — Added conditional warning: when `blocks.length > 0 && exercises.length === 0`, shows an orange alert explaining session exercises are missing and includes the SQL verification query for migration 056.
+
+**Already present (not changed):**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Director session detail already shows migration 056 message with verification SQL.
+- `supabase/migrations/056_session_block_exercises_rls.sql` — Migration file exists; must be applied to live Supabase instance separately.
+
+**Safety:** Read-only diagnostic only. No SQL executed. No RLS bypassed. No service role used.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 44: Player Portal Profile Linkage UI
 
 Added Player Portal Access panel to the director player profile Overview tab, below the Guardian linking panel.
