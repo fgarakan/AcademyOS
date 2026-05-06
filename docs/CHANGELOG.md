@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-06 — Sprint 50: Player Portal Mission View V1
+
+Improved the player portal with a "What to ask your coach" prompt card, an encouragement footer, and a friendlier no-link empty state.
+
+**Files modified:**
+- `src/app/player/page.tsx` — Added `HelpCircle` and `Sparkles` imports. Added "What to ask your coach" card that derives coaching questions from `what_to_understand` items (framed as "How am I doing with X?") and a generic mission question. Added encouragement footer card. Replaced generic no-player-link empty state with warmer copy ("Your mission is on its way") and icon.
+
+**Safety:** Player-safe only. No internal coach notes. No raw observations. No schema changes.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 49: Director Session Builder from Template V1
 
 Added a dedicated session creation page (`/director/sessions/new`) with template picker, date, coach, and notes. Uses existing `generateSessionFromTemplateAction`.

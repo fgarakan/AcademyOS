@@ -1,4 +1,4 @@
-import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight } from 'lucide-react'
+import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight, HelpCircle, Sparkles } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { PlayerMissionPreview } from '@/components/player/PlayerMissionPreview'
 import { getSupabaseServer } from '@/lib/supabase/server'
@@ -267,12 +267,14 @@ export default async function PlayerHome() {
       {/* ── No Mapping State ──────────────────────────────────── */}
       {!idpView && noMappingReason && (
         <Card>
-          <CardContent className="py-6 space-y-2">
-            <p className="text-text-secondary text-sm text-center">
-              Your development plan will appear here once your account is linked to your player record.
+          <CardContent className="py-8 space-y-3 text-center">
+            <Sparkles className="w-8 h-8 text-lime/40 mx-auto" />
+            <p className="text-text-primary text-sm font-medium">Your mission is on its way</p>
+            <p className="text-text-secondary text-xs leading-relaxed max-w-xs mx-auto">
+              Your coach will add your first mission soon. Once your account is connected, everything will appear here automatically.
             </p>
-            <p className="text-text-muted text-xs text-center">
-              Ask your coach or academy director to connect your profile.
+            <p className="text-text-muted text-xs">
+              Ask your academy director to link your profile.
             </p>
           </CardContent>
         </Card>
@@ -393,6 +395,42 @@ export default async function PlayerHome() {
             </Card>
           )}
 
+          {/* What to ask your coach */}
+          {(idpView.what_to_understand.length > 0 || idpView.recommended_next_mission) && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
+                    <HelpCircle className="w-4 h-4 text-text-muted" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-text-primary text-sm">What to Ask Your Coach</p>
+                    <p className="text-text-muted text-xs">Good questions to ask this week</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {idpView.what_to_understand.slice(0, 2).map((item, i) => (
+                    <li key={i} className="flex gap-2 text-sm text-text-secondary">
+                      <span className="text-lime shrink-0 mt-0.5">?</span>
+                      <span>&ldquo;How am I doing with {item.toLowerCase().replace(/\.$/, '')}?&rdquo;</span>
+                    </li>
+                  ))}
+                  {idpView.recommended_next_mission && (
+                    <li className="flex gap-2 text-sm text-text-secondary">
+                      <span className="text-lime shrink-0 mt-0.5">?</span>
+                      <span>&ldquo;What does success look like for my current mission?&rdquo;</span>
+                    </li>
+                  )}
+                </ul>
+                <p className="text-[10px] text-text-muted mt-3">
+                  Great players ask great questions. These are safe to bring to any session.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Q&A Answer */}
           {qaAnswer && qaAnswer.question_intent !== 'unknown' && qaAnswer.bullets.length > 0 && (
             <Card>
@@ -422,6 +460,13 @@ export default async function PlayerHome() {
               </CardContent>
             </Card>
           )}
+          {/* Encouragement */}
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-surface-raised border border-border">
+            <Sparkles className="w-4 h-4 text-lime shrink-0 mt-0.5" />
+            <p className="text-xs text-text-muted leading-relaxed">
+              Your coach updates this plan as you grow. Keep showing up — every session counts.
+            </p>
+          </div>
         </>
       )}
 
