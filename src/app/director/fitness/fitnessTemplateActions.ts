@@ -107,6 +107,181 @@ export async function createFitnessTemplateAction(
 }
 
 // ─────────────────────────────────────────────────────────────
+// updateFitnessTemplateMetaAction
+// Updates name / description / total_duration_min on a fitness template.
+// Does NOT touch blocks, exercises, or curriculum assignment.
+// ─────────────────────────────────────────────────────────────
+
+export interface UpdateFitnessTemplateMetaInput {
+  name: string
+  description?: string | null
+  totalDurationMin?: number | null
+}
+
+export interface UpdateFitnessTemplateMetaResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function updateFitnessTemplateMetaAction(
+  templateId: string,
+  input: UpdateFitnessTemplateMetaInput,
+): Promise<UpdateFitnessTemplateMetaResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, error: 'Writes are disabled in preview mode.' }
+  }
+  const auth = await resolveAcademyAndRole()
+  if (!auth.ok) return { ok: false, error: auth.error }
+  const { supabase, academyId } = auth
+
+  const rawDb = supabase as any
+
+  // Verify template is a fitness template in this academy
+  const { data: template } = await rawDb
+    .from('templates')
+    .select('id, tags')
+    .eq('id', templateId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!template) return { ok: false, error: 'Template not found or access denied.' }
+  const tags: string[] = template.tags ?? []
+  if (!tags.includes('fitness_template:true')) {
+    return { ok: false, error: 'This template is not a fitness template.' }
+  }
+
+  if (!input.name.trim()) return { ok: false, error: 'Template name is required.' }
+
+  const { error } = await rawDb
+    .from('templates')
+    .update({
+      name: input.name.trim(),
+      description: input.description?.trim() || null,
+      total_duration_min: input.totalDurationMin ?? null,
+    })
+    .eq('id', templateId)
+    .eq('academy_id', academyId)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/director/fitness/templates/${templateId}`)
+  revalidatePath('/director/fitness/templates')
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// duplicateFitnessTemplateAction
+// Creates a new template copying metadata, blocks, and exercises.
+// The source template is never modified.
+// ─────────────────────────────────────────────────────────────
+
+export interface DuplicateFitnessTemplateResult {
+  ok: boolean
+  error: string | null
+  newTemplateId: string | null
+}
+
+export async function duplicateFitnessTemplateAction(
+  sourceTemplateId: string,
+  newName: string,
+): Promise<DuplicateFitnessTemplateResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, error: 'Writes are disabled in preview mode.', newTemplateId: null }
+  }
+  const auth = await resolveAcademyAndRole()
+  if (!auth.ok) return { ok: false, error: auth.error, newTemplateId: null }
+  const { supabase, userId, academyId } = auth
+
+  const rawDb = supabase as any
+
+  // 1. Load source template — verify ownership
+  const { data: source } = await rawDb
+    .from('templates')
+    .select('*')
+    .eq('id', sourceTemplateId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!source) return { ok: false, error: 'Template not found or access denied.', newTemplateId: null }
+  const sourceTags: string[] = source.tags ?? []
+  if (!sourceTags.includes('fitness_template:true')) {
+    return { ok: false, error: 'This template is not a fitness template.', newTemplateId: null }
+  }
+  if (!newName.trim()) return { ok: false, error: 'New template name is required.', newTemplateId: null }
+
+  // 2. Insert new template row
+  const { data: newTemplate, error: templateError } = await rawDb
+    .from('templates')
+    .insert({
+      academy_id: academyId,
+      created_by: userId,
+      name: newName.trim(),
+      description: source.description ?? null,
+      track: source.track ?? 'fitness',
+      total_duration_min: source.total_duration_min ?? null,
+      is_active: true,
+      is_default: false,
+      tags: sourceTags,
+    })
+    .select('id')
+    .single()
+
+  if (templateError || !newTemplate) {
+    return { ok: false, error: templateError?.message ?? 'Failed to create template.', newTemplateId: null }
+  }
+  const newTemplateId: string = newTemplate.id
+
+  // 3. Load source blocks
+  const { data: sourceBlocks, error: blocksError } = await supabase
+    .from('template_blocks')
+    .select('id, name, type, duration_min, order_index, intensity, notes')
+    .eq('template_id', sourceTemplateId)
+    .order('order_index')
+
+  if (blocksError) {
+    return { ok: false, error: `Failed to load source blocks: ${blocksError.message}`, newTemplateId: null }
+  }
+  const blockList = sourceBlocks ?? []
+
+  // 4. Duplicate blocks + exercises sequentially
+  for (const block of blockList) {
+    const { data: newBlock, error: blockError } = await rawDb
+      .from('template_blocks')
+      .insert({
+        template_id: newTemplateId,
+        name: block.name,
+        type: block.type,
+        duration_min: block.duration_min,
+        order_index: block.order_index,
+        intensity: block.intensity ?? null,
+        notes: block.notes ?? null,
+      })
+      .select('id')
+      .single()
+
+    if (blockError || !newBlock) continue
+
+    // Duplicate exercises for this block
+    const { data: sourceExercises } = await rawDb
+      .from('template_block_exercises')
+      .select('exercise_id, order_index, duration_min, notes')
+      .eq('block_id', block.id)
+      .order('order_index')
+
+    for (const ex of (sourceExercises ?? [])) {
+      await rawDb.from('template_block_exercises').insert({
+        block_id: newBlock.id,
+        exercise_id: ex.exercise_id,
+        order_index: ex.order_index,
+        duration_min: ex.duration_min ?? null,
+        notes: ex.notes ?? null,
+      })
+    }
+  }
+
+  revalidatePath('/director/fitness/templates')
+  return { ok: true, error: null, newTemplateId }
+}
+
+// ─────────────────────────────────────────────────────────────
 // addFitnessBlockAction
 // ─────────────────────────────────────────────────────────────
 

@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui'
 import { FitnessTemplateBuilderClient } from './FitnessTemplateBuilderClient'
 import { PopulateFitnessBlocksButton } from './PopulateFitnessBlocksButton'
 import { CurriculumLevelSelector, type CurriculumLevelOption } from './CurriculumLevelSelector'
+import { TemplateMetaEditorCard } from './TemplateMetaEditorCard'
+import { GenerateSessionPanel, type CoachOption } from './GenerateSessionPanel'
 import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 import type { FitnessBlock, FitnessExercise, ExerciseLibraryItem } from './fitnessBuilderTypes'
 import type { Tables } from '@/lib/supabase/database.types'
@@ -189,6 +191,33 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
     ? (curriculumLevels.find(l => l.id === curriculumLevelId)?.display_name ?? null)
     : null
 
+  // Fetch coaches for the Generate Session panel
+  const { data: coachMemberships } = await supabase
+    .from('academy_memberships')
+    .select('profile_id, role')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .in('role', ['coach', 'head_coach', 'academy_director'])
+
+  const coachProfileIds = (coachMemberships ?? []).map(m => m.profile_id)
+  const coaches: CoachOption[] = []
+  if (coachProfileIds.length > 0) {
+    const { data: coachProfiles } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', coachProfileIds)
+      .order('display_name')
+    for (const p of coachProfiles ?? []) {
+      coaches.push({ id: p.id, display_name: p.display_name })
+    }
+  }
+
+  const fallbackCoachId = user?.id ?? ''
+  const { data: currentProfile } = user
+    ? await supabase.from('profiles').select('display_name').eq('id', user.id).single()
+    : { data: null }
+  const fallbackCoachName = currentProfile?.display_name ?? 'You'
+
   return (
     <div className="p-6 animate-fade-in space-y-6">
       <PageHeader template={template} typeLabel={typeLabel} isFitnessTemplate={isFitnessTemplate} />
@@ -234,6 +263,33 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Template Settings — edit metadata + duplicate */}
+      <TemplateMetaEditorCard
+        templateId={params.templateId}
+        initialName={template.name}
+        initialDescription={template.description ?? null}
+        initialDurationMin={template.total_duration_min ?? null}
+      />
+
+      {/* Generate Session from Template — fitness templates only */}
+      {isFitnessTemplate && (
+        <Card>
+          <CardHeader>
+            <p className="label-xs">Create Session from Template</p>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <GenerateSessionPanel
+              templateId={params.templateId}
+              templateName={template.name}
+              hasBlocks={fitnessBlocks.length > 0}
+              coaches={coaches}
+              fallbackCoachId={fallbackCoachId}
+              fallbackCoachName={fallbackCoachName}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Non-fitness template warning */}
       {!isFitnessTemplate && (

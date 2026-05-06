@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-06 — Sprint 92: Generate Session from Fitness Template V1
+
+Wired the existing `GenerateSessionPanel` (previously built but not rendered) into the fitness template detail page. The director can now click "Create Session from Template," choose a date, coach, and optional notes, and generate a dated session that is a copy of the template at that moment. The master template is unchanged. Exercises and blocks are copied via `generateSessionFromTemplateAction`. A link to the created session is shown on success. Added coaches data fetch (all active academy_director/head_coach/coach members) to the server component.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Added `GenerateSessionPanel` import, coaches + fallback-coach data fetch, and panel render inside a Card below the Template Settings card.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
+## 2026-05-06 — Sprint 91: Save Template / Save As Template Controls
+
+Added `updateFitnessTemplateMetaAction` (updates name/description/duration on an existing fitness template) and `duplicateFitnessTemplateAction` (creates a full copy with all blocks and exercises) to `fitnessTemplateActions.ts`. Created `TemplateMetaEditorCard.tsx` client component with collapsible "Edit & Save Template" and "Save As New Template" sections. Wired into the fitness template detail page. Source template is never modified during duplicate.
+
+**Files created:**
+- `src/app/director/fitness/templates/[templateId]/TemplateMetaEditorCard.tsx` — Client component with save + duplicate flows.
+
+**Files modified:**
+- `src/app/director/fitness/fitnessTemplateActions.ts` — Added `updateFitnessTemplateMetaAction` and `duplicateFitnessTemplateAction`.
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Added `TemplateMetaEditorCard` import and render.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-06 — Sprint 90: Template Auto-Populate Live UI Refresh
 
 Root cause: `FitnessTemplateBuilderClient` initializes `useState(initialBlocks)` once on mount. After `populateFitnessTemplateBlocksAction` succeeds and `router.refresh()` is called, the Server Component re-renders with new blocks data but React does not reset existing state — exercises never appeared without a hard reload.
