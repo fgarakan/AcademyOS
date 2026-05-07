@@ -1,5 +1,6 @@
 import { ClipboardList } from 'lucide-react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
+import { formatDate } from '@/lib/utils'
 
 interface AssessmentRecord {
   id: string
@@ -17,12 +18,15 @@ interface Props {
   assessments: AssessmentRecord[]
 }
 
-const DOMAIN_KEYS: { key: keyof Omit<AssessmentRecord, 'id' | 'assessed_date' | 'notes' | 'assessed_by_name'>; label: string }[] = [
-  { key: 'technical_score', label: 'Technical' },
-  { key: 'tactical_score', label: 'Tactical' },
-  { key: 'movement_score', label: 'Movement' },
+const DOMAIN_KEYS: {
+  key: keyof Omit<AssessmentRecord, 'id' | 'assessed_date' | 'notes' | 'assessed_by_name'>
+  label: string
+}[] = [
+  { key: 'technical_score',   label: 'Technical' },
+  { key: 'tactical_score',    label: 'Tactical' },
+  { key: 'movement_score',    label: 'Movement' },
   { key: 'competition_score', label: 'Competition' },
-  { key: 'behavioral_score', label: 'Behavioral' },
+  { key: 'behavioral_score',  label: 'Behavioral' },
 ]
 
 function scoreLabel(score: number | null): string | null {
@@ -41,32 +45,36 @@ function scoreColor(score: number | null): string {
   return 'text-status-green'
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
+const MAX_SHOWN = 3
 
 export function QuickAssessmentHistoryCard({ assessments }: Props) {
+  const shown = assessments.slice(0, MAX_SHOWN)
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
-            <ClipboardList className="w-4 h-4 text-text-muted" />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="w-3.5 h-3.5 text-text-muted shrink-0" />
+            <p className="label-xs">Recent Quick Ratings</p>
           </div>
-          <div>
-            <p className="font-semibold text-text-primary text-sm">Quick Rating History</p>
-            <p className="text-text-muted text-xs">Last {assessments.length > 0 ? Math.min(assessments.length, 3) : 0} ad-hoc ratings</p>
-          </div>
+          {assessments.length > 0 && (
+            <span className="text-[10px] font-mono text-text-muted shrink-0">
+              {shown.length} of {assessments.length}
+            </span>
+          )}
         </div>
       </CardHeader>
-      <CardContent className="pt-0 space-y-4">
+      <CardContent className="pt-0 space-y-3">
         {assessments.length === 0 ? (
-          <p className="text-xs text-text-muted py-2">No quick ratings yet. Use the form above to add one.</p>
+          <p className="text-[11px] text-text-muted py-2">
+            No quick ratings yet — use the form above to add one.
+          </p>
         ) : (
-          assessments.slice(0, 3).map(a => (
+          shown.map(a => (
             <div key={a.id} className="rounded-lg bg-surface-raised border border-border p-3 space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold text-text-primary">{formatDate(a.assessed_date)}</p>
+                <p className="text-xs text-text-secondary">{formatDate(a.assessed_date)}</p>
                 {a.assessed_by_name && (
                   <p className="text-[10px] text-text-muted">{a.assessed_by_name}</p>
                 )}
@@ -85,7 +93,7 @@ export function QuickAssessmentHistoryCard({ assessments }: Props) {
                 })}
               </div>
               {a.notes && (
-                <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">{a.notes}</p>
+                <p className="text-[11px] text-text-secondary leading-relaxed line-clamp-2">{a.notes}</p>
               )}
             </div>
           ))

@@ -13,6 +13,7 @@ export interface GenerateSessionInput {
   templateId: string
   name: string
   scheduledDate: string
+  scheduledTime?: string | null
   coachId: string
   sessionNotes?: string | null
 }
@@ -160,6 +161,7 @@ export async function generateSessionFromTemplateAction(
       template_id: input.templateId,
       name: input.name.trim() || template.name,
       scheduled_date: input.scheduledDate,
+      scheduled_time: input.scheduledTime?.trim() || null,
       session_notes: finalSessionNotes.trim() || null,
       status: 'planned',
       created_by: user.id,

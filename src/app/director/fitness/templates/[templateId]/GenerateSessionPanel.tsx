@@ -35,6 +35,7 @@ export function GenerateSessionPanel({
   const [open, setOpen] = useState(false)
   const [name, setName] = useState(templateName)
   const [date, setDate] = useState(todayIso)
+  const [time, setTime] = useState('')
   const [coachId, setCoachId] = useState(
     coaches.length > 0 ? coaches[0].id : fallbackCoachId
   )
@@ -47,6 +48,7 @@ export function GenerateSessionPanel({
   function openPanel() {
     setName(templateName)
     setDate(todayIso())
+    setTime('')
     setCoachId(coaches.length > 0 ? coaches[0].id : fallbackCoachId)
     setNotes('')
     setFormError(null)
@@ -77,6 +79,7 @@ export function GenerateSessionPanel({
         templateId,
         name: name.trim(),
         scheduledDate: date,
+        scheduledTime: time.trim() || null,
         coachId,
         sessionNotes: notes.trim() || null,
       })
@@ -205,18 +208,32 @@ export function GenerateSessionPanel({
             />
           </div>
 
-          {/* Session date */}
-          <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest text-text-muted block">
-              Session date <span className="text-status-red">*</span>
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              disabled={isPending}
-              className="w-full text-sm bg-surface border border-border rounded px-3 py-2 text-text-primary focus:outline-none focus:border-lime/40 disabled:opacity-50"
-            />
+          {/* Session date + time */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-text-muted block">
+                Date <span className="text-status-red">*</span>
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                disabled={isPending}
+                className="w-full text-sm bg-surface border border-border rounded px-3 py-2 text-text-primary focus:outline-none focus:border-lime/40 disabled:opacity-50"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-text-muted block">
+                Start time
+              </label>
+              <input
+                type="time"
+                value={time}
+                onChange={e => setTime(e.target.value)}
+                disabled={isPending}
+                className="w-full text-sm bg-surface border border-border rounded px-3 py-2 text-text-primary focus:outline-none focus:border-lime/40 disabled:opacity-50"
+              />
+            </div>
           </div>
 
           {/* Coach selection */}

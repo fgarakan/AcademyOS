@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   ChevronUp, ChevronDown, Plus, Trash2, RefreshCw,
   Clock, MessageSquare, Check, Loader2, X, Activity, AlertCircle,
@@ -45,6 +46,7 @@ export function FitnessTemplateBuilderClient({
   totalExercisesInAcademy = 0,
   blockExercisesQueryError,
 }: FitnessTemplateBuilderClientProps) {
+  const router = useRouter()
   const libraryCount = exerciseLibraryCount ?? exerciseLibrary.length
   const [blocks, setBlocks] = useState<FitnessBlock[]>(initialBlocks)
 
@@ -79,7 +81,7 @@ export function FitnessTemplateBuilderClient({
       const result = await addFitnessBlockAction(templateId, blockType, true)
       if (!result.ok) { showStatus('error', result.error ?? 'Failed to add block.'); return }
       // Re-fetch handled by server revalidation — reload the data by refreshing
-      window.location.reload()
+      router.refresh()
     })
   }
 
@@ -128,7 +130,7 @@ export function FitnessTemplateBuilderClient({
 
   function handleSwitchComplete() {
     setSwitcherTarget(null)
-    window.location.reload()
+    router.refresh()
   }
 
   function openPicker(blockId: string, blockName: string, fitnessBlockType: FitnessBlockType | null) {
@@ -137,7 +139,7 @@ export function FitnessTemplateBuilderClient({
 
   function handlePickComplete() {
     setPickerTarget(null)
-    window.location.reload()
+    router.refresh()
   }
 
   function openObservation(blockId: string, currentNotes: string | null) {

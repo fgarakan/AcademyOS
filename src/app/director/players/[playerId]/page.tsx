@@ -33,6 +33,7 @@ import { confirmRequirementProgressStatusAction } from './requirementProgressCon
 import type { RequirementEvidenceDetailRow } from './types'
 import { EvidenceRequirementDraftButton } from './EvidenceRequirementDraftButton'
 import { GateEvidenceButton } from './GateEvidenceButton'
+import { ConfirmGateButton } from './ConfirmGateButton'
 import { EvidenceRequirementDrafts, type EvidenceRequirementDraftRow } from './EvidenceRequirementDrafts'
 import { createEvidenceRequirementLinkDraftsAction } from './evidenceRequirementDraftAction'
 import { FitnessHomeworkRecommendationButton } from './FitnessHomeworkRecommendationButton'
@@ -645,6 +646,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           {/* Quick Assessment history */}
           <QuickAssessmentHistoryCard assessments={adHocAssessments} />
 
+          {/* Full assessment history — all types, last 10 */}
+          <AssessmentHistoryCard assessments={allAssessments} />
+
           {/* Player Info — administrative details (demoted below development data) */}
           <Card>
             <CardHeader>
@@ -1058,6 +1062,17 @@ export default async function PlayerProfilePage({ params }: PageProps) {
             />,
           ])
         )}
+        confirmActions={Object.fromEntries(
+          levelGates.map(g => [
+            g.id,
+            <ConfirmGateButton
+              key={g.id}
+              playerId={params.playerId}
+              gateId={g.id}
+              currentStatus={playerGateStatuses[g.id]?.status ?? 'not_started'}
+            />,
+          ])
+        )}
       />
 
       {/* Advancement score thresholds — what numbers are needed to exit this level */}
@@ -1204,9 +1219,6 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         currentFocus={qaCoachLanguage[0]?.current_focus ?? null}
         parentSupportTip={null}
       />
-
-      {/* Full assessment history — all types, last 10 */}
-      <AssessmentHistoryCard assessments={allAssessments} />
 
     </div>
   )

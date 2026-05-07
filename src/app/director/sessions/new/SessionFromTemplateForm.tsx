@@ -32,6 +32,7 @@ export function SessionFromTemplateForm({ templates, coaches, fallbackCoachId }:
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? '')
   const [sessionName, setSessionName] = useState(templates[0]?.name ?? '')
   const [date, setDate] = useState(todayIso())
+  const [time, setTime] = useState('')
   const [coachId, setCoachId] = useState(coaches[0]?.id ?? fallbackCoachId)
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -54,6 +55,7 @@ export function SessionFromTemplateForm({ templates, coaches, fallbackCoachId }:
         templateId,
         name: sessionName.trim(),
         scheduledDate: date,
+        scheduledTime: time.trim() || null,
         coachId: coachId || fallbackCoachId,
         sessionNotes: notes.trim() || null,
       })
@@ -138,17 +140,27 @@ export function SessionFromTemplateForm({ templates, coaches, fallbackCoachId }:
             />
           </div>
           <div className="space-y-1.5">
-            <label className="label-xs">Coach</label>
-            <select
-              value={coachId}
-              onChange={e => setCoachId(e.target.value)}
+            <label className="label-xs">Start time</label>
+            <input
+              type="time"
+              value={time}
+              onChange={e => setTime(e.target.value)}
               className="w-full bg-surface-raised border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-lime/50"
-            >
-              {coaches.map(c => (
-                <option key={c.id} value={c.id}>{c.display_name}</option>
-              ))}
-            </select>
+            />
           </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="label-xs">Coach</label>
+          <select
+            value={coachId}
+            onChange={e => setCoachId(e.target.value)}
+            className="w-full bg-surface-raised border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-lime/50"
+          >
+            {coaches.map(c => (
+              <option key={c.id} value={c.id}>{c.display_name}</option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-1.5">
