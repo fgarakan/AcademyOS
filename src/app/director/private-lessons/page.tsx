@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ClipboardList, Inbox, Eye, CheckCircle } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { Card, CardHeader, CardContent } from '@/components/ui'
+import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { PrivateLessonRequestCard } from './PrivateLessonRequestCard'
 
 type PLRStatus = 'new' | 'reviewing' | 'assigned' | 'scheduled' | 'declined' | 'completed'
@@ -147,13 +147,11 @@ export default async function PrivateLessonsPage() {
         </CardHeader>
         <CardContent>
           {requestCards.length === 0 ? (
-            <div className="py-12 text-center">
-              <Inbox className="w-8 h-8 text-text-muted mx-auto mb-3" />
-              <p className="text-text-secondary text-sm">No private lesson requests yet.</p>
-              <p className="text-text-muted text-xs mt-1">
-                Requests will appear here once parents can submit them from the parent portal.
-              </p>
-            </div>
+            <EmptyState
+              icon={<Inbox className="w-5 h-5" />}
+              title="No private lesson requests yet"
+              description="Requests will appear here once parents can submit them from the parent portal."
+            />
           ) : (
             <div className="space-y-3">
               {requestCards.map(req => (

@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-07 — Sprint 113: Global Empty/Error/Loading State Pass
+
+UI-only. No migrations, no schema changes, no queries modified.
+
+**Files created:**
+- `src/app/director/sessions/loading.tsx` — Next.js loading skeleton for sessions list: page header + 6 card-row skeletons matching the real list layout.
+- `src/app/director/review/loading.tsx` — Next.js loading skeleton for review queue: header + category strip + tab row + 3 card skeletons with action button placeholders.
+- `src/app/director/sessions/overview/loading.tsx` — Next.js loading skeleton for sessions overview: header + 4 summary card skeletons + session list skeleton rows.
+
+**Files modified:**
+- `src/app/director/private-lessons/page.tsx` — Replaced inline `div > icon + text` empty state with `EmptyState` component; added `EmptyState` to import.
+- `src/app/director/improvement/page.tsx` — Replaced inline `div > icon + text` empty state with `EmptyState` component with descriptive copy; added `EmptyState` to import.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 112: Review Queue Unification Polish
 
 UI label consistency pass. No migrations, no schema changes, no queries modified.

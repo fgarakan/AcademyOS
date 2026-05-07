@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, TrendingUp, TrendingDown, Minus, BarChart3, AlertCircle } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { Card, CardHeader, CardContent } from '@/components/ui'
+import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 
 type PlayerSummaryRow = {
   player_id: string | null
@@ -168,10 +168,11 @@ export default async function ImprovementPage() {
         </CardHeader>
         <CardContent>
           {activePlayers.length === 0 ? (
-            <div className="py-12 text-center">
-              <BarChart3 className="w-8 h-8 text-text-muted mx-auto mb-3" />
-              <p className="text-text-secondary text-sm">No active players found.</p>
-            </div>
+            <EmptyState
+              icon={<BarChart3 className="w-5 h-5" />}
+              title="No active players found"
+              description="Active players with at least one assessment will appear here with progress trends."
+            />
           ) : (
             <div className="divide-y divide-border">
               {activePlayers.map(player => (
