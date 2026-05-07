@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-07 — Sprint 106: Gate Status UI in Player Profile
+
+UI-only. No migrations, no schema changes, no database.types.ts changes.
+
+**Files modified:**
+- `src/components/player/PlayerLevelRequirementsCard.tsx` — Added `GateStatusRow` interface (exported), `gateStatuses` and `confirmActions` props, `STATUS_CONFIG` badge map (6 statuses), `GateStatusBadge` helper, per-gate status section showing status badge + observation count + last evidence date, and empty state "No evidence recorded yet."
+- `src/app/director/players/[playerId]/page.tsx` — Added `playerGateStatuses` fetch after `levelGates` using `rawDb` (consistent with existing pattern); passed `gateStatuses={playerGateStatuses}` to `PlayerLevelRequirementsCard` in `skillPathSlot`.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 105: Player Profile Command Center Polish
 
 UI/UX polish only. No migrations, no schema changes, no database.types.ts changes, no new queries.

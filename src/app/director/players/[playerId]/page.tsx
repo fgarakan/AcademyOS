@@ -218,6 +218,29 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     levelGates = gatesData ?? []
   }
 
+  // Sprint 106: Fetch per-gate evidence status for this player.
+  // player_gate_status not yet in database.types.ts — rawDb cast consistent with existing usage.
+  interface PlayerGateStatusData {
+    gate_id: string
+    status: string
+    evidence_count: number
+    last_evidence_at: string | null
+  }
+  const playerGateStatuses: Record<string, PlayerGateStatusData> = {}
+
+  if (levelGates.length > 0) {
+    const gateIds = levelGates.map(g => g.id)
+    const { data: gateStatusRows } = await rawDb
+      .from('player_gate_status')
+      .select('gate_id, status, evidence_count, last_evidence_at')
+      .eq('player_id', params.playerId)
+      .eq('academy_id', academyId)
+      .in('gate_id', gateIds)
+    for (const row of (gateStatusRows ?? []) as PlayerGateStatusData[]) {
+      playerGateStatuses[row.gate_id] = row
+    }
+  }
+
   // All 15 curriculum levels for the level picker.
   const { data: allLevelsData } = await rawDb
     .from('curriculum_levels')
@@ -1016,12 +1039,13 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         </Card>
       )}
 
-      {/* Level requirements with director gate evidence buttons */}
+      {/* Level requirements with director gate evidence buttons and status display */}
       <PlayerLevelRequirementsCard
         gates={levelGates}
         currentLevelName={curriculumSummary?.current_level_name ?? null}
         nextLevelName={nextCurriculumLevel?.display_name ?? null}
         hasCurriculumState={hasCurriculum}
+        gateStatuses={playerGateStatuses}
         gateActions={Object.fromEntries(
           levelGates.map(g => [
             g.id,
