@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-07 — Sprint 120: Drill-Into-Block-Notes Population
+
+Director-only server action. No migrations, no schema changes, no parent/player exposure.
+
+**Files created:**
+- `src/app/director/fitness/templates/[templateId]/PopulateDrillNotesButton.tsx` — Client button component calling `populateCurriculumDrillNotesAction`. Shows result with per-block details toggle. Disabled when template has no curriculum level or no blocks. Warning copy: "Does not add formal exercise records."
+
+**Files modified:**
+- `src/lib/actions/curriculumContentPopulation.ts` — Added `populateCurriculumDrillNotesAction` server action. Queries `curriculum_drills` by `level_min_id`, maps `session_block` → block `type` via `BLOCK_TYPE_TO_SESSION_BLOCKS`. Skips blocks with existing notes (no-overwrite). Writes drill name, objective, coaching cues, success criteria, progressions, and reference footer into `template_blocks.notes`. Returns `PopulateCurriculumBlocksResult` for UI display.
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Added "Push Curriculum Drills to Block Notes" card rendering `PopulateDrillNotesButton`. Only shown for fitness templates.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 119: Curriculum Drill Reference Panel
 
 Read-only UI. No migrations, no schema changes, no database.types.ts edits, no writes.

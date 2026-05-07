@@ -11,6 +11,7 @@ import { GenerateSessionPanel, type CoachOption } from './GenerateSessionPanel'
 import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 import { getCurriculumDrillsForLevel, type CurriculumDrillRow } from '@/lib/templates/curriculumTemplateLinks'
 import { CurriculumDrillReferencePanel } from '@/components/templates/CurriculumDrillReferencePanel'
+import { PopulateDrillNotesButton } from './PopulateDrillNotesButton'
 import type { FitnessBlock, FitnessExercise, ExerciseLibraryItem } from './fitnessBuilderTypes'
 import type { Tables } from '@/lib/supabase/database.types'
 
@@ -277,6 +278,22 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
           drills={curriculumDrills}
           levelName={currentLevelName}
         />
+      )}
+
+      {/* Push curriculum drill content into block notes */}
+      {isFitnessTemplate && (
+        <Card>
+          <CardHeader>
+            <p className="label-xs">Push Curriculum Drills to Block Notes</p>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <PopulateDrillNotesButton
+              templateId={params.templateId}
+              hasBlocks={fitnessBlocks.length > 0}
+              hasLevel={!!curriculumLevelId}
+            />
+          </CardContent>
+        </Card>
       )}
 
       {/* Template Version History — placeholder until migration 064 is applied */}

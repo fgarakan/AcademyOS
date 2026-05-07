@@ -379,3 +379,255 @@ export async function populateTemplateBlocksFromCurriculumAction(
     blockResults,
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Block type → session_block mapping for curriculum_drills
+// curriculum_drills.session_block uses display labels ('Warm-Up', 'Train', etc.)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BLOCK_TYPE_TO_SESSION_BLOCKS: Record<string, string[]> = {
+  warm_up:     ['Warm-Up'],
+  technical:   ['Focus', 'Train'],
+  tactical:    ['Play'],
+  movement:    ['Warm-Up', 'Train'],
+  fitness:     ['Train'],
+  competition: ['Game'],
+  mental:      ['Play', 'Game'],
+  cool_down:   [],
+  free:        ['Warm-Up', 'Focus', 'Train', 'Play', 'Game'],
+}
+
+interface DrillRow {
+  id: string
+  name: string
+  session_block: string
+  objective: string
+  coaching_cues: unknown
+  success_criteria: string | null
+  duration_minutes: number | null
+  players_needed: number | null
+  progression_easier: string | null
+  progression_harder: string | null
+}
+
+function parseDrillCues(raw: unknown): string[] {
+  if (!raw) return []
+  if (Array.isArray(raw)) return (raw as unknown[]).filter(c => typeof c === 'string').map(c => c as string).slice(0, 3)
+  if (typeof raw === 'object' && raw !== null) {
+    const known = ['setup', 'key_point', 'coaching_focus', 'cue_1', 'cue_2', 'cue_3']
+    const vals: string[] = []
+    for (const k of known) {
+      const v = (raw as Record<string, unknown>)[k]
+      if (typeof v === 'string' && v) vals.push(v)
+    }
+    return vals.slice(0, 3)
+  }
+  if (typeof raw === 'string' && raw) return [raw]
+  return []
+}
+
+function buildDrillNotes(levelName: string, drills: DrillRow[]): string {
+  const lines: string[] = [`[Curriculum Drills: ${levelName}]`, '', 'CURRICULUM DRILLS:']
+  for (const d of drills.slice(0, 4)) {
+    const meta: string[] = []
+    if (d.duration_minutes != null) meta.push(`${d.duration_minutes} min`)
+    if (d.players_needed != null) meta.push(`${d.players_needed} players`)
+    lines.push(`• ${d.name}${meta.length > 0 ? ` (${meta.join(', ')})` : ''}`)
+    if (d.objective) lines.push(`  Objective: ${d.objective}`)
+    const cues = parseDrillCues(d.coaching_cues)
+    if (cues.length > 0) lines.push(`  Cues: ${cues.join(' · ')}`)
+    if (d.success_criteria) lines.push(`  Success: ${d.success_criteria}`)
+    if (d.progression_easier) lines.push(`  Easier: ${d.progression_easier}`)
+    if (d.progression_harder) lines.push(`  Harder: ${d.progression_harder}`)
+  }
+  lines.push('')
+  lines.push('Reference only. Does not add formal exercise records.')
+  return lines.join('\n')
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Server action: populate template block notes with curriculum_drills content
+//
+// Behaviour identical to populateTemplateBlocksFromCurriculumAction:
+// - Skips blocks that already have notes (no overwrite)
+// - Uses session_block → block type mapping for drill matching
+// - Writes reference text into template_blocks.notes only
+// - Does not add to template_block_exercises
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function populateCurriculumDrillNotesAction(
+  templateId: string,
+): Promise<PopulateCurriculumBlocksResult> {
+  const fail = (error: string): PopulateCurriculumBlocksResult =>
+    ({ ok: false, error, levelName: null, blocksProcessed: 0, blocksUpdated: 0, blockResults: [] })
+
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const rawDb = supabase as any
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return fail('Not authenticated.')
+  if (!templateId) return fail('Template ID required.')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return fail('Academy context unavailable.')
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return fail('You do not have permission to populate curriculum block notes.')
+  }
+
+  const { data: templateRow } = await rawDb
+    .from('templates')
+    .select('id, name, academy_id, curriculum_level_id')
+    .eq('id', templateId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!templateRow) return fail('Template not found or access denied.')
+
+  const curriculumLevelId: string | null = templateRow.curriculum_level_id ?? null
+  if (!curriculumLevelId) {
+    return fail('This template has no curriculum level set. Select a curriculum level first.')
+  }
+
+  const { data: levelRow } = await rawDb
+    .from('curriculum_levels')
+    .select('display_name')
+    .eq('id', curriculumLevelId)
+    .single()
+  const levelName: string = levelRow?.display_name ?? 'Unknown Level'
+
+  const { data: drillData, error: drillError } = await rawDb
+    .from('curriculum_drills')
+    .select('id, name, session_block, objective, coaching_cues, success_criteria, duration_minutes, players_needed, progression_easier, progression_harder')
+    .eq('level_min_id', curriculumLevelId)
+    .eq('is_active', true)
+    .or(`academy_id.is.null,academy_id.eq.${academyId}`)
+    .order('session_block', { ascending: true })
+    .order('name', { ascending: true })
+    .limit(100)
+
+  if (drillError) return fail(`Failed to load curriculum drills: ${drillError.message}`)
+  const allDrills: DrillRow[] = (drillData ?? []) as DrillRow[]
+
+  // Index drills by session_block
+  const drillsByBlock = new Map<string, DrillRow[]>()
+  for (const d of allDrills) {
+    const arr = drillsByBlock.get(d.session_block) ?? []
+    arr.push(d)
+    drillsByBlock.set(d.session_block, arr)
+  }
+
+  const { data: blocks, error: blocksError } = await supabase
+    .from('template_blocks')
+    .select('id, name, type, duration_min, notes, order_index')
+    .eq('template_id', templateId)
+    .order('order_index')
+
+  if (blocksError) return fail(`Failed to load blocks: ${blocksError.message}`)
+  const blockList = blocks ?? []
+  if (blockList.length === 0) {
+    return fail('This template has no blocks. Add blocks before populating from curriculum drills.')
+  }
+
+  const blockResults: BlockCurriculumResult[] = []
+  let blocksUpdated = 0
+
+  for (const block of blockList) {
+    if (block.notes && block.notes.trim().length > 0) {
+      blockResults.push({
+        blockId: block.id,
+        blockName: block.name,
+        blockType: block.type,
+        itemsFound: 0,
+        notesWritten: false,
+        skippedReason: 'Block already has notes — skipped to preserve existing content.',
+      })
+      continue
+    }
+
+    const sessionBlocks = BLOCK_TYPE_TO_SESSION_BLOCKS[block.type] ?? []
+    if (sessionBlocks.length === 0) {
+      blockResults.push({
+        blockId: block.id,
+        blockName: block.name,
+        blockType: block.type,
+        itemsFound: 0,
+        notesWritten: false,
+        skippedReason: `No drill session_block mapping for block type "${block.type}".`,
+      })
+      continue
+    }
+
+    const matchingDrills: DrillRow[] = []
+    for (const sb of sessionBlocks) {
+      matchingDrills.push(...(drillsByBlock.get(sb) ?? []))
+    }
+
+    if (matchingDrills.length === 0) {
+      blockResults.push({
+        blockId: block.id,
+        blockName: block.name,
+        blockType: block.type,
+        itemsFound: 0,
+        notesWritten: false,
+        skippedReason: `No curriculum drills found for level "${levelName}" matching block type "${block.type}".`,
+      })
+      continue
+    }
+
+    const notes = buildDrillNotes(levelName, matchingDrills)
+
+    const { error: updateError } = await supabase
+      .from('template_blocks')
+      .update({ notes })
+      .eq('id', block.id)
+      .eq('template_id', templateId)
+
+    if (updateError) {
+      blockResults.push({
+        blockId: block.id,
+        blockName: block.name,
+        blockType: block.type,
+        itemsFound: matchingDrills.length,
+        notesWritten: false,
+        skippedReason: `Failed to write notes: ${updateError.message}`,
+      })
+      continue
+    }
+
+    blocksUpdated++
+    blockResults.push({
+      blockId: block.id,
+      blockName: block.name,
+      blockType: block.type,
+      itemsFound: matchingDrills.length,
+      notesWritten: true,
+      skippedReason: null,
+    })
+  }
+
+  revalidatePath(`/director/fitness/templates/${templateId}`)
+
+  return {
+    ok: true,
+    error: null,
+    levelName,
+    blocksProcessed: blockList.length,
+    blocksUpdated,
+    blockResults,
+  }
+}
