@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-07 — Sprint 125: Parent Support Guide V1
+
+Static rule-based parent support guide. No AI. No migrations. No internal data exposed.
+
+**Files created:**
+- `src/lib/parent/parentSupportGuide.ts` — Pure static helper. `buildParentSupportGuide({ domain, levelStage, playerFirstName })` returns `ParentSupportGuide` with: `whatToPraise`, `atHomeSupportIdea`, `practiceLanguage`, `avoidOvercoaching`, `whenToAskCoach`. Language is keyed by domain (Technical, Tactical, Movement, Mentality, Competition, Fitness, Recovery, Lifestyle, default) and optionally augmented by level stage (beginner/intermediate/advanced). No AI, no DB calls, no external APIs.
+
+**Files modified:**
+- `src/app/parent/page.tsx` — Added `buildParentSupportGuide` import and `ParentSupportGuide` type. Added `parentSupportGuide` and `coachLangDomain` hoisted variables. Added `coachLangDomain = cl.domain` inside the coach language fetch block. Added `parentSupportGuide = buildParentSupportGuide(...)` in the hoist block (using `coachLangDomain`, `currentStage`, player first name). Added **Parent Support Guide card** in the render (after IDP sections, before Session Consistency): shows What to Praise (green), At-Home Support Idea, After Practice Try Saying (italic), Avoid Overcoaching This (orange), When to Ask the Coach.
+- `docs/CHANGELOG.md` — Sprint 125 entry.
+
+**Content examples:**
+- Technical domain: "Praise preparation and effort" / "Light ball drops at home" / "Ask what felt comfortable"
+- Movement domain: "Praise recovery and reset" / "Tag, hopscotch, or dancing" / "How did your legs feel?"
+- Mentality domain: "Praise persistence and composure" / "Talk about athletes who bounce back" / "Was there a moment you reset?"
+
+**Guardrails confirmed:**
+- No raw coach notes exposed
+- No AI content
+- No audit logs
+- No internal gate statuses
+- No parent communication triggered
+- No migrations
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 124: Parent Progress Dashboard V1
 
 Parent-safe progress dashboard at `/parent`. No migrations, no schema changes, no internal data exposed.

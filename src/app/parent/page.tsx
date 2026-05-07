@@ -6,6 +6,8 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { buildIndividualDevelopmentPlan, buildRoleSpecificIdpView } from '@/lib/player/individualDevelopmentPlan'
 import type { IdpParentView } from '@/lib/player/individualDevelopmentPlan'
 import { sanitizeParentFacingText } from '@/lib/communications/parentSafeResponseRules'
+import { buildParentSupportGuide } from '@/lib/parent/parentSupportGuide'
+import type { ParentSupportGuide } from '@/lib/parent/parentSupportGuide'
 
 export default async function ParentHome() {
   const supabase = await getSupabaseServer()
@@ -17,6 +19,7 @@ export default async function ParentHome() {
   let parentCurrentLevelName: string | null = null
   let parentNextLevelName: string | null = null
   let parentSafeDoingWell: string | null = null
+  let parentSupportGuide: ParentSupportGuide | null = null
   interface AttendanceStat {
     totalRecorded: number
     presentCount: number
@@ -98,6 +101,7 @@ export default async function ParentHome() {
             let currentLevelName: string | null = null
             let currentStage: string | null = null
             let nextLevelName: string | null = null
+            let coachLangDomain: string | null = null
             let coachLangDoingWell: string | null = null
             let coachLangWorkingOn: string | null = null
             let coachLangCurrentFocus: string | null = null
@@ -125,11 +129,12 @@ export default async function ParentHome() {
               // Coach language — sanitize before IDP build (safety layer)
               const { data: clData } = await rawDb
                 .from('curriculum_coach_language')
-                .select('doing_well, working_on, current_focus, next_step')
+                .select('domain, doing_well, working_on, current_focus, next_step')
                 .eq('level_id', currentLevelId)
                 .limit(1)
               const cl = clData?.[0] ?? null
               if (cl) {
+                coachLangDomain = cl.domain ?? null
                 coachLangDoingWell = cl.doing_well ? sanitizeParentFacingText(cl.doing_well) : null
                 coachLangWorkingOn = cl.working_on ? sanitizeParentFacingText(cl.working_on) : null
                 coachLangCurrentFocus = cl.current_focus ? sanitizeParentFacingText(cl.current_focus) : null
@@ -153,10 +158,15 @@ export default async function ParentHome() {
               category: (p.category ?? null) as string | null,
             }))
 
-            // Hoist level info for the level card in the render
+            // Hoist level info and support guide for the render
             parentCurrentLevelName = currentLevelName
             parentNextLevelName = nextLevelName
             parentSafeDoingWell = coachLangDoingWell
+            parentSupportGuide = buildParentSupportGuide({
+              domain: coachLangDomain,
+              levelStage: currentStage,
+              playerFirstName: playerRow.first_name ?? playerRow.full_name ?? 'your child',
+            })
 
             // 6. Build IDP → parent role view
             const plan = buildIndividualDevelopmentPlan({
@@ -422,6 +432,45 @@ export default async function ParentHome() {
             </Card>
           )}
         </>
+      )}
+
+      {/* ── Parent Support Guide ───────────────────────────────────── */}
+      {parentSupportGuide && linkedPlayerFirstName && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
+                <Heart className="w-4 h-4 text-lime" />
+              </div>
+              <div>
+                <p className="font-semibold text-text-primary text-sm">How to Support This Week</p>
+                <p className="text-text-muted text-xs">A guide from the coaching team</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="px-3 py-3 rounded-xl bg-status-green/5 border border-status-green/20">
+              <p className="text-[10px] uppercase tracking-widest text-status-green mb-1">What to Praise</p>
+              <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.whatToPraise}</p>
+            </div>
+            <div className="px-3 py-3 rounded-xl bg-surface-raised border border-border">
+              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">At-Home Support Idea</p>
+              <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.atHomeSupportIdea}</p>
+            </div>
+            <div className="px-3 py-3 rounded-xl bg-surface-raised border border-border">
+              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">After Practice, Try Saying</p>
+              <p className="text-sm text-text-secondary leading-relaxed italic">&ldquo;{parentSupportGuide.practiceLanguage.replace(/^"|"$/g, '')}&rdquo;</p>
+            </div>
+            <div className="px-3 py-3 rounded-xl bg-status-orange/5 border border-status-orange/20">
+              <p className="text-[10px] uppercase tracking-widest text-status-orange mb-1">Avoid Overcoaching This</p>
+              <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.avoidOvercoaching}</p>
+            </div>
+            <div className="px-3 py-3 rounded-xl bg-surface-raised border border-border">
+              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">When to Ask the Coach</p>
+              <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.whenToAskCoach}</p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* ── Latest Coach Update ───────────────────────────────────── */}
