@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-07 — Sprint 123: Player Progress Dashboard V1
+
+Player-safe progress clarity screen at `/player`. No migrations, no schema changes, no internal data exposed.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — Sprint 123 entry.
+
+**What satisfies Sprint 123 requirements (already built):**
+- `src/app/player/page.tsx` — Comprehensive player dashboard using IDP (Individual Development Plan) with player role view. Shows: PlayerMissionPreview (Today's Mission / Your Strength / Your Mission / Next Win / Current Level), Current Level + Next Level card, "What to Work On" (drill names from curriculum_drills), "What to Understand" (from coach language), "Next Evidence to Show" (gate criteria — player-safe wording only), "This Week's Challenge" (mini_challenge + reflection_question from learning module), "What to Ask Your Coach", Q&A answer, recent session history (attendance only, no notes). Empty state: "Your mission is on its way." All content passes through `buildRoleSpecificIdpView(plan, 'player')` — no internal notes, no audit logs, no raw evidence text, no harsh gate language.
+- `src/components/player/PlayerMissionPreview.tsx` — Mission card component (Today's Mission, Your Strength, Your Mission, Next Win, Current Level) with safe empty state.
+
+**Guardrails confirmed:**
+- No coach observations exposed
+- No audit_logs exposed
+- No gate history exposed
+- No internal evidence text
+- No parent-only guidance visible
+- No migrations
+- No RLS changes
+
+**TypeScript:** clean (no code changes this sprint).
+
+---
+
 ## 2026-05-07 — Sprint 122: Tentative Lesson Plan Preview
 
 Director-only UI. No migrations, no schema changes, no writes before session creation.
