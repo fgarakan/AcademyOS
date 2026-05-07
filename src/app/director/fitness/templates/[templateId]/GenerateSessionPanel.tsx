@@ -11,6 +11,13 @@ export interface CoachOption {
   display_name: string
 }
 
+export interface GateOption {
+  id: string
+  domain: string
+  criterion: string
+  threshold: string
+}
+
 interface GenerateSessionPanelProps {
   templateId: string
   templateName: string
@@ -18,6 +25,7 @@ interface GenerateSessionPanelProps {
   coaches: CoachOption[]
   fallbackCoachId: string
   fallbackCoachName: string
+  focusGates?: GateOption[]
 }
 
 function todayIso(): string {
@@ -31,6 +39,7 @@ export function GenerateSessionPanel({
   coaches,
   fallbackCoachId,
   fallbackCoachName,
+  focusGates = [],
 }: GenerateSessionPanelProps) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState(templateName)
@@ -40,6 +49,7 @@ export function GenerateSessionPanel({
     coaches.length > 0 ? coaches[0].id : fallbackCoachId
   )
   const [notes, setNotes] = useState('')
+  const [selectedGateIds, setSelectedGateIds] = useState<string[]>([])
   const [formError, setFormError] = useState<string | null>(null)
   const [formWarning, setFormWarning] = useState<string | null>(null)
   const [generatedId, setGeneratedId] = useState<string | null>(null)
@@ -51,10 +61,17 @@ export function GenerateSessionPanel({
     setTime('')
     setCoachId(coaches.length > 0 ? coaches[0].id : fallbackCoachId)
     setNotes('')
+    setSelectedGateIds([])
     setFormError(null)
     setFormWarning(null)
     setGeneratedId(null)
     setOpen(true)
+  }
+
+  function toggleGate(id: string) {
+    setSelectedGateIds(prev =>
+      prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]
+    )
   }
 
   function closePanel() {
@@ -82,6 +99,7 @@ export function GenerateSessionPanel({
         scheduledTime: time.trim() || null,
         coachId,
         sessionNotes: notes.trim() || null,
+        focusGateIds: selectedGateIds,
       })
 
       if (result.sessionId) {
@@ -274,6 +292,51 @@ export function GenerateSessionPanel({
               className="w-full text-sm bg-surface border border-border rounded px-3 py-2 text-text-primary focus:outline-none focus:border-lime/40 disabled:opacity-50 resize-none placeholder:text-text-muted"
             />
           </div>
+
+          {/* Today's focus gates */}
+          {focusGates.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] uppercase tracking-widest text-text-muted block">
+                  Today's focus gates <span className="text-text-muted">(optional)</span>
+                </label>
+                {selectedGateIds.length > 0 && (
+                  <span className="text-[10px] font-mono text-lime">{selectedGateIds.length} selected</span>
+                )}
+              </div>
+              <p className="text-[10px] text-text-muted">
+                Selected gates appear in session notes as coaching context. This does not record evidence.
+              </p>
+              <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                {focusGates.map(g => (
+                  <label
+                    key={g.id}
+                    className={[
+                      'flex items-start gap-2.5 cursor-pointer rounded-lg px-2.5 py-1.5 border transition-colors',
+                      selectedGateIds.includes(g.id)
+                        ? 'border-lime/30 bg-lime/5'
+                        : 'border-border bg-surface-raised',
+                    ].join(' ')}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedGateIds.includes(g.id)}
+                      onChange={() => toggleGate(g.id)}
+                      disabled={isPending}
+                      className="mt-0.5 accent-lime shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-text-secondary leading-snug">{g.criterion}</p>
+                      <p className="text-[9px] text-text-muted mt-0.5">
+                        <span className="font-semibold">{g.domain}</span>
+                        {g.threshold ? ` · ${g.threshold}` : ''}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Error */}
           {formError && (

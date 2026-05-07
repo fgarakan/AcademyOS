@@ -16,6 +16,7 @@ export interface GenerateSessionInput {
   scheduledTime?: string | null
   coachId: string
   sessionNotes?: string | null
+  focusGateIds?: string[]
 }
 
 export interface GenerateSessionResult {
@@ -136,6 +137,26 @@ export async function generateSessionFromTemplateAction(
   //    Coach changes happen on session_blocks/session_block_exercises only, never here.
   //    Curriculum level name is prepended to session_notes so the coach can see
   //    the curriculum focus without needing to query the template separately.
+  // 7a. Resolve focus gates — director-selected gates for today's session context
+  let focusGateLines: string[] = []
+  if (input.focusGateIds && input.focusGateIds.length > 0 && template.curriculum_level_id) {
+    const { data: selectedGates } = await rawDb
+      .from('curriculum_gates')
+      .select('id, domain, criterion, threshold')
+      .in('id', input.focusGateIds)
+      .eq('level_id', template.curriculum_level_id)
+      .limit(10)
+    const gates = (selectedGates ?? []) as Array<{ id: string; domain: string; criterion: string; threshold: string }>
+    if (gates.length > 0) {
+      focusGateLines.push(`[Today's Curriculum Focus — ${gates.length} gate${gates.length !== 1 ? 's' : ''}]`)
+      for (const g of gates) {
+        const threshold = g.threshold ? ` · Target: ${g.threshold}` : ''
+        focusGateLines.push(`• [${g.domain}] ${g.criterion}${threshold}`)
+      }
+      focusGateLines.push('')
+    }
+  }
+
   const curriculumLines: string[] = []
   if (curriculumLevelName) {
     curriculumLines.push(`[Curriculum: ${curriculumLevelName}]`)
@@ -151,7 +172,7 @@ export async function generateSessionFromTemplateAction(
     }
     curriculumLines.push('')
   }
-  const curriculumPrefix = curriculumLines.join('\n')
+  const curriculumPrefix = [...curriculumLines, ...focusGateLines].join('\n')
   const finalSessionNotes = curriculumPrefix + (input.sessionNotes?.trim() ?? '')
   const { data: session, error: sessionError } = await supabase
     .from('sessions')

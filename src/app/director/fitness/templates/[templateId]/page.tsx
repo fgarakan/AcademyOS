@@ -7,7 +7,7 @@ import { FitnessTemplateBuilderClient } from './FitnessTemplateBuilderClient'
 import { PopulateFitnessBlocksButton } from './PopulateFitnessBlocksButton'
 import { CurriculumLevelSelector, type CurriculumLevelOption } from './CurriculumLevelSelector'
 import { TemplateMetaEditorCard } from './TemplateMetaEditorCard'
-import { GenerateSessionPanel, type CoachOption } from './GenerateSessionPanel'
+import { GenerateSessionPanel, type CoachOption, type GateOption } from './GenerateSessionPanel'
 import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 import { getCurriculumDrillsForLevel, type CurriculumDrillRow } from '@/lib/templates/curriculumTemplateLinks'
 import { CurriculumDrillReferencePanel } from '@/components/templates/CurriculumDrillReferencePanel'
@@ -199,6 +199,24 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
     ? await getCurriculumDrillsForLevel(curriculumLevelId, academyId, supabase)
     : []
 
+  // Curriculum gates for the focus gates selector in session generation
+  let focusGatesForSession: GateOption[] = []
+  if (curriculumLevelId) {
+    const { data: gateData } = await rawDb
+      .from('curriculum_gates')
+      .select('id, domain, criterion, threshold, sort_order')
+      .eq('level_id', curriculumLevelId)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .limit(15)
+    focusGatesForSession = (gateData ?? []).map((g: { id: string; domain: string; criterion: string; threshold: string }) => ({
+      id: g.id,
+      domain: g.domain,
+      criterion: g.criterion,
+      threshold: g.threshold ?? '',
+    }))
+  }
+
   // Fetch coaches for the Generate Session panel
   const { data: coachMemberships } = await supabase
     .from('academy_memberships')
@@ -339,6 +357,7 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
               coaches={coaches}
               fallbackCoachId={fallbackCoachId}
               fallbackCoachName={fallbackCoachName}
+              focusGates={focusGatesForSession}
             />
           </CardContent>
         </Card>

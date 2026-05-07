@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-07 — Sprint 121: Today's Focus Gates Selector
+
+Director session generation UI. No migrations, no schema changes, no evidence creation, no player status updates.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/generate-session-actions.ts` — Extended `GenerateSessionInput` with optional `focusGateIds: string[]`. Action fetches selected gate criterion/domain/threshold from `curriculum_gates` (scoped by level_id to prevent cross-level spoofing). Appends `[Today's Curriculum Focus]` block to `session_notes` before other curriculum context. Context only — no evidence recorded.
+- `src/app/director/fitness/templates/[templateId]/GenerateSessionPanel.tsx` — Added `GateOption` export interface and `focusGates?: GateOption[]` prop. Added `selectedGateIds` state. Added `toggleGate()` handler. Added focus gates checklist section between Notes and the submit button. Checked gates highlighted with lime border. Clarification copy: "This does not record evidence."
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Added `curriculum_gates` fetch for `curriculumLevelId` (rawDb, `is_active=true`, ordered by `sort_order`, limit 15). Passes result as `focusGates` prop to `GenerateSessionPanel`. Imports `GateOption` type.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 120: Drill-Into-Block-Notes Population
 
 Director-only server action. No migrations, no schema changes, no parent/player exposure.
