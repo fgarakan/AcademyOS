@@ -292,26 +292,64 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - **Impact on session list:** The sessions list at `/director/sessions` is unaffected — it only queries `sessions` and `session_blocks` which have correct policies.
 - **Fix:** Apply `supabase/migrations/056_session_block_exercises_rls.sql` to the live Supabase instance via the SQL Editor. Paste the full file contents and run. No code changes needed after application — exercises will render automatically.
 
-### `player_gate_status` and `requirement_evidence_links.gate_id` — migration 059 pending live application
+### `player_gate_status` partially applied — repair via migration 060
 
-- **Status:** Migration 059 (`supabase/migrations/059_player_gate_status.sql`) creates the `player_gate_status` table and adds a nullable `gate_id` column to `requirement_evidence_links`. **The live database still needs this migration applied.**
-- **Impact until applied:** No per-player gate progress rows exist. Gate evidence continues to flow through `proposed_actions` via the existing `recordGateEvidenceAction` stopgap (Sprint 103 did not change application code). Sprint 104 server action rewrite will not function until this migration is applied.
-- **Bootstrap rows:** The migration includes an idempotent bootstrap INSERT that seeds `not_started` `player_gate_status` rows for all players with an active `player_curriculum_states` record. This runs automatically as part of the migration.
-- **Known constraint:** `requirement_evidence_links.requirement_id` remains NOT NULL. Gate-only evidence rows (no matching track requirement) cannot be stored in `requirement_evidence_links` without a `requirement_id`. Sprint 104 must resolve this before rewriting `recordGateEvidenceAction`.
-- **Fix:** Open Supabase → SQL Editor, paste the full contents of `supabase/migrations/059_player_gate_status.sql`, and Run.
-- **Verification after applying:**
+- **Status:** Migration 059 (`supabase/migrations/059_player_gate_status.sql`) **partially applied** on the live database. It failed with `ERROR: 42P01: relation "requirement_evidence_links" does not exist` because migration 041 (`041_requirement_domains.sql`) had not been applied to the live DB first.
+
+- **What 059 committed before the failure (already on live DB):**
+  - `player_gate_status` table, all 6 indexes, `trg_player_gate_status_updated_at` trigger
+  - RLS enabled, `"Staff see player gate status"` policy, `"Staff manage player gate status"` policy
+
+- **What 059 did NOT execute (still missing from live DB):**
+  - `requirement_evidence_links.gate_id` column
+  - `idx_req_evidence_gate_id` index
+  - Bootstrap `player_gate_status` rows (INSERT never reached)
+
+- **Root cause:** Migration 041 (`041_requirement_domains.sql`) was never applied to the live database. This means `requirement_evidence_links`, `curriculum_track_requirements`, `player_requirement_progress`, and `curriculum_requirement_domains` are also absent. Migrations 042, 043, and 044 (which seed those tables) were also never applied.
+
+- **DO NOT re-run migration 059.** `player_gate_status` already exists. Re-running 059 will fail on `CREATE TABLE player_gate_status` (relation already exists).
+
+- **Sprint 104 is blocked until the repair is applied.**
+
+- **Required application order:**
+  1. `041_requirement_domains.sql` — creates `requirement_evidence_links` and three related tables
+  2. `042_requirement_domain_seed.sql` — seeds `curriculum_requirement_domains` (3 domain rows)
+  3. `043_orange_ball_starter_requirements.sql` — seeds `curriculum_track_requirements`
+  4. `044_player_requirement_progress_bootstrap.sql` — bootstraps `player_requirement_progress` rows
+  5. `060_gate_status_repair.sql` — adds `gate_id` column, index, and bootstrap rows (the three steps 059 failed to complete)
+
+- **Fix:** Open Supabase → SQL Editor and apply each file in the order above. Paste the full contents of each file and Run before proceeding to the next.
+
+- **Verification after applying migration 060:**
   ```sql
-  SELECT policyname FROM pg_policies WHERE tablename = 'player_gate_status' ORDER BY policyname;
-  -- Expect: "Staff manage player gate status", "Staff see player gate status"
-
-  SELECT COUNT(*) FROM player_gate_status;
-  -- Expect: > 0 if any players have a player_curriculum_states row with gates at their level
-
+  -- Confirm gate_id column was added
   SELECT column_name FROM information_schema.columns
-  WHERE table_name = 'requirement_evidence_links' AND column_name = 'gate_id';
-  -- Expect: one row returned
+  WHERE table_schema = 'public'
+    AND table_name = 'requirement_evidence_links'
+    AND column_name = 'gate_id';
+  -- Expect: one row
+
+  -- Confirm index was created
+  SELECT indexname FROM pg_indexes
+  WHERE tablename = 'requirement_evidence_links'
+    AND indexname = 'idx_req_evidence_gate_id';
+  -- Expect: one row
+
+  -- Confirm bootstrap rows were inserted
+  SELECT COUNT(*) FROM player_gate_status;
+  -- Expect: > 0 if any players have a player_curriculum_states row
+  -- with active gates at their current level
+
+  -- Confirm policies are intact (should already be present from partial 059)
+  SELECT policyname FROM pg_policies
+  WHERE tablename = 'player_gate_status'
+  ORDER BY policyname;
+  -- Expect: "Staff manage player gate status", "Staff see player gate status"
   ```
-- **Type regeneration:** After applying, run `supabase gen types typescript` to regenerate `src/lib/supabase/database.types.ts`. Do not edit the types file manually.
+
+- **Known constraint (unchanged):** `requirement_evidence_links.requirement_id` remains NOT NULL (migration 041). Gate-only evidence rows (no matching track requirement) cannot be stored without a `requirement_id`. Sprint 104 must resolve this before rewriting `recordGateEvidenceAction`.
+
+- **Type regeneration:** After applying all five migrations, run `supabase gen types typescript` to regenerate `src/lib/supabase/database.types.ts`. Do not edit the types file manually.
 
 ### `template_block_exercises` missing RLS policies — migration 058 pending live application
 

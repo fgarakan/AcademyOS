@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-07 — Sprint 103 Repair: Gate Status Migration Dependency Repair
+
+Schema repair only. No application code, UI, or `database.types.ts` changes.
+
+**Root cause:** Migration 059 partially applied on the live database with error `42P01: relation "requirement_evidence_links" does not exist`. Migration 041 (`041_requirement_domains.sql`), which creates `requirement_evidence_links`, was never applied to the live DB. The `player_gate_status` table, its indexes, trigger, and both RLS policies were committed by 059 before the failure. The `gate_id` column, its index, and the bootstrap INSERT were never executed.
+
+**Migration created:**
+- `supabase/migrations/060_gate_status_repair.sql` — idempotent repair covering the three statements 059 failed to complete: `ALTER TABLE requirement_evidence_links ADD COLUMN IF NOT EXISTS gate_id`, `CREATE INDEX IF NOT EXISTS idx_req_evidence_gate_id`, and the bootstrap `INSERT INTO player_gate_status ... ON CONFLICT DO NOTHING`. Prerequisites: migrations 041–044 must be applied first.
+
+**Docs updated:**
+- `docs/KNOWN_LIMITATIONS.md` — replaced the outdated "migration 059 pending" entry with the full partial-apply state, root cause (missing 041), required five-migration application order (041 → 042 → 043 → 044 → 060), warning not to re-run 059, Sprint 104 blocked notice, and updated verification SQL
+- `docs/CHANGELOG.md` — this entry
+
+**Guardrails confirmed:**
+- Migration 060 does not drop or recreate `player_gate_status`
+- Migration 060 does not drop or replace any existing RLS policies
+- No parent/player RLS added
+- No automatic player level advancement
+- No assessment behavior changed
+- No `curriculum_gates` rows modified
+- No application code changed
+- No UI files changed
+- `database.types.ts` not touched (regenerate after repair migrations applied to live DB)
+
+**TypeScript:** clean — no application code changed.
+
+---
+
 ## 2026-05-06 — Sprint 103: Gate Evidence Foundation Schema
 
 Schema-only sprint. Creates the `player_gate_status` table and extends `requirement_evidence_links` with a nullable `gate_id` column, establishing the foundation for per-player curriculum gate progress tracking.
