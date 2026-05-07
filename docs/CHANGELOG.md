@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-07 — Sprint 117: Player Gate History Timeline
+
+UI read-only. No migrations, no schema changes, no database.types.ts edits, no parent/player exposure, no gate status mutations.
+
+**Files created:**
+- `src/components/player/GateHistoryTimeline.tsx` — Server Component displaying a chronological audit trail of gate activity. Exports `GateAuditEntry` interface. Renders per-entry rows with: event type badge (evidence recorded / gate confirmed / gate waived), timestamp, gate criterion teaser (from payload snapshot or current gate name), actor display name (or "Staff" fallback), evidence count after (for evidence events), status transition (for decision events), "Waiver reason on record" flag when `waiver_reason_present` is true, and evidence text truncated to 80 chars labeled `[Internal]`. Empty state: "No gate activity yet. Record evidence from a gate to start the history."
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Added `audit_logs` query after `playerGateStatuses` block, scoped by `academy_id + action IN [gate_status.evidence_recorded, gate_status.director_decision] + target_id IN (current level gate IDs)`, limit 20. Resolves actor display names via a follow-up `profiles` query on unique actor IDs; falls back to `"Staff"`. Renders `<GateHistoryTimeline />` in the Skill Path tab directly after `<PlayerLevelRequirementsCard />`.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 116: Gate Evidence Threshold Readiness Audit + Safe Badge Logic
 
 UI-only. No migrations, no schema changes, no status writes, no backend mutations.

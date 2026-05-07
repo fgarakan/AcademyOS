@@ -60,6 +60,7 @@ import { QuickAssessmentPanel } from './QuickAssessmentPanel'
 import { QuickAssessmentHistoryCard } from './QuickAssessmentHistoryCard'
 import { AssessmentHistoryCard } from './AssessmentHistoryCard'
 import { PlayerCommandCenterCard } from '@/components/player/PlayerCommandCenterCard'
+import { GateHistoryTimeline, type GateAuditEntry } from '@/components/player/GateHistoryTimeline'
 
 interface PageProps {
   params: { playerId: string }
@@ -240,6 +241,57 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     for (const row of (gateStatusRows ?? []) as PlayerGateStatusData[]) {
       playerGateStatuses[row.gate_id] = row
     }
+  }
+
+  // Gate activity timeline: recent audit_logs for gate evidence and director decision events.
+  // RLS on audit_logs: auth_is_director_or_head() — never exposed to parent/player portals.
+  // rawDb used for consistency with the existing pattern in this file (audit_logs is typed
+  // in database.types.ts but payload as Json | null conflicts with our local interface).
+  let gateActivityLog: GateAuditEntry[] = []
+
+  if (levelGates.length > 0) {
+    const gateIds = levelGates.map(g => g.id)
+    const { data: gateLogRows } = await rawDb
+      .from('audit_logs')
+      .select('id, action, actor_id, created_at, payload')
+      .eq('academy_id', academyId)
+      .in('action', ['gate_status.evidence_recorded', 'gate_status.director_decision'])
+      .in('target_id', gateIds)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    const rawLog: Array<{
+      id: string
+      action: string
+      actor_id: string | null
+      created_at: string
+      payload: Record<string, unknown> | null
+    }> = gateLogRows ?? []
+
+    // Resolve actor display names — scoped to actor IDs found in audit rows only.
+    const actorIds = Array.from(
+      new Set(rawLog.filter(r => r.actor_id).map(r => r.actor_id as string))
+    )
+    const actorNameMap = new Map<string, string>()
+
+    if (actorIds.length > 0) {
+      const { data: actorProfiles } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', actorIds)
+      for (const p of (actorProfiles ?? [])) {
+        actorNameMap.set(p.id, p.display_name)
+      }
+    }
+
+    gateActivityLog = rawLog.map(row => ({
+      id:                  row.id,
+      action:              row.action,
+      actor_id:            row.actor_id,
+      actor_display_name:  row.actor_id ? (actorNameMap.get(row.actor_id) ?? 'Staff') : 'Staff',
+      created_at:          row.created_at,
+      payload:             row.payload,
+    }))
   }
 
   // All 15 curriculum levels for the level picker.
@@ -1073,6 +1125,12 @@ export default async function PlayerProfilePage({ params }: PageProps) {
             />,
           ])
         )}
+      />
+
+      {/* Gate History Timeline — internal audit trail, director and head coach only */}
+      <GateHistoryTimeline
+        entries={gateActivityLog}
+        levelGates={levelGates.map(g => ({ id: g.id, criterion: g.criterion }))}
       />
 
       {/* Advancement score thresholds — what numbers are needed to exit this level */}
