@@ -1,4 +1,4 @@
-import { Zap, Star, ArrowRight } from 'lucide-react'
+import { Zap, Star, ArrowRight, Lightbulb, Eye } from 'lucide-react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 
 interface Props {
@@ -6,9 +6,20 @@ interface Props {
   mission: string | null
   nextWin: string | null
   currentLevel: string | null
+  whyItMatters?: string | null
+  tryThisNext?: string | null
+  coachIsWatchingFor?: string | null
 }
 
-export function PlayerMissionPreview({ strength, mission, nextWin, currentLevel }: Props) {
+export function PlayerMissionPreview({
+  strength,
+  mission,
+  nextWin,
+  currentLevel,
+  whyItMatters,
+  tryThisNext,
+  coachIsWatchingFor,
+}: Props) {
   const hasContent = strength || mission || nextWin
 
   return (
@@ -19,7 +30,7 @@ export function PlayerMissionPreview({ strength, mission, nextWin, currentLevel 
             <Zap className="w-4 h-4 text-lime" />
           </div>
           <div>
-            <p className="font-semibold text-text-primary text-sm">Today&apos;s Mission</p>
+            <p className="font-semibold text-text-primary text-sm">Current Mission</p>
             <p className="text-text-muted text-xs">What your coach has set for you</p>
           </div>
         </div>
@@ -28,7 +39,7 @@ export function PlayerMissionPreview({ strength, mission, nextWin, currentLevel 
         {!hasContent ? (
           <div className="py-8 text-center space-y-2">
             <Zap className="w-8 h-8 text-text-muted mx-auto" />
-            <p className="text-text-secondary text-sm">Your next mission will appear after your coach reviews your progress.</p>
+            <p className="text-text-secondary text-sm">Your coach is setting up your next mission.</p>
             <p className="text-text-muted text-xs">Keep showing up — your coach is watching your progress.</p>
           </div>
         ) : (
@@ -53,9 +64,39 @@ export function PlayerMissionPreview({ strength, mission, nextWin, currentLevel 
               </div>
             )}
 
+            {whyItMatters && (
+              <div className="flex items-start gap-3 px-3 py-3 rounded-xl bg-surface-raised border border-border">
+                <Lightbulb className="w-4 h-4 text-status-blue shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-status-blue mb-0.5">Why It Matters</p>
+                  <p className="text-sm text-text-secondary leading-relaxed">{whyItMatters}</p>
+                </div>
+              </div>
+            )}
+
+            {tryThisNext && (
+              <div className="flex items-start gap-3 px-3 py-3 rounded-xl bg-lime/5 border border-lime/20">
+                <ArrowRight className="w-4 h-4 text-lime shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-lime mb-0.5">Try This Next</p>
+                  <p className="text-sm text-text-primary leading-relaxed">{tryThisNext}</p>
+                </div>
+              </div>
+            )}
+
+            {coachIsWatchingFor && (
+              <div className="flex items-start gap-3 px-3 py-3 rounded-xl bg-surface-raised border border-border">
+                <Eye className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Coach is Watching For</p>
+                  <p className="text-sm text-text-secondary leading-relaxed">{coachIsWatchingFor}</p>
+                </div>
+              </div>
+            )}
+
             {nextWin && (
               <div className="flex items-start gap-3 px-3 py-3 rounded-xl bg-surface-raised border border-border">
-                <ArrowRight className="w-4 h-4 text-status-orange shrink-0 mt-0.5" />
+                <Star className="w-4 h-4 text-status-orange shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-status-orange mb-0.5">Next Win</p>
                   <p className="text-sm text-text-secondary leading-relaxed">{nextWin}</p>

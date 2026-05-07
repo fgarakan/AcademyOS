@@ -7,6 +7,8 @@ import type { IdpPlayerView } from '@/lib/player/individualDevelopmentPlan'
 import { parsePlayerProgressQuestion, buildPlayerProgressAnswer } from '@/lib/player/playerProgressQa'
 import { buildModuleForLevelDomain } from '@/lib/curriculum/learningModules'
 import type { LearningModuleDomain } from '@/lib/curriculum/learningModules'
+import { buildPlayerMissionCopy } from '@/lib/player/playerMissionCopy'
+import type { PlayerMissionCopy } from '@/lib/player/playerMissionCopy'
 
 
 export default async function PlayerHome() {
@@ -20,6 +22,7 @@ export default async function PlayerHome() {
   let noMappingReason: string | null = null
   let currentLevelStage: string | null = null
   let nextLevelDisplayName: string | null = null
+  let missionCopy: PlayerMissionCopy | null = null
   interface SessionHistoryItem {
     sessionName: string | null
     date: string
@@ -211,6 +214,13 @@ export default async function PlayerHome() {
 
         idpView = buildRoleSpecificIdpView(plan, 'player') as IdpPlayerView
 
+        // Build mission copy from domain + level stage (static, no AI)
+        missionCopy = buildPlayerMissionCopy({
+          domain: coachLang?.domain ?? null,
+          levelStage: currentStage,
+          currentLevel: currentLevelName,
+        })
+
         // 6. Session attendance history — last 60 days, player-safe (no notes)
         const sixtyDaysAgo = new Date()
         sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
@@ -314,6 +324,9 @@ export default async function PlayerHome() {
         mission={idpView?.recommended_next_mission ?? null}
         nextWin={idpView?.requirements_to_move_up?.[0] ?? null}
         currentLevel={idpView?.current_level ?? null}
+        whyItMatters={missionCopy?.whyItMatters ?? null}
+        tryThisNext={missionCopy?.tryThisNext ?? null}
+        coachIsWatchingFor={missionCopy?.coachIsWatchingFor ?? null}
       />
 
       {/* ── No Mapping State ──────────────────────────────────── */}

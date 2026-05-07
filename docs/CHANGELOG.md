@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-07 — Sprint 126: Player Mission / Next Step Card V1
+
+Static rule-based player mission copy. No AI. No migrations. No internal data exposed.
+
+**Files created:**
+- `src/lib/player/playerMissionCopy.ts` — Pure static helper. `buildPlayerMissionCopy({ domain, levelStage, currentLevel })` returns `PlayerMissionCopy` with: `whyItMatters`, `tryThisNext`, `coachIsWatchingFor`. Language is domain-keyed (Technical, Tactical, Movement, Mentality, Competition, Fitness, Recovery, Lifestyle, default) with level-stage augmentation for `tryThisNext`. No AI, no DB calls, mission/progress framing only — no grade/fail language.
+
+**Files modified:**
+- `src/components/player/PlayerMissionPreview.tsx` — Added three new optional props: `whyItMatters`, `tryThisNext`, `coachIsWatchingFor`. Updated header from "Today's Mission" to "Current Mission". Updated empty state copy to "Your coach is setting up your next mission." Added three new display sections when data is present: Why It Matters (blue/Lightbulb), Try This Next (lime/ArrowRight), Coach is Watching For (muted/Eye). Added `Lightbulb` and `Eye` icon imports.
+- `src/app/player/page.tsx` — Added `buildPlayerMissionCopy` import and `PlayerMissionCopy` type. Added `missionCopy: PlayerMissionCopy | null` top-level variable. Added `missionCopy = buildPlayerMissionCopy(...)` after IDP view build (uses `coachLang?.domain`, `currentStage`). Passes `whyItMatters`, `tryThisNext`, `coachIsWatchingFor` to `PlayerMissionPreview`.
+- `docs/CHANGELOG.md` — Sprint 126 entry.
+
+**Content examples:**
+- Technical domain: "Solid technique is the foundation everything else is built on" / "Focus on your preparation — get your racket back early" / "Consistent preparation and clean contact"
+- Tactical domain: "Tennis is a thinking sport" / "Pick one target before each rally starts. Aim crosscourt with control" / "Decision quality — choosing the right shot"
+- Movement domain: "Great movement gets you to the ball early" / "After every shot, reset your position" / "Recovery speed and split step timing"
+
+**Guardrails confirmed:**
+- No raw coach notes exposed
+- No audit logs exposed
+- No internal gate history exposed
+- No harsh criteria language
+- No AI content
+- No migrations
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 125: Parent Support Guide V1
 
 Static rule-based parent support guide. No AI. No migrations. No internal data exposed.
