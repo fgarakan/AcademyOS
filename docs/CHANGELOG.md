@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-07 — Sprint 104: Gate Evidence Server Actions
+
+Rewrote the gate evidence path so evidence writes directly to `player_gate_status` and `audit_logs`, replacing the `proposed_actions` stopgap from Sprint 103.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/recordGateEvidenceAction.ts` — full rewrite: fetches existing `player_gate_status` row; if confirmed/waived returns a safe error; if row exists updates evidence_count, last_evidence_at, and transitions `not_started → observing`; if no row creates one (UPSERT, fetches `gate_criterion_snapshot` from `curriculum_gates`); writes to `audit_logs`; does not write to `proposed_actions` or `requirement_evidence_links`; uses `rawDb` for `player_gate_status` and `curriculum_gates` (not yet in types)
+- `src/app/director/players/[playerId]/GateEvidenceButton.tsx` — copy only: "Submit for review" → "Record evidence", loading state "Submitting…" → "Recording…", success message updated, removed "Goes to director review queue" note, added "Adds evidence to this player's gate progress. Director confirmation comes later."
+- `docs/KNOWN_LIMITATIONS.md` — updated migration 059 entry (Sprint 104 unblocked, requirement_evidence_links NOT NULL resolved), added gate evidence architecture section (orphaned proposed_actions records, status transitions, evidence_threshold_met deferred, Sprint 107 confirmation deferred, visibility flags)
+- `docs/CHANGELOG.md` — this entry
+
+**Guardrails confirmed:**
+- No migration created or modified
+- No `database.types.ts` changes
+- No write to `requirement_evidence_links`
+- No write to `proposed_actions` for new gate evidence
+- No automatic gate confirmation
+- No automatic level advancement
+- No threshold parsing
+- `is_player_visible` and `is_parent_visible` remain `false` on all rows — no parent/player exposure
+- No AI calls
+- No curriculum gates modified
+- No assessment behavior changed
+- `rawDb` used only for `player_gate_status` and `curriculum_gates` (not yet in types); `audit_logs` write follows same rawDb pattern as `requirementProgressConfirmationAction.ts`
+
+**TypeScript:** clean.
+
+**Live DB prerequisite:** Repair migrations 041 → 042 → 043 → 044 → 060 must be applied before this action works in production. Code is production-ready once DB is repaired and types are regenerated.
+
+---
+
 ## 2026-05-07 — Sprint 103 Repair: Gate Status Migration Dependency Repair
 
 Schema repair only. No application code, UI, or `database.types.ts` changes.

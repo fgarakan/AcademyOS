@@ -309,7 +309,7 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 
 - **DO NOT re-run migration 059.** `player_gate_status` already exists. Re-running 059 will fail on `CREATE TABLE player_gate_status` (relation already exists).
 
-- **Sprint 104 is blocked until the repair is applied.**
+- **Sprint 104 (Gate Evidence Server Actions) is complete.** `recordGateEvidenceAction` now writes directly to `player_gate_status` and `audit_logs`. The server action will work in production once the repair migrations below are applied to the live DB. Until then, evidence submissions will return a DB error at runtime.
 
 - **Required application order:**
   1. `041_requirement_domains.sql` — creates `requirement_evidence_links` and three related tables
@@ -347,9 +347,29 @@ These are not bugs to fix immediately — they are known gaps that future sessio
   -- Expect: "Staff manage player gate status", "Staff see player gate status"
   ```
 
-- **Known constraint (unchanged):** `requirement_evidence_links.requirement_id` remains NOT NULL (migration 041). Gate-only evidence rows (no matching track requirement) cannot be stored without a `requirement_id`. Sprint 104 must resolve this before rewriting `recordGateEvidenceAction`.
+- **Known constraint (resolved in Sprint 104):** `requirement_evidence_links.requirement_id` remains NOT NULL (migration 041). Sprint 104 resolves this by not writing gate evidence to `requirement_evidence_links` at all. Gate evidence is stored in `player_gate_status` (count, status, timestamp) and `audit_logs` (evidence text, actor). No migration was needed.
 
 - **Type regeneration:** After applying all five migrations, run `supabase gen types typescript` to regenerate `src/lib/supabase/database.types.ts`. Do not edit the types file manually.
+
+### Gate evidence architecture — Sprint 104 (current state)
+
+- **Status:** `recordGateEvidenceAction` (Sprint 104) writes gate evidence directly to `player_gate_status` and `audit_logs`. The old `proposed_actions` stopgap is removed.
+
+- **Orphaned `proposed_actions` records:** Any gate evidence submitted before Sprint 104 was deployed exists as `proposed_actions` rows with `action_type: 'other'` and `subtype: 'curriculum_gate_observation'`. These records are harmless — they remain in the director review queue and can be dismissed. They are not linked to `player_gate_status` and will not affect gate evidence counts.
+
+- **Status transitions in Sprint 104:**
+  - `not_started → observing` — automatic on first evidence submission
+  - `evidence_count` increments by 1 on each submission
+  - `last_evidence_at` updates to now on each submission
+  - All other statuses (`observing`, `evidence_threshold_met`, `blocked`) are preserved on update
+
+- **`evidence_threshold_met` transition — deferred:** The `curriculum_gates.threshold` column is a free-text field (e.g., `"7/10 rallies"`, `"3 observations"`). Parsing it for automatic `evidence_threshold_met` transitions is deferred. Sprint 107 will implement threshold evaluation as part of the director gate confirmation flow.
+
+- **Director gate confirmation — deferred to Sprint 107:** The `confirmed` status on `player_gate_status` must be set by an explicit director action (not automatic). The confirmation UI and server action are Sprint 107 work.
+
+- **Parent and player visibility:** `is_player_visible` and `is_parent_visible` on all `player_gate_status` rows remain `false`. Neither the player portal nor the parent portal reads this table. No gate evidence or gate status is exposed to players or parents.
+
+- **`database.types.ts` is stale for gate tables:** `player_gate_status` and `curriculum_gates` are not yet in the generated types (migrations 059/052 not yet applied to live DB). `recordGateEvidenceAction` uses `rawDb = supabase as any` for those two tables. Regenerate types after live DB repair is applied.
 
 ### `template_block_exercises` missing RLS policies — migration 058 pending live application
 

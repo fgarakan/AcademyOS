@@ -36,7 +36,7 @@ export function GateEvidenceButton({ playerId, academyId, gateId, gateCriterion 
   if (saved) {
     return (
       <p className="text-[10px] text-status-green flex items-center gap-1 mt-1.5">
-        <Check className="w-3 h-3" /> Evidence submitted for review.
+        <Check className="w-3 h-3" /> Evidence recorded.
       </p>
     )
   }
@@ -85,10 +85,10 @@ export function GateEvidenceButton({ playerId, academyId, gateId, gateCriterion 
         ].join(' ')}
       >
         {isPending
-          ? <><Loader2 className="w-3 h-3 animate-spin" /> Submitting…</>
-          : 'Submit for review'}
+          ? <><Loader2 className="w-3 h-3 animate-spin" /> Recording…</>
+          : 'Record evidence'}
       </button>
-      <p className="text-[9px] text-text-muted">Goes to director review queue. Nothing changes until approved.</p>
+      <p className="text-[9px] text-text-muted">Adds evidence to this player&apos;s gate progress. Director confirmation comes later.</p>
     </div>
   )
 }
