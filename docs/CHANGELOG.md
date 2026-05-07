@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-07 — Sprint 114: Mobile UX Masterclass Pass
+
+UI-only. No migrations, no schema changes, no queries modified.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — Three touch-target improvements for coaches using the session screen on mobile: (1) Attendance status buttons (P/A/L/E) increased from `w-8 py-1 rounded` to `w-10 py-2 rounded-lg` (~32×20px → ~40×32px min target). (2) Per-block status buttons (Planned/Active/Done/Skipped/Modified) increased `py-0.5` → `py-1.5` with `rounded-lg`. (3) Exercise status buttons (Done/Mod/Skip) increased from `text-[10px] px-2 py-0.5` to `text-xs px-3 py-1.5 rounded-lg` with `gap-1.5`; "Modified" label shortened to "Mod" to prevent overflow at larger size.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 113: Global Empty/Error/Loading State Pass
 
 UI-only. No migrations, no schema changes, no queries modified.

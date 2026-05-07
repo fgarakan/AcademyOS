@@ -39,17 +39,10 @@ export function CoachSessionExecutionClient({
   const [sessionNotes, setSessionNotes] = useState(initialSessionNotes)
 
   // Per-exercise status: done / skipped / modified / planned
-  // Persisted via completedMap (done+modified→true, skipped+planned→false) when saving.
   type ExerciseStatus = 'planned' | 'done' | 'skipped' | 'modified'
   const [exerciseStatusMap, setExerciseStatusMap] = useState<Record<string, ExerciseStatus>>(() => {
     const init: Record<string, ExerciseStatus> = {}
     for (const ex of exercises) init[ex.id] = ex.completed ? 'done' : 'planned'
-    return init
-  })
-  // completedMap is derived from exerciseStatusMap for backward-compat with handleSave
-  const [completedMap, setCompletedMap] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {}
-    for (const ex of exercises) init[ex.id] = ex.completed
     return init
   })
   const [notesMap, setNotesMap] = useState<Record<string, string>>(() => {
@@ -104,14 +97,26 @@ export function CoachSessionExecutionClient({
 
   function setExerciseStatus(id: string, s: ExerciseStatus) {
     setExerciseStatusMap(prev => ({ ...prev, [id]: s }))
-    setCompletedMap(prev => ({ ...prev, [id]: s === 'done' || s === 'modified' }))
     setSaveResult(null)
   }
 
-  function toggleExercise(id: string) {
-    const current = exerciseStatusMap[id] ?? 'planned'
-    const next = current === 'done' ? 'planned' : 'done'
-    setExerciseStatus(id, next)
+  function markAllPresent() {
+    setAttendanceMap(prev => {
+      const next = { ...prev }
+      for (const p of roster) next[p.playerId] = 'present'
+      return next
+    })
+    setAttendanceResult(null)
+  }
+
+  function markBlockAllDone(blockId: string) {
+    const blockExercises = exercisesByBlock.get(blockId) ?? []
+    setExerciseStatusMap(prev => {
+      const next = { ...prev }
+      for (const ex of blockExercises) next[ex.id] = 'done'
+      return next
+    })
+    setSaveResult(null)
   }
 
   function markAttendance(playerId: string, status: 'present' | 'absent' | 'late' | 'excused') {
@@ -151,7 +156,7 @@ export function CoachSessionExecutionClient({
         }
         return {
           id: ex.id,
-          completed: completedMap[ex.id] ?? false,
+          completed: exStatus === 'done' || exStatus === 'modified',
           notes,
         }
       })
@@ -168,11 +173,7 @@ export function CoachSessionExecutionClient({
   function handleQuickStatusChange(newStatus: 'in_progress' | 'completed') {
     setSaveResult(null)
     startTransition(async () => {
-      const exerciseUpdates = exercises.map(ex => ({
-        id: ex.id,
-        completed: completedMap[ex.id] ?? false,
-        notes: notesMap[ex.id]?.trim() || null,
-      })) as Array<{ id: string; completed: boolean; notes: string | null }>
+      const exerciseUpdates = exercises.map(ex => { const s = exerciseStatusMap[ex.id] ?? 'planned'; return { id: ex.id, completed: s === 'done' || s === 'modified', notes: notesMap[ex.id]?.trim() || null } }) as Array<{ id: string; completed: boolean; notes: string | null }>
       const result = await saveAction({
         sessionId,
         status: newStatus,
@@ -225,14 +226,24 @@ export function CoachSessionExecutionClient({
           <div className="flex items-center justify-between gap-3">
             <SectionHeader title="ATTENDANCE" />
             {roster.length > 0 && (
-              <button
-                type="button"
-                onClick={handleSaveAttendance}
-                disabled={isAttendancePending}
-                className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-              >
-                {isAttendancePending ? 'Saving…' : 'Save Attendance'}
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={markAllPresent}
+                  disabled={isAttendancePending}
+                  className="text-[10px] font-medium px-2 py-1 rounded border border-status-green/30 text-status-green bg-status-green/5 hover:bg-status-green/10 transition-colors disabled:opacity-50"
+                >
+                  All present
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAttendance}
+                  disabled={isAttendancePending}
+                  className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isAttendancePending ? 'Saving…' : 'Save'}
+                </button>
+              </div>
             )}
           </div>
           <p className="text-xs text-text-muted mt-1">
@@ -264,7 +275,7 @@ export function CoachSessionExecutionClient({
                         key={s}
                         type="button"
                         onClick={() => markAttendance(player.playerId, s)}
-                        className={`w-8 py-1 rounded text-[10px] font-bold uppercase border transition-all ${
+                        className={`w-10 py-2 rounded-lg text-xs font-bold uppercase border transition-all ${
                           attendanceMap[player.playerId] === s
                             ? attendanceActiveClass(s)
                             : 'bg-surface-raised text-text-muted border-border hover:text-text-secondary'
@@ -389,27 +400,51 @@ export function CoachSessionExecutionClient({
                     </p>
                     <p className="font-semibold text-text-primary text-sm">{block.name}</p>
                   </div>
-                  <p className="text-sm font-mono font-bold text-lime shrink-0">{block.duration_min} min</p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {blockExercises.length > 0 && (() => {
+                      const doneInBlock = blockExercises.filter(ex => {
+                        const s = exerciseStatusMap[ex.id] ?? 'planned'
+                        return s === 'done' || s === 'modified'
+                      }).length
+                      return (
+                        <span className={`text-[10px] font-mono font-semibold ${doneInBlock === blockExercises.length ? 'text-status-green' : 'text-lime'}`}>
+                          {doneInBlock}/{blockExercises.length}
+                        </span>
+                      )
+                    })()}
+                    <p className="text-sm font-mono font-bold text-lime">{block.duration_min} min</p>
+                  </div>
                 </div>
                 {block.notes && (
                   <p className="text-xs text-text-muted mt-1">{block.notes}</p>
                 )}
-                {/* Per-block status tracker — local state, feeds into Wrap-Up */}
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {(['planned', 'in_progress', 'completed', 'skipped', 'modified'] as const).map(s => (
+                {/* Per-block status tracker + mark-all shortcut */}
+                <div className="flex items-center justify-between gap-2 mt-2 flex-wrap">
+                  <div className="flex flex-wrap gap-1">
+                    {(['planned', 'in_progress', 'completed', 'skipped', 'modified'] as const).map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setBlockStatus(block.id, s)}
+                        className={`text-[10px] px-2 py-1.5 rounded-lg border font-medium transition-colors ${
+                          blockStatusMap[block.id] === s
+                            ? blockStatusActiveClass(s)
+                            : 'bg-surface border-border text-text-muted hover:border-text-muted'
+                        }`}
+                      >
+                        {blockStatusLabel(s)}
+                      </button>
+                    ))}
+                  </div>
+                  {blockExercises.length > 0 && (
                     <button
-                      key={s}
                       type="button"
-                      onClick={() => setBlockStatus(block.id, s)}
-                      className={`text-[10px] px-2 py-0.5 rounded border font-medium transition-colors ${
-                        blockStatusMap[block.id] === s
-                          ? blockStatusActiveClass(s)
-                          : 'bg-surface border-border text-text-muted hover:border-text-muted'
-                      }`}
+                      onClick={() => markBlockAllDone(block.id)}
+                      className="text-[10px] font-medium text-text-muted hover:text-status-green transition-colors shrink-0"
                     >
-                      {blockStatusLabel(s)}
+                      Mark all done
                     </button>
-                  ))}
+                  )}
                 </div>
               </CardHeader>
 
@@ -438,11 +473,11 @@ export function CoachSessionExecutionClient({
                             )}
                           </div>
                           {/* Exercise status buttons — session-level only, template unchanged */}
-                          <div className="flex gap-1 shrink-0">
+                          <div className="flex gap-1.5 shrink-0">
                             <button
                               type="button"
                               onClick={() => setExerciseStatus(ex.id, exStatus === 'done' ? 'planned' : 'done')}
-                              className={`text-[10px] px-2 py-0.5 rounded border font-medium transition-colors ${
+                              className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
                                 exStatus === 'done'
                                   ? 'bg-status-green/10 border-status-green/40 text-status-green'
                                   : 'bg-surface border-border text-text-muted hover:border-status-green/40 hover:text-status-green'
@@ -453,18 +488,18 @@ export function CoachSessionExecutionClient({
                             <button
                               type="button"
                               onClick={() => setExerciseStatus(ex.id, exStatus === 'modified' ? 'planned' : 'modified')}
-                              className={`text-[10px] px-2 py-0.5 rounded border font-medium transition-colors ${
+                              className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
                                 exStatus === 'modified'
                                   ? 'bg-status-orange/10 border-status-orange/40 text-status-orange'
                                   : 'bg-surface border-border text-text-muted hover:border-status-orange/40 hover:text-status-orange'
                               }`}
                             >
-                              Modified
+                              Mod
                             </button>
                             <button
                               type="button"
                               onClick={() => setExerciseStatus(ex.id, exStatus === 'skipped' ? 'planned' : 'skipped')}
-                              className={`text-[10px] px-2 py-0.5 rounded border font-medium transition-colors ${
+                              className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
                                 exStatus === 'skipped'
                                   ? 'bg-status-red/10 border-status-red/40 text-status-red'
                                   : 'bg-surface border-border text-text-muted hover:border-status-red/40 hover:text-status-red'
