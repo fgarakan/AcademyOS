@@ -58,6 +58,7 @@ import { PlayerPortalLinkPanel } from './PlayerPortalLinkPanel'
 import { QuickAssessmentPanel } from './QuickAssessmentPanel'
 import { QuickAssessmentHistoryCard } from './QuickAssessmentHistoryCard'
 import { AssessmentHistoryCard } from './AssessmentHistoryCard'
+import { PlayerCommandCenterCard } from '@/components/player/PlayerCommandCenterCard'
 
 interface PageProps {
   params: { playerId: string }
@@ -587,126 +588,148 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
-    <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6 items-start">
+    <div className="space-y-6">
 
-      {/* Left column: player info + development summary */}
-      <div className="space-y-6">
+      {/* Command Center — answers the 6 key director questions at a glance */}
+      <PlayerCommandCenterCard
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        currentStage={curriculumSummary?.stage ?? null}
+        nextLevelName={nextCurriculumLevel?.display_name ?? null}
+        developmentFocus={developmentSummary?.development_focus ?? null}
+        doingWell={developmentSummary?.current_strengths ?? []}
+        workingOn={developmentSummary?.things_to_work_on ?? []}
+        activePriorityCount={activePriorities.length}
+        gateCount={levelGates.length}
+        assessmentCount={allAssessments.length}
+        latestAssessmentDate={allAssessments[0]?.assessed_date ?? null}
+        latestAssessmentScore={allAssessments[0]?.overall_score ?? null}
+        advancementEligible={curriculumSummary?.advancement_eligible ?? null}
+        hasCurriculumState={hasCurriculum}
+      />
 
-        {/* Player Info */}
-        <Card>
-          <CardHeader>
-            <p className="label-xs">Player Info</p>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-0">
-            <div>
-              <p className="text-[11px] text-text-muted mb-0.5">Status</p>
-              <p className="text-sm text-text-primary capitalize">
-                {player.status?.replace(/_/g, ' ') ?? '—'}
-              </p>
-            </div>
-            <div>
-              <p className="text-[11px] text-text-muted mb-0.5">Joined</p>
-              <p className="text-sm text-text-primary">{formatDate(player.join_date)}</p>
-            </div>
-            <div>
-              <p className="text-[11px] text-text-muted mb-0.5">Date of birth</p>
-              <p className="text-sm text-text-primary">{formatDate(player.date_of_birth)}</p>
-            </div>
-            {player.notes && (
-              <div>
-                <p className="text-[11px] text-text-muted mb-0.5">Notes</p>
-                <p className="text-sm text-text-secondary leading-relaxed">{player.notes}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Two-column layout: development data left, admin/curriculum right */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6 items-start">
 
-        {/* Development Profile Summary — internal coach view */}
-        <DevelopmentProfileSummaryCard summary={developmentSummary} priorities={activePriorities} />
+        {/* Left column: development summary + quick assessments */}
+        <div className="space-y-6">
 
-        {/* Quick Assessment — director ad-hoc domain rating */}
-        <QuickAssessmentPanel playerId={params.playerId} />
+          {/* Development Profile Summary — internal coach view */}
+          <DevelopmentProfileSummaryCard summary={developmentSummary} priorities={activePriorities} />
 
-        {/* Quick Assessment history */}
-        <QuickAssessmentHistoryCard assessments={adHocAssessments} />
+          {/* Quick Assessment — director ad-hoc domain rating */}
+          <QuickAssessmentPanel playerId={params.playerId} />
 
-      </div>
+          {/* Quick Assessment history */}
+          <QuickAssessmentHistoryCard assessments={adHocAssessments} />
 
-      {/* Right sidebar */}
-      <div className="space-y-4">
-
-        {/* Curriculum card — Skill Track + Competition Track + Fitness + link to /director/curriculum */}
-        <PlayerCurriculumCard
-          skillTrackLevelName={curriculumSummary?.current_level_name ?? null}
-          skillTrackStage={curriculumSummary?.stage ?? null}
-          competitionTrackLevelName={competitionTrackLevelName}
-          fitnessPathPhase={fitnessPathPhase}
-          nextLevelName={nextCurriculumLevel?.display_name ?? null}
-          hasCurriculumState={hasCurriculum}
-        />
-
-        {/* Level Progress */}
-        <LevelProgressCard
-          currentLevelName={curriculumSummary?.current_level_name ?? null}
-          currentStage={curriculumSummary?.stage ?? null}
-          nextLevelName={nextCurriculumLevel?.display_name ?? null}
-          advancementEligible={curriculumSummary?.advancement_eligible ?? null}
-          hasCurriculumState={!!curriculumSummary}
-          requiresDirectorApproval={progressionRequirements?.requires_director_approval ?? null}
-        />
-
-        <p className="label-xs">Coach Focus</p>
-
-        <Card>
-          <CardContent className="py-4 space-y-3">
-            {curriculumSummary?.advancement_eligible ? (
-              <p className="text-xs text-lime">Player meets advancement criteria.</p>
-            ) : hasCurriculum ? (
-              <p className="text-xs text-text-muted">
-                Open the Skill Path tab to evaluate advancement eligibility.
-              </p>
-            ) : (
-              <p className="text-xs text-text-muted">
-                No curriculum assigned yet. Use the Skill Path tab to get started.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Guardian / Parent Access panel (Sprint 40) */}
-        <GuardianLinkingPanel
-          playerId={params.playerId}
-          academyId={academyId}
-          linkedGuardians={linkedGuardians}
-        />
-
-        {/* Player Portal Access panel (Sprint 44) */}
-        <PlayerPortalLinkPanel
-          playerId={params.playerId}
-          linkedProfileId={player.profile_id ?? null}
-          linkedProfileEmail={linkedPortalEmail}
-          linkedProfileName={linkedPortalName}
-          playerName={player.full_name ?? null}
-        />
-
-        {hasCurriculum && (
+          {/* Player Info — administrative details (demoted below development data) */}
           <Card>
-            <CardContent className="py-4 space-y-3">
-              <p className="text-[11px] uppercase tracking-widest text-text-muted">Domain summary</p>
-              {([
-                { label: 'Complete',    count: domainCounts.complete,    color: 'text-lime' },
-                { label: 'In progress', count: domainCounts.in_progress, color: 'text-status-blue' },
-                { label: 'Regressed',   count: domainCounts.regressed,   color: 'text-status-red' },
-                { label: 'Not started', count: domainCounts.not_started, color: 'text-text-muted' },
-              ] as const).map(({ label, count, color }) => (
-                <div key={label} className="flex items-center justify-between">
-                  <span className="text-xs text-text-secondary">{label}</span>
-                  <span className={`text-sm font-mono font-bold ${color}`}>{count}</span>
+            <CardHeader>
+              <p className="label-xs">Player Info</p>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-0">
+              <div>
+                <p className="text-[11px] text-text-muted mb-0.5">Status</p>
+                <p className="text-sm text-text-primary capitalize">
+                  {player.status?.replace(/_/g, ' ') ?? '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] text-text-muted mb-0.5">Joined</p>
+                <p className="text-sm text-text-primary">{formatDate(player.join_date)}</p>
+              </div>
+              <div>
+                <p className="text-[11px] text-text-muted mb-0.5">Date of birth</p>
+                <p className="text-sm text-text-primary">{formatDate(player.date_of_birth)}</p>
+              </div>
+              {player.notes && (
+                <div>
+                  <p className="text-[11px] text-text-muted mb-0.5">Notes</p>
+                  <p className="text-sm text-text-secondary leading-relaxed">{player.notes}</p>
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
-        )}
+
+        </div>
+
+        {/* Right sidebar */}
+        <div className="space-y-4">
+
+          {/* Curriculum card — Skill Track + Competition Track + Fitness + link to /director/curriculum */}
+          <PlayerCurriculumCard
+            skillTrackLevelName={curriculumSummary?.current_level_name ?? null}
+            skillTrackStage={curriculumSummary?.stage ?? null}
+            competitionTrackLevelName={competitionTrackLevelName}
+            fitnessPathPhase={fitnessPathPhase}
+            nextLevelName={nextCurriculumLevel?.display_name ?? null}
+            hasCurriculumState={hasCurriculum}
+          />
+
+          {/* Level Progress */}
+          <LevelProgressCard
+            currentLevelName={curriculumSummary?.current_level_name ?? null}
+            currentStage={curriculumSummary?.stage ?? null}
+            nextLevelName={nextCurriculumLevel?.display_name ?? null}
+            advancementEligible={curriculumSummary?.advancement_eligible ?? null}
+            hasCurriculumState={!!curriculumSummary}
+            requiresDirectorApproval={progressionRequirements?.requires_director_approval ?? null}
+          />
+
+          <p className="label-xs">Coach Focus</p>
+
+          <Card>
+            <CardContent className="py-4 space-y-3">
+              {curriculumSummary?.advancement_eligible ? (
+                <p className="text-xs text-lime">Player meets advancement criteria.</p>
+              ) : hasCurriculum ? (
+                <p className="text-xs text-text-muted">
+                  Open the Skill Path tab to evaluate advancement eligibility.
+                </p>
+              ) : (
+                <p className="text-xs text-text-muted">
+                  No curriculum assigned yet. Use the Skill Path tab to get started.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Guardian / Parent Access panel (Sprint 40) */}
+          <GuardianLinkingPanel
+            playerId={params.playerId}
+            academyId={academyId}
+            linkedGuardians={linkedGuardians}
+          />
+
+          {/* Player Portal Access panel (Sprint 44) */}
+          <PlayerPortalLinkPanel
+            playerId={params.playerId}
+            linkedProfileId={player.profile_id ?? null}
+            linkedProfileEmail={linkedPortalEmail}
+            linkedProfileName={linkedPortalName}
+            playerName={player.full_name ?? null}
+          />
+
+          {hasCurriculum && (
+            <Card>
+              <CardContent className="py-4 space-y-3">
+                <p className="text-[11px] uppercase tracking-widest text-text-muted">Domain summary</p>
+                {([
+                  { label: 'Complete',    count: domainCounts.complete,    color: 'text-lime' },
+                  { label: 'In progress', count: domainCounts.in_progress, color: 'text-status-blue' },
+                  { label: 'Regressed',   count: domainCounts.regressed,   color: 'text-status-red' },
+                  { label: 'Not started', count: domainCounts.not_started, color: 'text-text-muted' },
+                ] as const).map(({ label, count, color }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <span className="text-xs text-text-secondary">{label}</span>
+                    <span className={`text-sm font-mono font-bold ${color}`}>{count}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+        </div>
 
       </div>
 

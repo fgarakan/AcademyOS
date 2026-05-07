@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-05-07 — Sprint 105: Player Profile Command Center Polish
+
+UI/UX polish only. No migrations, no schema changes, no database.types.ts changes, no new queries.
+
+**Files created:**
+- `src/components/player/PlayerCommandCenterCard.tsx` — New command center card for the top of the Overview tab. Shows: current level badge + targeting next level, advancement status pill (Ready / In Progress / Not Evaluated), current development focus box (lime highlight or premium empty state), three quick-stat pills (Active Priorities, Gate Criteria, Assessments), latest assessment date + overall score teaser (or empty-state prompt), and a "Next Best Actions" list of 5 directed action prompts with tab labels. All data comes from props already fetched in page.tsx — no new queries.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Restructured Overview tab: (1) added `PlayerCommandCenterCard` as a full-width header card above the two-column layout, answering all 6 key director questions at a glance; (2) demoted "Player Info" card (join date, DOB, status) from the first position in the left column to the last, so development intelligence leads; (3) added import for the new component.
+
+**UX changes:**
+- Overview tab now leads with a command center that immediately answers: who is this player, what level, what are they working on, what evidence exists, what needs attention, and what should happen next.
+- Development focus is visually foregrounded (lime-accented box vs. plain text).
+- Admin data (DOB, join date) is moved below development-relevant content.
+- Empty states are premium and action-directing (e.g., "Add coach observations in Notes tab, then use AI Draft").
+- Next Best Actions section gives directors a clear directed prompt without requiring navigation knowledge.
+
+**Guardrails confirmed:**
+- No migration created or modified
+- No `database.types.ts` changes
+- No parent/player exposure changes
+- No gate evidence backend changes (`recordGateEvidenceAction` untouched)
+- No level movement logic added
+- No threshold parsing
+- No AI prompt/API changes
+- No assessment scoring changes
+- No new database queries — all props sourced from data already fetched before `overviewSlot`
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 104: Gate Evidence Server Actions
 
 Rewrote the gate evidence path so evidence writes directly to `player_gate_status` and `audit_logs`, replacing the `proposed_actions` stopgap from Sprint 103.
