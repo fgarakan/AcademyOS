@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-07 — Sprint 116: Gate Evidence Threshold Readiness Audit + Safe Badge Logic
+
+UI-only. No migrations, no schema changes, no status writes, no backend mutations.
+
+**Files modified:**
+- `src/components/player/PlayerLevelRequirementsCard.tsx` — Added `parseObservationThreshold(threshold: string): number | null` helper that returns a count only when the threshold string explicitly contains the word "observation" (e.g. "3 observations", "needs 3 coach observations"). Performance standards ("7/10 rallies", "80% consistency", "coach discretion") return null and are never parsed. When a parseable target is found, the evidence count display changes from `"N observation(s)"` to `"N / M obs"` (font-mono). When `evidence_count >= parsedTarget` and status is non-terminal, shows a lime-tinted hint: "Evidence count target may be met" + "Director confirmation still required". For non-parseable thresholds with evidence recorded, shows "Review criteria manually" in muted italic. Added `TERMINAL_STATUSES` set (`confirmed`, `waived`, `blocked`) — readiness hint is suppressed for all terminal states.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 115: End-to-End Brian Demo Hardening
 
 UI-only. No migrations, no schema changes, no queries modified.

@@ -23,6 +23,8 @@ const STATUS_CONFIG: Record<string, { label: string; classes: string }> = {
   blocked:                { label: 'Blocked',       classes: 'text-status-red bg-status-red/5 border-status-red/20' },
 }
 
+const TERMINAL_STATUSES = new Set(['confirmed', 'waived', 'blocked'])
+
 interface GateRow {
   id: string
   domain: string
@@ -58,6 +60,19 @@ function GateStatusBadge({ status }: { status: string }) {
       {cfg.label}
     </span>
   )
+}
+
+// Only parses thresholds that explicitly refer to observation count — e.g. "3 observations",
+// "needs 3 observations", "3 coach observations". Returns null for performance standards
+// ("7/10 rallies", "80% consistency"), coach-discretion criteria, and any threshold that
+// does not contain the word "observation".
+function parseObservationThreshold(threshold: string): number | null {
+  if (!threshold) return null
+  if (!threshold.toLowerCase().includes('observation')) return null
+  const match = threshold.match(/\b(\d+)\b/)
+  if (!match) return null
+  const n = parseInt(match[1], 10)
+  return Number.isFinite(n) && n > 0 ? n : null
 }
 
 export function PlayerLevelRequirementsCard({
@@ -126,6 +141,13 @@ export function PlayerLevelRequirementsCard({
             <div className="space-y-1.5">
               {domainGates.map(g => {
                 const gs = gateStatuses?.[g.id]
+                const parsedTarget = parseObservationThreshold(g.threshold)
+                const isTerminal = TERMINAL_STATUSES.has(gs?.status ?? '')
+                const thresholdMayBeMet =
+                  parsedTarget !== null &&
+                  (gs?.evidence_count ?? 0) >= parsedTarget &&
+                  !isTerminal
+
                 return (
                   <div
                     key={g.id}
@@ -155,15 +177,35 @@ export function PlayerLevelRequirementsCard({
                       <div className="mt-2 pt-2 border-t border-border space-y-1.5">
                         <div className="flex items-center gap-2 flex-wrap">
                           <GateStatusBadge status={gs.status} />
-                          <span className="text-[10px] text-text-muted">
-                            {gs.evidence_count} observation{gs.evidence_count !== 1 ? 's' : ''}
-                          </span>
+                          {parsedTarget !== null ? (
+                            <span className="text-[10px] text-text-muted font-mono">
+                              {gs.evidence_count} / {parsedTarget} obs
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-text-muted">
+                              {gs.evidence_count} observation{gs.evidence_count !== 1 ? 's' : ''}
+                            </span>
+                          )}
                           {gs.last_evidence_at && (
                             <span className="text-[10px] text-text-muted">
                               · Last: {formatDate(gs.last_evidence_at)}
                             </span>
                           )}
                         </div>
+
+                        {/* Observation-based readiness hint — only shown when count meets the parsed target */}
+                        {thresholdMayBeMet && (
+                          <div className="px-2.5 py-1.5 rounded-lg bg-lime/5 border border-lime/20 space-y-0.5">
+                            <p className="text-[10px] text-lime font-medium">Evidence count target may be met</p>
+                            <p className="text-[10px] text-text-muted">Director confirmation still required</p>
+                          </div>
+                        )}
+
+                        {/* Ambiguous threshold — performance criteria cannot be auto-evaluated */}
+                        {parsedTarget === null && !isTerminal && gs.evidence_count > 0 && (
+                          <p className="text-[10px] text-text-muted italic">Review criteria manually</p>
+                        )}
+
                         {confirmActions?.[g.id]}
                       </div>
                     ) : (
