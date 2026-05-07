@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Calendar, Check, X, Loader2, Zap, AlertCircle } from 'lucide-react'
+import { ArrowRight, Calendar, Check, X, Loader2, Zap, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { generateSessionFromTemplateAction } from './generate-session-actions'
 
@@ -18,6 +18,14 @@ export interface GateOption {
   threshold: string
 }
 
+export interface LessonPlanBlock {
+  id: string
+  name: string
+  duration_min: number | null
+  notes: string | null
+  exerciseNames: string[]
+}
+
 interface GenerateSessionPanelProps {
   templateId: string
   templateName: string
@@ -26,6 +34,7 @@ interface GenerateSessionPanelProps {
   fallbackCoachId: string
   fallbackCoachName: string
   focusGates?: GateOption[]
+  blocks?: LessonPlanBlock[]
 }
 
 function todayIso(): string {
@@ -40,6 +49,7 @@ export function GenerateSessionPanel({
   fallbackCoachId,
   fallbackCoachName,
   focusGates = [],
+  blocks = [],
 }: GenerateSessionPanelProps) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState(templateName)
@@ -50,6 +60,7 @@ export function GenerateSessionPanel({
   )
   const [notes, setNotes] = useState('')
   const [selectedGateIds, setSelectedGateIds] = useState<string[]>([])
+  const [showPreview, setShowPreview] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [formWarning, setFormWarning] = useState<string | null>(null)
   const [generatedId, setGeneratedId] = useState<string | null>(null)
@@ -335,6 +346,85 @@ export function GenerateSessionPanel({
                   </label>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Lesson plan preview toggle */}
+          {blocks.length > 0 && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowPreview(v => !v)}
+                className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
+              >
+                {showPreview
+                  ? <EyeOff className="w-3 h-3" />
+                  : <Eye className="w-3 h-3" />
+                }
+                {showPreview ? 'Hide preview' : 'Preview tentative lesson plan'}
+              </button>
+
+              {showPreview && (
+                <div className="mt-2 rounded-xl border border-border bg-surface-raised p-3 space-y-2">
+                  <p className="text-[9px] font-semibold uppercase tracking-widest text-text-muted">
+                    Tentative Lesson Plan — Preview only. Session is created after you confirm.
+                  </p>
+
+                  {/* Header meta */}
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] text-text-primary font-medium">{name || '(unnamed session)'}</p>
+                    <p className="text-[10px] text-text-muted">
+                      {date || '—'}
+                      {time ? ` · ${time}` : ''}
+                      {' · '}
+                      {coaches.find(c => c.id === coachId)?.display_name ?? fallbackCoachName}
+                    </p>
+                    <p className="text-[10px] text-text-muted">Template: <span className="text-text-secondary">{templateName}</span></p>
+                  </div>
+
+                  {/* Selected focus gates */}
+                  {selectedGateIds.length > 0 && (
+                    <div className="pt-1 border-t border-border">
+                      <p className="text-[9px] font-semibold uppercase tracking-widest text-lime/70 mb-1">Today's Focus Gates</p>
+                      {focusGates
+                        .filter(g => selectedGateIds.includes(g.id))
+                        .map(g => (
+                          <p key={g.id} className="text-[10px] text-text-secondary leading-snug">
+                            <span className="text-text-muted">[{g.domain}]</span> {g.criterion}
+                          </p>
+                        ))
+                      }
+                    </div>
+                  )}
+
+                  {/* Blocks */}
+                  <div className="pt-1 border-t border-border space-y-2">
+                    <p className="text-[9px] font-semibold uppercase tracking-widest text-text-muted">Blocks</p>
+                    {blocks.map((b, i) => (
+                      <div key={b.id} className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-mono text-text-muted w-4 shrink-0">{i + 1}.</span>
+                          <span className="text-[10px] text-text-primary font-medium">{b.name}</span>
+                          {b.duration_min != null && (
+                            <span className="text-[9px] font-mono text-text-muted ml-auto shrink-0">{b.duration_min} min</span>
+                          )}
+                        </div>
+                        {b.notes && (
+                          <p className="text-[10px] text-text-muted leading-snug pl-6 whitespace-pre-line line-clamp-3">
+                            {b.notes}
+                          </p>
+                        )}
+                        {b.exerciseNames.length > 0 && (
+                          <p className="text-[10px] text-text-muted/70 pl-6">
+                            {b.exerciseNames.slice(0, 4).join(' · ')}
+                            {b.exerciseNames.length > 4 ? ` +${b.exerciseNames.length - 4} more` : ''}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

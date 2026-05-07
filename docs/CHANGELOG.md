@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-07 — Sprint 122: Tentative Lesson Plan Preview
+
+Director-only UI. No migrations, no schema changes, no writes before session creation.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/GenerateSessionPanel.tsx` — Added `LessonPlanBlock` interface (id, name, duration_min, notes, exerciseNames). Added `blocks?: LessonPlanBlock[]` prop and `showPreview` state. Added "Preview tentative lesson plan" toggle button (Eye/EyeOff icons). Preview panel shows: session name/date/time/coach, template source, selected focus gates, and blocks in order with duration, notes (clamped), and exercise names. Copy: "Tentative Lesson Plan — Preview only. Session is created after you confirm." Preview only shown when blocks exist.
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Added `lessonPlanBlocks: LessonPlanBlock[]` computed from `fitnessBlocks` (maps id, name, duration_min, notes, exerciseNames). Passes `blocks={lessonPlanBlocks}` to `GenerateSessionPanel`.
+
+**Constraints confirmed:**
+- No lesson_plan_drafts table created
+- No proposed_actions written
+- No data written before session creation
+- No auto-publish to coach
+- No parent/player routes touched
+- No migrations
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 121: Today's Focus Gates Selector
 
 Director session generation UI. No migrations, no schema changes, no evidence creation, no player status updates.

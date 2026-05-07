@@ -7,7 +7,7 @@ import { FitnessTemplateBuilderClient } from './FitnessTemplateBuilderClient'
 import { PopulateFitnessBlocksButton } from './PopulateFitnessBlocksButton'
 import { CurriculumLevelSelector, type CurriculumLevelOption } from './CurriculumLevelSelector'
 import { TemplateMetaEditorCard } from './TemplateMetaEditorCard'
-import { GenerateSessionPanel, type CoachOption, type GateOption } from './GenerateSessionPanel'
+import { GenerateSessionPanel, type CoachOption, type GateOption, type LessonPlanBlock } from './GenerateSessionPanel'
 import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 import { getCurriculumDrillsForLevel, type CurriculumDrillRow } from '@/lib/templates/curriculumTemplateLinks'
 import { CurriculumDrillReferencePanel } from '@/components/templates/CurriculumDrillReferencePanel'
@@ -244,6 +244,15 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
     : { data: null }
   const fallbackCoachName = currentProfile?.display_name ?? 'You'
 
+  // Map fitness blocks to lesson plan block shape for the preview panel
+  const lessonPlanBlocks: LessonPlanBlock[] = fitnessBlocks.map(b => ({
+    id: b.id,
+    name: b.name,
+    duration_min: b.duration_min,
+    notes: b.notes,
+    exerciseNames: b.exercises.map(e => e.name),
+  }))
+
   return (
     <div className="p-6 animate-fade-in space-y-6">
       <PageHeader template={template} typeLabel={typeLabel} isFitnessTemplate={isFitnessTemplate} />
@@ -358,6 +367,7 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
               fallbackCoachId={fallbackCoachId}
               fallbackCoachName={fallbackCoachName}
               focusGates={focusGatesForSession}
+              blocks={lessonPlanBlocks}
             />
           </CardContent>
         </Card>
