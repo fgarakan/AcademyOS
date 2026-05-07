@@ -9,6 +9,8 @@ import { CurriculumLevelSelector, type CurriculumLevelOption } from './Curriculu
 import { TemplateMetaEditorCard } from './TemplateMetaEditorCard'
 import { GenerateSessionPanel, type CoachOption } from './GenerateSessionPanel'
 import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
+import { getCurriculumDrillsForLevel, type CurriculumDrillRow } from '@/lib/templates/curriculumTemplateLinks'
+import { CurriculumDrillReferencePanel } from '@/components/templates/CurriculumDrillReferencePanel'
 import type { FitnessBlock, FitnessExercise, ExerciseLibraryItem } from './fitnessBuilderTypes'
 import type { Tables } from '@/lib/supabase/database.types'
 
@@ -191,6 +193,11 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
     ? (curriculumLevels.find(l => l.id === curriculumLevelId)?.display_name ?? null)
     : null
 
+  // Curriculum drills for the reference panel — read-only, rawDb inside helper
+  const curriculumDrills: CurriculumDrillRow[] = curriculumLevelId
+    ? await getCurriculumDrillsForLevel(curriculumLevelId, academyId, supabase)
+    : []
+
   // Fetch coaches for the Generate Session panel
   const { data: coachMemberships } = await supabase
     .from('academy_memberships')
@@ -263,6 +270,14 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Curriculum Drill Reference — shown only when a level is assigned */}
+      {curriculumLevelId && currentLevelName && (
+        <CurriculumDrillReferencePanel
+          drills={curriculumDrills}
+          levelName={currentLevelName}
+        />
+      )}
 
       {/* Template Version History — placeholder until migration 064 is applied */}
       <Card>

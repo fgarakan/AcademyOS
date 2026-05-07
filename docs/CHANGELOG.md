@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-07 — Sprint 119: Curriculum Drill Reference Panel
+
+Read-only UI. No migrations, no schema changes, no database.types.ts edits, no writes.
+
+**Files created:**
+- `src/components/templates/CurriculumDrillReferencePanel.tsx` — Server Component displaying curriculum drills for a template's assigned level. Groups drills by `session_block` (Warm-Up → Focus → Train → Play → Game order). Per-drill card shows: name, domain badge (color-coded), objective, duration, players_needed, up to 3 coaching cues (defensive JSONB parse via `parseCues`), success_criteria, and progressions easier/harder. Empty state: "No curriculum drills found for this level." Footer: "Reference only — nothing is added to this template automatically."
+
+**Files modified:**
+- `src/lib/templates/curriculumTemplateLinks.ts` — Added `CurriculumDrillRow` interface and `getCurriculumDrillsForLevel(levelId, academyId, supabase)` function. Queries `curriculum_drills` table via `rawDb` (not in database.types.ts). Scoped by `level_min_id`, `is_active = true`, academy_id or null (shared drills), ordered by domain → session_block → name, limit 60.
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Added `getCurriculumDrillsForLevel` call after curriculum level resolution. Renders `<CurriculumDrillReferencePanel>` between the Curriculum Context card and Version History card when a level is assigned.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 117: Player Gate History Timeline
 
 UI read-only. No migrations, no schema changes, no database.types.ts edits, no parent/player exposure, no gate status mutations.

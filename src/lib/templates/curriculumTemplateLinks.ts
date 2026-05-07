@@ -177,3 +177,45 @@ export async function getAllCurriculumLevels(
     .order('sort_order', { ascending: true })
   return (data ?? []) as CurriculumLevelMeta[]
 }
+
+// ─────────────────────────────────────────────────────────────
+// Curriculum drill reference — read-only, used in template builder
+// curriculum_drills is not in database.types.ts; rawDb required.
+// ─────────────────────────────────────────────────────────────
+
+export interface CurriculumDrillRow {
+  id: string
+  name: string
+  domain: string
+  session_block: string
+  objective: string
+  coaching_cues: unknown
+  success_criteria: string | null
+  duration_minutes: number | null
+  players_needed: number | null
+  progression_easier: string | null
+  progression_harder: string | null
+}
+
+export async function getCurriculumDrillsForLevel(
+  levelId: string,
+  academyId: string,
+  supabase: SupabaseClient,
+): Promise<CurriculumDrillRow[]> {
+  const rawDb = supabase as any
+  const { data } = await rawDb
+    .from('curriculum_drills')
+    .select(
+      'id, name, domain, session_block, objective, coaching_cues, ' +
+      'success_criteria, duration_minutes, players_needed, ' +
+      'progression_easier, progression_harder'
+    )
+    .eq('level_min_id', levelId)
+    .eq('is_active', true)
+    .or(`academy_id.is.null,academy_id.eq.${academyId}`)
+    .order('domain', { ascending: true })
+    .order('session_block', { ascending: true })
+    .order('name', { ascending: true })
+    .limit(60)
+  return (data ?? []) as CurriculumDrillRow[]
+}
