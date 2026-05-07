@@ -1,4 +1,4 @@
-import { MessageSquare, Calendar, Heart, Bell, BookOpen, ShieldCheck, TrendingUp } from 'lucide-react'
+import { MessageSquare, Calendar, Heart, Bell, BookOpen, ShieldCheck, TrendingUp, ArrowRight } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { ParentSafeProgressPreview } from '@/components/player/ParentSafeProgressPreview'
 import { PrivateLessonRequestCard } from './PrivateLessonRequestCard'
@@ -14,6 +14,9 @@ export default async function ParentHome() {
   let parentView: IdpParentView | null = null
   let noMappingReason: string | null = null
   let linkedPlayerFirstName: string | null = null
+  let parentCurrentLevelName: string | null = null
+  let parentNextLevelName: string | null = null
+  let parentSafeDoingWell: string | null = null
   interface AttendanceStat {
     totalRecorded: number
     presentCount: number
@@ -150,6 +153,11 @@ export default async function ParentHome() {
               category: (p.category ?? null) as string | null,
             }))
 
+            // Hoist level info for the level card in the render
+            parentCurrentLevelName = currentLevelName
+            parentNextLevelName = nextLevelName
+            parentSafeDoingWell = coachLangDoingWell
+
             // 6. Build IDP → parent role view
             const plan = buildIndividualDevelopmentPlan({
               player_id: playerRow.id,
@@ -276,9 +284,37 @@ export default async function ParentHome() {
         </div>
       )}
 
+      {/* ── Level Card ───────────────────────────────────────────── */}
+      {parentCurrentLevelName && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-5 h-5 text-lime" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Current Level</p>
+                  <p className="font-bold text-text-primary text-base leading-tight">{parentCurrentLevelName}</p>
+                </div>
+              </div>
+              {parentNextLevelName && (
+                <div className="text-right shrink-0 flex items-center gap-2">
+                  <ArrowRight className="w-3.5 h-3.5 text-text-muted" />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Next Level</p>
+                    <p className="text-xs text-text-secondary font-medium">{parentNextLevelName}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* ── Child's Progress ──────────────────────────────────────── */}
       <ParentSafeProgressPreview
-        doingWell={[]}
+        doingWell={parentSafeDoingWell ? [parentSafeDoingWell] : []}
         workingOn={parentView?.what_child_is_working_on ? [parentView.what_child_is_working_on] : []}
         currentFocus={null}
         nextStep={parentView?.next_development_step ?? null}

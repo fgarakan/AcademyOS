@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-07 — Sprint 124: Parent Progress Dashboard V1
+
+Parent-safe progress dashboard at `/parent`. No migrations, no schema changes, no internal data exposed.
+
+**Files modified:**
+- `src/app/parent/page.tsx` — Added three top-level hoisted variables (`parentCurrentLevelName`, `parentNextLevelName`, `parentSafeDoingWell`) populated from the inner data-fetch block after curriculum level resolution. Added `ArrowRight` import. Added **Level Card** showing current level + next level with arrow between them (rendered above Child's Progress). Updated `ParentSafeProgressPreview` call: passes `doingWell={parentSafeDoingWell ? [parentSafeDoingWell] : []}` (sanitized via `sanitizeParentFacingText` during fetch) instead of empty array.
+
+**What the parent dashboard now shows:**
+- Level Card: Current Level (lime icon, bold name) + Next Level (arrow + name)
+- Child's Progress: Doing Well (sanitized coach language) + Working On + Next Step
+- Why It Matters, How to Support This Week, What to Say After Practice, What Not to Over-Focus On
+- Session Consistency (attendance rate + recent session list)
+- Approved data banner
+- Safety note
+
+**Guardrails confirmed:**
+- No raw coach notes exposed
+- No audit_logs exposed
+- `coachLangDoingWell` sanitized via `sanitizeParentFacingText` before display
+- No internal gate history exposed
+- No auto-communication triggered
+- No migrations
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 123: Player Progress Dashboard V1
 
 Player-safe progress clarity screen at `/player`. No migrations, no schema changes, no internal data exposed.
