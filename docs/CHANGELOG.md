@@ -2,6 +2,80 @@
 
 ---
 
+## 2026-05-07 — Sprint 112: Review Queue Unification Polish
+
+UI label consistency pass. No migrations, no schema changes, no queries modified.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — Three targeted label fixes: (1) Wrap-Ups tab approved section label changed from "Approved — Apply Coming Next" to "Approved — Ready to Apply" now that `ApplyWrapUpDraftControls` is fully functional. (2) Voice Intake tab approved section label changed from "Approved" to "Approved — Ready to Execute" to match the execute controls already rendered for approved voice intake items. (3) Voice Intake empty state icon changed from `Calendar` to `Mic` (semantic match). Removed unused `Calendar` import; added `Mic` import.
+
+**TypeScript:** clean.
+
+---
+
+## 2026-05-07 — Sprint 111: Template → Session Flow Polish
+
+UI + minor server action extension only. No migrations, no schema changes. `scheduled_time` already exists in the sessions table.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/generate-session-actions.ts` — Added optional `scheduledTime?: string | null` field to `GenerateSessionInput`; wired through to `scheduled_time` in the session insert. Previously sessions were always created with `null` scheduled_time even when the user intended a specific time.
+- `src/app/director/fitness/templates/[templateId]/GenerateSessionPanel.tsx` — Added `time` state; added date/time two-column grid (replaces single date field); passes `scheduledTime` to the server action.
+- `src/app/director/sessions/new/SessionFromTemplateForm.tsx` — Added `time` state; added `Start time` input field below the date field (Coach moved to its own row); passes `scheduledTime` to the server action.
+
+**TypeScript:** clean.
+
+---
+
+## 2026-05-07 — Sprint 110: Fitness Template Builder UX Polish
+
+UI-only. No migrations, no schema changes, no new queries.
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` — Replaced all 3 `window.location.reload()` calls with `router.refresh()` from `next/navigation`. Affected operations: Add Fitness Block, Switch Exercise, Pick Exercise. `router.refresh()` re-fetches server component data and merges it into the current page without a full reload, preserving scroll position and client state. The existing `useEffect(() => { setBlocks(initialBlocks) }, [initialBlocks])` sync pattern already handles the incoming data from `router.refresh()` correctly. Added `useRouter` import.
+
+**TypeScript:** clean.
+
+---
+
+## 2026-05-07 — Sprint 109: Coach Session Execution UX Polish
+
+UI-only. No migrations, no schema changes, no new queries, no new components.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — (1) Removed redundant `completedMap` state — it was kept in manual sync with `exerciseStatusMap` (source of truth) and both `handleSave` and `handleQuickStatusChange` now derive `completed: boolean` directly from `exerciseStatusMap`. (2) Removed unused `toggleExercise` function. (3) Added "All present" shortcut button next to "Save" in the attendance card header — marks all roster players as present in one tap. (4) Added per-block exercise completion count badge (`done/total`) in each block header, colored lime or green when complete. (5) Added "Mark all done" quick action per block, positioned opposite the block status pills. (6) Added `markAllPresent` and `markBlockAllDone` helper functions.
+
+**TypeScript:** clean.
+
+---
+
+## 2026-05-07 — Sprint 108: Assessment Tab + Assessment History UX Polish
+
+UI-only. No migrations, no schema changes, no new queries.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/AssessmentHistoryCard.tsx` — Replaced local `formatDate` with shared `@/lib/utils` version; updated header to `label-xs` pattern with count badge; added per-domain horizontal score bars (colored fill strips, 0–100 width); promoted `promotion_ready` from plain text to green badge; improved empty state with actionable copy.
+- `src/app/director/players/[playerId]/QuickAssessmentHistoryCard.tsx` — Replaced local `formatDate` with shared `@/lib/utils` version; updated header to `label-xs` pattern; added dynamic "N of M" count badge; improved empty state copy.
+- `src/app/director/players/[playerId]/page.tsx` — Moved `AssessmentHistoryCard` from bottom of Notes tab into Overview tab (after `QuickAssessmentHistoryCard`), where all assessment data now lives together. Removed from `notesSlot`.
+
+**TypeScript:** clean.
+
+---
+
+## 2026-05-07 — Sprint 107: Director Gate Confirmation Flow
+
+UI + server action only. No migrations, no schema changes, no database.types.ts changes.
+
+**Files created:**
+- `src/app/director/players/[playerId]/confirmGateStatusAction.ts` — Server action allowing `academy_director` or `head_coach` to set a gate to `confirmed` or `waived`. Resolves `academy_id` from authenticated user's profile, verifies academy membership role, verifies player belongs to academy, guards against overwriting terminal statuses, upserts `player_gate_status`, writes `audit_logs` entry, calls `revalidatePath`. Uses `rawDb` cast pattern (consistent with existing gate actions). No external AI calls, no automatic level movement, no parent/player exposure.
+- `src/app/director/players/[playerId]/ConfirmGateButton.tsx` — Client component rendered per gate in the Skill Path tab. Returns null for terminal statuses (confirmed, waived, blocked). For `evidence_threshold_met`: shows lime "Confirm gate" button + secondary "Waive" link. For earlier statuses (not_started, observing): shows only "Waive" link. Waive flow expands inline textarea for optional waiver reason (max 1000 chars). Full pending/error states with Loader2 and AlertTriangle.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Added import for `ConfirmGateButton`; added `confirmActions` prop to `PlayerLevelRequirementsCard` (passes a `ConfirmGateButton` per gate, bound to `currentStatus` from `playerGateStatuses`). `PlayerLevelRequirementsCard` already accepts and renders `confirmActions` from Sprint 106.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 106: Gate Status UI in Player Profile
 
 UI-only. No migrations, no schema changes, no database.types.ts changes.

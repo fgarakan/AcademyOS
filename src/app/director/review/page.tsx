@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, CheckCircle, ClipboardList, Inbox, Link2, Target, Users } from 'lucide-react'
+import { BookOpen, CheckCircle, ClipboardList, Inbox, Link2, Mic, Target, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -895,7 +895,7 @@ export default async function DirectorReviewQueuePage() {
           {approvedWrapUpDrafts.length > 0 && (
             <section className="space-y-3">
               <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Apply Coming Next</p>
+                <p className="label-xs">Approved — Ready to Apply</p>
                 <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                   {approvedWrapUpDrafts.length}
                 </span>
@@ -955,7 +955,7 @@ export default async function DirectorReviewQueuePage() {
           {approvedVoiceIntakeDrafts.length > 0 && (
             <section className="space-y-3">
               <div className="flex items-center gap-2">
-                <p className="label-xs">Approved</p>
+                <p className="label-xs">Approved — Ready to Execute</p>
                 <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
                   {approvedVoiceIntakeDrafts.length}
                 </span>
@@ -975,7 +975,7 @@ export default async function DirectorReviewQueuePage() {
               <Card>
                 <CardContent className="py-12">
                   <EmptyState
-                    icon={<Calendar className="w-5 h-5" />}
+                    icon={<Mic className="w-5 h-5" />}
                     title="No pending voice intake drafts"
                     description="When directors or coaches submit voice intake drafts from the Command Center or session pages, they will appear here for review."
                   />
