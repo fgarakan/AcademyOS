@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { RefreshCw, Trash2, Play, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { createOrResetDemoSandboxAction, resetDemoSandboxAction } from './demoSandboxActions'
@@ -13,6 +14,7 @@ interface Props {
 type Phase = 'idle' | 'seeding' | 'resetting' | 'done_seed' | 'done_reset' | 'error'
 
 export function DemoSandboxControls({ status }: Props) {
+  const router = useRouter()
   const [phase, setPhase] = useState<Phase>('idle')
   const [deleteConfirmed, setDeleteConfirmed] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -42,7 +44,7 @@ export function DemoSandboxControls({ status }: Props) {
     setMessage(parts.length > 0 ? parts.join(' · ') : 'Demo sandbox already up to date.')
     setWarnings(result.warnings ?? [])
     setPhase('done_seed')
-    setTimeout(() => window.location.reload(), 1800)
+    setTimeout(() => router.refresh(), 1800)
   }
 
   async function handleDelete() {
@@ -67,7 +69,7 @@ export function DemoSandboxControls({ status }: Props) {
     setMessage(parts.length > 0 ? parts.join(' · ') : 'No demo records found to delete.')
     setDeleteConfirmed(false)
     setPhase('done_reset')
-    setTimeout(() => window.location.reload(), 1800)
+    setTimeout(() => router.refresh(), 1800)
   }
 
   return (

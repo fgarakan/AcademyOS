@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
   Users, Sparkles, BookOpen, Calendar, Lightbulb, CheckCircle2,
-  GraduationCap, ArrowRight, FlaskConical, MessageSquare,
+  GraduationCap, ArrowRight, FlaskConical, MessageSquare, ClipboardList,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { getDemoSandboxStatusAction } from './demoSandboxActions'
@@ -177,6 +177,7 @@ export default async function DemoTourPage() {
               <DemoLink href="/director/players/onboarding-review" label="Onboarding Review" icon={<CheckCircle2 className="w-3.5 h-3.5" />} active={sandboxActive} />
               <DemoLink href="/director/players/development-intake" label="Development Intake" icon={<Sparkles className="w-3.5 h-3.5" />} active={sandboxActive} />
               <DemoLink href="/director/curriculum" label="Curriculum" icon={<BookOpen className="w-3.5 h-3.5" />} active />
+              <DemoLink href="/director/review" label="Review Queue" icon={<ClipboardList className="w-3.5 h-3.5" />} active />
               {sandbox?.sessionId ? (
                 <Link
                   href={`/director/sessions/${sandbox.sessionId}`}

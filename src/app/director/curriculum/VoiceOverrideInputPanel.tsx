@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, AlertTriangle, CheckCircle } from 'lucide-react'
+import Link from 'next/link'
+import { Send, AlertTriangle, CheckCircle, ArrowRight } from 'lucide-react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { VoiceTextInput } from '@/components/voice/VoiceTextInput'
 import { createCurriculumOverrideDraftAction } from '@/lib/actions/curriculumOverrideDraft'
@@ -73,9 +74,17 @@ export function VoiceOverrideInputPanel({ hasActiveVersion }: Props) {
           </button>
 
           {result?.ok && (
-            <div className="flex items-center gap-1.5 text-xs text-status-green">
-              <CheckCircle className="w-3.5 h-3.5" />
-              Draft created — check Review Queue.
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 text-xs text-status-green">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Draft created.
+              </div>
+              <Link
+                href="/director/review"
+                className="flex items-center gap-1 text-xs text-lime hover:opacity-80 transition-opacity font-medium"
+              >
+                Open Review Queue <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
           )}
         </div>

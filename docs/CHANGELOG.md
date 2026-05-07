@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-07 — Sprint 115: End-to-End Brian Demo Hardening
+
+UI-only. No migrations, no schema changes, no queries modified.
+
+**Files modified:**
+- `src/app/director/curriculum/VoiceOverrideInputPanel.tsx` — Added actionable "Open Review Queue →" link in the success state after a curriculum override draft is created. Previously showed plain text "Draft created — check Review Queue." with no link. Also added `Link` and `ArrowRight` imports.
+- `src/app/director/demo/DemoSandboxControls.tsx` — Replaced two `window.location.reload()` calls (post-seed and post-delete) with `router.refresh()` from Next.js `useRouter`. Same behaviour but stays within the Next.js router context, avoiding a full browser navigation. Added `useRouter` import.
+- `src/app/director/demo/page.tsx` — Added "Review Queue" quick link to the Quick Links section (Step 6 of the demo flow goes straight to the review queue after creating a curriculum draft). Added `ClipboardList` import.
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-07 — Sprint 114: Mobile UX Masterclass Pass
 
 UI-only. No migrations, no schema changes, no queries modified.
