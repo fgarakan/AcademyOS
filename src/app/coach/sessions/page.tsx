@@ -97,8 +97,8 @@ export default async function CoachSessionsPage() {
               <CardContent className="py-10">
                 <EmptyState
                   icon={<Calendar className="w-5 h-5" />}
-                  title="No sessions today"
-                  description="Sessions scheduled for today will appear here once the director assigns them."
+                  title="Nothing on the court today"
+                  description="Sessions scheduled for today will appear here. Check back if you're expecting one, or contact your director."
                 />
               </CardContent>
             </Card>
@@ -121,8 +121,8 @@ export default async function CoachSessionsPage() {
               <div className="py-8">
                 <EmptyState
                   icon={<Calendar className="w-5 h-5" />}
-                  title="No upcoming sessions"
-                  description="Sessions scheduled after today will appear here."
+                  title="No upcoming sessions scheduled"
+                  description="Future sessions will appear here as your director adds them to the schedule."
                 />
               </div>
             )}

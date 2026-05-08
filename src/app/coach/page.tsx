@@ -125,7 +125,7 @@ export default async function CoachHome() {
               <EmptyState
                 icon={<Calendar className="w-5 h-5" />}
                 title="No sessions scheduled yet"
-                description="Your session plan will appear here once sessions are set up in the platform."
+                description="Sessions will appear here as soon as your director schedules them. Check back before your next court time."
                 className="py-10"
               />
             )}
@@ -202,8 +202,8 @@ export default async function CoachHome() {
               ) : (
                 <EmptyState
                   icon={<Users className="w-5 h-5" />}
-                  title="No players assigned yet"
-                  description="Your assigned players will appear here."
+                  title="Players will appear here"
+                  description="Your director assigns players to you. Once connected, you'll see their levels and current focus."
                   className="py-8"
                 />
               )}
@@ -265,7 +265,7 @@ export default async function CoachHome() {
                 <EmptyState
                   icon={<FileText className="w-5 h-5" />}
                   title="No notes yet"
-                  description="Recent player notes will appear here."
+                  description="Notes you write during or after sessions will appear here for quick reference."
                   className="py-8"
                 />
               )}

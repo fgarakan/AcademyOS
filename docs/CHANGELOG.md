@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-08 — Sprint 147: Empty State and Help Copy Pass
+
+Audits and improves cold empty-state copy across coach and director routes, replacing terse system messages with contextual, warm descriptions.
+
+**Files modified:**
+- `src/app/coach/page.tsx` — Improves 3 empty states: (1) "No sessions scheduled yet" → adds "check back before your next court time"; (2) "No players assigned yet" → "Players will appear here — your director assigns players to you"; (3) "No notes yet" → "Notes you write during or after sessions will appear here for quick reference."
+- `src/app/coach/sessions/page.tsx` — Improves 2 empty states: (1) today → "Nothing on the court today" with contact-director context; (2) upcoming → "No upcoming sessions scheduled — future sessions will appear here as your director adds them."
+- `src/app/director/private-lessons/page.tsx` — Improves empty state from "No private lesson requests yet" to "No requests yet — when parents request private lessons through the parent portal, requests will appear here for your review."
+
+**Guardrails confirmed:** Copy-only changes, no logic, no schema, no new files. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 146: Contextual Next Best Action Cards
 
 Adds a reusable `NextBestActionCard` component and wires it into 4 contextual empty/action states across the product.

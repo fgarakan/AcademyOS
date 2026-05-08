@@ -149,8 +149,8 @@ export default async function PrivateLessonsPage() {
           {requestCards.length === 0 ? (
             <EmptyState
               icon={<Inbox className="w-5 h-5" />}
-              title="No private lesson requests yet"
-              description="Requests will appear here once parents can submit them from the parent portal."
+              title="No requests yet"
+              description="When parents request private lessons through the parent portal, those requests will appear here for your review."
             />
           ) : (
             <div className="space-y-3">
