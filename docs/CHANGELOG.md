@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-08 — Sprint 143: Lesson Plan Generation Guided Flow
+
+Adds a 4-step guided flow to the Lesson Plan Draft Generator panel so directors understand where they are in the generate → review → apply → session chain. Step states are derived from live component state (draft generated, applied) and the `hasCurriculumContent` prop.
+
+**Files created:**
+- `src/components/onboarding/GuidedStepCard.tsx` — Reusable component for a single step in a guided flow. Props: `stepNumber`, `totalSteps?`, `title`, `description`, `status` (complete/current/upcoming), `children?`, `className?`. Shows CheckCircle2 for complete, lime circle for current, muted circle for upcoming. Description hidden when complete.
+
+**Files modified:**
+- `src/app/director/class-templates/[templateId]/LessonPlanDraftPanel.tsx` — Adds 4 GuidedStepCard steps (Generate draft / Review the plan / Apply to template / Create session) with live state. Adds "Draft only — review before applying" inline label. Improves apply success copy: "Applied — coaches will see this plan when a session is created from this template." + "Next step: create a session." Adds clarity copy near apply button: "Applying updates curriculum content on this template. It does not change the global curriculum."
+
+**Guardrails confirmed:** No schema, no mutations changed, no parent/player exposure. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 142: Class Template Guided Setup V1
 
 Adds guided setup and next-step clarity to the class templates workflow. Directors now see a state-aware 4-step guide on each class template, and a page explainer on the list view that answers the five key questions about the class template → lesson plan → session workflow.

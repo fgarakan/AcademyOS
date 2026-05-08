@@ -10,6 +10,7 @@ import {
   type DraftBlock,
 } from './generateLessonPlanDraftAction'
 import { applyLessonPlanDraftAction } from './applyLessonPlanDraftAction'
+import { GuidedStepCard } from '@/components/onboarding/GuidedStepCard'
 
 interface Props {
   templateId: string
@@ -80,6 +81,14 @@ export function LessonPlanDraftPanel({ templateId, hasCurriculumContent, curricu
 
   const matchedBlockCount = draft?.blocks.filter(b => b.contentItems.length > 0).length ?? 0
 
+  // Step status for guided flow
+  const hasGenerated = draft !== null || applied || hasCurriculumContent
+  const hasApplied = applied || hasCurriculumContent
+  const step1Status: 'complete' | 'current' | 'upcoming' = hasGenerated ? 'complete' : 'current'
+  const step2Status: 'complete' | 'current' | 'upcoming' = hasApplied ? 'complete' : hasGenerated ? 'current' : 'upcoming'
+  const step3Status: 'complete' | 'current' | 'upcoming' = hasApplied ? 'complete' : 'upcoming'
+  const step4Status: 'complete' | 'current' | 'upcoming' = hasApplied ? 'current' : 'upcoming'
+
   return (
     <Card className="border-lime/10 bg-lime/[0.02]">
       <CardContent className="py-4 space-y-3">
@@ -112,6 +121,38 @@ export function LessonPlanDraftPanel({ templateId, hasCurriculumContent, curricu
           </p>
         ) : (
           <>
+            {/* 4-step guided flow */}
+            <div className="space-y-2 py-1">
+              <GuidedStepCard
+                stepNumber={1}
+                totalSteps={4}
+                title="Generate draft"
+                description="Use the curriculum level on this template to create a suggested lesson plan. Nothing is saved yet."
+                status={step1Status}
+              />
+              <GuidedStepCard
+                stepNumber={2}
+                totalSteps={4}
+                title="Review the plan"
+                description="Check the blocks, drills, coaching cues, and success criteria before applying."
+                status={step2Status}
+              />
+              <GuidedStepCard
+                stepNumber={3}
+                totalSteps={4}
+                title="Apply to template"
+                description="Applying writes this plan to the reusable class template so future sessions can use it."
+                status={step3Status}
+              />
+              <GuidedStepCard
+                stepNumber={4}
+                totalSteps={4}
+                title="Create session for coaches"
+                description="Once a session is created from this template, coaches will see the curriculum plan on their session page."
+                status={step4Status}
+              />
+            </div>
+
             {/* Applied status banner — shown on initial load when lesson plan is already live */}
             {hasCurriculumContent && !draft && !loading && (
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-status-green/5 border border-status-green/20">
@@ -154,29 +195,44 @@ export function LessonPlanDraftPanel({ templateId, hasCurriculumContent, curricu
             {/* Draft preview */}
             {draft && expanded && (
               <div className="space-y-2 pt-1 border-t border-border/50">
-                <p className="text-[10px] uppercase tracking-widest text-text-muted pt-1">
-                  Draft Preview — {draft.levelName} · not yet applied
-                </p>
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted">
+                    Draft Preview — {draft.levelName}
+                  </p>
+                  <span className="text-[10px] text-status-orange italic shrink-0">
+                    Draft only — review before applying
+                  </span>
+                </div>
                 <div className="space-y-2">
                   {draft.blocks.map((block, i) => (
                     <DraftBlockRow key={block.blockId} block={block} index={i} />
                   ))}
                 </div>
-                <div className="pt-2 border-t border-border flex items-center justify-between gap-3">
+                <div className="pt-2 border-t border-border space-y-2">
                   {applied ? (
-                    <p className="text-xs text-status-green flex items-center gap-1.5">
-                      <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-                      Lesson plan applied — curriculum content updated above.
-                    </p>
+                    <div>
+                      <p className="text-xs text-status-green flex items-center gap-1.5">
+                        <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                        Applied — coaches will see this plan when a session is created from this template.
+                      </p>
+                      <p className="text-[10px] text-text-muted mt-1 pl-5">
+                        Next step: create a session from this template so coaches can run it.
+                      </p>
+                    </div>
                   ) : (
-                    <p className="text-[11px] text-text-muted">
-                      Review the draft above, then apply it to write curriculum content to this template.
-                    </p>
+                    <div>
+                      <p className="text-[11px] text-text-muted">
+                        Review the draft above, then apply it to write curriculum content to this template.
+                      </p>
+                      <p className="text-[10px] text-text-muted/70 mt-0.5 italic">
+                        Applying updates curriculum content on this template. It does not change the global curriculum.
+                      </p>
+                    </div>
                   )}
                   <button
                     onClick={handleApply}
                     disabled={applying || applied}
-                    className="btn-lime text-xs px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60 shrink-0"
+                    className="btn-lime text-xs px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60"
                   >
                     {applying ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
