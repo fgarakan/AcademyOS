@@ -223,6 +223,19 @@ export default async function DirectorDashboard() {
         sessionsExist={sessionsExist}
       />
 
+      {/* ── Setup Complete Banner ─────────────────────────── */}
+      {players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/5 border border-status-green/20">
+          <Sparkles className="w-4 h-4 text-status-green shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-status-green">Academy OS is live</p>
+            <p className="text-xs text-text-secondary mt-0.5">
+              Players, curriculum, templates, and sessions are all connected. Coaches have everything they need on court.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Today's Priorities ────────────────────────────── */}
       <div>
         <p className="label-xs mb-4">Today's Priorities</p>

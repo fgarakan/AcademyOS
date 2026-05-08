@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-08 — Sprint 152: Role-Based Landing Dashboards Polish
+
+Polishes the coach and director dashboards with contextual greeting, quick stats, and a setup-complete celebration banner.
+
+**Files modified:**
+- `src/app/coach/page.tsx` — Adds a personalized greeting using `profile.display_name` (e.g. "Good morning, Brian"). Adds a quick stats bar showing session count for today, player count, and notes count (if any). Both are derived from the existing `CoachWorkspaceSummary`.
+- `src/app/director/page.tsx` — Adds a "Academy OS is live" success banner (green, `Sparkles` icon) that appears only when all 4 setup conditions are met: players exist, curriculum levels assigned, class templates exist, and sessions created. Banner text: "Players, curriculum, templates, and sessions are all connected. Coaches have everything they need on court."
+
+**Guardrails confirmed:** No schema changes, no new data queries, no parent/player exposure. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 151: Demo Dataset Setup
 
 Docs-only sprint. Creates a comprehensive demo story and dataset setup guide.

@@ -50,9 +50,13 @@ export default async function CoachHome() {
     }
   }
 
-  const { assignedPlayers, recentObservations, todaySessions } = summary
+  const { profile, assignedPlayers, recentObservations, todaySessions } = summary
 
-  const today = new Date().toLocaleDateString('en-US', {
+  const now = new Date()
+  const hour = now.getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const coachFirstName = profile?.display_name?.split(' ')[0] ?? null
+  const today = now.toLocaleDateString('en-US', {
     weekday: 'long',
     year:    'numeric',
     month:   'long',
@@ -65,8 +69,28 @@ export default async function CoachHome() {
       {/* ── Header ───────────────────────────────────────────── */}
       <div>
         <p className="page-eyebrow">Your Workspace</p>
-        <h1 className="page-title">Coach Hub</h1>
+        <h1 className="page-title">
+          {coachFirstName ? `${greeting}, ${coachFirstName}` : 'Coach Hub'}
+        </h1>
         <p className="page-subtitle">{today}</p>
+      </div>
+
+      {/* ── Quick stats ────────────────────────────────────────── */}
+      <div className="flex gap-4">
+        <div className="flex flex-col items-center px-4 py-2.5 rounded-xl bg-surface-raised border border-border min-w-[72px]">
+          <p className="text-xl font-mono font-bold text-lime leading-none">{todaySessions.length}</p>
+          <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Today</p>
+        </div>
+        <div className="flex flex-col items-center px-4 py-2.5 rounded-xl bg-surface-raised border border-border min-w-[72px]">
+          <p className="text-xl font-mono font-bold text-lime leading-none">{assignedPlayers.length}</p>
+          <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Players</p>
+        </div>
+        {recentObservations.length > 0 && (
+          <div className="flex flex-col items-center px-4 py-2.5 rounded-xl bg-surface-raised border border-border min-w-[72px]">
+            <p className="text-xl font-mono font-bold text-lime leading-none">{recentObservations.length}</p>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Notes</p>
+          </div>
+        )}
       </div>
 
       {/* ── Today ────────────────────────────────────────────── */}
