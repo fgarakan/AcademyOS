@@ -62,6 +62,7 @@ import { AssessmentHistoryCard } from './AssessmentHistoryCard'
 import { PlayerCommandCenterCard } from '@/components/player/PlayerCommandCenterCard'
 import { GateHistoryTimeline, type GateAuditEntry } from '@/components/player/GateHistoryTimeline'
 import { DraftSummaryUpdateButton } from './DraftSummaryUpdateButton'
+import { PlayerSessionHistoryPanel } from './PlayerSessionHistoryPanel'
 
 interface PageProps {
   params: { playerId: string }
@@ -1299,6 +1300,17 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     </div>
   )
 
+  // ─── Tab 6: Session History ───────────────────────────────────────────────
+  // Read-only panel. Uses data already fetched above — no additional DB calls.
+  // exposureTimeline: last 60 days of session attendance (Tab 4 / Fitness data).
+  // enrichedObservations: applied coach_observations (Tab 5 / Notes data).
+  const sessionHistorySlot = (
+    <PlayerSessionHistoryPanel
+      attendanceItems={exposureTimeline}
+      observations={enrichedObservations}
+    />
+  )
+
   return (
     <div className="animate-fade-in p-4 sm:p-6 max-w-5xl">
       <PlayerProfileHeader player={player} curriculumSummary={curriculumSummary} />
@@ -1308,6 +1320,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         competition={competitionSlot}
         fitness={fitnessSlot}
         notes={notesSlot}
+        sessionHistory={sessionHistorySlot}
       />
     </div>
   )

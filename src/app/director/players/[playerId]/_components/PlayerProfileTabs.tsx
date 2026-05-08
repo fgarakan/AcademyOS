@@ -9,6 +9,7 @@ interface PlayerProfileTabsProps {
   competition: ReactNode
   fitness: ReactNode
   notes: ReactNode
+  sessionHistory: ReactNode
 }
 
 export function PlayerProfileTabs({
@@ -17,6 +18,7 @@ export function PlayerProfileTabs({
   competition,
   fitness,
   notes,
+  sessionHistory,
 }: PlayerProfileTabsProps) {
   return (
     <Tabs defaultValue="overview">
@@ -26,12 +28,14 @@ export function PlayerProfileTabs({
         <TabsTrigger value="competition">Competition</TabsTrigger>
         <TabsTrigger value="fitness">Fitness / Load</TabsTrigger>
         <TabsTrigger value="notes">Notes</TabsTrigger>
+        <TabsTrigger value="session-history">Session History</TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="pt-6">{overview}</TabsContent>
       <TabsContent value="skill-path" className="pt-6">{skillPath}</TabsContent>
       <TabsContent value="competition" className="pt-6">{competition}</TabsContent>
       <TabsContent value="fitness" className="pt-6">{fitness}</TabsContent>
       <TabsContent value="notes" className="pt-6">{notes}</TabsContent>
+      <TabsContent value="session-history" className="pt-6">{sessionHistory}</TabsContent>
     </Tabs>
   )
 }

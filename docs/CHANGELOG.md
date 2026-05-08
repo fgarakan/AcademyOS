@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-08 — Sprint 160: Player Profile Evidence + Session History Panel
+
+Adds a read-only "Session History" tab to the director player profile. A director can now open a player profile and immediately see attendance history (last 60 days) and all applied coach observations in one consolidated panel, without switching between Fitness and Notes tabs. No new DB queries — uses data already fetched by `page.tsx` (`exposureTimeline` + `enrichedObservations`). No backend mutations. Not visible to parents or players.
+
+**Files created:**
+- `src/app/director/players/[playerId]/PlayerSessionHistoryPanel.tsx` — Read-only panel. Shows: internal notice, 4-metric counts strip (Sessions/Present/Absent-Late/Coach Notes), attendance list with status pills (last 60 days), applied coach observations reusing `CoachObservationsFeed`. Empty states for both sections when no data exists. Wrap-up observation count badge in section header.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/_components/PlayerProfileTabs.tsx` — Added `sessionHistory: ReactNode` prop. Added "Session History" tab trigger and content slot.
+- `src/app/director/players/[playerId]/page.tsx` — Imported `PlayerSessionHistoryPanel`. Added `sessionHistorySlot` after `notesSlot` using existing `exposureTimeline` + `enrichedObservations` data. Passed `sessionHistory` prop to `PlayerProfileTabs`.
+
+**Guardrails confirmed:** No migrations. No new DB queries. No schema changes. No parent/player data exposure. No mutations. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 159: Director Review Queue Command Center
 
 Clarity sprint — makes the director review queue feel like a command center. No backend changes, no new workflows, no migrations. Only `page.tsx` modified.
