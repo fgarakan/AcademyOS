@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-08 — Sprint 131: Class Template Curriculum Content Display
+
+Updated class template detail page to prioritize curriculum content over legacy fitness exercises.
+
+**Files modified:**
+- `src/app/director/class-templates/[templateId]/page.tsx` — Queries `curriculum_class_template_blocks` joining `curriculum_content_items` and `curriculum_drills`. Renders a "Curriculum Lesson Plan" section above legacy exercise records. Shows block name, content title, content_type badge, domain, description, coach cues, success criteria, progressions/regressions, duration, and notes. Empty state: "No curriculum content applied yet — Generate a lesson plan draft." Legacy exercises de-emphasized with label "Attached exercise records (legacy/fitness)".
+
+**Guardrails confirmed:**
+- Fitness OS untouched (template_block_exercises and exercises still queried and shown)
+- No mutations — read-only display
+- No parent/player routes touched
+- rawDb used for new curriculum_class_template_blocks table (not yet in database.types.ts)
+
+**TypeScript:** clean.
+
+---
+
 ## 2026-05-08 — Sprint 130: Orange 1 Foundation Content Seed
 
 Seeds 46 curriculum content items for Orange 1 — Rally (global defaults, academy_id NULL).

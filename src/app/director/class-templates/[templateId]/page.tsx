@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Clock, BookOpen, GraduationCap } from 'lucide-react'
+import { ArrowLeft, Clock, BookOpen, GraduationCap, Layers, CheckCircle, ArrowRight, ArrowUpRight } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import { ClassTemplateCurriculumSelector } from './ClassTemplateCurriculumSelector'
@@ -11,6 +11,77 @@ type Template = Tables<'templates'>
 
 interface PageProps {
   params: { templateId: string }
+}
+
+// Shape returned by the curriculum_class_template_blocks join
+interface CurriculumBlockRow {
+  id: string
+  block_id: string
+  order_index: number
+  notes: string | null
+  duration_min: number | null
+  content_item: {
+    title: string
+    description: string | null
+    content_type: string
+    domain: string | null
+    session_block_hint: string | null
+    coach_cues: string[] | null
+    success_criteria: string[] | null
+    progressions: string[] | null
+    regressions: string[] | null
+    duration_min: number | null
+  } | null
+  drill: {
+    name: string
+    description: string | null
+    domain: string | null
+    cues: string[] | null
+    success_criteria: string[] | null
+    progressions: string[] | null
+    regressions: string[] | null
+    duration_min: number | null
+  } | null
+}
+
+function contentTypeBadge(type: string): string {
+  const map: Record<string, string> = {
+    drill: 'bg-lime/10 text-lime border-lime/20',
+    tactical_game: 'bg-status-blue/10 text-status-blue border-status-blue/20',
+    situational: 'bg-status-orange/10 text-status-orange border-status-orange/20',
+    match_play_theme: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    mental_skill: 'bg-status-green/10 text-status-green border-status-green/20',
+    competition_behavior: 'bg-status-orange/10 text-status-orange border-status-orange/20',
+    warmup: 'bg-border text-text-secondary border-border',
+    cooldown: 'bg-border text-text-secondary border-border',
+    coach_cue: 'bg-lime/5 text-lime border-lime/10',
+    success_criteria: 'bg-status-green/5 text-status-green border-status-green/10',
+    progression: 'bg-lime/10 text-lime border-lime/20',
+    regression: 'bg-border text-text-muted border-border',
+    player_mission: 'bg-status-blue/5 text-status-blue border-status-blue/10',
+    parent_guidance: 'bg-border text-text-muted border-border',
+  }
+  return map[type] ?? 'bg-border text-text-muted border-border'
+}
+
+function contentTypeLabel(type: string): string {
+  const map: Record<string, string> = {
+    drill: 'Drill',
+    tactical_game: 'Tactical Game',
+    situational: 'Situational',
+    match_play_theme: 'Match-Play Theme',
+    mental_skill: 'Mental Skill',
+    competition_behavior: 'Competition',
+    warmup: 'Warm-Up',
+    cooldown: 'Cool-Down',
+    coach_cue: 'Coach Cue',
+    success_criteria: 'Success Criteria',
+    progression: 'Progression',
+    regression: 'Regression',
+    player_mission: 'Player Mission',
+    parent_guidance: 'Parent Guidance',
+  }
+  return map[type] ?? type.replace(/_/g, ' ')
 }
 
 export default async function ClassTemplateDetailPage({ params }: PageProps) {
@@ -58,7 +129,36 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
   const blockList = blocks ?? []
   const blockIds = blockList.map(b => b.id)
 
-  // Fetch exercises per block
+  // Fetch curriculum class template blocks (new curriculum content path)
+  const curriculumByBlock = new Map<string, CurriculumBlockRow[]>()
+  if (blockIds.length > 0) {
+    const { data: cctbData } = await rawDb
+      .from('curriculum_class_template_blocks')
+      .select(`
+        id,
+        block_id,
+        order_index,
+        notes,
+        duration_min,
+        content_item:curriculum_content_items(
+          title, description, content_type, domain, session_block_hint,
+          coach_cues, success_criteria, progressions, regressions, duration_min
+        ),
+        drill:curriculum_drills(
+          name, description, domain, cues, success_criteria, progressions, regressions, duration_min
+        )
+      `)
+      .in('block_id', blockIds)
+      .order('order_index')
+
+    for (const row of (cctbData ?? [])) {
+      const arr = curriculumByBlock.get(row.block_id) ?? []
+      arr.push(row as CurriculumBlockRow)
+      curriculumByBlock.set(row.block_id, arr)
+    }
+  }
+
+  // Fetch legacy exercises per block (preserved — not removed)
   const exercisesByBlock = new Map<string, { name: string; category: string }[]>()
   if (blockIds.length > 0) {
     const { data: exData } = await rawDb
@@ -95,8 +195,12 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
     ? (curriculumLevels.find(l => l.id === curriculumLevelId)?.display_name ?? null)
     : null
 
-  let totalExercises = 0
-  exercisesByBlock.forEach(arr => { totalExercises += arr.length })
+  // Counts
+  let totalCurriculumItems = 0
+  curriculumByBlock.forEach(arr => { totalCurriculumItems += arr.length })
+  let totalLegacyExercises = 0
+  exercisesByBlock.forEach(arr => { totalLegacyExercises += arr.length })
+  const hasCurriculumContent = totalCurriculumItems > 0
 
   return (
     <div className="p-6 animate-fade-in space-y-6">
@@ -145,8 +249,8 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
               <p className="text-base font-mono font-bold text-lime">{blockList.length}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Exercises</p>
-              <p className="text-base font-mono font-bold text-lime">{totalExercises}</p>
+              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Curriculum Items</p>
+              <p className="text-base font-mono font-bold text-lime">{totalCurriculumItems}</p>
             </div>
           </div>
 
@@ -165,11 +269,17 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
                 {currentLevelName}
               </span>
             )}
+            {hasCurriculumContent && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border border-status-green/20 bg-status-green/5 text-status-green">
+                <Layers className="w-2.5 h-2.5" />
+                Curriculum Lesson Plan Applied
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Curriculum level */}
+      {/* Curriculum level selector */}
       <Card>
         <CardHeader>
           <p className="label-xs">Curriculum Context</p>
@@ -197,7 +307,163 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      {/* Blocks */}
+      {/* ================================================================
+          CURRICULUM LESSON PLAN — primary content path
+          ================================================================ */}
+      <div>
+        <p className="label-xs mb-3">Curriculum Lesson Plan</p>
+
+        {!hasCurriculumContent ? (
+          <Card>
+            <CardContent className="py-10">
+              <div className="text-center space-y-2">
+                <Layers className="w-8 h-8 text-text-muted mx-auto" />
+                <p className="text-sm text-text-primary">No curriculum content applied yet</p>
+                <p className="text-xs text-text-muted max-w-xs mx-auto">
+                  Generate a lesson plan draft to populate this template with curriculum content.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {blockList.map((block, i) => {
+              const curriculumItems = curriculumByBlock.get(block.id) ?? []
+              if (curriculumItems.length === 0) return null
+              return (
+                <Card key={block.id}>
+                  <CardContent className="py-4">
+                    {/* Block header */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-[10px] font-mono text-text-muted w-5">{i + 1}</span>
+                      <p className="text-sm font-semibold text-text-primary">{block.name}</p>
+                      {block.type && (
+                        <span className="text-[10px] uppercase tracking-widest text-text-muted px-1.5 py-0.5 rounded border border-border">
+                          {block.type}
+                        </span>
+                      )}
+                      {block.duration_min != null && (
+                        <span className="ml-auto flex items-center gap-1 text-xs text-text-muted">
+                          <Clock className="w-3 h-3" />
+                          {block.duration_min}min
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Curriculum content items */}
+                    <div className="space-y-3 pl-7">
+                      {curriculumItems.map((row, j) => {
+                        const ci = row.content_item
+                        const dr = row.drill
+                        const title = ci?.title ?? dr?.name ?? 'Untitled'
+                        const description = ci?.description ?? dr?.description ?? null
+                        const domain = ci?.domain ?? dr?.domain ?? null
+                        const cues = ci?.coach_cues ?? dr?.cues ?? null
+                        const criteria = ci?.success_criteria ?? dr?.success_criteria ?? null
+                        const progs = ci?.progressions ?? dr?.progressions ?? null
+                        const regs = ci?.regressions ?? dr?.regressions ?? null
+                        const duration = row.duration_min ?? ci?.duration_min ?? dr?.duration_min ?? null
+                        const contentType = ci?.content_type ?? 'drill'
+
+                        return (
+                          <div key={row.id} className="border border-border rounded-lg p-3 space-y-2">
+                            {/* Content item header */}
+                            <div className="flex items-start gap-2">
+                              <span className="text-[10px] font-mono text-text-muted mt-0.5 w-4 text-right shrink-0">{j + 1}.</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="text-sm font-medium text-text-primary">{title}</p>
+                                  <span className={`text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded border ${contentTypeBadge(contentType)}`}>
+                                    {contentTypeLabel(contentType)}
+                                  </span>
+                                  {domain && (
+                                    <span className="text-[10px] text-text-muted">{domain}</span>
+                                  )}
+                                  {duration != null && (
+                                    <span className="ml-auto flex items-center gap-1 text-[10px] text-text-muted shrink-0">
+                                      <Clock className="w-3 h-3" />
+                                      {duration}min
+                                    </span>
+                                  )}
+                                </div>
+                                {description && (
+                                  <p className="text-xs text-text-secondary mt-1">{description}</p>
+                                )}
+                                {row.notes && (
+                                  <p className="text-xs text-text-muted mt-1 italic">{row.notes}</p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Coach cues */}
+                            {cues && cues.length > 0 && (
+                              <div className="pl-6 space-y-0.5">
+                                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Coach Cues</p>
+                                {cues.map((cue, k) => (
+                                  <p key={k} className="text-xs text-text-secondary flex items-start gap-1.5">
+                                    <span className="text-lime mt-0.5 shrink-0">›</span>
+                                    {cue}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Success criteria */}
+                            {criteria && criteria.length > 0 && (
+                              <div className="pl-6 space-y-0.5">
+                                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Success Criteria</p>
+                                {criteria.map((c, k) => (
+                                  <p key={k} className="text-xs text-text-secondary flex items-start gap-1.5">
+                                    <CheckCircle className="w-3 h-3 text-status-green mt-0.5 shrink-0" />
+                                    {c}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Progressions / regressions */}
+                            {(progs && progs.length > 0) || (regs && regs.length > 0) ? (
+                              <div className="pl-6 flex gap-6 flex-wrap">
+                                {progs && progs.length > 0 && (
+                                  <div>
+                                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Progressions</p>
+                                    {progs.map((p, k) => (
+                                      <p key={k} className="text-xs text-text-muted flex items-start gap-1">
+                                        <ArrowUpRight className="w-3 h-3 text-lime mt-0.5 shrink-0" />
+                                        {p}
+                                      </p>
+                                    ))}
+                                  </div>
+                                )}
+                                {regs && regs.length > 0 && (
+                                  <div>
+                                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Regressions</p>
+                                    {regs.map((r, k) => (
+                                      <p key={k} className="text-xs text-text-muted flex items-start gap-1">
+                                        <ArrowRight className="w-3 h-3 text-text-muted mt-0.5 shrink-0 rotate-180" />
+                                        {r}
+                                      </p>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ) : null}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ================================================================
+          TEMPLATE BLOCKS — shows all blocks including those without
+          curriculum content. Legacy exercises shown below curriculum.
+          ================================================================ */}
       <div>
         <p className="label-xs mb-3">Template Blocks</p>
         {blockList.length === 0 ? (
@@ -209,7 +475,10 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
         ) : (
           <div className="space-y-3">
             {blockList.map((block, i) => {
+              const curriculumItems = curriculumByBlock.get(block.id) ?? []
               const exercises = exercisesByBlock.get(block.id) ?? []
+              const hasCurriculum = curriculumItems.length > 0
+              const hasLegacy = exercises.length > 0
               return (
                 <Card key={block.id}>
                   <CardContent className="py-4">
@@ -223,23 +492,43 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
                               {block.type}
                             </span>
                           )}
+                          {hasCurriculum && (
+                            <span className="text-[10px] text-status-green flex items-center gap-0.5">
+                              <Layers className="w-2.5 h-2.5" />
+                              {curriculumItems.length} curriculum item{curriculumItems.length !== 1 ? 's' : ''}
+                            </span>
+                          )}
                         </div>
                         {block.notes && (
                           <p className="text-xs text-text-muted mt-1 pl-7">{block.notes}</p>
                         )}
-                        {exercises.length > 0 && (
-                          <ul className="mt-2 pl-7 space-y-0.5">
-                            {exercises.map((ex, j) => (
-                              <li key={j} className="text-xs text-text-secondary flex items-center gap-1.5">
-                                <span className="text-[10px] font-mono text-text-muted w-4 text-right">{j + 1}.</span>
-                                <span>{ex.name}</span>
-                                <span className="text-[10px] text-text-muted">{ex.category}</span>
-                              </li>
-                            ))}
-                          </ul>
+
+                        {/* Legacy exercises — de-emphasized */}
+                        {hasLegacy && (
+                          <div className="mt-2 pl-7">
+                            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">
+                              Attached exercise records
+                              <span className="ml-1 normal-case text-[9px] text-text-muted/60">(legacy / fitness)</span>
+                            </p>
+                            <ul className="space-y-0.5">
+                              {exercises.map((ex, j) => (
+                                <li key={j} className="text-xs text-text-muted/70 flex items-center gap-1.5">
+                                  <span className="text-[10px] font-mono text-text-muted/50 w-4 text-right">{j + 1}.</span>
+                                  <span>{ex.name}</span>
+                                  <span className="text-[10px] text-text-muted/50">{ex.category}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {hasCurriculum && (
+                              <p className="text-[10px] text-text-muted/60 mt-1 italic">
+                                Curriculum lesson-plan content appears above.
+                              </p>
+                            )}
+                          </div>
                         )}
-                        {exercises.length === 0 && (
-                          <p className="text-[11px] text-text-muted mt-1 pl-7 italic">No exercises assigned.</p>
+
+                        {!hasCurriculum && !hasLegacy && (
+                          <p className="text-[11px] text-text-muted mt-1 pl-7 italic">No content assigned.</p>
                         )}
                       </div>
                       {block.duration_min != null && (
