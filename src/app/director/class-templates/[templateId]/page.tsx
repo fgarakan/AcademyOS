@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui'
 import { ClassTemplateCurriculumSelector } from './ClassTemplateCurriculumSelector'
 import type { CurriculumLevelOption } from './ClassTemplateCurriculumSelector'
 import { LessonPlanDraftPanel } from './LessonPlanDraftPanel'
+import { ClassTemplateSetupGuide } from '@/components/onboarding/ClassTemplateSetupGuide'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
@@ -279,6 +280,15 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Template setup guide — state-aware 4-step flow */}
+      <div>
+        <p className="label-xs mb-3">Template Workflow</p>
+        <ClassTemplateSetupGuide
+          hasCurriculumLevel={!!curriculumLevelId}
+          hasCurriculumContent={hasCurriculumContent}
+        />
+      </div>
 
       {/* Curriculum level selector */}
       <Card>

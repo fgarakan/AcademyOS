@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-08 — Sprint 142: Class Template Guided Setup V1
+
+Adds guided setup and next-step clarity to the class templates workflow. Directors now see a state-aware 4-step guide on each class template, and a page explainer on the list view that answers the five key questions about the class template → lesson plan → session workflow.
+
+**Files created:**
+- `src/components/onboarding/ClassTemplateSetupGuide.tsx` — Reusable server component. Props: `hasCurriculumLevel`, `hasCurriculumContent`, `hasSessionsFromTemplate?`, `className?`. Shows: (1) a status pill with context-aware next-step copy, (2) a 4-step flow with CheckCircle2/Circle state icons and current-step lime highlight, (3) a plain-language definitions block for Curriculum content, Lesson plan draft, Applied lesson plan, and Session.
+
+**Files modified:**
+- `src/app/director/class-templates/page.tsx` — Adds `PageExplainerCard` between the page header and the curriculum loop stats strip. Title: "Turn curriculum into coach-ready lesson plans". 5 Q&A tiles.
+- `src/app/director/class-templates/[templateId]/page.tsx` — Imports `ClassTemplateSetupGuide` and renders it in a "Template Workflow" section between the meta card and the curriculum level selector. Passes `hasCurriculumLevel={!!curriculumLevelId}` and `hasCurriculumContent={hasCurriculumContent}` (both already computed on the page). `hasSessionsFromTemplate` omitted — requires an extra query not justified for V1.
+
+**State logic:**
+- Step 1 done: `!!curriculumLevelId`
+- Steps 2 + 3 done: `hasCurriculumContent` (generating + applying are both prerequisites for content existing in the DB)
+- Step 4 done: `hasSessionsFromTemplate === true` (omitted in V1, shown as next step)
+- Status message: adaptive to current state — "Start here" / "Next: generate draft" / "Lesson plan applied. Next: create a session" / "Template is active"
+
+**Guardrails confirmed:**
+- UI-only scaffolding — no migrations, no schema, no database.types.ts edits
+- No curriculum mutation, no template mutation
+- generateLessonPlanDraftAction and applyLessonPlanDraftAction untouched
+- No parent/player exposure changes
+- No coach routes touched
+- No AI, no service role
+- TypeScript: clean
+
+---
+
 ## 2026-05-08 — Sprint 141: Curriculum Customization Assistant UX V1
 
 Adds a guided curriculum customization experience to the Director Curriculum page. Directors now see a clear explanation of what the curriculum is, how customization works, what the three layers mean, and plain-language definitions for all curriculum terms — before they engage with any of the technical controls.
