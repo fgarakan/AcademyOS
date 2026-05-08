@@ -15,6 +15,7 @@ import {
 import { urgencyToLabel } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
 import { SetupProgressChecklist } from '@/components/onboarding/SetupProgressChecklist'
+import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -298,6 +299,26 @@ export default async function DirectorDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Next Best Action prompts ─────────────────────────── */}
+      {pendingCount > 0 && (
+        <NextBestActionCard
+          variant="warning"
+          title={`${pendingCount} player${pendingCount !== 1 ? 's' : ''} pending placement`}
+          body="Complete their placement to activate profiles and assign curriculum levels."
+          actionLabel="Go to Players"
+          actionHref="/director/players"
+        />
+      )}
+      {classTemplateCount === 0 && players.length > 0 && (
+        <NextBestActionCard
+          variant="guide"
+          title="Create your first class template"
+          body="Class templates let you generate curriculum-aligned lesson plans that coaches can run on court."
+          actionLabel="New Template"
+          actionHref="/director/class-templates/new"
+        />
+      )}
 
       {/* ── Priority panel + Pending placement ─────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -4,6 +4,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import type { Tables } from '@/lib/supabase/database.types'
 import { PageExplainerCard } from '@/components/onboarding/PageExplainerCard'
+import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 
 type Template = Tables<'templates'>
 type TemplateWithLevel = Template & { curriculum_level_id: string | null }
@@ -192,15 +193,24 @@ export default async function ClassTemplatesPage() {
       )}
 
       {classTemplates.length === 0 ? (
-        <Card>
-          <CardContent className="py-12">
-            <EmptyState
-              icon={<BookOpen className="w-5 h-5" />}
-              title="No class templates found"
-              description="Class and session templates will appear here. Fitness templates are managed under Fitness OS."
-            />
-          </CardContent>
-        </Card>
+        <div className="space-y-3">
+          <NextBestActionCard
+            variant="guide"
+            title="Create your first class template"
+            body="A class template is your reusable blueprint. Assign a curriculum level, generate a lesson plan, and coaches can run it on court."
+            actionLabel="New Class Template"
+            actionHref="/director/class-templates/new"
+          />
+          <Card>
+            <CardContent className="py-8">
+              <EmptyState
+                icon={<BookOpen className="w-5 h-5" />}
+                title="No class templates yet"
+                description="Fitness templates are managed under Fitness OS."
+              />
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <div className="space-y-3">
           {classTemplates.map(template => (

@@ -2,13 +2,13 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Info, AlertTriangle } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { Card, CardContent } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { CoachSessionExecutionClient } from './CoachSessionExecutionClient'
 import { CoachRecapCommandPanel } from './CoachRecapCommandPanel'
 import { CoachSessionGapBriefPanel } from './CoachSessionGapBriefPanel'
 import { CoachSessionActions } from './CoachSessionActions'
 import { CoachSessionCurriculumPanel } from './CoachSessionCurriculumPanel'
+import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 import { saveSessionExecutionAction, saveAttendanceAction, saveSessionRecapAction } from './actions'
 import { structureCoachRecapAction } from './structureCoachRecapAction'
 
@@ -287,11 +287,13 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
       <section>
         <p className="label-xs mb-3">Run the Session</p>
         {blockList.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center">
-              <p className="text-text-muted text-sm">No blocks in this session. Add blocks to the class template to see them here.</p>
-            </CardContent>
-          </Card>
+          <NextBestActionCard
+            variant="info"
+            title="No blocks in this session"
+            body="Blocks are added through the class template. Ask your director to add blocks to the template this session was created from."
+            actionLabel="Back to Sessions"
+            actionHref="/coach/sessions"
+          />
         ) : (
           <CoachSessionExecutionClient
             sessionId={session.id}

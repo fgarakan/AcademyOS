@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-08 — Sprint 146: Contextual Next Best Action Cards
+
+Adds a reusable `NextBestActionCard` component and wires it into 4 contextual empty/action states across the product.
+
+**Files created:**
+- `src/components/onboarding/NextBestActionCard.tsx` — Inline action-card component. Props: `title`, `body`, `actionLabel`, `actionHref`, `variant` (guide/warning/success/info), `className?`. Each variant has a distinct icon and color treatment (lime for guide, orange for warning, green for success, blue for info). Server-component safe (Link-based action).
+
+**Files modified:**
+- `src/app/director/page.tsx` — Wires two NBA cards between Curriculum Coverage and Priority Queue: (1) warning card when `pendingCount > 0` ("X players pending placement"); (2) guide card when `classTemplateCount === 0 && players.length > 0` ("Create your first class template").
+- `src/app/director/class-templates/page.tsx` — Adds guide NBA card above the existing EmptyState when no class templates exist ("Create your first class template — a reusable blueprint with curriculum-aligned lesson plans").
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Replaces cold `Card/CardContent` empty block state with an info NBA card ("No blocks in this session — add blocks through the class template"). Removes the now-unused `Card, CardContent` import.
+
+**Guardrails confirmed:** No schema changes, no mutations, no parent/player data exposure. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 145: Parent and Player Onboarding Clarity Pass
 
 Improves empty states, no-mapping states, and duplicate section handling on parent and player home pages.
