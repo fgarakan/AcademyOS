@@ -2,6 +2,50 @@
 
 ---
 
+## 2026-05-08 — Sprint 128: Curriculum Content Taxonomy Migration
+
+Additive schema migration only. No app code changed. No UI changed. No seed data. No Fitness OS changes.
+
+**Files created:**
+- `supabase/migrations/061_curriculum_content_taxonomy.sql` — Extends `curriculum_content_items` with 6 new columns, expands the `content_type` CHECK constraint from 9 to 22 values, adds 7 new indexes. All changes are additive — no existing rows modified, no tables dropped.
+
+**Columns added to `curriculum_content_items`:**
+- `domain TEXT` — curriculum domain for lesson planning alignment (Technical, Tactical, Movement, Competition, Mentality, Fitness, Recovery, Lifestyle, Games, Assessment)
+- `session_block_hint TEXT` — suggested lesson block placement (Warm-Up, Focus, Train, Play, Game, Situational, Match-Play, Assessment, Cool-Down)
+- `is_player_visible BOOLEAN NOT NULL DEFAULT false` — future flag for player portal exposure (schema only, no exposure logic built)
+- `is_parent_visible BOOLEAN NOT NULL DEFAULT false` — future flag for parent portal exposure (schema only, no exposure logic built)
+- `is_coach_only BOOLEAN NOT NULL DEFAULT false` — marks strictly coach/director-facing content
+- `ball_level TEXT` — ball colour/equipment level (red, orange, green, yellow, any)
+
+**content_type constraint expanded:**
+- Preserved: `drill`, `game`, `skill`, `assessment`, `warmup`, `cooldown`, `fitness`, `tactical`, `competition`
+- Added: `tactical_game`, `situational`, `match_play_theme`, `mental_skill`, `competition_behavior`, `coach_cue`, `success_criteria`, `success_criteria_item`, `progression`, `regression`, `player_mission`, `parent_guidance`, `level_gate_support`
+
+**Indexes added:**
+- `idx_curriculum_content_items_content_type`
+- `idx_curriculum_content_items_domain`
+- `idx_curriculum_content_items_session_block_hint`
+- `idx_curriculum_content_items_ball_level`
+- `idx_curriculum_content_items_player_visible`
+- `idx_curriculum_content_items_parent_visible`
+- `idx_curriculum_content_items_lesson_plan` (composite: level_id, domain, content_type WHERE is_active)
+
+**Guardrails confirmed:**
+- No UI/app code changes
+- No `database.types.ts` edits (regenerate after live DB apply)
+- No Fitness OS tables touched
+- `template_block_exercises` and `exercises` untouched
+- Visibility flags default false — no portal exposure
+- No seed data (Sprint 130)
+- No junction table (Sprint 129)
+- No AI, no proposed_actions
+
+**TypeScript:** clean (migration and docs only — no TS files changed).
+
+**Next:** Apply `supabase/migrations/061_curriculum_content_taxonomy.sql` to live Supabase, then regenerate `database.types.ts`. Sprint 129 (class template junction table) follows after approval.
+
+---
+
 ## 2026-05-07 — Sprint 126: Player Mission / Next Step Card V1
 
 Static rule-based player mission copy. No AI. No migrations. No internal data exposed.

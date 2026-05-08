@@ -386,6 +386,55 @@ These are not bugs to fix immediately — they are known gaps that future sessio
 - **Status:** Server Actions that guard writes with `assertNotPreviewMode()` now catch the throw and return `{ error: 'Writes are disabled in preview mode.' }` instead of propagating the exception to the client. Preview banner ("Writes are disabled in preview.") displays in the director layout when in preview mode.
 - **Impact resolved:** Clicking save/create buttons in preview mode now shows a friendly error message instead of crashing the page.
 
+### `curriculum_content_items` taxonomy columns — migration 061 pending live application
+
+- **Status:** Migration `061_curriculum_content_taxonomy.sql` creates 6 new columns (`domain`, `session_block_hint`, `is_player_visible`, `is_parent_visible`, `is_coach_only`, `ball_level`) and expands the `content_type` CHECK constraint from 9 to 22 values. **Must be applied to the live Supabase database before new curriculum content can be seeded with the full taxonomy.**
+- **Impact until applied:** Any attempt to INSERT a `curriculum_content_items` row using a new `content_type` value (e.g. `tactical_game`, `player_mission`, `parent_guidance`) will fail with a CHECK constraint violation. The `domain` and `session_block_hint` columns do not exist yet on the live DB.
+- **Impact on app:** None — no app code queries these new columns yet. Fitness OS, class template detail page, and curriculum explorer are unaffected.
+- **Fix:** Open Supabase → SQL Editor, paste the full contents of `supabase/migrations/061_curriculum_content_taxonomy.sql`, and Run. Then regenerate `database.types.ts` with `supabase gen types typescript`.
+- **Verification after applying:**
+  ```sql
+  -- Confirm new columns exist
+  SELECT column_name, data_type, is_nullable, column_default
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'curriculum_content_items'
+    AND column_name IN ('domain', 'session_block_hint', 'is_player_visible',
+                        'is_parent_visible', 'is_coach_only', 'ball_level')
+  ORDER BY column_name;
+  -- Expect: 6 rows
+
+  -- Confirm constraint was replaced
+  SELECT conname, pg_get_constraintdef(oid)
+  FROM pg_constraint
+  WHERE conrelid = 'public.curriculum_content_items'::regclass
+    AND contype = 'c'
+    AND conname = 'curriculum_content_items_content_type_check';
+  -- Expect: 1 row with the full 22-value IN list
+
+  -- Confirm indexes exist
+  SELECT indexname FROM pg_indexes
+  WHERE tablename = 'curriculum_content_items'
+    AND indexname IN (
+      'idx_curriculum_content_items_content_type',
+      'idx_curriculum_content_items_domain',
+      'idx_curriculum_content_items_session_block_hint',
+      'idx_curriculum_content_items_ball_level',
+      'idx_curriculum_content_items_player_visible',
+      'idx_curriculum_content_items_parent_visible',
+      'idx_curriculum_content_items_lesson_plan'
+    )
+  ORDER BY indexname;
+  -- Expect: 7 rows
+  ```
+
+### Class template blocks show fitness exercises — root cause identified (Sprint 127 audit)
+
+- **Root cause:** Class template detail at `/director/class-templates/[templateId]/page.tsx` queries `template_block_exercises → exercises`. The `exercises` table contains only fitness/athletic exercises (T-Drill, Spider Drill, etc.). There is no separate content pipeline for tennis class templates.
+- **Impact:** Any class template block that has `template_block_exercises` rows will show fitness exercises. Blocks with no `template_block_exercises` rows show "No exercises assigned."
+- **Fix path:** Sprint 129 — create `curriculum_class_template_blocks` junction table linking class template blocks to `curriculum_drills` and `curriculum_content_items`. Sprint 130 — seed Orange 1 content pack. Sprint 131 — update class template detail page to query the new junction table.
+- **Fitness OS unaffected:** `template_block_exercises`, `exercises`, and `FitnessTemplateBuilderClient` are not touched.
+
 ### Class template block editing not built
 - **File:** `src/app/director/class-templates/[templateId]/page.tsx`
 - **Impact:** Class template detail shows a read-only block list. Blocks cannot be added, removed, or reordered from the class template detail page. Only the curriculum level can be assigned.
