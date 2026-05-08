@@ -1,6 +1,8 @@
-import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight, HelpCircle, Sparkles, Calendar, CheckCircle } from 'lucide-react'
+import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight, HelpCircle, Sparkles, CheckCircle } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { PlayerMissionPreview } from '@/components/player/PlayerMissionPreview'
+import { AttendanceSparkline } from '@/components/player/AttendanceSparkline'
+import { LevelProgressRing } from '@/components/player/LevelProgressRing'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { buildIndividualDevelopmentPlan, buildRoleSpecificIdpView } from '@/lib/player/individualDevelopmentPlan'
 import type { IdpPlayerView } from '@/lib/player/individualDevelopmentPlan'
@@ -306,6 +308,11 @@ export default async function PlayerHome() {
       )
     : null
 
+  const sessionPresentCount = recentSessionHistory.filter(r => r.status === 'present' || r.status === 'late').length
+  const sessionAttendancePct = recentSessionHistory.length > 0
+    ? Math.round((sessionPresentCount / recentSessionHistory.length) * 100)
+    : 0
+
   return (
     <div className="space-y-4">
 
@@ -566,16 +573,23 @@ export default async function PlayerHome() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
-                    <Calendar className="w-4 h-4 text-text-muted" />
-                  </div>
-                  <div>
+                  <LevelProgressRing
+                    percent={sessionAttendancePct}
+                    size={44}
+                    label={`${sessionAttendancePct}%`}
+                    className="shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
                     <p className="font-semibold text-text-primary text-sm">Recent Sessions</p>
                     <p className="text-text-muted text-xs">Your last {recentSessionHistory.length} sessions</p>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
+                <AttendanceSparkline
+                  sessions={recentSessionHistory}
+                  className="mb-3"
+                />
                 <div className="divide-y divide-border">
                   {recentSessionHistory.map((item, i) => {
                     const statusLabel =

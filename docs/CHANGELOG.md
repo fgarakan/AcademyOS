@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-08 — Sprint 148: Visual Flow Diagrams and Light Motion
+
+Adds three visual components — a curriculum loop diagram, an attendance sparkline, and a progress ring — wired into real data on existing pages.
+
+**Files created:**
+- `src/components/onboarding/CurriculumLoopDiagram.tsx` — Static horizontal flow diagram showing the 6-step curriculum execution loop (Global Curriculum → Class Template → Session Created → Coach Runs It → Wrap-Up Submitted → Director Reviews). Lime accent on first and last step; ArrowRight connectors; flex-wrap for mobile.
+- `src/components/player/AttendanceSparkline.tsx` — Row of colored 10×10 dots representing recent session attendance. Color: green = present, orange = late, blue = excused, muted = absent. Props: `sessions`, `maxDots?`, `className?`.
+- `src/components/player/LevelProgressRing.tsx` — SVG circular progress ring. Props: `percent` (0–100), `size?` (default 56), `label?`, `sublabel?`, `className?`. Lime stroke on dark track. `transition-all duration-700` on the progress arc.
+
+**Files modified:**
+- `src/app/director/curriculum/page.tsx` — Adds `CurriculumLoopDiagram` in a surface-raised card between the PageExplainerCard and CurriculumCustomizationAssistant.
+- `src/app/player/page.tsx` — Wires `LevelProgressRing` and `AttendanceSparkline` into the "Recent Sessions" card. Ring shows session attendance % (e.g. "80%") replacing the Calendar icon. Sparkline appears above the session list. Adds `sessionAttendancePct` derived variable before return. Removes now-unused `Calendar` import.
+
+**Guardrails confirmed:** No schema changes, no mutations, no parent/player data exposure. All components are server-safe (no client state). TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 147: Empty State and Help Copy Pass
 
 Audits and improves cold empty-state copy across coach and director routes, replacing terse system messages with contextual, warm descriptions.

@@ -9,6 +9,7 @@ import { AcademyCurriculumVersionCard } from './AcademyCurriculumVersionCard'
 import { VoiceOverrideInputPanel } from './VoiceOverrideInputPanel'
 import { PageExplainerCard } from '@/components/onboarding/PageExplainerCard'
 import { CurriculumCustomizationAssistant } from '@/components/curriculum/CurriculumCustomizationAssistant'
+import { CurriculumLoopDiagram } from '@/components/onboarding/CurriculumLoopDiagram'
 
 export default async function DirectorCurriculumPage() {
   const supabase = await getSupabaseServer()
@@ -121,6 +122,11 @@ export default async function DirectorCurriculumPage() {
           },
         ]}
       />
+
+      {/* Curriculum execution loop diagram */}
+      <div className="px-5 py-4 rounded-2xl border border-border bg-surface-raised">
+        <CurriculumLoopDiagram />
+      </div>
 
       {/* Customization assistant — 5-step guide, three-layer distinction, glossary */}
       <CurriculumCustomizationAssistant />
