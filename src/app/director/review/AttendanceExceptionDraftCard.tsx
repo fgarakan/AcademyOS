@@ -113,7 +113,7 @@ export function AttendanceExceptionDraftCard({ draft }: Props) {
               </div>
             ))}
             <p className="text-[10px] text-text-muted">
-              These individuals are not on the session roster. No player profile, roster change, billing, or parent communication will occur automatically.
+              These individuals are not on the session roster. Applying creates a placement review follow-up for each — no player profile, roster change, billing, or parent communication occurs automatically.
             </p>
           </div>
         )}

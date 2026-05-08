@@ -12,7 +12,7 @@ interface Props {
 export function ApplyApprovedAttendanceExceptionControls({ proposedActionId }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [result, setResult] = useState<{ ok: boolean; error: string | null; attendanceRowsUpserted: number; skippedUnknown: number } | null>(null)
+  const [result, setResult] = useState<{ ok: boolean; error: string | null; attendanceRowsUpserted: number; skippedUnknown: number; unrosteredFollowUpsCreated: number } | null>(null)
 
   function handleApply() {
     startTransition(async () => {
@@ -24,12 +24,22 @@ export function ApplyApprovedAttendanceExceptionControls({ proposedActionId }: P
 
   if (result?.ok) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-status-green/10 border border-status-green/30 text-xs text-status-green">
-        <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-        <span>
-          Attendance applied — {result.attendanceRowsUpserted} player{result.attendanceRowsUpserted !== 1 ? 's' : ''} recorded.
-          {result.skippedUnknown > 0 && ` ${result.skippedUnknown} skipped (unknown status).`}
-        </span>
+      <div className="space-y-1.5 px-3 py-2.5 rounded-xl bg-status-green/10 border border-status-green/30 text-xs text-status-green">
+        <div className="flex items-center gap-2">
+          <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+          <span className="font-medium">Applied.</span>
+        </div>
+        {result.attendanceRowsUpserted > 0 && (
+          <p className="pl-5">{result.attendanceRowsUpserted} rostered player{result.attendanceRowsUpserted !== 1 ? 's' : ''} recorded.</p>
+        )}
+        {result.skippedUnknown > 0 && (
+          <p className="pl-5 text-text-muted">{result.skippedUnknown} skipped (unknown status).</p>
+        )}
+        {result.unrosteredFollowUpsCreated > 0 && (
+          <p className="pl-5">
+            {result.unrosteredFollowUpsCreated} unexpected attendee follow-up{result.unrosteredFollowUpsCreated !== 1 ? 's' : ''} created — visible in the Placement Review tab.
+          </p>
+        )}
       </div>
     )
   }
@@ -39,8 +49,7 @@ export function ApplyApprovedAttendanceExceptionControls({ proposedActionId }: P
       <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border text-[11px] text-text-muted">
         <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5 text-status-orange" />
         <span>
-          Applying will write rostered attendance to session_attendance. Players with unknown status are skipped.
-          Unrostered attendees are never applied — they remain for separate director decision.
+          Applying will not create a player or change a roster. Rostered attendance will be recorded (unknown status skipped). Each unexpected attendee creates a placement review follow-up for director decision.
         </span>
       </div>
 
@@ -54,7 +63,7 @@ export function ApplyApprovedAttendanceExceptionControls({ proposedActionId }: P
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
             : <CheckCircle className="w-3.5 h-3.5" />
           }
-          {isPending ? 'Applying Attendance…' : 'Apply Rostered Attendance'}
+          {isPending ? 'Applying…' : 'Apply Exception Draft'}
         </button>
       </div>
 

@@ -1,4 +1,4 @@
-import { BookOpen, CheckCircle, ClipboardList, Inbox, Link2, Mic, Target, Users } from 'lucide-react'
+import { BookOpen, CheckCircle, ClipboardList, Inbox, Link2, Mic, Target, Users, UserSearch } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -26,6 +26,8 @@ import type { CoachObservationDraftPayload } from '@/app/coach/sessions/[session
 import { DevelopmentSummaryDraftCard } from './DevelopmentSummaryDraftCard'
 import type { EnrichedSummaryDraftItem } from './DevelopmentSummaryDraftCard'
 import type { DevelopmentSummaryDraftPayload } from '@/app/director/players/[playerId]/draftSummaryUpdateAction'
+import { PlacementReviewCard } from './PlacementReviewCard'
+import type { EnrichedPlacementReviewItem, PlacementReviewPayload } from './PlacementReviewCard'
 import { VoiceIntakeBatchPanel } from './VoiceIntakeBatchPanel'
 import { CapturesBatchPanel } from './CapturesBatchPanel'
 
@@ -700,6 +702,55 @@ export default async function DirectorReviewQueuePage() {
   const pendingSummaryDrafts = enrichedSummaryDrafts.filter(d => d.status === 'pending_review')
   const approvedSummaryDrafts = enrichedSummaryDrafts.filter(d => d.status === 'approved')
 
+  // ─── Placement review follow-ups ──────────────────────────────
+  // Created when a director applies an attendance_exception draft that has
+  // unrostered attendees. Each item represents one unexpected attendee
+  // flagged by a coach — no player has been created.
+
+  const { data: placementReviewRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .eq('status', 'pending_review')
+    .eq('target_module', 'placement_review')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allPlacementReviewRows: DraftRow[] = (placementReviewRows ?? []) as DraftRow[]
+
+  // Batch-fetch session names for placement review items
+  const placementSessionIds = Array.from(
+    new Set(
+      allPlacementReviewRows
+        .map(d => d.target_object_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+  const placementSessionMap = new Map<string, { id: string; name: string | null; scheduled_date: string }>()
+  if (placementSessionIds.length > 0) {
+    const { data: pSessions } = await supabase
+      .from('sessions')
+      .select('id, name, scheduled_date')
+      .in('id', placementSessionIds)
+      .eq('academy_id', academyId)
+    for (const s of (pSessions ?? [])) {
+      placementSessionMap.set(s.id, s)
+    }
+  }
+
+  const enrichedPlacementReviews: EnrichedPlacementReviewItem[] = allPlacementReviewRows.map(d => {
+    const sess = d.target_object_id ? placementSessionMap.get(d.target_object_id) : undefined
+    return {
+      id: d.id,
+      status: d.status,
+      createdAt: d.created_at,
+      sessionId: d.target_object_id,
+      sessionName: sess?.name ?? null,
+      sessionDate: sess?.scheduled_date ?? null,
+      payload: d.proposed_payload as unknown as PlacementReviewPayload,
+    }
+  })
+
   // Oldest pending date per category (arrays are sorted newest-first, so last item = oldest)
   const oldestPendingDates = {
     session_recaps: pendingDrafts.at(-1)?.createdAt ?? null,
@@ -711,6 +762,7 @@ export default async function DirectorReviewQueuePage() {
     wrap_ups: pendingWrapUpDrafts.at(-1)?.createdAt ?? null,
     player_observations: pendingObservationDrafts.at(-1)?.createdAt ?? null,
     development_summaries: pendingSummaryDrafts.at(-1)?.createdAt ?? null,
+    placement_review: enrichedPlacementReviews.at(-1)?.createdAt ?? null,
     captures: generalCaptures.at(-1)?.createdAt ?? null,
   }
 
@@ -725,6 +777,7 @@ export default async function DirectorReviewQueuePage() {
     { value: 'wrap_ups', pending: pendingWrapUpDrafts.length },
     { value: 'player_observations', pending: pendingObservationDrafts.length },
     { value: 'development_summaries', pending: pendingSummaryDrafts.length },
+    { value: 'placement_review', pending: enrichedPlacementReviews.length },
     { value: 'captures', pending: generalCaptures.length },
   ].find(t => t.pending > 0)?.value ?? 'session_recaps'
 
@@ -749,6 +802,7 @@ export default async function DirectorReviewQueuePage() {
         observationApprovedCount={approvedObservationDrafts.length}
         summaryPendingCount={pendingSummaryDrafts.length}
         summaryApprovedCount={approvedSummaryDrafts.length}
+        placementReviewCount={enrichedPlacementReviews.length}
         captureCount={generalCaptures.length}
         oldestPendingDates={oldestPendingDates}
       />
@@ -758,7 +812,7 @@ export default async function DirectorReviewQueuePage() {
         pendingDrafts.length + pendingPriorityDrafts.length + pendingEvidenceDrafts.length +
         pendingAttendanceDrafts.length + pendingCurriculumOverrideDrafts.length +
         pendingVoiceIntakeDrafts.length + pendingWrapUpDrafts.length +
-        pendingObservationDrafts.length + pendingSummaryDrafts.length + generalCaptures.length
+        pendingObservationDrafts.length + pendingSummaryDrafts.length + enrichedPlacementReviews.length + generalCaptures.length
       ) === 0 && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/10 border border-status-green/20">
           <CheckCircle className="w-4 h-4 text-status-green shrink-0" />
@@ -831,6 +885,13 @@ export default async function DirectorReviewQueuePage() {
               label="Dev Summaries"
               pending={pendingSummaryDrafts.length}
               ready={approvedSummaryDrafts.length}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="placement_review">
+            <TabLabel
+              label="Placement Review"
+              pending={enrichedPlacementReviews.length}
+              ready={0}
             />
           </TabsTrigger>
           <TabsTrigger value="captures">
@@ -1170,6 +1231,37 @@ export default async function DirectorReviewQueuePage() {
           </section>
         </TabsContent>
 
+        {/* ─── Placement Review tab ─── */}
+        <TabsContent value="placement_review" className="pt-6 space-y-4">
+          <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border text-[11px] text-text-muted space-y-1">
+            <p className="font-medium text-text-secondary">Unexpected attendee follow-ups</p>
+            <p>
+              These items were created when a coach flagged an unexpected attendee during session wrap-up and a director applied the exception draft.
+              No player profile, roster entry, billing, or parent communication has been created.
+              Mark each one reviewed once you have decided on next steps.
+            </p>
+          </div>
+          <section className="space-y-3">
+            {enrichedPlacementReviews.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <EmptyState
+                    icon={<UserSearch className="w-5 h-5" />}
+                    title="No placement review items"
+                    description="When a director applies an attendance exception draft that includes unexpected attendees, follow-up items appear here."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {enrichedPlacementReviews.map(item => (
+                  <PlacementReviewCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+
         {/* ─── Captures tab ─── */}
         <TabsContent value="captures" className="pt-6 space-y-4">
           <section className="space-y-3">
@@ -1275,6 +1367,7 @@ function PageHeader({
   observationApprovedCount,
   summaryPendingCount,
   summaryApprovedCount,
+  placementReviewCount,
   captureCount,
   oldestPendingDates,
 }: {
@@ -1296,10 +1389,11 @@ function PageHeader({
   observationApprovedCount: number
   summaryPendingCount: number
   summaryApprovedCount: number
+  placementReviewCount: number
   captureCount: number
   oldestPendingDates: Record<string, string | null>
 }) {
-  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + wrapUpPendingCount + observationPendingCount + summaryPendingCount + captureCount
+  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + wrapUpPendingCount + observationPendingCount + summaryPendingCount + placementReviewCount + captureCount
   const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount + wrapUpApprovedCount + observationApprovedCount + summaryApprovedCount
 
   const categories = [
@@ -1312,6 +1406,7 @@ function PageHeader({
     { key: 'wrap_ups', label: 'Session Wrap-Ups', pending: wrapUpPendingCount, ready: wrapUpApprovedCount },
     { key: 'player_observations', label: 'Player Observations', pending: observationPendingCount, ready: observationApprovedCount },
     { key: 'development_summaries', label: 'Dev Summaries', pending: summaryPendingCount, ready: summaryApprovedCount },
+    { key: 'placement_review', label: 'Placement Review', pending: placementReviewCount, ready: 0 },
     { key: 'captures', label: 'Captures', pending: captureCount, ready: 0 },
   ]
 

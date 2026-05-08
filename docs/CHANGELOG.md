@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-08 — Sprint 158: Director Attendance Exception Apply Flow
+
+Closes the director-side apply loop for coach wrap-up attendance exceptions. The existing `applyApprovedAttendanceExceptionAction` previously failed with "No attendance rows to apply" when `rostered_attendance: []` (the exact shape coach wrap-up produces). This sprint fixes that failure and routes unrostered attendees through a safe placement review follow-up pipeline. No player profile, roster change, billing, or parent communication is created automatically.
+
+**Files created:**
+- `src/app/director/review/PlacementReviewCard.tsx` — Client card showing unexpected attendee name, reason, session context, and "Mark Reviewed" button. Calls `dismissPlacementReviewDraftAction`. Writes audit log on dismiss.
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — Fixed `applyApprovedAttendanceExceptionAction`: removed the early fail when `rostered_attendance` is empty; added unrostered attendee processing loop that creates `voice_commands` + `proposed_actions` (target_module: 'placement_review', pending_review) for each attendee; updated audit log to include `unrostered_follow_ups_created`; added new `unrosteredFollowUpsCreated` field to result type. Added `dismissPlacementReviewDraftAction` — marks placement review item as executed + writes audit log.
+- `src/app/director/review/ApplyApprovedAttendanceExceptionControls.tsx` — Updated result type to include `unrosteredFollowUpsCreated`. Updated pre-apply notice to explain follow-up behavior. Updated button label to "Apply Exception Draft". Updated success display to show unrostered follow-ups created count.
+- `src/app/director/review/AttendanceExceptionDraftCard.tsx` — Updated unrostered attendees note to explain applying creates a placement review follow-up.
+- `src/app/director/review/page.tsx` — Added `PlacementReviewCard` import. Added fetch block for `target_module: 'placement_review'`. Added "Placement Review" tab with `PlacementReviewCard` list + empty state. Added `placementReviewCount` to `PageHeader` props and function signature. Updated `totalPending`, `oldestPendingDates`, `defaultTab`, and category strip.
+
+**Guardrails confirmed:** No migrations. No new tables. `target_module: 'placement_review'` is a free-text string column — no schema change. No player creation, no roster change, no billing, no parent/player communication. All changes go through `proposed_actions` + `audit_logs`. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 157: Coach-Side Attendance Exception Capture
 
 Allows coaches to flag unexpected (unrostered) attendees directly inside the wrap-up flow as structured director review drafts. Replaces the old "use the Attendance Exceptions panel in the session detail view" note with an inline name + reason form that queues entries and submits them to `proposed_actions` via the existing `attendance_exception_v1` pipeline. No roster change until the director approves and applies.

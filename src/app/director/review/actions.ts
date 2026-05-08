@@ -1262,11 +1262,11 @@ export async function updateAttendanceExceptionDraftDecisionAction(
 
 // ─────────────────────────────────────────────────────────────
 // Apply approved attendance exception draft
-// Writes rostered player attendance to session_attendance.
-// Skips proposed_status='unknown' rows.
-// Never creates player profiles, adds roster members, changes billing,
-// or sends parent/player communications.
-// Unrostered attendees are never applied — they remain in the draft only.
+// For rostered attendance: writes to session_attendance (skips unknown).
+// For unrostered attendees: creates a placement_review proposed_action per
+// attendee (pending_review, risk_level: medium). No player created, no
+// roster change, no billing, no parent/player communication.
+// All downstream changes require a separate director decision.
 // ─────────────────────────────────────────────────────────────
 
 export interface ApplyApprovedAttendanceExceptionResult {
@@ -1274,13 +1274,14 @@ export interface ApplyApprovedAttendanceExceptionResult {
   error: string | null
   attendanceRowsUpserted: number
   skippedUnknown: number
+  unrosteredFollowUpsCreated: number
 }
 
 export async function applyApprovedAttendanceExceptionAction(
   proposedActionId: string,
 ): Promise<ApplyApprovedAttendanceExceptionResult> {
   const fail = (error: string): ApplyApprovedAttendanceExceptionResult =>
-    ({ ok: false, error, attendanceRowsUpserted: 0, skippedUnknown: 0 })
+    ({ ok: false, error, attendanceRowsUpserted: 0, skippedUnknown: 0, unrosteredFollowUpsCreated: 0 })
 
   await assertNotPreviewMode()
 
@@ -1345,47 +1346,110 @@ export async function applyApprovedAttendanceExceptionAction(
     player_name: string
     proposed_status: 'present' | 'absent' | 'unknown'
   }
+  type UnrosteredRow = { name: string; reason: string }
 
   const rosteredAttendance = (payload.rostered_attendance ?? []) as RosteredRow[]
+  const unrosteredAttendees = (payload.unrostered_attendees ?? []) as UnrosteredRow[]
+
+  // Require at least one thing to process
+  if (rosteredAttendance.length === 0 && unrosteredAttendees.length === 0) {
+    return fail('Nothing to apply — no rostered attendance rows and no unrostered attendees in this draft.')
+  }
+
   const toApply = rosteredAttendance.filter(r => r.proposed_status !== 'unknown')
   const skippedUnknown = rosteredAttendance.length - toApply.length
 
-  if (toApply.length === 0) {
-    return fail('No attendance rows to apply — all players have unknown status. Review the draft and try again.')
-  }
-
-  // Batch-verify player IDs belong to this academy
-  const playerIds = toApply.map(r => r.player_id)
-  const { data: verifiedPlayers } = await supabase
-    .from('players')
-    .select('id')
-    .in('id', playerIds)
-    .eq('academy_id', academyId)
-  const verifiedSet = new Set(((verifiedPlayers ?? []) as Array<{ id: string }>).map(p => p.id))
-
-  const verifiedRows = toApply.filter(r => verifiedSet.has(r.player_id))
-  if (verifiedRows.length === 0) {
-    return fail('No players in the draft could be verified as members of this academy.')
-  }
-
-  // Upsert session_attendance rows
-  // status field is a plain string — matches the existing schema
+  // Apply rostered attendance rows (if any)
   let attendanceRowsUpserted = 0
-  for (const row of verifiedRows) {
-    const { error: upsertError } = await rawDb
-      .from('session_attendance')
-      .upsert(
-        {
+  if (toApply.length > 0) {
+    const playerIds = toApply.map(r => r.player_id)
+    const { data: verifiedPlayers } = await supabase
+      .from('players')
+      .select('id')
+      .in('id', playerIds)
+      .eq('academy_id', academyId)
+    const verifiedSet = new Set(((verifiedPlayers ?? []) as Array<{ id: string }>).map(p => p.id))
+    const verifiedRows = toApply.filter(r => verifiedSet.has(r.player_id))
+
+    for (const row of verifiedRows) {
+      const { error: upsertError } = await rawDb
+        .from('session_attendance')
+        .upsert(
+          {
+            session_id: sessionId,
+            player_id: row.player_id,
+            status: row.proposed_status,
+            marked_by: user.id,
+            marked_at: new Date().toISOString(),
+            notes: `Applied from attendance exception draft ${proposedActionId}`,
+          },
+          { onConflict: 'session_id,player_id' },
+        )
+      if (!upsertError) attendanceRowsUpserted++
+    }
+  }
+
+  // Create placement review follow-ups for unrostered attendees.
+  // Each creates a voice_commands row (required FK) + proposed_actions row (pending_review).
+  // No player profile, roster entry, billing, or parent communication is created.
+  let unrosteredFollowUpsCreated = 0
+  const issuerRole: 'academy_director' | 'head_coach' = role === 'academy_director' ? 'academy_director' : 'head_coach'
+
+  for (const attendee of unrosteredAttendees) {
+    const name = attendee.name?.trim()
+    if (!name) continue
+
+    const { data: vcRow } = await supabase
+      .from('voice_commands')
+      .insert({
+        academy_id: academyId,
+        issuer_id: user.id,
+        issuer_role: issuerRole as any,
+        input_method: 'typed' as any,
+        raw_input: `Placement review: ${name}`,
+        transcript: `Placement review: ${name}`,
+        processing_status: 'processed',
+      })
+      .select('id')
+      .single()
+
+    if (!vcRow) continue
+
+    const { error: paErr } = await rawDb
+      .from('proposed_actions')
+      .insert({
+        academy_id: academyId,
+        proposed_by_id: user.id,
+        voice_command_id: vcRow.id,
+        action_type: 'other',
+        action_label: `Placement Review — ${name}`,
+        target_module: 'placement_review',
+        target_object_id: sessionId,
+        target_object_type: 'session',
+        proposed_payload: {
+          source: 'attendance_exception',
+          source_proposed_action_id: proposedActionId,
           session_id: sessionId,
-          player_id: row.player_id,
-          status: row.proposed_status,
-          marked_by: user.id,
-          marked_at: new Date().toISOString(),
-          notes: `Applied from attendance exception draft ${proposedActionId}`,
+          attendee_name: name,
+          reason: attendee.reason ?? '',
+          recommended_next_step: 'Review for placement/onboarding',
+          no_automatic_player_creation: true,
+          warnings: [
+            'No player profile has been created.',
+            'No roster change has been made.',
+            'No parent or player communication has been sent.',
+            'Director must manually decide next steps for this individual.',
+          ],
         },
-        { onConflict: 'session_id,player_id' },
-      )
-    if (!upsertError) attendanceRowsUpserted++
+        status: 'pending_review',
+        risk_level: 'medium',
+        risk_notes: [
+          'No automatic changes made — director decision required.',
+          'Individual was flagged as an unexpected attendee by the coach.',
+        ],
+      })
+
+    if (!paErr) unrosteredFollowUpsCreated++
   }
 
   // Write audit log
@@ -1394,7 +1458,7 @@ export async function applyApprovedAttendanceExceptionAction(
     .insert({
       academy_id: academyId,
       actor_id: user.id,
-      action: 'attendance_exception.attendance.applied',
+      action: 'attendance_exception.applied',
       target_type: 'session_attendance',
       target_id: sessionId,
       payload: {
@@ -1402,6 +1466,7 @@ export async function applyApprovedAttendanceExceptionAction(
         session_id: sessionId,
         attendance_rows_upserted: attendanceRowsUpserted,
         skipped_unknown: skippedUnknown,
+        unrostered_follow_ups_created: unrosteredFollowUpsCreated,
         applied_by: user.id,
         source: 'attendance_exception_draft_v1',
       },
@@ -1419,13 +1484,14 @@ export async function applyApprovedAttendanceExceptionAction(
   if (updateError) {
     return {
       ok: false,
-      error: `Attendance applied but failed to mark draft as executed: ${updateError.message}`,
+      error: `Changes applied but failed to mark draft as executed: ${updateError.message}`,
       attendanceRowsUpserted,
       skippedUnknown,
+      unrosteredFollowUpsCreated,
     }
   }
 
-  return { ok: true, error: null, attendanceRowsUpserted, skippedUnknown }
+  return { ok: true, error: null, attendanceRowsUpserted, skippedUnknown, unrosteredFollowUpsCreated }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2288,6 +2354,90 @@ export async function applyApprovedSummaryDraftAction(
   if (updateError) {
     return fail(`Summary updated but failed to mark draft as executed: ${updateError.message}`)
   }
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Dismiss placement review draft
+// Marks a placement_review follow-up as executed after director has
+// noted the outcome. No player, roster, billing, or parent communication
+// is created — this is a read/acknowledge action only.
+// ─────────────────────────────────────────────────────────────
+
+export interface DismissPlacementReviewResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function dismissPlacementReviewDraftAction(
+  proposedActionId: string,
+): Promise<DismissPlacementReviewResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+  if (!proposedActionId) return { ok: false, error: 'Missing proposed action ID.' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to dismiss placement review items.' }
+  }
+
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, voice_command_id')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return { ok: false, error: 'Item not found.' }
+  if (proposedAction.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (proposedAction.target_module !== 'placement_review') {
+    return { ok: false, error: 'This item cannot be dismissed through this interface.' }
+  }
+  if (proposedAction.status === 'executed') {
+    return { ok: false, error: 'Already marked reviewed.' }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'executed' })
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to mark reviewed: ${updateError.message}` }
+  }
+
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'placement_review.dismissed',
+      target_type: 'proposed_actions',
+      target_id: proposedActionId,
+      payload: { proposed_action_id: proposedActionId, dismissed_by: user.id },
+      source_type: 'ui',
+      voice_command_id: proposedAction.voice_command_id ?? null,
+    })
 
   return { ok: true, error: null }
 }
