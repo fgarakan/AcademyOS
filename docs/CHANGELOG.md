@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-08 — Sprint 145: Parent and Player Onboarding Clarity Pass
+
+Improves empty states, no-mapping states, and duplicate section handling on parent and player home pages.
+
+**Files modified:**
+- `src/app/parent/page.tsx` — Suppresses the `parentView.how_to_support_this_week` card when the richer `parentSupportGuide` is present (eliminates the duplicate "How to Support This Week" heading). Replaces cold no-mapping state with warmer copy ("Your academy is preparing your child's development view — once connected, you'll see their level, current focus, and how best to support them at home."). Updates "Latest Coach Update" empty state from "No updates yet" to "Your first update is on its way" with context copy.
+- `src/app/player/page.tsx` — Updates "My Skills" empty state to "Your skill path is being set up" with warmer guidance. Updates "Wins & Streaks" empty state to "Wins are coming" with "Wins and streaks will come alive after a few sessions." Updates "Messages" empty state with more context ("Messages from your coach and academy will show up here when they have something to share.").
+
+**Guardrails confirmed:** No schema changes, no mutations, no new files, no parent/player data exposure. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 144: Coach Session Guided Execution UX
 
 Restructures the coach session detail page into three clear phases and adds a block progress rail at the top of each session.

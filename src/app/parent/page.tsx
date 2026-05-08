@@ -335,11 +335,12 @@ export default async function ParentHome() {
       {!parentView && noMappingReason && (
         <Card>
           <CardContent className="py-6 space-y-2">
-            <p className="text-text-secondary text-sm text-center">
-              Your child's development plan will appear here once your account is linked to their player record.
+            <p className="text-text-primary text-sm font-medium text-center">Your academy is preparing your child's development view</p>
+            <p className="text-text-secondary text-xs leading-relaxed text-center max-w-xs mx-auto">
+              Once connected, you'll see their level, current focus, and how best to support them at home.
             </p>
             <p className="text-text-muted text-xs text-center">
-              Ask the academy director to connect your parent account.
+              Ask the academy director to link your parent account to your child's profile.
             </p>
           </CardContent>
         </Card>
@@ -368,8 +369,8 @@ export default async function ParentHome() {
             </Card>
           )}
 
-          {/* How to Support This Week */}
-          {parentView.how_to_support_this_week && (
+          {/* How to Support This Week — suppressed when richer parentSupportGuide is present */}
+          {parentView.how_to_support_this_week && !parentSupportGuide && (
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -489,8 +490,8 @@ export default async function ParentHome() {
         <CardContent>
           <EmptyState
             icon={<MessageSquare className="w-5 h-5" />}
-            title="No updates yet"
-            description="Your coach's latest update will appear here."
+            title="Your first update is on its way"
+            description="When your coach wraps up a session, a parent-ready summary will appear here."
             className="py-8"
           />
         </CardContent>

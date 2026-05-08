@@ -635,8 +635,8 @@ export default async function PlayerHome() {
           <CardContent>
             <EmptyState
               icon={<TrendingUp className="w-5 h-5" />}
-              title="Your skill path will appear here"
-              description="As you progress through the academy, your skills will be tracked here."
+              title="Your skill path is being set up"
+              description="Your coach is setting up your first mission. Once connected, your level, focus, and next skills will appear here."
               className="py-8"
             />
           </CardContent>
@@ -659,8 +659,8 @@ export default async function PlayerHome() {
         <CardContent>
           <EmptyState
             icon={<Trophy className="w-5 h-5" />}
-            title="Your wins will show up here"
-            description="Keep showing up — your achievements are being tracked."
+            title="Wins are coming"
+            description="Wins and streaks will come alive after a few sessions. Keep showing up."
             className="py-8"
           />
         </CardContent>
@@ -683,7 +683,7 @@ export default async function PlayerHome() {
           <EmptyState
             icon={<MessageCircle className="w-5 h-5" />}
             title="No messages yet"
-            description="Your coach will reach out here."
+            description="Messages from your coach and academy will show up here when they have something to share."
             className="py-8"
           />
         </CardContent>
