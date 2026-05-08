@@ -60,6 +60,7 @@ export default async function ClassTemplatesPage() {
 
   const blockCountByTemplate = new Map<string, number>()
   const exerciseCountByTemplate = new Map<string, number>()
+  const curriculumItemCountByTemplate = new Map<string, number>()
 
   if (classTemplates.length > 0) {
     const ids = classTemplates.map(t => t.id)
@@ -88,7 +89,37 @@ export default async function ClassTemplatesPage() {
         const tid = blockToTemplate.get(ex.block_id)
         if (tid) exerciseCountByTemplate.set(tid, (exerciseCountByTemplate.get(tid) ?? 0) + 1)
       }
+
+      // Curriculum content counts per template (Sprint 137 — loop status)
+      // rawDb required — curriculum_class_template_blocks not in database.types.ts
+      const { data: cctbRows } = await rawDb
+        .from('curriculum_class_template_blocks')
+        .select('block_id')
+        .in('block_id', blockIds)
+
+      for (const row of (cctbRows ?? [])) {
+        const tid = blockToTemplate.get(row.block_id)
+        if (tid) curriculumItemCountByTemplate.set(tid, (curriculumItemCountByTemplate.get(tid) ?? 0) + 1)
+      }
     }
+  }
+
+  // Sprint 137 — Curriculum loop summary stats
+  const templatesWithLessonPlan = classTemplates.filter(t => (curriculumItemCountByTemplate.get(t.id) ?? 0) > 0)
+  const templatesWithLevel = classTemplates.filter(t => !!t.curriculum_level_id)
+
+  // Sessions generated from curriculum-linked templates in the last 30 days
+  let recentCurriculumSessionCount = 0
+  const curriculumLinkedTemplateIds = templatesWithLessonPlan.map(t => t.id)
+  if (curriculumLinkedTemplateIds.length > 0) {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    const { data: recentSessions } = await supabase
+      .from('sessions')
+      .select('id')
+      .eq('academy_id', academyId)
+      .in('template_id', curriculumLinkedTemplateIds)
+      .gte('scheduled_date', thirtyDaysAgo)
+    recentCurriculumSessionCount = (recentSessions ?? []).length
   }
 
   return (
@@ -106,6 +137,30 @@ export default async function ClassTemplatesPage() {
 
       {error && (
         <p className="text-status-red text-sm">Failed to load templates: {error.message}</p>
+      )}
+
+      {/* Sprint 137 — Curriculum loop summary strip */}
+      {classTemplates.length > 0 && (
+        <div className="flex flex-wrap gap-5 px-4 py-3 rounded-xl bg-surface-raised border border-border">
+          <div>
+            <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Lesson Plans Applied</p>
+            <p className="text-sm font-mono font-bold text-lime">
+              {templatesWithLessonPlan.length}
+              <span className="text-text-muted font-normal text-xs"> / {classTemplates.length}</span>
+            </p>
+          </div>
+          <div>
+            <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Curriculum Level Set</p>
+            <p className="text-sm font-mono font-bold text-lime">
+              {templatesWithLevel.length}
+              <span className="text-text-muted font-normal text-xs"> / {classTemplates.length}</span>
+            </p>
+          </div>
+          <div>
+            <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Sessions w/ Curriculum (30d)</p>
+            <p className="text-sm font-mono font-bold text-lime">{recentCurriculumSessionCount}</p>
+          </div>
+        </div>
       )}
 
       {classTemplates.length === 0 ? (
@@ -126,6 +181,7 @@ export default async function ClassTemplatesPage() {
               template={template}
               blockCount={blockCountByTemplate.get(template.id) ?? 0}
               exerciseCount={exerciseCountByTemplate.get(template.id) ?? 0}
+              curriculumItemCount={curriculumItemCountByTemplate.get(template.id) ?? 0}
               curriculumLevelName={template.curriculum_level_id ? (curriculumLevelNameMap[template.curriculum_level_id] ?? null) : null}
             />
           ))}
@@ -151,11 +207,13 @@ function TemplateRow({
   template,
   blockCount,
   exerciseCount,
+  curriculumItemCount,
   curriculumLevelName,
 }: {
   template: TemplateWithLevel
   blockCount: number
   exerciseCount: number
+  curriculumItemCount: number
   curriculumLevelName: string | null
 }) {
   const importBatchTag = template.tags?.find(t => t.startsWith('import_batch:'))
@@ -197,6 +255,12 @@ function TemplateRow({
               <div className="text-right">
                 <p className="text-[10px] uppercase tracking-widest text-text-muted">Exercises</p>
                 <p className="text-base font-mono font-bold text-lime">{exerciseCount}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted">Curriculum</p>
+                <p className={`text-base font-mono font-bold ${curriculumItemCount > 0 ? 'text-lime' : 'text-text-muted'}`}>
+                  {curriculumItemCount}
+                </p>
               </div>
               {template.total_duration_min != null && (
                 <div className="flex items-center gap-1 text-xs text-text-muted">

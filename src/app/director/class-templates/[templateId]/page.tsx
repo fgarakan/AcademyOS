@@ -5,6 +5,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import { ClassTemplateCurriculumSelector } from './ClassTemplateCurriculumSelector'
 import type { CurriculumLevelOption } from './ClassTemplateCurriculumSelector'
+import { LessonPlanDraftPanel } from './LessonPlanDraftPanel'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
@@ -306,6 +307,13 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Lesson plan draft generator */}
+      <LessonPlanDraftPanel
+        templateId={params.templateId}
+        hasCurriculumContent={hasCurriculumContent}
+        curriculumLevelName={currentLevelName}
+      />
 
       {/* ================================================================
           CURRICULUM LESSON PLAN — primary content path

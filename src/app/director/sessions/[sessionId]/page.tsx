@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, GraduationCap, GitBranch, Users, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, GraduationCap, GitBranch, Users, AlertTriangle, Target, Info } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, SectionHeader } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -533,6 +533,91 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
     : null
   const wrapUpStatus: string | null = latestWrapUp?.status ?? null
 
+  // 14. Curriculum content for planned vs actual alignment (Sprint 135)
+  // Keyed by normalized block name so session_blocks (generated from template_blocks) can be matched by name
+  const curriculumByBlockName = new Map<string, Array<{ title: string; contentType: string; domain: string | null }>>()
+  if (session.template_id) {
+    const { data: tblData } = await rawDb
+      .from('template_blocks')
+      .select('id, name')
+      .eq('template_id', session.template_id)
+      .order('order_index')
+
+    const tblList = (tblData ?? []) as Array<{ id: string; name: string }>
+    const tblIds = tblList.map((t: { id: string }) => t.id)
+
+    if (tblIds.length > 0) {
+      const blockNameById = new Map<string, string>()
+      for (const tb of tblList) blockNameById.set(tb.id, tb.name)
+
+      const { data: cctbData } = await rawDb
+        .from('curriculum_class_template_blocks')
+        .select(`
+          block_id,
+          content_item:curriculum_content_items(title, content_type, domain),
+          drill:curriculum_drills(name, domain)
+        `)
+        .in('block_id', tblIds)
+        .order('order_index')
+
+      for (const row of (cctbData ?? [])) {
+        const blockName = blockNameById.get(row.block_id) ?? ''
+        const normalizedName = blockName.toLowerCase().trim()
+        if (!normalizedName) continue
+        const arr = curriculumByBlockName.get(normalizedName) ?? []
+        arr.push({
+          title: row.content_item?.title ?? row.drill?.name ?? 'Untitled',
+          contentType: row.content_item?.content_type ?? 'drill',
+          domain: row.content_item?.domain ?? row.drill?.domain ?? null,
+        })
+        curriculumByBlockName.set(normalizedName, arr)
+      }
+    }
+  }
+
+  // 15. Gate evidence suggestions — derived from completed blocks + curriculum domains (Sprint 136)
+  // No DB query — uses already-fetched sessionCurriculumExtra.topGates + curriculumByBlockName
+  interface GateEvidenceSuggestion {
+    domain: string
+    criterion: string
+    threshold: string
+    relevantItems: string[]
+  }
+  const gateEvidenceSuggestions: GateEvidenceSuggestion[] = []
+
+  if (wrapUpPayload && sessionCurriculumExtra && curriculumByBlockName.size > 0) {
+    const completedNames = new Set(
+      wrapUpPayload.block_completion
+        .filter(bc => bc.status === 'completed' || bc.status === 'modified')
+        .map(bc => bc.block_name.toLowerCase().trim())
+        .filter(Boolean)
+    )
+
+    if (completedNames.size > 0) {
+      const coveredDomains = new Set<string>()
+      Array.from(curriculumByBlockName.entries()).forEach(([normName, items]) => {
+        if (completedNames.has(normName)) {
+          items.forEach(item => { if (item.domain) coveredDomains.add(item.domain) })
+        }
+      })
+
+      for (const gate of sessionCurriculumExtra.topGates) {
+        if (gate.domain && coveredDomains.has(gate.domain)) {
+          const relevantItems: string[] = []
+          Array.from(curriculumByBlockName.values()).forEach(items => {
+            items.forEach(item => { if (item.domain === gate.domain) relevantItems.push(item.title) })
+          })
+          gateEvidenceSuggestions.push({
+            domain: gate.domain,
+            criterion: gate.criterion,
+            threshold: gate.threshold,
+            relevantItems: Array.from(new Set(relevantItems)).slice(0, 3),
+          })
+        }
+      }
+    }
+  }
+
   // Derived intelligence for coach briefing
   const playersWithNeeds = playerIntelligence.filter(p => p.thingsToWorkOn.length > 0)
   const playersWithPriority = playerIntelligence.filter(p => p.topPriority)
@@ -1059,9 +1144,43 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
               notes: ex.notes,
               duration_min: ex.duration_min,
             }))}
+            curriculumByBlockName={curriculumByBlockName}
           />
         </div>
       </div>
+
+      {/* Gate Evidence Opportunities — Sprint 136 */}
+      {gateEvidenceSuggestions.length > 0 && (
+        <div>
+          <SectionHeader title="GATE EVIDENCE OPPORTUNITIES" />
+          <div className="mt-3 space-y-3">
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-lime/5 border border-lime/20 text-xs text-text-secondary">
+              <Info className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
+              <span>
+                Today&apos;s completed curriculum activities may support evidence for these gates.
+                Visit each player&apos;s profile Skill Path tab to record observations.
+              </span>
+            </div>
+            {gateEvidenceSuggestions.map((s, i) => (
+              <div key={i} className="px-3 py-3 rounded-xl bg-surface-raised border border-border space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Target className="w-3.5 h-3.5 text-lime shrink-0" />
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-lime">
+                    {s.domain}
+                  </span>
+                  <p className="text-xs font-medium text-text-primary">{s.criterion}</p>
+                </div>
+                <p className="text-[10px] text-text-muted pl-5">Threshold: {s.threshold}</p>
+                {s.relevantItems.length > 0 && (
+                  <p className="text-[10px] text-text-muted pl-5">
+                    Supported by today&apos;s session: {s.relevantItems.join(' · ')}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Curriculum Exposure Candidates */}
       <div>

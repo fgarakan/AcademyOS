@@ -8,6 +8,7 @@ import { CoachSessionExecutionClient } from './CoachSessionExecutionClient'
 import { CoachRecapCommandPanel } from './CoachRecapCommandPanel'
 import { CoachSessionGapBriefPanel } from './CoachSessionGapBriefPanel'
 import { CoachSessionActions } from './CoachSessionActions'
+import { CoachSessionCurriculumPanel } from './CoachSessionCurriculumPanel'
 import { saveSessionExecutionAction, saveAttendanceAction, saveSessionRecapAction } from './actions'
 import { structureCoachRecapAction } from './structureCoachRecapAction'
 
@@ -289,6 +290,11 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
             </p>
           </div>
         </div>
+      )}
+
+      {/* Curriculum lesson plan for this session's template */}
+      {session.template_id && (
+        <CoachSessionCurriculumPanel templateId={session.template_id} />
       )}
 
       {/* Wrap Up / Quick Note — primary session CTAs before inline note panel */}

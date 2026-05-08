@@ -19,11 +19,19 @@ interface SessionExerciseActual {
   duration_min: number | null
 }
 
+// Sprint 135 — curriculum items planned for each block, keyed by normalized block name
+export interface CurriculumPlanItem {
+  title: string
+  contentType: string
+  domain: string | null
+}
+
 interface Props {
   plannedBlocks: PlannedBlock[]
   wrapUpPayload: SessionActualDraftPayload | null
   wrapUpStatus: string | null
   sessionExercises?: SessionExerciseActual[]
+  curriculumByBlockName?: Map<string, CurriculumPlanItem[]>
 }
 
 function BlockStatusIcon({ status }: { status: BlockCompletionDraft['status'] | 'unknown' }) {
@@ -47,7 +55,7 @@ function statusColor(status: BlockCompletionDraft['status'] | 'unknown') {
   return 'text-text-muted'
 }
 
-export function PlannedVsActualDiffPanel({ plannedBlocks, wrapUpPayload, wrapUpStatus, sessionExercises = [] }: Props) {
+export function PlannedVsActualDiffPanel({ plannedBlocks, wrapUpPayload, wrapUpStatus, sessionExercises = [], curriculumByBlockName }: Props) {
   if (!wrapUpPayload) {
     return (
       <Card>
@@ -136,7 +144,10 @@ export function PlannedVsActualDiffPanel({ plannedBlocks, wrapUpPayload, wrapUpS
 
       {/* Per-block diff rows */}
       <div className="space-y-2">
-        {diffRows.map(row => (
+        {diffRows.map(row => {
+          const normalizedBlockName = row.block.name.toLowerCase().trim()
+          const curriculumItems = curriculumByBlockName?.get(normalizedBlockName) ?? []
+          return (
           <div
             key={row.block.id}
             className="rounded-xl bg-surface-raised border border-border overflow-hidden"
@@ -148,6 +159,17 @@ export function PlannedVsActualDiffPanel({ plannedBlocks, wrapUpPayload, wrapUpS
                 <p className="text-xs font-medium text-text-primary truncate">{row.block.name}</p>
                 {row.block.duration_min && (
                   <p className="text-[10px] text-text-muted">{row.block.duration_min} min · {row.block.type}</p>
+                )}
+                {/* Curriculum content items for this block */}
+                {curriculumItems.length > 0 && (
+                  <div className="mt-1.5 space-y-0.5">
+                    {curriculumItems.slice(0, 2).map((item, k) => (
+                      <p key={k} className="text-[10px] text-lime/70 flex items-start gap-1 leading-tight">
+                        <span className="shrink-0">›</span>
+                        <span>{item.title}{item.domain ? ` · ${item.domain}` : ''}</span>
+                      </p>
+                    ))}
+                  </div>
                 )}
               </div>
 
@@ -212,7 +234,8 @@ export function PlannedVsActualDiffPanel({ plannedBlocks, wrapUpPayload, wrapUpS
               </div>
             )}
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Wrap-up context fields */}

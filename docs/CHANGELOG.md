@@ -2,6 +2,172 @@
 
 ---
 
+## 2026-05-08 — Sprint 138: Investor / Academy Owner Demo Hardening
+
+Polish pass on the curriculum feature set (Sprints 129–137) to ensure a clean end-to-end demo path.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionCurriculumPanel.tsx` — Replaces the silent `return null` (when template has blocks but no lesson plan content) with a visible empty state Card. Coaches and demo viewers now see the curriculum section and understand what it's for, rather than having it silently disappear. The `tblList.length === 0` early return (no blocks at all) still returns null.
+- `src/app/director/class-templates/[templateId]/LessonPlanDraftPanel.tsx` — Adds a "Lesson plan is live on this template" status banner (green, with BookOpen icon) that appears on initial load when `hasCurriculumContent=true` and no draft has been generated yet. This makes the applied state clearly visible to directors and investors without requiring them to scroll or generate a new draft. Adds `BookOpen` to lucide-react imports.
+
+**Guardrails confirmed:**
+- Display only — no mutations, no migrations
+- No database.types.ts edits
+- No Fitness OS changes
+- TypeScript: clean
+
+---
+
+## 2026-05-08 — Sprint 137: Director Curriculum Loop Dashboard
+
+Adds curriculum loop health metrics to the Class Templates list page — shows how many templates have lesson plans applied, how many have a curriculum level set, and how many sessions used curriculum-linked templates in the last 30 days. Each template row now shows a "Curriculum" count (number of curriculum content items linked via lesson plan).
+
+**Files modified:**
+- `src/app/director/class-templates/page.tsx` — Adds `curriculumItemCountByTemplate` map (counting `curriculum_class_template_blocks` rows per template), `templatesWithLessonPlan` and `templatesWithLevel` derived arrays, `recentCurriculumSessionCount` (sessions from curriculum-linked templates in last 30 days). Adds summary strip between page header and template list. Passes `curriculumItemCount` to `TemplateRow`, which shows it as a third stat column (lime when > 0, muted when 0).
+
+**Guardrails confirmed:**
+- Display only — no mutations, no migrations
+- No database.types.ts edits (rawDb used for curriculum_class_template_blocks)
+- No Fitness OS changes
+- TypeScript: clean
+
+**Next:** Sprint 138 — Investor / Academy Owner Demo Hardening
+
+---
+
+## 2026-05-08 — Sprint 136: Session Actuals → Gate Evidence Suggestions
+
+Adds a "Gate Evidence Opportunities" section to the director session detail page. When a wrap-up has been submitted, shows which curriculum gates may have had evidence collected based on the session's completed blocks and curriculum content.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Adds computation step 15: derives covered curriculum domains from completed wrap-up blocks (using curriculumByBlockName from step 14), filters `sessionCurriculumExtra.topGates` by those domains, builds `gateEvidenceSuggestions[]` (no additional DB query — reuses already-fetched data). Renders "GATE EVIDENCE OPPORTUNITIES" section between Planned vs Actual and Curriculum Exposure sections when at least one gate suggestion is generated. Adds `Target` and `Info` to lucide-react imports.
+
+**Logic:** Completed block names (from wrap-up `block_completion` where status = completed or modified) → matched to normalized block names in curriculumByBlockName → domain set extracted → curriculum_gates filtered by domains → suggestion list with criterion, threshold, and supporting activity titles.
+
+**Guardrails confirmed:**
+- No evidence auto-created — display only, with a note directing directors to player profile Skill Path tab
+- No mutations — purely derived display
+- No migration created
+- No database.types.ts edits
+- No Fitness OS changes
+- No parent/player data exposure
+- Uses `Array.from()` instead of `for...of` on Map/Set for TypeScript target compatibility
+- TypeScript: clean
+
+**Next:** Sprint 137 — Director Curriculum Loop Dashboard
+
+---
+
+## 2026-05-08 — Sprint 135: Planned vs Actual Wrap-Up Against Curriculum
+
+Adds curriculum lesson plan items to the director's Planned vs Actual diff panel so curriculum delivery can be assessed alongside coach-reported block completion.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/PlannedVsActualDiffPanel.tsx` — Adds optional `curriculumByBlockName: Map<string, CurriculumPlanItem[]>` prop. Exports `CurriculumPlanItem` interface. For each planned block, looks up curriculum items by normalized block name and renders up to 2 items (title + domain) in the Planned column as lime-tinted subtext. Map callback updated from arrow-expression to block body to support the curriculum lookup computation.
+- `src/app/director/sessions/[sessionId]/page.tsx` — Adds data fetch step 14: reads `template_blocks` for the session's template, fetches `curriculum_class_template_blocks` joining `curriculum_content_items` and `curriculum_drills`, groups items by normalized block name into a `Map`. Passes `curriculumByBlockName` to `PlannedVsActualDiffPanel`.
+
+**Matching logic:** Session blocks were generated from template blocks with the same names. Curriculum content is keyed by normalized template block name (lowercase + trim) and looked up against each session block's name.
+
+**Guardrails confirmed:**
+- Read-only — no mutations
+- No migration created
+- No database.types.ts edits
+- Fitness OS untouched
+- No parent/player data exposure
+- Map not passed across client boundary (PlannedVsActualDiffPanel has no 'use client')
+- TypeScript: clean
+
+**Next:** Sprint 136 — Session Actuals → Gate Evidence Suggestions
+
+---
+
+## 2026-05-08 — Sprint 134: Coach Class Session Curriculum View
+
+Shows the curriculum lesson plan on the coach session detail page when the session was generated from a template that has curriculum content applied.
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionCurriculumPanel.tsx` — Async Server Component. Reads `template_blocks` for the session's template, then fetches `curriculum_class_template_blocks` joining `curriculum_content_items` and `curriculum_drills`. Groups items by template block and renders block-by-block with title, domain, duration, coach cues (up to 3), and success criteria (up to 2). Returns null if no curriculum content is applied — no empty state shown (coach sees nothing if there's nothing to show).
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Imports `CoachSessionCurriculumPanel`. Renders it when `session.template_id` is present, placed between the execution client area and the Wrap-Up CTAs.
+
+**Guardrails confirmed:**
+- Read-only — no mutations
+- No migration created
+- No database.types.ts edits
+- Fitness OS untouched
+- No parent/player data exposure
+- rawDb used only for tables not in database.types.ts (curriculum_class_template_blocks, curriculum_content_items, template_blocks.curriculum context)
+- Panel renders nothing if template has no curriculum content — graceful empty state
+- TypeScript: clean
+
+**Next:** Sprint 135 — Planned vs Actual Wrap-Up Against Curriculum
+
+---
+
+## 2026-05-08 — Sprint 133: Apply Lesson Plan Draft to Class Template
+
+Wires up the Apply button in the Lesson Plan Draft Panel to write the draft to `curriculum_class_template_blocks`.
+
+**Files created:**
+- `src/app/director/class-templates/[templateId]/applyLessonPlanDraftAction.ts` — Server Action that: (1) confirms template belongs to the director's academy; (2) deletes all existing `curriculum_class_template_blocks` rows for the template; (3) inserts new rows from the draft (content_item_id only, drill_id null, order_index per block); (4) writes to `audit_logs`. Returns `{ success, totalApplied }` or `{ error }`.
+
+**Files modified:**
+- `src/app/director/class-templates/[templateId]/LessonPlanDraftPanel.tsx` — Imports `applyLessonPlanDraftAction`. Adds `applying` and `applied` state. "Apply to Template" button now calls the action, shows spinner during apply, shows green "Applied" confirmation on success, and calls `router.refresh()` so the Server Component re-renders with the new curriculum content.
+
+**Guardrails confirmed:**
+- Delete-then-insert is scoped by `template_id` — cannot touch another academy's data (RLS + academy_id check)
+- No parent/player data touched
+- No migration created
+- No database.types.ts edits
+- Fitness OS (template_block_exercises / exercises) untouched
+- Audit log written on every successful apply
+- rawDb used for tables not in database.types.ts
+
+**TypeScript:** clean
+
+**Next:** Sprint 134 — Coach Class Session Curriculum View
+
+---
+
+## 2026-05-08 — Sprint 132: Lesson Plan Draft Generator V1
+
+Adds a deterministic lesson plan draft generator to the class template detail page.
+
+**Files created:**
+- `src/app/director/class-templates/[templateId]/generateLessonPlanDraftAction.ts` — Server Action that reads the template's curriculum level, fetches matching `curriculum_content_items` (lesson-plan-relevant types only), and maps items to blocks by `session_block_hint` vs `block_type`. Returns a `LessonPlanDraft` object — no DB writes. Each block consumes items greedily (up to 3 per block, hint-matched first, then fallback to any unused item).
+- `src/app/director/class-templates/[templateId]/LessonPlanDraftPanel.tsx` — Client component with "Generate Lesson Plan Draft" / "Regenerate Draft" button. Calls the server action and renders the draft as a block-by-block preview. Includes a disabled "Apply to Template" button (Sprint 133). Collapsible when a draft is present.
+
+**Files modified:**
+- `src/app/director/class-templates/[templateId]/page.tsx` — Imports and renders `LessonPlanDraftPanel` between the Curriculum Context card and the Curriculum Lesson Plan section.
+
+**Guardrails confirmed:**
+- No DB writes — generator is read-only
+- No migration created
+- No database.types.ts edits
+- Fitness OS untouched
+- No parent/player data exposure
+- rawDb used only for tables not in database.types.ts (curriculum_content_items, templates.curriculum_level_id)
+- TypeScript: clean
+
+**Block type → session_block_hint mapping:**
+- `warm_up` → Warm-Up
+- `cool_down` → Cool-Down
+- `technical` → Focus, Train
+- `tactical` → Game, Play, Situational
+- `movement` / `fitness` → Train, Focus
+- `competition` → Match-Play, Situational, Game
+- `mental` → Focus, Train, Play
+- `free` → Focus, Train, Game, Play
+
+**Content types included in draft:** warmup, cooldown, drill, game, skill, tactical, fitness, competition, assessment, tactical_game, situational, match_play_theme, mental_skill, competition_behavior
+
+**Content types excluded:** coach_cue, success_criteria, success_criteria_item, progression, regression, player_mission, parent_guidance, level_gate_support
+
+**Next:** Sprint 133 — Apply Lesson Plan Draft to Class Template (wire up the Apply button, write draft to `curriculum_class_template_blocks`)
+
+---
+
 ## 2026-05-08 — Sprint 131: Class Template Curriculum Content Display
 
 Updated class template detail page to prioritize curriculum content over legacy fitness exercises.
