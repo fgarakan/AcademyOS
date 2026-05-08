@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-08 — Sprint 157: Coach-Side Attendance Exception Capture
+
+Allows coaches to flag unexpected (unrostered) attendees directly inside the wrap-up flow as structured director review drafts. Replaces the old "use the Attendance Exceptions panel in the session detail view" note with an inline name + reason form that queues entries and submits them to `proposed_actions` via the existing `attendance_exception_v1` pipeline. No roster change until the director approves and applies.
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/saveWrapUpAttendanceExceptionAction.ts` — Server action that validates coach role, verifies session belongs to the academy, creates a `voice_commands` row then a `proposed_actions` row with `action_type: 'other'`, `target_module: 'attendance_exception'`, `draft_type: 'attendance_exception_v1'`, `source: 'coach_wrap_up'`, `status: 'pending_review'`. Accepts structured `WrapUpUnrosteredEntry[]` — no text parsing. `rostered_attendance: []` always empty (handled separately by `saveAttendanceAction`).
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Added `Users` icon import, `saveWrapUpAttendanceExceptionAction` import, `NOTE_LABELS` constant. Added 5 new state variables (`unrosteredEntries`, `newUnrosteredName`, `newUnrosteredNote`, `attendanceExceptionSaved`, `attendanceExceptionError`). Added step 4 to `handleSave` to call exception action when entries exist. Replaced `{roster.length > 0 && <attendance-card>}` outer guard with unconditional card: per-player selects remain guarded; new "Unexpected attendees" subsection added with name input + reason select + Add button + remove-able list. Added unrostered count to "what will happen" summary box. Added exception count / error display in saved state.
+
+**Guardrails confirmed:** No schema changes. No migrations. Exception drafts route through `proposed_actions` pipeline — existing director review infrastructure renders them without modification. No roster, billing, or parent communication changes. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 156: Coach Wrap-Up UX Consolidation
 
 Unifies the coach end-of-session experience around one primary CTA. "Wrap Up Session" is the obvious primary action; "Quick Note" is clearly demoted with microcopy. Wrap-up flow adds a follow-up question and uses coach-friendly copy throughout. Confirmation state explicitly reports observation draft count.

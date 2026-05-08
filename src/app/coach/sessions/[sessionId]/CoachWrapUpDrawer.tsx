@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect, useTransition, useMemo } from 'react'
-import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy, Plus, Volume2, VolumeX, AlertTriangle, User, Square } from 'lucide-react'
+import { X, ChevronRight, ChevronLeft, Check, Loader2, Copy, Plus, Volume2, VolumeX, AlertTriangle, User, Users, Square } from 'lucide-react'
 import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
 import { AudioRecorderButton } from '@/components/assistant/AudioRecorderButton'
 import { saveSessionRecapAction } from './actions'
 import { saveWrapUpDraftAction, type BlockCompletionDraft } from './saveWrapUpDraftAction'
 import { saveWrapUpObservationsAction, type PlayerObservationInput } from './saveWrapUpObservationsAction'
 import { saveAttendanceAction, type AttendanceUpdate } from './actions'
+import { saveWrapUpAttendanceExceptionAction, type WrapUpUnrosteredEntry, type UnrosteredAttendeeNote } from './saveWrapUpAttendanceExceptionAction'
 import type { SessionBlock, RosterPlayer } from './page'
 
 // ─────────────────────────────────────────────────────────────
@@ -65,6 +66,14 @@ const STEPS: WrapUpStep[] = [
     placeholder: 'No follow-up needed / Emma\'s parent asked about schedule changes / Director should know about the court issue',
   },
 ]
+
+const NOTE_LABELS: Record<UnrosteredAttendeeNote, string> = {
+  trial: 'Trial class',
+  sibling: 'Sibling',
+  makeup: 'Makeup class',
+  unknown: 'Unknown',
+  other: 'Other',
+}
 
 // Common non-name capitalized words to exclude from name detection
 const COMMON_NON_NAMES = new Set([
@@ -130,6 +139,11 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
   const [recapNotePlayer, setRecapNotePlayer] = useState<string>('')
   const [recapNoteType, setRecapNoteType] = useState<'positive' | 'needs_attention'>('positive')
   const [recapNoteText, setRecapNoteText] = useState<string>('')
+  const [unrosteredEntries, setUnrosteredEntries] = useState<WrapUpUnrosteredEntry[]>([])
+  const [newUnrosteredName, setNewUnrosteredName] = useState('')
+  const [newUnrosteredNote, setNewUnrosteredNote] = useState<UnrosteredAttendeeNote>('trial')
+  const [attendanceExceptionSaved, setAttendanceExceptionSaved] = useState<number | null>(null)
+  const [attendanceExceptionError, setAttendanceExceptionError] = useState<string | null>(null)
 
   const draftKey = `wrapup_draft_${sessionId}`
 
@@ -308,6 +322,18 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
         }
       }
 
+      // 4. Save attendance exception draft if there are unrostered attendees
+      if (unrosteredEntries.length > 0) {
+        const exceptResult = await saveWrapUpAttendanceExceptionAction(
+          sessionId, sessionName, unrosteredEntries, answers[0] ?? '',
+        )
+        if (exceptResult.ok) {
+          setAttendanceExceptionSaved(unrosteredEntries.length)
+        } else {
+          setAttendanceExceptionError(exceptResult.error ?? 'Could not submit unexpected attendee draft.')
+        }
+      }
+
       try { localStorage.removeItem(draftKey) } catch { /* ignore */ }
       setPhase('saved')
     })
@@ -337,6 +363,14 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
             )}
             {observationsError && (
               <p className="text-xs text-status-orange">{observationsError}</p>
+            )}
+            {attendanceExceptionSaved !== null && attendanceExceptionSaved > 0 && (
+              <p className="text-xs text-status-orange">
+                {attendanceExceptionSaved} unexpected attendee{attendanceExceptionSaved !== 1 ? 's' : ''} flagged for director review.
+              </p>
+            )}
+            {attendanceExceptionError && (
+              <p className="text-xs text-status-orange">{attendanceExceptionError}</p>
             )}
           </div>
           <button
@@ -420,6 +454,14 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
                   </span>
                 </div>
               )}
+              {unrosteredEntries.length > 0 && (
+                <div className="flex items-start gap-2 text-xs">
+                  <span className="text-status-orange mt-0.5">→</span>
+                  <span className="text-text-secondary">
+                    <span className="text-text-primary font-medium">{unrosteredEntries.length}</span> unexpected attendee draft{unrosteredEntries.length !== 1 ? 's' : ''} will go to director review
+                  </span>
+                </div>
+              )}
               {nextFocusText && (
                 <div className="flex items-start gap-2 text-xs">
                   <span className="text-lime mt-0.5">→</span>
@@ -468,58 +510,122 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
             )}
           </div>
           <div className="px-5 py-4 space-y-5">
-            {/* Attendance section — explicit per-player confirmation */}
-            {roster.length > 0 && (
-              <div className="p-3 rounded-xl bg-surface-raised border border-border space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted">Attendance</p>
-                  {attendanceSaved && (
-                    <span className="text-[10px] text-status-green font-semibold">Saved ✓</span>
+            {/* Attendance section — per-player confirmation + unexpected attendees */}
+            <div className="p-3 rounded-xl bg-surface-raised border border-border space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted">Attendance</p>
+                {attendanceSaved && (
+                  <span className="text-[10px] text-status-green font-semibold">Saved ✓</span>
+                )}
+              </div>
+              {roster.length > 0 && (
+                <>
+                  <p className="text-[10px] text-text-muted leading-snug">
+                    Your answer: &ldquo;{answers[0]?.trim() || 'Not answered'}&rdquo;
+                    — confirm each player below before saving.
+                  </p>
+                  <div className="space-y-1.5">
+                    {roster.map(p => (
+                      <div key={p.playerId} className="flex items-center gap-2">
+                        <span className="text-xs text-text-secondary flex-1 truncate">{p.fullName}</span>
+                        <select
+                          value={attendanceMap[p.playerId] ?? 'present'}
+                          onChange={e => setAttendanceMap(prev => ({
+                            ...prev,
+                            [p.playerId]: e.target.value as 'present' | 'absent' | 'late' | 'excused',
+                          }))}
+                          disabled={attendanceSaved || isAttendancePending}
+                          className="text-[10px] bg-surface border border-border rounded px-2 py-0.5 text-text-secondary focus:outline-none focus:border-lime/40 disabled:opacity-50"
+                        >
+                          <option value="present">Present</option>
+                          <option value="absent">Absent</option>
+                          <option value="late">Late</option>
+                          <option value="excused">Excused</option>
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                  {attendanceError && (
+                    <p className="text-[10px] text-status-red">{attendanceError}</p>
                   )}
+                  {!attendanceSaved && (
+                    <button
+                      onClick={handleSaveAttendance}
+                      disabled={isAttendancePending}
+                      className="flex items-center gap-1.5 text-xs btn-lime px-3 py-1.5 disabled:opacity-50"
+                    >
+                      {isAttendancePending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                      {isAttendancePending ? 'Saving…' : 'Save Attendance'}
+                    </button>
+                  )}
+                </>
+              )}
+              {/* Unexpected attendees — structured capture → attendance_exception proposed_action */}
+              <div className={`space-y-2 ${roster.length > 0 ? 'pt-2 border-t border-border' : ''}`}>
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-3 h-3 text-text-muted" />
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted">Unexpected attendees</p>
                 </div>
                 <p className="text-[10px] text-text-muted leading-snug">
-                  Your answer: &ldquo;{answers[0]?.trim() || 'Not answered'}&rdquo;
-                  — confirm each player below before saving.
+                  Anyone who showed up but isn&apos;t on the roster? Add them here — creates a director review draft. No roster change until approved.
                 </p>
-                <div className="space-y-1.5">
-                  {roster.map(p => (
-                    <div key={p.playerId} className="flex items-center gap-2">
-                      <span className="text-xs text-text-secondary flex-1 truncate">{p.fullName}</span>
-                      <select
-                        value={attendanceMap[p.playerId] ?? 'present'}
-                        onChange={e => setAttendanceMap(prev => ({
-                          ...prev,
-                          [p.playerId]: e.target.value as 'present' | 'absent' | 'late' | 'excused',
-                        }))}
-                        disabled={attendanceSaved || isAttendancePending}
-                        className="text-[10px] bg-surface border border-border rounded px-2 py-0.5 text-text-secondary focus:outline-none focus:border-lime/40 disabled:opacity-50"
-                      >
-                        <option value="present">Present</option>
-                        <option value="absent">Absent</option>
-                        <option value="late">Late</option>
-                        <option value="excused">Excused</option>
-                      </select>
-                    </div>
-                  ))}
-                </div>
-                {attendanceError && (
-                  <p className="text-[10px] text-status-red">{attendanceError}</p>
-                )}
-                {!attendanceSaved && (
-                  <button
-                    onClick={handleSaveAttendance}
-                    disabled={isAttendancePending}
-                    className="flex items-center gap-1.5 text-xs btn-lime px-3 py-1.5 disabled:opacity-50"
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newUnrosteredName}
+                    onChange={e => setNewUnrosteredName(e.target.value)}
+                    placeholder="Name…"
+                    maxLength={100}
+                    className="flex-1 text-[11px] bg-surface border border-border rounded px-2 py-1.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/40"
+                  />
+                  <select
+                    value={newUnrosteredNote}
+                    onChange={e => setNewUnrosteredNote(e.target.value as UnrosteredAttendeeNote)}
+                    className="text-[11px] bg-surface border border-border rounded px-2 py-1.5 text-text-primary focus:outline-none focus:border-lime/40"
                   >
-                    {isAttendancePending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                    {isAttendancePending ? 'Saving…' : 'Save Attendance'}
+                    <option value="trial">Trial class</option>
+                    <option value="sibling">Sibling</option>
+                    <option value="makeup">Makeup class</option>
+                    <option value="unknown">Unknown</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <button
+                    type="button"
+                    disabled={!newUnrosteredName.trim() || unrosteredEntries.length >= 10}
+                    onClick={() => {
+                      const name = newUnrosteredName.trim()
+                      if (!name) return
+                      setUnrosteredEntries(prev => [...prev, { name, note: newUnrosteredNote }])
+                      setNewUnrosteredName('')
+                    }}
+                    className="flex items-center gap-1 text-xs btn-lime px-2.5 py-1.5 disabled:opacity-40"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add
                   </button>
+                </div>
+                {unrosteredEntries.length > 0 && (
+                  <div className="space-y-1">
+                    {unrosteredEntries.map((e, i) => (
+                      <div key={i} className="flex items-center gap-2 text-[10px]">
+                        <span className="text-status-orange">→</span>
+                        <span className="text-text-secondary flex-1">
+                          {e.name} <span className="text-text-muted">({NOTE_LABELS[e.note]})</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setUnrosteredEntries(prev => prev.filter((_, j) => j !== i))}
+                          className="text-text-muted hover:text-status-red transition-colors px-1"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    <p className="text-[9px] text-text-muted">Sent to director review — no roster change until approved.</p>
+                  </div>
                 )}
-                <p className="text-[9px] text-text-muted">
-                  Unrostered players must go to director review — use the Attendance Exceptions panel in the session detail view.
-                </p>
               </div>
-            )}
+            </div>
 
             {/* Add note from recap — assisted player observation draft */}
             {roster.length > 0 && (
