@@ -1,3 +1,81 @@
+# V1 Manual Test Checklist — Pilot Readiness (Sprint 150)
+**Date:** 2026-05-08
+**Scope:** Full Academy OS golden path — director setup → curriculum → lesson plan → session → coach → wrap-up → review → parent/player
+
+---
+
+## Director — Setup Loop
+
+| Check | Expected | Pass? |
+|---|---|---|
+| Log in as director | Redirect to `/director` | |
+| Setup checklist shows | 4 steps; completed ones checked | |
+| Import player via CSV | Dry-run validates; import writes the player | |
+| Assign curriculum level to player | Level badge on player profile | |
+| Create class template | Appears in `/director/class-templates` | |
+| Assign curriculum level to template | Level badge on template detail | |
+| Generate + apply lesson plan | "Lesson plan is live" banner appears | |
+| Create session from template | Session in `/director/sessions` | |
+
+## Director — Command Center
+
+| Check | Expected | Pass? |
+|---|---|---|
+| Active player count correct | Matches actual players | |
+| Sessions this week correct | Current week count | |
+| Curriculum coverage: with/without-level | Correct counts; orange if missing | |
+| Priority queue shows | Urgency badges on players needing attention | |
+| NBA card shows (if pending players) | Warning card with action link | |
+| NBA card shows (if no templates) | Guide card linking to `/director/class-templates/new` | |
+
+## Coach — Session Execution
+
+| Check | Expected | Pass? |
+|---|---|---|
+| Open session | Detail page loads | |
+| "Before Session" visible (if lesson plan applied) | Curriculum brief with drills + cues | |
+| Block progress rail shows | Named pills for each block | |
+| Mark attendance | Status updates | |
+| Mark exercise complete | Checkbox toggles | |
+| Submit coach wrap-up | Appears in director Review Queue | |
+
+## Director — Review Queue
+
+| Check | Expected | Pass? |
+|---|---|---|
+| Wrap-Up tab shows submitted wrap-up | Coach name + session visible | |
+| Approve wrap-up | Status changes | |
+
+## Parent Portal
+
+| Check | Expected | Pass? |
+|---|---|---|
+| Level card shows (if linked + level assigned) | Level name visible | |
+| Parent support guide shows | What to Praise, At-Home Support, etc. | |
+| "How to Support" NOT duplicated | Only support guide card (not IDP card too) | |
+| No-mapping state is warm | "Academy is preparing your child's view" | |
+| "Latest Coach Update" empty state | "Your first update is on its way" | |
+
+## Player Portal
+
+| Check | Expected | Pass? |
+|---|---|---|
+| Mission preview shows | Current mission card visible | |
+| Recent sessions: sparkline visible | Colored dots row | |
+| Recent sessions: ring shows attendance % | SVG ring with percentage label | |
+| No-mapping state is warm | "Your mission is on its way" | |
+| Wins & Streaks empty state | "Wins are coming" copy | |
+
+## Demo Tour
+
+| Check | Expected | Pass? |
+|---|---|---|
+| `/director/demo` loads | Page renders | |
+| 11-step path visible | All steps numbered + linked | |
+| Click step goes to correct route | No 404s | |
+
+---
+
 # V1 Manual Test Checklist — Coach Operating Loop + Assistant Demo
 
 **Sprint:** 87

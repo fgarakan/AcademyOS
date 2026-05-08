@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-08 — Sprint 150: Launch Readiness UX Audit
+
+Docs-only sprint. Creates two launch-readiness documents for the V1 pilot.
+
+**Files created:**
+- `docs/LAUNCH_READINESS_UX_AUDIT.md` — Screen-by-screen status for all four role portals (director, coach, player, parent). Documents known UX gaps (non-blocking), validated UX principles, and a pre-pilot sign-off checklist.
+- (updated) `docs/V1_MANUAL_TEST_CHECKLIST.md` — Prepends a new "Sprint 150 — V1 Pilot Readiness" section covering: director setup loop, command center, session execution, review queue, parent portal, player portal, and demo tour checks. Preserves existing Sprint 67–87 checklist below.
+
+**Guardrails confirmed:** Docs only. No code changes, no schema changes. TypeScript clean (no changes).
+
+---
+
 ## 2026-05-08 — Sprint 149: End-to-End Guided Demo Polish
 
 Adds an 11-step guided demo path to the existing demo tour page, making the full Academy OS lifecycle navigable in one place.
