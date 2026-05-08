@@ -30,9 +30,9 @@ const STEPS: WrapUpStep[] = [
   },
   {
     key: 'blocks',
-    question: 'Did you complete all the planned blocks?',
-    hint: 'If you skipped or shortened anything, mention it here.',
-    placeholder: 'Yes, all blocks / We skipped the conditioning block',
+    question: 'Did the session mostly follow the plan?',
+    hint: 'All blocks completed, or were there skips and adjustments?',
+    placeholder: 'Yes, followed the plan / Made small adjustments / Changed significantly — we skipped the conditioning block',
   },
   {
     key: 'changes',
@@ -42,13 +42,13 @@ const STEPS: WrapUpStep[] = [
   },
   {
     key: 'standouts',
-    question: 'Who stood out today — in a good way or needs follow-up?',
-    hint: 'Positive or negative. Skill breakthroughs, focus issues, anything noteworthy.',
-    placeholder: 'Lucas was exceptional on serve. Emma struggled with movement consistency.',
+    question: 'Any players stand out positively today?',
+    hint: 'Skill breakthroughs, great effort, focus — anything worth noting.',
+    placeholder: 'Lucas was exceptional on serve. Emma showed real improvement on movement.',
   },
   {
     key: 'attention',
-    question: 'Who needs specific attention next session?',
+    question: 'Any players need extra attention next time?',
     hint: 'Players who need extra focus, one-on-one work, or a check-in.',
     placeholder: 'Emma needs one-on-one work on footwork. Check in with Max after his absence.',
   },
@@ -57,6 +57,12 @@ const STEPS: WrapUpStep[] = [
     question: 'What should the focus be for the next session?',
     hint: 'What would make the next session most valuable for this group?',
     placeholder: 'Serve placement and consistency under pressure. Build on today\'s forehand work.',
+  },
+  {
+    key: 'followup',
+    question: 'Any parent or director follow-up needed?',
+    hint: 'Flag anything that needs to be communicated to a parent or actioned by the director.',
+    placeholder: 'No follow-up needed / Emma\'s parent asked about schedule changes / Director should know about the court issue',
   },
 ]
 
@@ -316,13 +322,17 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
             <Check className="w-7 h-7 text-status-green" />
           </div>
           <div className="text-center space-y-1.5">
-            <p className="text-base font-semibold text-text-primary">Wrap-up saved</p>
+            <p className="text-base font-semibold text-text-primary">Session wrap-up submitted</p>
             <p className="text-sm text-text-muted">
-              Your recap has been saved for director review. Nothing official has been changed.
+              Your recap is in the director review queue. Nothing official has been changed.
             </p>
-            {observationsSaved !== null && observationsSaved > 0 && (
+            {observationsSaved !== null && observationsSaved > 0 ? (
               <p className="text-xs text-status-green">
-                {observationsSaved} player observation draft{observationsSaved !== 1 ? 's' : ''} submitted for director review.
+                {observationsSaved} player observation draft{observationsSaved !== 1 ? 's' : ''} sent for director review.
+              </p>
+            ) : (
+              <p className="text-xs text-text-muted">
+                No player observation drafts were created.
               </p>
             )}
             {observationsError && (
@@ -698,10 +708,10 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
               className="btn-lime flex items-center gap-1.5 text-sm px-4 py-2 disabled:opacity-50"
             >
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              {isPending ? 'Saving…' : 'Save Wrap-Up'}
+              {isPending ? 'Submitting…' : 'Submit for Director Review'}
             </button>
           </div>
-          {/* Save as quick note — for incomplete wrap-ups */}
+          {/* Save partial wrap-up — for incomplete flows */}
           {answers.filter(a => a.trim()).length < STEPS.length && (
             <p className="text-[10px] text-text-muted text-center">
               Only answered some questions?{' '}
@@ -711,9 +721,9 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
                 onClick={handleSave}
                 className="text-lime underline disabled:opacity-40"
               >
-                Save as quick note
+                Save what you have
               </button>
-              {' '}— saves what you have.
+              {' '}— submits your partial recap.
             </p>
           )}
         </div>

@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-08 — Sprint 156: Coach Wrap-Up UX Consolidation
+
+Unifies the coach end-of-session experience around one primary CTA. "Wrap Up Session" is the obvious primary action; "Quick Note" is clearly demoted with microcopy. Wrap-up flow adds a follow-up question and uses coach-friendly copy throughout. Confirmation state explicitly reports observation draft count.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Added 7th guided step ("Any parent or director follow-up needed?"), changed submit button copy to "Submit for Director Review", updated confirmation to "Session wrap-up submitted" with explicit observation count (including "No player observation drafts were created" when 0), changed "Save as quick note" link to "Save what you have". Updated step 2 and step 4 question copy to match sprint spec.
+- `src/app/coach/sessions/[sessionId]/CoachSessionActions.tsx` — Added microcopy below "Quick Note" button: "Quick Note is an informal internal capture — not a session recap. Use Wrap Up Session to submit your end-of-session review."
+- `src/app/coach/sessions/[sessionId]/CoachRecapCommandPanel.tsx` — Renamed section header from "QUICK NOTE" to "QUICK INTERNAL NOTE". Updated subtitle to clarify informal vs. structured recap distinction.
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Improved "After Session" section: removed confusing right-justified microcopy, replaced with inline label explaining the Wrap Up → director review flow. Added "Or, add a quick internal note" section label above `CoachRecapCommandPanel` to visually subordinate it.
+
+**Guardrails confirmed:** No schema changes. No backend changes. Player observations still route through proposed_actions. No AI, no voice, no parent exposure. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 155: Approved Evidence → Development Summary Draft
 
 Adds a director-triggered flow to assemble a development summary draft from recent internal coach observations. The draft is routed through `proposed_actions` for director review and apply — nothing writes to `player_development_summary` automatically.

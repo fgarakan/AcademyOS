@@ -97,9 +97,10 @@ export function CoachRecapCommandPanel({
   return (
     <Card>
       <CardHeader>
-        <SectionHeader title="QUICK NOTE" />
+        <SectionHeader title="QUICK INTERNAL NOTE" />
         <p className="text-xs text-text-muted mt-1">
-          Leave a quick note about anything you want to flag. For a full end-of-session debrief, use the guided Wrap-Up above.
+          Informal notes for yourself or the director — saved but not structured.
+          For your end-of-session debrief, use <span className="text-text-secondary font-medium">Wrap Up Session</span> above.
         </p>
       </CardHeader>
       <CardContent className="pt-0 space-y-3">

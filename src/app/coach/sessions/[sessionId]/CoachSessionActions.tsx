@@ -31,7 +31,7 @@ export function CoachSessionActions({ sessionId, academyId, sessionName, blocks,
         Wrap Up Session
       </button>
 
-      {/* Secondary — Quick Note */}
+      {/* Secondary — Quick Note (informal capture, not a session recap) */}
       <button
         onClick={() => setCaptureOpen(true)}
         className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium text-text-secondary border border-border hover:border-lime/30 hover:text-text-primary transition-colors"
@@ -39,6 +39,10 @@ export function CoachSessionActions({ sessionId, academyId, sessionName, blocks,
         <Plus className="w-3.5 h-3.5" />
         Quick Note
       </button>
+      <p className="text-[10px] text-text-muted text-center leading-snug">
+        Quick Note is an informal internal capture — not a session recap.
+        Use <span className="text-text-secondary">Wrap Up Session</span> to submit your end-of-session review.
+      </p>
 
       <QuickCaptureDrawer
         open={captureOpen}

@@ -323,15 +323,13 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* ── After Session ── wrap-up and quick note */}
+      {/* ── After Session ── primary: Wrap Up Session ── */}
       <section>
-        <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
-          <p className="label-xs">After Session</p>
-          <p className="text-[10px] text-text-muted">
-            Quick Note = fast capture during or after class.
-            Coach Wrap-Up = structured end-of-session review.
-          </p>
-        </div>
+        <p className="label-xs mb-1">After Session</p>
+        <p className="text-[11px] text-text-muted mb-3">
+          Use <span className="text-text-secondary font-medium">Wrap Up Session</span> for your structured end-of-session recap.
+          Player observations go directly to the director review queue.
+        </p>
         <CoachSessionActions
           sessionId={session.id}
           academyId={academyId}
@@ -341,17 +339,20 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         />
       </section>
 
-      {/* Inline Quick Note panel */}
-      <CoachRecapCommandPanel
-        sessionId={session.id}
-        sessionName={session.name ?? 'Untitled Session'}
-        completedCount={completedCount}
-        totalCount={totalExercises}
-        attendanceSummary={attendanceSummary}
-        initialRecap={initialRecap}
-        saveRecapAction={saveSessionRecapAction}
-        structureRecapAction={structureCoachRecapAction}
-      />
+      {/* Secondary: quick internal note — informal, not a session recap */}
+      <section>
+        <p className="label-xs mb-3 text-text-muted">Or, add a quick internal note</p>
+        <CoachRecapCommandPanel
+          sessionId={session.id}
+          sessionName={session.name ?? 'Untitled Session'}
+          completedCount={completedCount}
+          totalCount={totalExercises}
+          attendanceSummary={attendanceSummary}
+          initialRecap={initialRecap}
+          saveRecapAction={saveSessionRecapAction}
+          structureRecapAction={structureCoachRecapAction}
+        />
+      </section>
 
       {roster.length > 0 && (
         <CoachSessionGapBriefPanel
