@@ -247,37 +247,66 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         {templateName && (
           <p className="text-xs text-text-muted mt-0.5">From template: {templateName}</p>
         )}
+
+        {/* Block progress rail */}
+        {blockList.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {blockList.map((block, i) => (
+              <span
+                key={block.id}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-raised border border-border text-[10px] text-text-secondary"
+              >
+                <span className="font-mono text-[9px] text-lime">{i + 1}</span>
+                {block.name}
+                {block.duration_min != null && (
+                  <span className="text-[9px] text-text-muted">{block.duration_min}m</span>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* ── Before Session ── what to coach today */}
+      {session.template_id && (
+        <section>
+          <p className="label-xs mb-3">Before Session</p>
+          <CoachSessionCurriculumPanel templateId={session.template_id} />
+        </section>
+      )}
 
       {/* Snapshot notice */}
       <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-lime/5 border border-lime/20 text-xs text-text-secondary">
         <Info className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
         <span>
-          This is a planned session snapshot. Coach execution updates are saved to the session only
-          and do not change the master template.
+          Execution updates are saved to this session only — the master template is not changed.
         </span>
       </div>
 
-      {blockList.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-text-muted text-sm">No blocks in this session.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <CoachSessionExecutionClient
-          sessionId={session.id}
-          initialStatus={session.status as 'planned' | 'in_progress' | 'completed' | 'cancelled'}
-          initialSessionNotes={session.session_notes ?? ''}
-          blocks={blockList}
-          exercises={exercises}
-          roster={roster}
-          saveAction={saveSessionExecutionAction}
-          saveAttendanceAction={saveAttendanceAction}
-        />
-      )}
+      {/* ── Run the Session ── blocks, exercises, attendance */}
+      <section>
+        <p className="label-xs mb-3">Run the Session</p>
+        {blockList.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center">
+              <p className="text-text-muted text-sm">No blocks in this session. Add blocks to the class template to see them here.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <CoachSessionExecutionClient
+            sessionId={session.id}
+            initialStatus={session.status as 'planned' | 'in_progress' | 'completed' | 'cancelled'}
+            initialSessionNotes={session.session_notes ?? ''}
+            blocks={blockList}
+            exercises={exercises}
+            roster={roster}
+            saveAction={saveSessionExecutionAction}
+            saveAttendanceAction={saveAttendanceAction}
+          />
+        )}
+      </section>
 
-      {/* Attendance completion prompt — shown before gap brief so coach sees it early */}
+      {/* Attendance completion prompt */}
       {roster.length > 0 && unmarkedAttendanceCount > 0 && (
         <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-status-orange/5 border border-status-orange/30">
           <AlertTriangle className="w-4 h-4 text-status-orange shrink-0 mt-0.5" />
@@ -286,25 +315,29 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
               {unmarkedAttendanceCount} player{unmarkedAttendanceCount !== 1 ? 's' : ''} not yet marked
             </p>
             <p className="text-xs text-text-muted mt-0.5">
-              Scroll up to mark attendance before wrapping up.
+              Mark attendance in the execution panel above before wrapping up.
             </p>
           </div>
         </div>
       )}
 
-      {/* Curriculum lesson plan for this session's template */}
-      {session.template_id && (
-        <CoachSessionCurriculumPanel templateId={session.template_id} />
-      )}
-
-      {/* Wrap Up / Quick Note — primary session CTAs before inline note panel */}
-      <CoachSessionActions
-        sessionId={session.id}
-        academyId={academyId}
-        sessionName={session.name ?? 'Untitled Session'}
-        blocks={blockList}
-        roster={roster}
-      />
+      {/* ── After Session ── wrap-up and quick note */}
+      <section>
+        <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+          <p className="label-xs">After Session</p>
+          <p className="text-[10px] text-text-muted">
+            Quick Note = fast capture during or after class.
+            Coach Wrap-Up = structured end-of-session review.
+          </p>
+        </div>
+        <CoachSessionActions
+          sessionId={session.id}
+          academyId={academyId}
+          sessionName={session.name ?? 'Untitled Session'}
+          blocks={blockList}
+          roster={roster}
+        />
+      </section>
 
       {/* Inline Quick Note panel */}
       <CoachRecapCommandPanel

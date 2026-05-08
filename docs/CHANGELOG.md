@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-08 — Sprint 144: Coach Session Guided Execution UX
+
+Restructures the coach session detail page into three clear phases and adds a block progress rail at the top of each session.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Adds block progress rail (named pills with block order, name, duration) in the session header. Moves `CoachSessionCurriculumPanel` ABOVE the execution client under a "Before Session" label (what to coach today). Reframes execution blocks under "Run the Session". Adds "After Session" section with Quick Note vs Coach Wrap-Up helper copy. Updates snapshot notice to shorter copy. Updates empty blocks state to include guidance.
+- `src/app/coach/sessions/[sessionId]/CoachSessionCurriculumPanel.tsx` — Updates empty state copy to: "Director has not applied a curriculum lesson plan yet. Run the session from the blocks below and add a wrap-up after class."
+
+**Guardrails confirmed:** No schema, no backend logic changes, no parent/player exposure. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 143: Lesson Plan Generation Guided Flow
 
 Adds a 4-step guided flow to the Lesson Plan Draft Generator panel so directors understand where they are in the generate → review → apply → session chain. Step states are derived from live component state (draft generated, applied) and the `hasCurriculumContent` prop.

@@ -81,8 +81,8 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
         </div>
         <Card>
           <CardContent className="py-4 text-center">
-            <p className="text-xs text-text-muted">No lesson plan has been applied to this session's template yet.</p>
-            <p className="text-[11px] text-text-muted mt-1">Directors can generate and apply a lesson plan from the class template settings.</p>
+            <p className="text-xs text-text-muted">Director has not applied a curriculum lesson plan yet.</p>
+            <p className="text-[11px] text-text-muted mt-1">Run the session from the blocks below and add a wrap-up after class.</p>
           </CardContent>
         </Card>
       </div>
