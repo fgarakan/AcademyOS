@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-08 — Sprint 151: Demo Dataset Setup
+
+Docs-only sprint. Creates a comprehensive demo story and dataset setup guide.
+
+**Files created:**
+- `docs/DEMO_DATASET_SETUP.md` — Two-path demo guide: (A) automated sandbox via `/director/demo`, (B) 11-step manual demo story with character bios (Mia, Sophie, Leo), script copy for each step, talking-point cheat sheet, and "what NOT to demo" list. Covers the full loop: import → levels → curriculum → template → lesson plan → session → coach execution → wrap-up → director review.
+
+**Guardrails confirmed:** Docs only. No code changes, no schema changes. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 150: Launch Readiness UX Audit
 
 Docs-only sprint. Creates two launch-readiness documents for the V1 pilot.
