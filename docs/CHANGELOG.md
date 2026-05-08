@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-08 — Sprint 141: Curriculum Customization Assistant UX V1
+
+Adds a guided curriculum customization experience to the Director Curriculum page. Directors now see a clear explanation of what the curriculum is, how customization works, what the three layers mean, and plain-language definitions for all curriculum terms — before they engage with any of the technical controls.
+
+**Files created:**
+- `src/components/onboarding/PageExplainerCard.tsx` — Reusable server component. Accepts a title, body, and optional Q&A items. Renders a lime-bordered context card with a 2-column Q&A grid. No state, no client JS.
+- `src/components/curriculum/CurriculumCustomizationAssistant.tsx` — Client component with three sections: (1) three-layer distinction card (Global curriculum / Academy version / Session plan), (2) 5-step customization process with "Preview only" note and "Start customization preview ↓" anchor link, (3) collapsible plain-language glossary (8 terms: curriculum level, gate, domain, drill, game, situational, match-play theme, academy override).
+
+**Files modified:**
+- `src/app/director/curriculum/page.tsx` — Imports PageExplainerCard and CurriculumCustomizationAssistant. Renders PageExplainerCard after the page header with 5 Q&A entries. Renders CurriculumCustomizationAssistant before the curriculum explorer. Adds `id="curriculum-explorer"` to the explorer section so the anchor link scrolls correctly.
+
+**Guardrails confirmed:**
+- UI-only scaffolding — no migrations, no schema, no database.types.ts edits
+- No curriculum override records created
+- No save/apply logic added
+- No teaching philosophy saved
+- No parent/player exposure changes
+- No coach or lesson plan logic touched
+- No AI, no service role
+- TypeScript: clean
+
+---
+
 ## 2026-05-08 — Sprint 140: Director First-Time Setup Wizard V1
 
 Adds a collapsible, dismissible setup checklist to the Director Command Center dashboard. Shows new directors the 7-step path from "empty academy" to "curriculum live and coaches equipped". Progress is tracked via server-side boolean props; dismiss/collapse state is persisted to localStorage only (no schema changes).

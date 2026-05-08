@@ -7,6 +7,8 @@ import { CurriculumExplorer } from '@/components/curriculum/CurriculumExplorer'
 import { CurriculumDemoFlowPanel } from '@/components/curriculum/CurriculumDemoFlowPanel'
 import { AcademyCurriculumVersionCard } from './AcademyCurriculumVersionCard'
 import { VoiceOverrideInputPanel } from './VoiceOverrideInputPanel'
+import { PageExplainerCard } from '@/components/onboarding/PageExplainerCard'
+import { CurriculumCustomizationAssistant } from '@/components/curriculum/CurriculumCustomizationAssistant'
 
 export default async function DirectorCurriculumPage() {
   const supabase = await getSupabaseServer()
@@ -92,8 +94,39 @@ export default async function DirectorCurriculumPage() {
         </p>
       </div>
 
+      {/* Page context card */}
+      <PageExplainerCard
+        title="Customize your academy curriculum"
+        body="Academy OS starts with a global development spine. You can review each level, understand the gates, and later create academy-specific adjustments without changing the global default."
+        qa={[
+          {
+            q: 'What is this page?',
+            a: 'A read-only view of the Academy OS global curriculum — 15 levels, evidence-based gates, drills, and coach language.',
+          },
+          {
+            q: 'Why does it matter?',
+            a: 'The curriculum defines what players learn, in what order, and what evidence shows they are ready to advance.',
+          },
+          {
+            q: 'What should I do first?',
+            a: 'Explore one level — try Orange 1. Read the gates, browse the drills, and check the coach language.',
+          },
+          {
+            q: 'What happens after customization?',
+            a: 'Academy adjustments live in your version. They flow into templates and sessions without touching the global spine.',
+          },
+          {
+            q: 'Safe to ignore for now?',
+            a: 'Academy overrides and the voice customization input. Review the curriculum first, then customize later.',
+          },
+        ]}
+      />
+
+      {/* Customization assistant — 5-step guide, three-layer distinction, glossary */}
+      <CurriculumCustomizationAssistant />
+
       {/* Premium Curriculum Explorer */}
-      <section className="space-y-4">
+      <section id="curriculum-explorer" className="space-y-4">
         <p className="label-xs">Global Curriculum Explorer</p>
         <CurriculumExplorer data={explorerData} />
       </section>
