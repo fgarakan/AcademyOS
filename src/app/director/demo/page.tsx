@@ -7,6 +7,107 @@ import { Card, CardContent } from '@/components/ui'
 import { getDemoSandboxStatusAction } from './demoSandboxActions'
 import { DemoSandboxControls } from './DemoSandboxControls'
 
+const DEMO_PATH = [
+  {
+    n: 1,
+    title: 'Import your roster',
+    desc: 'Upload players via CSV. Dry-run validates every row before a single record is written.',
+    href: '/director/players/import',
+    label: 'Player Import',
+  },
+  {
+    n: 2,
+    title: 'Review and activate players',
+    desc: 'Check onboarding status, review any import flags, and activate each player\'s profile.',
+    href: '/director/players',
+    label: 'Players',
+  },
+  {
+    n: 3,
+    title: 'Assign curriculum levels',
+    desc: 'Link each player to a development level. This drives lesson plans and the coach briefing.',
+    href: '/director/players',
+    label: 'Players → Curriculum',
+  },
+  {
+    n: 4,
+    title: 'Explore the curriculum',
+    desc: '15 levels, evidence-based gates, 152+ drills, and coaching language — all in one view.',
+    href: '/director/curriculum',
+    label: 'Curriculum',
+  },
+  {
+    n: 5,
+    title: 'Create a class template',
+    desc: 'Build a reusable session blueprint. Assign a curriculum level to unlock lesson plan generation.',
+    href: '/director/class-templates',
+    label: 'Class Templates',
+  },
+  {
+    n: 6,
+    title: 'Generate and apply a lesson plan',
+    desc: 'Use the AI draft generator to create a curriculum-aligned lesson plan. Review it, then apply.',
+    href: '/director/class-templates',
+    label: 'Class Templates → Draft',
+  },
+  {
+    n: 7,
+    title: 'Schedule a session',
+    desc: 'Create a session from the template. Assign a group. Coaches will see the curriculum brief.',
+    href: '/director/sessions',
+    label: 'Sessions',
+  },
+  {
+    n: 8,
+    title: 'Open the session as coach',
+    desc: '"Before Session" shows the curriculum plan. Run blocks, mark attendance, complete exercises.',
+    href: '/coach/sessions',
+    label: 'Coach Sessions',
+  },
+  {
+    n: 9,
+    title: 'Submit a coach wrap-up',
+    desc: 'After class, the coach writes a quick note. The OS structures it for director review.',
+    href: '/coach/sessions',
+    label: 'Coach Wrap-Up',
+  },
+  {
+    n: 10,
+    title: 'Review the wrap-up as director',
+    desc: 'Structured coach notes land in the Review Queue. Approve, adjust, or flag for follow-up.',
+    href: '/director/review',
+    label: 'Review Queue',
+  },
+  {
+    n: 11,
+    title: 'Close the loop',
+    desc: 'Insights feed back to player profiles. The curriculum adjusts. Each loop makes the next one sharper.',
+    href: '/director/players',
+    label: 'Back to Players',
+  },
+]
+
+function DemoPathRow({ step }: { step: typeof DEMO_PATH[number] }) {
+  return (
+    <Link href={step.href} className="group block">
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-border bg-surface-raised hover:border-lime/30 transition-colors">
+        <span className="flex-none w-6 h-6 rounded-full bg-lime/10 text-lime text-[11px] font-bold flex items-center justify-center border border-lime/20 shrink-0 mt-0.5">
+          {step.n}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-text-primary group-hover:text-lime transition-colors truncate">{step.title}</p>
+            <span className="text-[10px] text-text-muted shrink-0 group-hover:text-lime transition-colors hidden sm:block">
+              {step.label} →
+            </span>
+          </div>
+          <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">{step.desc}</p>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 function SandboxBanner() {
   return (
     <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-lime/5 border border-lime/20">
@@ -54,6 +155,19 @@ export default async function DemoTourPage() {
       </div>
 
       <SandboxBanner />
+
+      {/* ============================================================
+          Section 0 — 11-Step Demo Path
+          ============================================================ */}
+      <div className="space-y-3">
+        <p className="label-xs">11-Step Demo Path</p>
+        <p className="text-xs text-text-muted">Follow these steps in order to demonstrate the full Academy OS loop.</p>
+        <div className="space-y-2">
+          {DEMO_PATH.map((step) => (
+            <DemoPathRow key={step.n} step={step} />
+          ))}
+        </div>
+      </div>
 
       {/* ============================================================
           Section 1 — Sandbox Status

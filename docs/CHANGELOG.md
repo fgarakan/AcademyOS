@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-08 — Sprint 149: End-to-End Guided Demo Polish
+
+Adds an 11-step guided demo path to the existing demo tour page, making the full Academy OS lifecycle navigable in one place.
+
+**Files modified:**
+- `src/app/director/demo/page.tsx` — Adds `DEMO_PATH` constant (11 steps: import → activate → assign levels → curriculum → class template → lesson plan → session → coach pre-session → wrap-up → director review → close the loop). Adds `DemoPathRow` sub-component — a clickable row with step number badge, title, description, and label-with-arrow. Inserts the full 11-step list as "Section 0" above the existing sandbox controls, with a `label-xs` header and subtitle copy.
+
+**Guardrails confirmed:** No schema changes, no mutations, no new data fetches. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 148: Visual Flow Diagrams and Light Motion
 
 Adds three visual components — a curriculum loop diagram, an attendance sparkline, and a progress ring — wired into real data on existing pages.
