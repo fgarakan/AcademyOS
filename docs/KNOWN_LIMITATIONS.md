@@ -1,6 +1,6 @@
 # Known Limitations
 
-**Last updated:** 2026-05-06
+**Last updated:** 2026-05-08
 
 This file documents what is currently broken, missing, or intentionally incomplete.
 These are not bugs to fix immediately — they are known gaps that future sessions should be aware of.
@@ -426,6 +426,20 @@ These are not bugs to fix immediately — they are known gaps that future sessio
     )
   ORDER BY indexname;
   -- Expect: 7 rows
+  ```
+
+### `curriculum_class_template_blocks` — migration 062 pending live application (Sprint 129)
+
+- **Status:** Migration `062_class_template_content_junction.sql` creates the `curriculum_class_template_blocks` table. **Must be applied to the live Supabase database before Sprint 130 seeding or Sprint 131 UI can read curriculum content.**
+- **Impact until applied:** Queries against `curriculum_class_template_blocks` will return a "relation does not exist" error. The class template detail page will not yet show curriculum content (Sprint 131 not yet built).
+- **Fix:** Open Supabase → SQL Editor, paste the full contents of `supabase/migrations/062_class_template_content_junction.sql`, and Run.
+- **Verification:**
+  ```sql
+  SELECT tablename FROM pg_tables WHERE tablename = 'curriculum_class_template_blocks';
+  -- Expect: 1 row
+
+  SELECT policyname FROM pg_policies WHERE tablename = 'curriculum_class_template_blocks' ORDER BY policyname;
+  -- Expect: "Directors manage curriculum class template blocks", "Staff see curriculum class template blocks"
   ```
 
 ### Class template blocks show fitness exercises — root cause identified (Sprint 127 audit)

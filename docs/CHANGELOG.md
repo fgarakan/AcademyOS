@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-08 — Sprint 129: Class Template Curriculum Content Junction Table
+
+Additive schema migration only. No app code changed. No UI changed. No Fitness OS changes.
+
+**Files created:**
+- `supabase/migrations/062_class_template_content_junction.sql` — Creates `curriculum_class_template_blocks` junction table linking class template blocks to `curriculum_content_items` or `curriculum_drills`. Includes RLS (staff read, director/head manage), 5 indexes, and updated_at trigger. Constraint ensures exactly one of `content_item_id` or `drill_id` is non-null.
+
+**Guardrails confirmed:**
+- `template_block_exercises` and `exercises` untouched (Fitness OS unaffected)
+- RLS on new table scoped to `academy_id` via templates join
+- No parent/player policies
+- No app code changes
+- No database.types.ts edits (regenerate after live apply)
+- No seed data (Sprint 130)
+
+**TypeScript:** clean (SQL-only sprint).
+
+**Requires manual SQL application to live Supabase before Sprint 130 seeding works.**
+
+---
+
 ## 2026-05-08 — Sprint 128: Curriculum Content Taxonomy Migration
 
 Additive schema migration only. No app code changed. No UI changed. No seed data. No Fitness OS changes.
