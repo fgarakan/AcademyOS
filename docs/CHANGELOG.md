@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-08 — Sprint 159: Director Review Queue Command Center
+
+Clarity sprint — makes the director review queue feel like a command center. No backend changes, no new workflows, no migrations. Only `page.tsx` modified.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — Reordered tabs: Attendance → Placement Review → Player Observations → Dev Summaries → Session Wrap-Ups → Session Recaps → Priorities → Evidence → Curriculum → Voice Intake → Captures. Updated `defaultTab` priority order to match (operational tabs first). Replaced flat per-category summary strip in `PageHeader` with a 4-group command-center grid: Operations (Attendance, Placement Review), Player Development (Observations, Dev Summaries, Priorities, Evidence), Session Review (Wrap-Ups, Recaps), System (Curriculum, Voice Intake, Captures). Added `CategoryRow` helper function — shows label, pending count (orange), ready count (lime), oldest age when pending. Added one-sentence "what this affects" microcopy at the top of each `TabsContent`. Improved empty state descriptions to clarify where each draft type originates.
+
+**Guardrails confirmed:** No migrations. No schema changes. No new components. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 158: Director Attendance Exception Apply Flow
 
 Closes the director-side apply loop for coach wrap-up attendance exceptions. The existing `applyApprovedAttendanceExceptionAction` previously failed with "No attendance rows to apply" when `rostered_attendance: []` (the exact shape coach wrap-up produces). This sprint fixes that failure and routes unrostered attendees through a safe placement review follow-up pipeline. No player profile, roster change, billing, or parent communication is created automatically.

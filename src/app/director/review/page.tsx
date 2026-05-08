@@ -766,20 +766,20 @@ export default async function DirectorReviewQueuePage() {
     captures: generalCaptures.at(-1)?.createdAt ?? null,
   }
 
-  // Compute default tab — first category with pending items, fallback to session_recaps
+  // Compute default tab — operational tabs take priority, fallback to attendance
   const defaultTab = [
+    { value: 'attendance', pending: pendingAttendanceDrafts.length },
+    { value: 'placement_review', pending: enrichedPlacementReviews.length },
+    { value: 'player_observations', pending: pendingObservationDrafts.length },
+    { value: 'development_summaries', pending: pendingSummaryDrafts.length },
+    { value: 'wrap_ups', pending: pendingWrapUpDrafts.length },
     { value: 'session_recaps', pending: pendingDrafts.length },
     { value: 'priorities', pending: pendingPriorityDrafts.length },
     { value: 'evidence', pending: pendingEvidenceDrafts.length },
-    { value: 'attendance', pending: pendingAttendanceDrafts.length },
     { value: 'curriculum', pending: pendingCurriculumOverrideDrafts.length },
     { value: 'voice_intake', pending: pendingVoiceIntakeDrafts.length },
-    { value: 'wrap_ups', pending: pendingWrapUpDrafts.length },
-    { value: 'player_observations', pending: pendingObservationDrafts.length },
-    { value: 'development_summaries', pending: pendingSummaryDrafts.length },
-    { value: 'placement_review', pending: enrichedPlacementReviews.length },
     { value: 'captures', pending: generalCaptures.length },
-  ].find(t => t.pending > 0)?.value ?? 'session_recaps'
+  ].find(t => t.pending > 0)?.value ?? 'attendance'
 
   return (
     <div className="animate-fade-in p-6 space-y-6">
@@ -824,6 +824,41 @@ export default async function DirectorReviewQueuePage() {
 
       <Tabs defaultValue={defaultTab}>
         <TabsList scrollable>
+          <TabsTrigger value="attendance">
+            <TabLabel
+              label="Attendance"
+              pending={pendingAttendanceDrafts.length}
+              ready={approvedAttendanceDrafts.length}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="placement_review">
+            <TabLabel
+              label="Placement Review"
+              pending={enrichedPlacementReviews.length}
+              ready={0}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="player_observations">
+            <TabLabel
+              label="Player Observations"
+              pending={pendingObservationDrafts.length}
+              ready={approvedObservationDrafts.length}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="development_summaries">
+            <TabLabel
+              label="Dev Summaries"
+              pending={pendingSummaryDrafts.length}
+              ready={approvedSummaryDrafts.length}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="wrap_ups">
+            <TabLabel
+              label="Session Wrap-Ups"
+              pending={pendingWrapUpDrafts.length}
+              ready={approvedWrapUpDrafts.length}
+            />
+          </TabsTrigger>
           <TabsTrigger value="session_recaps">
             <TabLabel
               label="Session Recaps"
@@ -845,13 +880,6 @@ export default async function DirectorReviewQueuePage() {
               ready={approvedEvidenceDrafts.length}
             />
           </TabsTrigger>
-          <TabsTrigger value="attendance">
-            <TabLabel
-              label="Attendance"
-              pending={pendingAttendanceDrafts.length}
-              ready={approvedAttendanceDrafts.length}
-            />
-          </TabsTrigger>
           <TabsTrigger value="curriculum">
             <TabLabel
               label="Curriculum"
@@ -866,34 +894,6 @@ export default async function DirectorReviewQueuePage() {
               ready={approvedVoiceIntakeDrafts.length}
             />
           </TabsTrigger>
-          <TabsTrigger value="wrap_ups">
-            <TabLabel
-              label="Session Wrap-Ups"
-              pending={pendingWrapUpDrafts.length}
-              ready={approvedWrapUpDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="player_observations">
-            <TabLabel
-              label="Player Observations"
-              pending={pendingObservationDrafts.length}
-              ready={approvedObservationDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="development_summaries">
-            <TabLabel
-              label="Dev Summaries"
-              pending={pendingSummaryDrafts.length}
-              ready={approvedSummaryDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="placement_review">
-            <TabLabel
-              label="Placement Review"
-              pending={enrichedPlacementReviews.length}
-              ready={0}
-            />
-          </TabsTrigger>
           <TabsTrigger value="captures">
             <TabLabel
               label="Captures"
@@ -903,131 +903,9 @@ export default async function DirectorReviewQueuePage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ─── Session Recaps tab ─── */}
-        <TabsContent value="session_recaps" className="pt-6 space-y-4">
-          {approvedDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedDrafts.map(draft => (
-                  <StructuredDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="space-y-3">
-            {approvedDrafts.length > 0 && pendingDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<ClipboardList className="w-5 h-5" />}
-                    title="No pending session recap drafts"
-                    description="When coaches save session recaps and directors structure them, they will appear here for review."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingDrafts.map(draft => (
-                  <StructuredDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            )}
-          </section>
-        </TabsContent>
-
-        {/* ─── Priorities tab ─── */}
-        <TabsContent value="priorities" className="pt-6 space-y-4">
-          {approvedPriorityDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedPriorityDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedPriorityDrafts.map(draft => (
-                  <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="space-y-3">
-            {approvedPriorityDrafts.length > 0 && pendingPriorityDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingPriorityDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<Target className="w-5 h-5" />}
-                    title="No pending priority recommendation drafts"
-                    description="Drafts created from player evidence will appear here for review."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingPriorityDrafts.map(draft => (
-                  <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            )}
-          </section>
-        </TabsContent>
-
-        {/* ─── Evidence tab ─── */}
-        <TabsContent value="evidence" className="pt-6 space-y-4">
-          {approvedEvidenceDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedEvidenceDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedEvidenceDrafts.map(draft => (
-                  <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="space-y-3">
-            {approvedEvidenceDrafts.length > 0 && pendingEvidenceDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingEvidenceDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<Link2 className="w-5 h-5" />}
-                    title="No pending evidence link drafts"
-                    description="Drafts created from player requirement pages will appear here for review."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingEvidenceDrafts.map(draft => (
-                  <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            )}
-          </section>
-        </TabsContent>
-
         {/* ─── Attendance tab ─── */}
         <TabsContent value="attendance" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">Records session attendance for rostered players. Approve to confirm the proposed changes, then apply to write to attendance records. Unexpected attendees create placement review follow-ups — no player is created automatically.</p>
           {approvedAttendanceDrafts.length > 0 && (
             <section className="space-y-3">
               <div className="flex items-center gap-2">
@@ -1053,7 +931,7 @@ export default async function DirectorReviewQueuePage() {
                   <EmptyState
                     icon={<Users className="w-5 h-5" />}
                     title="No pending attendance exception drafts"
-                    description="When coaches record attendance exceptions from sessions, they will appear here for review."
+                    description="When coaches flag unexpected attendees or record attendance exceptions, they appear here for review before any attendance is written."
                   />
                 </CardContent>
               </Card>
@@ -1067,82 +945,24 @@ export default async function DirectorReviewQueuePage() {
           </section>
         </TabsContent>
 
-        {/* ─── Curriculum tab ─── */}
-        <TabsContent value="curriculum" className="pt-6 space-y-4">
-          {approvedCurriculumOverrideDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedCurriculumOverrideDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedCurriculumOverrideDrafts.map(draft => (
-                  <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
-          )}
+        {/* ─── Placement Review tab ─── */}
+        <TabsContent value="placement_review" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">Unexpected attendees flagged by coaches during session wrap-up. No player profile, roster entry, billing, or parent communication has been created. Decide on next steps for each individual and mark reviewed.</p>
           <section className="space-y-3">
-            {approvedCurriculumOverrideDrafts.length > 0 && pendingCurriculumOverrideDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingCurriculumOverrideDrafts.length === 0 ? (
+            {enrichedPlacementReviews.length === 0 ? (
               <Card>
                 <CardContent className="py-12">
                   <EmptyState
-                    icon={<BookOpen className="w-5 h-5" />}
-                    title="No pending curriculum override drafts"
-                    description="Voice curriculum customizations typed on the Curriculum page will appear here for review."
+                    icon={<UserSearch className="w-5 h-5" />}
+                    title="No placement review items"
+                    description="When a director applies an attendance exception draft that includes unexpected attendees, follow-up items appear here for a decision on whether to onboard, waitlist, or decline."
                   />
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
-                {pendingCurriculumOverrideDrafts.map(draft => (
-                  <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            )}
-          </section>
-        </TabsContent>
-
-        {/* ─── Session Wrap-Ups tab ─── */}
-        <TabsContent value="wrap_ups" className="pt-6 space-y-4">
-          {approvedWrapUpDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedWrapUpDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedWrapUpDrafts.map(draft => (
-                  <WrapUpDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="space-y-3">
-            {approvedWrapUpDrafts.length > 0 && pendingWrapUpDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingWrapUpDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<ClipboardList className="w-5 h-5" />}
-                    title="No pending session wrap-up drafts"
-                    description="When coaches complete the guided wrap-up after a session, their summary will appear here for director review."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingWrapUpDrafts.map(draft => (
-                  <WrapUpDraftCard key={draft.id} draft={draft} />
+                {enrichedPlacementReviews.map(item => (
+                  <PlacementReviewCard key={item.id} item={item} />
                 ))}
               </div>
             )}
@@ -1151,6 +971,7 @@ export default async function DirectorReviewQueuePage() {
 
         {/* ─── Player Observations tab ─── */}
         <TabsContent value="player_observations" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">Coach notes on individual players submitted during session wrap-up. Not added to player profiles until you apply them. Not visible to players or parents.</p>
           {approvedObservationDrafts.length > 0 && (
             <section className="space-y-3">
               <div className="flex items-center gap-2">
@@ -1176,7 +997,7 @@ export default async function DirectorReviewQueuePage() {
                   <EmptyState
                     icon={<Users className="w-5 h-5" />}
                     title="No pending player observation drafts"
-                    description="When coaches complete a session wrap-up and add player notes, individual observation drafts will appear here for review before being applied to player profiles."
+                    description="When coaches add player notes during a session wrap-up, individual observation drafts appear here for director review before being applied to player profiles."
                   />
                 </CardContent>
               </Card>
@@ -1192,6 +1013,7 @@ export default async function DirectorReviewQueuePage() {
 
         {/* ─── Development Summaries tab ─── */}
         <TabsContent value="development_summaries" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">Director-assembled development summary updates built from recent observations. Applying overwrites the player's current development summary. Not visible to players or parents until applied.</p>
           {approvedSummaryDrafts.length > 0 && (
             <section className="space-y-3">
               <div className="flex items-center gap-2">
@@ -1231,58 +1053,219 @@ export default async function DirectorReviewQueuePage() {
           </section>
         </TabsContent>
 
-        {/* ─── Placement Review tab ─── */}
-        <TabsContent value="placement_review" className="pt-6 space-y-4">
-          <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border text-[11px] text-text-muted space-y-1">
-            <p className="font-medium text-text-secondary">Unexpected attendee follow-ups</p>
-            <p>
-              These items were created when a coach flagged an unexpected attendee during session wrap-up and a director applied the exception draft.
-              No player profile, roster entry, billing, or parent communication has been created.
-              Mark each one reviewed once you have decided on next steps.
-            </p>
-          </div>
+        {/* ─── Session Wrap-Ups tab ─── */}
+        <TabsContent value="wrap_ups" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">Guided coach recaps submitted after sessions. Review for accuracy, then approve and apply to record session actuals. Applying also creates individual player observation drafts.</p>
+          {approvedWrapUpDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Approved — Ready to Apply</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                  {approvedWrapUpDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {approvedWrapUpDrafts.map(draft => (
+                  <WrapUpDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
           <section className="space-y-3">
-            {enrichedPlacementReviews.length === 0 ? (
+            {approvedWrapUpDrafts.length > 0 && pendingWrapUpDrafts.length > 0 && (
+              <p className="label-xs">Pending Review</p>
+            )}
+            {pendingWrapUpDrafts.length === 0 ? (
               <Card>
                 <CardContent className="py-12">
                   <EmptyState
-                    icon={<UserSearch className="w-5 h-5" />}
-                    title="No placement review items"
-                    description="When a director applies an attendance exception draft that includes unexpected attendees, follow-up items appear here."
+                    icon={<ClipboardList className="w-5 h-5" />}
+                    title="No pending session wrap-up drafts"
+                    description="When coaches complete the guided wrap-up after a session, their summary appears here for director review before session actuals and player observations are recorded."
                   />
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
-                {enrichedPlacementReviews.map(item => (
-                  <PlacementReviewCard key={item.id} item={item} />
+                {pendingWrapUpDrafts.map(draft => (
+                  <WrapUpDraftCard key={draft.id} draft={draft} />
                 ))}
               </div>
             )}
           </section>
         </TabsContent>
 
-        {/* ─── Captures tab ─── */}
-        <TabsContent value="captures" className="pt-6 space-y-4">
+        {/* ─── Session Recaps tab ─── */}
+        <TabsContent value="session_recaps" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">AI-structured session recap drafts. Approve to confirm the proposed structure, then apply to write the structured data to the session record.</p>
+          {approvedDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Approved — Ready to Apply</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                  {approvedDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {approvedDrafts.map(draft => (
+                  <StructuredDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
           <section className="space-y-3">
-            {generalCaptures.length === 0 ? (
+            {approvedDrafts.length > 0 && pendingDrafts.length > 0 && (
+              <p className="label-xs">Pending Review</p>
+            )}
+            {pendingDrafts.length === 0 ? (
               <Card>
                 <CardContent className="py-12">
                   <EmptyState
-                    icon={<Inbox className="w-5 h-5" />}
-                    title="No unrouted captures"
-                    description="Quick captures made outside a player profile will appear here. Use the + Capture button anywhere in the director area to add one."
+                    icon={<ClipboardList className="w-5 h-5" />}
+                    title="No pending session recap drafts"
+                    description="When a coach saves a session recap and it is structured by AI, the draft appears here for review before being applied to the session record."
                   />
                 </CardContent>
               </Card>
             ) : (
-              <CapturesBatchPanel captures={generalCaptures} players={playerOptions} />
+              <div className="space-y-4">
+                {pendingDrafts.map(draft => (
+                  <StructuredDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+
+        {/* ─── Priorities tab ─── */}
+        <TabsContent value="priorities" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">Training priority recommendations for individual players. Approve to confirm, then apply to update a player's current focus areas. Not visible to players or parents until applied.</p>
+          {approvedPriorityDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Approved — Ready to Apply</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                  {approvedPriorityDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {approvedPriorityDrafts.map(draft => (
+                  <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
+          <section className="space-y-3">
+            {approvedPriorityDrafts.length > 0 && pendingPriorityDrafts.length > 0 && (
+              <p className="label-xs">Pending Review</p>
+            )}
+            {pendingPriorityDrafts.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <EmptyState
+                    icon={<Target className="w-5 h-5" />}
+                    title="No pending priority recommendation drafts"
+                    description="Priority recommendations are created from evidence on player profiles. They appear here for director approval before updating a player's focus areas."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingPriorityDrafts.map(draft => (
+                  <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+
+        {/* ─── Evidence tab ─── */}
+        <TabsContent value="evidence" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">Links connecting a performance moment to a curriculum requirement. Approve and apply to record evidence in the player's development record.</p>
+          {approvedEvidenceDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Approved — Ready to Apply</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                  {approvedEvidenceDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {approvedEvidenceDrafts.map(draft => (
+                  <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
+          <section className="space-y-3">
+            {approvedEvidenceDrafts.length > 0 && pendingEvidenceDrafts.length > 0 && (
+              <p className="label-xs">Pending Review</p>
+            )}
+            {pendingEvidenceDrafts.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <EmptyState
+                    icon={<Link2 className="w-5 h-5" />}
+                    title="No pending evidence link drafts"
+                    description="Evidence links are created from a player's requirement page. They appear here for director approval before being recorded in the player's development record."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingEvidenceDrafts.map(draft => (
+                  <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+
+        {/* ─── Curriculum tab ─── */}
+        <TabsContent value="curriculum" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">Curriculum override suggestions — changes to the standard training plan. Approve and apply to modify what the curriculum prescribes. Not visible to players or parents until applied.</p>
+          {approvedCurriculumOverrideDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Approved — Ready to Apply</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                  {approvedCurriculumOverrideDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {approvedCurriculumOverrideDrafts.map(draft => (
+                  <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
+          <section className="space-y-3">
+            {approvedCurriculumOverrideDrafts.length > 0 && pendingCurriculumOverrideDrafts.length > 0 && (
+              <p className="label-xs">Pending Review</p>
+            )}
+            {pendingCurriculumOverrideDrafts.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <EmptyState
+                    icon={<BookOpen className="w-5 h-5" />}
+                    title="No pending curriculum override drafts"
+                    description="Curriculum customizations created on the Curriculum page appear here for director approval before modifying the training plan."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingCurriculumOverrideDrafts.map(draft => (
+                  <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
             )}
           </section>
         </TabsContent>
 
         {/* ─── Voice Intake tab ─── */}
         <TabsContent value="voice_intake" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">Unresolved voice commands requiring a director decision. Approve to confirm intent, then execute to write to the relevant record. Nothing is written automatically.</p>
           {approvedVoiceIntakeDrafts.length > 0 && (
             <section className="space-y-3">
               <div className="flex items-center gap-2">
@@ -1308,12 +1291,32 @@ export default async function DirectorReviewQueuePage() {
                   <EmptyState
                     icon={<Mic className="w-5 h-5" />}
                     title="No pending voice intake drafts"
-                    description="When directors or coaches submit voice intake drafts from the Command Center or session pages, they will appear here for review."
+                    description="Voice commands submitted from the Command Center or session pages appear here for director review before any data is written."
                   />
                 </CardContent>
               </Card>
             ) : (
               <VoiceIntakeBatchPanel pending={pendingVoiceIntakeDrafts} />
+            )}
+          </section>
+        </TabsContent>
+
+        {/* ─── Captures tab ─── */}
+        <TabsContent value="captures" className="pt-6 space-y-4">
+          <p className="text-[10px] text-text-muted px-1">Unrouted quick-capture notes not yet assigned to a player. Route each one to a player profile or dismiss it — no data has been written yet.</p>
+          <section className="space-y-3">
+            {generalCaptures.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <EmptyState
+                    icon={<Inbox className="w-5 h-5" />}
+                    title="No unrouted captures"
+                    description="Quick captures made outside a player profile appear here. Use the + Capture button anywhere in the director area to add one."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <CapturesBatchPanel captures={generalCaptures} players={playerOptions} />
             )}
           </section>
         </TabsContent>
@@ -1396,20 +1399,6 @@ function PageHeader({
   const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + wrapUpPendingCount + observationPendingCount + summaryPendingCount + placementReviewCount + captureCount
   const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount + wrapUpApprovedCount + observationApprovedCount + summaryApprovedCount
 
-  const categories = [
-    { key: 'session_recaps', label: 'Session Recaps', pending: pendingCount, ready: approvedCount },
-    { key: 'priorities', label: 'Priorities', pending: priorityPendingCount, ready: priorityApprovedCount },
-    { key: 'evidence', label: 'Evidence', pending: evidencePendingCount, ready: evidenceApprovedCount },
-    { key: 'attendance', label: 'Attendance', pending: attendancePendingCount, ready: attendanceApprovedCount },
-    { key: 'curriculum', label: 'Curriculum', pending: curriculumOverridePendingCount, ready: curriculumOverrideApprovedCount },
-    { key: 'voice_intake', label: 'Voice Intake', pending: voiceIntakePendingCount, ready: voiceIntakeApprovedCount },
-    { key: 'wrap_ups', label: 'Session Wrap-Ups', pending: wrapUpPendingCount, ready: wrapUpApprovedCount },
-    { key: 'player_observations', label: 'Player Observations', pending: observationPendingCount, ready: observationApprovedCount },
-    { key: 'development_summaries', label: 'Dev Summaries', pending: summaryPendingCount, ready: summaryApprovedCount },
-    { key: 'placement_review', label: 'Placement Review', pending: placementReviewCount, ready: 0 },
-    { key: 'captures', label: 'Captures', pending: captureCount, ready: 0 },
-  ]
-
   return (
     <div className="space-y-4">
       <div>
@@ -1432,31 +1421,70 @@ function PageHeader({
         </p>
       </div>
 
-      {/* Per-category summary strip */}
-      <div className="flex flex-wrap gap-4 px-4 py-3 rounded-xl bg-surface-raised border border-border">
-        {categories.map(cat => {
-          const oldest = oldestPendingDates[cat.key] ?? null
-          return (
-            <div key={cat.label} className="min-w-[80px]">
-              <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">{cat.label}</p>
-              <div className="flex flex-col gap-0.5">
-                {cat.pending > 0 ? (
-                  <>
-                    <span className="text-xs font-mono font-semibold text-status-orange">{cat.pending} pending</span>
-                    {oldest && (
-                      <span className="text-[9px] text-text-muted">{relativeAge(oldest)}</span>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-xs font-mono text-text-muted">—</span>
-                )}
-                {cat.ready > 0 && (
-                  <span className="text-xs font-mono font-semibold text-lime">{cat.ready} ready</span>
-                )}
-              </div>
-            </div>
-          )
-        })}
+      {/* Command center overview — grouped by workflow area */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-2">
+          <p className="text-[9px] uppercase tracking-widest text-status-orange/80 font-semibold">Operations</p>
+          <div className="space-y-1.5">
+            <CategoryRow label="Attendance" pending={attendancePendingCount} ready={attendanceApprovedCount} oldest={oldestPendingDates['attendance']} />
+            <CategoryRow label="Placement Review" pending={placementReviewCount} ready={0} oldest={oldestPendingDates['placement_review']} />
+          </div>
+        </div>
+        <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-2">
+          <p className="text-[9px] uppercase tracking-widest text-text-muted font-semibold">Player Development</p>
+          <div className="space-y-1.5">
+            <CategoryRow label="Observations" pending={observationPendingCount} ready={observationApprovedCount} oldest={oldestPendingDates['player_observations']} />
+            <CategoryRow label="Dev Summaries" pending={summaryPendingCount} ready={summaryApprovedCount} oldest={oldestPendingDates['development_summaries']} />
+            <CategoryRow label="Priorities" pending={priorityPendingCount} ready={priorityApprovedCount} oldest={oldestPendingDates['priorities']} />
+            <CategoryRow label="Evidence" pending={evidencePendingCount} ready={evidenceApprovedCount} oldest={oldestPendingDates['evidence']} />
+          </div>
+        </div>
+        <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-2">
+          <p className="text-[9px] uppercase tracking-widest text-text-muted font-semibold">Session Review</p>
+          <div className="space-y-1.5">
+            <CategoryRow label="Wrap-Ups" pending={wrapUpPendingCount} ready={wrapUpApprovedCount} oldest={oldestPendingDates['wrap_ups']} />
+            <CategoryRow label="Recaps" pending={pendingCount} ready={approvedCount} oldest={oldestPendingDates['session_recaps']} />
+          </div>
+        </div>
+        <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-2">
+          <p className="text-[9px] uppercase tracking-widest text-text-muted font-semibold">System</p>
+          <div className="space-y-1.5">
+            <CategoryRow label="Curriculum" pending={curriculumOverridePendingCount} ready={curriculumOverrideApprovedCount} oldest={oldestPendingDates['curriculum']} />
+            <CategoryRow label="Voice Intake" pending={voiceIntakePendingCount} ready={voiceIntakeApprovedCount} oldest={oldestPendingDates['voice_intake']} />
+            <CategoryRow label="Captures" pending={captureCount} ready={0} oldest={oldestPendingDates['captures']} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CategoryRow({
+  label,
+  pending,
+  ready,
+  oldest,
+}: {
+  label: string
+  pending: number
+  ready: number
+  oldest: string | null | undefined
+}) {
+  return (
+    <div className="flex items-center justify-between gap-1 min-w-0">
+      <p className="text-[9px] text-text-muted truncate">{label}</p>
+      <div className="flex items-center gap-1 shrink-0">
+        {pending > 0 ? (
+          <span className="text-[9px] font-mono font-semibold text-status-orange">{pending}</span>
+        ) : (
+          <span className="text-[9px] font-mono text-border">—</span>
+        )}
+        {ready > 0 && (
+          <span className="text-[9px] font-mono font-semibold text-lime ml-1">{ready}↑</span>
+        )}
+        {pending > 0 && oldest && (
+          <span className="text-[9px] text-text-muted ml-0.5">· {relativeAge(oldest)}</span>
+        )}
       </div>
     </div>
   )
