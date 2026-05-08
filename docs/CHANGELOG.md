@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-08 — Sprint 140: Director First-Time Setup Wizard V1
+
+Adds a collapsible, dismissible setup checklist to the Director Command Center dashboard. Shows new directors the 7-step path from "empty academy" to "curriculum live and coaches equipped". Progress is tracked via server-side boolean props; dismiss/collapse state is persisted to localStorage only (no schema changes).
+
+**Files created:**
+- `src/components/onboarding/SetupProgressChecklist.tsx` — Client component with 7 setup steps, lime progress bar, CheckCircle2/Circle icons, CTA links, and "Unlocks:" microcopy for incomplete steps. SSR-safe via `mounted` state. Dismiss key: `acos_setup_checklist_dismissed`. Collapse key: `acos_setup_checklist_collapsed`.
+
+**Files modified:**
+- `src/app/director/page.tsx` — Adds two lightweight data queries (`classTemplateCount` from non-fitness templates, `sessionsExist` from any session ever created). Imports and renders `SetupProgressChecklist` after the header, before "Today's Priorities".
+
+**Guardrails confirmed:**
+- UI-only — no migrations, no schema changes, no database.types.ts edits
+- No parent/player data exposed
+- No coach workflow changes
+- No AI or external API calls
+- localStorage-only persistence
+- TypeScript: clean
+
+---
+
 ## 2026-05-08 — Sprint 138: Investor / Academy Owner Demo Hardening
 
 Polish pass on the curriculum feature set (Sprints 129–137) to ensure a clean end-to-end demo path.

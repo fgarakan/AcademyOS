@@ -14,6 +14,7 @@ import {
 } from '@/components/ui'
 import { urgencyToLabel } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
+import { SetupProgressChecklist } from '@/components/onboarding/SetupProgressChecklist'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -169,6 +170,23 @@ export default async function DirectorDashboard() {
     .eq('status', 'pending_review')
   const pendingWrapUpsCount = (pendingWrapUpData ?? []).length
 
+  // Checklist: class template count (non-fitness)
+  const { data: templateCheckData } = await rawDb
+    .from('templates')
+    .select('id, tags')
+    .eq('academy_id', academyId)
+    .limit(20)
+  const classTemplateCount = ((templateCheckData ?? []) as Array<{ id: string; tags: string[] | null }>)
+    .filter((t) => !(t.tags ?? []).includes('fitness_template:true')).length
+
+  // Checklist: any session ever created
+  const { data: anySessionData } = await supabase
+    .from('sessions')
+    .select('id')
+    .eq('academy_id', academyId)
+    .limit(1)
+  const sessionsExist = (anySessionData ?? []).length > 0
+
   // Deterministic alert count
   const missingFocus = activePl.filter(p => !p.focus_areas || p.focus_areas.length === 0).length
   const reassessmentDue = reassessmentPipeline.filter(
@@ -195,6 +213,14 @@ export default async function DirectorDashboard() {
           Players
         </Link>
       </div>
+
+      {/* ── Setup Checklist ───────────────────────────────── */}
+      <SetupProgressChecklist
+        playersExist={players.length > 0}
+        curriculumLevelsAssigned={playersWithLevel > 0}
+        templatesExist={classTemplateCount > 0}
+        sessionsExist={sessionsExist}
+      />
 
       {/* ── Today's Priorities ────────────────────────────── */}
       <div>
