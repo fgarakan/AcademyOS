@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-08 — Sprint 130: Orange 1 Foundation Content Seed
+
+Seeds 46 curriculum content items for Orange 1 — Rally (global defaults, academy_id NULL).
+
+**Files created:**
+- `supabase/migrations/063_orange1_foundation_content_seed.sql` — Seeds 46 rows covering warmups (2), technical drills (6), tactical games (5), situationals (5), match-play themes (4), mental skills (4), competition behaviors (3), coach cues/internal (5), success criteria/internal (3), progressions (3), regressions (3), player_mission (2), parent_guidance (2). All rows have `is_player_visible = false` and `is_parent_visible = false`. Uses `ON CONFLICT DO NOTHING` for idempotent re-runs. Level resolved via `stage = 'orange_development' AND level_number = 1`.
+
+**Guardrails confirmed:**
+- No parent/player portal exposure (all visibility flags false)
+- No app code changes
+- No database.types.ts edits
+- Fitness OS untouched
+- Idempotent seed — safe to re-run
+
+**TypeScript:** clean (SQL-only sprint).
+
+**Requires manual SQL application:** Apply migrations 061 and 062 to live DB first, then apply 063.
+
+---
+
 ## 2026-05-08 — Sprint 129: Class Template Curriculum Content Junction Table
 
 Additive schema migration only. No app code changed. No UI changed. No Fitness OS changes.
