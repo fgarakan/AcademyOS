@@ -49,6 +49,7 @@ export function CoachObservationsFeed({ observations, onSelectForDraft }: Props)
     <div className="space-y-3">
       {observations.map(obs => {
         const isFromRecap = obs.ai_entities?.source === 'session_recap_draft'
+        const isFromWrapUp = obs.ai_entities?.source === 'coach_wrap_up'
 
         return (
           <Card key={obs.id}>
@@ -68,6 +69,11 @@ export function CoachObservationsFeed({ observations, onSelectForDraft }: Props)
                   {isFromRecap && (
                     <span className="text-[10px] bg-surface-raised text-lime border border-lime/20 px-1.5 py-0.5 rounded uppercase tracking-wide">
                       From Recap
+                    </span>
+                  )}
+                  {isFromWrapUp && (
+                    <span className="text-[10px] bg-surface-raised text-status-green border border-status-green/20 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                      Coach Evidence
                     </span>
                   )}
                 </div>

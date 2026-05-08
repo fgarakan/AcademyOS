@@ -61,6 +61,7 @@ import { QuickAssessmentHistoryCard } from './QuickAssessmentHistoryCard'
 import { AssessmentHistoryCard } from './AssessmentHistoryCard'
 import { PlayerCommandCenterCard } from '@/components/player/PlayerCommandCenterCard'
 import { GateHistoryTimeline, type GateAuditEntry } from '@/components/player/GateHistoryTimeline'
+import { DraftSummaryUpdateButton } from './DraftSummaryUpdateButton'
 
 interface PageProps {
   params: { playerId: string }
@@ -1252,6 +1253,23 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Evidence summary — derived from same observation data, no extra DB query */}
       <CoachObservationEvidenceSummary observations={enrichedObservations} />
+
+      {/* Draft development summary update from approved internal observations */}
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Development Summary Update</p>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-2">
+          <p className="text-[11px] text-text-muted">
+            Assemble a draft update from recent internal observations. Draft requires director review before updating the development summary.
+          </p>
+          <DraftSummaryUpdateButton
+            playerId={params.playerId}
+            academyId={academyId}
+            hasObservations={enrichedObservations.length > 0}
+          />
+        </CardContent>
+      </Card>
 
       {/* Priority recommendation drafts — existing pending/approved drafts for this player */}
       <PriorityRecommendationDrafts drafts={recommendationDrafts} />

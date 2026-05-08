@@ -3,6 +3,8 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 import type { StructuredDraftPayload } from '@/app/director/sessions/[sessionId]/structureRecapAction'
+import { upsertPlayerDevelopmentSummary } from '@/lib/backend/notes'
+import type { DevelopmentSummaryDraftPayload } from '@/app/director/players/[playerId]/draftSummaryUpdateAction'
 
 export type DraftDecision = 'approved' | 'rejected' | 'clarification_needed'
 
@@ -1833,4 +1835,459 @@ export async function applyApprovedCurriculumOverrideDraftAction(
   }
 
   return { ok: true, error: null, overrideId }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Review coach observation draft (coach_observation_draft_v1)
+// Only updates proposed_actions status + reviewer tracking fields.
+// Never writes to coach_observations, player profiles, parent messages,
+// or any other table. Apply action is the only path to write.
+// ─────────────────────────────────────────────────────────────
+
+export async function updateObservationDraftDecisionAction(
+  proposedActionId: string,
+  decision: DraftDecision,
+  reviewNotes?: string,
+): Promise<UpdateDraftDecisionResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+
+  if (!proposedActionId) return { ok: false, error: 'Missing proposed action ID.' }
+  const allowedDecisions: DraftDecision[] = ['approved', 'rejected', 'clarification_needed']
+  if (!allowedDecisions.includes(decision)) return { ok: false, error: 'Invalid decision value.' }
+  if (reviewNotes && reviewNotes.length > 1000) {
+    return { ok: false, error: 'Review note must be 1000 characters or fewer.' }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to review player observation drafts.' }
+  }
+
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return { ok: false, error: 'Proposed action not found.' }
+  if (proposedAction.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (proposedAction.target_module !== 'coach_observation_draft_v1') {
+    return { ok: false, error: 'This action cannot be reviewed through this interface.' }
+  }
+  if (proposedAction.status !== 'pending_review') {
+    return { ok: false, error: 'This draft has already been reviewed.' }
+  }
+
+  const now = new Date().toISOString()
+  let updatePayload: Record<string, unknown>
+
+  if (decision === 'approved') {
+    updatePayload = {
+      status: 'approved',
+      approved_by: user.id,
+      approved_at: now,
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  } else if (decision === 'rejected') {
+    updatePayload = {
+      status: 'rejected',
+      rejected_by: user.id,
+      rejected_at: now,
+      ...(reviewNotes ? { rejection_reason: reviewNotes, reviewer_notes: reviewNotes } : {}),
+    }
+  } else {
+    updatePayload = {
+      status: 'clarification_needed',
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update(updatePayload)
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to record decision: ${updateError.message}` }
+  }
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Apply approved coach observation draft (coach_observation_draft_v1)
+// Creates exactly one coach_observations row from the draft payload.
+// Writes audit_log. Marks proposed_action as executed.
+// Never touches player levels, curriculum, parent messages, or billing.
+// ─────────────────────────────────────────────────────────────
+
+export interface ApplyApprovedObservationDraftResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function applyApprovedObservationDraftAction(
+  proposedActionId: string,
+): Promise<ApplyApprovedObservationDraftResult> {
+  const fail = (error: string): ApplyApprovedObservationDraftResult => ({ ok: false, error })
+
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return fail('Not authenticated.')
+  if (!proposedActionId) return fail('Missing proposed action ID.')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return fail('Academy context unavailable.')
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return fail('You do not have permission to apply player observation drafts.')
+  }
+
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_by_id, proposed_payload, voice_command_id')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return fail('Proposed action not found.')
+  if (proposedAction.academy_id !== academyId) return fail('Access denied.')
+  if (proposedAction.target_module !== 'coach_observation_draft_v1') {
+    return fail('This action cannot be applied through this interface.')
+  }
+  if (proposedAction.status !== 'approved') {
+    return fail('Only approved drafts can be applied.')
+  }
+
+  const payload = proposedAction.proposed_payload as Record<string, unknown>
+  if (payload?.draft_type !== 'coach_observation_draft_v1') {
+    return fail('Unsupported draft type.')
+  }
+
+  const playerId = payload.player_id as string | undefined
+  const sessionId = payload.session_id as string | undefined
+  const note = payload.note as string | undefined
+  const observationType = payload.observation_type as string | undefined
+
+  if (!playerId || !note) return fail('Draft payload is missing required fields.')
+
+  // Verify player belongs to this academy
+  const { data: player } = await supabase
+    .from('players')
+    .select('id')
+    .eq('id', playerId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!player) return fail('Player not found or does not belong to this academy.')
+
+  // Insert into coach_observations — is_private always true
+  // ai_entities tracks provenance so the player profile can show a "From Wrap-Up" badge
+  const { data: created, error: insertError } = await supabase
+    .from('coach_observations')
+    .insert({
+      academy_id: academyId,
+      coach_id: proposedAction.proposed_by_id,
+      player_id: playerId,
+      session_id: sessionId ?? null,
+      observation_type: observationType ?? 'general',
+      content: note,
+      is_private: true,
+      voice_command_id: proposedAction.voice_command_id ?? null,
+      ai_entities: {
+        source: 'coach_wrap_up',
+        proposed_action_id: proposedActionId,
+      },
+    })
+    .select('id')
+    .single()
+
+  if (insertError || !created) {
+    return fail(`Failed to create observation: ${insertError?.message ?? 'unknown'}`)
+  }
+
+  // Write audit log
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'coach_observation.applied',
+      target_type: 'player',
+      target_id: playerId,
+      payload: {
+        proposed_action_id: proposedActionId,
+        observation_id: created.id,
+        player_id: playerId,
+        session_id: sessionId ?? null,
+        observation_type: observationType ?? 'general',
+        source: 'coach_observation_draft_v1',
+        applied_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: proposedAction.voice_command_id ?? null,
+    })
+
+  // Mark proposed_action as executed only after successful insert
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'executed' })
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return fail(`Observation created but failed to mark draft as executed: ${updateError.message}`)
+  }
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Review development summary draft (development_summary_draft_v1)
+// Only updates proposed_actions status. Never touches player_development_summary.
+// ─────────────────────────────────────────────────────────────
+
+export async function updateSummaryDraftDecisionAction(
+  proposedActionId: string,
+  decision: DraftDecision,
+  reviewNotes?: string,
+): Promise<UpdateDraftDecisionResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+
+  if (!proposedActionId) return { ok: false, error: 'Missing proposed action ID.' }
+  const allowed: DraftDecision[] = ['approved', 'rejected', 'clarification_needed']
+  if (!allowed.includes(decision)) return { ok: false, error: 'Invalid decision value.' }
+  if (reviewNotes && reviewNotes.length > 1000) {
+    return { ok: false, error: 'Review note must be 1000 characters or fewer.' }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  if (membership?.role !== 'academy_director' && membership?.role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to review development summary drafts.' }
+  }
+
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return { ok: false, error: 'Proposed action not found.' }
+  if (proposedAction.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (proposedAction.target_module !== 'development_summary_draft_v1') {
+    return { ok: false, error: 'This action cannot be reviewed through this interface.' }
+  }
+  if (proposedAction.status !== 'pending_review') {
+    return { ok: false, error: 'This draft has already been reviewed.' }
+  }
+
+  const now = new Date().toISOString()
+  let updatePayload: Record<string, unknown>
+
+  if (decision === 'approved') {
+    updatePayload = {
+      status: 'approved',
+      approved_by: user.id,
+      approved_at: now,
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  } else if (decision === 'rejected') {
+    updatePayload = {
+      status: 'rejected',
+      rejected_by: user.id,
+      rejected_at: now,
+      ...(reviewNotes ? { rejection_reason: reviewNotes, reviewer_notes: reviewNotes } : {}),
+    }
+  } else {
+    updatePayload = {
+      status: 'clarification_needed',
+      ...(reviewNotes ? { reviewer_notes: reviewNotes } : {}),
+    }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update(updatePayload)
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) return { ok: false, error: `Failed to record decision: ${updateError.message}` }
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Apply approved development summary draft (development_summary_draft_v1)
+// Upserts player_development_summary from payload. Writes audit_log.
+// Never changes player level, curriculum, or parent/player-facing data.
+// ─────────────────────────────────────────────────────────────
+
+export interface ApplyApprovedSummaryDraftResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function applyApprovedSummaryDraftAction(
+  proposedActionId: string,
+): Promise<ApplyApprovedSummaryDraftResult> {
+  const fail = (error: string): ApplyApprovedSummaryDraftResult => ({ ok: false, error })
+
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return fail('Not authenticated.')
+  if (!proposedActionId) return fail('Missing proposed action ID.')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return fail('Academy context unavailable.')
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  if (membership?.role !== 'academy_director' && membership?.role !== 'head_coach') {
+    return fail('You do not have permission to apply development summary drafts.')
+  }
+
+  const rawDb = supabase as any
+  const { data: proposedAction } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, target_object_id, proposed_payload, voice_command_id')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!proposedAction) return fail('Proposed action not found.')
+  if (proposedAction.academy_id !== academyId) return fail('Access denied.')
+  if (proposedAction.target_module !== 'development_summary_draft_v1') {
+    return fail('This action cannot be applied through this interface.')
+  }
+  if (proposedAction.status !== 'approved') return fail('Only approved drafts can be applied.')
+
+  const payload = proposedAction.proposed_payload as DevelopmentSummaryDraftPayload
+  if (payload?.draft_type !== 'development_summary_draft_v1') return fail('Unsupported draft type.')
+
+  const playerId = proposedAction.target_object_id as string | null
+  if (!playerId) return fail('Player reference missing from draft.')
+
+  // Verify player belongs to this academy
+  const { data: player } = await supabase
+    .from('players')
+    .select('id')
+    .eq('id', playerId)
+    .eq('academy_id', academyId)
+    .single()
+  if (!player) return fail('Player not found or access denied.')
+
+  // Upsert development summary — internal only, show_to_student/parent remain false
+  try {
+    await upsertPlayerDevelopmentSummary(supabase, {
+      academy_id: academyId,
+      player_id: playerId,
+      created_by: user.id,
+      updated_by: user.id,
+      current_strengths: payload.proposed_strengths,
+      things_to_work_on: payload.proposed_work_on,
+      coach_summary: payload.proposed_coach_summary || null,
+      show_to_student: false,
+      show_to_parent: false,
+      source: 'coach_observation_draft',
+    })
+  } catch (err) {
+    return fail(`Failed to update development summary: ${(err as Error).message}`)
+  }
+
+  // Write audit log
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'development_summary.applied',
+      target_type: 'player',
+      target_id: playerId,
+      payload: {
+        proposed_action_id: proposedActionId,
+        player_id: playerId,
+        source_observation_count: payload.source_observation_count,
+        source: 'development_summary_draft_v1',
+        applied_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: proposedAction.voice_command_id ?? null,
+    })
+
+  // Mark proposed_action as executed
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'executed' })
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return fail(`Summary updated but failed to mark draft as executed: ${updateError.message}`)
+  }
+
+  return { ok: true, error: null }
 }

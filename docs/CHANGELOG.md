@@ -2,6 +2,58 @@
 
 ---
 
+## 2026-05-08 — Sprint 155: Approved Evidence → Development Summary Draft
+
+Adds a director-triggered flow to assemble a development summary draft from recent internal coach observations. The draft is routed through `proposed_actions` for director review and apply — nothing writes to `player_development_summary` automatically.
+
+**Files created:**
+- `src/app/director/players/[playerId]/draftSummaryUpdateAction.ts` — Server action that assembles a `development_summary_draft_v1` proposed_action from recent `is_private` coach_observations (max 10). Exports `DevelopmentSummaryDraftPayload` type.
+- `src/app/director/players/[playerId]/DraftSummaryUpdateButton.tsx` — Client button component. Disabled with hint when no internal observations exist. Shows observation count on success.
+- `src/app/director/review/DevelopmentSummaryDraftCard.tsx` — Review queue card showing proposed strengths, work-on areas, coach summary, and safety notice. Routes to decision or apply controls based on status.
+- `src/app/director/review/DevelopmentSummaryDraftDecisionControls.tsx` — Client component for approve/reject decision with optional note.
+- `src/app/director/review/ApplyDevelopmentSummaryDraftControls.tsx` — Client component that calls `applyApprovedSummaryDraftAction` to upsert `player_development_summary`.
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — Added `updateSummaryDraftDecisionAction` and `applyApprovedSummaryDraftAction` (upserts `player_development_summary` with `show_to_student: false, show_to_parent: false`, writes audit_log, marks executed).
+- `src/app/director/players/[playerId]/page.tsx` — Added `DraftSummaryUpdateButton` card after `CoachObservationEvidenceSummary` in the overview tab.
+- `src/app/director/review/page.tsx` — Added `development_summary_draft_v1` fetch block, "Dev Summaries" tab with pending/approved sections, updated all-clear check, defaultTab, oldestPendingDates, and PageHeader counts.
+
+**Guardrails confirmed:** No migrations. `player_development_summary` only written after director approve + apply. `show_to_student: false, show_to_parent: false` on all upserts. No AI API calls — summary assembled deterministically from stored observations. RLS scoped via `academy_id`. TypeScript clean.
+
+---
+
+## 2026-05-08 — Sprint 154: Approved Observation → Player Profile Evidence
+
+Applied coach wrap-up observations now appear clearly in the player profile with a "Coach Evidence" source badge, and the evidence summary reflects approved evidence count.
+
+**Files modified:**
+- `src/app/director/review/actions.ts` — Added `ai_entities: { source: 'coach_wrap_up', proposed_action_id }` to the `coach_observations` insert in `applyApprovedObservationDraftAction`, enabling source tracking.
+- `src/app/director/players/[playerId]/CoachObservationsFeed.tsx` — Added "Coach Evidence" badge (green) for observations with `ai_entities.source === 'coach_wrap_up'`, matching the existing "From Recap" pattern.
+- `src/app/director/players/[playerId]/CoachObservationEvidenceSummary.tsx` — Added `fromWrapUpCount`, unified `approvedEvidenceCount` stat (recap + wrap-up), updated "Approved" metric label and recap note text.
+
+**Guardrails confirmed:** No schema changes. No parent/player exposure. Internal display only. TypeScript clean.
+
+---
+
+## 2026-05-08 — Sprint 153: Coach Wrap-Up → Director Evidence Queue
+
+Routes coach player observations through the director review pipeline. Observations no longer write directly to `coach_observations` — each one becomes an individual `proposed_actions` draft requiring director approval and explicit apply.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/saveWrapUpObservationsAction.ts` — Replaced direct `coach_observations` INSERT with `voice_commands` + one `proposed_actions` row per observation (`target_module: 'coach_observation_draft_v1'`). Exports `CoachObservationDraftPayload` type. Added optional `sessionTitle` parameter.
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Updated saved-state copy and queue summary to reflect drafts going to director review instead of being saved directly.
+- `src/app/director/review/actions.ts` — Added `updateObservationDraftDecisionAction` (approve/reject, status only) and `applyApprovedObservationDraftAction` (writes to `coach_observations`, writes `audit_log`, marks `executed`).
+- `src/app/director/review/page.tsx` — Added fetch for `coach_observation_draft_v1` proposed_actions, enrichment with player/proposer names, "Player Observations" tab with pending/approved sections, and inclusion in all-clear check, defaultTab, and PageHeader counts.
+
+**Files created:**
+- `src/app/director/review/WrapUpObservationDraftCard.tsx` — Card component showing observation type badge, player name, session context, note content, internal-only badge. Shows decision controls when pending, apply controls when approved.
+- `src/app/director/review/WrapUpObservationDraftDecisionControls.tsx` — Client component with approve/reject buttons and optional decision note.
+- `src/app/director/review/ApplyWrapUpObservationDraftControls.tsx` — Client component with Apply button that calls `applyApprovedObservationDraftAction`.
+
+**Guardrails confirmed:** No migrations. No parent/player exposure. No level movement. No AI tagging. `coach_observations` only written after director approve + apply. RLS scoped via `academy_id` on all queries. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 152: Role-Based Landing Dashboards Polish
 
 Polishes the coach and director dashboards with contextual greeting, quick stats, and a setup-complete celebration banner.

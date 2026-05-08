@@ -295,10 +295,10 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
           observationType: n.type === 'positive' ? 'positive' : 'needs_attention',
         }))
       if (playerObservations.length > 0) {
-        const obsResult = await saveWrapUpObservationsAction(sessionId, playerObservations)
+        const obsResult = await saveWrapUpObservationsAction(sessionId, playerObservations, sessionName)
         setObservationsSaved(obsResult.savedCount)
         if (!obsResult.ok || obsResult.error) {
-          setObservationsError(`${obsResult.savedCount} of ${playerObservations.length} observations saved.`)
+          setObservationsError(`${obsResult.savedCount} of ${playerObservations.length} observation drafts submitted.`)
         }
       }
 
@@ -322,7 +322,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
             </p>
             {observationsSaved !== null && observationsSaved > 0 && (
               <p className="text-xs text-status-green">
-                {observationsSaved} player observation{observationsSaved !== 1 ? 's' : ''} saved.
+                {observationsSaved} player observation draft{observationsSaved !== 1 ? 's' : ''} submitted for director review.
               </p>
             )}
             {observationsError && (
@@ -406,7 +406,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
                 <div className="flex items-start gap-2 text-xs">
                   <span className="text-lime mt-0.5">→</span>
                   <span className="text-text-secondary">
-                    <span className="text-text-primary font-medium">{queuedObsCount}</span> player observation{queuedObsCount !== 1 ? 's' : ''} queued
+                    <span className="text-text-primary font-medium">{queuedObsCount}</span> player observation draft{queuedObsCount !== 1 ? 's' : ''} will go to director review
                   </span>
                 </div>
               )}
@@ -516,7 +516,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
               <div className="p-3 rounded-xl bg-surface-raised border border-border space-y-3">
                 <p className="text-[10px] uppercase tracking-widest text-text-muted">Add note from recap (optional)</p>
                 <p className="text-[10px] text-text-muted leading-snug">
-                  Select a player, choose note type, and write or paste text from your recap. Saves as an internal coach observation — not visible to players or parents.
+                  Select a player, choose note type, and write or paste text from your recap. Submitted as a draft for director review — not visible to players or parents.
                 </p>
                 <div className="flex gap-2">
                   <select
@@ -657,7 +657,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
                         </div>
                       )
                     })}
-                    <p className="text-[9px] text-text-muted">Saved as internal coach notes — not visible to players or parents.</p>
+                    <p className="text-[9px] text-text-muted">Submitted as observation drafts for director review — not visible to players or parents.</p>
                   </div>
                 )}
               </div>
@@ -671,7 +671,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
           )}
           {queuedObsCount > 0 && (
             <p className="text-[10px] text-text-muted px-1">
-              {queuedObsCount} player observation{queuedObsCount !== 1 ? 's' : ''} queued — will save with recap.
+              {queuedObsCount} player observation draft{queuedObsCount !== 1 ? 's' : ''} queued — will go to director review.
             </p>
           )}
           <div className="flex items-center gap-3">

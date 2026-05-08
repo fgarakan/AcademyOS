@@ -20,6 +20,12 @@ import type { GeneralCaptureItem, PlayerOption } from './GeneralCaptureDraftCard
 import { WrapUpDraftCard } from './WrapUpDraftCard'
 import type { EnrichedWrapUpDraftItem } from './WrapUpDraftCard'
 import type { SessionActualDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpDraftAction'
+import { WrapUpObservationDraftCard } from './WrapUpObservationDraftCard'
+import type { EnrichedObservationDraftItem } from './WrapUpObservationDraftCard'
+import type { CoachObservationDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpObservationsAction'
+import { DevelopmentSummaryDraftCard } from './DevelopmentSummaryDraftCard'
+import type { EnrichedSummaryDraftItem } from './DevelopmentSummaryDraftCard'
+import type { DevelopmentSummaryDraftPayload } from '@/app/director/players/[playerId]/draftSummaryUpdateAction'
 import { VoiceIntakeBatchPanel } from './VoiceIntakeBatchPanel'
 import { CapturesBatchPanel } from './CapturesBatchPanel'
 
@@ -566,6 +572,134 @@ export default async function DirectorReviewQueuePage() {
   const pendingWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'pending_review')
   const approvedWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'approved')
 
+  // ─── Player observation drafts (coach wrap-up observations) ──
+
+  const { data: observationDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_review', 'approved', 'clarification_needed'])
+    .eq('target_module', 'coach_observation_draft_v1')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allObservationDraftRows: DraftRow[] = (observationDraftRows ?? []) as DraftRow[]
+
+  const filteredObservationDrafts = allObservationDraftRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'coach_observation_draft_v1'
+  })
+
+  // Batch-fetch player names from target_object_id (= player_id)
+  const observationPlayerIds = Array.from(
+    new Set(
+      filteredObservationDrafts
+        .map(d => d.target_object_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+  const observationPlayerMap = new Map<string, string>()
+  if (observationPlayerIds.length > 0) {
+    const { data: obsPlayers } = await supabase
+      .from('players')
+      .select('id, first_name, last_name, full_name')
+      .in('id', observationPlayerIds)
+      .eq('academy_id', academyId)
+    for (const p of (obsPlayers ?? [])) {
+      observationPlayerMap.set(p.id, p.full_name ?? `${p.first_name} ${p.last_name}`.trim())
+    }
+  }
+
+  // Batch-fetch proposer display names
+  const observationProposerIds = Array.from(new Set(filteredObservationDrafts.map(d => d.proposed_by_id)))
+  const observationProposerMap = new Map<string, string>()
+  if (observationProposerIds.length > 0) {
+    const { data: obsProposers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', observationProposerIds)
+    for (const p of (obsProposers ?? [])) {
+      observationProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  const enrichedObservationDrafts: EnrichedObservationDraftItem[] = filteredObservationDrafts.map(d => ({
+    id: d.id,
+    status: d.status,
+    createdAt: d.created_at,
+    playerId: d.target_object_id,
+    playerName: d.target_object_id ? (observationPlayerMap.get(d.target_object_id) ?? null) : null,
+    proposerName: observationProposerMap.get(d.proposed_by_id) ?? null,
+    payload: d.proposed_payload as unknown as CoachObservationDraftPayload,
+  }))
+
+  const pendingObservationDrafts = enrichedObservationDrafts.filter(d => d.status === 'pending_review')
+  const approvedObservationDrafts = enrichedObservationDrafts.filter(d => d.status === 'approved')
+
+  // ─── Development summary drafts ───────────────────────────────
+
+  const { data: summaryDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_review', 'approved'])
+    .eq('target_module', 'development_summary_draft_v1')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allSummaryDraftRows: DraftRow[] = (summaryDraftRows ?? []) as DraftRow[]
+
+  const filteredSummaryDrafts = allSummaryDraftRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'development_summary_draft_v1'
+  })
+
+  // Batch-fetch player names from target_object_id (= player_id)
+  const summaryPlayerIds = Array.from(
+    new Set(
+      filteredSummaryDrafts
+        .map(d => d.target_object_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+  const summaryPlayerMap = new Map<string, string>()
+  if (summaryPlayerIds.length > 0) {
+    const { data: summaryPlayers } = await supabase
+      .from('players')
+      .select('id, first_name, last_name, full_name')
+      .in('id', summaryPlayerIds)
+      .eq('academy_id', academyId)
+    for (const p of (summaryPlayers ?? [])) {
+      summaryPlayerMap.set(p.id, p.full_name ?? `${p.first_name} ${p.last_name}`.trim())
+    }
+  }
+
+  // Batch-fetch proposer display names
+  const summaryProposerIds = Array.from(new Set(filteredSummaryDrafts.map(d => d.proposed_by_id)))
+  const summaryProposerMap = new Map<string, string>()
+  if (summaryProposerIds.length > 0) {
+    const { data: summaryProposers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', summaryProposerIds)
+    for (const p of (summaryProposers ?? [])) {
+      summaryProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  const enrichedSummaryDrafts: EnrichedSummaryDraftItem[] = filteredSummaryDrafts.map(d => ({
+    id: d.id,
+    status: d.status,
+    createdAt: d.created_at,
+    playerId: d.target_object_id,
+    playerName: d.target_object_id ? (summaryPlayerMap.get(d.target_object_id) ?? null) : null,
+    proposerName: summaryProposerMap.get(d.proposed_by_id) ?? null,
+    payload: d.proposed_payload as unknown as DevelopmentSummaryDraftPayload,
+  }))
+
+  const pendingSummaryDrafts = enrichedSummaryDrafts.filter(d => d.status === 'pending_review')
+  const approvedSummaryDrafts = enrichedSummaryDrafts.filter(d => d.status === 'approved')
+
   // Oldest pending date per category (arrays are sorted newest-first, so last item = oldest)
   const oldestPendingDates = {
     session_recaps: pendingDrafts.at(-1)?.createdAt ?? null,
@@ -575,6 +709,8 @@ export default async function DirectorReviewQueuePage() {
     curriculum: pendingCurriculumOverrideDrafts.at(-1)?.createdAt ?? null,
     voice_intake: pendingVoiceIntakeDrafts.at(-1)?.createdAt ?? null,
     wrap_ups: pendingWrapUpDrafts.at(-1)?.createdAt ?? null,
+    player_observations: pendingObservationDrafts.at(-1)?.createdAt ?? null,
+    development_summaries: pendingSummaryDrafts.at(-1)?.createdAt ?? null,
     captures: generalCaptures.at(-1)?.createdAt ?? null,
   }
 
@@ -587,6 +723,8 @@ export default async function DirectorReviewQueuePage() {
     { value: 'curriculum', pending: pendingCurriculumOverrideDrafts.length },
     { value: 'voice_intake', pending: pendingVoiceIntakeDrafts.length },
     { value: 'wrap_ups', pending: pendingWrapUpDrafts.length },
+    { value: 'player_observations', pending: pendingObservationDrafts.length },
+    { value: 'development_summaries', pending: pendingSummaryDrafts.length },
     { value: 'captures', pending: generalCaptures.length },
   ].find(t => t.pending > 0)?.value ?? 'session_recaps'
 
@@ -607,6 +745,10 @@ export default async function DirectorReviewQueuePage() {
         voiceIntakeApprovedCount={approvedVoiceIntakeDrafts.length}
         wrapUpPendingCount={pendingWrapUpDrafts.length}
         wrapUpApprovedCount={approvedWrapUpDrafts.length}
+        observationPendingCount={pendingObservationDrafts.length}
+        observationApprovedCount={approvedObservationDrafts.length}
+        summaryPendingCount={pendingSummaryDrafts.length}
+        summaryApprovedCount={approvedSummaryDrafts.length}
         captureCount={generalCaptures.length}
         oldestPendingDates={oldestPendingDates}
       />
@@ -615,7 +757,8 @@ export default async function DirectorReviewQueuePage() {
       {(
         pendingDrafts.length + pendingPriorityDrafts.length + pendingEvidenceDrafts.length +
         pendingAttendanceDrafts.length + pendingCurriculumOverrideDrafts.length +
-        pendingVoiceIntakeDrafts.length + pendingWrapUpDrafts.length + generalCaptures.length
+        pendingVoiceIntakeDrafts.length + pendingWrapUpDrafts.length +
+        pendingObservationDrafts.length + pendingSummaryDrafts.length + generalCaptures.length
       ) === 0 && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/10 border border-status-green/20">
           <CheckCircle className="w-4 h-4 text-status-green shrink-0" />
@@ -674,6 +817,20 @@ export default async function DirectorReviewQueuePage() {
               label="Session Wrap-Ups"
               pending={pendingWrapUpDrafts.length}
               ready={approvedWrapUpDrafts.length}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="player_observations">
+            <TabLabel
+              label="Player Observations"
+              pending={pendingObservationDrafts.length}
+              ready={approvedObservationDrafts.length}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="development_summaries">
+            <TabLabel
+              label="Dev Summaries"
+              pending={pendingSummaryDrafts.length}
+              ready={approvedSummaryDrafts.length}
             />
           </TabsTrigger>
           <TabsTrigger value="captures">
@@ -931,6 +1088,88 @@ export default async function DirectorReviewQueuePage() {
           </section>
         </TabsContent>
 
+        {/* ─── Player Observations tab ─── */}
+        <TabsContent value="player_observations" className="pt-6 space-y-4">
+          {approvedObservationDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Approved — Ready to Apply</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                  {approvedObservationDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {approvedObservationDrafts.map(draft => (
+                  <WrapUpObservationDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
+          <section className="space-y-3">
+            {approvedObservationDrafts.length > 0 && pendingObservationDrafts.length > 0 && (
+              <p className="label-xs">Pending Review</p>
+            )}
+            {pendingObservationDrafts.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <EmptyState
+                    icon={<Users className="w-5 h-5" />}
+                    title="No pending player observation drafts"
+                    description="When coaches complete a session wrap-up and add player notes, individual observation drafts will appear here for review before being applied to player profiles."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingObservationDrafts.map(draft => (
+                  <WrapUpObservationDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+
+        {/* ─── Development Summaries tab ─── */}
+        <TabsContent value="development_summaries" className="pt-6 space-y-4">
+          {approvedSummaryDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Approved — Ready to Apply</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                  {approvedSummaryDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {approvedSummaryDrafts.map(draft => (
+                  <DevelopmentSummaryDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
+          <section className="space-y-3">
+            {approvedSummaryDrafts.length > 0 && pendingSummaryDrafts.length > 0 && (
+              <p className="label-xs">Pending Review</p>
+            )}
+            {pendingSummaryDrafts.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <EmptyState
+                    icon={<ClipboardList className="w-5 h-5" />}
+                    title="No pending development summary drafts"
+                    description="Use the 'Draft Development Summary Update' button on a player profile to assemble a draft from recent observations. It will appear here for director review before being applied."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingSummaryDrafts.map(draft => (
+                  <DevelopmentSummaryDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+
         {/* ─── Captures tab ─── */}
         <TabsContent value="captures" className="pt-6 space-y-4">
           <section className="space-y-3">
@@ -1032,6 +1271,10 @@ function PageHeader({
   voiceIntakeApprovedCount,
   wrapUpPendingCount,
   wrapUpApprovedCount,
+  observationPendingCount,
+  observationApprovedCount,
+  summaryPendingCount,
+  summaryApprovedCount,
   captureCount,
   oldestPendingDates,
 }: {
@@ -1049,11 +1292,15 @@ function PageHeader({
   voiceIntakeApprovedCount: number
   wrapUpPendingCount: number
   wrapUpApprovedCount: number
+  observationPendingCount: number
+  observationApprovedCount: number
+  summaryPendingCount: number
+  summaryApprovedCount: number
   captureCount: number
   oldestPendingDates: Record<string, string | null>
 }) {
-  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + wrapUpPendingCount + captureCount
-  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount + wrapUpApprovedCount
+  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + wrapUpPendingCount + observationPendingCount + summaryPendingCount + captureCount
+  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount + wrapUpApprovedCount + observationApprovedCount + summaryApprovedCount
 
   const categories = [
     { key: 'session_recaps', label: 'Session Recaps', pending: pendingCount, ready: approvedCount },
@@ -1063,6 +1310,8 @@ function PageHeader({
     { key: 'curriculum', label: 'Curriculum', pending: curriculumOverridePendingCount, ready: curriculumOverrideApprovedCount },
     { key: 'voice_intake', label: 'Voice Intake', pending: voiceIntakePendingCount, ready: voiceIntakeApprovedCount },
     { key: 'wrap_ups', label: 'Session Wrap-Ups', pending: wrapUpPendingCount, ready: wrapUpApprovedCount },
+    { key: 'player_observations', label: 'Player Observations', pending: observationPendingCount, ready: observationApprovedCount },
+    { key: 'development_summaries', label: 'Dev Summaries', pending: summaryPendingCount, ready: summaryApprovedCount },
     { key: 'captures', label: 'Captures', pending: captureCount, ready: 0 },
   ]
 

@@ -36,6 +36,10 @@ export function CoachObservationEvidenceSummary({ observations }: Props) {
   const fromRecapCount = observations.filter(
     o => (o.ai_entities as Record<string, unknown> | null)?.source === 'session_recap_draft'
   ).length
+  const fromWrapUpCount = observations.filter(
+    o => (o.ai_entities as Record<string, unknown> | null)?.source === 'coach_wrap_up'
+  ).length
+  const approvedEvidenceCount = fromRecapCount + fromWrapUpCount
   const sessionLinkedCount = observations.filter(o => o.sessions !== null).length
   const mostRecentDate = observations[0].created_at
 
@@ -57,13 +61,13 @@ export function CoachObservationEvidenceSummary({ observations }: Props) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
 
-  const recapRatio = total > 0 ? Math.round((fromRecapCount / total) * 100) : 0
+  const recapRatio = total > 0 ? Math.round((approvedEvidenceCount / total) * 100) : 0
   const recapNote =
-    fromRecapCount === 0
-      ? 'No observations linked to session recaps yet.'
+    approvedEvidenceCount === 0
+      ? 'No director-approved evidence yet. Apply session recap or wrap-up observation drafts to begin.'
       : recapRatio >= 50
-      ? 'Most recent evidence comes from structured coach recaps.'
-      : 'Some evidence comes from structured coach recaps.'
+      ? 'Most evidence comes from director-approved session observations.'
+      : 'Some evidence comes from director-approved session observations.'
 
   return (
     <Card>
@@ -82,7 +86,7 @@ export function CoachObservationEvidenceSummary({ observations }: Props) {
           {([
             { label: 'Total',          value: total },
             { label: 'Internal',       value: internalCount },
-            { label: 'From Recap',     value: fromRecapCount },
+            { label: 'Approved',       value: approvedEvidenceCount },
             { label: 'Session-linked', value: sessionLinkedCount },
           ] as const).map(({ label, value }) => (
             <div key={label} className="bg-surface-raised rounded border border-border p-3 text-center">
