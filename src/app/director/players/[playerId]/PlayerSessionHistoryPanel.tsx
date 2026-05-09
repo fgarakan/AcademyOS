@@ -77,7 +77,7 @@ export function PlayerSessionHistoryPanel({ attendanceItems, observations }: Pro
             <EmptyState
               icon={<CalendarDays className="w-5 h-5" />}
               title="No session attendance recorded"
-              description="No attendance has been recorded for this player in the last 60 days. Attendance records appear here once a director applies an attendance exception draft from the review queue."
+              description="No attendance has been recorded for this player in the last 60 days. Attendance records appear here after a coach saves roster attendance from the session page. Unexpected attendee exceptions appear here once a director approves them from the review queue."
             />
           ) : (
             <div className="divide-y divide-border/50">

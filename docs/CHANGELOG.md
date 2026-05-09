@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-09 — Sprint 161: Coach Attendance Flow Clarity Pass
+
+Clarity sprint. Pre-implementation audit (10-point checklist) confirmed the roster attendance write-back already worked end-to-end before this sprint: `CoachSessionExecutionClient` renders P/A/L/E buttons per rostered player, `saveAttendanceAction` upserts to `session_attendance`, and the player profile Session History tab reads those same rows directly — no director approval needed for normal roster attendance.
+
+**The single functional problem found:** `PlayerSessionHistoryPanel` EmptyState wrongly told directors that attendance records appear "once a director applies an attendance exception draft from the review queue." That description applies only to unexpected/unrostered attendees (the wrap-up → `proposed_actions` path). Normal roster attendance written by the coach appears immediately with no director step.
+
+**File modified:**
+- `src/app/director/players/[playerId]/PlayerSessionHistoryPanel.tsx` — Fixed EmptyState description. New copy: "Attendance records appear here after a coach saves roster attendance from the session page. Unexpected attendee exceptions appear here once a director approves them from the review queue." Accurately separates the two flows.
+
+**Copy left unchanged (correct as written):**
+- Line 135 `PlayerSessionHistoryPanel`: coach observations *do* require director approval via proposed_actions — left as-is.
+- `CoachSessionExecutionClient:291`: note about unexpected attendees going to director review — correct for that flow, left as-is.
+
+**Guardrails confirmed:** No migrations. No schema changes. No action changes. No new components. No new DB queries. TypeScript clean.
+
+---
+
 ## 2026-05-08 — Sprint 160: Player Profile Evidence + Session History Panel
 
 Adds a read-only "Session History" tab to the director player profile. A director can now open a player profile and immediately see attendance history (last 60 days) and all applied coach observations in one consolidated panel, without switching between Fitness and Notes tabs. No new DB queries — uses data already fetched by `page.tsx` (`exposureTimeline` + `enrichedObservations`). No backend mutations. Not visible to parents or players.
