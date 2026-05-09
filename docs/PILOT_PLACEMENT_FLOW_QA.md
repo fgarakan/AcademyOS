@@ -271,11 +271,11 @@ The following steps are planned but not yet implemented:
 
 ## Known Limitations
 
-1. **Player creation not built.** Sprints 168–171 are pending. The pipeline stops at an approved recommendation draft.
+1. **Player creation not built.** Sprint 168 is pending. The pipeline stops at an approved recommendation draft. Approving a recommendation records intent — no player record is created until Sprint 168 runs.
 
-2. **Required player fields not yet collected.** `players.date_of_birth` is `NOT NULL`. The current assessment form does not capture first_name, last_name, or date_of_birth — these must be added to the assessment draft form before Sprint 168 can run.
+2. **Required player fields — RESOLVED (Sprint 168A).** `players.date_of_birth` is `NOT NULL`. The assessment form now collects `first_name`, `last_name`, `date_of_birth`, and `gender`. These are stored in `player_identity` inside the assessment draft payload and carried forward into the recommendation draft payload. Recommendation generation is blocked until all three required fields are saved.
 
-3. **Group assignment requires a real group_id.** `finalize_player_placement()` requires either `recommended_group_id` or `override_group_id` (both are UUIDs). The current pipeline produces a free-text `suggested_group_type`. A group selector must be added before player activation.
+3. **Group assignment — RESOLVED (Sprint 168A).** A real group selector now appears on the recommendation card. Directors must choose an actual academy group (from `groups WHERE is_active = true`) before approving. The server verifies the selected `group_id` belongs to the current academy. The approved payload contains `recommended_group_id` (UUID) and `recommended_group_name`. `finalize_player_placement()` can now consume a valid group UUID from the approved payload.
 
 4. **Dismiss does not un-dismiss.** Once a placement review item or intake candidate is dismissed (rejected/executed), it disappears from the queue with no undo path. This is intentional for the pilot.
 

@@ -2,6 +2,50 @@
 
 ---
 
+## 2026-05-09 — Sprint 168A: Placement Identity + Group Selection Unblocker
+
+Unblocks Sprint 168 (player creation) by adding required player identity fields and a real academy group selector to the placement assessment and recommendation pipeline. No player rows, group_membership rows, billing records, or parent communications are created by this sprint. No migrations or schema changes.
+
+**No migration required.**
+
+**Updated `src/app/director/review/PlacementAssessmentDraftCard.tsx`:**
+- Added `player_identity` block to `PlacementAssessmentDraftPayload` type (optional for backwards compatibility with existing drafts).
+- Added four identity fields to the assessment form: First Name (text), Last Name (text), Date of Birth (`<input type="date">`, YYYY-MM-DD), Gender (select: male/female/other/blank).
+- Pre-populates First Name and Last Name from `attendee_name` (splits on first space) when no saved identity exists.
+- Inline warning panel explains that `players.date_of_birth` is NOT NULL and identity is required before recommendation generation.
+- Identity fields are passed to `saveAssessmentDraftAction` and persisted in the payload on every save.
+
+**Updated `src/app/director/review/PlacementRecommendationDraftCard.tsx`:**
+- Added `AcademyGroup`, `recommended_group_id`, `recommended_group_name`, `player_identity` to `PlacementRecommendationDraftPayload` type.
+- Added `academyGroups: AcademyGroup[]` prop (array of `{ id, name, track }` fetched from `groups` table).
+- Added real group selector dropdown populated from academy's active groups. Client-side blocks approve if no group selected.
+- Displays read-only `player_identity` summary (name, DOB, gender) from payload. Shows orange warning if identity is missing.
+- Shows assigned group (lime highlight) on approved cards. Hides decision controls after approval.
+- Override form includes its own group selector.
+- Footer copy updated: "Approving does not create a player yet. It prepares this recommendation for the next step: player creation."
+- Discriminated union `activeAction` preserved for correct per-button loading state.
+
+**Updated `src/app/director/review/actions.ts`:**
+- Exported `PlayerIdentity` interface: `{ first_name, last_name, date_of_birth, gender }`.
+- Added `player_identity: PlayerIdentity` to `AssessmentDraftFields` interface.
+- `saveAssessmentDraftAction` — merges `player_identity` into payload on every save.
+- `generatePlacementRecommendationDraftAction` — validates `first_name`, `last_name`, `date_of_birth` before generating. Returns clear error if missing. Carries `player_identity` into recommendation payload. Adds `recommended_group_id: null`, `recommended_group_name: null` as initial values.
+- `approveRecommendationDraftAction` — new params: `selectedGroupId`, `selectedGroupName`. Validates `player_identity` in payload. Server-side verifies `selectedGroupId` against `groups WHERE academy_id = ? AND is_active = true`. Merges verified `recommended_group_id` + `recommended_group_name` into payload before setting `status = approved`. Audit log includes group fields.
+- `RecommendationOverrideFields` — added `recommended_group_id` and `recommended_group_name` fields.
+- `overrideRecommendationDraftAction` — validates `recommended_group_id`. Server-side verifies group belongs to academy. Merges verified group into payload. `player_identity` preserved via spread.
+
+**Updated `src/app/director/review/page.tsx`:**
+- Fetches academy groups: `SELECT id, name, track FROM groups WHERE academy_id = ? AND is_active = true ORDER BY name`.
+- Passes `academyGroups` prop to every `PlacementRecommendationDraftCard`.
+- Imports `AcademyGroup` type.
+
+**Updated `docs/PILOT_PLACEMENT_FLOW_QA.md`:**
+- Known Limitations 2 and 3 updated: marked RESOLVED (Sprint 168A), with description of what was added and how validation works.
+
+**Guardrails confirmed:** No migrations. No schema changes. No player rows. No group_membership rows. No billing. No parent/player communications. No external API calls. Academy-scoped group validation on server for both approve and override paths. Audit log written on approval. TypeScript clean.
+
+---
+
 ## 2026-05-09 — Sprint 172: Pilot Placement Flow QA Guide
 
 Creates `docs/PILOT_PLACEMENT_FLOW_QA.md` — a complete end-to-end reference for QA testing the unexpected-attendee → placement pipeline. Covers all 7 currently-implemented steps with SQL verification queries and known limitations. Includes explicit documentation of the Sprint 168 blocker (player creation not yet built).

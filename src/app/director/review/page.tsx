@@ -33,7 +33,7 @@ import type { EnrichedIntakeCandidateItem, PlacementIntakeCandidatePayload } fro
 import { PlacementAssessmentDraftCard } from './PlacementAssessmentDraftCard'
 import type { EnrichedAssessmentDraftItem, PlacementAssessmentDraftPayload } from './PlacementAssessmentDraftCard'
 import { PlacementRecommendationDraftCard } from './PlacementRecommendationDraftCard'
-import type { EnrichedRecommendationDraftItem, PlacementRecommendationDraftPayload } from './PlacementRecommendationDraftCard'
+import type { EnrichedRecommendationDraftItem, PlacementRecommendationDraftPayload, AcademyGroup } from './PlacementRecommendationDraftCard'
 import { VoiceIntakeBatchPanel } from './VoiceIntakeBatchPanel'
 import { CapturesBatchPanel } from './CapturesBatchPanel'
 
@@ -938,6 +938,22 @@ export default async function DirectorReviewQueuePage() {
   const approvedRecommendationDrafts = allEnrichedRecommendationDrafts.filter(d => d.status === 'approved')
   const enrichedRecommendationDrafts = allEnrichedRecommendationDrafts
 
+  // ─── Academy groups for placement group selector ──────────────
+  // Fetched here (server component) and passed to PlacementRecommendationDraftCard.
+  // Only active groups scoped to this academy. Used to populate real UUID group selector.
+  const { data: groupRows } = await supabase
+    .from('groups')
+    .select('id, name, track')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .order('name')
+
+  const academyGroups: AcademyGroup[] = (groupRows ?? []).map(g => ({
+    id: g.id,
+    name: g.name,
+    track: g.track ?? null,
+  }))
+
   // Oldest pending date per category (arrays are sorted newest-first, so last item = oldest)
   const oldestPendingDates = {
     session_recaps: pendingDrafts.at(-1)?.createdAt ?? null,
@@ -1274,7 +1290,7 @@ export default async function DirectorReviewQueuePage() {
             ) : (
               <div className="space-y-4">
                 {allEnrichedRecommendationDrafts.map(item => (
-                  <PlacementRecommendationDraftCard key={item.id} item={item} />
+                  <PlacementRecommendationDraftCard key={item.id} item={item} academyGroups={academyGroups} />
                 ))}
               </div>
             )}

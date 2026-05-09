@@ -2955,6 +2955,13 @@ export interface SaveAssessmentDraftResult {
   error: string | null
 }
 
+export interface PlayerIdentity {
+  first_name: string
+  last_name: string
+  date_of_birth: string  // YYYY-MM-DD
+  gender: string | null  // 'male' | 'female' | 'other' | null
+}
+
 export interface AssessmentDraftFields {
   age_band: string | null
   ball_color: string | null
@@ -2962,6 +2969,7 @@ export interface AssessmentDraftFields {
   movement_observations: string
   competitive_readiness: string
   recommended_next_step: string
+  player_identity: PlayerIdentity
 }
 
 export async function saveAssessmentDraftAction(
@@ -3021,6 +3029,12 @@ export async function saveAssessmentDraftAction(
     movement_observations: fields.movement_observations.trim(),
     competitive_readiness: fields.competitive_readiness.trim(),
     recommended_next_step: fields.recommended_next_step.trim(),
+    player_identity: {
+      first_name: fields.player_identity.first_name.trim(),
+      last_name: fields.player_identity.last_name.trim(),
+      date_of_birth: fields.player_identity.date_of_birth.trim(),
+      gender: fields.player_identity.gender ?? null,
+    },
   }
 
   const { error: updateError } = await rawDb
@@ -3166,6 +3180,23 @@ export async function generatePlacementRecommendationDraftAction(
 
   if (!attendeeName) return fail('Attendee name missing from assessment draft.')
 
+  // Validate required player identity fields before generating recommendation
+  const rawIdentity = ap?.player_identity as Record<string, unknown> | undefined
+  const firstName = (rawIdentity?.first_name as string | undefined)?.trim() ?? ''
+  const lastName = (rawIdentity?.last_name as string | undefined)?.trim() ?? ''
+  const dateOfBirth = (rawIdentity?.date_of_birth as string | undefined)?.trim() ?? ''
+
+  if (!firstName || !lastName || !dateOfBirth) {
+    return fail('First name, last name, and date of birth are required before generating a placement recommendation.')
+  }
+
+  const playerIdentity: PlayerIdentity = {
+    first_name: firstName,
+    last_name: lastName,
+    date_of_birth: dateOfBirth,
+    gender: (rawIdentity?.gender as string | null) ?? null,
+  }
+
   // Deterministic derivation — no AI, no external calls
   const currentLevel = deriveCurrentLevel(ballColor)
   const startingPathway = deriveStartingPathway(ballColor, ageBand)
@@ -3200,10 +3231,13 @@ export async function generatePlacementRecommendationDraftAction(
     source_proposed_action_id: assessmentDraftId,
     attendee_name: attendeeName,
     session_id: sessionId,
+    player_identity: playerIdentity,
     current_level: currentLevel,
     starting_pathway: startingPathway,
     suggested_group_type: suggestedGroupType,
     first_skill_priority: firstSkillPriority,
+    recommended_group_id: null as string | null,
+    recommended_group_name: null as string | null,
     confidence,
     director_override_notes: '',
     assessment_summary: {
@@ -3293,8 +3327,13 @@ export interface ApproveRecommendationResult {
 
 export async function approveRecommendationDraftAction(
   recommendationDraftId: string,
+  selectedGroupId: string,
+  selectedGroupName: string,
 ): Promise<ApproveRecommendationResult> {
   await assertNotPreviewMode()
+
+  if (!selectedGroupId?.trim()) return { ok: false, error: 'Select a valid group before approving this recommendation.' }
+  if (!selectedGroupName?.trim()) return { ok: false, error: 'Group name is missing.' }
 
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
@@ -3338,9 +3377,36 @@ export async function approveRecommendationDraftAction(
     return { ok: false, error: 'Only pending recommendation drafts can be approved.' }
   }
 
+  // Validate player identity in payload
+  const existingPayload = item.proposed_payload as Record<string, unknown>
+  const rawIdentity = existingPayload?.player_identity as Record<string, unknown> | undefined
+  if (!rawIdentity?.first_name || !rawIdentity?.last_name || !rawIdentity?.date_of_birth) {
+    return { ok: false, error: 'Player identity (first name, last name, date of birth) must be saved on the assessment before approving.' }
+  }
+
+  // Server-side: verify the selected group belongs to this academy
+  const { data: verifiedGroup } = await supabase
+    .from('groups')
+    .select('id, name')
+    .eq('id', selectedGroupId)
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .single()
+
+  if (!verifiedGroup) {
+    return { ok: false, error: 'Selected group does not belong to this academy or is inactive.' }
+  }
+
+  // Merge group into payload before approving
+  const approvedPayload = {
+    ...existingPayload,
+    recommended_group_id: verifiedGroup.id,
+    recommended_group_name: verifiedGroup.name,
+  }
+
   const { error: updateError } = await rawDb
     .from('proposed_actions')
-    .update({ status: 'approved' })
+    .update({ status: 'approved', proposed_payload: approvedPayload })
     .eq('id', recommendationDraftId)
     .eq('academy_id', academyId)
 
@@ -3348,7 +3414,6 @@ export async function approveRecommendationDraftAction(
     return { ok: false, error: `Failed to approve recommendation: ${updateError.message}` }
   }
 
-  const payload = item.proposed_payload as Record<string, unknown>
   await rawDb
     .from('audit_logs')
     .insert({
@@ -3359,7 +3424,9 @@ export async function approveRecommendationDraftAction(
       target_id: recommendationDraftId,
       payload: {
         recommendation_draft_id: recommendationDraftId,
-        attendee_name: payload?.attendee_name,
+        attendee_name: existingPayload?.attendee_name,
+        recommended_group_id: verifiedGroup.id,
+        recommended_group_name: verifiedGroup.name,
         approved_by: user.id,
       },
       source_type: 'ui',
@@ -3474,6 +3541,8 @@ export interface RecommendationOverrideFields {
   suggested_group_type: string
   first_skill_priority: string
   director_override_notes: string
+  recommended_group_id: string
+  recommended_group_name: string
 }
 
 export async function overrideRecommendationDraftAction(
@@ -3489,6 +3558,7 @@ export async function overrideRecommendationDraftAction(
 
   if (!overrides.current_level?.trim()) return { ok: false, error: 'Current level is required.' }
   if (!overrides.starting_pathway?.trim()) return { ok: false, error: 'Starting pathway is required.' }
+  if (!overrides.recommended_group_id?.trim()) return { ok: false, error: 'Select a valid group before applying this override.' }
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -3508,6 +3578,19 @@ export async function overrideRecommendationDraftAction(
   const role = membership?.role
   if (role !== 'academy_director' && role !== 'head_coach') {
     return { ok: false, error: 'You do not have permission to override placement recommendations.' }
+  }
+
+  // Server-side: verify the selected group belongs to this academy
+  const { data: verifiedGroup } = await supabase
+    .from('groups')
+    .select('id, name')
+    .eq('id', overrides.recommended_group_id)
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .single()
+
+  if (!verifiedGroup) {
+    return { ok: false, error: 'Selected group does not belong to this academy or is inactive.' }
   }
 
   const rawDb = supabase as any
@@ -3535,7 +3618,10 @@ export async function overrideRecommendationDraftAction(
     suggested_group_type: overrides.suggested_group_type.trim(),
     first_skill_priority: overrides.first_skill_priority.trim(),
     director_override_notes: overrides.director_override_notes.trim(),
+    recommended_group_id: verifiedGroup.id,
+    recommended_group_name: verifiedGroup.name,
     director_overridden: true,
+    // player_identity is preserved via ...existingPayload spread above
   }
 
   const { error: updateError } = await rawDb

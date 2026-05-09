@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { CheckCircle, ClipboardList, Loader2, Sparkles } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { saveAssessmentDraftAction, generatePlacementRecommendationDraftAction } from './actions'
-import type { AssessmentDraftFields } from './actions'
+import type { AssessmentDraftFields, PlayerIdentity } from './actions'
 
 export interface PlacementAssessmentDraftPayload {
   draft_type: 'placement_assessment_draft_v1'
@@ -13,6 +13,12 @@ export interface PlacementAssessmentDraftPayload {
   source_proposed_action_id: string
   attendee_name: string
   session_id: string | null
+  player_identity?: {
+    first_name: string
+    last_name: string
+    date_of_birth: string
+    gender: string | null
+  }
   age_band: string | null
   ball_color: string | null
   skill_observations: string
@@ -40,10 +46,32 @@ interface Props {
 
 const AGE_BANDS = ['6–8', '9–10', '11–12', '13–14', '15–16', '17–18', '18+'] as const
 const BALL_COLORS = ['Red', 'Orange', 'Green', 'Yellow'] as const
+const GENDER_OPTIONS = [
+  { value: '', label: '— not specified —' },
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
+] as const
+
+function guessNameParts(attendeeName: string): { first: string; last: string } {
+  const trimmed = attendeeName.trim()
+  const spaceIdx = trimmed.indexOf(' ')
+  if (spaceIdx === -1) return { first: trimmed, last: '' }
+  return { first: trimmed.slice(0, spaceIdx), last: trimmed.slice(spaceIdx + 1) }
+}
 
 export function PlacementAssessmentDraftCard({ item }: Props) {
   const { payload } = item
   const router = useRouter()
+
+  // Pre-populate identity from payload or guess from attendee_name
+  const savedIdentity = payload.player_identity
+  const nameFallback = guessNameParts(payload.attendee_name ?? '')
+
+  const [firstName, setFirstName] = useState(savedIdentity?.first_name ?? nameFallback.first)
+  const [lastName, setLastName] = useState(savedIdentity?.last_name ?? nameFallback.last)
+  const [dateOfBirth, setDateOfBirth] = useState(savedIdentity?.date_of_birth ?? '')
+  const [gender, setGender] = useState(savedIdentity?.gender ?? '')
 
   const [ageBand, setAgeBand] = useState(payload.age_band ?? '')
   const [ballColor, setBallColor] = useState(payload.ball_color ?? '')
@@ -58,6 +86,15 @@ export function PlacementAssessmentDraftCard({ item }: Props) {
   const [generateResult, setGenerateResult] = useState<{ ok: boolean; error: string | null } | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  function buildIdentity(): PlayerIdentity {
+    return {
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      date_of_birth: dateOfBirth.trim(),
+      gender: gender || null,
+    }
+  }
+
   function handleSave() {
     setSaveResult(null)
     setActiveAction('save')
@@ -68,6 +105,7 @@ export function PlacementAssessmentDraftCard({ item }: Props) {
       movement_observations: movementObs,
       competitive_readiness: competitiveReadiness,
       recommended_next_step: recommendedNext,
+      player_identity: buildIdentity(),
     }
     startTransition(async () => {
       const res = await saveAssessmentDraftAction(item.id, fields)
@@ -122,6 +160,69 @@ export function PlacementAssessmentDraftCard({ item }: Props) {
             )}
           </div>
         )}
+
+        {/* ── Player Identity ── */}
+        <div className="p-3 rounded-xl bg-surface-raised border border-border space-y-3">
+          <div className="space-y-0.5">
+            <p className="text-[10px] uppercase tracking-widest text-text-muted">Player Identity</p>
+            <p className="text-[10px] text-status-orange leading-snug">
+              Required before generating a recommendation. First name, last name, and date of birth must be saved here because <span className="font-semibold">players.date_of_birth is NOT NULL</span> — player creation will fail without them.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase tracking-widest text-text-muted">
+                First Name <span className="text-status-red">*</span>
+              </label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+                placeholder="First name"
+                className="w-full text-xs bg-base border border-border rounded-lg px-2 py-1.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/50"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase tracking-widest text-text-muted">
+                Last Name <span className="text-status-red">*</span>
+              </label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={e => setLastName(e.target.value)}
+                placeholder="Last name"
+                className="w-full text-xs bg-base border border-border rounded-lg px-2 py-1.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/50"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase tracking-widest text-text-muted">
+                Date of Birth <span className="text-status-red">*</span>
+              </label>
+              <input
+                type="date"
+                value={dateOfBirth}
+                onChange={e => setDateOfBirth(e.target.value)}
+                className="w-full text-xs bg-base border border-border rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-lime/50"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase tracking-widest text-text-muted">Gender</label>
+              <select
+                value={gender}
+                onChange={e => setGender(e.target.value)}
+                className="w-full text-xs bg-base border border-border rounded-lg px-2 py-1.5 text-text-primary focus:outline-none focus:border-lime/50"
+              >
+                {GENDER_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
 
         {/* Assessment fields */}
         <div className="space-y-3">
@@ -243,7 +344,7 @@ export function PlacementAssessmentDraftCard({ item }: Props) {
             <p className="text-xs text-status-red">{generateResult.error}</p>
           )}
           <p className="text-[10px] text-text-muted leading-snug px-0.5">
-            Derives a placement recommendation from the assessment fields above. No player profile, billing, or parent communication is created. Director must approve the recommendation before any official record is created.
+            Save identity fields first, then generate. Recommendation generation requires first name, last name, and date of birth. No player profile, billing, or parent communication is created. Director must approve before any official record is created.
           </p>
         </div>
       </CardContent>
