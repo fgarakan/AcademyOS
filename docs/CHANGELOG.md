@@ -2,6 +2,146 @@
 
 ---
 
+## 2026-05-09 — Sprint 172: Pilot Placement Flow QA Guide
+
+Creates `docs/PILOT_PLACEMENT_FLOW_QA.md` — a complete end-to-end reference for QA testing the unexpected-attendee → placement pipeline. Covers all 7 currently-implemented steps with SQL verification queries and known limitations. Includes explicit documentation of the Sprint 168 blocker (player creation not yet built).
+
+**No code changes. Documentation only.**
+
+**Contents:**
+- Pipeline overview diagram (text)
+- Step-by-step QA path: coach wrap-up → attendance exception → placement review → intake candidate → assessment draft → recommendation draft → approval
+- SQL verification queries for every stage
+- Known limitations section (6 items): player creation not built, date_of_birth required, group_id required, dismiss is permanent, no follow-up expiry, rough confidence algorithm
+- Guardrails verification checklist with SQL audit queries
+
+---
+
+## 2026-05-09 — Sprint 167: Recommendation Review + Override
+
+Adds Approve / Override / Reject controls to `PlacementRecommendationDraftCard`. Directors can now act on a generated recommendation. Approving does NOT create a player — that is the next explicit step (Sprint 168). Override shows an inline form to edit all four recommendation fields plus override notes.
+
+**No migration required.**
+
+**New server actions (`src/app/director/review/actions.ts`):**
+- `approveRecommendationDraftAction` — verifies auth + role + module + status. Sets status to `approved`. Writes `placement_recommendation_draft.approved` to `audit_logs`.
+- `rejectRecommendationDraftAction` — sets status to `rejected`. Writes `placement_recommendation_draft.rejected` to `audit_logs`. No player created.
+- `overrideRecommendationDraftAction` — validates required fields (current_level, starting_pathway). Merges override fields into payload, sets `director_overridden: true`, sets status to `approved`. Writes `placement_recommendation_draft.overridden_and_approved` to `audit_logs`.
+
+**Updated `PlacementRecommendationDraftCard.tsx`** (now a `'use client'` component):
+- Three controls: "Approve Recommendation" (primary lime), "Override" (ghost — toggles inline form), "Reject" (ghost/danger).
+- Override form: four text inputs (current_level, starting_pathway, suggested_group_type, first_skill_priority) + override notes textarea, pre-filled with current payload values.
+- `activeAction: 'approve' | 'reject' | 'override'` discriminated union for correct loading state per button.
+- Success flash with action-specific message: Approve clearly states "Player creation is the next explicit step."
+- Approved cards remain visible (status filter now includes `approved`) so directors see the full funnel state before Sprint 168 is built.
+
+**Updated `src/app/director/review/page.tsx`:**
+- Recommendation fetch now includes `in('status', ['pending_review', 'approved'])`.
+- Split into `pendingRecommendationDrafts` and `approvedRecommendationDrafts` for badge display; all items still rendered via `allEnrichedRecommendationDrafts`.
+- Recommendation section header shows separate orange (pending) and lime (approved) count badges.
+
+**Guardrails confirmed:** No migrations. No schema changes. No player/roster/billing/comms. Audit log written on every action. TypeScript clean.
+
+---
+
+## 2026-05-09 — Sprint 166: Placement Recommendation Draft V1
+
+Adds deterministic placement recommendation generation from a completed assessment draft. No AI, no external API calls. The recommendation is derived from the assessment fields using pure rule-based logic. Director must approve before any player record is created.
+
+**No migration required.**
+
+**New server action (`src/app/director/review/actions.ts`):**
+- `generatePlacementRecommendationDraftAction` — derives recommendation fields deterministically: `current_level` (from ball_color), `starting_pathway` (from ball_color + age_band), `first_skill_priority` (keyword scan on skill_observations), `suggested_group_type` (keyword scan on competitive_readiness), `confidence` (low/medium/high based on how many fields are filled). Creates `placement_recommendation_draft_v1` proposed_actions row (`risk_level: 'high'`). Marks assessment as `executed`. Writes `placement_assessment_draft.recommendation_generated` to `audit_logs`. No player, no roster, no billing, no parent comms.
+
+**New component (`src/app/director/review/PlacementRecommendationDraftCard.tsx`):**
+- Read-only display card (approval controls come in Sprint 167) showing: current_level, starting_pathway, suggested_group_type, first_skill_priority in a 2×2 grid, confidence pill (green/orange/red), collapsible assessment summary, safety badges, "Awaiting Approval" status badge.
+- Note to director: "Sprint 167 will add Approve / Override / Reject controls."
+
+**Updated `src/app/director/review/PlacementAssessmentDraftCard.tsx`:**
+- Added `useRouter` and `generatePlacementRecommendationDraftAction` import.
+- "Generate Placement Recommendation" primary lime button below the Save button. Tracks `activeAction: 'save' | 'generate'` for correct loading state on each button independently.
+- On success: `router.refresh()` unmounts the assessment card (it's now `executed`) and the recommendation draft appears in the section below.
+
+**Updated `src/app/director/review/page.tsx`:**
+- Fetches `placement_recommendation_draft` rows, extracts session_id from payloads, batch-fetches sessions.
+- Added "Placement Recommendations — Awaiting Approval" section at the bottom of the Intake Candidates tab.
+- `recommendationDraftCount` added to: PageHeader prop/type/destructuring, Operations group `CategoryRow` ("Recommendation"), `totalPending` sum, tab badge, `oldestPendingDates`, all-caught-up check.
+
+**Guardrails confirmed:** No migrations. No schema changes. No AI/external calls. No player/roster/billing/comms. Audit log written on generation. TypeScript clean.
+
+---
+
+## 2026-05-09 — Sprint 165: Placement Assessment Draft V1
+
+Adds an inline-editable assessment draft stage to the placement intake pipeline. When a director clicks "Start Placement Assessment" on an intake candidate, it creates a `placement_assessment_draft_v1` proposed_actions row and moves the candidate to `executed`. The assessment card appears in the "Placement Assessments In Progress" section of the Intake Candidates tab.
+
+**No migration required.**
+
+**New server actions (`src/app/director/review/actions.ts`):**
+- `startPlacementAssessmentDraftAction` — verifies auth + role, fetches intake candidate, creates `voice_commands` FK row, creates `placement_assessment_draft_v1` proposed_actions row, marks intake candidate as `executed`, writes `placement_intake_candidate.assessment_started` to `audit_logs`.
+- `saveAssessmentDraftAction` — verifies auth + role + module. Updates `proposed_payload` fields (age_band, ball_color, skill_observations, movement_observations, competitive_readiness, recommended_next_step) using a merge patch. No status change. Returns `{ ok, error }`.
+
+**New component (`src/app/director/review/PlacementAssessmentDraftCard.tsx`):**
+- Controlled form with: Age Band (select from 7 options), Ball Color (select Red/Orange/Green/Yellow), Skill Observations (textarea), Movement Observations (textarea), Competitive Readiness (textarea), Recommended Next Step (textarea).
+- "Save Assessment Draft" button with loading state + inline success/error feedback. No page refresh on save.
+- Safety notice: "No player profile, billing record, or parent account is created by saving."
+- Exports `PlacementAssessmentDraftPayload` and `EnrichedAssessmentDraftItem`.
+
+**Updated `src/app/director/review/PlacementIntakeCandidateCard.tsx`:**
+- Replaced dashed placeholder with "Start Placement Assessment" primary lime button (same pattern as Placement Review intake button).
+- `activeAction` discriminated union now covers `'assess' | 'dismiss'`.
+- Success flash message is action-specific.
+
+**Updated `src/app/director/review/page.tsx`:**
+- Fetches `placement_assessment_draft` rows, extracts `session_id` from payloads, batch-fetches sessions.
+- Intake Candidates tab now has two sections: "Pending Intake Candidates" and "Placement Assessments In Progress".
+- `assessmentDraftCount` added to: PageHeader prop/type/destructuring, Operations group `CategoryRow` ("In Assessment"), `totalPending` sum, tab badge, `oldestPendingDates`, all-caught-up check.
+
+**Guardrails confirmed:** No migrations. No schema changes. No player/roster/billing/comms. Audit log written on assessment start. TypeScript clean.
+
+---
+
+## 2026-05-09 — Sprint 164: Placement Intake Candidate Dismiss Action
+
+Adds a "Dismiss Candidate" action button to each intake candidate card. Dismissed candidates are set to `rejected` status and removed from the queue. Also adds a placeholder slot for "Start Placement Assessment" (Sprint 165). No player, roster, billing, or parent comms are created.
+
+**No migration required.**
+
+**New server action (`src/app/director/review/actions.ts`):**
+- `dismissIntakeCandidateAction` — verifies auth, academy scope, role (director/head_coach), and `target_module === 'placement_intake_candidate'`. Sets status to `rejected`. Writes `placement_intake_candidate.dismissed` to `audit_logs`. Returns `{ ok, error }`.
+
+**Updated `src/app/director/review/PlacementIntakeCandidateCard.tsx`:**
+- Now a `'use client'` component with `useTransition` + `useRouter` (same pattern as `PlacementReviewCard`).
+- Dismiss button with loading state and success card flash before `router.refresh()`.
+- Dashed placeholder for "Start Placement Assessment" (replaced in Sprint 165).
+- Dismiss microcopy: "Marks this candidate as dismissed. No player record is created."
+
+**Guardrails confirmed:** No migrations. No schema changes. No player/roster/billing/comms. Audit log written on dismiss. TypeScript clean.
+
+---
+
+## 2026-05-09 — Sprint 163: Surface Placement Intake Candidates
+
+Surfaces `placement_intake_candidate_v1` proposed_actions rows in the Director Review Queue as a new "Intake Candidates" tab. These items are created when a director chooses "Start Placement Intake" from the Placement Review tab. No player, roster, billing, or parent comms have been created at this stage.
+
+**No migration required.** Display-only sprint — reads existing `proposed_actions` rows, no new mutations.
+
+**New component (`src/app/director/review/PlacementIntakeCandidateCard.tsx`):**
+- Read-only display card showing: attendee name, "Pending Intake" badge, source session context, coach note, four safety badges (No player record / No roster entry / No billing / No parent comms), and safety notice microcopy.
+- No action buttons in this sprint (Sprint 164 adds Dismiss and further assessment controls).
+- Exports `PlacementIntakeCandidatePayload` and `EnrichedIntakeCandidateItem` types.
+
+**Updated `src/app/director/review/page.tsx`:**
+- Fetches `proposed_actions` where `target_module = 'placement_intake_candidate'`, `status = 'pending_review'`, filtered to `draft_type === 'placement_intake_candidate_v1'`.
+- Extracts `session_id` from each payload (not `target_object_id`, which is `academyId`); batch-fetches session names for source session context.
+- New "Intake Candidates" tab trigger between Placement Review and Player Observations.
+- New `placement_intake` tab content with EmptyState and card list.
+- `intakeCandidateCount` added to: PageHeader prop/type/destructuring, Operations group `CategoryRow`, `totalPending` sum, `defaultTab` logic, `oldestPendingDates`, all-caught-up check.
+
+**Guardrails confirmed:** No migrations. No schema changes. No mutations in this sprint. No player/roster/billing/comms. TypeScript clean.
+
+---
+
 ## 2026-05-09 — Sprint 162: Placement Review → Player Onboarding Bridge
 
 Turns Placement Review follow-ups into a clear, director-controlled onboarding bridge. Before this sprint, the only action was "Mark Reviewed" — an ambiguous dismiss. Directors now see three explicit decision controls with microcopy for each.

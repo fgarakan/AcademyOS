@@ -2692,3 +2692,879 @@ export async function markPlacementReviewFollowUpLaterAction(
 
   return { ok: true, error: null }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Dismiss a placement intake candidate.
+// Sets status to 'rejected' — candidate is removed from the queue.
+// No player, roster, billing, or parent communication is created.
+// ─────────────────────────────────────────────────────────────
+
+export interface DismissIntakeCandidateResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function dismissIntakeCandidateAction(
+  proposedActionId: string,
+): Promise<DismissIntakeCandidateResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+  if (!proposedActionId) return { ok: false, error: 'Missing proposed action ID.' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to dismiss intake candidates.' }
+  }
+
+  const rawDb = supabase as any
+
+  const { data: item } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, voice_command_id')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!item) return { ok: false, error: 'Intake candidate not found.' }
+  if (item.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (item.target_module !== 'placement_intake_candidate') {
+    return { ok: false, error: 'This item cannot be dismissed through this interface.' }
+  }
+  if (item.status === 'rejected' || item.status === 'executed') {
+    return { ok: false, error: 'This item has already been handled.' }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'rejected' })
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to dismiss candidate: ${updateError.message}` }
+  }
+
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'placement_intake_candidate.dismissed',
+      target_type: 'proposed_actions',
+      target_id: proposedActionId,
+      payload: { proposed_action_id: proposedActionId, dismissed_by: user.id },
+      source_type: 'ui',
+      voice_command_id: item.voice_command_id ?? null,
+    })
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Start a placement assessment draft from an intake candidate.
+// Creates a proposed_actions row with target_module: 'placement_assessment_draft'.
+// Marks the intake candidate as 'executed'.
+// No player, roster, billing, or parent communication is created.
+// ─────────────────────────────────────────────────────────────
+
+export interface StartPlacementAssessmentResult {
+  ok: boolean
+  error: string | null
+  assessmentDraftId: string | null
+}
+
+export async function startPlacementAssessmentDraftAction(
+  intakeCandidateId: string,
+): Promise<StartPlacementAssessmentResult> {
+  const fail = (error: string): StartPlacementAssessmentResult =>
+    ({ ok: false, error, assessmentDraftId: null })
+
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return fail('Not authenticated.')
+  if (!intakeCandidateId) return fail('Missing intake candidate ID.')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return fail('Academy context unavailable.')
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return fail('You do not have permission to start placement assessments.')
+  }
+
+  const rawDb = supabase as any
+
+  const { data: candidate } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_payload, voice_command_id')
+    .eq('id', intakeCandidateId)
+    .single()
+
+  if (!candidate) return fail('Intake candidate not found.')
+  if (candidate.academy_id !== academyId) return fail('Access denied.')
+  if (candidate.target_module !== 'placement_intake_candidate') {
+    return fail('This item cannot be handled through this interface.')
+  }
+  if (candidate.status === 'executed' || candidate.status === 'rejected') {
+    return fail('This candidate has already been handled.')
+  }
+
+  const candidatePayload = candidate.proposed_payload as Record<string, unknown>
+  const attendeeName = candidatePayload?.attendee_name as string | null
+  const sessionId = candidatePayload?.session_id as string | null
+
+  if (!attendeeName) return fail('Attendee name missing from intake candidate.')
+
+  // Create voice_commands row (required FK for proposed_actions)
+  const issuerRole: 'academy_director' | 'head_coach' =
+    role === 'academy_director' ? 'academy_director' : 'head_coach'
+  const rawInput = `Placement assessment: ${attendeeName}`
+
+  const { data: vcRow } = await supabase
+    .from('voice_commands')
+    .insert({
+      academy_id: academyId,
+      issuer_id: user.id,
+      issuer_role: issuerRole as any,
+      input_method: 'typed' as any,
+      raw_input: rawInput,
+      transcript: rawInput,
+      processing_status: 'processed',
+    })
+    .select('id')
+    .single()
+
+  if (!vcRow) return fail('Failed to create command record.')
+
+  const assessmentPayload = {
+    draft_type: 'placement_assessment_draft_v1',
+    source: 'placement_intake_candidate',
+    source_proposed_action_id: intakeCandidateId,
+    attendee_name: attendeeName,
+    session_id: sessionId,
+    age_band: null as string | null,
+    ball_color: null as string | null,
+    skill_observations: '',
+    movement_observations: '',
+    competitive_readiness: '',
+    recommended_next_step: '',
+    no_player_created: true,
+    no_roster_change: true,
+    no_billing: true,
+    no_parent_communication: true,
+  }
+
+  const { data: assessmentAction, error: assessmentError } = await rawDb
+    .from('proposed_actions')
+    .insert({
+      academy_id: academyId,
+      proposed_by_id: user.id,
+      voice_command_id: vcRow.id,
+      action_type: 'other',
+      action_label: `Placement Assessment — ${attendeeName}`,
+      target_module: 'placement_assessment_draft',
+      target_object_id: academyId,
+      target_object_type: 'academy',
+      proposed_payload: assessmentPayload,
+      status: 'pending_review',
+      risk_level: 'medium',
+      risk_notes: [
+        'No player record created.',
+        'No roster change made.',
+        'No billing or parent communication created.',
+        'Director must complete assessment and approve recommendation to create an official player record.',
+      ],
+    })
+    .select('id')
+    .single()
+
+  if (assessmentError || !assessmentAction) {
+    return fail(`Failed to create assessment draft: ${assessmentError?.message ?? 'unknown'}`)
+  }
+
+  // Mark intake candidate as executed
+  const { error: execError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'executed' })
+    .eq('id', intakeCandidateId)
+    .eq('academy_id', academyId)
+
+  if (execError) {
+    return fail(`Failed to update intake candidate status: ${execError.message}`)
+  }
+
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'placement_intake_candidate.assessment_started',
+      target_type: 'proposed_actions',
+      target_id: intakeCandidateId,
+      payload: {
+        intake_candidate_id: intakeCandidateId,
+        assessment_draft_id: assessmentAction.id,
+        attendee_name: attendeeName,
+        started_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: candidate.voice_command_id ?? null,
+    })
+
+  return { ok: true, error: null, assessmentDraftId: assessmentAction.id as string }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Save updates to a placement assessment draft.
+// Only updates payload fields — never creates a player or changes status.
+// ─────────────────────────────────────────────────────────────
+
+export interface SaveAssessmentDraftResult {
+  ok: boolean
+  error: string | null
+}
+
+export interface AssessmentDraftFields {
+  age_band: string | null
+  ball_color: string | null
+  skill_observations: string
+  movement_observations: string
+  competitive_readiness: string
+  recommended_next_step: string
+}
+
+export async function saveAssessmentDraftAction(
+  assessmentDraftId: string,
+  fields: AssessmentDraftFields,
+): Promise<SaveAssessmentDraftResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+  if (!assessmentDraftId) return { ok: false, error: 'Missing assessment draft ID.' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to edit assessment drafts.' }
+  }
+
+  const rawDb = supabase as any
+
+  const { data: item } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_payload')
+    .eq('id', assessmentDraftId)
+    .single()
+
+  if (!item) return { ok: false, error: 'Assessment draft not found.' }
+  if (item.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (item.target_module !== 'placement_assessment_draft') {
+    return { ok: false, error: 'This item cannot be edited through this interface.' }
+  }
+  if (item.status !== 'pending_review') {
+    return { ok: false, error: 'Only pending assessment drafts can be edited.' }
+  }
+
+  const existingPayload = item.proposed_payload as Record<string, unknown>
+  const updatedPayload = {
+    ...existingPayload,
+    age_band: fields.age_band,
+    ball_color: fields.ball_color,
+    skill_observations: fields.skill_observations.trim(),
+    movement_observations: fields.movement_observations.trim(),
+    competitive_readiness: fields.competitive_readiness.trim(),
+    recommended_next_step: fields.recommended_next_step.trim(),
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ proposed_payload: updatedPayload })
+    .eq('id', assessmentDraftId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to save assessment: ${updateError.message}` }
+  }
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Generate a placement recommendation draft from a completed assessment.
+// Deterministic derivation — no AI, no external API calls.
+// Creates a proposed_actions row with target_module: 'placement_recommendation_draft'.
+// Marks the assessment draft as 'executed'.
+// No player, roster, billing, or parent communication is created.
+// ─────────────────────────────────────────────────────────────
+
+export interface GeneratePlacementRecommendationResult {
+  ok: boolean
+  error: string | null
+  recommendationDraftId: string | null
+}
+
+function deriveCurrentLevel(ballColor: string | null): string {
+  switch (ballColor?.toLowerCase()) {
+    case 'red': return 'Beginner'
+    case 'orange': return 'Intermediate'
+    case 'green': return 'Advanced Intermediate'
+    case 'yellow': return 'Advanced'
+    default: return 'Unknown'
+  }
+}
+
+function deriveStartingPathway(ballColor: string | null, ageBand: string | null): string {
+  const isYouth = ageBand ? /^[6-9]|^1[0-4]/.test(ageBand) : false
+  switch (ballColor?.toLowerCase()) {
+    case 'red': return isYouth ? 'Youth Beginner' : 'Adult Beginner'
+    case 'orange': return isYouth ? 'Youth Development' : 'Adult Development'
+    case 'green': return isYouth ? 'Youth Competitive' : 'Adult Competitive'
+    case 'yellow': return isYouth ? 'Junior Elite' : 'Adult Performance'
+    default: return 'To Be Determined'
+  }
+}
+
+function deriveFirstSkillPriority(skillObs: string): string {
+  const text = skillObs.toLowerCase()
+  if (/\bforehand\b/.test(text)) return 'Forehand groundstroke'
+  if (/\bbackhand\b/.test(text)) return 'Backhand groundstroke'
+  if (/\bserve\b|\bserving\b/.test(text)) return 'Serve mechanics'
+  if (/\bmovement\b|\bfootwork\b/.test(text)) return 'Movement and footwork'
+  if (/\bvolley\b/.test(text)) return 'Net play / volleys'
+  if (/\breturn\b/.test(text)) return 'Return of serve'
+  return 'General stroke development'
+}
+
+function deriveSuggestedGroupType(competitiveReadiness: string): string {
+  const text = competitiveReadiness.toLowerCase()
+  if (/\bprivate\b|\bone-on-one\b/.test(text)) return 'Private (1:1)'
+  if (/\bsemi-private\b|\bsmall group\b/.test(text)) return 'Semi-private (2-3)'
+  return 'Group training'
+}
+
+function deriveConfidence(
+  ageBand: string | null,
+  ballColor: string | null,
+  skillObs: string,
+  movementObs: string,
+  competitiveReadiness: string,
+  recommendedNext: string,
+): 'low' | 'medium' | 'high' {
+  const filled = [ageBand, ballColor, skillObs, movementObs, competitiveReadiness, recommendedNext]
+    .filter(v => v && v.trim().length > 0).length
+  if (filled <= 2) return 'low'
+  if (filled <= 4) return 'medium'
+  return 'high'
+}
+
+export async function generatePlacementRecommendationDraftAction(
+  assessmentDraftId: string,
+): Promise<GeneratePlacementRecommendationResult> {
+  const fail = (error: string): GeneratePlacementRecommendationResult =>
+    ({ ok: false, error, recommendationDraftId: null })
+
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return fail('Not authenticated.')
+  if (!assessmentDraftId) return fail('Missing assessment draft ID.')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return fail('Academy context unavailable.')
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return fail('You do not have permission to generate placement recommendations.')
+  }
+
+  const rawDb = supabase as any
+
+  const { data: assessment } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_payload, voice_command_id')
+    .eq('id', assessmentDraftId)
+    .single()
+
+  if (!assessment) return fail('Assessment draft not found.')
+  if (assessment.academy_id !== academyId) return fail('Access denied.')
+  if (assessment.target_module !== 'placement_assessment_draft') {
+    return fail('This item cannot be handled through this interface.')
+  }
+  if (assessment.status !== 'pending_review') {
+    return fail('Only pending assessment drafts can be used to generate a recommendation.')
+  }
+
+  const ap = assessment.proposed_payload as Record<string, unknown>
+  const attendeeName = ap?.attendee_name as string | null
+  const sessionId = ap?.session_id as string | null
+  const ageBand = ap?.age_band as string | null
+  const ballColor = ap?.ball_color as string | null
+  const skillObs = (ap?.skill_observations as string) ?? ''
+  const movementObs = (ap?.movement_observations as string) ?? ''
+  const competitiveReadiness = (ap?.competitive_readiness as string) ?? ''
+  const recommendedNext = (ap?.recommended_next_step as string) ?? ''
+
+  if (!attendeeName) return fail('Attendee name missing from assessment draft.')
+
+  // Deterministic derivation — no AI, no external calls
+  const currentLevel = deriveCurrentLevel(ballColor)
+  const startingPathway = deriveStartingPathway(ballColor, ageBand)
+  const firstSkillPriority = deriveFirstSkillPriority(skillObs)
+  const suggestedGroupType = deriveSuggestedGroupType(competitiveReadiness)
+  const confidence = deriveConfidence(ageBand, ballColor, skillObs, movementObs, competitiveReadiness, recommendedNext)
+
+  // Create voice_commands row (required FK)
+  const issuerRole: 'academy_director' | 'head_coach' =
+    role === 'academy_director' ? 'academy_director' : 'head_coach'
+  const rawInput = `Placement recommendation: ${attendeeName}`
+
+  const { data: vcRow } = await supabase
+    .from('voice_commands')
+    .insert({
+      academy_id: academyId,
+      issuer_id: user.id,
+      issuer_role: issuerRole as any,
+      input_method: 'typed' as any,
+      raw_input: rawInput,
+      transcript: rawInput,
+      processing_status: 'processed',
+    })
+    .select('id')
+    .single()
+
+  if (!vcRow) return fail('Failed to create command record.')
+
+  const recommendationPayload = {
+    draft_type: 'placement_recommendation_draft_v1',
+    source: 'placement_assessment_draft',
+    source_proposed_action_id: assessmentDraftId,
+    attendee_name: attendeeName,
+    session_id: sessionId,
+    current_level: currentLevel,
+    starting_pathway: startingPathway,
+    suggested_group_type: suggestedGroupType,
+    first_skill_priority: firstSkillPriority,
+    confidence,
+    director_override_notes: '',
+    assessment_summary: {
+      age_band: ageBand,
+      ball_color: ballColor,
+      skill_observations: skillObs,
+      movement_observations: movementObs,
+      competitive_readiness: competitiveReadiness,
+      recommended_next_step: recommendedNext,
+    },
+    no_player_created: true,
+    no_roster_change: true,
+    no_billing: true,
+    no_parent_communication: true,
+  }
+
+  const { data: recAction, error: recError } = await rawDb
+    .from('proposed_actions')
+    .insert({
+      academy_id: academyId,
+      proposed_by_id: user.id,
+      voice_command_id: vcRow.id,
+      action_type: 'other',
+      action_label: `Placement Recommendation — ${attendeeName}`,
+      target_module: 'placement_recommendation_draft',
+      target_object_id: academyId,
+      target_object_type: 'academy',
+      proposed_payload: recommendationPayload,
+      status: 'pending_review',
+      risk_level: 'high',
+      risk_notes: [
+        'This recommendation is the final step before player creation.',
+        'No player record created until director explicitly approves this recommendation.',
+        'Director must review and approve before any roster, billing, or parent communication is initiated.',
+      ],
+    })
+    .select('id')
+    .single()
+
+  if (recError || !recAction) {
+    return fail(`Failed to create recommendation draft: ${recError?.message ?? 'unknown'}`)
+  }
+
+  // Mark assessment as executed
+  const { error: execError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'executed' })
+    .eq('id', assessmentDraftId)
+    .eq('academy_id', academyId)
+
+  if (execError) {
+    return fail(`Failed to update assessment status: ${execError.message}`)
+  }
+
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'placement_assessment_draft.recommendation_generated',
+      target_type: 'proposed_actions',
+      target_id: assessmentDraftId,
+      payload: {
+        assessment_draft_id: assessmentDraftId,
+        recommendation_draft_id: recAction.id,
+        attendee_name: attendeeName,
+        confidence,
+        generated_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: assessment.voice_command_id ?? null,
+    })
+
+  return { ok: true, error: null, recommendationDraftId: recAction.id as string }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Approve a placement recommendation draft (no overrides).
+// Sets status to 'approved'. No player is created here.
+// Player creation (Sprint 168) is a separate explicit director action.
+// ─────────────────────────────────────────────────────────────
+
+export interface ApproveRecommendationResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function approveRecommendationDraftAction(
+  recommendationDraftId: string,
+): Promise<ApproveRecommendationResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+  if (!recommendationDraftId) return { ok: false, error: 'Missing recommendation draft ID.' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to approve placement recommendations.' }
+  }
+
+  const rawDb = supabase as any
+
+  const { data: item } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_payload, voice_command_id')
+    .eq('id', recommendationDraftId)
+    .single()
+
+  if (!item) return { ok: false, error: 'Recommendation draft not found.' }
+  if (item.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (item.target_module !== 'placement_recommendation_draft') {
+    return { ok: false, error: 'This item cannot be approved through this interface.' }
+  }
+  if (item.status !== 'pending_review') {
+    return { ok: false, error: 'Only pending recommendation drafts can be approved.' }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'approved' })
+    .eq('id', recommendationDraftId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to approve recommendation: ${updateError.message}` }
+  }
+
+  const payload = item.proposed_payload as Record<string, unknown>
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'placement_recommendation_draft.approved',
+      target_type: 'proposed_actions',
+      target_id: recommendationDraftId,
+      payload: {
+        recommendation_draft_id: recommendationDraftId,
+        attendee_name: payload?.attendee_name,
+        approved_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: item.voice_command_id ?? null,
+    })
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Reject a placement recommendation draft.
+// Sets status to 'rejected'. No player is created.
+// ─────────────────────────────────────────────────────────────
+
+export interface RejectRecommendationResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function rejectRecommendationDraftAction(
+  recommendationDraftId: string,
+): Promise<RejectRecommendationResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+  if (!recommendationDraftId) return { ok: false, error: 'Missing recommendation draft ID.' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to reject placement recommendations.' }
+  }
+
+  const rawDb = supabase as any
+
+  const { data: item } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_payload, voice_command_id')
+    .eq('id', recommendationDraftId)
+    .single()
+
+  if (!item) return { ok: false, error: 'Recommendation draft not found.' }
+  if (item.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (item.target_module !== 'placement_recommendation_draft') {
+    return { ok: false, error: 'This item cannot be rejected through this interface.' }
+  }
+  if (item.status !== 'pending_review') {
+    return { ok: false, error: 'Only pending recommendation drafts can be rejected.' }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'rejected' })
+    .eq('id', recommendationDraftId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to reject recommendation: ${updateError.message}` }
+  }
+
+  const payload = item.proposed_payload as Record<string, unknown>
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'placement_recommendation_draft.rejected',
+      target_type: 'proposed_actions',
+      target_id: recommendationDraftId,
+      payload: {
+        recommendation_draft_id: recommendationDraftId,
+        attendee_name: payload?.attendee_name,
+        rejected_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: item.voice_command_id ?? null,
+    })
+
+  return { ok: true, error: null }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Override and approve a placement recommendation draft.
+// Updates payload fields with director overrides and sets status to 'approved'.
+// No player is created here — player creation is a separate explicit step.
+// ─────────────────────────────────────────────────────────────
+
+export interface OverrideRecommendationResult {
+  ok: boolean
+  error: string | null
+}
+
+export interface RecommendationOverrideFields {
+  current_level: string
+  starting_pathway: string
+  suggested_group_type: string
+  first_skill_priority: string
+  director_override_notes: string
+}
+
+export async function overrideRecommendationDraftAction(
+  recommendationDraftId: string,
+  overrides: RecommendationOverrideFields,
+): Promise<OverrideRecommendationResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+  if (!recommendationDraftId) return { ok: false, error: 'Missing recommendation draft ID.' }
+
+  if (!overrides.current_level?.trim()) return { ok: false, error: 'Current level is required.' }
+  if (!overrides.starting_pathway?.trim()) return { ok: false, error: 'Starting pathway is required.' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to override placement recommendations.' }
+  }
+
+  const rawDb = supabase as any
+
+  const { data: item } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, proposed_payload, voice_command_id')
+    .eq('id', recommendationDraftId)
+    .single()
+
+  if (!item) return { ok: false, error: 'Recommendation draft not found.' }
+  if (item.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (item.target_module !== 'placement_recommendation_draft') {
+    return { ok: false, error: 'This item cannot be overridden through this interface.' }
+  }
+  if (item.status !== 'pending_review') {
+    return { ok: false, error: 'Only pending recommendation drafts can be overridden.' }
+  }
+
+  const existingPayload = item.proposed_payload as Record<string, unknown>
+  const updatedPayload = {
+    ...existingPayload,
+    current_level: overrides.current_level.trim(),
+    starting_pathway: overrides.starting_pathway.trim(),
+    suggested_group_type: overrides.suggested_group_type.trim(),
+    first_skill_priority: overrides.first_skill_priority.trim(),
+    director_override_notes: overrides.director_override_notes.trim(),
+    director_overridden: true,
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'approved', proposed_payload: updatedPayload })
+    .eq('id', recommendationDraftId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to apply override: ${updateError.message}` }
+  }
+
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'placement_recommendation_draft.overridden_and_approved',
+      target_type: 'proposed_actions',
+      target_id: recommendationDraftId,
+      payload: {
+        recommendation_draft_id: recommendationDraftId,
+        attendee_name: existingPayload?.attendee_name,
+        overrides,
+        overridden_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: item.voice_command_id ?? null,
+    })
+
+  return { ok: true, error: null }
+}

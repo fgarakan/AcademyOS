@@ -1,4 +1,4 @@
-import { BookOpen, CheckCircle, ClipboardList, Inbox, Link2, Mic, Target, Users, UserSearch } from 'lucide-react'
+import { BookOpen, CheckCircle, ClipboardList, Inbox, Link2, Mic, Target, Users, UserPlus, UserSearch } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -28,6 +28,12 @@ import type { EnrichedSummaryDraftItem } from './DevelopmentSummaryDraftCard'
 import type { DevelopmentSummaryDraftPayload } from '@/app/director/players/[playerId]/draftSummaryUpdateAction'
 import { PlacementReviewCard } from './PlacementReviewCard'
 import type { EnrichedPlacementReviewItem, PlacementReviewPayload } from './PlacementReviewCard'
+import { PlacementIntakeCandidateCard } from './PlacementIntakeCandidateCard'
+import type { EnrichedIntakeCandidateItem, PlacementIntakeCandidatePayload } from './PlacementIntakeCandidateCard'
+import { PlacementAssessmentDraftCard } from './PlacementAssessmentDraftCard'
+import type { EnrichedAssessmentDraftItem, PlacementAssessmentDraftPayload } from './PlacementAssessmentDraftCard'
+import { PlacementRecommendationDraftCard } from './PlacementRecommendationDraftCard'
+import type { EnrichedRecommendationDraftItem, PlacementRecommendationDraftPayload } from './PlacementRecommendationDraftCard'
 import { VoiceIntakeBatchPanel } from './VoiceIntakeBatchPanel'
 import { CapturesBatchPanel } from './CapturesBatchPanel'
 
@@ -753,6 +759,185 @@ export default async function DirectorReviewQueuePage() {
   const pendingPlacementReviews = allEnrichedPlacementReviews.filter(i => i.status === 'pending_review')
   const followUpPlacementReviews = allEnrichedPlacementReviews.filter(i => i.status === 'clarification_needed')
 
+  // ─── Placement intake candidates ──────────────────────────────
+  // Created when a director starts placement intake from a placement_review item.
+  // Still a proposed_actions safe bridge — no player, no roster, no billing, no parent comms.
+
+  const { data: intakeCandidateRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, proposed_payload, created_at')
+    .eq('academy_id', academyId)
+    .eq('status', 'pending_review')
+    .eq('target_module', 'placement_intake_candidate')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allIntakeCandidateRows: Array<{ id: string; status: string; proposed_payload: unknown; created_at: string }> =
+    (intakeCandidateRows ?? []) as any
+
+  const filteredIntakeCandidates = allIntakeCandidateRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'placement_intake_candidate_v1'
+  })
+
+  // session_id lives in the payload (target_object_id is academyId)
+  const intakeSessionIds = Array.from(
+    new Set(
+      filteredIntakeCandidates
+        .map(d => {
+          const p = d.proposed_payload as Record<string, unknown>
+          return p?.session_id as string | null
+        })
+        .filter((id): id is string => id !== null)
+    )
+  )
+
+  const intakeSessionMap = new Map<string, { id: string; name: string | null; scheduled_date: string }>()
+  if (intakeSessionIds.length > 0) {
+    const { data: iSessions } = await supabase
+      .from('sessions')
+      .select('id, name, scheduled_date')
+      .in('id', intakeSessionIds)
+      .eq('academy_id', academyId)
+    for (const s of (iSessions ?? [])) {
+      intakeSessionMap.set(s.id, s)
+    }
+  }
+
+  const enrichedIntakeCandidates: EnrichedIntakeCandidateItem[] = filteredIntakeCandidates.map(d => {
+    const p = d.proposed_payload as PlacementIntakeCandidatePayload
+    const sessionId = p?.session_id ?? null
+    const sess = sessionId ? intakeSessionMap.get(sessionId) : undefined
+    return {
+      id: d.id,
+      status: d.status,
+      createdAt: d.created_at,
+      sessionName: sess?.name ?? null,
+      sessionDate: sess?.scheduled_date ?? null,
+      payload: p,
+    }
+  })
+
+  // ─── Placement assessment drafts ─────────────────────────────
+  // Created when a director starts a placement assessment from an intake candidate.
+  // Still a proposed_actions safe bridge — no player, no roster, no billing, no parent comms.
+
+  const { data: assessmentDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, proposed_payload, created_at')
+    .eq('academy_id', academyId)
+    .eq('status', 'pending_review')
+    .eq('target_module', 'placement_assessment_draft')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allAssessmentDraftRows: Array<{ id: string; status: string; proposed_payload: unknown; created_at: string }> =
+    (assessmentDraftRows ?? []) as any
+
+  const filteredAssessmentDrafts = allAssessmentDraftRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'placement_assessment_draft_v1'
+  })
+
+  // session_id lives in the payload
+  const assessmentSessionIds = Array.from(
+    new Set(
+      filteredAssessmentDrafts
+        .map(d => {
+          const p = d.proposed_payload as Record<string, unknown>
+          return p?.session_id as string | null
+        })
+        .filter((id): id is string => id !== null)
+    )
+  )
+
+  const assessmentSessionMap = new Map<string, { id: string; name: string | null; scheduled_date: string }>()
+  if (assessmentSessionIds.length > 0) {
+    const { data: aSess } = await supabase
+      .from('sessions')
+      .select('id, name, scheduled_date')
+      .in('id', assessmentSessionIds)
+      .eq('academy_id', academyId)
+    for (const s of (aSess ?? [])) {
+      assessmentSessionMap.set(s.id, s)
+    }
+  }
+
+  const enrichedAssessmentDrafts: EnrichedAssessmentDraftItem[] = filteredAssessmentDrafts.map(d => {
+    const p = d.proposed_payload as PlacementAssessmentDraftPayload
+    const sessionId = p?.session_id ?? null
+    const sess = sessionId ? assessmentSessionMap.get(sessionId) : undefined
+    return {
+      id: d.id,
+      status: d.status,
+      createdAt: d.created_at,
+      sessionName: sess?.name ?? null,
+      sessionDate: sess?.scheduled_date ?? null,
+      payload: p,
+    }
+  })
+
+  // ─── Placement recommendation drafts ─────────────────────────
+  // Created when a director generates a recommendation from an assessment draft.
+  // Still a proposed_actions safe bridge — no player, no roster, no billing, no parent comms.
+
+  const { data: recommendationDraftRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, proposed_payload, created_at')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_review', 'approved'])
+    .eq('target_module', 'placement_recommendation_draft')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const allRecommendationDraftRows: Array<{ id: string; status: string; proposed_payload: unknown; created_at: string }> =
+    (recommendationDraftRows ?? []) as any
+
+  const filteredRecommendationDrafts = allRecommendationDraftRows.filter(d => {
+    const p = d.proposed_payload as Record<string, unknown>
+    return p?.draft_type === 'placement_recommendation_draft_v1'
+  })
+
+  const recommendationSessionIds = Array.from(
+    new Set(
+      filteredRecommendationDrafts
+        .map(d => {
+          const p = d.proposed_payload as Record<string, unknown>
+          return p?.session_id as string | null
+        })
+        .filter((id): id is string => id !== null)
+    )
+  )
+
+  const recommendationSessionMap = new Map<string, { id: string; name: string | null; scheduled_date: string }>()
+  if (recommendationSessionIds.length > 0) {
+    const { data: rSess } = await supabase
+      .from('sessions')
+      .select('id, name, scheduled_date')
+      .in('id', recommendationSessionIds)
+      .eq('academy_id', academyId)
+    for (const s of (rSess ?? [])) {
+      recommendationSessionMap.set(s.id, s)
+    }
+  }
+
+  const allEnrichedRecommendationDrafts: EnrichedRecommendationDraftItem[] = filteredRecommendationDrafts.map(d => {
+    const p = d.proposed_payload as PlacementRecommendationDraftPayload
+    const sessionId = p?.session_id ?? null
+    const sess = sessionId ? recommendationSessionMap.get(sessionId) : undefined
+    return {
+      id: d.id,
+      status: d.status,
+      createdAt: d.created_at,
+      sessionName: sess?.name ?? null,
+      sessionDate: sess?.scheduled_date ?? null,
+      payload: p,
+    }
+  })
+  const pendingRecommendationDrafts = allEnrichedRecommendationDrafts.filter(d => d.status === 'pending_review')
+  const approvedRecommendationDrafts = allEnrichedRecommendationDrafts.filter(d => d.status === 'approved')
+  const enrichedRecommendationDrafts = allEnrichedRecommendationDrafts
+
   // Oldest pending date per category (arrays are sorted newest-first, so last item = oldest)
   const oldestPendingDates = {
     session_recaps: pendingDrafts.at(-1)?.createdAt ?? null,
@@ -765,6 +950,9 @@ export default async function DirectorReviewQueuePage() {
     player_observations: pendingObservationDrafts.at(-1)?.createdAt ?? null,
     development_summaries: pendingSummaryDrafts.at(-1)?.createdAt ?? null,
     placement_review: pendingPlacementReviews.at(-1)?.createdAt ?? null,
+    placement_intake: enrichedIntakeCandidates.at(-1)?.createdAt ?? null,
+    placement_assessment: enrichedAssessmentDrafts.at(-1)?.createdAt ?? null,
+    placement_recommendation: enrichedRecommendationDrafts.at(-1)?.createdAt ?? null,
     captures: generalCaptures.at(-1)?.createdAt ?? null,
   }
 
@@ -772,6 +960,7 @@ export default async function DirectorReviewQueuePage() {
   const defaultTab = [
     { value: 'attendance', pending: pendingAttendanceDrafts.length },
     { value: 'placement_review', pending: pendingPlacementReviews.length },
+    { value: 'placement_intake', pending: enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + enrichedRecommendationDrafts.length },
     { value: 'player_observations', pending: pendingObservationDrafts.length },
     { value: 'development_summaries', pending: pendingSummaryDrafts.length },
     { value: 'wrap_ups', pending: pendingWrapUpDrafts.length },
@@ -805,6 +994,9 @@ export default async function DirectorReviewQueuePage() {
         summaryPendingCount={pendingSummaryDrafts.length}
         summaryApprovedCount={approvedSummaryDrafts.length}
         placementReviewCount={pendingPlacementReviews.length}
+        intakeCandidateCount={enrichedIntakeCandidates.length}
+        assessmentDraftCount={enrichedAssessmentDrafts.length}
+        recommendationDraftCount={enrichedRecommendationDrafts.length}
         captureCount={generalCaptures.length}
         oldestPendingDates={oldestPendingDates}
       />
@@ -814,7 +1006,8 @@ export default async function DirectorReviewQueuePage() {
         pendingDrafts.length + pendingPriorityDrafts.length + pendingEvidenceDrafts.length +
         pendingAttendanceDrafts.length + pendingCurriculumOverrideDrafts.length +
         pendingVoiceIntakeDrafts.length + pendingWrapUpDrafts.length +
-        pendingObservationDrafts.length + pendingSummaryDrafts.length + pendingPlacementReviews.length + generalCaptures.length
+        pendingObservationDrafts.length + pendingSummaryDrafts.length + pendingPlacementReviews.length +
+        enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + enrichedRecommendationDrafts.length + generalCaptures.length
       ) === 0 && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/10 border border-status-green/20">
           <CheckCircle className="w-4 h-4 text-status-green shrink-0" />
@@ -837,6 +1030,13 @@ export default async function DirectorReviewQueuePage() {
             <TabLabel
               label="Placement Review"
               pending={pendingPlacementReviews.length}
+              ready={0}
+            />
+          </TabsTrigger>
+          <TabsTrigger value="placement_intake">
+            <TabLabel
+              label="Intake Candidates"
+              pending={enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + enrichedRecommendationDrafts.length}
               ready={0}
             />
           </TabsTrigger>
@@ -989,6 +1189,96 @@ export default async function DirectorReviewQueuePage() {
               </div>
             </section>
           )}
+        </TabsContent>
+
+        {/* ─── Placement Intake tab ─── */}
+        <TabsContent value="placement_intake" className="pt-6 space-y-6">
+          <p className="text-[10px] text-text-muted px-1">Director-controlled intake pipeline. No player profile, roster entry, billing, or parent communication is created at any stage until the full placement assessment is approved. Each step requires explicit director action.</p>
+
+          {/* Pending intake candidates */}
+          <section className="space-y-3">
+            <p className="label-xs">Pending Intake Candidates</p>
+            {enrichedIntakeCandidates.length === 0 ? (
+              <Card>
+                <CardContent className="py-8">
+                  <EmptyState
+                    icon={<UserPlus className="w-5 h-5" />}
+                    title="No intake candidates"
+                    description="Intake candidates appear here when a director chooses 'Start Placement Intake' from the Placement Review tab. No player record is created until the full placement assessment is complete."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {enrichedIntakeCandidates.map(item => (
+                  <PlacementIntakeCandidateCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Assessment drafts in progress */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <p className="label-xs">Placement Assessments In Progress</p>
+              {enrichedAssessmentDrafts.length > 0 && (
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-blue/10 text-status-blue border border-status-blue/30">
+                  {enrichedAssessmentDrafts.length}
+                </span>
+              )}
+            </div>
+            {enrichedAssessmentDrafts.length === 0 ? (
+              <Card>
+                <CardContent className="py-8">
+                  <EmptyState
+                    icon={<ClipboardList className="w-5 h-5" />}
+                    title="No assessments in progress"
+                    description="When you start a placement assessment from an intake candidate above, an editable assessment draft appears here. No player record is created until the assessment is complete and a recommendation is approved."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {enrichedAssessmentDrafts.map(item => (
+                  <PlacementAssessmentDraftCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Placement recommendation drafts */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <p className="label-xs">Placement Recommendations</p>
+              {pendingRecommendationDrafts.length > 0 && (
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+                  {pendingRecommendationDrafts.length} pending
+                </span>
+              )}
+              {approvedRecommendationDrafts.length > 0 && (
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                  {approvedRecommendationDrafts.length} approved
+                </span>
+              )}
+            </div>
+            {allEnrichedRecommendationDrafts.length === 0 ? (
+              <Card>
+                <CardContent className="py-8">
+                  <EmptyState
+                    icon={<Target className="w-5 h-5" />}
+                    title="No recommendations yet"
+                    description="After completing an assessment above, click 'Generate Placement Recommendation' to create a recommendation draft. Director must approve before any player record is created."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {allEnrichedRecommendationDrafts.map(item => (
+                  <PlacementRecommendationDraftCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
+          </section>
         </TabsContent>
 
         {/* ─── Player Observations tab ─── */}
@@ -1393,6 +1683,9 @@ function PageHeader({
   summaryPendingCount,
   summaryApprovedCount,
   placementReviewCount,
+  intakeCandidateCount,
+  assessmentDraftCount,
+  recommendationDraftCount,
   captureCount,
   oldestPendingDates,
 }: {
@@ -1415,10 +1708,13 @@ function PageHeader({
   summaryPendingCount: number
   summaryApprovedCount: number
   placementReviewCount: number
+  intakeCandidateCount: number
+  assessmentDraftCount: number
+  recommendationDraftCount: number
   captureCount: number
   oldestPendingDates: Record<string, string | null>
 }) {
-  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + wrapUpPendingCount + observationPendingCount + summaryPendingCount + placementReviewCount + captureCount
+  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + wrapUpPendingCount + observationPendingCount + summaryPendingCount + placementReviewCount + intakeCandidateCount + assessmentDraftCount + recommendationDraftCount + captureCount
   const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount + wrapUpApprovedCount + observationApprovedCount + summaryApprovedCount
 
   return (
@@ -1450,6 +1746,9 @@ function PageHeader({
           <div className="space-y-1.5">
             <CategoryRow label="Attendance" pending={attendancePendingCount} ready={attendanceApprovedCount} oldest={oldestPendingDates['attendance']} />
             <CategoryRow label="Placement Review" pending={placementReviewCount} ready={0} oldest={oldestPendingDates['placement_review']} />
+            <CategoryRow label="Intake Candidates" pending={intakeCandidateCount} ready={0} oldest={oldestPendingDates['placement_intake']} />
+            <CategoryRow label="In Assessment" pending={assessmentDraftCount} ready={0} oldest={oldestPendingDates['placement_assessment']} />
+            <CategoryRow label="Recommendation" pending={recommendationDraftCount} ready={0} oldest={oldestPendingDates['placement_recommendation']} />
           </div>
         </div>
         <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-2">
