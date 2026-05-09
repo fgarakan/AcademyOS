@@ -253,9 +253,9 @@ export function CoachSessionExecutionClient({
         </CardHeader>
         <CardContent className="pt-0">
           {roster.length === 0 ? (
-            <div className="py-4 text-center">
-              <p className="text-sm text-text-muted">No players are attached to this session yet.</p>
-              <p className="text-xs text-text-muted mt-1">Player roster assignment will be added in a future sprint.</p>
+            <div className="py-4 text-center space-y-1">
+              <p className="text-sm text-text-muted">No roster for this session.</p>
+              <p className="text-xs text-text-muted">Players appear here once a director assigns a training group to this session.</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -287,6 +287,9 @@ export function CoachSessionExecutionClient({
                   </div>
                 </div>
               ))}
+              <p className="text-[10px] text-text-muted pt-2 border-t border-border/50">
+                Player not on this list? Use the Unexpected Attendees section in the Session Wrap-Up — their attendance goes to director review.
+              </p>
             </div>
           )}
           {attendanceResult && (

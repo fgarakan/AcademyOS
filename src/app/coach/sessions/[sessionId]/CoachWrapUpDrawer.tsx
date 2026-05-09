@@ -567,7 +567,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
                   <p className="text-[10px] uppercase tracking-widest text-text-muted">Unexpected attendees</p>
                 </div>
                 <p className="text-[10px] text-text-muted leading-snug">
-                  Anyone who showed up but isn&apos;t on the roster? Add them here — creates a director review draft. No roster change until approved.
+                  Rostered player attendance is marked directly in the session view above. Use this section only for players who showed up but aren&apos;t on the roster — creates a director review draft. No roster change until approved.
                 </p>
                 <div className="flex gap-2">
                   <input
