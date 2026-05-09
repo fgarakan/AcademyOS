@@ -19,7 +19,7 @@ Assessment Draft (proposed_actions: placement_assessment_draft)
   ↓  [Director: Save + Generate Recommendation]
 Recommendation Draft (proposed_actions: placement_recommendation_draft)
   ↓  [Director: Approve / Override]
-⚠️  Sprint 168+ — Player creation (not yet built)
+✅  Sprint 168 — Director clicks "Create Player Profile" → player activated
 ```
 
 **At every stage: no player record, no roster change, no billing, no parent comms.**
@@ -248,17 +248,60 @@ LIMIT 5;
 
 ---
 
-## ⚠️ Sprint 168+ — Player Creation (Not Yet Built)
+## Step 8 — Director Creates Player Profile (Sprint 168)
 
-The following steps are planned but not yet implemented:
+**Path:** Director → Review Queue → Intake Candidates → Placement Recommendations → "Create Player Profile"
 
-**Step 8 — Player Profile Creation (Sprint 168)**
-- Director fills in: first_name, last_name, date_of_birth, gender
-- Director selects a real academy group (required by `finalize_player_placement()`)
-- System creates a `players` row with `status = 'pending_placement'`, `is_active = false`
-- System creates a `placement_recommendations` row linked to the new player
-- Director clicks "Activate Player" → system calls `finalize_player_placement()`
-- Player status → `active`, group_membership created
+**Prerequisites (all must be true before the button appears):**
+- Recommendation draft `status = 'approved'`
+- `player_identity` present in payload (first_name, last_name, date_of_birth)
+- `recommended_group_id` present in payload (UUID of an active group)
+
+**What happens:**
+1. `players` row inserted (`status = 'pending_placement'`)
+2. `created_player_id` written to `proposed_actions.proposed_payload` (idempotency stamp)
+3. `placement_recommendations` row inserted (`status = 'approved'`)
+4. `finalize_player_placement(rec_id, activator_id)` called — activates player, creates group membership
+5. `proposed_actions` row marked `status = 'executed'`
+6. Audit log written: `action = 'placement_recommendation.player_created'`
+
+**SQL verification:**
+```sql
+-- Confirm player was created and activated
+SELECT id, first_name, last_name, status, created_at
+FROM players
+WHERE academy_id = '<your-academy-id>'
+ORDER BY created_at DESC
+LIMIT 5;
+
+-- Confirm placement_recommendations row
+SELECT id, player_id, recommended_group_id, status, approved_at
+FROM placement_recommendations
+WHERE academy_id = '<your-academy-id>'
+ORDER BY created_at DESC
+LIMIT 5;
+
+-- Confirm proposed_action executed and contains player ID
+SELECT id, status, proposed_payload->>'created_player_id', proposed_payload->>'finalized_at'
+FROM proposed_actions
+WHERE academy_id = '<your-academy-id>'
+  AND target_module = 'placement_recommendation_draft'
+  AND status = 'executed'
+ORDER BY updated_at DESC
+LIMIT 5;
+
+-- Confirm audit log
+SELECT action, payload->>'player_id', payload->>'group_name', created_at
+FROM audit_logs
+WHERE academy_id = '<your-academy-id>'
+  AND action = 'placement_recommendation.player_created'
+ORDER BY created_at DESC
+LIMIT 3;
+```
+
+---
+
+## ⚠️ Sprint 169+ — Remaining Pipeline
 
 **Step 9 — Development Profile Seeding (Sprint 170)**
 - Approved recommendation payload written to player's development profile
@@ -271,7 +314,7 @@ The following steps are planned but not yet implemented:
 
 ## Known Limitations
 
-1. **Player creation not built.** Sprint 168 is pending. The pipeline stops at an approved recommendation draft. Approving a recommendation records intent — no player record is created until Sprint 168 runs.
+1. **Player creation — RESOLVED (Sprint 168).** After a recommendation is approved, the director clicks "Create Player Profile." This creates the `players` row, `placement_recommendations` row, calls `finalize_player_placement()`, marks the `proposed_actions` row `executed`, and writes the audit log. Idempotency guard: `created_player_id` is written to the payload immediately after player INSERT to prevent duplicates on retry.
 
 2. **Required player fields — RESOLVED (Sprint 168A).** `players.date_of_birth` is `NOT NULL`. The assessment form now collects `first_name`, `last_name`, `date_of_birth`, and `gender`. These are stored in `player_identity` inside the assessment draft payload and carried forward into the recommendation draft payload. Recommendation generation is blocked until all three required fields are saved.
 
@@ -296,7 +339,7 @@ Before each pilot session, confirm:
 - [ ] No billing records exist for pilot attendees
 - [ ] No parent communications were sent
 - [ ] All actions are traceable in `audit_logs`
-- [ ] All pipeline stages exist only as `proposed_actions` rows until Sprint 168+
+- [ ] Player records exist only after director explicitly clicks "Create Player Profile" (Sprint 168+)
 
 ```sql
 -- Quick audit: no unintended player records

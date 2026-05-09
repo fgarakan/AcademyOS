@@ -3654,3 +3654,245 @@ export async function overrideRecommendationDraftAction(
 
   return { ok: true, error: null }
 }
+
+// ── Sprint 168 — Player Profile Creation ────────────────────────────────────
+
+export interface CreatePlayerResult {
+  ok: boolean
+  error: string | null
+  playerId: string | null
+  placementRecommendationId: string | null
+}
+
+function mapConfidenceScore(confidence: string | undefined): number | null {
+  if (confidence === 'high') return 0.8
+  if (confidence === 'medium') return 0.5
+  if (confidence === 'low') return 0.2
+  return null
+}
+
+export async function createPlayerFromApprovedRecommendationAction(
+  recommendationDraftId: string,
+): Promise<CreatePlayerResult> {
+  assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const rawDb = supabase as any
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+  if (authError || !user) return { ok: false, error: 'Not authenticated', playerId: null, placementRecommendationId: null }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (profileError || !profile?.academy_id) return { ok: false, error: 'Profile not found', playerId: null, placementRecommendationId: null }
+
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const memberRole = membership?.role
+  if (memberRole !== 'academy_director' && memberRole !== 'head_coach') {
+    return { ok: false, error: 'Permission denied', playerId: null, placementRecommendationId: null }
+  }
+
+  // Fetch the proposed_action row
+  const { data: item, error: fetchError } = await rawDb
+    .from('proposed_actions')
+    .select('*')
+    .eq('id', recommendationDraftId)
+    .eq('academy_id', academyId)
+    .single()
+  if (fetchError || !item) return { ok: false, error: 'Recommendation draft not found', playerId: null, placementRecommendationId: null }
+
+  if (item.status === 'executed') {
+    return { ok: false, error: 'This placement has already been finalized.', playerId: null, placementRecommendationId: null }
+  }
+  if (item.status !== 'approved') {
+    return { ok: false, error: 'Recommendation must be approved before creating a player.', playerId: null, placementRecommendationId: null }
+  }
+
+  const payload = item.proposed_payload as any
+
+  // Idempotency guard — if player was already created, return its ID
+  if (payload?.created_player_id) {
+    return {
+      ok: false,
+      error: 'A player record was already created from this recommendation. If activation failed, contact support.',
+      playerId: payload.created_player_id,
+      placementRecommendationId: null,
+    }
+  }
+
+  // Validate identity fields
+  const identity = payload?.player_identity as { first_name?: string; last_name?: string; date_of_birth?: string; gender?: string | null } | undefined
+  const firstName = identity?.first_name?.trim() ?? ''
+  const lastName = identity?.last_name?.trim() ?? ''
+  const dateOfBirth = identity?.date_of_birth?.trim() ?? ''
+  const gender = identity?.gender ?? null
+
+  if (!firstName || !lastName) {
+    return { ok: false, error: 'First name and last name are required in the assessment. Save the assessment draft with identity fields before creating a player.', playerId: null, placementRecommendationId: null }
+  }
+  if (!dateOfBirth) {
+    return { ok: false, error: 'Date of birth is required (players.date_of_birth is NOT NULL). Save the assessment draft with a date of birth before creating a player.', playerId: null, placementRecommendationId: null }
+  }
+  if (isNaN(Date.parse(dateOfBirth))) {
+    return { ok: false, error: 'Date of birth is not a valid date.', playerId: null, placementRecommendationId: null }
+  }
+
+  const recommendedGroupId = payload?.recommended_group_id as string | null
+  if (!recommendedGroupId) {
+    return { ok: false, error: 'A group must be selected on the recommendation before creating a player.', playerId: null, placementRecommendationId: null }
+  }
+
+  // Server-verify group belongs to this academy and is active
+  const { data: verifiedGroup, error: groupError } = await supabase
+    .from('groups')
+    .select('id, name')
+    .eq('id', recommendedGroupId)
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .single()
+  if (groupError || !verifiedGroup) {
+    return { ok: false, error: 'Selected group not found or is no longer active.', playerId: null, placementRecommendationId: null }
+  }
+
+  // Create the player record
+  const { data: newPlayer, error: playerError } = await supabase
+    .from('players')
+    .insert({
+      academy_id: academyId,
+      first_name: firstName,
+      last_name: lastName,
+      date_of_birth: dateOfBirth,
+      gender: gender as 'male' | 'female' | 'other' | null,
+      created_by: user.id,
+    })
+    .select('id')
+    .single()
+
+  if (playerError || !newPlayer) {
+    return { ok: false, error: `Failed to create player: ${playerError?.message ?? 'unknown error'}`, playerId: null, placementRecommendationId: null }
+  }
+
+  const playerId = newPlayer.id
+
+  // Idempotency stamp — write player ID to payload immediately before any further steps
+  await rawDb
+    .from('proposed_actions')
+    .update({
+      proposed_payload: {
+        ...payload,
+        created_player_id: playerId,
+        placement_creation_started_at: new Date().toISOString(),
+        placement_creation_started_by: user.id,
+      },
+    })
+    .eq('id', recommendationDraftId)
+    .eq('academy_id', academyId)
+
+  // Build recommendation rationale from payload fields
+  const rationaleLines: string[] = []
+  if (payload?.current_level) rationaleLines.push(`Level: ${payload.current_level}`)
+  if (payload?.starting_pathway) rationaleLines.push(`Pathway: ${payload.starting_pathway}`)
+  if (payload?.first_skill_priority) rationaleLines.push(`Skill priority: ${payload.first_skill_priority}`)
+  if (payload?.suggested_group_type) rationaleLines.push(`Group type: ${payload.suggested_group_type}`)
+  if (payload?.skill_observations) rationaleLines.push(`Skills: ${payload.skill_observations}`)
+  if (payload?.movement_observations) rationaleLines.push(`Movement: ${payload.movement_observations}`)
+  if (payload?.competitive_readiness) rationaleLines.push(`Competitive readiness: ${payload.competitive_readiness}`)
+  const recommendationRationale = rationaleLines.join(' | ') || null
+
+  // Create placement_recommendations row
+  const { data: placementRec, error: placementError } = await supabase
+    .from('placement_recommendations')
+    .insert({
+      academy_id: academyId,
+      player_id: playerId,
+      recommended_group_id: verifiedGroup.id,
+      status: 'approved',
+      approved_by: user.id,
+      approved_at: new Date().toISOString(),
+      created_by: user.id,
+      confidence_score: mapConfidenceScore(payload?.confidence),
+      recommendation_rationale: recommendationRationale,
+    })
+    .select('id')
+    .single()
+
+  if (placementError || !placementRec) {
+    return { ok: false, error: `Failed to create placement recommendation: ${placementError?.message ?? 'unknown error'}. Player record was created (ID: ${playerId}) but not activated. Contact support.`, playerId, placementRecommendationId: null }
+  }
+
+  const placementRecId = placementRec.id
+
+  // Call finalize_player_placement — the ONLY function that activates a player
+  const { data: rpcData, error: rpcError } = await supabase.rpc('finalize_player_placement', {
+    p_recommendation_id: placementRecId,
+    p_activator_id: user.id,
+  })
+
+  if (rpcError) {
+    return { ok: false, error: `Placement finalization failed: ${rpcError.message}. Player record was created (ID: ${playerId}) but not activated. Contact support.`, playerId, placementRecommendationId: placementRecId }
+  }
+
+  const rpcResult = rpcData as { success: boolean; error?: string; player_id?: string }
+  if (!rpcResult?.success) {
+    return { ok: false, error: `Placement finalization failed: ${rpcResult?.error ?? 'unknown error'}. Player record was created (ID: ${playerId}) but not activated. Contact support.`, playerId, placementRecommendationId: placementRecId }
+  }
+
+  // Mark proposed_action as executed
+  const now = new Date().toISOString()
+  await rawDb
+    .from('proposed_actions')
+    .update({
+      status: 'executed',
+      proposed_payload: {
+        ...payload,
+        created_player_id: playerId,
+        placement_creation_started_at: payload.placement_creation_started_at ?? now,
+        placement_creation_started_by: payload.placement_creation_started_by ?? user.id,
+        finalized_at: now,
+        finalized_by: user.id,
+        no_parent_portal_created: true,
+        no_billing_created: true,
+        no_parent_communication_sent: true,
+      },
+    })
+    .eq('id', recommendationDraftId)
+    .eq('academy_id', academyId)
+
+  // Audit log
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'placement_recommendation.player_created',
+      target_type: 'players',
+      target_id: playerId,
+      payload: {
+        recommendation_draft_id: recommendationDraftId,
+        placement_recommendation_id: placementRecId,
+        player_id: playerId,
+        attendee_name: payload?.attendee_name,
+        group_id: verifiedGroup.id,
+        group_name: verifiedGroup.name,
+        activated_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: item.voice_command_id ?? null,
+    })
+
+  return { ok: true, error: null, playerId, placementRecommendationId: placementRecId }
+}

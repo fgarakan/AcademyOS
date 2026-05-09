@@ -2,12 +2,13 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, Loader2, ShieldCheck, Trophy, X, Edit2 } from 'lucide-react'
+import { CheckCircle, Loader2, ShieldCheck, Trophy, X, Edit2, UserCheck } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import {
   approveRecommendationDraftAction,
   rejectRecommendationDraftAction,
   overrideRecommendationDraftAction,
+  createPlayerFromApprovedRecommendationAction,
 } from './actions'
 import type { RecommendationOverrideFields } from './actions'
 
@@ -50,6 +51,7 @@ export interface PlacementRecommendationDraftPayload {
   no_roster_change: boolean
   no_billing: boolean
   no_parent_communication: boolean
+  created_player_id?: string | null
 }
 
 export interface EnrichedRecommendationDraftItem {
@@ -95,6 +97,14 @@ export function PlacementRecommendationDraftCard({ item, academyGroups }: Props)
   const [showOverrideForm, setShowOverrideForm] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; error: string | null; action: ActiveAction } | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  // Sprint 168 — player creation state
+  const [isCreatingPlayer, setIsCreatingPlayer] = useState(false)
+  const [createPlayerResult, setCreatePlayerResult] = useState<{
+    ok: boolean
+    error: string | null
+    playerId: string | null
+  } | null>(null)
 
   // Group selector state — pre-fill from payload if already set (e.g. after re-load)
   const [selectedGroupId, setSelectedGroupId] = useState(payload.recommended_group_id ?? '')
@@ -169,6 +179,16 @@ export function PlacementRecommendationDraftCard({ item, academyGroups }: Props)
       const res = await overrideRecommendationDraftAction(item.id, fields)
       setResult({ ok: res.ok, error: res.error, action: 'override' })
       if (res.ok) router.refresh()
+    })
+  }
+
+  function handleCreatePlayer() {
+    setCreatePlayerResult(null)
+    setIsCreatingPlayer(true)
+    startTransition(async () => {
+      const res = await createPlayerFromApprovedRecommendationAction(item.id)
+      setCreatePlayerResult({ ok: res.ok, error: res.error, playerId: res.playerId })
+      setIsCreatingPlayer(false)
     })
   }
 
@@ -491,6 +511,48 @@ export function PlacementRecommendationDraftCard({ item, academyGroups }: Props)
 
         {result?.error && (
           <p className="text-xs text-status-red">{result.error}</p>
+        )}
+
+        {/* ── Sprint 168 — Create Player Profile (only after approval) ── */}
+        {isApproved && !payload.created_player_id && (
+          <div className="pt-2 border-t border-border space-y-2">
+            <button
+              type="button"
+              onClick={handleCreatePlayer}
+              disabled={isPending || isCreatingPlayer}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-lime/15 border border-lime/40 text-lime font-semibold text-xs hover:bg-lime/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCreatingPlayer
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <UserCheck className="w-3.5 h-3.5" />
+              }
+              {isCreatingPlayer ? 'Creating player…' : 'Create Player Profile'}
+            </button>
+            {createPlayerResult?.error && (
+              <p className="text-xs text-status-red">{createPlayerResult.error}</p>
+            )}
+            <p className="text-[10px] text-text-muted leading-snug px-0.5">
+              Creates the official player record and activates group membership. No billing or parent communication is triggered. Director-only action.
+            </p>
+          </div>
+        )}
+
+        {/* Success — player created */}
+        {isApproved && (payload.created_player_id || createPlayerResult?.ok) && (
+          <div className="pt-2 border-t border-border space-y-2">
+            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-status-green/10 border border-status-green/25">
+              <CheckCircle className="w-3.5 h-3.5 text-status-green shrink-0" />
+              <p className="text-xs text-status-green font-medium">Player profile created and activated.</p>
+            </div>
+            {(createPlayerResult?.playerId || payload.created_player_id) && (
+              <a
+                href={`/director/players/${createPlayerResult?.playerId ?? payload.created_player_id}`}
+                className="block w-full text-center py-2 rounded-lg text-xs font-medium bg-surface-raised border border-border text-text-secondary hover:border-lime/40 hover:text-lime transition-colors"
+              >
+                View Player Profile →
+              </a>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

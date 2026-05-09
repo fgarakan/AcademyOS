@@ -2,6 +2,51 @@
 
 ---
 
+## 2026-05-09 — Sprint 168: Approved Placement → Player Profile Creation
+
+Implements the director-triggered player creation step at the end of the placement pipeline. After a recommendation draft is approved, the director sees a "Create Player Profile" button on the recommendation card. Clicking it creates the `players` row, `placement_recommendations` row, calls `finalize_player_placement()`, marks the `proposed_actions` row `executed`, and writes an audit log entry. An idempotency guard writes `created_player_id` into the payload immediately after player INSERT to block duplicate creation on retry. On success, a lime success panel appears with a link to the new player profile.
+
+**No migration required.**
+
+**Updated `src/app/director/review/actions.ts`:**
+- Added `CreatePlayerResult` interface: `{ ok, error, playerId, placementRecommendationId }`.
+- Added `mapConfidenceScore(confidence)` helper: `high → 0.8`, `medium → 0.5`, `low → 0.2`.
+- Added `createPlayerFromApprovedRecommendationAction(recommendationDraftId)`:
+  - Auth check (user, profile, academyId via `profiles` + role via `academy_memberships`).
+  - Role guard: `academy_director` or `head_coach` only.
+  - Fetches `proposed_actions` row; rejects if already `executed` or not `approved`.
+  - Idempotency guard: rejects if `payload.created_player_id` already set.
+  - Validates `player_identity.first_name`, `last_name`, `date_of_birth` (NOT NULL guard) and `recommended_group_id`.
+  - Server-verifies group: `groups WHERE id = ? AND academy_id = ? AND is_active = true`.
+  - Inserts `players` row (`status = 'pending_placement'`, `gender` cast to enum).
+  - Immediately writes `created_player_id` to payload (idempotency stamp before RPC).
+  - Builds `recommendation_rationale` from payload fields (level, pathway, skill priority, group type, observations).
+  - Inserts `placement_recommendations` row (`status = 'approved'`, `confidence_score` from `mapConfidenceScore`).
+  - Calls `finalize_player_placement(p_recommendation_id, p_activator_id)` RPC.
+  - On RPC failure: returns partial-failure error with player ID so director can contact support.
+  - On success: updates `proposed_actions.status = 'executed'` with finalization metadata and guardrail flags.
+  - Writes audit log: `action = 'placement_recommendation.player_created'`.
+
+**Updated `src/app/director/review/PlacementRecommendationDraftCard.tsx`:**
+- Added `created_player_id?: string | null` to `PlacementRecommendationDraftPayload` type.
+- Added `UserCheck` icon import from lucide-react.
+- Added `createPlayerFromApprovedRecommendationAction` to action imports.
+- Added `isCreatingPlayer` and `createPlayerResult` state.
+- Added `handleCreatePlayer()` function: calls server action, sets result state.
+- Added "Create Player Profile" button section — visible only when `isApproved && !payload.created_player_id`.
+- Added success panel: lime checkmark + "View Player Profile →" link to `/director/players/{playerId}` — shown when `createPlayerResult.ok` or `payload.created_player_id` is set.
+- Error from `createPlayerResult.error` displayed inline below button.
+
+**Updated `docs/PILOT_PLACEMENT_FLOW_QA.md`:**
+- Pipeline diagram updated: `⚠️ Sprint 168+ — Player creation (not yet built)` → `✅ Sprint 168 — Director clicks "Create Player Profile" → player activated`.
+- Step 8 added: full QA walkthrough with SQL verification queries for `players`, `placement_recommendations`, `proposed_actions` (executed), and `audit_logs`.
+- Known Limitation 1 updated: "Player creation not built" → RESOLVED (Sprint 168) with idempotency guard description.
+- Guardrails checklist updated: pipeline-stages note updated to reflect Sprint 168 implementation.
+
+**Guardrails confirmed:** No migrations. No schema changes. No billing. No parent/player communications. No external API calls. Academy-scoped group verification on server. `finalize_player_placement()` called as the sole activation path. Audit log written. TypeScript clean.
+
+---
+
 ## 2026-05-09 — Sprint 168A: Placement Identity + Group Selection Unblocker
 
 Unblocks Sprint 168 (player creation) by adding required player identity fields and a real academy group selector to the placement assessment and recommendation pipeline. No player rows, group_membership rows, billing records, or parent communications are created by this sprint. No migrations or schema changes.
