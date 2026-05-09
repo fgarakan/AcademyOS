@@ -540,10 +540,48 @@ export function PlacementRecommendationDraftCard({ item, academyGroups }: Props)
         {/* Success — player created */}
         {isApproved && (payload.created_player_id || createPlayerResult?.ok) && (
           <div className="pt-2 border-t border-border space-y-2">
+            {/* Primary success badge */}
             <div className="flex items-center gap-2 p-2.5 rounded-lg bg-status-green/10 border border-status-green/25">
               <CheckCircle className="w-3.5 h-3.5 text-status-green shrink-0" />
               <p className="text-xs text-status-green font-medium">Player profile created and activated.</p>
             </div>
+
+            {/* What finalize_player_placement() confirmed */}
+            <div className="p-2.5 rounded-lg bg-surface-raised border border-border space-y-1.5">
+              <p className="text-[9px] uppercase tracking-widest text-text-muted">Finalization confirmed</p>
+              {[
+                'players.status set to active',
+                `Group assigned: ${payload.recommended_group_name ?? 'see player profile'}`,
+                'group_memberships row created (is_current = true)',
+                'placement_recommendations.status set to activated',
+                'Audit log written: player.placement.finalized',
+              ].map(line => (
+                <div key={line} className="flex items-start gap-1.5">
+                  <CheckCircle className="w-2.5 h-2.5 text-status-green shrink-0 mt-0.5" />
+                  <span className="text-[10px] text-text-secondary leading-snug">{line}</span>
+                </div>
+              ))}
+              <p className="text-[9px] text-text-muted leading-snug pt-1 border-t border-border">
+                Curriculum level is not set at placement. Assign via the Skill Path tab on the player profile.
+              </p>
+            </div>
+
+            {/* Confirmed guardrails */}
+            <div className="p-2.5 rounded-lg bg-surface-raised border border-border space-y-1">
+              <p className="text-[9px] uppercase tracking-widest text-text-muted">Guardrails confirmed</p>
+              {[
+                'No parent/player portal access created',
+                'No billing or enrollment created',
+                'No parent communication sent',
+              ].map(label => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-2.5 h-2.5 text-status-green shrink-0" />
+                  <span className="text-[9px] text-text-muted">{label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* View Player Profile link */}
             {(createPlayerResult?.playerId || payload.created_player_id) && (
               <a
                 href={`/director/players/${createPlayerResult?.playerId ?? payload.created_player_id}`}

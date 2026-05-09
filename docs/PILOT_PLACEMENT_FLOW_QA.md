@@ -301,12 +301,146 @@ LIMIT 3;
 
 ---
 
-## ⚠️ Sprint 169+ — Remaining Pipeline
+## Step 9 — Verify Post-Placement Outcome (Sprint 169)
 
-**Step 9 — Development Profile Seeding (Sprint 170)**
+**Path:** After clicking "Create Player Profile" in the review queue, verify each record below.
+
+### 9a — Player row
+
+```sql
+-- Confirm player was created and activated
+SELECT id, first_name, last_name, status, current_group_id, current_level_id,
+       last_assessed_at, next_assessment_due, created_at
+FROM players
+WHERE academy_id = '<your-academy-id>'
+ORDER BY created_at DESC
+LIMIT 5;
+```
+
+**Expected:**
+- `status = 'active'` — set by `finalize_player_placement()`
+- `current_group_id` — UUID of the assigned group
+- `current_level_id` — **may be NULL** (Sprint 168 did not populate `recommended_level_id` on the `placement_recommendations` row; assign curriculum level from Skill Path tab)
+
+### 9b — group_memberships row
+
+```sql
+-- Confirm group membership was created
+SELECT id, player_id, group_id, joined_at, is_current, moved_by
+FROM group_memberships
+WHERE player_id = '<player-id>'
+ORDER BY joined_at DESC
+LIMIT 3;
+```
+
+**Expected:**
+- One row with `is_current = true`
+- `group_id` matches the group selected at approval
+
+### 9c — placement_recommendations row
+
+```sql
+-- Confirm placement recommendation was activated
+SELECT id, player_id, recommended_group_id, status, confidence_score,
+       approved_at, activated_at, activated_by
+FROM placement_recommendations
+WHERE player_id = '<player-id>'
+ORDER BY created_at DESC
+LIMIT 3;
+```
+
+**Expected:**
+- `status = 'activated'` — set by `finalize_player_placement()`
+
+### 9d — proposed_action executed
+
+```sql
+-- Confirm proposed_action is executed and contains player ID
+SELECT id, status,
+       proposed_payload->>'created_player_id'     AS created_player_id,
+       proposed_payload->>'finalized_at'           AS finalized_at,
+       proposed_payload->>'no_parent_portal_created' AS no_portal,
+       proposed_payload->>'no_billing_created'     AS no_billing,
+       proposed_payload->>'no_parent_communication_sent' AS no_comms
+FROM proposed_actions
+WHERE academy_id = '<your-academy-id>'
+  AND target_module = 'placement_recommendation_draft'
+  AND status = 'executed'
+ORDER BY updated_at DESC
+LIMIT 5;
+```
+
+**Expected:** `status = 'executed'`, `created_player_id` present, all three no-* flags = true.
+
+### 9e — Audit logs
+
+```sql
+-- Confirm both audit log entries exist
+SELECT action, target_id, payload->>'group_id' AS group_id, created_at
+FROM audit_logs
+WHERE academy_id = '<your-academy-id>'
+  AND action IN (
+    'placement_recommendation.player_created',
+    'player.placement.finalized'
+  )
+ORDER BY created_at DESC
+LIMIT 6;
+```
+
+**Expected:** Two rows — one from the server action, one from the RPC.
+
+### 9f — Player profile link
+
+- Click "View Player Profile →" in the review card.
+- Confirm `/director/players/<player-id>` loads.
+- Confirm the **Placement Entry** card is visible in the right sidebar of the Overview tab.
+- Confirm group name, activation date, and player status are shown.
+
+### 9g — Review queue cleared
+
+- After execution, the recommendation card **disappears** from the review queue (query filters `status IN ('pending_review', 'approved')`).
+- Navigate back to the review queue to confirm it no longer appears.
+
+### 9h — Coach session roster path
+
+Coach sessions pull the roster from `group_memberships WHERE is_current = true AND group_id = session.group_id`.
+After `finalize_player_placement()` creates the group_memberships row, the newly placed player will appear naturally in any future session for that group. No code change required.
+
+**To verify manually:**
+1. Create or open a session for the assigned group.
+2. Confirm the newly placed player appears in the attendance list.
+
+### 9i — Guardrails: records that must NOT exist
+
+```sql
+-- Confirm no parent/player portal access was created
+-- (profile_id on players must remain NULL until explicitly linked)
+SELECT id, first_name, last_name, profile_id
+FROM players
+WHERE id = '<player-id>';
+-- Expect: profile_id = NULL
+
+-- Confirm no billing record
+-- (No billing table in current schema — confirmed by absence)
+
+-- Confirm no parent communication
+-- (No entries in proposed_actions with target_module = 'parent_communication' for this player)
+SELECT COUNT(*)
+FROM proposed_actions
+WHERE academy_id = '<your-academy-id>'
+  AND target_module = 'parent_communication'
+  AND proposed_payload->>'player_id' = '<player-id>';
+-- Expect: 0
+```
+
+---
+
+## ⚠️ Sprint 170+ — Remaining Pipeline
+
+**Step 10 — Development Profile Seeding (Sprint 170)**
 - Approved recommendation payload written to player's development profile
 
-**Step 10 — Safe Onboarding Draft (Sprint 171)**
+**Step 11 — Safe Onboarding Draft (Sprint 171)**
 - Director-controlled parent/player welcome draft created via proposed_actions
 - Never auto-published
 
@@ -320,13 +454,15 @@ LIMIT 3;
 
 3. **Group assignment — RESOLVED (Sprint 168A).** A real group selector now appears on the recommendation card. Directors must choose an actual academy group (from `groups WHERE is_active = true`) before approving. The server verifies the selected `group_id` belongs to the current academy. The approved payload contains `recommended_group_id` (UUID) and `recommended_group_name`. `finalize_player_placement()` can now consume a valid group UUID from the approved payload.
 
-4. **Dismiss does not un-dismiss.** Once a placement review item or intake candidate is dismissed (rejected/executed), it disappears from the queue with no undo path. This is intentional for the pilot.
+4. **current_level_id may remain NULL after placement (Sprint 169 documented).** `finalize_player_placement()` sets `current_level_id` from `COALESCE(override_level_id, recommended_level_id)`. Sprint 168's server action does not populate `recommended_level_id` on the `placement_recommendations` row. The player will be active with a group assignment but no curriculum level. Assign the curriculum level from the Skill Path tab in the player profile.
 
-5. **Follow-Up Later has no expiry.** Items in `clarification_needed` stay there indefinitely. A time-based reminder is not yet implemented.
+6. **Dismiss does not un-dismiss.** Once a placement review item or intake candidate is dismissed (rejected/executed), it disappears from the queue with no undo path. This is intentional for the pilot.
 
-6. **Assessment confidence is rough.** The confidence metric counts non-empty fields (0-2 = low, 3-4 = medium, 5-6 = high). It does not weight field quality or validate observations for correctness.
+7. **Follow-Up Later has no expiry.** Items in `clarification_needed` stay there indefinitely. A time-based reminder is not yet implemented.
 
-7. **Recommendation derivation is keyword-based.** `first_skill_priority` is extracted by keyword scan (e.g., "forehand" → "Forehand groundstroke"). If the coach's note is indirect ("worked on cross-court shots"), the default "General stroke development" applies.
+8. **Assessment confidence is rough.** The confidence metric counts non-empty fields (0-2 = low, 3-4 = medium, 5-6 = high). It does not weight field quality or validate observations for correctness.
+
+9. **Recommendation derivation is keyword-based.** `first_skill_priority` is extracted by keyword scan (e.g., "forehand" → "Forehand groundstroke"). If the coach's note is indirect ("worked on cross-court shots"), the default "General stroke development" applies.
 
 ---
 

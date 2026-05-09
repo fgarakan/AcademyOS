@@ -63,6 +63,7 @@ import { PlayerCommandCenterCard } from '@/components/player/PlayerCommandCenter
 import { GateHistoryTimeline, type GateAuditEntry } from '@/components/player/GateHistoryTimeline'
 import { DraftSummaryUpdateButton } from './DraftSummaryUpdateButton'
 import { PlayerSessionHistoryPanel } from './PlayerSessionHistoryPanel'
+import { PlacementEntryCard, type PlacementEntryData } from './PlacementEntryCard'
 
 interface PageProps {
   params: { playerId: string }
@@ -664,6 +665,40 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     assessed_by_name: allAssessorNameMap.get(r.assessed_by) ?? null,
   }))
 
+  // ─── Sprint 169: Placement entry context ─────────────────────────────────
+  // Read-only. Only exists for players created via the Sprint 168 placement pipeline.
+  // No parent/player portal, no billing, no comms — internal director context only.
+  let placementEntryData: PlacementEntryData | null = null
+  {
+    const { data: placementRec } = await rawDb
+      .from('placement_recommendations')
+      .select('id, status, recommended_group_id, activated_at, confidence_score')
+      .eq('player_id', params.playerId)
+      .eq('academy_id', academyId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (placementRec) {
+      let placementGroupName: string | null = null
+      if (placementRec.recommended_group_id) {
+        const { data: grp } = await supabase
+          .from('groups')
+          .select('name')
+          .eq('id', placementRec.recommended_group_id)
+          .single()
+        placementGroupName = grp?.name ?? null
+      }
+      placementEntryData = {
+        placementRecommendationId: placementRec.id,
+        groupName: placementGroupName,
+        activatedAt: placementRec.activated_at ?? null,
+        playerStatus: player.status ?? null,
+        confidenceScore: placementRec.confidence_score ?? null,
+      }
+    }
+  }
+
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
     <div className="space-y-6">
@@ -790,6 +825,11 @@ export default async function PlayerProfilePage({ params }: PageProps) {
             linkedProfileName={linkedPortalName}
             playerName={player.full_name ?? null}
           />
+
+          {/* Placement Entry — Sprint 169. Only shown if player was placed via pipeline. */}
+          {placementEntryData && (
+            <PlacementEntryCard data={placementEntryData} />
+          )}
 
           {hasCurriculum && (
             <Card>

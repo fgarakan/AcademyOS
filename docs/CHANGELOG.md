@@ -2,6 +2,49 @@
 
 ---
 
+## 2026-05-09 — Sprint 169: Approved Placement → Group Assignment Verification + Player Profile Entry Point
+
+Verification + entry-point sprint. No new database tables or migrations. No parent/player portal, no billing, no parent communication.
+
+**What was verified:**
+- `finalize_player_placement()` confirmed to: close existing group_memberships, INSERT new group_memberships (is_current = true), UPDATE players.status = 'active' + current_group_id, UPDATE placement_recommendations.status = 'activated', INSERT audit_log entry (player.placement.finalized).
+- Review queue automatically hides executed placement recommendation cards (status filter: `pending_review | approved` only).
+- "View Player Profile →" link on the review card points to `/director/players/{playerId}` — correct, no change needed.
+- Coach session roster queries `group_memberships WHERE is_current = true AND group_id = session.group_id` — newly placed player appears naturally in future sessions for their group.
+
+**Known limitation documented:** `current_level_id` will be NULL after placement. Sprint 168 does not set `recommended_level_id` on the `placement_recommendations` row, so `finalize_player_placement()` cannot derive a level. Director must assign via the Skill Path tab.
+
+**No migration required.**
+
+**Created `src/app/director/players/[playerId]/PlacementEntryCard.tsx`:**
+- Read-only, internal-only card showing placement origin context.
+- Displays: assigned group name, activation date, player status, confidence score, placement recommendation ID.
+- Shows four confirmed guardrails: no portal access, no billing, no parent comms, activated via finalize_player_placement().
+- Notes curriculum level limitation at bottom.
+- Renders only when a placement_recommendations row exists for the player (null guard in page.tsx).
+
+**Modified `src/app/director/review/PlacementRecommendationDraftCard.tsx`:**
+- Expanded post-success state after player creation to show full finalization confirmation.
+- Lists five confirmed outcomes: players.status active, group assigned, group_memberships created, placement_recommendations activated, audit log written.
+- Adds "Guardrails confirmed" section: no portal, no billing, no comms.
+- Documents curriculum level limitation inline.
+- "View Player Profile →" link unchanged — already correct.
+
+**Modified `src/app/director/players/[playerId]/page.tsx`:**
+- Added import for PlacementEntryCard and PlacementEntryData.
+- Added placement query block: fetches most recent `placement_recommendations` row for this player (scoped to academy_id), then resolves group name from `groups`.
+- Renders PlacementEntryCard in the right sidebar of the Overview tab, after PlayerPortalLinkPanel.
+
+**Modified `docs/PILOT_PLACEMENT_FLOW_QA.md`:**
+- Added Step 9 — full verification checklist for post-placement outcome (9 sub-checks: player row, group_memberships, placement_recommendations, proposed_action executed, audit logs, player profile link, review queue cleared, coach roster path, guardrails).
+- Added current_level_id NULL limitation to Known Limitations.
+- Fixed known limitations numbering (1–9).
+- Updated "Sprint 169+ remaining pipeline" header to "Sprint 170+".
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-09 — Sprint 168: Approved Placement → Player Profile Creation
 
 Implements the director-triggered player creation step at the end of the placement pipeline. After a recommendation draft is approved, the director sees a "Create Player Profile" button on the recommendation card. Clicking it creates the `players` row, `placement_recommendations` row, calls `finalize_player_placement()`, marks the `proposed_actions` row `executed`, and writes an audit log entry. An idempotency guard writes `created_player_id` into the payload immediately after player INSERT to block duplicate creation on retry. On success, a lime success panel appears with a link to the new player profile.
