@@ -2441,3 +2441,254 @@ export async function dismissPlacementReviewDraftAction(
 
   return { ok: true, error: null }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Start Placement Intake from a placement_review follow-up.
+// Creates a placement_intake_candidate_v1 proposed_actions row
+// (safe bridge — no player, no roster, no billing, no parent comms).
+// Marks the original placement_review item as executed.
+// Writes audit log.
+// ─────────────────────────────────────────────────────────────
+
+export interface StartPlacementIntakeResult {
+  ok: boolean
+  error: string | null
+  intakeCandidateId: string | null
+}
+
+export async function startPlacementIntakeFromReviewAction(
+  proposedActionId: string,
+): Promise<StartPlacementIntakeResult> {
+  const fail = (error: string): StartPlacementIntakeResult =>
+    ({ ok: false, error, intakeCandidateId: null })
+
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return fail('Not authenticated.')
+  if (!proposedActionId) return fail('Missing proposed action ID.')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return fail('Academy context unavailable.')
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return fail('You do not have permission to start placement intake.')
+  }
+
+  const rawDb = supabase as any
+
+  const { data: item } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, target_object_id, proposed_payload, voice_command_id')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!item) return fail('Placement review item not found.')
+  if (item.academy_id !== academyId) return fail('Access denied.')
+  if (item.target_module !== 'placement_review') {
+    return fail('This item cannot be handled through this interface.')
+  }
+  if (item.status === 'executed') return fail('This item has already been handled.')
+
+  const payload = item.proposed_payload as Record<string, unknown>
+  const attendeeName = payload?.attendee_name as string | null
+  const sessionId = item.target_object_id as string | null
+
+  if (!attendeeName) return fail('Attendee name missing from placement review item.')
+
+  // Create voice_commands row (required FK for proposed_actions)
+  const issuerRole: 'academy_director' | 'head_coach' =
+    role === 'academy_director' ? 'academy_director' : 'head_coach'
+  const rawInput = `Placement intake candidate: ${attendeeName}`
+
+  const { data: vcRow } = await supabase
+    .from('voice_commands')
+    .insert({
+      academy_id: academyId,
+      issuer_id: user.id,
+      issuer_role: issuerRole as any,
+      input_method: 'typed' as any,
+      raw_input: rawInput,
+      transcript: rawInput,
+      processing_status: 'processed',
+    })
+    .select('id')
+    .single()
+
+  if (!vcRow) return fail('Failed to create command record.')
+
+  // Create placement_intake_candidate proposed_action.
+  // No player, no roster, no billing, no parent comms.
+  const intakePayload = {
+    draft_type: 'placement_intake_candidate_v1',
+    source: 'placement_review',
+    source_proposed_action_id: proposedActionId,
+    attendee_name: attendeeName,
+    session_id: sessionId,
+    coach_note: payload?.reason ?? '',
+    recommended_next_step: 'Start placement intake',
+    no_player_created: true,
+    no_roster_change: true,
+    no_billing: true,
+    no_parent_communication: true,
+  }
+
+  const { data: intakeAction, error: intakeError } = await rawDb
+    .from('proposed_actions')
+    .insert({
+      academy_id: academyId,
+      proposed_by_id: user.id,
+      voice_command_id: vcRow.id,
+      action_type: 'other',
+      action_label: `Placement Intake — ${attendeeName}`,
+      target_module: 'placement_intake_candidate',
+      target_object_id: academyId,
+      target_object_type: 'academy',
+      proposed_payload: intakePayload,
+      status: 'pending_review',
+      risk_level: 'medium',
+      risk_notes: [
+        'No player record created.',
+        'No roster change made.',
+        'No billing or parent communication created.',
+        'Director must proceed through full placement intake to create an official player record.',
+      ],
+    })
+    .select('id')
+    .single()
+
+  if (intakeError || !intakeAction) {
+    return fail(`Failed to create intake candidate: ${intakeError?.message ?? 'unknown'}`)
+  }
+
+  // Mark original placement_review as executed
+  const { error: execError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'executed' })
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (execError) {
+    return fail(`Failed to update placement review status: ${execError.message}`)
+  }
+
+  // Write audit log
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'placement_review.intake_started',
+      target_type: 'proposed_actions',
+      target_id: proposedActionId,
+      payload: {
+        proposed_action_id: proposedActionId,
+        intake_candidate_id: intakeAction.id,
+        attendee_name: attendeeName,
+        started_by: user.id,
+      },
+      source_type: 'ui',
+      voice_command_id: item.voice_command_id ?? null,
+    })
+
+  return { ok: true, error: null, intakeCandidateId: intakeAction.id as string }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Mark a placement_review follow-up as Follow-Up Later.
+// Sets status to clarification_needed — item stays visible in the
+// follow-up section but no longer counts as an urgent pending item.
+// No player, roster, billing, or parent communication is created.
+// ─────────────────────────────────────────────────────────────
+
+export interface MarkFollowUpLaterResult {
+  ok: boolean
+  error: string | null
+}
+
+export async function markPlacementReviewFollowUpLaterAction(
+  proposedActionId: string,
+): Promise<MarkFollowUpLaterResult> {
+  await assertNotPreviewMode()
+
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated.' }
+  if (!proposedActionId) return { ok: false, error: 'Missing proposed action ID.' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+  const academyId = profile.academy_id
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return { ok: false, error: 'You do not have permission to update placement review items.' }
+  }
+
+  const rawDb = supabase as any
+
+  const { data: item } = await rawDb
+    .from('proposed_actions')
+    .select('id, academy_id, status, target_module, voice_command_id')
+    .eq('id', proposedActionId)
+    .single()
+
+  if (!item) return { ok: false, error: 'Item not found.' }
+  if (item.academy_id !== academyId) return { ok: false, error: 'Access denied.' }
+  if (item.target_module !== 'placement_review') {
+    return { ok: false, error: 'This item cannot be updated through this interface.' }
+  }
+  if (item.status === 'executed') {
+    return { ok: false, error: 'This item has already been handled.' }
+  }
+
+  const { error: updateError } = await rawDb
+    .from('proposed_actions')
+    .update({ status: 'clarification_needed' })
+    .eq('id', proposedActionId)
+    .eq('academy_id', academyId)
+
+  if (updateError) {
+    return { ok: false, error: `Failed to update item: ${updateError.message}` }
+  }
+
+  await rawDb
+    .from('audit_logs')
+    .insert({
+      academy_id: academyId,
+      actor_id: user.id,
+      action: 'placement_review.follow_up_later',
+      target_type: 'proposed_actions',
+      target_id: proposedActionId,
+      payload: { proposed_action_id: proposedActionId, marked_by: user.id },
+      source_type: 'ui',
+      voice_command_id: item.voice_command_id ?? null,
+    })
+
+  return { ok: true, error: null }
+}

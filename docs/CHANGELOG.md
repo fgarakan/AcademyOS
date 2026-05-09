@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-09 — Sprint 162: Placement Review → Player Onboarding Bridge
+
+Turns Placement Review follow-ups into a clear, director-controlled onboarding bridge. Before this sprint, the only action was "Mark Reviewed" — an ambiguous dismiss. Directors now see three explicit decision controls with microcopy for each.
+
+**No migration required.** `proposed_actions` is the safe bridge — no new tables created.
+
+**New server actions (`src/app/director/review/actions.ts`):**
+- `startPlacementIntakeFromReviewAction` — creates a `placement_intake_candidate_v1` proposed_actions row, marks the original `placement_review` item as `executed`, writes `placement_review.intake_started` to `audit_logs`. No player, no group_membership, no billing, no parent comms created.
+- `markPlacementReviewFollowUpLaterAction` — sets status to `clarification_needed`, writes `placement_review.follow_up_later` to `audit_logs`. Item stays visible in the Follow-Up Later section but no longer counts as pending.
+
+**Updated `PlacementReviewCard.tsx`:**
+- Replaced single "Mark Reviewed" button with three director decision controls: **Start Placement Intake** (primary lime), **Follow-Up Later** (ghost), **Not a Fit / Dismiss** (ghost/danger).
+- Each button shows a loading state keyed to the specific action in flight.
+- Microcopy clearly states: "Starting intake does not create a player, roster assignment, billing record, or parent account."
+- Separate card mode for `status === 'clarification_needed'` items: read-only info display with "Follow-Up Later" badge — no action buttons (Sprint 163 will add "Move back to Review" if needed).
+- All 10 hard rules enforced: no player, no roster, no billing, no parent comms.
+
+**Updated `src/app/director/review/page.tsx`:**
+- Placement review fetch now includes `clarification_needed` status (Follow-Up Later items).
+- Split into `pendingPlacementReviews` and `followUpPlacementReviews`.
+- Tab badge, PageHeader count, defaultTab logic, and all-caught-up check all use `pendingPlacementReviews.length` only — follow-up items don't inflate the urgent pending count.
+- Placement Review tab now shows a "Follow-Up Later" section when follow-up items exist.
+
+**Guardrails confirmed:** No migrations. No schema changes. No player/roster/billing/comms mutations. Audit log written on every action. TypeScript clean.
+
+---
+
 ## 2026-05-09 — Sprint 161: Coach Attendance Flow Clarity Pass
 
 Clarity sprint. Pre-implementation audit (10-point checklist) confirmed the roster attendance write-back already worked end-to-end before this sprint: `CoachSessionExecutionClient` renders P/A/L/E buttons per rostered player, `saveAttendanceAction` upserts to `session_attendance`, and the player profile Session History tab reads those same rows directly — no director approval needed for normal roster attendance.

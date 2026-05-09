@@ -711,7 +711,7 @@ export default async function DirectorReviewQueuePage() {
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
     .eq('academy_id', academyId)
-    .eq('status', 'pending_review')
+    .in('status', ['pending_review', 'clarification_needed'])
     .eq('target_module', 'placement_review')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -738,7 +738,7 @@ export default async function DirectorReviewQueuePage() {
     }
   }
 
-  const enrichedPlacementReviews: EnrichedPlacementReviewItem[] = allPlacementReviewRows.map(d => {
+  const allEnrichedPlacementReviews: EnrichedPlacementReviewItem[] = allPlacementReviewRows.map(d => {
     const sess = d.target_object_id ? placementSessionMap.get(d.target_object_id) : undefined
     return {
       id: d.id,
@@ -750,6 +750,8 @@ export default async function DirectorReviewQueuePage() {
       payload: d.proposed_payload as unknown as PlacementReviewPayload,
     }
   })
+  const pendingPlacementReviews = allEnrichedPlacementReviews.filter(i => i.status === 'pending_review')
+  const followUpPlacementReviews = allEnrichedPlacementReviews.filter(i => i.status === 'clarification_needed')
 
   // Oldest pending date per category (arrays are sorted newest-first, so last item = oldest)
   const oldestPendingDates = {
@@ -762,14 +764,14 @@ export default async function DirectorReviewQueuePage() {
     wrap_ups: pendingWrapUpDrafts.at(-1)?.createdAt ?? null,
     player_observations: pendingObservationDrafts.at(-1)?.createdAt ?? null,
     development_summaries: pendingSummaryDrafts.at(-1)?.createdAt ?? null,
-    placement_review: enrichedPlacementReviews.at(-1)?.createdAt ?? null,
+    placement_review: pendingPlacementReviews.at(-1)?.createdAt ?? null,
     captures: generalCaptures.at(-1)?.createdAt ?? null,
   }
 
   // Compute default tab — operational tabs take priority, fallback to attendance
   const defaultTab = [
     { value: 'attendance', pending: pendingAttendanceDrafts.length },
-    { value: 'placement_review', pending: enrichedPlacementReviews.length },
+    { value: 'placement_review', pending: pendingPlacementReviews.length },
     { value: 'player_observations', pending: pendingObservationDrafts.length },
     { value: 'development_summaries', pending: pendingSummaryDrafts.length },
     { value: 'wrap_ups', pending: pendingWrapUpDrafts.length },
@@ -802,7 +804,7 @@ export default async function DirectorReviewQueuePage() {
         observationApprovedCount={approvedObservationDrafts.length}
         summaryPendingCount={pendingSummaryDrafts.length}
         summaryApprovedCount={approvedSummaryDrafts.length}
-        placementReviewCount={enrichedPlacementReviews.length}
+        placementReviewCount={pendingPlacementReviews.length}
         captureCount={generalCaptures.length}
         oldestPendingDates={oldestPendingDates}
       />
@@ -812,7 +814,7 @@ export default async function DirectorReviewQueuePage() {
         pendingDrafts.length + pendingPriorityDrafts.length + pendingEvidenceDrafts.length +
         pendingAttendanceDrafts.length + pendingCurriculumOverrideDrafts.length +
         pendingVoiceIntakeDrafts.length + pendingWrapUpDrafts.length +
-        pendingObservationDrafts.length + pendingSummaryDrafts.length + enrichedPlacementReviews.length + generalCaptures.length
+        pendingObservationDrafts.length + pendingSummaryDrafts.length + pendingPlacementReviews.length + generalCaptures.length
       ) === 0 && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/10 border border-status-green/20">
           <CheckCircle className="w-4 h-4 text-status-green shrink-0" />
@@ -834,7 +836,7 @@ export default async function DirectorReviewQueuePage() {
           <TabsTrigger value="placement_review">
             <TabLabel
               label="Placement Review"
-              pending={enrichedPlacementReviews.length}
+              pending={pendingPlacementReviews.length}
               ready={0}
             />
           </TabsTrigger>
@@ -947,26 +949,46 @@ export default async function DirectorReviewQueuePage() {
 
         {/* ─── Placement Review tab ─── */}
         <TabsContent value="placement_review" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Unexpected attendees flagged by coaches during session wrap-up. No player profile, roster entry, billing, or parent communication has been created. Decide on next steps for each individual and mark reviewed.</p>
+          <p className="text-[10px] text-text-muted px-1">Unexpected attendees flagged by coaches during session wrap-up. Choose a next step for each individual. No player profile, roster entry, billing, or parent communication has been created.</p>
+
+          {/* Pending — need a director decision */}
           <section className="space-y-3">
-            {enrichedPlacementReviews.length === 0 ? (
+            {pendingPlacementReviews.length === 0 ? (
               <Card>
                 <CardContent className="py-12">
                   <EmptyState
                     icon={<UserSearch className="w-5 h-5" />}
                     title="No placement review items"
-                    description="When a director applies an attendance exception draft that includes unexpected attendees, follow-up items appear here for a decision on whether to onboard, waitlist, or decline."
+                    description="When a director applies an attendance exception draft that includes unexpected attendees, follow-up items appear here for a decision on whether to start intake, follow up later, or dismiss."
                   />
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
-                {enrichedPlacementReviews.map(item => (
+                {pendingPlacementReviews.map(item => (
                   <PlacementReviewCard key={item.id} item={item} />
                 ))}
               </div>
             )}
           </section>
+
+          {/* Follow-Up Later — parked, no urgent action required */}
+          {followUpPlacementReviews.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Follow-Up Later</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-blue/10 text-status-blue border border-status-blue/30">
+                  {followUpPlacementReviews.length}
+                </span>
+              </div>
+              <p className="text-[10px] text-text-muted px-1">Parked by the director for later review — no urgent action needed now.</p>
+              <div className="space-y-4">
+                {followUpPlacementReviews.map(item => (
+                  <PlacementReviewCard key={item.id} item={item} />
+                ))}
+              </div>
+            </section>
+          )}
         </TabsContent>
 
         {/* ─── Player Observations tab ─── */}
