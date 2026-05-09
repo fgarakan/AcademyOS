@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-05-09 — Sprint 170: New Player First Development Profile
+
+Display-only sprint. No database writes, no migrations, no player record mutations, no parent/player portal, no billing, no parent communication.
+
+**Goal:** Make the new player profile useful on Day 1 by surfacing placement recommendation context that would otherwise be invisible after the proposed_action is executed.
+
+**Data source:** The executed `proposed_actions` row for `target_module = 'placement_recommendation_draft'` contains the full recommendation payload. Linked via `proposed_payload.created_player_id === params.playerId`. Fetches up to 20 executed rows and filters client-side — safe at pilot scale.
+
+**No migration required.**
+
+**Created `src/app/director/players/[playerId]/FirstDevelopmentContextCard.tsx`:**
+- Read-only, internal-only card shown above Development Summary in the Overview tab left column.
+- Shows: Starting Pathway, First Skill Priority, Suggested Group Type, Assigned Group, Confidence.
+- Shows: Assessment evidence expander (age band, ball color, skill observations, movement observations, competitive readiness) — all gracefully omitted if null.
+- Orange warning badge: "Curriculum level not assigned yet. Assign from Skill Path."
+- Safety copy: "Internal director/coach context. Not shown to parents or players."
+- Next step prompt at bottom.
+- Renders nothing if no executed placement draft exists for this player (null guard in page.tsx).
+
+**Modified `src/app/director/players/[playerId]/page.tsx`:**
+- Added `FirstDevelopmentContextCard` and `FirstDevContextData` import.
+- Added Sprint 170 query block: fetches executed `placement_recommendation_draft` proposed_actions for this academy, filters for `created_player_id === params.playerId`, extracts payload into `FirstDevContextData`.
+- Renders `FirstDevelopmentContextCard` in left column above `DevelopmentProfileSummaryCard`.
+
+**Modified `docs/PILOT_PLACEMENT_FLOW_QA.md`:**
+- Added Step 10 — Sprint 170 verification (5 sub-checks: card appearance, internal copy, absent for non-placed players, no mutation confirmation, data source SQL).
+- Added Known Limitation #5: `player_development_summary` not written at placement.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-09 — Sprint 169: Approved Placement → Group Assignment Verification + Player Profile Entry Point
 
 Verification + entry-point sprint. No new database tables or migrations. No parent/player portal, no billing, no parent communication.

@@ -446,6 +446,73 @@ WHERE academy_id = '<your-academy-id>'
 
 ---
 
+## Step 10 — Verify First Development Context (Sprint 170)
+
+**Path:** Director → Player Profile → Overview tab → First Development Context card
+
+### 10a — Card appears for placed player
+
+1. Open the profile of a player created through the placement pipeline.
+2. Confirm **First Development Context** card appears above **Development Summary** in the left column.
+3. Confirm it shows:
+   - Starting Pathway (from recommendation payload)
+   - First Skill Priority (from recommendation payload)
+   - Suggested Group Type (from recommendation payload)
+   - Assigned Group name (from recommendation payload)
+   - Confidence level (high / medium / low)
+4. Confirm "Assessment evidence ▸" expander shows skill observations, movement, competitive readiness, age band, ball color if present.
+
+### 10b — Internal-only copy is present
+
+- Confirm card header shows "Internal only" badge.
+- Confirm copy reads "Internal director/coach context. Not shown to parents or players."
+- Confirm orange warning: "Curriculum level not assigned yet. Assign from the Skill Path tab..."
+- Confirm next step: "Assign curriculum level from Skill Path, then review first development priorities."
+
+### 10c — Card does not appear for non-placed players
+
+- Open a player profile for a player NOT created through the Sprint 168 placement pipeline.
+- Confirm the **First Development Context** card is absent.
+- Confirm **Development Summary** and other profile sections are unaffected.
+
+### 10d — No records mutated
+
+```sql
+-- Confirm player_development_summary was NOT written by this card
+SELECT id, source, created_at
+FROM player_development_summary
+WHERE player_id = '<player-id>'
+ORDER BY created_at DESC
+LIMIT 3;
+-- Expect: 0 rows (or only rows created by explicit director action — not by this card)
+
+-- Confirm players row was NOT mutated
+SELECT id, current_level_id, current_track, status
+FROM players
+WHERE id = '<player-id>';
+-- Expect: current_level_id = NULL (unchanged — must be assigned via Skill Path)
+-- Expect: status = 'active' (set only by finalize_player_placement())
+```
+
+### 10e — Data source verification
+
+```sql
+-- Confirm the executed proposed_action contains the player ID
+SELECT id, status,
+       proposed_payload->>'created_player_id' AS player_id,
+       proposed_payload->>'starting_pathway'   AS starting_pathway,
+       proposed_payload->>'first_skill_priority' AS first_skill_priority,
+       proposed_payload->>'confidence'          AS confidence
+FROM proposed_actions
+WHERE academy_id = '<your-academy-id>'
+  AND target_module = 'placement_recommendation_draft'
+  AND status = 'executed'
+  AND proposed_payload->>'created_player_id' = '<player-id>';
+-- Expect: 1 row with full recommendation payload
+```
+
+---
+
 ## Known Limitations
 
 1. **Player creation — RESOLVED (Sprint 168).** After a recommendation is approved, the director clicks "Create Player Profile." This creates the `players` row, `placement_recommendations` row, calls `finalize_player_placement()`, marks the `proposed_actions` row `executed`, and writes the audit log. Idempotency guard: `created_player_id` is written to the payload immediately after player INSERT to prevent duplicates on retry.
@@ -455,6 +522,8 @@ WHERE academy_id = '<your-academy-id>'
 3. **Group assignment — RESOLVED (Sprint 168A).** A real group selector now appears on the recommendation card. Directors must choose an actual academy group (from `groups WHERE is_active = true`) before approving. The server verifies the selected `group_id` belongs to the current academy. The approved payload contains `recommended_group_id` (UUID) and `recommended_group_name`. `finalize_player_placement()` can now consume a valid group UUID from the approved payload.
 
 4. **current_level_id may remain NULL after placement (Sprint 169 documented).** `finalize_player_placement()` sets `current_level_id` from `COALESCE(override_level_id, recommended_level_id)`. Sprint 168's server action does not populate `recommended_level_id` on the `placement_recommendations` row. The player will be active with a group assignment but no curriculum level. Assign the curriculum level from the Skill Path tab in the player profile.
+
+5. **player_development_summary not written at placement (Sprint 170 documented).** The First Development Context card (Sprint 170) is display-only. It reads from the executed proposed_action payload and does not write to `player_development_summary`. The Development Summary section will show "No development summary yet" until the director explicitly creates one via the Notes/AI draft pipeline. Sprint 171 can introduce a "Seed Development Summary from Placement" draft action.
 
 6. **Dismiss does not un-dismiss.** Once a placement review item or intake candidate is dismissed (rejected/executed), it disappears from the queue with no undo path. This is intentional for the pilot.
 

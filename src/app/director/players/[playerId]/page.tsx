@@ -64,6 +64,7 @@ import { GateHistoryTimeline, type GateAuditEntry } from '@/components/player/Ga
 import { DraftSummaryUpdateButton } from './DraftSummaryUpdateButton'
 import { PlayerSessionHistoryPanel } from './PlayerSessionHistoryPanel'
 import { PlacementEntryCard, type PlacementEntryData } from './PlacementEntryCard'
+import { FirstDevelopmentContextCard, type FirstDevContextData } from './FirstDevelopmentContextCard'
 
 interface PageProps {
   params: { playerId: string }
@@ -699,6 +700,47 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     }
   }
 
+  // ─── Sprint 170: First Development Context ───────────────────────────────
+  // Read-only. Sourced from the executed placement_recommendation_draft proposed_action.
+  // Linked via proposed_payload.created_player_id === params.playerId.
+  // No writes to player_development_summary, players, or any other table.
+  let firstDevContextData: FirstDevContextData | null = null
+  {
+    const { data: execDrafts } = await rawDb
+      .from('proposed_actions')
+      .select('id, proposed_payload, created_at')
+      .eq('academy_id', academyId)
+      .eq('target_module', 'placement_recommendation_draft')
+      .eq('status', 'executed')
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    const match = ((execDrafts ?? []) as Array<{ id: string; proposed_payload: any; created_at: string }>)
+      .find(row => row.proposed_payload?.created_player_id === params.playerId)
+
+    if (match) {
+      const p = match.proposed_payload
+      firstDevContextData = {
+        currentLevel:       p?.current_level        ?? null,
+        startingPathway:    p?.starting_pathway      ?? null,
+        suggestedGroupType: p?.suggested_group_type  ?? null,
+        firstSkillPriority: p?.first_skill_priority  ?? null,
+        confidence:         p?.confidence            ?? null,
+        groupName:          p?.recommended_group_name ?? null,
+        assessmentSummary:  p?.assessment_summary
+          ? {
+              ageBand:              p.assessment_summary.age_band              ?? null,
+              ballColor:            p.assessment_summary.ball_color            ?? null,
+              skillObservations:    p.assessment_summary.skill_observations    ?? null,
+              movementObservations: p.assessment_summary.movement_observations ?? null,
+              competitiveReadiness: p.assessment_summary.competitive_readiness ?? null,
+            }
+          : null,
+        placedAt: match.created_at ?? null,
+      }
+    }
+  }
+
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
     <div className="space-y-6">
@@ -725,6 +767,11 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
         {/* Left column: development summary + quick assessments */}
         <div className="space-y-6">
+
+          {/* First Development Context — Sprint 170. Placement recommendation context on Day 1. */}
+          {firstDevContextData && (
+            <FirstDevelopmentContextCard data={firstDevContextData} />
+          )}
 
           {/* Development Profile Summary — internal coach view */}
           <DevelopmentProfileSummaryCard summary={developmentSummary} priorities={activePriorities} />
