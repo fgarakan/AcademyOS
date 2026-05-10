@@ -2,6 +2,45 @@
 
 ---
 
+## 2026-05-10 — Sprint 189: Coach Sessions List Wrap-Up Status V1
+
+**Sprint 188 commit verified:** `(committed immediately prior in this session)`
+
+**Architecture audit:**
+- `getCoachWorkspaceSummary` returns `profile.academy_id` — already available, no extra query needed
+- `proposed_actions` can be queried in bulk with `.in('target_object_id', sessionIds)` — single round-trip for all session IDs
+- Wrap-up badges needed only on Today + Completed rows; Upcoming sessions have no wrap-up state yet
+- `SessionCard` and `SessionRow` are private server-only functions in the same file — prop extension is safe and type-checked
+
+**Implementation (Option A — bulk query + `WrapUpBadge` helper):**
+- `let academyId: string | null = null` and `const wrapUpStatusMap = new Map<string, string>()` declared at top of page function
+- `academyId = summary.profile?.academy_id ?? null` extracted from try block alongside `coachId`
+- Bulk `proposed_actions` query added inside `if (coachId)` block after `recentCompleted` query: collects all Today + Completed session IDs, queries `target_module = 'session_wrap_up_v1'` + `proposed_by_id = user.id` + `.in('target_object_id', sessionIds)` ordered by `created_at desc`; fills `wrapUpStatusMap` taking first (most recent) status per session
+- `wrapUpStatus={wrapUpStatusMap.get(s.id)}` passed to `SessionCard` (Today) and `SessionRow` (Completed); Upcoming rows receive no prop
+- `WrapUpBadge` helper added at bottom of file: renders a colored pill for known statuses, returns null for undefined/unknown
+
+**Wrap-up badge labels:**
+| Status | Label |
+|--------|-------|
+| `pending_review` | Wrap-up pending |
+| `approved` | Wrap-up approved |
+| `executed` | Wrap-up applied |
+| `clarification_needed` | Clarification needed |
+| `rejected` | Not approved |
+| undefined / unknown | (renders nothing) |
+
+**Files modified:** `src/app/coach/sessions/page.tsx`
+
+**Data safety:** Bulk `proposed_actions` read is scoped to `academy_id` + `proposed_by_id` + `target_module`. Read-only. No inserts, updates, deletes, player mutations, or communications.
+
+**No player records mutated.** No parent/player communication sent. No migrations modified. `database.types.ts` untouched.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` produced no output.
+
+**Manual browser QA status:** Not browser-tested in this environment. Badge is a pure read-only render with no state or effects.
+
+---
+
 ## 2026-05-10 — Sprint 188: Coach Wrap-Up Submitted State V1
 
 **Sprint 187 commit verified:** `ddec516 — Sprint 187 — Session Actual Display on Director Session Detail V1`

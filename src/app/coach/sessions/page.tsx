@@ -32,12 +32,15 @@ export default async function CoachSessionsPage() {
   let upcomingSessions: SessionRow[] = []
   let recentCompleted: SessionRow[] = []
   let coachId: string | null = null
+  let academyId: string | null = null
+  const wrapUpStatusMap = new Map<string, string>()
 
   if (user) {
     try {
       const summary = await getCoachWorkspaceSummary(supabase, user.id)
       todaySessions = summary.todaySessions
       coachId = summary.profile?.id ?? null
+      academyId = summary.profile?.academy_id ?? null
     } catch {
       // query failed — empty state renders
     }
@@ -65,6 +68,30 @@ export default async function CoachSessionsPage() {
         .order('scheduled_date', { ascending: false })
         .limit(8)
       recentCompleted = completed ?? []
+
+      // Wrap-up status badges for Today + Completed rows
+      if (academyId) {
+        const sessionIds = [
+          ...todaySessions.map(s => s.id),
+          ...recentCompleted.map(s => s.id),
+        ]
+        if (sessionIds.length > 0) {
+          const rawWrapUpDb = supabase as any
+          const { data: wrapUpRows } = await rawWrapUpDb
+            .from('proposed_actions')
+            .select('target_object_id, status, created_at')
+            .eq('academy_id', academyId)
+            .eq('target_module', 'session_wrap_up_v1')
+            .eq('proposed_by_id', user.id)
+            .in('target_object_id', sessionIds)
+            .order('created_at', { ascending: false })
+          for (const row of (wrapUpRows ?? [])) {
+            if (!wrapUpStatusMap.has(row.target_object_id)) {
+              wrapUpStatusMap.set(row.target_object_id, row.status as string)
+            }
+          }
+        }
+      }
     }
   }
 
@@ -90,7 +117,7 @@ export default async function CoachSessionsPage() {
         <div className="space-y-2">
           {todaySessions.length > 0 ? (
             todaySessions.map(s => (
-              <SessionCard key={s.id} session={s} primary />
+              <SessionCard key={s.id} session={s} primary wrapUpStatus={wrapUpStatusMap.get(s.id)} />
             ))
           ) : (
             <Card>
@@ -138,7 +165,7 @@ export default async function CoachSessionsPage() {
             <CardContent className="py-2">
               <ul className="divide-y divide-border">
                 {recentCompleted.map(s => (
-                  <SessionRow key={s.id} session={s} showDate />
+                  <SessionRow key={s.id} session={s} showDate wrapUpStatus={wrapUpStatusMap.get(s.id)} />
                 ))}
               </ul>
             </CardContent>
@@ -157,9 +184,11 @@ export default async function CoachSessionsPage() {
 function SessionCard({
   session,
   primary = false,
+  wrapUpStatus,
 }: {
   session: Pick<Tables<'sessions'>, 'id' | 'name' | 'scheduled_date' | 'scheduled_time' | 'status'>
   primary?: boolean
+  wrapUpStatus?: string
 }) {
   const isActive = session.status === 'in_progress'
   return (
@@ -189,6 +218,7 @@ function SessionCard({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <WrapUpBadge status={wrapUpStatus} />
           <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${STATUS_STYLES[session.status] ?? STATUS_STYLES.planned}`}>
             {statusLabel(session.status)}
           </span>
@@ -209,9 +239,11 @@ function SessionCard({
 function SessionRow({
   session,
   showDate = false,
+  wrapUpStatus,
 }: {
   session: SessionRow
   showDate?: boolean
+  wrapUpStatus?: string
 }) {
   const isCompleted = session.status === 'completed'
   return (
@@ -234,6 +266,7 @@ function SessionRow({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <WrapUpBadge status={wrapUpStatus} />
           <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${STATUS_STYLES[session.status] ?? STATUS_STYLES.planned}`}>
             {statusLabel(session.status)}
           </span>
@@ -241,5 +274,37 @@ function SessionRow({
         </div>
       </Link>
     </li>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// WrapUpBadge — compact inline status for submitted wrap-ups
+// ─────────────────────────────────────────────────────────────
+
+const WRAP_UP_LABEL: Record<string, string> = {
+  pending_review:       'Wrap-up pending',
+  approved:             'Wrap-up approved',
+  executed:             'Wrap-up applied',
+  clarification_needed: 'Clarification needed',
+  rejected:             'Not approved',
+}
+
+const WRAP_UP_STYLE: Record<string, string> = {
+  pending_review:       'bg-status-blue/10 text-status-blue border-status-blue/30',
+  approved:             'bg-status-green/10 text-status-green border-status-green/30',
+  executed:             'bg-status-green/10 text-status-green border-status-green/30',
+  clarification_needed: 'bg-status-orange/10 text-status-orange border-status-orange/30',
+  rejected:             'bg-status-red/10 text-status-red border-status-red/30',
+}
+
+function WrapUpBadge({ status }: { status: string | undefined }) {
+  if (!status) return null
+  const label = WRAP_UP_LABEL[status]
+  const style = WRAP_UP_STYLE[status]
+  if (!label) return null
+  return (
+    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${style}`}>
+      {label}
+    </span>
   )
 }
