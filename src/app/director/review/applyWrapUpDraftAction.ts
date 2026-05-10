@@ -93,6 +93,8 @@ export async function applyWrapUpDraftAction(
   if (payload.changes_note) noteParts.push(`Changes from plan: ${payload.changes_note}`)
   if (payload.next_focus) noteParts.push(`Next focus: ${payload.next_focus}`)
   if (payload.group_note) noteParts.push(`Group note: ${payload.group_note}`)
+  if (payload.raw_standouts_answer) noteParts.push(`Player Standouts: ${payload.raw_standouts_answer}`)
+  if (payload.raw_attention_answer) noteParts.push(`Needs Attention: ${payload.raw_attention_answer}`)
 
   const sessionNotes = noteParts.join('\n')
 

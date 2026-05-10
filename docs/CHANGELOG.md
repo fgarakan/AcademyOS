@@ -2,6 +2,57 @@
 
 ---
 
+## 2026-05-10 — Sprint 186: Apply Wrap-Up Draft to Session Actual V1
+
+**Sprint 185 commit verified:** `16e2c58 — Sprint 185 — Director Review URL Tab State + Wrap-Up Deep Link V1`
+
+**Apply/session actual architecture audit:**
+- `applyWrapUpDraftAction.ts` was already fully implemented: auth → profile → academy → role guard → approved-only guard → session ownership guard → session notes write → status advance → proposed_action executed → audit_log → revalidatePath
+- `ApplyWrapUpDraftControls.tsx` was already fully implemented: loading/success/error states, router refresh on success
+- `WrapUpDraftCard.tsx` was already correctly wired: shows `<ApplyWrapUpDraftControls>` when `draft.status === 'approved'`
+- No `session_actuals` table exists — `sessions.session_notes` + `sessions.status` is the correct and only target
+- Schema confirmed: `sessions.session_notes` (`string | null`), `session_status` enum includes `"completed"`, `proposed_action_status` enum includes `"executed"`
+
+**Gap identified and patched:**
+- `raw_standouts_answer` and `raw_attention_answer` (added to `SessionActualDraftPayload` in Sprint 183) were not included in the session notes written by the apply action — patched in `applyWrapUpDraftAction.ts`
+
+**Implementation (Option A — patch existing action):**
+- Added two conditional lines to the `noteParts` builder in `applyWrapUpDraftAction.ts`:
+  - `payload.raw_standouts_answer` → `Player Standouts: <value>` (only when present)
+  - `payload.raw_attention_answer` → `Needs Attention: <value>` (only when present)
+- All existing guards, writes, and revalidations preserved unchanged
+
+**Apply action behavior:**
+1. Auth guard — unauthenticated users blocked
+2. Profile/academy guard — no academy context → blocked
+3. Role guard — only `academy_director` or `head_coach` can apply
+4. Module guard — `target_module` must equal `session_wrap_up_v1`
+5. Status guard — draft must be `approved`; unapproved drafts return error
+6. Session ownership guard — session must belong to same academy
+7. Session notes written to `sessions.session_notes` (block summary, changes, next focus, group note, player standouts, needs attention)
+8. Session status advanced to `completed` if currently `planned` or `in_progress` — never regressed
+9. Proposed action marked `executed`
+10. Audit log written with actor, session, block counts, source
+11. `/director/review` and `/director/sessions/[sessionId]` revalidated
+
+**UI behavior:** Apply button → "Applying…" loading → success banner ("Applied. Session notes updated and session marked completed.") + router refresh, or inline error message on failure.
+
+**Data safety:** Only `sessions` and `proposed_actions` rows are mutated. No player records, no parent/player communication, no curriculum changes, no roster changes.
+
+**No player records mutated.** No parent/player communication sent. No migrations modified. `database.types.ts` untouched.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` produced no output.
+
+**Manual browser QA status:** Not browser-tested in this environment. Core apply logic was pre-built and reviewed; patch is additive (two conditional string concatenations with no new queries or branching).
+
+**Future Director AI Agent context note:** The apply action is the authoritative write path for session wrap-up data. When a Director AI Agent generates wrap-up links or status summaries, it should read `sessions.session_notes` and `sessions.status` for the canonical applied state, and `proposed_actions.status = 'executed'` to confirm application. The agent must never bypass the `approved` status guard.
+
+**Files modified:**
+- `src/app/director/review/applyWrapUpDraftAction.ts` — added `raw_standouts_answer` and `raw_attention_answer` to session notes builder
+- `docs/CHANGELOG.md` — this entry
+
+---
+
 ## 2026-05-10 — Sprint 185: Review Queue Wrap-Up Deep Link V1
 
 **Sprint 184 commit verified:** `97adfb0 — Sprint 184 — Director Dashboard Wrap-Up Count V1`
