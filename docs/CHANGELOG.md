@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-05-10 — Sprint 174: Curriculum Content Taxonomy Migration 061
+
+No new app code. No destructive commands. No production apply. No unrelated files touched.
+
+**Context:** Migration 061 was applied manually to DEV via the Supabase Dashboard SQL Editor (codespace environment lacks Supabase CLI configuration, psql, and DATABASE_URL). Types were then regenerated from the live DEV schema via `npx supabase gen types typescript --project-id dbjjhhxdkpdreytsozlq`.
+
+**DEV project ref:** `dbjjhhxdkpdreytsozlq`
+
+**Migration applied:** `supabase/migrations/061_curriculum_content_taxonomy.sql`
+
+**Schema changes verified via regenerated types — all 6 columns now present on `curriculum_content_items`:**
+- `ball_level: string | null` — CHECK (red, orange, green, yellow, any), nullable
+- `domain: string | null` — CHECK (Technical, Tactical, Movement, Competition, Mentality, Fitness, Recovery, Lifestyle, Games, Assessment), nullable
+- `is_coach_only: boolean` — NOT NULL DEFAULT false
+- `is_parent_visible: boolean` — NOT NULL DEFAULT false
+- `is_player_visible: boolean` — NOT NULL DEFAULT false
+- `session_block_hint: string | null` — CHECK (Warm-Up, Focus, Train, Play, Game, Situational, Match-Play, Assessment, Cool-Down), nullable
+
+**content_type CHECK constraint:** Expanded from original 9 values to 23 values (added: tactical_game, situational, match_play_theme, mental_skill, competition_behavior, coach_cue, success_criteria, success_criteria_item, progression, regression, player_mission, parent_guidance, level_gate_support).
+
+**Indexes added (7):**
+`idx_curriculum_content_items_content_type`, `_domain`, `_session_block_hint`, `_ball_level`, `_player_visible` (partial), `_parent_visible` (partial), `_lesson_plan` (composite: level_id + domain + content_type WHERE is_active).
+
+**No row data modified.** No new tables. No junction tables.
+
+**Note:** An IDE plugin (`<claude-code-hint>` tag) was injected at the end of the generated file. Removed before TypeScript check.
+
+**Files modified:**
+- `src/lib/supabase/database.types.ts` — regenerated from DEV schema; 11,559 lines (was 9,636 prior to this sprint)
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+---
+
 ## 2026-05-10 — Sprint 173 Polish: Placement QA Fixes
 
 No migrations. No schema changes. No parent/player portal. No billing. No parent communication. No new features.
