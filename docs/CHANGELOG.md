@@ -2,6 +2,45 @@
 
 ---
 
+## 2026-05-10 — Sprint 193: Rejected Wrap-Ups Visible in Director Review Queue V1
+
+**Sprint 192 commit verified:** `21f4419 — Sprint 192 — Director Wrap-Up Clarification Note Display V1`
+
+**Director review queue rejected-state audit:**
+- `WrapUpDraftCard.tsx`: `rejected` was already handled in the header badge (renders `'rejected'`), the Director Note panel (already gated on `clarification_needed || rejected`), decision controls (hidden for rejected — `pending_review` only), and apply controls (hidden for rejected — `approved` only). **No card changes needed.**
+- `page.tsx` query filter (line 543): `['pending_review', 'approved', 'clarification_needed']` — `'rejected'` was missing.
+- `page.tsx` arrays: `rejectedWrapUpDrafts` did not exist; `enrichedWrapUpDrafts` had no rejected filter.
+- `page.tsx` JSX: no "Not Approved" section in the `wrap_ups` tab content.
+- Additional finding: `clarification_needed` wraps are fetched by the existing query but also have no filter array or JSX section — a pre-existing gap, out of scope for Sprint 193 (noted as known limitation).
+
+**Implementation:**
+- `page.tsx`: added `'rejected'` to `.in('status', [...])` filter; added `const rejectedWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'rejected')`; added "Not Approved" section in the `wrap_ups` tab JSX after the pending section — conditionally rendered when `rejectedWrapUpDrafts.length > 0`, with a red count badge and `WrapUpDraftCard` per item.
+- `WrapUpDraftCard.tsx`: no changes required — card already renders correctly for rejected status.
+
+**Rejected wrap-up visibility:** Rejected wrap-ups now appear in the Session Wrap-Ups tab under a "Not Approved" section with a red count badge. Section is hidden when no rejected wraps exist.
+
+**Rejected status UI:** `WrapUpDraftCard` header shows `"Session Wrap-Up Draft · rejected"` for rejected items. Card renders full payload content (blocks, key fields, warnings). Director Note panel shows if `reviewerNotes` is non-empty (sprint 192 behavior preserved).
+
+**Director Note behavior:** Already supported for `rejected` since Sprint 192 — no change needed.
+
+**Decision/apply controls:** Decision controls hidden for rejected (unchanged — only show for `pending_review`). Apply controls hidden for rejected (unchanged — only show for `approved`). No action behavior modified.
+
+**Tab badge:** `TabLabel` `pending` count remains `pendingWrapUpDrafts.length` (action-needed items only). Rejected items are historical — no action required — so they do not inflate the pending badge.
+
+**Future Coach/Director AI Agent context note:** The rejected wrap-up history is now visible in the queue. A future Director AI Agent could scan rejected wraps for patterns (e.g., sessions from a specific coach or group consistently getting rejected) and surface coaching quality signals. The Director Note panel on rejected cards also provides the rejection reason context for this analysis.
+
+**Files modified:** `src/app/director/review/page.tsx`
+
+**Data safety:** Read-only display change. One additional value in an existing `.in()` filter. No inserts, updates, deletes, player mutations, or communications.
+
+**No player records mutated.** No parent/player communication sent. No migrations modified. `database.types.ts` untouched. `WrapUpDraftCard.tsx` untouched. `applyWrapUpDraftAction` untouched. `saveWrapUpDraftAction` untouched. Coach session pages untouched.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` produced no output.
+
+**Manual browser QA status:** Not browser-tested in this environment. Change is: one additional value in an `.in()` filter, one additional `.filter()` array derivation, and one conditionally-rendered JSX section. The card component already handled `rejected` before this sprint.
+
+---
+
 ## 2026-05-10 — Sprint 192: Director Wrap-Up Clarification Note Display V1
 
 **Sprint 191 commit verified:** `4840aba — Sprint 191 — Director Wrap-Up Clarification Request UX V1`

@@ -540,7 +540,7 @@ export default async function DirectorReviewQueuePage({
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id, reviewer_notes')
     .eq('academy_id', academyId)
-    .in('status', ['pending_review', 'approved', 'clarification_needed'])
+    .in('status', ['pending_review', 'approved', 'clarification_needed', 'rejected'])
     .eq('target_module', 'session_wrap_up_v1')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -622,6 +622,7 @@ export default async function DirectorReviewQueuePage({
 
   const pendingWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'pending_review')
   const approvedWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'approved')
+  const rejectedWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'rejected')
 
   // ─── Player observation drafts (coach wrap-up observations) ──
 
@@ -1468,6 +1469,21 @@ export default async function DirectorReviewQueuePage({
               </div>
             )}
           </section>
+          {rejectedWrapUpDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Not Approved</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-red/10 text-status-red border border-status-red/30">
+                  {rejectedWrapUpDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {rejectedWrapUpDrafts.map(draft => (
+                  <WrapUpDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
         </TabsContent>
 
         {/* ─── Session Recaps tab ─── */}
