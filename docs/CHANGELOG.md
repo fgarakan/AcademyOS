@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-10 — Sprint 197: Academy Identity + Settings V1
+
+**Files created:**
+- `src/app/director/settings/updateAcademySettingsAction.ts` — Server action: auth guard (director-only), fetches current settings, merges fields, updates `academies` name/country/timezone and `settings` JSON (logo_url, website, description, academy_identity_completed, academy_identity_updated_at). Calls `revalidatePath` for `/director` and `/director/settings`.
+- `src/app/director/settings/AcademySettingsForm.tsx` — Client form with three sections (Academy Identity, Branding, Description). Logo URL field with live preview (hidden on error). 500-char description textarea. Success/error feedback via `useTransition`.
+- `src/app/director/settings/page.tsx` — Server component: auth → profile → membership role check (director-only) → rawDb academy fetch → renders form with extracted settings values.
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — Added `Settings` icon import from lucide-react. Added `{ label: 'Settings', href: '/director/settings', icon: Settings }` to `SYSTEM_ITEMS` array.
+
+**No migrations needed.** All persistent fields use existing `academies` columns (`name`, `country`, `timezone`) and the existing `settings` JSON column.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-10 — Sprint 196: Academy Onboarding Master Flow Architecture V1
 
 **Sprint 195 commit verified:** `5edfc75 — Sprint 195 — Placement Engine Current State Audit + Next Phase Plan V1`
