@@ -11,6 +11,8 @@ import { BlockContentPickerCard } from './BlockContentPickerCard'
 import type { AssignedItem, AvailableContentItem } from './BlockContentPickerCard'
 import { TemplateSessionPreviewCard } from './TemplateSessionPreviewCard'
 import type { PreviewBlock } from './TemplateSessionPreviewCard'
+import { GenerateSessionFromTemplateButton } from './GenerateSessionFromTemplateButton'
+import type { CoachOption, GateOption } from './GenerateSessionFromTemplateButton'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
@@ -98,13 +100,15 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
 
   let academyId: string | null = null
+  let userDisplayName = 'You'
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('academy_id')
+      .select('academy_id, display_name')
       .eq('id', user.id)
       .single()
     academyId = profile?.academy_id ?? null
+    userDisplayName = (profile as { academy_id: string | null; display_name: string | null } | null)?.display_name ?? 'You'
   }
 
   if (!academyId) {
@@ -116,6 +120,28 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
   }
 
   const rawDb = supabase as any
+
+  // Fetch coaches active in this academy — for Generate Session coach selector
+  const { data: memberRows } = await rawDb
+    .from('academy_memberships')
+    .select('profile_id, profiles(id, display_name)')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .in('role', ['coach', 'head_coach', 'academy_director'])
+
+  const coaches: CoachOption[] = ((memberRows ?? []) as Array<{
+    profile_id: string
+    profiles: { id: string; display_name: string } | null
+  }>)
+    .filter(m => m.profiles)
+    .map(m => ({ id: m.profiles!.id, display_name: m.profiles!.display_name }))
+
+  // Count sessions already generated from this template — used to light up Step 4 in setup guide
+  const { count: sessionCount } = await rawDb
+    .from('sessions')
+    .select('id', { count: 'exact', head: true })
+    .eq('template_id', params.templateId)
+    .eq('academy_id', academyId)
 
   const { data: templateRaw, error: templateError } = await rawDb
     .from('templates')
@@ -205,6 +231,23 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
   const currentLevelName = curriculumLevelId
     ? (curriculumLevels.find(l => l.id === curriculumLevelId)?.display_name ?? null)
     : null
+
+  // Fetch focus gates for this curriculum level — shown as optional coaching context when generating a session
+  let focusGates: GateOption[] = []
+  if (curriculumLevelId) {
+    const { data: gateRows } = await rawDb
+      .from('curriculum_gates')
+      .select('id, domain, criterion, threshold')
+      .eq('level_id', curriculumLevelId)
+      .order('domain')
+      .limit(20)
+    focusGates = (gateRows ?? []).map((g: { id: string; domain: string; criterion: string; threshold: string | null }) => ({
+      id: g.id,
+      domain: g.domain ?? '',
+      criterion: g.criterion ?? '',
+      threshold: g.threshold ?? '',
+    }))
+  }
 
   // Fetch all global active curriculum content items for the picker
   const { data: availableRaw } = await rawDb
@@ -342,6 +385,7 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
         <ClassTemplateSetupGuide
           hasCurriculumLevel={!!curriculumLevelId}
           hasCurriculumContent={hasCurriculumContent}
+          hasSessionsFromTemplate={(sessionCount ?? 0) > 0}
         />
       </div>
 
@@ -542,6 +586,22 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
           <TemplateSessionPreviewCard blocks={previewBlocks} levelName={currentLevelName} />
         </CardContent>
       </Card>
+
+      {/* ================================================================
+          GENERATE SESSION — create a real planned session from this template.
+          ================================================================ */}
+      <div>
+        <p className="label-xs mb-3">Generate Session</p>
+        <GenerateSessionFromTemplateButton
+          templateId={params.templateId}
+          templateName={template.name}
+          hasBlocks={blockList.length > 0}
+          coaches={coaches}
+          fallbackCoachId={user?.id ?? ''}
+          fallbackCoachName={userDisplayName}
+          focusGates={focusGates}
+        />
+      </div>
 
       {/* ================================================================
           TEMPLATE BLOCKS — shows all blocks including those without

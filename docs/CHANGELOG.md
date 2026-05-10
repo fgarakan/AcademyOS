@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-05-10 — Sprint 180: Generate Session from Template V1
+
+**Sprint 179 commit verified:** `f9f22c3 — Sprint 179 — Template-to-Session Preview V1`
+
+**Architecture audit:** Option A — use existing `generateSessionFromTemplateAction` (fitness template path) as-is. The action is schema-agnostic and handles auth, academy ownership, block copying, template_id reference, curriculum context injection, and exercise best-effort copy. Zero changes to the action.
+
+**Files created:**
+- `src/app/director/class-templates/[templateId]/GenerateSessionFromTemplateButton.tsx` — Client component: lime "Generate Session" trigger → inline expandable panel with session name, date (required), start time (optional), coach selector, notes, and optional focus gates. Calls `generateSessionFromTemplateAction`. Success state with link to created session at `/director/sessions/[id]` and "View all sessions" fallback.
+
+**Files modified:**
+- `src/app/director/class-templates/[templateId]/page.tsx` — Six changes: (1) Imported `GenerateSessionFromTemplateButton`, `CoachOption`, `GateOption`. (2) Extended profile query to fetch `display_name` for fallback coach label. (3) Added `coaches` query (academy_memberships + profiles join, same pattern as sessions/new). (4) Added `sessionCount` query (sessions with template_id = templateId, for setup guide Step 4). (5) Added `focusGates` query when curriculum level is set. (6) Added `hasSessionsFromTemplate` prop to `ClassTemplateSetupGuide`. (7) Rendered `GenerateSessionFromTemplateButton` section below Session Preview card.
+
+**Session creation behavior:**
+- Calls existing `generateSessionFromTemplateAction` which inserts `sessions` (status=planned, template_id preserved, coach assigned) and `session_blocks` (template_block_id preserved for source traceability) sequentially.
+- Exercises copied best-effort from `template_block_exercises` (warning shown if migration 056 not applied).
+- Curriculum content (`curriculum_class_template_blocks`) is NOT separately copied — session detail infers content via `session_blocks.template_block_id → curriculum_class_template_blocks.block_id`. This is correct V1 design; no new table needed.
+
+**Redirect/link behavior:** Success state shows "Open planned session →" link to `/director/sessions/[generatedId]` and a secondary "View all sessions" link.
+
+**Data safety:**
+- Auth + academy membership verified before creation
+- Template ownership verified (`template.academy_id = user.academy_id`)
+- Coach is validated as an active member of the academy
+- No player records mutated
+- No parent/player communication sent
+- No migrations created or modified
+- `database.types.ts` untouched
+
+**Future Director AI Agent compatibility:**
+- Session generation is a named, reviewable action. Future AI agent can create a `proposed_action` with `target_module = 'session_generation'` referencing a template and date. The director reviews the draft, approves, and the system calls `generateSessionFromTemplateAction`. No changes to the action needed for this future path.
+
+**Manual browser QA status:** Not yet run — dev server start required.
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+**Known limitations:**
+- `curriculum_class_template_blocks` rows are not separately duplicated into a `session_curriculum_blocks` table. Session detail infers curriculum content via template_block_id join. This is V1 scope.
+- Exercise copy is best-effort; shows warning if migration 056 not applied to live DB.
+
+---
+
 ## 2026-05-10 — Sprint 179: Template-to-Session Preview V1
 
 **Goal:** Read-only preview showing how a class template's blocks and curriculum content would appear as a session plan, displayed on the template detail page before any session is created.
