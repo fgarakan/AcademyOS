@@ -7,6 +7,8 @@ import { ClassTemplateCurriculumSelector } from './ClassTemplateCurriculumSelect
 import type { CurriculumLevelOption } from './ClassTemplateCurriculumSelector'
 import { LessonPlanDraftPanel } from './LessonPlanDraftPanel'
 import { ClassTemplateSetupGuide } from '@/components/onboarding/ClassTemplateSetupGuide'
+import { BlockContentPickerCard } from './BlockContentPickerCard'
+import type { AssignedItem, AvailableContentItem } from './BlockContentPickerCard'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
@@ -19,6 +21,8 @@ interface PageProps {
 interface CurriculumBlockRow {
   id: string
   block_id: string
+  content_item_id: string | null
+  drill_id: string | null
   order_index: number
   notes: string | null
   duration_min: number | null
@@ -139,6 +143,8 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
       .select(`
         id,
         block_id,
+        content_item_id,
+        drill_id,
         order_index,
         notes,
         duration_min,
@@ -196,6 +202,35 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
   const currentLevelName = curriculumLevelId
     ? (curriculumLevels.find(l => l.id === curriculumLevelId)?.display_name ?? null)
     : null
+
+  // Fetch all global active curriculum content items for the picker
+  const { data: availableRaw } = await rawDb
+    .from('curriculum_content_items')
+    .select('id, title, content_type, domain, session_block_hint, duration_min, is_coach_only')
+    .eq('is_active', true)
+    .is('academy_id', null)
+    .order('content_type', { ascending: true })
+    .order('title', { ascending: true })
+
+  const availableContent: AvailableContentItem[] = (availableRaw ?? []).map(
+    (row: {
+      id: string
+      title: string
+      content_type: string
+      domain: string | null
+      session_block_hint: string | null
+      duration_min: number | null
+      is_coach_only: boolean
+    }) => ({
+      id: row.id,
+      title: row.title,
+      contentType: row.content_type,
+      domain: row.domain,
+      sessionBlockHint: row.session_block_hint,
+      durationMin: row.duration_min,
+      isCoachOnly: row.is_coach_only,
+    })
+  )
 
   // Counts
   let totalCurriculumItems = 0
@@ -497,56 +532,38 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
               const exercises = exercisesByBlock.get(block.id) ?? []
               const hasCurriculum = curriculumItems.length > 0
               const hasLegacy = exercises.length > 0
+
+              // Shape assigned items for BlockContentPickerCard
+              const assignedItems: AssignedItem[] = curriculumItems.map(row => ({
+                cctbId: row.id,
+                contentItemId: row.content_item_id,
+                drillId: row.drill_id,
+                title: row.content_item?.title ?? row.drill?.name ?? 'Untitled',
+                contentType: row.content_item?.content_type ?? 'drill',
+                domain: row.content_item?.domain ?? row.drill?.domain ?? null,
+                sessionBlockHint: row.content_item?.session_block_hint ?? null,
+                durationMin: row.duration_min ?? row.content_item?.duration_min ?? row.drill?.duration_min ?? null,
+                orderIndex: row.order_index,
+              }))
+
               return (
                 <Card key={block.id}>
-                  <CardContent className="py-4">
+                  <CardContent className="py-4 space-y-3">
+                    {/* Block header */}
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono text-text-muted w-5 shrink-0">{i + 1}</span>
-                          <p className="text-sm font-semibold text-text-primary">{block.name}</p>
-                          {block.type && (
-                            <span className="text-[10px] uppercase tracking-widest text-text-muted px-1.5 py-0.5 rounded border border-border">
-                              {block.type}
-                            </span>
-                          )}
-                          {hasCurriculum && (
-                            <span className="text-[10px] text-status-green flex items-center gap-0.5">
-                              <Layers className="w-2.5 h-2.5" />
-                              {curriculumItems.length} curriculum item{curriculumItems.length !== 1 ? 's' : ''}
-                            </span>
-                          )}
-                        </div>
-                        {block.notes && (
-                          <p className="text-xs text-text-muted mt-1 pl-7">{block.notes}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono text-text-muted w-5 shrink-0">{i + 1}</span>
+                        <p className="text-sm font-semibold text-text-primary">{block.name}</p>
+                        {block.type && (
+                          <span className="text-[10px] uppercase tracking-widest text-text-muted px-1.5 py-0.5 rounded border border-border">
+                            {block.type}
+                          </span>
                         )}
-
-                        {/* Legacy exercises — de-emphasized */}
-                        {hasLegacy && (
-                          <div className="mt-2 pl-7">
-                            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">
-                              Attached exercise records
-                              <span className="ml-1 normal-case text-[9px] text-text-muted/60">(legacy / fitness)</span>
-                            </p>
-                            <ul className="space-y-0.5">
-                              {exercises.map((ex, j) => (
-                                <li key={j} className="text-xs text-text-muted/70 flex items-center gap-1.5">
-                                  <span className="text-[10px] font-mono text-text-muted/50 w-4 text-right">{j + 1}.</span>
-                                  <span>{ex.name}</span>
-                                  <span className="text-[10px] text-text-muted/50">{ex.category}</span>
-                                </li>
-                              ))}
-                            </ul>
-                            {hasCurriculum && (
-                              <p className="text-[10px] text-text-muted/60 mt-1 italic">
-                                Curriculum lesson-plan content appears above.
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        {!hasCurriculum && !hasLegacy && (
-                          <p className="text-[11px] text-text-muted mt-1 pl-7 italic">No content assigned.</p>
+                        {hasCurriculum && (
+                          <span className="text-[10px] text-status-green flex items-center gap-0.5">
+                            <Layers className="w-2.5 h-2.5" />
+                            {curriculumItems.length} item{curriculumItems.length !== 1 ? 's' : ''}
+                          </span>
                         )}
                       </div>
                       {block.duration_min != null && (
@@ -556,6 +573,43 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
                         </div>
                       )}
                     </div>
+
+                    {block.notes && (
+                      <p className="text-xs text-text-muted pl-7">{block.notes}</p>
+                    )}
+
+                    {/* Interactive curriculum content picker */}
+                    <BlockContentPickerCard
+                      blockId={block.id}
+                      blockName={block.name}
+                      templateId={params.templateId}
+                      initialAssigned={assignedItems}
+                      available={availableContent}
+                    />
+
+                    {/* Legacy exercises — de-emphasized */}
+                    {hasLegacy && (
+                      <div className="pl-7 pt-2 border-t border-border/50">
+                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">
+                          Attached exercise records
+                          <span className="ml-1 normal-case text-[9px] text-text-muted/60">(legacy / fitness)</span>
+                        </p>
+                        <ul className="space-y-0.5">
+                          {exercises.map((ex, j) => (
+                            <li key={j} className="text-xs text-text-muted/70 flex items-center gap-1.5">
+                              <span className="text-[10px] font-mono text-text-muted/50 w-4 text-right">{j + 1}.</span>
+                              <span>{ex.name}</span>
+                              <span className="text-[10px] text-text-muted/50">{ex.category}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        {hasCurriculum && (
+                          <p className="text-[10px] text-text-muted/60 mt-1 italic">
+                            Curriculum lesson-plan content appears above.
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )

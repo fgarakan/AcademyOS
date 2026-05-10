@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-10 — Sprint 177: Template Block Curriculum Content Picker V1
+
+**Goal:** Allow directors to manually assign and remove curriculum content items from individual class template blocks.
+
+**Files created:**
+- `src/app/director/class-templates/[templateId]/addBlockContentAction.ts` — Server Action: auth → academy ownership → block ownership → active content check → duplicate check → next order_index → INSERT one `curriculum_class_template_blocks` row + audit log
+- `src/app/director/class-templates/[templateId]/removeBlockContentAction.ts` — Server Action: auth → academy ownership via template join → DELETE one `curriculum_class_template_blocks` row by ID + audit log
+- `src/app/director/class-templates/[templateId]/BlockContentPickerCard.tsx` — Client component per block: assigned content list with hover-reveal remove buttons; "Add Content" dashed button opens a Modal picker with title search, content_type filter, domain filter, and per-item add buttons; duplicate prevention via assigned ID set; `router.refresh()` after each mutation
+
+**Files modified:**
+- `src/app/director/class-templates/[templateId]/page.tsx` — Added `content_item_id` and `drill_id` to CCTB select + interface; fetches all global active curriculum content items (47 Orange 1 rows); passes per-block assigned items and full available list to `BlockContentPickerCard`; Template Blocks section is now interactive
+
+**No migrations created or modified.**
+**`database.types.ts` not manually edited.**
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+---
+
 ## 2026-05-10 — Sprint 176: Apply Migrations 062 + 063 and Regenerate Types
 
 No new app code. No destructive commands. No production apply. No unrelated files touched.
