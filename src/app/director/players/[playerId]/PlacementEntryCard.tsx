@@ -62,12 +62,12 @@ export function PlacementEntryCard({ data }: Props) {
             </div>
           )}
 
-          {data.confidenceScore != null && (
-            <div>
-              <p className="text-[10px] text-text-muted mb-0.5">Placement Confidence</p>
-              <p className="text-xs text-text-secondary">{data.confidenceScore}%</p>
-            </div>
-          )}
+          <div>
+            <p className="text-[10px] text-text-muted mb-0.5">Placement Confidence</p>
+            <p className="text-xs text-text-secondary">
+              {data.confidenceScore != null ? `${Math.round(data.confidenceScore * 100)}%` : '—'}
+            </p>
+          </div>
 
           <div>
             <p className="text-[10px] text-text-muted mb-0.5">Placement Record ID</p>

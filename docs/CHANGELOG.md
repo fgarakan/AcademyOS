@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-10 — Sprint 173 Polish: Placement QA Fixes
+
+No migrations. No schema changes. No parent/player portal. No billing. No parent communication. No new features.
+
+**Context:** Sprint 173 QA static analysis (Bugs #2–6) identified polish and defense-in-depth issues after Bug #1 was committed separately.
+
+**Bug #2 — Confidence display (PlacementEntryCard):** `confidenceScore` is stored as a decimal (0.8, 0.5, 0.2). Was displaying as "0.8%" — now displays as "80%", "50%", "20%" via `Math.round(score * 100)`. Null renders "—" unconditionally.
+
+**Bug #3 — Player ownership check (setCurriculumLevelAction):** Action verified user academy membership and level validity but did not confirm the target player belongs to the same academy before calling the RPC. Added explicit `.eq('academy_id', academyId)` check on `players` table before any write.
+
+**Bug #4 — Draft source label (DevelopmentSummaryDraftCard):** Placement-seeded drafts showed "from N observations" — misleading since `source_observation_count` is a count of non-null placement fields, not coach observations. Now reads `payload.generated_from`: shows "from placement assessment" if `'placement_seed'`, otherwise preserves "from N observation(s)".
+
+**Bug #5 — Footer copy (FirstDevelopmentContextCard):** "Next: assign curriculum level from Skill Path" was stale after Sprint 172B added an Overview bridge. Now shows "assign curriculum level above or via the Skill Path tab" when `!hasCurriculum`, and "review first development priorities and confirm the player's first 2–3 sessions" when `hasCurriculum`.
+
+**Bug #6 — Command center copy (page.tsx):** "Use the Skill Path tab to get started" was stale after the Overview bridge was added. Now reads "Use the assignment card on the Overview tab or the Skill Path tab to get started."
+
+**Files modified:**
+- `src/app/director/players/[playerId]/PlacementEntryCard.tsx` — Bug #2: decimal → percentage confidence display
+- `src/app/director/players/[playerId]/setCurriculumLevelAction.ts` — Bug #3: player academy ownership check before RPC
+- `src/app/director/review/DevelopmentSummaryDraftCard.tsx` — Bug #4: placement-seeded draft label
+- `src/app/director/players/[playerId]/FirstDevelopmentContextCard.tsx` — Bug #5: footer copy
+- `src/app/director/players/[playerId]/page.tsx` — Bug #6: command center missing-curriculum copy
+- `docs/CHANGELOG.md` — This entry
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+---
+
 ## 2026-05-09 — Sprint 172B: Placement → Curriculum Level Assignment Bridge
 
 No migrations. No new assignment action. No level movement logic. No requirement completion. No evidence creation. No parent/player visibility. No billing. No parent communication.

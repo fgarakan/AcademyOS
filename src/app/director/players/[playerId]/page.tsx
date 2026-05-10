@@ -865,7 +865,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
                 </p>
               ) : (
                 <p className="text-xs text-text-muted">
-                  No curriculum assigned yet. Use the Skill Path tab to get started.
+                  No curriculum assigned yet. Use the assignment card on the Overview tab or the Skill Path tab to get started.
                 </p>
               )}
             </CardContent>

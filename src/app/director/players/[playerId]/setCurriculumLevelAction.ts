@@ -26,6 +26,16 @@ export async function setCurriculumLevelAction(
     return { error: 'Insufficient permissions' }
   }
 
+  // Verify the player belongs to this academy before touching their record.
+  const { data: playerCheck, error: playerError } = await supabase
+    .from('players')
+    .select('id')
+    .eq('id', playerId)
+    .eq('academy_id', academyId)
+    .single()
+
+  if (playerError || !playerCheck) return { error: 'Player not found or access denied.' }
+
   // Confirm level exists and belongs to the global curriculum.
   const rawDb = supabase as any
   const { data: level, error: levelError } = await rawDb

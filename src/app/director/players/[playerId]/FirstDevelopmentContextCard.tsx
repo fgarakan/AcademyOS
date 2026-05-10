@@ -211,7 +211,9 @@ export function FirstDevelopmentContextCard({ data, playerId, hasCurriculum }: P
 
         {/* Next step */}
         <p className="text-[10px] text-text-muted leading-snug border-t border-border pt-3">
-          Next: assign curriculum level from Skill Path, then review first development priorities.
+          {hasCurriculum
+            ? 'Next: review first development priorities and confirm the player\'s first 2–3 sessions.'
+            : 'Next: assign curriculum level above or via the Skill Path tab, then review first development priorities.'}
         </p>
       </CardContent>
     </Card>

@@ -43,7 +43,11 @@ export function DevelopmentSummaryDraftCard({ draft }: { draft: EnrichedSummaryD
                   hour: 'numeric', minute: '2-digit',
                 })}
               </span>
-              <span>from {payload.source_observation_count} observation{payload.source_observation_count !== 1 ? 's' : ''}</span>
+              <span>
+                {payload.generated_from === 'placement_seed'
+                  ? 'from placement assessment'
+                  : `from ${payload.source_observation_count} observation${payload.source_observation_count !== 1 ? 's' : ''}`}
+              </span>
             </div>
           </div>
           {draft.playerId && (
