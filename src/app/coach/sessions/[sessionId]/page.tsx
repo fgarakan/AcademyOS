@@ -222,7 +222,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
   const rawWrapUpDb = supabase as any
   const { data: wrapUpDraftRow } = await rawWrapUpDb
     .from('proposed_actions')
-    .select('status')
+    .select('status, reviewer_notes')
     .eq('academy_id', academyId)
     .eq('target_module', 'session_wrap_up_v1')
     .eq('target_object_id', session.id)
@@ -231,6 +231,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
     .limit(1)
     .maybeSingle()
   const existingWrapUpStatus: string | null = (wrapUpDraftRow?.status as string) ?? null
+  const existingWrapUpNote: string | null = (wrapUpDraftRow?.reviewer_notes as string) ?? null
 
   // Compute context for recap panel
   const totalExercises = exercises.length
@@ -347,7 +348,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           Player observations go directly to the director review queue.
         </p>
         <div className="space-y-3">
-          <CoachWrapUpStatusCard status={existingWrapUpStatus} />
+          <CoachWrapUpStatusCard status={existingWrapUpStatus} reviewerNote={existingWrapUpNote} />
           <CoachSessionActions
             sessionId={session.id}
             academyId={academyId}

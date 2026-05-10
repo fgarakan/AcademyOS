@@ -50,7 +50,7 @@ export function WrapUpDraftDecisionControls({ proposedActionId }: Props) {
 
       <div className="space-y-1">
         <label className="label-xs" htmlFor={`wrapup-note-${proposedActionId}`}>
-          Decision note (optional)
+          Clarification note
         </label>
         <textarea
           id={`wrapup-note-${proposedActionId}`}
@@ -58,10 +58,11 @@ export function WrapUpDraftDecisionControls({ proposedActionId }: Props) {
           onChange={e => setNoteText(e.target.value)}
           maxLength={1000}
           rows={2}
-          placeholder="Add context for the coach or next reviewer…"
+          placeholder="What should the coach clarify?"
           disabled={isPending}
           className="w-full bg-surface-raised border border-border rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-lime/40 disabled:opacity-50"
         />
+        <p className="text-[10px] text-text-muted">This note is visible to the coach.</p>
         {noteText.length > 800 && (
           <p className="text-[10px] text-text-muted text-right">{noteText.length}/1000</p>
         )}

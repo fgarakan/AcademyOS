@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-05-10 — Sprint 191: Director Wrap-Up Clarification Request UX V1
+
+**Sprint 190 commit verified:** `59bf4b6 — Sprint 190 — Coach Wrap-Up Duplicate Submission Guard V1`
+
+**Director decision architecture audit:**
+- `reviewer_notes: string | null` is a confirmed real column on `proposed_actions` (verified in `database.types.ts`)
+- `updateWrapUpDraftDecisionAction` already accepts `reviewNotes?: string` as a 3rd param and writes it to `reviewer_notes` for all decisions including `clarification_needed` — note was already being saved to DB
+- `WrapUpDraftDecisionControls` already maintained `noteText` state and passed `noteText.trim() || undefined` to the action — the full save path already worked
+- Coach `page.tsx` query only selected `'status'`; `reviewer_notes` was never read or surfaced
+- `CoachWrapUpStatusCard` had no note prop and showed no note
+- `actions.ts` required no modification
+
+**Clarification note storage field identified:** `reviewer_notes` on `proposed_actions` — already populated by existing action, confirmed in generated types.
+
+**Implementation:**
+- `WrapUpDraftDecisionControls.tsx`: updated textarea label from "Decision note (optional)" → "Clarification note"; placeholder from "Add context for the coach or next reviewer…" → "What should the coach clarify?"; added helper "This note is visible to the coach."
+- `page.tsx`: added `reviewer_notes` to `.select('status, reviewer_notes')` query; extracted `existingWrapUpNote: string | null`; passed `reviewerNote={existingWrapUpNote}` to `<CoachWrapUpStatusCard>`
+- `CoachWrapUpStatusCard.tsx`: added `reviewerNote?: string | null` prop; for `clarification_needed` status, renders "Director note: [note]" in `text-text-secondary` with `text-status-orange` label below helper text
+
+**Director clarification UX:** Single shared textarea (already present) now clearly labeled for clarification context. Label and placeholder guide the director to write what the coach needs to address. Helper confirms coach visibility.
+
+**Coach clarification display:** When `status === 'clarification_needed'` and `reviewerNote` is non-null, `CoachWrapUpStatusCard` renders "Director note: …" below the helper text. Note is never shown for approved/rejected/pending_review/executed — scoped to clarification only.
+
+**Update Wrap-Up behavior preserved:** Sprint 190 button guard unchanged. `clarification_needed` still enables the "Update Wrap-Up" button and opens `CoachWrapUpDrawer`.
+
+**Approve/reject/apply behavior preserved:** `updateWrapUpDraftDecisionAction` unchanged. `ApplyWrapUpDraftControls` unchanged. `applyWrapUpDraftAction` unchanged. Approve and reject paths still accept optional notes; those notes go to `reviewer_notes` but are not surfaced to coach (only `clarification_needed` renders the note).
+
+**Future Coach/Director AI Agent context note:** `reviewer_notes` is the canonical field for structured director-to-coach feedback. A future Coach AI Agent could pre-populate the wrap-up drawer with context drawn from `reviewer_notes` when `status === 'clarification_needed'`. A future Director AI Agent could draft clarification notes from pattern analysis.
+
+**Files modified:** `src/app/director/review/WrapUpDraftDecisionControls.tsx`, `src/app/coach/sessions/[sessionId]/page.tsx`, `src/app/coach/sessions/[sessionId]/CoachWrapUpStatusCard.tsx`
+
+**Data safety:** No inserts, updates, deletes, player mutations, or communications. Read-only change on the coach side; director side textarea label change only — action function unchanged.
+
+**No player records mutated.** No parent/player communication sent. No migrations modified. `database.types.ts` untouched. `actions.ts` untouched. `saveWrapUpDraftAction` untouched. `applyWrapUpDraftAction` untouched.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` produced no output.
+
+**Manual browser QA status:** Not browser-tested in this environment. Logic is: one additional selected column in an existing query, one optional prop on an existing component with a conditional render gated on status and non-null note. Straightforward and low-risk.
+
+---
+
 ## 2026-05-10 — Sprint 190: Coach Wrap-Up Duplicate Submission Guard V1
 
 **Sprint 189 commit verified:** `ebc90f6 — Sprint 189 — Coach Sessions List Wrap-Up Status V1`

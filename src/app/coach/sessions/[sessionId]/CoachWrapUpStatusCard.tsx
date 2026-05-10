@@ -54,9 +54,10 @@ const STATUS_MAP: Record<string, StatusConfig> = {
 
 interface Props {
   status: string | null
+  reviewerNote?: string | null
 }
 
-export function CoachWrapUpStatusCard({ status }: Props) {
+export function CoachWrapUpStatusCard({ status, reviewerNote }: Props) {
   if (!status) return null
   const config = STATUS_MAP[status]
   if (!config) return null
@@ -69,6 +70,12 @@ export function CoachWrapUpStatusCard({ status }: Props) {
       <div className="min-w-0">
         <p className="text-sm font-medium">{config.title}</p>
         <p className="text-xs mt-0.5 opacity-80">{config.helper}</p>
+        {status === 'clarification_needed' && reviewerNote && (
+          <p className="text-xs mt-2 text-text-secondary leading-snug">
+            <span className="font-medium text-status-orange">Director note:</span>{' '}
+            {reviewerNote}
+          </p>
+        )}
       </div>
     </div>
   )
