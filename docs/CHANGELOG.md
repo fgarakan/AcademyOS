@@ -2,6 +2,51 @@
 
 ---
 
+## 2026-05-10 — Sprint 190: Coach Wrap-Up Duplicate Submission Guard V1
+
+**Sprint 189 commit verified:** `ebc90f6 — Sprint 189 — Coach Sessions List Wrap-Up Status V1`
+
+**Coach wrap-up action architecture audit (Option A chosen):**
+- `CoachSessionActions` is a `'use client'` component — adding an optional `wrapUpStatus` prop is safe and straightforward
+- `CoachWrapUpDrawer` is mounted only when `wrapUpOpen === true`; disabling the button prevents `setWrapUpOpen(true)` from firing — drawer is never mounted in blocked states
+- `saveWrapUpDraftAction` always creates a new `proposed_actions` row and has no server-side duplicate check — UI guard is sufficient for V1
+- Session detail page already had `existingWrapUpStatus: string | null` computed in step 7 (Sprint 188); only needed to pass it through to `CoachSessionActions`
+- `CoachWrapUpStatusCard`, `CoachWrapUpDrawer`, `saveWrapUpDraftAction`, and `applyWrapUpDraftAction` are all unchanged
+
+**Implementation:**
+- Added `wrapUpStatus?: string | null` to `CoachSessionActions` Props interface
+- Added `resolveWrapUpCTA(status)` helper: maps status string to `{ label, helper, helperColor, disabled }`
+- Primary button is `disabled` for `pending_review` / `approved` / `executed` — styled as muted surface with `cursor-not-allowed`; `onClick` not fired
+- Primary button remains enabled (lime) for `clarification_needed` / `rejected` with adjusted label and helper copy
+- Helper text below Quick Note is hidden when button is disabled (wrap-up already complete) to avoid confusing copy
+- Passed `wrapUpStatus={existingWrapUpStatus}` to `<CoachSessionActions>` in coach session detail page
+
+**Duplicate guard behavior:**
+| Status | Button label | Helper copy | Drawer opens |
+|--------|-------------|-------------|--------------|
+| `null` / unknown | Wrap Up Session | (none) | Yes |
+| `clarification_needed` | Update Wrap-Up | Director requested clarification. | Yes |
+| `rejected` | Submit New Wrap-Up | Your previous wrap-up was not approved. | Yes |
+| `pending_review` | Wrap-up submitted | Director is reviewing your notes. | No |
+| `approved` | Wrap-up approved | Director can apply it to the session record. | No |
+| `executed` | Wrap-up applied | Your notes are part of the official session record. | No |
+
+**Existing drawer behavior:** `CoachWrapUpDrawer` is completely unchanged. When the button is enabled, the multi-step form opens and submits exactly as before.
+
+**Future Coach AI Agent context note:** The `resolveWrapUpCTA` helper provides a clean insertion point for a future Coach AI Agent to suggest "your previous wrap-up had a clarification request — here's what to update." The status-to-CTA mapping is intentionally decoupled from the drawer logic.
+
+**Files modified:** `src/app/coach/sessions/[sessionId]/CoachSessionActions.tsx`, `src/app/coach/sessions/[sessionId]/page.tsx`
+
+**Data safety:** UI-only change. No inserts, updates, deletes, player mutations, or communications.
+
+**No player records mutated.** No parent/player communication sent. No migrations modified. `database.types.ts` untouched.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` produced no output.
+
+**Manual browser QA status:** Not browser-tested in this environment. Logic is straightforward conditional rendering with no async state; the `disabled` prop on a `<button>` is standard React behavior.
+
+---
+
 ## 2026-05-10 — Sprint 189: Coach Sessions List Wrap-Up Status V1
 
 **Sprint 188 commit verified:** `(committed immediately prior in this session)`

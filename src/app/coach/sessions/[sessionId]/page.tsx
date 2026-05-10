@@ -354,6 +354,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
             sessionName={session.name ?? 'Untitled Session'}
             blocks={blockList}
             roster={roster}
+            wrapUpStatus={existingWrapUpStatus}
           />
         </div>
       </section>

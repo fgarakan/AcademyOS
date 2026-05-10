@@ -12,24 +12,84 @@ interface Props {
   sessionName: string
   blocks: SessionBlock[]
   roster: RosterPlayer[]
+  wrapUpStatus?: string | null
 }
 
-export function CoachSessionActions({ sessionId, academyId, sessionName, blocks, roster }: Props) {
+interface WrapUpCTA {
+  label: string
+  helper: string
+  helperColor: string
+  disabled: boolean
+}
+
+function resolveWrapUpCTA(status: string | null | undefined): WrapUpCTA {
+  switch (status) {
+    case 'pending_review':
+      return {
+        label: 'Wrap-up submitted',
+        helper: 'Director is reviewing your notes.',
+        helperColor: 'text-text-muted',
+        disabled: true,
+      }
+    case 'approved':
+      return {
+        label: 'Wrap-up approved',
+        helper: 'Director can apply it to the session record.',
+        helperColor: 'text-text-muted',
+        disabled: true,
+      }
+    case 'executed':
+      return {
+        label: 'Wrap-up applied',
+        helper: 'Your notes are part of the official session record.',
+        helperColor: 'text-text-muted',
+        disabled: true,
+      }
+    case 'clarification_needed':
+      return {
+        label: 'Update Wrap-Up',
+        helper: 'Director requested clarification.',
+        helperColor: 'text-status-orange',
+        disabled: false,
+      }
+    case 'rejected':
+      return {
+        label: 'Submit New Wrap-Up',
+        helper: 'Your previous wrap-up was not approved.',
+        helperColor: 'text-text-muted',
+        disabled: false,
+      }
+    default:
+      return { label: 'Wrap Up Session', helper: '', helperColor: '', disabled: false }
+  }
+}
+
+export function CoachSessionActions({ sessionId, academyId, sessionName, blocks, roster, wrapUpStatus }: Props) {
   const [captureOpen, setCaptureOpen] = useState(false)
   const [wrapUpOpen, setWrapUpOpen] = useState(false)
+  const cta = resolveWrapUpCTA(wrapUpStatus)
 
   return (
     <div className="space-y-2">
       <p className="text-[10px] uppercase tracking-widest text-text-muted">Wrap Up</p>
 
-      {/* Primary CTA — Wrap Up Session */}
+      {/* Primary CTA — guarded by existing wrap-up status */}
       <button
-        onClick={() => setWrapUpOpen(true)}
-        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-lime text-black font-bold text-sm hover:bg-lime/90 transition-colors"
+        onClick={cta.disabled ? undefined : () => setWrapUpOpen(true)}
+        disabled={cta.disabled}
+        className={[
+          'w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm transition-colors',
+          cta.disabled
+            ? 'bg-surface-raised border border-border text-text-muted cursor-not-allowed'
+            : 'bg-lime text-black hover:bg-lime/90',
+        ].join(' ')}
       >
         <ClipboardList className="w-4 h-4" />
-        Wrap Up Session
+        {cta.label}
       </button>
+      {cta.helper && (
+        <p className={`text-[10px] text-center leading-snug ${cta.helperColor}`}>{cta.helper}</p>
+      )}
 
       {/* Secondary — Quick Note (informal capture, not a session recap) */}
       <button
@@ -39,10 +99,12 @@ export function CoachSessionActions({ sessionId, academyId, sessionName, blocks,
         <Plus className="w-3.5 h-3.5" />
         Quick Note
       </button>
-      <p className="text-[10px] text-text-muted text-center leading-snug">
-        Quick Note is an informal internal capture — not a session recap.
-        Use <span className="text-text-secondary">Wrap Up Session</span> to submit your end-of-session review.
-      </p>
+      {!cta.disabled && (
+        <p className="text-[10px] text-text-muted text-center leading-snug">
+          Quick Note is an informal internal capture — not a session recap.
+          Use <span className="text-text-secondary">Wrap Up Session</span> to submit your end-of-session review.
+        </p>
+      )}
 
       <QuickCaptureDrawer
         open={captureOpen}
