@@ -39,14 +39,15 @@ export async function addBlockContentAction(
     .single()
   if (!block) return { ok: false, error: 'Block not found on this template' }
 
-  // Verify content item exists and is active global content
+  // Verify content item exists, is active, and is global (academy_id IS NULL)
   const { data: contentItem } = await rawDb
     .from('curriculum_content_items')
     .select('id')
     .eq('id', contentItemId)
     .eq('is_active', true)
+    .is('academy_id', null)
     .single()
-  if (!contentItem) return { ok: false, error: 'Content item not found or inactive' }
+  if (!contentItem) return { ok: false, error: 'Content item not found, inactive, or not a global item' }
 
   // Duplicate check: same block + content item
   const { data: existing } = await rawDb

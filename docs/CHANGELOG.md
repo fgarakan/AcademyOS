@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-05-10 — Sprint 178: Curriculum Content Picker QA Polish
+
+**Sprint 177 commit verified:** `45a5a62 — Sprint 177 — Template Block Curriculum Content Picker V1`
+
+**QA findings and fixes:**
+
+- **`addBlockContentAction.ts`** — Added `.is('academy_id', null)` to content item verification. Previously only checked `is_active = true`; a request supplying an academy-specific content item UUID would have passed the server check. Now enforces global-only at the action level (defense-in-depth on top of the UI filter).
+
+- **`BlockContentPickerCard.tsx`** — Six UI polish changes:
+  1. Added "Curriculum Content" section label with lime item count above the assigned list
+  2. Modal title updated from `"Add Content — {blockName}"` to `"Add Curriculum Content"`
+  3. Added modal subtitle: `"For {blockName} — choose a drill, game, cue, or focus item."`
+  4. Added in-flight spinner banner inside modal when `isPending` ("Saving…")
+  5. "Add Content" button label changes to `"Updating…"` when `isPending`
+  6. Remove button changed from `opacity-0` (invisible on touch devices) to `opacity-30` (subtly visible, full opacity on hover) — fixes mobile UX
+  7. Footer copy updated to: "Internal planning only. Parent and player visibility is controlled separately."
+
+**Duplicate prevention verified:** Server-side duplicate check (`block_id + content_item_id`) in `addBlockContentAction` confirmed; client-side `assignedContentIds` set filters picker list.
+
+**Data safety verified:** Remove action only deletes the `curriculum_class_template_blocks` row by ID. `curriculum_content_items` and `template_blocks` are never touched. Audit log written for both add and remove.
+
+**No migrations created or modified.**
+**`database.types.ts` not manually edited.**
+**Unrelated dirty files left untouched** (`exercise-import-dry-run-report.json`, `index.html`, migrations 053/057/058).
+
+**Manual browser QA status:** Not performed — codespace environment has no browser. Code-level QA completed. Manual browser verification recommended before production use.
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+---
+
 ## 2026-05-10 — Sprint 177: Template Block Curriculum Content Picker V1
 
 **Goal:** Allow directors to manually assign and remove curriculum content items from individual class template blocks.
