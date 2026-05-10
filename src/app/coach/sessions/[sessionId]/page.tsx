@@ -24,6 +24,7 @@ export interface SessionBlock {
   order_index: number
   intensity: number | null
   notes: string | null
+  template_block_id: string | null
 }
 
 export interface SessionExercise {
@@ -92,7 +93,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
   // 3. Session blocks ordered
   const { data: blocks, error: blocksError } = await supabase
     .from('session_blocks')
-    .select('id, name, type, duration_min, order_index, intensity, notes')
+    .select('id, name, type, duration_min, order_index, intensity, notes, template_block_id')
     .eq('session_id', session.id)
     .order('order_index')
 
@@ -267,10 +268,10 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         )}
       </div>
 
-      {/* ── Before Session ── what to coach today */}
+      {/* ── Today's Plan ── what to coach today */}
       {session.template_id && (
         <section>
-          <p className="label-xs mb-3">Before Session</p>
+          <p className="label-xs mb-3">Today's Plan</p>
           <CoachSessionCurriculumPanel templateId={session.template_id} />
         </section>
       )}

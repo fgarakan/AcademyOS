@@ -2,6 +2,52 @@
 
 ---
 
+## 2026-05-10 — Sprint 182: Coach Session Run View V1
+
+**Sprint 181 commit verified:** `1ea27d2 — Sprint 181 — Session Detail Curriculum Content V1`
+
+**Coach session architecture audit:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` exists and is complete: auth, `academy_id` scoping, session blocks, group roster, attendance, curriculum panel, wrap-up drawer.
+- `CoachSessionCurriculumPanel` exists and fetches curriculum via `template_id → template_blocks → curriculum_class_template_blocks → curriculum_content_items/drills`. Was missing `session_block_hint`, `is_coach_only`, `description`.
+- `CoachSessionActions` + `CoachWrapUpDrawer` already provide a fully functional "Wrap Up Session" button — no placeholder needed.
+- `session_blocks` SELECT did not include `template_block_id` — added in this sprint.
+- Architecture: Option A — surgical edits to two existing files.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Three changes: (1) Added `template_block_id: string | null` to exported `SessionBlock` interface. (2) Added `template_block_id` to session_blocks `.select()` string. (3) Renamed "Before Session" section label to "Today's Plan".
+- `src/app/coach/sessions/[sessionId]/CoachSessionCurriculumPanel.tsx` — Four changes: (1) Added `session_block_hint`, `is_coach_only`, `description` to `PlanItem` interface and `curriculum_content_items` join select. (2) Mapped new fields in `planBlocks` construction. (3) Removed redundant "Curriculum Lesson Plan" internal header — page section label "Today's Plan" is the single entry point. (4) Added rendering: "Internal" badge with Lock icon for `is_coach_only` items, `sessionBlockHint` as muted domain-adjacent context, `description` as `line-clamp-2` supplemental text. Empty state copy updated to "No planned focus content yet." Coach cues and success criteria preserved.
+
+**Data path:**
+`session.template_id → template_blocks.id → curriculum_class_template_blocks.block_id → curriculum_content_items / curriculum_drills`
+Session blocks now carry `template_block_id` — available to future Coach AI Agent for per-block curriculum resolution.
+
+**Wrap-up CTA:**
+`CoachSessionActions` + `CoachWrapUpDrawer` are fully functional and unchanged. The prominent lime "Wrap Up Session" button and full six-question wrap-up drawer were already built. No placeholder needed.
+
+**Data safety:**
+- Read-only page — zero writes, zero mutations
+- No session records modified
+- No player records modified
+- No parent/player communication
+- No migrations created or modified
+- `database.types.ts` untouched
+
+**Future Coach AI Agent context:**
+- `session_blocks.template_block_id` is now returned by the coach session page query.
+- `CoachSessionCurriculumPanel` fetches and surfaces all curriculum metadata a Coach Agent would need: title, domain, `session_block_hint`, `description`, coach cues, success criteria, `is_coach_only`.
+- Future Coach Agent answering "What should I focus on in block 2?" can resolve `session_blocks[1].template_block_id → curriculum_class_template_blocks → curriculum_content_items` without any additional schema changes.
+- The "Today's Plan" section is the structural anchor for the Coach Agent's session context.
+
+**Manual browser QA status:** Not yet run — dev server start required.
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+**Known limitations:**
+- Curriculum is shown before the execution section ("Today's Plan" above "Run the Session"), not inline within each execution block card. Inline integration would require refactoring `CoachSessionExecutionClient` (a client component) to accept curriculum props — deferred to a future sprint.
+- `CoachSessionCurriculumPanel` fetches by `template_id → template_blocks`, not by `session_blocks.template_block_id`. Both paths resolve the same curriculum content for cleanly generated sessions. A future sprint could switch to the per-session-block path for precision (e.g., if session blocks are customized post-generation).
+
+---
+
 ## 2026-05-10 — Sprint 181: Session Detail Curriculum Content V1
 
 **Sprint 180 commit verified:** `b305988 — Sprint 180 — Generate Session from Template V1`

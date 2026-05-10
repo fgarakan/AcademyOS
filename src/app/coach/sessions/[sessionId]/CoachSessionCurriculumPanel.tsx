@@ -1,5 +1,5 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { BookOpen, Clock, CheckCircle } from 'lucide-react'
+import { Clock, CheckCircle, Lock } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 
 interface Props {
@@ -10,6 +10,9 @@ interface PlanItem {
   title: string
   contentType: string
   domain: string | null
+  sessionBlockHint: string | null
+  isCoachOnly: boolean
+  description: string | null
   cues: string[] | null
   criteria: string[] | null
   durationMin: number | null
@@ -26,7 +29,6 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
   const supabase = await getSupabaseServer()
   const rawDb = supabase as any
 
-  // Fetch template blocks for this template
   const { data: tblData } = await rawDb
     .from('template_blocks')
     .select('id, name, order_index')
@@ -38,14 +40,13 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
 
   const tblIds = tblList.map(b => b.id)
 
-  // Fetch curriculum class template blocks with joined content
   const { data: cctbData } = await rawDb
     .from('curriculum_class_template_blocks')
     .select(`
       block_id,
       order_index,
       duration_min,
-      content_item:curriculum_content_items(title, content_type, domain, coach_cues, success_criteria, duration_min),
+      content_item:curriculum_content_items(title, content_type, domain, session_block_hint, is_coach_only, description, coach_cues, success_criteria, duration_min),
       drill:curriculum_drills(name, domain, cues, success_criteria, duration_min)
     `)
     .in('block_id', tblIds)
@@ -59,6 +60,9 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
       title: string
       content_type: string
       domain: string | null
+      session_block_hint: string | null
+      is_coach_only: boolean
+      description: string | null
       coach_cues: string[] | null
       success_criteria: string[] | null
       duration_min: number | null
@@ -74,22 +78,15 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
 
   if (rows.length === 0) {
     return (
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <BookOpen className="w-3.5 h-3.5 text-lime" />
-          <p className="label-xs">Curriculum Lesson Plan</p>
-        </div>
-        <Card>
-          <CardContent className="py-4 text-center">
-            <p className="text-xs text-text-muted">Director has not applied a curriculum lesson plan yet.</p>
-            <p className="text-[11px] text-text-muted mt-1">Run the session from the blocks below and add a wrap-up after class.</p>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardContent className="py-4 text-center">
+          <p className="text-xs text-text-muted">No planned focus content yet.</p>
+          <p className="text-[11px] text-text-muted mt-1">Run the session from the blocks below and add a wrap-up after class.</p>
+        </CardContent>
+      </Card>
     )
   }
 
-  // Group rows by block_id
   const grouped = new Map<string, typeof rows>()
   for (const row of rows) {
     const arr = grouped.get(row.block_id) ?? []
@@ -97,7 +94,6 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
     grouped.set(row.block_id, arr)
   }
 
-  // Build ordered plan blocks (skip blocks with no curriculum content)
   const planBlocks: PlanBlock[] = []
   for (const tb of tblList) {
     const blockRows = grouped.get(tb.id) ?? []
@@ -110,6 +106,9 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
         title: row.content_item?.title ?? row.drill?.name ?? 'Untitled',
         contentType: row.content_item?.content_type ?? 'drill',
         domain: row.content_item?.domain ?? row.drill?.domain ?? null,
+        sessionBlockHint: row.content_item?.session_block_hint ?? null,
+        isCoachOnly: row.content_item?.is_coach_only ?? false,
+        description: row.content_item?.description ?? null,
         cues: row.content_item?.coach_cues ?? row.drill?.cues ?? null,
         criteria: row.content_item?.success_criteria ?? row.drill?.success_criteria ?? null,
         durationMin: row.duration_min ?? row.content_item?.duration_min ?? row.drill?.duration_min ?? null,
@@ -120,73 +119,92 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
   if (planBlocks.length === 0) return null
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <BookOpen className="w-3.5 h-3.5 text-lime" />
-        <p className="label-xs">Curriculum Lesson Plan</p>
-      </div>
-      <div className="space-y-3">
-        {planBlocks.map((block, i) => (
-          <Card key={block.blockId}>
-            <CardContent className="py-3">
-              {/* Block header */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-mono text-text-muted w-5 shrink-0">{i + 1}</span>
-                <p className="text-xs font-semibold text-text-primary">{block.blockName}</p>
-              </div>
+    <div className="space-y-3">
+      {planBlocks.map((block, i) => (
+        <Card key={block.blockId}>
+          <CardContent className="py-3">
+            {/* Block header */}
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="text-[10px] font-mono text-lime w-5 shrink-0">{i + 1}</span>
+              <p className="text-xs font-semibold text-text-primary">{block.blockName}</p>
+            </div>
 
-              {/* Curriculum items */}
-              <ul className="space-y-2.5 pl-7">
-                {block.items.map((item, j) => (
-                  <li key={j}>
-                    <div className="flex items-start gap-2">
-                      <span className="text-lime text-xs mt-0.5 shrink-0">›</span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-[11px] font-medium text-text-primary">{item.title}</p>
-                          {item.domain && (
-                            <span className="text-[10px] text-text-muted">{item.domain}</span>
-                          )}
-                          {item.durationMin != null && (
-                            <span className="text-[10px] text-text-muted flex items-center gap-0.5 ml-auto shrink-0">
-                              <Clock className="w-2.5 h-2.5" />
-                              {item.durationMin}min
-                            </span>
-                          )}
-                        </div>
+            {/* Curriculum items */}
+            <ul className="space-y-3 pl-7">
+              {block.items.map((item, j) => (
+                <li key={j}>
+                  <div className="flex items-start gap-2">
+                    <span className="text-lime/60 text-xs mt-0.5 shrink-0">›</span>
+                    <div className="min-w-0 flex-1">
 
-                        {/* Coach cues (up to 3) */}
-                        {item.cues && item.cues.length > 0 && (
-                          <div className="mt-1 space-y-0.5">
-                            {item.cues.slice(0, 3).map((cue, k) => (
-                              <p key={k} className="text-[10px] text-text-secondary flex items-start gap-1">
-                                <span className="text-lime/70 shrink-0 mt-0.5">·</span>
-                                {cue}
-                              </p>
-                            ))}
-                          </div>
+                      {/* Title row */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-[11px] font-medium text-text-primary">{item.title}</p>
+                        {item.isCoachOnly && (
+                          <span className="text-[9px] text-text-muted flex items-center gap-0.5 border border-border px-1.5 py-0.5 rounded">
+                            <Lock className="w-2 h-2" />
+                            Internal
+                          </span>
                         )}
-
-                        {/* Success criteria (up to 2) */}
-                        {item.criteria && item.criteria.length > 0 && (
-                          <div className="mt-1 space-y-0.5">
-                            {item.criteria.slice(0, 2).map((c, k) => (
-                              <p key={k} className="text-[10px] text-text-muted flex items-start gap-1">
-                                <CheckCircle className="w-2.5 h-2.5 text-status-green shrink-0 mt-0.5" />
-                                {c}
-                              </p>
-                            ))}
-                          </div>
+                        {item.durationMin != null && (
+                          <span className="text-[10px] text-text-muted flex items-center gap-0.5 ml-auto shrink-0">
+                            <Clock className="w-2.5 h-2.5" />
+                            {item.durationMin}min
+                          </span>
                         )}
                       </div>
+
+                      {/* Domain + session block hint */}
+                      <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                        {item.domain && (
+                          <span className="text-[10px] text-text-muted">{item.domain}</span>
+                        )}
+                        {item.sessionBlockHint && (
+                          <span className="text-[10px] text-text-muted">
+                            {item.domain ? '·' : ''} {item.sessionBlockHint}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Description */}
+                      {item.description && (
+                        <p className="text-[10px] text-text-muted/80 mt-0.5 leading-relaxed line-clamp-2">
+                          {item.description}
+                        </p>
+                      )}
+
+                      {/* Coach cues */}
+                      {item.cues && item.cues.length > 0 && (
+                        <div className="mt-1.5 space-y-0.5">
+                          {item.cues.slice(0, 3).map((cue, k) => (
+                            <p key={k} className="text-[10px] text-text-secondary flex items-start gap-1">
+                              <span className="text-lime/70 shrink-0 mt-0.5">·</span>
+                              {cue}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Success criteria */}
+                      {item.criteria && item.criteria.length > 0 && (
+                        <div className="mt-1 space-y-0.5">
+                          {item.criteria.slice(0, 2).map((c, k) => (
+                            <p key={k} className="text-[10px] text-text-muted flex items-start gap-1">
+                              <CheckCircle className="w-2.5 h-2.5 text-status-green shrink-0 mt-0.5" />
+                              {c}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
                     </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   )
 }
