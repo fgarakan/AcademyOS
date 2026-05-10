@@ -2,6 +2,49 @@
 
 ---
 
+## 2026-05-10 — Sprint 192: Director Wrap-Up Clarification Note Display V1
+
+**Sprint 191 commit verified:** `4840aba — Sprint 191 — Director Wrap-Up Clarification Request UX V1`
+
+**Director review card architecture audit:**
+- `page.tsx` wrap-up query (line 540) selected `id, status, target_object_id, proposed_payload, created_at, proposed_by_id` — `reviewer_notes` was not selected
+- Local `DraftRow` interface had no `reviewer_notes` field
+- `enrichedWrapUpDrafts.map()` did not extract or pass `reviewer_notes`
+- `EnrichedWrapUpDraftItem` had no `reviewerNotes` field
+- `WrapUpDraftCard` had no note display logic
+- Wrap-up status filter: `['pending_review', 'approved', 'clarification_needed']` — `rejected` excluded from current queue
+- `rawDb` is already `supabase as any`; adding `reviewer_notes` to the select string is safe
+
+**Implementation (Option A):**
+- `page.tsx`: added `reviewer_notes?: string | null` to `DraftRow` interface; added `reviewer_notes` to wrap-up `proposed_actions` select string; added `reviewerNotes: d.reviewer_notes ?? null` to `enrichedWrapUpDrafts.map()`
+- `WrapUpDraftCard.tsx`: added `reviewerNotes?: string | null` to `EnrichedWrapUpDraftItem`; added `HelpCircle` to lucide-react imports; added director note panel rendered when `status === 'clarification_needed' || status === 'rejected'` and `reviewerNotes` is non-empty
+
+**Director note display behavior:**
+- Orange-tinted inset panel with `HelpCircle` icon
+- Label: "Director Note · Visible to coach" (orange uppercase + muted qualifier)
+- Body: note text in `text-text-secondary`
+- Positioned between safety note and decision/apply controls
+- Only renders when `reviewerNotes` is non-null and non-empty
+- Shown for `clarification_needed` (primary V1 case) and `rejected` (future-safe; currently excluded from queue filter)
+
+**Decision controls preserved:** `WrapUpDraftDecisionControls` unchanged. Still shown only for `pending_review`.
+
+**Apply controls preserved:** `ApplyWrapUpDraftControls` unchanged. Still shown only for `approved`.
+
+**Future Coach/Director AI Agent context note:** `reviewerNotes` is now surfaced on both the coach session page (Sprint 191) and the director review card (Sprint 192). A future Director AI Agent could detect patterns across `reviewer_notes` values (e.g., recurring "missing attendance details" notes) to surface coaching quality signals. A Coach AI Agent could use the same field to pre-populate the wrap-up revision drawer with the director's specific ask.
+
+**Files modified:** `src/app/director/review/page.tsx`, `src/app/director/review/WrapUpDraftCard.tsx`
+
+**Data safety:** Read-only display change. One additional column in an existing read query. No inserts, updates, deletes, player mutations, or communications.
+
+**No player records mutated.** No parent/player communication sent. No migrations modified. `database.types.ts` untouched. `applyWrapUpDraftAction` untouched. `saveWrapUpDraftAction` untouched.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` produced no output.
+
+**Manual browser QA status:** Not browser-tested in this environment. Change is one additional Postgres column in an existing `rawDb` query, passed through a typed interface to a conditional render gated on status and non-null note. No async state, no effects, no new API surface.
+
+---
+
 ## 2026-05-10 — Sprint 191: Director Wrap-Up Clarification Request UX V1
 
 **Sprint 190 commit verified:** `59bf4b6 — Sprint 190 — Coach Wrap-Up Duplicate Submission Guard V1`

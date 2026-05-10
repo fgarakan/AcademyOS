@@ -116,6 +116,7 @@ export default async function DirectorReviewQueuePage({
     proposed_payload: unknown
     created_at: string
     proposed_by_id: string
+    reviewer_notes?: string | null
   }
 
   const rawDb = supabase as any
@@ -537,7 +538,7 @@ export default async function DirectorReviewQueuePage({
 
   const { data: wrapUpRows } = await rawDb
     .from('proposed_actions')
-    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
+    .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id, reviewer_notes')
     .eq('academy_id', academyId)
     .in('status', ['pending_review', 'approved', 'clarification_needed'])
     .eq('target_module', 'session_wrap_up_v1')
@@ -615,6 +616,7 @@ export default async function DirectorReviewQueuePage({
       groupName: sess?.group_id ? (wrapUpGroupMap.get(sess.group_id) ?? null) : null,
       proposerName: wrapUpProposerMap.get(d.proposed_by_id) ?? null,
       payload: d.proposed_payload as unknown as SessionActualDraftPayload,
+      reviewerNotes: d.reviewer_notes ?? null,
     }
   })
 

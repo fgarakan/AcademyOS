@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
   Calendar, CheckCircle2, XCircle, AlertTriangle, Pencil,
-  ExternalLink, MessageSquare, Target, FileText, Info, Users,
+  ExternalLink, MessageSquare, Target, FileText, Info, Users, HelpCircle,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -19,6 +19,7 @@ export interface EnrichedWrapUpDraftItem {
   groupName?: string | null
   proposerName: string | null
   payload: SessionActualDraftPayload
+  reviewerNotes?: string | null
 }
 
 function BlockStatusIcon({ status }: { status: BlockCompletionDraft['status'] }) {
@@ -232,6 +233,20 @@ export function WrapUpDraftCard({ draft }: { draft: EnrichedWrapUpDraftItem }) {
             Planned session and template are untouched. Approve, then use the Apply button to write the official session actual. Rejecting this draft records your decision but takes no further action.
           </span>
         </div>
+
+        {/* Director note — shown when a clarification or rejection note was sent to the coach */}
+        {(draft.status === 'clarification_needed' || draft.status === 'rejected') && draft.reviewerNotes && (
+          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-status-orange/5 border border-status-orange/20">
+            <HelpCircle className="w-3.5 h-3.5 text-status-orange shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-widest text-status-orange font-medium mb-1">
+                Director Note{' '}
+                <span className="normal-case tracking-normal font-normal text-text-muted">· Visible to coach</span>
+              </p>
+              <p className="text-xs text-text-secondary leading-snug">{draft.reviewerNotes}</p>
+            </div>
+          </div>
+        )}
 
         {/* Decision controls — only for pending_review */}
         {draft.status === 'pending_review' && (
