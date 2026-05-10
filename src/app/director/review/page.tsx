@@ -539,15 +539,35 @@ export default async function DirectorReviewQueuePage() {
     )
   )
 
-  const wrapUpSessionMap = new Map<string, { id: string; name: string | null; scheduled_date: string }>()
+  const wrapUpSessionMap = new Map<string, { id: string; name: string | null; scheduled_date: string; group_id: string | null }>()
   if (wrapUpSessionIds.length > 0) {
     const { data: wuSessions } = await supabase
       .from('sessions')
-      .select('id, name, scheduled_date')
+      .select('id, name, scheduled_date, group_id')
       .in('id', wrapUpSessionIds)
       .eq('academy_id', academyId)
     for (const s of (wuSessions ?? [])) {
-      wrapUpSessionMap.set(s.id, s)
+      wrapUpSessionMap.set(s.id, { ...s, group_id: s.group_id ?? null })
+    }
+  }
+
+  // Group name lookup for session context display
+  const wrapUpGroupIds = Array.from(
+    new Set(
+      Array.from(wrapUpSessionMap.values())
+        .map(s => s.group_id)
+        .filter((id): id is string => id !== null)
+    )
+  )
+  const wrapUpGroupMap = new Map<string, string>()
+  if (wrapUpGroupIds.length > 0) {
+    const { data: wuGroups } = await supabase
+      .from('groups')
+      .select('id, name')
+      .in('id', wrapUpGroupIds)
+      .eq('academy_id', academyId)
+    for (const g of (wuGroups ?? [])) {
+      wrapUpGroupMap.set(g.id, g.name)
     }
   }
 
@@ -572,6 +592,7 @@ export default async function DirectorReviewQueuePage() {
       sessionId: d.target_object_id,
       sessionName: sess?.name ?? null,
       sessionDate: sess?.scheduled_date ?? null,
+      groupName: sess?.group_id ? (wrapUpGroupMap.get(sess.group_id) ?? null) : null,
       proposerName: wrapUpProposerMap.get(d.proposed_by_id) ?? null,
       payload: d.proposed_payload as unknown as SessionActualDraftPayload,
     }

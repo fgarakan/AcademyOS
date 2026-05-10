@@ -2,6 +2,53 @@
 
 ---
 
+## 2026-05-10 — Sprint 183: Coach Wrap-Up Director Review V1
+
+**Sprint 182 commit verified:** `59a92e7 — Sprint 182 — Coach Session Run View V1`
+
+**Wrap-up persistence/review architecture audit:**
+- Coach wrap-up answers are persisted via `saveWrapUpDraftAction` as `proposed_actions` rows with `target_module = 'session_wrap_up_v1'`, `action_type = 'other'`, `status = 'pending_review'`. Payload type: `SessionActualDraftPayload` (`draft_type = 'session_actual_v1'`).
+- Director review queue at `/director/review` already has a "Session Wrap-Ups" tab. `WrapUpDraftCard` already renders session name, date, coach name, block completion per block, changes from plan, next focus, group note, "View Session" link, decision controls (Approve/Needs Clarification/Reject), and apply controls.
+- Three gaps: (1) `raw_standouts_answer` in payload — not rendered. (2) `raw_attention_answer` in payload — not rendered. (3) Group/class name — session query lacked `group_id`.
+- Architecture: Option A — enhance existing `WrapUpDraftCard` and wrap-up session query in `page.tsx`.
+
+**Files modified:**
+- `src/app/director/review/WrapUpDraftCard.tsx` — Four changes: (1) Added `groupName?: string | null` to `EnrichedWrapUpDraftItem` interface. (2) Added group name to header meta row (Users icon, text-secondary). (3) Renamed "Attendance Context (raw)" → "Attendance Notes" for director-facing clarity. (4) Added "Player Standouts" field (Users icon, lime) and "Needs Attention" field (AlertTriangle, orange) to key fields grid — rendered from `payload.raw_standouts_answer` and `payload.raw_attention_answer` when present.
+- `src/app/director/review/page.tsx` — Three changes in the wrap-up section: (1) Extended session select to include `group_id`. (2) After building `wrapUpSessionMap`, collected unique group_ids, queried `groups` table, built `wrapUpGroupMap` (same pattern as existing groups query at line 944). (3) Added `groupName` to `EnrichedWrapUpDraftItem` construction.
+
+**Session context now shown:**
+- Session title, date, submitting coach, group/class name (when available), block completion per block, "View Session" link
+
+**Coach answers now shown:**
+- Changes from plan, next focus, group note, attendance notes, player standouts, needs attention
+
+**Review actions:**
+- Approve, Needs Clarification, Reject — all preserved and unchanged via `WrapUpDraftDecisionControls`
+- Apply Approved — preserved and unchanged via `ApplyWrapUpDraftControls`
+
+**Data safety:**
+- Read-mostly — session select and group lookup are new reads only
+- No session records modified
+- No player records modified
+- No parent/player communication
+- No migrations created or modified
+- `database.types.ts` untouched
+
+**Future Director AI Agent context:**
+- `EnrichedWrapUpDraftItem` now carries `groupName` — Agent can cite class context when summarising a wrap-up.
+- `raw_standouts_answer` and `raw_attention_answer` are now surfaced in the review card. Future Director Agent answering "Which players were mentioned?" or "What needs follow-up from yesterday's session?" can read these fields directly from the `proposed_actions.proposed_payload` without additional joins.
+- The review card is the structured review object the Agent will use as its primary session-outcome context.
+
+**Manual browser QA status:** Not yet run — dev server start required.
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+**Known limitations:**
+- Curriculum focus from the session template is not shown directly in the wrap-up review card. Directors can follow the "View Session" link (Sprint 181) to see the full curriculum context. Adding template curriculum inline would require passing `template_id` through the enrichment chain — deferred.
+- `clarification_needed` wrap-up drafts are fetched (status filter includes it) but do not have a separate section in the UI; they appear in the pending section. A dedicated "Needs Clarification" sub-section could be added in a future sprint.
+
+---
+
 ## 2026-05-10 — Sprint 182: Coach Session Run View V1
 
 **Sprint 181 commit verified:** `1ea27d2 — Sprint 181 — Session Detail Curriculum Content V1`

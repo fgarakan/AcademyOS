@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
   Calendar, CheckCircle2, XCircle, AlertTriangle, Pencil,
-  ExternalLink, MessageSquare, Target, FileText, Info,
+  ExternalLink, MessageSquare, Target, FileText, Info, Users,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -16,6 +16,7 @@ export interface EnrichedWrapUpDraftItem {
   sessionId: string | null
   sessionName: string | null
   sessionDate: string | null
+  groupName?: string | null
   proposerName: string | null
   payload: SessionActualDraftPayload
 }
@@ -65,6 +66,12 @@ export function WrapUpDraftCard({ draft }: { draft: EnrichedWrapUpDraftItem }) {
                 </span>
               )}
               {draft.proposerName && <span>by {draft.proposerName}</span>}
+              {draft.groupName && (
+                <span className="flex items-center gap-1 text-text-secondary">
+                  <Users className="w-3 h-3" />
+                  {draft.groupName}
+                </span>
+              )}
               <span>
                 Created{' '}
                 {new Date(draft.createdAt).toLocaleString('en-US', {
@@ -168,10 +175,32 @@ export function WrapUpDraftCard({ draft }: { draft: EnrichedWrapUpDraftItem }) {
             <div className="space-y-1">
               <p className="label-xs flex items-center gap-1.5">
                 <FileText className="w-3 h-3 text-text-muted" />
-                Attendance Context (raw)
+                Attendance Notes
               </p>
               <p className="text-xs text-text-muted px-3 py-2 rounded-lg bg-surface-raised border border-border italic">
                 "{payload.raw_attendance_answer}"
+              </p>
+            </div>
+          )}
+          {payload.raw_standouts_answer && (
+            <div className="space-y-1">
+              <p className="label-xs flex items-center gap-1.5">
+                <Users className="w-3 h-3 text-lime" />
+                Player Standouts
+              </p>
+              <p className="text-xs text-text-secondary px-3 py-2 rounded-lg bg-surface-raised border border-border">
+                {payload.raw_standouts_answer}
+              </p>
+            </div>
+          )}
+          {payload.raw_attention_answer && (
+            <div className="space-y-1">
+              <p className="label-xs flex items-center gap-1.5">
+                <AlertTriangle className="w-3 h-3 text-status-orange" />
+                Needs Attention
+              </p>
+              <p className="text-xs text-text-secondary px-3 py-2 rounded-lg bg-surface-raised border border-border">
+                {payload.raw_attention_answer}
               </p>
             </div>
           )}
