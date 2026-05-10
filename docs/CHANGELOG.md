@@ -2,6 +2,61 @@
 
 ---
 
+## 2026-05-10 — Sprint 201: Level Gates + Promotion Rules V1
+
+**Sprint 200 commit verified:** `454ca10 — Sprint 200 — Curriculum Starter Selection V1`
+
+**Onboarding/settings/level-gate pattern audit:**
+- Settings merge pattern confirmed identical to Sprints 197–200.
+- `cn` utility used for radio card + checkbox card selected-state styling (same as Sprint 200).
+- Step 4 in `onboarding/page.tsx` confirmed to have no `settingsKey`, `href`, or `ctaLabel` — all three added this sprint.
+- No existing `level_gates` or `promotion` records in the codebase — safe to build preference storage only.
+- Checkbox card pattern built fresh (Sprint 200 had radio-only); uses square border, `bg-lime` fill, inline SVG checkmark.
+
+**`/director/onboarding/level-gates` page added:**
+- Server component. Four auth guard layers: auth → `profiles.academy_id` → `academy_memberships.role === 'academy_director'` → rawDb academy fetch.
+- Reads `settings.level_gates` sub-object; passes `approval_model`, `evidence_required` (array), `portal_visibility`, `notes` as `initial*` props.
+- Renders: back link, page header (GitBranch icon, "Onboarding · Step 4"), info banner ("This does not move any player yet…"), Card with form.
+
+**`LevelGatesForm` added:**
+- Client component. Three sections:
+  1. Approval model — 3 radio cards (default: `coach_recommend_director_approve`).
+  2. Evidence required — 7 checkbox cards in a 2-column grid (defaults: skill_assessment, coach_observations, session_performance, match_competition_behavior).
+  3. Portal visibility — 3 radio cards (default: `show_simple_requirements`).
+- Notes textarea (600 char max with live counter).
+- Save button with `Loader2` spinner, success `CheckCircle2` panel, `status-red` error text.
+- No AI generation. No curriculum/player/group mutations.
+
+**`updateLevelGatesAction` added:**
+- `'use server'`, `assertNotPreviewMode()` guard.
+- Full auth chain: auth → `profiles.academy_id` → `academy_memberships.role === 'academy_director'`.
+- Server-side allowlist validation for `approvalModel` (3 values), `portalVisibility` (3 values), and `evidenceRequired` (filters unknown values from the 7-item allowlist).
+- Fetches existing `academies.settings`, spreads, overlays `level_gates` object + `level_gates_completed: true` + `onboarding_state`.
+- Revalidates `/director/onboarding`, `/director/onboarding/level-gates`, `/director`.
+
+**Settings merge behavior:**
+- All prior keys preserved (`academy_identity_completed`, `director_interview`, `curriculum_setup`, etc.).
+- `level_gates` sub-object: `{ approval_model, evidence_required, portal_visibility, notes, updated_at }`.
+
+**`/director/onboarding` Step 4 behavior updated:**
+- Step 4 now has `href: '/director/onboarding/level-gates'`, `ctaLabel: 'Set Level Gate Rules'`, `settingsKey: 'level_gates_completed'`.
+- Completion check: `if (settings.level_gates_completed === true) completedStepNumbers.add(4)`.
+- Steps 5–12 remain "Coming Soon".
+
+**No curriculum gate editing added. Portal visibility preference stored as a setting only — no parent/player portal records changed.**
+
+**Future level readiness / parent-player progress map context note:** `settings.level_gates.portal_visibility` will be read by the parent/player portal rendering logic in a future sprint to determine what promotion information is shown. `settings.level_gates.evidence_required` will inform the level readiness scoring engine.
+
+**Data safety:** Only `academies.settings` written. No curriculum, player, placement, group, or communication mutations. No parent/player portal exposure changed.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+**Manual browser QA:** Not yet performed.
+
+**No migrations modified. `database.types.ts` untouched. Unrelated dirty files untouched.**
+
+---
+
 ## 2026-05-10 — Sprint 200: Curriculum Starter Selection V1
 
 **Sprint 199 commit verified:** `feaf7d5 — Sprint 199 — Director Interview Step V1`

@@ -43,6 +43,9 @@ const STEP_DEFS: StepDef[] = [
     number: 4,
     title: 'Level Gates + Promotion Rules',
     description: 'Configure how players move between levels. Set criteria, evidence requirements, and director approval flows.',
+    settingsKey: 'level_gates_completed',
+    href: '/director/onboarding/level-gates',
+    ctaLabel: 'Set Level Gate Rules',
   },
   {
     number: 5,
@@ -159,6 +162,7 @@ export default async function AcademyOnboardingPage() {
   if (settings.academy_identity_completed === true) completedStepNumbers.add(1)
   if (settings.director_interview_completed === true) completedStepNumbers.add(2)
   if (settings.curriculum_setup_completed === true) completedStepNumbers.add(3)
+  if (settings.level_gates_completed === true) completedStepNumbers.add(4)
 
   // Assign status: complete → next (first incomplete) → upcoming
   let nextAssigned = false
