@@ -2,6 +2,67 @@
 
 ---
 
+## 2026-05-10 — Sprint 200: Curriculum Starter Selection V1
+
+**Sprint 199 commit verified:** `feaf7d5 — Sprint 199 — Director Interview Step V1`
+
+**Onboarding/settings/curriculum pattern audit:**
+- Settings merge pattern confirmed identical to Sprints 197–199: fetch → spread → overlay → update.
+- `assertNotPreviewMode()` guard confirmed required.
+- Existing `/director/curriculum/` directory contains operational curriculum files (`AcademyCurriculumVersionCard.tsx`, `VoiceOverrideInputPanel.tsx`, `academy-version/`, `learning/`) — all left untouched.
+- `onboarding/page.tsx` Step 3 confirmed to have no `settingsKey`, `href`, or `ctaLabel` — all three added this sprint.
+- `completedStepNumbers` block at line 157 — Step 3 check added.
+- `cn` utility confirmed available at `@/lib/utils` (used for radio card styling).
+
+**`/director/onboarding/curriculum` page added:**
+- Server component. Four auth guard layers: authenticated user → `profiles.academy_id` → `academy_memberships.role === 'academy_director'` → rawDb academy fetch.
+- Reads `settings.curriculum_setup` sub-object; passes `starter_option` and `notes` as `initial*` props to `CurriculumStarterForm`.
+- Renders: back link to `/director/onboarding`, page header (BookOpen icon, "Onboarding · Step 3"), info banner ("This does not change your curriculum yet…"), Card with form.
+
+**`CurriculumStarterForm` added:**
+- Client component. Four selectable radio cards with lime accent border on selection.
+- Default selection: `customize_starter` (if no prior saved value).
+- Notes textarea (800 char max with live counter).
+- Save button with `Loader2` spinner. Green `CheckCircle2` success panel. `status-red` error text.
+- No AI generation. No curriculum record mutations.
+
+**Four curriculum starter options:**
+1. `customize_starter` — "Start with Academy OS curriculum and customize it" (default)
+2. `academy_os_starter` — "Use Academy OS Starter Curriculum"
+3. `upload_existing_later` — "I have my own curriculum"
+4. `blank_structure` — "Start with a blank structure"
+
+**`updateCurriculumStarterAction` added:**
+- `'use server'`, `assertNotPreviewMode()` guard.
+- Full auth chain: auth → `profiles.academy_id` → `academy_memberships.role === 'academy_director'`.
+- Validates `starterOption` is one of the four allowed values (server-side allowlist).
+- Fetches existing `academies.settings`, spreads, overlays `curriculum_setup` object + `curriculum_setup_completed: true` + `onboarding_state` (preserves existing or sets `'curriculum_setup'`).
+- Revalidates `/director/onboarding`, `/director/onboarding/curriculum`, `/director`.
+
+**Settings merge behavior:**
+- All prior keys preserved (`academy_identity_completed`, `director_interview`, `logo_url`, etc.).
+- `curriculum_setup` sub-object includes `starter_option`, `notes`, `updated_at`.
+
+**`/director/onboarding` Step 3 behavior updated:**
+- Step 3 now has `href: '/director/onboarding/curriculum'`, `ctaLabel: 'Choose Curriculum Starter'`, `settingsKey: 'curriculum_setup_completed'`.
+- Completion check: `if (settings.curriculum_setup_completed === true) completedStepNumbers.add(3)`.
+- When Steps 1 and 2 complete and Step 3 is next: CTA block shows "Choose Curriculum Starter".
+- When Step 3 complete: green check + "Complete" badge + "Revisit →" link.
+
+**No curriculum cloning or customization logic added.**
+
+**Future curriculum customization assistant context note:** The `customize_starter` and `academy_os_starter` selections are stored as preferences only. Future sprints will read `settings.curriculum_setup.starter_option` to determine which Curriculum Customization Assistant flow to activate.
+
+**Data safety:** Only `academies.settings` written. No curriculum, player, placement, group, or communication mutations.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+**Manual browser QA:** Not yet performed.
+
+**No migrations modified. `database.types.ts` untouched. Unrelated dirty files untouched.**
+
+---
+
 ## 2026-05-10 — Sprint 199: Director Interview Step V1
 
 **Sprint 198 commit verified:** `6a97021 — Sprint 198 — Academy Onboarding Wizard Entry Point V1`

@@ -35,6 +35,9 @@ const STEP_DEFS: StepDef[] = [
     number: 3,
     title: 'Curriculum Setup',
     description: 'Select or customize a curriculum spine for your academy. Define training levels, skill domains, and session structure.',
+    settingsKey: 'curriculum_setup_completed',
+    href: '/director/onboarding/curriculum',
+    ctaLabel: 'Choose Curriculum Starter',
   },
   {
     number: 4,
@@ -155,6 +158,7 @@ export default async function AcademyOnboardingPage() {
   const completedStepNumbers = new Set<number>()
   if (settings.academy_identity_completed === true) completedStepNumbers.add(1)
   if (settings.director_interview_completed === true) completedStepNumbers.add(2)
+  if (settings.curriculum_setup_completed === true) completedStepNumbers.add(3)
 
   // Assign status: complete → next (first incomplete) → upcoming
   let nextAssigned = false
