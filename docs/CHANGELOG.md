@@ -2,6 +2,53 @@
 
 ---
 
+## 2026-05-10 — Sprint 194: Clarification-Needed Wrap-Ups Visible in Director Review Queue V1
+
+**Sprint 193 commit verified:** `3ca7515 — Sprint 193 — Rejected Wrap-Ups Visible in Director Review Queue V1`
+
+**Director review queue clarification-needed audit:**
+- `WrapUpDraftCard.tsx`: `clarification_needed` already handled — header badge renders `'needs clarification'`; Director Note panel gated on `clarification_needed || rejected` (both supported); decision controls `pending_review`-only (clarification_needed gets none); apply controls `approved`-only (clarification_needed gets none). **No card changes required.**
+- `page.tsx` query filter (line 543): `['pending_review', 'approved', 'clarification_needed', 'rejected']` — `clarification_needed` already present from Sprint 192 audit. No query change needed.
+- `page.tsx` arrays: `clarificationNeededWrapUpDrafts` was missing; `clarification_needed` items were fetched, enriched, then silently dropped.
+- `page.tsx` JSX: no "Needs Clarification" section in the `wrap_ups` tab content.
+
+**Implementation (Option A — page.tsx only):**
+- Added `const clarificationNeededWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'clarification_needed')` between `approvedWrapUpDrafts` and `rejectedWrapUpDrafts` arrays.
+- Added "Needs Clarification" section in the `wrap_ups` tab JSX between the pending section and the "Not Approved" section — conditionally rendered when `clarificationNeededWrapUpDrafts.length > 0`, with an orange count badge and `WrapUpDraftCard` per item.
+- `WrapUpDraftCard.tsx`: zero changes.
+
+**Section ordering in Session Wrap-Ups tab (post Sprint 194):**
+1. Approved — Ready to Apply (lime badge) — director action: apply
+2. Pending Review (or empty state) — director action: decide
+3. Needs Clarification (orange badge) — waiting on coach
+4. Not Approved (red badge) — terminal / historical
+
+**Clarification-needed visibility:** `clarification_needed` wrap-ups now appear in the Session Wrap-Ups tab under "Needs Clarification" with an orange count badge. Section is hidden when none exist.
+
+**Needs Clarification UI:** `WrapUpDraftCard` header shows `"Session Wrap-Up Draft · needs clarification"`. Full card content is shown. Director Note panel appears if `reviewerNotes` is non-empty, showing what was sent to the coach. Card is action-free — no decision or apply controls.
+
+**Director Note behavior:** Supported since Sprint 192 — no change. `reviewerNotes` rendered for `clarification_needed` when non-null.
+
+**Decision controls:** Hidden for `clarification_needed` — only shown for `pending_review`. Unchanged.
+
+**Apply controls:** Hidden for `clarification_needed` — only shown for `approved`. Unchanged.
+
+**Tab badge:** `TabLabel` `pending` count remains `pendingWrapUpDrafts.length`. `clarification_needed` items are waiting on coach — not a new director action — so they do not inflate the pending badge.
+
+**Future Coach/Director AI Agent context note:** All four active wrap-up states (pending_review, clarification_needed, approved, rejected) are now visible in the queue. A future Director AI Agent could analyze the distribution of clarification_needed and rejected items per coach or group to surface coaching consistency signals. The Director Note text in each card provides structured feedback history for that analysis.
+
+**Files modified:** `src/app/director/review/page.tsx`
+
+**Data safety:** Read-only display change. One new `.filter()` derivation from an already-fetched array. No inserts, updates, deletes, player mutations, or communications.
+
+**No player records mutated.** No parent/player communication sent. No migrations modified. `database.types.ts` untouched. `WrapUpDraftCard.tsx` untouched. `applyWrapUpDraftAction` untouched. `saveWrapUpDraftAction` untouched. Coach session pages untouched.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` produced no output.
+
+**Manual browser QA status:** Not browser-tested in this environment. Change is one additional `.filter()` array derivation and one conditionally-rendered JSX section using an already-proven card component with established `clarification_needed` support.
+
+---
+
 ## 2026-05-10 — Sprint 193: Rejected Wrap-Ups Visible in Director Review Queue V1
 
 **Sprint 192 commit verified:** `21f4419 — Sprint 192 — Director Wrap-Up Clarification Note Display V1`

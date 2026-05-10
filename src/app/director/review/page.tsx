@@ -622,6 +622,7 @@ export default async function DirectorReviewQueuePage({
 
   const pendingWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'pending_review')
   const approvedWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'approved')
+  const clarificationNeededWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'clarification_needed')
   const rejectedWrapUpDrafts = enrichedWrapUpDrafts.filter(d => d.status === 'rejected')
 
   // ─── Player observation drafts (coach wrap-up observations) ──
@@ -1469,6 +1470,21 @@ export default async function DirectorReviewQueuePage({
               </div>
             )}
           </section>
+          {clarificationNeededWrapUpDrafts.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="label-xs">Needs Clarification</p>
+                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+                  {clarificationNeededWrapUpDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {clarificationNeededWrapUpDrafts.map(draft => (
+                  <WrapUpDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </section>
+          )}
           {rejectedWrapUpDrafts.length > 0 && (
             <section className="space-y-3">
               <div className="flex items-center gap-2">
