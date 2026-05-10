@@ -9,6 +9,8 @@ import { LessonPlanDraftPanel } from './LessonPlanDraftPanel'
 import { ClassTemplateSetupGuide } from '@/components/onboarding/ClassTemplateSetupGuide'
 import { BlockContentPickerCard } from './BlockContentPickerCard'
 import type { AssignedItem, AvailableContentItem } from './BlockContentPickerCard'
+import { TemplateSessionPreviewCard } from './TemplateSessionPreviewCard'
+import type { PreviewBlock } from './TemplateSessionPreviewCard'
 import type { Tables } from '@/lib/supabase/database.types'
 
 type Template = Tables<'templates'>
@@ -32,6 +34,7 @@ interface CurriculumBlockRow {
     content_type: string
     domain: string | null
     session_block_hint: string | null
+    is_coach_only: boolean | null
     coach_cues: string[] | null
     success_criteria: string[] | null
     progressions: string[] | null
@@ -149,7 +152,7 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
         notes,
         duration_min,
         content_item:curriculum_content_items(
-          title, description, content_type, domain, session_block_hint,
+          title, description, content_type, domain, session_block_hint, is_coach_only,
           coach_cues, success_criteria, progressions, regressions, duration_min
         ),
         drill:curriculum_drills(
@@ -231,6 +234,23 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
       isCoachOnly: row.is_coach_only,
     })
   )
+
+  // Build preview blocks for TemplateSessionPreviewCard
+  const previewBlocks: PreviewBlock[] = blockList.map(block => ({
+    id: block.id,
+    name: block.name,
+    blockType: block.type ?? '',
+    durationMin: block.duration_min ?? null,
+    orderIndex: block.order_index,
+    curriculumItems: (curriculumByBlock.get(block.id) ?? []).map(row => ({
+      title: row.content_item?.title ?? row.drill?.name ?? 'Untitled',
+      contentType: row.content_item?.content_type ?? 'drill',
+      domain: row.content_item?.domain ?? row.drill?.domain ?? null,
+      sessionBlockHint: row.content_item?.session_block_hint ?? null,
+      durationMin: row.duration_min ?? row.content_item?.duration_min ?? row.drill?.duration_min ?? null,
+      isCoachOnly: row.content_item?.is_coach_only ?? false,
+    })),
+  }))
 
   // Counts
   let totalCurriculumItems = 0
@@ -512,6 +532,16 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
           </div>
         )}
       </div>
+
+      {/* ================================================================
+          SESSION PREVIEW — read-only view of how the template would
+          appear as a planned session. No session record is created.
+          ================================================================ */}
+      <Card>
+        <CardContent className="py-4">
+          <TemplateSessionPreviewCard blocks={previewBlocks} levelName={currentLevelName} />
+        </CardContent>
+      </Card>
 
       {/* ================================================================
           TEMPLATE BLOCKS — shows all blocks including those without

@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-10 — Sprint 179: Template-to-Session Preview V1
+
+**Goal:** Read-only preview showing how a class template's blocks and curriculum content would appear as a session plan, displayed on the template detail page before any session is created.
+
+**Files created:**
+- `src/app/director/class-templates/[templateId]/TemplateSessionPreviewCard.tsx` — Pure Server Component. Accepts `PreviewBlock[]` + `levelName`. Renders summary card (block count, estimated duration, curriculum item count, level badge), per-block list with content items, type badges, Internal lock indicator, domain/hint labels, and warning banners for blocks missing content.
+
+**Files modified:**
+- `src/app/director/class-templates/[templateId]/page.tsx` — Four changes: (1) Added `is_coach_only` to CCTB content_item select string and interface field. (2) Imported `TemplateSessionPreviewCard` and `PreviewBlock`. (3) Built `previewBlocks: PreviewBlock[]` from `blockList` + `curriculumByBlock`. (4) Rendered `<TemplateSessionPreviewCard>` in a Card above the Template Blocks section.
+
+**Hard rules enforced:**
+- No session records created or modified
+- No migrations added
+- No `generateSessionFromTemplateAction` called
+- Read-only — zero DB writes in the preview path
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+---
+
 ## 2026-05-10 — Sprint 178: Curriculum Content Picker QA Polish
 
 **Sprint 177 commit verified:** `45a5a62 — Sprint 177 — Template Block Curriculum Content Picker V1`
