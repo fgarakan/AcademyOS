@@ -1603,6 +1603,81 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculum_class_template_blocks: {
+        Row: {
+          block_id: string
+          content_item_id: string | null
+          created_at: string
+          drill_id: string | null
+          duration_min: number | null
+          id: string
+          notes: string | null
+          order_index: number
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          block_id: string
+          content_item_id?: string | null
+          created_at?: string
+          drill_id?: string | null
+          duration_min?: number | null
+          id?: string
+          notes?: string | null
+          order_index: number
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          block_id?: string
+          content_item_id?: string | null
+          created_at?: string
+          drill_id?: string | null
+          duration_min?: number | null
+          id?: string
+          notes?: string | null
+          order_index?: number
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_class_template_blocks_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "template_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_class_template_blocks_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_class_template_blocks_drill_id_fkey"
+            columns: ["drill_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_drills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_class_template_blocks_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_class_template_blocks_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "v_session_recommendation_feed"
+            referencedColumns: ["suggested_template_id"]
+          },
+        ]
+      }
       curriculum_coach_language: {
         Row: {
           created_at: string

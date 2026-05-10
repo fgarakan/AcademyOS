@@ -2,6 +2,50 @@
 
 ---
 
+## 2026-05-10 — Sprint 176: Apply Migrations 062 + 063 and Regenerate Types
+
+No new app code. No destructive commands. No production apply. No unrelated files touched.
+
+**Context:** Migrations 062 and 063 were applied manually to DEV via the Supabase Dashboard SQL Editor. Two bugs in migration 063 were discovered and fixed before the migration ran successfully.
+
+**DEV project ref:** `dbjjhhxdkpdreytsozlq`
+
+**Migration 062 applied:** `supabase/migrations/062_class_template_content_junction.sql`
+
+**New table:** `curriculum_class_template_blocks` — junction between `template_blocks` and `curriculum_content_items` / `curriculum_drills`. Enforces exactly-one-source CHECK constraint. RLS: staff read (scoped via template → academy), director/head coach manage.
+
+**Columns:** `id`, `template_id`, `block_id`, `content_item_id`, `drill_id`, `order_index`, `notes`, `duration_min`, `created_at`, `updated_at`
+
+**Migration 063 applied:** `supabase/migrations/063_orange1_foundation_content_seed.sql`
+
+**Seed result:** `orange1_seed_count = 47` rows in `curriculum_content_items` (global, `academy_id = NULL`)
+
+**Two bugs fixed before migration 063 ran successfully:**
+
+1. **UTF-8 em-dash encoding** (`commit 823ec68`): 76 em dashes (U+2014, bytes E2 80 94) inside PL/pgSQL single-quoted string literals were misinterpreted by the Supabase Dashboard SQL Editor, breaking string boundaries. Replaced all 76 with ` -` (space-hyphen).
+
+2. **PostgreSQL backslash-apostrophe escaping** (`commit 0e9e4a8`): 25 occurrences of `\'` throughout the DO block were invalid under PostgreSQL `standard_conforming_strings = on` (Supabase default). Replaced all 25 with `''` (SQL standard doubled-apostrophe).
+
+**Types regenerated from DEV schema.**
+
+**`curriculum_class_template_blocks` verified in types** — all 10 columns present with correct nullability and foreign key relationships.
+
+**Migration 061 fields verified still present on `curriculum_content_items`:** `ball_level`, `domain`, `is_coach_only`, `is_parent_visible`, `is_player_visible`, `session_block_hint`.
+
+**Note:** IDE plugin (`<claude-code-hint>` tag) was injected at end of generated file. Removed before TypeScript check.
+
+**Files created:**
+- `supabase/migrations/062_class_template_content_junction.sql` — new junction table (untracked, applied to DEV)
+- `supabase/migrations/063_orange1_foundation_content_seed.sql` — Orange 1 content seed (two bug-fix commits)
+
+**Files modified:**
+- `src/lib/supabase/database.types.ts` — regenerated from DEV schema; 11,633 lines (was 11,559 prior to this sprint)
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+---
+
 ## 2026-05-10 — Sprint 174: Curriculum Content Taxonomy Migration 061
 
 No new app code. No destructive commands. No production apply. No unrelated files touched.
