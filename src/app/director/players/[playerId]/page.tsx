@@ -770,7 +770,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
           {/* First Development Context — Sprint 170. Placement recommendation context on Day 1. */}
           {firstDevContextData && (
-            <FirstDevelopmentContextCard data={firstDevContextData} />
+            <FirstDevelopmentContextCard data={firstDevContextData} playerId={params.playerId} />
           )}
 
           {/* Development Profile Summary — internal coach view */}

@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-09 — Sprint 171: Seed Development Summary from Placement
+
+No migrations. No direct writes to `player_development_summary`. No player record mutations. No curriculum level assignment. No parent/player portal. No billing. No parent communication. No AI generation.
+
+**Goal:** Bridge the placement pipeline to the development summary pipeline. Directors can now seed a reviewable development summary draft from existing placement recommendation data without waiting for coach observations.
+
+**Existing pipeline reused:**
+- `target_module = 'development_summary_draft_v1'` (unchanged)
+- `draft_type = 'development_summary_draft_v1'` (unchanged)
+- Draft appears automatically in Director Review Queue → Development Summaries tab (no new tab)
+- Apply path: `applyApprovedSummaryDraftAction` (unchanged) — only path that writes `player_development_summary`
+
+**Files created:**
+- `src/app/director/players/[playerId]/draftDevelopmentSummaryFromPlacementAction.ts` — Server action: auth + academy + role + player verify, duplicate check, finds executed `placement_recommendation_draft` by `created_player_id`, creates `voice_commands` FK row + `development_summary_draft_v1` proposed_action with `generated_from: 'placement_seed'`
+
+**Files modified:**
+- `src/app/director/players/[playerId]/FirstDevelopmentContextCard.tsx` — Added `'use client'`, `playerId: string` prop, "Draft Development Summary from Placement" button with loading/success/error/already-exists states
+- `src/app/director/players/[playerId]/page.tsx` — Pass `playerId={params.playerId}` to `FirstDevelopmentContextCard`
+- `src/app/director/players/[playerId]/draftSummaryUpdateAction.ts` — Extended `generated_from` union to `'recent_observations' | 'placement_seed'`; added optional `source_proposed_action_id?: string` and `internal_notes?: string` to `DevelopmentSummaryDraftPayload`
+- `docs/PILOT_PLACEMENT_FLOW_QA.md` — Added Step 11 (7 sub-checks); updated Known Limitation #5; updated remaining pipeline header
+- `docs/CHANGELOG.md` — This entry
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+---
+
 ## 2026-05-09 — Sprint 170: New Player First Development Profile
 
 Display-only sprint. No database writes, no migrations, no player record mutations, no parent/player portal, no billing, no parent communication.

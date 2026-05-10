@@ -435,12 +435,9 @@ WHERE academy_id = '<your-academy-id>'
 
 ---
 
-## ⚠️ Sprint 170+ — Remaining Pipeline
+## ⚠️ Sprint 171+ — Remaining Pipeline
 
-**Step 10 — Development Profile Seeding (Sprint 170)**
-- Approved recommendation payload written to player's development profile
-
-**Step 11 — Safe Onboarding Draft (Sprint 171)**
+**Step 11 — Safe Onboarding Draft (future)**
 - Director-controlled parent/player welcome draft created via proposed_actions
 - Never auto-published
 
@@ -513,6 +510,100 @@ WHERE academy_id = '<your-academy-id>'
 
 ---
 
+## Step 11 — Draft Development Summary from Placement (Sprint 171)
+
+**Path:** Director → Player Profile → Overview tab → First Development Context card → "Draft Development Summary from Placement" button
+
+### 11a — Button is visible
+
+1. Open the profile of a player created through the placement pipeline.
+2. Confirm the **First Development Context** card shows the "Draft Development Summary from Placement" button.
+3. Confirm button secondary copy reads: "Creates an internal draft for director review. Does not update the player profile until approved."
+
+### 11b — Click creates a proposed_actions draft
+
+1. Click the button.
+2. Confirm the button enters a loading state ("Creating draft…").
+3. Confirm the success state appears: "Development summary draft created. Review and apply it from the Director Review Queue → Development Summaries tab."
+4. Confirm no error message is shown.
+
+### 11c — Draft appears in Director Review Queue
+
+1. Navigate to Director → Review Queue → Development Summaries tab.
+2. Confirm a new **Development Summary Draft** card appears for this player.
+3. Confirm it shows:
+   - Label: "from X observation(s)" (X = number of non-null assessment fields from placement)
+   - Proposed Strengths from placement assessment (skill + movement observations)
+   - Proposed Work-On areas (first_skill_priority + two standard prompts)
+   - Proposed Coach Summary (starting pathway, group, confidence, competitive readiness)
+4. Confirm status is "pending review".
+
+### 11d — Duplicate prevention
+
+1. Click "Draft Development Summary from Placement" a second time.
+2. Confirm the button does **not** appear — it should have been replaced by the already-exists message, or confirm the already-exists state appears: "A placement-seeded draft is already pending review. Find it in the Director Review Queue → Development Summaries tab."
+3. Alternatively: use the SQL check below to confirm only one draft exists.
+
+```sql
+SELECT id, status, proposed_payload->>'generated_from' AS generated_from
+FROM proposed_actions
+WHERE academy_id = '<your-academy-id>'
+  AND target_module = 'development_summary_draft_v1'
+  AND target_object_id = '<player-id>'
+  AND status IN ('pending_review', 'approved');
+-- Expect: 1 row with generated_from = 'placement_seed'
+```
+
+### 11e — player_development_summary NOT written yet
+
+```sql
+-- Confirm no player_development_summary row exists before director applies the draft
+SELECT id, source, created_at
+FROM player_development_summary
+WHERE player_id = '<player-id>'
+ORDER BY created_at DESC
+LIMIT 3;
+-- Expect: 0 rows (or pre-existing rows only — not created by the button click)
+```
+
+### 11f — Apply path (existing pipeline)
+
+1. In the review queue, approve the draft (status → `approved`).
+2. Click "Apply to Player Profile".
+3. Confirm `player_development_summary` row now exists for this player.
+4. Confirm `current_strengths`, `things_to_work_on`, `coach_summary` are populated from the placement data.
+5. Confirm `show_to_student = false`, `show_to_parent = false`.
+
+```sql
+SELECT current_strengths, things_to_work_on, coach_summary, show_to_student, show_to_parent
+FROM player_development_summary
+WHERE player_id = '<player-id>';
+-- Expect: populated from placement data; both show flags = false
+```
+
+### 11g — No records mutated by button click (guardrail)
+
+- Confirm `players` row was not mutated.
+- Confirm no communications sent.
+- Confirm no billing rows created.
+- Confirm no curriculum level assigned.
+
+```sql
+-- Confirm proposed_action exists with correct shape
+SELECT id, target_module, status,
+       proposed_payload->>'draft_type'              AS draft_type,
+       proposed_payload->>'generated_from'          AS generated_from,
+       proposed_payload->>'source_proposed_action_id' AS source_action_id
+FROM proposed_actions
+WHERE target_object_id = '<player-id>'
+  AND target_module = 'development_summary_draft_v1'
+ORDER BY created_at DESC
+LIMIT 1;
+-- Expect: draft_type = 'development_summary_draft_v1', generated_from = 'placement_seed'
+```
+
+---
+
 ## Known Limitations
 
 1. **Player creation — RESOLVED (Sprint 168).** After a recommendation is approved, the director clicks "Create Player Profile." This creates the `players` row, `placement_recommendations` row, calls `finalize_player_placement()`, marks the `proposed_actions` row `executed`, and writes the audit log. Idempotency guard: `created_player_id` is written to the payload immediately after player INSERT to prevent duplicates on retry.
@@ -523,7 +614,7 @@ WHERE academy_id = '<your-academy-id>'
 
 4. **current_level_id may remain NULL after placement (Sprint 169 documented).** `finalize_player_placement()` sets `current_level_id` from `COALESCE(override_level_id, recommended_level_id)`. Sprint 168's server action does not populate `recommended_level_id` on the `placement_recommendations` row. The player will be active with a group assignment but no curriculum level. Assign the curriculum level from the Skill Path tab in the player profile.
 
-5. **player_development_summary not written at placement (Sprint 170 documented).** The First Development Context card (Sprint 170) is display-only. It reads from the executed proposed_action payload and does not write to `player_development_summary`. The Development Summary section will show "No development summary yet" until the director explicitly creates one via the Notes/AI draft pipeline. Sprint 171 can introduce a "Seed Development Summary from Placement" draft action.
+5. **player_development_summary not written at placement (Sprint 170 documented, Sprint 171 adds the bridge).** The First Development Context card is display-only. The "Draft Development Summary from Placement" button (Sprint 171) creates a `development_summary_draft_v1` proposed_action for director review. `player_development_summary` is only written after the director approves and explicitly applies the draft via the existing review queue pipeline. The Development Summary section will show "No development summary yet" until then.
 
 6. **Dismiss does not un-dismiss.** Once a placement review item or intake candidate is dismissed (rejected/executed), it disappears from the queue with no undo path. This is intentional for the pilot.
 

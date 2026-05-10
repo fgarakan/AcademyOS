@@ -1,5 +1,9 @@
-import { Lock, AlertCircle } from 'lucide-react'
+'use client'
+
+import { useState, useTransition } from 'react'
+import { Lock, AlertCircle, CheckCircle, ClipboardList } from 'lucide-react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
+import { draftDevelopmentSummaryFromPlacementAction } from './draftDevelopmentSummaryFromPlacementAction'
 
 export interface FirstDevContextData {
   currentLevel: string | null
@@ -20,6 +24,7 @@ export interface FirstDevContextData {
 
 interface Props {
   data: FirstDevContextData
+  playerId: string
 }
 
 const CONFIDENCE_COLORS: Record<string, string> = {
@@ -37,7 +42,10 @@ function Row({ label, value }: { label: string; value: string | null }) {
   )
 }
 
-export function FirstDevelopmentContextCard({ data }: Props) {
+export function FirstDevelopmentContextCard({ data, playerId }: Props) {
+  const [isPending, startTransition] = useTransition()
+  const [result, setResult] = useState<{ ok: boolean; error: string | null; alreadyExists?: boolean } | null>(null)
+
   const placedDate = data.placedAt
     ? new Date(data.placedAt).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -56,6 +64,14 @@ export function FirstDevelopmentContextCard({ data }: Props) {
       data.assessmentSummary.ageBand ||
       data.assessmentSummary.ballColor
     )
+
+  function handleDraftClick() {
+    setResult(null)
+    startTransition(async () => {
+      const res = await draftDevelopmentSummaryFromPlacementAction(playerId)
+      setResult(res)
+    })
+  }
 
   return (
     <Card>
@@ -81,10 +97,10 @@ export function FirstDevelopmentContextCard({ data }: Props) {
 
         {/* Core placement fields */}
         <div className="grid grid-cols-2 gap-3">
-          <Row label="Starting Pathway"  value={data.startingPathway} />
+          <Row label="Starting Pathway"    value={data.startingPathway} />
           <Row label="First Skill Priority" value={data.firstSkillPriority} />
           <Row label="Suggested Group Type" value={data.suggestedGroupType} />
-          <Row label="Assigned Group"    value={data.groupName} />
+          <Row label="Assigned Group"       value={data.groupName} />
         </div>
 
         {/* Confidence */}
@@ -144,6 +160,50 @@ export function FirstDevelopmentContextCard({ data }: Props) {
           <p className="text-[10px] text-status-orange leading-snug">
             Curriculum level not assigned yet. Assign from the Skill Path tab to activate curriculum tracking.
           </p>
+        </div>
+
+        {/* Draft development summary from placement */}
+        <div className="border-t border-border pt-3 space-y-2">
+          {result?.ok ? (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-status-green/5 border border-status-green/20">
+              <CheckCircle className="w-3 h-3 text-status-green shrink-0 mt-0.5" />
+              <p className="text-[10px] text-status-green leading-snug">
+                Development summary draft created. Review and apply it from the Director Review Queue → Development Summaries tab.
+              </p>
+            </div>
+          ) : result?.alreadyExists ? (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-surface-raised border border-border">
+              <ClipboardList className="w-3 h-3 text-text-muted shrink-0 mt-0.5" />
+              <p className="text-[10px] text-text-muted leading-snug">
+                A placement-seeded draft is already pending review. Find it in the Director Review Queue → Development Summaries tab.
+              </p>
+            </div>
+          ) : result && !result.ok ? (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-status-red/5 border border-status-red/20">
+              <AlertCircle className="w-3 h-3 text-status-red shrink-0 mt-0.5" />
+              <p className="text-[10px] text-status-red leading-snug">{result.error}</p>
+            </div>
+          ) : null}
+
+          {!result?.ok && !result?.alreadyExists && (
+            <button
+              onClick={handleDraftClick}
+              disabled={isPending}
+              className="w-full text-left flex items-start gap-2 p-2.5 rounded-lg border border-border hover:border-lime/30 hover:bg-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ClipboardList className="w-3 h-3 text-text-muted shrink-0 mt-0.5" />
+              <span className="text-[10px] text-text-secondary leading-snug">
+                {isPending
+                  ? 'Creating draft…'
+                  : 'Draft Development Summary from Placement'}
+                {!isPending && (
+                  <span className="block text-text-muted mt-0.5">
+                    Creates an internal draft for director review. Does not update the player profile until approved.
+                  </span>
+                )}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Next step */}

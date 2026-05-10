@@ -18,7 +18,9 @@ export interface DevelopmentSummaryDraftPayload {
   proposed_work_on: string[]
   proposed_coach_summary: string
   source_observation_count: number
-  generated_from: 'recent_observations'
+  generated_from: 'recent_observations' | 'placement_seed'
+  source_proposed_action_id?: string
+  internal_notes?: string
 }
 
 // Deterministic — no AI. Assembles from approved coach_observations already on file.
