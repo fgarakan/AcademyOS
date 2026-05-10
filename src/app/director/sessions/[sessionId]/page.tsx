@@ -25,6 +25,8 @@ import { SessionCurriculumContextPanel, SessionNoCurriculumContextPanel } from '
 import { PlannedVsActualDiffPanel } from './PlannedVsActualDiffPanel'
 import { SessionExposureSummaryPanel } from './SessionExposureSummaryPanel'
 import { DirectorSessionStatusCTA } from './DirectorSessionStatusCTA'
+import { SessionBlockCurriculumContent } from './SessionBlockCurriculumContent'
+import type { CurriculumItem } from './SessionBlockCurriculumContent'
 
 interface PageProps {
   params: { sessionId: string }
@@ -194,9 +196,10 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
   }
 
   // 4. Session blocks ordered by order_index
+  //    template_block_id preserved for curriculum content lookup via curriculum_class_template_blocks
   const { data: blocks, error: blocksError } = await supabase
     .from('session_blocks')
-    .select('id, name, type, duration_min, order_index, intensity, notes')
+    .select('id, name, type, duration_min, order_index, intensity, notes, template_block_id')
     .eq('session_id', session.id)
     .order('order_index')
 
@@ -534,8 +537,11 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
   const wrapUpStatus: string | null = latestWrapUp?.status ?? null
 
   // 14. Curriculum content for planned vs actual alignment (Sprint 135)
-  // Keyed by normalized block name so session_blocks (generated from template_blocks) can be matched by name
+  // Two maps built from the same query:
+  //   curriculumByBlockName  — keyed by normalized block name (used by PlannedVsActualDiffPanel)
+  //   curriculumByTemplateBlockId — keyed by template_block.id (used by per-block Planned Focus display)
   const curriculumByBlockName = new Map<string, Array<{ title: string; contentType: string; domain: string | null }>>()
+  const curriculumByTemplateBlockId = new Map<string, CurriculumItem[]>()
   if (session.template_id) {
     const { data: tblData } = await rawDb
       .from('template_blocks')
@@ -554,23 +560,39 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
         .from('curriculum_class_template_blocks')
         .select(`
           block_id,
-          content_item:curriculum_content_items(title, content_type, domain),
-          drill:curriculum_drills(name, domain)
+          duration_min,
+          content_item:curriculum_content_items(title, content_type, domain, session_block_hint, is_coach_only, description, duration_min),
+          drill:curriculum_drills(name, domain, description, duration_min)
         `)
         .in('block_id', tblIds)
         .order('order_index')
 
       for (const row of (cctbData ?? [])) {
+        // curriculumByBlockName — name-keyed for PlannedVsActualDiffPanel
         const blockName = blockNameById.get(row.block_id) ?? ''
         const normalizedName = blockName.toLowerCase().trim()
-        if (!normalizedName) continue
-        const arr = curriculumByBlockName.get(normalizedName) ?? []
-        arr.push({
+        if (normalizedName) {
+          const arr = curriculumByBlockName.get(normalizedName) ?? []
+          arr.push({
+            title: row.content_item?.title ?? row.drill?.name ?? 'Untitled',
+            contentType: row.content_item?.content_type ?? 'drill',
+            domain: row.content_item?.domain ?? row.drill?.domain ?? null,
+          })
+          curriculumByBlockName.set(normalizedName, arr)
+        }
+
+        // curriculumByTemplateBlockId — template_block.id-keyed for per-block display
+        const arr2 = curriculumByTemplateBlockId.get(row.block_id) ?? []
+        arr2.push({
           title: row.content_item?.title ?? row.drill?.name ?? 'Untitled',
           contentType: row.content_item?.content_type ?? 'drill',
           domain: row.content_item?.domain ?? row.drill?.domain ?? null,
+          sessionBlockHint: row.content_item?.session_block_hint ?? null,
+          durationMin: row.duration_min ?? row.content_item?.duration_min ?? row.drill?.duration_min ?? null,
+          isCoachOnly: row.content_item?.is_coach_only ?? false,
+          description: row.content_item?.description ?? row.drill?.description ?? null,
         })
-        curriculumByBlockName.set(normalizedName, arr)
+        curriculumByTemplateBlockId.set(row.block_id, arr2)
       }
     }
   }
@@ -925,6 +947,10 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           )}
           {blockList.map((block, idx) => {
             const blockExercises = exercisesByBlock.get(block.id) ?? []
+            // Resolve curriculum content via template_block_id if available
+            const curriculumItems: CurriculumItem[] = block.template_block_id
+              ? (curriculumByTemplateBlockId.get(block.template_block_id) ?? [])
+              : []
             return (
               <Card key={block.id}>
                 <CardHeader>
@@ -947,9 +973,10 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
                   )}
                 </CardHeader>
 
-                {blockExercises.length > 0 && (
-                  <CardContent className="pt-0">
-                    <div className="space-y-1">
+                <CardContent className="pt-0">
+                  {/* Fitness exercises (legacy path) */}
+                  {blockExercises.length > 0 && (
+                    <div className="space-y-1 mb-1">
                       {blockExercises.map(ex => (
                         <div
                           key={ex.id}
@@ -981,8 +1008,14 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                )}
+                  )}
+
+                  {/* Curriculum content — inherited from class template */}
+                  <SessionBlockCurriculumContent
+                    items={curriculumItems}
+                    hasTemplateSource={!!session.template_id && !!block.template_block_id}
+                  />
+                </CardContent>
               </Card>
             )
           })}

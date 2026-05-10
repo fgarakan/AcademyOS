@@ -2,6 +2,57 @@
 
 ---
 
+## 2026-05-10 — Sprint 181: Session Detail Curriculum Content V1
+
+**Sprint 180 commit verified:** `b305988 — Sprint 180 — Generate Session from Template V1`
+
+**Session detail architecture audit:**
+- `session.template_id` was already fetched in the session select
+- `session_blocks.template_block_id` exists in generated types (`string | null`) but was not included in the session_blocks select
+- Step 14 of the page already fetched `curriculum_class_template_blocks → curriculum_content_items/drills` for `PlannedVsActualDiffPanel`, keyed by block name. The same query is extended to also key by `template_block.id` with richer fields.
+- `CoachSessionCurriculumPanel` is a self-fetching Server Component designed for the coach view — not reused directly. Director page passes data as props instead.
+- Architecture: Option B — new `SessionBlockCurriculumContent` component + minimal page changes.
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/SessionBlockCurriculumContent.tsx` — Pure display component. Props: `items: CurriculumItem[]`, `hasTemplateSource: boolean`. Renders content type badge, domain, session_block_hint, duration, Internal (coach-only) indicator, description. Two empty states: (1) no curriculum content for this block, (2) session not from a class template.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — Four changes: (1) Added `template_block_id` to `session_blocks` select. (2) Imported `SessionBlockCurriculumContent` and `CurriculumItem`. (3) Extended step 14 CCTB select to include `description, session_block_hint, is_coach_only, duration_min`; built `curriculumByTemplateBlockId` map alongside existing `curriculumByBlockName`. (4) Rendered `SessionBlockCurriculumContent` inside each session block card, resolving items via `block.template_block_id`.
+
+**Data path:**
+`session.template_id → template_blocks.id → curriculum_class_template_blocks.block_id → curriculum_content_items / curriculum_drills`
+Keyed by `template_block.id`, matched to `session_blocks.template_block_id`. No data copied or duplicated.
+
+**Inherited content section:**
+- Each block card now shows a "Planned Focus" section below exercises.
+- Content items show type badge, domain, hint, duration, Internal indicator, description.
+- Blocks with no curriculum content show "No curriculum content assigned to this block."
+- Blocks with no `template_block_id` (not from a class template) show "Session was not generated from a class template."
+
+**Data safety:**
+- Read-only — zero writes, zero mutations
+- No session records modified
+- No player records modified
+- No parent/player communication
+- No migrations created or modified
+- `database.types.ts` untouched
+
+**Future Coach/Director AI Agent context:**
+- `curriculumByTemplateBlockId` is now a structured in-memory data context for each session block.
+- Future Director Agent answering "What is this session focused on?" can read this map to cite specific curriculum items per block.
+- Future Coach Agent can use the same data to answer "What should I teach in block 2?" without any additional DB queries.
+- The data path (session → template → curriculum) is now fully documented and exercised in the page.
+
+**Manual browser QA status:** Not yet run — dev server start required.
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+**Known limitations:**
+- The "Source Template" link in the session meta card points to `/director/fitness/templates/[templateId]`. For sessions generated from class templates, this should point to `/director/class-templates/[templateId]`. Correcting this requires knowing the template's `track` or `category` — out of scope for this sprint.
+- `CoachSessionCurriculumPanel` (coach view) is a separate component that fetches independently by `templateId`. It is not changed here; coach view retains its existing display.
+
+---
+
 ## 2026-05-10 — Sprint 180: Generate Session from Template V1
 
 **Sprint 179 commit verified:** `f9f22c3 — Sprint 179 — Template-to-Session Preview V1`
