@@ -2,6 +2,53 @@
 
 ---
 
+## 2026-05-10 — Sprint 188: Coach Wrap-Up Submitted State V1
+
+**Sprint 187 commit verified:** `ddec516 — Sprint 187 — Session Actual Display on Director Session Detail V1`
+
+**Coach wrap-up submission architecture audit:**
+- `proposed_actions.proposed_by_id` confirmed in schema (`string`, required FK) — safe to filter by current coach's user ID
+- `saveWrapUpDraftAction` inserts with `target_module: 'session_wrap_up_v1'`, `target_object_id: sessionId`, `proposed_by_id: user.id`, `status: 'pending_review'`
+- Coach session page is a server component with `user` and `academyId` already in scope
+- `CoachSessionActions` is `'use client'` — wraps both the Wrap Up Session button and `CoachWrapUpDrawer`; left completely untouched
+- `rawDb = supabase as any` pattern already used in the page; reused for the new query
+
+**Implementation (Option A — read-only query + display component):**
+- Added query (step 7) to coach session page: selects `status` from `proposed_actions`, scoped to `academy_id` + `target_module = 'session_wrap_up_v1'` + `target_object_id = session.id` + `proposed_by_id = user?.id`, ordered by `created_at desc`, limit 1 — yields `existingWrapUpStatus`
+- Created `CoachWrapUpStatusCard.tsx`: maps status string to icon, title, helper copy, and color scheme; renders nothing when `status` is null or unknown
+- Rendered `<CoachWrapUpStatusCard>` and `<CoachSessionActions>` inside a `space-y-3` wrapper in the "After Session" section — status card appears above the Wrap Up button, `space-y-3` produces natural gap only when card is visible
+
+**Status mapping:**
+| Status | Title | Helper |
+|--------|-------|--------|
+| `pending_review` | Wrap-up submitted — awaiting director review | Director is reviewing your notes. |
+| `approved` | Wrap-up approved | Director can apply it to the session record. |
+| `executed` | Wrap-up applied to the session record | Your notes are now part of the official session record. |
+| `clarification_needed` | Director requested clarification | Review the feedback and update your wrap-up if needed. |
+| `rejected` | Wrap-up was not approved | Check with the director if you need more context. |
+| `null` / unknown | (renders nothing) | — |
+
+**Existing CTA behavior:** `CoachSessionActions` (Wrap Up Session button) and `CoachWrapUpDrawer` are unchanged. Coaches can still submit or re-submit a wrap-up regardless of current status — V1 prioritizes visibility over duplicate guard.
+
+**Data safety:** Read-only query only. No inserts, updates, deletes, player mutations, or communications.
+
+**No player records mutated.** No parent/player communication sent. No migrations modified. `database.types.ts` untouched.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` produced no output.
+
+**Manual browser QA status:** Not browser-tested in this environment. Component is a pure read-only render of a single prop with no state or effects.
+
+**Future Coach AI Agent context note:** `CoachWrapUpStatusCard` surfaces the canonical wrap-up pipeline state to the coach. When a Coach AI Agent generates session guidance, it should check `proposed_actions.status` for `target_module = 'session_wrap_up_v1'` + `target_object_id = sessionId` + `proposed_by_id = coachId` to determine whether a wrap-up has been submitted, approved, applied, or needs follow-up. The agent should never trigger `saveWrapUpDraftAction` if an `executed` or `approved` draft already exists.
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpStatusCard.tsx` — read-only status display component
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — import added, wrap-up status query added, `<CoachWrapUpStatusCard>` rendered above existing CTA
+- `docs/CHANGELOG.md` — this entry
+
+---
+
 ## 2026-05-10 — Sprint 187: Session Actual Display on Director Session Detail V1
 
 **Sprint 186 commit verified:** `53fe13e — Sprint 186 — Apply Wrap-Up Draft to Session Actual V1`

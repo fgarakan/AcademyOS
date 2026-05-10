@@ -11,6 +11,7 @@ import { CoachSessionCurriculumPanel } from './CoachSessionCurriculumPanel'
 import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 import { saveSessionExecutionAction, saveAttendanceAction, saveSessionRecapAction } from './actions'
 import { structureCoachRecapAction } from './structureCoachRecapAction'
+import { CoachWrapUpStatusCard } from './CoachWrapUpStatusCard'
 
 interface PageProps {
   params: { sessionId: string }
@@ -217,6 +218,20 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
     .maybeSingle()
   initialRecap = recentRecap?.raw_input ?? ''
 
+  // 7. Check for existing wrap-up draft for this session submitted by this coach
+  const rawWrapUpDb = supabase as any
+  const { data: wrapUpDraftRow } = await rawWrapUpDb
+    .from('proposed_actions')
+    .select('status')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'session_wrap_up_v1')
+    .eq('target_object_id', session.id)
+    .eq('proposed_by_id', user?.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const existingWrapUpStatus: string | null = (wrapUpDraftRow?.status as string) ?? null
+
   // Compute context for recap panel
   const totalExercises = exercises.length
   const completedCount = exercises.filter(e => e.completed).length
@@ -331,13 +346,16 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           Use <span className="text-text-secondary font-medium">Wrap Up Session</span> for your structured end-of-session recap.
           Player observations go directly to the director review queue.
         </p>
-        <CoachSessionActions
-          sessionId={session.id}
-          academyId={academyId}
-          sessionName={session.name ?? 'Untitled Session'}
-          blocks={blockList}
-          roster={roster}
-        />
+        <div className="space-y-3">
+          <CoachWrapUpStatusCard status={existingWrapUpStatus} />
+          <CoachSessionActions
+            sessionId={session.id}
+            academyId={academyId}
+            sessionName={session.name ?? 'Untitled Session'}
+            blocks={blockList}
+            roster={roster}
+          />
+        </div>
       </section>
 
       {/* Secondary: quick internal note — informal, not a session recap */}
