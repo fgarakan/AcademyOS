@@ -37,7 +37,27 @@ import type { EnrichedRecommendationDraftItem, PlacementRecommendationDraftPaylo
 import { VoiceIntakeBatchPanel } from './VoiceIntakeBatchPanel'
 import { CapturesBatchPanel } from './CapturesBatchPanel'
 
-export default async function DirectorReviewQueuePage() {
+const VALID_TAB_PARAMS: Record<string, string> = {
+  'wrap-ups': 'wrap_ups',
+  'session-wrap-ups': 'wrap_ups',
+  'attendance': 'attendance',
+  'placement-review': 'placement_review',
+  'placement-intake': 'placement_intake',
+  'player-observations': 'player_observations',
+  'development-summaries': 'development_summaries',
+  'session-recaps': 'session_recaps',
+  'priorities': 'priorities',
+  'evidence': 'evidence',
+  'curriculum': 'curriculum',
+  'voice-intake': 'voice_intake',
+  'captures': 'captures',
+}
+
+export default async function DirectorReviewQueuePage({
+  searchParams,
+}: {
+  searchParams: { tab?: string }
+}) {
   const supabase = await getSupabaseServer()
 
   // 1. Auth
@@ -1009,6 +1029,10 @@ export default async function DirectorReviewQueuePage() {
     { value: 'captures', pending: generalCaptures.length },
   ].find(t => t.pending > 0)?.value ?? 'attendance'
 
+  const requestedTabParam = searchParams.tab
+  const resolvedTab = requestedTabParam ? (VALID_TAB_PARAMS[requestedTabParam] ?? null) : null
+  const activeDefaultTab = resolvedTab ?? defaultTab
+
   return (
     <div className="animate-fade-in p-6 space-y-6">
       <PageHeader
@@ -1054,7 +1078,7 @@ export default async function DirectorReviewQueuePage() {
         </div>
       )}
 
-      <Tabs defaultValue={defaultTab}>
+      <Tabs defaultValue={activeDefaultTab}>
         <TabsList scrollable>
           <TabsTrigger value="attendance">
             <TabLabel

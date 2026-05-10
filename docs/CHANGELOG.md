@@ -2,6 +2,50 @@
 
 ---
 
+## 2026-05-10 — Sprint 185: Review Queue Wrap-Up Deep Link V1
+
+**Sprint 184 commit verified:** `97adfb0 — Sprint 184 — Director Dashboard Wrap-Up Count V1`
+
+**Director review tab architecture audit:**
+- `src/app/director/review/page.tsx` had no `searchParams` prop — pure server component with no URL-driven tab selection
+- Tabs rendered with Radix UI `<Tabs defaultValue={defaultTab}>` where `defaultTab` was computed server-side from pending counts
+- Internal tab value for wrap-ups is `wrap_ups` (underscores); URL param convention is `wrap-ups` (hyphens)
+- Two dashboard links pointed to `/director/review` without tab param: Coach Wrap-Ups CommandCard and AcademyAlertsPanel wrap-up alert
+
+**Implementation (Option A — server-side searchParams):**
+- Added `VALID_TAB_PARAMS` map (URL hyphens → internal underscores) to `page.tsx` before the page function
+- Added `searchParams: { tab?: string }` prop to `DirectorReviewQueuePage`
+- Computed `resolvedTab` from param; overrides `defaultTab` only when a valid known param is provided
+- Changed `<Tabs defaultValue={defaultTab}>` to `<Tabs defaultValue={activeDefaultTab}>`
+- Unknown or absent tab params fall back to the original pending-count-driven `defaultTab` logic — no behavior change
+
+**Dashboard links updated:**
+- Coach Wrap-Ups CommandCard (`src/app/director/page.tsx` line 287): `/director/review` → `/director/review?tab=wrap-ups`
+- AcademyAlertsPanel wrap-up alert (`src/app/director/page.tsx` line 762): `/director/review` → `/director/review?tab=wrap-ups`
+
+**URL behavior:**
+- `/director/review?tab=wrap-ups` → opens directly to Session Wrap-Ups tab
+- `/director/review?tab=session-wrap-ups` → also resolves to Session Wrap-Ups tab (alias)
+- `/director/review` (no param) → existing pending-count-driven default, unchanged
+- `/director/review?tab=unknown` → falls back to pending-count-driven default safely
+
+**Data safety:** UI/navigation only. No inserts, updates, deletes, player mutations, or communications.
+
+**No player records mutated.** No parent/player communication sent. No migrations modified. `database.types.ts` untouched.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` produced no output.
+
+**Manual browser QA status:** Not browser-tested in this environment. Logic is a pure server-side prop addition with no rendering complexity — safe for director QA.
+
+**Future Director AI Agent context note:** The `VALID_TAB_PARAMS` map is the single authoritative place to register tab deep-link aliases. When the AI Agent generates review queue links, it should use the URL-param form (e.g. `?tab=wrap-ups`) which the server resolves to the internal Radix value.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — added `searchParams` prop and `VALID_TAB_PARAMS` map; overrides `defaultTab` when valid URL param present
+- `src/app/director/page.tsx` — updated 2 hrefs to `/director/review?tab=wrap-ups`
+- `docs/CHANGELOG.md` — this entry
+
+---
+
 ## 2026-05-10 — Sprint 184: Director Dashboard Wrap-Up Count V1
 
 **Sprint 183 commit verified:** `c3d6ade — Sprint 183 — Coach Wrap-Up Director Review V1`

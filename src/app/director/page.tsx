@@ -284,7 +284,7 @@ export default async function DirectorDashboard() {
             label="Coach Wrap-Ups"
             value={pendingWrapUpsCount}
             sublabel={pendingWrapUpsCount > 0 ? `${pendingWrapUpsCount} need${pendingWrapUpsCount === 1 ? 's' : ''} review` : 'No pending wrap-ups'}
-            href="/director/review"
+            href="/director/review?tab=wrap-ups"
             accentColor={pendingWrapUpsCount > 0 ? 'orange' : 'default'}
             icon={<ClipboardList className="w-4 h-4" />}
           />
@@ -759,7 +759,7 @@ function AcademyAlertsPanel({
       severity: 'medium' as Severity,
       title: `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting review`,
       why: 'Coach session wrap-ups are in the review queue and have not been approved.',
-      href: '/director/review',
+      href: '/director/review?tab=wrap-ups',
       count: pendingWrapUpsCount,
     },
     newRequestsCount > 0 && {
