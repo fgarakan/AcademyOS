@@ -2,6 +2,54 @@
 
 ---
 
+## 2026-05-10 — Sprint 184: Director Dashboard Wrap-Up Count V1
+
+**Sprint 183 commit verified:** `c3d6ade — Sprint 183 — Coach Wrap-Up Director Review V1`
+
+**Director dashboard architecture audit:**
+- `pendingWrapUpsCount` was already fetched at lines 165–172 of `src/app/director/page.tsx`: read-only count against `proposed_actions` scoped to `academy_id`, `target_module = 'session_wrap_up_v1'`, `status = 'pending_review'`.
+- Already included in `totalAlerts` (feeds the "Needs Attention" CommandCard).
+- Already shown in `AcademyAlertsPanel` as a dedicated "N coach wrap-ups awaiting review" alert item with a link to `/director/review`.
+- Gap: no dedicated top-level `CommandCard` showing the wrap-up count alone — count was aggregated into "Needs Attention" and only visible as a detail in the alerts panel below the fold.
+- Architecture: Option A — add a 6th `CommandCard` to the "Today's Priorities" grid.
+
+**Files modified:**
+- `src/app/director/page.tsx` — Three changes: (1) Added `ClipboardList` to lucide-react imports. (2) Changed "Today's Priorities" grid from `grid-cols-2 xl:grid-cols-5` to `grid-cols-2 sm:grid-cols-3 xl:grid-cols-6`. (3) Added 6th `CommandCard` — label "Coach Wrap-Ups", value `pendingWrapUpsCount`, sublabel "N need/s review" when count > 0 / "No pending wrap-ups" when zero, href `/director/review`, `accentColor="orange"` when count > 0 / `"default"` when zero, ClipboardList icon.
+
+**Wrap-up count query:**
+Reuses the existing `pendingWrapUpsCount` — no additional query. The count was already fetched; this sprint only surfaces it as a dedicated card.
+
+**Review queue link:**
+`/director/review` — direct link to the director review queue. No tab query params (review page does not expose URL-based tab selection).
+
+**Empty state:**
+When `pendingWrapUpsCount === 0`, the card shows value `0` with sublabel "No pending wrap-ups" and neutral accent. AcademyAlertsPanel wrap-up alert is also preserved (hidden when count is 0 via the `pendingWrapUpsCount > 0 &&` guard).
+
+**Existing AcademyAlertsPanel alert preserved:** The existing alerts panel alert item and the "Needs Attention" aggregated count are both untouched.
+
+**Data safety:**
+- No new queries added — `pendingWrapUpsCount` was already fetched
+- Read-only — zero writes, zero mutations
+- No session, player, or attendance records modified
+- No communications triggered
+- No migrations, no schema changes
+
+**Future Director AI Agent context:**
+- `pendingWrapUpsCount` is now prominently surfaced at the top of the Director Dashboard.
+- Future Director Agent answering "What needs my attention today?" can cite the wrap-up count directly from this dashboard metric.
+- The CommandCard's href (`/director/review`) is the canonical navigation target for the Agent to direct the director to pending wrap-up reviews.
+- The count will naturally scale: as more coaches submit wrap-ups and the director reviews them, the count drops to 0 — providing a clear "inbox zero" signal.
+
+**Manual browser QA status:** Not yet run — dev server start required.
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+**Known limitations:**
+- The review page does not support `?tab=wrap_ups` query params — the director lands on the first tab and must click "Session Wrap-Ups" to reach the wrap-up tab. A future sprint could add URL-based tab state to the review page.
+- The "Needs Attention" CommandCard still includes `pendingWrapUpsCount` in its `totalAlerts` value — this means wrap-up count is counted twice in the top command cards (once in "Needs Attention" total, once in the new "Coach Wrap-Ups" card). This is intentional: "Needs Attention" is a general signal; "Coach Wrap-Ups" is a specific actionable count.
+
+---
+
 ## 2026-05-10 — Sprint 183: Coach Wrap-Up Director Review V1
 
 **Sprint 182 commit verified:** `59a92e7 — Sprint 182 — Coach Session Run View V1`

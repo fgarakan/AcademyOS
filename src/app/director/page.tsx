@@ -3,7 +3,7 @@ import Link from 'next/link'
 import {
   Users, BookOpen, Calendar, ChevronRight, Activity,
   Clock, Mic, Brain, AlertTriangle, TrendingUp,
-  GraduationCap, Sparkles,
+  GraduationCap, Sparkles, ClipboardList,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
@@ -239,7 +239,7 @@ export default async function DirectorDashboard() {
       {/* ── Today's Priorities ────────────────────────────── */}
       <div>
         <p className="label-xs mb-4">Today's Priorities</p>
-        <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
           <CommandCard
             label="Active Players"
             value={activePlayers}
@@ -279,6 +279,14 @@ export default async function DirectorDashboard() {
             href="/director/signals"
             accentColor={totalAlerts > 0 ? 'red' : 'default'}
             icon={<AlertTriangle className="w-4 h-4" />}
+          />
+          <CommandCard
+            label="Coach Wrap-Ups"
+            value={pendingWrapUpsCount}
+            sublabel={pendingWrapUpsCount > 0 ? `${pendingWrapUpsCount} need${pendingWrapUpsCount === 1 ? 's' : ''} review` : 'No pending wrap-ups'}
+            href="/director/review"
+            accentColor={pendingWrapUpsCount > 0 ? 'orange' : 'default'}
+            icon={<ClipboardList className="w-4 h-4" />}
           />
         </div>
       </div>
