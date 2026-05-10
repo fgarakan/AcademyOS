@@ -25,6 +25,7 @@ export interface FirstDevContextData {
 interface Props {
   data: FirstDevContextData
   playerId: string
+  hasCurriculum: boolean
 }
 
 const CONFIDENCE_COLORS: Record<string, string> = {
@@ -42,7 +43,7 @@ function Row({ label, value }: { label: string; value: string | null }) {
   )
 }
 
-export function FirstDevelopmentContextCard({ data, playerId }: Props) {
+export function FirstDevelopmentContextCard({ data, playerId, hasCurriculum }: Props) {
   const [isPending, startTransition] = useTransition()
   const [result, setResult] = useState<{ ok: boolean; error: string | null; alreadyExists?: boolean } | null>(null)
 
@@ -154,13 +155,15 @@ export function FirstDevelopmentContextCard({ data, playerId }: Props) {
           </details>
         )}
 
-        {/* Curriculum level limitation */}
-        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-status-orange/5 border border-status-orange/20">
-          <AlertCircle className="w-3 h-3 text-status-orange shrink-0 mt-0.5" />
-          <p className="text-[10px] text-status-orange leading-snug">
-            Curriculum level not assigned yet. Assign from the Skill Path tab to activate curriculum tracking.
-          </p>
-        </div>
+        {/* Curriculum level status */}
+        {!hasCurriculum && (
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-status-orange/5 border border-status-orange/20">
+            <AlertCircle className="w-3 h-3 text-status-orange shrink-0 mt-0.5" />
+            <p className="text-[10px] text-status-orange leading-snug">
+              Curriculum level not assigned yet. Use the assignment card below to connect this player to Skill Path tracking.
+            </p>
+          </div>
+        )}
 
         {/* Draft development summary from placement */}
         <div className="border-t border-border pt-3 space-y-2">

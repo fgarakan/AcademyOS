@@ -65,6 +65,7 @@ import { DraftSummaryUpdateButton } from './DraftSummaryUpdateButton'
 import { PlayerSessionHistoryPanel } from './PlayerSessionHistoryPanel'
 import { PlacementEntryCard, type PlacementEntryData } from './PlacementEntryCard'
 import { FirstDevelopmentContextCard, type FirstDevContextData } from './FirstDevelopmentContextCard'
+import { PlacementCurriculumBridgeCard } from './PlacementCurriculumBridgeCard'
 
 interface PageProps {
   params: { playerId: string }
@@ -770,7 +771,20 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
           {/* First Development Context — Sprint 170. Placement recommendation context on Day 1. */}
           {firstDevContextData && (
-            <FirstDevelopmentContextCard data={firstDevContextData} playerId={params.playerId} />
+            <FirstDevelopmentContextCard
+              data={firstDevContextData}
+              playerId={params.playerId}
+              hasCurriculum={hasCurriculum}
+            />
+          )}
+
+          {/* Curriculum bridge — Sprint 172B. Shown when player has no curriculum state yet. */}
+          {!hasCurriculum && allCurriculumLevels.length > 0 && (
+            <PlacementCurriculumBridgeCard
+              playerId={params.playerId}
+              academyId={academyId}
+              levels={allCurriculumLevels}
+            />
           )}
 
           {/* Development Profile Summary — internal coach view */}

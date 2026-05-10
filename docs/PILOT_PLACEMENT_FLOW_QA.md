@@ -435,9 +435,9 @@ WHERE academy_id = '<your-academy-id>'
 
 ---
 
-## ⚠️ Sprint 171+ — Remaining Pipeline
+## ⚠️ Sprint 172B+ — Remaining Pipeline
 
-**Step 11 — Safe Onboarding Draft (future)**
+**Step 12 — Safe Onboarding Draft (future)**
 - Director-controlled parent/player welcome draft created via proposed_actions
 - Never auto-published
 
@@ -604,6 +604,72 @@ LIMIT 1;
 
 ---
 
+## Step 12 — Curriculum Level Assignment Bridge (Sprint 172B)
+
+**Path:** Director → Player Profile → Overview tab → "Curriculum level not assigned" card
+
+### 12a — Bridge card appears for player with no curriculum state
+
+1. Open a player profile where `player_curriculum_states` has no row (newly placed player).
+2. Confirm the **"Curriculum level not assigned"** orange callout appears on the Overview tab.
+3. Confirm copy reads: "This player is active and assigned to a group, but does not yet have a curriculum level. Assigning a curriculum level unlocks Skill Path tracking and progression evidence."
+4. Confirm internal-only guardrail note: "Internal only — no parent or player notification is sent. This does not move the player to a new level or auto-complete any requirements."
+5. Confirm `CurriculumLevelPickerCard` is visible below the callout.
+
+### 12b — Real curriculum levels appear in selector
+
+1. Confirm the selector is populated from `curriculum_levels` table (not free-text labels).
+2. Confirm levels are grouped by stage (`Red Foundation`, `Orange Development`, etc.).
+3. Confirm selecting a level activates the "Assign level" button.
+
+### 12c — Director assigns a level
+
+1. Select a curriculum level.
+2. Click "Assign level".
+3. Confirm success state: "Curriculum level saved."
+4. Confirm page reloads (revalidatePath fires).
+5. Confirm the bridge card no longer appears on the Overview tab after reload.
+6. Confirm `FirstDevelopmentContextCard` orange warning is gone after reload.
+
+### 12d — player_curriculum_states updated
+
+```sql
+-- Confirm player_curriculum_states row now exists
+SELECT player_id, current_level_id, enrolled_at, advancement_eligible
+FROM player_curriculum_states
+WHERE player_id = '<player-id>';
+-- Expect: 1 row, current_level_id = <selected level UUID>, advancement_eligible = false
+
+-- Confirm player_domain_progress rows seeded (status = 'not_started')
+SELECT player_id, level_id, domain, status
+FROM player_domain_progress
+WHERE player_id = '<player-id>'
+ORDER BY domain;
+-- Expect: rows per skill domain, all status = 'not_started' (not completed — scaffolding only)
+```
+
+### 12e — No parent/player visibility, no comms, no billing
+
+- Confirm no `parent_communications` or similar rows created.
+- Confirm `player_curriculum_states.show_to_parent` / `show_to_student` not applicable (those are development summary flags, not curriculum state flags).
+- Confirm no billing records created.
+- Confirm the player portal shows no new curriculum-level display.
+
+### 12f — Bridge card absent for players with existing curriculum state
+
+1. Open a player profile where `player_curriculum_states` already has a row.
+2. Confirm the bridge card does **not** appear on the Overview tab.
+3. Confirm the `FirstDevelopmentContextCard` orange warning is hidden.
+4. Confirm the Skill Path tab still shows `CurriculumLevelPickerCard` for future level changes (unchanged behavior).
+
+### 12g — No level movement or evidence auto-created
+
+- Confirm no `player_level_history` or level advancement rows created.
+- Confirm no `requirement_evidence` rows auto-created.
+- Confirm `advancement_eligible = false` on the new `player_curriculum_states` row.
+
+---
+
 ## Known Limitations
 
 1. **Player creation — RESOLVED (Sprint 168).** After a recommendation is approved, the director clicks "Create Player Profile." This creates the `players` row, `placement_recommendations` row, calls `finalize_player_placement()`, marks the `proposed_actions` row `executed`, and writes the audit log. Idempotency guard: `created_player_id` is written to the payload immediately after player INSERT to prevent duplicates on retry.
@@ -612,7 +678,7 @@ LIMIT 1;
 
 3. **Group assignment — RESOLVED (Sprint 168A).** A real group selector now appears on the recommendation card. Directors must choose an actual academy group (from `groups WHERE is_active = true`) before approving. The server verifies the selected `group_id` belongs to the current academy. The approved payload contains `recommended_group_id` (UUID) and `recommended_group_name`. `finalize_player_placement()` can now consume a valid group UUID from the approved payload.
 
-4. **current_level_id may remain NULL after placement (Sprint 169 documented).** `finalize_player_placement()` sets `current_level_id` from `COALESCE(override_level_id, recommended_level_id)`. Sprint 168's server action does not populate `recommended_level_id` on the `placement_recommendations` row. The player will be active with a group assignment but no curriculum level. Assign the curriculum level from the Skill Path tab in the player profile.
+4. **current_level_id may remain NULL after placement (Sprint 172B bridges this).** `finalize_player_placement()` sets `players.current_level_id` from `COALESCE(override_level_id, recommended_level_id)`, which is NULL because Sprint 168 does not populate `recommended_level_id`. The Skill Path system reads from `player_curriculum_states`, not `players.current_level_id` directly. Sprint 172B surfaces the existing `CurriculumLevelPickerCard` + `setCurriculumLevelAction` on the Overview tab, so the director can assign a real curriculum level immediately after placement. After assignment, `player_curriculum_states` has a row and all Skill Path tracking activates. `players.current_level_id` may remain NULL — this is acceptable because the Skill Path system does not depend on it.
 
 5. **player_development_summary not written at placement (Sprint 170 documented, Sprint 171 adds the bridge).** The First Development Context card is display-only. The "Draft Development Summary from Placement" button (Sprint 171) creates a `development_summary_draft_v1` proposed_action for director review. `player_development_summary` is only written after the director approves and explicitly applies the draft via the existing review queue pipeline. The Development Summary section will show "No development summary yet" until then.
 

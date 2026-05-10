@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-09 — Sprint 172B: Placement → Curriculum Level Assignment Bridge
+
+No migrations. No new assignment action. No level movement logic. No requirement completion. No evidence creation. No parent/player visibility. No billing. No parent communication.
+
+**Goal:** Surface the existing curriculum level picker directly on the Overview tab for players who have no `player_curriculum_states` row. Closes the last blocking gap from the Sprint 168–171 placement pipeline.
+
+**Existing infrastructure reused (no changes to these files):**
+- `setCurriculumLevelAction.ts` — auth + academy + role + level verification + `assign_player_curriculum_state` RPC + `revalidatePath`
+- `CurriculumLevelPickerCard.tsx` — stage-grouped level selector, save button, success/error states
+
+**Schema path used:**
+- `assign_player_curriculum_state` RPC (migration 038): upserts `player_curriculum_states.current_level_id`, seeds `player_domain_progress` rows at `status = 'not_started'` (scaffolding only — not completed evidence)
+- `players.current_level_id` remains NULL — Skill Path reads from `player_curriculum_states`, not `players` directly
+
+**Files created:**
+- `src/app/director/players/[playerId]/PlacementCurriculumBridgeCard.tsx` — Server component: explanatory callout (copy, internal-only note, guardrail) + `CurriculumLevelPickerCard`. Shown on Overview tab when `!hasCurriculum && allCurriculumLevels.length > 0`. Disappears after assignment.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Import and render `PlacementCurriculumBridgeCard` in `overviewSlot` left column; pass `hasCurriculum` to `FirstDevelopmentContextCard`
+- `src/app/director/players/[playerId]/FirstDevelopmentContextCard.tsx` — Add `hasCurriculum: boolean` prop; hide orange warning when `hasCurriculum` is true; update copy to reference "assignment card below"
+- `docs/PILOT_PLACEMENT_FLOW_QA.md` — Added Step 12 (7 sub-checks); updated Known Limitation #4; updated remaining pipeline header
+- `docs/CHANGELOG.md` — This entry
+
+**TypeScript validation:** Clean — `npx tsc --noEmit`
+
+---
+
 ## 2026-05-09 — Sprint 171: Seed Development Summary from Placement
 
 No migrations. No direct writes to `player_development_summary`. No player record mutations. No curriculum level assignment. No parent/player portal. No billing. No parent communication. No AI generation.
