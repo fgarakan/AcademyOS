@@ -2,6 +2,67 @@
 
 ---
 
+## 2026-05-10 — Sprint 199: Director Interview Step V1
+
+**Sprint 198 commit verified:** `6a97021 — Sprint 198 — Academy Onboarding Wizard Entry Point V1`
+
+**Onboarding/settings action pattern audit:**
+- Settings merge pattern confirmed: fetch `academies.settings`, spread existing, overlay new keys, update — identical to `updateAcademySettingsAction`. Safe to replicate exactly.
+- `assertNotPreviewMode()` guard confirmed required for all mutating actions.
+- `revalidatePath` pattern confirmed: invalidate `/director/onboarding`, `/director/onboarding/interview`, `/director`.
+- Auth guard chain confirmed: auth → `profiles.academy_id` → `academy_memberships.role === 'academy_director'` → rawDb fetch.
+- `AcademySettingsForm.tsx` client pattern confirmed: `useState` per field, `useTransition` for async, `saved`/`error` state. Replicated exactly.
+
+**`/director/onboarding/interview` page added:**
+- Server component. Four auth guard layers (identical to settings page).
+- Reads `academies.settings.director_interview` JSON and pre-fills all seven form fields.
+- Renders page header (MessageSquare icon, "Onboarding · Step 2"), info banner, Card with `DirectorInterviewForm`.
+
+**`DirectorInterviewForm` added:**
+- Client component (`'use client'`). Seven textarea fields, one per interview question.
+- Each field: question number indicator, label, prompt copy, textarea (600 char max with counter), onChange clears saved state.
+- Save button with `Loader2` spinner while pending. Green `CheckCircle2` success panel. `status-red` error text.
+- No AI generation. No parent/player communication.
+
+**Seven director interview questions (V1):**
+1. Coaching Philosophy — `philosophy`
+2. Primary Player Focus — `player_focus`
+3. Development Priorities — `development_priorities`
+4. Competition Approach — `competition_approach`
+5. Parent Communication Style — `parent_communication_style`
+6. Coach Operating Style — `coach_operating_style`
+7. Success in 90 Days — `ninety_day_success`
+
+**`updateDirectorInterviewAction` added:**
+- `'use server'`, `assertNotPreviewMode()` guard.
+- Full auth chain: auth → `profiles.academy_id` → `academy_memberships.role === 'academy_director'`.
+- Fetches existing `academies.settings`, spreads, overlays `director_interview` object + `director_interview_completed: true` + `onboarding_state` (preserves existing or sets `'director_interview'`).
+- Revalidates `/director/onboarding`, `/director/onboarding/interview`, `/director`.
+
+**Settings merge behavior:**
+- Fetches current `academies.settings` JSON first.
+- Spreads all existing keys before overlaying new ones — all prior keys (e.g. `academy_identity_completed`, `logo_url`) are preserved.
+- `director_interview` sub-object includes `updated_at` timestamp.
+
+**`/director/onboarding` Step 2 behavior updated:**
+- Step 2 now has `href: '/director/onboarding/interview'` and `ctaLabel: 'Start Director Interview'`.
+- Completion check: `if (settings.director_interview_completed === true) completedStepNumbers.add(2)`.
+- When Step 1 is complete and Step 2 is next: next-step CTA block shows "Start Director Interview" linking to `/director/onboarding/interview`.
+- When Step 2 is complete: green check + "Complete" badge + "Revisit →" link in step row.
+- Step 3 onwards remain "Coming Soon" (no href, no CTA).
+
+**No AI runtime or voice transcription added.**
+
+**Data safety:** Only `academies.settings` written. No player, placement, or communication mutations.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+**Manual browser QA:** Not yet performed.
+
+**No migrations modified. `database.types.ts` untouched. Unrelated dirty files untouched.**
+
+---
+
 ## 2026-05-10 — Sprint 198: Academy Onboarding Wizard Entry Point V1
 
 **Sprint 197 commit verified:** `f64747b — Sprint 197 — Academy Identity + Settings V1`

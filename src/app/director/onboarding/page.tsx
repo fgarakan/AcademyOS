@@ -27,6 +27,9 @@ const STEP_DEFS: StepDef[] = [
     number: 2,
     title: 'Director Interview',
     description: 'Answer a short set of questions about your coaching philosophy, academy goals, and player development approach. Your answers power AI recommendations.',
+    settingsKey: 'director_interview_completed',
+    href: '/director/onboarding/interview',
+    ctaLabel: 'Start Director Interview',
   },
   {
     number: 3,
@@ -148,9 +151,10 @@ export default async function AcademyOnboardingPage() {
 
   const settings = (academy.settings as Record<string, unknown>) ?? {}
 
-  // V1 completion state — only Academy Identity is detectable from current settings keys
+  // Completion state — one entry per step that has a detectable settings key
   const completedStepNumbers = new Set<number>()
   if (settings.academy_identity_completed === true) completedStepNumbers.add(1)
+  if (settings.director_interview_completed === true) completedStepNumbers.add(2)
 
   // Assign status: complete → next (first incomplete) → upcoming
   let nextAssigned = false
