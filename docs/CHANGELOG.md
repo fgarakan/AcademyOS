@@ -2,6 +2,48 @@
 
 ---
 
+## 2026-05-10 — Sprint 187: Session Actual Display on Director Session Detail V1
+
+**Sprint 186 commit verified:** `53fe13e — Sprint 186 — Apply Wrap-Up Draft to Session Actual V1`
+
+**Director session detail architecture audit:**
+- `session_notes` and `status` were already selected in the session query at line 75 of `page.tsx` — no query change needed
+- An existing bare "Session Notes" display existed at lines 887–892, buried inside the session meta/stats card (Status / Blocks / Exercises), with no empty state, no completed badge, and no wrap-up attribution context
+- `PlannedVsActualDiffPanel` reads from wrap-up payload (not `session_notes`) and was left untouched
+- `updated_at` is not in the session select — not included in the new component to avoid query changes
+
+**Implementation (Option B — dedicated component):**
+- Created `SessionActualDisplay.tsx`: read-only card showing completed/not-applied badge, official notes with wrap-up attribution, and empty state
+- Removed the existing rudimentary "Session Notes" inline block from the session meta card
+- Added `<SessionActualDisplay>` as a dedicated section after the meta card and before Group Assignment
+
+**Session Actual UI behavior:**
+- Section label: "Session Actual" (`label-xs`)
+- If `status === 'completed'`: green "Completed" badge + "This session has been marked completed." helper text
+- If any other status: neutral "Not Applied Yet" badge + "Session actual has not been applied." helper text
+- If `session_notes` present: "Official Notes" label + `whitespace-pre-wrap` notes in `bg-surface-raised` box + "These notes reflect the approved session wrap-up applied to this session." attribution
+- If no `session_notes`: empty state box — "No session actual notes have been applied yet." + "Approved coach wrap-ups will appear here after they are applied."
+- Planned curriculum content and `PlannedVsActualDiffPanel` remain visually separate below
+
+**Data safety:** Read-only display. No inserts, updates, deletes, player mutations, or communications.
+
+**No session records mutated.** No player records mutated. No parent/player communication sent. No migrations modified. `database.types.ts` untouched.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` produced no output.
+
+**Manual browser QA status:** Not browser-tested in this environment. Component is a pure read-only render of two already-available props — no new queries, no state, no effects.
+
+**Future Director AI Agent context note:** The `SessionActualDisplay` is the canonical UI surface for `sessions.session_notes`. When the AI Agent generates session summaries or status checks, it should treat `session_notes` as the official applied record and `sessions.status = 'completed'` as the confirmation gate. The component's empty state is the correct signal that no wrap-up has been applied yet.
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/SessionActualDisplay.tsx` — read-only component for session actual section
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — import added, buried notes removed from meta card, `<SessionActualDisplay>` section added
+- `docs/CHANGELOG.md` — this entry
+
+---
+
 ## 2026-05-10 — Sprint 186: Apply Wrap-Up Draft to Session Actual V1
 
 **Sprint 185 commit verified:** `16e2c58 — Sprint 185 — Director Review URL Tab State + Wrap-Up Deep Link V1`

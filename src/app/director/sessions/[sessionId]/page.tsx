@@ -27,6 +27,7 @@ import { SessionExposureSummaryPanel } from './SessionExposureSummaryPanel'
 import { DirectorSessionStatusCTA } from './DirectorSessionStatusCTA'
 import { SessionBlockCurriculumContent } from './SessionBlockCurriculumContent'
 import type { CurriculumItem } from './SessionBlockCurriculumContent'
+import { SessionActualDisplay } from './SessionActualDisplay'
 
 interface PageProps {
   params: { sessionId: string }
@@ -884,14 +885,14 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
               </Link>
             </div>
           )}
-          {session.session_notes && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Session Notes</p>
-              <p className="text-sm text-text-secondary whitespace-pre-wrap">{session.session_notes}</p>
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {/* Session Actual */}
+      <SessionActualDisplay
+        status={session.status}
+        sessionNotes={session.session_notes}
+      />
 
       {/* Group Assignment */}
       <div>
