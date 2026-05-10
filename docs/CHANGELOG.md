@@ -2,6 +2,57 @@
 
 ---
 
+## 2026-05-10 — Sprint 195: Placement Engine Current State Audit + Next Phase Plan V1
+
+**Sprint 194 commit verified:** `4f7b669 — Sprint 194 — Clarification-Needed Wrap-Ups Visible in Director Review Queue V1`
+
+**Audit scope:** Full read-only audit of the placement engine — all three entry points, the complete proposed_actions pipeline for unknown-attendee placement, the direct placement engine for pending players, post-activation review, and backend utilities.
+
+**Files read (no changes made):**
+- `src/app/director/placement/page.tsx` — Entry Point C server component
+- `src/app/director/placement/PlacementEngineClient.tsx` — Entry Point C client
+- `src/app/director/placement/placementDraftAction.ts` — Entry Point C server actions
+- `src/app/director/review/PlacementReviewCard.tsx` — Entry Point B Stage 1
+- `src/app/director/review/PlacementIntakeCandidateCard.tsx` — Entry Point B Stage 2
+- `src/app/director/review/PlacementAssessmentDraftCard.tsx` — Entry Point B Stage 3
+- `src/app/director/review/PlacementRecommendationDraftCard.tsx` — Entry Point B Stage 4–5
+- `src/app/director/review/actions.ts` (placement-related exports)
+- `src/app/director/players/new/NewPlayerForm.tsx` — Entry Point A
+- `src/app/director/players/new/createPlayerAction.ts` — Entry Point A action
+- `src/app/director/players/onboarding-review/page.tsx` — post-activation review
+- `src/lib/backend/assessments.ts` — backend utilities
+- `supabase/migrations/004_players.sql` — confirmed `full_name` generated column, `join_date` default
+
+**Three entry points confirmed:**
+
+1. **Entry Point A (Direct Manual):** `/director/players/new` → `createPlayerAction` inserts player as `pending_placement` → enters Entry Point C queue. No `proposed_actions` trail.
+
+2. **Entry Point B (Unknown Attendee):** `/director/review` five-stage pipeline through `proposed_actions`. Stages: placement_review → intake_candidate → assessment_draft → recommendation_draft → create player. Recommendation generation is deterministic (no AI). `createPlayerFromApprovedRecommendationAction` creates the player, creates a `placement_recommendations` row, calls `finalize_player_placement()`, marks proposed_action `executed`, writes audit log.
+
+3. **Entry Point C (Direct Placement):** `/director/placement` → `placement_recommendations` table directly (not via proposed_actions). `createPlacementDraftAction` → `approvePlacementDraftAction` → `activatePlayerAction` → calls `finalize_player_placement()`.
+
+**Activation gate confirmed:** `finalize_player_placement(p_recommendation_id, p_activator_id)` is called only from `activatePlayerAction` (Entry Point C) and `createPlayerFromApprovedRecommendationAction` (Entry Point B). No other activation path exists.
+
+**Schema facts confirmed:**
+- `players.full_name` is a `GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED` column — Entry Point B does not need to set it.
+- `players.join_date` has `DEFAULT CURRENT_DATE` — Entry Point B does not need to set it.
+
+**Known gaps identified for Phase 2:**
+1. Curriculum level not set at placement (explicit warning in UI; must be assigned separately).
+2. Entry Point C bypasses `proposed_actions` — no review audit trail for manually-added pending players.
+3. No `recommended_track` field in Entry Point B's `createPlayerFromApprovedRecommendationAction` insert.
+4. No guided next-step prompt to development intake after player activation.
+
+**Audit document created:** `docs/PLACEMENT_ENGINE_AUDIT.md`
+
+**Files modified:** `docs/PLACEMENT_ENGINE_AUDIT.md` (new), `docs/CHANGELOG.md`
+
+**No code changes.** No migrations. No player mutations. No proposed_actions inserts. `database.types.ts` untouched.
+
+**TypeScript:** CLEAN — no files modified; check is confirmatory.
+
+---
+
 ## 2026-05-10 — Sprint 194: Clarification-Needed Wrap-Ups Visible in Director Review Queue V1
 
 **Sprint 193 commit verified:** `3ca7515 — Sprint 193 — Rejected Wrap-Ups Visible in Director Review Queue V1`
