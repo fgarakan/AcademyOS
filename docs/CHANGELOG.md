@@ -2,6 +2,82 @@
 
 ---
 
+## 2026-05-10 — Sprint 196: Academy Onboarding Master Flow Architecture V1
+
+**Sprint 195 commit verified:** `5edfc75 — Sprint 195 — Placement Engine Current State Audit + Next Phase Plan V1`
+
+**Onboarding/setup route audit:**
+- Existing assets confirmed: `SetupProgressChecklist` (7-step widget on director dashboard), `/director/demo` (11-step sandbox demo tour), `/director/players/onboarding-review` (post-activation player readiness), `CurriculumCustomizationAssistant` (5-step scaffold), `/platform` (platform admin — read-only).
+- No `/director/onboarding` or `/director/setup` route exists. The checklist is a widget, not a flow. This is the primary gap.
+- `GuidedStepCard`, `NextBestActionCard`, `PageExplainerCard`, `CurriculumLoopDiagram` exist in `src/components/onboarding/` — reusable for the wizard.
+
+**Existing data model support confirmed:**
+- `academies`: `name`, `slug`, `country`, `timezone`, `is_active`, `settings` (JSON — writable; key onboarding fields can be stored here without migration).
+- `academy_memberships`: roles `academy_director`, `head_coach`, `coach`, `player`, `parent`.
+- `groups`: `name`, `track`, `level_id`, `description`, `min_age`, `max_age`, `max_players`.
+- `profiles`: `display_name`, `email`, `phone`, `locale`.
+- `templates`, `curriculum_levels`, `placement_recommendations`, `proposed_actions`, `audit_logs` all functional.
+- `academies.settings` JSON column can store: `onboarding_state`, `onboarding_completed_phases`, `logo_url`, `brand_color`, `communication_tone`, `portal_visibility`, `placement_rules`, `director_interview`.
+
+**Missing data model support identified:**
+- No `logo_url` column or Supabase Storage bucket for logos.
+- No `onboarding_state` typed column or enum.
+- No `communication_tone` column.
+- No `portal_visibility_settings` table.
+- No `onboarding_interview_answers` table.
+- No `placement_rules` table.
+- No `pending_invites` table for coach/parent email invite flow.
+- No `academy_curriculum_selections` table for per-academy curriculum adoption.
+- All of these can be deferred to future migrations; `settings` JSON handles V1.
+
+**Full onboarding flow defined — 18 phases:**
+1. Registration / Workspace Creation
+2. Academy Identity + Logo Upload
+3. AI Director Interview
+4. Curriculum Starter Selection
+5. Curriculum Customization Assistant
+6. Level Gates + Promotion Rules
+7. Program + Group Setup
+8. Coach Setup + Permissions
+9. Player Import / Pending Placement
+10. Placement Rules Setup
+11. Parent Portal Visibility
+12. Player Portal Mission Visibility
+13. Communication Style Setup
+14. Starter Session Template Generation
+15. Review Academy Setup
+16. Demo Week Preview
+17. Launch Checklist
+18. Go Live
+
+**For each phase:** director goal, AI assistant role, voice-assisted examples, data objects touched, approval/confirmation requirement, parent/player visibility risk, safe V1 version, future 10/10 version — all defined in `docs/ACADEMY_ONBOARDING_ARCHITECTURE.md`.
+
+**Voice-first interaction model defined:** Voice creates → proposed_actions (pending_review) → UI confirms → database structures → system executes → human approves before official activation or communication.
+
+**AI assistant behavior rules defined (10 rules):** one question at a time; summarize before writing; propose drafts; director approves; no parent/player communication without approval; no level movement without approval; no silent player activation; no raw coach notes exposed externally; no configuration overrides global defaults; onboarding progress is resumable.
+
+**Onboarding state machine defined:** `not_started → academy_identity → director_interview → curriculum_setup → operations_setup → people_setup → portal_setup → launch_review → demo_preview → ready_to_launch → live`. Persisted in `academies.settings.onboarding_state`.
+
+**Launch checklist defined — 14 checks:** academy profile complete, logo set/skipped, curriculum track selected, group created, class template created, coach invited/skipped, player import/skipped, placement rules approved, parent portal visibility saved, player portal visibility saved, communication tone selected, sample session generated, demo week previewed/skipped, director go-live approval.
+
+**Recommended Sprint 197–206 block defined:** Sprint 197 = Academy Identity + Settings V1 (`/director/settings`, read/write `academies` fields + `settings` JSON, no migration).
+
+**Open questions documented:** 8 product/data decisions requiring founder confirmation — academy creation model, logo storage target, coach invite vs manual creation, curriculum customization scope, parent portal URL structure, onboarding route guard, multi-director support, demo week with real data.
+
+**Documentation created:** `docs/ACADEMY_ONBOARDING_ARCHITECTURE.md`
+
+**Files modified:** `docs/ACADEMY_ONBOARDING_ARCHITECTURE.md` (new), `docs/CHANGELOG.md`
+
+**No functional code changes.** No academy records mutated. No player records mutated. No placement records mutated. No parent/player communication sent. No migrations modified. `database.types.ts` untouched.
+
+**TypeScript:** CLEAN — no code files modified; check is confirmatory.
+
+**Manual browser QA status:** Documentation-only sprint. No UI changes to test.
+
+**Future Director AI Agent context note:** The `academies.settings` JSON column is the V1 persistence layer for all onboarding state — including `onboarding_state`, `communication_tone`, `portal_visibility`, and `placement_rules`. A Director AI Agent in a future sprint can read these settings to understand the academy's configured operating style and tailor all proposed drafts accordingly (tone, depth, format). The 18-phase flow and state machine defined here provide the structured context that makes that agent coherent across sessions.
+
+---
+
 ## 2026-05-10 — Sprint 195: Placement Engine Current State Audit + Next Phase Plan V1
 
 **Sprint 194 commit verified:** `4f7b669 — Sprint 194 — Clarification-Needed Wrap-Ups Visible in Director Review Queue V1`
