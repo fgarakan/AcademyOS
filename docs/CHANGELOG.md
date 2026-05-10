@@ -2,6 +2,63 @@
 
 ---
 
+## 2026-05-10 — Sprint 198: Academy Onboarding Wizard Entry Point V1
+
+**Sprint 197 commit verified:** `f64747b — Sprint 197 — Academy Identity + Settings V1`
+
+**Onboarding/checklist/navigation pattern audit:**
+- `SetupProgressChecklist` — client-only (localStorage dismiss/collapse); props are data counts; not reusable for wizard (different data shape).
+- `GuidedStepCard` — server-safe; supports `complete`/`current`/`upcoming`; `complete` state hides description — rendered inline for full control over Revisit links and Coming Soon badges.
+- `NextBestActionCard` — server-safe; used as the next-step CTA block pattern.
+- `PageExplainerCard` — server-safe; used for context banners elsewhere.
+- `SidebarNav.tsx` SYSTEM_ITEMS confirmed safe for adding Onboarding nav item.
+- Auth pattern confirmed identical to `settings/page.tsx`: auth → profile → membership role check → rawDb fetch.
+
+**`/director/onboarding` page added:**
+- Server component. Read-only — no mutations.
+- Auth guard: authenticated user → profile → academy_id → `academy_director` role check → rawDb fetch academy.
+- Reads `academies.settings` JSON: `academy_identity_completed` (V1 only completion signal).
+- 12-step onboarding journey defined inline in `STEP_DEFS`.
+- Step status machine: complete → next (first incomplete, lime indicator) → upcoming (remaining).
+- Progress bar + `N / 12 steps complete` counter.
+
+**Onboarding step list (12 steps):**
+1. Academy Identity — linked to `/director/settings`; complete when `academy_identity_completed === true`
+2. Director Interview — Coming Soon
+3. Curriculum Setup — Coming Soon
+4. Level Gates + Promotion Rules — Coming Soon
+5. Programs + Groups — Coming Soon
+6. Coaches + Permissions — Coming Soon
+7. Players + Placement — Coming Soon
+8. Portal Visibility — Coming Soon
+9. Communication Style — Coming Soon
+10. Session Templates — Coming Soon
+11. Demo Week — Coming Soon
+12. Launch Checklist — Coming Soon
+
+**Academy Identity step behavior:**
+- Status = `complete` when `settings.academy_identity_completed === true`: green check, "Complete" badge, "Revisit →" link.
+- Status = `next` when not yet complete: lime indicator, full description, "Open Academy Settings →" inline link + separate next-step CTA block above the list.
+- Other steps show "Coming Soon" badge with Lock icon.
+
+**Navigation:**
+- `Onboarding` added to `SYSTEM_ITEMS` in `SidebarNav.tsx` with `Rocket` icon; appears before Demo Tour and Settings.
+
+**Data safety:**
+- Read-only page. No update/insert/delete anywhere.
+- No player mutations. No placement mutations. No parent/player communication.
+
+**AI-assisted onboarding context note:**
+- Info banner at page bottom: "AI-assisted setup and voice-guided onboarding will plug into this flow as each phase becomes available. Steps marked Coming Soon will be unlocked in future releases."
+
+**Manual browser QA:** Not yet performed (dev server not started this sprint — read-only shell page with no interactive state).
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+**No migrations modified. `database.types.ts` untouched. Unrelated dirty files untouched.**
+
+---
+
 ## 2026-05-10 — Sprint 197: Academy Identity + Settings V1
 
 **Files created:**

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
   LogOut, Dumbbell, ClipboardList, FlaskConical,
-  ChevronRight, LayoutTemplate, Sparkles, Terminal, UserPlus, Activity, Settings,
+  ChevronRight, LayoutTemplate, Sparkles, Terminal, UserPlus, Activity, Settings, Rocket,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
@@ -27,8 +27,9 @@ const INTELLIGENCE_ITEMS = [
 ]
 
 const SYSTEM_ITEMS = [
-  { label: 'Demo Tour', href: '/director/demo', icon: FlaskConical },
-  { label: 'Settings',  href: '/director/settings', icon: Settings },
+  { label: 'Onboarding', href: '/director/onboarding', icon: Rocket },
+  { label: 'Demo Tour',  href: '/director/demo',        icon: FlaskConical },
+  { label: 'Settings',   href: '/director/settings',    icon: Settings },
 ]
 
 interface SidebarNavProps {
