@@ -3674,7 +3674,7 @@ function mapConfidenceScore(confidence: string | undefined): number | null {
 export async function createPlayerFromApprovedRecommendationAction(
   recommendationDraftId: string,
 ): Promise<CreatePlayerResult> {
-  assertNotPreviewMode()
+  await assertNotPreviewMode()
 
   const supabase = await getSupabaseServer()
   const rawDb = supabase as any
