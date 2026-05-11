@@ -2,6 +2,44 @@
 
 ---
 
+## 2026-05-11 — Sprint 209: Live Supabase Migration Catch-Up V1
+
+**Root cause:** The live Supabase project (dbjjhhxdkpdreytsozlq) had only migrations 001–038 + 048 applied. Migrations 039–047 and 049–063 existed in local files but had never been executed on the live database. All 25 migrations (excluding 048 already applied in Sprint 208, and 055 which is superseded by 058) were applied via Supabase MCP in strict numeric order.
+
+**Migrations applied (database only — no source files changed):**
+- `039` (`academy_curriculum_clone` prerequisite migrations): platform_roles, requirement_domains, requirement_domain_seed, orange_ball_starter_requirements, player_requirement_progress_bootstrap, curriculum_content_library
+- `046_orange_ball_content_pack` — seeds curriculum_content_items for Orange 1/2/3 (29 rows); conflict clause fixed from named constraint to column inference
+- `047_content_requirement_mappings_seed` — seeds curriculum_content_requirement_mappings
+- `049_session_adjustment_suggestions` — creates session_adjustment_suggestions table with RLS
+- `050_private_lesson_requests` — creates private_lesson_requests table with RLS
+- `051_academy_suggestions` — creates academy_suggestions table with RLS
+- `052_curriculum_foundation_tables` — creates 10 curriculum tables (gates, drills, drill_tags, coach_language, competition_track, fitness_guidance, volume_guidance, archetypes, failure_modes, drill_gate_mappings) with RLS
+- `053_curriculum_seed` — 515KB seed file applied as verification-only DO block (data already present out-of-band); confirms gate/drill/archetype counts before registering
+- `054_execute_approved_action_expansion` — expands execute_approved_action() from 5 to 11 WHEN clauses
+- `055` — SKIPPED (superseded by 058)
+- `056_session_block_exercises_rls` — adds 2 RLS policies on session_block_exercises
+- `057_session_block_status` — adds actual_status column to session_blocks
+- `058_template_block_exercises_rls` — adds 5 RLS policies on template_block_exercises
+- `059_player_gate_status` — creates player_gate_status table with 6 indexes, trigger, 2 policies; adds gate_id to requirement_evidence_links; bootstraps not_started rows
+- `060_gate_status_repair` — completes partially-applied 059 steps (idempotent)
+- `061_curriculum_content_taxonomy` — adds 6 columns to curriculum_content_items (domain, session_block_hint, is_player_visible, is_parent_visible, is_coach_only, ball_level); expands content_type CHECK constraint; adds 7 indexes
+- `062_class_template_content_junction` — creates curriculum_class_template_blocks junction table with RLS
+- `063_orange1_foundation_content_seed` — seeds ~46 curriculum_content_items rows for Orange 1
+
+**Key idempotency fixes applied during this sprint:**
+- `ON CONFLICT ON CONSTRAINT <index_name>` replaced with column inference `ON CONFLICT (level_id, content_type, title, version) WHERE academy_id IS NULL DO NOTHING` (migrations 046, 063) — unique indexes are not named constraints in pg_constraint
+- All `CREATE TABLE` wrapped with `IF NOT EXISTS`
+- All `CREATE INDEX` wrapped with `IF NOT EXISTS`
+- All `CREATE POLICY` prefixed with `DROP POLICY IF EXISTS`
+- All `CREATE TRIGGER` prefixed with `DROP TRIGGER IF EXISTS`
+- `ADD CONSTRAINT curriculum_content_items_content_type_check` wrapped in conditional DO block (migration 061)
+
+**`database.types.ts` — not regenerated.** Schema is now fully applied on live DB. Regeneration deferred to a dedicated sprint to avoid disrupting current type coverage.
+
+**TypeScript result:** clean (`npx tsc --noEmit` — zero errors; Sprint 209 made no app code changes).
+
+---
+
 ## 2026-05-11 — Sprint 208: Curriculum Version Schema Repair V1
 
 **Root cause:** Migration 048 (`academy_curriculum_clone.sql`) had never been applied to the live Supabase project. The live database had only migrations 001–038. The tables `academy_curriculum_versions` and `academy_curriculum_overrides` did not exist, causing a runtime schema-cache error when the "Create Academy Curriculum Version" button was used on `/director/curriculum`.
