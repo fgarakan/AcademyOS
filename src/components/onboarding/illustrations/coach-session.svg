@@ -1,0 +1,43 @@
+<svg viewBox="0 0 400 240" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Running a session in blocks</title>
+  <desc>A vertical timeline of session blocks with progress, showing the structure of a single training session.</desc>
+  <!-- Session shell -->
+  <rect x="100" y="40" width="200" height="170" rx="8" class="illo-stroke" fill="var(--aos-surface)"/>
+  <!-- Header -->
+  <line x1="100" y1="64" x2="300" y2="64" stroke="var(--aos-border)" stroke-width="0.5"/>
+  <circle cx="116" cy="52" r="3" class="illo-accent-fill"/>
+  <line x1="126" y1="52" x2="180" y2="52" stroke="var(--aos-text)" stroke-width="0.75"/>
+  <text x="284" y="55" fill="var(--aos-text-dim)" font-size="9" text-anchor="end" font-family="inherit">75 min</text>
+  <!-- 5 blocks -->
+  <g>
+    <!-- Block 1 — completed -->
+    <rect x="112" y="76" width="176" height="20" rx="3" fill="var(--aos-accent-soft)" stroke="var(--aos-accent)" stroke-width="0.75"/>
+    <circle cx="122" cy="86" r="3" class="illo-accent-fill"/>
+    <path d="M 120 86 L 122 88 L 125 84" stroke="var(--aos-bg)" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="134" y1="86" x2="200" y2="86" stroke="var(--aos-accent)" stroke-width="0.5"/>
+
+    <!-- Block 2 — completed -->
+    <rect x="112" y="102" width="176" height="20" rx="3" fill="var(--aos-accent-soft)" stroke="var(--aos-accent)" stroke-width="0.75"/>
+    <circle cx="122" cy="112" r="3" class="illo-accent-fill"/>
+    <path d="M 120 112 L 122 114 L 125 110" stroke="var(--aos-bg)" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="134" y1="112" x2="210" y2="112" stroke="var(--aos-accent)" stroke-width="0.5"/>
+
+    <!-- Block 3 — active -->
+    <rect x="112" y="128" width="176" height="20" rx="3" fill="var(--aos-surface-2)" stroke="var(--aos-accent)" stroke-width="1.25"/>
+    <circle cx="122" cy="138" r="3.5" stroke="var(--aos-accent)" stroke-width="1" fill="var(--aos-bg)"/>
+    <circle cx="122" cy="138" r="1.5" class="illo-accent-fill illo-pulse"/>
+    <line x1="134" y1="138" x2="220" y2="138" stroke="var(--aos-text)" stroke-width="0.75"/>
+    <rect x="262" y="133" width="22" height="10" rx="2" fill="var(--aos-accent)"/>
+    <text x="273" y="141" fill="var(--aos-bg)" font-size="7" text-anchor="middle" letter-spacing="0.05em" font-family="inherit" font-weight="500">NOW</text>
+
+    <!-- Block 4 — upcoming -->
+    <rect x="112" y="154" width="176" height="20" rx="3" fill="var(--aos-bg)" stroke="var(--aos-border)" stroke-width="0.75"/>
+    <circle cx="122" cy="164" r="3" fill="none" stroke="var(--aos-text-dim)" stroke-width="0.75"/>
+    <line x1="134" y1="164" x2="190" y2="164" stroke="var(--aos-text-dim)" stroke-width="0.5"/>
+
+    <!-- Block 5 — upcoming -->
+    <rect x="112" y="180" width="176" height="20" rx="3" fill="var(--aos-bg)" stroke="var(--aos-border)" stroke-width="0.75"/>
+    <circle cx="122" cy="190" r="3" fill="none" stroke="var(--aos-text-dim)" stroke-width="0.75"/>
+    <line x1="134" y1="190" x2="180" y2="190" stroke="var(--aos-text-dim)" stroke-width="0.5"/>
+  </g>
+</svg>

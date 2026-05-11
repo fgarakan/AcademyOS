@@ -1,0 +1,275 @@
+/* ============================================================
+   AOS Deck — First-run role introduction deck
+   Sprint 210
+   ============================================================ */
+
+/* Custom property definitions scoped to the deck component.
+   Fallback values are used when --aos-* vars are not defined on :root. */
+.aos-deck {
+  --aos-bg: #030506;
+  --aos-surface: #07090c;
+  --aos-surface-2: #0d1117;
+  --aos-border: rgba(255,255,255,0.10);
+  --aos-border-strong: rgba(255,255,255,0.16);
+  --aos-accent: #11d9df;
+  --aos-accent-soft: rgba(17,217,223,0.10);
+  --aos-text: #f4f7f8;
+  --aos-text-muted: #a3aab4;
+  --aos-text-dim: #626b76;
+  --aos-red: #ff4d55;
+  --aos-orange: #ffb020;
+  background: var(--aos-surface, #07090c);
+  border: 1px solid var(--aos-border, rgba(255,255,255,0.10));
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  user-select: none;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.aos-deck-viewport {
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.aos-deck-track {
+  display: flex;
+  transition: transform 0.45s cubic-bezier(0.32, 0.72, 0.2, 1);
+  will-change: transform;
+}
+
+.aos-deck-slide {
+  flex: 0 0 100%;
+  padding: 48px 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-height: 520px;
+}
+
+.aos-deck-illustration {
+  width: 100%;
+  max-width: 380px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 36px;
+}
+
+.aos-deck-illustration svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ── Illustration helper classes ────────────────────────────
+   SVGs are injected via dangerouslySetInnerHTML and use these
+   class names to inherit the deck's color scheme. */
+.aos-deck-illustration .illo-stroke {
+  stroke: var(--aos-text, #f4f7f8);
+  fill: none;
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.aos-deck-illustration .illo-stroke-muted {
+  stroke: var(--aos-text-dim, #626b76);
+  fill: none;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.aos-deck-illustration .illo-dim-stroke {
+  stroke: var(--aos-border-strong, rgba(255,255,255,0.16));
+  fill: none;
+  stroke-width: 0.75;
+}
+
+.aos-deck-illustration .illo-grid {
+  stroke: var(--aos-border, rgba(255,255,255,0.10));
+  fill: none;
+  stroke-width: 0.5;
+}
+
+.aos-deck-illustration .illo-accent-fill {
+  fill: var(--aos-accent, #11d9df);
+}
+
+@keyframes illo-pulse-anim {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.aos-deck-illustration .illo-pulse {
+  animation: illo-pulse-anim 1.8s ease-in-out infinite;
+}
+
+/* ── Typography ─────────────────────────────────────────── */
+.aos-deck-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--aos-accent, #11d9df);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.aos-deck-title {
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  max-width: 480px;
+  color: var(--aos-text, #f4f7f8);
+}
+
+.aos-deck-body {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--aos-text-muted, #a3aab4);
+  margin: 0;
+  max-width: 460px;
+}
+
+/* ── Footer ─────────────────────────────────────────────── */
+.aos-deck-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px 24px;
+  border-top: 1px solid var(--aos-border, rgba(255,255,255,0.10));
+  background: var(--aos-bg, #030506);
+}
+
+.aos-deck-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.aos-deck-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--aos-border-strong, rgba(255,255,255,0.16));
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aos-deck-dot:hover {
+  background: var(--aos-text-dim, #626b76);
+}
+
+.aos-deck-dot.active {
+  background: var(--aos-accent, #11d9df);
+  width: 20px;
+  border-radius: 3px;
+}
+
+.aos-deck-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.aos-deck-btn {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 9px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  background: transparent;
+  color: var(--aos-text-muted, #a3aab4);
+}
+
+.aos-deck-btn:hover {
+  color: var(--aos-text, #f4f7f8);
+  background: var(--aos-surface-2, #0d1117);
+}
+
+.aos-deck-btn.primary {
+  background: var(--aos-accent, #11d9df);
+  color: var(--aos-bg, #030506);
+}
+
+.aos-deck-btn.primary:hover {
+  opacity: 0.88;
+}
+
+.aos-deck-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Chrome ─────────────────────────────────────────────── */
+.aos-deck-skip {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--aos-text-dim, #626b76);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  z-index: 2;
+}
+
+.aos-deck-skip:hover {
+  color: var(--aos-text-muted, #a3aab4);
+}
+
+.aos-deck-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--aos-accent, #11d9df);
+  transition: width 0.4s cubic-bezier(0.32, 0.72, 0.2, 1);
+  z-index: 3;
+}
+
+/* ── Accessibility ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .aos-deck-track,
+  .aos-deck-progress,
+  .aos-deck-dot,
+  .aos-deck-illustration .illo-pulse {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .aos-deck-slide {
+    padding: 40px 24px 20px;
+    min-height: 460px;
+  }
+
+  .aos-deck-title {
+    font-size: 22px;
+  }
+
+  .aos-deck-illustration {
+    height: 200px;
+    margin-bottom: 28px;
+  }
+
+  .aos-deck-footer {
+    padding: 16px 20px 20px;
+  }
+}

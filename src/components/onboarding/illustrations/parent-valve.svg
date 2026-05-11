@@ -1,0 +1,40 @@
+<svg viewBox="0 0 400 240" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>A filtering valve between coach and parent</title>
+  <desc>Raw coach input on the left passes through a valve in the center, with filtered cleaned output emerging on the right.</desc>
+  <!-- Left: raw input -->
+  <g>
+    <rect x="40" y="80" width="100" height="80" rx="6" class="illo-dim-stroke" fill="var(--aos-surface-2)" stroke-dasharray="2 3"/>
+    <text x="90" y="65" fill="var(--aos-text-dim)" font-size="9" text-anchor="middle" letter-spacing="0.15em" font-family="inherit">COACH NOTES</text>
+    <!-- Squiggly content -->
+    <g stroke="var(--aos-text-dim)" stroke-width="0.5" fill="none" stroke-linecap="round">
+      <path d="M 52 96 Q 60 92 70 96 T 90 96 T 110 96 T 128 96"/>
+      <path d="M 52 108 Q 60 104 70 108 T 90 108 T 110 108 T 128 108"/>
+      <path d="M 52 120 Q 60 116 70 120 T 90 120 T 110 120"/>
+      <path d="M 52 132 Q 60 128 70 132 T 90 132 T 110 132 T 128 132"/>
+      <path d="M 52 144 Q 60 140 70 144 T 90 144 T 105 144"/>
+    </g>
+  </g>
+  <!-- Center: valve -->
+  <g>
+    <!-- valve body -->
+    <path d="M 152 90 L 200 120 L 152 150 Z" class="illo-stroke" fill="var(--aos-surface)"/>
+    <path d="M 248 90 L 200 120 L 248 150 Z" class="illo-stroke" fill="var(--aos-surface)"/>
+    <!-- valve disc with accent -->
+    <circle cx="200" cy="120" r="14" fill="var(--aos-bg)" stroke="var(--aos-accent)" stroke-width="1.5"/>
+    <line x1="190" y1="120" x2="210" y2="120" stroke="var(--aos-accent)" stroke-width="1.25"/>
+  </g>
+  <text x="200" y="180" fill="var(--aos-accent)" font-size="9" text-anchor="middle" letter-spacing="0.15em" font-family="inherit" font-weight="500">DIRECTOR APPROVES</text>
+  <!-- Right: filtered output -->
+  <g>
+    <rect x="260" y="80" width="100" height="80" rx="6" class="illo-stroke" fill="var(--aos-surface)"/>
+    <text x="310" y="65" fill="var(--aos-accent)" font-size="9" text-anchor="middle" letter-spacing="0.15em" font-family="inherit" font-weight="500">TO YOU</text>
+    <!-- Clean content lines -->
+    <g stroke="var(--aos-text)" stroke-width="0.5">
+      <line x1="272" y1="96" x2="348" y2="96"/>
+      <line x1="272" y1="108" x2="338" y2="108" opacity="0.7"/>
+      <line x1="272" y1="120" x2="344" y2="120" opacity="0.7"/>
+      <line x1="272" y1="132" x2="330" y2="132" opacity="0.7"/>
+      <line x1="272" y1="144" x2="340" y2="144" opacity="0.7"/>
+    </g>
+  </g>
+</svg>

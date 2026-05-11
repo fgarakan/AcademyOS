@@ -1,0 +1,42 @@
+<svg viewBox="0 0 400 240" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>What parents see and what stays internal</title>
+  <desc>Two columns: one visible card on the left labeled shared, one redacted card on the right labeled internal only.</desc>
+  <!-- Left: shared -->
+  <g>
+    <rect x="50" y="50" width="140" height="160" rx="8" class="illo-stroke" fill="var(--aos-surface)"/>
+    <circle cx="65" cy="68" r="3" class="illo-accent-fill"/>
+    <text x="80" y="72" fill="var(--aos-accent)" font-size="10" letter-spacing="0.1em" font-family="inherit" font-weight="500">SHARED</text>
+    <!-- Content visible -->
+    <g stroke="var(--aos-text)" stroke-width="0.5">
+      <line x1="62" y1="92" x2="178" y2="92"/>
+      <line x1="62" y1="104" x2="170" y2="104" opacity="0.7"/>
+      <line x1="62" y1="116" x2="178" y2="116" opacity="0.7"/>
+    </g>
+    <g stroke="var(--aos-text)" stroke-width="0.5">
+      <line x1="62" y1="140" x2="178" y2="140"/>
+      <line x1="62" y1="152" x2="160" y2="152" opacity="0.7"/>
+      <line x1="62" y1="164" x2="174" y2="164" opacity="0.7"/>
+    </g>
+    <text x="120" y="194" fill="var(--aos-text-muted)" font-size="9" text-anchor="middle" font-family="inherit">progress · highlights · milestones</text>
+  </g>
+  <!-- Right: internal -->
+  <g>
+    <rect x="210" y="50" width="140" height="160" rx="8" class="illo-dim-stroke" fill="var(--aos-surface-2)"/>
+    <!-- Lock icon -->
+    <g transform="translate(225, 64)">
+      <rect x="-3" y="-1" width="6" height="6" rx="1" stroke="var(--aos-text-dim)" stroke-width="1" fill="none"/>
+      <path d="M -2 -1 L -2 -4 Q -2 -7 0 -7 Q 2 -7 2 -4 L 2 -1" stroke="var(--aos-text-dim)" stroke-width="1" fill="none"/>
+    </g>
+    <text x="240" y="72" fill="var(--aos-text-dim)" font-size="10" letter-spacing="0.1em" font-family="inherit">COACHING TEAM</text>
+    <!-- Redacted lines -->
+    <g>
+      <rect x="222" y="86" width="116" height="6" fill="var(--aos-text-dim)" opacity="0.25"/>
+      <rect x="222" y="98" width="106" height="6" fill="var(--aos-text-dim)" opacity="0.25"/>
+      <rect x="222" y="110" width="116" height="6" fill="var(--aos-text-dim)" opacity="0.25"/>
+      <rect x="222" y="134" width="116" height="6" fill="var(--aos-text-dim)" opacity="0.25"/>
+      <rect x="222" y="146" width="96" height="6" fill="var(--aos-text-dim)" opacity="0.25"/>
+      <rect x="222" y="158" width="116" height="6" fill="var(--aos-text-dim)" opacity="0.25"/>
+    </g>
+    <text x="280" y="194" fill="var(--aos-text-dim)" font-size="9" text-anchor="middle" font-family="inherit">coach notes · diagnoses</text>
+  </g>
+</svg>

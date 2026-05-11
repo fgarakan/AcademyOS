@@ -1,0 +1,51 @@
+<svg viewBox="0 0 400 240" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Asking questions through the right channel</title>
+  <desc>Parent figure on the left with a speech bubble flowing through a routing icon to a director figure on the right.</desc>
+  <!-- Parent -->
+  <g class="illo-stroke">
+    <circle cx="70" cy="110" r="9" fill="var(--aos-bg)"/>
+    <line x1="70" y1="119" x2="70" y2="150"/>
+    <line x1="70" y1="128" x2="58" y2="138"/>
+    <line x1="70" y1="128" x2="82" y2="138"/>
+    <line x1="70" y1="150" x2="64" y2="170"/>
+    <line x1="70" y1="150" x2="76" y2="170"/>
+  </g>
+  <circle cx="70" cy="110" r="2.5" class="illo-accent-fill"/>
+  <!-- Speech bubble -->
+  <g class="illo-stroke">
+    <rect x="100" y="70" width="80" height="36" rx="6" fill="var(--aos-surface)"/>
+    <path d="M 112 106 L 108 116 L 122 106 Z" fill="var(--aos-surface)" stroke="var(--aos-text)"/>
+  </g>
+  <!-- Question lines inside -->
+  <g stroke="var(--aos-text)" stroke-width="0.5">
+    <line x1="112" y1="84" x2="168" y2="84"/>
+    <line x1="112" y1="94" x2="158" y2="94" opacity="0.7"/>
+  </g>
+  <!-- Flow arrow -->
+  <g stroke="var(--aos-accent)" stroke-width="1" fill="none" stroke-linecap="round">
+    <line x1="190" y1="120" x2="218" y2="120"/>
+    <path d="M 212 114 L 218 120 L 212 126"/>
+  </g>
+  <!-- Routing hub (central) -->
+  <g>
+    <circle cx="238" cy="120" r="14" fill="var(--aos-surface)" stroke="var(--aos-accent)" stroke-width="1.25"/>
+    <circle cx="238" cy="120" r="3" class="illo-accent-fill"/>
+  </g>
+  <!-- Right arrow -->
+  <g stroke="var(--aos-accent)" stroke-width="1" fill="none" stroke-linecap="round">
+    <line x1="258" y1="120" x2="286" y2="120"/>
+    <path d="M 280 114 L 286 120 L 280 126"/>
+  </g>
+  <!-- Director on right -->
+  <g class="illo-stroke-muted">
+    <circle cx="320" cy="110" r="8" fill="var(--aos-bg)"/>
+    <line x1="320" y1="118" x2="320" y2="148"/>
+    <line x1="320" y1="126" x2="310" y2="136"/>
+    <line x1="320" y1="126" x2="330" y2="136"/>
+    <line x1="320" y1="148" x2="314" y2="166"/>
+    <line x1="320" y1="148" x2="326" y2="166"/>
+  </g>
+  <text x="70" y="196" fill="var(--aos-accent)" font-size="9" text-anchor="middle" letter-spacing="0.15em" font-family="inherit" font-weight="500">YOU</text>
+  <text x="238" y="196" fill="var(--aos-text-muted)" font-size="9" text-anchor="middle" letter-spacing="0.15em" font-family="inherit">ROUTED</text>
+  <text x="320" y="196" fill="var(--aos-text-muted)" font-size="9" text-anchor="middle" letter-spacing="0.15em" font-family="inherit">DIRECTOR</text>
+</svg>

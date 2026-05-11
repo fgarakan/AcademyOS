@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-11 — Sprint 210: First-Run Deck Copy + Illustration Update
+
+**Files created:**
+- `src/components/onboarding/AOSDeck.tsx` — Client Component: swipeable, keyboard-navigable, touch-aware first-run deck with progress bar, dot pagination, Skip/Back/Next controls
+- `src/components/onboarding/aos-deck.css` — Deck styles using `--aos-*` custom properties (mapped to project palette at component scope); includes illustration helper classes (`illo-stroke`, `illo-accent-fill`, `illo-pulse`, etc.) for SVGs injected via `dangerouslySetInnerHTML`
+- `src/components/onboarding/decks.ts` — Four role decks (director 5 slides, coach 5 slides, player 4 slides, parent 4 slides); SVG illustrations inlined as string constants
+- `src/components/onboarding/illustrations/` — 18 SVG files (director-overview, director-loop, director-role, director-setup, director-ready, coach-receive, coach-session, coach-wrapup, coach-visibility, coach-amplified, player-path, player-gates, player-assessment, player-trust, parent-receive, parent-valve, parent-private, parent-ask)
+
+**First-run gating: NOT wired.** The repo has no first-run state management pattern. The `profiles` table has no `has_seen_deck` or `onboarding_completed` column. There is no `useAuth` hook or client-side auth context. All role layouts are Server Components. Integration requires a decision on gating strategy (DB column + migration, or `localStorage`).
+
+**SVG raw-import strategy: Inlined string constants.** This is Next.js 14 App Router — `?raw` imports are not supported without a custom webpack loader. The `.svg` files exist in `./illustrations/` for reference; `decks.ts` contains their content verbatim as template literal constants.
+
+**TypeScript result:** clean (`npx tsc --noEmit` — zero errors).
+
+---
+
 ## 2026-05-11 — Sprint 209: Live Supabase Migration Catch-Up V1
 
 **Root cause:** The live Supabase project (dbjjhhxdkpdreytsozlq) had only migrations 001–038 + 048 applied. Migrations 039–047 and 049–063 existed in local files but had never been executed on the live database. All 25 migrations (excluding 048 already applied in Sprint 208, and 055 which is superseded by 058) were applied via Supabase MCP in strict numeric order.

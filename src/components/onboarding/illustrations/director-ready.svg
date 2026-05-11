@@ -1,0 +1,30 @@
+<svg viewBox="0 0 400 240" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Ready to begin</title>
+  <desc>Ascending arc made of dots rising from a horizon line, with a director figure on the horizon facing the rising path.</desc>
+  <!-- Horizon -->
+  <line x1="40" y1="200" x2="360" y2="200" stroke="var(--aos-border-strong)" stroke-width="1"/>
+  <!-- Ascending dot trail forming an arc -->
+  <g fill="var(--aos-accent)">
+    <circle cx="100" cy="195" r="2" opacity="0.4"/>
+    <circle cx="130" cy="180" r="2.2" opacity="0.55"/>
+    <circle cx="160" cy="160" r="2.4" opacity="0.7"/>
+    <circle cx="195" cy="135" r="2.6" opacity="0.85"/>
+    <circle cx="235" cy="105" r="2.8" opacity="0.95"/>
+    <circle cx="280" cy="72" r="3.2"/>
+    <circle cx="330" cy="40" r="3.6" class="illo-pulse"/>
+  </g>
+  <!-- Connecting curve (subtle) -->
+  <path d="M 100 195 Q 180 180 235 105 T 330 40" stroke="var(--aos-accent)" stroke-width="0.5" stroke-dasharray="1 3" fill="none" opacity="0.4"/>
+  <!-- Figure on horizon -->
+  <g class="illo-stroke">
+    <circle cx="80" cy="172" r="7" fill="var(--aos-bg)"/>
+    <line x1="80" y1="179" x2="80" y2="200"/>
+    <line x1="80" y1="186" x2="70" y2="194"/>
+    <line x1="80" y1="186" x2="90" y2="194"/>
+  </g>
+  <circle cx="80" cy="172" r="2" class="illo-accent-fill"/>
+  <!-- Subtle ground lines suggesting depth -->
+  <g class="illo-grid" stroke-dasharray="2 6">
+    <line x1="40" y1="215" x2="360" y2="215"/>
+  </g>
+</svg>

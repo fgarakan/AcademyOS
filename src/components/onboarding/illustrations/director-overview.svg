@@ -1,0 +1,52 @@
+<svg viewBox="0 0 400 240" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>An academy as a layered operating system</title>
+  <desc>Three horizontal layers stacked, with nodes on each connected vertically, representing the structured layers of an academy management system.</desc>
+  <!-- Background reticle -->
+  <g class="illo-grid">
+    <line x1="40" y1="50" x2="360" y2="50"/>
+    <line x1="40" y1="120" x2="360" y2="120"/>
+    <line x1="40" y1="190" x2="360" y2="190"/>
+  </g>
+  <!-- Layer labels (left side) -->
+  <text x="32" y="54" fill="var(--aos-text-dim)" font-size="9" text-anchor="end" letter-spacing="0.1em" font-family="inherit">PEOPLE</text>
+  <text x="32" y="124" fill="var(--aos-text-dim)" font-size="9" text-anchor="end" letter-spacing="0.1em" font-family="inherit">CURRICULUM</text>
+  <text x="32" y="194" fill="var(--aos-text-dim)" font-size="9" text-anchor="end" letter-spacing="0.1em" font-family="inherit">INTELLIGENCE</text>
+  <!-- Top layer: people nodes -->
+  <g class="illo-stroke">
+    <circle cx="100" cy="50" r="6" fill="var(--aos-bg)"/>
+    <circle cx="160" cy="50" r="6" fill="var(--aos-bg)"/>
+    <circle cx="220" cy="50" r="6" fill="var(--aos-bg)"/>
+    <circle cx="280" cy="50" r="6" fill="var(--aos-bg)"/>
+  </g>
+  <!-- Middle layer: curriculum bars -->
+  <g>
+    <rect x="80" y="113" width="40" height="14" rx="2" class="illo-dim-stroke" fill="var(--aos-surface-2)"/>
+    <rect x="130" y="113" width="60" height="14" rx="2" class="illo-dim-stroke" fill="var(--aos-surface-2)"/>
+    <rect x="200" y="113" width="50" height="14" rx="2" class="illo-dim-stroke" fill="var(--aos-surface-2)"/>
+    <rect x="260" y="113" width="60" height="14" rx="2" class="illo-dim-stroke" fill="var(--aos-surface-2)"/>
+  </g>
+  <!-- Bottom layer: intelligence pulses -->
+  <g class="illo-accent">
+    <circle cx="100" cy="190" r="3" fill="var(--aos-accent)"/>
+    <circle cx="160" cy="190" r="3" fill="var(--aos-accent)" class="illo-pulse"/>
+    <circle cx="220" cy="190" r="3" fill="var(--aos-accent)"/>
+    <circle cx="280" cy="190" r="3" fill="var(--aos-accent)" class="illo-pulse"/>
+  </g>
+  <!-- Vertical connections -->
+  <g stroke="var(--aos-accent)" stroke-width="0.75" stroke-dasharray="2 3" opacity="0.5" fill="none">
+    <line x1="100" y1="56" x2="100" y2="187"/>
+    <line x1="160" y1="56" x2="160" y2="187"/>
+    <line x1="220" y1="56" x2="220" y2="187"/>
+    <line x1="280" y1="56" x2="280" y2="187"/>
+  </g>
+  <!-- Director figure on left, looking across -->
+  <g class="illo-stroke">
+    <circle cx="56" cy="116" r="7" fill="var(--aos-bg)"/>
+    <line x1="56" y1="123" x2="56" y2="148"/>
+    <line x1="56" y1="130" x2="46" y2="140"/>
+    <line x1="56" y1="130" x2="66" y2="140"/>
+    <line x1="56" y1="148" x2="50" y2="162"/>
+    <line x1="56" y1="148" x2="62" y2="162"/>
+  </g>
+  <circle cx="56" cy="116" r="2" class="illo-accent-fill"/>
+</svg>
