@@ -2,6 +2,45 @@
 
 ---
 
+## 2026-05-11 — Sprint 205: Onboarding Progress Card on Director Dashboard V1
+
+**Sprint 204 commit verified:** `3f8679c — Sprint 204 — Players + Placement Setup V1`
+
+**Dashboard/onboarding pattern audit:**
+- `src/app/director/page.tsx` confirmed: academy fetch only selects `name` — `settings` not yet fetched on dashboard.
+- `rawDb = supabase as any` already defined at line 130 — safe to add settings fetch immediately after.
+- `SetupProgressChecklist` (in `src/components/onboarding/`) tracks operational setup: players, curriculum levels, templates, sessions — distinct from wizard onboarding. Preserved without modification.
+- `NextBestActionCard` and other onboarding components confirmed in `src/components/onboarding/`.
+- New `OnboardingProgressCard` placed in `src/app/director/` (co-located with dashboard) since it is a pure prop-driven server-compatible component.
+- Placement: above `SetupProgressChecklist` in dashboard JSX (directly after header section).
+
+**`OnboardingProgressCard` added (`src/app/director/OnboardingProgressCard.tsx`):**
+- Pure component (no `'use client'`), accepts `settings: Record<string, unknown>` prop.
+- Defines 7 onboarding step definitions matching the wizard: `academy_identity_completed`, `director_interview_completed`, `curriculum_setup_completed`, `level_gates_completed`, `programs_groups_completed`, `coaches_permissions_completed`, `players_placement_completed`.
+- Calculates `completedCount` and `progressPct` from settings keys.
+- Incomplete state: `Card`/`CardContent`, Rocket icon, "Academy Onboarding" title, `X / 7 steps complete` mono counter, lime progress bar, next step callout panel (lime/5 bg), "Continue Setup" primary CTA → `/director/onboarding`, "Go directly to [Step Name] →" secondary link to next step href.
+- All-complete state: compact green success banner with `CheckCircle2`, "Core setup complete" message, "Review Onboarding →" secondary link.
+
+**`/director` dashboard updated:**
+- Imports `OnboardingProgressCard` from `./OnboardingProgressCard`.
+- Adds settings fetch after `rawDb` is defined: `rawDb.from('academies').select('settings').eq('id', academyId).single()`.
+- Extracts: `const onboardingSettings = (academyWithSettings?.settings as Record<string, unknown>) ?? {}`.
+- Renders `<OnboardingProgressCard settings={onboardingSettings} />` between the header section and `SetupProgressChecklist`.
+- No mutations. No server actions added. No existing dashboard logic modified.
+
+**Data safety:**
+- Read-only. No `academies.settings` mutations. No server actions.
+- No `academy_memberships`, coach, group, program, curriculum, player, or placement records mutated.
+- No parent/player communication sent. No portal exposure changed.
+- No migrations created or modified. `database.types.ts` untouched.
+
+**Future context:**
+- When Steps 8–12 of onboarding are built, add their `settingsKey` to `ONBOARDING_STEPS` in `OnboardingProgressCard.tsx` and update the total count — no other dashboard changes needed. The card will automatically adjust progress and next-step logic.
+
+**Manual browser QA:** Pending — dev server required. Functional correctness verified by TypeScript check and structural review against existing dashboard patterns.
+
+---
+
 ## 2026-05-11 — Sprint 204: Players + Placement Setup V1
 
 **Sprint 203 commit verified:** `1aab5a3 — Sprint 203 — Coaches + Permissions Setup V1`

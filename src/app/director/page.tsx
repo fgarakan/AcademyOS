@@ -16,6 +16,7 @@ import { urgencyToLabel } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
 import { SetupProgressChecklist } from '@/components/onboarding/SetupProgressChecklist'
 import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
+import { OnboardingProgressCard } from './OnboardingProgressCard'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -128,6 +129,15 @@ export default async function DirectorDashboard() {
 
   // Private lesson requests — rawDb cast since table may not be in generated types yet
   const rawDb = supabase as any
+
+  // Onboarding settings — read-only, no mutations
+  const { data: academyWithSettings } = await rawDb
+    .from('academies')
+    .select('settings')
+    .eq('id', academyId)
+    .single()
+  const onboardingSettings = (academyWithSettings?.settings as Record<string, unknown>) ?? {}
+
   const { data: plrData } = await rawDb
     .from('private_lesson_requests')
     .select('id, status')
@@ -214,6 +224,9 @@ export default async function DirectorDashboard() {
           Players
         </Link>
       </div>
+
+      {/* ── Onboarding Progress ───────────────────────────── */}
+      <OnboardingProgressCard settings={onboardingSettings} />
 
       {/* ── Setup Checklist ───────────────────────────────── */}
       <SetupProgressChecklist
