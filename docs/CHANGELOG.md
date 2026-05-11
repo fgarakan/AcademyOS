@@ -2,6 +2,59 @@
 
 ---
 
+## 2026-05-11 — Sprint 207: Director Dashboard Empty States + Helper Copy V1
+
+**Sprint 206 commit verified:** `f86e1b6 — Sprint 206 — Director Dashboard UX Clarity Pass V1`
+
+**Dashboard empty-state audit findings:**
+- `Academy Setup` section had no helper copy to explain the two-track setup (wizard vs. operational).
+- `Today's Priorities` section had no helper copy; "0" metric counts were unexplained for new academies.
+- `Curriculum Coverage` card showed three "0" values with no guidance for zero-player state.
+- `Player Activity` section had no helper copy.
+- `Pending Placement` empty state said "All players have completed onboarding" even when zero players exist — actively misleading.
+- `Priority Queue` empty state was generic; "on track" is incorrect when there are no players yet.
+- `Signals + Intelligence` section had no helper copy.
+- `AI Suggestions` empty state said "Generate suggestions" — unclear since suggestions are system-generated.
+- `Academy Alerts` empty state said "Academy is on track" — misleading when no data exists at all.
+- `Sessions This Week` section was hidden entirely when no sessions — dead end for new directors.
+
+**`/director` page changes (`src/app/director/page.tsx`):**
+
+Helper copy added under section labels:
+- **Academy Setup** — "Complete these steps first. Academy OS uses this information to guide curriculum, placement, sessions, and coach workflows."
+- **Today's Priorities** — "Live counts from your academy. Numbers update as coaches run sessions and you action items in the review queue."
+- **Player Activity** — "Once players are added and placed, this section shows who needs placement, reassessment, or director attention."
+- **Signals + Intelligence** — "Alerts and AI suggestions appear here once sessions, coach notes, and player activity start producing signals."
+- **Sessions This Week** — "Sessions scheduled for the current week. Create sessions from class templates to build your coaching history."
+
+Empty states improved:
+- **Priority Queue** — now context-aware: shows "Add players to start tracking priority actions..." when zero players; shows "The academy is on track..." when players exist but none are urgent.
+- **Pending Placement** — now context-aware: shows "No players have been added yet. Add your first player to begin the placement process." when zero players; shows "All players have completed placement." when players exist and all are placed.
+- **AI Suggestions** — copy updated to "Suggestions are generated automatically from session data, coach notes, and curriculum gaps. They will appear here once your academy has activity."
+- **Academy Alerts** — copy updated to "No alerts at this time. Alerts appear when players miss sessions, are due for reassessment, or need coaching focus updates."
+- **Sessions This Week** — section now always renders. Empty state added: Calendar icon, "No sessions this week", "Sessions appear here once created from a class template." Removed conditional `{weekSessions.length > 0 && ...}` guard.
+- **Curriculum Coverage** — added zero-player note below stats grid: "Add players and assign curriculum levels to see coverage stats here."
+
+Sessions This Week restructure:
+- Section now always renders (was previously hidden when empty).
+- Outer `label-xs` header + helper text row added with "View all →" link.
+- Inner `CardHeader` removed (replaced by outer label row to avoid duplication).
+- `CardContent` handles both empty state and populated list.
+
+No new components created — all changes inline in `page.tsx`.
+
+**Data safety:**
+- Read-only pass. No Supabase mutations. No server actions added or modified.
+- No migrations created or modified. `database.types.ts` untouched.
+- No `academies.settings` mutations. No `academy_memberships`, coach, player, placement, group, program, curriculum, or portal records mutated.
+- No parent/player communication sent.
+
+**TypeScript:** Clean — `npx tsc --noEmit` exits with no errors.
+
+**Manual browser QA:** Pending — dev server required. Structural correctness verified by TypeScript check.
+
+---
+
 ## 2026-05-11 — Sprint 206: Director Dashboard UX Clarity Pass V1
 
 **Sprint 205 commit verified:** `602ea58 — Sprint 205 — Onboarding Progress Card on Director Dashboard V1`

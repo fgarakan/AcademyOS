@@ -263,7 +263,10 @@ export default async function DirectorDashboard() {
 
       {/* ── Academy Setup ─────────────────────────────────── */}
       <div className="space-y-3">
-        <p className="label-xs">Academy Setup</p>
+        <div>
+          <p className="label-xs">Academy Setup</p>
+          <p className="text-xs text-text-muted mt-1">Complete these steps first. Academy OS uses this information to guide curriculum, placement, sessions, and coach workflows.</p>
+        </div>
         <OnboardingProgressCard settings={onboardingSettings} />
         <SetupProgressChecklist
           playersExist={players.length > 0}
@@ -286,7 +289,8 @@ export default async function DirectorDashboard() {
 
       {/* ── Today's Priorities ────────────────────────────── */}
       <div>
-        <p className="label-xs mb-4">Today's Priorities</p>
+        <p className="label-xs mb-1">Today's Priorities</p>
+        <p className="text-xs text-text-muted mb-4">Live counts from your academy. Numbers update as coaches run sessions and you action items in the review queue.</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
           <CommandCard
             label="Active Players"
@@ -366,6 +370,9 @@ export default async function DirectorDashboard() {
               </div>
             </Link>
           </div>
+          {players.length === 0 && (
+            <p className="text-xs text-text-muted mt-3">Add players and assign curriculum levels to see coverage stats here.</p>
+          )}
         </CardContent>
       </Card>
 
@@ -382,7 +389,10 @@ export default async function DirectorDashboard() {
 
       {/* ── Priority panel + Pending placement ─────────────── */}
       <div className="space-y-4">
-      <p className="label-xs">Player Activity</p>
+      <div>
+        <p className="label-xs">Player Activity</p>
+        <p className="text-xs text-text-muted mt-1">Once players are added and placed, this section shows who needs placement, reassessment, or director attention.</p>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Priority Queue */}
@@ -405,7 +415,7 @@ export default async function DirectorDashboard() {
               <EmptyState
                 icon={<Activity className="w-5 h-5" />}
                 title="No urgent actions"
-                description="The academy is on track. Priority items will appear here when players need attention."
+                description={players.length === 0 ? "Add players to start tracking priority actions, reassessments, and development needs." : "The academy is on track. Priority items appear when players need attention or reassessment."}
                 className="py-10"
               />
             ) : (
@@ -475,7 +485,7 @@ export default async function DirectorDashboard() {
               <EmptyState
                 icon={<Clock className="w-5 h-5" />}
                 title="No pending placements"
-                description="All players have completed onboarding. New players will appear here during placement."
+                description={players.length === 0 ? "No players have been added yet. Add your first player to begin the placement process." : "All players have completed placement. New players will appear here when onboarding."}
                 className="py-10"
               />
             ) : (
@@ -521,7 +531,10 @@ export default async function DirectorDashboard() {
 
       {/* ── Academy Alerts + Signals ──────────────────────── */}
       <div className="space-y-4">
-      <p className="label-xs">Signals + Intelligence</p>
+      <div>
+        <p className="label-xs">Signals + Intelligence</p>
+        <p className="text-xs text-text-muted mt-1">Alerts and AI suggestions appear here once sessions, coach notes, and player activity start producing signals.</p>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
         <AcademyAlertsPanel
           missingFocusCount={missingFocus}
@@ -556,7 +569,7 @@ export default async function DirectorDashboard() {
               <EmptyState
                 icon={<Brain className="w-5 h-5" />}
                 title="No pending suggestions"
-                description="Generate suggestions to surface recommended actions from current academy data."
+                description="Suggestions are generated automatically from session data, coach notes, and curriculum gaps. They will appear here once your academy has activity."
                 className="py-8"
               />
             ) : (
@@ -591,44 +604,51 @@ export default async function DirectorDashboard() {
       </div>
 
       {/* ── Sessions this week ──────────────────────────────── */}
-      {(weekSessions ?? []).length > 0 && (
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="label-xs">Sessions This Week</p>
+            <p className="text-xs text-text-muted mt-1">Sessions scheduled for the current week. Create sessions from class templates to build your coaching history.</p>
+          </div>
+          <Link
+            href="/director/sessions"
+            className="shrink-0 text-xs text-lime hover:opacity-80 font-medium"
+          >
+            View all →
+          </Link>
+        </div>
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold text-text-primary">Sessions This Week</h2>
-                <p className="text-xs text-text-muted mt-0.5">Scheduled and completed sessions</p>
+          <CardContent className="py-4">
+            {(weekSessions ?? []).length === 0 ? (
+              <EmptyState
+                icon={<Calendar className="w-5 h-5" />}
+                title="No sessions this week"
+                description="Sessions appear here once created from a class template. Schedule your first session to get started."
+                className="py-6"
+              />
+            ) : (
+              <div className="space-y-1">
+                {(weekSessions ?? []).slice(0, 4).map(session => (
+                  <Link
+                    key={session.id}
+                    href={`/director/sessions/${session.id}`}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-text-primary truncate">
+                        {session.name ?? 'Untitled Session'}
+                      </p>
+                      <p className="text-xs text-text-muted">{formatDate(session.scheduled_date)}</p>
+                    </div>
+                    <SessionStatusPill status={session.status} />
+                    <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
+                  </Link>
+                ))}
               </div>
-              <Link
-                href="/director/sessions"
-                className="text-xs text-lime hover:opacity-80 font-medium"
-              >
-                View all →
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-1">
-              {(weekSessions ?? []).slice(0, 4).map(session => (
-                <Link
-                  key={session.id}
-                  href={`/director/sessions/${session.id}`}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">
-                      {session.name ?? 'Untitled Session'}
-                    </p>
-                    <p className="text-xs text-text-muted">{formatDate(session.scheduled_date)}</p>
-                  </div>
-                  <SessionStatusPill status={session.status} />
-                  <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
-                </Link>
-              ))}
-            </div>
+            )}
           </CardContent>
         </Card>
-      )}
+      </div>
 
       {/* ── Bottom Quick Actions ────────────────────────────── */}
       <div>
@@ -852,7 +872,7 @@ function AcademyAlertsPanel({
           <EmptyState
             icon={<Activity className="w-5 h-5" />}
             title="All clear"
-            description="No alerts at this time. Academy is on track."
+            description="No alerts at this time. Alerts appear when players miss sessions, are due for reassessment, or need coaching focus updates."
             className="py-8"
           />
         ) : (
