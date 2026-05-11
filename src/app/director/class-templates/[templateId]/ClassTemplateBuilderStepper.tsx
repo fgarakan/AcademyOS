@@ -140,15 +140,21 @@ function contentLabel(t: string) {
 function blockPurposeCopy(blockType: string): string {
   const map: Record<string, string> = {
     warm_up:     'Opens the session. Sets energy, focus, and movement readiness.',
-    movement:    'Opens the session. Sets energy, focus, and movement readiness.',
     technical:   'Focused skill work. Coaches teach and reinforce a specific technical target.',
     tactical:    'Decision-making practice. Players learn to read and respond to match situations.',
     competition: 'Match-play format. Players compete with structure, stakes, and coach observation.',
     mental:      'Focus and mindset. Coaches introduce a mental skill or competition behavior to practice.',
     cool_down:   'Closes the session. Coaches connect the work to the development plan.',
-    fitness:     'Athletic movement. Supports physical qualities that help players perform on court.',
+    fitness:     'Optional physical preparation block. Add this when the class plan includes dedicated athletic work. Not a default tennis session block.',
+    movement:    'Optional physical preparation block. Add this when the class plan includes dedicated athletic work. Not a default tennis session block.',
   }
   return map[blockType] ?? 'Add drills, games, coaching cues, or focus items for this block.'
+}
+
+// Returns true for block types that are physical/fitness (not tennis-session) in origin.
+// These blocks should be clearly labeled as optional in a class template context.
+function isFitnessBlockInClassTemplate(blockType: string): boolean {
+  return blockType === 'fitness' || blockType === 'movement'
 }
 
 // ─── Stepper navigation bar ───────────────────────────────────────────────────
@@ -424,13 +430,21 @@ function Step2Structure({
             const hasContent = items.length > 0
             const displayName = blockDisplayNames[block.id] ?? block.name
 
+            const isFitnessBlock = isFitnessBlockInClassTemplate(block.type ?? '')
             return (
               <Card key={block.id}>
                 <CardContent className="py-3">
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] font-mono text-text-muted w-5 shrink-0 text-center">{i + 1}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-text-primary">{displayName}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-text-primary">{displayName}</p>
+                        {isFitnessBlock && (
+                          <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-status-orange/30 text-status-orange bg-status-orange/5 shrink-0">
+                            Optional Fitness Block
+                          </span>
+                        )}
+                      </div>
                       {block.duration_min != null && (
                         <p className="text-[10px] text-text-muted flex items-center gap-1 mt-0.5">
                           <Clock className="w-2.5 h-2.5" />
@@ -521,12 +535,20 @@ function Step3BuildBlocks({
               orderIndex: row.order_index,
             }))
 
+            const isFitnessBlock = isFitnessBlockInClassTemplate(block.type ?? '')
             return (
               <Card key={block.id}>
                 <CardContent className="py-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-semibold text-text-primary">{displayName}</p>
+                    <div className="space-y-0.5 flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-text-primary">{displayName}</p>
+                        {isFitnessBlock && (
+                          <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-status-orange/30 text-status-orange bg-status-orange/5 shrink-0">
+                            Optional Fitness Block
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-text-muted">{blockPurposeCopy(block.type ?? '')}</p>
                     </div>
                     {block.duration_min != null && (

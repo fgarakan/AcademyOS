@@ -5,6 +5,35 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Check } from 'lucide-react'
 import { createClassTemplateAction } from '../createClassTemplateAction'
 
+const TEMPLATE_TYPES = [
+  'Weekly Class',
+  'Private Lesson',
+  'Camp',
+  'Match Play',
+  'Tournament Prep',
+  'Assessment Day',
+  'Custom',
+]
+
+const BALL_LEVELS = [
+  'Red Ball',
+  'Orange Ball',
+  'Green Ball',
+  'Yellow Ball',
+  'High Performance',
+  'Mixed Level',
+]
+
+const GROUP_TYPES = [
+  'Beginner',
+  'Intermediate',
+  'Advanced',
+  'Competitive',
+  'Performance',
+  'Adult',
+  'Custom',
+]
+
 export function NewClassTemplateForm() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -12,8 +41,15 @@ export function NewClassTemplateForm() {
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [track, setTrack] = useState('')
+  const [templateType, setTemplateType] = useState('')
+  const [ballLevel, setBallLevel] = useState('')
+  const [groupType, setGroupType] = useState('')
   const [totalDurationMin, setTotalDurationMin] = useState('')
+
+  function buildTrack(): string | undefined {
+    const parts = [templateType, ballLevel, groupType].filter(Boolean)
+    return parts.length > 0 ? parts.join(' · ') : undefined
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -24,7 +60,7 @@ export function NewClassTemplateForm() {
       const result = await createClassTemplateAction({
         name: name.trim(),
         description: description.trim() || undefined,
-        track: track.trim() || undefined,
+        track: buildTrack(),
         totalDurationMin: totalDurationMin ? parseInt(totalDurationMin, 10) : undefined,
       })
 
@@ -37,8 +73,18 @@ export function NewClassTemplateForm() {
     })
   }
 
+  const trackPreview = buildTrack()
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+
+      {/* Helper copy */}
+      <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
+        <p className="text-[11px] text-text-secondary leading-relaxed">
+          Choose who this class is for. Academy OS will use this to guide blocks, curriculum links, and coach-ready session plans.
+        </p>
+      </div>
+
       <div className="space-y-1.5">
         <label className="label-xs">Template Name *</label>
         <input
@@ -52,18 +98,60 @@ export function NewClassTemplateForm() {
         />
       </div>
 
-      <div className="space-y-1.5">
-        <label className="label-xs">Track / Category</label>
-        <input
-          type="text"
-          value={track}
-          onChange={e => setTrack(e.target.value)}
-          placeholder="e.g. juniors, competitive, group"
-          maxLength={80}
-          disabled={isPending}
-          className="input-base w-full"
-        />
+      {/* Guided dropdowns — combined into track field */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="space-y-1.5">
+          <label className="label-xs">Template Type</label>
+          <select
+            value={templateType}
+            onChange={e => setTemplateType(e.target.value)}
+            disabled={isPending}
+            className="input-base w-full"
+          >
+            <option value="">Select type…</option>
+            {TEMPLATE_TYPES.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="label-xs">Ball / Level Focus</label>
+          <select
+            value={ballLevel}
+            onChange={e => setBallLevel(e.target.value)}
+            disabled={isPending}
+            className="input-base w-full"
+          >
+            <option value="">Select level…</option>
+            {BALL_LEVELS.map(l => (
+              <option key={l} value={l}>{l}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="label-xs">Group Type</label>
+          <select
+            value={groupType}
+            onChange={e => setGroupType(e.target.value)}
+            disabled={isPending}
+            className="input-base w-full"
+          >
+            <option value="">Select group…</option>
+            {GROUP_TYPES.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {trackPreview && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-lime/20 bg-lime/5">
+          <p className="text-[10px] uppercase tracking-widest text-text-muted">Track</p>
+          <p className="text-xs font-medium text-lime ml-1">{trackPreview}</p>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <label className="label-xs">Description</label>

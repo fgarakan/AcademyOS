@@ -51,20 +51,18 @@ interface CurriculumBlockRow {
 
 // Maps block_type enum values to tennis-session display names — display only.
 // Does not mutate template_blocks.name in the database.
-// typeIndex = how many blocks of this type have appeared before this one (for fitness block disambiguation).
+// fitness/movement blocks are intentionally labeled as "Optional Fitness Block" — not tennis names.
 function classTemplateBlockDisplayName(type: string, typeIndex: number): string {
   switch (type) {
     case 'warm_up':     return 'Welcome + Warm-Up'
-    case 'movement':    return 'Welcome + Warm-Up'
     case 'technical':   return 'Skill Foundation'
     case 'tactical':    return 'Tactical Decisions'
     case 'competition': return 'Competitive Games'
     case 'mental':      return 'Mental Focus'
     case 'cool_down':   return 'Wrap-Up'
     case 'fitness':
-      if (typeIndex === 0) return 'Skill Foundation'
-      if (typeIndex === 1) return 'Rally Development'
-      return ''
+    case 'movement':
+      return typeIndex === 0 ? 'Optional Fitness Block' : `Optional Fitness Block ${typeIndex + 1}`
     default:            return ''
   }
 }

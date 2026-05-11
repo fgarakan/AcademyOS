@@ -2,6 +2,64 @@
 
 ---
 
+## 2026-05-11 — Sprint 217: Class + Fitness Template Guided UX Repair V1
+
+**Root cause — fitness blocks appearing as tennis blocks in class templates:**
+`classTemplateBlockDisplayName()` in `/director/class-templates/[templateId]/page.tsx` mapped `fitness` type blocks to "Skill Foundation" or "Rally Development" — legitimate tennis names. Blocks with `type = 'fitness'` or `type = 'movement'` inside class templates were rendered with tennis session labels, causing director and QA confusion. Fixed: both types now map to "Optional Fitness Block" (or "Optional Fitness Block N" if multiple).
+
+**Root cause — free-text track/category field:**
+`NewClassTemplateForm.tsx` had a single free-text input for track/category with placeholder "e.g. juniors, competitive, group". No guidance on format or meaning. Fixed with three guided dropdowns (Template Type, Ball/Level Focus, Group Type) whose selected values are joined as "Weekly Class · Orange Ball · Competitive" into the existing `templates.track` text column. No schema change.
+
+**Root cause — Fitness OS step order placing development context too late:**
+Fitness OS opened with Training Goal before directors had established who the fitness plan was for. The curriculum level selector was buried in Step 3 as "Curriculum Context," after physical blocks were already being built. Tennis drill reference cards (`CurriculumDrillReferencePanel`) were the primary content shown alongside it, which confused fitness planning with class curriculum planning.
+
+**Changes — Class Template creation (`NewClassTemplateForm.tsx`):**
+- Removed free-text "Track / Category" input.
+- Added three guided `<select>` dropdowns: Template Type (7 options), Ball / Level Focus (6 options), Group Type (7 options).
+- Combined values joined as "A · B · C" stored into existing `templates.track` column — no migration.
+- Live track preview badge appears when any dropdown is selected.
+- Helper copy added: "Choose who this class is for…"
+
+**Changes — Class Template block display (`page.tsx`):**
+- `fitness` and `movement` block types now display as "Optional Fitness Block" in all views.
+- Removed incorrect mapping of `fitness → Skill Foundation / Rally Development`.
+
+**Changes — Class Template builder stepper (`ClassTemplateBuilderStepper.tsx`):**
+- `blockPurposeCopy()` updated: `fitness` and `movement` types now say "Optional physical preparation block. Not a default tennis session block."
+- Added `isFitnessBlockInClassTemplate()` helper.
+- Step 2 (Class Structure) and Step 3 (Build Blocks) now show an orange "Optional Fitness Block" badge on any block with type `fitness` or `movement`.
+
+**Changes — Fitness OS step order (`FitnessBuilderStepper.tsx`):**
+- Step 1 renamed from "Training Goal" to "Development Focus."
+- New Step 1 (`Step1DevelopmentFocus`) contains: curriculum level selector, level-based physical development priorities card (Physical Priorities, Tennis Transfer, Coaching Emphasis, Load Guidance, Watch For), push-context-to-block-notes button.
+- `CurriculumDrillReferencePanel` (tennis drill reference) removed from primary flow; moved to a collapsed "Related Tennis Outcomes" toggle — not shown by default.
+- Old Step 1 (Training Goal) → Step 2. Old Step 2 (Physical Blocks) → Step 3. Old Step 4 (Tennis Transfer) → Step 4 (unchanged). Old Step 5 → Step 5.
+- `BottomNav` next-step labels updated to match new order.
+- Step 3 helper copy updated: "Build the physical blocks. These should match the player level, training goal, and available time."
+- Step 4 helper copy updated: "Show coaches how each fitness block transfers to tennis movement, balance, recovery, and performance."
+
+**Changes — Level-based development context (UI-only, no DB calls):**
+- Static `LEVEL_DEV_CONTEXT` map in `FitnessBuilderStepper.tsx` for: Red, Orange, Green, Yellow, High Performance, Mixed.
+- Each entry has: priority, transfer, emphasis, load, watchFor.
+- Matched against `currentLevelName` by lowercase substring check (`getDevContext()`).
+- Display-only — no persistence unless level is saved via `CurriculumLevelSelector` (existing action).
+
+**Changes — Coach live session regressions/progressions (`CoachSessionCurriculumPanel.tsx`):**
+- Select query now fetches `progressions, regressions` from `curriculum_content_items`.
+- Select query now fetches `progression_easier, progression_harder` from `curriculum_drills`.
+- `PlanItem` interface updated with `progressions: string[] | null` and `regressions: string[] | null`.
+- Drill criteria fixed: `success_criteria` from `curriculum_drills` is a single string — wrapped in array at mapping layer.
+- Drill cues corrected: `coaching_cues` (JSON field) replaces incorrect `cues` alias that never existed.
+- Render section: coaches now see "Make It Harder" (progressions) and "Make It Easier" (regressions) per drill/activity item when data is available.
+
+**Data/schema safety:** No migrations. No `database.types.ts` edits. No AI/voice runtime. No server action changes. All mutations unchanged.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passes with no errors.
+
+**Manual browser QA:** Pending — local dev server required to verify all 5 routes.
+
+---
+
 ## 2026-05-11 — Sprint 216: Guided Template Builder UX V1
 
 **Root cause / class template long-page issue:**

@@ -28,9 +28,9 @@ import type { FitnessBlock, ExerciseLibraryItem } from './fitnessBuilderTypes'
 // ─── Step definitions ─────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, label: 'Training Goal', shortLabel: '1', icon: Target },
-  { id: 2, label: 'Physical Blocks', shortLabel: '2', icon: Dumbbell },
-  { id: 3, label: 'Curriculum Context', shortLabel: '3', icon: GraduationCap },
+  { id: 1, label: 'Development Focus', shortLabel: '1', icon: GraduationCap },
+  { id: 2, label: 'Training Goal', shortLabel: '2', icon: Target },
+  { id: 3, label: 'Physical Blocks', shortLabel: '3', icon: Dumbbell },
   { id: 4, label: 'Tennis Transfer', shortLabel: '4', icon: Zap },
   { id: 5, label: 'Review + Save', shortLabel: '5', icon: ListChecks },
 ] as const
@@ -46,6 +46,70 @@ const TENNIS_TRANSFER: Record<string, string> = {
   coordination:      'Smooth stroke mechanics, racket-head control, hand-eye tracking on fast balls.',
   mobility:          'Full shoulder rotation on serve, hip flexibility for wide forehands, ankle range for split steps.',
   recovery_cool_down: 'Muscle recovery between points and games, breathing control under pressure, injury prevention.',
+}
+
+// ─── Level-based physical development context (UI-only, no DB calls) ──────────
+
+interface DevContext {
+  priority: string
+  transfer: string
+  emphasis: string
+  load: string
+  watchFor: string
+}
+
+const LEVEL_DEV_CONTEXT: Record<string, DevContext> = {
+  red: {
+    priority: 'Balance, coordination, rhythm, playful movement, body awareness.',
+    transfer: 'Helps players move to the ball, recover position, and stay organised on court.',
+    emphasis: 'Fun, simple cues, short bursts. Praise effort and coordination over output.',
+    load: 'Low intensity. Frequent rest. No extended conditioning.',
+    watchFor: 'Players rushing, losing balance, or not understanding space.',
+  },
+  orange: {
+    priority: 'Coordination, reaction, first step, balance, deceleration, recovery habits.',
+    transfer: 'Supports split-step timing, rally recovery, and balance after contact.',
+    emphasis: 'Clean movement before speed. Establish stopping mechanics.',
+    load: 'Low to moderate intensity. Short work intervals with rest.',
+    watchFor: 'Crossing feet too early, poor stopping mechanics, rushed movement.',
+  },
+  green: {
+    priority: 'First-step quickness, change of direction, stamina, rotational control.',
+    transfer: 'Supports wider court coverage, recovery after defense, and stronger stroke preparation.',
+    emphasis: 'Controlled speed and repeatability. Quality over quantity.',
+    load: 'Moderate intensity with planned recovery between sets.',
+    watchFor: 'Sloppy movement under fatigue. Cutting corners on footwork.',
+  },
+  yellow: {
+    priority: 'Speed, strength basics, repeated effort, power control, movement efficiency.',
+    transfer: 'Supports point construction, defense-to-offense transitions, and match stamina.',
+    emphasis: 'Intensity with quality. Debrief after each set.',
+    load: 'Moderate to high depending on schedule and recent match load.',
+    watchFor: 'Fatigue signs, poor landing mechanics, overtraining patterns.',
+  },
+  'high performance': {
+    priority: 'Power, repeat sprint ability, strength, explosiveness, recovery, injury prevention.',
+    transfer: 'Supports tournament-level movement, acceleration, braking, and high-intensity repeated points.',
+    emphasis: 'Precision, intent, measurable quality. Periodise against match schedule.',
+    load: 'Periodized and readiness-aware. Monitor weekly volume and intensity zones.',
+    watchFor: 'Overload, asymmetry, poor recovery between sessions, mood changes.',
+  },
+  mixed: {
+    priority: 'Scalable movement quality, coordination, balance, safe challenge for all levels.',
+    transfer: 'Gives coaches progressions and regressions for players at different stages.',
+    emphasis: 'Split groups when intensity diverges. Adjust cues by player level.',
+    load: 'Flexible. Anchor to the lowest level in the group for safety.',
+    watchFor: 'Younger or weaker players being pulled into inappropriate intensity.',
+  },
+}
+
+function getDevContext(levelName: string | null): DevContext | null {
+  if (!levelName) return null
+  const name = levelName.toLowerCase()
+  for (const key of Object.keys(LEVEL_DEV_CONTEXT)) {
+    if (name.includes(key)) return LEVEL_DEV_CONTEXT[key]
+  }
+  return null
 }
 
 // ─── Stepper navigation bar ───────────────────────────────────────────────────
@@ -115,7 +179,8 @@ function BottomNav({
   onNext: () => void
 }) {
   const nextLabel =
-    activeStep === 2 ? 'Curriculum Context' :
+    activeStep === 1 ? 'Training Goal' :
+    activeStep === 2 ? 'Physical Blocks' :
     activeStep === 3 ? 'Tennis Transfer' :
     activeStep === 4 ? 'Review + Save' :
     activeStep === totalSteps ? null : 'Next'
@@ -151,9 +216,157 @@ function BottomNav({
   )
 }
 
-// ─── Step 1 — Training Goal ───────────────────────────────────────────────────
+// ─── Step 1 — Player Level + Development Focus ────────────────────────────────
 
-function Step1TrainingGoal({
+function Step1DevelopmentFocus({
+  templateId,
+  curriculumLevelId,
+  currentLevelName,
+  curriculumLevels,
+  curriculumDrills,
+  fitnessBlocks,
+}: {
+  templateId: string
+  curriculumLevelId: string | null
+  currentLevelName: string | null
+  curriculumLevels: CurriculumLevelOption[]
+  curriculumDrills: CurriculumDrillRow[]
+  fitnessBlocks: FitnessBlock[]
+}) {
+  const [showRelatedOutcomes, setShowRelatedOutcomes] = useState(false)
+  const devCtx = getDevContext(currentLevelName)
+
+  return (
+    <div className="space-y-5">
+      <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
+        <p className="text-[11px] text-text-secondary leading-relaxed">
+          Start with the player level. This sets the physical priorities, tennis transfer, and coaching emphasis for the fitness plan.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <p className="label-xs">Player Level</p>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-2">
+          {curriculumLevels.length > 0 ? (
+            <>
+              <CurriculumLevelSelector
+                templateId={templateId}
+                currentLevelId={curriculumLevelId}
+                levels={curriculumLevels}
+              />
+              {currentLevelName && (
+                <p className="text-[10px] text-text-muted">
+                  Physical priorities and coaching emphasis will reflect{' '}
+                  <span className="text-lime">{currentLevelName}</span>.
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-[11px] text-text-muted">No curriculum levels available. Seed the curriculum to enable this feature.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {devCtx && currentLevelName && (
+        <Card>
+          <CardContent className="py-5">
+            <div className="flex items-center gap-2 mb-4">
+              <GraduationCap className="w-4 h-4 text-lime" />
+              <p className="text-sm font-semibold text-text-primary">
+                {currentLevelName} — Development Focus
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1.5">Physical Priorities</p>
+                <p className="text-xs text-text-secondary leading-relaxed">{devCtx.priority}</p>
+              </div>
+
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-lime mb-1.5">Tennis Transfer</p>
+                <p className="text-xs text-text-secondary leading-relaxed">{devCtx.transfer}</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-border">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Coaching Emphasis</p>
+                  <p className="text-[11px] text-text-secondary leading-relaxed">{devCtx.emphasis}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Load Guidance</p>
+                  <p className="text-[11px] text-text-secondary leading-relaxed">{devCtx.load}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-status-orange mb-1">Watch For</p>
+                  <p className="text-[11px] text-text-secondary leading-relaxed">{devCtx.watchFor}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!curriculumLevelId && (
+        <Card>
+          <CardContent className="py-8 text-center space-y-2">
+            <GraduationCap className="w-7 h-7 text-text-muted mx-auto" />
+            <p className="text-sm text-text-primary">No player level assigned yet.</p>
+            <p className="text-xs text-text-muted">Assign a level above to see physical development priorities and coaching emphasis for this group.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {curriculumLevelId && curriculumDrills.length > 0 && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowRelatedOutcomes(v => !v)}
+            className="flex items-center gap-2 text-[11px] text-text-muted hover:text-text-secondary transition-colors mb-2"
+          >
+            <span className={[
+              'w-3 h-3 border border-border rounded-sm flex items-center justify-center text-[8px] transition-colors',
+              showRelatedOutcomes ? 'bg-surface-raised' : '',
+            ].join(' ')}>
+              {showRelatedOutcomes ? '−' : '+'}
+            </span>
+            Related Tennis Outcomes ({curriculumDrills.length} curriculum drills)
+          </button>
+          {showRelatedOutcomes && (
+            <CurriculumDrillReferencePanel
+              drills={curriculumDrills}
+              levelName={currentLevelName ?? ''}
+            />
+          )}
+        </div>
+      )}
+
+      {curriculumLevelId && fitnessBlocks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <p className="label-xs">Push Curriculum Context to Block Notes</p>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-[11px] text-text-muted mb-3">
+              Writes curriculum development context into block notes so coaches see physical priorities during the session.
+            </p>
+            <PopulateDrillNotesButton
+              templateId={templateId}
+              hasBlocks={fitnessBlocks.length > 0}
+              hasLevel={!!curriculumLevelId}
+            />
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+// ─── Step 2 — Training Goal ───────────────────────────────────────────────────
+
+function Step2TrainingGoal({
   templateId,
   templateName,
   templateDescription,
@@ -181,7 +394,7 @@ function Step1TrainingGoal({
     <div className="space-y-5">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
-          Start with the training goal. This tells the Fitness OS whether this session should build speed, coordination, strength, mobility, recovery, or physical readiness.
+          Choose the training goal for this session: speed, coordination, strength, mobility, recovery, or readiness. This sets the intent for the physical blocks.
         </p>
       </div>
 
@@ -262,9 +475,9 @@ function Step1TrainingGoal({
   )
 }
 
-// ─── Step 2 — Physical Blocks ─────────────────────────────────────────────────
+// ─── Step 3 — Physical Blocks ─────────────────────────────────────────────────
 
-function Step2PhysicalBlocks({
+function Step3PhysicalBlocks({
   templateId,
   fitnessBlocks,
   exerciseLibrary,
@@ -283,7 +496,7 @@ function Step2PhysicalBlocks({
     <div className="space-y-5">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
-          Build the physical development structure. Add movement, agility, speed, strength, coordination, mobility, and recovery blocks. Each block targets a specific athletic quality.
+          Build the physical blocks. These should match the player level, training goal, and available time. Each block targets a specific athletic quality.
         </p>
       </div>
 
@@ -326,95 +539,7 @@ function Step2PhysicalBlocks({
   )
 }
 
-// ─── Step 3 — Curriculum Context ──────────────────────────────────────────────
-
-function Step3CurriculumContext({
-  templateId,
-  curriculumLevelId,
-  currentLevelName,
-  curriculumLevels,
-  curriculumDrills,
-  fitnessBlocks,
-}: {
-  templateId: string
-  curriculumLevelId: string | null
-  currentLevelName: string | null
-  curriculumLevels: CurriculumLevelOption[]
-  curriculumDrills: CurriculumDrillRow[]
-  fitnessBlocks: FitnessBlock[]
-}) {
-  return (
-    <div className="space-y-5">
-      <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
-        <p className="text-[11px] text-text-secondary leading-relaxed">
-          Assign a curriculum level to connect this fitness plan to the academy&apos;s development pathway. Sessions generated from this template will include curriculum context and coach cues for the selected level.
-        </p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <p className="label-xs">Curriculum Level</p>
-        </CardHeader>
-        <CardContent className="pt-0 space-y-2">
-          {curriculumLevels.length > 0 ? (
-            <>
-              <CurriculumLevelSelector
-                templateId={templateId}
-                currentLevelId={curriculumLevelId}
-                levels={curriculumLevels}
-              />
-              {currentLevelName && (
-                <p className="text-[10px] text-text-muted">
-                  Sessions generated from this template will show curriculum context for{' '}
-                  <span className="text-lime">{currentLevelName}</span>.
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-[11px] text-text-muted">No curriculum levels available. Seed the curriculum to enable this feature.</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {curriculumLevelId && currentLevelName && (
-        <>
-          <CurriculumDrillReferencePanel
-            drills={curriculumDrills}
-            levelName={currentLevelName}
-          />
-
-          <Card>
-            <CardHeader>
-              <p className="label-xs">Push Curriculum Drills to Block Notes</p>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <p className="text-[11px] text-text-muted mb-3">
-                Writes curriculum drill context into block notes so coaches see development goals during the session.
-              </p>
-              <PopulateDrillNotesButton
-                templateId={templateId}
-                hasBlocks={fitnessBlocks.length > 0}
-                hasLevel={!!curriculumLevelId}
-              />
-            </CardContent>
-          </Card>
-        </>
-      )}
-
-      {!curriculumLevelId && (
-        <Card>
-          <CardContent className="py-8 text-center space-y-2">
-            <GraduationCap className="w-7 h-7 text-text-muted mx-auto" />
-            <p className="text-sm text-text-primary">No curriculum level assigned yet.</p>
-            <p className="text-xs text-text-muted">Assign a level above to enable curriculum context and drill references.</p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
-}
-
-// ─── Step 4 — Tennis Transfer ─────────────────────────────────────────────────
+// ─── Step 4 — Tennis Transfer + Coach Cues ───────────────────────────────────
 
 function Step4TennisTransfer({
   fitnessBlocks,
@@ -427,9 +552,9 @@ function Step4TennisTransfer({
     <div className="space-y-5">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
-          Every fitness block serves a purpose on court. This shows how the physical work in this template directly supports tennis performance.
+          Show coaches how each fitness block transfers to tennis movement, balance, recovery, and performance.
           {currentLevelName && (
-            <span className="text-lime"> Training context: {currentLevelName}.</span>
+            <span className="text-lime"> Level: {currentLevelName}.</span>
           )}
         </p>
       </div>
@@ -717,7 +842,18 @@ export function FitnessBuilderStepper({
 
       <div className="min-h-[400px]">
         {activeStep === 1 && (
-          <Step1TrainingGoal
+          <Step1DevelopmentFocus
+            templateId={templateId}
+            curriculumLevelId={curriculumLevelId}
+            currentLevelName={currentLevelName}
+            curriculumLevels={curriculumLevels}
+            curriculumDrills={curriculumDrills}
+            fitnessBlocks={fitnessBlocks}
+          />
+        )}
+
+        {activeStep === 2 && (
+          <Step2TrainingGoal
             templateId={templateId}
             templateName={templateName}
             templateDescription={templateDescription}
@@ -730,25 +866,14 @@ export function FitnessBuilderStepper({
           />
         )}
 
-        {activeStep === 2 && (
-          <Step2PhysicalBlocks
+        {activeStep === 3 && (
+          <Step3PhysicalBlocks
             templateId={templateId}
             fitnessBlocks={fitnessBlocks}
             exerciseLibrary={exerciseLibrary}
             libraryQueryError={libraryQueryError}
             totalExercisesInAcademy={totalExercisesInAcademy}
             blockExercisesQueryError={blockExercisesQueryError}
-          />
-        )}
-
-        {activeStep === 3 && (
-          <Step3CurriculumContext
-            templateId={templateId}
-            curriculumLevelId={curriculumLevelId}
-            currentLevelName={currentLevelName}
-            curriculumLevels={curriculumLevels}
-            curriculumDrills={curriculumDrills}
-            fitnessBlocks={fitnessBlocks}
           />
         )}
 

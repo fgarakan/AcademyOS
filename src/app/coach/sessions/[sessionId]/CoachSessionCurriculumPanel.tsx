@@ -1,5 +1,5 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { Clock, CheckCircle, Lock } from 'lucide-react'
+import { Clock, CheckCircle, Lock, ArrowUpRight, ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 
 interface Props {
@@ -15,6 +15,8 @@ interface PlanItem {
   description: string | null
   cues: string[] | null
   criteria: string[] | null
+  progressions: string[] | null
+  regressions: string[] | null
   durationMin: number | null
 }
 
@@ -46,8 +48,8 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
       block_id,
       order_index,
       duration_min,
-      content_item:curriculum_content_items(title, content_type, domain, session_block_hint, is_coach_only, description, coach_cues, success_criteria, duration_min),
-      drill:curriculum_drills(name, domain, cues, success_criteria, duration_min)
+      content_item:curriculum_content_items(title, content_type, domain, session_block_hint, is_coach_only, description, coach_cues, success_criteria, progressions, regressions, duration_min),
+      drill:curriculum_drills(name, domain, coaching_cues, success_criteria, progression_easier, progression_harder, duration_min)
     `)
     .in('block_id', tblIds)
     .order('order_index')
@@ -65,13 +67,17 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
       description: string | null
       coach_cues: string[] | null
       success_criteria: string[] | null
+      progressions: string[] | null
+      regressions: string[] | null
       duration_min: number | null
     } | null
     drill: {
       name: string
       domain: string | null
-      cues: string[] | null
-      success_criteria: string[] | null
+      coaching_cues: unknown
+      success_criteria: string | null
+      progression_easier: string | null
+      progression_harder: string | null
       duration_min: number | null
     } | null
   }>
@@ -102,17 +108,24 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
       blockId: tb.id,
       blockName: tb.name,
       orderIndex: tb.order_index,
-      items: blockRows.map(row => ({
-        title: row.content_item?.title ?? row.drill?.name ?? 'Untitled',
-        contentType: row.content_item?.content_type ?? 'drill',
-        domain: row.content_item?.domain ?? row.drill?.domain ?? null,
-        sessionBlockHint: row.content_item?.session_block_hint ?? null,
-        isCoachOnly: row.content_item?.is_coach_only ?? false,
-        description: row.content_item?.description ?? null,
-        cues: row.content_item?.coach_cues ?? row.drill?.cues ?? null,
-        criteria: row.content_item?.success_criteria ?? row.drill?.success_criteria ?? null,
-        durationMin: row.duration_min ?? row.content_item?.duration_min ?? row.drill?.duration_min ?? null,
-      })),
+      items: blockRows.map(row => {
+        const drillCriteria = row.drill?.success_criteria ?? null
+        return {
+          title: row.content_item?.title ?? row.drill?.name ?? 'Untitled',
+          contentType: row.content_item?.content_type ?? 'drill',
+          domain: row.content_item?.domain ?? row.drill?.domain ?? null,
+          sessionBlockHint: row.content_item?.session_block_hint ?? null,
+          isCoachOnly: row.content_item?.is_coach_only ?? false,
+          description: row.content_item?.description ?? null,
+          cues: row.content_item?.coach_cues ?? null,
+          criteria: row.content_item?.success_criteria ?? (drillCriteria ? [drillCriteria] : null),
+          progressions: row.content_item?.progressions ??
+            (row.drill?.progression_harder ? [row.drill.progression_harder] : null),
+          regressions: row.content_item?.regressions ??
+            (row.drill?.progression_easier ? [row.drill.progression_easier] : null),
+          durationMin: row.duration_min ?? row.content_item?.duration_min ?? row.drill?.duration_min ?? null,
+        }
+      }),
     })
   }
 
@@ -194,6 +207,34 @@ export async function CoachSessionCurriculumPanel({ templateId }: Props) {
                               {c}
                             </p>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Progressions + Regressions */}
+                      {((item.progressions && item.progressions.length > 0) || (item.regressions && item.regressions.length > 0)) && (
+                        <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+                          {item.progressions && item.progressions.length > 0 && (
+                            <div className="space-y-0.5">
+                              <p className="text-[9px] uppercase tracking-widest text-lime/70">Make It Harder</p>
+                              {item.progressions.slice(0, 2).map((p, k) => (
+                                <p key={k} className="text-[10px] text-text-muted flex items-start gap-1">
+                                  <ArrowUpRight className="w-2.5 h-2.5 text-lime shrink-0 mt-0.5" />
+                                  {p}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                          {item.regressions && item.regressions.length > 0 && (
+                            <div className="space-y-0.5">
+                              <p className="text-[9px] uppercase tracking-widest text-text-muted/60">Make It Easier</p>
+                              {item.regressions.slice(0, 2).map((r, k) => (
+                                <p key={k} className="text-[10px] text-text-muted flex items-start gap-1">
+                                  <ArrowRight className="w-2.5 h-2.5 text-text-muted shrink-0 mt-0.5 rotate-180" />
+                                  {r}
+                                </p>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
 
