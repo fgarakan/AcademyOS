@@ -19,12 +19,45 @@ function hintsForBlockType(type: Enums<'block_type'>): string[] {
     case 'cool_down':   return ['Cool-Down']
     case 'technical':   return ['Focus', 'Train']
     case 'tactical':    return ['Game', 'Play', 'Situational']
-    case 'movement':    return ['Train', 'Focus']
-    case 'fitness':     return ['Train', 'Focus']
-    case 'competition': return ['Match-Play', 'Situational', 'Game']
-    case 'mental':      return ['Mental']
+    case 'movement':    return ['Warm-Up', 'Focus', 'Train']   // 'Warm-Up' first: movement blocks act as warmup in class templates
+    case 'fitness':     return ['Focus', 'Train']
+    case 'competition': return ['Match-Play', 'Situational', 'Game', 'Mental']  // 'Mental' routes mental_skill/competition_behavior items here
+    case 'mental':      return ['Mental', 'Focus']
     case 'free':        return ['Focus', 'Train', 'Game', 'Play']
   }
+}
+
+// Tennis-appropriate display names for class template blocks.
+// Overrides the raw Airtable block names stored in template_blocks.name.
+// typeIndex = 0 means this is the first block of this type in the template.
+function tennisBlockDisplayName(type: string, typeIndex: number): string {
+  switch (type) {
+    case 'warm_up':     return 'Welcome + Warm-Up'
+    case 'movement':    return 'Welcome + Warm-Up'
+    case 'technical':   return 'Skill Foundation'
+    case 'tactical':    return 'Tactical Decisions'
+    case 'competition': return 'Competitive Games'
+    case 'mental':      return 'Mental Focus'
+    case 'cool_down':   return 'Wrap-Up'
+    case 'fitness':
+      if (typeIndex === 0) return 'Skill Foundation'
+      if (typeIndex === 1) return 'Rally Development'
+      return `Athletic Block ${typeIndex + 1}`
+    default:            return ''
+  }
+}
+
+// Short coach-facing purpose line for each tennis block type.
+const TENNIS_BLOCK_PURPOSES: Record<string, string> = {
+  warm_up:     'Prepare the group and introduce today\'s focus.',
+  movement:    'Prepare the group and introduce today\'s focus.',
+  technical:   'Build the core skill for this level.',
+  fitness:     'Build the core skill and athletic foundation for this level.',
+  tactical:    'Help players choose the right shot and make good court decisions.',
+  competition: 'Apply the theme under pressure — competitive games and mental routines.',
+  mental:      'Train routines, confidence, and response to mistakes.',
+  cool_down:   'Capture coach notes and set the next focus.',
+  free:        '',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -45,6 +78,7 @@ export interface DraftBlock {
   blockId: string
   blockName: string
   blockType: string
+  blockPurpose: string
   orderIndex: number
   durationMin: number
   contentItems: DraftContentItem[]
@@ -134,9 +168,15 @@ export async function generateLessonPlanDraftAction(
   // Match content items to blocks, consuming each item at most once
   const usedIds = new Set<string>()
   const draftBlocks: DraftBlock[] = []
+  const typeCountMap: Record<string, number> = {}  // tracks how many blocks of each type appeared
 
   for (const block of blocks) {
+    const typeIndex = typeCountMap[block.type] ?? 0
+    typeCountMap[block.type] = typeIndex + 1
+
     const hints = hintsForBlockType(block.type as Enums<'block_type'>)
+    const displayName = tennisBlockDisplayName(block.type, typeIndex) || block.name
+    const purpose = TENNIS_BLOCK_PURPOSES[block.type] ?? ''
 
     // Primary: items whose session_block_hint is in this block's hint list
     const hintMatched = items
@@ -152,8 +192,9 @@ export async function generateLessonPlanDraftAction(
 
     draftBlocks.push({
       blockId: block.id,
-      blockName: block.name,
+      blockName: displayName,
       blockType: block.type,
+      blockPurpose: purpose,
       orderIndex: block.order_index,
       durationMin: block.duration_min,
       contentItems: toUse.map(item => ({

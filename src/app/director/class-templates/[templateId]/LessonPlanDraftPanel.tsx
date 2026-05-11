@@ -255,7 +255,7 @@ function DraftBlockRow({ block, index }: { block: DraftBlock; index: number }) {
   return (
     <div className="border border-border rounded-lg p-3">
       {/* Block header */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-1">
         <span className="text-[10px] font-mono text-text-muted w-5 shrink-0">{index + 1}</span>
         <p className="text-xs font-semibold text-text-primary truncate">{block.blockName}</p>
         <span className="text-[10px] uppercase tracking-widest text-text-muted px-1 py-0.5 rounded border border-border shrink-0">
@@ -269,9 +269,18 @@ function DraftBlockRow({ block, index }: { block: DraftBlock; index: number }) {
         )}
       </div>
 
+      {/* Purpose line */}
+      {block.blockPurpose && (
+        <p className="text-[10px] text-text-muted pl-7 mb-2">{block.blockPurpose}</p>
+      )}
+
       {/* Content items */}
       {block.contentItems.length === 0 ? (
-        <p className="text-[11px] text-text-muted pl-7 italic">No curriculum content matched for this block type.</p>
+        <p className="text-[11px] text-text-muted pl-7 italic">
+          {block.blockType === 'cool_down'
+            ? 'Coach recap space — coaches fill this in after the session. No curriculum items needed.'
+            : 'No curriculum content matched for this block type.'}
+        </p>
       ) : (
         <ul className="space-y-1.5 pl-7">
           {block.contentItems.map(item => (

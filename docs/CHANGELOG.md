@@ -2,6 +2,71 @@
 
 ---
 
+## 2026-05-11 — Sprint: Class Template Block Taxonomy Repair V1
+
+**Root cause:**
+Class templates were imported from Airtable with block names that preserved the original Airtable labels: "Movement", "Agility", "Speed", "Games", "Cool Down". These are fitness/exercise block names. The `generateLessonPlanDraftAction.ts` used `block.name` from `template_blocks` directly as the draft block display name, so the draft preview showed those Airtable labels instead of tennis-coaching block names.
+
+Additionally, mental_skill content items (updated by migration 065 to `session_block_hint = 'Mental'`) were not routed to any block in the Airtable-imported templates (which have no `mental` type block), and the competition block hints did not include 'Mental'. Mental content was either consumed by fitness blocks (via 'Focus' hint) or went unmatched entirely.
+
+**Where block names were generated:**
+`src/app/director/class-templates/[templateId]/generateLessonPlanDraftAction.ts` — the `blockName` field in each `DraftBlock` came directly from `block.name` (the raw DB value), not from a tennis-aware display name function.
+
+**Old block model (Airtable labels):**
+Movement → Agility → Speed → Games → Cool Down
+
+**New block model (tennis-session blocks):**
+- `movement` type → **Welcome + Warm-Up** (hints: Warm-Up, Focus, Train)
+- `fitness` type (1st) → **Skill Foundation** (hints: Focus, Train)
+- `fitness` type (2nd) → **Rally Development** (hints: Focus, Train)
+- `competition` type → **Competitive Games** (hints: Match-Play, Situational, Game, Mental)
+- `cool_down` type → **Wrap-Up** (hints: Cool-Down)
+- `technical` type → Skill Foundation
+- `tactical` type → Tactical Decisions
+- `mental` type → Mental Focus
+
+**Mental Focus component behavior:**
+Mental component is no longer hidden inside the Games / Agility blocks. The `competition` block hints now include `'Mental'`, so `mental_skill` and `competition_behavior` items (which migration 065 updated to `session_block_hint = 'Mental'`) are routed directly to the "Competitive Games" block. The Competitive Games block purpose reads: "Apply the theme under pressure — competitive games and mental routines." Templates that have an explicit `mental` type block will render a dedicated "Mental Focus" block with its own purpose line.
+
+**Block purpose lines added:**
+Each block in the draft preview now shows a short coach-facing purpose line below the block name. Examples:
+- Welcome + Warm-Up: "Prepare the group and introduce today's focus."
+- Skill Foundation: "Build the core skill for this level."
+- Competitive Games: "Apply the theme under pressure — competitive games and mental routines."
+- Wrap-Up: "Capture coach notes and set the next focus."
+
+Empty cool_down blocks now show a coach-friendly message: "Coach recap space — coaches fill this in after the session. No curriculum items needed."
+
+**Fitness OS affected:** No. `generateLessonPlanDraftAction.ts` is used only for class template lesson plans. Fitness OS uses `populateFitnessBlocksAction.ts` and `fitnessExerciseRecommendations.ts` — completely separate, untouched.
+
+**Data / model safety:**
+- `blockId` in each `DraftBlock` still points to the real `template_blocks.id` — Apply to Template continues to write valid `curriculum_class_template_blocks` rows.
+- `template_blocks.name` in the database is unchanged — no migration, no DB write.
+- Fitness OS block names unchanged.
+- `database.types.ts` untouched.
+- No migrations.
+
+**Files changed:**
+- `src/app/director/class-templates/[templateId]/generateLessonPlanDraftAction.ts` — updated `hintsForBlockType` (movement + competition + mental), added `tennisBlockDisplayName()`, added `TENNIS_BLOCK_PURPOSES`, added `blockPurpose` field to `DraftBlock` interface, override `blockName` with tennis name in output, track typeCountMap for duplicate block type handling.
+- `src/app/director/class-templates/[templateId]/LessonPlanDraftPanel.tsx` — `DraftBlockRow` now shows `block.blockPurpose` purpose line; empty cool_down blocks show a helpful coach recap message.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passes with zero errors.
+
+**Manual browser QA status:** Pending user verification. Expected outcome:
+1. Draft preview no longer shows Movement, Agility, Speed, Games, Cool Down as block names.
+2. Tennis session blocks appear: Welcome + Warm-Up, Skill Foundation, Rally Development, Competitive Games, Wrap-Up.
+3. Purpose lines appear under each block name.
+4. Mental content (mental_skill items) appears inside Competitive Games block.
+5. Cool Down block shows helpful coach recap message instead of "no content matched."
+6. Apply to Template still writes correct curriculum_class_template_blocks rows.
+7. Fitness OS screens unaffected.
+
+**Known limitations:**
+- The "Curriculum Lesson Plan" section and "Template Blocks" section on the class template detail page still show the raw Airtable block names from the DB (`template_blocks.name`). Only the draft preview shows tennis names. Fixing the full-page display requires either a DB migration to rename the blocks or a display-name translation layer in `page.tsx`.
+- If the live DB has NOT applied migration 065, mental_skill items still have `session_block_hint = 'Focus'` and will be matched by the fitness blocks' 'Focus' hint before reaching the competition block. Mental content will still appear in the draft, but not in the Competitive Games block specifically.
+
+---
+
 ## 2026-05-11 — Sprint 213: Director Interview Conversational Assistant V1
 
 **Sprint 212 commit verified:** `dddbcc5` — Mental / Competitive Class Template Phase V1 ✓
