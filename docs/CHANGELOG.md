@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-11 — Sprint 208: Curriculum Version Schema Repair V1
+
+**Root cause:** Migration 048 (`academy_curriculum_clone.sql`) had never been applied to the live Supabase project. The live database had only migrations 001–038. The tables `academy_curriculum_versions` and `academy_curriculum_overrides` did not exist, causing a runtime schema-cache error when the "Create Academy Curriculum Version" button was used on `/director/curriculum`.
+
+**Fix — database only (no source files changed):**
+- Applied migration `048_academy_curriculum_clone.sql` directly to the live Supabase project via MCP.
+- Created `public.academy_curriculum_versions` (12 columns) with RLS and triggers.
+- Created `public.academy_curriculum_overrides` (23 columns) with RLS and triggers.
+- All four dependency functions (`update_updated_at_column`, `auth_academy_id`, `auth_is_staff`, `auth_is_director_or_head`) were confirmed present before applying.
+
+**`database.types.ts` — not regenerated.** The live DB is still missing migrations 039–047 and 049–063 relative to local files. Regenerating types now would erase type coverage for those tables. All `academy_curriculum_versions` queries already use `rawDb as any`, so no type changes are needed for runtime correctness.
+
+**TypeScript result:** clean (`npx tsc --noEmit` — zero errors, pre- and post-sprint).
+
+---
+
 ## 2026-05-11 — Sprint 207: Director Dashboard Empty States + Helper Copy V1
 
 **Sprint 206 commit verified:** `f86e1b6 — Sprint 206 — Director Dashboard UX Clarity Pass V1`
