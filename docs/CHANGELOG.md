@@ -2,6 +2,45 @@
 
 ---
 
+## 2026-05-11 — Sprint 202: Programs + Groups Setup V1
+
+**Sprint 201 commit verified:** `f8ff294 — Sprint 201 — Level Gates + Promotion Rules V1`
+
+**Pattern audit:**
+- Settings merge pattern confirmed identical to Sprints 197–201.
+- Radio card pattern (three sections) matches Sprint 200/201 exactly.
+- Step 5 in `onboarding/page.tsx` confirmed to have no `settingsKey`, `href`, or `ctaLabel` — all three added this sprint.
+- No existing `programs_groups` records in the codebase — safe to build preference storage only.
+- No migrations needed — persisted to `academies.settings` JSON column.
+
+**`/director/onboarding/programs-groups` page added:**
+- Server component. Four auth guard layers: auth → `profiles.academy_id` → `academy_memberships.role === 'academy_director'` → rawDb academy fetch.
+- Reads `settings.programs_groups` sub-object; passes `program_structure`, `group_structure`, `naming_convention`, `notes` as `initial*` props.
+- Renders: back link, page header (Layers icon, "Onboarding · Step 5"), info banner ("This does not create any programs or groups yet…"), Card with form.
+
+**`ProgramsGroupsForm` added:**
+- Client component. Three radio-card sections:
+  1. Program structure — 4 options (default: `multiple_programs`).
+  2. Group structure — 4 options (default: `age_and_level_based`).
+  3. Naming convention — 4 options (default: `ball_color_level`).
+- Notes textarea (600 char max with live counter).
+- Save button with `Loader2` spinner, success `CheckCircle2` panel, `status-red` error text.
+- Radio sections use a shared inline `RadioSection` generic component to eliminate repetition.
+- No AI generation. No program/group/player record mutations.
+
+**`updateProgramsGroupsAction` added:**
+- `'use server'`. `assertNotPreviewMode()` guard.
+- Full auth chain: user → `profiles.academy_id` → `academy_memberships` director role check.
+- Three allowlist validations: `VALID_PROGRAM_STRUCTURES`, `VALID_GROUP_STRUCTURES`, `VALID_NAMING_CONVENTIONS`.
+- Fetch-merge-update pattern: fetches current `academies.settings`, spreads existing, overlays `programs_groups` sub-object + `programs_groups_completed: true`.
+- Revalidates: `/director/onboarding`, `/director/onboarding/programs-groups`, `/director`.
+
+**`onboarding/page.tsx` updated:**
+- Step 5 gains `settingsKey: 'programs_groups_completed'`, `href: '/director/onboarding/programs-groups'`, `ctaLabel: 'Set Up Programs + Groups'`.
+- Completion check: `if (settings.programs_groups_completed === true) completedStepNumbers.add(5)`.
+
+---
+
 ## 2026-05-10 — Sprint 201: Level Gates + Promotion Rules V1
 
 **Sprint 200 commit verified:** `454ca10 — Sprint 200 — Curriculum Starter Selection V1`

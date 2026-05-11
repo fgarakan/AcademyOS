@@ -51,6 +51,9 @@ const STEP_DEFS: StepDef[] = [
     number: 5,
     title: 'Programs + Groups',
     description: 'Create training programs and player groups. Define capacity, age ranges, and level assignments.',
+    settingsKey: 'programs_groups_completed',
+    href: '/director/onboarding/programs-groups',
+    ctaLabel: 'Set Up Programs + Groups',
   },
   {
     number: 6,
@@ -163,6 +166,7 @@ export default async function AcademyOnboardingPage() {
   if (settings.director_interview_completed === true) completedStepNumbers.add(2)
   if (settings.curriculum_setup_completed === true) completedStepNumbers.add(3)
   if (settings.level_gates_completed === true) completedStepNumbers.add(4)
+  if (settings.programs_groups_completed === true) completedStepNumbers.add(5)
 
   // Assign status: complete → next (first incomplete) → upcoming
   let nextAssigned = false
