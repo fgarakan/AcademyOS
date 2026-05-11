@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-11 — Sprint 211: First-Run Deck Gating + Role Layout Integration V1
+
+**Sprint 210 commit verified:** `00ac7e8` — AOSDeck, decks.ts, illustrations, aos-deck.css all present.
+
+**Files created:**
+- `supabase/migrations/064_first_run_deck.sql` — Idempotent `ADD COLUMN IF NOT EXISTS` migration: adds `has_seen_first_run_deck BOOLEAN NOT NULL DEFAULT false` and `first_run_deck_seen_at TIMESTAMPTZ` to `public.profiles`. Applied to live Supabase (project `dbjjhhxdkpdreytsozlq`) — confirmed present in `list_migrations`.
+- `src/lib/actions/markFirstRunDeckSeenAction.ts` — Server action: authenticates the current user, updates only `profiles.id = user.id` with `has_seen_first_run_deck = true` and `first_run_deck_seen_at = now()`. No client-supplied user_id. Returns `{ ok, error }`.
+- `src/components/onboarding/FirstRunDeckGate.tsx` — Client Component gate: receives `hasSeenDeck` (bool from server) and `role`; renders `AOSDeck` in a fixed full-screen overlay if not seen; `onComplete` and `onSkip` both call `markFirstRunDeckSeenAction`; on DB failure dismisses locally (user not trapped); renders `children` beneath overlay (and exclusively after dismiss).
+
+**Files modified:**
+- `src/app/director/layout.tsx` — Fetches `has_seen_first_run_deck` from `profiles` via `rawDb` cast; passes `hasSeenDeck` and `role="director"` to `<FirstRunDeckGate>` wrapping `{children}`.
+- `src/app/coach/layout.tsx` — Same pattern; `role="coach"`.
+- `src/app/player/layout.tsx` — Same pattern; `role="player"`.
+- `src/app/parent/layout.tsx` — Same pattern; `role="parent"`.
+
+**Database fields added:** `profiles.has_seen_first_run_deck`, `profiles.first_run_deck_seen_at` — applied to live DB via migration 064.
+
+**localStorage:** Not used. Gating is DB-backed across all devices and sessions.
+
+**`database.types.ts` status:** Not regenerated. No `gen:types` script in `package.json` and no `supabase/config.toml` present. All three callsites (`director/layout.tsx`, `coach/layout.tsx`, `player/layout.tsx`, `parent/layout.tsx`, `markFirstRunDeckSeenAction.ts`) use the established `rawDb = supabase as any` pattern for the two new columns, consistent with prior art in `middleware.ts`, `director.ts`, and `intelligence.ts`.
+
+**Unrelated dirty files untouched:** `index.html`, `data/airtable-import/reports/exercise-import-dry-run-report.json`, `supabase/migrations/053`, `057`, `058` — not staged.
+
+**TypeScript result:** Clean — `npx tsc --noEmit` — zero errors.
+
+**Manual QA status:** Dev server not started in this session. Logical QA summary: (1) Users with `has_seen_first_run_deck = false` (all existing users, new default) hit the layout → `rawDb` fetches the column → `FirstRunDeckGate` receives `hasSeenDeck=false` → overlay renders with the correct role deck. (2) Skip or "Get started" calls `markFirstRunDeckSeenAction` → sets column to `true`. (3) On next navigation the layout re-fetches → `hasSeenDeck=true` → gate renders `children` directly. (4) DB failure on write dismisses locally; user sees deck again on next hard navigation (acceptable degradation).
+
+---
+
 ## 2026-05-11 — Sprint 210: First-Run Deck Copy + Illustration Update
 
 **Files created:**

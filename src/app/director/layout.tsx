@@ -2,6 +2,7 @@ import { SidebarNav } from '@/components/nav/SidebarNav'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { PreviewBanner } from '@/components/platform/PreviewBanner'
 import { QuickCaptureButton } from '@/components/capture/QuickCaptureButton'
+import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
 
 export default async function DirectorLayout({
   children,
@@ -19,15 +20,20 @@ export default async function DirectorLayout({
   let pendingCount = 0
   let userEmail = ''
   let userDisplayName = ''
+  let hasSeenFirstRunDeck = true
 
   if (user) {
     userEmail = user.email ?? ''
 
-    const { data: profile } = await supabase
+    // has_seen_first_run_deck is not in database.types.ts yet — rawDb cast required.
+    const rawDb = supabase as any
+    const { data: profile } = await rawDb
       .from('profiles')
-      .select('academy_id, display_name')
+      .select('academy_id, display_name, has_seen_first_run_deck')
       .eq('id', user.id)
       .single()
+
+    hasSeenFirstRunDeck = (profile?.has_seen_first_run_deck ?? true) as boolean
 
     if (profile?.display_name) {
       userDisplayName = profile.display_name
@@ -47,7 +53,6 @@ export default async function DirectorLayout({
       }
 
       // Real pending count — all proposed_actions pending review for this academy
-      const rawDb = supabase as any
       const { count } = await rawDb
         .from('proposed_actions')
         .select('id', { count: 'exact', head: true })
@@ -68,7 +73,9 @@ export default async function DirectorLayout({
       />
       <main className="flex-1 ml-60 min-h-screen">
         <PreviewBanner />
-        {children}
+        <FirstRunDeckGate hasSeenDeck={hasSeenFirstRunDeck} role="director">
+          {children}
+        </FirstRunDeckGate>
       </main>
       {academyId && <QuickCaptureButton academyId={academyId} />}
     </div>
