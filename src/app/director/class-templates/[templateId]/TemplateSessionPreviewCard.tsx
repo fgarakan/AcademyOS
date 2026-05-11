@@ -67,12 +67,12 @@ const TYPE_BADGE: Record<string, string> = {
 
 const BLOCK_TYPE_LABELS: Record<string, string> = {
   warm_up:     'Warm-Up',
-  cool_down:   'Cool-Down',
-  technical:   'Technical',
-  tactical:    'Tactical',
-  movement:    'Movement',
-  fitness:     'Fitness',
-  competition: 'Competition',
+  cool_down:   'Wrap-Up',
+  technical:   'Skill',
+  tactical:    'Tactics',
+  movement:    'Warm-Up',
+  fitness:     'Athletic',
+  competition: 'Games',
   mental:      'Mental',
   free:        'Free Play',
 }

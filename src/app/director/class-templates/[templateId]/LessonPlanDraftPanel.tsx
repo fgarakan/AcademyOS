@@ -8,6 +8,7 @@ import {
   generateLessonPlanDraftAction,
   type LessonPlanDraft,
   type DraftBlock,
+  type DraftContentItem,
 } from './generateLessonPlanDraftAction'
 import { applyLessonPlanDraftAction } from './applyLessonPlanDraftAction'
 import { GuidedStepCard } from '@/components/onboarding/GuidedStepCard'
@@ -33,6 +34,19 @@ const CONTENT_TYPE_LABEL: Record<string, string> = {
   match_play_theme: 'Match-Play Theme',
   mental_skill: 'Mental Skill',
   competition_behavior: 'Competition Behavior',
+}
+
+// Tennis-session label for block type badges in the draft preview.
+const DRAFT_BLOCK_TYPE_LABELS: Record<string, string> = {
+  warm_up:     'Warm-Up',
+  movement:    'Warm-Up',
+  technical:   'Skill',
+  tactical:    'Tactics',
+  competition: 'Games',
+  mental:      'Mental',
+  cool_down:   'Wrap-Up',
+  fitness:     'Athletic',
+  free:        'Free Play',
 }
 
 export function LessonPlanDraftPanel({ templateId, hasCurriculumContent, curriculumLevelName }: Props) {
@@ -251,7 +265,45 @@ export function LessonPlanDraftPanel({ templateId, hasCurriculumContent, curricu
   )
 }
 
+function isMentalContentItem(item: DraftContentItem): boolean {
+  return item.contentType === 'mental_skill' || item.contentType === 'competition_behavior'
+}
+
+function DraftContentRow({ item }: { item: DraftContentItem }) {
+  return (
+    <li className="flex items-start gap-2">
+      <span className="text-lime shrink-0 text-xs mt-0.5">›</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-medium text-text-primary">{item.title}</p>
+        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+          <span className="text-[10px] text-text-muted">
+            {CONTENT_TYPE_LABEL[item.contentType] ?? item.contentType.replace(/_/g, ' ')}
+          </span>
+          {item.domain && (
+            <span className="text-[10px] text-text-muted">· {item.domain}</span>
+          )}
+          {item.durationMin != null && (
+            <span className="text-[10px] text-text-muted flex items-center gap-0.5">
+              · <Clock className="w-2.5 h-2.5 ml-0.5" /> {item.durationMin}min
+            </span>
+          )}
+        </div>
+      </div>
+    </li>
+  )
+}
+
 function DraftBlockRow({ block, index }: { block: DraftBlock; index: number }) {
+  // For Competitive Games blocks: split game/skill items from mental items so
+  // Mental Focus is visible as a distinct subsection rather than hidden in the list.
+  const isCompetitionBlock = block.blockType === 'competition'
+  const gameItems = isCompetitionBlock
+    ? block.contentItems.filter(item => !isMentalContentItem(item))
+    : block.contentItems
+  const mentalItems = isCompetitionBlock
+    ? block.contentItems.filter(isMentalContentItem)
+    : []
+
   return (
     <div className="border border-border rounded-lg p-3">
       {/* Block header */}
@@ -259,7 +311,7 @@ function DraftBlockRow({ block, index }: { block: DraftBlock; index: number }) {
         <span className="text-[10px] font-mono text-text-muted w-5 shrink-0">{index + 1}</span>
         <p className="text-xs font-semibold text-text-primary truncate">{block.blockName}</p>
         <span className="text-[10px] uppercase tracking-widest text-text-muted px-1 py-0.5 rounded border border-border shrink-0">
-          {block.blockType.replace(/_/g, ' ')}
+          {DRAFT_BLOCK_TYPE_LABELS[block.blockType] ?? block.blockType.replace(/_/g, ' ')}
         </span>
         {block.durationMin != null && (
           <span className="ml-auto flex items-center gap-1 text-[10px] text-text-muted shrink-0">
@@ -282,29 +334,30 @@ function DraftBlockRow({ block, index }: { block: DraftBlock; index: number }) {
             : 'No curriculum content matched for this block type.'}
         </p>
       ) : (
-        <ul className="space-y-1.5 pl-7">
-          {block.contentItems.map(item => (
-            <li key={item.contentItemId} className="flex items-start gap-2">
-              <span className="text-lime shrink-0 text-xs mt-0.5">›</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-medium text-text-primary">{item.title}</p>
-                <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                  <span className="text-[10px] text-text-muted">
-                    {CONTENT_TYPE_LABEL[item.contentType] ?? item.contentType.replace(/_/g, ' ')}
-                  </span>
-                  {item.domain && (
-                    <span className="text-[10px] text-text-muted">· {item.domain}</span>
-                  )}
-                  {item.durationMin != null && (
-                    <span className="text-[10px] text-text-muted flex items-center gap-0.5">
-                      · <Clock className="w-2.5 h-2.5 ml-0.5" /> {item.durationMin}min
-                    </span>
-                  )}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-3 pl-7">
+          {/* Primary game / skill / drill items */}
+          {gameItems.length > 0 && (
+            <ul className="space-y-1.5">
+              {gameItems.map(item => (
+                <DraftContentRow key={item.contentItemId} item={item} />
+              ))}
+            </ul>
+          )}
+
+          {/* Mental Focus subsection — visible within Competitive Games when mental items are present */}
+          {mentalItems.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-status-green mb-1.5">
+                Mental Focus
+              </p>
+              <ul className="space-y-1.5">
+                {mentalItems.map(item => (
+                  <DraftContentRow key={item.contentItemId} item={item} />
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       )}
     </div>
   )

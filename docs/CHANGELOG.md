@@ -2,6 +2,76 @@
 
 ---
 
+## 2026-05-11 — Sprint 215: Class Template Fitness Separation + Editable Curriculum Blocks V1
+
+**Root cause:**
+Sprint 214 fixed the lesson-plan draft preview block names (adding `tennisBlockDisplayName()` to `generateLessonPlanDraftAction.ts`). However, three display locations in `page.tsx` still rendered raw `template_blocks.name` values from the Airtable import ("Movement", "Agility", "Speed", "Cool Down"):
+1. The "Curriculum Lesson Plan" section (applied curriculum content per block)
+2. The "Template Blocks" section (interactive block list with BlockContentPickerCard)
+3. The `previewBlocks.name` field passed to `TemplateSessionPreviewCard`
+
+Additionally, `TemplateSessionPreviewCard.tsx` had `BLOCK_TYPE_LABELS` mapping `movement → 'Movement'` and `fitness → 'Fitness'`, and `LessonPlanDraftPanel.tsx` `DraftBlockRow` showed raw `blockType.replace(/_/g, ' ')` in the type badge.
+
+**Class template block separation from Fitness OS:**
+Class templates now display tennis-session block names exclusively. No fitness terminology appears as a primary class-template block label unless the director has explicitly added an Athletic Development block.
+
+**New display-name mapping (page.tsx `classTemplateBlockDisplayName`):**
+- `warm_up` → Welcome + Warm-Up
+- `movement` → Welcome + Warm-Up
+- `technical` → Skill Foundation
+- `fitness` (1st block) → Skill Foundation
+- `fitness` (2nd block) → Rally Development
+- `tactical` → Tactical Decisions
+- `competition` → Competitive Games
+- `mental` → Mental Focus
+- `cool_down` → Wrap-Up
+- Any unmapped type → falls back to stored `template_blocks.name`
+
+**Display-only mapping — no DB mutations:**
+`template_blocks.name` in the database is unchanged. `block.id` is preserved for all server actions (`addBlockContentAction`, `removeBlockContentAction`, `applyLessonPlanDraftAction`). Apply to Template continues to write correct `curriculum_class_template_blocks` rows using real block IDs.
+
+**TemplateSessionPreviewCard block type badge labels (class-template only):**
+- `movement → 'Warm-Up'` (was 'Movement')
+- `fitness → 'Athletic'` (was 'Fitness')
+- `technical → 'Skill'` (was 'Technical')
+- `tactical → 'Tactics'` (was 'Tactical')
+- `competition → 'Games'` (was 'Competition')
+- `cool_down → 'Wrap-Up'` (was 'Cool-Down')
+
+**LessonPlanDraftPanel draft block type badges:**
+`DraftBlockRow` now uses `DRAFT_BLOCK_TYPE_LABELS` (same tennis mapping) instead of raw `blockType.replace(/_/g, ' ')`.
+
+**Mental Focus subsection in Competitive Games:**
+`DraftBlockRow` now separates `mental_skill` and `competition_behavior` items from game items when `blockType === 'competition'`. Mental items appear under a distinct "Mental Focus" subheading inside the Competitive Games block — visually separated without requiring a separate DB block. Apply to Template is unaffected (both game and mental items still write to the same `blockId`).
+
+**Director add/delete/swap behavior:**
+Existing `BlockContentPickerCard` + `addBlockContentAction` + `removeBlockContentAction` pipeline is fully intact. The modal header now shows the tennis display name ("For Competitive Games — choose...") rather than the raw Airtable block name. Block IDs used in all server actions are unchanged.
+
+**Drill/activity detail with regressions/progressions:**
+The "Curriculum Lesson Plan" section in `page.tsx` already renders coach cues, success criteria, progressions, and regressions from `curriculum_content_items` and `curriculum_drills`. Graceful empty states apply — nothing is shown if the data does not exist. No fake progressions added.
+
+**Optional Athletic Development:**
+Fitness content within a class template only appears as "Skill Foundation" or "Rally Development" display names (from the `fitness` block type). A dedicated Athletic Development block does not appear by default. Directors can only get one by having a `fitness`-typed block in their template structure (which the Airtable import does include). This is not auto-created.
+
+**Fitness OS impact:** None. `TemplateSessionPreviewCard`, `LessonPlanDraftPanel`, and the class template `page.tsx` are only used in `/director/class-templates`. Fitness OS uses `FitnessTemplateBuilderClient`, `populateFitnessBlocksAction`, and `fitnessExerciseRecommendations` — all untouched.
+
+**Files modified:**
+- `src/app/director/class-templates/[templateId]/page.tsx` — Added `classTemplateBlockDisplayName()` helper + `blockDisplayNames` pre-computation; applied mapped names in Curriculum Lesson Plan section, Template Blocks section, `previewBlocks.name`, and `BlockContentPickerCard` `blockName` prop.
+- `src/app/director/class-templates/[templateId]/TemplateSessionPreviewCard.tsx` — Updated `BLOCK_TYPE_LABELS` to tennis-session labels for all block types.
+- `src/app/director/class-templates/[templateId]/LessonPlanDraftPanel.tsx` — Added `DRAFT_BLOCK_TYPE_LABELS`; extracted `DraftContentRow` helper; rewrote `DraftBlockRow` to use tennis badge labels and show Mental Focus subsection inside Competitive Games blocks; imported `DraftContentItem` type.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passes with zero errors.
+
+**Manual browser QA status:** Pending user verification.
+
+**Known limitations:**
+- The "Template Blocks" type badge (small muted label below the display name) still shows the raw block type enum value (e.g., `movement`, `cool_down`). These are internal DB type markers and are rendered in muted/small text. The primary block name is the tennis-session label. Cleaning up type badge labels in this section is a minor follow-up.
+- If a template has more than 2 fitness-type blocks, the 3rd and beyond fall back to the raw stored name. This is a graceful edge case — real class templates have at most 2 fitness blocks.
+- Live session coach view (drill/activity detail modal on coach session page) has not been built as part of this sprint. The data model supports it — `curriculum_class_template_blocks` rows contain cues, progressions, and regressions. This is the next sprint for coach session execution.
+
+---
+
 ## 2026-05-11 — Sprint: Class Template Block Taxonomy Repair V1
 
 **Root cause:**

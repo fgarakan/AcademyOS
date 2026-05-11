@@ -95,6 +95,26 @@ function contentTypeLabel(type: string): string {
   return map[type] ?? type.replace(/_/g, ' ')
 }
 
+// Maps block_type enum values to tennis-session display names — display only.
+// Does not mutate template_blocks.name in the database.
+// typeIndex = how many blocks of this type have appeared before this one (for fitness block disambiguation).
+function classTemplateBlockDisplayName(type: string, typeIndex: number): string {
+  switch (type) {
+    case 'warm_up':     return 'Welcome + Warm-Up'
+    case 'movement':    return 'Welcome + Warm-Up'
+    case 'technical':   return 'Skill Foundation'
+    case 'tactical':    return 'Tactical Decisions'
+    case 'competition': return 'Competitive Games'
+    case 'mental':      return 'Mental Focus'
+    case 'cool_down':   return 'Wrap-Up'
+    case 'fitness':
+      if (typeIndex === 0) return 'Skill Foundation'
+      if (typeIndex === 1) return 'Rally Development'
+      return ''
+    default:            return ''
+  }
+}
+
 export default async function ClassTemplateDetailPage({ params }: PageProps) {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
@@ -163,6 +183,18 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
 
   const blockList = blocks ?? []
   const blockIds = blockList.map(b => b.id)
+
+  // Pre-compute tennis display names — display layer only, no DB writes.
+  // Preserves underlying block.id for all mutations and server actions.
+  const _blockTypeCount: Record<string, number> = {}
+  const blockDisplayNames = new Map<string, string>()
+  for (const block of blockList) {
+    const t = block.type ?? ''
+    const idx = _blockTypeCount[t] ?? 0
+    _blockTypeCount[t] = idx + 1
+    const mapped = classTemplateBlockDisplayName(t, idx)
+    blockDisplayNames.set(block.id, mapped || block.name)
+  }
 
   // Fetch curriculum class template blocks (new curriculum content path)
   const curriculumByBlock = new Map<string, CurriculumBlockRow[]>()
@@ -281,7 +313,7 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
   // Build preview blocks for TemplateSessionPreviewCard
   const previewBlocks: PreviewBlock[] = blockList.map(block => ({
     id: block.id,
-    name: block.name,
+    name: blockDisplayNames.get(block.id) ?? block.name,
     blockType: block.type ?? '',
     durationMin: block.duration_min ?? null,
     orderIndex: block.order_index,
@@ -453,7 +485,7 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
                     {/* Block header */}
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-[10px] font-mono text-text-muted w-5">{i + 1}</span>
-                      <p className="text-sm font-semibold text-text-primary">{block.name}</p>
+                      <p className="text-sm font-semibold text-text-primary">{blockDisplayNames.get(block.id) ?? block.name}</p>
                       {block.type && (
                         <span className="text-[10px] uppercase tracking-widest text-text-muted px-1.5 py-0.5 rounded border border-border">
                           {block.type}
@@ -643,7 +675,7 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[10px] font-mono text-text-muted w-5 shrink-0">{i + 1}</span>
-                        <p className="text-sm font-semibold text-text-primary">{block.name}</p>
+                        <p className="text-sm font-semibold text-text-primary">{blockDisplayNames.get(block.id) ?? block.name}</p>
                         {block.type && (
                           <span className="text-[10px] uppercase tracking-widest text-text-muted px-1.5 py-0.5 rounded border border-border">
                             {block.type}
@@ -671,7 +703,7 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
                     {/* Interactive curriculum content picker */}
                     <BlockContentPickerCard
                       blockId={block.id}
-                      blockName={block.name}
+                      blockName={blockDisplayNames.get(block.id) ?? block.name}
                       templateId={params.templateId}
                       initialAssigned={assignedItems}
                       available={availableContent}
