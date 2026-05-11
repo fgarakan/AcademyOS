@@ -2,6 +2,54 @@
 
 ---
 
+## 2026-05-11 — Sprint 213: Director Interview Conversational Assistant V1
+
+**Sprint 212 commit verified:** `dddbcc5` — Mental / Competitive Class Template Phase V1 ✓
+
+**Audit findings:**
+- `updateDirectorInterviewAction` saves 7 fields to `academies.settings.director_interview` (JSONB merge) — reused unchanged.
+- `DirectorInterviewForm.tsx` rendered 7 stacked textareas — replaced by conversational assistant UI (left in place, no longer imported).
+- Page re-wired to `DirectorInterviewAssistant` via same 7 `initial*` string props — no data contract changes.
+
+**Files created:**
+- `src/app/director/onboarding/interview/interviewSteps.ts` — Static config for all 7 interview steps: field key, step label, question, why-it-matters copy, 5–6 answer chips per step.
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — Client component: welcome screen → one-question-at-a-time flow (chips + optional custom text + progress bar + back/next) → final review summary → save → success state.
+
+**Files modified:**
+- `src/app/director/onboarding/interview/page.tsx` — Replaced `<DirectorInterviewForm>` with `<DirectorInterviewAssistant>`; removed `Info` icon banner (context now inside assistant welcome screen); updated page subtitle.
+- `docs/CHANGELOG.md` — This entry.
+
+**Conversational UX:**
+- Welcome screen with 4 orientation items and "Start the interview" CTA.
+- 7 question steps one at a time, each with: step count, progress bar, question + why-it-matters, 5–6 answer chips, optional custom text area (400 char limit), back/next navigation.
+- Chips toggle selected/unselected. Selected = lime highlight. Custom text can be used alone or combined with chips.
+- Final review screen shows all 7 answers in a clean summary before save.
+- Success state with confirmation copy and "Back to Onboarding" link.
+
+**Data save behavior:**
+- Existing `updateDirectorInterviewAction` called unchanged with 7 positional strings.
+- Combined value format: chips only → `"chip1; chip2"` | custom only → `"custom text"` | both → `"chip1; chip2; Custom note: custom text"`.
+- Existing saved free-text values pre-populate the custom text field (backward compatible with old textarea data).
+- Saves to `academies.settings.director_interview` — no schema change.
+
+**Data safety verification:**
+- No AI runtime added.
+- No voice transcription added.
+- No migrations created.
+- `database.types.ts` untouched.
+- No player records mutated.
+- No placement records mutated.
+- No curriculum records mutated.
+- No class template records mutated.
+- No parent/player communication sent.
+- Unrelated dirty files untouched (`index.html`, `053`, `057`, `058` migrations, exercise report).
+
+**TypeScript result:** Clean — `npx tsc --noEmit` — zero errors.
+
+**Manual browser QA status:** Pending — verify by visiting `/director/onboarding/interview`.
+
+---
+
 ## 2026-05-11 — Sprint 212: Mental / Competitive Class Template Phase V1
 
 **Goal:** Add a working mental/competitive phase to the class template lesson plan generator. Fix broken routing for `block_type = 'mental'` and seed on-court mental/competitive content for Orange 1/2/3.

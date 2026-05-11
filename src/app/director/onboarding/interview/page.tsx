@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { ArrowLeft, MessageSquare, Info } from 'lucide-react'
+import { ArrowLeft, MessageSquare } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
-import { DirectorInterviewForm } from './DirectorInterviewForm'
+import { DirectorInterviewAssistant } from './DirectorInterviewAssistant'
 
 export default async function DirectorInterviewPage() {
   const supabase = await getSupabaseServer()
@@ -96,23 +96,13 @@ export default async function DirectorInterviewPage() {
         </div>
         <h1 className="page-title">Director Interview</h1>
         <p className="page-subtitle">
-          Tell Academy OS how your academy works.
+          A 3–5 minute guided conversation to shape your operating system.
         </p>
-      </div>
-
-      {/* ── Info banner ── */}
-      <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-lime/5 border border-lime/20 text-xs text-text-secondary">
-        <Info className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
-        <span>
-          These answers help Academy OS understand how your academy works. Future AI-assisted
-          setup will use this context to draft curriculum, groups, communication, and workflows
-          for your review.
-        </span>
       </div>
 
       <Card>
         <CardContent className="py-6">
-          <DirectorInterviewForm
+          <DirectorInterviewAssistant
             initialPhilosophy={initialPhilosophy}
             initialPlayerFocus={initialPlayerFocus}
             initialDevelopmentPriorities={initialDevelopmentPriorities}
