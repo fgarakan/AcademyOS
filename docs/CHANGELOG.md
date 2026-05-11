@@ -2,6 +2,85 @@
 
 ---
 
+## 2026-05-11 — Director Interview Voice-Assisted Conversation V1
+
+**Audit findings:**
+The existing `DirectorInterviewAssistant.tsx` already had a solid one-question-at-a-time stepper with chips, custom text, a review screen, and a connected server action. The backbone was correct. Missing: voice output (TTS), voice input (STT mic button), per-answer confirmation phase, and a conversational personality layer. The old UI skipped directly from "answer entered" to "next question" without any acknowledgment step.
+
+**Voice output added:**
+`window.speechSynthesis` (browser-native, no paid API). Each question card now shows a "Play question ▶" button that reads the current question aloud. An "Auto-read questions" toggle auto-speaks each question when stepping forward. SSR-safe: TTS support is detected post-hydration via `useEffect`. Speech cancelled on unmount and on every step change when not in auto-read mode.
+
+**Voice input added:**
+Inline `MicButton` component using `window.SpeechRecognition / webkitSpeechRecognition` (same pattern as `VoiceInputButton.tsx`). Appends transcript to the custom answer textarea. Handles `not-allowed` and `no-speech` errors gracefully. When unsupported, shows a text fallback note — mic button hidden entirely. Voice is never required.
+
+**Per-answer confirmation step added:**
+After pressing "Use this answer", the UI enters `phase: 'confirming'`. Assistant shows:
+- Rotating acknowledgment phrase (from pools: chips, custom, both, or empty)
+- Plain-language interpretation of what was selected/typed
+- Three actions: "Looks right — next question" | "Edit answer" | "Skip for now"
+- "Ask me simpler" link that clears the answer and adds a helper prompt
+
+**Conversational etiquette layer added:**
+`getAcknowledgment()` rotates through phrase pools by answer type. Avoids repetition and fake praise. Tone target: warm academy consultant, not a chatbot. Examples: "Got it — that's clear.", "That makes sense.", "No problem. We can keep this simple.", "That's helpful context."
+
+**Helper options added:**
+Bottom of each question card shows: "Ask me simpler" / "Use closest option" / "I'm not sure — skip". These are deterministic — no AI runtime. "Use closest option" pre-selects the first chip. "Ask me simpler" clears the answer and adds a soft prompt.
+
+**`interviewSteps.ts` updated:**
+Added `id` and `spokenQuestion` fields to each step. Updated all 7 question texts, why-it-matters copy, and chips to match Part D direction. Field names unchanged — server action signature unchanged.
+
+**No full AI runtime added:**
+All interpretation is deterministic. `buildInterpretation()` echoes back selected chips and quoted custom text. No OpenAI, no Anthropic, no paid voice API. Browser-native only.
+
+**No migrations:**
+`academies.settings.director_interview` field names unchanged. `updateDirectorInterviewAction.ts` unchanged.
+
+**No database.types.ts edits.** No mutations until final Save. No unrelated dirty files touched.
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — full voice-assisted conversation UX: TTS output, STT mic input, confirmation phase, acknowledgment phrases, helper options, warmer copy
+- `src/app/director/onboarding/interview/interviewSteps.ts` — added `id`, `spokenQuestion`; updated all 7 questions + chips
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean — `npx tsc --noEmit` exit 0.
+
+**Manual QA status:**
+- Browser access not available in this environment.
+- Route hiding logic, state machine, and voice checks are all deterministic and SSR-safe.
+- QA checklist for manual verification:
+  1. `/director/onboarding/interview` loads — welcome panel shows.
+  2. "Start" advances to Q1.
+  3. "Play question" button speaks the question (Chrome/Edge).
+  4. "Auto-read" toggle auto-speaks on step advance.
+  5. Chips toggle correctly (lime highlight).
+  6. "Speak answer" opens mic, transcript fills textarea.
+  7. Typing fallback works on all browsers.
+  8. "Use this answer" shows confirmation phase with acknowledgment.
+  9. "Looks right" advances to next question.
+  10. "Edit answer" returns to answering phase.
+  11. "Skip for now" clears and advances.
+  12. "Ask me simpler" clears answer and adds helper message.
+  13. Final review shows all 7 sections with inline Edit links.
+  14. Editing a section jumps back to that question.
+  15. "Save Academy Setup" fires `updateDirectorInterviewAction`.
+  16. No save fires until director confirms.
+  17. Success screen shows after save.
+  18. No SSR errors — voice support checked post-hydration.
+
+**git add command:**
+```
+git add src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx \
+        src/app/director/onboarding/interview/interviewSteps.ts \
+        docs/CHANGELOG.md
+```
+
+**git commit:**
+```
+Sprint 219 — Director Interview Voice-Assisted Conversation V1
+```
+
+---
+
 ## 2026-05-11 — Sprint 218: Floating Quick Capture Collision + Session Creation Policy Fix V1
 
 **Root cause — Quick Capture collision:**
