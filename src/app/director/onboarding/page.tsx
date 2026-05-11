@@ -67,6 +67,9 @@ const STEP_DEFS: StepDef[] = [
     number: 7,
     title: 'Players + Placement',
     description: 'Import your roster and run the placement engine. Assign each player to their starting level and group.',
+    settingsKey: 'players_placement_completed',
+    href: '/director/onboarding/players-placement',
+    ctaLabel: 'Set Up Players + Placement',
   },
   {
     number: 8,
@@ -171,6 +174,7 @@ export default async function AcademyOnboardingPage() {
   if (settings.level_gates_completed === true) completedStepNumbers.add(4)
   if (settings.programs_groups_completed === true) completedStepNumbers.add(5)
   if (settings.coaches_permissions_completed === true) completedStepNumbers.add(6)
+  if (settings.players_placement_completed === true) completedStepNumbers.add(7)
 
   // Assign status: complete → next (first incomplete) → upcoming
   let nextAssigned = false

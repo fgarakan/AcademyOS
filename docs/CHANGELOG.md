@@ -2,6 +2,64 @@
 
 ---
 
+## 2026-05-11 — Sprint 204: Players + Placement Setup V1
+
+**Sprint 203 commit verified:** `1aab5a3 — Sprint 203 — Coaches + Permissions Setup V1`
+
+**Onboarding/settings/player-placement pattern audit:**
+- Settings merge pattern confirmed identical to Sprints 197–203.
+- No existing `players_placement` key found anywhere in source.
+- No placement engine files touched — `finalize_player_placement()` untouched.
+- Step 7 in `onboarding/page.tsx` confirmed to have no `settingsKey`, `href`, or `ctaLabel` — all three added this sprint.
+- Checkbox card pattern (first used Sprint 201) reused for intake information section.
+- Radio card pattern matches Sprints 200–203 exactly.
+
+**`/director/onboarding/players-placement` page added:**
+- Server component. Four auth guard layers: auth → `profiles.academy_id` → `academy_memberships.role === 'academy_director'` → rawDb academy fetch.
+- Reads `settings.players_placement` sub-object; `Array.isArray` guard on `intake_information` before cast to `string[]`.
+- Passes `initialAddMethod`, `initialPlacementApproach`, `initialApprovalModel`, `initialIntakeInformation`, `initialNotes` as props.
+- `UserPlus` icon, "Onboarding · Step 7", info banner ("This does not add any players or run the placement engine yet…").
+
+**`PlayersPlacementForm` added:**
+- Client component. Three radio-card sections + one checkbox-card section:
+  1. Player add method — 4 options (default: `manual_entry`).
+  2. Placement approach — 4 options (default: `assessment_first`).
+  3. Placement approval model — 3 options (default: `director_approves_all`).
+  4. Intake information — 8 checkbox cards in 2-column grid (defaults: player_name_age, ball_level, current_training_history, competition_experience, parent_goals).
+- Player onboarding notes textarea (600 char max with live counter).
+- Save button with `Loader2` spinner, success `CheckCircle2` panel, `status-red` error text.
+- Shared `RadioSection<T>` generic component for all three radio sections.
+- No AI generation. No player, placement, group, or program mutations.
+
+**`updatePlayersPlacementAction` added:**
+- `'use server'`. `assertNotPreviewMode()` guard.
+- Full auth chain: user → `profiles.academy_id` → `academy_memberships` director role check.
+- Four allowlist constants: `VALID_PLAYER_ADD_METHODS`, `VALID_PLACEMENT_APPROACHES`, `VALID_PLACEMENT_APPROVAL_MODELS`, `VALID_INTAKE_INFORMATION`.
+- Intake array sanitized (filter, not reject) against allowlist.
+- Fetch-merge-update pattern: fetches current `academies.settings`, spreads existing, overlays `players_placement` sub-object + `players_placement_completed: true`.
+- Revalidates: `/director/onboarding`, `/director/onboarding/players-placement`, `/director`.
+
+**`onboarding/page.tsx` updated:**
+- Step 7 gains `settingsKey: 'players_placement_completed'`, `href: '/director/onboarding/players-placement'`, `ctaLabel: 'Set Up Players + Placement'`.
+- Completion check: `if (settings.players_placement_completed === true) completedStepNumbers.add(7)`.
+
+**Data safety:**
+- No player records created or mutated.
+- No placement records mutated. `finalize_player_placement()` untouched.
+- No group, program, curriculum, coach, or `academy_memberships` records mutated.
+- No parent/player communication sent. No portal exposure changed.
+- No file upload or CSV import added.
+- No placement engine execution.
+- No placement engine files modified.
+- No migrations created or modified. `database.types.ts` untouched.
+
+**Future context:**
+- This sprint stores player intake and placement workflow preferences only. Actual player import (CSV upload, manual entry form, parent registration) and placement engine execution (`finalize_player_placement()`) are deferred to future sprints. When those sprints run, `players_placement` settings will pre-configure the intake form fields, placement approach, and approval routing without requiring director re-configuration.
+
+**Manual browser QA:** Pending — dev server required. Functional correctness verified by TypeScript check and pattern parity with Sprints 200–203.
+
+---
+
 ## 2026-05-11 — Sprint 203: Coaches + Permissions Setup V1
 
 **Sprint 202 commit verified:** `f76a03c — Sprint 202 — Programs + Groups Setup V1`
