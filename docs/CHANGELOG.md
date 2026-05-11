@@ -2,6 +2,62 @@
 
 ---
 
+## 2026-05-11 — Sprint 203: Coaches + Permissions Setup V1
+
+**Sprint 202 commit verified:** `f76a03c — Sprint 202 — Programs + Groups Setup V1`
+
+**Onboarding/settings/coach-permission pattern audit:**
+- Settings merge pattern confirmed identical to Sprints 197–202.
+- No existing `coaches_permissions` key found anywhere in source.
+- No `/director/coaches` directory exists — safe to build preference storage without collision.
+- Step 6 in `onboarding/page.tsx` confirmed to have no `settingsKey`, `href`, or `ctaLabel` — all three added this sprint.
+- Radio card pattern matches Sprints 200–202 exactly.
+- `academy_memberships` read-only in the auth guard (no mutations).
+
+**`/director/onboarding/coaches-permissions` page added:**
+- Server component. Four auth guard layers: auth → `profiles.academy_id` → `academy_memberships.role === 'academy_director'` → rawDb academy fetch.
+- Reads `settings.coaches_permissions` sub-object; passes `coaching_team_structure`, `coach_access_level`, `level_recommendation_permission`, `communication_permission`, `notes` as `initial*` props.
+- Renders: back link, page header (Users icon, "Onboarding · Step 6"), info banner ("This does not invite coaches or change real permissions yet…"), Card with form.
+
+**`CoachesPermissionsForm` added:**
+- Client component. Four radio-card sections (extracted `RadioSection<T>` generic component shared across sections):
+  1. Coaching team structure — 4 options (default: `director_led`).
+  2. Coach access level — 3 options (default: `assigned_groups_plus_context`).
+  3. Level recommendation permission — 3 options (default: `coach_can_recommend_director_approves`).
+  4. Communication permission — 3 options (default: `drafts_only`).
+- Coach workflow notes textarea (600 char max with live counter).
+- Save button with `Loader2` spinner, success `CheckCircle2` panel, `status-red` error text.
+- No AI generation. No coach, membership, player, parent, or permission mutations.
+
+**`updateCoachesPermissionsAction` added:**
+- `'use server'`. `assertNotPreviewMode()` guard.
+- Full auth chain: user → `profiles.academy_id` → `academy_memberships` director role check.
+- Four allowlist validations: `VALID_COACHING_TEAM_STRUCTURES`, `VALID_COACH_ACCESS_LEVELS`, `VALID_LEVEL_RECOMMENDATION_PERMISSIONS`, `VALID_COMMUNICATION_PERMISSIONS`.
+- Fetch-merge-update pattern: fetches current `academies.settings`, spreads existing, overlays `coaches_permissions` sub-object + `coaches_permissions_completed: true`.
+- `onboarding_state` preserved or defaulted to `'coaches_permissions'`.
+- Revalidates: `/director/onboarding`, `/director/onboarding/coaches-permissions`, `/director`.
+
+**`onboarding/page.tsx` updated:**
+- Step 6 gains `settingsKey: 'coaches_permissions_completed'`, `href: '/director/onboarding/coaches-permissions'`, `ctaLabel: 'Set Up Coaches + Permissions'`.
+- Completion check: `if (settings.coaches_permissions_completed === true) completedStepNumbers.add(6)`.
+
+**Data safety:**
+- No `academy_memberships` records mutated.
+- No coach records created or modified.
+- No coach invites sent.
+- No group, program, curriculum, player, or placement records mutated.
+- No parent/player communication sent.
+- No parent/player portal exposure changed.
+- No migrations created or modified.
+- `database.types.ts` untouched.
+
+**Future context:**
+- This sprint stores coaching team preferences only. Actual coach invitation (creating `academy_memberships` rows, sending email invites) is deferred to a future sprint. When that sprint runs, `coaches_permissions` settings will pre-configure default access levels and permission rules for newly invited coaches, eliminating per-coach manual setup.
+
+**Manual browser QA:** Pending — dev server required. Functional correctness verified by TypeScript check and pattern parity with Sprints 200–202.
+
+---
+
 ## 2026-05-11 — Sprint 202: Programs + Groups Setup V1
 
 **Sprint 201 commit verified:** `f8ff294 — Sprint 201 — Level Gates + Promotion Rules V1`

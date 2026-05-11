@@ -59,6 +59,9 @@ const STEP_DEFS: StepDef[] = [
     number: 6,
     title: 'Coaches + Permissions',
     description: 'Invite your coaching staff and assign roles. Set access levels for head coaches and assistant coaches.',
+    settingsKey: 'coaches_permissions_completed',
+    href: '/director/onboarding/coaches-permissions',
+    ctaLabel: 'Set Up Coaches + Permissions',
   },
   {
     number: 7,
@@ -167,6 +170,7 @@ export default async function AcademyOnboardingPage() {
   if (settings.curriculum_setup_completed === true) completedStepNumbers.add(3)
   if (settings.level_gates_completed === true) completedStepNumbers.add(4)
   if (settings.programs_groups_completed === true) completedStepNumbers.add(5)
+  if (settings.coaches_permissions_completed === true) completedStepNumbers.add(6)
 
   // Assign status: complete → next (first incomplete) → upcoming
   let nextAssigned = false
