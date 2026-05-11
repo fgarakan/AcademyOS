@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-11 — Sprint 212: Mental / Competitive Class Template Phase V1
+
+**Goal:** Add a working mental/competitive phase to the class template lesson plan generator. Fix broken routing for `block_type = 'mental'` and seed on-court mental/competitive content for Orange 1/2/3.
+
+**Files created:**
+- `supabase/migrations/065_mental_competitive_content_seed.sql` — Extends `session_block_hint_check` constraint to include `'Mental'`; updates 7 existing Orange 1 rows (migrated from `063`) to `session_block_hint = 'Mental'`; inserts 8 new mental/competitive content items for Orange 2 and 8 for Orange 3. Applied to live Supabase project `dbjjhhxdkpdreytsozlq`.
+
+**Files modified:**
+- `src/app/director/class-templates/[templateId]/generateLessonPlanDraftAction.ts` — Fixed `hintsForBlockType('mental')` from `['Focus', 'Train', 'Play']` to `['Mental']` so mental blocks correctly route to `mental_skill` / `competition_behavior` content.
+- `src/lib/actions/curriculumContentPopulation.ts` — Fixed `BLOCK_TO_CONTENT_TYPES.mental` from `['game', 'drill']` to `['mental_skill', 'competition_behavior']`; fixed `BLOCK_TYPE_TO_SESSION_BLOCKS.mental` from `['Play', 'Game']` to `['Mental']`; extended `buildCurriculumNotes()` with a MENTAL / COMPETITIVE SKILL section.
+
+**Content seeded (24 new items + 7 updated):**
+- Orange 1: 7 rows updated to `session_block_hint = 'Mental'`
+- Orange 2: 5 `mental_skill` + 3 `competition_behavior` (Between-Point Reset, Pressure Point Routine, Attack/Rally/Defend/Reset Decision, etc.)
+- Orange 3: 5 `mental_skill` + 3 `competition_behavior` (Match Plan Execution, Serve Under Pressure, Handle a Momentum Shift, etc.)
+- All rows: `academy_id = NULL`, `is_player_visible = false`, `is_parent_visible = false`
+
+**CHECK constraint extended:** `session_block_hint_check` now includes `'Mental'` as a valid value.
+
+**TypeScript result:** Clean — `npx tsc --noEmit` — zero errors.
+
+---
+
 ## 2026-05-11 — Sprint 211: First-Run Deck Gating + Role Layout Integration V1
 
 **Sprint 210 commit verified:** `00ac7e8` — AOSDeck, decks.ts, illustrations, aos-deck.css all present.

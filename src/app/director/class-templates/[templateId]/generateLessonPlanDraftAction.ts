@@ -22,7 +22,7 @@ function hintsForBlockType(type: Enums<'block_type'>): string[] {
     case 'movement':    return ['Train', 'Focus']
     case 'fitness':     return ['Train', 'Focus']
     case 'competition': return ['Match-Play', 'Situational', 'Game']
-    case 'mental':      return ['Focus', 'Train', 'Play']
+    case 'mental':      return ['Mental']
     case 'free':        return ['Focus', 'Train', 'Game', 'Play']
   }
 }

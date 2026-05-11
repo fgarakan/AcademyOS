@@ -23,7 +23,7 @@ const BLOCK_TO_CONTENT_TYPES: Record<string, string[]> = {
   movement:    ['drill', 'fitness', 'warmup'],
   fitness:     ['fitness', 'drill'],
   competition: ['game', 'competition', 'assessment'],
-  mental:      ['game', 'drill'],
+  mental:      ['mental_skill', 'competition_behavior'],
   cool_down:   ['cooldown', 'drill'],
   free:        ['drill', 'game', 'skill', 'assessment', 'warmup', 'cooldown', 'fitness', 'tactical', 'competition'],
 }
@@ -100,6 +100,9 @@ function buildCurriculumNotes(
   )
   const games = items.filter(i => ['game', 'competition'].includes(i.content_type))
   const assessments = items.filter(i => i.content_type === 'assessment')
+  const mentalItems = items.filter(i =>
+    ['mental_skill', 'competition_behavior'].includes(i.content_type)
+  )
 
   if (drillsAndSkills.length > 0) {
     lines.push('')
@@ -123,6 +126,18 @@ function buildCurriculumNotes(
     lines.push('')
     lines.push('ASSESSMENT MOMENTS:')
     for (const item of assessments.slice(0, 2)) {
+      lines.push(`• ${item.title}`)
+    }
+  }
+
+  // Mental / Competitive phase — rendered as a coach-ready lesson section
+  if (mentalItems.length > 0) {
+    lines.push('')
+    lines.push('MENTAL / COMPETITIVE SKILL:')
+    lines.push('Purpose: Train focus, emotional response, between-point routine, and competitive decision-making.')
+    lines.push('')
+    lines.push('Activities:')
+    for (const item of mentalItems.slice(0, 3)) {
       lines.push(`• ${item.title}`)
     }
   }
@@ -392,7 +407,7 @@ const BLOCK_TYPE_TO_SESSION_BLOCKS: Record<string, string[]> = {
   movement:    ['Warm-Up', 'Train'],
   fitness:     ['Train'],
   competition: ['Game'],
-  mental:      ['Play', 'Game'],
+  mental:      ['Mental'],
   cool_down:   [],
   free:        ['Warm-Up', 'Focus', 'Train', 'Play', 'Game'],
 }
