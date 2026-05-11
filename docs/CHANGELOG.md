@@ -2,6 +2,44 @@
 
 ---
 
+## 2026-05-11 — Sprint 218: Floating Quick Capture Collision + Session Creation Policy Fix V1
+
+**Root cause — Quick Capture collision:**
+`QuickCaptureButton` renders globally in `director/layout.tsx` at `fixed bottom-6 right-6 z-40` on every director page, including focused builder flows. The `FitnessBuilderStepper.BottomNav` and `ClassTemplateBuilderStepper.BottomNav` are inline (not fixed) — they scroll with page content. When the director reaches Step 4 or 5, the stepper's Back / Next / "Review + Save" / "Generate Session" buttons sit at the viewport bottom-right, directly behind the fixed QuickCapture pill. The pill's `z-40` causes it to cover the primary action buttons, blocking workflow completion.
+
+**Quick Capture fix — chosen strategy: hide on focused builder routes:**
+Added `usePathname` to `QuickCaptureButton`. Defined `isFocusedBuilderRoute(pathname)` with three route patterns. When the current route matches a builder/stepper flow, the component returns `null`. On all other director pages Quick Capture remains fully visible. No global layout changes, no design-token changes.
+
+**Protected routes:**
+- `/director/fitness/templates/[templateId]`
+- `/director/class-templates/new`
+- `/director/class-templates/[templateId]`
+
+**Root cause — sessions RLS infinite recursion:**
+Migration 007 defines two policies that reference each other through RLS:
+- `"Players see their sessions"` on `sessions` subqueries `session_attendance` via EXISTS
+- `"Staff see attendance"` on `session_attendance` subqueries `sessions` via EXISTS
+
+When a director inserts a session and reads it back (`.insert().select('id').single()`), PostgreSQL evaluates all SELECT policies on sessions, including `"Players see their sessions"`. That subquery triggers `session_attendance` RLS, which evaluates `"Staff see attendance"`, which subqueries `sessions` again, triggering the cycle. Error: `infinite recursion detected in policy for relation "sessions"`.
+
+**Sessions RLS fix — migration 066:**
+Created `session_belongs_to_auth_academy(UUID)` as a `SECURITY DEFINER STABLE` function following the convention in `003_rls_helpers.sql`. SECURITY DEFINER bypasses RLS on its internal `sessions` query, breaking the cycle. Dropped and recreated `"Staff see attendance"` and `"Staff manage attendance"` on `session_attendance` to use this helper instead of the inline `EXISTS(SELECT 1 FROM sessions …)`. Access intent is preserved — staff can still see and manage attendance for sessions within their academy. Academy scoping is unchanged. Sessions table is not made public.
+
+**Files created:**
+- `supabase/migrations/066_sessions_rls_recursion_fix.sql` — SECURITY DEFINER helper + recreated attendance policies
+
+**Files modified:**
+- `src/components/capture/QuickCaptureButton.tsx` — `usePathname` + `isFocusedBuilderRoute()` + null return on builder routes
+- `docs/CHANGELOG.md` — this entry
+
+**Migration required:** Yes — `066_sessions_rls_recursion_fix.sql`. Must be applied to the live Supabase instance via SQL Editor.
+
+**TypeScript:** Clean — no schema type changes, no new DB columns.
+
+**Unrelated dirty files:** Not touched (`index.html`, `supabase/migrations/053`, `057`, `058`, dry-run report, CSVs).
+
+---
+
 ## 2026-05-11 — Sprint 217: Class + Fitness Template Guided UX Repair V1
 
 **Root cause — fitness blocks appearing as tennis blocks in class templates:**

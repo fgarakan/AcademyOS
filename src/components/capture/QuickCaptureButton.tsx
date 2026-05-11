@@ -1,15 +1,33 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { QuickCaptureDrawer } from './QuickCaptureDrawer'
+
+// Routes where directors are in a focused guided builder flow.
+// Quick Capture is hidden on these routes so it never covers stepper
+// navigation buttons (Back, Next, Review + Save, Generate Session).
+const FOCUSED_BUILDER_PATTERNS = [
+  /^\/director\/fitness\/templates\/[^/]+/,
+  /^\/director\/class-templates\/new/,
+  /^\/director\/class-templates\/[^/]+/,
+]
+
+function isFocusedBuilderRoute(pathname: string): boolean {
+  return FOCUSED_BUILDER_PATTERNS.some(re => re.test(pathname))
+}
 
 interface Props {
   academyId: string
 }
 
 export function QuickCaptureButton({ academyId }: Props) {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+
+  // Hide on builder/stepper routes — stepper primary actions take priority.
+  if (isFocusedBuilderRoute(pathname)) return null
 
   return (
     <>
