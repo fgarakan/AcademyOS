@@ -2,6 +2,78 @@
 
 ---
 
+## 2026-05-11 — Sprint 216: Guided Template Builder UX V1
+
+**Root cause / class template long-page issue:**
+`/director/class-templates/[templateId]/page.tsx` had grown to ~750 lines of mixed server-fetch and inline JSX rendering every step of the builder at once — identity fields, block structure, curriculum content picker, lesson-plan preview, and session generation all stacked in a single vertical scroll. Directors had no progressive guidance on sequence or completion, and the page felt overwhelming.
+
+**Root cause / fitness template long-page issue:**
+`/director/fitness/templates/[templateId]/page.tsx` (fitness path) had the same problem: blocks, curriculum context, exercise library, generate-session panel, and drill reference all rendered simultaneously with no step sequencing. The fitness and class-template builder shared a URL pattern but had no shared UX language.
+
+**New guided class-template flow:**
+Class Template builder now uses `ClassTemplateBuilderStepper` (new file) — a `'use client'` component that gates all 5 steps behind a step indicator. Directors move through:
+1. **Class Identity** — template name, description, track, duration
+2. **Class Structure** — ordered block list with tennis-session display names (Welcome + Warm-Up, Skill Foundation, Rally Development, Tactical Decisions, Competitive Games, Mental Focus, Wrap-Up)
+3. **Build Blocks** — curriculum content picker per block (`BlockContentPickerCard`) with block-purpose copy and drill/activity detail (cues, success criteria, Make It Harder / Make It Easier)
+4. **Coach Preview** — read-only view of every block's curriculum items; mental skill / competition behavior items highlighted in green
+5. **Review + Apply** — `ClassTemplateSetupGuide`, `LessonPlanDraftPanel`, `GenerateSessionFromTemplateButton` all intact
+
+**New guided fitness-template flow:**
+Fitness Template builder now uses `FitnessBuilderStepper` (new file) — same step-indicator pattern for fitness:
+1. **Training Goal** — template name, type label, duration, active status
+2. **Physical Blocks** — full `FitnessTemplateBuilderClient` embedded (all add/remove/reorder/exercise-switcher actions preserved)
+3. **Curriculum Context** — `CurriculumLevelSelector`, `CurriculumDrillReferencePanel`, `PopulateDrillNotesButton` embedded
+4. **Tennis Transfer** — per-block on-court transfer description; fitness block intent (`getFitnessBlockIntent`) + static TENNIS_TRANSFER copy
+5. **Review + Save** — block sequence table + `GenerateSessionPanel` intact
+
+**Class / fitness separation rules enforced:**
+- Class templates never show Activation / Speed / Agility / Strength / Conditioning labels
+- Fitness templates never show Welcome + Warm-Up / Skill Foundation / Tactical Decisions / Mental Focus labels
+- The two stepper components are entirely separate files with no shared label logic
+
+**Mental Focus visibility:**
+- Step 3 block-purpose copy for `mental` block type: "Focus and mindset. Coaches introduce a mental skill or competition behavior to practice."
+- Step 4 Coach Preview highlights `mental_skill` and `competition_behavior` content items with `border-status-green/20 bg-status-green/[0.02]`
+- Mental Focus block appears as its own named step in the step-2 structure list
+
+**Director add/remove/apply preservation:**
+`addBlockContentAction`, `removeBlockContentAction`, `applyLessonPlanDraftAction`, `populateFitnessBlocksAction`, `generateLessonPlanDraftAction` — all server actions unchanged. `BlockContentPickerCard` uses `router.refresh()` which re-fetches server data but preserves `activeStep` client state (Next.js App Router soft navigation).
+
+**Drill/activity detail preservation:**
+Step 4 Coach Preview renders `coach_cues`, `success_criteria`, `progressions` (labeled "Make It Harder"), `regressions` (labeled "Make It Easier") from `curriculum_content_items` and `curriculum_drills`. Arrays are only rendered when non-empty. No fake data added.
+
+**Map→Record serialization:**
+Server components computed `Map<string, ...>` for display names and curriculum content. These are not JSON-serializable. Converted with `forEach` before passing to client stepper components:
+```ts
+const blockDisplayNamesRecord: Record<string, string> = {}
+blockDisplayNames.forEach((v, k) => { blockDisplayNamesRecord[k] = v })
+```
+
+**Responsive UX notes:**
+Both steppers use full-width layout within the director fixed-sidebar shell. Step navigation uses `btn-ghost` / `btn-lime` pattern from the design system. No horizontal scroll introduced.
+
+**No migrations:** Display-layer changes only. Database schema unchanged.
+
+**database.types.ts untouched:** Not modified. No `supabase gen types` run.
+
+**TypeScript result:** `npx tsc --noEmit` — clean, zero errors.
+
+**Manual browser QA status:** Pending user verification in browser.
+
+**Known limitations:**
+- Step indicators show active/complete states but do not validate required fields before advancing (no form validation guard on "Next" buttons — directors can move through steps without completing each one).
+- Step 3 Build Blocks embeds `BlockContentPickerCard` which opens a modal. Modal z-index is inherited from existing component — no changes.
+- Fitness Step 2 embeds `FitnessTemplateBuilderClient` which has its own internal `useState` for selected block. Navigating away from Step 2 and back resets that internal selection to the first block. This is pre-existing behavior — the stepper does not persist `FitnessTemplateBuilderClient` internal state across step navigation.
+
+**Files modified:**
+- `src/app/director/class-templates/[templateId]/ClassTemplateBuilderStepper.tsx` — NEW: 5-step guided builder client component for class templates
+- `src/app/director/fitness/templates/[templateId]/FitnessBuilderStepper.tsx` — NEW: 5-step guided builder client component for fitness templates
+- `src/app/director/class-templates/[templateId]/page.tsx` — Removed inline JSX rendering; added Map→Record conversion; passes all data to ClassTemplateBuilderStepper
+- `src/app/director/fitness/templates/[templateId]/page.tsx` — Replaced fitness-template return with FitnessBuilderStepper; non-fitness path unchanged
+- `docs/CHANGELOG.md` — This entry.
+
+---
+
 ## 2026-05-11 — Sprint 215: Class Template Fitness Separation + Editable Curriculum Blocks V1
 
 **Root cause:**

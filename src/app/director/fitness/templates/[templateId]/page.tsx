@@ -3,15 +3,11 @@ import Link from 'next/link'
 import { ArrowLeft, Clock, Activity } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader } from '@/components/ui'
-import { FitnessTemplateBuilderClient } from './FitnessTemplateBuilderClient'
-import { PopulateFitnessBlocksButton } from './PopulateFitnessBlocksButton'
 import { CurriculumLevelSelector, type CurriculumLevelOption } from './CurriculumLevelSelector'
-import { TemplateMetaEditorCard } from './TemplateMetaEditorCard'
 import { GenerateSessionPanel, type CoachOption, type GateOption, type LessonPlanBlock } from './GenerateSessionPanel'
 import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 import { getCurriculumDrillsForLevel, type CurriculumDrillRow } from '@/lib/templates/curriculumTemplateLinks'
-import { CurriculumDrillReferencePanel } from '@/components/templates/CurriculumDrillReferencePanel'
-import { PopulateDrillNotesButton } from './PopulateDrillNotesButton'
+import { FitnessBuilderStepper } from './FitnessBuilderStepper'
 import type { FitnessBlock, FitnessExercise, ExerciseLibraryItem } from './fitnessBuilderTypes'
 import type { Tables } from '@/lib/supabase/database.types'
 
@@ -253,197 +249,67 @@ export default async function FitnessTemplateDetailPage({ params }: PageProps) {
     exerciseNames: b.exercises.map(e => e.name),
   }))
 
+  // Fitness templates: guided builder stepper
+  if (isFitnessTemplate) {
+    return (
+      <div className="p-6 animate-fade-in space-y-6">
+        <PageHeader template={template} typeLabel={typeLabel} isFitnessTemplate={true} />
+        <FitnessBuilderStepper
+          templateId={params.templateId}
+          templateName={template.name}
+          templateDescription={template.description ?? null}
+          templateDurationMin={template.total_duration_min ?? null}
+          templateIsActive={template.is_active}
+          templateCreatedAt={template.created_at}
+          templateUpdatedAt={(template as any).updated_at ?? null}
+          typeLabel={typeLabel}
+          curriculumLevelId={curriculumLevelId}
+          currentLevelName={currentLevelName}
+          curriculumLevels={curriculumLevels}
+          curriculumDrills={curriculumDrills}
+          focusGatesForSession={focusGatesForSession}
+          coaches={coaches}
+          fallbackCoachId={fallbackCoachId}
+          fallbackCoachName={fallbackCoachName}
+          fitnessBlocks={fitnessBlocks}
+          exerciseLibrary={exerciseLibrary}
+          libraryQueryError={libraryError?.message ?? null}
+          totalExercisesInAcademy={totalExercisesInAcademy ?? 0}
+          blockExercisesQueryError={blockExercisesQueryError}
+          lessonPlanBlocks={lessonPlanBlocks}
+        />
+      </div>
+    )
+  }
+
+  // Non-fitness template: keep existing warning path unchanged
   return (
     <div className="p-6 animate-fade-in space-y-6">
-      <PageHeader template={template} typeLabel={typeLabel} isFitnessTemplate={isFitnessTemplate} />
-
-      {/* Template metadata */}
+      <PageHeader template={template} typeLabel={typeLabel} isFitnessTemplate={false} />
       <TemplateMeta
         template={template}
         typeLabel={typeLabel}
         blockCount={fitnessBlocks.length}
         exerciseCount={totalExercises}
-        isFitnessTemplate={isFitnessTemplate}
+        isFitnessTemplate={false}
       />
-
-      {/* Curriculum Level — available for all templates */}
-      <Card>
-        <CardHeader>
-          <p className="label-xs">Curriculum Context</p>
-        </CardHeader>
-        <CardContent className="pt-0 space-y-2">
-          {curriculumLevels.length > 0 ? (
-            <>
-              <CurriculumLevelSelector
-                templateId={params.templateId}
-                currentLevelId={curriculumLevelId}
-                levels={curriculumLevels}
-              />
-              {currentLevelName && (
-                <p className="text-[10px] text-text-muted">
-                  Sessions generated from this template will show curriculum context for{' '}
-                  <span className="text-lime">{currentLevelName}</span>.
-                </p>
-              )}
-              {!currentLevelName && (
-                <p className="text-[10px] text-text-muted">
-                  Assign a level to power session curriculum context and coach cues.
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-[11px] text-text-muted">
-              No curriculum levels available. Seed the curriculum to enable this feature.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Curriculum Drill Reference — shown only when a level is assigned */}
-      {curriculumLevelId && currentLevelName && (
-        <CurriculumDrillReferencePanel
-          drills={curriculumDrills}
-          levelName={currentLevelName}
-        />
-      )}
-
-      {/* Push curriculum drill content into block notes */}
-      {isFitnessTemplate && (
-        <Card>
-          <CardHeader>
-            <p className="label-xs">Push Curriculum Drills to Block Notes</p>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <PopulateDrillNotesButton
-              templateId={params.templateId}
-              hasBlocks={fitnessBlocks.length > 0}
-              hasLevel={!!curriculumLevelId}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Template Version History — placeholder until migration 064 is applied */}
-      <Card>
-        <CardHeader>
-          <p className="label-xs">Version History</p>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-[11px] text-text-muted">
-            Template version history is not yet enabled.{' '}
-            <span className="text-text-secondary">
-              Each save will create an immutable version snapshot once migration 064 is applied.
-            </span>{' '}
-            Created: {new Date(template.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-            {(template as any).updated_at && template.created_at !== (template as any).updated_at && (
-              <span className="ml-2 text-text-muted">
-                · Last modified: {new Date((template as any).updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-              </span>
-            )}
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-sm text-status-orange">
+        <Activity className="w-4 h-4 shrink-0 mt-0.5" />
+        <div>
+          <p className="font-medium">This is a class/session template</p>
+          <p className="text-xs mt-0.5 text-status-orange/80">
+            Class templates are managed under Class Templates. The Fitness OS block builder is available for Fitness Templates only.
+            <Link href="/director/class-templates" className="ml-1 underline underline-offset-2">
+              View class templates →
+            </Link>
           </p>
-        </CardContent>
-      </Card>
-
-      {/* Template Settings — edit metadata + duplicate */}
-      <TemplateMetaEditorCard
-        templateId={params.templateId}
-        initialName={template.name}
-        initialDescription={template.description ?? null}
-        initialDurationMin={template.total_duration_min ?? null}
-      />
-
-      {/* Generate Session from Template — fitness templates only */}
-      {isFitnessTemplate && (
-        <Card>
-          <CardHeader>
-            <p className="label-xs">Create Session from Template</p>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <GenerateSessionPanel
-              templateId={params.templateId}
-              templateName={template.name}
-              hasBlocks={fitnessBlocks.length > 0}
-              coaches={coaches}
-              fallbackCoachId={fallbackCoachId}
-              fallbackCoachName={fallbackCoachName}
-              focusGates={focusGatesForSession}
-              blocks={lessonPlanBlocks}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Non-fitness template warning */}
-      {!isFitnessTemplate && (
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-sm text-status-orange">
-          <Activity className="w-4 h-4 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium">This is a class/session template</p>
-            <p className="text-xs mt-0.5 text-status-orange/80">
-              Class templates are managed under Class Templates. The Fitness OS block builder is available for Fitness Templates only.
-              <Link href="/director/class-templates" className="ml-1 underline underline-offset-2">
-                View class templates →
-              </Link>
-            </p>
-          </div>
         </div>
-      )}
-
-      {/* Fitness block builder — fitness templates only */}
-      {isFitnessTemplate && (
-        <>
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <p className="label-xs">Fitness Blocks</p>
-              {exerciseLibrary.length > 0 && (
-                <span className="text-[10px] font-mono text-lime px-2 py-0.5 rounded-full border border-lime/20 bg-lime/5">
-                  {exerciseLibrary.length} exercise{exerciseLibrary.length !== 1 ? 's' : ''} available
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-text-muted">
-              Add movement, agility, speed, strength, coordination, mobility, and recovery blocks.
-              {exerciseLibrary.length === 0 && (
-                (totalExercisesInAcademy ?? 0) > 0
-                  ? ` ${totalExercisesInAcademy} exercise${totalExercisesInAcademy !== 1 ? 's' : ''} found in library but none are active — update exercise is_active status to enable auto-population.`
-                  : ' Exercise library is empty — import exercises to enable auto-population.'
-              )}
-            </p>
-          </div>
-
-          {/* Populate all blocks from exercise library */}
-          <Card>
-            <CardHeader>
-              <p className="label-xs">Auto-Populate Exercises</p>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <PopulateFitnessBlocksButton
-                templateId={params.templateId}
-                hasBlocks={fitnessBlocks.length > 0}
-                exerciseLibraryCount={exerciseLibrary.length}
-              />
-            </CardContent>
-          </Card>
-
-          <FitnessTemplateBuilderClient
-            templateId={params.templateId}
-            initialBlocks={fitnessBlocks}
-            exerciseLibrary={exerciseLibrary}
-            libraryQueryError={libraryError?.message ?? null}
-            totalExercisesInAcademy={totalExercisesInAcademy ?? 0}
-            blockExercisesQueryError={blockExercisesQueryError}
-          />
-        </>
-      )}
-
-      {/* Non-fitness template: legacy editor notice */}
-      {!isFitnessTemplate && (
-        <div className="px-4 py-3 rounded-xl border border-border text-xs text-text-muted">
-          Legacy class template editor is available at{' '}
-          <span className="font-mono text-text-secondary">/director/fitness/templates/{params.templateId}</span>
-          . Use the Class Templates section to manage session templates.
-        </div>
-      )}
+      </div>
+      <div className="px-4 py-3 rounded-xl border border-border text-xs text-text-muted">
+        Legacy class template editor is available at{' '}
+        <span className="font-mono text-text-secondary">/director/fitness/templates/{params.templateId}</span>
+        . Use the Class Templates section to manage session templates.
+      </div>
     </div>
   )
 }
