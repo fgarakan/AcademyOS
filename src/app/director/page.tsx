@@ -3,7 +3,7 @@ import Link from 'next/link'
 import {
   Users, BookOpen, Calendar, ChevronRight, Activity,
   Clock, Mic, Brain, AlertTriangle, TrendingUp,
-  GraduationCap, Sparkles, ClipboardList,
+  GraduationCap, Sparkles, ClipboardList, ArrowRight,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
@@ -209,6 +209,31 @@ export default async function DirectorDashboard() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
 
+  // Single highest-priority director action — shown as a banner near the top
+  const priorityAction: { title: string; body: string; href: string } | null = (() => {
+    if (pendingWrapUpsCount > 0) return {
+      title: `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting your review`,
+      body: 'Approve or provide feedback before coaches move to their next session.',
+      href: '/director/review?tab=wrap-ups',
+    }
+    if (pendingCount > 0) return {
+      title: `${pendingCount} player${pendingCount !== 1 ? 's' : ''} waiting for placement`,
+      body: 'Complete placement to activate profiles and assign curriculum levels.',
+      href: '/director/players',
+    }
+    if (attentionCount > 0) return {
+      title: `${attentionCount} player${attentionCount !== 1 ? 's' : ''} need attention`,
+      body: 'Players on hold or due for reassessment are not progressing.',
+      href: '/director/players',
+    }
+    if (newRequests > 0) return {
+      title: `${newRequests} lesson request${newRequests !== 1 ? 's' : ''} awaiting review`,
+      body: 'Parent lesson requests need director review and routing.',
+      href: '/director/review',
+    }
+    return null
+  })()
+
   return (
     <div className="p-6 space-y-8 animate-fade-in">
 
@@ -225,29 +250,39 @@ export default async function DirectorDashboard() {
         </Link>
       </div>
 
-      {/* ── Onboarding Progress ───────────────────────────── */}
-      <OnboardingProgressCard settings={onboardingSettings} />
-
-      {/* ── Setup Checklist ───────────────────────────────── */}
-      <SetupProgressChecklist
-        playersExist={players.length > 0}
-        curriculumLevelsAssigned={playersWithLevel > 0}
-        templatesExist={classTemplateCount > 0}
-        sessionsExist={sessionsExist}
-      />
-
-      {/* ── Setup Complete Banner ─────────────────────────── */}
-      {players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/5 border border-status-green/20">
-          <Sparkles className="w-4 h-4 text-status-green shrink-0" />
-          <div>
-            <p className="text-sm font-semibold text-status-green">Academy OS is live</p>
-            <p className="text-xs text-text-secondary mt-0.5">
-              Players, curriculum, templates, and sessions are all connected. Coaches have everything they need on court.
-            </p>
-          </div>
-        </div>
+      {/* ── Recommended next action ───────────────────────── */}
+      {priorityAction && (
+        <NextBestActionCard
+          variant="warning"
+          title={priorityAction.title}
+          body={priorityAction.body}
+          actionLabel="Go"
+          actionHref={priorityAction.href}
+        />
       )}
+
+      {/* ── Academy Setup ─────────────────────────────────── */}
+      <div className="space-y-3">
+        <p className="label-xs">Academy Setup</p>
+        <OnboardingProgressCard settings={onboardingSettings} />
+        <SetupProgressChecklist
+          playersExist={players.length > 0}
+          curriculumLevelsAssigned={playersWithLevel > 0}
+          templatesExist={classTemplateCount > 0}
+          sessionsExist={sessionsExist}
+        />
+        {players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/5 border border-status-green/20">
+            <Sparkles className="w-4 h-4 text-status-green shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-status-green">Academy OS is live</p>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Players, curriculum, templates, and sessions are all connected. Coaches have everything they need on court.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ── Today's Priorities ────────────────────────────── */}
       <div>
@@ -334,16 +369,7 @@ export default async function DirectorDashboard() {
         </CardContent>
       </Card>
 
-      {/* ── Next Best Action prompts ─────────────────────────── */}
-      {pendingCount > 0 && (
-        <NextBestActionCard
-          variant="warning"
-          title={`${pendingCount} player${pendingCount !== 1 ? 's' : ''} pending placement`}
-          body="Complete their placement to activate profiles and assign curriculum levels."
-          actionLabel="Go to Players"
-          actionHref="/director/players"
-        />
-      )}
+      {/* ── Guided prompt: first class template ─────────────── */}
       {classTemplateCount === 0 && players.length > 0 && (
         <NextBestActionCard
           variant="guide"
@@ -355,6 +381,8 @@ export default async function DirectorDashboard() {
       )}
 
       {/* ── Priority panel + Pending placement ─────────────── */}
+      <div className="space-y-4">
+      <p className="label-xs">Player Activity</p>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Priority Queue */}
@@ -489,8 +517,11 @@ export default async function DirectorDashboard() {
         </Card>
 
       </div>
+      </div>
 
-      {/* ── Academy Alerts + AI Suggestions ────────────────── */}
+      {/* ── Academy Alerts + Signals ──────────────────────── */}
+      <div className="space-y-4">
+      <p className="label-xs">Signals + Intelligence</p>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
         <AcademyAlertsPanel
           missingFocusCount={missingFocus}
@@ -556,6 +587,7 @@ export default async function DirectorDashboard() {
             </Link>
           </CardFooter>
         </Card>
+      </div>
       </div>
 
       {/* ── Sessions this week ──────────────────────────────── */}

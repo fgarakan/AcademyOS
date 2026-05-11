@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-11 — Sprint 206: Director Dashboard UX Clarity Pass V1
+
+**Sprint 205 commit verified:** `602ea58 — Sprint 205 — Onboarding Progress Card on Director Dashboard V1`
+
+**Goal:** Make `/director` feel immediately understandable and premium for academy pilot users. UI/UX polish only — no new data, no server actions, no migrations.
+
+**`/director` dashboard updated (`src/app/director/page.tsx`):**
+- Added `ArrowRight` to lucide-react imports.
+- Added `priorityAction` IIFE computation: returns `{ title, body, href } | null` based on priority order (pending wrap-ups → pending placement → attention players → new requests). Used to drive a "Recommended Next Action" banner at the top of the content area.
+- Added "Recommended Next Action" banner: renders a `NextBestActionCard` with `variant="warning"` when `priorityAction` is non-null. Appears above the setup widgets.
+- Grouped `OnboardingProgressCard` + `SetupProgressChecklist` + "Academy OS is live" banner under an **Academy Setup** `label-xs` section header (`<div className="space-y-3">`).
+- Removed the redundant `NextBestActionCard` for pending players that previously appeared below the setup section (priority action at top makes it redundant).
+- Added **Player Activity** `label-xs` section header (`<div className="space-y-4">`) wrapping the Priority Queue + Pending Placement grid.
+- Added **Signals + Intelligence** `label-xs` section header (`<div className="space-y-4">`) wrapping the Academy Alerts + AI Suggestions grid.
+- No mutations. No server actions added. No existing query logic modified.
+
+**Data safety:**
+- Read-only pass. No Supabase mutations. No server actions added or modified.
+- No migrations created or modified. `database.types.ts` untouched.
+
+**TypeScript:** Clean — `npx tsc --noEmit` exits with no errors.
+
+**Manual browser QA:** Pending — dev server required. Structural correctness verified by TypeScript check.
+
+---
+
 ## 2026-05-11 — Sprint 205: Onboarding Progress Card on Director Dashboard V1
 
 **Sprint 204 commit verified:** `3f8679c — Sprint 204 — Players + Placement Setup V1`
