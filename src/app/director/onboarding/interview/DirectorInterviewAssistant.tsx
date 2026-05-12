@@ -129,10 +129,51 @@ function initAnswer(initial: string): AnswerState {
 // ─── Preflight phase ─────────────────────────────────────────────────────────
 type PreflightPhase =
   | 'idle'
-  | 'intro_speaking'
+  | 'name_speaking'              // assistant speaking the name question
+  | 'awaiting_name_answer'       // waiting for director's name (voice or typed)
+  | 'name_captured'              // name transcript received, pending confirmation
+  | 'intro_speaking'             // assistant speaking OPENING_SCRIPT
   | 'awaiting_preflight_answer'
+  | 'preflight_captured'
   | 'answering_preflight_question'
   | 'ready_for_question_one'
+
+// ─── Active voice prompt model ────────────────────────────────────────────────
+// Every question spoken by the assistant must have a matching visible prompt.
+// Before calling speakWithTracking for any question, set activeVoicePrompt.
+type ActiveVoicePrompt = {
+  id: string
+  kind: 'intro' | 'preflight' | 'interview'
+  questionText: string
+  helperText?: string
+}
+
+// The specific answerable question at the end of OPENING_SCRIPT
+const PREFLIGHT_VOICE_PROMPT: ActiveVoicePrompt = {
+  id: 'preflight',
+  kind: 'preflight',
+  questionText: 'Before we begin, do you have any questions, or should we jump into the first one?',
+  helperText: 'Say "No questions" or "Let\'s start" to begin, or ask anything about the setup.',
+}
+
+function buildInterviewPrompt(stepIndex: number): ActiveVoicePrompt {
+  const s = INTERVIEW_STEPS[stepIndex]
+  return {
+    id: s.id,
+    kind: 'interview',
+    questionText: getStepQuestion(stepIndex),
+    helperText: s.helperCopy,
+  }
+}
+
+// Name capture prompt — shown and spoken before the OPENING_SCRIPT
+const NAME_VOICE_PROMPT: ActiveVoicePrompt = {
+  id: 'director_name',
+  kind: 'preflight',
+  questionText: 'Before we begin, what name should I call you?',
+  helperText: 'This helps the assistant address you correctly during setup.',
+}
+
 
 const OPENING_SCRIPT =
   "Welcome. I'll guide you through a short setup interview for your academy. " +
@@ -237,6 +278,11 @@ function RealtimeDebugPanel({
   startClickedAt,
   welcomeResponseError,
   currentEncodedStep,
+  activePromptKind,
+  activePromptId,
+  activePromptQuestion,
+  transcriptPendingConfirmation,
+  directorDisplayName,
 }: {
   status: string
   debug: RealtimeDebugState
@@ -250,6 +296,11 @@ function RealtimeDebugPanel({
   startClickedAt?: number | null
   welcomeResponseError?: string | null
   currentEncodedStep?: number
+  activePromptKind?: string
+  activePromptId?: string
+  activePromptQuestion?: string
+  transcriptPendingConfirmation?: boolean
+  directorDisplayName?: string
 }) {
   const stepQ = currentEncodedStep != null && currentEncodedStep >= 0 && currentEncodedStep < INTERVIEW_STEPS.length
     ? getStepQuestion(currentEncodedStep)
@@ -294,8 +345,23 @@ function RealtimeDebugPanel({
         <p>last transcript event: {debug.lastTranscriptEvent || 'none'}</p>
         <p>speech started: <span className={speechStarted ? 'text-status-blue' : 'text-text-muted'}>{String(speechStarted ?? false)}</span></p>
         <p>final transcript: <span className={finalTranscriptReceived ? 'text-status-green' : 'text-text-muted'}>{String(finalTranscriptReceived ?? false)}</span></p>
+        <p>transcript pending confirm: <span className={transcriptPendingConfirmation ? 'text-status-orange' : 'text-text-muted'}>{String(transcriptPendingConfirmation ?? false)}</span></p>
         <p>user transcript len: {userTranscriptLen ?? 0}</p>
         <p>assistant transcript len: {assistantTranscriptLen ?? 0}</p>
+        {(activePromptKind || activePromptId) && (
+          <div className="border-t border-border pt-0.5 mt-0.5 space-y-0.5">
+            <p>active prompt kind: <span className="text-lime">{activePromptKind ?? 'none'}</span></p>
+            <p>active prompt id: <span className="text-text-secondary">{activePromptId ?? 'none'}</span></p>
+            {activePromptQuestion && (
+              <p className="text-text-muted break-words">active prompt Q: {activePromptQuestion}</p>
+            )}
+          </div>
+        )}
+        {directorDisplayName !== undefined && (
+          <p className="border-t border-border pt-0.5 mt-0.5">
+            director name: <span className={directorDisplayName ? 'text-lime' : 'text-text-muted'}>{directorDisplayName || '(not captured)'}</span>
+          </p>
+        )}
         {currentEncodedStep != null && currentEncodedStep >= 0 && (
           <div className="border-t border-border pt-0.5 mt-0.5 space-y-0.5">
             <p>current encoded step: <span className="text-lime">{currentEncodedStep}</span></p>
@@ -346,6 +412,20 @@ function RealtimeDebugPanel({
         </details>
       </div>
     </details>
+  )
+}
+
+// ─── Active Prompt Card — mirrors every spoken question on screen ─────────────
+// Rule: no question is invisible. If the AI asks it, this card shows it.
+function ActivePromptCard({ prompt }: { prompt: ActiveVoicePrompt }) {
+  return (
+    <div className="px-4 py-3.5 rounded-xl bg-surface border border-lime/30 space-y-1.5">
+      <p className="label-xs text-lime/80">Assistant is asking</p>
+      <p className="text-base font-semibold text-text-primary leading-snug">{prompt.questionText}</p>
+      {prompt.helperText && (
+        <p className="text-xs text-text-secondary leading-relaxed">{prompt.helperText}</p>
+      )}
+    </div>
   )
 }
 
@@ -483,6 +563,15 @@ export function DirectorInterviewAssistant({
   const [preflightPhase, setPreflightPhase] = useState<PreflightPhase>('idle')
   const [preflightAssistantText, setPreflightAssistantText] = useState('')
   const [preflightTypedInput, setPreflightTypedInput] = useState('')
+
+  // Active voice prompt — the specific question the director is expected to answer.
+  // Set before every speakWithTracking call for a question prompt.
+  // Rule: AI must never ask a question that is not visible on screen.
+  const [activeVoicePrompt, setActiveVoicePrompt] = useState<ActiveVoicePrompt | null>(null)
+
+  // Director display name — captured at the start of the interview (local only, no DB save)
+  const [directorDisplayName, setDirectorDisplayName] = useState('')
+  const [directorNameTypedInput, setDirectorNameTypedInput] = useState('')
 
   // Text shown in the assistant bubble — what the app told the assistant to say.
   // Used as fallback when Realtime transcript events don't arrive.
@@ -654,6 +743,19 @@ export function DirectorInterviewAssistant({
     realtimeVoice.speak(text, onDone)
   }, [realtimeVoice.speak])
 
+  // ── speakPrompt — always sets visible prompt card before speaking ─────────────
+  // Rule: every question the AI speaks must also appear on screen as an active prompt.
+  // Use this for all question prompts. speakWithTracking alone is for non-question speech.
+  const speakPrompt = useCallback((
+    prompt: ActiveVoicePrompt,
+    textToSpeak: string,
+    onDone?: () => void,
+  ) => {
+    setActiveVoicePrompt(prompt)
+    setLastSpokenAssistantText(textToSpeak)
+    realtimeVoice.speak(textToSpeak, onDone)
+  }, [realtimeVoice.speak])
+
   // ── Preflight response handler ───────────────────────────────────────────────
   // Classifies the director's response to the preflight question, answers briefly
   // using controlled FAQ copy, and advances to Q1 when ready.
@@ -673,6 +775,8 @@ export function DirectorInterviewAssistant({
       setDebugFirstRequested(true)
       setPreflightPhase('ready_for_question_one')
       setPreflightAssistantText(fullText)
+      // Set active prompt to Q1 — the question is now visible before/while it is spoken
+      setActiveVoicePrompt(buildInterviewPrompt(0))
       setIsSpeaking(true)
       setAudioStatus('speaking')
       if (isRealtimeConnected) {
@@ -723,6 +827,12 @@ export function DirectorInterviewAssistant({
     setPreflightPhase('awaiting_preflight_answer')
     setPreflightAssistantText(responseText)
     setPreflightTypedInput('')
+    // FAQ answer spoken — the next question is still the preflight question
+    setActiveVoicePrompt({
+      ...PREFLIGHT_VOICE_PROMPT,
+      questionText: 'Ready to start with the first one?',
+      helperText: 'Say "Yes" or "Let\'s go" to begin, or ask another question.',
+    })
     setIsSpeaking(true)
     setAudioStatus('speaking')
     if (isRealtimeConnected) {
@@ -739,17 +849,84 @@ export function DirectorInterviewAssistant({
     }
   }, [isRealtimeConnected, speakWithTracking, speakAssistant, realtimeVoice.clearUserTranscript])
 
-  // ── Wire Realtime user transcript to preflight handler ───────────────────────
+  // ── Name capture handlers ─────────────────────────────────────────────────────
+  // confirmName: director approved their name — store it and continue to preflight.
+  // App owns the name value — the AI never sets or validates it.
+  function confirmName(name: string) {
+    const trimmed = name.trim()
+    setDirectorDisplayName(trimmed)
+    realtimeVoice.clearUserTranscript()
+    lastAppliedTranscriptRef.current = ''
+    setDirectorNameTypedInput('')
+    if (isRealtimeConnected && voiceMode) {
+      const namePrefix = trimmed ? `Thanks, ${trimmed}. ` : ''
+      const textToSpeak = namePrefix + OPENING_SCRIPT
+      setPreflightPhase('intro_speaking')
+      setPreflightAssistantText(textToSpeak)
+      setIsSpeaking(true)
+      setAudioStatus('speaking')
+      // Active prompt shows the answerable question, not the full welcome text
+      speakPrompt(PREFLIGHT_VOICE_PROMPT, textToSpeak, () => {
+        setIsSpeaking(false)
+        setAudioStatus('ready')
+        setPreflightPhase('awaiting_preflight_answer')
+      })
+    } else {
+      // Typed mode — skip audio, go directly to preflight question
+      setActiveVoicePrompt(PREFLIGHT_VOICE_PROMPT)
+      setPreflightAssistantText(OPENING_SCRIPT)
+      setPreflightPhase('awaiting_preflight_answer')
+    }
+  }
+
+  // skipName: director skipped — proceed to preflight without a name.
+  function skipName() {
+    setDirectorDisplayName('')
+    realtimeVoice.clearUserTranscript()
+    lastAppliedTranscriptRef.current = ''
+    setDirectorNameTypedInput('')
+    if (isRealtimeConnected && voiceMode) {
+      setPreflightPhase('intro_speaking')
+      setPreflightAssistantText(OPENING_SCRIPT)
+      setIsSpeaking(true)
+      setAudioStatus('speaking')
+      speakPrompt(PREFLIGHT_VOICE_PROMPT, OPENING_SCRIPT, () => {
+        setIsSpeaking(false)
+        setAudioStatus('ready')
+        setPreflightPhase('awaiting_preflight_answer')
+      })
+    } else {
+      setActiveVoicePrompt(PREFLIGHT_VOICE_PROMPT)
+      setPreflightAssistantText(OPENING_SCRIPT)
+      setPreflightPhase('awaiting_preflight_answer')
+    }
+  }
+
+  // ── Wire Realtime user transcript to name editable field ─────────────────────
+  // Fires when step === -1 and the director speaks their name.
+  // Does NOT auto-confirm — shows transcript in editable field for director review.
+  useEffect(() => {
+    const t = realtimeVoice.finalUserTranscript
+    if (!t || t === lastAppliedTranscriptRef.current) return
+    if (preflightPhase !== 'awaiting_name_answer') return
+    lastAppliedTranscriptRef.current = t
+    setDirectorNameTypedInput(t)
+    setPreflightPhase('name_captured')
+  }, [realtimeVoice.finalUserTranscript, preflightPhase])
+
+  // ── Wire Realtime user transcript to preflight editable field ────────────────
   // Fires when step === -1 and the director's voice response to the preflight
-  // question is transcribed. Separate from the interview transcript useEffect
-  // which guards on step < 0 and ignores preflight transcripts entirely.
+  // question is transcribed. Does NOT immediately classify/process — puts the
+  // transcript into the editable field so the director can review and confirm.
   useEffect(() => {
     const t = realtimeVoice.finalUserTranscript
     if (!t || t === lastAppliedTranscriptRef.current) return
     if (preflightPhase !== 'awaiting_preflight_answer') return
     lastAppliedTranscriptRef.current = t
-    handlePreflightResponse(t)
-  }, [realtimeVoice.finalUserTranscript, preflightPhase, handlePreflightResponse])
+    // Show transcript in editable field — director must confirm before processing
+    setPreflightTypedInput(t)
+    setPreflightPhase('preflight_captured')
+  }, [realtimeVoice.finalUserTranscript, preflightPhase])
 
   // ── Auto-speak question when voice mode is on and an answering step is active.
   // Realtime path: speakWithTracking (tracks text + fires response.create).
@@ -772,6 +949,8 @@ export function DirectorInterviewAssistant({
     const baseQ = getStepQuestion(step)
     const textToSpeak = ack ? `${ack} Next question: ${baseQ}` : baseQ
 
+    // Set active prompt before speaking — question must be visible before voice starts
+    setActiveVoicePrompt(buildInterviewPrompt(step))
     setIsSpeaking(true)
     setAudioStatus('speaking')
 
@@ -826,6 +1005,7 @@ export function DirectorInterviewAssistant({
     setIsSpeaking(true)
     setAudioStatus('speaking')
     const text = getStepQuestion(step)
+    setActiveVoicePrompt(buildInterviewPrompt(step))
     if (isRealtimeConnected) {
       speakWithTracking(text, () => setIsSpeaking(false))
     } else {
@@ -851,6 +1031,7 @@ export function DirectorInterviewAssistant({
     setVoiceMode(false)
     setAudioStatus('idle')
     setAudioWarning(null)
+    setActiveVoicePrompt(null)
   }
 
   // Switches to typed mode during preflight — disconnects Realtime, keeps preflight
@@ -863,7 +1044,18 @@ export function DirectorInterviewAssistant({
     setVoiceMode(false)
     setAudioStatus('idle')
     setAudioWarning(null)
-    setPreflightPhase('awaiting_preflight_answer')
+    // If we were in a name phase, stay in name awaiting (typed) so prompt remains visible
+    if (
+      preflightPhase === 'name_speaking' ||
+      preflightPhase === 'awaiting_name_answer' ||
+      preflightPhase === 'name_captured'
+    ) {
+      setPreflightPhase('awaiting_name_answer')
+      setActiveVoicePrompt(NAME_VOICE_PROMPT) // keep prompt card visible in typed mode
+    } else {
+      setPreflightPhase('awaiting_preflight_answer')
+      setActiveVoicePrompt(null)
+    }
   }
 
   // ── Welcome actions ─────────────────────────────────────────────────────────
@@ -879,6 +1071,8 @@ export function DirectorInterviewAssistant({
     setPreflightPhase('idle')
     setPreflightAssistantText('')
     setPreflightTypedInput('')
+    setDirectorDisplayName('')
+    setDirectorNameTypedInput('')
     setVoiceMode(true)
     setAudioStatus('loading')
     setAudioWarning(null)
@@ -896,17 +1090,17 @@ export function DirectorInterviewAssistant({
       return
     }
 
-    // Connected — speak opening script immediately. Do NOT advance to step 0 yet.
-    // The app waits for the director's preflight response before asking Q1.
-    setPreflightPhase('intro_speaking')
-    setPreflightAssistantText(OPENING_SCRIPT)
+    // Connected — ask for the director's name first (before OPENING_SCRIPT).
+    // speakPrompt sets activeVoicePrompt BEFORE speaking — name question is visible on screen.
+    setPreflightPhase('name_speaking')
+    setPreflightAssistantText(NAME_VOICE_PROMPT.questionText)
     setDebugWelcomeSent(true)
     setIsSpeaking(true)
     setAudioStatus('speaking')
-    speakWithTracking(OPENING_SCRIPT, () => {
+    speakPrompt(NAME_VOICE_PROMPT, NAME_VOICE_PROMPT.questionText, () => {
       setIsSpeaking(false)
       setAudioStatus('ready')
-      setPreflightPhase('awaiting_preflight_answer')
+      setPreflightPhase('awaiting_name_answer')
     })
   }
 
@@ -1022,6 +1216,9 @@ export function DirectorInterviewAssistant({
       setPreflightPhase('idle')
       setPreflightAssistantText('')
       setPreflightTypedInput('')
+      setActiveVoicePrompt(null)
+      setDirectorDisplayName('')
+      setDirectorNameTypedInput('')
       preflightExchangeCountRef.current = 0
       setStep(-1)
     } else {
@@ -1064,6 +1261,11 @@ export function DirectorInterviewAssistant({
     startClickedAt: startClickedAtRef.current,
     welcomeResponseError,
     currentEncodedStep: step >= 0 && step < INTERVIEW_STEPS.length ? step : undefined,
+    activePromptKind: activeVoicePrompt?.kind,
+    activePromptId: activeVoicePrompt?.id,
+    activePromptQuestion: activeVoicePrompt?.questionText,
+    transcriptPendingConfirmation: preflightPhase === 'preflight_captured' || preflightPhase === 'name_captured',
+    directorDisplayName,
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -1098,8 +1300,13 @@ export function DirectorInterviewAssistant({
           </p>
         </div>
 
-        {/* Voice listening status during preflight */}
-        {voiceMode && isRealtimeConnected && preflightPhase === 'awaiting_preflight_answer' && !isSpeaking && (
+        {/* Active Prompt Card — always visible when a question prompt is active */}
+        {activeVoicePrompt && preflightPhase !== 'ready_for_question_one' && (
+          <ActivePromptCard prompt={activeVoicePrompt} />
+        )}
+
+        {/* Voice listening status — shown while waiting for name or preflight answer */}
+        {voiceMode && isRealtimeConnected && (preflightPhase === 'awaiting_preflight_answer' || preflightPhase === 'awaiting_name_answer') && !isSpeaking && (
           <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
             <div className="flex items-center gap-2">
               {realtimeVoice.speechStarted ? (
@@ -1114,6 +1321,130 @@ export function DirectorInterviewAssistant({
                 </>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Preflight captured — show transcript for review before processing */}
+        {preflightPhase === 'preflight_captured' && (
+          <div className="space-y-2.5">
+            <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-border space-y-2">
+              <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">Here&apos;s what I heard</p>
+              <textarea
+                value={preflightTypedInput}
+                onChange={e => setPreflightTypedInput(e.target.value)}
+                rows={2}
+                maxLength={300}
+                placeholder="Transcript of your response…"
+                className="w-full text-sm bg-surface border border-border rounded-xl px-3 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/50 transition-colors resize-none"
+              />
+              <p className="text-[10px] text-text-muted">Edit if the transcript is wrong, then confirm.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handlePreflightResponse(preflightTypedInput.trim() || 'no questions')}
+              disabled={isSpeaking}
+              className={`w-full ${BTN_LIME}`}
+            >
+              Use this response
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePreflightResponse('no questions')}
+              disabled={isSpeaking}
+              className={`w-full ${BTN_GHOST}`}
+            >
+              No questions — start
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                realtimeVoice.clearUserTranscript()
+                lastAppliedTranscriptRef.current = ''
+                setPreflightTypedInput('')
+                setPreflightPhase('awaiting_preflight_answer')
+              }}
+              disabled={isSpeaking}
+              className={`w-full ${BTN_GHOST}`}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Record again
+            </button>
+            {voiceMode && (
+              <button
+                type="button"
+                onClick={switchToTypeModePreflight}
+                className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
+              >
+                Type instead
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Name captured — transcript review before confirming */}
+        {preflightPhase === 'name_captured' && (
+          <div className="space-y-2.5">
+            <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-border space-y-2">
+              <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">Here&apos;s what I heard</p>
+              <input
+                type="text"
+                value={directorNameTypedInput}
+                onChange={e => setDirectorNameTypedInput(e.target.value)}
+                maxLength={60}
+                placeholder="Your name…"
+                autoFocus
+                className="w-full text-sm bg-surface border border-border rounded-xl px-3 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/50 transition-colors"
+              />
+              <p className="text-[10px] text-text-muted">Edit your name if the transcript was wrong, then confirm.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => confirmName(directorNameTypedInput)}
+              disabled={isSpeaking}
+              className={`w-full ${BTN_LIME}`}
+            >
+              Use this name
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                realtimeVoice.clearUserTranscript()
+                lastAppliedTranscriptRef.current = ''
+                setDirectorNameTypedInput('')
+                setPreflightPhase('awaiting_name_answer')
+              }}
+              disabled={isSpeaking}
+              className={`w-full ${BTN_GHOST}`}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Record again
+            </button>
+            <button
+              type="button"
+              onClick={skipName}
+              disabled={isSpeaking}
+              className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
+            >
+              Skip name
+            </button>
+          </div>
+        )}
+
+        {/* Name awaiting — typed name input shown when voice hasn't captured yet */}
+        {preflightPhase === 'awaiting_name_answer' && (
+          <div className="space-y-1.5">
+            <label className="label-xs">Your name (optional)</label>
+            <input
+              type="text"
+              value={directorNameTypedInput}
+              onChange={e => setDirectorNameTypedInput(e.target.value)}
+              maxLength={60}
+              placeholder={voiceMode ? 'Type your name, or speak into the mic…' : 'Type your name…'}
+              className="w-full text-sm bg-surface-raised border border-border rounded-xl px-3 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/50 transition-colors"
+            />
           </div>
         )}
 
@@ -1138,7 +1469,7 @@ export function DirectorInterviewAssistant({
           <p className="text-[11px] text-status-orange px-1">{audioWarning}</p>
         )}
 
-        {/* Typed input — shown once we're waiting for the director's answer */}
+        {/* Typed input — shown only while awaiting (not during capture confirm) */}
         {preflightPhase === 'awaiting_preflight_answer' && (
           <div className="space-y-1.5">
             <label className="label-xs">Your question or response</label>
@@ -1155,6 +1486,56 @@ export function DirectorInterviewAssistant({
 
         {/* Action buttons */}
         <div className="space-y-2.5">
+          {/* Name speaking — skip the name question */}
+          {preflightPhase === 'name_speaking' && (
+            <button
+              type="button"
+              onClick={() => {
+                stopAssistantSpeech()
+                setIsSpeaking(false)
+                setAudioStatus('ready')
+                skipName()
+              }}
+              className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
+            >
+              Skip name
+            </button>
+          )}
+
+          {/* Name awaiting — action buttons */}
+          {preflightPhase === 'awaiting_name_answer' && (
+            <>
+              {directorNameTypedInput.trim() && (
+                <button
+                  type="button"
+                  onClick={() => confirmName(directorNameTypedInput)}
+                  disabled={isSpeaking}
+                  className={`w-full ${BTN_LIME}`}
+                >
+                  Use this name
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={skipName}
+                disabled={isSpeaking}
+                className={`w-full ${BTN_GHOST}`}
+              >
+                Skip name
+              </button>
+              {voiceMode && (
+                <button
+                  type="button"
+                  onClick={switchToTypeModePreflight}
+                  className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
+                >
+                  Type instead
+                </button>
+              )}
+            </>
+          )}
+
           {/* Skip intro — shown while opening script is still speaking */}
           {preflightPhase === 'intro_speaking' && (
             <button
@@ -1171,7 +1552,7 @@ export function DirectorInterviewAssistant({
             </button>
           )}
 
-          {/* Primary action when awaiting preflight answer */}
+          {/* Primary action when awaiting preflight answer (typed path or voice before transcript) */}
           {preflightPhase === 'awaiting_preflight_answer' && (
             <>
               <button
@@ -1218,7 +1599,7 @@ export function DirectorInterviewAssistant({
                       setPreflightAssistantText(OPENING_SCRIPT)
                       setIsSpeaking(true)
                       setAudioStatus('speaking')
-                      speakWithTracking(OPENING_SCRIPT, () => {
+                      speakPrompt(PREFLIGHT_VOICE_PROMPT, OPENING_SCRIPT, () => {
                         setIsSpeaking(false)
                         setAudioStatus('ready')
                         setPreflightPhase('awaiting_preflight_answer')
@@ -1745,18 +2126,32 @@ export function DirectorInterviewAssistant({
         </div>
       )}
 
-      {/* Question */}
-      <div className="space-y-1">
-        {simpler && (
-          <p className="text-[10px] text-lime px-1 pb-1">
-            No problem — pick whichever feels closest, or add a quick note in your own words.
-          </p>
-        )}
-        <h2 className="text-base font-semibold text-text-primary leading-snug">
-          {getStepQuestion(step)}
-        </h2>
-        <p className="text-xs text-text-muted leading-relaxed">{currentStep.helperCopy}</p>
-      </div>
+      {/* Active Prompt Card — shown in voice mode so director always sees what was asked */}
+      {voiceMode && activeVoicePrompt && (
+        <ActivePromptCard prompt={activeVoicePrompt} />
+      )}
+
+      {/* Question — shown in typed mode or when no active prompt (fallback) */}
+      {(!voiceMode || !activeVoicePrompt) && (
+        <div className="space-y-1">
+          {simpler && (
+            <p className="text-[10px] text-lime px-1 pb-1">
+              No problem — pick whichever feels closest, or add a quick note in your own words.
+            </p>
+          )}
+          <h2 className="text-base font-semibold text-text-primary leading-snug">
+            {getStepQuestion(step)}
+          </h2>
+          <p className="text-xs text-text-muted leading-relaxed">{currentStep.helperCopy}</p>
+        </div>
+      )}
+
+      {/* Simpler note in voice mode */}
+      {voiceMode && simpler && (
+        <p className="text-[10px] text-lime px-1">
+          No problem — pick whichever feels closest, or add a quick note in your own words.
+        </p>
+      )}
 
       {/* Chips */}
       <div className="space-y-2">
