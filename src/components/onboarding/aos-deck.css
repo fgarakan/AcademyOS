@@ -1,6 +1,6 @@
 /* ============================================================
    AOS Deck — First-run role introduction deck
-   Sprint 210
+   V3: Active-slide animations + Web Audio sound engine
    ============================================================ */
 
 /* Custom property definitions scoped to the deck component.
@@ -28,6 +28,65 @@
   margin: 0 auto;
 }
 
+/* ── Top chrome ─────────────────────────────────────────────
+   Flex row: sound toggle + skip button. Absolutely positioned
+   so it overlays the slide without affecting layout height. */
+.aos-deck-chrome {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  z-index: 4;
+}
+
+.aos-deck-sound-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--aos-text-dim, #626b76);
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+  line-height: 0;
+}
+
+.aos-deck-sound-btn:hover {
+  color: var(--aos-text-muted, #a3aab4);
+  background: rgba(255,255,255,0.06);
+}
+
+.aos-deck-skip {
+  background: transparent;
+  border: none;
+  color: var(--aos-text-dim, #626b76);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.aos-deck-skip:hover {
+  color: var(--aos-text-muted, #a3aab4);
+}
+
+/* ── Progress bar ───────────────────────────────────────────── */
+.aos-deck-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--aos-accent, #11d9df);
+  transition: width 0.4s cubic-bezier(0.32, 0.72, 0.2, 1);
+  z-index: 3;
+}
+
+/* ── Viewport + track ───────────────────────────────────────── */
 .aos-deck-viewport {
   position: relative;
   overflow: hidden;
@@ -40,6 +99,7 @@
   will-change: transform;
 }
 
+/* ── Slide ──────────────────────────────────────────────────── */
 .aos-deck-slide {
   flex: 0 0 100%;
   padding: 48px 48px 24px;
@@ -50,6 +110,7 @@
   min-height: 520px;
 }
 
+/* ── Illustration ───────────────────────────────────────────── */
 .aos-deck-illustration {
   width: 100%;
   max-width: 380px;
@@ -66,9 +127,7 @@
   overflow: visible;
 }
 
-/* ── Illustration helper classes ────────────────────────────
-   SVGs are injected via dangerouslySetInnerHTML and use these
-   class names to inherit the deck's color scheme. */
+/* SVG helper classes — inherit deck colour scheme */
 .aos-deck-illustration .illo-stroke {
   stroke: var(--aos-text, #f4f7f8);
   fill: none;
@@ -101,6 +160,12 @@
   fill: var(--aos-accent, #11d9df);
 }
 
+/* SVG circle transforms need fill-box so transform-origin is element centre */
+.aos-deck-illustration circle {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 @keyframes illo-pulse-anim {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
@@ -110,7 +175,15 @@
   animation: illo-pulse-anim 1.8s ease-in-out infinite;
 }
 
-/* ── Typography ─────────────────────────────────────────── */
+/* ── Text block ─────────────────────────────────────────────── */
+.aos-deck-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* ── Typography ─────────────────────────────────────────────── */
 .aos-deck-eyebrow {
   font-size: 11px;
   letter-spacing: 0.14em;
@@ -138,7 +211,7 @@
   max-width: 460px;
 }
 
-/* ── Footer ─────────────────────────────────────────────── */
+/* ── Footer ─────────────────────────────────────────────────── */
 .aos-deck-footer {
   display: flex;
   align-items: center;
@@ -212,48 +285,138 @@
   cursor: not-allowed;
 }
 
-/* ── Chrome ─────────────────────────────────────────────── */
-.aos-deck-skip {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: transparent;
-  border: none;
-  color: var(--aos-text-dim, #626b76);
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 6px;
-  z-index: 2;
+/* ============================================================
+   V3 — Active-slide entrance animations
+   All animations apply only when the .animate-in class is
+   present. The component re-keys animated elements on every
+   slide change, re-triggering these animations each time.
+   ============================================================ */
+
+/* ── Keyframes ──────────────────────────────────────────────── */
+
+@keyframes aos-illo-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
 }
 
-.aos-deck-skip:hover {
-  color: var(--aos-text-muted, #a3aab4);
+@keyframes aos-text-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
 }
 
-.aos-deck-progress {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 2px;
-  background: var(--aos-accent, #11d9df);
-  transition: width 0.4s cubic-bezier(0.32, 0.72, 0.2, 1);
-  z-index: 3;
+@keyframes aos-fade-scale {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-/* ── Accessibility ──────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .aos-deck-track,
-  .aos-deck-progress,
-  .aos-deck-dot,
-  .aos-deck-illustration .illo-pulse {
-    transition: none;
-    animation: none;
+@keyframes aos-pop-in {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1);   }
+}
+
+@keyframes aos-draw-stroke {
+  from { stroke-dashoffset: 500; }
+  to   { stroke-dashoffset: 0;   }
+}
+
+/* ── Illustration container — fade + lift ───────────────────── */
+.aos-deck-illustration.animate-in {
+  animation: aos-illo-rise 0.50s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Text — staggered rise ──────────────────────────────────── */
+.aos-deck-text.animate-in .aos-deck-eyebrow {
+  animation: aos-text-rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.aos-deck-text.animate-in .aos-deck-title {
+  animation: aos-text-rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.20s both;
+}
+
+.aos-deck-text.animate-in .aos-deck-body {
+  animation: aos-text-rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
+}
+
+/* ── SVG groups — staggered fade-in ────────────────────────── */
+.aos-deck-illustration.animate-in .illo-grid {
+  animation: aos-fade-scale 0.40s ease-out 0.06s both;
+}
+
+.aos-deck-illustration.animate-in .illo-dim-stroke {
+  animation: aos-fade-scale 0.40s ease-out 0.10s both;
+}
+
+.aos-deck-illustration.animate-in .illo-stroke {
+  animation: aos-fade-scale 0.55s ease-out 0.16s both;
+}
+
+.aos-deck-illustration.animate-in .illo-stroke-muted {
+  animation: aos-fade-scale 0.55s ease-out 0.24s both;
+}
+
+/* ── Draw-stroke — lines + paths inside stroke groups ────────
+   stroke-dasharray/dashoffset are set here and in the
+   no-preference media query to keep them out of reduced-motion.
+   Large value (500) approximates any line/path length in the
+   400×240 viewBox; circles are handled separately via pop-in. */
+@media (prefers-reduced-motion: no-preference) {
+  .aos-deck-illustration.animate-in .illo-stroke line,
+  .aos-deck-illustration.animate-in .illo-stroke path,
+  .aos-deck-illustration.animate-in .illo-stroke-muted line,
+  .aos-deck-illustration.animate-in .illo-stroke-muted path {
+    stroke-dasharray: 500;
+    stroke-dashoffset: 500;
+    animation: aos-draw-stroke 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
   }
 }
 
-/* ── Responsive ─────────────────────────────────────────── */
+/* ── Pop-in — accent fill elements (excluding pulsing ones) ── */
+.aos-deck-illustration.animate-in .illo-accent-fill:not(.illo-pulse) {
+  animation: aos-pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.36s both;
+}
+
+/* ── Circles inside stroke groups — pop-in (not draw-stroke) ─ */
+.aos-deck-illustration.animate-in .illo-stroke circle:not(.illo-pulse),
+.aos-deck-illustration.animate-in .illo-stroke-muted circle:not(.illo-pulse) {
+  animation: aos-pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.28s both;
+}
+
+/* ============================================================
+   Accessibility
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  /* Track slide + UI transitions */
+  .aos-deck-track,
+  .aos-deck-progress,
+  .aos-deck-dot {
+    transition: none;
+  }
+
+  /* Continuous pulse */
+  .aos-deck-illustration .illo-pulse {
+    animation: none;
+  }
+
+  /* V3 entrance animations */
+  .aos-deck-illustration.animate-in,
+  .aos-deck-text.animate-in .aos-deck-eyebrow,
+  .aos-deck-text.animate-in .aos-deck-title,
+  .aos-deck-text.animate-in .aos-deck-body,
+  .aos-deck-illustration.animate-in .illo-grid,
+  .aos-deck-illustration.animate-in .illo-dim-stroke,
+  .aos-deck-illustration.animate-in .illo-stroke,
+  .aos-deck-illustration.animate-in .illo-stroke-muted,
+  .aos-deck-illustration.animate-in .illo-accent-fill,
+  .aos-deck-illustration.animate-in .illo-stroke circle,
+  .aos-deck-illustration.animate-in .illo-stroke-muted circle {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
 @media (max-width: 600px) {
   .aos-deck-slide {
     padding: 40px 24px 20px;

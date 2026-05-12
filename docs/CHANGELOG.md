@@ -2,6 +2,60 @@
 
 ---
 
+## 2026-05-12 — Sprint 220: First-Run Deck V3 — Sound + Animation V1
+
+**Audit findings:**
+Existing deck was structurally complete: 5/5/4/4 slides per role, DB-backed first-run gating via `has_seen_first_run_deck` on `profiles`, progress bar, dots, skip, back/next/get-started, keyboard arrows, Escape, mobile swipe, reduced-motion fallback. What it lacked: Web Audio sound engine, sound toggle UI, sound preference persistence, and active-slide entrance animations.
+
+The reference HTML file (`aos-deck-tier1-v3-animated-sound.html`) was not accessible inside Codespaces. Sprint proceeded using existing copy (correct slide counts matched V3 spec) and the full implementation spec from the sprint brief.
+
+**Components replaced/created:**
+
+- `src/components/onboarding/aosDeckSound.ts` — **New.** Web Audio API sound engine. 6 named sounds: `soundSlide`, `soundDraw`, `soundChime`, `soundHover`, `soundPress`, `soundComplete`. AudioContext is lazy-singleton, created on first call. Gracefully returns early on any failure. `isSoundEnabled()` / `setSoundEnabled()` read/write `aos:soundEnabled` in localStorage. Default: sound on for new users. `shouldPlay()` internally gates on both user preference and `prefers-reduced-motion`. No external audio files.
+
+- `src/components/onboarding/AOSDeck.tsx` — **Replaced.** Added sound toggle button (top-right alongside skip via `.aos-deck-chrome`). `soundOn` state initialized `false` then corrected from localStorage after hydration (SSR-safe). `animKey` counter increments on every slide change — used as React key on active slide's illustration + text blocks, forcing DOM remount and re-triggering CSS entrance animations. Sound calls wired: `soundPress()` on every click, `soundSlide()` 20ms after navigation (allows state to settle), `soundComplete()` on last-slide completion, `soundHover()` on button/dot mouse-enter. `toggleSound()` calls `soundPress()` before updating state. ARIA improvements: `aria-hidden` on inactive slides, `role="tab"` + `aria-selected` on dots, `aria-pressed` on sound button.
+
+- `src/components/onboarding/aos-deck.css` — **Replaced.** Added `.aos-deck-chrome` (absolute-positioned flex row, top-right), `.aos-deck-sound-btn` styles, `.aos-deck-text` flex wrapper for the text block. All V3 animation keyframes: `aos-illo-rise` (illustration: fade + scale from 0.97), `aos-text-rise` (eyebrow/title/body staggered: 0.12s / 0.20s / 0.28s delays), `aos-fade-scale` (SVG groups: illo-grid 0.06s, illo-dim-stroke 0.10s, illo-stroke 0.16s, illo-stroke-muted 0.24s), `aos-pop-in` (accent-fill elements at 0.36s; circles in stroke groups at 0.28s; uses `transform-box: fill-box; transform-origin: center` on all illustration circles), `aos-draw-stroke` (lines + paths inside stroke groups: `stroke-dasharray: 500; stroke-dashoffset: 500` animated to 0, scoped to `@media (prefers-reduced-motion: no-preference)` only to avoid invisible-stroke problem). Reduced-motion block disables all V3 animations and resets opacity to 1.
+
+- `src/app/dev/onboarding-preview/page.tsx` — **Updated.** Dev banner now labels V3, mentions sound toggle location and localStorage behavior. Functional behaviour unchanged.
+
+**Role decks included:** Director (5 slides), Coach (5 slides), Player (4 slides), Parent (4 slides). Copy unchanged from previous sprint.
+
+**Animation behavior:**
+On every slide change, the active slide's illustration and text blocks are remounted (new React key) with `.animate-in` class. The illustration fades in + lifts from `translateY(8px) scale(0.97)`. SVG illustration groups stagger their opacity. Lines and paths inside stroke groups draw in via `stroke-dashoffset` (draw-stroke). Accent fill circles pop in with an elastic overshoot. Eyebrow, title, and body rise in sequence. Inactive slides have no animation (stable React key, no `.animate-in`). All animations use `cubic-bezier(0.22, 1, 0.36, 1)` or `cubic-bezier(0.34, 1.56, 0.64, 1)` for premium feel.
+
+**Sound behavior:**
+Web Audio API, no external files. AudioContext created lazily on first call (browser activation safe). 6 sounds synthesized via oscillators + envelope: slide transition (layered descending), hover (subtle 1100Hz tick), press (soft 300Hz click), complete (ascending C5-E5-G5-C6 arpeggio). Hover sounds may fail silently if AudioContext not yet created (before first click) — graceful degradation, no errors. Sound preference saved to `localStorage` key `aos:soundEnabled`. Auto-disabled under `prefers-reduced-motion`. `soundDraw` and `soundChime` exported and available for future wiring (not connected to component in this sprint).
+
+**First-run gating behavior:**
+Unchanged. DB-backed via `has_seen_first_run_deck` on `profiles`. `FirstRunDeckGate.tsx` untouched. All four role layouts (director, coach, player, parent) continue to wire the gate. `markFirstRunDeckSeenAction.ts` untouched. No localStorage gating added.
+
+**Files changed:**
+- `src/components/onboarding/aosDeckSound.ts` — created
+- `src/components/onboarding/AOSDeck.tsx` — replaced
+- `src/components/onboarding/aos-deck.css` — replaced
+- `src/app/dev/onboarding-preview/page.tsx` — updated
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean — `npx tsc --noEmit` exit 0.
+
+**Manual QA status:**
+- Browser access not available in this environment.
+- Sound engine uses try/catch around every Web Audio call — cannot crash the deck.
+- Animation classes only apply on `.animate-in` (active slide); inactive slides unaffected.
+- Reduced-motion: all V3 animations disabled, stroke-dasharray never applied, opacity resets to 1.
+- First-run gating: not tested live but logic is unchanged.
+
+**Known limitations:**
+- `soundDraw` and `soundChime` are exported but not wired to deck navigation — available for future use if SVG animation-end events are added.
+- Sound toggle initializes as `false` on SSR, flips to stored preference after hydration — a single-frame flicker is possible but imperceptible in practice.
+- Draw-stroke animation uses `stroke-dasharray: 500` (approximation). Circles inside stroke groups use pop-in instead, avoiding the circumference mismatch problem.
+- V3 copy comparison could not be verified (reference HTML file unavailable in Codespaces). Existing copy retained.
+
+**No migrations added.** `database.types.ts` untouched. No Supabase policies changed. No seed content changed. Unrelated dirty files untouched.
+
+---
+
 ## 2026-05-11 — Director Interview Voice-Assisted Conversation V1
 
 **Audit findings:**
