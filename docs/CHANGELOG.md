@@ -2,6 +2,58 @@
 
 ---
 
+## 2026-05-12 — Sprint 231: Director Interview Guided Welcome + Preflight Question V1
+
+**Why the opening flow changed:** Clicking "Start Voice Interview" previously went straight to Q1 ("Hey, welcome. First question: …"). The assistant felt like an AI chatbot jumping into content without context. The director had no chance to understand what the interview was about or ask a quick question first. This sprint adds a structured guided preflight before Q1.
+
+**Opening explanation behavior:** After connecting Realtime, the assistant now speaks a short opening script explaining the interview's purpose ("understand how you teach, how you group players, what your coaches need…") and ends with: "Before we begin, do you have any questions, or should we jump into the first one?" Step remains at -1 during this phase. Q1 does not begin until the director responds.
+
+**Preflight state machine:** New `PreflightPhase` type with values: `idle`, `intro_speaking`, `awaiting_preflight_answer`, `answering_preflight_question`, `ready_for_question_one`. Stored in local React state only — no database state.
+
+**No-questions path:** If the director says "no", "nope", "let's start", "go ahead", "no questions", "I'm good", or similar, the assistant says: "Perfect. Let's start. First question: [INTERVIEW_STEPS[0].spokenQuestion]" and then sets step to 0, entering the normal Sprint 230 answer/confirm flow.
+
+**Yes-question path:** If the director asks a question or says "yes" (meaning "yes I have a question"), the assistant answers from a controlled local FAQ helper (`buildPreflightFAQResponse`). Answers are deterministic and cover: "can I change this later?", "who sees this?", "what happens with the answers?", "how long does this take?", and a general fallback. After answering, assistant asks: "Ready to start with the first one?"
+
+**Controlled FAQ guardrails:** `buildPreflightFAQResponse()` is a pure function with keyword matching. No AI free-run. The data channel `create_response: false` remains in place, so the AI can never generate an unsolicited response to director speech.
+
+**Max 2 preflight exchanges:** `preflightExchangeCountRef` tracks how many Q&A rounds have happened. After 2, the assistant says: "Let's start with the first question. You can always come back and adjust this later." and advances to Q1 regardless.
+
+**Q1 start behavior:** `handlePreflightResponse()` calls an internal `startQ1(intro)` helper that speaks the intro + "First question: [Q1]" as a single utterance, sets `hasSentWelcomeRef.current = true`, then advances to step 0 on speech completion. The auto-speak useEffect's step-0 guard (`hasSentWelcomeRef`) prevents double-speaking Q1.
+
+**Preflight UI:** New UI block renders when `step === -1 && preflightPhase !== 'idle'`. Shows:
+- Assistant bubble with opening explanation text (or FAQ response during Q&A)
+- Voice listening status card (Realtime connected, not speaking)
+- Typed input area ("Your question or response") — shown in `awaiting_preflight_answer` phase
+- "No questions — start" button (lime, primary)
+- "Ask this" button (ghost) — appears only when typed input is non-empty
+- "Type instead" link — calls `switchToTypeModePreflight()`, disconnects Realtime, stays in preflight with typed input
+- "Skip intro" link — shown during `intro_speaking`, cancels speech and advances to `awaiting_preflight_answer`
+- Spinner — shown during `ready_for_question_one` transition
+
+**Separate preflight transcript handler:** New `useEffect` watches `realtimeVoice.finalUserTranscript` when `preflightPhase === 'awaiting_preflight_answer'`. This is entirely separate from the interview transcript useEffect which guards on `step < 0` and ignores preflight transcripts. The preflight useEffect is positioned after `handlePreflightResponse` (its dependency) to satisfy TypeScript declaration order.
+
+**Typed fallback behavior unchanged:** `startTypeInterview()` still goes straight to step 0 (no preflight for typed-first mode). Typed input within the voice preflight screen is supported.
+
+**App-owned workflow guardrails:** The app controls every step transition. `handlePreflightResponse` is a `useCallback` with deterministic classification — it never lets the AI decide when to move forward. All branching (no_questions / has_question / unclear / max_exchanges) is handled locally.
+
+**Assistant instructions reinforced (route.ts):** Session instructions now explicitly add "Do not ask 'How can I help?'" and "speak the provided text and stop" and "During the preflight introduction, speak the provided text and wait."
+
+**Welcome screen copy updated:** Static description now reads: "The assistant will explain the setup interview, answer one quick question if you have one, then guide you through the questions…"
+
+**`goBack()` updated:** Resetting from step 0 now also resets `preflightPhase`, `preflightAssistantText`, `preflightTypedInput`, and `preflightExchangeCountRef`.
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — preflight phase state machine, opening script, classification helpers, FAQ helpers, preflight UI, updated welcome copy, updated startVoiceInterview
+- `src/app/api/director/interview/realtime-session/route.ts` — reinforced session instructions
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with 0 errors.
+
+**Manual QA status:** See sprint prompt QA checklist — requires live voice session with OPENAI_API_KEY configured. Typed fallback and button paths testable without voice.
+
+**No migrations added.** `database.types.ts` untouched. Save behavior unchanged. Unrelated dirty files untouched.
+
+---
+
 ## 2026-05-12 — Sprint 230: Director Interview Integrated Voice Transcript + Confirm Flow V1
 
 **Why added:** The Realtime voice assistant could speak and the director could hear it, but the experience felt like a separate AI agent rather than an integrated Academy OS workflow. The assistant's spoken words never appeared in the UI, the director's spoken responses were never captured as text, and — critically — the AI could potentially respond freely to director speech via server VAD auto-response. The app was not the owner of the workflow.

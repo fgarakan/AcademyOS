@@ -126,6 +126,75 @@ function initAnswer(initial: string): AnswerState {
   return { chips: [], custom: initial }
 }
 
+// ─── Preflight phase ─────────────────────────────────────────────────────────
+type PreflightPhase =
+  | 'idle'
+  | 'intro_speaking'
+  | 'awaiting_preflight_answer'
+  | 'answering_preflight_question'
+  | 'ready_for_question_one'
+
+const OPENING_SCRIPT =
+  "Hey, welcome. I'm going to walk you through a short setup interview for your academy. " +
+  "The goal is to understand how you teach, how you group players, what your coaches need, " +
+  "and what kind of system you want Academy OS to help you run. " +
+  "This helps the software organize your curriculum, templates, sessions, and coach workflows " +
+  "around the way your academy actually works. " +
+  "Before we begin, do you have any questions, or should we jump into the first one?"
+
+function classifyPreflightAnswer(text: string): 'no_questions' | 'has_question' | 'unclear' {
+  const lower = text.toLowerCase().trim()
+  const noMultiword = [
+    'no questions', "i'm good", 'im good', "let's start", 'lets start',
+    'go ahead', 'jump in', 'ready to start', 'sounds good',
+    "let's begin", 'lets begin', "let's go", 'lets go',
+    "i'm ready", 'im ready', "yes let's", 'yes lets', 'no thanks',
+  ]
+  for (const s of noMultiword) {
+    if (lower.includes(s)) return 'no_questions'
+  }
+  if (lower === 'no' || lower === 'nope' || lower === 'nah' ||
+      lower.startsWith('no ') || lower.startsWith('no,')) {
+    return 'no_questions'
+  }
+  if (lower.includes('?') || lower.includes('question') ||
+      lower.startsWith('what ') || lower.startsWith('how ') ||
+      lower.startsWith('who ') || lower.startsWith('can i ') ||
+      lower.startsWith('why ') || lower.includes('what is') ||
+      lower.includes('what are') || lower.includes('how does') ||
+      lower.includes('who sees') || lower.includes('change it') ||
+      lower.includes('change later') || lower.includes('what happens') ||
+      lower.includes('is this for')) {
+    return 'has_question'
+  }
+  if (lower === 'yes' || lower === 'yeah' || lower === 'yep' || lower === 'yup' ||
+      lower.startsWith('yes ') || lower.startsWith('yeah ')) {
+    return 'has_question'
+  }
+  return 'unclear'
+}
+
+function buildPreflightFAQResponse(text: string): string {
+  const lower = text.toLowerCase()
+  if (lower.includes('change') || lower.includes('edit') || lower.includes('update') ||
+      lower.includes('later') || lower.includes('permanent')) {
+    return "Yes. Nothing here is permanent. You can review and adjust your setup over time."
+  }
+  if (lower.includes('who see') || lower.includes('visible') || lower.includes('parent') ||
+      lower.includes('player') || lower.includes('private')) {
+    return "This is director-facing setup information. It helps shape the operating system — it's not automatically sent to parents or players."
+  }
+  if (lower.includes('what happen') || lower.includes('answers') || lower.includes('saved') ||
+      lower.includes('stored') || lower.includes('data')) {
+    return "Your answers help configure how Academy OS organizes priorities, templates, curriculum context, and coach guidance."
+  }
+  if (lower.includes('how long') || lower.includes('how many') || lower.includes('minutes') ||
+      lower.includes('time')) {
+    return "About three minutes — seven short questions, one at a time."
+  }
+  return "This helps Academy OS understand your academy's teaching style so it can organize your curriculum, templates, and coach workflows around the way your academy actually works."
+}
+
 // ─── Button classes ───────────────────────────────────────────────────────────
 const BTN_LIME =
   'flex items-center justify-center gap-2 py-2.5 rounded-xl bg-lime text-base text-sm font-semibold hover:bg-lime/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
@@ -364,6 +433,11 @@ export function DirectorInterviewAssistant({
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('idle')
   const [audioWarning, setAudioWarning] = useState<string | null>(null)
 
+  // Preflight phase — guided intro before Q1 begins
+  const [preflightPhase, setPreflightPhase] = useState<PreflightPhase>('idle')
+  const [preflightAssistantText, setPreflightAssistantText] = useState('')
+  const [preflightTypedInput, setPreflightTypedInput] = useState('')
+
   // Text shown in the assistant bubble — what the app told the assistant to say.
   // Used as fallback when Realtime transcript events don't arrive.
   const [lastSpokenAssistantText, setLastSpokenAssistantText] = useState('')
@@ -391,6 +465,8 @@ export function DirectorInterviewAssistant({
   const pendingAckRef = useRef<string | null>(null)
   // Tracks the last applied user transcript to prevent double-application.
   const lastAppliedTranscriptRef = useRef('')
+  // Counts preflight Q&A exchanges — forces forward to Q1 after 2.
+  const preflightExchangeCountRef = useRef(0)
 
   // Detect TTS support after hydration
   useEffect(() => {
@@ -522,6 +598,102 @@ export function DirectorInterviewAssistant({
     realtimeVoice.speak(text, onDone)
   }, [realtimeVoice.speak])
 
+  // ── Preflight response handler ───────────────────────────────────────────────
+  // Classifies the director's response to the preflight question, answers briefly
+  // using controlled FAQ copy, and advances to Q1 when ready.
+  // App owns all branching — AI never decides when to move forward.
+  const handlePreflightResponse = useCallback((rawText: string) => {
+    const text = rawText.trim()
+    const q1 = INTERVIEW_STEPS[0].spokenQuestion
+    const classification = classifyPreflightAnswer(text)
+
+    // Clear transcript so the next voice capture is fresh
+    realtimeVoice.clearUserTranscript()
+    lastAppliedTranscriptRef.current = ''
+
+    const startQ1 = (intro: string) => {
+      const fullText = `${intro} First question: ${q1}`
+      hasSentWelcomeRef.current = true
+      setPreflightPhase('ready_for_question_one')
+      setPreflightAssistantText(fullText)
+      setIsSpeaking(true)
+      setAudioStatus('speaking')
+      if (isRealtimeConnected) {
+        speakWithTracking(fullText, () => {
+          setIsSpeaking(false)
+          setAudioStatus('ready')
+          setStep(0)
+          setPreflightPhase('idle')
+        })
+      } else {
+        setLastSpokenAssistantText(fullText)
+        speakAssistant(fullText, {
+          onEnd: () => {
+            setIsSpeaking(false)
+            setAudioStatus('ready')
+            setStep(0)
+            setPreflightPhase('idle')
+          },
+          onError: () => {
+            setAudioWarning("Audio didn't play. Check browser sound.")
+            setStep(0)
+            setPreflightPhase('idle')
+          },
+        })
+      }
+    }
+
+    if (classification === 'no_questions') {
+      startQ1("Perfect. Let's start.")
+      return
+    }
+
+    if (preflightExchangeCountRef.current >= 2) {
+      startQ1("Let's start with the first question. You can always come back and adjust this later.")
+      return
+    }
+
+    // Director has a question — answer from controlled FAQ copy, then ask again
+    let responseText: string
+    if (classification === 'has_question') {
+      const faqAnswer = buildPreflightFAQResponse(text)
+      responseText = `${faqAnswer} Ready to start with the first one?`
+    } else {
+      responseText = "No problem. I'll keep it simple — should we start with the first question?"
+    }
+
+    preflightExchangeCountRef.current += 1
+    setPreflightPhase('awaiting_preflight_answer')
+    setPreflightAssistantText(responseText)
+    setPreflightTypedInput('')
+    setIsSpeaking(true)
+    setAudioStatus('speaking')
+    if (isRealtimeConnected) {
+      speakWithTracking(responseText, () => {
+        setIsSpeaking(false)
+        setAudioStatus('ready')
+      })
+    } else {
+      setLastSpokenAssistantText(responseText)
+      speakAssistant(responseText, {
+        onEnd: () => { setIsSpeaking(false); setAudioStatus('ready') },
+        onError: () => setAudioWarning("Audio didn't play. Check browser sound."),
+      })
+    }
+  }, [isRealtimeConnected, speakWithTracking, speakAssistant, realtimeVoice.clearUserTranscript])
+
+  // ── Wire Realtime user transcript to preflight handler ───────────────────────
+  // Fires when step === -1 and the director's voice response to the preflight
+  // question is transcribed. Separate from the interview transcript useEffect
+  // which guards on step < 0 and ignores preflight transcripts entirely.
+  useEffect(() => {
+    const t = realtimeVoice.finalUserTranscript
+    if (!t || t === lastAppliedTranscriptRef.current) return
+    if (preflightPhase !== 'awaiting_preflight_answer') return
+    lastAppliedTranscriptRef.current = t
+    handlePreflightResponse(t)
+  }, [realtimeVoice.finalUserTranscript, preflightPhase, handlePreflightResponse])
+
   // ── Auto-speak question when voice mode is on and an answering step is active.
   // Realtime path: speakWithTracking (tracks text + fires response.create).
   // Browser TTS path: setLastSpokenAssistantText + speakAssistant.
@@ -624,13 +796,30 @@ export function DirectorInterviewAssistant({
     setAudioWarning(null)
   }
 
+  // Switches to typed mode during preflight — disconnects Realtime, keeps preflight
+  // screen so the director can still type their answer before Q1 begins.
+  function switchToTypeModePreflight() {
+    stopAssistantSpeech()
+    if (isRealtimeConnected) realtimeVoice.disconnect()
+    hasSentWelcomeRef.current = false
+    pendingAckRef.current = null
+    setVoiceMode(false)
+    setAudioStatus('idle')
+    setAudioWarning(null)
+    setPreflightPhase('awaiting_preflight_answer')
+  }
+
   // ── Welcome actions ─────────────────────────────────────────────────────────
   async function startVoiceInterview() {
     hasSentWelcomeRef.current = false
     pendingAckRef.current = null
     lastAppliedTranscriptRef.current = ''
+    preflightExchangeCountRef.current = 0
     setDebugWelcomeSent(false)
     setDebugFirstRequested(false)
+    setPreflightPhase('idle')
+    setPreflightAssistantText('')
+    setPreflightTypedInput('')
     setVoiceMode(true)
     setAudioStatus('loading')
     setAudioWarning(null)
@@ -648,23 +837,17 @@ export function DirectorInterviewAssistant({
       return
     }
 
-    // Connected — welcome + first question as a single utterance so the experience
-    // feels continuous. hasSentWelcomeRef prevents the auto-speak useEffect from
-    // re-speaking step 0 after the callback advances the step.
-    const firstQ = INTERVIEW_STEPS[0].spokenQuestion
-    const welcomeText =
-      `Hey, welcome. I'll walk you through this one question at a time. We'll keep it simple. ` +
-      `First question: ${firstQ}`
-
-    hasSentWelcomeRef.current = true
+    // Connected — speak preflight opening script only. Do NOT advance to step 0 yet.
+    // The app waits for the director's preflight response before asking Q1.
+    setPreflightPhase('intro_speaking')
+    setPreflightAssistantText(OPENING_SCRIPT)
     setDebugWelcomeSent(true)
-    setDebugFirstRequested(true)
     setIsSpeaking(true)
     setAudioStatus('speaking')
-    speakWithTracking(welcomeText, () => {
+    speakWithTracking(OPENING_SCRIPT, () => {
       setIsSpeaking(false)
       setAudioStatus('ready')
-      setStep(0)
+      setPreflightPhase('awaiting_preflight_answer')
     })
   }
 
@@ -777,6 +960,10 @@ export function DirectorInterviewAssistant({
       setAudioStatus('idle')
       setAudioWarning(null)
       setLastSpokenAssistantText('')
+      setPreflightPhase('idle')
+      setPreflightAssistantText('')
+      setPreflightTypedInput('')
+      preflightExchangeCountRef.current = 0
       setStep(-1)
     } else {
       setStep(prev => prev - 1)
@@ -817,7 +1004,160 @@ export function DirectorInterviewAssistant({
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // WELCOME
+  // WELCOME — PREFLIGHT ACTIVE (voice connected, opening script spoken/speaking)
+  // ══════════════════════════════════════════════════════════════════════════════
+  if (step === -1 && preflightPhase !== 'idle') {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 mb-3">
+            <AssistantDot speaking={isSpeaking} listening={false} />
+            <AssistantStatus speaking={isSpeaking} listening={false} />
+            <span className="label-xs ml-1">Director Interview — Setup</span>
+          </div>
+        </div>
+
+        {/* Assistant opening explanation bubble */}
+        <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-lime/15 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+            <p className="text-xs font-medium text-lime">Assistant</p>
+            {isSpeaking && isRealtimeConnected && (
+              <AssistantDot speaking={true} listening={false} />
+            )}
+          </div>
+          <p className="text-sm text-text-secondary leading-relaxed">
+            {preflightAssistantText || OPENING_SCRIPT}
+          </p>
+        </div>
+
+        {/* Voice listening status during preflight */}
+        {voiceMode && isRealtimeConnected && preflightPhase === 'awaiting_preflight_answer' && !isSpeaking && (
+          <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
+            <div className="flex items-center gap-2">
+              {realtimeVoice.speechStarted ? (
+                <>
+                  <Mic className="w-3.5 h-3.5 text-status-blue animate-pulse shrink-0" />
+                  <p className="text-xs text-status-blue">Listening…</p>
+                </>
+              ) : (
+                <>
+                  <Mic className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                  <p className="text-xs text-text-muted">Speak your answer, or type below</p>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Enable audio if blocked */}
+        {realtimeVoice.audioBlocked && voiceMode && (
+          <div className="px-4 py-3 rounded-xl bg-surface-raised border border-status-orange/30 space-y-2">
+            <p className="text-xs text-text-secondary">
+              Voice connected, but audio did not start. Click to enable.
+            </p>
+            <button
+              type="button"
+              onClick={realtimeVoice.enableAudio}
+              className="text-xs px-3 py-1.5 rounded-xl border border-status-orange/40 bg-status-orange/10 text-status-orange hover:bg-status-orange/20 transition-colors"
+            >
+              Enable audio
+            </button>
+          </div>
+        )}
+
+        {/* Audio warning */}
+        {audioWarning && (
+          <p className="text-[11px] text-status-orange px-1">{audioWarning}</p>
+        )}
+
+        {/* Typed input — shown once we're waiting for the director's answer */}
+        {preflightPhase === 'awaiting_preflight_answer' && (
+          <div className="space-y-1.5">
+            <label className="label-xs">Your question or response</label>
+            <textarea
+              value={preflightTypedInput}
+              onChange={e => setPreflightTypedInput(e.target.value)}
+              rows={2}
+              maxLength={300}
+              placeholder={voiceMode ? 'Type your question, or speak into the mic…' : 'Any questions before we begin?'}
+              className="w-full text-sm bg-surface-raised border border-border rounded-xl px-3 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/50 transition-colors resize-none"
+            />
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="space-y-2.5">
+          {/* Skip intro — shown while opening script is still speaking */}
+          {preflightPhase === 'intro_speaking' && (
+            <button
+              type="button"
+              onClick={() => {
+                stopAssistantSpeech()
+                setIsSpeaking(false)
+                setAudioStatus('ready')
+                setPreflightPhase('awaiting_preflight_answer')
+              }}
+              className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
+            >
+              Skip intro
+            </button>
+          )}
+
+          {/* Primary action when awaiting preflight answer */}
+          {preflightPhase === 'awaiting_preflight_answer' && (
+            <>
+              <button
+                type="button"
+                onClick={() => handlePreflightResponse('no questions')}
+                disabled={isSpeaking}
+                className={`w-full ${BTN_LIME}`}
+              >
+                No questions — start
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              {preflightTypedInput.trim() && (
+                <button
+                  type="button"
+                  onClick={() => handlePreflightResponse(preflightTypedInput.trim())}
+                  disabled={isSpeaking}
+                  className={`w-full ${BTN_GHOST}`}
+                >
+                  Ask this
+                </button>
+              )}
+
+              {voiceMode && (
+                <button
+                  type="button"
+                  onClick={switchToTypeModePreflight}
+                  className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
+                >
+                  Type instead
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Transitioning to Q1 */}
+          {preflightPhase === 'ready_for_question_one' && (
+            <div className="flex items-center gap-2 py-1">
+              <Loader2 className="w-4 h-4 animate-spin text-lime shrink-0" />
+              <p className="text-xs text-text-muted">Starting first question…</p>
+            </div>
+          )}
+        </div>
+
+        {process.env.NODE_ENV !== 'production' && (
+          <RealtimeDebugPanel {...debugPanelProps} />
+        )}
+      </div>
+    )
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // WELCOME — STATIC (before voice interview is started)
   // ══════════════════════════════════════════════════════════════════════════════
   if (step === -1) {
     const isConnecting =
@@ -844,8 +1184,9 @@ export function DirectorInterviewAssistant({
             <p className="text-xs font-medium text-lime">Academy OS Setup Assistant</p>
           </div>
           <p className="text-sm text-text-secondary leading-relaxed">
-            I&apos;ll ask seven short questions — your philosophy, how you group players,
-            and what a successful first 90 days looks like. Pick a chip, speak, or type. About 3 minutes.
+            The assistant will explain the setup interview, answer one quick question if you have one,
+            then guide you through the questions. Seven questions — your philosophy, how you group players,
+            what your coaches need, and what a successful 90 days looks like. About 3 minutes.
           </p>
         </div>
 
@@ -897,7 +1238,7 @@ export function DirectorInterviewAssistant({
               {isConnecting ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />Connecting assistant…</>
               ) : isSpeaking && voiceMode ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Assistant is welcoming you…</>
+                <><Loader2 className="w-4 h-4 animate-spin" />Assistant is speaking…</>
               ) : (
                 <><Volume2 className="w-4 h-4" />Start Voice Interview</>
               )}
