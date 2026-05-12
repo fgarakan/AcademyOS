@@ -154,7 +154,17 @@ function AssistantStatus({ speaking, listening }: { speaking: boolean; listening
 }
 
 // ─── Dev-only Realtime debug panel ───────────────────────────────────────────
-function RealtimeDebugPanel({ status, debug }: { status: string; debug: RealtimeDebugState }) {
+function RealtimeDebugPanel({
+  status,
+  debug,
+  welcomeSent,
+  firstRequested,
+}: {
+  status: string
+  debug: RealtimeDebugState
+  welcomeSent?: boolean
+  firstRequested?: boolean
+}) {
   return (
     <details className="mt-4">
       <summary className="cursor-pointer text-[10px] text-text-muted hover:text-text-secondary font-mono select-none">
@@ -162,6 +172,8 @@ function RealtimeDebugPanel({ status, debug }: { status: string; debug: Realtime
       </summary>
       <div className="mt-2 p-3 rounded-lg bg-surface border border-border space-y-0.5 text-[9px] font-mono leading-relaxed">
         <p>status: <span className="text-lime">{status}</span></p>
+        <p>welcome sent: <span className={welcomeSent ? 'text-status-green' : 'text-text-muted'}>{String(welcomeSent ?? false)}</span></p>
+        <p>first response requested: <span className={firstRequested ? 'text-status-green' : 'text-text-muted'}>{String(firstRequested ?? false)}</span></p>
         <p>env configured: <span className={
           debug.envConfigured === true ? 'text-status-green'
           : debug.envConfigured === false ? 'text-status-red'
@@ -339,6 +351,10 @@ export function DirectorInterviewAssistant({
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('idle')
   const [audioWarning, setAudioWarning] = useState<string | null>(null)
 
+  // Dev-only debug fields for welcome sequence
+  const [debugWelcomeSent, setDebugWelcomeSent] = useState(false)
+  const [debugFirstRequested, setDebugFirstRequested] = useState(false)
+
   const [isPending, startTransition] = useTransition()
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -352,6 +368,9 @@ export function DirectorInterviewAssistant({
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null)
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Prevents the auto-speak useEffect from re-speaking step 0 when the welcome
+  // already included the first question. Reset when a new voice session starts.
+  const hasSentWelcomeRef = useRef(false)
 
   // Detect TTS support after hydration
   useEffect(() => {
@@ -467,6 +486,16 @@ export function DirectorInterviewAssistant({
   // Uses Realtime when connected, browser TTS when not.
   useEffect(() => {
     if (!voiceMode || step < 0 || step >= INTERVIEW_STEPS.length || phase !== 'answering') return
+
+    // Step 0 was already spoken as part of the combined welcome + first question.
+    // Clear the flag so Repeat Question works normally going forward.
+    if (step === 0 && hasSentWelcomeRef.current) {
+      hasSentWelcomeRef.current = false
+      setIsSpeaking(false)
+      setAudioStatus('ready')
+      return
+    }
+
     setIsSpeaking(true)
     setAudioStatus('speaking')
 
@@ -539,6 +568,7 @@ export function DirectorInterviewAssistant({
   function switchToTypeMode() {
     stopAssistantSpeech()
     if (isRealtimeConnected) realtimeVoice.disconnect()
+    hasSentWelcomeRef.current = false
     setVoiceMode(false)
     setAudioStatus('idle')
     setAudioWarning(null)
@@ -546,6 +576,9 @@ export function DirectorInterviewAssistant({
 
   // ── Welcome actions ─────────────────────────────────────────────────────────
   async function startVoiceInterview() {
+    hasSentWelcomeRef.current = false
+    setDebugWelcomeSent(false)
+    setDebugFirstRequested(false)
     setVoiceMode(true)
     setAudioStatus('loading')
     setAudioWarning(null)
@@ -563,16 +596,24 @@ export function DirectorInterviewAssistant({
       return
     }
 
-    // Connected — speak intro, then advance to question 1
+    // Connected — welcome + first question as a single utterance so the experience
+    // feels continuous. hasSentWelcomeRef prevents the auto-speak useEffect from
+    // re-speaking step 0 after the callback advances the step.
+    const firstQ = INTERVIEW_STEPS[0].spokenQuestion
+    const welcomeText =
+      `Hey, welcome. I'll walk you through this one question at a time. We'll keep it simple. ` +
+      `First question: ${firstQ}`
+
+    hasSentWelcomeRef.current = true
+    setDebugWelcomeSent(true)
+    setDebugFirstRequested(true)
     setIsSpeaking(true)
     setAudioStatus('speaking')
-    realtimeVoice.speak(
-      "Hey, welcome. I'll walk you through this one question at a time. We'll keep it simple.",
-      () => {
-        setIsSpeaking(false)
-        setStep(0)
-      }
-    )
+    realtimeVoice.speak(welcomeText, () => {
+      setIsSpeaking(false)
+      setAudioStatus('ready')
+      setStep(0)
+    })
   }
 
   function startTypeInterview() {
@@ -659,6 +700,7 @@ export function DirectorInterviewAssistant({
     setSimpler(false)
     if (step === 0) {
       if (isRealtimeConnected) realtimeVoice.disconnect()
+      hasSentWelcomeRef.current = false
       setVoiceMode(false)
       setAudioStatus('idle')
       setAudioWarning(null)
@@ -746,7 +788,8 @@ export function DirectorInterviewAssistant({
         {realtimeVoice.audioBlocked && (
           <div className="px-4 py-3 rounded-xl bg-surface-raised border border-status-orange/30 space-y-2">
             <p className="text-xs text-text-secondary">
-              Voice connected, but audio did not start. Click to enable.
+              Voice connected, but the assistant did not start speaking. Click to enable audio,
+              or use Repeat question / Type instead.
             </p>
             <button
               type="button"
@@ -767,9 +810,9 @@ export function DirectorInterviewAssistant({
               className={`w-full ${BTN_LIME}`}
             >
               {isConnecting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Connecting…</>
+                <><Loader2 className="w-4 h-4 animate-spin" />Connecting assistant…</>
               ) : isSpeaking && voiceMode ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Starting…</>
+                <><Loader2 className="w-4 h-4 animate-spin" />Assistant is welcoming you…</>
               ) : (
                 <><Volume2 className="w-4 h-4" />Start Voice Interview</>
               )}
@@ -788,7 +831,12 @@ export function DirectorInterviewAssistant({
 
         {/* Dev-only debug panel */}
         {process.env.NODE_ENV !== 'production' && (
-          <RealtimeDebugPanel status={realtimeVoice.status} debug={realtimeVoice.debug} />
+          <RealtimeDebugPanel
+            status={realtimeVoice.status}
+            debug={realtimeVoice.debug}
+            welcomeSent={debugWelcomeSent}
+            firstRequested={debugFirstRequested}
+          />
         )}
       </div>
     )
@@ -913,6 +961,7 @@ export function DirectorInterviewAssistant({
           pct={progressPct}
           voiceMode={voiceMode}
           isSpeaking={isSpeaking}
+          isListening={voiceMode && isRealtimeConnected && !isSpeaking}
         />
 
         {/* Assistant acknowledgment bubble */}
@@ -1019,7 +1068,12 @@ export function DirectorInterviewAssistant({
 
         {/* Dev debug panel */}
         {process.env.NODE_ENV !== 'production' && (
-          <RealtimeDebugPanel status={realtimeVoice.status} debug={realtimeVoice.debug} />
+          <RealtimeDebugPanel
+            status={realtimeVoice.status}
+            debug={realtimeVoice.debug}
+            welcomeSent={debugWelcomeSent}
+            firstRequested={debugFirstRequested}
+          />
         )}
       </div>
     )
@@ -1035,6 +1089,7 @@ export function DirectorInterviewAssistant({
         pct={progressPct}
         voiceMode={voiceMode}
         isSpeaking={isSpeaking}
+        isListening={voiceMode && isRealtimeConnected && !isSpeaking}
       />
 
       {/* Voice mode controls */}
@@ -1220,7 +1275,12 @@ export function DirectorInterviewAssistant({
 
       {/* Dev debug panel */}
       {process.env.NODE_ENV !== 'production' && (
-        <RealtimeDebugPanel status={realtimeVoice.status} debug={realtimeVoice.debug} />
+        <RealtimeDebugPanel
+          status={realtimeVoice.status}
+          debug={realtimeVoice.debug}
+          welcomeSent={debugWelcomeSent}
+          firstRequested={debugFirstRequested}
+        />
       )}
     </div>
   )
@@ -1234,6 +1294,7 @@ function ProgressRow({
   pct,
   voiceMode,
   isSpeaking,
+  isListening,
 }: {
   step: number
   total: number
@@ -1241,14 +1302,15 @@ function ProgressRow({
   pct: number
   voiceMode: boolean
   isSpeaking: boolean
+  isListening: boolean
 }) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-3">
         {voiceMode ? (
           <div className="flex items-center gap-2">
-            <AssistantDot speaking={isSpeaking} listening={false} />
-            <AssistantStatus speaking={isSpeaking} listening={false} />
+            <AssistantDot speaking={isSpeaking} listening={isListening} />
+            <AssistantStatus speaking={isSpeaking} listening={isListening} />
           </div>
         ) : (
           <p className="text-[10px] font-mono text-text-muted">{step + 1} / {total}</p>

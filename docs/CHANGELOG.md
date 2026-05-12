@@ -2,6 +2,39 @@
 
 ---
 
+## 2026-05-12 — Sprint 229: Director Interview Voice Welcome + First Question V1
+
+**Why added:** The Realtime voice connection now works (Sprint 228), but the assistant's first spoken moment was a short welcome that did not include the first interview question. The question was spoken separately by the auto-speak useEffect, creating an awkward gap and leaving the director uncertain that the interview had started.
+
+**Welcome behavior:** `startVoiceInterview()` now sends a single `response.create` combining the welcome and first question: _"Hey, welcome. I'll walk you through this one question at a time. We'll keep it simple. First question: [INTERVIEW_STEPS[0].spokenQuestion]"_ — one continuous, natural utterance. The first question text is read from `interviewSteps.ts` directly, not duplicated.
+
+**First question behavior:** After the combined utterance completes, the callback sets `step(0)` which renders the answering UI. The auto-speak `useEffect` skips re-speaking step 0 because `hasSentWelcomeRef.current` is true, then clears the flag so Repeat Question works normally.
+
+**Duplicate prevention:** `hasSentWelcomeRef` (a `useRef`) is set to `true` before the speak call. The useEffect checks it at step 0, skips speaking, and resets the ref to `false`. The ref resets to `false` at the start of every new `startVoiceInterview()` call, and also in `switchToTypeMode()` and `goBack()` when returning to the welcome screen — so the welcome replays correctly on every new session.
+
+**UI status updates:**
+- Button text: "Connecting assistant…" (during WebRTC setup) → "Assistant is welcoming you…" (while welcome plays)
+- Autoplay-blocked message updated to: "Voice connected, but the assistant did not start speaking. Click to enable audio, or use Repeat question / Type instead."
+- `ProgressRow` now accepts `isListening` prop and passes it to `AssistantDot` and `AssistantStatus` — shows "Listening…" (blue dot, blue label) when voice mode is on, realtime is connected, and assistant is not speaking.
+
+**Debug fields (dev only):** `RealtimeDebugPanel` extended with `welcomeSent` and `firstResponseRequested` fields — green when true, muted when false. Only visible in development.
+
+**Files changed:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — combined welcome+Q1 utterance, `hasSentWelcomeRef` guard, reset on stop/restart, updated status messages, `isListening` prop for ProgressRow, debug panel welcome fields, fallback autoplay message
+
+**TypeScript:** clean (`npx tsc --noEmit` — exit code 0)
+
+**Manual QA status:** Ready to test. Key checks:
+1. Click Start Voice Interview → voice connects → assistant speaks welcome + first question in one flow
+2. Welcome does not repeat on its own when staying on step 0
+3. Stop voice and Start again → welcome replays
+4. Repeat Question speaks only the current question (not the welcome)
+5. Type instead still works; onboarding save behavior unchanged
+
+**No migrations. `database.types.ts` untouched. Save behavior unchanged. Unrelated dirty files untouched.**
+
+---
+
 ## 2026-05-12 — Sprint 228: Realtime Client Secret Response Parser Fix V1
 
 **Root cause:** Sprint 227 fixed the 400 (body now wrapped in `session`). OpenAI returned 200 OK, but the route cast the response as `{ client_secret?: { value?: string } }` and read `.client_secret?.value`. The actual `/v1/realtime/client_secrets` response returns `client_secret` as a flat string (not a nested object), so `.value` was `undefined` and the no-secret 502 fired. Additionally, the no-secret error path returned only `{ error, envConfigured }` — no diagnostic fields — making the debug panel blind to the real shape.
