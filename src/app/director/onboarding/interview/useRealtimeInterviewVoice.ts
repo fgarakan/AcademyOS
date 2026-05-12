@@ -499,6 +499,13 @@ export function useRealtimeInterviewVoice() {
           patchDebug({ lastTranscriptEvent: evType })
         }
 
+        // ── response.cancelled — clear pending WITHOUT firing callback ─────
+        // A cancelled response must not advance the interview state machine.
+        if (evType === 'response.cancelled' && pendingDoneRef.current) {
+          clearTimeout(pendingDoneRef.current.timer)
+          pendingDoneRef.current = null
+        }
+
         // ── response.done fires when the full assistant turn is complete ────
         // This is when we fire the onDone callback for speak()
         if ((evType === 'response.done' || evType === 'response.audio.done') && pendingDoneRef.current) {

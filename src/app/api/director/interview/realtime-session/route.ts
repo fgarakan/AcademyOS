@@ -77,6 +77,12 @@ export async function POST() {
           audio: {
             output: { voice },
           },
+          // Disable auto-response from session start — app owns every response.create call.
+          // Without this the server may auto-generate a turn before our session.update arrives.
+          turn_detection: {
+            type: 'server_vad',
+            create_response: false,
+          },
         },
       }),
     })

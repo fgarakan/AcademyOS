@@ -307,6 +307,12 @@ function RealtimeDebugPanel({
   activePromptQuestion,
   transcriptPendingConfirmation,
   directorDisplayName,
+  preflightPhase,
+  firstSpokenText,
+  lastSpeechText,
+  guidedIntroRequested,
+  namePromptRequested,
+  preflightPromptRequested,
 }: {
   status: string
   debug: RealtimeDebugState
@@ -325,6 +331,12 @@ function RealtimeDebugPanel({
   activePromptQuestion?: string
   transcriptPendingConfirmation?: boolean
   directorDisplayName?: string
+  preflightPhase?: string
+  firstSpokenText?: string
+  lastSpeechText?: string
+  guidedIntroRequested?: boolean
+  namePromptRequested?: boolean
+  preflightPromptRequested?: boolean
 }) {
   const stepQ = currentEncodedStep != null && currentEncodedStep >= 0 && currentEncodedStep < INTERVIEW_STEPS.length
     ? getStepQuestion(currentEncodedStep)
@@ -381,6 +393,22 @@ function RealtimeDebugPanel({
             )}
           </div>
         )}
+        {/* Sequence tracking — must fire: guided_intro → name_speaking → awaiting_preflight */}
+        <div className="border-t border-border pt-0.5 mt-0.5 space-y-0.5">
+          <p>preflight phase: <span className="text-lime">{preflightPhase ?? 'unknown'}</span></p>
+          <p>guided intro requested: <span className={guidedIntroRequested ? 'text-status-green' : 'text-text-muted'}>{String(guidedIntroRequested ?? false)}</span></p>
+          <p>name prompt requested: <span className={namePromptRequested ? 'text-status-green' : 'text-text-muted'}>{String(namePromptRequested ?? false)}</span></p>
+          <p>preflight prompt requested: <span className={preflightPromptRequested ? 'text-status-orange' : 'text-text-muted'}>{String(preflightPromptRequested ?? false)}</span></p>
+          {firstSpokenText ? (
+            <p className="break-words">first spoken: <span className={firstSpokenText.startsWith('Welcome') ? 'text-status-green' : 'text-status-red'}>{firstSpokenText.slice(0, 50)}…</span></p>
+          ) : (
+            <p>first spoken: <span className="text-text-muted">none yet</span></p>
+          )}
+          {lastSpeechText && (
+            <p className="break-words">last speech: <span className="text-text-muted">{lastSpeechText.slice(0, 50)}…</span></p>
+          )}
+        </div>
+
         {directorDisplayName !== undefined && (
           <p className="border-t border-border pt-0.5 mt-0.5">
             director name: <span className={directorDisplayName ? 'text-lime' : 'text-text-muted'}>{directorDisplayName || '(not captured)'}</span>
@@ -694,6 +722,13 @@ export function DirectorInterviewAssistant({
   const startClickedAtRef = useRef<number | null>(null)
   const [welcomeResponseError, setWelcomeResponseError] = useState<string | null>(null)
 
+  // Sequence-tracking debug fields — must fire in order: guided → name → preflight
+  const [debugFirstSpokenText, setDebugFirstSpokenText] = useState('')
+  const [debugGuidedIntroRequested, setDebugGuidedIntroRequested] = useState(false)
+  const [debugNamePromptRequested, setDebugNamePromptRequested] = useState(false)
+  const [debugPreflightPromptRequested, setDebugPreflightPromptRequested] = useState(false)
+  const firstSpokenRef = useRef(false) // becomes true on the first speak() of each session
+
   const [isPending, startTransition] = useTransition()
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -851,6 +886,11 @@ export function DirectorInterviewAssistant({
   // it immediately even if Realtime transcript events are delayed or absent.
   const speakWithTracking = useCallback((text: string, onDone?: () => void) => {
     setLastSpokenAssistantText(text)
+    if (!firstSpokenRef.current) {
+      firstSpokenRef.current = true
+      setDebugFirstSpokenText(text)
+    }
+    if (text === GUIDED_INTRO_TEXT) setDebugGuidedIntroRequested(true)
     realtimeVoice.speak(text, onDone)
   }, [realtimeVoice.speak])
 
@@ -864,6 +904,12 @@ export function DirectorInterviewAssistant({
   ) => {
     setActiveVoicePrompt(prompt)
     setLastSpokenAssistantText(textToSpeak)
+    if (!firstSpokenRef.current) {
+      firstSpokenRef.current = true
+      setDebugFirstSpokenText(textToSpeak)
+    }
+    if (prompt.id === 'director_name') setDebugNamePromptRequested(true)
+    if (prompt.id === 'preflight') setDebugPreflightPromptRequested(true)
     realtimeVoice.speak(textToSpeak, onDone)
   }, [realtimeVoice.speak])
 
@@ -1180,6 +1226,11 @@ export function DirectorInterviewAssistant({
     setDebugWelcomeSent(false)
     setDebugFirstRequested(false)
     setWelcomeResponseError(null)
+    firstSpokenRef.current = false
+    setDebugFirstSpokenText('')
+    setDebugGuidedIntroRequested(false)
+    setDebugNamePromptRequested(false)
+    setDebugPreflightPromptRequested(false)
     setPreflightPhase('idle')
     setPreflightAssistantText('')
     setPreflightTypedInput('')
@@ -1388,6 +1439,12 @@ export function DirectorInterviewAssistant({
     activePromptQuestion: activeVoicePrompt?.questionText,
     transcriptPendingConfirmation: preflightPhase === 'preflight_captured' || preflightPhase === 'name_captured',
     directorDisplayName,
+    preflightPhase,
+    firstSpokenText: debugFirstSpokenText,
+    lastSpeechText: lastSpokenAssistantText,
+    guidedIntroRequested: debugGuidedIntroRequested,
+    namePromptRequested: debugNamePromptRequested,
+    preflightPromptRequested: debugPreflightPromptRequested,
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
