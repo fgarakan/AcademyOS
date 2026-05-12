@@ -2,6 +2,217 @@
 
 ---
 
+## 2026-05-12 — Sprint 226: Realtime Voice Audio Debug + Guaranteed Playback V1
+
+**Root cause found:** No OpenAI Realtime API implementation existed. The voice mode used browser `window.speechSynthesis` only. Env vars `OPENAI_REALTIME_MODEL` and `OPENAI_REALTIME_VOICE` were set but referenced nowhere in code. Zero instances of `RTCPeerConnection`, `ontrack`, `createDataChannel`, or data channel events in the codebase.
+
+**Architecture chosen:** Ephemeral token (Option 2) — server calls `/v1/realtime/client_secrets` to obtain a short-lived token; browser uses that token as Authorization bearer to exchange SDP directly with OpenAI at `/v1/realtime/calls`. API key never leaves the server.
+
+**Server route — `src/app/api/director/interview/realtime-session/route.ts` (new):**
+- POST handler with full director auth (Supabase session → academy membership → role check)
+- Reads `OPENAI_API_KEY`, `OPENAI_REALTIME_MODEL`, `OPENAI_REALTIME_VOICE` from env
+- Calls `POST https://api.openai.com/v1/realtime/client_secrets` with `model`, `audio.output.voice`, `modalities`, `instructions`
+- Returns `{ clientSecret, model, voice, envConfigured }` — never exposes API key
+- Server logs: route reached / key exists (yes/no) / model / voice / OpenAI status / content-type / safe error on failure
+
+**Client WebRTC hook — `src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts` (new):**
+- Full 8-step WebRTC lifecycle: fetch token → getUserMedia → RTCPeerConnection → ontrack → createDataChannel → createOffer → POST SDP to OpenAI → setRemoteDescription → wait for dc.onopen
+- `pc.ontrack`: creates `<audio autoplay playsInline volume=1>` element, calls `play()`, handles autoplay-blocked case
+- Data channel `onopen`: sends `session.update` (modalities, server_vad, whisper-1 transcription)
+- `speak(text, onDone?)`: sends `response.create` with audio+text modalities and exact instructions; `onDone` fires on `response.done` event or timeout fallback
+- `connect()` resolves only after `dc.onopen` fires — caller can call `speak()` immediately
+- Debug state: `envConfigured`, `tokenFetched`, `micGranted`, `peerConnectionState`, `iceConnectionState`, `dataChannelState`, `remoteTrackReceived`, `audioPlaying`, `audioBlocked`, `lastEventType`, `lastError`
+- All WebRTC logs go to console: token fetch, mic grant, SDP offer, SDP exchange status, `ontrack` details (track count, enabled, muted, readyState), `audio.play()` result, data channel open
+
+**Component changes — `DirectorInterviewAssistant.tsx` (modified):**
+- `startVoiceInterview()` is now async: calls `realtimeVoice.connect()`, speaks intro via `realtimeVoice.speak(welcomeText, () => setStep(0))`, falls back with error message on failure
+- Auto-speak effect: uses `realtimeVoice.speak()` when Realtime connected; browser `speechSynthesis` otherwise
+- `repeatQuestion()`, `confirmAnswer()`, `askSimpler()`: both route through Realtime when connected, browser TTS fallback when not
+- `switchToTypeMode()`, `goBack()` from step 0: call `realtimeVoice.disconnect()` when Realtime was active
+- "Enable audio" button rendered when `realtimeVoice.audioBlocked` (autoplay blocked by browser policy) — calls `enableAudio()` from user gesture
+- Fallback message: "Voice is not available right now. You can still complete the interview by typing." on Realtime failure; "Microphone access denied." on mic denial
+- Dev-only `<RealtimeDebugPanel>` rendered on welcome, question, and confirming screens (hidden in production)
+- Typed fallback fully intact — "I'd rather type" button unaffected
+
+**Files created:**
+- `src/app/api/director/interview/realtime-session/route.ts` — POST handler for OpenAI Realtime ephemeral token
+- `src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts` — Full WebRTC + Realtime hook
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — Realtime hook wired in; async voice start; debug panel; enable-audio button; fallback messaging
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean — `npx tsc --noEmit` exit 0.
+
+**No migrations. `database.types.ts` untouched. Save behavior unchanged. Unrelated dirty files untouched.**
+
+**Manual QA status:** Implementation complete. QA requires a running dev server with a valid `OPENAI_API_KEY`, a supported `OPENAI_REALTIME_MODEL`, and `OPENAI_REALTIME_VOICE` in `.env.local`. Open Chrome DevTools console, navigate to `/director/onboarding/interview`, click "Start Voice Interview", observe server logs and debug panel for exact failure point.
+
+**Known limitations:**
+- `OPENAI_REALTIME_MODEL=gpt-realtime` and `OPENAI_REALTIME_VOICE=marin` are used as-is from env; if these are invalid on the OpenAI side the server route will return 502 and the debug panel will show the OpenAI error status
+- `response.cancel` not implemented — Realtime speech is not interruptible in this build; browser TTS Pause button has no effect on Realtime audio
+- `connect()` does not retry on transient failures; each click of "Start Voice Interview" starts a fresh WebRTC connection
+
+---
+
+## 2026-05-12 — Sprint 224: Incomplete Onboarding Attention Cue V1
+
+**Reason:** Directors may navigate away from the Onboarding section before completing setup. Without a persistent visual cue, there is no ambient reminder to finish. The goal is a calm, premium guide — not an alarm.
+
+**Where the cue appears:** The "Onboarding" nav item in the director's left sidebar (`SYSTEM_ITEMS`). It is the only item that receives the attention cue.
+
+**How incomplete onboarding is detected:**
+
+The director layout (`src/app/director/layout.tsx`) already fetches the director's academy record. The academy select was extended from `'name'` to `'name, settings'` using the existing `rawDb` cast (required because `settings` is not in `database.types.ts`). After the fetch, `onboardingIncomplete` is computed:
+
+```ts
+const onboardingSettings = (academy?.settings as Record<string, unknown>) ?? {}
+onboardingIncomplete = [
+  'academy_identity_completed', 'director_interview_completed',
+  'curriculum_setup_completed', 'level_gates_completed',
+  'programs_groups_completed', 'coaches_permissions_completed',
+  'players_placement_completed',
+].some(k => onboardingSettings[k] !== true)
+```
+
+This mirrors the same 7 keys already used by `OnboardingProgressCard` and `onboarding/page.tsx`. No new schema, no new DB queries, no new tables.
+
+`onboardingIncomplete` is passed from layout to `<SidebarNav onboardingIncomplete={...} />`. If the director has no academy (rare edge case), it defaults to `false` and no cue is shown.
+
+**Animation / styling:**
+
+- **On other pages (cue active):** A 8px pulsing ping ring around a solid 8px cyan dot, rendered using Tailwind's built-in `animate-ping`:
+  - Outer ring: `absolute inline-flex h-full w-full rounded-full bg-lime opacity-40 motion-safe:animate-ping`
+  - Inner dot: `relative inline-flex rounded-full h-2 w-2 bg-lime`
+  - `motion-safe:animate-ping` — animation is suppressed for users with `prefers-reduced-motion: reduce`
+  - `lime` in this design system = `#11d9df` (cyan/aqua)
+  - `title="Finish onboarding setup"` + `aria-label="Onboarding incomplete"` on the wrapper
+
+- **On the Onboarding page (active, already there):** The ping is suppressed to avoid visual stacking. A simple `w-1.5 h-1.5 rounded-full bg-lime/60 shrink-0` static dot remains as a subtle reminder that setup is still in progress.
+
+- **When onboarding is complete:** `onboardingIncomplete=false` → `attention=false` on the `NavItem` → dot and ping do not render. The nav item returns to its normal appearance.
+
+**Active state behavior:**
+
+Normal active nav styling (`bg-lime/10 text-lime border border-lime/20` + left accent bar) is preserved. The attention cue appears alongside it on the Onboarding page, but in the calmer no-ping form.
+
+**Accessibility:**
+
+- `title` and `aria-label` on the ping wrapper describe the incomplete state.
+- `aria-hidden="true"` on the active-state dot (decorative only — the active link itself communicates current location).
+- `motion-safe:animate-ping` — zero animation for users with reduced-motion preference.
+- No colour-only signalling: the dot is supplementary to the existing `Rocket` icon + "Onboarding" label.
+
+**No disruption to:**
+- Onboarding save behavior (unchanged)
+- Onboarding interview workflow (unchanged)
+- Voice behavior (unchanged)
+- DB writes (unchanged)
+- All other nav items (unchanged)
+- Completion logic (unchanged)
+
+**Files changed:**
+- `src/app/director/layout.tsx` — extended `academies` select to include `settings`; computed `onboardingIncomplete`; passed to `SidebarNav`
+- `src/components/nav/SidebarNav.tsx` — added `onboardingIncomplete` to `SidebarNavProps`; added `attention` to `NavItem`; rendered ping dot for incomplete state; calmer dot for active state
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean — `npx tsc --noEmit` exit 0.
+
+**No migrations. `database.types.ts` untouched. Pre-existing dirty files untouched.**
+
+**Manual QA:** Dev server at localhost:3001. Open any director page while onboarding is incomplete → pulsing cyan dot visible on Onboarding nav item in System section. Navigate to `/director/onboarding` → dot still present but no animation. Complete all 7 steps → dot disappears.
+
+**Known limitations:**
+- The cue is server-rendered (layout re-fetches on each navigation). Completing a step doesn't make the dot disappear until the next server-rendered navigation. This is by design — no client-side polling needed.
+- The layout fetches `academies.settings` on every director page load. The query is tiny (single row, single column) and already runs in the layout's existing DB round-trip.
+
+---
+
+## 2026-05-12 — Sprint 222: Director Interview Voice Playback Reliability Fix V1
+
+**Problem:** The Director Interview had a "Start Voice Interview" button and voice mode UI, but clicking it produced no audible speech. The experience still felt like a broken form.
+
+**Audit findings / root causes:**
+
+1. **GC'd utterance** (primary cause): `speakText()` stored the `SpeechSynthesisUtterance` only in a local variable. Once the function returned, nothing held a strong reference. Chrome's garbage collector could collect it before speech finished, causing silence and `onend` never firing.
+
+2. **No voice selected**: `getVoices()` was never called. On Chrome, voices load asynchronously. Without a voice assigned to the utterance, Chrome may produce silence or use a broken default.
+
+3. **No `onerror` on utterances**: Any speech failure (synthesis-failed, not-allowed, hardware) was completely silent. The `onEnd` callback was never called.
+
+4. **No timeout fallback on intro**: `startVoiceInterview` relied entirely on the intro's `onEnd` to call `setStep(0)`. If `onEnd` never fired (GC, error, browser quirk), the director was stuck on the welcome screen indefinitely, never reaching question 1.
+
+5. **No visible failure feedback**: Speech failures produced no UI indication.
+
+**Fix — `speakAssistant` (replaces `speakText`):**
+
+- `utteranceRef = useRef<SpeechSynthesisUtterance | null>()` — stores current utterance in a React ref, preventing Chrome GC. This is the primary fix.
+- `selectedVoiceRef = useRef<SpeechSynthesisVoice | null>()` — holds the loaded preferred voice.
+- `advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>()` — holds the timeout fallback timer.
+- `speakAssistant(text, opts?)` — stable `useCallback([])` that:
+  - Clears any in-flight timer
+  - Calls `window.speechSynthesis.cancel()`
+  - Creates utterance, assigns `rate=0.92 pitch=1 volume=1 voice=selectedVoiceRef.current`
+  - Sets `u.onstart` → sets `isSpeaking=true`, `audioStatus='speaking'`, clears warning
+  - Sets `u.onend` → clears ref + timer, sets `isSpeaking=false`, `audioStatus='ready'`, calls `opts.onEnd`
+  - Sets `u.onerror` → handles non-cancellation errors with `audioWarning`, calls `opts.onError` and `opts.onEnd` (never leaves caller stuck)
+  - Assigns utterance to `utteranceRef.current` before `speak()` call
+  - Sets timeout fallback: `Math.max(4000, text.length * 70 + 1500)` ms — if `onend` never fires, advances caller anyway by checking `utteranceRef.current === u`
+- `stopAssistantSpeech()` — stable `useCallback([])`: clears timer, nulls ref, cancels synthesis, clears `isSpeaking`
+
+**Voice loading:**
+
+- New `useEffect([])` calls `window.speechSynthesis.getVoices()` immediately (sync on some browsers), then listens to `voiceschanged` event for async load (Chrome).
+- Preference order: `en-US` → any `en-*` → first available voice → null (fallback to browser default).
+
+**`startVoiceInterview` fix:**
+
+- Calls `speakAssistant(intro, { onEnd, onError, timeoutMs: 7000 })` synchronously in the click handler (preserves browser autoplay gesture requirement).
+- `onEnd`: sets `isSpeaking=false`, then `setStep(0)` — auto-speak effect fires question 0.
+- `onError`: sets warning, then `setStep(0)` anyway — director is never stuck.
+- Button shows "Starting…" + spinner while `isSpeaking || voiceMode` to prevent double-click.
+- `audioStatus='loading'` set immediately on click; transitions to `'speaking'` on `onstart`, `'ready'` on `onend`.
+
+**Auto-speak effect fix:**
+
+- Now calls `speakAssistant()` with `onError` handler that shows `audioWarning`.
+- Sets `isSpeaking=true` optimistically before call for immediate UI feedback.
+- Cleanup calls `stopAssistantSpeech()` to cancel in-flight speech on step/phase change.
+
+**`audioStatus` state (`AudioStatus = 'idle' | 'loading' | 'speaking' | 'ready' | 'error'`):**
+
+- `'loading'` shown as "Loading voice…" with spinner in voice controls.
+- `'ready'` shown as "Voice ready" in voice controls (confirms audio engine is functional).
+- `'error'` triggers `audioWarning` display.
+- `'idle'` shown when type mode or welcome screen.
+
+**`audioWarning` state:** Calm `text-status-orange` message shown near voice controls and on welcome screen if audio fails. Cleared when speech succeeds or user switches to type mode.
+
+**Repeat / Pause / Type instead:**
+
+- Repeat: `disabled` while already speaking; calls `stopAssistantSpeech()` then `speakAssistant(spokenQuestion)`.
+- Pause: calls `stopAssistantSpeech()`, sets `audioStatus='ready'`.
+- Type instead: calls `stopAssistantSpeech()`, sets `voiceMode=false`, clears `audioStatus` and `audioWarning`.
+
+**Save behavior:** IDENTICAL — `updateDirectorInterviewAction`, `buildValue()`, review screen, success screen, answer state all unchanged.
+
+**Files changed:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — replaced
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean — `npx tsc --noEmit` exit 0.
+
+**No migrations. `database.types.ts` untouched. Pre-existing dirty files untouched.**
+
+**Manual QA status:** Dev server running at localhost:3001. Test path: `/director/onboarding/interview` → "Start Voice Interview" → audible intro → auto-speak question 1 → Repeat → Pause → Type instead → answer flow → save.
+
+**Known limitations:**
+- Safari's `speechSynthesis` implementation may still behave differently; `voiceschanged` may not fire. The fallback (no voice assigned) lets Safari use its system default, which typically works.
+- Firefox requires user gesture for the first `speak()` call, which is satisfied by the click.
+- If the browser tab is muted at the OS level, `audioWarning` will appear after the timeout.
+
+---
+
 ## 2026-05-12 — Sprint 221: Director Interview True Voice Assistant V1
 
 **Problem:** The Director Interview screen behaved like a form. "Play question" was a manual button, there was no auto-speech, no voice mode, no assistant presence, and short/unclear answers were confirmed immediately without prompting the director for more.

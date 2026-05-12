@@ -17,8 +17,9 @@ import {
 } from 'lucide-react'
 import { INTERVIEW_STEPS, type InterviewField, type InterviewStep } from './interviewSteps'
 import { updateDirectorInterviewAction } from './updateDirectorInterviewAction'
+import { useRealtimeInterviewVoice, type RealtimeDebugState } from './useRealtimeInterviewVoice'
 
-// ─── Browser Speech API types ─────────────────────────────────────────────────
+// ─── Browser Speech API types (SpeechRecognition not in lib.dom) ──────────────
 interface SpeechRecognitionAlt { transcript: string }
 interface SpeechRecognitionResult { [index: number]: SpeechRecognitionAlt }
 interface SpeechRecognitionResultList {
@@ -50,21 +51,8 @@ function isTtsSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window
 }
 
-function speakText(text: string, onEnd?: () => void, rate = 0.92, pitch = 1) {
-  if (!isTtsSupported()) { onEnd?.(); return }
-  window.speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(text)
-  u.rate = rate
-  u.pitch = pitch
-  if (onEnd) u.onend = () => onEnd()
-  window.speechSynthesis.speak(u)
-}
-
-function cancelSpeech() {
-  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    window.speechSynthesis.cancel()
-  }
-}
+// ─── Audio status ─────────────────────────────────────────────────────────────
+type AudioStatus = 'idle' | 'loading' | 'speaking' | 'ready' | 'error'
 
 // ─── Acknowledgment phrases ───────────────────────────────────────────────────
 const ACK_CHIPS = [
@@ -163,6 +151,37 @@ function AssistantStatus({ speaking, listening }: { speaking: boolean; listening
   if (speaking) return <span className="text-[10px] text-lime">Speaking…</span>
   if (listening) return <span className="text-[10px] text-status-blue">Listening…</span>
   return <span className="text-[10px] text-text-muted">Ready</span>
+}
+
+// ─── Dev-only Realtime debug panel ───────────────────────────────────────────
+function RealtimeDebugPanel({ status, debug }: { status: string; debug: RealtimeDebugState }) {
+  return (
+    <details className="mt-4">
+      <summary className="cursor-pointer text-[10px] text-text-muted hover:text-text-secondary font-mono select-none">
+        ▶ Voice Debug ({status})
+      </summary>
+      <div className="mt-2 p-3 rounded-lg bg-surface border border-border space-y-0.5 text-[9px] font-mono leading-relaxed">
+        <p>status: <span className="text-lime">{status}</span></p>
+        <p>env configured: <span className={
+          debug.envConfigured === true ? 'text-status-green'
+          : debug.envConfigured === false ? 'text-status-red'
+          : 'text-text-muted'
+        }>{String(debug.envConfigured ?? '?')}</span></p>
+        <p>token fetched: {String(debug.tokenFetched)}</p>
+        <p>mic granted: {String(debug.micGranted ?? '?')}</p>
+        <p>pc state: {debug.peerConnectionState}</p>
+        <p>ICE state: {debug.iceConnectionState}</p>
+        <p>data channel: {debug.dataChannelState}</p>
+        <p>remote track: {String(debug.remoteTrackReceived)}</p>
+        <p>audio playing: {String(debug.audioPlaying)}</p>
+        <p>audio blocked: {String(debug.audioBlocked)}</p>
+        <p>last event: {debug.lastEventType || 'none'}</p>
+        {debug.lastError && (
+          <p className="text-status-red break-words">error: {debug.lastError}</p>
+        )}
+      </div>
+    </details>
+  )
 }
 
 // ─── Mic button (browser-native STT) ─────────────────────────────────────────
@@ -292,28 +311,161 @@ export function DirectorInterviewAssistant({
   const [voiceMode, setVoiceMode] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [ttsSupported, setTtsSupported] = useState(false)
+  const [audioStatus, setAudioStatus] = useState<AudioStatus>('idle')
+  const [audioWarning, setAudioWarning] = useState<string | null>(null)
 
   const [isPending, startTransition] = useTransition()
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  // ── OpenAI Realtime voice hook ───────────────────────────────────────────────
+  const realtimeVoice = useRealtimeInterviewVoice()
+  const isRealtimeConnected = realtimeVoice.status === 'connected'
+
+  // ── Browser TTS refs (speechSynthesis fallback) ──────────────────────────────
+  // utteranceRef prevents Chrome from GC-ing the utterance mid-speech.
+  // Without this, Chrome silently stops speaking and onend never fires.
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null)
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Detect TTS support after hydration
   useEffect(() => {
     setTtsSupported(isTtsSupported())
   }, [])
 
-  // Auto-speak question whenever voice mode is on and an answering step is active
+  // Load and cache a preferred English voice. Chrome loads voices asynchronously.
+  useEffect(() => {
+    if (!isTtsSupported()) return
+    const pick = () => {
+      const voices = window.speechSynthesis.getVoices()
+      if (!voices.length) return
+      selectedVoiceRef.current =
+        voices.find(v => v.lang === 'en-US') ??
+        voices.find(v => v.lang.startsWith('en')) ??
+        voices[0] ??
+        null
+    }
+    pick()
+    window.speechSynthesis.addEventListener('voiceschanged', pick)
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', pick)
+  }, [])
+
+  // ── Browser TTS helper (fallback when Realtime is not connected) ─────────────
+  // speakAssistant is stable (useCallback with []) because it only accesses
+  // refs and React state setters, both of which are stable across renders.
+  const speakAssistant = useCallback((
+    text: string,
+    opts?: { onEnd?: () => void; onError?: () => void; timeoutMs?: number }
+  ) => {
+    if (!isTtsSupported()) {
+      setAudioWarning("Speech synthesis is not available in this browser.")
+      setAudioStatus('error')
+      opts?.onError?.()
+      opts?.onEnd?.()
+      return
+    }
+
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current)
+      advanceTimerRef.current = null
+    }
+
+    window.speechSynthesis.cancel()
+
+    const u = new SpeechSynthesisUtterance(text)
+    u.rate = 0.92
+    u.pitch = 1
+    u.volume = 1
+    if (selectedVoiceRef.current) u.voice = selectedVoiceRef.current
+
+    u.onstart = () => {
+      setIsSpeaking(true)
+      setAudioStatus('speaking')
+      setAudioWarning(null)
+    }
+
+    u.onend = () => {
+      utteranceRef.current = null
+      if (advanceTimerRef.current) {
+        clearTimeout(advanceTimerRef.current)
+        advanceTimerRef.current = null
+      }
+      setIsSpeaking(false)
+      setAudioStatus('ready')
+      opts?.onEnd?.()
+    }
+
+    u.onerror = (e) => {
+      utteranceRef.current = null
+      if (advanceTimerRef.current) {
+        clearTimeout(advanceTimerRef.current)
+        advanceTimerRef.current = null
+      }
+      setIsSpeaking(false)
+      const isCancellation = (e.error as string) === 'interrupted' || (e.error as string) === 'canceled'
+      if (!isCancellation) {
+        setAudioStatus('error')
+        setAudioWarning("Audio didn't play. Check browser sound or switch to typed mode.")
+        opts?.onError?.()
+        opts?.onEnd?.()
+      } else {
+        setAudioStatus('ready')
+      }
+    }
+
+    utteranceRef.current = u
+
+    const timeoutMs = opts?.timeoutMs ?? Math.max(4000, text.length * 70 + 1500)
+    advanceTimerRef.current = setTimeout(() => {
+      if (utteranceRef.current === u) {
+        utteranceRef.current = null
+        setIsSpeaking(false)
+        setAudioStatus('ready')
+        opts?.onEnd?.()
+      }
+    }, timeoutMs)
+
+    window.speechSynthesis.speak(u)
+  }, [])
+
+  const stopAssistantSpeech = useCallback(() => {
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current)
+      advanceTimerRef.current = null
+    }
+    utteranceRef.current = null
+    if (isTtsSupported()) window.speechSynthesis.cancel()
+    setIsSpeaking(false)
+  }, [])
+
+  // ── Auto-speak question when voice mode is on and an answering step is active.
+  // Uses Realtime when connected, browser TTS when not.
   useEffect(() => {
     if (!voiceMode || step < 0 || step >= INTERVIEW_STEPS.length || phase !== 'answering') return
     setIsSpeaking(true)
-    speakText(INTERVIEW_STEPS[step].spokenQuestion, () => setIsSpeaking(false))
-    return () => {
-      cancelSpeech()
-      setIsSpeaking(false)
-    }
-  }, [voiceMode, step, phase])
+    setAudioStatus('speaking')
 
+    if (isRealtimeConnected) {
+      realtimeVoice.speak(INTERVIEW_STEPS[step].spokenQuestion, () => {
+        setIsSpeaking(false)
+        setAudioStatus('ready')
+      })
+      return () => { setIsSpeaking(false) }
+    }
+
+    speakAssistant(INTERVIEW_STEPS[step].spokenQuestion, {
+      onEnd: () => setIsSpeaking(false),
+      onError: () => {
+        setAudioWarning("Audio didn't play. Check browser sound or use typed mode.")
+      },
+    })
+    return () => { stopAssistantSpeech() }
+  }, [voiceMode, step, phase, isRealtimeConnected, realtimeVoice.speak, speakAssistant, stopAssistantSpeech])
+
+  // Cancel speech on unmount
   useEffect(() => {
-    return () => cancelSpeech()
-  }, [])
+    return () => stopAssistantSpeech()
+  }, [stopAssistantSpeech])
 
   // ── Answer helpers ──────────────────────────────────────────────────────────
   function toggleChip(field: InterviewField, chip: string) {
@@ -339,45 +491,75 @@ export function DirectorInterviewAssistant({
 
   // ── Voice controls ──────────────────────────────────────────────────────────
   function repeatQuestion() {
-    cancelSpeech()
+    stopAssistantSpeech()
     setIsSpeaking(true)
-    speakText(INTERVIEW_STEPS[step].spokenQuestion, () => setIsSpeaking(false))
+    setAudioStatus('speaking')
+    const text = INTERVIEW_STEPS[step].spokenQuestion
+    if (isRealtimeConnected) {
+      realtimeVoice.speak(text, () => setIsSpeaking(false))
+    } else {
+      speakAssistant(text, {
+        onEnd: () => setIsSpeaking(false),
+        onError: () => setAudioWarning("Audio didn't play. Check browser sound."),
+      })
+    }
   }
 
-  function pauseSpeech() {
-    cancelSpeech()
+  function pauseAssistant() {
+    if (!isRealtimeConnected) stopAssistantSpeech()
     setIsSpeaking(false)
+    setAudioStatus('ready')
   }
 
   function switchToTypeMode() {
-    cancelSpeech()
-    setIsSpeaking(false)
+    stopAssistantSpeech()
+    if (isRealtimeConnected) realtimeVoice.disconnect()
     setVoiceMode(false)
+    setAudioStatus('idle')
+    setAudioWarning(null)
   }
 
   // ── Welcome actions ─────────────────────────────────────────────────────────
-  function startVoiceInterview() {
-    // Called from a click handler — qualifies as a user gesture for autoplay.
+  async function startVoiceInterview() {
     setVoiceMode(true)
+    setAudioStatus('loading')
+    setAudioWarning(null)
+
+    const ok = await realtimeVoice.connect()
+
+    if (!ok) {
+      setVoiceMode(false)
+      setAudioStatus('error')
+      const errMsg =
+        realtimeVoice.status === 'mic-denied'
+          ? 'Microphone access denied. You can still complete the interview by typing.'
+          : 'Voice is not available right now. You can still complete the interview by typing.'
+      setAudioWarning(errMsg)
+      return
+    }
+
+    // Connected — speak intro, then advance to question 1
     setIsSpeaking(true)
-    speakText(
-      "Great. Let's get your academy set up. I'll ask a few quick questions — pick an option, speak, or type. Here we go.",
+    setAudioStatus('speaking')
+    realtimeVoice.speak(
+      "Hey, welcome. I'll walk you through this one question at a time. We'll keep it simple.",
       () => {
         setIsSpeaking(false)
         setStep(0)
-      },
+      }
     )
   }
 
   function startTypeInterview() {
     setVoiceMode(false)
+    setAudioStatus('idle')
+    setAudioWarning(null)
     setStep(0)
   }
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   function confirmAnswer() {
-    cancelSpeech()
-    setIsSpeaking(false)
+    stopAssistantSpeech()
     const s = INTERVIEW_STEPS[step]
     const a = answers[s.field]
     const ack = getAcknowledgment(a.chips, a.custom)
@@ -387,14 +569,22 @@ export function DirectorInterviewAssistant({
     if (voiceMode) {
       const wc = a.custom.trim().split(/\s+/).filter(Boolean).length
       const short = a.chips.length === 0 && wc < 6
+      const text = short ? s.followUpPrompt : ack
       setIsSpeaking(true)
-      speakText(short ? s.followUpPrompt : ack, () => setIsSpeaking(false))
+      setAudioStatus('speaking')
+      if (isRealtimeConnected) {
+        realtimeVoice.speak(text, () => setIsSpeaking(false))
+      } else {
+        speakAssistant(text, {
+          onEnd: () => setIsSpeaking(false),
+          onError: () => setAudioWarning("Audio didn't play. Check browser sound."),
+        })
+      }
     }
   }
 
   function acceptAnswer() {
-    cancelSpeech()
-    setIsSpeaking(false)
+    stopAssistantSpeech()
     if (step === INTERVIEW_STEPS.length - 1) {
       setStep(7)
     } else {
@@ -408,8 +598,7 @@ export function DirectorInterviewAssistant({
   }
 
   function skipAnswer() {
-    cancelSpeech()
-    setIsSpeaking(false)
+    stopAssistantSpeech()
     const s = INTERVIEW_STEPS[step]
     setAnswers(prev => ({ ...prev, [s.field]: { chips: [], custom: '' } }))
     if (step === INTERVIEW_STEPS.length - 1) {
@@ -427,17 +616,27 @@ export function DirectorInterviewAssistant({
     setPhase('answering')
     if (voiceMode) {
       setIsSpeaking(true)
-      speakText(s.followUpPrompt, () => setIsSpeaking(false))
+      setAudioStatus('speaking')
+      if (isRealtimeConnected) {
+        realtimeVoice.speak(s.followUpPrompt, () => setIsSpeaking(false))
+      } else {
+        speakAssistant(s.followUpPrompt, {
+          onEnd: () => setIsSpeaking(false),
+          onError: () => setAudioWarning("Audio didn't play. Check browser sound."),
+        })
+      }
     }
   }
 
   function goBack() {
-    cancelSpeech()
-    setIsSpeaking(false)
+    stopAssistantSpeech()
     setPhase('answering')
     setSimpler(false)
     if (step === 0) {
+      if (isRealtimeConnected) realtimeVoice.disconnect()
       setVoiceMode(false)
+      setAudioStatus('idle')
+      setAudioWarning(null)
       setStep(-1)
     } else {
       setStep(prev => prev - 1)
@@ -469,6 +668,11 @@ export function DirectorInterviewAssistant({
   // WELCOME
   // ══════════════════════════════════════════════════════════════════════════════
   if (step === -1) {
+    const isConnecting =
+      realtimeVoice.status === 'fetching-token' ||
+      realtimeVoice.status === 'requesting-mic' ||
+      realtimeVoice.status === 'connecting'
+
     return (
       <div className="space-y-6">
         <div className="space-y-1">
@@ -508,26 +712,59 @@ export function DirectorInterviewAssistant({
           ))}
         </div>
 
+        {/* Audio warning */}
+        {audioWarning && (
+          <p className="text-[11px] text-status-orange px-1">{audioWarning}</p>
+        )}
+
+        {/* Enable audio button (WebRTC autoplay blocked) */}
+        {realtimeVoice.audioBlocked && (
+          <div className="px-4 py-3 rounded-xl bg-surface-raised border border-status-orange/30 space-y-2">
+            <p className="text-xs text-text-secondary">
+              Voice connected, but audio did not start. Click to enable.
+            </p>
+            <button
+              type="button"
+              onClick={realtimeVoice.enableAudio}
+              className="text-xs px-3 py-1.5 rounded-xl border border-status-orange/40 bg-status-orange/10 text-status-orange hover:bg-status-orange/20 transition-colors"
+            >
+              Enable audio
+            </button>
+          </div>
+        )}
+
         <div className="space-y-2.5 pt-1">
           {ttsSupported && (
             <button
               type="button"
               onClick={startVoiceInterview}
+              disabled={isConnecting || isSpeaking || voiceMode}
               className={`w-full ${BTN_LIME}`}
             >
-              <Volume2 className="w-4 h-4" />
-              Start Voice Interview
+              {isConnecting ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Connecting…</>
+              ) : isSpeaking && voiceMode ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Starting…</>
+              ) : (
+                <><Volume2 className="w-4 h-4" />Start Voice Interview</>
+              )}
             </button>
           )}
           <button
             type="button"
             onClick={startTypeInterview}
+            disabled={isConnecting}
             className={`w-full ${BTN_GHOST}`}
           >
             {ttsSupported ? "I'd rather type" : 'Start Interview'}
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Dev-only debug panel */}
+        {process.env.NODE_ENV !== 'production' && (
+          <RealtimeDebugPanel status={realtimeVoice.status} debug={realtimeVoice.debug} />
+        )}
       </div>
     )
   }
@@ -635,7 +872,6 @@ export function DirectorInterviewAssistant({
   const isLast = step === INTERVIEW_STEPS.length - 1
   const progressPct = ((step + 1) / INTERVIEW_STEPS.length) * 100
 
-  // Detect short/unclear answers for the confirming phase
   const wordCount = currentAnswer.custom.trim().split(/\s+/).filter(Boolean).length
   const isShortAnswer = currentAnswer.chips.length === 0 && wordCount < 6
 
@@ -676,6 +912,25 @@ export function DirectorInterviewAssistant({
             </>
           )}
         </div>
+
+        {/* Audio warning in confirming phase */}
+        {audioWarning && voiceMode && (
+          <p className="text-[11px] text-status-orange px-1">{audioWarning}</p>
+        )}
+
+        {/* Enable audio when blocked */}
+        {realtimeVoice.audioBlocked && voiceMode && (
+          <div className="px-4 py-3 rounded-xl bg-surface-raised border border-status-orange/30 space-y-2">
+            <p className="text-xs text-text-secondary">Voice connected, but audio did not start.</p>
+            <button
+              type="button"
+              onClick={realtimeVoice.enableAudio}
+              className="text-xs px-3 py-1.5 rounded-xl border border-status-orange/40 bg-status-orange/10 text-status-orange hover:bg-status-orange/20 transition-colors"
+            >
+              Enable audio
+            </button>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="space-y-2.5">
@@ -736,6 +991,11 @@ export function DirectorInterviewAssistant({
             </>
           )}
         </div>
+
+        {/* Dev debug panel */}
+        {process.env.NODE_ENV !== 'production' && (
+          <RealtimeDebugPanel status={realtimeVoice.status} debug={realtimeVoice.debug} />
+        )}
       </div>
     )
   }
@@ -754,32 +1014,60 @@ export function DirectorInterviewAssistant({
 
       {/* Voice mode controls */}
       {voiceMode && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <button
-            type="button"
-            onClick={repeatQuestion}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
-          >
-            <RefreshCw className="w-3 h-3" />
-            Repeat
-          </button>
-          {isSpeaking && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 flex-wrap">
             <button
               type="button"
-              onClick={pauseSpeech}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
+              onClick={repeatQuestion}
+              disabled={isSpeaking}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors disabled:opacity-40"
             >
-              <VolumeX className="w-3 h-3" />
-              Pause
+              <RefreshCw className="w-3 h-3" />
+              Repeat
+            </button>
+            {isSpeaking && (
+              <button
+                type="button"
+                onClick={pauseAssistant}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
+              >
+                <VolumeX className="w-3 h-3" />
+                Pause
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={switchToTypeMode}
+              className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+            >
+              Type instead
+            </button>
+          </div>
+
+          {/* Enable audio when blocked */}
+          {realtimeVoice.audioBlocked && (
+            <button
+              type="button"
+              onClick={realtimeVoice.enableAudio}
+              className="text-xs px-3 py-1.5 rounded-xl border border-status-orange/40 bg-status-orange/10 text-status-orange hover:bg-status-orange/20 transition-colors"
+            >
+              Enable audio
             </button>
           )}
-          <button
-            type="button"
-            onClick={switchToTypeMode}
-            className="text-xs text-text-muted hover:text-text-secondary transition-colors"
-          >
-            Type instead
-          </button>
+
+          {/* Audio status */}
+          {audioStatus === 'loading' && (
+            <p className="text-[10px] text-text-muted flex items-center gap-1.5">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              {isRealtimeConnected ? 'Voice ready' : 'Loading voice…'}
+            </p>
+          )}
+          {audioWarning && (
+            <p className="text-[10px] text-status-orange">{audioWarning}</p>
+          )}
+          {!audioWarning && audioStatus === 'ready' && (
+            <p className="text-[10px] text-text-muted">Voice ready</p>
+          )}
         </div>
       )}
 
@@ -787,7 +1075,7 @@ export function DirectorInterviewAssistant({
       {!voiceMode && ttsSupported && (
         <button
           type="button"
-          onClick={() => speakText(currentStep.spokenQuestion)}
+          onClick={() => speakAssistant(currentStep.spokenQuestion)}
           className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
         >
           <Volume2 className="w-3.5 h-3.5 text-lime" />
@@ -904,6 +1192,11 @@ export function DirectorInterviewAssistant({
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Dev debug panel */}
+      {process.env.NODE_ENV !== 'production' && (
+        <RealtimeDebugPanel status={realtimeVoice.status} debug={realtimeVoice.debug} />
+      )}
     </div>
   )
 }
