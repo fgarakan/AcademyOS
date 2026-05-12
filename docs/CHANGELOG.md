@@ -2,6 +2,80 @@
 
 ---
 
+## 2026-05-12 — Sprint 228: Realtime Client Secret Response Parser Fix V1
+
+**Root cause:** Sprint 227 fixed the 400 (body now wrapped in `session`). OpenAI returned 200 OK, but the route cast the response as `{ client_secret?: { value?: string } }` and read `.client_secret?.value`. The actual `/v1/realtime/client_secrets` response returns `client_secret` as a flat string (not a nested object), so `.value` was `undefined` and the no-secret 502 fired. Additionally, the no-secret error path returned only `{ error, envConfigured }` — no diagnostic fields — making the debug panel blind to the real shape.
+
+**Server route fix — `src/app/api/director/interview/realtime-session/route.ts`:**
+- Response now parsed as `Record<string, unknown>` before any field extraction
+- Safe diagnostics logged: `Object.keys(data)`, `typeof data.client_secret`, keys of client_secret object if present, `Boolean(client_secret?.value)` — secret value never logged
+- Multi-shape resolver: tries `client_secret.value` → `client_secret` (string) → `data.value` in order
+- Only accepts `typeof raw === 'string' && raw.length > 10`
+- `clientSecretShape` computed (e.g. `object{value,expires_at}` or `string(ek_abcd12...)`  or `undefined`)
+- No-secret 502 now returns `{ error, envConfigured, openaiStatus, endpointAttempted, model, voice, openaiResponseKeys, clientSecretShape }`
+- Success response changed from `{ clientSecret }` (camelCase) to `{ client_secret }` (snake_case) plus `endpointAttempted`, `openaiResponseKeys`, `clientSecretShape`
+
+**Client hook fix — `src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts`:**
+- `RealtimeDebugState` extended with `openaiResponseKeys: string | null` and `clientSecretShape: string | null`
+- `connect()` now reads `data.client_secret` (snake_case) and validates `typeof secretValue === 'string' && secretValue.length > 10`
+- On error: stores all new debug fields in debug state
+- On success: also stores `endpointAttempted`, `openaiResponseKeys`, `clientSecretShape`, `openaiModel`, `openaiVoice` — visible in debug panel even on success
+
+**Debug panel fix — `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx`:**
+- `RealtimeDebugPanel` now shows `response keys` and `client_secret shape` fields in the diagnostic sub-section
+
+**No migrations. `database.types.ts` untouched. Save behavior unchanged. Unrelated dirty files untouched.**
+
+**TypeScript:** clean
+
+**Manual QA:**
+- Restart dev server → open `/director/onboarding/interview` → click Start Voice Interview
+- Debug panel now shows `response keys`, `client_secret shape`, and endpoint attempted
+- If token succeeds: `token fetched: true`, mic permission requested next
+- If still failing: `response keys` and `client_secret shape` fields identify exact next fix
+
+**Files modified:**
+- `src/app/api/director/interview/realtime-session/route.ts` — multi-shape response parser, safe key logging, full diagnostic error response, snake_case success response
+- `src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts` — new debug fields, reads `client_secret`, validates type + length
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — debug panel shows response keys and secret shape
+
+---
+
+## 2026-05-12 — Sprint 227: OpenAI Realtime Session 400 Fix V1
+
+**Root cause:** The `/v1/realtime/client_secrets` request body was a flat object — missing the `session` wrapper and `type: "realtime"` field required by the endpoint. Top-level `modalities` was also present and likely rejected. Additionally, the OpenAI error body was logged server-side but never forwarded to the browser debug panel, making the real cause opaque.
+
+**Server route fix — `src/app/api/director/interview/realtime-session/route.ts`:**
+- Request body now wraps config inside `{ session: { type: "realtime", model, instructions, audio: { output: { voice } } } }`
+- Removed top-level `model` and `modalities` from the OpenAI request body
+- On 400/error: parses `error.message` from OpenAI JSON body; returns `openaiStatus`, `openaiError`, `endpointAttempted`, `model`, `voice` to the client
+- User-facing error message changed from "Check OPENAI_REALTIME_MODEL and OPENAI_REALTIME_VOICE in env." to "Realtime session could not be created. Check the server logs for the OpenAI error."
+- Server logs now capture 500 chars of the error body (up from 300)
+
+**Client hook fix — `src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts`:**
+- `RealtimeDebugState` extended with `openaiStatus: number | null`, `openaiError: string | null`, `endpointAttempted: string | null`, `openaiModel: string | null`, `openaiVoice: string | null`
+- `connect()` token-fetch error path now parses and stores all new debug fields
+
+**Debug panel fix — `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx`:**
+- `RealtimeDebugPanel` now shows endpoint attempted, OpenAI status code, model, voice, and OpenAI error message in a separated sub-section when a token error occurs
+
+**No migrations. `database.types.ts` untouched. Save behavior unchanged. Unrelated dirty files untouched.**
+
+**TypeScript:** clean
+
+**Manual QA:**
+- Restart dev server → open `/director/onboarding/interview` → click Start Voice Interview
+- Debug panel will now show exact OpenAI error text instead of generic env message
+- If token succeeds: `token fetched: true`, mic permission requested next
+- If token still fails: `openai status` and `openai error` fields identify the next fix needed
+
+**Files modified:**
+- `src/app/api/director/interview/realtime-session/route.ts` — session wrapper body, safe error forwarding
+- `src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts` — extended debug state, error parsing
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — debug panel extended fields, new error message
+
+---
+
 ## 2026-05-12 — Sprint 226: Realtime Voice Audio Debug + Guaranteed Playback V1
 
 **Root cause found:** No OpenAI Realtime API implementation existed. The voice mode used browser `window.speechSynthesis` only. Env vars `OPENAI_REALTIME_MODEL` and `OPENAI_REALTIME_VOICE` were set but referenced nowhere in code. Zero instances of `RTCPeerConnection`, `ontrack`, `createDataChannel`, or data channel events in the codebase.

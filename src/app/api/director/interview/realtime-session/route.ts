@@ -51,23 +51,27 @@ export async function POST() {
     )
   }
 
+  const ENDPOINT = 'https://api.openai.com/v1/realtime/client_secrets'
+
   // Create ephemeral client secret via OpenAI Realtime API
   try {
-    const res = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
+    const res = await fetch(ENDPOINT, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model,
-        audio: {
-          output: { voice },
+        session: {
+          type: 'realtime',
+          model,
+          instructions:
+            'You are the Academy OS setup assistant. Speak warmly and concisely. ' +
+            'When asked to say something, say it naturally and clearly.',
+          audio: {
+            output: { voice },
+          },
         },
-        instructions:
-          'You are the Academy OS setup assistant. Speak warmly and concisely. ' +
-          'When asked to say something, say it naturally and clearly.',
-        modalities: ['audio', 'text'],
       }),
     })
 
@@ -76,29 +80,84 @@ export async function POST() {
 
     if (!res.ok) {
       const body = await res.text()
-      console.error('[realtime-session] OpenAI error body:', body.slice(0, 300))
+      console.error('[realtime-session] OpenAI error body:', body.slice(0, 500))
+      let openaiError = body.slice(0, 300)
+      try {
+        const parsed = JSON.parse(body) as { error?: { message?: string } }
+        if (parsed?.error?.message) openaiError = parsed.error.message.slice(0, 300)
+      } catch { /* leave as raw text */ }
       return NextResponse.json(
         {
-          error: `OpenAI session creation failed (${res.status}). Check OPENAI_REALTIME_MODEL and OPENAI_REALTIME_VOICE in env.`,
+          error: 'Realtime session could not be created. Check the server logs for the OpenAI error.',
           envConfigured: true,
+          openaiStatus: res.status,
+          openaiError,
+          endpointAttempted: ENDPOINT,
+          model,
+          voice,
         },
         { status: 502 }
       )
     }
 
-    const session = await res.json() as { client_secret?: { value?: string } }
-    const clientSecret = session.client_secret?.value
+    const data = await res.json() as Record<string, unknown>
+
+    // Safe diagnostics — never log the secret value itself
+    const responseKeys = Object.keys(data).join(', ')
+    const csField = data.client_secret
+    const csType = typeof csField
+    const csKeys = csField && typeof csField === 'object' ? Object.keys(csField as object).join(', ') : 'n/a'
+    const csValuePresent = Boolean((csField as Record<string, unknown> | undefined)?.value)
+    console.log('[realtime-session] response keys:', responseKeys)
+    console.log('[realtime-session] typeof client_secret:', csType)
+    console.log('[realtime-session] client_secret keys (if object):', csKeys)
+    console.log('[realtime-session] client_secret.value present:', csValuePresent)
+
+    // Resolve the secret from whichever shape OpenAI actually returns
+    const rawSecret =
+      (csField && typeof csField === 'object'
+        ? (csField as Record<string, unknown>).value
+        : csField) ??
+      data.value ??
+      null
+
+    const clientSecret =
+      typeof rawSecret === 'string' && rawSecret.length > 10 ? rawSecret : null
+
+    const clientSecretShape =
+      csType === 'object' && csField !== null
+        ? `object{${csKeys}}`
+        : csType === 'string'
+        ? `string(${(csField as string).slice(0, 8)}...)`
+        : csType
 
     if (!clientSecret) {
-      console.error('[realtime-session] No client_secret in OpenAI response')
+      console.error('[realtime-session] No usable client_secret found in OpenAI response')
       return NextResponse.json(
-        { error: 'OpenAI returned no client_secret — session may not support WebRTC.', envConfigured: true },
+        {
+          error: 'OpenAI response did not include a usable client secret.',
+          envConfigured: true,
+          openaiStatus: res.status,
+          endpointAttempted: ENDPOINT,
+          model,
+          voice,
+          openaiResponseKeys: responseKeys,
+          clientSecretShape,
+        },
         { status: 502 }
       )
     }
 
     console.log('[realtime-session] ephemeral token created successfully')
-    return NextResponse.json({ clientSecret, model, voice, envConfigured: true })
+    return NextResponse.json({
+      client_secret: clientSecret,
+      model,
+      voice,
+      envConfigured: true,
+      endpointAttempted: ENDPOINT,
+      openaiResponseKeys: responseKeys,
+      clientSecretShape,
+    })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[realtime-session] network error:', msg)

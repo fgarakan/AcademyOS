@@ -179,6 +179,31 @@ function RealtimeDebugPanel({ status, debug }: { status: string; debug: Realtime
         {debug.lastError && (
           <p className="text-status-red break-words">error: {debug.lastError}</p>
         )}
+        {(debug.openaiStatus != null || debug.openaiError || debug.endpointAttempted || debug.openaiResponseKeys || debug.clientSecretShape) && (
+          <div className="mt-1 pt-1 border-t border-border space-y-0.5">
+            {debug.endpointAttempted && (
+              <p className="text-text-muted break-all">endpoint: {debug.endpointAttempted}</p>
+            )}
+            {debug.openaiStatus != null && (
+              <p>openai status: <span className="text-status-orange">{debug.openaiStatus}</span></p>
+            )}
+            {debug.openaiModel && (
+              <p>model: {debug.openaiModel}</p>
+            )}
+            {debug.openaiVoice && (
+              <p>voice: {debug.openaiVoice}</p>
+            )}
+            {debug.openaiResponseKeys && (
+              <p className="text-text-muted break-words">response keys: {debug.openaiResponseKeys}</p>
+            )}
+            {debug.clientSecretShape && (
+              <p className="text-text-muted">client_secret shape: {debug.clientSecretShape}</p>
+            )}
+            {debug.openaiError && (
+              <p className="text-status-orange break-words">openai error: {debug.openaiError}</p>
+            )}
+          </div>
+        )}
       </div>
     </details>
   )

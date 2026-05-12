@@ -25,6 +25,13 @@ export interface RealtimeDebugState {
   audioBlocked: boolean
   lastEventType: string
   lastError: string | null
+  openaiStatus: number | null
+  openaiError: string | null
+  endpointAttempted: string | null
+  openaiModel: string | null
+  openaiVoice: string | null
+  openaiResponseKeys: string | null
+  clientSecretShape: string | null
 }
 
 const INITIAL_DEBUG: RealtimeDebugState = {
@@ -39,6 +46,13 @@ const INITIAL_DEBUG: RealtimeDebugState = {
   audioBlocked: false,
   lastEventType: '',
   lastError: null,
+  openaiStatus: null,
+  openaiError: null,
+  endpointAttempted: null,
+  openaiModel: null,
+  openaiVoice: null,
+  openaiResponseKeys: null,
+  clientSecretShape: null,
 }
 
 export function useRealtimeInterviewVoice() {
@@ -144,21 +158,46 @@ export function useRealtimeInterviewVoice() {
     try {
       const res = await fetch('/api/director/interview/realtime-session', { method: 'POST' })
       const data = await res.json() as {
-        clientSecret?: string
+        client_secret?: string
         model?: string
+        voice?: string
         error?: string
         envConfigured?: boolean
+        openaiStatus?: number
+        openaiError?: string
+        endpointAttempted?: string
+        openaiResponseKeys?: string
+        clientSecretShape?: string
       }
       patchDebug({ envConfigured: data.envConfigured ?? false })
 
-      if (!res.ok || !data.clientSecret) {
+      const secretValue = data.client_secret
+      const secretUsable = typeof secretValue === 'string' && secretValue.length > 10
+
+      if (!res.ok || !secretUsable) {
         setStatus('token-error')
-        patchDebug({ lastError: data.error ?? `Server returned ${res.status}` })
+        patchDebug({
+          lastError: data.error ?? `Server returned ${res.status}`,
+          openaiStatus: data.openaiStatus ?? null,
+          openaiError: data.openaiError ?? null,
+          endpointAttempted: data.endpointAttempted ?? null,
+          openaiModel: data.model ?? null,
+          openaiVoice: data.voice ?? null,
+          openaiResponseKeys: data.openaiResponseKeys ?? null,
+          clientSecretShape: data.clientSecretShape ?? null,
+        })
         return false
       }
-      clientSecret = data.clientSecret
-      model = data.model ?? 'gpt-realtime'
-      patchDebug({ tokenFetched: true })
+      clientSecret = secretValue as string
+      model = data.model ?? 'gpt-4o-realtime-preview'
+      patchDebug({
+        tokenFetched: true,
+        endpointAttempted: data.endpointAttempted ?? null,
+        openaiResponseKeys: data.openaiResponseKeys ?? null,
+        clientSecretShape: data.clientSecretShape ?? null,
+        openaiModel: data.model ?? null,
+        openaiVoice: data.voice ?? null,
+      })
     } catch (err) {
       setStatus('token-error')
       patchDebug({
