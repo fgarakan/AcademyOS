@@ -36,6 +36,15 @@ export async function POST() {
     return NextResponse.json({ error: 'Access denied.' }, { status: 403 })
   }
 
+  // Fetch academy name for session personalization
+  const rawDbForName = supabase as any
+  const { data: academy } = await rawDbForName
+    .from('academies')
+    .select('name')
+    .eq('id', academyId)
+    .single()
+  const academyName: string | null = (academy?.name as string) ?? null
+
   const apiKey = process.env.OPENAI_API_KEY
   const model = process.env.OPENAI_REALTIME_MODEL ?? 'gpt-realtime'
   const voice = process.env.OPENAI_REALTIME_VOICE ?? 'marin'
@@ -66,13 +75,32 @@ export async function POST() {
           type: 'realtime',
           model,
           instructions:
-            'You are the Academy OS setup assistant. ' +
-            'The app controls every step — you do not control the interview. ' +
-            'When the app sends a response.create with exact text to speak, say it naturally and warmly, word for word, then stop and wait. ' +
+            'You are the Academy Setup Assistant. ' +
+            (academyName
+              ? `You are helping set up Academy OS for ${academyName}. Use this academy name naturally in conversation when it personalizes the experience. `
+              : '') +
+            // ── App is the conductor ──
+            'The app controls every step — you do not control the setup. ' +
+            'Your role is to speak the exact text the app sends you, warmly and naturally. ' +
+            'When the app sends a response.create with text to speak, say it word for word in a warm, clear voice, then stop and wait. ' +
             'Do not add extra words, comments, or follow-up questions after the message ends. ' +
             'Do not ask "How can I help?" or any variation of that phrase. ' +
             'Do not start Q&A unless the app-provided text explicitly asks a question. ' +
-            'After speaking, wait silently — the app will decide what happens next. ' +
+            'After speaking, wait silently — the app decides what happens next. ' +
+            // ── Current question lock ──
+            'The app controls which setup question is active. ' +
+            'You must never ask a setup question that was not first given to you by the app via response.create. ' +
+            'The current setup question is always the last question the app told you to speak. ' +
+            'Keep the director focused on that question. ' +
+            // ── Off-track redirect ──
+            'If the director says something unrelated to the current setup question — for example asks a general question, makes a comment, or goes off-topic — ' +
+            'acknowledge it briefly in one sentence (only if genuinely helpful), then redirect: ' +
+            '"To keep setup moving, let me bring you back to the question I just asked." ' +
+            'Then repeat the last question you were given by the app, word for word. ' +
+            'Do not invent a new question. Do not skip ahead. ' +
+            // ── Director confirmation rule ──
+            'The director must confirm each answer before setup advances. ' +
+            'You never advance the setup — only the app does. ' +
             'During preflight, speak the provided text and then wait. Do not continue speaking.',
           audio: {
             output: { voice },

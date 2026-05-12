@@ -19,7 +19,7 @@ export default async function DirectorInterviewPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('academy_id')
+    .select('academy_id, display_name')
     .eq('id', user.id)
     .single()
 
@@ -110,6 +110,8 @@ export default async function DirectorInterviewPage() {
             initialParentCommunicationStyle={initialParentCommunicationStyle}
             initialCoachOperatingStyle={initialCoachOperatingStyle}
             initialNinetyDaySuccess={initialNinetyDaySuccess}
+            academyName={(academy.name as string) ?? undefined}
+            directorProfileName={(profile as any)?.display_name ?? undefined}
           />
         </CardContent>
       </Card>

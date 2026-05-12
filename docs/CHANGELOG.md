@@ -2,6 +2,61 @@
 
 ---
 
+## 2026-05-12 — Sprint 239: Academy Setup Context Packet + Current Question Lock V1
+
+**Why this was needed:**
+The assistant was free-running — it could drift from the visible screen question, respond with unrelated content, or ask questions the app hadn't sanctioned. The app is the conductor, not the AI. Every spoken question must match what is visible on screen, and the AI must redirect off-track input back to the current question.
+
+**Setup context packet:**
+- `setupContext` derived object (not state) computed at the top level of `DirectorInterviewAssistant` from existing app and DB values: `directorName`, `academyName`, `role`, `currentScreen`, `currentStage`, `currentQuestionId`, `currentQuestionText`, `completedAnswersCount`, `completedAnswersSummary`
+- `academyName` fetched from DB in `page.tsx` and passed as prop
+- `directorProfileName` fetched from `profiles.display_name` in `page.tsx` and passed as prop; `directorDisplayName` (captured during interview) takes priority
+
+**Current question contract:**
+- `CurrentQuestionContract` type added: `id`, `stage`, `questionText`, `whyThisMatters`, `expectedAnswerType`
+- `buildCurrentQuestionContract(stepIndex)` factory function; `questionText` is always `getStepQuestion(stepIndex)` — the same single source used by both screen and voice
+- `buildOffTrackRedirect(currentQuestionText)` helper added
+
+**Screen/spoken question single source of truth:**
+- `buildInterviewPrompt()` updated to use `s.whyItMatters` (contract source) instead of `s.helperCopy` for `ActivePromptCard`'s "Why this matters" section
+- Auto-speak useEffect uses `contract.questionText` (not a separate call to `getStepQuestion`) to make the dependency explicit
+- `lastSpokenQuestionText` state tracks the pure question text sent to voice on each step
+
+**QA guard:**
+- In auto-speak useEffect: compares `contract.questionText` against `buildInterviewPrompt(step).questionText` and logs a dev warning on mismatch
+- Debug panel shows `spokenQuestionText`, `screenQuestionText`, `questionTextMatchesScreen` (green/red with warning label on mismatch)
+
+**Off-track redirect behavior (session instructions):**
+- `route.ts` session instructions updated with: academy name personalization, explicit current-question lock rule ("you must never ask a question not given by the app"), off-track redirect rule ("acknowledge briefly, repeat last question the app gave you, then stop")
+- `buildOffTrackRedirect()` helper available on the app side for future typed-mode edge cases
+
+**Debug panel — new fields (Setup Context section):**
+- `director name`, `academy name`, `current stage`, `answers captured`
+- **Question Lock section:** `currentQuestionId`, `currentQuestionText`, `screenQuestionText`, `spokenQuestionText`, `questionTextMatchesScreen` (boolean, red + warning text on mismatch)
+
+**Safeguards preserved:**
+- `GuideIntroCard` for non-answerable intro unchanged
+- `ActivePromptCard` for answerable prompts unchanged (data source improved)
+- Editable transcripts unchanged
+- No auto-processing
+- Director confirmation required before continuing
+- Typed fallback unchanged
+- Final save behavior unchanged
+- No migrations
+- `database.types.ts` untouched
+- Unrelated dirty files unstaged
+
+**Files changed:**
+- Modified: `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx`
+- Modified: `src/app/director/onboarding/interview/page.tsx`
+- Modified: `src/app/api/director/interview/realtime-session/route.ts`
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with no errors
+
+**Manual QA status:** Pending — see sprint QA checklist
+
+---
+
 ## 2026-05-12 — Sprint 237: Academy Setup Assistant Framing V1
 
 **Why "Director Interview" was wrong:**

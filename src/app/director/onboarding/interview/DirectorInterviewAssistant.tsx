@@ -162,8 +162,9 @@ function buildInterviewPrompt(stepIndex: number): ActiveVoicePrompt {
   return {
     id: s.id,
     kind: 'interview',
+    // Use whyItMatters (contract source) so ActivePromptCard and currentQuestionContract agree
     questionText: getStepQuestion(stepIndex),
-    helperText: s.helperCopy,
+    helperText: s.whyItMatters,
   }
 }
 
@@ -240,6 +241,38 @@ function buildPreflightFAQResponse(text: string): string {
   return "This helps Academy OS understand your academy's teaching style so it can organize your curriculum, templates, and coach workflows around the way your academy actually works."
 }
 
+// ─── Current question contract ───────────────────────────────────────────────
+// Single source of truth for every answerable interview question.
+// The screen (ActivePromptCard) and the voice (speakWithTracking) must both
+// derive their text from this contract — never from separate sources.
+interface CurrentQuestionContract {
+  id: string
+  stage: string
+  questionText: string      // = getStepQuestion(stepIndex) — canonical
+  whyThisMatters: string    // = InterviewStep.whyItMatters
+  expectedAnswerType: 'chips_or_freeform'
+}
+
+function buildCurrentQuestionContract(stepIndex: number): CurrentQuestionContract {
+  const s = INTERVIEW_STEPS[stepIndex]
+  return {
+    id: s.id,
+    stage: s.stepLabel,
+    questionText: getStepQuestion(stepIndex), // always spokenQuestion ?? question
+    whyThisMatters: s.whyItMatters,
+    expectedAnswerType: 'chips_or_freeform',
+  }
+}
+
+// Off-track redirect — used when director asks something unrelated.
+// App-side version: the AI session instructions handle the primary case.
+function buildOffTrackRedirect(currentQuestionText: string): string {
+  return (
+    "Good question. We can come back to that later. " +
+    `To keep setup moving, let's answer the current question: ${currentQuestionText}`
+  )
+}
+
 // ─── Setup progress stages ────────────────────────────────────────────────────
 const SETUP_STAGES = [
   'Welcome',
@@ -313,6 +346,15 @@ function RealtimeDebugPanel({
   guidedIntroRequested,
   namePromptRequested,
   preflightPromptRequested,
+  setupDirectorName,
+  setupAcademyName,
+  setupCurrentStage,
+  setupCompletedAnswersCount,
+  currentQuestionId,
+  currentQuestionText,
+  spokenQuestionText,
+  screenQuestionText,
+  questionTextMatchesScreen,
 }: {
   status: string
   debug: RealtimeDebugState
@@ -337,6 +379,16 @@ function RealtimeDebugPanel({
   guidedIntroRequested?: boolean
   namePromptRequested?: boolean
   preflightPromptRequested?: boolean
+  // Sprint 239 — setup context + question lock fields
+  setupDirectorName?: string | null
+  setupAcademyName?: string | null
+  setupCurrentStage?: string | null
+  setupCompletedAnswersCount?: number
+  currentQuestionId?: string | null
+  currentQuestionText?: string | null
+  spokenQuestionText?: string | null
+  screenQuestionText?: string | null
+  questionTextMatchesScreen?: boolean | null
 }) {
   const stepQ = currentEncodedStep != null && currentEncodedStep >= 0 && currentEncodedStep < INTERVIEW_STEPS.length
     ? getStepQuestion(currentEncodedStep)
@@ -423,6 +475,41 @@ function RealtimeDebugPanel({
         )}
         {debug.lastError && (
           <p className="text-status-red break-words">error: {debug.lastError}</p>
+        )}
+        {/* Sprint 239 — Setup context + question lock section */}
+        <div className="border-t border-border pt-0.5 mt-0.5 space-y-0.5">
+          <p className="text-[8px] uppercase tracking-widest text-text-muted font-semibold">Setup Context</p>
+          <p>director name: <span className={setupDirectorName ? 'text-lime' : 'text-text-muted'}>{setupDirectorName ?? '(not set)'}</span></p>
+          <p>academy name: <span className={setupAcademyName ? 'text-lime' : 'text-text-muted'}>{setupAcademyName ?? '(not set)'}</span></p>
+          <p>current stage: <span className="text-text-secondary">{setupCurrentStage ?? '—'}</span></p>
+          <p>answers captured: <span className="text-lime">{setupCompletedAnswersCount ?? 0}</span></p>
+        </div>
+        {/* Question lock section */}
+        {(currentQuestionId || screenQuestionText || spokenQuestionText) && (
+          <div className="border-t border-border pt-0.5 mt-0.5 space-y-0.5">
+            <p className="text-[8px] uppercase tracking-widest text-text-muted font-semibold">Question Lock</p>
+            <p>currentQuestionId: <span className="text-text-secondary">{currentQuestionId ?? '—'}</span></p>
+            {currentQuestionText && (
+              <p className="break-words">currentQuestionText: <span className="text-text-muted">{currentQuestionText.slice(0, 70)}</span></p>
+            )}
+            {screenQuestionText && (
+              <p className="break-words">screenQuestionText: <span className="text-text-muted">{screenQuestionText.slice(0, 70)}</span></p>
+            )}
+            {spokenQuestionText && (
+              <p className="break-words">spokenQuestionText: <span className="text-text-muted">{spokenQuestionText.slice(0, 70)}</span></p>
+            )}
+            {questionTextMatchesScreen !== null && (
+              <p>
+                questionTextMatchesScreen:{' '}
+                <span className={questionTextMatchesScreen ? 'text-status-green' : 'text-status-red font-semibold'}>
+                  {String(questionTextMatchesScreen)}
+                </span>
+                {!questionTextMatchesScreen && (
+                  <span className="text-status-red ml-1">⚠ Mismatch: spoken question does not match screen question</span>
+                )}
+              </p>
+            )}
+          </div>
         )}
         {(debug.openaiStatus != null || debug.openaiError || debug.endpointAttempted || debug.openaiResponseKeys || debug.clientSecretShape) && (
           <div className="mt-1 pt-1 border-t border-border space-y-0.5">
@@ -664,6 +751,10 @@ interface Props {
   initialParentCommunicationStyle: string
   initialCoachOperatingStyle: string
   initialNinetyDaySuccess: string
+  /** Academy name from DB — used for personalization and setup context */
+  academyName?: string
+  /** Director's display_name from profiles — used as default before name-capture phase */
+  directorProfileName?: string
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -675,6 +766,8 @@ export function DirectorInterviewAssistant({
   initialParentCommunicationStyle,
   initialCoachOperatingStyle,
   initialNinetyDaySuccess,
+  academyName,
+  directorProfileName,
 }: Props) {
   // step: -1 = welcome, 0–6 = questions, 7 = review, 8 = saved
   const [step, setStep] = useState(-1)
@@ -731,6 +824,10 @@ export function DirectorInterviewAssistant({
 
   const [isPending, startTransition] = useTransition()
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Tracks the pure question text that was most recently spoken for an interview step.
+  // Used in QA guard to verify screen and voice questions stay in sync.
+  const [lastSpokenQuestionText, setLastSpokenQuestionText] = useState('')
 
   // ── OpenAI Realtime voice hook ───────────────────────────────────────────────
   const realtimeVoice = useRealtimeInterviewVoice()
@@ -1103,8 +1200,25 @@ export function DirectorInterviewAssistant({
     // Consume any pending ack from acceptAnswer() — "Got it. Next question: ..."
     const ack = pendingAckRef.current
     pendingAckRef.current = null
-    const baseQ = getStepQuestion(step)
+    // currentQuestionContract is the canonical source — both screen and voice must use this text
+    const contract = buildCurrentQuestionContract(step)
+    const baseQ = contract.questionText // always = getStepQuestion(step)
     const textToSpeak = ack ? `${ack} Next question: ${baseQ}` : baseQ
+
+    // Track spoken question text for QA guard (pure question without ack prefix)
+    setLastSpokenQuestionText(baseQ)
+
+    // QA guard: verify screen and spoken question text share the same source
+    if (process.env.NODE_ENV !== 'production') {
+      const screenQ = buildInterviewPrompt(step).questionText
+      if (baseQ !== screenQ) {
+        console.warn('[QA Guard] Mismatch: spoken question does not match screen question', {
+          spoken: baseQ,
+          screen: screenQ,
+          step,
+        })
+      }
+    }
 
     // Set active prompt before speaking — question must be visible before voice starts
     setActiveVoicePrompt(buildInterviewPrompt(step))
@@ -1420,6 +1534,45 @@ export function DirectorInterviewAssistant({
     })
   }
 
+  // ── Top-level derived values (available across all render branches) ──────────
+
+  // Answers count — how many steps have at least one chip or custom text
+  const capturedAnswersCount = INTERVIEW_STEPS.filter(
+    s => buildValue(answers[s.field].chips, answers[s.field].custom).trim().length > 0
+  ).length
+
+  // Current question contract — single source of truth for screen + voice question text
+  const currentQuestionContract: CurrentQuestionContract | null =
+    step >= 0 && step < INTERVIEW_STEPS.length
+      ? buildCurrentQuestionContract(step)
+      : null
+
+  // Setup context packet — snapshot of current state for personalization and debug
+  const setupContext = {
+    directorName: directorDisplayName || directorProfileName || null,
+    academyName: academyName || null,
+    role: 'academy_director',
+    timezone: null as null,
+    currentScreen: '/director/onboarding/interview',
+    currentStage: SETUP_STAGES[getSetupStageIndex(step, preflightPhase)] ?? null,
+    currentQuestionId: currentQuestionContract?.id ?? null,
+    currentQuestionText: currentQuestionContract?.questionText ?? null,
+    completedAnswersCount: capturedAnswersCount,
+    completedAnswersSummary: INTERVIEW_STEPS
+      .filter(s => buildValue(answers[s.field].chips, answers[s.field].custom).trim().length > 0)
+      .map(s => `${s.stepLabel}: ${buildValue(answers[s.field].chips, answers[s.field].custom).slice(0, 60)}`)
+      .join('; ') || null,
+  }
+
+  // QA: screen question text — what ActivePromptCard currently shows
+  const screenQuestionText =
+    activeVoicePrompt?.kind === 'interview' ? (activeVoicePrompt.questionText ?? null) : null
+  // QA: spoken question text — last pure question text sent to voice (set in auto-speak useEffect)
+  const questionTextMatchesScreen =
+    lastSpokenQuestionText && screenQuestionText
+      ? lastSpokenQuestionText === screenQuestionText
+      : null // null = no comparison yet (not on an interview step)
+
   // ── Shared debug panel props ─────────────────────────────────────────────────
   const debugPanelProps = {
     status: realtimeVoice.status,
@@ -1445,6 +1598,16 @@ export function DirectorInterviewAssistant({
     guidedIntroRequested: debugGuidedIntroRequested,
     namePromptRequested: debugNamePromptRequested,
     preflightPromptRequested: debugPreflightPromptRequested,
+    // Sprint 239 — setup context + question lock fields
+    setupDirectorName: setupContext.directorName,
+    setupAcademyName: setupContext.academyName,
+    setupCurrentStage: setupContext.currentStage,
+    setupCompletedAnswersCount: setupContext.completedAnswersCount,
+    currentQuestionId: currentQuestionContract?.id ?? null,
+    currentQuestionText: currentQuestionContract?.questionText ?? null,
+    spokenQuestionText: lastSpokenQuestionText || null,
+    screenQuestionText,
+    questionTextMatchesScreen,
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -2080,9 +2243,6 @@ export function DirectorInterviewAssistant({
   const currentSetupStage = getSetupStageIndex(step, preflightPhase)
 
   // Summary card data
-  const capturedAnswersCount = INTERVIEW_STEPS.filter(
-    s => buildValue(answers[s.field].chips, answers[s.field].custom).trim().length > 0
-  ).length
   const nextStepLabel = step < INTERVIEW_STEPS.length - 1
     ? INTERVIEW_STEPS[step + 1].stepLabel
     : 'Review'
