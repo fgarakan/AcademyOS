@@ -95,6 +95,9 @@ export function useRealtimeInterviewVoice() {
   const audioElRef = useRef<HTMLAudioElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const pendingDoneRef = useRef<{ cb: () => void; timer: ReturnType<typeof setTimeout> } | null>(null)
+  // ID of the response we explicitly requested via speak() — only this response
+  // is allowed to fire the onDone callback. Auto-generated responses are ignored.
+  const activeResponseIdRef = useRef<string | null>(null)
 
   const patchDebug = useCallback((patch: Partial<RealtimeDebugState>) => {
     setDebug(prev => ({ ...prev, ...patch }))
@@ -233,6 +236,9 @@ export function useRealtimeInterviewVoice() {
     clearPending()
     // Clear current transcript so the new utterance builds up fresh
     setCurrentAssistantText('')
+    // Reset the tracked response ID — response.created will fill it in.
+    // Until then, no response.done from a prior or auto-generated turn can fire the callback.
+    activeResponseIdRef.current = null
 
     const estimatedMs = Math.max(3000, text.length * 65 + 1200)
 
@@ -499,20 +505,48 @@ export function useRealtimeInterviewVoice() {
           patchDebug({ lastTranscriptEvent: evType })
         }
 
+        // ── response.created — capture the ID of the response we requested ──
+        // Only responses whose ID was captured here are allowed to fire onDone.
+        // Auto-generated or prior-turn responses arrive with no matching pending,
+        // so they never set activeResponseIdRef and are therefore safely ignored.
+        if (evType === 'response.created') {
+          const responseId = (msg.response as Record<string, unknown> | undefined)?.id as string | undefined
+          if (responseId && pendingDoneRef.current) {
+            console.log('[Realtime] response.created — tracking id:', responseId)
+            activeResponseIdRef.current = responseId
+          }
+        }
+
         // ── response.cancelled — clear pending WITHOUT firing callback ─────
         // A cancelled response must not advance the interview state machine.
-        if (evType === 'response.cancelled' && pendingDoneRef.current) {
-          clearTimeout(pendingDoneRef.current.timer)
-          pendingDoneRef.current = null
+        if (evType === 'response.cancelled') {
+          const responseId = (msg.response as Record<string, unknown> | undefined)?.id as string | undefined
+          const isOurs = !responseId || responseId === activeResponseIdRef.current
+          if (isOurs && pendingDoneRef.current) {
+            clearTimeout(pendingDoneRef.current.timer)
+            pendingDoneRef.current = null
+            activeResponseIdRef.current = null
+          }
         }
 
         // ── response.done fires when the full assistant turn is complete ────
-        // This is when we fire the onDone callback for speak()
-        if ((evType === 'response.done' || evType === 'response.audio.done') && pendingDoneRef.current) {
-          const { cb, timer } = pendingDoneRef.current
-          clearTimeout(timer)
-          pendingDoneRef.current = null
-          cb()
+        // Only fire onDone for the response ID we explicitly requested via speak().
+        // A random/auto response.done must never advance the setup state machine.
+        if (evType === 'response.done' || evType === 'response.audio.done') {
+          const responseId = (msg.response as Record<string, unknown> | undefined)?.id as string | undefined
+          const isOurs = responseId
+            ? responseId === activeResponseIdRef.current
+            : pendingDoneRef.current !== null // no id field — treat as ours if we have a pending
+          if (isOurs && pendingDoneRef.current) {
+            console.log('[Realtime] response.done — firing onDone for id:', responseId ?? 'unknown')
+            const { cb, timer } = pendingDoneRef.current
+            clearTimeout(timer)
+            pendingDoneRef.current = null
+            activeResponseIdRef.current = null
+            cb()
+          } else if (!isOurs) {
+            console.log('[Realtime] response.done ignored — id', responseId, '!= active', activeResponseIdRef.current)
+          }
         }
       } catch { /* non-JSON message */ }
     }
