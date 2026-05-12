@@ -135,11 +135,12 @@ type PreflightPhase =
   | 'ready_for_question_one'
 
 const OPENING_SCRIPT =
-  "Hey, welcome. I'm going to walk you through a short setup interview for your academy. " +
+  "Welcome. I'll guide you through a short setup interview for your academy. " +
   "The goal is to understand how you teach, how you group players, what your coaches need, " +
-  "and what kind of system you want Academy OS to help you run. " +
-  "This helps the software organize your curriculum, templates, sessions, and coach workflows " +
+  "and how you want Academy OS to support your day-to-day workflow. " +
+  "This helps the system organize your curriculum, class templates, sessions, and coach guidance " +
   "around the way your academy actually works. " +
+  "Nothing saves until you review it. " +
   "Before we begin, do you have any questions, or should we jump into the first one?"
 
 function classifyPreflightAnswer(text: string): 'no_questions' | 'has_question' | 'unclear' {
@@ -1010,11 +1011,15 @@ export function DirectorInterviewAssistant({
     return (
       <div className="space-y-6">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-2">
             <AssistantDot speaking={isSpeaking} listening={false} />
             <AssistantStatus speaking={isSpeaking} listening={false} />
-            <span className="label-xs ml-1">Director Interview — Setup</span>
+            <span className="label-xs ml-1">Director Interview</span>
           </div>
+          <h2 className="text-xl font-semibold text-text-primary leading-tight">Voice-led setup</h2>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            Listen first. The assistant will guide you. You can answer out loud or use the buttons below.
+          </p>
         </div>
 
         {/* Assistant opening explanation bubble */}
@@ -1135,6 +1140,26 @@ export function DirectorInterviewAssistant({
                   className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
                 >
                   Type instead
+                </button>
+              )}
+
+              {voiceMode && isRealtimeConnected && !isSpeaking && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreflightPhase('intro_speaking')
+                    setPreflightAssistantText(OPENING_SCRIPT)
+                    setIsSpeaking(true)
+                    setAudioStatus('speaking')
+                    speakWithTracking(OPENING_SCRIPT, () => {
+                      setIsSpeaking(false)
+                      setAudioStatus('ready')
+                      setPreflightPhase('awaiting_preflight_answer')
+                    })
+                  }}
+                  className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
+                >
+                  Start intro
                 </button>
               )}
             </>

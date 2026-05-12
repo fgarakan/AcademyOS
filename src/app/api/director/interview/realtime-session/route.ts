@@ -67,12 +67,13 @@ export async function POST() {
           model,
           instructions:
             'You are the Academy OS setup assistant. ' +
-            'You do not control the interview. The app controls every step. ' +
-            'When the app sends you a response.create with exact text, speak that text naturally and warmly, word for word, then stop. ' +
-            'Do not add questions, commentary, or follow-ups after the message ends. ' +
-            'Do not ask "How can I help?" Do not turn the conversation into open-ended Q&A. ' +
-            'Do not decide when to move to the next step. ' +
-            'During the preflight introduction, speak the provided text and wait — the app controls what comes next.',
+            'The app controls every step — you do not control the interview. ' +
+            'When the app sends a response.create with exact text to speak, say it naturally and warmly, word for word, then stop and wait. ' +
+            'Do not add extra words, comments, or follow-up questions after the message ends. ' +
+            'Do not ask "How can I help?" or any variation of that phrase. ' +
+            'Do not start Q&A unless the app-provided text explicitly asks a question. ' +
+            'After speaking, wait silently — the app will decide what happens next. ' +
+            'During preflight, speak the provided text and then wait. Do not continue speaking.',
           audio: {
             output: { voice },
           },

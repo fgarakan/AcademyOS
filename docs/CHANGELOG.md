@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-05-12 — Sprint 232: Director Interview Voice-Led Opening Polish V1
+
+**Why voice-led opening polish was needed:** Sprint 231 added the preflight phase correctly, but the experience still felt text-first — a large explanation bubble dominated the screen, making the director feel they needed to read it. The goal of this sprint is to make voice the clear leader and the text a support/transcript layer.
+
+**Revised spoken opening script:** The `OPENING_SCRIPT` constant was replaced with a shorter, more conversational version designed to sound natural out loud. Old version opened with "Hey, welcome. I'm going to walk you through…" and said "Academy OS to help you run." New version opens with "Welcome. I'll guide you through…" and adds "Nothing saves until you review it." before the closing question. Avoids long technical phrases like "operating system" in repetition. Fits comfortably under 35 seconds.
+
+**Voice-first UI copy:** The preflight screen (step === -1, preflightPhase !== 'idle') now shows:
+- Heading: "Voice-led setup" (h2, text-xl font-semibold)
+- Helper: "Listen first. The assistant will guide you. You can answer out loud or use the buttons below."
+The assistant bubble still shows the spoken text as a transcript/support layer, but is no longer the dominant instructional element.
+
+**"No questions — start" button behavior:** Confirmed unchanged — `onClick={() => handlePreflightResponse('no questions')}` correctly routes to `startQ1("Perfect. Let's start.")` which speaks "Perfect. Let's start. First question: [Q1]" and transitions to step 0 only after speech completes.
+
+**Spoken Q1 reliability:** `startQ1()` in `handlePreflightResponse` sets `hasSentWelcomeRef.current = true` before calling `speakWithTracking`, preventing the auto-speak useEffect from double-speaking Q1 when step 0 activates. This was already correct in Sprint 231; confirmed unchanged.
+
+**Fallback if intro does not play:** Added a "Start intro" button in the `awaiting_preflight_answer` phase (visible only when Realtime is connected and the assistant is not currently speaking). Clicking it re-speaks `OPENING_SCRIPT` via `speakWithTracking`, sets `preflightPhase` back to `intro_speaking` during playback, then returns to `awaiting_preflight_answer` when done. Handles the case where the director pressed "Skip intro" early or autoplay was briefly blocked.
+
+**Route.ts assistant instructions tightened:** The session instructions in `route.ts` were reworded to be more directive and explicit: "After speaking, wait silently — the app will decide what happens next." and "Do not start Q&A unless the app-provided text explicitly asks a question." Coverage of all sprint F requirements now explicit.
+
+**Files changed:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — revised OPENING_SCRIPT, voice-led UI title/helper, Start intro fallback button
+- `src/app/api/director/interview/realtime-session/route.ts` — tightened session instructions
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with 0 errors.
+
+**Manual QA status:** Requires live voice session with OPENAI_API_KEY configured. Button paths (No questions — start, Start intro) testable without voice. Typed fallback confirmed unchanged.
+
+**No migrations added.** `database.types.ts` untouched. Save behavior unchanged. Unrelated dirty files (`index.html`, `layout.tsx`, `SidebarNav.tsx`, migration files, airtable report) untouched.
+
+**Exact git add command:**
+```
+git add src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx src/app/api/director/interview/realtime-session/route.ts docs/CHANGELOG.md
+```
+
+**Exact git commit command:**
+```
+git commit -m "Sprint 232 — Director Interview Voice-Led Opening Polish V1"
+```
+
+---
+
 ## 2026-05-12 — Sprint 231: Director Interview Guided Welcome + Preflight Question V1
 
 **Why the opening flow changed:** Clicking "Start Voice Interview" previously went straight to Q1 ("Hey, welcome. First question: …"). The assistant felt like an AI chatbot jumping into content without context. The director had no chance to understand what the interview was about or ask a quick question first. This sprint adds a structured guided preflight before Q1.
