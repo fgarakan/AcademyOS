@@ -2,6 +2,154 @@
 
 ---
 
+## 2026-05-12 — Sprint 237: Academy Setup Assistant Framing V1
+
+**Why "Director Interview" was wrong:**
+"Director Interview" implied the director was being evaluated or screened. The correct product psychology is that the director is customizing their own operating system, guided by an assistant. The AI should feel like a setup helper, not an interviewer.
+
+**New user-facing framing:**
+- Product is now "Academy Setup Assistant" / "Customize Your Academy OS"
+- The experience is framed as guided setup, not an interview
+
+**Page title changes:**
+- `interview/page.tsx` h1: "Director Interview" → "Customize Your Academy OS"
+- `interview/page.tsx` subtitle: updated to approved text about curriculum, coaching workflow, player pathways, and parent experience
+
+**Assistant identity changes:**
+- Both "Director Interview" label badges in `DirectorInterviewAssistant.tsx` → "Academy Setup Assistant"
+- Welcome screen inner h2: "Let's set up your academy together." → "Customize Your Academy OS"
+
+**CTA changes:**
+- "Start Voice Interview" → "Start Guided Setup"
+- "Start Interview" (TTS-unavailable fallback) → "Start Setup"
+- `onboarding/page.tsx` step 2 ctaLabel: "Start Director Interview" → "Start Guided Setup"
+- `DirectorInterviewForm.tsx`: "Save Director Interview" → "Save Setup"
+
+**Guided intro copy update:**
+- `GUIDED_INTRO_TEXT` now reads: "Welcome. I'm your Academy Setup Assistant. I'll help customize your Academy OS around how your academy actually works. I'll ask one question at a time, and you'll be able to review and edit every answer before we continue."
+
+**Preflight / opening script update:**
+- `OPENING_SCRIPT` now reads: "I'll guide you through a short academy setup so your Academy OS reflects how your academy actually works. The goal is to understand your curriculum, groups, coaching workflow, player pathways, and parent experience. Nothing saves until you review it. Before we begin, do you have any questions, or should we jump into the first one?"
+- Answerable preflight question preserved: "Before we begin, do you have any questions, or should we jump into the first one?"
+
+**Other user-facing copy replacements:**
+- "You can still complete the interview by typing." → "...the setup by typing." (x2, mic-denied + voice-unavailable error paths)
+- `onboarding/page.tsx` step 2 title: "Director Interview" → "Academy Setup Assistant"
+- `onboarding/page.tsx` step 2 description: updated to setup-framing language
+- `OnboardingProgressCard.tsx` step 2 title: "Director Interview" → "Academy Setup Assistant"
+- `DirectorInterviewForm.tsx` success message: "Director interview saved." → "Setup saved."
+- Success screen h2: "Interview saved." → "Setup saved."
+
+**Internal names intentionally left unchanged:**
+- File: `DirectorInterviewAssistant.tsx` (not renamed — avoids breaking imports and routes)
+- File: `DirectorInterviewForm.tsx` (not renamed)
+- Server action: `updateDirectorInterviewAction` (not renamed — stable server action)
+- Types: `InterviewField`, `InterviewStep`, `INTERVIEW_STEPS`, `PreflightPhase`, `getStepQuestion` (internal only)
+- DB settings key: `director_interview_completed` (not changed — stored in `academies.settings`)
+- Route: `/director/onboarding/interview` (not changed)
+
+**Safeguards preserved:**
+- `ActivePromptCard` for all answerable prompts — unchanged
+- `GuideIntroCard` for non-answerable guided intro — unchanged
+- No auto-processing of transcripts
+- `INTERVIEW_STEPS` and `getStepQuestion()` unchanged
+- Final save behavior (`updateDirectorInterviewAction`) unchanged
+- Typed fallback (MicButton + textarea) preserved
+- No AI free-running (create_response: false) preserved
+- No invisible questions preserved
+
+**Files changed:**
+- `src/app/director/onboarding/interview/page.tsx` — page title, subtitle, error messages
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — GUIDED_INTRO_TEXT, OPENING_SCRIPT, label badges, CTAs, success h2, error strings, welcome h2
+- `src/app/director/onboarding/page.tsx` — step 2 title, description, ctaLabel
+- `src/app/director/OnboardingProgressCard.tsx` — step 2 title and description
+- `src/app/director/onboarding/interview/DirectorInterviewForm.tsx` — save button label, success message (component currently not rendered — cosmetic consistency)
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passed with zero errors
+
+**Manual QA status:** Pending — dev server not running
+
+**Save behavior:** Unchanged — `updateDirectorInterviewAction` writes to `academies.settings.director_interview`
+
+**No migrations:** Confirmed
+
+**`database.types.ts`:** Untouched
+
+**Unrelated dirty files untouched:** `index.html`, `src/app/director/layout.tsx`, `src/components/nav/SidebarNav.tsx`, `supabase/migrations/053`, `057`, `058`, `data/airtable-import/reports/*` — all confirmed untouched
+
+---
+
+## 2026-05-12 — Sprint 236: Director Interview Guided Assistant Experience Polish V1
+
+**Audit findings — why previous flow was not 10/10:**
+1. Voice started immediately with the name question — no orientation, no context.
+2. Welcome screen had 3 minimal bullets — no "How this works" process explanation.
+3. No named stage progress indicator — only an unnamed % bar.
+4. `helperCopy` shown as orphan text — no "Why this matters:" label/framing.
+5. No in-progress "Building your Academy OS" summary card during the interview.
+6. "Use this response" and "No questions — start" button labels were mechanical.
+
+**Changes made:**
+
+**Guided intro before name capture:**
+- New `'guided_intro'` added to `PreflightPhase` union type.
+- `GUIDED_INTRO_TEXT` constant: "Welcome. I'll guide you through setting up your academy operating system. I'll ask one question at a time, and you'll be able to review and edit every answer before we continue."
+- `startVoiceInterview()` now speaks `GUIDED_INTRO_TEXT` via `speakWithTracking` first. On completion, automatically transitions to `name_speaking` and speaks the name prompt.
+- `GuideIntroCard` component added — non-answerable info card, explicitly NOT an `ActivePromptCard`. Shown only during `'guided_intro'` phase.
+- Skip button during `guided_intro` advances directly to the name prompt — director is never blocked.
+- `switchToTypeModePreflight()` updated: `'guided_intro'` phase routes to `awaiting_name_answer` (same as name phases).
+
+**"How this works" card on welcome screen:**
+- 5-step process list replaces the previous 3-bullet summary.
+- Steps: I ask one question at a time → You answer naturally → You review what I heard → You approve before we continue → Nothing is finalized until you save.
+- "How this works" label-xs heading added above the list.
+
+**Visible setup progress indicator:**
+- `SETUP_STAGES` constant: `['Welcome', 'Name', 'Academy Structure', 'Coaching System', 'Player Pathways', 'Parent Communication', 'Review']`.
+- `getSetupStageIndex(step, preflightPhase)` pure function computes active stage index.
+- `SetupProgressIndicator` component: horizontal scrollable pill row, active stage highlighted lime, past stages muted, future stages very muted.
+- Shown on: welcome screen (stage 0), preflight screen (stage 1), question steps via updated `ProgressRow` (stages 2–5), review screen (stage 6).
+- `ProgressRow` updated: accepts optional `setupStageIndex` prop, renders `SetupProgressIndicator` above the progress bar when provided.
+
+**"Why this matters" support copy framing:**
+- `ActivePromptCard` updated: for `kind === 'interview'` steps, shows "Why this matters" label + `helperText` BEFORE "Assistant is asking" + `questionText`. Non-interview prompts (preflight/name) keep original layout.
+- Typed mode question display updated: "Why this matters" label + `helperCopy` shown above the question heading (replacing the plain orphan text style).
+
+**Confirmation language changes:**
+- `preflight_captured` primary button: "Use this response" → "Looks right — continue"
+- `awaiting_preflight_answer` primary button: "No questions — start" → "Start the setup" (both occurrences)
+- "Use this name", "Record again", "Type instead" labels unchanged.
+
+**Building your Academy OS summary card:**
+- `AcademySummaryCard` component added: shows Name (or "Not set"), Current step label, Answers captured (X / 7), Next step label (or "Review").
+- `capturedAnswersCount` computed from `INTERVIEW_STEPS` + current `answers` state.
+- `nextStepLabel` computed from `INTERVIEW_STEPS[step + 1].stepLabel` or "Review" for the last step.
+- Card shown in answering phase, between helper links and navigation buttons.
+
+**Safeguards preserved:**
+- `ActivePromptCard` still used for all answerable prompts (name, preflight, interview questions).
+- `GuideIntroCard` is NOT an `ActivePromptCard` — intro text is not a question.
+- `speakPrompt()` still sets visible prompt BEFORE speaking for all question prompts.
+- `create_response: false` in session.update — AI never free-runs.
+- Editable transcripts preserved (name, preflight, main questions).
+- No auto-processing — director always confirms before app advances.
+- `INTERVIEW_STEPS` and `getStepQuestion(step)` unchanged and still canonical.
+- Final save behavior (`updateDirectorInterviewAction` + step 8) unchanged.
+- Typed fallback preserved throughout all new phases.
+
+**Files changed:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx`
+- `docs/CHANGELOG.md`
+
+**TypeScript result:** `npx tsc --noEmit` — CLEAN
+
+**Manual QA status:** Dev server required for full voice/audio verification. All state transitions verified by code review. All new phases (guided_intro, skip flows, typed fallback for guided_intro) traced through logic paths.
+
+**No migrations.** `database.types.ts` untouched. Unrelated dirty files untouched.
+
+---
+
 ## 2026-05-12 — Sprint 235: Director Interview Editable Name Capture V1
 
 **Why name capture was needed:** After Sprint 234 added the Active Prompt Card and editable preflight transcript, the next missing piece was a name capture step before the welcome script. The assistant may mishear "Brian Dabul" as "Brian DeBoe." The director must see the question on screen, see what was heard, be able to correct it, and confirm — before the app continues. No invisible questions. Voice leads; UI mirrors; director approves.

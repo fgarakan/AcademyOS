@@ -10,8 +10,8 @@ const ONBOARDING_STEPS = [
     href: '/director/settings',
   },
   {
-    title: 'Director Interview',
-    description: 'Answer questions about your coaching philosophy and academy goals.',
+    title: 'Academy Setup Assistant',
+    description: 'Customize how Academy OS understands your curriculum, workflow, and player pathways.',
     key: 'director_interview_completed',
     href: '/director/onboarding/interview',
   },

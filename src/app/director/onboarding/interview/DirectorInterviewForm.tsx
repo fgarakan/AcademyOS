@@ -149,13 +149,13 @@ export function DirectorInterviewForm({
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-lime text-base font-semibold text-sm hover:bg-lime/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          {isPending ? 'Saving…' : 'Save Director Interview'}
+          {isPending ? 'Saving…' : 'Save Setup'}
         </button>
 
         {saved && (
           <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-status-green/10 border border-status-green/25">
             <CheckCircle2 className="w-4 h-4 text-status-green shrink-0" />
-            <p className="text-sm text-status-green font-medium">Director interview saved.</p>
+            <p className="text-sm text-status-green font-medium">Setup saved.</p>
           </div>
         )}
         {error && (

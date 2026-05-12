@@ -129,6 +129,7 @@ function initAnswer(initial: string): AnswerState {
 // ─── Preflight phase ─────────────────────────────────────────────────────────
 type PreflightPhase =
   | 'idle'
+  | 'guided_intro'               // assistant speaking guided intro — not a question, no ActivePromptCard
   | 'name_speaking'              // assistant speaking the name question
   | 'awaiting_name_answer'       // waiting for director's name (voice or typed)
   | 'name_captured'              // name transcript received, pending confirmation
@@ -175,12 +176,14 @@ const NAME_VOICE_PROMPT: ActiveVoicePrompt = {
 }
 
 
+// Guided intro — spoken first on voice start, not a question (no ActivePromptCard)
+const GUIDED_INTRO_TEXT =
+  "Welcome. I'm your Academy Setup Assistant. I'll help customize your Academy OS around how your academy actually works. " +
+  "I'll ask one question at a time, and you'll be able to review and edit every answer before we continue."
+
 const OPENING_SCRIPT =
-  "Welcome. I'll guide you through a short setup interview for your academy. " +
-  "The goal is to understand how you teach, how you group players, what your coaches need, " +
-  "and how you want Academy OS to support your day-to-day workflow. " +
-  "This helps the system organize your curriculum, class templates, sessions, and coach guidance " +
-  "around the way your academy actually works. " +
+  "I'll guide you through a short academy setup so your Academy OS reflects how your academy actually works. " +
+  "The goal is to understand your curriculum, groups, coaching workflow, player pathways, and parent experience. " +
   "Nothing saves until you review it. " +
   "Before we begin, do you have any questions, or should we jump into the first one?"
 
@@ -235,6 +238,27 @@ function buildPreflightFAQResponse(text: string): string {
     return "About three minutes — seven short questions, one at a time."
   }
   return "This helps Academy OS understand your academy's teaching style so it can organize your curriculum, templates, and coach workflows around the way your academy actually works."
+}
+
+// ─── Setup progress stages ────────────────────────────────────────────────────
+const SETUP_STAGES = [
+  'Welcome',
+  'Name',
+  'Academy Structure',
+  'Coaching System',
+  'Player Pathways',
+  'Parent Communication',
+  'Review',
+]
+
+function getSetupStageIndex(step: number, preflightPhase: PreflightPhase): number {
+  if (step === -1 && preflightPhase === 'idle') return 0
+  if (step === -1) return 1
+  if (step <= 1) return 2
+  if (step === 2 || step === 5) return 3
+  if (step === 3) return 4
+  if (step === 4 || step === 6) return 5
+  return 6
 }
 
 // ─── Button classes ───────────────────────────────────────────────────────────
@@ -417,14 +441,101 @@ function RealtimeDebugPanel({
 
 // ─── Active Prompt Card — mirrors every spoken question on screen ─────────────
 // Rule: no question is invisible. If the AI asks it, this card shows it.
+// For interview steps: shows "Why this matters:" before the question.
+// For preflight/name steps: keeps the simpler original layout.
 function ActivePromptCard({ prompt }: { prompt: ActiveVoicePrompt }) {
+  const isInterview = prompt.kind === 'interview'
   return (
-    <div className="px-4 py-3.5 rounded-xl bg-surface border border-lime/30 space-y-1.5">
-      <p className="label-xs text-lime/80">Assistant is asking</p>
-      <p className="text-base font-semibold text-text-primary leading-snug">{prompt.questionText}</p>
-      {prompt.helperText && (
-        <p className="text-xs text-text-secondary leading-relaxed">{prompt.helperText}</p>
+    <div className="px-4 py-3.5 rounded-xl bg-surface border border-lime/30 space-y-2">
+      {isInterview && prompt.helperText && (
+        <div className="space-y-0.5">
+          <p className="label-xs text-text-muted">Why this matters</p>
+          <p className="text-xs text-text-secondary leading-relaxed">{prompt.helperText}</p>
+        </div>
       )}
+      <div className="space-y-1">
+        <p className="label-xs text-lime/80">Assistant is asking</p>
+        <p className="text-base font-semibold text-text-primary leading-snug">{prompt.questionText}</p>
+        {!isInterview && prompt.helperText && (
+          <p className="text-xs text-text-secondary leading-relaxed">{prompt.helperText}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Guided intro card — non-answerable orientation message ───────────────────
+// Shown during 'guided_intro' phase. Not an ActivePromptCard — no question prompt.
+function GuideIntroCard({ text, isSpeaking }: { text: string; isSpeaking: boolean }) {
+  return (
+    <div className="px-4 py-4 rounded-xl bg-surface-raised border border-lime/20 space-y-3">
+      <div className="flex items-center gap-2">
+        <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+        <p className="text-xs font-medium text-lime">Academy OS Setup Assistant</p>
+        {isSpeaking && <AssistantDot speaking={true} listening={false} />}
+      </div>
+      <p className="text-sm text-text-secondary leading-relaxed">{text}</p>
+    </div>
+  )
+}
+
+// ─── Setup progress indicator — 7-stage named journey ────────────────────────
+function SetupProgressIndicator({ activeStage }: { activeStage: number }) {
+  return (
+    <div className="flex items-center gap-0.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+      {SETUP_STAGES.map((stage, i) => (
+        <div key={i} className="flex items-center gap-0.5 shrink-0">
+          <span className={`text-[9px] px-2 py-0.5 rounded-full transition-colors whitespace-nowrap ${
+            i === activeStage
+              ? 'bg-lime/10 text-lime border border-lime/30'
+              : i < activeStage
+              ? 'text-text-muted'
+              : 'text-text-muted/30'
+          }`}>
+            {stage}
+          </span>
+          {i < SETUP_STAGES.length - 1 && (
+            <span className={`text-[8px] select-none shrink-0 ${i < activeStage ? 'text-text-muted/60' : 'text-text-muted/20'}`}>›</span>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Academy summary card — lightweight in-progress setup summary ─────────────
+function AcademySummaryCard({
+  directorName,
+  currentStepLabel,
+  answersCount,
+  nextStepLabel,
+}: {
+  directorName: string
+  currentStepLabel: string
+  answersCount: number
+  nextStepLabel: string
+}) {
+  return (
+    <div className="px-4 py-3 rounded-xl bg-surface border border-border/60">
+      <p className="label-xs text-text-muted mb-2">Building your Academy OS</p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+        <div>
+          <p className="text-[9px] text-text-muted uppercase tracking-widest">Name</p>
+          <p className="text-xs text-text-secondary mt-0.5 truncate">{directorName || 'Not set'}</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-text-muted uppercase tracking-widest">Answers captured</p>
+          <p className="text-xs font-mono text-lime mt-0.5">{answersCount} / 7</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-text-muted uppercase tracking-widest">Current</p>
+          <p className="text-xs text-text-secondary mt-0.5">{currentStepLabel}</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-text-muted uppercase tracking-widest">Next</p>
+          <p className="text-xs text-text-secondary mt-0.5">{nextStepLabel}</p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1044,8 +1155,9 @@ export function DirectorInterviewAssistant({
     setVoiceMode(false)
     setAudioStatus('idle')
     setAudioWarning(null)
-    // If we were in a name phase, stay in name awaiting (typed) so prompt remains visible
+    // guided_intro or any name phase → jump to typed name capture
     if (
+      preflightPhase === 'guided_intro' ||
       preflightPhase === 'name_speaking' ||
       preflightPhase === 'awaiting_name_answer' ||
       preflightPhase === 'name_captured'
@@ -1084,23 +1196,33 @@ export function DirectorInterviewAssistant({
       setAudioStatus('error')
       const errMsg =
         realtimeVoice.status === 'mic-denied'
-          ? 'Microphone access denied. You can still complete the interview by typing.'
-          : 'Voice is not available right now. You can still complete the interview by typing.'
+          ? 'Microphone access denied. You can still complete the setup by typing.'
+          : 'Voice is not available right now. You can still complete the setup by typing.'
       setAudioWarning(errMsg)
       return
     }
 
-    // Connected — ask for the director's name first (before OPENING_SCRIPT).
-    // speakPrompt sets activeVoicePrompt BEFORE speaking — name question is visible on screen.
-    setPreflightPhase('name_speaking')
-    setPreflightAssistantText(NAME_VOICE_PROMPT.questionText)
+    // Connected — speak guided intro first (not a question, no ActivePromptCard).
+    // After intro finishes, immediately transition to the name prompt.
+    setPreflightPhase('guided_intro')
+    setPreflightAssistantText(GUIDED_INTRO_TEXT)
     setDebugWelcomeSent(true)
     setIsSpeaking(true)
     setAudioStatus('speaking')
-    speakPrompt(NAME_VOICE_PROMPT, NAME_VOICE_PROMPT.questionText, () => {
+    speakWithTracking(GUIDED_INTRO_TEXT, () => {
       setIsSpeaking(false)
       setAudioStatus('ready')
-      setPreflightPhase('awaiting_name_answer')
+      // Intro done — now ask for the director's name.
+      // speakPrompt sets activeVoicePrompt BEFORE speaking — name question is visible on screen.
+      setPreflightPhase('name_speaking')
+      setPreflightAssistantText(NAME_VOICE_PROMPT.questionText)
+      setIsSpeaking(true)
+      setAudioStatus('speaking')
+      speakPrompt(NAME_VOICE_PROMPT, NAME_VOICE_PROMPT.questionText, () => {
+        setIsSpeaking(false)
+        setAudioStatus('ready')
+        setPreflightPhase('awaiting_name_answer')
+      })
     })
   }
 
@@ -1274,11 +1396,13 @@ export function DirectorInterviewAssistant({
   if (step === -1 && preflightPhase !== 'idle') {
     return (
       <div className="space-y-6">
+        <SetupProgressIndicator activeStage={getSetupStageIndex(-1, preflightPhase)} />
+
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-2">
             <AssistantDot speaking={isSpeaking} listening={false} />
             <AssistantStatus speaking={isSpeaking} listening={false} />
-            <span className="label-xs ml-1">Director Interview</span>
+            <span className="label-xs ml-1">Academy Setup Assistant</span>
           </div>
           <h2 className="text-xl font-semibold text-text-primary leading-tight">Voice-led setup</h2>
           <p className="text-xs text-text-secondary leading-relaxed">
@@ -1286,19 +1410,26 @@ export function DirectorInterviewAssistant({
           </p>
         </div>
 
-        {/* Assistant opening explanation bubble */}
-        <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-lime/15 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
-            <p className="text-xs font-medium text-lime">Assistant</p>
-            {isSpeaking && isRealtimeConnected && (
-              <AssistantDot speaking={true} listening={false} />
-            )}
+        {/* Guided intro card — shown during 'guided_intro' phase only. Not an answerable question. */}
+        {preflightPhase === 'guided_intro' && (
+          <GuideIntroCard text={preflightAssistantText || GUIDED_INTRO_TEXT} isSpeaking={isSpeaking} />
+        )}
+
+        {/* Assistant opening explanation bubble — shown after guided intro (preflight/opening) */}
+        {preflightPhase !== 'guided_intro' && (
+          <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-lime/15 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+              <p className="text-xs font-medium text-lime">Assistant</p>
+              {isSpeaking && isRealtimeConnected && (
+                <AssistantDot speaking={true} listening={false} />
+              )}
+            </div>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              {preflightAssistantText || OPENING_SCRIPT}
+            </p>
           </div>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            {preflightAssistantText || OPENING_SCRIPT}
-          </p>
-        </div>
+        )}
 
         {/* Active Prompt Card — always visible when a question prompt is active */}
         {activeVoicePrompt && preflightPhase !== 'ready_for_question_one' && (
@@ -1345,7 +1476,7 @@ export function DirectorInterviewAssistant({
               disabled={isSpeaking}
               className={`w-full ${BTN_LIME}`}
             >
-              Use this response
+              Looks right — continue
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
@@ -1354,7 +1485,7 @@ export function DirectorInterviewAssistant({
               disabled={isSpeaking}
               className={`w-full ${BTN_GHOST}`}
             >
-              No questions — start
+              Start the setup
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
@@ -1486,6 +1617,31 @@ export function DirectorInterviewAssistant({
 
         {/* Action buttons */}
         <div className="space-y-2.5">
+          {/* Guided intro — skip button so director is never blocked */}
+          {preflightPhase === 'guided_intro' && (
+            <button
+              type="button"
+              onClick={() => {
+                stopAssistantSpeech()
+                setIsSpeaking(false)
+                setAudioStatus('ready')
+                // Skip intro → go straight to name prompt
+                setPreflightPhase('name_speaking')
+                setPreflightAssistantText(NAME_VOICE_PROMPT.questionText)
+                setIsSpeaking(true)
+                setAudioStatus('speaking')
+                speakPrompt(NAME_VOICE_PROMPT, NAME_VOICE_PROMPT.questionText, () => {
+                  setIsSpeaking(false)
+                  setAudioStatus('ready')
+                  setPreflightPhase('awaiting_name_answer')
+                })
+              }}
+              className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
+            >
+              Skip intro
+            </button>
+          )}
+
           {/* Name speaking — skip the name question */}
           {preflightPhase === 'name_speaking' && (
             <button
@@ -1561,7 +1717,7 @@ export function DirectorInterviewAssistant({
                 disabled={isSpeaking}
                 className={`w-full ${BTN_LIME}`}
               >
-                No questions — start
+                Start the setup
                 <ArrowRight className="w-4 h-4" />
               </button>
 
@@ -1642,13 +1798,15 @@ export function DirectorInterviewAssistant({
 
     return (
       <div className="space-y-6">
+        <SetupProgressIndicator activeStage={0} />
+
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-3">
             <AssistantDot speaking={isSpeaking} listening={false} />
-            <span className="label-xs">Director Interview</span>
+            <span className="label-xs">Academy Setup Assistant</span>
           </div>
           <h2 className="text-xl font-semibold text-text-primary leading-tight">
-            Let&apos;s set up your academy together.
+            Customize Your Academy OS
           </h2>
         </div>
 
@@ -1659,17 +1817,20 @@ export function DirectorInterviewAssistant({
             <p className="text-xs font-medium text-lime">Academy OS Setup Assistant</p>
           </div>
           <p className="text-sm text-text-secondary leading-relaxed">
-            The assistant will explain the setup interview, answer one quick question if you have one,
-            then guide you through the questions. Seven questions — your philosophy, how you group players,
-            what your coaches need, and what a successful 90 days looks like. About 3 minutes.
+            Seven questions — your philosophy, how you group players, what your coaches need, and what a
+            successful 90 days looks like. About 3 minutes.
           </p>
         </div>
 
-        <div className="space-y-2.5">
+        {/* How this works — process card */}
+        <div className="space-y-2">
+          <p className="label-xs text-text-muted">How this works</p>
           {[
-            'One question at a time — no rushing.',
-            'Pick chips, speak, or type your answer.',
-            'Nothing saves until you review and confirm.',
+            'I ask one question at a time.',
+            'You answer naturally — voice, chips, or type.',
+            'You review what I heard.',
+            'You approve before we continue.',
+            'Nothing is finalized until you save.',
           ].map((item, i) => (
             <div key={i} className="flex items-start gap-2.5">
               <span className="mt-0.5 w-4 h-4 rounded-full bg-lime/10 border border-lime/25 flex items-center justify-center shrink-0">
@@ -1718,7 +1879,7 @@ export function DirectorInterviewAssistant({
                 ) : realtimeVoice.voiceReadiness === 'preparing' ? (
                   <><Loader2 className="w-4 h-4 animate-spin opacity-60" />Preparing voice…</>
                 ) : (
-                  <><Volume2 className="w-4 h-4" />Start Voice Interview</>
+                  <><Volume2 className="w-4 h-4" />Start Guided Setup</>
                 )}
               </button>
               {realtimeVoice.voiceReadiness === 'preparing' && !isConnecting && (
@@ -1735,7 +1896,7 @@ export function DirectorInterviewAssistant({
             disabled={isConnecting}
             className={`w-full ${BTN_GHOST}`}
           >
-            {ttsSupported ? "I'd rather type" : 'Start Interview'}
+            {ttsSupported ? "I'd rather type" : 'Start Setup'}
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -1827,7 +1988,7 @@ export function DirectorInterviewAssistant({
             <CheckCircle2 className="w-6 h-6 text-status-green" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-text-primary">Interview saved.</h2>
+            <h2 className="text-lg font-semibold text-text-primary">Setup saved.</h2>
             <p className="text-sm text-text-secondary mt-1 max-w-xs mx-auto">
               Academy OS now has the context it needs to shape your setup, curriculum, and workflows.
             </p>
@@ -1858,6 +2019,17 @@ export function DirectorInterviewAssistant({
     ? realtimeVoice.currentAssistantText
     : (lastSpokenAssistantText || realtimeVoice.lastAssistantText)
 
+  // Setup stage index — drives both ProgressRow indicator and AcademySummaryCard
+  const currentSetupStage = getSetupStageIndex(step, preflightPhase)
+
+  // Summary card data
+  const capturedAnswersCount = INTERVIEW_STEPS.filter(
+    s => buildValue(answers[s.field].chips, answers[s.field].custom).trim().length > 0
+  ).length
+  const nextStepLabel = step < INTERVIEW_STEPS.length - 1
+    ? INTERVIEW_STEPS[step + 1].stepLabel
+    : 'Review'
+
   // ── CONFIRMING PHASE ────────────────────────────────────────────────────────
   if (phase === 'confirming') {
     const interpretation = buildInterpretation(currentStep, currentAnswer.chips, currentAnswer.custom)
@@ -1872,6 +2044,7 @@ export function DirectorInterviewAssistant({
           voiceMode={voiceMode}
           isSpeaking={isSpeaking}
           isListening={voiceMode && isRealtimeConnected && !isSpeaking}
+          setupStageIndex={currentSetupStage}
         />
 
         {/* Assistant acknowledgment bubble */}
@@ -1994,6 +2167,7 @@ export function DirectorInterviewAssistant({
         voiceMode={voiceMode}
         isSpeaking={isSpeaking}
         isListening={voiceMode && isRealtimeConnected && !isSpeaking}
+        setupStageIndex={currentSetupStage}
       />
 
       {/* Voice mode controls */}
@@ -2133,16 +2307,19 @@ export function DirectorInterviewAssistant({
 
       {/* Question — shown in typed mode or when no active prompt (fallback) */}
       {(!voiceMode || !activeVoicePrompt) && (
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           {simpler && (
             <p className="text-[10px] text-lime px-1 pb-1">
               No problem — pick whichever feels closest, or add a quick note in your own words.
             </p>
           )}
+          <div className="space-y-0.5 mb-1">
+            <p className="label-xs text-text-muted">Why this matters</p>
+            <p className="text-xs text-text-secondary leading-relaxed">{currentStep.helperCopy}</p>
+          </div>
           <h2 className="text-base font-semibold text-text-primary leading-snug">
             {getStepQuestion(step)}
           </h2>
-          <p className="text-xs text-text-muted leading-relaxed">{currentStep.helperCopy}</p>
         </div>
       )}
 
@@ -2234,6 +2411,14 @@ export function DirectorInterviewAssistant({
         </button>
       </div>
 
+      {/* Building your Academy OS — in-progress summary card */}
+      <AcademySummaryCard
+        directorName={directorDisplayName}
+        currentStepLabel={currentStep.stepLabel}
+        answersCount={capturedAnswersCount}
+        nextStepLabel={nextStepLabel}
+      />
+
       {/* Navigation — app controls step advancement, not the AI */}
       <div className="flex gap-3 pt-1">
         <button
@@ -2270,6 +2455,7 @@ function ProgressRow({
   voiceMode,
   isSpeaking,
   isListening,
+  setupStageIndex,
 }: {
   step: number
   total: number
@@ -2278,25 +2464,31 @@ function ProgressRow({
   voiceMode: boolean
   isSpeaking: boolean
   isListening: boolean
+  setupStageIndex?: number
 }) {
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-3">
-        {voiceMode ? (
-          <div className="flex items-center gap-2">
-            <AssistantDot speaking={isSpeaking} listening={isListening} />
-            <AssistantStatus speaking={isSpeaking} listening={isListening} />
-          </div>
-        ) : (
-          <p className="text-[10px] font-mono text-text-muted">{step + 1} / {total}</p>
-        )}
-        <p className="label-xs">{label}</p>
-      </div>
-      <div className="w-full h-0.5 rounded-full bg-border overflow-hidden">
-        <div
-          className="h-full rounded-full bg-lime transition-all duration-300"
-          style={{ width: `${pct}%` }}
-        />
+    <div className="space-y-2">
+      {setupStageIndex !== undefined && (
+        <SetupProgressIndicator activeStage={setupStageIndex} />
+      )}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-3">
+          {voiceMode ? (
+            <div className="flex items-center gap-2">
+              <AssistantDot speaking={isSpeaking} listening={isListening} />
+              <AssistantStatus speaking={isSpeaking} listening={isListening} />
+            </div>
+          ) : (
+            <p className="text-[10px] font-mono text-text-muted">{step + 1} / {total}</p>
+          )}
+          <p className="label-xs">{label}</p>
+        </div>
+        <div className="w-full h-0.5 rounded-full bg-border overflow-hidden">
+          <div
+            className="h-full rounded-full bg-lime transition-all duration-300"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
       </div>
     </div>
   )

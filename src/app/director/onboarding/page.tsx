@@ -25,11 +25,11 @@ const STEP_DEFS: StepDef[] = [
   },
   {
     number: 2,
-    title: 'Director Interview',
-    description: 'Answer a short set of questions about your coaching philosophy, academy goals, and player development approach. Your answers power AI recommendations.',
+    title: 'Academy Setup Assistant',
+    description: 'Customize how your Academy OS understands your curriculum, coaching workflow, player pathways, and parent experience. Your answers shape the entire system.',
     settingsKey: 'director_interview_completed',
     href: '/director/onboarding/interview',
-    ctaLabel: 'Start Director Interview',
+    ctaLabel: 'Start Guided Setup',
   },
   {
     number: 3,

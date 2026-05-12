@@ -12,7 +12,7 @@ export default async function DirectorInterviewPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-text-secondary text-sm">Please sign in to access the director interview.</p>
+        <p className="text-text-secondary text-sm">Please sign in to access Academy Setup.</p>
       </div>
     )
   }
@@ -45,7 +45,7 @@ export default async function DirectorInterviewPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-text-secondary text-sm">
-          The director interview is only available to academy directors.
+          Academy Setup is only available to academy directors.
         </p>
       </div>
     )
@@ -94,9 +94,9 @@ export default async function DirectorInterviewPage() {
           <MessageSquare className="w-3.5 h-3.5 text-lime" />
           <p className="page-eyebrow">Onboarding · Step 2</p>
         </div>
-        <h1 className="page-title">Director Interview</h1>
+        <h1 className="page-title">Customize Your Academy OS</h1>
         <p className="page-subtitle">
-          A 3–5 minute guided conversation to shape your operating system.
+          Your Academy Setup Assistant will guide you through a short setup so your Academy OS reflects your curriculum, coaching workflow, player pathways, and parent experience.
         </p>
       </div>
 
