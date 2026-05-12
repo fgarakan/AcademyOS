@@ -143,3 +143,12 @@ export const INTERVIEW_STEPS: InterviewStep[] = [
     ],
   },
 ]
+
+// Canonical question accessor — always returns spokenQuestion (TTS-optimised).
+// Use this for both the UI heading and the voice response.create payload so they
+// stay in sync even if the underlying field names change.
+export function getStepQuestion(stepIndex: number): string {
+  const s = INTERVIEW_STEPS[stepIndex]
+  if (!s) return ''
+  return s.spokenQuestion ?? s.question ?? ''
+}

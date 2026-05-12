@@ -2,6 +2,65 @@
 
 ---
 
+## 2026-05-12 — Sprint 233: Director Interview Preloaded Voice Assistant + Question Alignment V1
+
+**Why preloading was needed:** After Sprint 232 the voice session still had noticeable lag because `startVoiceInterview()` called `connect()` which fetched the ephemeral token, requested the microphone, built the WebRTC peer connection, and exchanged SDP — all serially after the Start click. The token fetch (HTTP round-trip to our own API route + OpenAI) was the only step that can safely happen before a user gesture. This sprint separates token pre-fetch from the connection sequence.
+
+**Voice readiness / preparation behavior:**
+- New `VoiceReadiness` type exported from `useRealtimeInterviewVoice.ts`: `idle | preparing | ready | needs_permission | error`
+- New `prepare()` function in the hook: fetches the ephemeral token on page load via a background HTTP call (no browser gesture required). Stores result in `preparedTokenRef` / `preparedAtRef`. Token is considered valid for 50 seconds (OpenAI ephemeral tokens expire after ~60 s).
+- `connect()` now checks for a cached, non-expired token first. If found, it skips the token fetch step entirely — removing ~300–500 ms from the Start click path. Falls back to live fetch if no cached token or token expired.
+- `disconnect()` resets `voiceReadiness` to `idle` and clears cached token, so `prepare()` fires again on the next welcome-screen visit (e.g., after director goes back from step 0).
+
+**Start button states:**
+- `preparing`: button shows "Preparing voice…" with spinner + helper text "Getting the assistant ready…"
+- `ready`: button shows "Start Voice Interview" + helper text "Voice is ready. Press start and the assistant will guide you."
+- All other states: button shows "Start Voice Interview" as before
+- Post-click connecting: button shows "Connecting assistant…" (existing behavior, now faster due to cached token)
+
+**Auto-prepare useEffect:** Component calls `realtimeVoice.prepare()` automatically when `step === -1` and `voiceReadiness === 'idle'`. Fires on initial mount and after any disconnect that returns the user to the welcome screen. The `isPreparingRef` guard prevents double-fetches.
+
+**Question alignment helper:** Added `getStepQuestion(stepIndex: number): string` to `interviewSteps.ts`. Returns `step.spokenQuestion ?? step.question ?? ''`. This is the canonical single-source accessor for both the UI question heading and all `response.create` payloads. All callers updated: `repeatQuestion()`, auto-speak `useEffect` baseline question, type-mode "Play question" button, and the answering-phase heading.
+
+**Question alignment fix:** The answering phase heading previously showed `currentStep.question` (longer UI form) while voice spoke `step.spokenQuestion` (shorter TTS form). Both now use `getStepQuestion(step)` — the UI heading matches the spoken question exactly. Example: Q1 UI now shows "When a parent describes your academy, what do you want them to say you are great at?" (matching speech) rather than the longer "...to a friend…" form.
+
+**Encoded question list in dev debug panel:** The debug panel now includes a collapsible "Encoded interview questions (7)" section listing all `spokenQuestion` values. Active step is highlighted in lime. Also shows: current encoded step index, encoded Q text, and "ui == voice question: true".
+
+**Additional debug panel fields:** voice prepare status, token preloaded, prepared at timestamp, start clicked at timestamp, welcome response error.
+
+**`debugFirstRequested` fix:** This flag was initialized/reset to `false` but never set to `true`. Now set to `true` inside `startQ1()` in `handlePreflightResponse`, correctly marking when Q1 is first requested.
+
+**"Play welcome" retry (Part E):** "Start intro" button renamed to "Play welcome" with clearer framing: "Voice is connected. If the welcome didn't start, press Play welcome." Shown only when Realtime is connected, not currently speaking, and audio is not blocked. Calls `speakWithTracking(OPENING_SCRIPT)`.
+
+**Spoken opening reliability:** Token pre-fetch means the connect() sequence starts from mic request on click. The assistant speaks `OPENING_SCRIPT` as soon as the data channel opens — same as Sprint 232 but with reduced lead-up lag.
+
+**No free-run guardrails:** Confirmed unchanged — `create_response: false` in `session.update`, explicit `instructions` in `response.create` tell the assistant to speak the provided text verbatim then stop, route.ts session instructions tightened in Sprint 232.
+
+**Name capture:** Deferred. Adding a pre-preflight name capture would require either a new preflight phase state or modifying the OPENING_SCRIPT flow. V1 focus is preloading and question alignment. Known limitation for a future sprint.
+
+**Files changed:**
+- `src/app/director/onboarding/interview/interviewSteps.ts` — added `getStepQuestion()` helper
+- `src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts` — added `VoiceReadiness` type, `prepare()` function, `voiceReadiness` state, cached token refs, new debug fields, modified `connect()` token fetch, modified `disconnect()` to reset readiness
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — imported `getStepQuestion`, added auto-prepare useEffect, updated question heading, updated button states + helper text, fixed `debugFirstRequested`, updated debug panel props and component, renamed "Start intro" to "Play welcome"
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with 0 errors.
+
+**Manual QA status:** Requires live voice session with OPENAI_API_KEY configured. Button "Preparing voice…" / helper text testable immediately on page load. Encoded question list visible in dev debug panel. "Play welcome" and "No questions — start" paths testable in browser. Typed fallback confirmed unchanged. Save behavior unchanged.
+
+**No migrations added.** `database.types.ts` untouched. Save behavior unchanged. Unrelated dirty files (`index.html`, `layout.tsx`, `SidebarNav.tsx`, migration files, airtable report) untouched.
+
+**Exact git add command:**
+```
+git add src/app/director/onboarding/interview/interviewSteps.ts src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx docs/CHANGELOG.md
+```
+
+**Exact git commit command:**
+```
+git commit -m "Sprint 233 — Director Interview Preloaded Voice Assistant + Question Alignment V1"
+```
+
+---
+
 ## 2026-05-12 — Sprint 232: Director Interview Voice-Led Opening Polish V1
 
 **Why voice-led opening polish was needed:** Sprint 231 added the preflight phase correctly, but the experience still felt text-first — a large explanation bubble dominated the screen, making the director feel they needed to read it. The goal of this sprint is to make voice the clear leader and the text a support/transcript layer.

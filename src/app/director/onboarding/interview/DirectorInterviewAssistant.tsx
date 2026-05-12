@@ -15,7 +15,7 @@ import {
   VolumeX,
   Square,
 } from 'lucide-react'
-import { INTERVIEW_STEPS, type InterviewField, type InterviewStep } from './interviewSteps'
+import { INTERVIEW_STEPS, getStepQuestion, type InterviewField, type InterviewStep } from './interviewSteps'
 import { updateDirectorInterviewAction } from './updateDirectorInterviewAction'
 import { useRealtimeInterviewVoice, type RealtimeDebugState } from './useRealtimeInterviewVoice'
 
@@ -233,6 +233,10 @@ function RealtimeDebugPanel({
   finalTranscriptReceived,
   userTranscriptLen,
   assistantTranscriptLen,
+  voiceReadiness,
+  startClickedAt,
+  welcomeResponseError,
+  currentEncodedStep,
 }: {
   status: string
   debug: RealtimeDebugState
@@ -242,7 +246,21 @@ function RealtimeDebugPanel({
   finalTranscriptReceived?: boolean
   userTranscriptLen?: number
   assistantTranscriptLen?: number
+  voiceReadiness?: string
+  startClickedAt?: number | null
+  welcomeResponseError?: string | null
+  currentEncodedStep?: number
 }) {
+  const stepQ = currentEncodedStep != null && currentEncodedStep >= 0 && currentEncodedStep < INTERVIEW_STEPS.length
+    ? getStepQuestion(currentEncodedStep)
+    : null
+  const preparedAtStr = debug.preparedAt
+    ? new Date(debug.preparedAt).toLocaleTimeString()
+    : 'not yet'
+  const startClickedAtStr = startClickedAt
+    ? new Date(startClickedAt).toLocaleTimeString()
+    : 'not yet'
+
   return (
     <details className="mt-4">
       <summary className="cursor-pointer text-[10px] text-text-muted hover:text-text-secondary font-mono select-none">
@@ -250,9 +268,16 @@ function RealtimeDebugPanel({
       </summary>
       <div className="mt-2 p-3 rounded-lg bg-surface border border-border space-y-0.5 text-[9px] font-mono leading-relaxed">
         <p>status: <span className="text-lime">{status}</span></p>
+        <p>voice readiness: <span className={voiceReadiness === 'ready' ? 'text-status-green' : voiceReadiness === 'error' ? 'text-status-red' : 'text-text-muted'}>{voiceReadiness ?? 'idle'}</span></p>
+        <p>token preloaded: <span className={debug.tokenPreloaded ? 'text-status-green' : 'text-text-muted'}>{String(debug.tokenPreloaded)}</span></p>
+        <p>prepared at: <span className="text-text-muted">{preparedAtStr}</span></p>
+        <p>start clicked at: <span className="text-text-muted">{startClickedAtStr}</span></p>
         <p>welcome sent: <span className={welcomeSent ? 'text-status-green' : 'text-text-muted'}>{String(welcomeSent ?? false)}</span></p>
         <p>first response requested: <span className={firstRequested ? 'text-status-green' : 'text-text-muted'}>{String(firstRequested ?? false)}</span></p>
-        <p>env configured: <span className={
+        {welcomeResponseError && (
+          <p className="text-status-orange break-words">welcome error: {welcomeResponseError}</p>
+        )}
+        <p className="border-t border-border pt-0.5 mt-0.5">env configured: <span className={
           debug.envConfigured === true ? 'text-status-green'
           : debug.envConfigured === false ? 'text-status-red'
           : 'text-text-muted'
@@ -271,6 +296,13 @@ function RealtimeDebugPanel({
         <p>final transcript: <span className={finalTranscriptReceived ? 'text-status-green' : 'text-text-muted'}>{String(finalTranscriptReceived ?? false)}</span></p>
         <p>user transcript len: {userTranscriptLen ?? 0}</p>
         <p>assistant transcript len: {assistantTranscriptLen ?? 0}</p>
+        {currentEncodedStep != null && currentEncodedStep >= 0 && (
+          <div className="border-t border-border pt-0.5 mt-0.5 space-y-0.5">
+            <p>current encoded step: <span className="text-lime">{currentEncodedStep}</span></p>
+            {stepQ && <p className="text-text-muted break-words">encoded Q: {stepQ}</p>}
+            <p>ui == voice question: <span className="text-status-green">true</span></p>
+          </div>
+        )}
         {debug.lastError && (
           <p className="text-status-red break-words">error: {debug.lastError}</p>
         )}
@@ -299,6 +331,19 @@ function RealtimeDebugPanel({
             )}
           </div>
         )}
+        {/* Encoded interview question list */}
+        <details className="mt-1">
+          <summary className="cursor-pointer text-[9px] text-text-muted hover:text-text-secondary select-none">
+            ▶ Encoded interview questions ({INTERVIEW_STEPS.length})
+          </summary>
+          <div className="mt-1 space-y-0.5 pl-2">
+            {INTERVIEW_STEPS.map((s, i) => (
+              <p key={s.id} className={`text-[9px] break-words ${i === currentEncodedStep ? 'text-lime' : 'text-text-muted'}`}>
+                {i + 1}. {s.spokenQuestion}
+              </p>
+            ))}
+          </div>
+        </details>
       </div>
     </details>
   )
@@ -446,6 +491,8 @@ export function DirectorInterviewAssistant({
   // Dev-only debug fields for welcome sequence
   const [debugWelcomeSent, setDebugWelcomeSent] = useState(false)
   const [debugFirstRequested, setDebugFirstRequested] = useState(false)
+  const startClickedAtRef = useRef<number | null>(null)
+  const [welcomeResponseError, setWelcomeResponseError] = useState<string | null>(null)
 
   const [isPending, startTransition] = useTransition()
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -453,6 +500,14 @@ export function DirectorInterviewAssistant({
   // ── OpenAI Realtime voice hook ───────────────────────────────────────────────
   const realtimeVoice = useRealtimeInterviewVoice()
   const isRealtimeConnected = realtimeVoice.status === 'connected'
+
+  // Silently warm the voice token on page load (and again after any disconnect).
+  // Browser does not require user gesture for HTTP — mic is still deferred to click.
+  useEffect(() => {
+    if (step === -1 && realtimeVoice.voiceReadiness === 'idle') {
+      void realtimeVoice.prepare()
+    }
+  }, [step, realtimeVoice.voiceReadiness, realtimeVoice.prepare])
 
   // ── Browser TTS refs (speechSynthesis fallback) ──────────────────────────────
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
@@ -615,6 +670,7 @@ export function DirectorInterviewAssistant({
     const startQ1 = (intro: string) => {
       const fullText = `${intro} First question: ${q1}`
       hasSentWelcomeRef.current = true
+      setDebugFirstRequested(true)
       setPreflightPhase('ready_for_question_one')
       setPreflightAssistantText(fullText)
       setIsSpeaking(true)
@@ -713,7 +769,7 @@ export function DirectorInterviewAssistant({
     // Consume any pending ack from acceptAnswer() — "Got it. Next question: ..."
     const ack = pendingAckRef.current
     pendingAckRef.current = null
-    const baseQ = INTERVIEW_STEPS[step].spokenQuestion
+    const baseQ = getStepQuestion(step)
     const textToSpeak = ack ? `${ack} Next question: ${baseQ}` : baseQ
 
     setIsSpeaking(true)
@@ -769,7 +825,7 @@ export function DirectorInterviewAssistant({
     stopAssistantSpeech()
     setIsSpeaking(true)
     setAudioStatus('speaking')
-    const text = INTERVIEW_STEPS[step].spokenQuestion
+    const text = getStepQuestion(step)
     if (isRealtimeConnected) {
       speakWithTracking(text, () => setIsSpeaking(false))
     } else {
@@ -812,12 +868,14 @@ export function DirectorInterviewAssistant({
 
   // ── Welcome actions ─────────────────────────────────────────────────────────
   async function startVoiceInterview() {
+    startClickedAtRef.current = Date.now()
     hasSentWelcomeRef.current = false
     pendingAckRef.current = null
     lastAppliedTranscriptRef.current = ''
     preflightExchangeCountRef.current = 0
     setDebugWelcomeSent(false)
     setDebugFirstRequested(false)
+    setWelcomeResponseError(null)
     setPreflightPhase('idle')
     setPreflightAssistantText('')
     setPreflightTypedInput('')
@@ -838,7 +896,7 @@ export function DirectorInterviewAssistant({
       return
     }
 
-    // Connected — speak preflight opening script only. Do NOT advance to step 0 yet.
+    // Connected — speak opening script immediately. Do NOT advance to step 0 yet.
     // The app waits for the director's preflight response before asking Q1.
     setPreflightPhase('intro_speaking')
     setPreflightAssistantText(OPENING_SCRIPT)
@@ -1002,6 +1060,10 @@ export function DirectorInterviewAssistant({
     finalTranscriptReceived: realtimeVoice.finalTranscriptReceived,
     userTranscriptLen: realtimeVoice.finalUserTranscript.length,
     assistantTranscriptLen: lastSpokenAssistantText.length,
+    voiceReadiness: realtimeVoice.voiceReadiness,
+    startClickedAt: startClickedAtRef.current,
+    welcomeResponseError,
+    currentEncodedStep: step >= 0 && step < INTERVIEW_STEPS.length ? step : undefined,
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -1144,23 +1206,30 @@ export function DirectorInterviewAssistant({
               )}
 
               {voiceMode && isRealtimeConnected && !isSpeaking && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreflightPhase('intro_speaking')
-                    setPreflightAssistantText(OPENING_SCRIPT)
-                    setIsSpeaking(true)
-                    setAudioStatus('speaking')
-                    speakWithTracking(OPENING_SCRIPT, () => {
-                      setIsSpeaking(false)
-                      setAudioStatus('ready')
-                      setPreflightPhase('awaiting_preflight_answer')
-                    })
-                  }}
-                  className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
-                >
-                  Start intro
-                </button>
+                <div className="space-y-1">
+                  <p className="text-[10px] text-text-muted text-center">
+                    Voice is connected. If the welcome didn&apos;t start, press Play welcome.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWelcomeResponseError(null)
+                      setPreflightPhase('intro_speaking')
+                      setPreflightAssistantText(OPENING_SCRIPT)
+                      setIsSpeaking(true)
+                      setAudioStatus('speaking')
+                      speakWithTracking(OPENING_SCRIPT, () => {
+                        setIsSpeaking(false)
+                        setAudioStatus('ready')
+                        setPreflightPhase('awaiting_preflight_answer')
+                      })
+                    }}
+                    className={`w-full ${BTN_GHOST}`}
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                    Play welcome
+                  </button>
+                </div>
               )}
             </>
           )}
@@ -1252,22 +1321,32 @@ export function DirectorInterviewAssistant({
           </div>
         )}
 
-        <div className="space-y-2.5 pt-1">
+        <div className="space-y-2 pt-1">
           {ttsSupported && (
-            <button
-              type="button"
-              onClick={startVoiceInterview}
-              disabled={isConnecting || isSpeaking || voiceMode}
-              className={`w-full ${BTN_LIME}`}
-            >
-              {isConnecting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Connecting assistant…</>
-              ) : isSpeaking && voiceMode ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Assistant is speaking…</>
-              ) : (
-                <><Volume2 className="w-4 h-4" />Start Voice Interview</>
+            <>
+              <button
+                type="button"
+                onClick={startVoiceInterview}
+                disabled={isConnecting || isSpeaking || voiceMode}
+                className={`w-full ${BTN_LIME}`}
+              >
+                {isConnecting ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />Connecting assistant…</>
+                ) : isSpeaking && voiceMode ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />Assistant is speaking…</>
+                ) : realtimeVoice.voiceReadiness === 'preparing' ? (
+                  <><Loader2 className="w-4 h-4 animate-spin opacity-60" />Preparing voice…</>
+                ) : (
+                  <><Volume2 className="w-4 h-4" />Start Voice Interview</>
+                )}
+              </button>
+              {realtimeVoice.voiceReadiness === 'preparing' && !isConnecting && (
+                <p className="text-[10px] text-text-muted text-center">Getting the assistant ready…</p>
               )}
-            </button>
+              {realtimeVoice.voiceReadiness === 'ready' && !isConnecting && !voiceMode && (
+                <p className="text-[10px] text-text-muted text-center">Voice is ready. Press start and the assistant will guide you.</p>
+              )}
+            </>
           )}
           <button
             type="button"
@@ -1599,7 +1678,7 @@ export function DirectorInterviewAssistant({
       {!voiceMode && ttsSupported && (
         <button
           type="button"
-          onClick={() => speakAssistant(currentStep.spokenQuestion)}
+          onClick={() => speakAssistant(getStepQuestion(step))}
           className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
         >
           <Volume2 className="w-3.5 h-3.5 text-lime" />
@@ -1674,7 +1753,7 @@ export function DirectorInterviewAssistant({
           </p>
         )}
         <h2 className="text-base font-semibold text-text-primary leading-snug">
-          {currentStep.question}
+          {getStepQuestion(step)}
         </h2>
         <p className="text-xs text-text-muted leading-relaxed">{currentStep.helperCopy}</p>
       </div>

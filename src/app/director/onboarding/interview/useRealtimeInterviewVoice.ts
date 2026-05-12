@@ -13,6 +13,14 @@ export type RealtimeStatus =
   | 'error'
   | 'closed'
 
+// Voice readiness: tracks pre-click token preparation state.
+// idle        — not yet attempted
+// preparing   — token fetch in progress (background, before Start click)
+// ready       — token cached, connection will be faster on Start click
+// needs_permission — token ready, mic permission needed on click
+// error       — pre-fetch failed (env not configured, network error)
+export type VoiceReadiness = 'idle' | 'preparing' | 'ready' | 'needs_permission' | 'error'
+
 export interface RealtimeDebugState {
   envConfigured: boolean | null
   tokenFetched: boolean
@@ -33,6 +41,8 @@ export interface RealtimeDebugState {
   openaiVoice: string | null
   openaiResponseKeys: string | null
   clientSecretShape: string | null
+  tokenPreloaded: boolean
+  preparedAt: number | null
 }
 
 const INITIAL_DEBUG: RealtimeDebugState = {
@@ -55,6 +65,8 @@ const INITIAL_DEBUG: RealtimeDebugState = {
   openaiVoice: null,
   openaiResponseKeys: null,
   clientSecretShape: null,
+  tokenPreloaded: false,
+  preparedAt: null,
 }
 
 export function useRealtimeInterviewVoice() {
@@ -70,6 +82,13 @@ export function useRealtimeInterviewVoice() {
   const [finalUserTranscript, setFinalUserTranscript] = useState('')
   const [speechStarted, setSpeechStarted] = useState(false)
   const [finalTranscriptReceived, setFinalTranscriptReceived] = useState(false)
+
+  // Voice readiness — tracks pre-click token preparation
+  const [voiceReadiness, setVoiceReadiness] = useState<VoiceReadiness>('idle')
+  // Cached token from prepare() — consumed by connect() if not expired
+  const preparedTokenRef = useRef<{ clientSecret: string; model: string } | null>(null)
+  const preparedAtRef = useRef<number | null>(null)
+  const isPreparingRef = useRef(false)
 
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const dcRef = useRef<RTCDataChannel | null>(null)
@@ -88,6 +107,68 @@ export function useRealtimeInterviewVoice() {
     }
   }, [])
 
+  // Pre-fetch the ephemeral token before the user clicks Start.
+  // Safe to call on page load — no browser gesture required for HTTP requests.
+  // Mic and WebRTC are still deferred to the user click inside connect().
+  const prepare = useCallback(async () => {
+    if (isPreparingRef.current) return
+    if (preparedTokenRef.current) {
+      const age = preparedAtRef.current != null ? Date.now() - preparedAtRef.current : Infinity
+      if (age < 50_000) return // still valid — skip
+      preparedTokenRef.current = null
+      preparedAtRef.current = null
+    }
+    isPreparingRef.current = true
+    setVoiceReadiness('preparing')
+    try {
+      const res = await fetch('/api/director/interview/realtime-session', { method: 'POST' })
+      const data = await res.json() as {
+        client_secret?: string
+        model?: string
+        voice?: string
+        error?: string
+        envConfigured?: boolean
+        openaiStatus?: number
+        openaiError?: string
+        endpointAttempted?: string
+        openaiResponseKeys?: string
+        clientSecretShape?: string
+      }
+      patchDebug({ envConfigured: data.envConfigured ?? false })
+      const secretValue = data.client_secret
+      const secretUsable = typeof secretValue === 'string' && secretValue.length > 10
+      if (!res.ok || !secretUsable) {
+        setVoiceReadiness('error')
+        patchDebug({
+          lastError: data.error ?? `Token prep failed: server returned ${res.status}`,
+          openaiStatus: data.openaiStatus ?? null,
+          openaiError: data.openaiError ?? null,
+          endpointAttempted: data.endpointAttempted ?? null,
+        })
+        return
+      }
+      const now = Date.now()
+      preparedTokenRef.current = { clientSecret: secretValue as string, model: data.model ?? 'gpt-4o-realtime-preview' }
+      preparedAtRef.current = now
+      patchDebug({
+        tokenFetched: true,
+        tokenPreloaded: true,
+        preparedAt: now,
+        endpointAttempted: data.endpointAttempted ?? null,
+        openaiResponseKeys: data.openaiResponseKeys ?? null,
+        clientSecretShape: data.clientSecretShape ?? null,
+        openaiModel: data.model ?? null,
+        openaiVoice: data.voice ?? null,
+      })
+      setVoiceReadiness('ready')
+    } catch (err) {
+      setVoiceReadiness('error')
+      patchDebug({ lastError: `Token prep failed: ${err instanceof Error ? err.message : String(err)}` })
+    } finally {
+      isPreparingRef.current = false
+    }
+  }, [patchDebug])
+
   const disconnect = useCallback(() => {
     clearPending()
     try { dcRef.current?.close() } catch { /* ignore */ }
@@ -103,6 +184,10 @@ export function useRealtimeInterviewVoice() {
     }
     setStatus('closed')
     setAudioBlocked(false)
+    // Reset readiness so prepare() fires again on next welcome-screen visit
+    setVoiceReadiness('idle')
+    preparedTokenRef.current = null
+    preparedAtRef.current = null
   }, [clearPending])
 
   // Called from a user gesture to unblock autoplay-blocked audio
@@ -179,59 +264,75 @@ export function useRealtimeInterviewVoice() {
     setStatus('fetching-token')
     patchDebug({ ...INITIAL_DEBUG })
 
-    // ── Step 1: Fetch ephemeral token from server ─────────────────────────────
+    // ── Step 1: Resolve ephemeral token ──────────────────────────────────────
+    // Use the pre-fetched token from prepare() if available and not expired.
+    // Skipping the fetch here removes ~300–500 ms from the Start click latency.
     let clientSecret: string
     let model: string
 
-    try {
-      const res = await fetch('/api/director/interview/realtime-session', { method: 'POST' })
-      const data = await res.json() as {
-        client_secret?: string
-        model?: string
-        voice?: string
-        error?: string
-        envConfigured?: boolean
-        openaiStatus?: number
-        openaiError?: string
-        endpointAttempted?: string
-        openaiResponseKeys?: string
-        clientSecretShape?: string
-      }
-      patchDebug({ envConfigured: data.envConfigured ?? false })
+    const prepAge = preparedAtRef.current != null ? Date.now() - preparedAtRef.current : Infinity
+    if (preparedTokenRef.current && prepAge < 50_000) {
+      // Consume the pre-fetched token
+      clientSecret = preparedTokenRef.current.clientSecret
+      model = preparedTokenRef.current.model
+      preparedTokenRef.current = null
+      preparedAtRef.current = null
+      console.log('[Realtime] connect() — using pre-fetched token (age:', Math.round(prepAge / 1000), 's)')
+      patchDebug({ tokenFetched: true, tokenPreloaded: true })
+    } else {
+      // No cached token or expired — fetch now (original path)
+      preparedTokenRef.current = null
+      preparedAtRef.current = null
+      try {
+        const res = await fetch('/api/director/interview/realtime-session', { method: 'POST' })
+        const data = await res.json() as {
+          client_secret?: string
+          model?: string
+          voice?: string
+          error?: string
+          envConfigured?: boolean
+          openaiStatus?: number
+          openaiError?: string
+          endpointAttempted?: string
+          openaiResponseKeys?: string
+          clientSecretShape?: string
+        }
+        patchDebug({ envConfigured: data.envConfigured ?? false })
 
-      const secretValue = data.client_secret
-      const secretUsable = typeof secretValue === 'string' && secretValue.length > 10
+        const secretValue = data.client_secret
+        const secretUsable = typeof secretValue === 'string' && secretValue.length > 10
 
-      if (!res.ok || !secretUsable) {
-        setStatus('token-error')
+        if (!res.ok || !secretUsable) {
+          setStatus('token-error')
+          patchDebug({
+            lastError: data.error ?? `Server returned ${res.status}`,
+            openaiStatus: data.openaiStatus ?? null,
+            openaiError: data.openaiError ?? null,
+            endpointAttempted: data.endpointAttempted ?? null,
+            openaiModel: data.model ?? null,
+            openaiVoice: data.voice ?? null,
+            openaiResponseKeys: data.openaiResponseKeys ?? null,
+            clientSecretShape: data.clientSecretShape ?? null,
+          })
+          return false
+        }
+        clientSecret = secretValue as string
+        model = data.model ?? 'gpt-4o-realtime-preview'
         patchDebug({
-          lastError: data.error ?? `Server returned ${res.status}`,
-          openaiStatus: data.openaiStatus ?? null,
-          openaiError: data.openaiError ?? null,
+          tokenFetched: true,
           endpointAttempted: data.endpointAttempted ?? null,
-          openaiModel: data.model ?? null,
-          openaiVoice: data.voice ?? null,
           openaiResponseKeys: data.openaiResponseKeys ?? null,
           clientSecretShape: data.clientSecretShape ?? null,
+          openaiModel: data.model ?? null,
+          openaiVoice: data.voice ?? null,
+        })
+      } catch (err) {
+        setStatus('token-error')
+        patchDebug({
+          lastError: `Failed to reach realtime-session route: ${err instanceof Error ? err.message : String(err)}`,
         })
         return false
       }
-      clientSecret = secretValue as string
-      model = data.model ?? 'gpt-4o-realtime-preview'
-      patchDebug({
-        tokenFetched: true,
-        endpointAttempted: data.endpointAttempted ?? null,
-        openaiResponseKeys: data.openaiResponseKeys ?? null,
-        clientSecretShape: data.clientSecretShape ?? null,
-        openaiModel: data.model ?? null,
-        openaiVoice: data.voice ?? null,
-      })
-    } catch (err) {
-      setStatus('token-error')
-      patchDebug({
-        lastError: `Failed to reach realtime-session route: ${err instanceof Error ? err.message : String(err)}`,
-      })
-      return false
     }
 
     // ── Step 2: Request microphone ────────────────────────────────────────────
@@ -542,6 +643,8 @@ export function useRealtimeInterviewVoice() {
     status,
     debug,
     audioBlocked,
+    voiceReadiness,
+    prepare,
     connect,
     disconnect,
     enableAudio,
