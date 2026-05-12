@@ -2,6 +2,52 @@
 
 ---
 
+## 2026-05-12 — Sprint 221: Director Interview True Voice Assistant V1
+
+**Problem:** The Director Interview screen behaved like a form. "Play question" was a manual button, there was no auto-speech, no voice mode, no assistant presence, and short/unclear answers were confirmed immediately without prompting the director for more.
+
+**Goal:** Premium voice-first interview where the system speaks automatically and guides the director conversationally.
+
+**Components changed:**
+
+- `src/app/director/onboarding/interview/interviewSteps.ts` — **Updated.** Added `helperCopy` (conversational helper shown below each question) and `followUpPrompt` (spoken/shown when answer is short or unclear) fields to the `InterviewStep` interface. Filled in warm, specific copy for all 7 steps.
+
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — **Replaced.** Complete rewrite of the interview UX:
+  - **Welcome screen:** `AssistantDot` (pulsing lime dot) + "Academy OS Setup Assistant" intro bubble + 3 bullet points + "Start Voice Interview" CTA (lime, Volume2 icon, only rendered when TTS supported) + "I'd rather type" ghost fallback.
+  - **`voiceMode` state** replaces the previous `autoRead` toggle. Voice mode is entered exclusively via user click (browser autoplay safe).
+  - **`startVoiceInterview()`:** speaks a short intro phrase, then sets `step=0` in the `onEnd` callback so the auto-speak effect fires the first question cleanly.
+  - **Auto-speak effect:** `useEffect` on `[voiceMode, step, phase]` — fires whenever voice mode is on and an answering step is active. Sets `isSpeaking=true`, calls `speakText(spokenQuestion, onEnd)`, clears `isSpeaking` in `onEnd`. Cleanup cancels speech.
+  - **`speakText()` updated** to accept optional `onEnd` callback (wired to `SpeechSynthesisUtterance.onend`).
+  - **`isSpeaking` state** drives `AssistantDot` pulse and "Pause" button visibility.
+  - **`AssistantDot`:** 8px rounded dot — lime + `animate-pulse` when speaking, status-blue when listening, lime/40 when idle.
+  - **`AssistantStatus`:** "Speaking…" / "Listening…" / "Ready" label beside the dot.
+  - **`ProgressRow`** (replaces `ProgressBar`): in voice mode shows AssistantDot + AssistantStatus on the left; in type mode shows "N / total". Step label right-aligned in both modes. Slim lime progress bar below.
+  - **Voice controls (answering phase):** "Repeat" (RefreshCw icon, re-speaks current question) + "Pause" (VolumeX, only rendered while isSpeaking) + "Type instead" (text link, clears voice mode). Shown only in voice mode.
+  - **Type mode:** "Play question" button preserved (manual, no auto-speak).
+  - **Short-answer detection (confirming phase):** `isShortAnswer = chips.length === 0 && wordCount < 6`. When true: assistant bubble shows `followUpPrompt` text instead of the ack phrase; primary CTA becomes "Let me rephrase" (lime, calls `askSimpler()`); secondary becomes "Keep it anyway — next question" (ghost). When false: existing ack + interpretation + "Edit / Skip / Ask me simpler" flow.
+  - **`confirmAnswer()`:** in voice mode, speaks `followUpPrompt` if short answer, otherwise speaks the ack phrase.
+  - **`askSimpler()`:** in voice mode, speaks `followUpPrompt`.
+  - **`goBack()` from step 0:** resets `voiceMode=false` and returns to welcome screen.
+  - **Save behavior:** IDENTICAL to previous sprint — same `updateDirectorInterviewAction` call, same `buildValue()` logic, same review + success screens.
+  - **No external APIs, no migrations, no database.types.ts changes.**
+
+**Interaction model (voice path):**
+1. Director clicks "Start Voice Interview" (user gesture — autoplay safe).
+2. System speaks intro → sets step 0 → auto-speak effect fires question 1.
+3. Director picks chip / speaks / types → clicks "Use this answer".
+4. System speaks ack (or follow-up if short answer) → confirming phase.
+5. "Looks right" → step advances → auto-speak fires next question.
+6. After step 6: review screen → "Save Academy Setup" → success.
+
+**Files changed:**
+- `src/app/director/onboarding/interview/interviewSteps.ts` — updated
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — replaced
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean — `npx tsc --noEmit` exit 0.
+
+---
+
 ## 2026-05-12 — Sprint 220: First-Run Deck V3 — Sound + Animation V1
 
 **Audit findings:**

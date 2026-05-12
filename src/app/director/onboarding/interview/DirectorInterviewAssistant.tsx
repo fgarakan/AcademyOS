@@ -9,6 +9,7 @@ import {
   Loader2,
   Mic,
   MicOff,
+  RefreshCw,
   Sparkles,
   Volume2,
   VolumeX,
@@ -18,7 +19,6 @@ import { INTERVIEW_STEPS, type InterviewField, type InterviewStep } from './inte
 import { updateDirectorInterviewAction } from './updateDirectorInterviewAction'
 
 // ─── Browser Speech API types ─────────────────────────────────────────────────
-// Declared locally so we do not depend on DOM lib configuration.
 interface SpeechRecognitionAlt { transcript: string }
 interface SpeechRecognitionResult { [index: number]: SpeechRecognitionAlt }
 interface SpeechRecognitionResultList {
@@ -50,12 +50,13 @@ function isTtsSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window
 }
 
-function speakText(text: string, rate = 0.92, pitch = 1) {
-  if (!isTtsSupported()) return
+function speakText(text: string, onEnd?: () => void, rate = 0.92, pitch = 1) {
+  if (!isTtsSupported()) { onEnd?.(); return }
   window.speechSynthesis.cancel()
   const u = new SpeechSynthesisUtterance(text)
   u.rate = rate
   u.pitch = pitch
+  if (onEnd) u.onend = () => onEnd()
   window.speechSynthesis.speak(u)
 }
 
@@ -143,7 +144,28 @@ const BTN_LIME =
 const BTN_GHOST =
   'flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-border text-sm text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
 
-// ─── Mic button (inline, browser-native) ─────────────────────────────────────
+// ─── AssistantDot + status label ─────────────────────────────────────────────
+function AssistantDot({ speaking, listening }: { speaking: boolean; listening: boolean }) {
+  return (
+    <span
+      className={`inline-block w-2 h-2 rounded-full shrink-0 transition-all duration-300 ${
+        speaking
+          ? 'bg-lime animate-pulse'
+          : listening
+          ? 'bg-status-blue animate-pulse'
+          : 'bg-lime/40'
+      }`}
+    />
+  )
+}
+
+function AssistantStatus({ speaking, listening }: { speaking: boolean; listening: boolean }) {
+  if (speaking) return <span className="text-[10px] text-lime">Speaking…</span>
+  if (listening) return <span className="text-[10px] text-status-blue">Listening…</span>
+  return <span className="text-[10px] text-text-muted">Ready</span>
+}
+
+// ─── Mic button (browser-native STT) ─────────────────────────────────────────
 interface MicButtonProps {
   onTranscript: (text: string) => void
   disabled?: boolean
@@ -267,29 +289,28 @@ export function DirectorInterviewAssistant({
     ninety_day_success: initAnswer(initialNinetyDaySuccess),
   })
 
-  // Voice output
-  const [autoRead, setAutoRead] = useState(false)
+  const [voiceMode, setVoiceMode] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
   const [ttsSupported, setTtsSupported] = useState(false)
 
   const [isPending, startTransition] = useTransition()
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Detect TTS support after hydration
   useEffect(() => {
     setTtsSupported(isTtsSupported())
   }, [])
 
-  // Auto-read when step changes or autoRead is toggled on
+  // Auto-speak question whenever voice mode is on and an answering step is active
   useEffect(() => {
-    if (!autoRead || step < 0 || step >= INTERVIEW_STEPS.length || phase !== 'answering') {
+    if (!voiceMode || step < 0 || step >= INTERVIEW_STEPS.length || phase !== 'answering') return
+    setIsSpeaking(true)
+    speakText(INTERVIEW_STEPS[step].spokenQuestion, () => setIsSpeaking(false))
+    return () => {
       cancelSpeech()
-      return
+      setIsSpeaking(false)
     }
-    const s = INTERVIEW_STEPS[step]
-    speakText(s.spokenQuestion)
-  }, [autoRead, step, phase])
+  }, [voiceMode, step, phase])
 
-  // Cancel speech on unmount
   useEffect(() => {
     return () => cancelSpeech()
   }, [])
@@ -316,17 +337,64 @@ export function DirectorInterviewAssistant({
     })
   }
 
+  // ── Voice controls ──────────────────────────────────────────────────────────
+  function repeatQuestion() {
+    cancelSpeech()
+    setIsSpeaking(true)
+    speakText(INTERVIEW_STEPS[step].spokenQuestion, () => setIsSpeaking(false))
+  }
+
+  function pauseSpeech() {
+    cancelSpeech()
+    setIsSpeaking(false)
+  }
+
+  function switchToTypeMode() {
+    cancelSpeech()
+    setIsSpeaking(false)
+    setVoiceMode(false)
+  }
+
+  // ── Welcome actions ─────────────────────────────────────────────────────────
+  function startVoiceInterview() {
+    // Called from a click handler — qualifies as a user gesture for autoplay.
+    setVoiceMode(true)
+    setIsSpeaking(true)
+    speakText(
+      "Great. Let's get your academy set up. I'll ask a few quick questions — pick an option, speak, or type. Here we go.",
+      () => {
+        setIsSpeaking(false)
+        setStep(0)
+      },
+    )
+  }
+
+  function startTypeInterview() {
+    setVoiceMode(false)
+    setStep(0)
+  }
+
   // ── Navigation ──────────────────────────────────────────────────────────────
   function confirmAnswer() {
     cancelSpeech()
+    setIsSpeaking(false)
     const s = INTERVIEW_STEPS[step]
-    setCurrentAck(getAcknowledgment(answers[s.field].chips, answers[s.field].custom))
+    const a = answers[s.field]
+    const ack = getAcknowledgment(a.chips, a.custom)
+    setCurrentAck(ack)
     setPhase('confirming')
     setSimpler(false)
+    if (voiceMode) {
+      const wc = a.custom.trim().split(/\s+/).filter(Boolean).length
+      const short = a.chips.length === 0 && wc < 6
+      setIsSpeaking(true)
+      speakText(short ? s.followUpPrompt : ack, () => setIsSpeaking(false))
+    }
   }
 
   function acceptAnswer() {
     cancelSpeech()
+    setIsSpeaking(false)
     if (step === INTERVIEW_STEPS.length - 1) {
       setStep(7)
     } else {
@@ -341,7 +409,7 @@ export function DirectorInterviewAssistant({
 
   function skipAnswer() {
     cancelSpeech()
-    // Clear current answer and advance
+    setIsSpeaking(false)
     const s = INTERVIEW_STEPS[step]
     setAnswers(prev => ({ ...prev, [s.field]: { chips: [], custom: '' } }))
     if (step === INTERVIEW_STEPS.length - 1) {
@@ -357,13 +425,19 @@ export function DirectorInterviewAssistant({
     setAnswers(prev => ({ ...prev, [s.field]: { chips: [], custom: '' } }))
     setSimpler(true)
     setPhase('answering')
+    if (voiceMode) {
+      setIsSpeaking(true)
+      speakText(s.followUpPrompt, () => setIsSpeaking(false))
+    }
   }
 
   function goBack() {
     cancelSpeech()
+    setIsSpeaking(false)
     setPhase('answering')
     setSimpler(false)
     if (step === 0) {
+      setVoiceMode(false)
       setStep(-1)
     } else {
       setStep(prev => prev - 1)
@@ -399,23 +473,30 @@ export function DirectorInterviewAssistant({
       <div className="space-y-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-lime" />
+            <AssistantDot speaking={isSpeaking} listening={false} />
             <span className="label-xs">Director Interview</span>
           </div>
           <h2 className="text-xl font-semibold text-text-primary leading-tight">
             Let&apos;s set up your academy together.
           </h2>
-          <p className="text-sm text-text-secondary pt-1">
-            I&apos;ll ask one simple question at a time. You can answer casually — pick a chip, speak, or type.
-            I&apos;ll organize your answers and you&apos;ll review everything before anything is saved.
+        </div>
+
+        {/* Assistant intro bubble */}
+        <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-lime/15 space-y-1">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+            <p className="text-xs font-medium text-lime">Academy OS Setup Assistant</p>
+          </div>
+          <p className="text-sm text-text-secondary leading-relaxed">
+            I&apos;ll ask seven short questions — your philosophy, how you group players,
+            and what a successful first 90 days looks like. Pick a chip, speak, or type. About 3 minutes.
           </p>
         </div>
 
-        <div className="space-y-2.5 py-1">
+        <div className="space-y-2.5">
           {[
-            'Takes 3–5 minutes. Short answers are fine.',
-            'Pick chips that match your style, or add your own note.',
-            'You can speak your answer or type — your choice.',
+            'One question at a time — no rushing.',
+            'Pick chips, speak, or type your answer.',
             'Nothing saves until you review and confirm.',
           ].map((item, i) => (
             <div key={i} className="flex items-start gap-2.5">
@@ -427,14 +508,26 @@ export function DirectorInterviewAssistant({
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setStep(0)}
-          className={`w-full ${BTN_LIME}`}
-        >
-          Start
-          <ArrowRight className="w-4 h-4" />
-        </button>
+        <div className="space-y-2.5 pt-1">
+          {ttsSupported && (
+            <button
+              type="button"
+              onClick={startVoiceInterview}
+              className={`w-full ${BTN_LIME}`}
+            >
+              <Volume2 className="w-4 h-4" />
+              Start Voice Interview
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={startTypeInterview}
+            className={`w-full ${BTN_GHOST}`}
+          >
+            {ttsSupported ? "I'd rather type" : 'Start Interview'}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     )
   }
@@ -542,65 +635,106 @@ export function DirectorInterviewAssistant({
   const isLast = step === INTERVIEW_STEPS.length - 1
   const progressPct = ((step + 1) / INTERVIEW_STEPS.length) * 100
 
+  // Detect short/unclear answers for the confirming phase
+  const wordCount = currentAnswer.custom.trim().split(/\s+/).filter(Boolean).length
+  const isShortAnswer = currentAnswer.chips.length === 0 && wordCount < 6
+
   // ── CONFIRMING PHASE ────────────────────────────────────────────────────────
   if (phase === 'confirming') {
     const interpretation = buildInterpretation(currentStep, currentAnswer.chips, currentAnswer.custom)
 
     return (
       <div className="space-y-6">
-        {/* Progress */}
-        <ProgressBar step={step} total={INTERVIEW_STEPS.length} label={currentStep.stepLabel} pct={progressPct} />
+        <ProgressRow
+          step={step}
+          total={INTERVIEW_STEPS.length}
+          label={currentStep.stepLabel}
+          pct={progressPct}
+          voiceMode={voiceMode}
+          isSpeaking={isSpeaking}
+        />
 
-        {/* Acknowledgment bubble */}
+        {/* Assistant acknowledgment bubble */}
         <div className="px-4 py-4 rounded-xl bg-surface-raised border border-lime/20 space-y-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
-            <p className="text-xs font-medium text-lime">Here&apos;s what I heard…</p>
+            {isShortAnswer ? (
+              wordCount === 0
+                ? <p className="text-xs font-medium text-lime">No worries — just pick the closest option…</p>
+                : <p className="text-xs font-medium text-lime">Want to add a bit more?</p>
+            ) : (
+              <p className="text-xs font-medium text-lime">Here&apos;s what I heard…</p>
+            )}
           </div>
-          <p className="text-[11px] text-text-muted font-semibold uppercase tracking-wide">{currentAck}</p>
-          <p className="text-sm text-text-secondary leading-relaxed">{interpretation}</p>
-        </div>
 
-        {/* Helper message for simpler */}
-        <p className="text-xs text-text-muted px-1">
-          Want to adjust that, or are we good to keep going?
-        </p>
+          {isShortAnswer ? (
+            <p className="text-sm text-text-secondary leading-relaxed">{currentStep.followUpPrompt}</p>
+          ) : (
+            <>
+              <p className="text-[11px] text-text-muted font-semibold uppercase tracking-wide">{currentAck}</p>
+              <p className="text-sm text-text-secondary leading-relaxed">{interpretation}</p>
+            </>
+          )}
+        </div>
 
         {/* Action buttons */}
         <div className="space-y-2.5">
-          <button
-            type="button"
-            onClick={acceptAnswer}
-            className={`w-full ${BTN_LIME}`}
-          >
-            {isLast ? 'Looks right — show me the review' : 'Looks right — next question'}
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          {isShortAnswer ? (
+            <>
+              <button
+                type="button"
+                onClick={askSimpler}
+                className={`w-full ${BTN_LIME}`}
+              >
+                <RefreshCw className="w-4 h-4" />
+                Let me rephrase
+              </button>
+              <button
+                type="button"
+                onClick={acceptAnswer}
+                className={`w-full ${BTN_GHOST}`}
+              >
+                Keep it anyway — {isLast ? 'show review' : 'next question'}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={acceptAnswer}
+                className={`w-full ${BTN_LIME}`}
+              >
+                {isLast ? 'Looks right — show me the review' : 'Looks right — next question'}
+                <ArrowRight className="w-4 h-4" />
+              </button>
 
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={editAnswer}
-              className={`flex-1 ${BTN_GHOST}`}
-            >
-              Edit answer
-            </button>
-            <button
-              type="button"
-              onClick={skipAnswer}
-              className={`flex-1 ${BTN_GHOST}`}
-            >
-              Skip for now
-            </button>
-          </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={editAnswer}
+                  className={`flex-1 ${BTN_GHOST}`}
+                >
+                  Edit answer
+                </button>
+                <button
+                  type="button"
+                  onClick={skipAnswer}
+                  className={`flex-1 ${BTN_GHOST}`}
+                >
+                  Skip for now
+                </button>
+              </div>
 
-          <button
-            type="button"
-            onClick={askSimpler}
-            className="w-full text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors py-1"
-          >
-            Ask me simpler
-          </button>
+              <button
+                type="button"
+                onClick={askSimpler}
+                className="w-full text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors py-1"
+              >
+                Ask me simpler
+              </button>
+            </>
+          )}
         </div>
       </div>
     )
@@ -609,36 +743,56 @@ export function DirectorInterviewAssistant({
   // ── ANSWERING PHASE ─────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
-      {/* Progress */}
-      <ProgressBar step={step} total={INTERVIEW_STEPS.length} label={currentStep.stepLabel} pct={progressPct} />
+      <ProgressRow
+        step={step}
+        total={INTERVIEW_STEPS.length}
+        label={currentStep.stepLabel}
+        pct={progressPct}
+        voiceMode={voiceMode}
+        isSpeaking={isSpeaking}
+      />
 
-      {/* Voice controls row */}
-      {ttsSupported && (
-        <div className="flex items-center justify-between gap-3">
+      {/* Voice mode controls */}
+      {voiceMode && (
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             type="button"
-            onClick={() => speakText(currentStep.spokenQuestion)}
+            onClick={repeatQuestion}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
           >
-            <Volume2 className="w-3.5 h-3.5 text-lime" />
-            Play question
+            <RefreshCw className="w-3 h-3" />
+            Repeat
           </button>
-          <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer select-none">
-            <div
-              role="checkbox"
-              aria-checked={autoRead}
-              tabIndex={0}
-              onKeyDown={e => e.key === 'Enter' && setAutoRead(v => !v)}
-              onClick={() => setAutoRead(v => !v)}
-              className={`relative w-8 h-4 rounded-full transition-colors cursor-pointer ${autoRead ? 'bg-lime/70' : 'bg-border'}`}
+          {isSpeaking && (
+            <button
+              type="button"
+              onClick={pauseSpeech}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
             >
-              <span
-                className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${autoRead ? 'translate-x-4' : ''}`}
-              />
-            </div>
-            Auto-read questions
-          </label>
+              <VolumeX className="w-3 h-3" />
+              Pause
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={switchToTypeMode}
+            className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+          >
+            Type instead
+          </button>
         </div>
+      )}
+
+      {/* Type mode: manual play button */}
+      {!voiceMode && ttsSupported && (
+        <button
+          type="button"
+          onClick={() => speakText(currentStep.spokenQuestion)}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
+        >
+          <Volume2 className="w-3.5 h-3.5 text-lime" />
+          Play question
+        </button>
       )}
 
       {/* Question */}
@@ -651,10 +805,10 @@ export function DirectorInterviewAssistant({
         <h2 className="text-base font-semibold text-text-primary leading-snug">
           {currentStep.question}
         </h2>
-        <p className="text-xs text-text-muted leading-relaxed">{currentStep.whyItMatters}</p>
+        <p className="text-xs text-text-muted leading-relaxed">{currentStep.helperCopy}</p>
       </div>
 
-      {/* Helper chips */}
+      {/* Chips */}
       <div className="space-y-2">
         <p className="text-[10px] text-text-muted">Pick one or more, or add your own below:</p>
         <div className="flex flex-wrap gap-2">
@@ -678,7 +832,7 @@ export function DirectorInterviewAssistant({
         </div>
       </div>
 
-      {/* Mic input */}
+      {/* Mic input for spoken answers */}
       <MicButton
         onTranscript={(text) => appendTranscript(field, text)}
         disabled={false}
@@ -700,7 +854,7 @@ export function DirectorInterviewAssistant({
         )}
       </div>
 
-      {/* Helper options */}
+      {/* Helper links */}
       <div className="flex flex-wrap gap-2 pt-1 border-t border-border">
         <button
           type="button"
@@ -713,7 +867,6 @@ export function DirectorInterviewAssistant({
         <button
           type="button"
           onClick={() => {
-            // Pre-select first chip as closest option
             if (currentStep.chips.length > 0 && !currentAnswer.chips.includes(currentStep.chips[0])) {
               toggleChip(field, currentStep.chips[0])
             }
@@ -755,22 +908,33 @@ export function DirectorInterviewAssistant({
   )
 }
 
-// ─── Shared progress bar sub-component ───────────────────────────────────────
-function ProgressBar({
+// ─── Progress row with optional voice-mode indicator ─────────────────────────
+function ProgressRow({
   step,
   total,
   label,
   pct,
+  voiceMode,
+  isSpeaking,
 }: {
   step: number
   total: number
   label: string
   pct: number
+  voiceMode: boolean
+  isSpeaking: boolean
 }) {
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-mono text-text-muted">{step + 1} / {total}</p>
+      <div className="flex items-center justify-between gap-3">
+        {voiceMode ? (
+          <div className="flex items-center gap-2">
+            <AssistantDot speaking={isSpeaking} listening={false} />
+            <AssistantStatus speaking={isSpeaking} listening={false} />
+          </div>
+        ) : (
+          <p className="text-[10px] font-mono text-text-muted">{step + 1} / {total}</p>
+        )}
         <p className="label-xs">{label}</p>
       </div>
       <div className="w-full h-0.5 rounded-full bg-border overflow-hidden">
