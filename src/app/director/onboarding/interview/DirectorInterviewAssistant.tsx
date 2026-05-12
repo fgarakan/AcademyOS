@@ -159,11 +159,19 @@ function RealtimeDebugPanel({
   debug,
   welcomeSent,
   firstRequested,
+  speechStarted,
+  finalTranscriptReceived,
+  userTranscriptLen,
+  assistantTranscriptLen,
 }: {
   status: string
   debug: RealtimeDebugState
   welcomeSent?: boolean
   firstRequested?: boolean
+  speechStarted?: boolean
+  finalTranscriptReceived?: boolean
+  userTranscriptLen?: number
+  assistantTranscriptLen?: number
 }) {
   return (
     <details className="mt-4">
@@ -188,6 +196,11 @@ function RealtimeDebugPanel({
         <p>audio playing: {String(debug.audioPlaying)}</p>
         <p>audio blocked: {String(debug.audioBlocked)}</p>
         <p>last event: {debug.lastEventType || 'none'}</p>
+        <p>last transcript event: {debug.lastTranscriptEvent || 'none'}</p>
+        <p>speech started: <span className={speechStarted ? 'text-status-blue' : 'text-text-muted'}>{String(speechStarted ?? false)}</span></p>
+        <p>final transcript: <span className={finalTranscriptReceived ? 'text-status-green' : 'text-text-muted'}>{String(finalTranscriptReceived ?? false)}</span></p>
+        <p>user transcript len: {userTranscriptLen ?? 0}</p>
+        <p>assistant transcript len: {assistantTranscriptLen ?? 0}</p>
         {debug.lastError && (
           <p className="text-status-red break-words">error: {debug.lastError}</p>
         )}
@@ -221,7 +234,7 @@ function RealtimeDebugPanel({
   )
 }
 
-// ─── Mic button (browser-native STT) ─────────────────────────────────────────
+// ─── Mic button (browser-native STT fallback) ─────────────────────────────────
 interface MicButtonProps {
   onTranscript: (text: string) => void
   disabled?: boolean
@@ -351,6 +364,10 @@ export function DirectorInterviewAssistant({
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('idle')
   const [audioWarning, setAudioWarning] = useState<string | null>(null)
 
+  // Text shown in the assistant bubble — what the app told the assistant to say.
+  // Used as fallback when Realtime transcript events don't arrive.
+  const [lastSpokenAssistantText, setLastSpokenAssistantText] = useState('')
+
   // Dev-only debug fields for welcome sequence
   const [debugWelcomeSent, setDebugWelcomeSent] = useState(false)
   const [debugFirstRequested, setDebugFirstRequested] = useState(false)
@@ -363,14 +380,17 @@ export function DirectorInterviewAssistant({
   const isRealtimeConnected = realtimeVoice.status === 'connected'
 
   // ── Browser TTS refs (speechSynthesis fallback) ──────────────────────────────
-  // utteranceRef prevents Chrome from GC-ing the utterance mid-speech.
-  // Without this, Chrome silently stops speaking and onend never fires.
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null)
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Prevents the auto-speak useEffect from re-speaking step 0 when the welcome
-  // already included the first question. Reset when a new voice session starts.
+  // already included the first question.
   const hasSentWelcomeRef = useRef(false)
+  // Pending ack phrase: set by acceptAnswer() in voice mode.
+  // Consumed by the auto-speak useEffect to prepend ack + next question.
+  const pendingAckRef = useRef<string | null>(null)
+  // Tracks the last applied user transcript to prevent double-application.
+  const lastAppliedTranscriptRef = useRef('')
 
   // Detect TTS support after hydration
   useEffect(() => {
@@ -394,9 +414,21 @@ export function DirectorInterviewAssistant({
     return () => window.speechSynthesis.removeEventListener('voiceschanged', pick)
   }, [])
 
+  // ── Wire Realtime user transcript to answer field ────────────────────────────
+  // When the director's spoken answer is transcribed, auto-populate the custom
+  // textarea. Director can then edit before confirming. Does not auto-advance.
+  useEffect(() => {
+    const t = realtimeVoice.finalUserTranscript
+    if (!t || t === lastAppliedTranscriptRef.current) return
+    if (step < 0 || step >= INTERVIEW_STEPS.length) return
+    lastAppliedTranscriptRef.current = t
+    const stepField = INTERVIEW_STEPS[step].field
+    appendTranscript(stepField, t)
+  // appendTranscript is defined below but is stable (uses setAnswers which is stable)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realtimeVoice.finalUserTranscript, step])
+
   // ── Browser TTS helper (fallback when Realtime is not connected) ─────────────
-  // speakAssistant is stable (useCallback with []) because it only accesses
-  // refs and React state setters, both of which are stable across renders.
   const speakAssistant = useCallback((
     text: string,
     opts?: { onEnd?: () => void; onError?: () => void; timeoutMs?: number }
@@ -482,13 +514,22 @@ export function DirectorInterviewAssistant({
     setIsSpeaking(false)
   }, [])
 
+  // ── Realtime speak wrapper — tracks what was spoken for the assistant bubble ──
+  // The app always knows what text it told the AI to say, so the bubble shows
+  // it immediately even if Realtime transcript events are delayed or absent.
+  const speakWithTracking = useCallback((text: string, onDone?: () => void) => {
+    setLastSpokenAssistantText(text)
+    realtimeVoice.speak(text, onDone)
+  }, [realtimeVoice.speak])
+
   // ── Auto-speak question when voice mode is on and an answering step is active.
-  // Uses Realtime when connected, browser TTS when not.
+  // Realtime path: speakWithTracking (tracks text + fires response.create).
+  // Browser TTS path: setLastSpokenAssistantText + speakAssistant.
+  // pendingAckRef: set by acceptAnswer() to combine ack + next question.
   useEffect(() => {
     if (!voiceMode || step < 0 || step >= INTERVIEW_STEPS.length || phase !== 'answering') return
 
     // Step 0 was already spoken as part of the combined welcome + first question.
-    // Clear the flag so Repeat Question works normally going forward.
     if (step === 0 && hasSentWelcomeRef.current) {
       hasSentWelcomeRef.current = false
       setIsSpeaking(false)
@@ -496,25 +537,32 @@ export function DirectorInterviewAssistant({
       return
     }
 
+    // Consume any pending ack from acceptAnswer() — "Got it. Next question: ..."
+    const ack = pendingAckRef.current
+    pendingAckRef.current = null
+    const baseQ = INTERVIEW_STEPS[step].spokenQuestion
+    const textToSpeak = ack ? `${ack} Next question: ${baseQ}` : baseQ
+
     setIsSpeaking(true)
     setAudioStatus('speaking')
 
     if (isRealtimeConnected) {
-      realtimeVoice.speak(INTERVIEW_STEPS[step].spokenQuestion, () => {
+      speakWithTracking(textToSpeak, () => {
         setIsSpeaking(false)
         setAudioStatus('ready')
       })
       return () => { setIsSpeaking(false) }
     }
 
-    speakAssistant(INTERVIEW_STEPS[step].spokenQuestion, {
+    setLastSpokenAssistantText(textToSpeak)
+    speakAssistant(textToSpeak, {
       onEnd: () => setIsSpeaking(false),
       onError: () => {
         setAudioWarning("Audio didn't play. Check browser sound or use typed mode.")
       },
     })
     return () => { stopAssistantSpeech() }
-  }, [voiceMode, step, phase, isRealtimeConnected, realtimeVoice.speak, speakAssistant, stopAssistantSpeech])
+  }, [voiceMode, step, phase, isRealtimeConnected, speakWithTracking, speakAssistant, stopAssistantSpeech])
 
   // Cancel speech on unmount
   useEffect(() => {
@@ -550,8 +598,9 @@ export function DirectorInterviewAssistant({
     setAudioStatus('speaking')
     const text = INTERVIEW_STEPS[step].spokenQuestion
     if (isRealtimeConnected) {
-      realtimeVoice.speak(text, () => setIsSpeaking(false))
+      speakWithTracking(text, () => setIsSpeaking(false))
     } else {
+      setLastSpokenAssistantText(text)
       speakAssistant(text, {
         onEnd: () => setIsSpeaking(false),
         onError: () => setAudioWarning("Audio didn't play. Check browser sound."),
@@ -569,6 +618,7 @@ export function DirectorInterviewAssistant({
     stopAssistantSpeech()
     if (isRealtimeConnected) realtimeVoice.disconnect()
     hasSentWelcomeRef.current = false
+    pendingAckRef.current = null
     setVoiceMode(false)
     setAudioStatus('idle')
     setAudioWarning(null)
@@ -577,6 +627,8 @@ export function DirectorInterviewAssistant({
   // ── Welcome actions ─────────────────────────────────────────────────────────
   async function startVoiceInterview() {
     hasSentWelcomeRef.current = false
+    pendingAckRef.current = null
+    lastAppliedTranscriptRef.current = ''
     setDebugWelcomeSent(false)
     setDebugFirstRequested(false)
     setVoiceMode(true)
@@ -609,7 +661,7 @@ export function DirectorInterviewAssistant({
     setDebugFirstRequested(true)
     setIsSpeaking(true)
     setAudioStatus('speaking')
-    realtimeVoice.speak(welcomeText, () => {
+    speakWithTracking(welcomeText, () => {
       setIsSpeaking(false)
       setAudioStatus('ready')
       setStep(0)
@@ -639,8 +691,9 @@ export function DirectorInterviewAssistant({
       setIsSpeaking(true)
       setAudioStatus('speaking')
       if (isRealtimeConnected) {
-        realtimeVoice.speak(text, () => setIsSpeaking(false))
+        speakWithTracking(text, () => setIsSpeaking(false))
       } else {
+        setLastSpokenAssistantText(text)
         speakAssistant(text, {
           onEnd: () => setIsSpeaking(false),
           onError: () => setAudioWarning("Audio didn't play. Check browser sound."),
@@ -649,8 +702,21 @@ export function DirectorInterviewAssistant({
     }
   }
 
+  // acceptAnswer: director confirmed — move to next step.
+  // In voice mode, queues an ack so the auto-speak useEffect combines it with
+  // the next question: "Got it. Next question: ..."
+  // App controls the next question — always uses INTERVIEW_STEPS[nextStep].spokenQuestion.
   function acceptAnswer() {
     stopAssistantSpeech()
+    // Queue ack for voice mode (consumed in auto-speak useEffect)
+    if (voiceMode && step < INTERVIEW_STEPS.length - 1) {
+      const a = answers[INTERVIEW_STEPS[step].field]
+      pendingAckRef.current = getAcknowledgment(a.chips, a.custom)
+    }
+    // Clear transcript state for the next step
+    realtimeVoice.clearUserTranscript()
+    lastAppliedTranscriptRef.current = ''
+
     if (step === INTERVIEW_STEPS.length - 1) {
       setStep(7)
     } else {
@@ -667,6 +733,8 @@ export function DirectorInterviewAssistant({
     stopAssistantSpeech()
     const s = INTERVIEW_STEPS[step]
     setAnswers(prev => ({ ...prev, [s.field]: { chips: [], custom: '' } }))
+    realtimeVoice.clearUserTranscript()
+    lastAppliedTranscriptRef.current = ''
     if (step === INTERVIEW_STEPS.length - 1) {
       setStep(7)
     } else {
@@ -678,14 +746,17 @@ export function DirectorInterviewAssistant({
   function askSimpler() {
     const s = INTERVIEW_STEPS[step]
     setAnswers(prev => ({ ...prev, [s.field]: { chips: [], custom: '' } }))
+    realtimeVoice.clearUserTranscript()
+    lastAppliedTranscriptRef.current = ''
     setSimpler(true)
     setPhase('answering')
     if (voiceMode) {
       setIsSpeaking(true)
       setAudioStatus('speaking')
       if (isRealtimeConnected) {
-        realtimeVoice.speak(s.followUpPrompt, () => setIsSpeaking(false))
+        speakWithTracking(s.followUpPrompt, () => setIsSpeaking(false))
       } else {
+        setLastSpokenAssistantText(s.followUpPrompt)
         speakAssistant(s.followUpPrompt, {
           onEnd: () => setIsSpeaking(false),
           onError: () => setAudioWarning("Audio didn't play. Check browser sound."),
@@ -701,9 +772,11 @@ export function DirectorInterviewAssistant({
     if (step === 0) {
       if (isRealtimeConnected) realtimeVoice.disconnect()
       hasSentWelcomeRef.current = false
+      pendingAckRef.current = null
       setVoiceMode(false)
       setAudioStatus('idle')
       setAudioWarning(null)
+      setLastSpokenAssistantText('')
       setStep(-1)
     } else {
       setStep(prev => prev - 1)
@@ -729,6 +802,18 @@ export function DirectorInterviewAssistant({
         setSaveError(result.error ?? 'Failed to save. Please try again.')
       }
     })
+  }
+
+  // ── Shared debug panel props ─────────────────────────────────────────────────
+  const debugPanelProps = {
+    status: realtimeVoice.status,
+    debug: realtimeVoice.debug,
+    welcomeSent: debugWelcomeSent,
+    firstRequested: debugFirstRequested,
+    speechStarted: realtimeVoice.speechStarted,
+    finalTranscriptReceived: realtimeVoice.finalTranscriptReceived,
+    userTranscriptLen: realtimeVoice.finalUserTranscript.length,
+    assistantTranscriptLen: lastSpokenAssistantText.length,
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -829,14 +914,8 @@ export function DirectorInterviewAssistant({
           </button>
         </div>
 
-        {/* Dev-only debug panel */}
         {process.env.NODE_ENV !== 'production' && (
-          <RealtimeDebugPanel
-            status={realtimeVoice.status}
-            debug={realtimeVoice.debug}
-            welcomeSent={debugWelcomeSent}
-            firstRequested={debugFirstRequested}
-          />
+          <RealtimeDebugPanel {...debugPanelProps} />
         )}
       </div>
     )
@@ -947,6 +1026,11 @@ export function DirectorInterviewAssistant({
 
   const wordCount = currentAnswer.custom.trim().split(/\s+/).filter(Boolean).length
   const isShortAnswer = currentAnswer.chips.length === 0 && wordCount < 6
+
+  // What to show in the assistant bubble: live transcript > app-known text > last confirmed transcript
+  const assistantDisplayText = (isSpeaking && realtimeVoice.currentAssistantText)
+    ? realtimeVoice.currentAssistantText
+    : (lastSpokenAssistantText || realtimeVoice.lastAssistantText)
 
   // ── CONFIRMING PHASE ────────────────────────────────────────────────────────
   if (phase === 'confirming') {
@@ -1066,14 +1150,8 @@ export function DirectorInterviewAssistant({
           )}
         </div>
 
-        {/* Dev debug panel */}
         {process.env.NODE_ENV !== 'production' && (
-          <RealtimeDebugPanel
-            status={realtimeVoice.status}
-            debug={realtimeVoice.debug}
-            welcomeSent={debugWelcomeSent}
-            firstRequested={debugFirstRequested}
-          />
+          <RealtimeDebugPanel {...debugPanelProps} />
         )}
       </div>
     )
@@ -1163,6 +1241,65 @@ export function DirectorInterviewAssistant({
         </button>
       )}
 
+      {/* ── Assistant bubble — shows what the assistant said/is saying ────────── */}
+      {/* Displayed in voice mode when we know what the assistant spoke.          */}
+      {/* Falls back to app-known text if Realtime transcript events don't arrive. */}
+      {voiceMode && assistantDisplayText && (
+        <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-lime/15 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+            <p className="text-xs font-medium text-lime">Assistant</p>
+            {isSpeaking && isRealtimeConnected && (
+              <AssistantDot speaking={true} listening={false} />
+            )}
+          </div>
+          <p className="text-sm text-text-secondary leading-relaxed">{assistantDisplayText}</p>
+        </div>
+      )}
+
+      {/* ── Voice capture status — Realtime listening state ───────────────────── */}
+      {/* Shown when Realtime is connected and assistant is not currently speaking. */}
+      {voiceMode && isRealtimeConnected && !isSpeaking && (
+        <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border space-y-2">
+          <div className="flex items-center gap-2">
+            {realtimeVoice.speechStarted ? (
+              <>
+                <Mic className="w-3.5 h-3.5 text-status-blue animate-pulse shrink-0" />
+                <p className="text-xs text-status-blue">Listening…</p>
+              </>
+            ) : realtimeVoice.finalTranscriptReceived ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-status-green shrink-0" />
+                <p className="text-xs text-text-secondary">Captured — edit below if needed, then click Use this answer</p>
+              </>
+            ) : (
+              <>
+                <Mic className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                <p className="text-xs text-text-muted">
+                  {currentAnswer.custom
+                    ? 'Answer ready — edit or speak again'
+                    : 'Speak your answer, or type below'}
+                </p>
+              </>
+            )}
+          </div>
+          {realtimeVoice.finalTranscriptReceived && (
+            <button
+              type="button"
+              onClick={() => {
+                realtimeVoice.clearUserTranscript()
+                lastAppliedTranscriptRef.current = ''
+                setCustom(field, '')
+              }}
+              className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Record again
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Question */}
       <div className="space-y-1">
         {simpler && (
@@ -1200,21 +1337,25 @@ export function DirectorInterviewAssistant({
         </div>
       </div>
 
-      {/* Mic input for spoken answers */}
-      <MicButton
-        onTranscript={(text) => appendTranscript(field, text)}
-        disabled={false}
-      />
+      {/* Browser STT mic button — fallback / type-mode only */}
+      {!voiceMode && (
+        <MicButton
+          onTranscript={(text) => appendTranscript(field, text)}
+          disabled={false}
+        />
+      )}
 
-      {/* Custom text area */}
+      {/* Custom text area — pre-populated by Realtime transcript when in voice mode */}
       <div className="space-y-1.5">
-        <label className="label-xs">Your own words (optional)</label>
+        <label className="label-xs">
+          {voiceMode ? 'Your answer (edit as needed)' : 'Your own words (optional)'}
+        </label>
         <textarea
           value={currentAnswer.custom}
           onChange={e => setCustom(field, e.target.value)}
           rows={2}
           maxLength={400}
-          placeholder="Add a note in your own words…"
+          placeholder={voiceMode ? 'Transcript appears here after you speak…' : 'Add a note in your own words…'}
           className="w-full text-sm bg-surface-raised border border-border rounded-xl px-3 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/50 transition-colors resize-none"
         />
         {currentAnswer.custom.length > 0 && (
@@ -1253,7 +1394,7 @@ export function DirectorInterviewAssistant({
         </button>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation — app controls step advancement, not the AI */}
       <div className="flex gap-3 pt-1">
         <button
           type="button"
@@ -1273,14 +1414,8 @@ export function DirectorInterviewAssistant({
         </button>
       </div>
 
-      {/* Dev debug panel */}
       {process.env.NODE_ENV !== 'production' && (
-        <RealtimeDebugPanel
-          status={realtimeVoice.status}
-          debug={realtimeVoice.debug}
-          welcomeSent={debugWelcomeSent}
-          firstRequested={debugFirstRequested}
-        />
+        <RealtimeDebugPanel {...debugPanelProps} />
       )}
     </div>
   )

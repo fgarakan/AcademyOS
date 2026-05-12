@@ -2,6 +2,106 @@
 
 ---
 
+## 2026-05-12 — Sprint 230: Director Interview Integrated Voice Transcript + Confirm Flow V1
+
+**Why added:** The Realtime voice assistant could speak and the director could hear it, but the experience felt like a separate AI agent rather than an integrated Academy OS workflow. The assistant's spoken words never appeared in the UI, the director's spoken responses were never captured as text, and — critically — the AI could potentially respond freely to director speech via server VAD auto-response. The app was not the owner of the workflow.
+
+**App-owned workflow principle:** The app controls every step. The AI speaks only what the app tells it to speak. The AI does not advance the step. The AI does not save. The AI does not decide completion.
+
+**Anti-free-running (Part E):**
+- `session.update` now sends `turn_detection: { type: 'server_vad', create_response: false }` — VAD still detects director speech (for transcription) but does NOT auto-generate AI responses. Only explicit `speak()` calls generate responses.
+- Server-side session instructions updated to: "You do not control the interview. The app controls every step. Speak only what you are told. Do not ask extra questions. Do not decide when to move to the next step."
+- `response.create` instructions updated: "Say exactly this, word for word… Do not add extra words, questions, or commentary."
+
+**Assistant transcript capture (Part A):**
+`useRealtimeInterviewVoice.ts` now listens for:
+- `response.audio_transcript.delta` → appends to `currentAssistantText` (live build-up while AI speaks)
+- `response.audio_transcript.done` → finalizes to `lastAssistantText`, clears `currentAssistantText`
+- `response.text.delta` / `response.text.done` → text modality fallback
+- `response.content_part.done` → audio/text content part fallback
+Exposes: `currentAssistantText`, `lastAssistantText`, `clearAssistantTranscript()`
+
+**Director transcript capture (Part B):**
+`useRealtimeInterviewVoice.ts` now listens for:
+- `input_audio_buffer.speech_started` → sets `speechStarted: true`
+- `input_audio_buffer.speech_stopped` → sets `speechStarted: false`
+- `conversation.item.input_audio_transcription.completed` → sets `finalUserTranscript`, `finalTranscriptReceived: true`
+Exposes: `finalUserTranscript`, `speechStarted`, `finalTranscriptReceived`, `clearUserTranscript()`
+
+**Assistant bubble UI (Part C):**
+In the answering phase (voice mode), an "Assistant" bubble now appears showing:
+- `currentAssistantText` while the AI is actively speaking (live transcript build-up)
+- Falls back to `lastSpokenAssistantText` (app-known text — what the app told the AI to say)
+- Falls back to `lastAssistantText` (last confirmed Realtime transcript)
+This means the bubble always shows the right text even if Realtime transcript events are delayed or absent (Part I fallback).
+
+**Director transcript wired to answer field (Part C/D):**
+A `useEffect` in `DirectorInterviewAssistant.tsx` watches `finalUserTranscript`. When a new transcript arrives it calls `appendTranscript(field, t)` to populate the custom textarea for the current step. `lastAppliedTranscriptRef` prevents double-application. Director can edit the textarea before clicking Use this answer.
+
+**Voice capture status section (Part G):**
+In the answering phase (Realtime connected, not speaking), a capture card shows:
+- "Listening…" (blue, pulsing mic) — while VAD detects director speech
+- "Captured — edit below if needed, then click Use this answer" (green check) — when transcript arrived
+- "Speak your answer, or type below" (muted mic) — idle
+- "Record again" button (clears transcript and textarea, allows re-capture)
+
+**Confirm flow (Part D):**
+Director must explicitly click "Use this answer" to advance. This calls `confirmAnswer()` which moves to the confirming phase showing "Here's what I heard" with the captured answer. Director then clicks "Looks right — next question" to call `acceptAnswer()` and actually advance the step.
+
+**Ack + next question combined (Part D):**
+`acceptAnswer()` sets `pendingAckRef.current` to an ack phrase (voice mode only). The auto-speak `useEffect` at the new step reads this ref, prepends it, and speaks: `"Got it. Next question: [INTERVIEW_STEPS[nextStep].spokenQuestion]"`. The ack is consumed immediately so it only fires once. The next question always comes from `INTERVIEW_STEPS[nextStep].spokenQuestion` — the AI cannot choose a different question.
+
+**`speakWithTracking` helper (Part F):**
+All `realtimeVoice.speak()` calls in the component are replaced with `speakWithTracking(text, onDone)` which sets `lastSpokenAssistantText(text)` before delegating to the hook. This ensures the assistant bubble always shows the correct text even before Realtime transcript events arrive.
+
+**Step cleanup:** `acceptAnswer()` and `skipAnswer()` now call `clearUserTranscript()` and reset `lastAppliedTranscriptRef` when moving to a new step, so each question starts with a clean capture state.
+
+**Debug panel (Part H):**
+`RealtimeDebugPanel` now shows: `last transcript event`, `speech started`, `final transcript`, `user transcript len`, `assistant transcript len`. New `lastTranscriptEvent` field added to `RealtimeDebugState`.
+
+**Save behavior:** Unchanged. Final review (`step === 7`) and `updateDirectorInterviewAction` are untouched.
+
+**Files changed:**
+- `src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts` — transcript state, event handlers, `create_response: false`, new callbacks, updated return value, `lastTranscriptEvent` debug field
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — assistant bubble, voice capture section, `speakWithTracking`, `pendingAckRef`, transcript wiring, updated debug panel props, step cleanup
+- `src/app/api/director/interview/realtime-session/route.ts` — tightened session instructions
+
+**No migrations created.**
+**`database.types.ts` untouched.**
+**Unrelated dirty files untouched** (`index.html`, `layout.tsx`, `SidebarNav.tsx`, migrations 053/057/058, `exercise-import-dry-run-report.json`).
+
+**TypeScript:** clean (`npx tsc --noEmit` — exit code 0)
+
+**Manual QA checklist:**
+1. Open `/director/onboarding/interview` → click Start Voice Interview
+2. Confirm assistant welcomes and asks Q1
+3. Confirm assistant text appears in the UI bubble
+4. Speak an answer → confirm transcript appears in textarea
+5. Edit the transcript text
+6. Click Use this answer → confirm app moves to confirming phase (not next question yet)
+7. Click Looks right → confirm app advances to Q2
+8. Confirm assistant speaks ack + Q2 ("Got it… Next question: …")
+9. Confirm Q2 bubble shows the combined text
+10. Click Record again → confirm textarea clears, capture state resets
+11. Type instead → confirm typed fallback works
+12. Skip for now → confirm advance without AI choosing next
+13. Complete all 7 questions → confirm review page is unchanged
+14. Save → confirm save behavior unchanged
+15. Confirm no migrations created
+16. Confirm `database.types.ts` untouched
+
+**git add command:**
+```
+git add src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx src/app/api/director/interview/realtime-session/route.ts docs/CHANGELOG.md
+```
+
+**git commit command:**
+```
+git commit -m "Sprint 230 — Director Interview Integrated Voice Transcript + Confirm Flow V1"
+```
+
+---
+
 ## 2026-05-12 — Sprint 229: Director Interview Voice Welcome + First Question V1
 
 **Why added:** The Realtime voice connection now works (Sprint 228), but the assistant's first spoken moment was a short welcome that did not include the first interview question. The question was spoken separately by the auto-speak useEffect, creating an awkward gap and leaving the director uncertain that the interview had started.

@@ -24,6 +24,7 @@ export interface RealtimeDebugState {
   audioPlaying: boolean
   audioBlocked: boolean
   lastEventType: string
+  lastTranscriptEvent: string
   lastError: string | null
   openaiStatus: number | null
   openaiError: string | null
@@ -45,6 +46,7 @@ const INITIAL_DEBUG: RealtimeDebugState = {
   audioPlaying: false,
   audioBlocked: false,
   lastEventType: '',
+  lastTranscriptEvent: '',
   lastError: null,
   openaiStatus: null,
   openaiError: null,
@@ -59,6 +61,15 @@ export function useRealtimeInterviewVoice() {
   const [status, setStatus] = useState<RealtimeStatus>('idle')
   const [audioBlocked, setAudioBlocked] = useState(false)
   const [debug, setDebug] = useState<RealtimeDebugState>(INITIAL_DEBUG)
+
+  // ── Transcript state ────────────────────────────────────────────────────────
+  // Assistant transcript: what the AI is currently saying / last said
+  const [currentAssistantText, setCurrentAssistantText] = useState('')
+  const [lastAssistantText, setLastAssistantText] = useState('')
+  // Director transcript: what the director just spoke
+  const [finalUserTranscript, setFinalUserTranscript] = useState('')
+  const [speechStarted, setSpeechStarted] = useState(false)
+  const [finalTranscriptReceived, setFinalTranscriptReceived] = useState(false)
 
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const dcRef = useRef<RTCDataChannel | null>(null)
@@ -108,8 +119,22 @@ export function useRealtimeInterviewVoice() {
       })
   }, [patchDebug])
 
+  // Clear assistant transcript state (e.g. between steps)
+  const clearAssistantTranscript = useCallback(() => {
+    setCurrentAssistantText('')
+    setLastAssistantText('')
+  }, [])
+
+  // Clear director transcript state (Record again / step change)
+  const clearUserTranscript = useCallback(() => {
+    setFinalUserTranscript('')
+    setSpeechStarted(false)
+    setFinalTranscriptReceived(false)
+  }, [])
+
   // Send a response.create to make the assistant speak text aloud.
   // onDone fires on response.done or after a timeout fallback.
+  // App owns the workflow — never let the AI choose what to say next.
   const speak = useCallback((text: string, onDone?: () => void) => {
     const dc = dcRef.current
     if (!dc || dc.readyState !== 'open') {
@@ -121,6 +146,8 @@ export function useRealtimeInterviewVoice() {
       return
     }
     clearPending()
+    // Clear current transcript so the new utterance builds up fresh
+    setCurrentAssistantText('')
 
     const estimatedMs = Math.max(3000, text.length * 65 + 1200)
 
@@ -128,7 +155,8 @@ export function useRealtimeInterviewVoice() {
       type: 'response.create',
       response: {
         modalities: ['audio', 'text'],
-        instructions: `Say the following exactly, in a warm natural voice: "${text}"`,
+        // Explicit constraint: say exactly this, nothing more.
+        instructions: `Say exactly this, word for word, in a warm natural voice: "${text}". Do not add extra words, questions, or commentary after the message ends.`,
       },
     }
     console.log('[Realtime] speak() — sending response.create:', text.slice(0, 60))
@@ -303,7 +331,75 @@ export function useRealtimeInterviewVoice() {
         console.log('[Realtime] server event:', evType)
         patchDebug({ lastEventType: evType })
 
-        // response.done fires when an assistant turn (including audio) is complete
+        // ── Assistant transcript events ────────────────────────────────────
+        // Build up current transcript delta-by-delta while assistant speaks
+        if (evType === 'response.audio_transcript.delta') {
+          const delta = (msg.delta as string) ?? ''
+          if (delta) setCurrentAssistantText(prev => prev + delta)
+          patchDebug({ lastTranscriptEvent: evType })
+        }
+        // Finalize when audio transcript is complete — full text arrives here
+        if (evType === 'response.audio_transcript.done') {
+          const transcript = (msg.transcript as string) ?? ''
+          if (transcript) setLastAssistantText(transcript)
+          setCurrentAssistantText('')
+          patchDebug({ lastTranscriptEvent: evType })
+        }
+        // Text modality fallback (if audio transcript events not present)
+        if (evType === 'response.text.delta') {
+          const delta = (msg.delta as string) ?? ''
+          if (delta) setCurrentAssistantText(prev => prev + delta)
+          patchDebug({ lastTranscriptEvent: evType })
+        }
+        if (evType === 'response.text.done') {
+          const text = (msg.text as string) ?? ''
+          if (text) setLastAssistantText(text)
+          setCurrentAssistantText('')
+          patchDebug({ lastTranscriptEvent: evType })
+        }
+        // Content part done — another path that may carry transcript
+        if (evType === 'response.content_part.done') {
+          const part = msg.part as Record<string, unknown> | undefined
+          if (part?.type === 'audio') {
+            const t = (part.transcript as string) ?? ''
+            if (t) setLastAssistantText(t)
+            setCurrentAssistantText('')
+          } else if (part?.type === 'text') {
+            const t = (part.text as string) ?? ''
+            if (t) setLastAssistantText(t)
+            setCurrentAssistantText('')
+          }
+          patchDebug({ lastTranscriptEvent: evType })
+        }
+
+        // ── Director speech / transcription events ─────────────────────────
+        if (evType === 'input_audio_buffer.speech_started') {
+          console.log('[Realtime] director speech started')
+          setSpeechStarted(true)
+          setFinalTranscriptReceived(false)
+          patchDebug({ lastTranscriptEvent: evType })
+        }
+        if (evType === 'input_audio_buffer.speech_stopped') {
+          console.log('[Realtime] director speech stopped')
+          setSpeechStarted(false)
+          patchDebug({ lastTranscriptEvent: evType })
+        }
+        if (evType === 'conversation.item.input_audio_transcription.completed') {
+          const transcript = (msg.transcript as string)?.trim() ?? ''
+          console.log('[Realtime] director transcript completed:', transcript.slice(0, 60))
+          if (transcript) {
+            setFinalUserTranscript(transcript)
+            setFinalTranscriptReceived(true)
+            patchDebug({ lastTranscriptEvent: evType })
+          }
+        }
+        // Also handle the delta variant if present
+        if (evType === 'conversation.item.input_audio_transcription.delta') {
+          patchDebug({ lastTranscriptEvent: evType })
+        }
+
+        // ── response.done fires when the full assistant turn is complete ────
+        // This is when we fire the onDone callback for speak()
         if ((evType === 'response.done' || evType === 'response.audio.done') && pendingDoneRef.current) {
           const { cb, timer } = pendingDoneRef.current
           clearTimeout(timer)
@@ -340,16 +436,20 @@ export function useRealtimeInterviewVoice() {
       patchDebug({ dataChannelState: 'open' })
       setStatus('connected')
 
-      // Configure session: output audio + server VAD + input transcription
+      // App-owned workflow: server VAD transcribes director speech but does NOT
+      // auto-generate responses. The app calls speak() to control every utterance.
       const sessionUpdate = {
         type: 'session.update',
         session: {
           modalities: ['audio', 'text'],
-          turn_detection: { type: 'server_vad' },
+          turn_detection: {
+            type: 'server_vad',
+            create_response: false, // app owns response creation — no free-running AI
+          },
           input_audio_transcription: { model: 'whisper-1' },
         },
       }
-      console.log('[Realtime] sending session.update')
+      console.log('[Realtime] sending session.update (create_response: false)')
       dc.send(JSON.stringify(sessionUpdate))
 
       resolveDcOpen()
@@ -438,5 +538,22 @@ export function useRealtimeInterviewVoice() {
 
   useEffect(() => { return () => { disconnect() } }, [disconnect])
 
-  return { status, debug, audioBlocked, connect, disconnect, enableAudio, speak }
+  return {
+    status,
+    debug,
+    audioBlocked,
+    connect,
+    disconnect,
+    enableAudio,
+    speak,
+    // Assistant transcript — what the AI is currently saying / last said
+    currentAssistantText,
+    lastAssistantText,
+    clearAssistantTranscript,
+    // Director transcript — what the director spoke
+    finalUserTranscript,
+    speechStarted,
+    finalTranscriptReceived,
+    clearUserTranscript,
+  }
 }

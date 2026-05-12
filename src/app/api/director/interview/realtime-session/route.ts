@@ -66,8 +66,12 @@ export async function POST() {
           type: 'realtime',
           model,
           instructions:
-            'You are the Academy OS setup assistant. Speak warmly and concisely. ' +
-            'When asked to say something, say it naturally and clearly.',
+            'You are the Academy OS setup assistant. ' +
+            'You do not control the interview. The app controls every step. ' +
+            'When the app sends you a response.create with exact text, speak that text naturally and warmly, word for word. ' +
+            'Do not add questions, commentary, or follow-ups beyond what you were told to say. ' +
+            'Do not ask extra questions. Do not decide when to move to the next step. ' +
+            'Wait for the app to give you the next instruction.',
           audio: {
             output: { voice },
           },
