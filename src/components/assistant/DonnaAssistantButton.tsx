@@ -2,11 +2,19 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
-import { Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Mic } from 'lucide-react'
+import {
+  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Mic, Layers,
+} from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { QuickCaptureDrawer } from '@/components/capture/QuickCaptureDrawer'
 import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
+import { TemplateDraftPanel } from '@/components/assistant/TemplateDraftPanel'
+import type { TemplateDraft } from '@/components/assistant/templateDraftTypes'
+import {
+  isTemplateCreationIntent,
+  parseTemplateDraft,
+} from '@/components/assistant/templateDraftParser'
 
 // ---------------------------------------------------------------------------
 // Route context map — static guidance per director route
@@ -75,8 +83,8 @@ const ROUTE_CONTEXT: Record<string, RouteContext> = {
   '/director/class-templates': {
     screen: 'Templates',
     guidance:
-      'Templates help you organize repeatable class plans, training blocks, and session structures.',
-    nextAction: 'Review or create a template.',
+      'Templates are reusable class blueprints. Assign a curriculum level, generate a lesson plan, and coaches can run it on court. Use Academy Assistant to draft a new template by voice or text.',
+    nextAction: 'Create a template or assign a curriculum level to an existing one.',
   },
 }
 
@@ -117,10 +125,20 @@ const VOICE_PROMPTS: Record<string, string[]> = {
     'Explain this review item.',
     'Where should I start?',
   ],
+  '/director/class-templates': [
+    'Help me create an Orange 2 class template.',
+    'Create a template with warm-up, rally skills, point play, and matches.',
+    'Show me how to build a class template.',
+  ],
+  '/director/curriculum': [
+    'Create a template from this curriculum level.',
+    'Help me build an Orange 2 class template.',
+    'Explain how curriculum connects to templates.',
+  ],
   '/director': [
+    'Help me create a class template.',
+    'What should I build next?',
     'Brief me on what needs attention.',
-    'What should I check first?',
-    'Show me setup progress.',
   ],
 }
 
@@ -155,10 +173,10 @@ const QUICK_LINKS = [
 ]
 
 // ---------------------------------------------------------------------------
-// Mode config — voice is the primary card, not a mode button
+// Mode config
 // ---------------------------------------------------------------------------
 
-type AssistantMode = 'guide' | 'explain' | 'find' | 'capture'
+type AssistantMode = 'guide' | 'explain' | 'find' | 'capture' | 'create_template'
 
 interface ModeConfig {
   mode: AssistantMode
@@ -168,6 +186,12 @@ interface ModeConfig {
 }
 
 const MODES: ModeConfig[] = [
+  {
+    mode: 'create_template',
+    label: 'Create Template',
+    desc: 'Draft a class template with Academy Assistant. Nothing saves until you approve.',
+    Icon: Layers,
+  },
   {
     mode: 'guide',
     label: 'Guide me',
@@ -194,6 +218,13 @@ const MODES: ModeConfig[] = [
   },
 ]
 
+// Template creation quick-start examples — deterministic, no AI
+const TEMPLATE_QUICK_STARTS = [
+  'Create a template for Orange 2 with standard warm-up, dynamic warm-up, rally skills, point play, and matches.',
+  'Build a Yellow 1 class with warm-up, technical work, point play, and match play.',
+  'Create a 60-minute Red 2 template with warm-up, rally skills, and matches.',
+]
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -213,12 +244,20 @@ export function DonnaAssistantButton({ academyId }: Props) {
   const [typeInstead, setTypeInstead] = useState(false)
   const [typedText, setTypedText] = useState('')
 
+  // Template creation state — all local until director explicitly approves and saves
+  const [templateDraft, setTemplateDraft] = useState<TemplateDraft | null>(null)
+  const [fromVoiceCapture, setFromVoiceCapture] = useState(false)
+  const [templateCommandInput, setTemplateCommandInput] = useState('')
+
   const ctx = resolveContext(pathname)
   const voicePrompts = resolveVoicePrompts(pathname)
 
   const closePanel = useCallback(() => {
     setPanelOpen(false)
     setActiveMode(null)
+    setTemplateDraft(null)
+    setFromVoiceCapture(false)
+    setTemplateCommandInput('')
   }, [])
 
   // Escape closes the panel
@@ -237,34 +276,70 @@ export function DonnaAssistantButton({ academyId }: Props) {
     setVoiceTranscript(null)
     setTypeInstead(false)
     setTypedText('')
+    setTemplateDraft(null)
+    setFromVoiceCapture(false)
+    setTemplateCommandInput('')
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
     if (mode === 'capture') {
-      // Capture opens the existing QuickCaptureDrawer — no new DB logic
       setCaptureOpen(true)
       closePanel()
+      return
+    }
+    if (mode === 'create_template') {
+      setActiveMode('create_template')
+      // If the type-instead area already has a template intent, auto-parse it
+      if (typedText && isTemplateCreationIntent(typedText)) {
+        setTemplateDraft(parseTemplateDraft(typedText))
+        setFromVoiceCapture(false)
+      }
       return
     }
     setActiveMode(prev => (prev === mode ? null : mode))
   }
 
-  // Transcript stays local — displayed in panel only, never sent anywhere
+  // Voice transcript stays local — detect template intent automatically
   function handleVoiceTranscript(text: string) {
     setVoiceTranscript(text)
     setTypeInstead(false)
+    if (isTemplateCreationIntent(text)) {
+      setTemplateDraft(parseTemplateDraft(text))
+      setFromVoiceCapture(true)
+      setActiveMode('create_template')
+    }
   }
 
-  // Clicking a suggestion pre-fills the type-instead area as a reference script
+  // Clicking a suggestion pre-fills the typed area; template suggestions also start the draft
   function handleSuggestionClick(prompt: string) {
     setTypeInstead(true)
     setTypedText(prompt)
+    if (isTemplateCreationIntent(prompt)) {
+      setTemplateDraft(parseTemplateDraft(prompt))
+      setFromVoiceCapture(false)
+      setActiveMode('create_template')
+    }
+  }
+
+  function handleParseTemplate() {
+    const text = templateCommandInput.trim()
+    if (!text) return
+    setTemplateDraft(parseTemplateDraft(text))
+    setFromVoiceCapture(false)
+    setTemplateCommandInput('')
+  }
+
+  function handleCancelTemplate() {
+    setTemplateDraft(null)
+    setFromVoiceCapture(false)
+    setTemplateCommandInput('')
+    setActiveMode(null)
   }
 
   return (
     <>
       {/* ------------------------------------------------------------------ */}
-      {/* Floating trigger — premium assistant identity, not a lime action    */}
+      {/* Floating trigger                                                      */}
       {/* ------------------------------------------------------------------ */}
       <button
         onClick={() => setPanelOpen(true)}
@@ -389,9 +464,11 @@ export function DonnaAssistantButton({ academyId }: Props) {
                   <p className="text-[12px] text-text-secondary leading-relaxed">
                     {voiceTranscript}
                   </p>
-                  <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
-                    To save, use "Capture a note" below.
-                  </p>
+                  {activeMode !== 'create_template' && (
+                    <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
+                      To save, use "Capture a note" below.
+                    </p>
+                  )}
                   <button
                     onClick={() => setVoiceTranscript(null)}
                     className="mt-1 text-[10px] text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
@@ -456,7 +533,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
                     className="w-full text-left text-[11px] text-text-secondary hover:text-text-primary
                       px-2.5 py-1.5 rounded-lg hover:bg-surface-raised transition-all leading-snug"
                   >
-                    "{prompt}"
+                    &ldquo;{prompt}&rdquo;
                   </button>
                 ))}
               </div>
@@ -464,18 +541,20 @@ export function DonnaAssistantButton({ academyId }: Props) {
           </div>
 
           {/* ── Current screen context card ── */}
-          <div
-            className="rounded-xl px-3.5 py-3"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
-          >
-            <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-0.5">
-              Current screen
-            </p>
-            <p className="text-sm font-semibold text-text-primary mb-1.5">{ctx.screen}</p>
-            <p className="text-[12px] text-text-secondary leading-relaxed">{ctx.guidance}</p>
-          </div>
+          {activeMode !== 'create_template' && (
+            <div
+              className="rounded-xl px-3.5 py-3"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
+            >
+              <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-0.5">
+                Current screen
+              </p>
+              <p className="text-sm font-semibold text-text-primary mb-1.5">{ctx.screen}</p>
+              <p className="text-[12px] text-text-secondary leading-relaxed">{ctx.guidance}</p>
+            </div>
+          )}
 
-          {/* Inline response: Guide me */}
+          {/* ── Inline response: Guide me ── */}
           {activeMode === 'guide' && (
             <div
               className="rounded-xl px-3.5 py-3"
@@ -494,7 +573,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
             </div>
           )}
 
-          {/* Inline response: Explain this screen */}
+          {/* ── Inline response: Explain this screen ── */}
           {activeMode === 'explain' && (
             <div
               className="rounded-xl px-3.5 py-3"
@@ -513,7 +592,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
             </div>
           )}
 
-          {/* Inline response: Find something */}
+          {/* ── Inline response: Find something ── */}
           {activeMode === 'find' && (
             <div
               className="rounded-xl px-3.5 py-3"
@@ -538,6 +617,95 @@ export function DonnaAssistantButton({ academyId }: Props) {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* ── Template creation mode ── */}
+          {activeMode === 'create_template' && (
+            <>
+              {/* "Nothing saves until you approve" notice */}
+              <div
+                className="rounded-lg px-3 py-2.5"
+                style={{
+                  background: 'rgba(139,92,246,0.05)',
+                  border: '1px solid rgba(139,92,246,0.15)',
+                }}
+              >
+                <p className="text-[11px] text-text-secondary leading-snug">
+                  Academy Assistant can draft this template, but nothing is saved until you
+                  approve.
+                </p>
+              </div>
+
+              {/* Command input — shown when no draft exists yet */}
+              {!templateDraft && (
+                <div className="space-y-2.5">
+                  <div className="space-y-1.5">
+                    <textarea
+                      rows={3}
+                      placeholder='e.g. "Create a template for Orange 2 with warm-up, rally skills, point play, and matches."'
+                      value={templateCommandInput}
+                      onChange={e => setTemplateCommandInput(e.target.value)}
+                      className="w-full rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
+                      style={{
+                        background: 'var(--bg-surface)',
+                        border: '1px solid var(--border)',
+                      }}
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleParseTemplate}
+                        disabled={!templateCommandInput.trim()}
+                        className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
+                      >
+                        Start Draft
+                      </button>
+                      <button
+                        onClick={() => setActiveMode(null)}
+                        className="btn-ghost text-xs px-3 py-1.5"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick starts — deterministic examples, no AI */}
+                  <div
+                    className="rounded-xl px-3.5 py-3"
+                    style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+                  >
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-2">
+                      Quick starts
+                    </p>
+                    <div className="space-y-0.5">
+                      {TEMPLATE_QUICK_STARTS.map((s, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setTemplateDraft(parseTemplateDraft(s))
+                            setFromVoiceCapture(false)
+                            setTemplateCommandInput('')
+                          }}
+                          className="w-full text-left text-[11px] text-text-secondary hover:text-text-primary
+                            px-2.5 py-1.5 rounded-lg hover:bg-surface-raised transition-all leading-snug"
+                        >
+                          &ldquo;{s}&rdquo;
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Live draft panel — shown once a draft exists */}
+              {templateDraft && (
+                <TemplateDraftPanel
+                  draft={templateDraft}
+                  onUpdateDraft={d => setTemplateDraft(d)}
+                  onCancel={handleCancelTemplate}
+                  fromVoice={fromVoiceCapture}
+                />
+              )}
+            </>
           )}
 
           {/* ── Mode buttons ── */}

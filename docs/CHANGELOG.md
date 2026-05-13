@@ -2,6 +2,65 @@
 
 ---
 
+## 2026-05-13 — Sprint 254: Donna Template Creation Operating Loop V1
+
+**Why this was needed:**
+Academy Assistant existed as a navigation and guidance tool (Sprints 250–251) but had no ability to help directors do real work. The most frequent director task — building a class template — required navigating to a separate page, filling a form, and manually adding blocks. This sprint adds a guided template creation loop inside Academy Assistant: voice or typed intent → local draft → question flow → live preview → explicit approval → save. All of this is deterministic (no AI/API), fully local until the director clicks Save, and routes through the existing `templates` and `template_blocks` tables.
+
+**Capability map (Phase 2):**
+- Can draft: class template draft (new), session plan draft, player note draft, parent-safe summary draft, curriculum adjustment draft
+- Can suggest: template block structure, template time allocation, next best action, review queue entry point
+- Cannot apply without approval: save class template, move player level, change curriculum, send parent message
+
+**Template command contract (Phase 3):**
+- `src/components/assistant/templateDraftTypes.ts` — local `TemplateDraft`, `TemplateDraftBlock`, `TemplateDraftQuestion` types; no DB dependency; `source: 'assistant'` marker on every draft
+
+**Guided template builder (Phase 4):**
+- `src/components/assistant/templateDraftParser.ts` — deterministic parser: `isTemplateCreationIntent()`, `parseTemplateDraft()`, `extractLevel()`, `extractBlocks()`, `extractDuration()`, `allocateBlockDurations()`, `computeMissingQuestions()`, `applyAnswerToField()`, `isDraftReadyForReview()`. No AI, no API calls. Recognizes Red/Orange/Green/Yellow/HP levels 1–3, 11 block phrase patterns, duration in minutes or "hour and a half". Predefined time allocations for the standard 5-block structure at 60 and 90 minutes; proportional fallback for other structures.
+
+**Live draft preview (Phase 5):**
+- `src/components/assistant/TemplateDraftPanel.tsx` — `'use client'` component rendered inside Academy Assistant side panel. Shows: "Draft only — not saved" status pill, one missing question at a time with inline answer input, draft preview (editable name, level/duration meta, block list with per-block duration inputs, total duration validator, Rebalance button), Add Block dropdown, Review to Save button. Save button only appears after explicit "Review to save" click reveals the approval summary.
+
+**Approval + save guardrails (Phase 6):**
+- Save never triggers from voice transcript alone, suggestion click, or draft creation.
+- Save only fires after: director reviews draft → clicks "Review to save" → reads approval summary ("You're about to save a class template for X with N blocks and Y minutes total.") → clicks "Save Template".
+- `src/app/director/class-templates/saveAssistantTemplateDraftAction.ts` — `'use server'` action: preview mode guard, auth check, academy_id resolution, role check (director/head_coach only), INSERT into `templates` table + best-effort INSERT into `template_blocks`. Same auth/validation pattern as `createClassTemplateAction`. Tags template with `source:assistant`. Returns `{ ok, templateId, error }`. On success: "Template saved." + link to template detail. Block category → DB block_type mapping: warm_up/dynamic_warm_up → `warm_up`, rally/technical → `technical`, point_play → `tactical`, match_play → `competition`, fitness → `fitness`, other → `free`.
+
+**Voice transcript handling:**
+- When a voice transcript matches `isTemplateCreationIntent()`, the panel automatically shows: "I captured a template request. Review the draft below before anything is saved." Draft is parsed locally. No transcript sent to any API.
+- Voice transcript that is not a template intent shows normally (existing behavior preserved).
+
+**Route-aware prompt updates (`DonnaAssistantButton.tsx`):**
+- `/director/class-templates`: "Help me create an Orange 2 class template." / "Create a template with warm-up, rally skills, point play, and matches." / "Show me how to build a class template."
+- `/director/curriculum`: "Create a template from this curriculum level." / "Help me build an Orange 2 class template." / "Explain how curriculum connects to templates."
+- `/director`: "Help me create a class template." / "What should I build next?" / "Brief me on what needs attention."
+- Route context for `/director/class-templates` updated to mention Academy Assistant as the creation entry point.
+
+**Quick Capture preserved:** `QuickCaptureDrawer` integration unchanged. "Capture a note" mode still opens the drawer and closes the panel.
+
+**Player profile action layer preserved:** No changes to player profile files.
+
+**Files created:**
+- `src/components/assistant/templateDraftTypes.ts` — local TemplateDraft, TemplateDraftBlock, TemplateDraftQuestion types
+- `src/components/assistant/templateDraftParser.ts` — deterministic intent parser and time allocator
+- `src/components/assistant/TemplateDraftPanel.tsx` — live draft preview, question flow, approval section, save button
+- `src/app/director/class-templates/saveAssistantTemplateDraftAction.ts` — server action: creates template + blocks in existing tables
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `create_template` mode, template draft state, voice intent detection, route prompt updates, TemplateDraftPanel integration, quick-start examples
+
+**No migrations:** Existing `templates` and `template_blocks` tables used. No new tables. No schema changes.
+
+**`database.types.ts` untouched:** Used `rawDb = supabase as any` in the save action (same pattern as `createClassTemplateAction`).
+
+**TypeScript result:** Clean — 0 errors.
+
+**Manual QA status:** Pending user verification per Sprint 254 QA checklist.
+
+**Save behavior:** Wired — calls existing `templates` + `template_blocks` tables via `saveAssistantTemplateDraftAction`. Requires explicit director approval before any DB write.
+
+---
+
 ## 2026-05-13 — Sprint 253: Player Profile Action Layer V1
 
 **Why this was needed:**
