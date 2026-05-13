@@ -2,6 +2,68 @@
 
 ---
 
+## 2026-05-13 — Sprint 247: Review Queue Redesign V1
+
+**Why this was needed:**
+The director review queue at `/director/review` had 12 horizontally-scrolling tabs with internal/technical labels (Evidence, Captures, Voice Intake, Dev Summaries). A UX audit found extremely high cognitive load — a director opening the page had no immediate sense of what needed their attention or why.
+
+**Old problem:**
+- 12 top-level tabs: Attendance, Placement Review, Intake Candidates, Player Observations, Dev Summaries, Session Wrap-Ups, Session Recaps, Priorities, Evidence, Curriculum, Voice Intake, Captures
+- Internal terminology visible at the first-level navigation
+- No page title, subtitle, or trust line
+- No aggregated summary — required scanning all tabs to understand what needed attention
+
+**New 4-section director-facing structure:**
+
+| Section | What it contains |
+|---|---|
+| Needs Approval | Coach Wrap-Ups, Attendance Exceptions, Placement / New Students, Voice Commands & Captures |
+| Player Updates | Player Notes, Development Summaries, Training Priorities, Level Readiness |
+| Curriculum / Sessions | Session Recaps, Curriculum Suggestions |
+| Completed | Sent back for clarification, Not approved, placeholder for executed items |
+
+**What was preserved:**
+- All data fetching — zero queries changed
+- All card components — all existing cards render unchanged inside the new sections
+- All approval actions — `applyWrapUpDraftAction`, attendance apply, evidence apply, etc. — untouched
+- Old `?tab=` URL params preserved as aliases that route to the correct new section
+- Sub-section content within each tab is hidden when empty (no clutter)
+
+**New page header:**
+- Title: "Review Queue"
+- Subtitle: "Coach notes, attendance exceptions, placement decisions, and system suggestions wait here until you review them."
+- Trust line: "Nothing parent-facing or player-level-changing is applied without your approval."
+
+**Section summary cards:**
+- 4 cards at top showing pending count per section, with color-coded borders when items are present
+- No expensive new queries — counts derived from already-fetched data
+
+**Empty states:**
+- "You're caught up. Nothing needs approval right now." (Needs Approval)
+- "No player updates are waiting for review." (Player Updates)
+- "No curriculum or session changes are waiting right now." (Curriculum / Sessions)
+- "Approved and resolved items will appear here." (Completed)
+- All-clear green banner when all sections are empty
+
+**Mobile / cognitive load:**
+- 4 tabs replace 12 — no horizontal scrolling required
+- Sub-sections only render when they have items — no cluttered empty cards
+
+**Files changed:**
+- `src/app/director/review/page.tsx` — replaced 12-tab structure with 4-section layout; updated `VALID_TAB_PARAMS`; replaced `PageHeader`, `CategoryRow`, `relativeAge` helpers with inline summary cards; trimmed unused icon imports
+
+**TypeScript:** clean (`npx tsc --noEmit` passed)
+**Manual QA:** pending live test
+**Migrations:** none
+**database.types.ts:** untouched
+
+```
+git add src/app/director/review/page.tsx docs/CHANGELOG.md
+git commit -m "Sprint 247 — Review Queue Redesign V1"
+```
+
+---
+
 ## 2026-05-13 — Sprint 246: Director Sidebar Simplification V1
 
 **Why this was needed:**

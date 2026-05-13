@@ -1,4 +1,4 @@
-import { BookOpen, CheckCircle, ClipboardList, Inbox, Link2, Mic, Target, Users, UserPlus, UserSearch } from 'lucide-react'
+import { BookOpen, CheckCircle, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -38,19 +38,25 @@ import { VoiceIntakeBatchPanel } from './VoiceIntakeBatchPanel'
 import { CapturesBatchPanel } from './CapturesBatchPanel'
 
 const VALID_TAB_PARAMS: Record<string, string> = {
-  'wrap-ups': 'wrap_ups',
-  'session-wrap-ups': 'wrap_ups',
-  'attendance': 'attendance',
-  'placement-review': 'placement_review',
-  'placement-intake': 'placement_intake',
-  'player-observations': 'player_observations',
-  'development-summaries': 'development_summaries',
-  'session-recaps': 'session_recaps',
-  'priorities': 'priorities',
-  'evidence': 'evidence',
-  'curriculum': 'curriculum',
-  'voice-intake': 'voice_intake',
-  'captures': 'captures',
+  // Director-facing section names (Sprint 247)
+  'needs-approval': 'needs_approval',
+  'player-updates': 'player_updates',
+  'curriculum-session': 'curriculum_session',
+  'completed': 'completed',
+  // Legacy aliases — old URL params still work, route to the correct section
+  'wrap-ups': 'needs_approval',
+  'session-wrap-ups': 'needs_approval',
+  'attendance': 'needs_approval',
+  'placement-review': 'needs_approval',
+  'placement-intake': 'needs_approval',
+  'voice-intake': 'needs_approval',
+  'captures': 'needs_approval',
+  'player-observations': 'player_updates',
+  'development-summaries': 'player_updates',
+  'priorities': 'player_updates',
+  'evidence': 'player_updates',
+  'session-recaps': 'curriculum_session',
+  'curriculum': 'curriculum_session',
 }
 
 export default async function DirectorReviewQueuePage({
@@ -999,39 +1005,51 @@ export default async function DirectorReviewQueuePage({
     track: g.track ?? null,
   }))
 
-  // Oldest pending date per category (arrays are sorted newest-first, so last item = oldest)
-  const oldestPendingDates = {
-    session_recaps: pendingDrafts.at(-1)?.createdAt ?? null,
-    priorities: pendingPriorityDrafts.at(-1)?.createdAt ?? null,
-    evidence: pendingEvidenceDrafts.at(-1)?.createdAt ?? null,
-    attendance: pendingAttendanceDrafts.at(-1)?.createdAt ?? null,
-    curriculum: pendingCurriculumOverrideDrafts.at(-1)?.createdAt ?? null,
-    voice_intake: pendingVoiceIntakeDrafts.at(-1)?.createdAt ?? null,
-    wrap_ups: pendingWrapUpDrafts.at(-1)?.createdAt ?? null,
-    player_observations: pendingObservationDrafts.at(-1)?.createdAt ?? null,
-    development_summaries: pendingSummaryDrafts.at(-1)?.createdAt ?? null,
-    placement_review: pendingPlacementReviews.at(-1)?.createdAt ?? null,
-    placement_intake: enrichedIntakeCandidates.at(-1)?.createdAt ?? null,
-    placement_assessment: enrichedAssessmentDrafts.at(-1)?.createdAt ?? null,
-    placement_recommendation: enrichedRecommendationDrafts.at(-1)?.createdAt ?? null,
-    captures: generalCaptures.at(-1)?.createdAt ?? null,
-  }
+  // ─── Section counts for the 4 director-facing tabs ────────────
 
-  // Compute default tab — operational tabs take priority, fallback to attendance
+  // Needs Approval: items waiting for director action (pending or approved-but-not-applied)
+  const needsApprovalPending =
+    pendingWrapUpDrafts.length +
+    pendingAttendanceDrafts.length +
+    pendingPlacementReviews.length +
+    enrichedIntakeCandidates.length +
+    enrichedAssessmentDrafts.length +
+    pendingRecommendationDrafts.length +
+    pendingVoiceIntakeDrafts.length +
+    generalCaptures.length
+
+  const needsApprovalReady =
+    approvedWrapUpDrafts.length +
+    approvedAttendanceDrafts.length +
+    approvedRecommendationDrafts.length +
+    approvedVoiceIntakeDrafts.length
+
+  // Player Updates: items affecting player records
+  const playerUpdatesPending =
+    pendingObservationDrafts.length +
+    pendingSummaryDrafts.length +
+    pendingPriorityDrafts.length +
+    pendingEvidenceDrafts.length
+
+  const playerUpdatesReady =
+    approvedObservationDrafts.length +
+    approvedSummaryDrafts.length +
+    approvedPriorityDrafts.length +
+    approvedEvidenceDrafts.length
+
+  // Curriculum / Session Changes
+  const curriculumSessionPending = pendingDrafts.length + pendingCurriculumOverrideDrafts.length
+  const curriculumSessionReady = approvedDrafts.length + approvedCurriculumOverrideDrafts.length
+
+  // Completed: resolved items (sent back for clarification, rejected)
+  const completedCount = clarificationNeededWrapUpDrafts.length + rejectedWrapUpDrafts.length
+
+  // Default tab — first section with pending items, fallback to needs_approval
   const defaultTab = [
-    { value: 'attendance', pending: pendingAttendanceDrafts.length },
-    { value: 'placement_review', pending: pendingPlacementReviews.length },
-    { value: 'placement_intake', pending: enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + enrichedRecommendationDrafts.length },
-    { value: 'player_observations', pending: pendingObservationDrafts.length },
-    { value: 'development_summaries', pending: pendingSummaryDrafts.length },
-    { value: 'wrap_ups', pending: pendingWrapUpDrafts.length },
-    { value: 'session_recaps', pending: pendingDrafts.length },
-    { value: 'priorities', pending: pendingPriorityDrafts.length },
-    { value: 'evidence', pending: pendingEvidenceDrafts.length },
-    { value: 'curriculum', pending: pendingCurriculumOverrideDrafts.length },
-    { value: 'voice_intake', pending: pendingVoiceIntakeDrafts.length },
-    { value: 'captures', pending: generalCaptures.length },
-  ].find(t => t.pending > 0)?.value ?? 'attendance'
+    { value: 'needs_approval', pending: needsApprovalPending },
+    { value: 'player_updates', pending: playerUpdatesPending },
+    { value: 'curriculum_session', pending: curriculumSessionPending },
+  ].find(t => t.pending > 0)?.value ?? 'needs_approval'
 
   const requestedTabParam = searchParams.tab
   const resolvedTab = requestedTabParam ? (VALID_TAB_PARAMS[requestedTabParam] ?? null) : null
@@ -1039,442 +1057,631 @@ export default async function DirectorReviewQueuePage({
 
   return (
     <div className="animate-fade-in p-6 space-y-6">
-      <PageHeader
-        pendingCount={pendingDrafts.length}
-        approvedCount={approvedDrafts.length}
-        priorityPendingCount={pendingPriorityDrafts.length}
-        priorityApprovedCount={approvedPriorityDrafts.length}
-        evidencePendingCount={pendingEvidenceDrafts.length}
-        evidenceApprovedCount={approvedEvidenceDrafts.length}
-        attendancePendingCount={pendingAttendanceDrafts.length}
-        attendanceApprovedCount={approvedAttendanceDrafts.length}
-        curriculumOverridePendingCount={pendingCurriculumOverrideDrafts.length}
-        curriculumOverrideApprovedCount={approvedCurriculumOverrideDrafts.length}
-        voiceIntakePendingCount={pendingVoiceIntakeDrafts.length}
-        voiceIntakeApprovedCount={approvedVoiceIntakeDrafts.length}
-        wrapUpPendingCount={pendingWrapUpDrafts.length}
-        wrapUpApprovedCount={approvedWrapUpDrafts.length}
-        observationPendingCount={pendingObservationDrafts.length}
-        observationApprovedCount={approvedObservationDrafts.length}
-        summaryPendingCount={pendingSummaryDrafts.length}
-        summaryApprovedCount={approvedSummaryDrafts.length}
-        placementReviewCount={pendingPlacementReviews.length}
-        intakeCandidateCount={enrichedIntakeCandidates.length}
-        assessmentDraftCount={enrichedAssessmentDrafts.length}
-        recommendationDraftCount={enrichedRecommendationDrafts.length}
-        captureCount={generalCaptures.length}
-        oldestPendingDates={oldestPendingDates}
-      />
 
-      {/* All clear state — shown above tabs when no pending items remain */}
-      {(
-        pendingDrafts.length + pendingPriorityDrafts.length + pendingEvidenceDrafts.length +
-        pendingAttendanceDrafts.length + pendingCurriculumOverrideDrafts.length +
-        pendingVoiceIntakeDrafts.length + pendingWrapUpDrafts.length +
-        pendingObservationDrafts.length + pendingSummaryDrafts.length + pendingPlacementReviews.length +
-        enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + enrichedRecommendationDrafts.length + generalCaptures.length
-      ) === 0 && (
+      {/* Page header */}
+      <div className="space-y-1">
+        <p className="page-eyebrow">Director</p>
+        <h1 className="page-title">Review Queue</h1>
+        <p className="page-subtitle">
+          Coach notes, attendance exceptions, placement decisions, and system suggestions wait here until you review them.
+        </p>
+        <p className="text-[11px] text-text-muted pt-0.5">
+          Nothing parent-facing or player-level-changing is applied without your approval.
+        </p>
+      </div>
+
+      {/* Section summary cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className={`rounded-xl border px-4 py-3 space-y-1 ${needsApprovalPending > 0 ? 'bg-status-orange/5 border-status-orange/20' : 'bg-surface-raised border-border'}`}>
+          <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Needs Approval</p>
+          <p className={`text-xl font-mono font-bold ${needsApprovalPending > 0 ? 'text-status-orange' : 'text-text-muted'}`}>
+            {needsApprovalPending}
+          </p>
+          <p className="text-[9px] text-text-muted">Wrap-ups, attendance, placement</p>
+        </div>
+        <div className={`rounded-xl border px-4 py-3 space-y-1 ${playerUpdatesPending > 0 ? 'bg-status-blue/5 border-status-blue/20' : 'bg-surface-raised border-border'}`}>
+          <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Player Updates</p>
+          <p className={`text-xl font-mono font-bold ${playerUpdatesPending > 0 ? 'text-status-blue' : 'text-text-muted'}`}>
+            {playerUpdatesPending}
+          </p>
+          <p className="text-[9px] text-text-muted">Notes, summaries, priorities</p>
+        </div>
+        <div className={`rounded-xl border px-4 py-3 space-y-1 ${curriculumSessionPending > 0 ? 'bg-lime/5 border-lime/20' : 'bg-surface-raised border-border'}`}>
+          <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Curriculum / Sessions</p>
+          <p className={`text-xl font-mono font-bold ${curriculumSessionPending > 0 ? 'text-lime' : 'text-text-muted'}`}>
+            {curriculumSessionPending}
+          </p>
+          <p className="text-[9px] text-text-muted">Recaps, curriculum changes</p>
+        </div>
+        <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-1">
+          <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Completed</p>
+          <p className="text-xl font-mono font-bold text-text-muted">{completedCount}</p>
+          <p className="text-[9px] text-text-muted">Resolved items</p>
+        </div>
+      </div>
+
+      {/* All clear state */}
+      {needsApprovalPending + playerUpdatesPending + curriculumSessionPending === 0 && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/10 border border-status-green/20">
           <CheckCircle className="w-4 h-4 text-status-green shrink-0" />
           <p className="text-sm text-status-green font-medium">
-            All caught up — no pending items in the queue.
+            You&apos;re caught up — nothing needs approval right now.
           </p>
         </div>
       )}
 
       <Tabs defaultValue={activeDefaultTab}>
-        <TabsList scrollable>
-          <TabsTrigger value="attendance">
-            <TabLabel
-              label="Attendance"
-              pending={pendingAttendanceDrafts.length}
-              ready={approvedAttendanceDrafts.length}
-            />
+        <TabsList>
+          <TabsTrigger value="needs_approval">
+            <TabLabel label="Needs Approval" pending={needsApprovalPending} ready={needsApprovalReady} />
           </TabsTrigger>
-          <TabsTrigger value="placement_review">
-            <TabLabel
-              label="Placement Review"
-              pending={pendingPlacementReviews.length}
-              ready={0}
-            />
+          <TabsTrigger value="player_updates">
+            <TabLabel label="Player Updates" pending={playerUpdatesPending} ready={playerUpdatesReady} />
           </TabsTrigger>
-          <TabsTrigger value="placement_intake">
-            <TabLabel
-              label="Intake Candidates"
-              pending={enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + enrichedRecommendationDrafts.length}
-              ready={0}
-            />
+          <TabsTrigger value="curriculum_session">
+            <TabLabel label="Curriculum / Sessions" pending={curriculumSessionPending} ready={curriculumSessionReady} />
           </TabsTrigger>
-          <TabsTrigger value="player_observations">
-            <TabLabel
-              label="Player Observations"
-              pending={pendingObservationDrafts.length}
-              ready={approvedObservationDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="development_summaries">
-            <TabLabel
-              label="Dev Summaries"
-              pending={pendingSummaryDrafts.length}
-              ready={approvedSummaryDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="wrap_ups">
-            <TabLabel
-              label="Session Wrap-Ups"
-              pending={pendingWrapUpDrafts.length}
-              ready={approvedWrapUpDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="session_recaps">
-            <TabLabel
-              label="Session Recaps"
-              pending={pendingDrafts.length}
-              ready={approvedDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="priorities">
-            <TabLabel
-              label="Priorities"
-              pending={pendingPriorityDrafts.length}
-              ready={approvedPriorityDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="evidence">
-            <TabLabel
-              label="Evidence"
-              pending={pendingEvidenceDrafts.length}
-              ready={approvedEvidenceDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="curriculum">
-            <TabLabel
-              label="Curriculum"
-              pending={pendingCurriculumOverrideDrafts.length}
-              ready={approvedCurriculumOverrideDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="voice_intake">
-            <TabLabel
-              label="Voice Intake"
-              pending={pendingVoiceIntakeDrafts.length}
-              ready={approvedVoiceIntakeDrafts.length}
-            />
-          </TabsTrigger>
-          <TabsTrigger value="captures">
-            <TabLabel
-              label="Captures"
-              pending={generalCaptures.length}
-              ready={0}
-            />
+          <TabsTrigger value="completed">
+            <TabLabel label="Completed" pending={0} ready={completedCount} />
           </TabsTrigger>
         </TabsList>
 
-        {/* ─── Attendance tab ─── */}
-        <TabsContent value="attendance" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Records session attendance for rostered players. Approve to confirm the proposed changes, then apply to write to attendance records. Unexpected attendees create placement review follow-ups — no player is created automatically.</p>
-          {approvedAttendanceDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedAttendanceDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedAttendanceDrafts.map(draft => (
-                  <AttendanceExceptionDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
+        {/* ─── Needs Approval tab ─── */}
+        <TabsContent value="needs_approval" className="pt-6 space-y-8">
+          {needsApprovalPending + needsApprovalReady === 0 && (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<CheckCircle className="w-5 h-5" />}
+                  title="You're caught up. Nothing needs approval right now."
+                  description="Coach wrap-ups, attendance exceptions, placement items, and voice commands will appear here when they need your attention."
+                />
+              </CardContent>
+            </Card>
           )}
-          <section className="space-y-3">
-            {approvedAttendanceDrafts.length > 0 && pendingAttendanceDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingAttendanceDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<Users className="w-5 h-5" />}
-                    title="No pending attendance exception drafts"
-                    description="When coaches flag unexpected attendees or record attendance exceptions, they appear here for review before any attendance is written."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingAttendanceDrafts.map(draft => (
-                  <AttendanceExceptionDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            )}
-          </section>
-        </TabsContent>
 
-        {/* ─── Placement Review tab ─── */}
-        <TabsContent value="placement_review" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Unexpected attendees flagged by coaches during session wrap-up. Choose a next step for each individual. No player profile, roster entry, billing, or parent communication has been created.</p>
-
-          {/* Pending — need a director decision */}
-          <section className="space-y-3">
-            {pendingPlacementReviews.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<UserSearch className="w-5 h-5" />}
-                    title="No placement review items"
-                    description="When a director applies an attendance exception draft that includes unexpected attendees, follow-up items appear here for a decision on whether to start intake, follow up later, or dismiss."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingPlacementReviews.map(item => (
-                  <PlacementReviewCard key={item.id} item={item} />
-                ))}
+          {/* Coach Wrap-Ups */}
+          {(pendingWrapUpDrafts.length + approvedWrapUpDrafts.length) > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Coach Wrap-Ups</h3>
+                {pendingWrapUpDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {pendingWrapUpDrafts.length} to review
+                  </span>
+                )}
+                {approvedWrapUpDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                    {approvedWrapUpDrafts.length} ready to apply
+                  </span>
+                )}
               </div>
-            )}
-          </section>
-
-          {/* Follow-Up Later — parked, no urgent action required */}
-          {followUpPlacementReviews.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Follow-Up Later</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-blue/10 text-status-blue border border-status-blue/30">
-                  {followUpPlacementReviews.length}
-                </span>
-              </div>
-              <p className="text-[10px] text-text-muted px-1">Parked by the director for later review — no urgent action needed now.</p>
-              <div className="space-y-4">
-                {followUpPlacementReviews.map(item => (
-                  <PlacementReviewCard key={item.id} item={item} />
-                ))}
-              </div>
-            </section>
+              <p className="text-[10px] text-text-muted">Guided coach recaps submitted after sessions. Review for accuracy, then approve and apply to record session actuals. Applying also creates individual player notes.</p>
+              {approvedWrapUpDrafts.length > 0 && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Approved — Ready to Apply</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                      {approvedWrapUpDrafts.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {approvedWrapUpDrafts.map(draft => (
+                      <WrapUpDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {pendingWrapUpDrafts.length > 0 && (
+                <section className="space-y-3">
+                  {approvedWrapUpDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+                  <div className="space-y-4">
+                    {pendingWrapUpDrafts.map(draft => (
+                      <WrapUpDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
           )}
-        </TabsContent>
 
-        {/* ─── Placement Intake tab ─── */}
-        <TabsContent value="placement_intake" className="pt-6 space-y-6">
-          <p className="text-[10px] text-text-muted px-1">Director-controlled intake pipeline. No player profile, roster entry, billing, or parent communication is created at any stage until the full placement assessment is approved. Each step requires explicit director action.</p>
-
-          {/* Pending intake candidates */}
-          <section className="space-y-3">
-            <p className="label-xs">Pending Intake Candidates</p>
-            {enrichedIntakeCandidates.length === 0 ? (
-              <Card>
-                <CardContent className="py-8">
-                  <EmptyState
-                    icon={<UserPlus className="w-5 h-5" />}
-                    title="No intake candidates"
-                    description="Intake candidates appear here when a director chooses 'Start Placement Intake' from the Placement Review tab. No player record is created until the full placement assessment is complete."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {enrichedIntakeCandidates.map(item => (
-                  <PlacementIntakeCandidateCard key={item.id} item={item} />
-                ))}
+          {/* Attendance Exceptions */}
+          {(pendingAttendanceDrafts.length + approvedAttendanceDrafts.length) > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Attendance Exceptions</h3>
+                {pendingAttendanceDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {pendingAttendanceDrafts.length} to review
+                  </span>
+                )}
+                {approvedAttendanceDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                    {approvedAttendanceDrafts.length} ready to apply
+                  </span>
+                )}
               </div>
-            )}
-          </section>
+              <p className="text-[10px] text-text-muted">Coach-flagged attendance changes. Approve to confirm, then apply to write to attendance records. Unexpected attendees create follow-up placement items — no player is created automatically.</p>
+              {approvedAttendanceDrafts.length > 0 && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Approved — Ready to Apply</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                      {approvedAttendanceDrafts.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {approvedAttendanceDrafts.map(draft => (
+                      <AttendanceExceptionDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {pendingAttendanceDrafts.length > 0 && (
+                <section className="space-y-3">
+                  {approvedAttendanceDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+                  <div className="space-y-4">
+                    {pendingAttendanceDrafts.map(draft => (
+                      <AttendanceExceptionDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
 
-          {/* Assessment drafts in progress */}
-          <section className="space-y-3">
-            <div className="flex items-center gap-2">
-              <p className="label-xs">Placement Assessments In Progress</p>
+          {/* Placement / New Students */}
+          {(pendingPlacementReviews.length + followUpPlacementReviews.length + enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + allEnrichedRecommendationDrafts.length) > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Placement / New Students</h3>
+                {(pendingPlacementReviews.length + enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + pendingRecommendationDrafts.length) > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {pendingPlacementReviews.length + enrichedIntakeCandidates.length + enrichedAssessmentDrafts.length + pendingRecommendationDrafts.length} to review
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-text-muted">Unexpected attendees, intake candidates, and placement assessments. No player profile, roster entry, or parent communication is created until a placement recommendation is approved.</p>
+
+              {pendingPlacementReviews.length > 0 && (
+                <section className="space-y-3">
+                  <p className="label-xs">Unexpected Attendees — Need a Decision</p>
+                  <div className="space-y-4">
+                    {pendingPlacementReviews.map(item => (
+                      <PlacementReviewCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {followUpPlacementReviews.length > 0 && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Follow-Up Later</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-blue/10 text-status-blue border border-status-blue/30">
+                      {followUpPlacementReviews.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {followUpPlacementReviews.map(item => (
+                      <PlacementReviewCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {enrichedIntakeCandidates.length > 0 && (
+                <section className="space-y-3">
+                  <p className="label-xs">Intake Candidates</p>
+                  <div className="space-y-4">
+                    {enrichedIntakeCandidates.map(item => (
+                      <PlacementIntakeCandidateCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                </section>
+              )}
               {enrichedAssessmentDrafts.length > 0 && (
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-blue/10 text-status-blue border border-status-blue/30">
-                  {enrichedAssessmentDrafts.length}
-                </span>
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Placement Assessments In Progress</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-blue/10 text-status-blue border border-status-blue/30">
+                      {enrichedAssessmentDrafts.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {enrichedAssessmentDrafts.map(item => (
+                      <PlacementAssessmentDraftCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {allEnrichedRecommendationDrafts.length > 0 && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Placement Recommendations</p>
+                    {pendingRecommendationDrafts.length > 0 && (
+                      <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+                        {pendingRecommendationDrafts.length} pending
+                      </span>
+                    )}
+                    {approvedRecommendationDrafts.length > 0 && (
+                      <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                        {approvedRecommendationDrafts.length} approved
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    {allEnrichedRecommendationDrafts.map(item => (
+                      <PlacementRecommendationDraftCard key={item.id} item={item} academyGroups={academyGroups} />
+                    ))}
+                  </div>
+                </section>
               )}
             </div>
-            {enrichedAssessmentDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-8">
-                  <EmptyState
-                    icon={<ClipboardList className="w-5 h-5" />}
-                    title="No assessments in progress"
-                    description="When you start a placement assessment from an intake candidate above, an editable assessment draft appears here. No player record is created until the assessment is complete and a recommendation is approved."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {enrichedAssessmentDrafts.map(item => (
-                  <PlacementAssessmentDraftCard key={item.id} item={item} />
-                ))}
-              </div>
-            )}
-          </section>
+          )}
 
-          {/* Placement recommendation drafts */}
-          <section className="space-y-3">
-            <div className="flex items-center gap-2">
-              <p className="label-xs">Placement Recommendations</p>
-              {pendingRecommendationDrafts.length > 0 && (
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
-                  {pendingRecommendationDrafts.length} pending
-                </span>
+          {/* Voice Commands & Captures */}
+          {(pendingVoiceIntakeDrafts.length + approvedVoiceIntakeDrafts.length + generalCaptures.length) > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Voice Commands &amp; Captures</h3>
+                {(pendingVoiceIntakeDrafts.length + generalCaptures.length) > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {pendingVoiceIntakeDrafts.length + generalCaptures.length} to review
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-text-muted">Voice commands and unrouted quick captures awaiting a director decision. Nothing is written automatically.</p>
+              {(approvedVoiceIntakeDrafts.length > 0) && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Approved — Ready to Execute</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                      {approvedVoiceIntakeDrafts.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {approvedVoiceIntakeDrafts.map(draft => (
+                      <VoiceIntakeDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
               )}
-              {approvedRecommendationDrafts.length > 0 && (
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedRecommendationDrafts.length} approved
-                </span>
+              {pendingVoiceIntakeDrafts.length > 0 && (
+                <section className="space-y-3">
+                  {approvedVoiceIntakeDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+                  <VoiceIntakeBatchPanel pending={pendingVoiceIntakeDrafts} />
+                </section>
+              )}
+              {generalCaptures.length > 0 && (
+                <section className="space-y-3">
+                  <p className="label-xs">Unrouted Captures</p>
+                  <p className="text-[10px] text-text-muted">Quick-capture notes not yet assigned to a player. Route each one or dismiss it.</p>
+                  <CapturesBatchPanel captures={generalCaptures} players={playerOptions} />
+                </section>
               )}
             </div>
-            {allEnrichedRecommendationDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-8">
-                  <EmptyState
-                    icon={<Target className="w-5 h-5" />}
-                    title="No recommendations yet"
-                    description="After completing an assessment above, click 'Generate Placement Recommendation' to create a recommendation draft. Director must approve before any player record is created."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {allEnrichedRecommendationDrafts.map(item => (
-                  <PlacementRecommendationDraftCard key={item.id} item={item} academyGroups={academyGroups} />
-                ))}
-              </div>
-            )}
-          </section>
+          )}
         </TabsContent>
 
-        {/* ─── Player Observations tab ─── */}
-        <TabsContent value="player_observations" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Coach notes on individual players submitted during session wrap-up. Not added to player profiles until you apply them. Not visible to players or parents.</p>
-          {approvedObservationDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedObservationDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedObservationDrafts.map(draft => (
-                  <WrapUpObservationDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
+        {/* ─── Player Updates tab ─── */}
+        <TabsContent value="player_updates" className="pt-6 space-y-8">
+          {playerUpdatesPending + playerUpdatesReady === 0 && (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<Users className="w-5 h-5" />}
+                  title="No player updates are waiting for review."
+                  description="Player notes, development summaries, training priorities, and level readiness items will appear here when coaches or the system propose changes to player records."
+                />
+              </CardContent>
+            </Card>
           )}
-          <section className="space-y-3">
-            {approvedObservationDrafts.length > 0 && pendingObservationDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingObservationDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<Users className="w-5 h-5" />}
-                    title="No pending player observation drafts"
-                    description="When coaches add player notes during a session wrap-up, individual observation drafts appear here for director review before being applied to player profiles."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingObservationDrafts.map(draft => (
-                  <WrapUpObservationDraftCard key={draft.id} draft={draft} />
-                ))}
+
+          {/* Player Notes */}
+          {(pendingObservationDrafts.length + approvedObservationDrafts.length) > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Player Notes</h3>
+                {pendingObservationDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {pendingObservationDrafts.length} to review
+                  </span>
+                )}
+                {approvedObservationDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                    {approvedObservationDrafts.length} ready to apply
+                  </span>
+                )}
               </div>
-            )}
-          </section>
+              <p className="text-[10px] text-text-muted">Coach notes on individual players from session wrap-ups. Not added to player profiles until you apply them. Not visible to players or parents.</p>
+              {approvedObservationDrafts.length > 0 && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Approved — Ready to Apply</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                      {approvedObservationDrafts.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {approvedObservationDrafts.map(draft => (
+                      <WrapUpObservationDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {pendingObservationDrafts.length > 0 && (
+                <section className="space-y-3">
+                  {approvedObservationDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+                  <div className="space-y-4">
+                    {pendingObservationDrafts.map(draft => (
+                      <WrapUpObservationDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* Development Summaries */}
+          {(pendingSummaryDrafts.length + approvedSummaryDrafts.length) > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Development Summaries</h3>
+                {pendingSummaryDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {pendingSummaryDrafts.length} to review
+                  </span>
+                )}
+                {approvedSummaryDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                    {approvedSummaryDrafts.length} ready to apply
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-text-muted">Director-assembled development summary updates built from recent observations. Applying overwrites the player&apos;s current development summary. Not visible to players or parents until applied.</p>
+              {approvedSummaryDrafts.length > 0 && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Approved — Ready to Apply</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                      {approvedSummaryDrafts.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {approvedSummaryDrafts.map(draft => (
+                      <DevelopmentSummaryDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {pendingSummaryDrafts.length > 0 && (
+                <section className="space-y-3">
+                  {approvedSummaryDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+                  <div className="space-y-4">
+                    {pendingSummaryDrafts.map(draft => (
+                      <DevelopmentSummaryDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* Training Priorities */}
+          {(pendingPriorityDrafts.length + approvedPriorityDrafts.length) > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Training Priorities</h3>
+                {pendingPriorityDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {pendingPriorityDrafts.length} to review
+                  </span>
+                )}
+                {approvedPriorityDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                    {approvedPriorityDrafts.length} ready to apply
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-text-muted">Training priority recommendations for individual players. Approve to confirm, then apply to update a player&apos;s current focus areas. Not visible to players or parents until applied.</p>
+              {approvedPriorityDrafts.length > 0 && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Approved — Ready to Apply</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                      {approvedPriorityDrafts.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {approvedPriorityDrafts.map(draft => (
+                      <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {pendingPriorityDrafts.length > 0 && (
+                <section className="space-y-3">
+                  {approvedPriorityDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+                  <div className="space-y-4">
+                    {pendingPriorityDrafts.map(draft => (
+                      <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* Level Readiness */}
+          {(pendingEvidenceDrafts.length + approvedEvidenceDrafts.length) > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Level Readiness</h3>
+                {pendingEvidenceDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {pendingEvidenceDrafts.length} to review
+                  </span>
+                )}
+                {approvedEvidenceDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                    {approvedEvidenceDrafts.length} ready to apply
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-text-muted">Links connecting a performance moment to a curriculum requirement. Approve and apply to record evidence in the player&apos;s development record.</p>
+              {approvedEvidenceDrafts.length > 0 && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Approved — Ready to Apply</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                      {approvedEvidenceDrafts.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {approvedEvidenceDrafts.map(draft => (
+                      <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {pendingEvidenceDrafts.length > 0 && (
+                <section className="space-y-3">
+                  {approvedEvidenceDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+                  <div className="space-y-4">
+                    {pendingEvidenceDrafts.map(draft => (
+                      <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
         </TabsContent>
 
-        {/* ─── Development Summaries tab ─── */}
-        <TabsContent value="development_summaries" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Director-assembled development summary updates built from recent observations. Applying overwrites the player's current development summary. Not visible to players or parents until applied.</p>
-          {approvedSummaryDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedSummaryDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedSummaryDrafts.map(draft => (
-                  <DevelopmentSummaryDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
+        {/* ─── Curriculum / Session Changes tab ─── */}
+        <TabsContent value="curriculum_session" className="pt-6 space-y-8">
+          {curriculumSessionPending + curriculumSessionReady === 0 && (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<BookOpen className="w-5 h-5" />}
+                  title="No curriculum or session changes are waiting right now."
+                  description="Session recap drafts and curriculum suggestions will appear here when they are submitted for review."
+                />
+              </CardContent>
+            </Card>
           )}
-          <section className="space-y-3">
-            {approvedSummaryDrafts.length > 0 && pendingSummaryDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingSummaryDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<ClipboardList className="w-5 h-5" />}
-                    title="No pending development summary drafts"
-                    description="Use the 'Draft Development Summary Update' button on a player profile to assemble a draft from recent observations. It will appear here for director review before being applied."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingSummaryDrafts.map(draft => (
-                  <DevelopmentSummaryDraftCard key={draft.id} draft={draft} />
-                ))}
+
+          {/* Session Recaps */}
+          {(pendingDrafts.length + approvedDrafts.length) > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Session Recaps</h3>
+                {pendingDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {pendingDrafts.length} to review
+                  </span>
+                )}
+                {approvedDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                    {approvedDrafts.length} ready to apply
+                  </span>
+                )}
               </div>
-            )}
-          </section>
+              <p className="text-[10px] text-text-muted">AI-structured session recap drafts. Approve to confirm the proposed structure, then apply to write the structured data to the session record.</p>
+              {approvedDrafts.length > 0 && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Approved — Ready to Apply</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                      {approvedDrafts.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {approvedDrafts.map(draft => (
+                      <StructuredDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {pendingDrafts.length > 0 && (
+                <section className="space-y-3">
+                  {approvedDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+                  <div className="space-y-4">
+                    {pendingDrafts.map(draft => (
+                      <StructuredDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* Curriculum Suggestions */}
+          {(pendingCurriculumOverrideDrafts.length + approvedCurriculumOverrideDrafts.length) > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Curriculum Suggestions</h3>
+                {pendingCurriculumOverrideDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {pendingCurriculumOverrideDrafts.length} to review
+                  </span>
+                )}
+                {approvedCurriculumOverrideDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/20 leading-none">
+                    {approvedCurriculumOverrideDrafts.length} ready to apply
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-text-muted">Curriculum override suggestions — changes to the standard training plan. Approve and apply to modify what the curriculum prescribes. Not visible to players or parents until applied.</p>
+              {approvedCurriculumOverrideDrafts.length > 0 && (
+                <section className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <p className="label-xs">Approved — Ready to Apply</p>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
+                      {approvedCurriculumOverrideDrafts.length}
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {approvedCurriculumOverrideDrafts.map(draft => (
+                      <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {pendingCurriculumOverrideDrafts.length > 0 && (
+                <section className="space-y-3">
+                  {approvedCurriculumOverrideDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+                  <div className="space-y-4">
+                    {pendingCurriculumOverrideDrafts.map(draft => (
+                      <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
         </TabsContent>
 
-        {/* ─── Session Wrap-Ups tab ─── */}
-        <TabsContent value="wrap_ups" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Guided coach recaps submitted after sessions. Review for accuracy, then approve and apply to record session actuals. Applying also creates individual player observation drafts.</p>
-          {approvedWrapUpDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedWrapUpDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedWrapUpDrafts.map(draft => (
-                  <WrapUpDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
+        {/* ─── Completed tab ─── */}
+        <TabsContent value="completed" className="pt-6 space-y-8">
+          {completedCount === 0 && (
+            <Card>
+              <CardContent className="py-12">
+                <EmptyState
+                  icon={<CheckCircle className="w-5 h-5" />}
+                  title="Approved and resolved items will appear here."
+                  description="Items you've reviewed, approved, or dismissed will be listed here for your reference."
+                />
+              </CardContent>
+            </Card>
           )}
-          <section className="space-y-3">
-            {approvedWrapUpDrafts.length > 0 && pendingWrapUpDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingWrapUpDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<ClipboardList className="w-5 h-5" />}
-                    title="No pending session wrap-up drafts"
-                    description="When coaches complete the guided wrap-up after a session, their summary appears here for director review before session actuals and player observations are recorded."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingWrapUpDrafts.map(draft => (
-                  <WrapUpDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            )}
-          </section>
+
+          {/* Sent back for clarification */}
           {clarificationNeededWrapUpDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Needs Clarification</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/30">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Sent Back for Clarification</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                   {clarificationNeededWrapUpDrafts.length}
                 </span>
               </div>
@@ -1483,13 +1690,15 @@ export default async function DirectorReviewQueuePage({
                   <WrapUpDraftCard key={draft.id} draft={draft} />
                 ))}
               </div>
-            </section>
+            </div>
           )}
+
+          {/* Not approved */}
           {rejectedWrapUpDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Not Approved</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-red/10 text-status-red border border-status-red/30">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Not Approved</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-red/15 text-status-red border border-status-red/20 leading-none">
                   {rejectedWrapUpDrafts.length}
                 </span>
               </div>
@@ -1498,234 +1707,14 @@ export default async function DirectorReviewQueuePage({
                   <WrapUpDraftCard key={draft.id} draft={draft} />
                 ))}
               </div>
-            </section>
+            </div>
           )}
-        </TabsContent>
 
-        {/* ─── Session Recaps tab ─── */}
-        <TabsContent value="session_recaps" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">AI-structured session recap drafts. Approve to confirm the proposed structure, then apply to write the structured data to the session record.</p>
-          {approvedDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedDrafts.map(draft => (
-                  <StructuredDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="space-y-3">
-            {approvedDrafts.length > 0 && pendingDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<ClipboardList className="w-5 h-5" />}
-                    title="No pending session recap drafts"
-                    description="When a coach saves a session recap and it is structured by AI, the draft appears here for review before being applied to the session record."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingDrafts.map(draft => (
-                  <StructuredDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            )}
-          </section>
-        </TabsContent>
-
-        {/* ─── Priorities tab ─── */}
-        <TabsContent value="priorities" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Training priority recommendations for individual players. Approve to confirm, then apply to update a player's current focus areas. Not visible to players or parents until applied.</p>
-          {approvedPriorityDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedPriorityDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedPriorityDrafts.map(draft => (
-                  <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="space-y-3">
-            {approvedPriorityDrafts.length > 0 && pendingPriorityDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingPriorityDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<Target className="w-5 h-5" />}
-                    title="No pending priority recommendation drafts"
-                    description="Priority recommendations are created from evidence on player profiles. They appear here for director approval before updating a player's focus areas."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingPriorityDrafts.map(draft => (
-                  <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            )}
-          </section>
-        </TabsContent>
-
-        {/* ─── Evidence tab ─── */}
-        <TabsContent value="evidence" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Links connecting a performance moment to a curriculum requirement. Approve and apply to record evidence in the player's development record.</p>
-          {approvedEvidenceDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedEvidenceDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedEvidenceDrafts.map(draft => (
-                  <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="space-y-3">
-            {approvedEvidenceDrafts.length > 0 && pendingEvidenceDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingEvidenceDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<Link2 className="w-5 h-5" />}
-                    title="No pending evidence link drafts"
-                    description="Evidence links are created from a player's requirement page. They appear here for director approval before being recorded in the player's development record."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingEvidenceDrafts.map(draft => (
-                  <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            )}
-          </section>
-        </TabsContent>
-
-        {/* ─── Curriculum tab ─── */}
-        <TabsContent value="curriculum" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Curriculum override suggestions — changes to the standard training plan. Approve and apply to modify what the curriculum prescribes. Not visible to players or parents until applied.</p>
-          {approvedCurriculumOverrideDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Apply</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedCurriculumOverrideDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedCurriculumOverrideDrafts.map(draft => (
-                  <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="space-y-3">
-            {approvedCurriculumOverrideDrafts.length > 0 && pendingCurriculumOverrideDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingCurriculumOverrideDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<BookOpen className="w-5 h-5" />}
-                    title="No pending curriculum override drafts"
-                    description="Curriculum customizations created on the Curriculum page appear here for director approval before modifying the training plan."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingCurriculumOverrideDrafts.map(draft => (
-                  <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            )}
-          </section>
-        </TabsContent>
-
-        {/* ─── Voice Intake tab ─── */}
-        <TabsContent value="voice_intake" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Unresolved voice commands requiring a director decision. Approve to confirm intent, then execute to write to the relevant record. Nothing is written automatically.</p>
-          {approvedVoiceIntakeDrafts.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="label-xs">Approved — Ready to Execute</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/30">
-                  {approvedVoiceIntakeDrafts.length}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {approvedVoiceIntakeDrafts.map(draft => (
-                  <VoiceIntakeDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            </section>
-          )}
-          <section className="space-y-3">
-            {approvedVoiceIntakeDrafts.length > 0 && pendingVoiceIntakeDrafts.length > 0 && (
-              <p className="label-xs">Pending Review</p>
-            )}
-            {pendingVoiceIntakeDrafts.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<Mic className="w-5 h-5" />}
-                    title="No pending voice intake drafts"
-                    description="Voice commands submitted from the Command Center or session pages appear here for director review before any data is written."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <VoiceIntakeBatchPanel pending={pendingVoiceIntakeDrafts} />
-            )}
-          </section>
-        </TabsContent>
-
-        {/* ─── Captures tab ─── */}
-        <TabsContent value="captures" className="pt-6 space-y-4">
-          <p className="text-[10px] text-text-muted px-1">Unrouted quick-capture notes not yet assigned to a player. Route each one to a player profile or dismiss it — no data has been written yet.</p>
-          <section className="space-y-3">
-            {generalCaptures.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={<Inbox className="w-5 h-5" />}
-                    title="No unrouted captures"
-                    description="Quick captures made outside a player profile appear here. Use the + Capture button anywhere in the director area to add one."
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <CapturesBatchPanel captures={generalCaptures} players={playerOptions} />
-            )}
-          </section>
+          <div className="rounded-xl bg-surface-raised border border-border px-4 py-3">
+            <p className="text-[11px] text-text-muted">
+              Fully applied items (executed) will be visible here in a future update.
+            </p>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
@@ -1756,163 +1745,4 @@ function TabLabel({
       )}
     </span>
   )
-}
-
-function PageHeader({
-  pendingCount,
-  approvedCount,
-  priorityPendingCount,
-  priorityApprovedCount,
-  evidencePendingCount,
-  evidenceApprovedCount,
-  attendancePendingCount,
-  attendanceApprovedCount,
-  curriculumOverridePendingCount,
-  curriculumOverrideApprovedCount,
-  voiceIntakePendingCount,
-  voiceIntakeApprovedCount,
-  wrapUpPendingCount,
-  wrapUpApprovedCount,
-  observationPendingCount,
-  observationApprovedCount,
-  summaryPendingCount,
-  summaryApprovedCount,
-  placementReviewCount,
-  intakeCandidateCount,
-  assessmentDraftCount,
-  recommendationDraftCount,
-  captureCount,
-  oldestPendingDates,
-}: {
-  pendingCount: number
-  approvedCount: number
-  priorityPendingCount: number
-  priorityApprovedCount: number
-  evidencePendingCount: number
-  evidenceApprovedCount: number
-  attendancePendingCount: number
-  attendanceApprovedCount: number
-  curriculumOverridePendingCount: number
-  curriculumOverrideApprovedCount: number
-  voiceIntakePendingCount: number
-  voiceIntakeApprovedCount: number
-  wrapUpPendingCount: number
-  wrapUpApprovedCount: number
-  observationPendingCount: number
-  observationApprovedCount: number
-  summaryPendingCount: number
-  summaryApprovedCount: number
-  placementReviewCount: number
-  intakeCandidateCount: number
-  assessmentDraftCount: number
-  recommendationDraftCount: number
-  captureCount: number
-  oldestPendingDates: Record<string, string | null>
-}) {
-  const totalPending = pendingCount + priorityPendingCount + evidencePendingCount + attendancePendingCount + curriculumOverridePendingCount + voiceIntakePendingCount + wrapUpPendingCount + observationPendingCount + summaryPendingCount + placementReviewCount + intakeCandidateCount + assessmentDraftCount + recommendationDraftCount + captureCount
-  const totalReadyToApply = approvedCount + priorityApprovedCount + evidenceApprovedCount + attendanceApprovedCount + curriculumOverrideApprovedCount + voiceIntakeApprovedCount + wrapUpApprovedCount + observationApprovedCount + summaryApprovedCount
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <p className="page-eyebrow">Director</p>
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="page-title">Draft Review Queue</h1>
-          {totalPending > 0 && (
-            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-status-orange/10 text-status-orange border border-status-orange/25">
-              {totalPending} pending
-            </span>
-          )}
-          {totalReadyToApply > 0 && (
-            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lime/10 text-lime border border-lime/25">
-              {totalReadyToApply} ready to apply
-            </span>
-          )}
-        </div>
-        <p className="page-subtitle">
-          Structured drafts awaiting review or application. Nothing is applied automatically.
-        </p>
-      </div>
-
-      {/* Command center overview — grouped by workflow area */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-2">
-          <p className="text-[9px] uppercase tracking-widest text-status-orange/80 font-semibold">Operations</p>
-          <div className="space-y-1.5">
-            <CategoryRow label="Attendance" pending={attendancePendingCount} ready={attendanceApprovedCount} oldest={oldestPendingDates['attendance']} />
-            <CategoryRow label="Placement Review" pending={placementReviewCount} ready={0} oldest={oldestPendingDates['placement_review']} />
-            <CategoryRow label="Intake Candidates" pending={intakeCandidateCount} ready={0} oldest={oldestPendingDates['placement_intake']} />
-            <CategoryRow label="In Assessment" pending={assessmentDraftCount} ready={0} oldest={oldestPendingDates['placement_assessment']} />
-            <CategoryRow label="Recommendation" pending={recommendationDraftCount} ready={0} oldest={oldestPendingDates['placement_recommendation']} />
-          </div>
-        </div>
-        <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-2">
-          <p className="text-[9px] uppercase tracking-widest text-text-muted font-semibold">Player Development</p>
-          <div className="space-y-1.5">
-            <CategoryRow label="Observations" pending={observationPendingCount} ready={observationApprovedCount} oldest={oldestPendingDates['player_observations']} />
-            <CategoryRow label="Dev Summaries" pending={summaryPendingCount} ready={summaryApprovedCount} oldest={oldestPendingDates['development_summaries']} />
-            <CategoryRow label="Priorities" pending={priorityPendingCount} ready={priorityApprovedCount} oldest={oldestPendingDates['priorities']} />
-            <CategoryRow label="Evidence" pending={evidencePendingCount} ready={evidenceApprovedCount} oldest={oldestPendingDates['evidence']} />
-          </div>
-        </div>
-        <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-2">
-          <p className="text-[9px] uppercase tracking-widest text-text-muted font-semibold">Session Review</p>
-          <div className="space-y-1.5">
-            <CategoryRow label="Wrap-Ups" pending={wrapUpPendingCount} ready={wrapUpApprovedCount} oldest={oldestPendingDates['wrap_ups']} />
-            <CategoryRow label="Recaps" pending={pendingCount} ready={approvedCount} oldest={oldestPendingDates['session_recaps']} />
-          </div>
-        </div>
-        <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-2">
-          <p className="text-[9px] uppercase tracking-widest text-text-muted font-semibold">System</p>
-          <div className="space-y-1.5">
-            <CategoryRow label="Curriculum" pending={curriculumOverridePendingCount} ready={curriculumOverrideApprovedCount} oldest={oldestPendingDates['curriculum']} />
-            <CategoryRow label="Voice Intake" pending={voiceIntakePendingCount} ready={voiceIntakeApprovedCount} oldest={oldestPendingDates['voice_intake']} />
-            <CategoryRow label="Captures" pending={captureCount} ready={0} oldest={oldestPendingDates['captures']} />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function CategoryRow({
-  label,
-  pending,
-  ready,
-  oldest,
-}: {
-  label: string
-  pending: number
-  ready: number
-  oldest: string | null | undefined
-}) {
-  return (
-    <div className="flex items-center justify-between gap-1 min-w-0">
-      <p className="text-[9px] text-text-muted truncate">{label}</p>
-      <div className="flex items-center gap-1 shrink-0">
-        {pending > 0 ? (
-          <span className="text-[9px] font-mono font-semibold text-status-orange">{pending}</span>
-        ) : (
-          <span className="text-[9px] font-mono text-border">—</span>
-        )}
-        {ready > 0 && (
-          <span className="text-[9px] font-mono font-semibold text-lime ml-1">{ready}↑</span>
-        )}
-        {pending > 0 && oldest && (
-          <span className="text-[9px] text-text-muted ml-0.5">· {relativeAge(oldest)}</span>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function relativeAge(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  if (diffMin < 2) return 'just now'
-  if (diffMin < 60) return `${diffMin}m ago`
-  const diffHr = Math.floor(diffMin / 60)
-  if (diffHr < 24) return `${diffHr}h ago`
-  const diffDay = Math.floor(diffHr / 24)
-  return `${diffDay}d ago`
 }
