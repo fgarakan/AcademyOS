@@ -18,6 +18,7 @@ import {
   isDraftReadyForReview,
   extractLevel,
 } from '@/components/assistant/templateDraftParser'
+import { resolvePageContext } from '@/components/assistant/donnaPageContextRegistry'
 
 // ---------------------------------------------------------------------------
 // Donna guided task infrastructure — local types only, no DB, no API.
@@ -33,153 +34,13 @@ type GuidedTaskState = {
 }
 
 // ---------------------------------------------------------------------------
-// Route context map — static guidance per director route
+// Route context and prompt suggestions are managed by donnaPageContextRegistry.ts
 // ---------------------------------------------------------------------------
-
-interface RouteContext {
-  screen: string
-  guidance: string
-  nextAction: string
-}
 
 interface CommandResponse {
   message: string
   type: 'info' | 'honest'
   label?: string
-}
-
-const ROUTE_CONTEXT: Record<string, RouteContext> = {
-  '/director': {
-    screen: 'Dashboard',
-    guidance:
-      "This is your director overview. Start with anything that needs review, then check today's sessions and player priorities.",
-    nextAction: 'Review what needs attention.',
-  },
-  '/director/onboarding/interview': {
-    screen: 'Academy Setup Assistant',
-    guidance:
-      'Answer one question at a time. Your answers help Academy OS understand how your academy works.',
-    nextAction: 'Complete the current question.',
-  },
-  '/director/onboarding/curriculum': {
-    screen: 'Curriculum Setup',
-    guidance:
-      'Approve or customize your curriculum spine so Academy OS can connect players, levels, and sessions.',
-    nextAction: 'Continue curriculum setup.',
-  },
-  '/director/onboarding': {
-    screen: 'Academy Onboarding',
-    guidance:
-      "You're setting up the foundation of your Academy OS. Follow the Next Best Step card to keep moving.",
-    nextAction: 'Continue your next setup step.',
-  },
-  '/director/review': {
-    screen: 'Review Queue',
-    guidance:
-      'This is where important items wait for your approval before they affect players, parents, sessions, or curriculum.',
-    nextAction: 'Start with Needs Approval.',
-  },
-  '/director/curriculum': {
-    screen: 'Curriculum',
-    guidance:
-      "This is where your academy's development system lives. Start by reviewing the current spine, then continue setup or open the builder.",
-    nextAction: 'Review your spine or open the Curriculum Builder to customize it.',
-  },
-  '/director/players/': {
-    screen: 'Player Profile',
-    guidance:
-      "This profile shows the player's current level, active priorities, coach notes, and next recommended actions. Start with the action summary, then review the curriculum connection and coach evidence sections.",
-    nextAction: "Review this player's next recommended action in the action summary card.",
-  },
-  '/director/players': {
-    screen: 'Players',
-    guidance:
-      'This is where player profiles, levels, priorities, and development records live.',
-    nextAction: 'Review players needing attention.',
-  },
-  '/director/sessions': {
-    screen: 'Sessions',
-    guidance: 'This is where session planning and coach execution connect.',
-    nextAction: 'Review or create the next session.',
-  },
-  '/director/class-templates': {
-    screen: 'Templates',
-    guidance:
-      'Templates are reusable class blueprints. Assign a curriculum level, generate a lesson plan, and coaches can run it on court. Use Academy Assistant to draft a new template by voice or text.',
-    nextAction: 'Create a template or assign a curriculum level to an existing one.',
-  },
-}
-
-const FALLBACK_CONTEXT: RouteContext = {
-  screen: 'Academy OS',
-  guidance:
-    'Use this assistant to guide setup, find pages, or capture a note.',
-  nextAction: 'Ask what to do next.',
-}
-
-// ---------------------------------------------------------------------------
-// Route-aware voice prompt suggestions
-// ---------------------------------------------------------------------------
-
-const VOICE_PROMPTS: Record<string, string[]> = {
-  '/director/onboarding/interview': [
-    'What is this page?',
-    'Explain this question.',
-    'What should I do next?',
-  ],
-  '/director/onboarding/curriculum': [
-    'What is this page?',
-    'What should I do next?',
-    'What happens when I approve this?',
-  ],
-  '/director/onboarding': [
-    'What should I do next?',
-    'Take me to curriculum setup.',
-    'What is this page?',
-  ],
-  '/director/players/': [
-    'What should I do next for this player?',
-    'Explain this player profile.',
-    'Capture a player note.',
-  ],
-  '/director/review': [
-    'What needs approval?',
-    'Explain this review item.',
-    'Where should I start?',
-  ],
-  '/director/class-templates': [
-    'Help me create an Orange 2 class template.',
-    'Create a template with warm-up, rally skills, point play, and matches.',
-    'Show me how to build a class template.',
-  ],
-  '/director/curriculum': [
-    'Create a template from this curriculum level.',
-    'Help me build an Orange 2 class template.',
-    'Explain how curriculum connects to templates.',
-  ],
-  '/director': [
-    'Help me create a class template.',
-    'What should I build next?',
-    'Brief me on what needs attention.',
-  ],
-}
-
-const FALLBACK_PROMPTS = ['What should I do next?', 'Show me what needs attention.']
-
-function resolveContext(pathname: string): RouteContext {
-  if (ROUTE_CONTEXT[pathname]) return ROUTE_CONTEXT[pathname]
-  const match = Object.keys(ROUTE_CONTEXT)
-    .filter(k => pathname.startsWith(k))
-    .sort((a, b) => b.length - a.length)[0]
-  return match ? ROUTE_CONTEXT[match] : FALLBACK_CONTEXT
-}
-
-function resolveVoicePrompts(pathname: string): string[] {
-  if (VOICE_PROMPTS[pathname]) return VOICE_PROMPTS[pathname]
-  const match = Object.keys(VOICE_PROMPTS)
-    .filter(k => pathname.startsWith(k))
-    .sort((a, b) => b.length - a.length)[0]
-  return match ? VOICE_PROMPTS[match] : FALLBACK_PROMPTS
 }
 
 // ---------------------------------------------------------------------------
@@ -297,8 +158,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [templateCommandInput, setTemplateCommandInput] = useState('')
   const [commandResponse, setCommandResponse] = useState<CommandResponse | null>(null)
 
-  const ctx = resolveContext(pathname)
-  const voicePrompts = resolveVoicePrompts(pathname)
+  // Page context from registry — resolves to the richest matching context for this route.
+  // Includes screenName, purpose, assistantIntro, safeDraftActions, approvalRequiredFor,
+  // and suggestedPrompts for the current director page.
+  const ctx = resolvePageContext(pathname)
+  const voicePrompts = ctx.suggestedPrompts
   // Single source of truth for the current missing question — same text shown on screen and spoken aloud.
   const currentTemplateQuestion: TemplateDraftQuestion | null = templateDraft?.missingQuestions?.[0] ?? null
 
@@ -558,7 +422,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       lower.includes('what page am i') ||
       lower.includes('explain this screen')
     ) {
-      setCommandResponse({ message: ctx.guidance, type: 'info', label: 'About this page' })
+      setCommandResponse({ message: ctx.purpose, type: 'info', label: 'About this page' })
       setActiveMode('explain')
       return true
     }
@@ -591,7 +455,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       setCommandResponse({
         message: pathname.startsWith('/director/onboarding/curriculum')
           ? "Approving curriculum setup confirms your academy's development spine. It connects players to levels, enables session planning, and activates the full Academy OS workflow."
-          : ctx.guidance,
+          : ctx.purpose,
         type: 'info',
         label: 'About approval',
       })
@@ -612,14 +476,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           label: 'About this question',
         })
       } else {
-        setCommandResponse({ message: ctx.guidance, type: 'info', label: 'About this page' })
+        setCommandResponse({ message: ctx.purpose, type: 'info', label: 'About this page' })
       }
       return true
     }
 
     // Broad "explain this" catch-all — after specific "explain this question" is already handled above
     if (lower.startsWith('explain') || lower.includes('explain this')) {
-      setCommandResponse({ message: ctx.guidance, type: 'info', label: 'About this page' })
+      setCommandResponse({ message: ctx.purpose, type: 'info', label: 'About this page' })
       setActiveMode('explain')
       return true
     }
@@ -889,7 +753,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               )}
             </div>
 
-            {/* Route-aware suggestions — hints only, no AI requests */}
+            {/* Route-aware suggestions — from page context registry */}
             <div
               className="px-4 py-3"
               style={{
@@ -953,17 +817,32 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* ── Current screen context card ── */}
+          {/* ── Current context card — uses page context registry ── */}
           {activeMode !== 'create_template' && (
             <div
-              className="rounded-xl px-3.5 py-3"
+              className="rounded-xl px-3.5 py-3 space-y-2"
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
             >
-              <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-0.5">
-                Current screen
-              </p>
-              <p className="text-sm font-semibold text-text-primary mb-1.5">{ctx.screen}</p>
-              <p className="text-[12px] text-text-secondary leading-relaxed">{ctx.guidance}</p>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-0.5">
+                  Current context
+                </p>
+                <p className="text-sm font-semibold text-text-primary">{ctx.screenName}</p>
+              </div>
+              <p className="text-[12px] text-text-secondary leading-relaxed">{ctx.assistantIntro}</p>
+              {ctx.approvalRequiredFor.length > 0 && (
+                <p
+                  className="text-[10px] text-text-muted leading-snug pt-2"
+                  style={{ borderTop: '1px solid var(--border-subtle)' }}
+                >
+                  Requires approval:{' '}
+                  {ctx.approvalRequiredFor
+                    .slice(0, 2)
+                    .map(a => a.replace(/_/g, ' '))
+                    .join(', ')}
+                  .
+                </p>
+              )}
             </div>
           )}
 
@@ -1001,7 +880,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               >
                 About this screen
               </p>
-              <p className="text-[12px] text-text-secondary leading-relaxed">{ctx.guidance}</p>
+              <p className="text-[12px] text-text-secondary leading-relaxed">{ctx.purpose}</p>
             </div>
           )}
 

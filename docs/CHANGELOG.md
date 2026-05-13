@@ -2,6 +2,81 @@
 
 ---
 
+## 2026-05-13 — Mega Sprint 264: Donna Academy-Wide Context + Predictive Task Infrastructure V1
+
+**Why this sprint:**
+Sprint 263 established the guided class-template completion loop. This sprint builds the contract infrastructure that lets Academy Assistant understand and operate across the entire Academy OS ecosystem — which pages it is on, what it is allowed to read by role, what tasks it can guide a director through, what approval-gated drafts those tasks produce, and what kinds of predictive suggestions it can generate. All five layers are pure TypeScript contract registries — no DB queries, no OpenAI, no Realtime, no external API calls. Everything is honesty-first: wired vs. not-yet-wired is clearly labeled on every contract.
+
+**What was built:**
+
+**Phase 1 — Page Context Registry (`donnaPageContextRegistry.ts`, created)**
+- `DonnaPageContext` interface (11 fields): routePattern, screenName, objectType, purpose, nextAction, assistantIntro, readableContext, safeDraftActions, approvalRequiredFor, suggestedPrompts, unsafeActions
+- `PAGE_CONTEXT_REGISTRY` — 14 registered director route contexts covering: onboarding interview/curriculum/root, review queue, curriculum, class-template detail/list, fitness-template detail/list, sessions, player profile/list, signals, director dashboard
+- `patternToMatchPrefix()` — converts `[paramId]` patterns to prefix strings for dynamic route matching
+- `resolvePageContext(pathname)` — exact match → longest-prefix-match fallback → `FALLBACK_CONTEXT`
+- `getContextByPattern()` utility
+
+**Phase 2 — Ecosystem Read Access Map (`donnaAccessMap.ts`, created)**
+- `DonnaObjectType` union (17 types): academy, director_profile, coach_profile, parent_profile, player_profile, group, session, attendance, class_template, fitness_template, curriculum, coach_note, assessment, review_item, signal, parent_update, player_summary
+- `DonnaReadLevel` union: full | assigned_only | safe_summary | none
+- `DonnaObjectAccess` interface with directorRead, coachRead, parentRead, playerRead, sensitiveFields, parentSafeFields, playerSafeFields, requiresApprovalToExpose
+- `DONNA_ACCESS_MAP` — 17 complete entries, director never sees parent/player-restricted fields via UI contract
+- Helpers: `canRoleRead()`, `getRoleReadLevel()`, `getSafeFieldsForRole()`, `getReadableObjectTypesForRole()`
+
+**Phase 3 — Task Contract Registry (`donnaTaskContracts.ts`, created)**
+- `DonnaTaskId` union (13 tasks): create_class_template, create_fitness_template, create_session, capture_coach_note, draft_parent_update, draft_player_note, review_level_readiness, handle_attendance_exception, adjust_curriculum, create_group, assign_player_to_group, summarize_player_progress, recommend_template_for_group
+- `DonnaTaskContract` with requiredFields, optionalFields, questionSequence, reads, createsDraftType, approvalRequired, unsafeWithoutApproval, `saveApplyMethodStatus: 'wired' | 'not_wired_yet'`
+- `create_class_template` is the ONLY wired task; all 12 others are contract-only
+- Helpers: `getTaskContract()`, `getWiredTaskContracts()`, `getUnwiredTaskContracts()`
+
+**Phase 4 — Draft + Approval Contract Registry (`donnaDraftContracts.ts`, created)**
+- `DonnaDraftType` union (11 types): class_template_draft, fitness_template_draft, session_draft, coach_note_draft, parent_update_draft, player_note_draft, curriculum_adjustment_draft, attendance_exception_draft, level_readiness_draft, group_creation_draft, template_recommendation_draft
+- `DonnaDraftContract` with proposedChanges, affectedObjects, visibilityImpact, approvalRequired, approvalActionLabel, cancelActionLabel, `saveWireStatus: 'wired' | 'not_wired_yet'`
+- `class_template_draft` is the ONLY wired draft; all 10 others are contract-only
+- Helpers: `getDraftContract()`, `getWiredDraftContracts()`, `getUnwiredDraftContracts()`
+
+**Phase 5 — Predictive Suggestion Contracts (`donnaSuggestionContracts.ts`, created)**
+- `DonnaSuggestionType` union (8 types): template_recommendation, session_focus_recommendation, group_composition_recommendation, player_attention_signal, parent_update_suggestion, curriculum_priority_suggestion, fitness_focus_suggestion, attendance_risk_suggestion
+- `DonnaSuggestionContract` with requiredInputs, optionalInputs, reasoningFields, confidenceLevels, recommendedActionType, createsDraftType, approvalRequired, `explainabilityRequired: boolean`
+- All 8 suggestion types have `explainabilityRequired: true`; no live predictions, no DB queries
+- Helpers: `getSuggestionContract()`, `getApprovalRequiredSuggestions()`, `getExplainabilitySuggestions()`
+
+**Phase 6 — Assistant UI Context Awareness Upgrade (`DonnaAssistantButton.tsx`, modified)**
+- Removed ~145 lines of inline `RouteContext`, `ROUTE_CONTEXT`, `FALLBACK_CONTEXT`, `VOICE_PROMPTS`, `resolveContext()`, `resolveVoicePrompts()`
+- Added `import { resolvePageContext }` from registry
+- `ctx = resolvePageContext(pathname)` replaces inline `resolveContext(pathname)`
+- `voicePrompts = ctx.suggestedPrompts` replaces `resolveVoicePrompts(pathname)`
+- All `ctx.guidance` → `ctx.purpose`, `ctx.screen` → `ctx.screenName`
+- Context card updated: `ctx.screenName`, `ctx.assistantIntro`, `ctx.approvalRequiredFor` (first 2, human-readable)
+- All Sprint 262/263 guided class-template flow preserved unchanged (speech helper, `wasFieldResolved`, `handleVoiceTranscript`, `TemplateDraftPanel`)
+
+**What was intentionally not changed:**
+- No migrations, no DB tables, `database.types.ts` untouched
+- No OpenAI / Realtime / external APIs
+- No parent/player data exposed — access map is a UI guardrail only; RLS remains authoritative
+- No automatic player level movement, no curriculum data changes, no billing changes
+- `saveAssistantTemplateDraftAction` unchanged — class-template wired save is the only live save path
+- `QuickCaptureDrawer`, `TemplateDraftPanel`, `templateDraftParser.ts`, `templateDraftTypes.ts` untouched
+- Public UI label remains "Academy Assistant" — Donna name only in internal code files
+
+**Wired vs. contract-only summary:**
+- Wired (save action exists): `create_class_template` task / `class_template_draft` draft
+- Contract-only (13 tasks / 10 drafts / 8 suggestion types): full spec defined, save actions not yet built
+
+**Files created:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — 14-route director page context registry
+- `src/components/assistant/donnaAccessMap.ts` — 17-object-type × 5-role read access map
+- `src/components/assistant/donnaTaskContracts.ts` — 13-task guided flow contract registry
+- `src/components/assistant/donnaDraftContracts.ts` — 11-draft approval contract registry
+- `src/components/assistant/donnaSuggestionContracts.ts` — 8-suggestion predictive contract registry
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — registry-based context resolution, updated context card, all Sprint 262/263 code preserved
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with no errors.
+
+---
+
 ## 2026-05-13 — Sprint 263: Donna Guided Completion Infrastructure V1
 
 **Why this sprint:**
