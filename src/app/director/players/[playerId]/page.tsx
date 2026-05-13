@@ -66,6 +66,10 @@ import { PlayerSessionHistoryPanel } from './PlayerSessionHistoryPanel'
 import { PlacementEntryCard, type PlacementEntryData } from './PlacementEntryCard'
 import { FirstDevelopmentContextCard, type FirstDevContextData } from './FirstDevelopmentContextCard'
 import { PlacementCurriculumBridgeCard } from './PlacementCurriculumBridgeCard'
+import { PlayerActionSummaryCard } from './_components/PlayerActionSummaryCard'
+import { PlayerCurriculumConnectionBlock } from './_components/PlayerCurriculumConnectionBlock'
+import { PlayerCoachNotesBlock } from './_components/PlayerCoachNotesBlock'
+import { PlayerParentSummaryBlock } from './_components/PlayerParentSummaryBlock'
 
 interface PageProps {
   params: { playerId: string }
@@ -742,6 +746,21 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     }
   }
 
+  // ─── Observations — fetched early so overviewSlot can reference them ────
+  // rawDb cast avoids TS2589 on the multi-join select; RLS enforces academy scoping.
+  const { data: rawObs } = await rawDb
+    .from('coach_observations')
+    .select([
+      'id', 'content', 'observation_type', 'tags', 'is_private', 'ai_entities', 'created_at',
+      'profiles!coach_observations_coach_id_fkey(display_name)',
+      'sessions!coach_observations_session_id_fkey(name, scheduled_date)',
+    ].join(', '))
+    .eq('academy_id', academyId)
+    .eq('player_id', params.playerId)
+    .order('created_at', { ascending: false })
+    .limit(20)
+  const enrichedObservations: CoachObservationRow[] = rawObs ?? []
+
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
     <div className="space-y-6">
@@ -762,6 +781,45 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         advancementEligible={curriculumSummary?.advancement_eligible ?? null}
         hasCurriculumState={hasCurriculum}
       />
+
+      {/* ── Sprint 253: Action layer ─────────────────────────────────────── */}
+      {/* Action summary + clickable CTAs */}
+      <PlayerActionSummaryCard
+        academyId={academyId}
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        developmentFocus={developmentSummary?.development_focus ?? null}
+        activePriorityTitle={activePriorities[0]?.title ?? null}
+        latestNoteSnippet={(enrichedObservations[0] as any)?.content ?? null}
+        latestNoteDate={(enrichedObservations[0] as any)?.created_at ?? null}
+        hasCurriculumState={hasCurriculum}
+        observationCount={enrichedObservations.length}
+        advancementEligible={curriculumSummary?.advancement_eligible ?? null}
+      />
+
+      {/* Three operational blocks — responsive grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <PlayerCurriculumConnectionBlock
+          currentLevelName={curriculumSummary?.current_level_name ?? null}
+          nextLevelName={nextCurriculumLevel?.display_name ?? null}
+          hasCurriculumState={hasCurriculum}
+          currentStage={curriculumSummary?.stage ?? null}
+        />
+        <PlayerCoachNotesBlock
+          latestNote={enrichedObservations[0]
+            ? {
+                content: (enrichedObservations[0] as any).content,
+                created_at: (enrichedObservations[0] as any).created_at,
+                observation_type: (enrichedObservations[0] as any).observation_type ?? null,
+              }
+            : null}
+          observationCount={enrichedObservations.length}
+        />
+        <PlayerParentSummaryBlock
+          playerFirstName={player.first_name ?? null}
+          currentLevelName={curriculumSummary?.current_level_name ?? null}
+          currentFocus={qaCoachLanguage[0]?.current_focus ?? developmentSummary?.development_focus ?? null}
+        />
+      </div>
 
       {/* Two-column layout: development data left, admin/curriculum right */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6 items-start">
@@ -954,20 +1012,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   )
 
   // ─── Tab 5: Notes ─────────────────────────────────────────────────────────
-  // Enriched observation query: academy_id + player_id scoped, with coach name and session context.
-  // rawDb cast avoids TS2589 on the multi-join select; RLS already enforces academy scoping.
-  const { data: rawObs } = await rawDb
-    .from('coach_observations')
-    .select([
-      'id', 'content', 'observation_type', 'tags', 'is_private', 'ai_entities', 'created_at',
-      'profiles!coach_observations_coach_id_fkey(display_name)',
-      'sessions!coach_observations_session_id_fkey(name, scheduled_date)',
-    ].join(', '))
-    .eq('academy_id', academyId)
-    .eq('player_id', params.playerId)
-    .order('created_at', { ascending: false })
-    .limit(20)
-  const enrichedObservations: CoachObservationRow[] = rawObs ?? []
+  // enrichedObservations is fetched before overviewSlot above — reused here.
 
   // Priority recommendation drafts: pending/approved for this player, newest first.
   // rawDb cast avoids TS2589; RLS enforces academy scoping.

@@ -2,6 +2,89 @@
 
 ---
 
+## 2026-05-13 — Sprint 253: Player Profile Action Layer V1
+
+**Why this was needed:**
+Player profiles in Academy OS had all the right data but felt passive — a director could see who a player was, but the page did not clearly tell them what to do next. Coach notes, curriculum connection, and parent communication were buried in separate tabs. The sprint adds an action-first layer to the Overview tab that surfaces clickable CTAs, operational context blocks, and smart guidance, so a director can look at any player and immediately know the next step.
+
+**Player Action Summary card (`PlayerActionSummaryCard.tsx`):**
+- 'use client' component added to the Overview tab, directly below the existing PlayerCommandCenterCard
+- Shows the active development priority or focus (or an empty-state prompt if none set)
+- Shows the latest coach note snippet (or empty-state prompt if no observations yet)
+- Action buttons grid with 6 actions:
+  - **Add Coach Note** → opens `QuickCaptureDrawer` (auto-detects player context via pathname); primary lime styling
+  - **Review Level Readiness** → links to `/director/review`
+  - **Create Session** → links to `/director/sessions`
+  - **View Curriculum** → links to `/director/curriculum`
+  - **Assign At-Home Work** → disabled / coming soon
+  - **Draft Parent Update** → disabled / coming soon
+- "What this player needs next" section: derives 1–4 operational guidance items from available data (no curriculum state, no priority, no focus set, no observations, advancement eligible)
+- Mobile: action buttons in `grid-cols-1 sm:grid-cols-2`; coming-soon buttons visually secondary (opacity-50, no hover effects)
+
+**Three operational blocks (responsive 3-column grid on Overview tab):**
+
+1. **Curriculum Connection (`PlayerCurriculumConnectionBlock.tsx`):**
+   - Shows current level, next level, and a note about gate criteria being on the Skill Path tab
+   - If no curriculum assigned: shows empty-state with instruction to use Skill Path tab
+   - Always includes a "View Curriculum" link to `/director/curriculum`
+
+2. **Coach Notes & Evidence (`PlayerCoachNotesBlock.tsx`):**
+   - Shows latest coach note content with date and type, plus total observation count badge
+   - If no notes: empty state with message to capture first observation
+   - "Capture Player Note" section explains how to use the Notes tab or Academy Assistant — no new route created; safe
+   - Reuses `enrichedObservations` data already fetched on the page (no extra DB query)
+
+3. **Parent / Player Summary (`PlayerParentSummaryBlock.tsx`):**
+   - Shows current level and current focus as a preview of what a parent update would include
+   - If no level or focus: empty state message
+   - "Draft Parent Update" CTA shown as disabled / coming soon (no parent send route exists yet)
+   - Internal-only badge visible; guardrail copy confirms no automatic sharing
+
+**Academy Assistant route guidance update (`DonnaAssistantButton.tsx`):**
+- Added `/director/players/` entry to `ROUTE_CONTEXT` (with trailing slash so prefix resolver picks it over the list entry for player profile URLs):
+  - Screen: `"Player Profile"`
+  - Guidance: explains level, priorities, coach notes, and action summary
+  - Next action: "Review this player's next recommended action in the action summary card."
+- Added `/director/players/` entry to `VOICE_PROMPTS`:
+  - "What should I do next for this player?"
+  - "Explain this player profile."
+  - "Capture a player note."
+- Existing `/director/players` (no trailing slash) list-page entry unchanged
+
+**`page.tsx` structural change:**
+- Moved the `enrichedObservations` DB query from the Notes tab section to before the `overviewSlot` definition so the Overview tab can reference it without a TypeScript temporal dead zone error. No logic change — same query, same RLS enforcement.
+- 4 new components imported and inserted into the Overview tab between `PlayerCommandCenterCard` and the existing two-column grid.
+
+**Mobile usability:**
+- PlayerActionSummaryCard action buttons use `grid-cols-1 sm:grid-cols-2` — clean wrapping on narrow screens
+- Operational blocks use `grid-cols-1 md:grid-cols-3` — single column on mobile, 3-column on tablet+
+- Coming-soon actions clearly visually demoted (opacity, no hover)
+- No cramped table layout introduced
+
+**No migrations:** Confirmed. No new tables, no schema changes.
+**database.types.ts:** Untouched.
+**Player save behavior:** Unchanged.
+**Level movement logic:** Unchanged.
+**No AI/API connections added.**
+**Sprint 250 Academy Assistant shell:** Unaffected.
+**Sprint 251 voice-first Academy Assistant:** Unaffected — voice panel, capture drawer, and mode buttons all intact.
+**Sprint 252 curriculum page:** Unaffected.
+
+**Files created:**
+- `src/app/director/players/[playerId]/_components/PlayerActionSummaryCard.tsx`
+- `src/app/director/players/[playerId]/_components/PlayerCurriculumConnectionBlock.tsx`
+- `src/app/director/players/[playerId]/_components/PlayerCoachNotesBlock.tsx`
+- `src/app/director/players/[playerId]/_components/PlayerParentSummaryBlock.tsx`
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — moved enrichedObservations query; imported and inserted 4 new components into Overview tab
+- `src/components/assistant/DonnaAssistantButton.tsx` — added player profile route context and voice prompts
+
+**TypeScript result:** `npx tsc --noEmit` — clean, no errors.
+**Manual QA status:** Pending — run through the 15-item QA checklist in the sprint prompt.
+
+---
+
 ## 2026-05-13 — Sprint 252: Curriculum Page Simplification V1
 
 **Why this was needed:**

@@ -55,6 +55,12 @@ const ROUTE_CONTEXT: Record<string, RouteContext> = {
       "This is where your academy's development system lives. Start by reviewing the current spine, then continue setup or open the builder.",
     nextAction: 'Review your spine or open the Curriculum Builder to customize it.',
   },
+  '/director/players/': {
+    screen: 'Player Profile',
+    guidance:
+      "This profile shows the player's current level, active priorities, coach notes, and next recommended actions. Start with the action summary, then review the curriculum connection and coach evidence sections.",
+    nextAction: "Review this player's next recommended action in the action summary card.",
+  },
   '/director/players': {
     screen: 'Players',
     guidance:
@@ -100,6 +106,11 @@ const VOICE_PROMPTS: Record<string, string[]> = {
     'What should I do next?',
     'Explain this onboarding step.',
     'What does curriculum setup unlock?',
+  ],
+  '/director/players/': [
+    'What should I do next for this player?',
+    'Explain this player profile.',
+    'Capture a player note.',
   ],
   '/director/review': [
     'What needs approval?',
