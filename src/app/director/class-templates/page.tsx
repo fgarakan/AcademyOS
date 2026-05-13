@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BookOpen, Clock, GraduationCap, Plus } from 'lucide-react'
+import { BookOpen, Clock, Dumbbell, GraduationCap, Plus } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import type { Tables } from '@/lib/supabase/database.types'
@@ -128,13 +128,22 @@ export default async function ClassTemplatesPage() {
     <div className="p-6 animate-fade-in space-y-6">
       <div className="flex items-start justify-between gap-4">
         <PageHeader />
-        <Link
-          href="/director/class-templates/new"
-          className="inline-flex items-center gap-1.5 btn-lime text-xs px-3 py-2 shrink-0"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          New Class Template
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/director/fitness/templates"
+            className="inline-flex items-center gap-1.5 btn-ghost text-xs px-3 py-2"
+          >
+            <Dumbbell className="w-3.5 h-3.5" />
+            Fitness Templates
+          </Link>
+          <Link
+            href="/director/class-templates/new"
+            className="inline-flex items-center gap-1.5 btn-lime text-xs px-3 py-2"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            New Class Template
+          </Link>
+        </div>
       </div>
 
       <PageExplainerCard
@@ -206,7 +215,7 @@ export default async function ClassTemplatesPage() {
               <EmptyState
                 icon={<BookOpen className="w-5 h-5" />}
                 title="No class templates yet"
-                description="Fitness templates are managed under Fitness OS."
+                description="Fitness templates are managed separately under Fitness Templates."
               />
             </CardContent>
           </Card>
@@ -233,9 +242,9 @@ function PageHeader() {
   return (
     <div>
       <p className="page-eyebrow">Curriculum</p>
-      <h1 className="page-title">Class Templates</h1>
+      <h1 className="page-title">Templates</h1>
       <p className="page-subtitle">
-        Session and class templates used for program planning. Fitness training protocols are under Fitness OS.
+        Use templates to organize repeatable class plans, training blocks, and session structures. Fitness training protocols are managed under Fitness Templates.
       </p>
     </div>
   )

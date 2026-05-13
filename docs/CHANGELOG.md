@@ -2,6 +2,56 @@
 
 ---
 
+## 2026-05-13 — Sprint 246: Director Sidebar Simplification V1
+
+**Why this was needed:**
+The director sidebar had grown into a feature sitemap — 11 items across three sections including Placement, Fitness Templates, AI Suggestions, and an Intelligence section that duplicated functionality available elsewhere. The sidebar needed to reflect daily operation priorities, not the full feature inventory.
+
+**New sidebar structure:**
+
+Section 1 — Academy OS:
+- Dashboard → /director
+- Players → /director/players
+- Sessions → /director/sessions
+- Review Queue → /director/review (badge preserved)
+- Signals → /director/signals
+- Curriculum → /director/curriculum
+- Templates → /director/class-templates
+
+Section 2 — System:
+- Settings → /director/settings
+- Onboarding → /director/onboarding (attention ping preserved)
+- Command Center → /director/command-center
+
+**Removed from sidebar (routes preserved):**
+- Placement → /director/placement (route intact; accessible via dashboard priority actions and onboarding flow)
+- Fitness Templates → /director/fitness/templates (route intact; accessible via "Fitness Templates" button on the Templates page)
+- AI Suggestions → /director/ai-suggestions (route intact; will surface through Signals or Review Queue in a future sprint)
+- Intelligence section label (removed; Command Center moved to System)
+
+**Files changed:**
+- `src/components/nav/SidebarNav.tsx` — Restructured nav items into two sections (Academy OS / System). Removed Placement, Fitness Templates, AI Suggestions from sidebar. Removed Intelligence section. Preserved badge on Review Queue, attention ping on Onboarding.
+- `src/app/director/class-templates/page.tsx` — Added orientation sentence to page subtitle. Added "Fitness Templates" secondary button linking to /director/fitness/templates. Replaced "Fitness OS" language with "Fitness Templates" in subtitle and EmptyState. Page title updated from "Class Templates" to "Templates" to match sidebar label.
+
+**TypeScript:** clean (npx tsc --noEmit — no errors)
+
+**Manual QA status:** Pending — run locally to verify sidebar shows correct 10 items, no Demo Tour, no Fitness OS language, no AI Suggestions, badge/ping behaviors intact.
+
+**No migrations:** Database unchanged.
+**`database.types.ts`:** Untouched.
+
+**Exact git add command:**
+```
+git add src/components/nav/SidebarNav.tsx src/app/director/class-templates/page.tsx docs/CHANGELOG.md
+```
+
+**Exact commit command:**
+```
+git commit -m "Sprint 246 — Director Sidebar Simplification V1"
+```
+
+---
+
 ## 2026-05-13 — Sprint 245: Animated Academy OS Onboarding Deck V1
 
 **Why this was added:**

@@ -4,31 +4,25 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
-  LogOut, Dumbbell, ClipboardList,
-  ChevronRight, LayoutTemplate, Sparkles, Terminal, UserPlus, Activity, Settings, Rocket,
+  LogOut, ClipboardList,
+  LayoutTemplate, Terminal, Activity, Settings, Rocket,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
-const FOUNDATION_ITEMS = [
-  { label: 'Dashboard',       href: '/director',                   icon: LayoutDashboard },
-  { label: 'Players',         href: '/director/players',           icon: Users },
-  { label: 'Placement',       href: '/director/placement',         icon: UserPlus },
-  { label: 'Curriculum',      href: '/director/curriculum',        icon: BookOpen },
-  { label: 'Class Templates', href: '/director/class-templates',   icon: LayoutTemplate },
-  { label: 'Fitness Templates', href: '/director/fitness/templates', icon: Dumbbell },
-  { label: 'Sessions',        href: '/director/sessions',          icon: Calendar },
-  { label: 'Signals',         href: '/director/signals',           icon: Activity },
-  { label: 'Review Queue',    href: '/director/review',            icon: ClipboardList },
-]
-
-const INTELLIGENCE_ITEMS = [
-  { label: 'Command Center', href: '/director/command-center', icon: Terminal },
-  { label: 'AI Suggestions', href: '/director/ai-suggestions', icon: Sparkles },
+const ACADEMY_ITEMS = [
+  { label: 'Dashboard',    href: '/director',                 icon: LayoutDashboard },
+  { label: 'Players',      href: '/director/players',         icon: Users },
+  { label: 'Sessions',     href: '/director/sessions',        icon: Calendar },
+  { label: 'Review Queue', href: '/director/review',          icon: ClipboardList },
+  { label: 'Signals',      href: '/director/signals',         icon: Activity },
+  { label: 'Curriculum',   href: '/director/curriculum',      icon: BookOpen },
+  { label: 'Templates',    href: '/director/class-templates', icon: LayoutTemplate },
 ]
 
 const SYSTEM_ITEMS = [
-  { label: 'Onboarding', href: '/director/onboarding', icon: Rocket },
-  { label: 'Settings',   href: '/director/settings',    icon: Settings },
+  { label: 'Settings',       href: '/director/settings',       icon: Settings },
+  { label: 'Onboarding',     href: '/director/onboarding',     icon: Rocket },
+  { label: 'Command Center', href: '/director/command-center', icon: Terminal },
 ]
 
 interface SidebarNavProps {
@@ -142,19 +136,14 @@ export function SidebarNav({
       {/* Nav items */}
       <div className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
 
-        <SectionLabel label="Foundation" />
-        {FOUNDATION_ITEMS.map(item => (
+        <SectionLabel label="Academy OS" />
+        {ACADEMY_ITEMS.map(item => (
           <NavItem
             key={item.href}
             item={item}
             isActive={isActive(item.href)}
             badge={item.label === 'Review Queue' ? pendingCount : undefined}
           />
-        ))}
-
-        <SectionLabel label="Intelligence" />
-        {INTELLIGENCE_ITEMS.map(item => (
-          <NavItem key={item.href} item={item} isActive={isActive(item.href)} />
         ))}
 
         <SectionLabel label="System" />
