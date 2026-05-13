@@ -242,9 +242,9 @@ function PageHeader() {
   return (
     <div>
       <p className="page-eyebrow">Curriculum</p>
-      <h1 className="page-title">Templates</h1>
+      <h1 className="page-title">Class Templates</h1>
       <p className="page-subtitle">
-        Use templates to organize repeatable class plans, training blocks, and session structures. Fitness training protocols are managed under Fitness Templates.
+        Reusable class blueprints that help coaches run consistent, curriculum-aligned sessions on court.
       </p>
     </div>
   )

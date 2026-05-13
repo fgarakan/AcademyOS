@@ -155,7 +155,9 @@ export default async function SignalsPage() {
         <div>
           <p className="page-eyebrow">Director</p>
           <h1 className="page-title">Signals</h1>
-          <p className="page-subtitle">Attention items across players, sessions, and requests.</p>
+          <p className="page-subtitle">
+            Patterns worth noticing — missing curriculum levels, attendance concerns, pending coach reviews, and lesson requests. Review items here and take action before they affect players or sessions.
+          </p>
         </div>
         {totalSignals > 0 && (
           <span className="shrink-0 mt-1 px-3 py-1 rounded-full text-xs font-bold bg-status-orange/10 text-status-orange border border-status-orange/30">

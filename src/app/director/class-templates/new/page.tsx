@@ -17,7 +17,7 @@ export default function NewClassTemplatePage() {
         <p className="page-eyebrow">Curriculum</p>
         <h1 className="page-title">New Class Template</h1>
         <p className="page-subtitle">
-          Create a session or class template. Add blocks and curriculum links after creation.
+          Start high level. Give this template a name and describe who it's for. You can add blocks, timing, and curriculum links after creation.
         </p>
       </div>
 

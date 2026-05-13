@@ -187,7 +187,9 @@ function PageHeader() {
       <div>
         <p className="page-eyebrow">Director</p>
         <h1 className="page-title">Sessions</h1>
-        <p className="page-subtitle">Generated session snapshots for this academy.</p>
+        <p className="page-subtitle">
+          Sessions are created from class and fitness templates. Each session gives coaches a plan to run on court. After a session, coaches submit a wrap-up you can review in the Review Queue.
+        </p>
       </div>
       <div className="flex items-center gap-2 shrink-0 mt-1">
         <Link

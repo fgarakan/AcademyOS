@@ -76,114 +76,153 @@ export function NewClassTemplateForm() {
   const trackPreview = buildTrack()
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-6">
 
-      {/* Helper copy */}
+      {/* Guide banner */}
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
-          Choose who this class is for. Academy OS will use this to guide blocks, curriculum links, and coach-ready session plans.
+          Start high level. You can refine details later. Blocks are the parts of class the coach will run on court — add them on the next screen after creation.
         </p>
       </div>
 
-      <div className="space-y-1.5">
-        <label className="label-xs">Template Name *</label>
-        <input
-          type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          placeholder="e.g. Junior Intermediate Group Session"
-          maxLength={100}
-          disabled={isPending}
-          className="input-base w-full"
-        />
-      </div>
-
-      {/* Guided dropdowns — combined into track field */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Step 1 — Template Basics */}
+      <div className="space-y-3">
+        <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
+          Step 1 — Template Basics
+        </p>
         <div className="space-y-1.5">
-          <label className="label-xs">Template Type</label>
-          <select
-            value={templateType}
-            onChange={e => setTemplateType(e.target.value)}
+          <label className="label-xs">Template Name *</label>
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="e.g. Junior Intermediate Group Session"
+            maxLength={100}
             disabled={isPending}
             className="input-base w-full"
-          >
-            <option value="">Select type…</option>
-            {TEMPLATE_TYPES.map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+          />
         </div>
-
         <div className="space-y-1.5">
-          <label className="label-xs">Ball / Level Focus</label>
-          <select
-            value={ballLevel}
-            onChange={e => setBallLevel(e.target.value)}
+          <label className="label-xs">Description</label>
+          <textarea
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Briefly describe this template's purpose…"
+            rows={2}
+            maxLength={300}
             disabled={isPending}
-            className="input-base w-full"
-          >
-            <option value="">Select level…</option>
-            {BALL_LEVELS.map(l => (
-              <option key={l} value={l}>{l}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="label-xs">Group Type</label>
-          <select
-            value={groupType}
-            onChange={e => setGroupType(e.target.value)}
-            disabled={isPending}
-            className="input-base w-full"
-          >
-            <option value="">Select group…</option>
-            {GROUP_TYPES.map(g => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
+            className="input-base w-full resize-none"
+          />
         </div>
       </div>
 
-      {trackPreview && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-lime/20 bg-lime/5">
-          <p className="text-[10px] uppercase tracking-widest text-text-muted">Track</p>
-          <p className="text-xs font-medium text-lime ml-1">{trackPreview}</p>
-        </div>
-      )}
+      {/* Step 2 — Level + Class Type */}
+      <div className="space-y-3">
+        <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
+          Step 2 — Level + Class Type
+        </p>
+        <p className="text-[11px] text-text-secondary -mt-1">
+          These choices help Academy OS connect this template to curriculum, drills, and coach language.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <label className="label-xs">Template Type</label>
+            <select
+              value={templateType}
+              onChange={e => setTemplateType(e.target.value)}
+              disabled={isPending}
+              className="input-base w-full"
+            >
+              <option value="">Select type…</option>
+              {TEMPLATE_TYPES.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
 
-      <div className="space-y-1.5">
-        <label className="label-xs">Description</label>
-        <textarea
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          placeholder="Briefly describe this template's purpose…"
-          rows={2}
-          maxLength={300}
-          disabled={isPending}
-          className="input-base w-full resize-none"
-        />
+          <div className="space-y-1.5">
+            <label className="label-xs">Ball / Level Focus</label>
+            <select
+              value={ballLevel}
+              onChange={e => setBallLevel(e.target.value)}
+              disabled={isPending}
+              className="input-base w-full"
+            >
+              <option value="">Select level…</option>
+              {BALL_LEVELS.map(l => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="label-xs">Group Type</label>
+            <select
+              value={groupType}
+              onChange={e => setGroupType(e.target.value)}
+              disabled={isPending}
+              className="input-base w-full"
+            >
+              <option value="">Select group…</option>
+              {GROUP_TYPES.map(g => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {trackPreview && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-lime/20 bg-lime/5">
+            <p className="text-[10px] uppercase tracking-widest text-text-muted">Track</p>
+            <p className="text-xs font-medium text-lime ml-1">{trackPreview}</p>
+          </div>
+        )}
       </div>
 
-      <div className="space-y-1.5">
-        <label className="label-xs">Total Duration (minutes)</label>
-        <input
-          type="number"
-          min="0"
-          value={totalDurationMin}
-          onChange={e => setTotalDurationMin(e.target.value)}
-          placeholder="e.g. 60"
-          disabled={isPending}
-          className="input-base w-32"
-        />
+      {/* Step 3 — Timing */}
+      <div className="space-y-3">
+        <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
+          Step 3 — Timing
+        </p>
+        <p className="text-[11px] text-text-secondary -mt-1">
+          Timing helps the session stay organized. You can adjust this after creation.
+        </p>
+        <div className="space-y-1.5">
+          <label className="label-xs">Total Duration (minutes)</label>
+          <input
+            type="number"
+            min="0"
+            value={totalDurationMin}
+            onChange={e => setTotalDurationMin(e.target.value)}
+            placeholder="e.g. 60"
+            disabled={isPending}
+            className="input-base w-32"
+          />
+        </div>
+      </div>
+
+      {/* Steps 4–6 note */}
+      <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
+        <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1.5">Next — after creation</p>
+        <ul className="space-y-1">
+          {[
+            'Step 4 — Add blocks (the parts of class coaches will run on court)',
+            'Step 5 — Connect curriculum and generate a lesson plan',
+            'Step 6 — Add coach instructions and review',
+          ].map(step => (
+            <li key={step} className="text-[11px] text-text-muted flex items-start gap-1.5">
+              <span className="text-lime mt-px shrink-0">·</span>
+              {step}
+            </li>
+          ))}
+        </ul>
       </div>
 
       {error && (
         <p className="text-xs text-status-red">{error}</p>
       )}
 
-      <div className="flex items-center gap-3 pt-2">
+      <div className="flex items-center gap-3 pt-1">
         <button
           type="submit"
           disabled={isPending || !name.trim()}

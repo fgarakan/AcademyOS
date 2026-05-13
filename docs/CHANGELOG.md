@@ -2,6 +2,62 @@
 
 ---
 
+## 2026-05-13 — Mega Sprint 259: Core Usability + Guided Templates + Spoken Academy Assistant V1
+
+**Why this sprint:**
+The director experience needed coherent hierarchy — high-level orientation first, guided next action, then details. Class and Fitness templates needed step-by-step explanation. The Academy Assistant needed a spoken, name-aware greeting on open.
+
+**Phase 1 — CTA Clarity Verification:**
+All Sprint 258 labels verified already correct: "Continue Curriculum Setup" ✅, "Open Curriculum Builder" ✅, "View Archive" ✅. No changes made.
+
+**Phase 2 — Class Templates Guided Builder UX V1:**
+- `src/app/director/class-templates/page.tsx` — Page title updated from "Templates" to "Class Templates"; subtitle updated to one-sentence purpose.
+- `src/app/director/class-templates/new/page.tsx` — Subtitle updated: "Start high level. Give this template a name and describe who it's for. You can add blocks, timing, and curriculum links after creation."
+- `src/app/director/class-templates/new/NewClassTemplateForm.tsx` — Complete rewrite of form structure. Added three step labels (Step 1 — Template Basics, Step 2 — Level + Class Type, Step 3 — Timing). Added "Steps 4–6 after creation" summary card explaining blocks, curriculum, and coach instructions come on the next screen. Updated guide banner copy. Save behavior unchanged.
+
+**Phase 3 — Fitness Templates Guided Builder UX V1:**
+- `src/app/director/fitness/templates/page.tsx` — Added `PageExplainerCard` with purpose explanation ("Reusable physical training plans — not today's completed workout, not a player-specific plan"). Added Q&A clarifying block categories and what to do first. Updated page eyebrow to "Physical Pathway". Updated subtitle to one-sentence purpose. Added Class Templates cross-navigation link in header.
+
+**Phase 4 — Director Tab Hierarchy + Reading Clarity Pass V1:**
+- `src/app/director/sessions/page.tsx` — Improved subtitle: explains sessions come from templates, coaches run them, wrap-ups go to Review Queue.
+- `src/app/director/signals/page.tsx` — Improved subtitle: "Patterns worth noticing — missing curriculum levels, attendance concerns, pending coach reviews, and lesson requests."
+- Other tabs (Dashboard, Curriculum, Review Queue, Onboarding, Players) verified already well-structured. No changes made.
+
+**Phase 5 — Academy Assistant Spoken Greeting + Name-Aware Voice Start V1:**
+- `src/app/director/layout.tsx` — Passes `directorName={userDisplayName || undefined}` to `DonnaAssistantButton`. Director display name already available from profile query.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `directorName?: string` prop. On first intentional panel open: speaks greeting via browser-native `speechSynthesis.speak()` (no external TTS). Derives first name from `directorName` split; falls back to "Welcome" if name unavailable. `hasGreetedRef` prevents re-greeting within the same session. `closePanel` calls `speechSynthesis.cancel()` on close. Greeting text also shown on screen as a card in the panel body. Internal component/file naming preserved as Donna; public UI says "Academy Assistant".
+
+**What was intentionally not changed:**
+- No database migrations created
+- `database.types.ts` untouched
+- No OpenAI/Anthropic API calls added
+- No new routes created
+- No save behavior changed
+- QuickCaptureDrawer, voice transcript, typed commands, Create Template — all preserved
+- Sprint 254 Donna template creation loop — preserved
+- Sprint 255 page-aware commands — preserved
+- Sprint 256 reliability pass — preserved
+- Sprint 257 broken-link fix — preserved
+
+**TypeScript:** Clean (`npx tsc --noEmit` — no errors)
+
+**No migrations. `database.types.ts` untouched. No external API calls.**
+
+**Manual QA required:** See sprint prompt QA checklist (30 items).
+
+**Files changed:**
+- `src/components/assistant/DonnaAssistantButton.tsx`
+- `src/app/director/layout.tsx`
+- `src/app/director/class-templates/page.tsx`
+- `src/app/director/class-templates/new/page.tsx`
+- `src/app/director/class-templates/new/NewClassTemplateForm.tsx`
+- `src/app/director/fitness/templates/page.tsx`
+- `src/app/director/sessions/page.tsx`
+- `src/app/director/signals/page.tsx`
+- `docs/CHANGELOG.md`
+
+---
+
 ## 2026-05-13 — Sprint 258: Action Language + CTA Clarity Pass V1
 
 **Scope:** Label-only CTA clarity pass. No routes, no save behavior, no migrations, no features changed.

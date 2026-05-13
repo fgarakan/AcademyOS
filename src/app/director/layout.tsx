@@ -90,7 +90,12 @@ export default async function DirectorLayout({
           {children}
         </FirstRunDeckGate>
       </main>
-      {academyId && <DonnaAssistantButton academyId={academyId} />}
+      {academyId && (
+        <DonnaAssistantButton
+          academyId={academyId}
+          directorName={userDisplayName || undefined}
+        />
+      )}
     </div>
   )
 }

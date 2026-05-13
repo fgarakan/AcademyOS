@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Mic, Layers,
@@ -237,14 +237,32 @@ const TEMPLATE_QUICK_STARTS = [
 
 interface Props {
   academyId: string
+  directorName?: string
 }
 
-export function DonnaAssistantButton({ academyId }: Props) {
+export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [panelOpen, setPanelOpen] = useState(false)
   const [captureOpen, setCaptureOpen] = useState(false)
   const [activeMode, setActiveMode] = useState<AssistantMode | null>(null)
+
+  // Spoken greeting — fires once on first intentional panel open, never again in this session
+  const hasGreetedRef = useRef(false)
+  const [showGreeting, setShowGreeting] = useState(false)
+  const firstName = directorName ? directorName.split(' ')[0] : null
+  const greetingText = firstName
+    ? `Hi ${firstName}, how can I help you today?`
+    : 'Welcome. How can I help you today?'
+
+  function speakGreeting() {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const utt = new SpeechSynthesisUtterance(greetingText)
+    utt.rate = 1.0
+    utt.pitch = 1.0
+    window.speechSynthesis.speak(utt)
+  }
 
   // Voice-specific local state — transcript never sent to AI or written to DB
   const [voiceTranscript, setVoiceTranscript] = useState<string | null>(null)
@@ -267,6 +285,9 @@ export function DonnaAssistantButton({ academyId }: Props) {
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     setCommandResponse(null)
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
   }, [])
 
   // Escape closes the panel
@@ -548,7 +569,14 @@ export function DonnaAssistantButton({ academyId }: Props) {
       {/* Floating trigger                                                      */}
       {/* ------------------------------------------------------------------ */}
       <button
-        onClick={() => setPanelOpen(true)}
+        onClick={() => {
+          setPanelOpen(true)
+          if (!hasGreetedRef.current) {
+            hasGreetedRef.current = true
+            setShowGreeting(true)
+            speakGreeting()
+          }
+        }}
         aria-label="Ask Academy Assistant"
         title="Ask Academy Assistant"
         className={cn(
@@ -624,6 +652,27 @@ export function DonnaAssistantButton({ academyId }: Props) {
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+
+          {/* ── Spoken greeting card — shown on first open, persists while panel is open ── */}
+          {showGreeting && (
+            <div
+              className="rounded-xl px-3.5 py-3"
+              style={{
+                background: 'rgba(139,92,246,0.06)',
+                border: '1px solid rgba(139,92,246,0.18)',
+              }}
+            >
+              <p
+                className="text-[10px] uppercase tracking-widest font-semibold mb-1"
+                style={{ color: '#8b5cf6' }}
+              >
+                Academy Assistant
+              </p>
+              <p className="text-[13px] text-text-primary font-medium leading-snug">
+                {greetingText}
+              </p>
+            </div>
+          )}
 
           {/* ── Primary voice card ── */}
           <div
