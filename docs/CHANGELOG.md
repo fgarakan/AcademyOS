@@ -2,6 +2,59 @@
 
 ---
 
+## 2026-05-13 — Sprint 245: Animated Academy OS Onboarding Deck V1
+
+**Why this was added:**
+UX audit found that Academy OS has strong screens but the connected product story was not obvious to new directors. Directors needed a guided, premium orientation before diving into setup steps.
+
+**Files created:**
+- `src/app/director/onboarding/AnimatedOnboardingDeck.tsx` — Client component: 7-card animated overview deck with CSS slide-fade transitions, dot progress indicator, prev/next controls, "This unlocks" tag per card, setup journey strip, skip/collapse/replay controls. Expanded by default when `completedCount === 0`; collapsed by default when setup has started.
+
+**Files modified:**
+- `src/app/director/onboarding/page.tsx` — Updated page subtitle to the new framing statement. Added `AnimatedOnboardingDeck` import and rendered it between the page header and the progress bar, passing `nextStepHref`, `nextStepLabel`, and `completedCount` as props. Final CTA routes to the first incomplete active setup step, not always Step 2.
+
+**Deck cards created:**
+1. Welcome to Academy OS
+2. Build your operating system
+3. You define how the academy works
+4. Coaches know exactly what to do
+5. Player progress becomes visible
+6. Families see what helps, not internal noise
+7. AI drafts. You approve.
+
+**Animation behavior:**
+- Card-to-card transitions use `animate-fade-in` (opacity 0→1, translateY 4px→0, 200ms ease-out) triggered by `key={currentCard}` remount — no framer-motion required.
+- `motion-reduce:animate-none` added for users who prefer reduced motion.
+- No autoplay, no bounce, no playful effects — director controls the pace.
+
+**Setup journey strip:**
+- 7 thin progress bars (one per active setup step) with step label below.
+- Done steps: lime. Active step: lime/30. Upcoming: border color.
+
+**First incomplete step CTA:**
+- Final card CTA and collapsed-state CTA both route to `nextStep?.href ?? '/director/onboarding/interview'`.
+- Button label uses `nextStep?.ctaLabel ?? 'Continue Setup'` — always reflects the actual next step, not a hardcoded route.
+
+**No migrations:** Database unchanged.
+**`database.types.ts`:** Untouched.
+**TypeScript:** clean
+
+**Manual QA checklist:**
+1. Open /director/onboarding — deck appears above setup steps
+2. New director (0 steps done): deck expanded by default
+3. Returning director (steps done): deck collapsed by default, shows CTA
+4. Cards feel premium, not childish
+5. Each card: short, readable, "Unlocks" tag visible
+6. Next/Back controls and dot indicator work
+7. Skip → dismissed; "Replay overview" button appears
+8. Collapse/expand toggle works
+9. Final card CTA → first incomplete active step
+10. Collapsed state CTA → first incomplete active step
+11. /director/onboarding/interview still works
+12. /director/onboarding/curriculum still works
+
+---
+
 ## 2026-05-13 — Sprint 244: Demo-Safe Navigation + Dead-End Cleanup V1
 
 **What changed:**

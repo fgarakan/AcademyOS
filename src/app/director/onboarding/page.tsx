@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowLeft, Rocket, CheckCircle2, ArrowRight, Info, Lock } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
+import { AnimatedOnboardingDeck } from './AnimatedOnboardingDeck'
 
 // ── Step definitions ───────────────────────────────────────────
 
@@ -210,10 +211,17 @@ export default async function AcademyOnboardingPage() {
         </div>
         <h1 className="page-title">Academy Onboarding</h1>
         <p className="page-subtitle">
-          Set up your academy operating system step by step. The system will help you configure
-          identity, curriculum, programs, people, portals, and launch readiness.
+          Start with the essentials. Academy OS will guide you one step at a time and show what each
+          setup step unlocks.
         </p>
       </div>
+
+      {/* ── Animated overview deck ── */}
+      <AnimatedOnboardingDeck
+        nextStepHref={nextStep?.href ?? '/director/onboarding/interview'}
+        nextStepLabel={nextStep?.ctaLabel ?? 'Continue Setup'}
+        completedCount={completedCount}
+      />
 
       {/* ── Progress summary ── */}
       <Card>
