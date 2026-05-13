@@ -112,6 +112,17 @@ function buildInterpretation(step: InterviewStep, chips: string[], custom: strin
 
 // ─── State types ──────────────────────────────────────────────────────────────
 type Phase = 'answering' | 'confirming'
+
+// Sprint 242 — voice answer confirmation loop phases
+// The app, not the AI, controls all transitions.
+type VoiceAnswerPhase =
+  | 'idle'                       // typed mode or not on a question step
+  | 'listening_for_answer'       // question just spoken; waiting for director's voice answer
+  | 'answer_captured'            // transcript just arrived (brief transitional)
+  | 'review_answer'              // transcript shown; waiting for confirm/edit/redo command
+  | 'listening_for_confirmation' // alias — same confirm-command window as review_answer
+  | 'confirming_answer'          // confirm command received; calling accept logic
+  | 'advancing_to_next_question' // advancing to next step in progress
 type AnswerState = { chips: string[]; custom: string }
 type Answers = Record<InterviewField, AnswerState>
 
@@ -360,6 +371,35 @@ function buildOffTrackRedirect(currentQuestionText: string): string {
   )
 }
 
+// ─── Confirmation command detection ──────────────────────────────────────────
+// Only called during review_answer / listening_for_confirmation phases.
+// During listening_for_answer the director's words are treated as an answer — never as commands.
+function detectConfirmationCommand(
+  text: string,
+): 'confirm' | 'edit' | 'redo' | 'repeat' | 'back' | null {
+  const lower = text.toLowerCase().trim()
+  const words = lower.split(/\s+/)
+
+  // Multi-word patterns first (most specific → least specific)
+  if (lower.includes('go back') || lower.includes('previous question') || lower.includes('go previous')) return 'back'
+  if (lower.includes('repeat question') || lower.includes('say that again') || lower.includes('repeat that')) return 'repeat'
+  if (lower.includes('answer again') || lower.includes('try again') || lower.includes('start over') || lower.includes('do it again')) return 'redo'
+  if (lower.includes('let me edit') || lower.includes('change it') || lower.includes('fix it') || lower.includes('edit that')) return 'edit'
+  if (lower.includes('looks right') || lower.includes("that's right") || lower.includes('move on') || lower.includes('go next') || lower.includes('go to next')) return 'confirm'
+
+  // Single-word commands
+  if (words.includes('back')) return 'back'
+  if (words.includes('repeat')) return 'repeat'
+  if (words.includes('redo')) return 'redo'
+  if (words.includes('edit')) return 'edit'
+  if (words.includes('confirm') || words.includes('correct') || words.includes('continue')) return 'confirm'
+  // 'yes' and 'next' only as exact utterance or first word — too common in answers otherwise
+  if (lower === 'yes' || lower === 'yeah' || lower === 'yep' || lower === 'next') return 'confirm'
+  if (lower.startsWith('yes ') || lower.startsWith('yeah ') || lower.startsWith('next ')) return 'confirm'
+
+  return null
+}
+
 // ─── Setup progress stages ────────────────────────────────────────────────────
 const SETUP_STAGES = [
   'Welcome',
@@ -448,6 +488,13 @@ function RealtimeDebugPanel({
   contractSpokenText,
   contractExactQuestionText,
   spokenIncludesExactQuestion,
+  // Sprint 242
+  voiceAnswerPhase,
+  pendingAnswerTranscriptLen,
+  editableAnswerTextLen,
+  lastConfirmationCommand,
+  confirmationCommandDetected,
+  autoAdvanceAfterVoiceConfirm,
 }: {
   status: string
   debug: RealtimeDebugState
@@ -488,6 +535,13 @@ function RealtimeDebugPanel({
   contractSpokenText?: string | null
   contractExactQuestionText?: string | null
   spokenIncludesExactQuestion?: boolean | null
+  // Sprint 242 — voice answer confirmation loop debug fields
+  voiceAnswerPhase?: string
+  pendingAnswerTranscriptLen?: number
+  editableAnswerTextLen?: number
+  lastConfirmationCommand?: string
+  confirmationCommandDetected?: boolean
+  autoAdvanceAfterVoiceConfirm?: boolean
 }) {
   const stepQ = currentEncodedStep != null && currentEncodedStep >= 0 && currentEncodedStep < INTERVIEW_STEPS.length
     ? getStepQuestion(currentEncodedStep)
@@ -637,6 +691,21 @@ function RealtimeDebugPanel({
             )}
           </div>
         )}
+        {/* Sprint 242 — voice answer confirmation loop debug section */}
+        <div className="border-t border-border pt-0.5 mt-0.5 space-y-0.5">
+          <p className="text-[8px] uppercase tracking-widest text-text-muted font-semibold">Voice Answer Loop (Sprint 242)</p>
+          <p>voiceAnswerPhase: <span className={
+            voiceAnswerPhase === 'listening_for_answer' ? 'text-status-blue'
+            : voiceAnswerPhase === 'review_answer' || voiceAnswerPhase === 'listening_for_confirmation' ? 'text-lime'
+            : voiceAnswerPhase === 'advancing_to_next_question' ? 'text-status-green'
+            : 'text-text-muted'
+          }>{voiceAnswerPhase ?? 'idle'}</span></p>
+          <p>pendingAnswerTranscript len: <span className="text-text-muted">{pendingAnswerTranscriptLen ?? 0}</span></p>
+          <p>editableAnswerText len: <span className="text-text-muted">{editableAnswerTextLen ?? 0}</span></p>
+          <p>lastConfirmationCommand: <span className={lastConfirmationCommand ? 'text-lime' : 'text-text-muted'}>{lastConfirmationCommand || '—'}</span></p>
+          <p>confirmationCommandDetected: <span className={confirmationCommandDetected ? 'text-status-green' : 'text-text-muted'}>{String(confirmationCommandDetected ?? false)}</span></p>
+          <p>autoAdvanceAfterVoiceConfirm: <span className="text-text-muted">{String(autoAdvanceAfterVoiceConfirm ?? true)}</span></p>
+        </div>
         {(debug.openaiStatus != null || debug.openaiError || debug.endpointAttempted || debug.openaiResponseKeys || debug.clientSecretShape) && (
           <div className="mt-1 pt-1 border-t border-border space-y-0.5">
             {debug.endpointAttempted && (
@@ -993,6 +1062,16 @@ export function DirectorInterviewAssistant({
   // Used in QA guard to verify screen and voice questions stay in sync.
   const [lastSpokenQuestionText, setLastSpokenQuestionText] = useState('')
 
+  // ── Sprint 242 — voice answer confirmation loop ──────────────────────────────
+  // Phase tracking for the post-question voice flow.
+  const [voiceAnswerPhase, setVoiceAnswerPhase] = useState<VoiceAnswerPhase>('idle')
+  // The most recently captured voice answer transcript (before it was accepted).
+  const [pendingAnswerTranscript, setPendingAnswerTranscript] = useState('')
+  // The last confirmation command word detected (for debug display).
+  const [lastConfirmationCommand, setLastConfirmationCommand] = useState('')
+  // Ref to the main answer textarea so voice "edit" can focus it.
+  const editableAnswerRef = useRef<HTMLTextAreaElement | null>(null)
+
   // ── OpenAI Realtime voice hook ───────────────────────────────────────────────
   const realtimeVoice = useRealtimeInterviewVoice()
   const isRealtimeConnected = realtimeVoice.status === 'connected'
@@ -1042,19 +1121,120 @@ export function DirectorInterviewAssistant({
     return () => window.speechSynthesis.removeEventListener('voiceschanged', pick)
   }, [])
 
-  // ── Wire Realtime user transcript to answer field ────────────────────────────
-  // When the director's spoken answer is transcribed, auto-populate the custom
-  // textarea. Director can then edit before confirming. Does not auto-advance.
+  // ── Wire Realtime user transcript to answer field — phase-aware ──────────────
+  // Sprint 242: behaviour depends on voiceAnswerPhase.
+  //   listening_for_answer → capture transcript, enter review_answer
+  //   review_answer / listening_for_confirmation → detect commands only
+  //   idle / typed mode → existing behaviour (populate textarea directly)
+  // Safeguard: "yes", "confirm", "next" are NEVER treated as commands during
+  // listening_for_answer. Any transcript in that phase is the director's answer.
   useEffect(() => {
     const t = realtimeVoice.finalUserTranscript
     if (!t || t === lastAppliedTranscriptRef.current) return
     if (step < 0 || step >= INTERVIEW_STEPS.length) return
-    lastAppliedTranscriptRef.current = t
+
     const stepField = INTERVIEW_STEPS[step].field
+
+    if (voiceMode) {
+      // ── Command detection phase ───────────────────────────────────────────
+      // Only active during review_answer / listening_for_confirmation.
+      // Anything said during listening_for_answer is the director's answer — never a command.
+      if (voiceAnswerPhase === 'review_answer' || voiceAnswerPhase === 'listening_for_confirmation') {
+        const cmd = detectConfirmationCommand(t)
+        if (!cmd) return // not a recognised command — ignore during review phase
+        lastAppliedTranscriptRef.current = t
+        setLastConfirmationCommand(cmd)
+        realtimeVoice.clearUserTranscript()
+        lastAppliedTranscriptRef.current = ''
+
+        if (cmd === 'confirm') {
+          setVoiceAnswerPhase('confirming_answer')
+          stopAssistantSpeech()
+          // Queue ack to be prepended to the next question by the auto-speak useEffect
+          if (step < INTERVIEW_STEPS.length - 1) {
+            const a = answers[INTERVIEW_STEPS[step].field]
+            pendingAckRef.current = getAcknowledgment(a.chips, a.custom)
+          }
+          setVoiceAnswerPhase('advancing_to_next_question')
+          if (step === INTERVIEW_STEPS.length - 1) {
+            setStep(7)
+          } else {
+            setStep(prev => prev + 1)
+          }
+          setPhase('answering')
+          setVoiceAnswerPhase('idle')
+
+        } else if (cmd === 'edit') {
+          // Focus the editable textarea; stay in review_answer so "confirm" still works
+          setTimeout(() => { editableAnswerRef.current?.focus() }, 50)
+
+        } else if (cmd === 'redo') {
+          // Clear captured transcript and return to listening
+          setPendingAnswerTranscript('')
+          setAnswers(prev => ({ ...prev, [stepField]: { ...prev[stepField], custom: '' } }))
+          setVoiceAnswerPhase('listening_for_answer')
+
+        } else if (cmd === 'repeat') {
+          // Re-speak the current question, then listen again
+          setPendingAnswerTranscript('')
+          setVoiceAnswerPhase('listening_for_answer')
+          stopAssistantSpeech()
+          const contract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
+          setActiveVoicePrompt(buildInterviewPrompt(step, resolvedNameRef.current, academyName))
+          setIsSpeaking(true)
+          setAudioStatus('speaking')
+          if (isRealtimeConnected) {
+            speakWithTracking(contract.spokenText, () => {
+              setIsSpeaking(false)
+              setAudioStatus('ready')
+              setVoiceAnswerPhase('listening_for_answer')
+            })
+          } else {
+            setLastSpokenAssistantText(contract.spokenText)
+            speakAssistant(contract.spokenText, {
+              onEnd: () => { setIsSpeaking(false); setAudioStatus('ready'); setVoiceAnswerPhase('listening_for_answer') },
+              onError: () => setAudioWarning("Audio didn't play. Check browser sound."),
+            })
+          }
+
+        } else if (cmd === 'back') {
+          setVoiceAnswerPhase('idle')
+          goBack()
+        }
+        return
+      }
+
+      // ── Answer capture phase ───────────────────────────────────────────────
+      // Anything the director says during listening_for_answer is their answer.
+      if (voiceAnswerPhase === 'listening_for_answer') {
+        lastAppliedTranscriptRef.current = t
+        appendTranscript(stepField, t)
+        setPendingAnswerTranscript(t)
+        setVoiceAnswerPhase('review_answer')
+        // Clear the realtime transcript so the next spoken phrase (e.g. "confirm")
+        // arrives fresh and can be detected as a command.
+        realtimeVoice.clearUserTranscript()
+        lastAppliedTranscriptRef.current = ''
+        return
+      }
+
+      // ── Idle / other voice phases ─────────────────────────────────────────
+      // Fallback: populate the textarea as before (typed-style voice input).
+      if (voiceAnswerPhase === 'idle') {
+        lastAppliedTranscriptRef.current = t
+        appendTranscript(stepField, t)
+      }
+      return
+    }
+
+    // ── Typed mode: existing behaviour ──────────────────────────────────────
+    lastAppliedTranscriptRef.current = t
     appendTranscript(stepField, t)
-  // appendTranscript is defined below but is stable (uses setAnswers which is stable)
+  // appendTranscript / goBack / stopAssistantSpeech / speakWithTracking / speakAssistant
+  // are referenced but stable (state setters or useCallbacks). voiceAnswerPhase and step
+  // are in the deps — any change re-registers this effect with fresh closures.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [realtimeVoice.finalUserTranscript, step])
+  }, [realtimeVoice.finalUserTranscript, step, voiceMode, voiceAnswerPhase])
 
   // ── Browser TTS helper (fallback when Realtime is not connected) ─────────────
   const speakAssistant = useCallback((
@@ -1358,6 +1538,8 @@ export function DirectorInterviewAssistant({
       hasSentWelcomeRef.current = false
       setIsSpeaking(false)
       setAudioStatus('ready')
+      // Question was already spoken — move into listening phase immediately.
+      setVoiceAnswerPhase('listening_for_answer')
       return
     }
 
@@ -1394,13 +1576,18 @@ export function DirectorInterviewAssistant({
       speakWithTracking(textToSpeak, () => {
         setIsSpeaking(false)
         setAudioStatus('ready')
+        // Question speech complete — enter listening phase so director knows to answer.
+        setVoiceAnswerPhase('listening_for_answer')
       })
       return () => { setIsSpeaking(false) }
     }
 
     setLastSpokenAssistantText(textToSpeak)
     speakAssistant(textToSpeak, {
-      onEnd: () => setIsSpeaking(false),
+      onEnd: () => {
+        setIsSpeaking(false)
+        setVoiceAnswerPhase('listening_for_answer')
+      },
       onError: () => {
         setAudioWarning("Audio didn't play. Check browser sound or use typed mode.")
       },
@@ -1438,17 +1625,21 @@ export function DirectorInterviewAssistant({
   // ── Voice controls ──────────────────────────────────────────────────────────
   function repeatQuestion() {
     stopAssistantSpeech()
+    setVoiceAnswerPhase('listening_for_answer') // reset — question is being re-spoken
     setIsSpeaking(true)
     setAudioStatus('speaking')
     const contract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
     const text = contract.spokenText
     setActiveVoicePrompt(buildInterviewPrompt(step, resolvedNameRef.current, academyName))
     if (isRealtimeConnected) {
-      speakWithTracking(text, () => setIsSpeaking(false))
+      speakWithTracking(text, () => {
+        setIsSpeaking(false)
+        setVoiceAnswerPhase('listening_for_answer')
+      })
     } else {
       setLastSpokenAssistantText(text)
       speakAssistant(text, {
-        onEnd: () => setIsSpeaking(false),
+        onEnd: () => { setIsSpeaking(false); setVoiceAnswerPhase('listening_for_answer') },
         onError: () => setAudioWarning("Audio didn't play. Check browser sound."),
       })
     }
@@ -1469,6 +1660,7 @@ export function DirectorInterviewAssistant({
     setAudioStatus('idle')
     setAudioWarning(null)
     setActiveVoicePrompt(null)
+    setVoiceAnswerPhase('idle')
   }
 
   // Switches to typed mode during welcome or Q1 transition — disconnects Realtime.
@@ -1596,6 +1788,7 @@ export function DirectorInterviewAssistant({
   // ── Navigation ──────────────────────────────────────────────────────────────
   function confirmAnswer() {
     stopAssistantSpeech()
+    setVoiceAnswerPhase('idle') // confirming phase takes over from voice answer phase
     const s = INTERVIEW_STEPS[step]
     const a = answers[s.field]
     const ack = getAcknowledgment(a.chips, a.custom)
@@ -1624,8 +1817,10 @@ export function DirectorInterviewAssistant({
   // In voice mode, queues an ack so the auto-speak useEffect combines it with
   // the next question: "Got it. Next question: ..."
   // App controls the next question — always uses INTERVIEW_STEPS[nextStep].spokenQuestion.
+  // Called by: "Looks right — continue" button AND voice confirm command.
   function acceptAnswer() {
     stopAssistantSpeech()
+    setVoiceAnswerPhase('idle') // reset before step change
     // Queue ack for voice mode (consumed in auto-speak useEffect)
     if (voiceMode && step < INTERVIEW_STEPS.length - 1) {
       const a = answers[INTERVIEW_STEPS[step].field]
@@ -1634,6 +1829,7 @@ export function DirectorInterviewAssistant({
     // Clear transcript state for the next step
     realtimeVoice.clearUserTranscript()
     lastAppliedTranscriptRef.current = ''
+    setPendingAnswerTranscript('')
 
     if (step === INTERVIEW_STEPS.length - 1) {
       setStep(7)
@@ -1644,15 +1840,18 @@ export function DirectorInterviewAssistant({
   }
 
   function editAnswer() {
+    setVoiceAnswerPhase('idle')
     setPhase('answering')
   }
 
   function skipAnswer() {
     stopAssistantSpeech()
+    setVoiceAnswerPhase('idle')
     const s = INTERVIEW_STEPS[step]
     setAnswers(prev => ({ ...prev, [s.field]: { chips: [], custom: '' } }))
     realtimeVoice.clearUserTranscript()
     lastAppliedTranscriptRef.current = ''
+    setPendingAnswerTranscript('')
     if (step === INTERVIEW_STEPS.length - 1) {
       setStep(7)
     } else {
@@ -1685,6 +1884,7 @@ export function DirectorInterviewAssistant({
 
   function goBack() {
     stopAssistantSpeech()
+    setVoiceAnswerPhase('idle')
     setPhase('answering')
     setSimpler(false)
     if (step === 0) {
@@ -1821,6 +2021,15 @@ export function DirectorInterviewAssistant({
     contractSpokenText: lastSpokenQuestionText || null,
     contractExactQuestionText,
     spokenIncludesExactQuestion,
+    // Sprint 242 — voice answer confirmation loop debug fields
+    voiceAnswerPhase,
+    pendingAnswerTranscriptLen: pendingAnswerTranscript.length,
+    editableAnswerTextLen: step >= 0 && step < INTERVIEW_STEPS.length
+      ? answers[INTERVIEW_STEPS[step].field].custom.length
+      : 0,
+    lastConfirmationCommand,
+    confirmationCommandDetected: !!lastConfirmationCommand,
+    autoAdvanceAfterVoiceConfirm: true,
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -2718,47 +2927,85 @@ export function DirectorInterviewAssistant({
         </div>
       )}
 
-      {/* ── Voice capture status — Realtime listening state ───────────────────── */}
-      {/* Shown when Realtime is connected and assistant is not currently speaking. */}
+      {/* ── Voice capture status — three-branch per voiceAnswerPhase ─────────── */}
       {voiceMode && isRealtimeConnected && !isSpeaking && (
-        <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border space-y-2">
-          <div className="flex items-center gap-2">
-            {realtimeVoice.speechStarted ? (
-              <>
-                <Mic className="w-3.5 h-3.5 text-status-blue animate-pulse shrink-0" />
-                <p className="text-xs text-status-blue">Listening…</p>
-              </>
-            ) : realtimeVoice.finalTranscriptReceived ? (
-              <>
+        <>
+          {/* ── A. Review state — answer captured, awaiting confirmation ─────── */}
+          {(voiceAnswerPhase === 'review_answer' || voiceAnswerPhase === 'listening_for_confirmation') ? (
+            <div className="px-4 py-4 rounded-xl bg-surface border border-lime/30 space-y-3">
+              <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-status-green shrink-0" />
-                <p className="text-xs text-text-secondary">Captured — edit below if needed, then click Use this answer</p>
-              </>
-            ) : (
-              <>
-                <Mic className="w-3.5 h-3.5 text-text-muted shrink-0" />
-                <p className="text-xs text-text-muted">
-                  {currentAnswer.custom
-                    ? 'Answer ready — edit or speak again'
-                    : 'Speak your answer, or type below'}
-                </p>
-              </>
-            )}
-          </div>
-          {realtimeVoice.finalTranscriptReceived && (
-            <button
-              type="button"
-              onClick={() => {
-                realtimeVoice.clearUserTranscript()
-                lastAppliedTranscriptRef.current = ''
-                setCustom(field, '')
-              }}
-              className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
-            >
-              <RefreshCw className="w-3 h-3" />
-              Record again
-            </button>
+                <p className="text-xs font-semibold text-status-green">Here&apos;s what I heard</p>
+              </div>
+              <p className="text-[10px] text-text-muted leading-relaxed">
+                Say{' '}
+                <span className="text-text-secondary font-medium">&ldquo;confirm&rdquo;</span>{' '}
+                to continue,{' '}
+                <span className="text-text-secondary font-medium">&ldquo;edit&rdquo;</span>{' '}
+                to change it, or{' '}
+                <span className="text-text-secondary font-medium">&ldquo;redo&rdquo;</span>{' '}
+                to answer again.
+              </p>
+            </div>
+          ) : voiceAnswerPhase === 'listening_for_answer' ? (
+            /* ── B. Listening state — question spoken, waiting for answer ─────── */
+            <div className="px-4 py-3 rounded-xl bg-surface-raised border border-status-blue/20 space-y-1.5">
+              <div className="flex items-center gap-2">
+                {realtimeVoice.speechStarted ? (
+                  <>
+                    <Mic className="w-3.5 h-3.5 text-status-blue animate-pulse shrink-0" />
+                    <p className="text-xs text-status-blue font-medium">Listening…</p>
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-3.5 h-3.5 text-status-blue/60 shrink-0" />
+                    <p className="text-xs text-text-secondary">Answer naturally. I&apos;ll write it out for you.</p>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* ── C. Idle / fallback — existing behaviour ─────────────────────── */
+            <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border space-y-2">
+              <div className="flex items-center gap-2">
+                {realtimeVoice.speechStarted ? (
+                  <>
+                    <Mic className="w-3.5 h-3.5 text-status-blue animate-pulse shrink-0" />
+                    <p className="text-xs text-status-blue">Listening…</p>
+                  </>
+                ) : realtimeVoice.finalTranscriptReceived ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-status-green shrink-0" />
+                    <p className="text-xs text-text-secondary">Captured — edit below if needed, then click Use this answer</p>
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                    <p className="text-xs text-text-muted">
+                      {currentAnswer.custom
+                        ? 'Answer ready — edit or speak again'
+                        : 'Speak your answer, or type below'}
+                    </p>
+                  </>
+                )}
+              </div>
+              {realtimeVoice.finalTranscriptReceived && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    realtimeVoice.clearUserTranscript()
+                    lastAppliedTranscriptRef.current = ''
+                    setCustom(field, '')
+                  }}
+                  className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Record again
+                </button>
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Active Prompt Card — shown in voice mode so director always sees what was asked */}
@@ -2823,12 +3070,18 @@ export function DirectorInterviewAssistant({
         />
       )}
 
-      {/* Custom text area — pre-populated by Realtime transcript when in voice mode */}
+      {/* Custom text area — pre-populated by Realtime transcript when in voice mode.
+          In review_answer the label changes to signal the transcript is editable. */}
       <div className="space-y-1.5">
         <label className="label-xs">
-          {voiceMode ? 'Your answer (edit as needed)' : 'Your own words (optional)'}
+          {voiceMode && (voiceAnswerPhase === 'review_answer' || voiceAnswerPhase === 'listening_for_confirmation')
+            ? 'Here\'s what I heard — edit if needed'
+            : voiceMode
+            ? 'Your answer (edit as needed)'
+            : 'Your own words (optional)'}
         </label>
         <textarea
+          ref={editableAnswerRef}
           value={currentAnswer.custom}
           onChange={e => setCustom(field, e.target.value)}
           rows={2}
@@ -2879,6 +3132,61 @@ export function DirectorInterviewAssistant({
         answersCount={capturedAnswersCount}
         nextStepLabel={nextStepLabel}
       />
+
+      {/* ── Review action buttons — shown when answer is captured in voice mode ─ */}
+      {/* These are the click fallbacks for the voice commands. Always visible so  */}
+      {/* the director is never blocked even if voice detection doesn't work.      */}
+      {voiceMode && (voiceAnswerPhase === 'review_answer' || voiceAnswerPhase === 'listening_for_confirmation') && (
+        <div className="space-y-2 pt-1 border-t border-border">
+          <p className="label-xs text-text-muted">Confirmation</p>
+          <button
+            type="button"
+            onClick={acceptAnswer}
+            className={`w-full ${BTN_LIME}`}
+          >
+            {isLast ? 'Looks right — show me the review' : 'Looks right — continue'}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => { editableAnswerRef.current?.focus() }}
+              className={`flex-1 ${BTN_GHOST}`}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPendingAnswerTranscript('')
+                setAnswers(prev => ({ ...prev, [field]: { ...prev[field], custom: '' } }))
+                realtimeVoice.clearUserTranscript()
+                lastAppliedTranscriptRef.current = ''
+                setVoiceAnswerPhase('listening_for_answer')
+              }}
+              className={`flex-1 ${BTN_GHOST}`}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Redo answer
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={repeatQuestion}
+            className={`w-full ${BTN_GHOST}`}
+          >
+            <RefreshCw className="w-3 h-3" />
+            Repeat question
+          </button>
+          <button
+            type="button"
+            onClick={switchToTypeMode}
+            className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
+          >
+            Type instead
+          </button>
+        </div>
+      )}
 
       {/* Navigation — app controls step advancement, not the AI */}
       <div className="flex gap-3 pt-1">

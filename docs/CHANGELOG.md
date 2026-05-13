@@ -2,6 +2,60 @@
 
 ---
 
+## 2026-05-13 — Sprint 242: Academy Setup Voice Answer Confirmation Loop V1
+
+**Why this was needed:**
+After Sprint 241, the assistant could welcome the director and ask the first question. But the voice flow stopped there — the director had no smooth path from spoken answer → on-screen review → verbal confirmation → next question. The loop had to be completed manually with button clicks. Sprint 242 closes that loop entirely.
+
+**State machine (`VoiceAnswerPhase`):**
+- `idle` — typed mode or not on a question step
+- `listening_for_answer` — question finished speaking; app is waiting for director's spoken answer
+- `answer_captured` — transcript just arrived (brief transitional)
+- `review_answer` — transcript shown on screen; app is listening for a confirmation command
+- `listening_for_confirmation` — alias for review_answer (same command-detection window)
+- `confirming_answer` — confirm command received; calling accept logic
+- `advancing_to_next_question` — step advance in progress
+
+**Answer capture behaviour:**
+When `finalUserTranscript` arrives during `listening_for_answer`, the transcript is written into the editable textarea and `voiceAnswerPhase` moves to `review_answer`. The realtime transcript is then cleared so the director's next utterance ("confirm") arrives fresh as a new event.
+
+**Verbal confirmation commands:**
+Detected only during `review_answer` / `listening_for_confirmation`. Never during `listening_for_answer` (where "yes" is part of an answer, not a command).
+- Confirm: confirm, yes, yeah, next, correct, continue, looks right, that's right, move on, go next
+- Edit: edit, let me edit, change it, fix it, edit that
+- Redo: redo, answer again, try again, start over, do it again
+- Repeat: repeat, repeat question, say that again, repeat that
+- Back: back, go back, previous question, go previous
+
+**Auto-advance behaviour:**
+When a confirm command is detected, the app calls the same `acceptAnswer()` logic as the "Looks right — continue" button. The ack phrase is queued in `pendingAckRef` and prepended to the next question by the auto-speak useEffect. The next question screen appears before speaking.
+
+**Edit / redo / repeat / back commands:**
+- edit → focuses the editable textarea; stays in review_answer so "confirm" still works after editing
+- redo → clears pending transcript and answer text; returns to listening_for_answer
+- repeat → re-speaks current question via existing `repeatQuestion()` flow; returns to listening_for_answer
+- back → calls existing `goBack()` logic; resets voiceAnswerPhase to idle
+
+**Safeguards preserved:**
+- AI never decides when to advance; all branching is deterministic (string matching, not NLU)
+- AI never asks invisible questions; AssistantPromptContract still the source of truth
+- Confirm commands ignored during listening_for_answer (false confirmation prevention)
+- Click fallback always available: Looks right, Edit, Redo, Repeat, Type instead buttons remain
+- No migrations; database.types.ts untouched; no new packages
+
+**Files created:** none
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — Added `VoiceAnswerPhase` type; added `voiceAnswerPhase`, `pendingAnswerTranscript`, `lastConfirmationCommand` state + `editableAnswerRef`; added `detectConfirmationCommand()` helper; rewrote `finalUserTranscript` useEffect to split answer-capture vs. command-detection by phase; modified auto-speak useEffect to enter `listening_for_answer` after question speech and after hasSentWelcomeRef early-return; modified `repeatQuestion()` to enter `listening_for_answer` after re-speak; modified `acceptAnswer()`, `goBack()`, `confirmAnswer()`, `skipAnswer()`, `editAnswer()`, `switchToTypeMode()` to reset voiceAnswerPhase to idle; added three-branch voice capture status section (listening_for_answer / review_answer / idle); added review action buttons (Looks right, Edit, Redo, Repeat, Type instead) as click fallback when in review_answer; updated textarea label to show "Here's what I heard" in review state; updated `RealtimeDebugPanel` with Sprint 242 debug fields (voiceAnswerPhase, pendingAnswerTranscript len, editableAnswerText len, lastConfirmationCommand, confirmationCommandDetected, autoAdvanceAfterVoiceConfirm)
+
+**TypeScript result:** clean — `npx tsc --noEmit` passed with 0 errors.
+
+**Manual QA status:** pending — see sprint prompt for 18-step QA checklist.
+
+**No migrations. `database.types.ts` untouched.**
+
+---
+
 ## 2026-05-13 — Sprint 241: Academy Setup Personalized Welcome + Question Contract V1
 
 **Files created:** none
