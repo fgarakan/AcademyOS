@@ -2,6 +2,77 @@
 
 ---
 
+## 2026-05-13 — Mega Sprint 265: Donna Context + Retrieval Intelligence V1
+
+**Why this sprint:**
+Sprint 264 built the contract layer — registries defining what Donna understands about pages, roles, tasks, and drafts. This sprint makes Donna context-aware: she can now retrieve, summarize, and explain real academy data on any director page. The director can click "Ask about this page" (or say/type "summarize this page") and get a live, deterministic, data-derived summary of exactly what is happening on that screen — no hallucination, no OpenAI, no writes.
+
+**Data access audit results:**
+Every director page already fetches its own context server-side. All required data exists in: `v_player_summary`, `players`, `sessions`, `templates`, `template_blocks`, `player_curriculum_states`, `curriculum_levels`, `academy_curriculum_versions`, `academy_curriculum_overrides`, `proposed_actions`, `session_attendance`, `private_lesson_requests`, `player_priorities`, `coach_notes`, `player_assessments`, `groups`. No migrations required.
+
+**Live Context Retrieval Engine added (`src/app/director/_actions/donnaContextActions.ts`, created):**
+- `'use server'` Server Action — called from client `DonnaAssistantButton` via Next.js 14 Server Action protocol
+- `fetchDonnaContext(contextType, params?)` — main entry point, dispatches to one of 10 context fetchers
+- 10 deterministic context fetchers: `academy_overview`, `player_collection`, `player_profile`, `group_context`, `session_context`, `class_template_collection`, `fitness_template_collection`, `curriculum_context`, `review_queue_context`, `signals_context`
+- Each returns a `DonnaContextSummary` with: title, summary, keyFacts, openQuestions, suggestedNextSteps, dataUsed, missingData, safetyNotes, recommendationInputsAvailable, recommendationInputsMissing, possibleSuggestionTypes, fetchedAt
+- All summaries are deterministic — counts and labels derived directly from data, no AI generation
+- Honest fallbacks when data is missing: `makeFallbackSummary()` explains what is needed
+- Reuses existing backend helpers: `getPlayerSummaries`, and queries existing views/tables directly
+
+**Context type and request derivation added (`src/components/assistant/donnaContextTypes.ts`, created):**
+- `DonnaContextType` union (10 types), `DonnaContextRequest`, `DonnaContextSummary` interface (14 fields)
+- `deriveContextRequest(pathname)` — maps any director pathname to the correct context type + params (extracts `playerId` from `/director/players/[uuid]` using UUID regex)
+- `makeFallbackSummary()` helper — exported for use by the server action
+
+**Assistant UI upgraded (`src/components/assistant/DonnaAssistantButton.tsx`, modified):**
+- Added `contextSummary` / `isLoadingContext` state
+- Added `isContextQueryPhrase()` helper — detects: "summarize this page", "what's going on here", "what is going on here", "ask about this page", "summarize this player", "what does this player need", "what should I know about this player"
+- Added `handleContextSummary()` async function — calls `fetchDonnaContext` via Server Action, stores result, shows loading state
+- Voice routing: context query phrases are now intercepted in `handleVoiceTranscript` (priority 4, before generic commands, after template flow)
+- Typed routing: context queries detected in `handleCommandSubmit` (before `detectAndHandleCommand`)
+- "Ask about this page" button: visible lime-accented button above mode buttons, shows loading state while fetching
+- Context summary result card: lime-bordered, shows title, summary, key facts, suggested next steps, missing data, read-only timestamp, dismiss button (X)
+- `closePanel` and route-change effect both clear context state
+- Footer capability list updated: "Summarize any page with live academy data" added
+
+**Player profile context (Phase 8):**
+- Player profile on `/director/players/[uuid]` — `deriveContextRequest` extracts the UUID, passes as `playerId` param
+- `fetchPlayerProfile` reads: player record, curriculum state + level name, active priorities, coach note count, attendance (30-day), latest assessment, pending review items
+- Honest fallback if no playerId or player not found: "Open a specific player profile to use this summary."
+
+**Recommendation-ready context output (Phase 9):**
+- Every `DonnaContextSummary` includes `recommendationInputsAvailable`, `recommendationInputsMissing`, `possibleSuggestionTypes`
+- Example: player profile → `possibleSuggestionTypes: ['player_attention_signal', 'parent_update_suggestion', 'curriculum_priority_suggestion']`
+- These fields prepare the shape for Mega Sprint 267 predictive recommendations — no live predictions in this sprint
+
+**Existing Donna behavior preserved:**
+- Sprint 262/263 guided class-template completion — unchanged (speech, transcript routing, `wasFieldResolved`, `TemplateDraftPanel`)
+- Sprint 264 contract registries — unchanged (donnaPageContextRegistry, donnaAccessMap, donnaTaskContracts, donnaDraftContracts, donnaSuggestionContracts)
+- QuickCaptureDrawer — unchanged
+- All navigation commands — unchanged
+- Context query phrases do NOT intercept existing "what should I do next" or "guide me" commands — those still route to `ctx.nextAction`
+
+**What is still not wired (contract-only):**
+- All 12 task-guided flows other than class template creation
+- All 10 draft approval flows other than class template draft
+- All 8 predictive suggestion types — no live predictions
+- No parent/player communication sent
+- No database writes in any of the new code
+
+**No migrations. `database.types.ts` untouched. No OpenAI/API/Realtime. No database writes.**
+
+**Files created:**
+- `src/components/assistant/donnaContextTypes.ts` — context type definitions and pathname→context mapper
+- `src/app/director/_actions/donnaContextActions.ts` — read-only Server Action with 10 deterministic context fetchers
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — "Ask about this page" button, context summary card, voice/typed routing for context queries
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with no errors.
+
+---
+
 ## 2026-05-13 — Mega Sprint 264: Donna Academy-Wide Context + Predictive Task Infrastructure V1
 
 **Why this sprint:**

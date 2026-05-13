@@ -19,6 +19,9 @@ import {
   extractLevel,
 } from '@/components/assistant/templateDraftParser'
 import { resolvePageContext } from '@/components/assistant/donnaPageContextRegistry'
+import { deriveContextRequest } from '@/components/assistant/donnaContextTypes'
+import type { DonnaContextSummary } from '@/components/assistant/donnaContextTypes'
+import { fetchDonnaContext } from '@/app/director/_actions/donnaContextActions'
 
 // ---------------------------------------------------------------------------
 // Donna guided task infrastructure — local types only, no DB, no API.
@@ -152,6 +155,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [typeInstead, setTypeInstead] = useState(false)
   const [typedText, setTypedText] = useState('')
 
+  // Context retrieval state — read-only live data summary, no DB writes
+  const [contextSummary, setContextSummary] = useState<DonnaContextSummary | null>(null)
+  const [isLoadingContext, setIsLoadingContext] = useState(false)
+
   // Template creation state — all local until director explicitly approves and saves
   const [templateDraft, setTemplateDraft] = useState<TemplateDraft | null>(null)
   const [fromVoiceCapture, setFromVoiceCapture] = useState(false)
@@ -173,6 +180,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     setCommandResponse(null)
+    setContextSummary(null)
+    setIsLoadingContext(false)
     lastSpokenTextRef.current = null
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -199,6 +208,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     setCommandResponse(null)
+    setContextSummary(null)
+    setIsLoadingContext(false)
     lastSpokenTextRef.current = null
   }, [pathname])
 
@@ -298,7 +309,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return
     }
 
-    // 4. Generic navigation and info commands
+    // 4. Context query phrases — route to read-only live data summary
+    if (isContextQueryPhrase(text.toLowerCase())) {
+      void handleContextSummary()
+      return
+    }
+
+    // 5. Generic navigation and info commands
     detectAndHandleCommand(text)
   }
 
@@ -342,6 +359,37 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     setActiveMode(null)
+  }
+
+  // Returns true if the input phrase is a read-only context summary request.
+  // These are routed to handleContextSummary() rather than detectAndHandleCommand().
+  function isContextQueryPhrase(lower: string): boolean {
+    return (
+      lower.includes('summarize this page') ||
+      lower.includes("what's going on here") ||
+      lower.includes('what is going on here') ||
+      lower.includes('ask about this page') ||
+      lower.includes('summarize this player') ||
+      lower.includes('what does this player need') ||
+      lower.includes('what should i know about this player')
+    )
+  }
+
+  // Fetch read-only context summary for the current page via Server Action.
+  // No writes, no OpenAI, no Realtime. Returns deterministic data-derived summary.
+  async function handleContextSummary() {
+    setIsLoadingContext(true)
+    setContextSummary(null)
+    setCommandResponse(null)
+    try {
+      const req = deriveContextRequest(pathname)
+      const summary = await fetchDonnaContext(req.contextType, req.params)
+      setContextSummary(summary)
+    } catch {
+      // Silent fail — user can retry
+    } finally {
+      setIsLoadingContext(false)
+    }
   }
 
   // Deterministic command detection — no AI, no API calls.
@@ -522,6 +570,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       const firstQ = draft.missingQuestions[0] ?? null
       if (firstQ) speakAssistantText(firstQ.question)
       else speakAssistantText('I have enough to draft this. Review it before saving.')
+      return
+    }
+    if (isContextQueryPhrase(text.toLowerCase())) {
+      void handleContextSummary()
+      setTypeInstead(false)
+      setTypedText('')
       return
     }
     const handled = detectAndHandleCommand(text)
@@ -817,6 +871,91 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
+          {/* ── Context summary result card — read-only live data, no writes ── */}
+          {contextSummary && (
+            <div
+              className="rounded-xl px-3.5 py-3 space-y-2.5"
+              style={{
+                background: 'rgba(200,255,0,0.04)',
+                border: '1px solid rgba(200,255,0,0.18)',
+              }}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-lime">
+                    {contextSummary.title}
+                  </p>
+                  <p className="text-[12px] text-text-secondary leading-relaxed">
+                    {contextSummary.summary}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setContextSummary(null)}
+                  aria-label="Dismiss summary"
+                  className="shrink-0 text-text-muted hover:text-text-primary transition-colors mt-0.5"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              {contextSummary.keyFacts.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">
+                    Key facts
+                  </p>
+                  <ul className="space-y-0.5">
+                    {contextSummary.keyFacts.map((fact, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-[11px] text-text-secondary leading-snug">
+                        <span className="shrink-0 mt-px text-lime">·</span>
+                        {fact}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {contextSummary.suggestedNextSteps.length > 0 && (
+                <div
+                  className="pt-2"
+                  style={{ borderTop: '1px solid rgba(200,255,0,0.1)' }}
+                >
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">
+                    Suggested next steps
+                  </p>
+                  <ul className="space-y-0.5">
+                    {contextSummary.suggestedNextSteps.map((step, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-[11px] text-text-secondary leading-snug">
+                        <span className="shrink-0 mt-px text-lime">{i + 1}.</span>
+                        {step}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {contextSummary.missingData.length > 0 && (
+                <div
+                  className="pt-2"
+                  style={{ borderTop: '1px solid rgba(200,255,0,0.1)' }}
+                >
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">
+                    Missing data
+                  </p>
+                  <ul className="space-y-0.5">
+                    {contextSummary.missingData.map((m, i) => (
+                      <li key={i} className="text-[11px] text-text-muted leading-snug">
+                        {m}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p
+                className="text-[9px] text-text-muted pt-1"
+                style={{ borderTop: '1px solid rgba(200,255,0,0.08)' }}
+              >
+                Read-only · fetched {new Date(contextSummary.fetchedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+          )}
+
           {/* ── Current context card — uses page context registry ── */}
           {activeMode !== 'create_template' && (
             <div
@@ -1011,6 +1150,31 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </>
           )}
 
+          {/* ── Ask about this page — read-only live data summary ── */}
+          {activeMode !== 'create_template' && (
+            <button
+              onClick={() => void handleContextSummary()}
+              disabled={isLoadingContext}
+              className="w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150 text-text-secondary hover:text-text-primary disabled:opacity-60"
+              style={{ background: 'var(--bg-surface)', border: '1px solid rgba(200,255,0,0.2)' }}
+            >
+              <div className="flex items-start gap-2.5">
+                <Sparkles
+                  className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                  style={{ color: '#C8FF00' }}
+                />
+                <div>
+                  <p className="text-[12px] font-semibold leading-tight text-lime">
+                    {isLoadingContext ? 'Reading academy data…' : 'Ask about this page'}
+                  </p>
+                  <p className="text-[11px] text-text-muted leading-snug mt-0.5">
+                    Summarize what's happening right now, based on live data.
+                  </p>
+                </div>
+              </div>
+            </button>
+          )}
+
           {/* ── Mode buttons ── */}
           <div className="space-y-1.5">
             <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
@@ -1063,6 +1227,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           </p>
           <ul className="space-y-1">
             {[
+              'Summarize any page with live academy data',
               'Guide you through the current page',
               'Take you to approved Academy OS pages',
               'Capture notes',
