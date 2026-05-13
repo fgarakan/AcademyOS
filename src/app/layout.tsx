@@ -1,12 +1,17 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { ToastProvider } from '@/components/ui/Toast'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#030506',
+}
 
 export const metadata: Metadata = {
   title: 'Academy OS',
   description: 'Voice-driven tennis academy operating system',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
-  themeColor: '#030506',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

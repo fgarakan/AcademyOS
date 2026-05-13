@@ -185,7 +185,7 @@ export function PlayersDirectoryClient({ players, curriculumMap = {} }: Props) {
         <EmptyState
           icon={<Users className="w-5 h-5" />}
           title="No players yet"
-          description="Players will appear here once they are added to the academy."
+          description="Player profiles live here. Use the Add Player button above to add your first player and begin placement, or use Import to bring in a roster from a CSV file."
         />
       ) : filtered.length === 0 ? (
         <EmptyState

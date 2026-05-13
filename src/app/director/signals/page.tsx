@@ -173,7 +173,9 @@ export default async function SignalsPage() {
               <CheckCircle className="w-6 h-6 text-status-green" />
             </div>
             <p className="font-semibold text-text-primary">All clear</p>
-            <p className="text-text-muted text-sm">No open signals right now. Check back after sessions run.</p>
+            <p className="text-text-muted text-sm text-center max-w-xs">
+              No open signals right now. Signals appear when players miss sessions, curriculum levels are unassigned, coaches submit wrap-ups, or lesson requests come in. Check back after sessions run.
+            </p>
           </CardContent>
         </Card>
       )}

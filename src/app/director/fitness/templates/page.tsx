@@ -251,17 +251,17 @@ function FitnessTemplateCard({
               )}
             </div>
 
-            <div className="flex items-center gap-5 shrink-0">
+            <div className="flex items-center gap-3 sm:gap-5 shrink-0 flex-wrap justify-end">
               <div className="text-right">
                 <p className="text-[10px] uppercase tracking-widest text-text-muted">Blocks</p>
                 <p className="text-base font-mono font-bold text-lime">{blockCount}</p>
               </div>
-              <div className="text-right">
+              <div className="text-right hidden sm:block">
                 <p className="text-[10px] uppercase tracking-widest text-text-muted">Exercises</p>
                 <p className="text-base font-mono font-bold text-lime">{exerciseCount}</p>
               </div>
               {template.total_duration_min != null && (
-                <div className="flex items-center gap-1 text-xs text-text-muted">
+                <div className="hidden sm:flex items-center gap-1 text-xs text-text-muted">
                   <Clock className="w-3.5 h-3.5" />
                   {template.total_duration_min}min
                 </div>

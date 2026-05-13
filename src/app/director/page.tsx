@@ -245,7 +245,7 @@ export default async function DirectorDashboard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="page-eyebrow">{academyName}</p>
-          <h1 className="page-title text-3xl">Command Center</h1>
+          <h1 className="page-title text-3xl">Dashboard</h1>
           <p className="page-subtitle">{today}</p>
         </div>
         <Link href="/director/players" className="btn-lime text-sm hidden sm:inline-flex items-center gap-2">

@@ -111,21 +111,21 @@ export default async function DirectorSessionsPage() {
             <EmptyState
               icon={<Calendar className="w-5 h-5" />}
               title="No sessions yet"
-              description="Sessions are generated from fitness templates. Open a template, add blocks, then click Generate Session."
+              description="Sessions are created from class or fitness templates. Open a template, add blocks, then generate a session from it."
             />
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <Link
-                href="/director/fitness/templates"
+                href="/director/class-templates"
                 className="flex items-center gap-1.5 text-xs btn-lime px-4 py-2"
               >
                 <Zap className="w-3.5 h-3.5" />
-                Go to Fitness Templates
+                Class Templates
               </Link>
               <Link
-                href="/director/class-templates"
+                href="/director/fitness/templates"
                 className="text-xs text-text-muted hover:text-text-secondary transition-colors underline underline-offset-2"
               >
-                Class Templates
+                Fitness Templates
               </Link>
             </div>
           </CardContent>

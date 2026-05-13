@@ -2,6 +2,69 @@
 
 ---
 
+## 2026-05-13 — Mega Sprint 260: 10/10 Director Usability Polish + Flow Continuity V1
+
+**Why this sprint:**
+Every director page already had working functionality, but some pages had title inconsistencies, empty states that only said "nothing here" without teaching, mobile layout that overflowed on narrow screens, and assistant copy that didn't match the expected interaction model. This sprint focused on copy clarity, flow consistency, empty state teaching, narrow-screen layout, and runtime warning cleanup — no new features, no behavior changes.
+
+**Phase 1 — Director Use-Order Flow Audit:**
+- `src/app/director/page.tsx` — Changed h1 from "Command Center" to "Dashboard" to match the sidebar label. This was the only page/sidebar title inconsistency across the entire director experience.
+- `src/app/director/sessions/page.tsx` — Fixed empty state CTA: previously only showed a link to Fitness Templates; sessions can be created from class or fitness templates. Updated primary CTA to "Class Templates" and secondary to "Fitness Templates".
+
+**Phase 2 — Empty State + First Action Improvements:**
+- `src/app/director/sessions/page.tsx` — Fixed empty state description: "Sessions are generated from fitness templates" → "Sessions are created from class or fitness templates. Open a template, add blocks, then generate a session from it."
+- `src/app/director/players/_components/PlayersDirectoryClient.tsx` — Improved "No players yet" empty state: explains the Add Player and Import paths so a director knows what to do next, not just that it's empty.
+- `src/app/director/signals/page.tsx` — Expanded "All clear" empty state: previously said only "Check back after sessions run." Now explains what kinds of signals appear (player absences, curriculum gaps, coach wrap-ups, lesson requests) so the page teaches even when it's empty.
+
+**Phase 3 — Mobile / Narrow Layout Fixes:**
+- `src/app/director/class-templates/page.tsx` — Template row stat chips (Exercises, Curriculum, Duration) now hidden on narrow screens (`hidden sm:block`). Blocks count and Status pill always visible. Outer container gap reduced on small screens. Prevents horizontal overflow on tablet/narrow viewports.
+- `src/app/director/fitness/templates/page.tsx` — Same pattern: Exercises and Duration hidden on narrow screens, Blocks and Status always visible.
+
+**Phase 4 — Visual Hierarchy (included in Phase 1 fix):**
+- Dashboard h1 consistency fix covers the main hierarchy issue identified. Other pages already had strong hierarchy from Sprint 259.
+
+**Phase 5 — Academy Assistant Greeting + Help Polish:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Changed panel subtitle from "Ask by voice, find what you need, or capture a note." to "Ask by voice, type a command, or choose an action below." Matches the actual interaction model (typed commands + action buttons + voice).
+
+**Phase 6 — Runtime Warning Cleanup:**
+- `src/app/layout.tsx` — Moved `viewport` and `themeColor` from `metadata` export to a new `viewport: Viewport` export. Eliminates Next.js 14 App Router warning: "Unsupported metadata viewport/themeColor configured in metadata export." Single fix covers the entire app.
+
+**What was intentionally not changed:**
+- No database migrations
+- `database.types.ts` untouched (generated file)
+- No OpenAI/Anthropic API calls added
+- No new routes created
+- Template save behavior unchanged
+- QuickCaptureDrawer behavior unchanged
+- Academy Assistant spoken greeting and name-aware open from Sprint 259 preserved
+- Template creation from Sprint 254 preserved
+- Page-aware commands from Sprint 255 preserved
+- Reliability fixes from Sprint 256 preserved
+- Sprint 257 broken-link fix preserved
+- Sprint 258 CTA clarity preserved
+- Sidebar nav order unchanged (current order is correct for daily director use)
+- Curriculum, Onboarding, Review Queue, New Class Template, Class Template Detail, Fitness Template Detail pages unchanged (already well-structured)
+- Player profile unchanged
+- `DonnaAssistantButton` internal component name preserved; public UI says "Academy Assistant" throughout
+
+**Files changed:**
+- `src/app/layout.tsx` — viewport export
+- `src/app/director/page.tsx` — h1 title fix
+- `src/app/director/sessions/page.tsx` — empty state copy + CTA fix
+- `src/app/director/class-templates/page.tsx` — mobile stat chip visibility
+- `src/app/director/fitness/templates/page.tsx` — mobile stat chip visibility
+- `src/app/director/players/_components/PlayersDirectoryClient.tsx` — empty state description
+- `src/app/director/signals/page.tsx` — All clear empty state description
+- `src/components/assistant/DonnaAssistantButton.tsx` — panel subtitle copy
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with no errors.
+**No migrations created.**
+**database.types.ts untouched.**
+**No OpenAI/API calls added.**
+**Manual QA:** See sprint QA checklist above.
+
+---
+
 ## 2026-05-13 — Mega Sprint 259: Core Usability + Guided Templates + Spoken Academy Assistant V1
 
 **Why this sprint:**

@@ -637,7 +637,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               <h2 className="text-sm font-semibold text-text-primary">Academy Assistant</h2>
             </div>
             <p className="text-[11px] text-text-muted leading-snug">
-              Ask by voice, find what you need, or capture a note.
+              Ask by voice, type a command, or choose an action below.
             </p>
           </div>
           <button
