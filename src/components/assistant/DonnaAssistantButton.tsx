@@ -51,8 +51,9 @@ const ROUTE_CONTEXT: Record<string, RouteContext> = {
   },
   '/director/curriculum': {
     screen: 'Curriculum',
-    guidance: "This is where your academy's development system lives.",
-    nextAction: 'Continue curriculum setup or review your levels.',
+    guidance:
+      "This is where your academy's development system lives. Start by reviewing the current spine, then continue setup or open the builder.",
+    nextAction: 'Review your spine or open the Curriculum Builder to customize it.',
   },
   '/director/players': {
     screen: 'Players',

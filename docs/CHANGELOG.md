@@ -2,6 +2,57 @@
 
 ---
 
+## 2026-05-13 — Sprint 252: Curriculum Page Simplification V1
+
+**Why this was needed:**
+The curriculum page was one of the most important differentiators in Academy OS but risked feeling too complex and panel-heavy on first load. Directors arriving at `/director/curriculum` saw a dense wall of customization guides, internal architecture diagrams, and a full explorer before they could understand what the page was for. The page needed to feel like a curriculum command center — status visible immediately, spine readable at a glance, next action obvious.
+
+**New page structure:**
+1. **Header** — "Your Curriculum" title with plain-language subtitle explaining how curriculum connects to levels, requirements, templates, and player progress.
+2. **Curriculum Status hero card** — top of the page, full-width. Shows setup status (Setup in progress / Draft in progress / Starter spine active), active spine name, and next recommended action. Primary CTA adapts based on status: Start Curriculum Setup → `/director/onboarding/curriculum` when no version exists; Continue Curriculum Setup → `/director/onboarding/curriculum` when draft exists; Open Curriculum Builder → `/director/curriculum/builder` when active.
+3. **Current Spine section** — 5 stage cards in a row (Red Ball, Orange Ball, Green Ball, Yellow Ball, High Performance), each with a color dot, stage name, and one-line plain-language purpose. Static — no DB dependency.
+4. **Empty state** — shown when no curriculum version exists. "No curriculum spine active yet. Start with the starter curriculum spine, then customize it for your academy." with a Start Curriculum Setup CTA.
+5. **Setup Status checklist** — 5 items with CheckCircle / Circle icons. Derives real status from `versionData` (version exists, version active, override count > 0). Templates and player connection items show "Not connected yet" as placeholders per sprint spec.
+6. **Continue Builder CTA** — two-button row: Continue Setup (lime) and Open Builder (ghost). Always visible as a clear path forward.
+7. **Connected System section** — 4 cards showing how curriculum powers Player Profiles, Session Planning, Coach Notes, and Parent/Player Progress. Static copy, no DB dependency.
+8. **Next Recommended Actions** — 3 numbered actions that adapt based on curriculum setup state (no version / draft / active).
+9. **Advanced curriculum tools (collapsed)** — `<details>` collapse block containing all previously first-screen components: `PageExplainerCard`, `CurriculumLoopDiagram`, `CurriculumCustomizationAssistant`, `CurriculumExplorer` (labeled "Global Curriculum Explorer"), `AcademyCurriculumVersionCard`, `VoiceOverrideInputPanel` (dev-gated), `CurriculumDemoFlowPanel` (dev-gated), and the "How Customization Works" step list. Nothing deleted.
+
+**Advanced / internal panels treatment:**
+All existing dense and technical components preserved. Moved into a collapsible `<details>` block labeled "Advanced curriculum tools — Curriculum explorer, customization guide, and version management." The `CurriculumCustomizationAssistant` V1 Preview badge and internal glossary remain in the advanced section. Dev-gated panels remain dev-gated.
+
+**Empty/no-data behavior:**
+If `versionData` is null (no curriculum version, migration 048 not applied or not yet set up), the Curriculum Status card shows "Setup in progress" with an orange dot. A dedicated empty state card appears below the spine section. All status checklist items show as pending. Next actions guide the director to start setup.
+
+**Academy Assistant compatibility:**
+- Donna button continues to render from `src/app/director/layout.tsx` — no second floating button
+- Updated `/director/curriculum` guidance in `DonnaAssistantButton.tsx`: `"This is where your academy's development system lives. Start by reviewing the current spine, then continue setup or open the builder."`
+- `nextAction` updated to: `"Review your spine or open the Curriculum Builder to customize it."`
+- Voice panel, Capture a note (QuickCaptureDrawer), and all existing assistant modes unaffected
+
+**Mobile usability:**
+- Status hero card stacks vertically on mobile (flex-wrap on title/CTA row)
+- Current Spine uses `grid-cols-1 sm:grid-cols-5` — single column on mobile, 5-column on desktop
+- Setup Status and Next Actions are full-width stacked lists — readable on any screen
+- Advanced tools section is collapsed by default — does not dominate mobile first screen
+- Continue Builder buttons stack vertically on mobile (`flex-col sm:flex-row`)
+
+**Files changed:**
+- Modified `src/app/director/curriculum/page.tsx` — full page restructure with new director-first layout; all existing components preserved in advanced section
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — updated `/director/curriculum` guidance copy (one-line improvement)
+
+**No migrations:** Confirmed. No new tables, no schema changes.
+**database.types.ts:** Untouched.
+**Curriculum save behavior:** Unchanged. All save logic lives in `CurriculumSetupBuilder` and `src/lib/actions/curriculum.ts` — not touched.
+**Sprint 249 progressive onboarding:** Unaffected.
+**Sprint 250 Academy Assistant shell:** Unaffected.
+**Sprint 251 voice-first Academy Assistant:** Unaffected.
+
+**TypeScript result:** `npx tsc --noEmit` — clean, no errors.
+**Manual QA status:** Pending — run through the 15-item QA checklist in the sprint prompt.
+
+---
+
 ## 2026-05-13 — Sprint 251: Academy Assistant Visual + Voice Entry V1
 
 **Why this was added:**
