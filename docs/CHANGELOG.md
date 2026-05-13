@@ -2,6 +2,81 @@
 
 ---
 
+## 2026-05-13 — Sprint 249: Progressive Onboarding Flow V1
+
+**Why this was needed:**
+The onboarding page at `/director/onboarding` showed all 7 active steps plus 5 advanced steps in flat lists — heavy and checklist-like. Even after Sprint 244 separated active from advanced steps, a new director had no single clear "do this now" signal. The page felt like a long form to fill out rather than a guided system.
+
+**Core change: guided, not bigger.**
+The redesign reduces visual weight while adding structure. The total element count is lower than before — no separate progress bar card, no separate next-step banner. Those are consolidated into one focused "Next Best Step" card.
+
+**Next Best Step card:**
+Replaces the previous progress bar card + next-step CTA banner with a single prominent lime-bordered card:
+- "Next Best Step" eyebrow label
+- Step title (text-sm font-semibold — largest text on the page below the h1)
+- Step description
+- Unlock copy: one sentence showing what this step enables
+- Lime CTA button (px-4 py-2.5 — tappable on mobile)
+- Mini progress bar + X/7 counter inline
+- Green "Core setup complete" variant when all 7 steps are done
+
+**Three progressive setup groups:**
+Steps 1–7 are split into three visually distinct sections:
+1. **Start Here** (steps 1–3) — primary weight, full step detail (description + unlock copy shown for the next step)
+2. **Build Your Operating System** (steps 4–6) — secondary weight, compact rows (title + unlock copy for next step only, no descriptions for upcoming)
+3. **Launch Your First Operating Version** (step 7) — least weight, most muted section header
+
+Each section header uses different text opacity to reinforce the hierarchy: `text-text-secondary` → `text-text-muted` → `text-text-muted/60`.
+
+**Unlock copy per active step (one sentence each):**
+- Step 1: Unlocks academy identity and setup context.
+- Step 2: Unlocks personalized setup guidance.
+- Step 3: Unlocks player levels, curriculum builder, and session planning structure.
+- Step 4: Unlocks player grouping and placement logic.
+- Step 5: Unlocks program capacity, age ranges, and group structure.
+- Step 6: Unlocks coach session clarity and recap structure.
+- Step 7: Unlocks player profiles, development tracking, and real academy usage.
+
+**Advanced setup — collapsed by default:**
+Steps 8–12 are wrapped in a native `<details>/<summary>` element — collapsed on load, no JS required. Summary reads "Advanced setup — later". When opened, a one-line note explains: "These steps become useful after your first operating version is active." Steps render at opacity-40.
+
+**What was removed (cognitive load reduction):**
+- Separate progress bar card (merged into Next Best Step card)
+- Separate next-step CTA banner (replaced by Next Best Step card)
+- "Coming Soon" lock badges on upcoming steps (replaced by opacity reduction)
+- Description text shown for non-next steps in Groups 2+3 (reduces visual noise)
+
+**What was preserved:**
+- All routes and hrefs unchanged
+- Completion logic and settings key checks unchanged
+- AnimatedOnboardingDeck props and behavior unchanged
+- All step numbers, titles, and ctaLabels unchanged
+- AI note at bottom unchanged
+
+**Mobile:**
+Next Best Step card appears before group sections. CTA button uses py-2.5 for tap target. Group sections stack cleanly. Advanced section is collapsed so it does not dominate the first screen.
+
+**Files changed:**
+- Modified: `src/app/director/onboarding/page.tsx`
+
+**No migrations. `database.types.ts` untouched.**
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with no errors.
+
+**Manual QA status:** Pending — requires dev server + browser test at `/director/onboarding`.
+
+**git add command:**
+```
+git add src/app/director/onboarding/page.tsx docs/CHANGELOG.md
+```
+
+**Commit command:**
+```
+Sprint 249 — Progressive Onboarding Flow V1
+```
+
+---
+
 ## 2026-05-13 — Sprint 248: Academy Setup Completion Summary V1
 
 **Why this was needed:**
