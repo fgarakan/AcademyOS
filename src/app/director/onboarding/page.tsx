@@ -185,7 +185,7 @@ export default async function AcademyOnboardingPage() {
   })
 
   const completedCount = completedStepNumbers.size
-  const totalSteps = STEP_DEFS.length
+  const totalSteps = 7  // steps 1–7 are the active setup phase; 8–12 are coming later
   const progressPct = Math.round((completedCount / totalSteps) * 100)
 
   const nextStepIndex = stepStatuses.indexOf('next')
@@ -265,10 +265,10 @@ export default async function AcademyOnboardingPage() {
         </div>
       )}
 
-      {/* ── Step list ── */}
+      {/* ── Step list (steps 1–7 — active setup) ── */}
       <Card>
         <CardContent className="p-0">
-          {STEP_DEFS.map((step, idx) => {
+          {STEP_DEFS.slice(0, 7).map((step, idx) => {
             const status = stepStatuses[idx]
             return (
               <div
@@ -340,6 +340,33 @@ export default async function AcademyOnboardingPage() {
           })}
         </CardContent>
       </Card>
+
+      {/* ── Advanced setup — coming later (steps 8–12) ── */}
+      <div>
+        <p className="text-[11px] uppercase tracking-widest font-semibold text-text-muted/50 mb-2 px-1">
+          Advanced setup — coming later
+        </p>
+        <Card>
+          <CardContent className="p-0">
+            {STEP_DEFS.slice(7).map((step) => (
+              <div
+                key={step.number}
+                className="flex items-start gap-3 px-5 py-3 border-b border-border last:border-b-0 opacity-40"
+              >
+                <div className="shrink-0 mt-0.5 w-5 flex items-center justify-center">
+                  <div className="w-4 h-4 rounded-full border border-border/50 flex items-center justify-center">
+                    <span className="text-[9px] font-mono text-text-muted/60 leading-none">{step.number}</span>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-text-muted leading-tight">{step.title}</p>
+                  <p className="text-[11px] text-text-muted/70 mt-0.5 leading-relaxed">{step.description}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* ── AI note ── */}
       <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-lime/5 border border-lime/20 text-xs text-text-secondary">

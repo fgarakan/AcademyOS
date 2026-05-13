@@ -2,6 +2,46 @@
 
 ---
 
+## 2026-05-13 — Sprint 244: Demo-Safe Navigation + Dead-End Cleanup V1
+
+**What changed:**
+- `src/app/coach/layout.tsx` — Removed Voice tab from `COACH_TABS`. The `/coach/voice` route is a Coming Soon stub; the tab was a dead end in the bottom navigation.
+- `src/components/nav/SidebarNav.tsx` — Renamed "Fitness OS" → "Fitness Templates" (matches actual content). Removed "Demo Tour" from `SYSTEM_ITEMS` (non-functional route). Removed unused `FlaskConical` import.
+- `src/app/director/page.tsx` — Replaced vague `actionLabel="Go"` on `NextBestActionCard` with context-aware labels: "Review Wrap-Ups", "Place Players", "Review Players", "Review Requests" — derived from which `priorityAction` branch fired.
+- `src/app/director/onboarding/page.tsx` — Split step list into two sections: steps 1–7 (active setup, rendered normally) and steps 8–12 (grouped under "Advanced setup — coming later" at 40% opacity). Fixed progress counter to use 7 as denominator instead of 12, so progress reflects real actionable steps.
+- `src/app/director/curriculum/page.tsx` — Gated `CurriculumDemoFlowPanel` and `VoiceOverrideInputPanel` behind `process.env.NODE_ENV !== 'production'`. Both panels are experimental/demo-only and should not appear in production.
+
+**Files modified:**
+- `src/app/coach/layout.tsx`
+- `src/components/nav/SidebarNav.tsx`
+- `src/app/director/page.tsx`
+- `src/app/director/onboarding/page.tsx`
+- `src/app/director/curriculum/page.tsx`
+
+**TypeScript:** clean
+
+---
+
+## 2026-05-13 — Sprint 243: Academy Setup Natural Assistant Speech Layer V1
+
+**What changed:**
+- Added Natural Speech Library: `NATURAL_QUESTION_LEAD_INS`, `NATURAL_REVIEW_PHRASES`, `NATURAL_TRANSITION_PHRASES` — all hard-coded, app-controlled strings (no AI invention). No phrase exceeds 12 words.
+- Added `getSpeechPhrase(group, stepIndex)` — deterministic phrase selection by `stepIndex % group.length`.
+- Extended `AssistantPromptContract` type with `leadInText?`, `transitionText?`, `reviewText?`.
+- Updated `buildAssistantPromptContract()` to source `leadInText` from `NATURAL_QUESTION_LEAD_INS` (replaces per-step `casualLeadIn`), and populate `transitionText` and `reviewText` from their respective libraries.
+- When transcript is captured (`listening_for_answer` → `review_answer`): assistant now speaks the `reviewText` phrase (via Realtime or browser TTS) and shows it in the assistant bubble.
+- `review_answer` UI block now shows `selectedReviewText` phrase on screen (italic, above command instructions) — visible before/while spoken.
+- Voice confirm path (both `detectConfirmationCommand` and `acceptAnswer`) now uses `NATURAL_TRANSITION_PHRASES` instead of `getAcknowledgment()`. Typed-mode confirm path unchanged.
+- Auto-speak `useEffect`: when a transition phrase is queued (`pendingAckRef`), the `ActiveVoicePrompt.spokenText` is updated to include the full combined text (`transition + leadIn + question`), so `ActivePromptCard` shows what the assistant will say.
+- Added Sprint 243 debug section to `RealtimeDebugPanel`: `naturalSpeechEnabled`, `selectedLeadInText`, `selectedReviewText`, `selectedTransitionText`, `finalSpokenText`.
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx`
+
+**TypeScript:** clean
+
+---
+
 ## 2026-05-13 — Sprint 242: Academy Setup Voice Answer Confirmation Loop V1
 
 **Why this was needed:**

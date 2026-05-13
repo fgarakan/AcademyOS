@@ -141,11 +141,15 @@ export default async function DirectorCurriculumPage() {
       <section className="space-y-4">
         <p className="label-xs">Your Academy Curriculum</p>
         <AcademyCurriculumVersionCard version={versionData} />
-        <VoiceOverrideInputPanel hasActiveVersion={!!activeVersion} />
+        {process.env.NODE_ENV !== 'production' && (
+          <VoiceOverrideInputPanel hasActiveVersion={!!activeVersion} />
+        )}
       </section>
 
-      {/* Demo flow — collapsible how-to guide for directors */}
-      <CurriculumDemoFlowPanel />
+      {/* Demo flow — dev/staging only */}
+      {process.env.NODE_ENV !== 'production' && (
+        <CurriculumDemoFlowPanel />
+      )}
 
       {/* How it works */}
       <div className="px-5 py-4 rounded-2xl border border-border bg-surface-raised">

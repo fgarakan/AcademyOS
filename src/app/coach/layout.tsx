@@ -7,7 +7,6 @@ const COACH_TABS = [
   { label: 'Home', href: '/coach', iconKey: 'home', exact: true },
   { label: 'Players', href: '/coach/players', iconKey: 'players' },
   { label: 'Sessions', href: '/coach/sessions', iconKey: 'sessions' },
-  { label: 'Voice', href: '/coach/voice', iconKey: 'voice' },
 ]
 
 export default async function CoachLayout({ children }: { children: React.ReactNode }) {

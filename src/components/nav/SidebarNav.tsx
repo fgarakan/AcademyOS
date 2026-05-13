@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
-  LogOut, Dumbbell, ClipboardList, FlaskConical,
+  LogOut, Dumbbell, ClipboardList,
   ChevronRight, LayoutTemplate, Sparkles, Terminal, UserPlus, Activity, Settings, Rocket,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
@@ -15,7 +15,7 @@ const FOUNDATION_ITEMS = [
   { label: 'Placement',       href: '/director/placement',         icon: UserPlus },
   { label: 'Curriculum',      href: '/director/curriculum',        icon: BookOpen },
   { label: 'Class Templates', href: '/director/class-templates',   icon: LayoutTemplate },
-  { label: 'Fitness OS',      href: '/director/fitness/templates', icon: Dumbbell },
+  { label: 'Fitness Templates', href: '/director/fitness/templates', icon: Dumbbell },
   { label: 'Sessions',        href: '/director/sessions',          icon: Calendar },
   { label: 'Signals',         href: '/director/signals',           icon: Activity },
   { label: 'Review Queue',    href: '/director/review',            icon: ClipboardList },
@@ -28,7 +28,6 @@ const INTELLIGENCE_ITEMS = [
 
 const SYSTEM_ITEMS = [
   { label: 'Onboarding', href: '/director/onboarding', icon: Rocket },
-  { label: 'Demo Tour',  href: '/director/demo',        icon: FlaskConical },
   { label: 'Settings',   href: '/director/settings',    icon: Settings },
 ]
 
@@ -37,16 +36,19 @@ interface SidebarNavProps {
   pendingCount?: number
   userEmail?: string
   userDisplayName?: string
+  onboardingIncomplete?: boolean
 }
 
 function NavItem({
   item,
   isActive,
   badge,
+  attention = false,
 }: {
   item: { label: string; href: string; icon: React.ElementType }
   isActive: boolean
   badge?: number
+  attention?: boolean
 }) {
   const Icon = item.icon
   return (
@@ -64,6 +66,25 @@ function NavItem({
       )}
       <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-lime' : 'text-text-muted group-hover:text-text-secondary')} />
       <span className="flex-1">{item.label}</span>
+      {attention && (
+        isActive ? (
+          // Calmer dot when already on the Onboarding page — no ping
+          <span
+            aria-hidden="true"
+            className="w-1.5 h-1.5 rounded-full bg-lime/60 shrink-0"
+          />
+        ) : (
+          // Breathing ping ring when on other pages — draws attention without alarm
+          <span
+            title="Finish onboarding setup"
+            aria-label="Onboarding incomplete"
+            className="relative flex shrink-0 h-2 w-2"
+          >
+            <span className="absolute inline-flex h-full w-full rounded-full bg-lime opacity-40 motion-safe:animate-ping" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-lime" />
+          </span>
+        )
+      )}
       {badge !== undefined && badge > 0 && (
         <span className="ml-auto bg-status-red text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shrink-0">
           {badge > 9 ? '9+' : badge}
@@ -86,6 +107,7 @@ export function SidebarNav({
   pendingCount = 0,
   userEmail,
   userDisplayName,
+  onboardingIncomplete = false,
 }: SidebarNavProps) {
   const pathname = usePathname()
 
@@ -137,7 +159,12 @@ export function SidebarNav({
 
         <SectionLabel label="System" />
         {SYSTEM_ITEMS.map(item => (
-          <NavItem key={item.href} item={item} isActive={isActive(item.href)} />
+          <NavItem
+            key={item.href}
+            item={item}
+            isActive={isActive(item.href)}
+            attention={item.href === '/director/onboarding' ? onboardingIncomplete : false}
+          />
         ))}
 
       </div>

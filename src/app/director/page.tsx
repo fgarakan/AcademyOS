@@ -210,26 +210,30 @@ export default async function DirectorDashboard() {
   })
 
   // Single highest-priority director action — shown as a banner near the top
-  const priorityAction: { title: string; body: string; href: string } | null = (() => {
+  const priorityAction: { title: string; body: string; href: string; actionLabel: string } | null = (() => {
     if (pendingWrapUpsCount > 0) return {
       title: `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting your review`,
       body: 'Approve or provide feedback before coaches move to their next session.',
       href: '/director/review?tab=wrap-ups',
+      actionLabel: 'Review Wrap-Ups',
     }
     if (pendingCount > 0) return {
       title: `${pendingCount} player${pendingCount !== 1 ? 's' : ''} waiting for placement`,
       body: 'Complete placement to activate profiles and assign curriculum levels.',
       href: '/director/players',
+      actionLabel: 'Place Players',
     }
     if (attentionCount > 0) return {
       title: `${attentionCount} player${attentionCount !== 1 ? 's' : ''} need attention`,
       body: 'Players on hold or due for reassessment are not progressing.',
       href: '/director/players',
+      actionLabel: 'Review Players',
     }
     if (newRequests > 0) return {
       title: `${newRequests} lesson request${newRequests !== 1 ? 's' : ''} awaiting review`,
       body: 'Parent lesson requests need director review and routing.',
       href: '/director/review',
+      actionLabel: 'Review Requests',
     }
     return null
   })()
@@ -256,7 +260,7 @@ export default async function DirectorDashboard() {
           variant="warning"
           title={priorityAction.title}
           body={priorityAction.body}
-          actionLabel="Go"
+          actionLabel={priorityAction.actionLabel}
           actionHref={priorityAction.href}
         />
       )}
