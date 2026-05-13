@@ -2,6 +2,49 @@
 
 ---
 
+## 2026-05-13 — Sprint 248: Academy Setup Completion Summary V1
+
+**Why this was needed:**
+After completing the Academy Setup Assistant interview and saving, directors were immediately returned to `/director/onboarding` with no confirmation of what was captured and no clear next step. The interview felt like data entry rather than system-building. This sprint adds a completion summary screen that appears after save — giving the director a payoff moment before they continue setup.
+
+**Where it appears:**
+Inside `DirectorInterviewAssistant.tsx` — the `step === 8` render branch (triggered by a successful `handleSave()` call). No route change, no query params, no DB changes. Pure component state.
+
+**Answer groups shown:**
+The 7 captured answers are displayed in 4 labelled groups:
+- Academy Identity: Academy Identity (philosophy)
+- How Your Academy Works: Training Structure, Competition Pathway
+- Player Development: Player Development, 90-Day Goal
+- Coaching & Parent: Coaching Style, Parent Communication
+
+Each row shows the step label and the captured answer (truncated at 100 chars). Empty answers show "You can refine this later." No raw IDs, step IDs, or internal fields are exposed.
+
+**"Academy OS can now" panel:**
+Six short concrete bullets (Sparkles icon, lime border panel):
+personalize setup path, recommend curriculum next steps, shape player profile structure, guide coach workflow configuration, prepare parent and player communication rules, recommend launch priorities.
+
+**Next-step routing:**
+- Primary CTA: Continue to Curriculum Setup → `/director/onboarding/curriculum`
+- Secondary: Return to Onboarding → `/director/onboarding`
+- Tertiary: Go to Dashboard → `/director`
+
+**Safeguards preserved:**
+- `handleSave()` behavior untouched — save still calls `updateDirectorInterviewAction`, sets `step(8)` on success, shows existing error on failure
+- Failed save does not show completion summary
+- No edit-answer navigation added (answers already saved — would require a second save)
+- No migrations
+- `database.types.ts` untouched
+- No new npm packages
+
+**Files changed:**
+- Modified: `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx`
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with no errors.
+
+**Manual QA status:** Pending — requires dev server + browser test of the full interview → save flow.
+
+---
+
 ## 2026-05-13 — Sprint 247: Review Queue Redesign V1
 
 **Why this was needed:**

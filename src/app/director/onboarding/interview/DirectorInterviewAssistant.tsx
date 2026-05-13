@@ -96,6 +96,34 @@ function getAcknowledgment(chips: string[], custom: string): string {
   return phrase
 }
 
+// ─── Natural Speech Library (Sprint 243) ─────────────────────────────────────
+// All phrases are app-controlled, hard-coded strings. No AI invention.
+// No phrase exceeds 12 words. Selection is deterministic via getSpeechPhrase().
+const NATURAL_QUESTION_LEAD_INS: readonly string[] = [
+  "Let's start high-level.",
+  "This one is simple.",
+  "This helps me understand your academy.",
+  "Now let's look at the coaching side.",
+  "Quick one here.",
+]
+const NATURAL_REVIEW_PHRASES: readonly string[] = [
+  "Got it. Take a quick look.",
+  "Perfect, here's what I heard.",
+  "Good, I captured that.",
+  "That helps. Take a look.",
+]
+const NATURAL_TRANSITION_PHRASES: readonly string[] = [
+  "Perfect. Next question.",
+  "Got it. Let's keep moving.",
+  "Great. Moving to the next piece.",
+  "That's enough. Next one.",
+]
+
+function getSpeechPhrase(group: readonly string[], stepIndex: number): string {
+  if (group.length === 0) return ''
+  return group[Math.abs(stepIndex) % group.length]
+}
+
 function buildInterpretation(step: InterviewStep, chips: string[], custom: string): string {
   const trimmed = custom.trim()
   if (chips.length > 0 && trimmed) {
@@ -160,10 +188,14 @@ type AssistantPromptContract = {
   questionNumber?: number
   totalQuestionsInModule?: number
   screenText: string         // what is shown on screen (= spokenText for questions)
-  spokenText: string         // what the assistant speaks (casual lead-in + exact question)
+  spokenText: string         // what the assistant speaks (lead-in + exact question)
   exactQuestionText?: string // the locked canonical question — never modified by AI
   whyThisMatters?: string
   requiresAnswer: boolean
+  // Sprint 243 — natural speech additions (app-controlled, library-sourced)
+  leadInText?: string        // short phrase before the question (from NATURAL_QUESTION_LEAD_INS)
+  transitionText?: string    // short phrase before next question (from NATURAL_TRANSITION_PHRASES)
+  reviewText?: string        // short phrase shown/spoken after transcript capture (from NATURAL_REVIEW_PHRASES)
 }
 
 // ─── Active voice prompt model ────────────────────────────────────────────────
@@ -234,6 +266,7 @@ function buildPersonalizedWelcomeText(
 // Builds the single source of truth for each interview question.
 // screenText and spokenText are identical — what is shown is what is spoken.
 // exactQuestionText is the locked question from interviewSteps — never changed by AI.
+// Sprint 243: leadInText sourced from NATURAL_QUESTION_LEAD_INS (deterministic rotation).
 function buildAssistantPromptContract(
   stepIndex: number,
   directorName: string | null,
@@ -241,9 +274,10 @@ function buildAssistantPromptContract(
 ): AssistantPromptContract {
   const s = INTERVIEW_STEPS[stepIndex]
   const exactQ = s.spokenQuestion ?? s.question
+  const libraryLeadIn = getSpeechPhrase(NATURAL_QUESTION_LEAD_INS, stepIndex)
   const namePrefix = directorName ? `${directorName}, ` : ''
-  const leadIn = s.casualLeadIn ? `${namePrefix}${s.casualLeadIn} ` : namePrefix
-  const spokenText = `${leadIn}${exactQ}`
+  const leadInText = `${namePrefix}${libraryLeadIn}`.trim()
+  const spokenText = leadInText ? `${leadInText} ${exactQ}` : exactQ
   return {
     id: s.id,
     kind: 'question',
@@ -256,6 +290,9 @@ function buildAssistantPromptContract(
     exactQuestionText: exactQ,
     whyThisMatters: s.whyItMatters,
     requiresAnswer: true,
+    leadInText: libraryLeadIn || undefined,
+    transitionText: getSpeechPhrase(NATURAL_TRANSITION_PHRASES, stepIndex) || undefined,
+    reviewText: getSpeechPhrase(NATURAL_REVIEW_PHRASES, stepIndex) || undefined,
   }
 }
 
@@ -495,6 +532,12 @@ function RealtimeDebugPanel({
   lastConfirmationCommand,
   confirmationCommandDetected,
   autoAdvanceAfterVoiceConfirm,
+  // Sprint 243
+  selectedLeadInText,
+  selectedReviewText,
+  selectedTransitionText,
+  naturalSpeechEnabled,
+  finalSpokenText,
 }: {
   status: string
   debug: RealtimeDebugState
@@ -542,6 +585,12 @@ function RealtimeDebugPanel({
   lastConfirmationCommand?: string
   confirmationCommandDetected?: boolean
   autoAdvanceAfterVoiceConfirm?: boolean
+  // Sprint 243 — natural speech debug fields
+  selectedLeadInText?: string
+  selectedReviewText?: string
+  selectedTransitionText?: string
+  naturalSpeechEnabled?: boolean
+  finalSpokenText?: string
 }) {
   const stepQ = currentEncodedStep != null && currentEncodedStep >= 0 && currentEncodedStep < INTERVIEW_STEPS.length
     ? getStepQuestion(currentEncodedStep)
@@ -705,6 +754,17 @@ function RealtimeDebugPanel({
           <p>lastConfirmationCommand: <span className={lastConfirmationCommand ? 'text-lime' : 'text-text-muted'}>{lastConfirmationCommand || '—'}</span></p>
           <p>confirmationCommandDetected: <span className={confirmationCommandDetected ? 'text-status-green' : 'text-text-muted'}>{String(confirmationCommandDetected ?? false)}</span></p>
           <p>autoAdvanceAfterVoiceConfirm: <span className="text-text-muted">{String(autoAdvanceAfterVoiceConfirm ?? true)}</span></p>
+        </div>
+        {/* Sprint 243 — natural speech debug section */}
+        <div className="border-t border-border pt-0.5 mt-0.5 space-y-0.5">
+          <p className="text-[8px] uppercase tracking-widest text-text-muted font-semibold">Natural Speech (Sprint 243)</p>
+          <p>naturalSpeechEnabled: <span className={naturalSpeechEnabled ? 'text-status-green' : 'text-text-muted'}>{String(naturalSpeechEnabled ?? false)}</span></p>
+          <p>selectedLeadInText: <span className="text-lime">{selectedLeadInText || '—'}</span></p>
+          <p>selectedReviewText: <span className="text-text-secondary">{selectedReviewText || '—'}</span></p>
+          <p>selectedTransitionText: <span className="text-text-secondary">{selectedTransitionText || '—'}</span></p>
+          {finalSpokenText && (
+            <p className="break-words">finalSpokenText: <span className="text-text-muted">{finalSpokenText.slice(0, 80)}</span></p>
+          )}
         </div>
         {(debug.openaiStatus != null || debug.openaiError || debug.endpointAttempted || debug.openaiResponseKeys || debug.clientSecretShape) && (
           <div className="mt-1 pt-1 border-t border-border space-y-0.5">
@@ -1150,10 +1210,9 @@ export function DirectorInterviewAssistant({
         if (cmd === 'confirm') {
           setVoiceAnswerPhase('confirming_answer')
           stopAssistantSpeech()
-          // Queue ack to be prepended to the next question by the auto-speak useEffect
+          // Sprint 243 — use natural transition phrase (library, deterministic) for voice path
           if (step < INTERVIEW_STEPS.length - 1) {
-            const a = answers[INTERVIEW_STEPS[step].field]
-            pendingAckRef.current = getAcknowledgment(a.chips, a.custom)
+            pendingAckRef.current = getSpeechPhrase(NATURAL_TRANSITION_PHRASES, step)
           }
           setVoiceAnswerPhase('advancing_to_next_question')
           if (step === INTERVIEW_STEPS.length - 1) {
@@ -1211,10 +1270,19 @@ export function DirectorInterviewAssistant({
         appendTranscript(stepField, t)
         setPendingAnswerTranscript(t)
         setVoiceAnswerPhase('review_answer')
-        // Clear the realtime transcript so the next spoken phrase (e.g. "confirm")
-        // arrives fresh and can be detected as a command.
         realtimeVoice.clearUserTranscript()
         lastAppliedTranscriptRef.current = ''
+        // Sprint 243 — show and speak review phrase after transcript capture.
+        // reviewText is app-controlled (library), visible in assistant bubble before/while spoken.
+        const reviewPhrase = getSpeechPhrase(NATURAL_REVIEW_PHRASES, step)
+        if (reviewPhrase) {
+          setLastSpokenAssistantText(reviewPhrase)
+          if (isRealtimeConnected) {
+            speakWithTracking(reviewPhrase)
+          } else {
+            speakAssistant(reviewPhrase)
+          }
+        }
         return
       }
 
@@ -1567,8 +1635,14 @@ export function DirectorInterviewAssistant({
       }
     }
 
-    // Set active prompt before speaking — question must be visible before voice starts
-    setActiveVoicePrompt(buildInterviewPrompt(step, resolvedNameRef.current, academyName))
+    // Set active prompt before speaking — question must be visible before voice starts.
+    // Sprint 243: when a transition phrase is prepended, include it in spokenText so
+    // ActivePromptCard shows the full spoken text (transition + leadIn + question).
+    const basePrompt = buildInterviewPrompt(step, resolvedNameRef.current, academyName)
+    const voicePromptWithTransition: ActiveVoicePrompt = ack && basePrompt.spokenText
+      ? { ...basePrompt, spokenText: `${ack} ${basePrompt.spokenText}` }
+      : basePrompt
+    setActiveVoicePrompt(voicePromptWithTransition)
     setIsSpeaking(true)
     setAudioStatus('speaking')
 
@@ -1814,17 +1888,16 @@ export function DirectorInterviewAssistant({
   }
 
   // acceptAnswer: director confirmed — move to next step.
-  // In voice mode, queues an ack so the auto-speak useEffect combines it with
-  // the next question: "Got it. Next question: ..."
+  // In voice mode, queues a transition phrase so the auto-speak useEffect combines it
+  // with the next question: "Perfect. Next question. [leadIn] [question]"
   // App controls the next question — always uses INTERVIEW_STEPS[nextStep].spokenQuestion.
   // Called by: "Looks right — continue" button AND voice confirm command.
   function acceptAnswer() {
     stopAssistantSpeech()
-    setVoiceAnswerPhase('idle') // reset before step change
-    // Queue ack for voice mode (consumed in auto-speak useEffect)
+    setVoiceAnswerPhase('idle')
+    // Sprint 243 — use natural transition phrase (library, deterministic) for voice path
     if (voiceMode && step < INTERVIEW_STEPS.length - 1) {
-      const a = answers[INTERVIEW_STEPS[step].field]
-      pendingAckRef.current = getAcknowledgment(a.chips, a.custom)
+      pendingAckRef.current = getSpeechPhrase(NATURAL_TRANSITION_PHRASES, step)
     }
     // Clear transcript state for the next step
     realtimeVoice.clearUserTranscript()
@@ -1980,6 +2053,15 @@ export function DirectorInterviewAssistant({
   const contractExactQuestionText =
     activeVoicePrompt?.kind === 'interview' ? (activeVoicePrompt.exactQuestionText ?? null) : null
 
+  // Sprint 243 — natural speech derived values (deterministic, library-sourced)
+  const selectedLeadInText = step >= 0 && step < INTERVIEW_STEPS.length
+    ? getSpeechPhrase(NATURAL_QUESTION_LEAD_INS, step) : ''
+  const selectedReviewText = step >= 0 && step < INTERVIEW_STEPS.length
+    ? getSpeechPhrase(NATURAL_REVIEW_PHRASES, step) : ''
+  const selectedTransitionText = step >= 0 && step < INTERVIEW_STEPS.length
+    ? getSpeechPhrase(NATURAL_TRANSITION_PHRASES, step) : ''
+  const naturalSpeechEnabled = true
+
   // ── Shared debug panel props ─────────────────────────────────────────────────
   const debugPanelProps = {
     status: realtimeVoice.status,
@@ -2030,6 +2112,12 @@ export function DirectorInterviewAssistant({
     lastConfirmationCommand,
     confirmationCommandDetected: !!lastConfirmationCommand,
     autoAdvanceAfterVoiceConfirm: true,
+    // Sprint 243 — natural speech debug fields
+    selectedLeadInText,
+    selectedReviewText,
+    selectedTransitionText,
+    naturalSpeechEnabled,
+    finalSpokenText: lastSpokenAssistantText || undefined,
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -2648,26 +2736,115 @@ export function DirectorInterviewAssistant({
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // SUCCESS
+  // SUCCESS — COMPLETION SUMMARY (Sprint 248)
   // ══════════════════════════════════════════════════════════════════════════════
   if (step === 8) {
+    const summaryGroups: Array<{ label: string; steps: InterviewStep[] }> = [
+      {
+        label: 'Academy Identity',
+        steps: [INTERVIEW_STEPS[0]], // philosophy
+      },
+      {
+        label: 'How Your Academy Works',
+        steps: [INTERVIEW_STEPS[2], INTERVIEW_STEPS[3]], // development_priorities, competition_approach
+      },
+      {
+        label: 'Player Development',
+        steps: [INTERVIEW_STEPS[1], INTERVIEW_STEPS[6]], // player_focus, ninety_day_success
+      },
+      {
+        label: 'Coaching & Parent',
+        steps: [INTERVIEW_STEPS[5], INTERVIEW_STEPS[4]], // coach_operating_style, parent_communication_style
+      },
+    ]
+
     return (
-      <div className="py-4 space-y-6">
-        <div className="flex flex-col items-center text-center gap-3 py-8">
-          <div className="w-12 h-12 rounded-full bg-status-green/10 border border-status-green/25 flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6 text-status-green" />
+      <div className="space-y-7">
+
+        {/* ── Header ── */}
+        <div className="flex flex-col items-center text-center gap-3 pt-2 pb-1">
+          <div className="w-10 h-10 rounded-full bg-status-green/10 border border-status-green/25 flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5 text-status-green" />
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-text-primary">Setup saved.</h2>
-            <p className="text-sm text-text-secondary mt-1 max-w-xs mx-auto">
-              Academy OS now has the context it needs to shape your setup, curriculum, and workflows.
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-semibold text-text-primary">Academy Setup Captured</h2>
+            <p className="text-sm text-text-secondary leading-relaxed max-w-xs mx-auto">
+              Here&apos;s what Academy OS learned about your academy. You can refine any answer later.
             </p>
           </div>
         </div>
-        <Link href="/director/onboarding" className={`w-full ${BTN_LIME}`}>
-          Back to Onboarding
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+
+        {/* ── Captured answers — grouped ── */}
+        <div className="space-y-5">
+          {summaryGroups.map(group => (
+            <div key={group.label}>
+              <p className="label-xs mb-2">{group.label}</p>
+              <div className="space-y-1.5">
+                {group.steps.map(s => {
+                  const value = buildValue(answers[s.field].chips, answers[s.field].custom)
+                  const display = value.length > 100 ? `${value.slice(0, 100)}…` : value
+                  return (
+                    <div key={s.field} className="px-3.5 py-2.5 rounded-xl bg-surface-raised border border-border">
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">{s.stepLabel}</p>
+                      {display ? (
+                        <p className="text-sm text-text-secondary mt-0.5 leading-snug">{display}</p>
+                      ) : (
+                        <p className="text-xs text-text-muted/60 italic mt-0.5">You can refine this later.</p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── What Academy OS can now do ── */}
+        <div className="px-4 py-4 rounded-xl bg-lime/5 border border-lime/20 space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+            <p className="text-xs font-semibold text-lime">Academy OS can now</p>
+          </div>
+          <ul className="space-y-1.5">
+            {[
+              'Personalize your setup path',
+              'Recommend curriculum next steps',
+              'Shape player profile structure',
+              'Guide coach workflow configuration',
+              'Prepare parent and player communication rules',
+              'Recommend launch priorities',
+            ].map(item => (
+              <li key={item} className="flex items-start gap-2">
+                <span className="mt-1.5 w-1 h-1 rounded-full bg-lime shrink-0" />
+                <span className="text-sm text-text-secondary">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* ── Progress message ── */}
+        <p className="text-[11px] text-text-muted leading-relaxed">
+          Setup Assistant complete. Next, approve your curriculum spine so Academy OS can connect players, sessions, and development levels.
+        </p>
+
+        {/* ── Next step CTAs ── */}
+        <div className="space-y-2.5">
+          <Link href="/director/onboarding/curriculum" className={`w-full ${BTN_LIME}`}>
+            Continue to Curriculum Setup
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link href="/director/onboarding" className={`w-full ${BTN_GHOST}`}>
+            Return to Onboarding
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/director"
+            className="w-full flex items-center justify-center text-xs text-text-muted hover:text-text-secondary transition-colors py-1.5"
+          >
+            Go to Dashboard
+          </Link>
+        </div>
+
       </div>
     )
   }
@@ -2937,6 +3114,10 @@ export function DirectorInterviewAssistant({
                 <CheckCircle2 className="w-3.5 h-3.5 text-status-green shrink-0" />
                 <p className="text-xs font-semibold text-status-green">Here&apos;s what I heard</p>
               </div>
+              {/* Sprint 243 — review phrase visible on screen, mirrors what assistant says */}
+              {selectedReviewText && (
+                <p className="text-xs text-text-secondary italic">&ldquo;{selectedReviewText}&rdquo;</p>
+              )}
               <p className="text-[10px] text-text-muted leading-relaxed">
                 Say{' '}
                 <span className="text-text-secondary font-medium">&ldquo;confirm&rdquo;</span>{' '}
