@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Mic, Layers,
 } from 'lucide-react'
@@ -24,6 +24,11 @@ interface RouteContext {
   screen: string
   guidance: string
   nextAction: string
+}
+
+interface CommandResponse {
+  message: string
+  type: 'info' | 'honest'
 }
 
 const ROUTE_CONTEXT: Record<string, RouteContext> = {
@@ -101,19 +106,19 @@ const FALLBACK_CONTEXT: RouteContext = {
 
 const VOICE_PROMPTS: Record<string, string[]> = {
   '/director/onboarding/interview': [
-    'How should I answer this question?',
-    'What happens after setup?',
-    'Explain the current question.',
+    'What is this page?',
+    'Explain this question.',
+    'What should I do next?',
   ],
   '/director/onboarding/curriculum': [
-    'What should I review first?',
-    'Explain the curriculum spine.',
+    'What is this page?',
+    'What should I do next?',
     'What happens when I approve this?',
   ],
   '/director/onboarding': [
     'What should I do next?',
-    'Explain this onboarding step.',
-    'What does curriculum setup unlock?',
+    'Take me to curriculum setup.',
+    'What is this page?',
   ],
   '/director/players/': [
     'What should I do next for this player?',
@@ -235,6 +240,7 @@ interface Props {
 
 export function DonnaAssistantButton({ academyId }: Props) {
   const pathname = usePathname()
+  const router = useRouter()
   const [panelOpen, setPanelOpen] = useState(false)
   const [captureOpen, setCaptureOpen] = useState(false)
   const [activeMode, setActiveMode] = useState<AssistantMode | null>(null)
@@ -248,6 +254,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
   const [templateDraft, setTemplateDraft] = useState<TemplateDraft | null>(null)
   const [fromVoiceCapture, setFromVoiceCapture] = useState(false)
   const [templateCommandInput, setTemplateCommandInput] = useState('')
+  const [commandResponse, setCommandResponse] = useState<CommandResponse | null>(null)
 
   const ctx = resolveContext(pathname)
   const voicePrompts = resolveVoicePrompts(pathname)
@@ -258,6 +265,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
     setTemplateDraft(null)
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
+    setCommandResponse(null)
   }, [])
 
   // Escape closes the panel
@@ -279,6 +287,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
     setTemplateDraft(null)
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
+    setCommandResponse(null)
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -299,7 +308,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
     setActiveMode(prev => (prev === mode ? null : mode))
   }
 
-  // Voice transcript stays local — detect template intent automatically
+  // Voice transcript stays local — detect template intent first, then navigation/info commands
   function handleVoiceTranscript(text: string) {
     setVoiceTranscript(text)
     setTypeInstead(false)
@@ -307,17 +316,24 @@ export function DonnaAssistantButton({ academyId }: Props) {
       setTemplateDraft(parseTemplateDraft(text))
       setFromVoiceCapture(true)
       setActiveMode('create_template')
+      return
     }
+    detectAndHandleCommand(text)
   }
 
-  // Clicking a suggestion pre-fills the typed area; template suggestions also start the draft
+  // Clicking a suggestion executes template intent or navigation/info commands;
+  // unrecognized suggestions pre-fill the typed area for manual Send.
   function handleSuggestionClick(prompt: string) {
-    setTypeInstead(true)
-    setTypedText(prompt)
     if (isTemplateCreationIntent(prompt)) {
       setTemplateDraft(parseTemplateDraft(prompt))
       setFromVoiceCapture(false)
       setActiveMode('create_template')
+      return
+    }
+    const handled = detectAndHandleCommand(prompt)
+    if (!handled) {
+      setTypeInstead(true)
+      setTypedText(prompt)
     }
   }
 
@@ -334,6 +350,141 @@ export function DonnaAssistantButton({ academyId }: Props) {
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     setActiveMode(null)
+  }
+
+  // Deterministic command detection — no AI, no API calls.
+  // Navigation uses approved /director routes only. Returns true if command was recognized.
+  function detectAndHandleCommand(text: string): boolean {
+    const lower = text.toLowerCase().trim()
+
+    // Navigation commands — approved routes only, ordered most-specific first
+    const NAV_COMMANDS: Array<{ patterns: string[]; href: string }> = [
+      {
+        patterns: ['take me to curriculum setup', 'go to curriculum setup', 'open curriculum setup'],
+        href: '/director/onboarding/curriculum',
+      },
+      {
+        patterns: ['continue setup', 'go to onboarding', 'go to setup', 'take me to onboarding', 'take me to setup'],
+        href: '/director/onboarding',
+      },
+      {
+        patterns: ['take me to review', 'go to review queue', 'go to review', 'open review queue'],
+        href: '/director/review',
+      },
+      {
+        patterns: ['go to players', 'take me to players', 'show me players'],
+        href: '/director/players',
+      },
+      {
+        patterns: ['go to templates', 'take me to templates', 'show me templates', 'go to class templates'],
+        href: '/director/class-templates',
+      },
+      {
+        patterns: ['go to curriculum', 'take me to curriculum', 'open curriculum', 'show me curriculum'],
+        href: '/director/curriculum',
+      },
+    ]
+
+    for (const { patterns, href } of NAV_COMMANDS) {
+      if (patterns.some(p => lower.includes(p))) {
+        router.push(href)
+        closePanel()
+        return true
+      }
+    }
+
+    // Go back — only within /director, not from the root dashboard
+    if (lower.includes('go back') || lower === 'back') {
+      if (pathname.startsWith('/director') && pathname !== '/director') {
+        router.back()
+        closePanel()
+      } else {
+        setCommandResponse({ message: 'You are already at the main director screen.', type: 'honest' })
+      }
+      return true
+    }
+
+    // Explain this page / screen
+    if (
+      lower.includes('what is this page') ||
+      lower.includes('what page am i') ||
+      lower.includes('explain this screen')
+    ) {
+      setCommandResponse({ message: ctx.guidance, type: 'info' })
+      setActiveMode('explain')
+      return true
+    }
+
+    // What should I do next
+    if (
+      lower.includes('what should i do next') ||
+      lower.includes("what's next") ||
+      lower.includes('guide me') ||
+      lower === 'what do i do'
+    ) {
+      setCommandResponse({ message: ctx.nextAction, type: 'info' })
+      setActiveMode('guide')
+      return true
+    }
+
+    // Explain this question — honest on interview page (step index not accessible from here)
+    if (
+      lower.includes('explain this question') ||
+      lower.includes('explain the question') ||
+      lower.includes('explain this q')
+    ) {
+      if (pathname.startsWith('/director/onboarding/interview')) {
+        setCommandResponse({
+          message:
+            'This interview has 7 questions covering: your academy philosophy, player focus, development priorities, competition approach, parent communication style, coach operating style, and 90-day success vision. Answer one at a time using the on-screen form.',
+          type: 'info',
+        })
+      } else {
+        setCommandResponse({ message: ctx.guidance, type: 'info' })
+      }
+      return true
+    }
+
+    // Honest fallbacks — commands that look functional but are not yet wired
+    if (lower.includes('next question') || lower.includes('skip question')) {
+      setCommandResponse({
+        message: 'Direct question control is not wired yet. Use the on-screen Confirm button to move forward.',
+        type: 'honest',
+      })
+      return true
+    }
+
+    if (lower.includes('confirm') && (lower.includes('answer') || lower.includes('this') || lower.includes('it'))) {
+      setCommandResponse({
+        message: 'Confirming your answer is handled by the on-screen button. Click Confirm in the interview form to move forward.',
+        type: 'honest',
+      })
+      return true
+    }
+
+    return false
+  }
+
+  function handleCommandSubmit() {
+    const text = typedText.trim()
+    if (!text) return
+    if (isTemplateCreationIntent(text)) {
+      setTemplateDraft(parseTemplateDraft(text))
+      setFromVoiceCapture(false)
+      setActiveMode('create_template')
+      setTypeInstead(false)
+      return
+    }
+    const handled = detectAndHandleCommand(text)
+    if (!handled) {
+      setCommandResponse({
+        message:
+          'I didn\'t recognize that command. Try: "What is this page?", "What should I do next?", "Take me to curriculum setup.", or start a template with "Create a template for…"',
+        type: 'honest',
+      })
+    }
+    setTypeInstead(false)
+    setTypedText('')
   }
 
   return (
@@ -490,25 +641,35 @@ export function DonnaAssistantButton({ academyId }: Props) {
                 <div className="mt-3 space-y-2">
                   <textarea
                     rows={3}
-                    placeholder="Type your question or note…"
+                    placeholder='Type a command or question — e.g. "What is this page?" or "Create a template for Orange 2."'
                     value={typedText}
                     onChange={e => setTypedText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleCommandSubmit()
+                      }
+                    }}
                     className="w-full rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
                     style={{
                       background: 'var(--bg-surface)',
                       border: '1px solid var(--border-subtle)',
                     }}
                   />
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={handleCommandSubmit}
+                      disabled={!typedText.trim()}
+                      className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
+                    >
+                      Send
+                    </button>
                     <button
                       onClick={() => { setTypeInstead(false); setTypedText('') }}
                       className="text-[10px] text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
                     >
                       Cancel
                     </button>
-                    <p className="text-[10px] text-text-muted">
-                      Use "Capture a note" below to save.
-                    </p>
                   </div>
                 </div>
               )}
@@ -539,6 +700,44 @@ export function DonnaAssistantButton({ academyId }: Props) {
               </div>
             </div>
           </div>
+
+          {/* ── Command response card ── */}
+          {commandResponse && (
+            <div
+              className="rounded-xl px-3.5 py-3"
+              style={{
+                background:
+                  commandResponse.type === 'honest'
+                    ? 'rgba(255,149,0,0.06)'
+                    : 'rgba(139,92,246,0.06)',
+                border:
+                  commandResponse.type === 'honest'
+                    ? '1px solid rgba(255,149,0,0.2)'
+                    : '1px solid rgba(139,92,246,0.18)',
+              }}
+            >
+              <div className="flex items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="text-[10px] uppercase tracking-widest font-semibold mb-1"
+                    style={{ color: commandResponse.type === 'honest' ? '#FF9500' : '#8b5cf6' }}
+                  >
+                    {commandResponse.type === 'honest' ? 'Not available yet' : 'Academy Assistant'}
+                  </p>
+                  <p className="text-[12px] text-text-secondary leading-relaxed">
+                    {commandResponse.message}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setCommandResponse(null)}
+                  aria-label="Dismiss"
+                  className="shrink-0 text-text-muted hover:text-text-primary transition-colors mt-0.5"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* ── Current screen context card ── */}
           {activeMode !== 'create_template' && (

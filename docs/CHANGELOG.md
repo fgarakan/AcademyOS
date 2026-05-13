@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-13 — Sprint 255: Academy Assistant Page-Aware Setup Controller V1
+
+**Modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `useRouter`, `CommandResponse` interface, `commandResponse` state, `detectAndHandleCommand()` (deterministic navigation + info + honest fallback), `handleCommandSubmit()`, Send button on type-instead textarea (Enter key also submits), command response card UI (violet for info, orange for honest fallback), updated VOICE_PROMPTS for all onboarding routes to use wired commands, clear `commandResponse` on panel close and route change.
+
+**Behavior added:**
+- Navigation commands route to approved `/director` routes only: `'take me to curriculum setup'` → `/director/onboarding/curriculum`, `'continue setup'` → `/director/onboarding`, `'go to review'` → `/director/review`, `'go to players'` → `/director/players`, `'go to templates'` → `/director/class-templates`, `'go to curriculum'` → `/director/curriculum`. Panel closes on navigation.
+- `'go back'` — calls `router.back()` within `/director`; honest fallback at root dashboard.
+- Info commands: `'what is this page'`, `'explain this screen'` → shows `ctx.guidance` + activates explain mode. `'what should i do next'` → shows `ctx.nextAction` + activates guide mode.
+- `'explain this question'` on interview page → shows 7-topic overview (step index not accessible from this component); on other pages → shows `ctx.guidance`.
+- Honest fallbacks for `'next question'` and `'confirm answer'` — explicitly tells director to use the on-screen Confirm button. No pretense of wiring.
+- Unrecognized typed commands → honest fallback listing what's supported.
+
+**Suggestion behavior updated:**
+- Suggestions that match commands now execute immediately (no longer just pre-fill the textarea).
+- Suggestions that don't match any command still pre-fill the textarea for manual Send.
+- Template intent suggestions still create a local draft immediately (Sprint 254 behavior preserved).
+
+**No migrations. No database.types.ts changes. No AI/API calls. No DB writes. QuickCaptureDrawer and Create Template mode from Sprint 254 preserved.**
+
+**TypeScript:** clean
+
+---
+
 ## 2026-05-13 — Sprint 254: Donna Template Creation Operating Loop V1
 
 **Why this was needed:**
