@@ -488,7 +488,7 @@ export default async function DirectorCurriculumPage() {
               ))}
             </ol>
             <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-4">
-              <Link href="/director/fitness/templates" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
+              <Link href="/director/class-templates" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
                 Templates <ChevronRight className="w-3 h-3" />
               </Link>
               <Link href="/director/review" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">

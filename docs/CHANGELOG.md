@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-13 — Sprint 257: Core Flow QA + Broken-Link Audit V1
+
+**Audit scope:** All major director routes, CTAs, sidebar nav, onboarding steps, assistant nav commands, and quick-link sections. All static hrefs verified against the actual directory tree.
+
+**Key finding:** The previous analysis that `/director/signals` was a broken link was incorrect — that route exists with a full page.tsx. All links in the director dashboard, AcademyAlertsPanel, AI Suggestions card, Quick Actions, and sidebar nav are valid.
+
+**One genuine wrong-target link found and fixed:**
+- `src/app/director/curriculum/page.tsx` — "How Customization Works" section, step 4 quick-link "Templates" pointed to `/director/fitness/templates`. In context, step 4 says "Populate templates — sessions carry the academy context automatically," which refers to class templates (the ones that connect to curriculum levels and generate lesson plans). Fitness templates do not connect to curriculum. Fixed href to `/director/class-templates`.
+
+**All other routes verified clean:**
+- Sidebar nav (Dashboard, Players, Sessions, Review Queue, Signals, Curriculum, Templates, Settings, Onboarding, Command Center) — all valid
+- Director dashboard command cards, priority queue, pending placement, curriculum coverage, sessions panel, quick actions — all valid
+- Onboarding steps 1–7 hrefs — all exist; steps 8–12 have no hrefs (correctly locked)
+- Class templates page, sessions page, players page, review page, signals page — all valid
+- Academy Assistant NAV_COMMANDS — all 7 approved routes exist
+
+**TypeScript:** Clean (no errors)
+
+**Files modified:** `src/app/director/curriculum/page.tsx`
+
+---
+
 ## 2026-05-13 — Sprint 256: Academy Assistant Reliability Pass V1
 
 **Why this was needed:**
