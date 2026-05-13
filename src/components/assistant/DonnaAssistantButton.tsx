@@ -10,10 +10,12 @@ import { cn } from '@/lib/utils'
 import { QuickCaptureDrawer } from '@/components/capture/QuickCaptureDrawer'
 import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
 import { TemplateDraftPanel } from '@/components/assistant/TemplateDraftPanel'
-import type { TemplateDraft } from '@/components/assistant/templateDraftTypes'
+import type { TemplateDraft, TemplateDraftQuestion } from '@/components/assistant/templateDraftTypes'
 import {
   isTemplateCreationIntent,
   parseTemplateDraft,
+  applyAnswerToField,
+  isDraftReadyForReview,
 } from '@/components/assistant/templateDraftParser'
 
 // ---------------------------------------------------------------------------
@@ -255,10 +257,16 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     ? `Hi ${firstName}, how can I help you today?`
     : 'Welcome. How can I help you today?'
 
-  function speakGreeting() {
+  // Shared speech helper — cancel any active speech, then speak new text.
+  // Must be called from user-interaction event handlers to satisfy browser autoplay rules.
+  // lastSpokenTextRef prevents the same string from being spoken twice in a row.
+  const lastSpokenTextRef = useRef<string | null>(null)
+  function speakAssistantText(text: string) {
     if (typeof window === 'undefined' || !window.speechSynthesis) return
+    if (lastSpokenTextRef.current === text) return
+    lastSpokenTextRef.current = text
     window.speechSynthesis.cancel()
-    const utt = new SpeechSynthesisUtterance(greetingText)
+    const utt = new SpeechSynthesisUtterance(text)
     utt.rate = 1.0
     utt.pitch = 1.0
     window.speechSynthesis.speak(utt)
@@ -277,6 +285,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
   const ctx = resolveContext(pathname)
   const voicePrompts = resolveVoicePrompts(pathname)
+  // Single source of truth for the current missing question — same text shown on screen and spoken aloud.
+  const currentTemplateQuestion: TemplateDraftQuestion | null = templateDraft?.missingQuestions?.[0] ?? null
 
   const closePanel = useCallback(() => {
     setPanelOpen(false)
@@ -285,6 +295,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     setCommandResponse(null)
+    lastSpokenTextRef.current = null
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
     }
@@ -310,6 +321,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     setCommandResponse(null)
+    lastSpokenTextRef.current = null
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -322,24 +334,70 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       setActiveMode('create_template')
       // If the type-instead area already has a template intent, auto-parse it
       if (typedText && isTemplateCreationIntent(typedText)) {
-        setTemplateDraft(parseTemplateDraft(typedText))
+        const draft = parseTemplateDraft(typedText)
+        setTemplateDraft(draft)
         setFromVoiceCapture(false)
+        const firstQ = draft.missingQuestions[0] ?? null
+        if (firstQ) speakAssistantText(firstQ.question)
+        else speakAssistantText('I have enough to draft this. Review it before saving.')
       }
       return
     }
     setActiveMode(prev => (prev === mode ? null : mode))
   }
 
-  // Voice transcript stays local — detect template intent first, then navigation/info commands
+  // Voice transcript — route in priority order:
+  //   1. Answer current missing template question (if draft is active with questions)
+  //   2. Guide to save button (if draft is complete and director says confirm/save)
+  //   3. New template creation intent
+  //   4. Generic navigation / info commands
   function handleVoiceTranscript(text: string) {
     setVoiceTranscript(text)
     setTypeInstead(false)
-    if (isTemplateCreationIntent(text)) {
-      setTemplateDraft(parseTemplateDraft(text))
-      setFromVoiceCapture(true)
-      setActiveMode('create_template')
+
+    // 1. Active draft with missing questions — treat transcript as the answer
+    if (templateDraft && templateDraft.missingQuestions.length > 0) {
+      const question = templateDraft.missingQuestions[0]
+      const updated = applyAnswerToField(templateDraft, question.field, text)
+      setTemplateDraft(updated)
+      const nextQ = updated.missingQuestions[0] ?? null
+      if (nextQ) {
+        speakAssistantText(nextQ.question)
+      } else {
+        speakAssistantText('I have enough to draft this. Review it before saving.')
+      }
       return
     }
+
+    // 2. Draft complete — redirect voice confirm/save to the screen button
+    if (templateDraft && templateDraft.missingQuestions.length === 0) {
+      const lower = text.toLowerCase()
+      if (lower.includes('confirm') || lower.includes('save') || lower.includes('approve')) {
+        setCommandResponse({
+          message: 'Use the Save Template button to approve and save safely.',
+          type: 'honest',
+          label: 'Ready to save',
+        })
+        return
+      }
+    }
+
+    // 3. New template creation intent
+    if (isTemplateCreationIntent(text)) {
+      const draft = parseTemplateDraft(text)
+      setTemplateDraft(draft)
+      setFromVoiceCapture(true)
+      setActiveMode('create_template')
+      const firstQ = draft.missingQuestions[0] ?? null
+      if (firstQ) {
+        speakAssistantText(firstQ.question)
+      } else {
+        speakAssistantText('I have enough to draft this. Review it before saving.')
+      }
+      return
+    }
+
+    // 4. Generic navigation and info commands
     detectAndHandleCommand(text)
   }
 
@@ -347,9 +405,16 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // unrecognized suggestions pre-fill the typed area for manual Send.
   function handleSuggestionClick(prompt: string) {
     if (isTemplateCreationIntent(prompt)) {
-      setTemplateDraft(parseTemplateDraft(prompt))
+      const draft = parseTemplateDraft(prompt)
+      setTemplateDraft(draft)
       setFromVoiceCapture(false)
       setActiveMode('create_template')
+      const firstQ = draft.missingQuestions[0] ?? null
+      if (firstQ) {
+        speakAssistantText(firstQ.question)
+      } else {
+        speakAssistantText('I have enough to draft this. Review it before saving.')
+      }
       return
     }
     const handled = detectAndHandleCommand(prompt)
@@ -362,9 +427,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   function handleParseTemplate() {
     const text = templateCommandInput.trim()
     if (!text) return
-    setTemplateDraft(parseTemplateDraft(text))
+    const draft = parseTemplateDraft(text)
+    setTemplateDraft(draft)
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
+    const firstQ = draft.missingQuestions[0] ?? null
+    if (firstQ) speakAssistantText(firstQ.question)
+    else speakAssistantText('I have enough to draft this. Review it before saving.')
   }
 
   function handleCancelTemplate() {
@@ -544,10 +613,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     const text = typedText.trim()
     if (!text) return
     if (isTemplateCreationIntent(text)) {
-      setTemplateDraft(parseTemplateDraft(text))
+      const draft = parseTemplateDraft(text)
+      setTemplateDraft(draft)
       setFromVoiceCapture(false)
       setActiveMode('create_template')
       setTypeInstead(false)
+      const firstQ = draft.missingQuestions[0] ?? null
+      if (firstQ) speakAssistantText(firstQ.question)
+      else speakAssistantText('I have enough to draft this. Review it before saving.')
       return
     }
     const handled = detectAndHandleCommand(text)
@@ -574,7 +647,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           if (!hasGreetedRef.current) {
             hasGreetedRef.current = true
             setShowGreeting(true)
-            speakGreeting()
+            speakAssistantText(greetingText)
           }
         }}
         aria-label="Ask Academy Assistant"
@@ -984,9 +1057,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                         <button
                           key={i}
                           onClick={() => {
-                            setTemplateDraft(parseTemplateDraft(s))
+                            const draft = parseTemplateDraft(s)
+                            setTemplateDraft(draft)
                             setFromVoiceCapture(false)
                             setTemplateCommandInput('')
+                            const firstQ = draft.missingQuestions[0] ?? null
+                            if (firstQ) speakAssistantText(firstQ.question)
+                            else speakAssistantText('I have enough to draft this. Review it before saving.')
                           }}
                           className="w-full text-left text-[11px] text-text-secondary hover:text-text-primary
                             px-2.5 py-1.5 rounded-lg hover:bg-surface-raised transition-all leading-snug"
@@ -1006,6 +1083,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   onUpdateDraft={d => setTemplateDraft(d)}
                   onCancel={handleCancelTemplate}
                   fromVoice={fromVoiceCapture}
+                  onQuestionAnswered={(nextQ, updatedDraft) => {
+                    if (nextQ) {
+                      speakAssistantText(nextQ.question)
+                    } else if (isDraftReadyForReview(updatedDraft)) {
+                      speakAssistantText('I have enough to draft this. Review it before saving.')
+                    }
+                  }}
                 />
               )}
             </>

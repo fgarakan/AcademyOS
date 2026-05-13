@@ -12,7 +12,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import Link from 'next/link'
-import type { TemplateDraft, TemplateDraftBlockCategory } from './templateDraftTypes'
+import type { TemplateDraft, TemplateDraftBlockCategory, TemplateDraftQuestion } from './templateDraftTypes'
 import {
   computeMissingQuestions,
   allocateBlockDurations,
@@ -43,6 +43,7 @@ interface TemplateDraftPanelProps {
   onUpdateDraft: (draft: TemplateDraft) => void
   onCancel: () => void
   fromVoice?: boolean
+  onQuestionAnswered?: (nextQuestion: TemplateDraftQuestion | null, updatedDraft: TemplateDraft) => void
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ export function TemplateDraftPanel({
   onUpdateDraft,
   onCancel,
   fromVoice,
+  onQuestionAnswered,
 }: TemplateDraftPanelProps) {
   const [answerInput, setAnswerInput] = useState('')
   const [editingName, setEditingName] = useState(false)
@@ -78,6 +80,8 @@ export function TemplateDraftPanel({
     const updated = applyAnswerToField(draft, currentQuestion.field, answerInput.trim())
     onUpdateDraft(updated)
     setAnswerInput('')
+    const nextQ = updated.missingQuestions[0] ?? null
+    onQuestionAnswered?.(nextQ, updated)
   }
 
   function handleUpdateBlockDuration(blockId: string, value: string) {
@@ -247,6 +251,9 @@ export function TemplateDraftPanel({
             </p>
             <p className="text-[12px] text-text-primary font-medium leading-snug">
               {currentQuestion.question}
+            </p>
+            <p className="text-[10px] text-text-muted mt-1 leading-snug">
+              Answer by voice or type below. I&apos;ll ask one question at a time.
             </p>
           </div>
           <div className="flex gap-2">

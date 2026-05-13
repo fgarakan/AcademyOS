@@ -2,6 +2,51 @@
 
 ---
 
+## 2026-05-13 — Sprint 262: Donna Guided Completion Engine V1
+
+**Why this sprint:**
+Sprint 261 audit identified that Academy Assistant greeted the director but went silent after that. Voice transcripts were discarded when a template draft was active, because `handleVoiceTranscript` had no branch to route answers to the current missing question. Typed answers in `TemplateDraftPanel` updated the draft but never triggered speech. The result: the guided completion loop existed on screen but was disconnected from voice entirely.
+
+**Audit root cause (Sprint 261):**
+- `speakGreeting()` was the only `speechSynthesis.speak()` call — follow-up questions were never spoken.
+- `handleVoiceTranscript` did not check whether a draft with missing questions was active before routing to generic command detection.
+- `TemplateDraftPanel.handleAnswerSubmit` had no callback to notify the parent that a question was answered, so the parent could not speak the next question.
+
+**What was built:**
+
+- `speakAssistantText(text)` — shared speech helper replacing `speakGreeting()`. Single function for all Academy Assistant speech: greeting, missing questions, review-ready summary. Uses `lastSpokenTextRef` to prevent the same string from being spoken twice in a row. Calls `speechSynthesis.cancel()` before speaking. Must only be called from event handlers to satisfy browser autoplay rules.
+
+- `currentTemplateQuestion` — derived at component level as `templateDraft?.missingQuestions?.[0] ?? null`. Single source of truth: the same question object drives both the visible "Missing info" card in `TemplateDraftPanel` and the spoken question text.
+
+- Voice transcript routing in `handleVoiceTranscript` — Priority order:
+  1. If draft has missing questions: treat transcript as answer to current question, apply it, speak next question or review-ready summary.
+  2. If draft is complete and user says confirm/save/approve: show "Use the Save Template button" guidance.
+  3. New template creation intent: parse, create draft, speak first question.
+  4. Generic navigation/info commands (existing behavior unchanged).
+
+- Typed answer triggers speech in `TemplateDraftPanel` — new optional `onQuestionAnswered(nextQuestion, updatedDraft)` callback prop. Called in `handleAnswerSubmit` after updating the draft. Parent uses it to speak the next missing question or the review-ready summary.
+
+- Review-ready spoken summary — when all missing questions are resolved (by voice or typed answer), Academy Assistant says: "I have enough to draft this. Review it before saving."
+
+- First question spoken when draft starts — all paths that create a new `templateDraft` now call `speakAssistantText(firstQ.question)`: typed command submit, voice transcript template intent, suggestion chip click, Start Draft button, Quick Start buttons, and the Create Template mode auto-parse.
+
+- Helper subtext in missing question card — "Answer by voice or type below. I'll ask one question at a time." Added as subtext under the question in `TemplateDraftPanel`.
+
+- `lastSpokenTextRef` cleared on panel close and route change to prevent stale state across sessions.
+
+**No Realtime / OpenAI used.** Browser `speechSynthesis` only.
+**No save behavior changed.** Save still requires explicit "Save Template" button click.
+**No migrations.** `database.types.ts` untouched.
+**No new routes or DB tables.**
+
+**Files changed:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — `speakAssistantText`, `lastSpokenTextRef`, `currentTemplateQuestion`, voice transcript routing, first-question speech on all draft-creation paths, `onQuestionAnswered` callback passed to `TemplateDraftPanel`
+- `src/components/assistant/TemplateDraftPanel.tsx` — `onQuestionAnswered` prop, called in `handleAnswerSubmit`, helper subtext in missing question card
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with no errors.
+
+---
+
 ## 2026-05-13 — Mega Sprint 260: 10/10 Director Usability Polish + Flow Continuity V1
 
 **Why this sprint:**
