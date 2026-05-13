@@ -16,7 +16,21 @@ import {
   parseTemplateDraft,
   applyAnswerToField,
   isDraftReadyForReview,
+  extractLevel,
 } from '@/components/assistant/templateDraftParser'
+
+// ---------------------------------------------------------------------------
+// Donna guided task infrastructure — local types only, no DB, no API.
+// Proves the guided completion loop with class templates first.
+// Future kinds: fitness_template | session | curriculum_change | player_note | parent_summary | attendance_exception
+// ---------------------------------------------------------------------------
+
+type GuidedTaskKind = 'class_template'
+
+type GuidedTaskState = {
+  kind: GuidedTaskKind
+  phase: 'collecting_context' | 'ready_for_review' | 'saved'
+}
 
 // ---------------------------------------------------------------------------
 // Route context map — static guidance per director route
@@ -346,6 +360,17 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setActiveMode(prev => (prev === mode ? null : mode))
   }
 
+  // Returns true when the voice answer actually populated the field being asked.
+  // level: must match one of the 15 official level names via extractLevel — rejects "um", "maybe", freetext.
+  // durationMinutes: must be a positive number.
+  // blockDurations: must produce at least one recognized block.
+  function wasFieldResolved(field: string, updated: TemplateDraft): boolean {
+    if (field === 'level') return updated.level !== null && extractLevel(updated.level) !== null
+    if (field === 'durationMinutes') return updated.durationMinutes !== null && updated.durationMinutes > 0
+    if (field === 'blockDurations') return updated.blocks.length > 0
+    return true
+  }
+
   // Voice transcript — route in priority order:
   //   1. Answer current missing template question (if draft is active with questions)
   //   2. Guide to save button (if draft is complete and director says confirm/save)
@@ -359,6 +384,18 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     if (templateDraft && templateDraft.missingQuestions.length > 0) {
       const question = templateDraft.missingQuestions[0]
       const updated = applyAnswerToField(templateDraft, question.field, text)
+
+      // If the answer didn't resolve the field, keep the question and give feedback
+      if (!wasFieldResolved(question.field, updated)) {
+        setCommandResponse({
+          message: "I captured that, but I need a clearer answer for this field.",
+          type: 'honest',
+          label: 'Try again',
+        })
+        lastSpokenTextRef.current = null // allow re-speaking the same question next attempt
+        return
+      }
+
       setTemplateDraft(updated)
       const nextQ = updated.missingQuestions[0] ?? null
       if (nextQ) {

@@ -2,6 +2,42 @@
 
 ---
 
+## 2026-05-13 — Sprint 263: Donna Guided Completion Infrastructure V1
+
+**Why this sprint:**
+Sprint 262 wired up the core guided-completion loop (speech helper, voice transcript routing, `onQuestionAnswered` callback). This sprint adds the three remaining pieces from the infrastructure brief: a visible "Guided setup" status bar so the director can see progress at a glance; unclear-answer feedback so a voice reply that fails to resolve a field is caught rather than silently discarded; and local `GuidedTaskKind`/`GuidedTaskState` types that establish the extensibility contract for Donna working across the full Academy OS ecosystem in future sprints.
+
+**Audit root cause:**
+- `handleVoiceTranscript` applied the voice answer and always advanced, even when `applyAnswerToField` returned a draft with the same null field — e.g. saying "um" when asked for level would set `draft.level = "um"` and advance the question.
+- `TemplateDraftPanel` showed a missing question card but no task-level progress indicator — director had no compact view of how many fields were answered vs. remaining.
+- No `GuidedTaskKind`/`GuidedTaskState` types existed to establish the pattern for future task kinds.
+
+**What was built:**
+
+- `GuidedTaskKind = 'class_template'` and `GuidedTaskState` — local types scaffolding the future Donna task ecosystem. Comment documents that future kinds will include fitness templates, sessions, curriculum changes, player notes, parent summaries, and attendance exceptions. No DB, no API — types only.
+
+- `wasFieldResolved(field, updatedDraft)` helper in `DonnaAssistantButton` — validates each field after `applyAnswerToField` runs. Level: uses `extractLevel()` from the parser to confirm the stored value is one of the 15 official level names (Red 1–3, Orange 1–3, Green 1–3, Yellow 1–3, High Performance 1–3); rejects raw freetext like "um", "maybe", or any unrecognized string that `applyAnswerToField` would otherwise store. Duration: must be a positive number. Blocks: must produce at least one recognized block. If the answer did not resolve the field, shows "I captured that, but I need a clearer answer for this field." and resets `lastSpokenTextRef` so the same question can be re-spoken on the next voice attempt. Draft is not updated on a failed answer.
+
+- "Guided setup" compact status bar at the top of `TemplateDraftPanel` — shows task title "Create Class Template", answered count ("2 of 3"), and a pill ("1 left" / "Ready") that turns green when all 3 fields are collected. Total is fixed at 3 (the three fields from `computeMissingQuestions`: level, durationMinutes, blocks). Compact, does not redesign the panel.
+
+**What was intentionally not changed:**
+- Save behavior unchanged — `saveAssistantTemplateDraftAction` untouched
+- `VoiceInputButton` untouched
+- `templateDraftParser.ts` untouched
+- `templateDraftTypes.ts` untouched
+- No OpenAI / Realtime / external APIs
+- No migrations, no DB tables, `database.types.ts` untouched
+- All existing Academy Assistant modes (guide, find, capture, explain) unchanged
+- `QuickCaptureDrawer` unchanged
+
+**Files changed:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — `GuidedTaskKind`/`GuidedTaskState` types, `wasFieldResolved()` helper, unclear-answer feedback in `handleVoiceTranscript`
+- `src/components/assistant/TemplateDraftPanel.tsx` — "Guided setup" status bar (task title + answered/remaining progress)
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passes with no errors.
+
+---
+
 ## 2026-05-13 — Sprint 262: Donna Guided Completion Engine V1
 
 **Why this sprint:**
