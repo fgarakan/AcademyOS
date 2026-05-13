@@ -22,11 +22,23 @@ import { resolvePageContext } from '@/components/assistant/donnaPageContextRegis
 import { deriveContextRequest } from '@/components/assistant/donnaContextTypes'
 import type { DonnaContextSummary } from '@/components/assistant/donnaContextTypes'
 import { fetchDonnaContext } from '@/app/director/_actions/donnaContextActions'
+// Sprint 266 — Task Runtime + Draft Builder
+import { DONNA_TASK_CONTRACTS } from '@/components/assistant/donnaTaskContracts'
+import type { DonnaTaskId } from '@/components/assistant/donnaTaskContracts'
+import { detectTaskIntent } from '@/components/assistant/donnaTaskRuntime'
+import {
+  getNextMissingQuestion,
+  isTaskDraftComplete,
+} from '@/components/assistant/donnaMissingQuestionEngine'
+import type { GenericTaskDraft } from '@/components/assistant/donnaGenericDraftTypes'
+import { createEmptyGenericDraft, applyAnswerToGenericDraft } from '@/components/assistant/donnaGenericDraftTypes'
+import { GenericDraftPanel } from '@/components/assistant/GenericDraftPanel'
+import { getAvailableTasksForPage } from '@/components/assistant/donnaPageTaskRouter'
 
 // ---------------------------------------------------------------------------
 // Donna guided task infrastructure — local types only, no DB, no API.
 // Proves the guided completion loop with class templates first.
-// Future kinds: fitness_template | session | curriculum_change | player_note | parent_summary | attendance_exception
+// Sprint 266 expands to generic contract-only tasks via GenericDraftPanel.
 // ---------------------------------------------------------------------------
 
 type GuidedTaskKind = 'class_template'
@@ -62,7 +74,7 @@ const QUICK_LINKS = [
 // Mode config
 // ---------------------------------------------------------------------------
 
-type AssistantMode = 'guide' | 'explain' | 'find' | 'capture' | 'create_template'
+type AssistantMode = 'guide' | 'explain' | 'find' | 'capture' | 'create_template' | 'guided_task'
 
 interface ModeConfig {
   mode: AssistantMode
@@ -155,28 +167,36 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [typeInstead, setTypeInstead] = useState(false)
   const [typedText, setTypedText] = useState('')
 
-  // Context retrieval state — read-only live data summary, no DB writes
+  // Context retrieval state — read-only live data summary, no DB writes (Sprint 265)
   const [contextSummary, setContextSummary] = useState<DonnaContextSummary | null>(null)
   const [isLoadingContext, setIsLoadingContext] = useState(false)
 
-  // Template creation state — all local until director explicitly approves and saves
+  // Class-template creation state — wired, saves via saveAssistantTemplateDraftAction (Sprints 262/263)
   const [templateDraft, setTemplateDraft] = useState<TemplateDraft | null>(null)
   const [fromVoiceCapture, setFromVoiceCapture] = useState(false)
   const [templateCommandInput, setTemplateCommandInput] = useState('')
   const [commandResponse, setCommandResponse] = useState<CommandResponse | null>(null)
 
+  // Generic task draft state — contract-only, local only, no DB writes (Sprint 266)
+  const [genericDraft, setGenericDraft] = useState<GenericTaskDraft | null>(null)
+
   // Page context from registry — resolves to the richest matching context for this route.
-  // Includes screenName, purpose, assistantIntro, safeDraftActions, approvalRequiredFor,
-  // and suggestedPrompts for the current director page.
   const ctx = resolvePageContext(pathname)
   const voicePrompts = ctx.suggestedPrompts
-  // Single source of truth for the current missing question — same text shown on screen and spoken aloud.
+  // Single source of truth for the current missing question — same text shown and spoken.
   const currentTemplateQuestion: TemplateDraftQuestion | null = templateDraft?.missingQuestions?.[0] ?? null
+
+  // Contextual task shortcuts for the current page — computed for the shortcuts section
+  const pageTaskShortcuts =
+    activeMode === null && !templateDraft && !genericDraft
+      ? getAvailableTasksForPage(pathname).slice(0, 4)
+      : []
 
   const closePanel = useCallback(() => {
     setPanelOpen(false)
     setActiveMode(null)
     setTemplateDraft(null)
+    setGenericDraft(null)
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     setCommandResponse(null)
@@ -205,6 +225,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setTypeInstead(false)
     setTypedText('')
     setTemplateDraft(null)
+    setGenericDraft(null)
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     setCommandResponse(null)
@@ -220,6 +241,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return
     }
     if (mode === 'create_template') {
+      setGenericDraft(null) // clear any active generic draft when switching to template mode
       setActiveMode('create_template')
       // If the type-instead area already has a template intent, auto-parse it
       if (typedText && isTemplateCreationIntent(typedText)) {
@@ -232,6 +254,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       }
       return
     }
+    setGenericDraft(null) // clear any active generic draft when switching modes
     setActiveMode(prev => (prev === mode ? null : mode))
   }
 
@@ -246,16 +269,21 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     return true
   }
 
-  // Voice transcript — route in priority order:
-  //   1. Answer current missing template question (if draft is active with questions)
-  //   2. Guide to save button (if draft is complete and director says confirm/save)
-  //   3. New template creation intent
-  //   4. Generic navigation / info commands
+  // ── Voice transcript routing — strict priority order ────────────────────────
+  //
+  // 1. Active class-template question  → answer it (requires level validation)
+  // 2. Active generic task question    → answer it (accepts any non-empty text)
+  // 3a. Class-template draft complete  → guard confirm/save to screen button
+  // 3b. Generic draft complete         → honest "save not yet available" guardrail
+  // 4. Class-template creation intent  → parse → TemplateDraftPanel
+  // 5. Generic task intent             → detect → GenericDraftPanel (not create_class_template)
+  // 6. Context query (Sprint 265)      → fetchDonnaContext → summary card
+  // 7. Navigation / help commands      → detectAndHandleCommand
   function handleVoiceTranscript(text: string) {
     setVoiceTranscript(text)
     setTypeInstead(false)
 
-    // 1. Active draft with missing questions — treat transcript as the answer
+    // 1. Active class-template draft with missing questions — treat as the answer
     if (templateDraft && templateDraft.missingQuestions.length > 0) {
       const question = templateDraft.missingQuestions[0]
       const updated = applyAnswerToField(templateDraft, question.field, text)
@@ -281,9 +309,27 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return
     }
 
-    // 2. Draft complete — redirect voice confirm/save to the screen button
+    // 2. Active generic task draft with missing questions — treat as the answer
+    if (genericDraft && !isTaskDraftComplete(genericDraft.taskId, genericDraft.collectedFields)) {
+      const currentQ = getNextMissingQuestion(genericDraft.taskId, genericDraft.collectedFields)
+      if (currentQ) {
+        const updated = applyAnswerToGenericDraft(genericDraft, currentQ.fieldId, text)
+        setGenericDraft(updated)
+        const nextQ = getNextMissingQuestion(updated.taskId, updated.collectedFields)
+        if (nextQ) {
+          speakAssistantText(nextQ.question)
+        } else {
+          const c = DONNA_TASK_CONTRACTS[updated.taskId]
+          speakAssistantText(`${c?.label ?? 'Draft'} is ready to review.`)
+        }
+        return
+      }
+    }
+
+    const lower = text.toLowerCase()
+
+    // 3a. Class-template draft complete — redirect voice confirm/save to screen button
     if (templateDraft && templateDraft.missingQuestions.length === 0) {
-      const lower = text.toLowerCase()
       if (lower.includes('confirm') || lower.includes('save') || lower.includes('approve')) {
         setCommandResponse({
           message: 'Use the Save Template button to approve and save safely.',
@@ -294,7 +340,19 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       }
     }
 
-    // 3. New template creation intent
+    // 3b. Generic draft complete — honest save not yet available notice
+    if (genericDraft && isTaskDraftComplete(genericDraft.taskId, genericDraft.collectedFields)) {
+      if (lower.includes('confirm') || lower.includes('save') || lower.includes('approve')) {
+        setCommandResponse({
+          message: 'Saving this draft is not yet available. Your answers are captured here for your review.',
+          type: 'honest',
+          label: 'Save not available yet',
+        })
+        return
+      }
+    }
+
+    // 4. Class-template creation intent — always routes to wired TemplateDraftPanel
     if (isTemplateCreationIntent(text)) {
       const draft = parseTemplateDraft(text)
       setTemplateDraft(draft)
@@ -309,18 +367,26 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return
     }
 
-    // 4. Context query phrases — route to read-only live data summary
-    if (isContextQueryPhrase(text.toLowerCase())) {
+    // 5. Generic task intent — only when no draft is currently active
+    if (!templateDraft && !genericDraft) {
+      const { taskId } = detectTaskIntent(text)
+      if (taskId && taskId !== 'create_class_template') {
+        handleStartGenericTask(taskId, true)
+        return
+      }
+    }
+
+    // 6. Context query phrases — route to read-only live data summary (Sprint 265)
+    if (isContextQueryPhrase(lower)) {
       void handleContextSummary()
       return
     }
 
-    // 5. Generic navigation and info commands
+    // 7. Generic navigation and info commands
     detectAndHandleCommand(text)
   }
 
-  // Clicking a suggestion executes template intent or navigation/info commands;
-  // unrecognized suggestions pre-fill the typed area for manual Send.
+  // Clicking a suggestion — same routing priority as voice/typed
   function handleSuggestionClick(prompt: string) {
     if (isTemplateCreationIntent(prompt)) {
       const draft = parseTemplateDraft(prompt)
@@ -334,6 +400,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         speakAssistantText('I have enough to draft this. Review it before saving.')
       }
       return
+    }
+    // Generic task intent from suggestion — only when no draft is active
+    if (!templateDraft && !genericDraft) {
+      const { taskId } = detectTaskIntent(prompt)
+      if (taskId && taskId !== 'create_class_template') {
+        handleStartGenericTask(taskId, false)
+        return
+      }
     }
     const handled = detectAndHandleCommand(prompt)
     if (!handled) {
@@ -361,8 +435,26 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setActiveMode(null)
   }
 
+  // Start a guided task for any contract-only task (never create_class_template)
+  function handleStartGenericTask(taskId: DonnaTaskId, fromVoice = false) {
+    if (taskId === 'create_class_template') return // always uses TemplateDraftPanel
+    const draft = createEmptyGenericDraft(taskId)
+    setGenericDraft(draft)
+    setActiveMode('guided_task')
+    setFromVoiceCapture(fromVoice)
+    setCommandResponse(null)
+    const contract = DONNA_TASK_CONTRACTS[taskId]
+    const firstQ = contract?.questionSequence[0] ?? null
+    if (firstQ) speakAssistantText(firstQ.question)
+  }
+
+  function handleCancelGenericTask() {
+    setGenericDraft(null)
+    setActiveMode(null)
+    setFromVoiceCapture(false)
+  }
+
   // Returns true if the input phrase is a read-only context summary request.
-  // These are routed to handleContextSummary() rather than detectAndHandleCommand().
   function isContextQueryPhrase(lower: string): boolean {
     return (
       lower.includes('summarize this page') ||
@@ -561,6 +653,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   function handleCommandSubmit() {
     const text = typedText.trim()
     if (!text) return
+
+    // Class-template creation intent — always routes to wired TemplateDraftPanel
     if (isTemplateCreationIntent(text)) {
       const draft = parseTemplateDraft(text)
       setTemplateDraft(draft)
@@ -572,12 +666,26 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       else speakAssistantText('I have enough to draft this. Review it before saving.')
       return
     }
+
+    // Generic task intent — only when no draft is currently active
+    if (!templateDraft && !genericDraft) {
+      const { taskId } = detectTaskIntent(text)
+      if (taskId && taskId !== 'create_class_template') {
+        handleStartGenericTask(taskId, false)
+        setTypeInstead(false)
+        setTypedText('')
+        return
+      }
+    }
+
+    // Context query
     if (isContextQueryPhrase(text.toLowerCase())) {
       void handleContextSummary()
       setTypeInstead(false)
       setTypedText('')
       return
     }
+
     const handled = detectAndHandleCommand(text)
     if (!handled) {
       setCommandResponse({
@@ -747,9 +855,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   <p className="text-[12px] text-text-secondary leading-relaxed">
                     {voiceTranscript}
                   </p>
-                  {activeMode !== 'create_template' && (
+                  {activeMode !== 'create_template' && activeMode !== 'guided_task' && (
                     <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
-                      To save, use "Capture a note" below.
+                      To save, use &quot;Capture a note&quot; below.
                     </p>
                   )}
                   <button
@@ -871,7 +979,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* ── Context summary result card — read-only live data, no writes ── */}
+          {/* ── Context summary result card — read-only live data, no writes (Sprint 265) ── */}
           {contextSummary && (
             <div
               className="rounded-xl px-3.5 py-3 space-y-2.5"
@@ -956,8 +1064,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* ── Current context card — uses page context registry ── */}
-          {activeMode !== 'create_template' && (
+          {/* ── Current context card — hidden in template and guided-task modes ── */}
+          {activeMode !== 'create_template' && activeMode !== 'guided_task' && (
             <div
               className="rounded-xl px-3.5 py-3 space-y-2"
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
@@ -1050,7 +1158,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* ── Template creation mode ── */}
+          {/* ── Template creation mode (Sprints 262/263) — wired, saves to DB ── */}
           {activeMode === 'create_template' && (
             <>
               {/* "Nothing saves until you approve" notice */}
@@ -1150,8 +1258,40 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </>
           )}
 
-          {/* ── Ask about this page — read-only live data summary ── */}
-          {activeMode !== 'create_template' && (
+          {/* ── Guided task mode — contract-only tasks, local draft only (Sprint 266) ── */}
+          {activeMode === 'guided_task' && genericDraft && (
+            <>
+              <div
+                className="rounded-lg px-3 py-2.5"
+                style={{
+                  background: 'rgba(139,92,246,0.05)',
+                  border: '1px solid rgba(139,92,246,0.15)',
+                }}
+              >
+                <p className="text-[11px] text-text-secondary leading-snug">
+                  Academy Assistant will collect the information — nothing is saved until a save
+                  action is available and you explicitly approve.
+                </p>
+              </div>
+              <GenericDraftPanel
+                draft={genericDraft}
+                onUpdateDraft={d => setGenericDraft(d)}
+                onCancel={handleCancelGenericTask}
+                fromVoice={fromVoiceCapture}
+                onQuestionAnswered={(nextQ, updatedDraft) => {
+                  if (nextQ) {
+                    speakAssistantText(nextQ.question)
+                  } else {
+                    const c = DONNA_TASK_CONTRACTS[updatedDraft.taskId]
+                    speakAssistantText(`${c?.label ?? 'Draft'} is ready to review.`)
+                  }
+                }}
+              />
+            </>
+          )}
+
+          {/* ── Ask about this page — hidden in template and guided-task modes (Sprint 265) ── */}
+          {activeMode !== 'create_template' && activeMode !== 'guided_task' && (
             <button
               onClick={() => void handleContextSummary()}
               disabled={isLoadingContext}
@@ -1168,7 +1308,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                     {isLoadingContext ? 'Reading academy data…' : 'Ask about this page'}
                   </p>
                   <p className="text-[11px] text-text-muted leading-snug mt-0.5">
-                    Summarize what's happening right now, based on live data.
+                    Summarize what&apos;s happening right now, based on live data.
                   </p>
                 </div>
               </div>
@@ -1215,6 +1355,35 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               </button>
             ))}
           </div>
+
+          {/* ── Quick actions for this page — contextual task shortcuts (Sprint 266) ── */}
+          {pageTaskShortcuts.length > 0 && (
+            <div
+              className="rounded-xl px-3.5 py-3 space-y-1.5"
+              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+            >
+              <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
+                Quick actions for this page
+              </p>
+              <div className="space-y-0.5">
+                {pageTaskShortcuts.map(taskId => {
+                  const contract = DONNA_TASK_CONTRACTS[taskId]
+                  if (!contract) return null
+                  return (
+                    <button
+                      key={taskId}
+                      onClick={() => handleStartGenericTask(taskId, false)}
+                      className="w-full text-left text-[11px] text-text-secondary hover:text-text-primary
+                        px-2.5 py-1.5 rounded-lg hover:bg-surface-raised transition-all leading-snug"
+                    >
+                      {contract.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* Footer — capability summary */}
@@ -1232,6 +1401,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               'Take you to approved Academy OS pages',
               'Capture notes',
               'Draft class templates for review',
+              'Collect info for sessions, notes, groups, and more',
               'Save only after your explicit approval',
             ].map(item => (
               <li key={item} className="flex items-start gap-1.5 text-[11px] text-text-muted">

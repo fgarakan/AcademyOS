@@ -2,6 +2,80 @@
 
 ---
 
+## 2026-05-13 — Mega Sprint 266: Donna Task Runtime + Draft Builder V1
+
+**Why this sprint:**
+Sprint 265 gave the director a read-only context view of any page. Sprint 264 defined contracts for 13 task types. This sprint makes those contracts executable: a local task intent detector, a generic question engine, and a guided draft panel that collects information for any contract-only task — no DB writes, no OpenAI, no Realtime. Only `create_class_template` has a wired save path; all other tasks produce a held local draft with an honest "save not yet available" notice.
+
+**Task Intent Detection Runtime added (`src/components/assistant/donnaTaskRuntime.ts`, created — 266A):**
+- `detectTaskIntent(text)` — maps voice/typed input to a `DonnaTaskId` via keyword matching
+- Returns `taskId | null`, `confidence ('low'|'medium'|'high')`, and `matchedPhrases`
+- Covers 12 contract-only tasks; `create_class_template` is deliberately excluded (still routed through `isTemplateCreationIntent` + `TemplateDraftPanel`)
+- No AI, no API — pure local string matching with longest-match / count-based confidence scoring
+
+**Missing Question Engine added (`src/components/assistant/donnaMissingQuestionEngine.ts`, created — 266B):**
+- `getNextMissingQuestion(taskId, collectedFields)` — reads `DONNA_TASK_CONTRACTS[taskId].questionSequence`, returns next unanswered question
+- `getMissingRequiredFieldIds(taskId, collectedFields)` — returns fieldIds of still-missing required fields
+- `isTaskDraftComplete(taskId, collectedFields)` — true when all required fields are satisfied
+- `countAnsweredRequired(taskId, collectedFields)` — answered count for progress display
+- Works for any `DonnaTaskId`; no AI, no API
+
+**Generic Draft State types added (`src/components/assistant/donnaGenericDraftTypes.ts`, created — 266C):**
+- `GenericTaskDraft` type: `taskId`, `collectedFields: Record<string, string>`, `status`, `startedAt`
+- `createEmptyGenericDraft(taskId)` — creates blank draft for any task
+- `applyAnswerToGenericDraft(draft, fieldId, value)` — immutable answer application
+
+**Generic Draft Panel component added (`src/components/assistant/GenericDraftPanel.tsx`, created — 266C+E):**
+- Guided completion UI for any contract-only task — question loop, collected-fields summary, field-edit modification loop
+- Guided setup status bar: "X of Y" answered, "Ready" / "N left" pill
+- Collected fields: shown with edit (pencil) buttons; edit inline with Save/Cancel
+- Complete state: `CheckCircle2` + "Draft is ready" card + honest **"Save not yet available"** orange notice (no save button for contract-only tasks)
+- `onQuestionAnswered` callback → parent speaks next question via TTS
+- Never used for `create_class_template` — that always routes to `TemplateDraftPanel`
+
+**Cross-Page Action Controller added (`src/components/assistant/donnaPageTaskRouter.ts`, created — 266D):**
+- `getAvailableTasksForPage(pathname)` — longest-prefix matching, returns `DonnaTaskId[]` for current page
+- `/director/players` → summarize_player_progress, capture_coach_note, draft_parent_update, draft_player_note, review_level_readiness, assign_player_to_group
+- `/director/sessions` → create_session, handle_attendance_exception, recommend_template_for_group
+- `/director/class-templates` → create_fitness_template, recommend_template_for_group
+- `/director/curriculum` → adjust_curriculum, review_level_readiness
+- `/director/review` → review_level_readiness, draft_parent_update, capture_coach_note
+- `create_class_template` excluded from all routes — has its own Create Template mode button
+
+**Assistant UI upgraded (`src/components/assistant/DonnaAssistantButton.tsx`, modified):**
+- `AssistantMode` union extended: added `'guided_task'`
+- `genericDraft: GenericTaskDraft | null` state added
+- `handleStartGenericTask(taskId, fromVoice?)` — creates empty generic draft, sets `guided_task` mode, speaks first question
+- `handleCancelGenericTask()` — clears draft and mode
+- `closePanel()` and route-change effect both clear `genericDraft`
+- `handleModeClick()` clears `genericDraft` when switching modes
+- Voice routing extended to 7 priority levels (per guardrail spec):
+  1. Active class-template question (existing — with level validation via `wasFieldResolved`)
+  2. Active generic task question (new — any non-empty answer accepted)
+  3a. Class-template draft complete confirm/save guardrail (existing)
+  3b. Generic draft complete confirm/save guardrail (new — honest "save not yet available")
+  4. Class-template creation intent (existing — routes to `TemplateDraftPanel`)
+  5. Generic task intent (new — `detectTaskIntent`, only when no draft active, never `create_class_template`)
+  6. Context query phrases (existing — Sprint 265)
+  7. Navigation / help commands (existing)
+- `handleCommandSubmit()` and `handleSuggestionClick()` extended with same priority ordering
+- `GenericDraftPanel` rendered when `activeMode === 'guided_task' && genericDraft`
+- Current context card and "Ask about this page" button hidden in `guided_task` mode (same as `create_template`)
+- "Quick actions for this page" section added below mode buttons: shows up to 4 contextual `DonnaTaskId` shortcuts from `getAvailableTasksForPage`, hidden when any draft is active
+- Footer capability list updated: "Collect info for sessions, notes, groups, and more" added
+- All Sprint 262/263 class-template flow preserved: `TemplateDraftPanel`, `wasFieldResolved`, `speakAssistantText`, `fromVoiceCapture`, `handleCancelTemplate`, quick-starts
+- All Sprint 265 context retrieval preserved: `fetchDonnaContext`, `handleContextSummary`, context summary card, "Ask about this page" button, `isContextQueryPhrase`
+- `QuickCaptureDrawer`, spoken greeting, `isContextQueryPhrase`, all navigation commands — unchanged
+
+**Routing guardrails confirmed:**
+- `create_class_template` is never routed through `GenericDraftPanel` — excluded from `donnaTaskRuntime.ts` keyword map, excluded from `donnaPageTaskRouter.ts`, and guarded in `handleStartGenericTask` with an early return
+- All 12 contract-only tasks: local draft only, no server action, no DB write, no parent/player communication, no curriculum changes, no player level movement
+- No migrations, no `database.types.ts` changes, no OpenAI/API, no Realtime
+
+**TypeScript:** Clean — 0 errors
+
+---
+
 ## 2026-05-13 — Mega Sprint 265: Donna Context + Retrieval Intelligence V1
 
 **Why this sprint:**
