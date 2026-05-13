@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
-import { Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight } from 'lucide-react'
+import { Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Mic } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { QuickCaptureDrawer } from '@/components/capture/QuickCaptureDrawer'
+import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
 
 // ---------------------------------------------------------------------------
 // Route context map — static guidance per director route
@@ -75,9 +76,63 @@ const ROUTE_CONTEXT: Record<string, RouteContext> = {
 const FALLBACK_CONTEXT: RouteContext = {
   screen: 'Academy OS',
   guidance:
-    'I can help explain this page, point you to the next step, or capture a note.',
+    'Use this assistant to guide setup, find pages, or capture a note.',
   nextAction: 'Ask what to do next.',
 }
+
+// ---------------------------------------------------------------------------
+// Route-aware voice prompt suggestions
+// ---------------------------------------------------------------------------
+
+const VOICE_PROMPTS: Record<string, string[]> = {
+  '/director/onboarding/interview': [
+    'How should I answer this question?',
+    'What happens after setup?',
+    'Explain the current question.',
+  ],
+  '/director/onboarding/curriculum': [
+    'What should I review first?',
+    'Explain the curriculum spine.',
+    'What happens when I approve this?',
+  ],
+  '/director/onboarding': [
+    'What should I do next?',
+    'Explain this onboarding step.',
+    'What does curriculum setup unlock?',
+  ],
+  '/director/review': [
+    'What needs approval?',
+    'Explain this review item.',
+    'Where should I start?',
+  ],
+  '/director': [
+    'Brief me on what needs attention.',
+    'What should I check first?',
+    'Show me setup progress.',
+  ],
+}
+
+const FALLBACK_PROMPTS = ['What should I do next?', 'Show me what needs attention.']
+
+function resolveContext(pathname: string): RouteContext {
+  if (ROUTE_CONTEXT[pathname]) return ROUTE_CONTEXT[pathname]
+  const match = Object.keys(ROUTE_CONTEXT)
+    .filter(k => pathname.startsWith(k))
+    .sort((a, b) => b.length - a.length)[0]
+  return match ? ROUTE_CONTEXT[match] : FALLBACK_CONTEXT
+}
+
+function resolveVoicePrompts(pathname: string): string[] {
+  if (VOICE_PROMPTS[pathname]) return VOICE_PROMPTS[pathname]
+  const match = Object.keys(VOICE_PROMPTS)
+    .filter(k => pathname.startsWith(k))
+    .sort((a, b) => b.length - a.length)[0]
+  return match ? VOICE_PROMPTS[match] : FALLBACK_PROMPTS
+}
+
+// ---------------------------------------------------------------------------
+// Quick links
+// ---------------------------------------------------------------------------
 
 const QUICK_LINKS = [
   { label: 'Players',      href: '/director/players' },
@@ -87,17 +142,8 @@ const QUICK_LINKS = [
   { label: 'Onboarding',   href: '/director/onboarding' },
 ]
 
-function resolveContext(pathname: string): RouteContext {
-  if (ROUTE_CONTEXT[pathname]) return ROUTE_CONTEXT[pathname]
-  // Longest-prefix match so /director/onboarding/interview beats /director/onboarding
-  const match = Object.keys(ROUTE_CONTEXT)
-    .filter(k => pathname.startsWith(k))
-    .sort((a, b) => b.length - a.length)[0]
-  return match ? ROUTE_CONTEXT[match] : FALLBACK_CONTEXT
-}
-
 // ---------------------------------------------------------------------------
-// Assistant modes
+// Mode config — voice is the primary card, not a mode button
 // ---------------------------------------------------------------------------
 
 type AssistantMode = 'guide' | 'explain' | 'find' | 'capture'
@@ -117,12 +163,6 @@ const MODES: ModeConfig[] = [
     Icon: Compass,
   },
   {
-    mode: 'explain',
-    label: 'Explain this screen',
-    desc: 'Understand what this page is for.',
-    Icon: BookOpen,
-  },
-  {
     mode: 'find',
     label: 'Find something',
     desc: 'Jump to players, sessions, curriculum, or review items.',
@@ -133,6 +173,12 @@ const MODES: ModeConfig[] = [
     label: 'Capture a note',
     desc: 'Save a coach note, player observation, or director thought.',
     Icon: PenLine,
+  },
+  {
+    mode: 'explain',
+    label: 'Explain this screen',
+    desc: 'Understand what this page is for.',
+    Icon: BookOpen,
   },
 ]
 
@@ -150,7 +196,13 @@ export function DonnaAssistantButton({ academyId }: Props) {
   const [captureOpen, setCaptureOpen] = useState(false)
   const [activeMode, setActiveMode] = useState<AssistantMode | null>(null)
 
+  // Voice-specific local state — transcript never sent to AI or written to DB
+  const [voiceTranscript, setVoiceTranscript] = useState<string | null>(null)
+  const [typeInstead, setTypeInstead] = useState(false)
+  const [typedText, setTypedText] = useState('')
+
   const ctx = resolveContext(pathname)
+  const voicePrompts = resolveVoicePrompts(pathname)
 
   const closePanel = useCallback(() => {
     setPanelOpen(false)
@@ -167,9 +219,12 @@ export function DonnaAssistantButton({ academyId }: Props) {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [panelOpen, closePanel])
 
-  // Clear inline response on route change
+  // Clear all inline state on route change
   useEffect(() => {
     setActiveMode(null)
+    setVoiceTranscript(null)
+    setTypeInstead(false)
+    setTypedText('')
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -182,19 +237,42 @@ export function DonnaAssistantButton({ academyId }: Props) {
     setActiveMode(prev => (prev === mode ? null : mode))
   }
 
+  // Transcript stays local — displayed in panel only, never sent anywhere
+  function handleVoiceTranscript(text: string) {
+    setVoiceTranscript(text)
+    setTypeInstead(false)
+  }
+
+  // Clicking a suggestion pre-fills the type-instead area as a reference script
+  function handleSuggestionClick(prompt: string) {
+    setTypeInstead(true)
+    setTypedText(prompt)
+  }
+
   return (
     <>
       {/* ------------------------------------------------------------------ */}
-      {/* Floating trigger — single bottom-right action button                */}
+      {/* Floating trigger — premium assistant identity, not a lime action    */}
       {/* ------------------------------------------------------------------ */}
       <button
         onClick={() => setPanelOpen(true)}
         aria-label="Ask Academy Assistant"
         title="Ask Academy Assistant"
-        className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full flex items-center justify-center
-          shadow-lg bg-surface border border-lime/20 text-lime
-          hover:border-lime/40 hover:shadow-lime
-          active:scale-95 transition-all duration-150"
+        className={cn(
+          'fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full',
+          'flex items-center justify-center',
+          'text-white',
+          'shadow-[0_4px_16px_rgba(139,92,246,0.4)]',
+          'hover:brightness-110 hover:-translate-y-0.5',
+          'hover:shadow-[0_6px_22px_rgba(139,92,246,0.55)]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400',
+          'focus-visible:ring-offset-2 focus-visible:ring-offset-black',
+          'active:scale-95 transition-all duration-200',
+        )}
+        style={{
+          background: 'linear-gradient(135deg, #6d28d9, #4338ca)',
+          border: '1px solid rgba(139,92,246,0.35)',
+        }}
       >
         <Sparkles className="w-[18px] h-[18px]" />
       </button>
@@ -234,11 +312,11 @@ export function DonnaAssistantButton({ academyId }: Props) {
         >
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
-              <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+              <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: '#8b5cf6' }} />
               <h2 className="text-sm font-semibold text-text-primary">Academy Assistant</h2>
             </div>
             <p className="text-[11px] text-text-muted leading-snug">
-              Guidance, search, and quick capture for your academy.
+              Ask by voice, find what you need, or capture a note.
             </p>
           </div>
           <button
@@ -254,7 +332,126 @@ export function DonnaAssistantButton({ academyId }: Props) {
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
 
-          {/* Current screen context card */}
+          {/* ── Primary voice card ── */}
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ border: '1px solid rgba(139,92,246,0.2)' }}
+          >
+            {/* Voice input area */}
+            <div
+              className="px-4 py-3.5"
+              style={{
+                background: 'linear-gradient(135deg, rgba(109,40,217,0.09), rgba(67,56,202,0.05))',
+              }}
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                <Mic className="w-3.5 h-3.5 shrink-0" style={{ color: '#8b5cf6' }} />
+                <p className="text-sm font-semibold text-text-primary">Ask by voice</p>
+              </div>
+              <p className="text-[11px] text-text-muted leading-snug mb-3">
+                Use voice to ask what to do next, explain this screen, or capture a director note.
+              </p>
+
+              {/* VoiceInputButton — browser SpeechRecognition only, no API, no DB write */}
+              <VoiceInputButton
+                onTranscript={handleVoiceTranscript}
+                label="Start voice"
+                appendMode={false}
+              />
+
+              {/* Voice transcript — displayed locally only */}
+              {voiceTranscript && (
+                <div
+                  className="mt-3 rounded-lg px-3 py-2.5"
+                  style={{
+                    background: 'var(--bg-surface)',
+                    border: '1px solid rgba(139,92,246,0.18)',
+                  }}
+                >
+                  <p
+                    className="text-[10px] uppercase tracking-widest font-semibold mb-1"
+                    style={{ color: '#8b5cf6' }}
+                  >
+                    Voice captured
+                  </p>
+                  <p className="text-[12px] text-text-secondary leading-relaxed">
+                    {voiceTranscript}
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
+                    To save, use "Capture a note" below.
+                  </p>
+                  <button
+                    onClick={() => setVoiceTranscript(null)}
+                    className="mt-1 text-[10px] text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+
+              {/* Type instead */}
+              {!typeInstead ? (
+                <button
+                  onClick={() => setTypeInstead(true)}
+                  className="mt-2.5 text-[11px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
+                >
+                  Type instead
+                </button>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  <textarea
+                    rows={3}
+                    placeholder="Type your question or note…"
+                    value={typedText}
+                    onChange={e => setTypedText(e.target.value)}
+                    className="w-full rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
+                    style={{
+                      background: 'var(--bg-surface)',
+                      border: '1px solid var(--border-subtle)',
+                    }}
+                  />
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <button
+                      onClick={() => { setTypeInstead(false); setTypedText('') }}
+                      className="text-[10px] text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <p className="text-[10px] text-text-muted">
+                      Use "Capture a note" below to save.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Route-aware suggestions — hints only, no AI requests */}
+            <div
+              className="px-4 py-3"
+              style={{
+                borderTop: '1px solid rgba(139,92,246,0.1)',
+                background: 'var(--bg-surface)',
+              }}
+            >
+              <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-2">
+                Suggested questions
+              </p>
+              <div className="space-y-0.5">
+                {voicePrompts.map((prompt, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSuggestionClick(prompt)}
+                    className="w-full text-left text-[11px] text-text-secondary hover:text-text-primary
+                      px-2.5 py-1.5 rounded-lg hover:bg-surface-raised transition-all leading-snug"
+                  >
+                    "{prompt}"
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Current screen context card ── */}
           <div
             className="rounded-xl px-3.5 py-3"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
@@ -269,10 +466,16 @@ export function DonnaAssistantButton({ academyId }: Props) {
           {/* Inline response: Guide me */}
           {activeMode === 'guide' && (
             <div
-              className="rounded-xl px-3.5 py-3 border border-lime/15"
-              style={{ background: 'var(--bg-surface)' }}
+              className="rounded-xl px-3.5 py-3"
+              style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid rgba(139,92,246,0.15)',
+              }}
             >
-              <p className="text-[10px] uppercase tracking-widest text-lime font-semibold mb-1.5">
+              <p
+                className="text-[10px] uppercase tracking-widest font-semibold mb-1.5"
+                style={{ color: '#8b5cf6' }}
+              >
                 Suggested next step
               </p>
               <p className="text-[12px] text-text-secondary leading-relaxed">{ctx.nextAction}</p>
@@ -282,10 +485,16 @@ export function DonnaAssistantButton({ academyId }: Props) {
           {/* Inline response: Explain this screen */}
           {activeMode === 'explain' && (
             <div
-              className="rounded-xl px-3.5 py-3 border border-lime/15"
-              style={{ background: 'var(--bg-surface)' }}
+              className="rounded-xl px-3.5 py-3"
+              style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid rgba(139,92,246,0.15)',
+              }}
             >
-              <p className="text-[10px] uppercase tracking-widest text-lime font-semibold mb-1.5">
+              <p
+                className="text-[10px] uppercase tracking-widest font-semibold mb-1.5"
+                style={{ color: '#8b5cf6' }}
+              >
                 About this screen
               </p>
               <p className="text-[12px] text-text-secondary leading-relaxed">{ctx.guidance}</p>
@@ -295,8 +504,8 @@ export function DonnaAssistantButton({ academyId }: Props) {
           {/* Inline response: Find something */}
           {activeMode === 'find' && (
             <div
-              className="rounded-xl px-3.5 py-3 border border-border"
-              style={{ background: 'var(--bg-surface)' }}
+              className="rounded-xl px-3.5 py-3"
+              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
             >
               <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-2">
                 Jump to
@@ -319,7 +528,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
             </div>
           )}
 
-          {/* Mode buttons */}
+          {/* ── Mode buttons ── */}
           <div className="space-y-1.5">
             <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
               What would you like?
@@ -330,23 +539,25 @@ export function DonnaAssistantButton({ academyId }: Props) {
                 key={mode}
                 onClick={() => handleModeClick(mode)}
                 className={cn(
-                  'w-full text-left px-3 py-2.5 rounded-xl border transition-all duration-150',
+                  'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150',
                   activeMode === mode
-                    ? 'border-lime/25 text-text-primary'
-                    : 'border-border text-text-secondary hover:border-border/60 hover:text-text-primary',
+                    ? 'text-text-primary'
+                    : 'text-text-secondary hover:text-text-primary',
                 )}
                 style={{
                   background:
+                    activeMode === mode ? 'rgba(139,92,246,0.06)' : 'var(--bg-surface)',
+                  border:
                     activeMode === mode
-                      ? 'rgba(17,217,223,0.05)'
-                      : 'var(--bg-surface)',
+                      ? '1px solid rgba(139,92,246,0.2)'
+                      : '1px solid var(--border)',
                 }}
               >
                 <div className="flex items-start gap-2.5">
                   <Icon
                     className={cn(
                       'w-3.5 h-3.5 mt-0.5 shrink-0',
-                      activeMode === mode ? 'text-lime' : 'text-text-muted',
+                      activeMode === mode ? 'text-violet-400' : 'text-text-muted',
                     )}
                   />
                   <div>
@@ -364,8 +575,8 @@ export function DonnaAssistantButton({ academyId }: Props) {
           className="px-4 py-3 shrink-0"
           style={{ borderTop: '1px solid var(--border-subtle)' }}
         >
-          <p className="text-[10px] text-text-muted text-center">
-            Academy Assistant · V1 · More capabilities coming
+          <p className="text-[10px] text-text-muted text-center leading-snug">
+            Voice will become the fastest way to guide setup, capture notes, and ask what needs attention.
           </p>
         </div>
       </aside>

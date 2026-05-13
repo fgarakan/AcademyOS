@@ -2,6 +2,67 @@
 
 ---
 
+## 2026-05-13 — Sprint 251: Academy Assistant Visual + Voice Entry V1
+
+**Why this was added:**
+The Academy Assistant button looked identical to a normal lime system action. Voice was buried or absent. This sprint elevates the assistant into a distinct identity layer with a premium violet/indigo visual treatment and makes voice the primary mode inside the panel — while being fully honest that voice is browser-native only and does not yet connect to AI.
+
+**Floating button visual treatment:**
+Changed from `bg-surface border-lime/20 text-lime` to a violet/indigo gradient (`linear-gradient(135deg, #6d28d9, #4338ca)`), violet border, and a 16px violet glow shadow. Size increased from `w-10 h-10` to `w-12 h-12`. Icon color is white. Hover adds lift and brightness. No constant pulse animation. The assistant button is now visually distinct from any lime action in the UI.
+
+**Voice is the primary mode:**
+The panel body now opens with a dedicated "Ask by voice" card at the top. It includes:
+- A Mic icon header and description
+- `VoiceInputButton` integrated with `label="Start voice"` — uses browser `SpeechRecognition` (Chrome/Edge) only, no external API calls, no database writes
+- Transcript displayed locally in the panel as "Voice captured" — never sent to AI, never written to database
+- A "Type instead" option that expands a textarea for directors who prefer typing; clicking a suggestion pre-fills it
+- Route-aware suggestion chips (2–3 per route)
+
+**Existing voice component reuse decision:**
+- `VoiceInputButton` — reused as-is via import. Safe: browser-native SpeechRecognition only, `onTranscript` callback returns local text. No external API, no DB writes.
+- `AudioRecorderButton` — not reused. Tightly coupled to `/api/coach/sessions/[sessionId]/transcribe` and requires a session ID — wrong scope for the assistant.
+
+**Route-aware voice prompt suggestions (5 routes + fallback):**
+`/director/onboarding/interview`, `/director/onboarding/curriculum`, `/director/onboarding`, `/director/review`, `/director` — each shows 2–3 contextual suggested questions. Clicking a suggestion pre-fills the "Type instead" textarea. These are hints only — no AI requests triggered.
+
+**Mode order updated:**
+Guide me · Find something · Capture a note · Explain this screen (voice is the primary card, not a mode button). Active mode highlight changed from lime to violet (`rgba(139,92,246,...)`).
+
+**Panel hierarchy:**
+1. Ask by voice card (always visible, top)
+2. Current screen context card
+3. Inline response for active mode (Guide me / Explain / Find)
+4. Mode buttons
+
+**Footer updated:**
+"Voice will become the fastest way to guide setup, capture notes, and ask what needs attention."
+
+**Safeguards preserved:**
+- No migrations created
+- `database.types.ts` untouched
+- No OpenAI or external API calls
+- No database writes from voice
+- No fake AI responses (honest V1 copy only)
+- `QuickCaptureDrawer` fully preserved — "Capture a note" still opens it
+- Find something links unchanged
+- Escape-to-close still works
+- Only one floating button appears
+- Public UI says "Academy Assistant" — "Donna" is internal only
+
+**Files created:** none
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — violet/indigo button, voice-first panel, VoiceInputButton integration, route-aware suggestions, reordered modes
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** clean (`npx tsc --noEmit` — no errors)
+
+**Manual QA:** pending user verification
+
+**No migrations. `database.types.ts` untouched.**
+
+---
+
 ## 2026-05-13 — Sprint 250: Donna Entry Button / Academy Assistant Shell V1
 
 **Why this was added:**
