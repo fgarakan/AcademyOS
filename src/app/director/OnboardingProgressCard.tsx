@@ -127,7 +127,7 @@ export function OnboardingProgressCard({ settings }: Props) {
             href="/director/onboarding"
             className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-lime text-base hover:bg-lime/90 transition-colors"
           >
-            Continue Setup
+            Continue Curriculum Setup
             <ArrowRight className="w-3 h-3" />
           </Link>
           {nextStep && (

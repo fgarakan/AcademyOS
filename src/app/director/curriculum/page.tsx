@@ -357,10 +357,10 @@ export default async function DirectorCurriculumPage() {
         </div>
         <div className="flex flex-col sm:flex-row gap-2 shrink-0">
           <Link href="/director/onboarding/curriculum" className="btn-lime">
-            Continue Setup
+            Continue Curriculum Setup
           </Link>
           <Link href="/director/curriculum/builder" className="btn-ghost">
-            Open Builder
+            Open Curriculum Builder
           </Link>
         </div>
       </div>

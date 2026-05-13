@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-13 — Sprint 258: Action Language + CTA Clarity Pass V1
+
+**Scope:** Label-only CTA clarity pass. No routes, no save behavior, no migrations, no features changed.
+
+**Changes:**
+- `src/app/director/OnboardingProgressCard.tsx` — "Continue Setup" → "Continue Curriculum Setup"
+- `src/app/director/onboarding/page.tsx` — fallback label "Continue Setup" → "Continue Curriculum Setup"
+- `src/app/director/curriculum/page.tsx` — "Continue Setup" → "Continue Curriculum Setup"; "Open Builder" → "Open Curriculum Builder"
+- `src/app/director/sessions/page.tsx` — "Archive" → "View Archive"
+
+**TypeScript:** Clean (`npx tsc --noEmit` — no errors).
+
+---
+
 ## 2026-05-13 — Sprint 257: Core Flow QA + Broken-Link Audit V1
 
 **Audit scope:** All major director routes, CTAs, sidebar nav, onboarding steps, assistant nav commands, and quick-link sections. All static hrefs verified against the actual directory tree.

@@ -194,7 +194,7 @@ function PageHeader() {
           href="/director/sessions/archive"
           className="btn-ghost flex items-center gap-1.5 text-xs px-3 py-2"
         >
-          Archive
+          View Archive
         </Link>
         <Link
           href="/director/sessions/new"

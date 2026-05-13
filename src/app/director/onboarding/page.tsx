@@ -236,7 +236,7 @@ export default async function AcademyOnboardingPage() {
       {/* ── Animated overview deck — unchanged ── */}
       <AnimatedOnboardingDeck
         nextStepHref={nextStep?.href ?? '/director/onboarding/interview'}
-        nextStepLabel={nextStep?.ctaLabel ?? 'Continue Setup'}
+        nextStepLabel={nextStep?.ctaLabel ?? 'Continue Curriculum Setup'}
         completedCount={completedCount}
       />
 
