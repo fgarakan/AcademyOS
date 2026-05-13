@@ -2,6 +2,54 @@
 
 ---
 
+## 2026-05-13 — Sprint 250: Donna Entry Button / Academy Assistant Shell V1
+
+**Why this was added:**
+Directors needed a persistent, always-accessible layer to answer "where am I, what should I do next, and how do I find things?" The assistant entry layer — internally called Donna, publicly called Academy Assistant — provides this without AI inference or database writes. It is a static, context-aware shell that will grow into the director's operating assistant over future sprints.
+
+**Academy Assistant replaces Quick Capture as the main floating action:**
+The previous `QuickCaptureButton` (lime pill, bottom-right) is no longer rendered globally in the director layout. The Academy Assistant button (Sparkles icon, same position) is the single floating action for directors. Quick Capture remains fully preserved as a mode inside the assistant panel — clicking "Capture a note" opens the existing `QuickCaptureDrawer` with full functionality. No capture data model or database writes changed.
+
+**Internal naming vs. public UI:**
+- Internal file and component name: `DonnaAssistantButton`
+- Public UI label: "Academy Assistant"
+- No visible "Donna" label anywhere in the UI
+- Floating button is icon-only (Sparkles) with `aria-label="Ask Academy Assistant"`
+
+**What the assistant panel includes:**
+- Current screen name and static guidance, resolved from pathname
+- Four assistant modes: Guide me · Explain this screen · Find something · Capture a note
+- Guide me / Explain this screen: shows static context-aware text inline (no API calls)
+- Find something: shortcut links to Players, Sessions, Curriculum, Review Queue, Onboarding
+- Capture a note: opens the existing QuickCaptureDrawer — full player observation and general capture works
+
+**Context-aware route guidance (9 routes):**
+`/director`, `/director/onboarding`, `/director/onboarding/interview`, `/director/onboarding/curriculum`, `/director/review`, `/director/curriculum`, `/director/players`, `/director/sessions`, `/director/class-templates` — plus a fallback for unmatched routes.
+
+**Safeguards preserved:**
+- No migrations created
+- `database.types.ts` untouched
+- No OpenAI or external API calls
+- No database writes introduced
+- No fake AI responses
+- Quick Capture source files (`QuickCaptureButton.tsx`, `QuickCaptureDrawer.tsx`) kept intact
+- All existing onboarding, review queue, and voice intake sprints unaffected
+
+**Files created:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — floating Sparkles button + right side panel with context map, 4 modes, Escape-to-close, QuickCaptureDrawer integration
+
+**Files modified:**
+- `src/app/director/layout.tsx` — replaced `QuickCaptureButton` import/render with `DonnaAssistantButton`
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** clean (`npx tsc --noEmit` — no errors)
+
+**Manual QA:** pending user verification
+
+**No migrations. `database.types.ts` untouched.**
+
+---
+
 ## 2026-05-13 — Sprint 249: Progressive Onboarding Flow V1
 
 **Why this was needed:**
