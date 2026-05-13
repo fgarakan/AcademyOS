@@ -2,6 +2,53 @@
 
 ---
 
+## 2026-05-13 — Sprint 256: Academy Assistant Reliability Pass V1
+
+**Why this was needed:**
+After Sprints 250–255, Academy Assistant had multiple active systems (voice, typed commands, page-aware guidance, approved navigation, template creation, capture, find, guide, explain) but several suggestions pre-filled the textarea instead of executing, mode descriptions overpromised features not shown, command response labels were generic, and the footer was vague. This sprint makes the assistant feel consistent and honest without adding new capabilities.
+
+**Modes audited:** Ask by voice, Type instead / Send, Create Template, Guide me, Find something, Capture a note, Explain this screen — all verified intact.
+
+**Mode descriptions corrected:**
+- `capture`: "Save a coach note, player observation, or director thought." → "Save a player observation or capture a director thought." (removed "coach note" — that's the Coach Wrap-Up system, not this drawer)
+- `guide`: "See what to do next and why it matters." → "See the suggested next step for this page." ("why it matters" was not shown in the response)
+
+**Command behavior fixed:**
+- `'open templates'` was not recognized — added to class-templates nav entry
+- `'open review'`, `'open players'`, `'open sessions'` added for nav consistency with QUICK_LINKS
+- Sessions route (`/director/sessions`) added as approved navigation target
+- Suggestions "Explain this player profile.", "Explain this review item." pre-filled textarea instead of responding — fixed via broad `startsWith('explain')` catch-all ordered after the specific "explain this question" handler
+- Suggestions "Where should I start?", "What needs approval?" pre-filled textarea — fixed by mapping both to `ctx.nextAction` + guide mode
+- "What happens when I approve this?" (curriculum suggestions) — added curriculum-specific info response
+- "Capture a player note." suggestion — wired to open QuickCaptureDrawer (same behavior as clicking "Capture a note" mode button)
+
+**Command response labels made specific:**
+- Added optional `label?: string` to `CommandResponse` interface
+- Each `setCommandResponse` call now carries a specific label: "About this page", "Suggested next step", "About this question", "About approval", "Not available yet" (known unwired), "Not recognized" (unrecognized input)
+- Command response card renders `commandResponse.label ?? default`
+
+**Honest fallbacks preserved:** "Next question" and "Confirm answer" still show "Not available yet" + on-screen Confirm button guidance. "Go back" at root shows "Not available" honestly. Unrecognized commands show "Not recognized" with examples of what works.
+
+**Capability language clarified:**
+- Footer replaced with "What I can do right now" — 5 bullets + honest limitation sentence about setup question voice control
+
+**Template creation verified intact:** Draft status pill, missing question flow, 90-min allocation (totals to 90), approval gating, no auto-save from voice or suggestion. ✓
+
+**QuickCaptureDrawer verified intact:** Single floating button, drawer opens as Modal, no AI language, no second floating element. ✓
+
+**Mobile / accessibility verified:** `min-w-0 truncate` on block names, `flex-wrap` on approval buttons, all aria-labels present, Enter key never saves. ✓
+
+**Public naming:** No "Donna" in any user-facing copy. ✓
+
+**No migrations. No database.types.ts changes. No AI/API calls. No DB writes.**
+
+**TypeScript:** clean
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx`
+
+---
+
 ## 2026-05-13 — Sprint 255: Academy Assistant Page-Aware Setup Controller V1
 
 **Modified:**

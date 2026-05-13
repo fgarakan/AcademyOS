@@ -29,6 +29,7 @@ interface RouteContext {
 interface CommandResponse {
   message: string
   type: 'info' | 'honest'
+  label?: string
 }
 
 const ROUTE_CONTEXT: Record<string, RouteContext> = {
@@ -200,7 +201,7 @@ const MODES: ModeConfig[] = [
   {
     mode: 'guide',
     label: 'Guide me',
-    desc: 'See what to do next and why it matters.',
+    desc: 'See the suggested next step for this page.',
     Icon: Compass,
   },
   {
@@ -212,7 +213,7 @@ const MODES: ModeConfig[] = [
   {
     mode: 'capture',
     label: 'Capture a note',
-    desc: 'Save a coach note, player observation, or director thought.',
+    desc: 'Save a player observation or capture a director thought.',
     Icon: PenLine,
   },
   {
@@ -357,7 +358,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
   function detectAndHandleCommand(text: string): boolean {
     const lower = text.toLowerCase().trim()
 
-    // Navigation commands — approved routes only, ordered most-specific first
+    // Navigation commands — approved routes only, most-specific first
     const NAV_COMMANDS: Array<{ patterns: string[]; href: string }> = [
       {
         patterns: ['take me to curriculum setup', 'go to curriculum setup', 'open curriculum setup'],
@@ -368,16 +369,20 @@ export function DonnaAssistantButton({ academyId }: Props) {
         href: '/director/onboarding',
       },
       {
-        patterns: ['take me to review', 'go to review queue', 'go to review', 'open review queue'],
+        patterns: ['take me to review', 'go to review queue', 'go to review', 'open review queue', 'open review'],
         href: '/director/review',
       },
       {
-        patterns: ['go to players', 'take me to players', 'show me players'],
+        patterns: ['go to players', 'take me to players', 'show me players', 'open players'],
         href: '/director/players',
       },
       {
-        patterns: ['go to templates', 'take me to templates', 'show me templates', 'go to class templates'],
+        patterns: ['go to templates', 'take me to templates', 'show me templates', 'go to class templates', 'open templates'],
         href: '/director/class-templates',
+      },
+      {
+        patterns: ['go to sessions', 'take me to sessions', 'open sessions', 'show me sessions'],
+        href: '/director/sessions',
       },
       {
         patterns: ['go to curriculum', 'take me to curriculum', 'open curriculum', 'show me curriculum'],
@@ -399,8 +404,24 @@ export function DonnaAssistantButton({ academyId }: Props) {
         router.back()
         closePanel()
       } else {
-        setCommandResponse({ message: 'You are already at the main director screen.', type: 'honest' })
+        setCommandResponse({
+          message: 'You are already at the main director screen.',
+          type: 'honest',
+          label: 'Not available',
+        })
       }
+      return true
+    }
+
+    // Capture a note — mirrors the "Capture a note" mode button
+    if (
+      lower.includes('capture a note') ||
+      lower.includes('capture a player note') ||
+      lower.includes('take a note') ||
+      lower.includes('save a note')
+    ) {
+      setCaptureOpen(true)
+      closePanel()
       return true
     }
 
@@ -410,7 +431,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
       lower.includes('what page am i') ||
       lower.includes('explain this screen')
     ) {
-      setCommandResponse({ message: ctx.guidance, type: 'info' })
+      setCommandResponse({ message: ctx.guidance, type: 'info', label: 'About this page' })
       setActiveMode('explain')
       return true
     }
@@ -422,8 +443,31 @@ export function DonnaAssistantButton({ academyId }: Props) {
       lower.includes('guide me') ||
       lower === 'what do i do'
     ) {
-      setCommandResponse({ message: ctx.nextAction, type: 'info' })
+      setCommandResponse({ message: ctx.nextAction, type: 'info', label: 'Suggested next step' })
       setActiveMode('guide')
+      return true
+    }
+
+    // What needs approval / where should I start — maps to nextAction (route-aware)
+    if (
+      lower.includes('what needs approval') ||
+      lower.includes('where should i start') ||
+      lower.includes('where do i start')
+    ) {
+      setCommandResponse({ message: ctx.nextAction, type: 'info', label: 'Suggested next step' })
+      setActiveMode('guide')
+      return true
+    }
+
+    // What happens when I approve — curriculum-specific, honest elsewhere
+    if (lower.includes('what happens when i approve') || lower.includes('what happens if i approve')) {
+      setCommandResponse({
+        message: pathname.startsWith('/director/onboarding/curriculum')
+          ? "Approving curriculum setup confirms your academy's development spine. It connects players to levels, enables session planning, and activates the full Academy OS workflow."
+          : ctx.guidance,
+        type: 'info',
+        label: 'About approval',
+      })
       return true
     }
 
@@ -438,10 +482,18 @@ export function DonnaAssistantButton({ academyId }: Props) {
           message:
             'This interview has 7 questions covering: your academy philosophy, player focus, development priorities, competition approach, parent communication style, coach operating style, and 90-day success vision. Answer one at a time using the on-screen form.',
           type: 'info',
+          label: 'About this question',
         })
       } else {
-        setCommandResponse({ message: ctx.guidance, type: 'info' })
+        setCommandResponse({ message: ctx.guidance, type: 'info', label: 'About this page' })
       }
+      return true
+    }
+
+    // Broad "explain this" catch-all — after specific "explain this question" is already handled above
+    if (lower.startsWith('explain') || lower.includes('explain this')) {
+      setCommandResponse({ message: ctx.guidance, type: 'info', label: 'About this page' })
+      setActiveMode('explain')
       return true
     }
 
@@ -450,6 +502,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
       setCommandResponse({
         message: 'Direct question control is not wired yet. Use the on-screen Confirm button to move forward.',
         type: 'honest',
+        label: 'Not available yet',
       })
       return true
     }
@@ -458,6 +511,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
       setCommandResponse({
         message: 'Confirming your answer is handled by the on-screen button. Click Confirm in the interview form to move forward.',
         type: 'honest',
+        label: 'Not available yet',
       })
       return true
     }
@@ -479,8 +533,9 @@ export function DonnaAssistantButton({ academyId }: Props) {
     if (!handled) {
       setCommandResponse({
         message:
-          'I didn\'t recognize that command. Try: "What is this page?", "What should I do next?", "Take me to curriculum setup.", or start a template with "Create a template for…"',
+          'I didn\'t recognize that command. Try: "What is this page?", "What should I do next?", "Open review queue", or start a template with "Create a template for…"',
         type: 'honest',
+        label: 'Not recognized',
       })
     }
     setTypeInstead(false)
@@ -722,7 +777,7 @@ export function DonnaAssistantButton({ academyId }: Props) {
                     className="text-[10px] uppercase tracking-widest font-semibold mb-1"
                     style={{ color: commandResponse.type === 'honest' ? '#FF9500' : '#8b5cf6' }}
                   >
-                    {commandResponse.type === 'honest' ? 'Not available yet' : 'Academy Assistant'}
+                    {commandResponse.label ?? (commandResponse.type === 'honest' ? 'Not available yet' : 'Academy Assistant')}
                   </p>
                   <p className="text-[12px] text-text-secondary leading-relaxed">
                     {commandResponse.message}
@@ -949,13 +1004,30 @@ export function DonnaAssistantButton({ academyId }: Props) {
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer — capability summary */}
         <div
-          className="px-4 py-3 shrink-0"
+          className="px-4 py-3 shrink-0 space-y-2"
           style={{ borderTop: '1px solid var(--border-subtle)' }}
         >
-          <p className="text-[10px] text-text-muted text-center leading-snug">
-            Voice will become the fastest way to guide setup, capture notes, and ask what needs attention.
+          <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
+            What I can do right now
+          </p>
+          <ul className="space-y-1">
+            {[
+              'Guide you through the current page',
+              'Take you to approved Academy OS pages',
+              'Capture notes',
+              'Draft class templates for review',
+              'Save only after your explicit approval',
+            ].map(item => (
+              <li key={item} className="flex items-start gap-1.5 text-[11px] text-text-muted">
+                <span className="mt-px shrink-0" style={{ color: '#8b5cf6' }}>·</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="text-[10px] text-text-muted leading-snug">
+            Some commands, like advancing setup questions by voice, still use the on-screen controls for safety.
           </p>
         </div>
       </aside>
