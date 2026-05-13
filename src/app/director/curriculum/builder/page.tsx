@@ -1,9 +1,9 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { CurriculumSetupBuilder } from '@/app/director/curriculum/builder/CurriculumSetupBuilder'
+import { CurriculumSetupBuilder } from './CurriculumSetupBuilder'
 import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes'
 import { DEFAULT_CURRICULUM_SETUP_STATE } from '@/lib/curriculum/curriculumSetupTypes'
 
-export default async function CurriculumStarterPage() {
+export default async function CurriculumBuilderPage() {
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -11,7 +11,7 @@ export default async function CurriculumStarterPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-text-secondary text-sm">Please sign in to access curriculum setup.</p>
+        <p className="text-text-secondary text-sm">Please sign in to access the Curriculum Builder.</p>
       </div>
     )
   }
@@ -66,6 +66,6 @@ export default async function CurriculumStarterPage() {
   }
 
   return (
-    <CurriculumSetupBuilder initialState={initialState} origin="onboarding" />
+    <CurriculumSetupBuilder initialState={initialState} origin="builder" />
   )
 }

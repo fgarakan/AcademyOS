@@ -2,6 +2,73 @@
 
 ---
 
+## 2026-05-13 — Sprint 240: Curriculum Setup Builder Shared Entry V1
+
+**Why this was needed:**
+Directors had no high-level curriculum approval flow. The old onboarding curriculum page showed a generic "choose a starter" form with no sense of structure or progression. The curriculum builder (`/director/curriculum`) is complex and detail-heavy — not the right entry point. Directors need to approve a spine first, feel the win, then unlock deeper layers progressively.
+
+**Shared onboarding / curriculum entry logic:**
+Both `/director/onboarding/curriculum` and `/director/curriculum/builder` render the same `CurriculumSetupBuilder` client component. State is stored in `academies.settings.curriculum_setup_v2` (JSON key). When the director approves the spine from either entry point, both routes reflect the same state. The legacy `curriculum_setup_completed` key is kept in sync when all 3 required steps are complete.
+
+**Recommended spine:**
+`RECOMMENDED_CURRICULUM_SPINE` constant: 15 levels across 5 stages (Red Ball, Orange Ball, Green Ball, Yellow Ball, High Performance). Defined in `src/lib/curriculum/curriculumSetupTypes.ts`. Never changes via AI — director always approves or overrides explicitly.
+
+**Shared state model (`CurriculumSetupState`):**
+- Required: `spine_status`, `approved_spine_levels`, `curriculum_source_status`, `curriculum_source_choice`, `domains_status`, `selected_domains`
+- Deeper (tracked, not built in V1): `level_names_status`, `level_goals_status`, `movement_gates_status`, `requirements_status`, `template_connections_status`, `parent_player_explanations_status`
+- `isRequiredSetupComplete()` — spine + source + domains all done
+- `getInitialStep()` — restores director to correct step from saved state
+
+**Spine approval behavior:**
+- "Use this structure" → `spine_status = 'approved'`, saves spine levels, transitions to impact screen
+- "Edit levels" → shows inline note pointing to deeper setup; "Approve spine — customize level names later" secondary action → `spine_status = 'customized'`, impact screen
+- "Help me create a different structure" → shows inline note about future capability; secondary action → impact screen with recommended spine
+- "Decide later" → navigate away without saving
+
+**Impact screen (WIN moment):**
+Immediate after spine approval: lime circle checkmark, "Curriculum Spine approved.", 6 unlocked capabilities listed with icons, 2 remaining required steps shown, 3 CTA buttons (Continue, Go to Builder, Return to Onboarding).
+
+**Curriculum source step:**
+5 options with radio selection. Recommended: "Use starter curriculum and customize". Saves `curriculum_source_status = 'selected'` or `'skipped'` (for "Decide later").
+
+**Domains step:**
+11 domain chips, multi-select. "Use recommended domains" selects all and saves as `'approved'`. Custom selection saves as `'customized'`. "Decide later" saves as `'skipped'`.
+
+**Completion state:**
+Shows: required setup summary (3 rows with check/skip/pending icons), deeper setup section (6 rows with lock badge and descriptions), navigation to Curriculum Builder and Onboarding.
+
+**Required vs. deeper setup distinction:**
+- Required (3): spine, source, domains — clearly labeled, progress pips, completion gated on these
+- Deeper (6): level names, goals, gates, requirements, template connections, parent/player explanations — shown as locked/optional placeholders in V1, unlocked in future sprints
+
+**Files created:**
+- `src/lib/curriculum/curriculumSetupTypes.ts` — `CurriculumSetupState` type, `RECOMMENDED_CURRICULUM_SPINE`, `SPINE_STAGES`, `CURRICULUM_SOURCE_OPTIONS`, `CURRICULUM_DOMAINS`, helpers
+- `src/lib/actions/curriculumSpineAction.ts` — Server action for writing `curriculum_setup_v2` to academy settings; syncs `curriculum_setup_completed` when required setup is complete
+- `src/app/director/curriculum/builder/page.tsx` — Curriculum Builder route server component
+- `src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx` — Multi-step client component (spine → impact → source → domains → complete)
+
+**Files modified:**
+- `src/app/director/onboarding/curriculum/page.tsx` — Replaced old `CurriculumStarterForm` with `CurriculumSetupBuilder` in `origin='onboarding'` mode; same settings loading pattern
+
+**No migrations / no database.types.ts changes:**
+All state stored in existing `academies.settings` JSON column under new `curriculum_setup_v2` key. No schema changes.
+
+**TypeScript result:** Clean — `npx tsc --noEmit` passed with zero errors.
+
+**Manual QA status:** Pending director review.
+
+**Git add command:**
+```
+git add src/lib/curriculum/curriculumSetupTypes.ts src/lib/actions/curriculumSpineAction.ts src/app/director/curriculum/builder/page.tsx src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx src/app/director/onboarding/curriculum/page.tsx docs/CHANGELOG.md
+```
+
+**Commit message:**
+```
+Sprint 240 — Curriculum Setup Builder Shared Entry V1
+```
+
+---
+
 ## 2026-05-12 — Sprint 239: Academy Setup Context Packet + Current Question Lock V1
 
 **Why this was needed:**
