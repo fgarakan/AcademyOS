@@ -20,6 +20,8 @@ export interface InterviewStep {
   followUpPrompt: string
   whyItMatters: string
   chips: string[]
+  /** Semi-casual lead-in spoken before the exact question. App-controlled — AI never modifies this. */
+  casualLeadIn: string
 }
 
 export const INTERVIEW_STEPS: InterviewStep[] = [
@@ -39,6 +41,7 @@ export const INTERVIEW_STEPS: InterviewStep[] = [
       'Confidence and character',
       'Strong fundamentals first',
     ],
+    casualLeadIn: 'Let me start with the big picture.',
   },
   {
     id: 'player_focus',
@@ -56,6 +59,7 @@ export const INTERVIEW_STEPS: InterviewStep[] = [
       'Athletic movement',
       'Mental routines',
     ],
+    casualLeadIn: 'This is about what matters most for your players early on.',
   },
   {
     id: 'development_priorities',
@@ -73,6 +77,7 @@ export const INTERVIEW_STEPS: InterviewStep[] = [
       'Technical focus first',
       'Match habits throughout',
     ],
+    casualLeadIn: 'This one is about how you structure training.',
   },
   {
     id: 'competition_approach',
@@ -90,6 +95,7 @@ export const INTERVIEW_STEPS: InterviewStep[] = [
       'Depends on the level',
       'Process over results always',
     ],
+    casualLeadIn: 'This is about your competition philosophy.',
   },
   {
     id: 'parent_communication_style',
@@ -107,6 +113,7 @@ export const INTERVIEW_STEPS: InterviewStep[] = [
       'Level requirements are specific',
       'Parents should support, not coach',
     ],
+    casualLeadIn: 'This is about how you communicate with families.',
   },
   {
     id: 'coach_operating_style',
@@ -124,6 +131,7 @@ export const INTERVIEW_STEPS: InterviewStep[] = [
       'Depends on age and level',
       'Questions over corrections',
     ],
+    casualLeadIn: 'This one is about your coaching culture.',
   },
   {
     id: 'ninety_day_success',
@@ -141,6 +149,7 @@ export const INTERVIEW_STEPS: InterviewStep[] = [
       'Sessions feel more organised',
       'Director has better visibility',
     ],
+    casualLeadIn: 'Last question — and it is the most important one.',
   },
 ]
 

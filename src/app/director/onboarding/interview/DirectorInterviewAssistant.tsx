@@ -139,14 +139,37 @@ type PreflightPhase =
   | 'answering_preflight_question'
   | 'ready_for_question_one'
 
+// ─── Assistant Prompt Contract — single source of truth for every spoken + shown question ─
+// The app always builds this contract before speaking. Screen and voice use the same contract.
+type AssistantPromptContract = {
+  id: string
+  kind: 'intro' | 'question' | 'confirmation' | 'redirect'
+  moduleId?: string
+  moduleTitle?: string
+  questionNumber?: number
+  totalQuestionsInModule?: number
+  screenText: string         // what is shown on screen (= spokenText for questions)
+  spokenText: string         // what the assistant speaks (casual lead-in + exact question)
+  exactQuestionText?: string // the locked canonical question — never modified by AI
+  whyThisMatters?: string
+  requiresAnswer: boolean
+}
+
 // ─── Active voice prompt model ────────────────────────────────────────────────
 // Every question spoken by the assistant must have a matching visible prompt.
 // Before calling speakWithTracking for any question, set activeVoicePrompt.
 type ActiveVoicePrompt = {
   id: string
   kind: 'intro' | 'preflight' | 'interview'
-  questionText: string
+  questionText: string       // backward compat: = exactQuestionText for interview steps
   helperText?: string
+  // Sprint 241 contract fields — populated for interview steps only:
+  spokenText?: string        // full spoken text including casual lead-in
+  exactQuestionText?: string // the locked canonical question (no lead-in)
+  moduleTitle?: string
+  questionNumber?: number
+  totalQuestions?: number
+  whyThisMatters?: string
 }
 
 // The specific answerable question at the end of OPENING_SCRIPT
@@ -157,18 +180,7 @@ const PREFLIGHT_VOICE_PROMPT: ActiveVoicePrompt = {
   helperText: 'Say "No questions" or "Let\'s start" to begin, or ask anything about the setup.',
 }
 
-function buildInterviewPrompt(stepIndex: number): ActiveVoicePrompt {
-  const s = INTERVIEW_STEPS[stepIndex]
-  return {
-    id: s.id,
-    kind: 'interview',
-    // Use whyItMatters (contract source) so ActivePromptCard and currentQuestionContract agree
-    questionText: getStepQuestion(stepIndex),
-    helperText: s.whyItMatters,
-  }
-}
-
-// Name capture prompt — shown and spoken before the OPENING_SCRIPT
+// Name capture prompt — kept as fallback when no profile name and no typed name
 const NAME_VOICE_PROMPT: ActiveVoicePrompt = {
   id: 'director_name',
   kind: 'preflight',
@@ -176,11 +188,86 @@ const NAME_VOICE_PROMPT: ActiveVoicePrompt = {
   helperText: 'This helps the assistant address you correctly during setup.',
 }
 
-
-// Guided intro — spoken first on voice start, not a question (no ActivePromptCard)
+// Generic guided intro text — fallback only. Happy path uses buildPersonalizedWelcomeText().
 const GUIDED_INTRO_TEXT =
   "Welcome. I'm your Academy Setup Assistant. I'll help customize your Academy OS around how your academy actually works. " +
-  "I'll ask one question at a time, and you'll be able to review and edit every answer before we continue."
+  "I'll guide you one section at a time, and you'll be able to review and edit every answer before we continue."
+
+// ─── Director name resolution ─────────────────────────────────────────────────
+// Resolution order: directorDisplayName (confirmed this session) → directorProfileName → null
+function resolveDirectorName(
+  directorDisplayName: string,
+  directorProfileName: string | undefined,
+): string | null {
+  if (directorDisplayName.trim()) return directorDisplayName.trim()
+  if (directorProfileName?.trim()) return directorProfileName.trim()
+  return null
+}
+
+// ─── Personalized welcome text ───────────────────────────────────────────────
+// First spoken word is always "Welcome." per sprint contract.
+function buildPersonalizedWelcomeText(
+  directorName: string | null,
+  academyName: string | undefined,
+): string {
+  const greeting = directorName ? `Welcome, ${directorName}.` : 'Welcome.'
+  const academyRef = academyName ? `${academyName}'s Academy OS` : "your academy's Academy OS"
+  return (
+    `${greeting} I'm your Academy Setup Assistant. ` +
+    `I'll help customize ${academyRef} around how your academy actually works. ` +
+    "I'll guide you one section at a time, and you'll be able to review and edit every answer before we continue."
+  )
+}
+
+// ─── Assistant Prompt Contract builder ───────────────────────────────────────
+// Builds the single source of truth for each interview question.
+// screenText and spokenText are identical — what is shown is what is spoken.
+// exactQuestionText is the locked question from interviewSteps — never changed by AI.
+function buildAssistantPromptContract(
+  stepIndex: number,
+  directorName: string | null,
+  academyName: string | undefined,
+): AssistantPromptContract {
+  const s = INTERVIEW_STEPS[stepIndex]
+  const exactQ = s.spokenQuestion ?? s.question
+  const namePrefix = directorName ? `${directorName}, ` : ''
+  const leadIn = s.casualLeadIn ? `${namePrefix}${s.casualLeadIn} ` : namePrefix
+  const spokenText = `${leadIn}${exactQ}`
+  return {
+    id: s.id,
+    kind: 'question',
+    moduleId: s.id,
+    moduleTitle: s.stepLabel,
+    questionNumber: stepIndex + 1,
+    totalQuestionsInModule: INTERVIEW_STEPS.length,
+    screenText: spokenText,
+    spokenText,
+    exactQuestionText: exactQ,
+    whyThisMatters: s.whyItMatters,
+    requiresAnswer: true,
+  }
+}
+
+// ─── Interview prompt builder — derives ActiveVoicePrompt from AssistantPromptContract ─
+function buildInterviewPrompt(
+  stepIndex: number,
+  directorName: string | null = null,
+  academyName?: string,
+): ActiveVoicePrompt {
+  const contract = buildAssistantPromptContract(stepIndex, directorName, academyName)
+  return {
+    id: contract.id,
+    kind: 'interview',
+    questionText: contract.exactQuestionText ?? getStepQuestion(stepIndex),
+    helperText: contract.whyThisMatters,
+    spokenText: contract.spokenText,
+    exactQuestionText: contract.exactQuestionText,
+    moduleTitle: contract.moduleTitle,
+    questionNumber: contract.questionNumber,
+    totalQuestions: contract.totalQuestionsInModule,
+    whyThisMatters: contract.whyThisMatters,
+  }
+}
 
 const OPENING_SCRIPT =
   "I'll guide you through a short academy setup so your Academy OS reflects how your academy actually works. " +
@@ -355,6 +442,12 @@ function RealtimeDebugPanel({
   spokenQuestionText,
   screenQuestionText,
   questionTextMatchesScreen,
+  // Sprint 241
+  activePromptContractId,
+  contractScreenText,
+  contractSpokenText,
+  contractExactQuestionText,
+  spokenIncludesExactQuestion,
 }: {
   status: string
   debug: RealtimeDebugState
@@ -389,6 +482,12 @@ function RealtimeDebugPanel({
   spokenQuestionText?: string | null
   screenQuestionText?: string | null
   questionTextMatchesScreen?: boolean | null
+  // Sprint 241 — AssistantPromptContract debug fields
+  activePromptContractId?: string | null
+  contractScreenText?: string | null
+  contractSpokenText?: string | null
+  contractExactQuestionText?: string | null
+  spokenIncludesExactQuestion?: boolean | null
 }) {
   const stepQ = currentEncodedStep != null && currentEncodedStep >= 0 && currentEncodedStep < INTERVIEW_STEPS.length
     ? getStepQuestion(currentEncodedStep)
@@ -505,7 +604,34 @@ function RealtimeDebugPanel({
                   {String(questionTextMatchesScreen)}
                 </span>
                 {!questionTextMatchesScreen && (
-                  <span className="text-status-red ml-1">⚠ Mismatch: spoken question does not match screen question</span>
+                  <span className="text-status-red ml-1">⚠ Mismatch</span>
+                )}
+              </p>
+            )}
+          </div>
+        )}
+        {/* Sprint 241 — AssistantPromptContract debug section */}
+        {(activePromptContractId || contractExactQuestionText) && (
+          <div className="border-t border-border pt-0.5 mt-0.5 space-y-0.5">
+            <p className="text-[8px] uppercase tracking-widest text-text-muted font-semibold">Contract (Sprint 241)</p>
+            <p>activePromptContractId: <span className="text-lime">{activePromptContractId ?? '—'}</span></p>
+            {contractScreenText && (
+              <p className="break-words">screenText: <span className="text-text-muted">{contractScreenText.slice(0, 80)}</span></p>
+            )}
+            {contractSpokenText && (
+              <p className="break-words">spokenText: <span className="text-text-muted">{contractSpokenText.slice(0, 80)}</span></p>
+            )}
+            {contractExactQuestionText && (
+              <p className="break-words">exactQuestionText: <span className="text-text-secondary">{contractExactQuestionText.slice(0, 70)}</span></p>
+            )}
+            {spokenIncludesExactQuestion !== null && (
+              <p>
+                spokenIncludesExactQuestion:{' '}
+                <span className={spokenIncludesExactQuestion ? 'text-status-green' : 'text-status-red font-semibold'}>
+                  {String(spokenIncludesExactQuestion)}
+                </span>
+                {!spokenIncludesExactQuestion && (
+                  <span className="text-status-red ml-1">⚠ Mismatch: spoken does not include exact question</span>
                 )}
               </p>
             )}
@@ -556,22 +682,56 @@ function RealtimeDebugPanel({
 
 // ─── Active Prompt Card — mirrors every spoken question on screen ─────────────
 // Rule: no question is invisible. If the AI asks it, this card shows it.
-// For interview steps: shows "Why this matters:" before the question.
-// For preflight/name steps: keeps the simpler original layout.
+// For interview steps with a full contract: shows module, why, full spokenText, and locked question.
+// For preflight/name steps: keeps the simpler layout.
 function ActivePromptCard({ prompt }: { prompt: ActiveVoicePrompt }) {
   const isInterview = prompt.kind === 'interview'
+  const hasContract = isInterview && Boolean(prompt.spokenText && prompt.exactQuestionText)
+
+  if (hasContract) {
+    return (
+      <div className="px-4 py-3.5 rounded-xl bg-surface border border-lime/30 space-y-2.5">
+        {(prompt.moduleTitle || prompt.questionNumber) && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {prompt.moduleTitle && (
+              <span className="label-xs text-text-muted">{prompt.moduleTitle}</span>
+            )}
+            {prompt.questionNumber && prompt.totalQuestions && (
+              <span className="label-xs text-text-muted/50">· {prompt.questionNumber} of {prompt.totalQuestions}</span>
+            )}
+          </div>
+        )}
+        {prompt.whyThisMatters && (
+          <div className="space-y-0.5">
+            <p className="label-xs text-text-muted">Why this matters</p>
+            <p className="text-xs text-text-secondary leading-relaxed">{prompt.whyThisMatters}</p>
+          </div>
+        )}
+        <div className="space-y-1">
+          <p className="label-xs text-lime/80">Assistant will ask</p>
+          <p className="text-sm text-text-secondary leading-relaxed italic">&ldquo;{prompt.spokenText}&rdquo;</p>
+        </div>
+        <div className="border-t border-border/50 pt-2 space-y-1">
+          <p className="label-xs text-text-muted">Question</p>
+          <p className="text-base font-semibold text-text-primary leading-snug">{prompt.exactQuestionText}</p>
+        </div>
+      </div>
+    )
+  }
+
+  const isIntroLocal = prompt.kind === 'interview'
   return (
     <div className="px-4 py-3.5 rounded-xl bg-surface border border-lime/30 space-y-2">
-      {isInterview && prompt.helperText && (
+      {isIntroLocal && prompt.helperText && (
         <div className="space-y-0.5">
           <p className="label-xs text-text-muted">Why this matters</p>
           <p className="text-xs text-text-secondary leading-relaxed">{prompt.helperText}</p>
         </div>
       )}
       <div className="space-y-1">
-        <p className="label-xs text-lime/80">Assistant is asking</p>
+        <p className="label-xs text-lime/80">Assistant will ask</p>
         <p className="text-base font-semibold text-text-primary leading-snug">{prompt.questionText}</p>
-        {!isInterview && prompt.helperText && (
+        {!isIntroLocal && prompt.helperText && (
           <p className="text-xs text-text-secondary leading-relaxed">{prompt.helperText}</p>
         )}
       </div>
@@ -801,9 +961,13 @@ export function DirectorInterviewAssistant({
   // Rule: AI must never ask a question that is not visible on screen.
   const [activeVoicePrompt, setActiveVoicePrompt] = useState<ActiveVoicePrompt | null>(null)
 
-  // Director display name — captured at the start of the interview (local only, no DB save)
+  // Director display name — resolved at interview start from welcome input or profile
   const [directorDisplayName, setDirectorDisplayName] = useState('')
   const [directorNameTypedInput, setDirectorNameTypedInput] = useState('')
+  // Welcome screen name input — shown before Start when no profile name is available
+  const [welcomeNameInput, setWelcomeNameInput] = useState('')
+  // Stable ref to resolved name — set once at interview start, used throughout the session
+  const resolvedNameRef = useRef<string | null>(null)
 
   // Text shown in the assistant bubble — what the app told the assistant to say.
   // Used as fallback when Realtime transcript events don't arrive.
@@ -1197,31 +1361,32 @@ export function DirectorInterviewAssistant({
       return
     }
 
-    // Consume any pending ack from acceptAnswer() — "Got it. Next question: ..."
+    // Consume any pending ack from acceptAnswer()
     const ack = pendingAckRef.current
     pendingAckRef.current = null
-    // currentQuestionContract is the canonical source — both screen and voice must use this text
-    const contract = buildCurrentQuestionContract(step)
-    const baseQ = contract.questionText // always = getStepQuestion(step)
-    const textToSpeak = ack ? `${ack} Next question: ${baseQ}` : baseQ
+    // Build AssistantPromptContract — single source of truth for screen and voice
+    const promptContract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
+    const exactQ = promptContract.exactQuestionText ?? ''
+    const baseSpokenText = promptContract.spokenText // includes casual lead-in
+    const textToSpeak = ack ? `${ack} ${baseSpokenText}` : baseSpokenText
 
-    // Track spoken question text for QA guard (pure question without ack prefix)
-    setLastSpokenQuestionText(baseQ)
+    // Track full spoken text (with lead-in) for QA guard and debug panel
+    setLastSpokenQuestionText(baseSpokenText)
 
-    // QA guard: verify screen and spoken question text share the same source
+    // QA guard: spokenText must include exactQuestionText
     if (process.env.NODE_ENV !== 'production') {
-      const screenQ = buildInterviewPrompt(step).questionText
-      if (baseQ !== screenQ) {
-        console.warn('[QA Guard] Mismatch: spoken question does not match screen question', {
-          spoken: baseQ,
-          screen: screenQ,
+      const spokenIncludesExact = baseSpokenText.includes(exactQ)
+      if (!spokenIncludesExact) {
+        console.warn('Assistant prompt mismatch: spoken text does not include exact screen question.', {
+          spokenText: baseSpokenText,
+          exactQuestionText: exactQ,
           step,
         })
       }
     }
 
     // Set active prompt before speaking — question must be visible before voice starts
-    setActiveVoicePrompt(buildInterviewPrompt(step))
+    setActiveVoicePrompt(buildInterviewPrompt(step, resolvedNameRef.current, academyName))
     setIsSpeaking(true)
     setAudioStatus('speaking')
 
@@ -1275,8 +1440,9 @@ export function DirectorInterviewAssistant({
     stopAssistantSpeech()
     setIsSpeaking(true)
     setAudioStatus('speaking')
-    const text = getStepQuestion(step)
-    setActiveVoicePrompt(buildInterviewPrompt(step))
+    const contract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
+    const text = contract.spokenText
+    setActiveVoicePrompt(buildInterviewPrompt(step, resolvedNameRef.current, academyName))
     if (isRealtimeConnected) {
       speakWithTracking(text, () => setIsSpeaking(false))
     } else {
@@ -1305,8 +1471,7 @@ export function DirectorInterviewAssistant({
     setActiveVoicePrompt(null)
   }
 
-  // Switches to typed mode during preflight — disconnects Realtime, keeps preflight
-  // screen so the director can still type their answer before Q1 begins.
+  // Switches to typed mode during welcome or Q1 transition — disconnects Realtime.
   function switchToTypeModePreflight() {
     stopAssistantSpeech()
     if (isRealtimeConnected) realtimeVoice.disconnect()
@@ -1315,15 +1480,17 @@ export function DirectorInterviewAssistant({
     setVoiceMode(false)
     setAudioStatus('idle')
     setAudioWarning(null)
-    // guided_intro or any name phase → jump to typed name capture
+    // During guided_intro, name phases, or ready_for_question_one → jump directly to Q1 typed mode
     if (
       preflightPhase === 'guided_intro' ||
       preflightPhase === 'name_speaking' ||
       preflightPhase === 'awaiting_name_answer' ||
-      preflightPhase === 'name_captured'
+      preflightPhase === 'name_captured' ||
+      preflightPhase === 'ready_for_question_one'
     ) {
-      setPreflightPhase('awaiting_name_answer')
-      setActiveVoicePrompt(NAME_VOICE_PROMPT) // keep prompt card visible in typed mode
+      setPreflightPhase('idle')
+      setActiveVoicePrompt(null)
+      setStep(0)
     } else {
       setPreflightPhase('awaiting_preflight_answer')
       setActiveVoicePrompt(null)
@@ -1342,17 +1509,21 @@ export function DirectorInterviewAssistant({
     setWelcomeResponseError(null)
     firstSpokenRef.current = false
     setDebugFirstSpokenText('')
-    setDebugGuidedIntroRequested(false)
+    setDebugGuidedIntroRequested(true) // personalized welcome IS the guided intro
     setDebugNamePromptRequested(false)
     setDebugPreflightPromptRequested(false)
     setPreflightPhase('idle')
     setPreflightAssistantText('')
     setPreflightTypedInput('')
-    setDirectorDisplayName('')
     setDirectorNameTypedInput('')
     setVoiceMode(true)
     setAudioStatus('loading')
     setAudioWarning(null)
+
+    // Resolve director name: welcome screen text input → profile.display_name → null
+    const resolvedName = resolveDirectorName(welcomeNameInput, directorProfileName)
+    resolvedNameRef.current = resolvedName
+    setDirectorDisplayName(resolvedName ?? '')
 
     const ok = await realtimeVoice.connect()
 
@@ -1367,31 +1538,55 @@ export function DirectorInterviewAssistant({
       return
     }
 
-    // Connected — speak guided intro first (not a question, no ActivePromptCard).
-    // After intro finishes, immediately transition to the name prompt.
+    // Connected — speak personalized welcome first (GuideIntroCard, not ActivePromptCard).
+    // First spoken word is always "Welcome." per AssistantPromptContract spec.
+    const welcomeText = buildPersonalizedWelcomeText(resolvedName, academyName)
     setPreflightPhase('guided_intro')
-    setPreflightAssistantText(GUIDED_INTRO_TEXT)
+    setPreflightAssistantText(welcomeText)
     setDebugWelcomeSent(true)
     setIsSpeaking(true)
     setAudioStatus('speaking')
-    speakWithTracking(GUIDED_INTRO_TEXT, () => {
+    speakWithTracking(welcomeText, () => {
       setIsSpeaking(false)
       setAudioStatus('ready')
-      // Intro done — now ask for the director's name.
-      // speakPrompt sets activeVoicePrompt BEFORE speaking — name question is visible on screen.
-      setPreflightPhase('name_speaking')
-      setPreflightAssistantText(NAME_VOICE_PROMPT.questionText)
+      // Welcome done — go directly to Q1 (no name-capture, no preflight Q&A).
+      // hasSentWelcomeRef prevents auto-speak useEffect from re-speaking Q1 after setStep(0).
+      hasSentWelcomeRef.current = true
+      setDebugFirstRequested(true)
+
+      const contract = buildAssistantPromptContract(0, resolvedNameRef.current, academyName)
+      const interviewPrompt = buildInterviewPrompt(0, resolvedNameRef.current, academyName)
+      setPreflightPhase('ready_for_question_one')
+      setActiveVoicePrompt(interviewPrompt)
+      setLastSpokenQuestionText(contract.exactQuestionText ?? '')
       setIsSpeaking(true)
       setAudioStatus('speaking')
-      speakPrompt(NAME_VOICE_PROMPT, NAME_VOICE_PROMPT.questionText, () => {
+
+      // QA guard: verify spokenText includes exactQuestionText before speaking
+      if (process.env.NODE_ENV !== 'production') {
+        const exactQ = contract.exactQuestionText ?? ''
+        if (exactQ && !contract.spokenText.includes(exactQ)) {
+          console.warn('Assistant prompt mismatch: spoken text does not include exact screen question.', {
+            spokenText: contract.spokenText,
+            exactQuestionText: exactQ,
+          })
+        }
+      }
+
+      speakWithTracking(contract.spokenText, () => {
         setIsSpeaking(false)
         setAudioStatus('ready')
-        setPreflightPhase('awaiting_name_answer')
+        setPreflightPhase('idle')
+        setStep(0)
       })
     })
   }
 
   function startTypeInterview() {
+    // Resolve name so the interview summary card shows the director's name
+    const resolvedName = resolveDirectorName(welcomeNameInput, directorProfileName)
+    resolvedNameRef.current = resolvedName
+    setDirectorDisplayName(resolvedName ?? '')
     setVoiceMode(false)
     setAudioStatus('idle')
     setAudioWarning(null)
@@ -1564,14 +1759,26 @@ export function DirectorInterviewAssistant({
       .join('; ') || null,
   }
 
-  // QA: screen question text — what ActivePromptCard currently shows
+  // QA: exact question text shown on screen (the locked, canonical question)
   const screenQuestionText =
-    activeVoicePrompt?.kind === 'interview' ? (activeVoicePrompt.questionText ?? null) : null
-  // QA: spoken question text — last pure question text sent to voice (set in auto-speak useEffect)
-  const questionTextMatchesScreen =
+    activeVoicePrompt?.kind === 'interview'
+      ? (activeVoicePrompt.exactQuestionText ?? activeVoicePrompt.questionText ?? null)
+      : null
+  // QA: spokenIncludesExactQuestion — spoken text (with lead-in) must include the exact question
+  const spokenIncludesExactQuestion =
     lastSpokenQuestionText && screenQuestionText
-      ? lastSpokenQuestionText === screenQuestionText
+      ? lastSpokenQuestionText.includes(screenQuestionText)
       : null // null = no comparison yet (not on an interview step)
+  // Sprint 239 compat alias
+  const questionTextMatchesScreen = spokenIncludesExactQuestion
+
+  // Sprint 241 — contract debug fields derived from activeVoicePrompt
+  const activePromptContractId =
+    activeVoicePrompt?.kind === 'interview' ? (activeVoicePrompt.id ?? null) : null
+  const contractScreenText =
+    activeVoicePrompt?.kind === 'interview' ? (activeVoicePrompt.spokenText ?? null) : null
+  const contractExactQuestionText =
+    activeVoicePrompt?.kind === 'interview' ? (activeVoicePrompt.exactQuestionText ?? null) : null
 
   // ── Shared debug panel props ─────────────────────────────────────────────────
   const debugPanelProps = {
@@ -1608,6 +1815,12 @@ export function DirectorInterviewAssistant({
     spokenQuestionText: lastSpokenQuestionText || null,
     screenQuestionText,
     questionTextMatchesScreen,
+    // Sprint 241 — AssistantPromptContract debug fields
+    activePromptContractId,
+    contractScreenText,
+    contractSpokenText: lastSpokenQuestionText || null,
+    contractExactQuestionText,
+    spokenIncludesExactQuestion,
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -1635,8 +1848,8 @@ export function DirectorInterviewAssistant({
           <GuideIntroCard text={preflightAssistantText || GUIDED_INTRO_TEXT} isSpeaking={isSpeaking} />
         )}
 
-        {/* Assistant opening explanation bubble — shown after guided intro (preflight/opening) */}
-        {preflightPhase !== 'guided_intro' && (
+        {/* Assistant opening explanation bubble — shown after guided intro, hidden during Q1 transition */}
+        {preflightPhase !== 'guided_intro' && preflightPhase !== 'ready_for_question_one' && preflightAssistantText && (
           <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-lime/15 space-y-1.5">
             <div className="flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
@@ -1646,13 +1859,13 @@ export function DirectorInterviewAssistant({
               )}
             </div>
             <p className="text-sm text-text-secondary leading-relaxed">
-              {preflightAssistantText || OPENING_SCRIPT}
+              {preflightAssistantText}
             </p>
           </div>
         )}
 
         {/* Active Prompt Card — always visible when a question prompt is active */}
-        {activeVoicePrompt && preflightPhase !== 'ready_for_question_one' && (
+        {activeVoicePrompt && (
           <ActivePromptCard prompt={activeVoicePrompt} />
         )}
 
@@ -1845,15 +2058,20 @@ export function DirectorInterviewAssistant({
                 stopAssistantSpeech()
                 setIsSpeaking(false)
                 setAudioStatus('ready')
-                // Skip intro → go straight to name prompt
-                setPreflightPhase('name_speaking')
-                setPreflightAssistantText(NAME_VOICE_PROMPT.questionText)
+                // Skip welcome → go straight to Q1 (no name capture, no preflight Q&A)
+                hasSentWelcomeRef.current = true
+                const contract = buildAssistantPromptContract(0, resolvedNameRef.current, academyName)
+                const interviewPrompt = buildInterviewPrompt(0, resolvedNameRef.current, academyName)
+                setPreflightPhase('ready_for_question_one')
+                setActiveVoicePrompt(interviewPrompt)
+                setLastSpokenQuestionText(contract.exactQuestionText ?? '')
                 setIsSpeaking(true)
                 setAudioStatus('speaking')
-                speakPrompt(NAME_VOICE_PROMPT, NAME_VOICE_PROMPT.questionText, () => {
+                speakWithTracking(contract.spokenText, () => {
                   setIsSpeaking(false)
                   setAudioStatus('ready')
-                  setPreflightPhase('awaiting_name_answer')
+                  setPreflightPhase('idle')
+                  setStep(0)
                 })
               }}
               className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
@@ -2060,6 +2278,29 @@ export function DirectorInterviewAssistant({
             </div>
           ))}
         </div>
+
+        {/* Director name — show profile name greeting or text input for name capture */}
+        {directorProfileName ? (
+          <div className="px-4 py-3 rounded-xl bg-surface border border-border/60">
+            <p className="text-[10px] text-text-muted uppercase tracking-widest mb-1">Director</p>
+            <p className="text-sm text-text-primary">{directorProfileName}</p>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <label className="label-xs" htmlFor="welcome-name-input">
+              What should your assistant call you? <span className="text-text-muted">(optional)</span>
+            </label>
+            <input
+              id="welcome-name-input"
+              type="text"
+              value={welcomeNameInput}
+              onChange={e => setWelcomeNameInput(e.target.value)}
+              maxLength={60}
+              placeholder="Your first name…"
+              className="w-full text-sm bg-surface-raised border border-border rounded-xl px-3 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/50 transition-colors"
+            />
+          </div>
+        )}
 
         {/* Audio warning */}
         {audioWarning && (
@@ -2450,7 +2691,10 @@ export function DirectorInterviewAssistant({
       {!voiceMode && ttsSupported && (
         <button
           type="button"
-          onClick={() => speakAssistant(getStepQuestion(step))}
+          onClick={() => {
+            const contract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
+            speakAssistant(contract.spokenText)
+          }}
           className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
         >
           <Volume2 className="w-3.5 h-3.5 text-lime" />

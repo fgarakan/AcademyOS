@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-13 — Sprint 241: Academy Setup Personalized Welcome + Question Contract V1
+
+**Files created:** none
+
+**Files modified:**
+- `src/app/director/onboarding/interview/interviewSteps.ts` — Added `casualLeadIn` field to `InterviewStep` interface; added lead-in values for all 7 steps.
+- `src/app/api/director/interview/realtime-session/route.ts` — Updated OpenAI session `instructions` to enforce question lock, conductor rule, and warm redirect behavior.
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — Added `AssistantPromptContract` type; updated `ActiveVoicePrompt` with Sprint 241 fields; added `resolveDirectorName`, `buildPersonalizedWelcomeText`, `buildAssistantPromptContract`; updated `buildInterviewPrompt`; updated `ActivePromptCard` to show contract-based UI; added `welcomeNameInput` state and `resolvedNameRef`; updated `startVoiceInterview` to speak personalized welcome then Q1 directly; updated `startTypeInterview`, `repeatQuestion`, `switchToTypeModePreflight`; updated auto-speak useEffect with contract + QA guard; added contract debug fields to `RealtimeDebugPanel`; added name input to welcome static screen.
+
+**TypeScript validation:** clean — `npx tsc --noEmit` passed with 0 errors.
+
+---
+
 ## 2026-05-13 — Sprint 240: Curriculum Setup Builder Shared Entry V1
 
 **Why this was needed:**
