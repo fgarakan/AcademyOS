@@ -2,6 +2,48 @@
 
 ---
 
+## 2026-05-14 — Sprint 314: Academy Setup Prompt Reader Contract + Read-Aloud Guarantee V1
+
+**Goal:** Guarantee that Academy Setup always reads the exact prompt shown on screen. Voice output is non-authoritative. Workflow continues regardless of audio state.
+
+**Root cause of prompt mismatch (name duplication):**
+`buildAssistantPromptContract()` added `namePrefix = "${directorName}, "` to the lead-in text of every question. When `startVoiceInterview()` (Sprint 313) passed `pendingAckRef = "Welcome, Brian."` to the step useEffect, the combined text became: `"Welcome, Brian. Brian, Let's start high-level. [question]"` — the name was spoken twice. Fix: removed `namePrefix` from `buildAssistantPromptContract`. Name appears once in the welcome greeting only.
+
+**Root cause of prompt divergence:**
+`buildAssistantPromptContract`, `buildInterviewPrompt`, `buildCurrentQuestionContract`, and `getStepQuestion` were all separate builders that could produce different text. The step useEffect, `repeatQuestion`, and the typed-mode "Play question" button each called different builders. Any one of them could drift from the others.
+
+**Fix — AcademySetupPromptContract (Phase 2+3):**
+- Added `AcademySetupPromptContract` type: `{ stepIndex, sectionLabel, visibleQuestion, spokenText, whyThisMatters, answerTarget }`
+- Added `buildStepContract(stepIndex, academyName)`: single canonical builder, no name prefix, integrity guard fires in dev when `spokenText` does not include `visibleQuestion` verbatim
+- Added `currentStepContract` derived value: computed once per step, used by all UI and voice paths
+- Step useEffect rewritten to use `buildStepContract` — `setActiveVoicePrompt` now uses `contract.visibleQuestion` as `exactQuestionText` and `questionText`
+
+**Fix — Play question / Repeat (Phase 5):**
+- `repeatQuestion()` rewritten to use `buildStepContract` with `[AcademySetupReadAloud]` logging (stepIndex, visibleQuestion, spokenText, voiceMode)
+- "Repeat" button renamed to "Play question" in voice mode controls
+- Typed-mode "Play question" button updated to use `currentStepContract.spokenText` with same logging
+- Both show "Voice could not play. The exact question is shown below." on audio failure
+
+**Fix — confirmCurrentAnswer (Phase 7):**
+- Added `confirmCurrentAnswer(answerText)`: validates, saves to `answerTarget`, clears state, increments step exactly once, logs `[AcademySetupFlow] answerConfirmed`
+- "Use this answer" button in voice review panel now calls `confirmCurrentAnswer(currentAnswer.custom)`
+
+**Fix — question display (Phase 3):**
+- Typed-mode question `<h2>` now uses `currentStepContract.visibleQuestion` as canonical source
+
+**Dev proof panel (Phase 4+9):**
+- `<details>` block in ANSWERING PHASE shows: stepIndex, answerTarget, visibleQuestion, spokenText, match PASS/FAIL, lastAttemptedRead
+- Mismatch shows red warning text
+
+**No migrations. No authority changes. No DB changes.**
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — AcademySetupPromptContract type; buildStepContract function; namePrefix removal; currentStepContract derived value; step useEffect rewrite; repeatQuestion rewrite; confirmCurrentAnswer function; Play question button/logging; question display update; dev proof panel
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Sprint 313: Academy Setup Screen-First + Voice Gate Removal V1
 
 **Goal:** Make Academy Setup deterministic and screen-first. Voice output is optional and informational — it must never gate the workflow, block step transitions, or require confirmation before the director can answer.

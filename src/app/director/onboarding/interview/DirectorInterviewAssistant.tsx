@@ -184,6 +184,19 @@ type PreflightPhase =
   | 'answering_preflight_question'
   | 'ready_for_question_one'
 
+// Sprint 314 — AcademySetupPromptContract is the authoritative per-step contract.
+// ALL UI and voice paths must derive text from this object — never from separate strings.
+// visibleQuestion is shown on screen verbatim. spokenText includes visibleQuestion exactly.
+// Name prefix is deliberately excluded — name belongs in the ack/greeting only.
+type AcademySetupPromptContract = {
+  stepIndex: number
+  sectionLabel: string
+  visibleQuestion: string  // exact screen question — no lead-in, no name prefix
+  spokenText: string       // includes visibleQuestion exactly; may prepend short lead-in
+  whyThisMatters: string
+  answerTarget: InterviewField
+}
+
 // ─── Assistant Prompt Contract — single source of truth for every spoken + shown question ─
 // The app always builds this contract before speaking. Screen and voice use the same contract.
 type AssistantPromptContract = {
@@ -281,8 +294,9 @@ function buildAssistantPromptContract(
   const s = INTERVIEW_STEPS[stepIndex]
   const exactQ = s.spokenQuestion ?? s.question
   const libraryLeadIn = getSpeechPhrase(NATURAL_QUESTION_LEAD_INS, stepIndex)
-  const namePrefix = directorName ? `${directorName}, ` : ''
-  const leadInText = `${namePrefix}${libraryLeadIn}`.trim()
+  // Sprint 314: name prefix removed — name belongs in the ack/greeting only, not per-question.
+  // Previously: namePrefix caused "Welcome, Brian. Brian, Let's start..." duplication.
+  const leadInText = libraryLeadIn || ''
   const spokenText = leadInText ? `${leadInText} ${exactQ}` : exactQ
   return {
     id: s.id,
@@ -380,6 +394,35 @@ function buildPreflightFAQResponse(text: string): string {
     return "About three minutes — seven short questions, one at a time."
   }
   return "This helps Academy OS understand your academy's teaching style so it can organize your curriculum, templates, and coach workflows around the way your academy actually works."
+}
+
+// Sprint 314 — AcademySetupPromptContract builder.
+// Single source of truth for screen text and spoken text for every setup step.
+// Name prefix intentionally excluded — name appears once in the welcome ack, not per-question.
+// Integrity guard fires in dev when spokenText does not contain visibleQuestion verbatim.
+function buildStepContract(
+  stepIndex: number,
+  academyName: string | undefined,
+): AcademySetupPromptContract {
+  const s = INTERVIEW_STEPS[stepIndex]
+  const visibleQuestion = s.spokenQuestion ?? s.question
+  const leadIn = getSpeechPhrase(NATURAL_QUESTION_LEAD_INS, stepIndex)
+  const spokenText = leadIn ? `${leadIn} ${visibleQuestion}` : visibleQuestion
+  if (process.env.NODE_ENV !== 'production' && !spokenText.includes(visibleQuestion)) {
+    console.warn('[AcademySetupPromptContract] spokenText does not include visibleQuestion', {
+      stepIndex,
+      visibleQuestion,
+      spokenText,
+    })
+  }
+  return {
+    stepIndex,
+    sectionLabel: s.stepLabel,
+    visibleQuestion,
+    spokenText,
+    whyThisMatters: s.whyItMatters,
+    answerTarget: s.field,
+  }
 }
 
 // ─── Current question contract ───────────────────────────────────────────────
@@ -1649,33 +1692,31 @@ export function DirectorInterviewAssistant({
     const ack = pendingAckRef.current
     pendingAckRef.current = null
 
-    // Build AssistantPromptContract — single source of truth for screen and voice
-    const promptContract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
-    const exactQ = promptContract.exactQuestionText ?? ''
-    const baseSpokenText = promptContract.spokenText // includes casual lead-in
-    const textToSpeak = ack ? `${ack} ${baseSpokenText}` : baseSpokenText
+    // Sprint 314: single prompt contract — screen and voice use the same object.
+    // buildStepContract has no name prefix — name belongs in ack/greeting only.
+    const contract = buildStepContract(step, academyName)
+    const textToSpeak = ack ? `${ack} ${contract.spokenText}` : contract.spokenText
 
-    // Track full spoken text (with lead-in) for QA guard and debug panel
-    setLastSpokenQuestionText(baseSpokenText)
-
-    // QA guard: spokenText must include exactQuestionText
-    if (process.env.NODE_ENV !== 'production') {
-      const spokenIncludesExact = baseSpokenText.includes(exactQ)
-      if (!spokenIncludesExact) {
-        console.warn('Assistant prompt mismatch: spoken text does not include exact screen question.', {
-          spokenText: baseSpokenText,
-          exactQuestionText: exactQ,
-          step,
-        })
-      }
-    }
+    setLastSpokenQuestionText(contract.spokenText)
+    console.log('[AcademySetupReadAloud] stepEntry | stepIndex:', step,
+      '| visibleQuestion:', contract.visibleQuestion.slice(0, 60),
+      '| textToSpeak:', textToSpeak.slice(0, 80),
+      '| ack:', ack?.slice(0, 30) ?? 'none')
 
     // Set active prompt before voice — question must be visible before voice starts.
-    const basePrompt = buildInterviewPrompt(step, resolvedNameRef.current, academyName)
-    const voicePromptWithTransition: ActiveVoicePrompt = ack && basePrompt.spokenText
-      ? { ...basePrompt, spokenText: `${ack} ${basePrompt.spokenText}` }
-      : basePrompt
-    setActiveVoicePrompt(voicePromptWithTransition)
+    const currentS = INTERVIEW_STEPS[step]
+    setActiveVoicePrompt({
+      id: currentS.id,
+      kind: 'interview',
+      questionText: contract.visibleQuestion,
+      helperText: contract.whyThisMatters,
+      spokenText: textToSpeak,
+      exactQuestionText: contract.visibleQuestion,
+      moduleTitle: contract.sectionLabel,
+      questionNumber: step + 1,
+      totalQuestions: INTERVIEW_STEPS.length,
+      whyThisMatters: contract.whyThisMatters,
+    })
 
     // Sprint 313: Listening begins immediately — screen is the source of truth.
     // Voice output is informational only — updates voiceOutputState but does NOT gate workflow.
@@ -1817,23 +1858,39 @@ export function DirectorInterviewAssistant({
 
   // ── Voice controls ──────────────────────────────────────────────────────────
   function repeatQuestion() {
+    if (step < 0 || step >= INTERVIEW_STEPS.length) return
     stopAssistantSpeech()
-    setVoiceAnswerPhase('listening_for_answer') // reset — question is being re-spoken
+    setVoiceAnswerPhase('listening_for_answer')
+    const contract = buildStepContract(step, academyName)
+    const currentS = INTERVIEW_STEPS[step]
+    console.log('[AcademySetupReadAloud] playQuestion | stepIndex:', step,
+      '| visibleQuestion:', contract.visibleQuestion.slice(0, 60),
+      '| spokenText:', contract.spokenText.slice(0, 80),
+      '| voiceMode:', voiceMode)
+    setActiveVoicePrompt({
+      id: currentS.id,
+      kind: 'interview',
+      questionText: contract.visibleQuestion,
+      helperText: contract.whyThisMatters,
+      spokenText: contract.spokenText,
+      exactQuestionText: contract.visibleQuestion,
+      moduleTitle: contract.sectionLabel,
+      questionNumber: step + 1,
+      totalQuestions: INTERVIEW_STEPS.length,
+      whyThisMatters: contract.whyThisMatters,
+    })
     setIsSpeaking(true)
     setAudioStatus('speaking')
-    const contract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
-    const text = contract.spokenText
-    setActiveVoicePrompt(buildInterviewPrompt(step, resolvedNameRef.current, academyName))
     if (isRealtimeConnectedRef.current && !browserVoiceModeRef.current) {
-      speakWithTracking(text, () => {
-        setIsSpeaking(false)
-        setVoiceAnswerPhase('listening_for_answer')
-      })
+      speakWithTracking(contract.spokenText,
+        () => { setIsSpeaking(false); setAudioStatus('ready'); setVoiceAnswerPhase('listening_for_answer') },
+        () => { setIsSpeaking(false); setAudioStatus('ready'); setAudioWarning('Voice could not play. The exact question is shown below.') },
+      )
     } else {
-      setLastSpokenAssistantText(text)
-      speakAssistant(text, {
-        onEnd: () => { setIsSpeaking(false); setVoiceAnswerPhase('listening_for_answer') },
-        onError: () => setAudioWarning("Audio didn't play. Check browser sound."),
+      setLastSpokenAssistantText(contract.spokenText)
+      speakAssistant(contract.spokenText, {
+        onEnd: () => { setIsSpeaking(false); setAudioStatus('ready'); setVoiceAnswerPhase('listening_for_answer') },
+        onError: () => { setIsSpeaking(false); setAudioStatus('ready'); setAudioWarning('Voice could not play. The exact question is shown below.') },
       })
     }
   }
@@ -2032,6 +2089,38 @@ export function DirectorInterviewAssistant({
     setPhase('answering')
   }
 
+  // Sprint 314 — confirmCurrentAnswer: the ONLY path that advances the setup step.
+  // Validates answer text, saves to answerTarget, clears transcript state, increments step.
+  // Called by "Use this answer" button in the voice review panel.
+  function confirmCurrentAnswer(answerText: string) {
+    const trimmed = answerText.trim()
+    if (step < 0 || step >= INTERVIEW_STEPS.length) return
+    const s = INTERVIEW_STEPS[step]
+    const stepBefore = step
+    const stepAfter = step === INTERVIEW_STEPS.length - 1 ? 7 : step + 1
+    stopAssistantSpeech()
+    if (trimmed) {
+      setAnswers(prev => ({ ...prev, [s.field]: { ...prev[s.field], custom: trimmed } }))
+    }
+    setPendingAnswerTranscript('')
+    setVoiceAnswerPhase('idle')
+    setVoiceOutputState('idle')
+    setAudioWarning(null)
+    realtimeVoice.clearUserTranscript()
+    lastAppliedTranscriptRef.current = ''
+    if (voiceMode && step < INTERVIEW_STEPS.length - 1) {
+      pendingAckRef.current = getSpeechPhrase(NATURAL_TRANSITION_PHRASES, step)
+    }
+    console.log('[AcademySetupFlow] answerConfirmed | stepBefore:', stepBefore,
+      '| stepAfter:', stepAfter, '| answerTarget:', s.field, '| answerLen:', trimmed.length)
+    if (step === INTERVIEW_STEPS.length - 1) {
+      setStep(7)
+    } else {
+      setStep(prev => prev + 1)
+    }
+    setPhase('answering')
+  }
+
   function editAnswer() {
     setVoiceAnswerPhase('idle')
     setPhase('answering')
@@ -2125,6 +2214,12 @@ export function DirectorInterviewAssistant({
   }
 
   // ── Top-level derived values (available across all render branches) ──────────
+
+  // Sprint 314 — single prompt contract for current step. ALL UI and voice paths use this.
+  const currentStepContract: AcademySetupPromptContract | null =
+    step >= 0 && step < INTERVIEW_STEPS.length
+      ? buildStepContract(step, academyName)
+      : null
 
   // Answers count — how many steps have at least one chip or custom text
   const capturedAnswersCount = INTERVIEW_STEPS.filter(
@@ -3188,8 +3283,8 @@ export function DirectorInterviewAssistant({
               disabled={isSpeaking}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors disabled:opacity-40"
             >
-              <RefreshCw className="w-3 h-3" />
-              Repeat
+              <Volume2 className="w-3 h-3 text-lime" />
+              Play question
             </button>
             {isSpeaking && (
               <button
@@ -3258,8 +3353,14 @@ export function DirectorInterviewAssistant({
         <button
           type="button"
           onClick={() => {
-            const contract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
-            speakAssistant(contract.spokenText)
+            if (!currentStepContract) return
+            console.log('[AcademySetupReadAloud] playQuestion | stepIndex:', step,
+              '| visibleQuestion:', currentStepContract.visibleQuestion.slice(0, 60),
+              '| spokenText:', currentStepContract.spokenText.slice(0, 80),
+              '| voiceMode: false')
+            speakAssistant(currentStepContract.spokenText, {
+              onError: () => setAudioWarning('Voice could not play. The exact question is shown below.'),
+            })
           }}
           className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
         >
@@ -3405,7 +3506,7 @@ export function DirectorInterviewAssistant({
             <p className="text-xs text-text-secondary leading-relaxed">{currentStep.helperCopy}</p>
           </div>
           <h2 className="text-base font-semibold text-text-primary leading-snug">
-            {getStepQuestion(step)}
+            {currentStepContract?.visibleQuestion ?? getStepQuestion(step)}
           </h2>
         </div>
       )}
@@ -3520,7 +3621,7 @@ export function DirectorInterviewAssistant({
           <p className="label-xs text-text-muted">Confirmation</p>
           <button
             type="button"
-            onClick={acceptAnswer}
+            onClick={() => confirmCurrentAnswer(currentAnswer.custom)}
             className={`w-full ${BTN_LIME}`}
           >
             {isLast ? 'Use this answer — show review' : 'Use this answer'}
@@ -3586,6 +3687,33 @@ export function DirectorInterviewAssistant({
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Sprint 314 — Dev-only prompt proof panel */}
+      {process.env.NODE_ENV !== 'production' && currentStepContract && (
+        <details className="mt-1">
+          <summary className="cursor-pointer text-[9px] text-text-muted hover:text-text-secondary select-none">
+            ▶ Prompt Contract Proof (Sprint 314)
+          </summary>
+          <div className="mt-1 p-2 rounded-lg bg-surface border border-border text-[9px] font-mono space-y-1">
+            <p>stepIndex: <span className="text-lime">{currentStepContract.stepIndex}</span></p>
+            <p>answerTarget: <span className="text-text-secondary">{currentStepContract.answerTarget}</span></p>
+            <p className="break-words">visibleQuestion: <span className="text-text-secondary">{currentStepContract.visibleQuestion}</span></p>
+            <p className="break-words">spokenText: <span className="text-text-muted">{currentStepContract.spokenText.slice(0, 120)}</span></p>
+            <p>
+              match:{' '}
+              <span className={currentStepContract.spokenText.includes(currentStepContract.visibleQuestion) ? 'text-status-green font-semibold' : 'text-status-red font-semibold'}>
+                {currentStepContract.spokenText.includes(currentStepContract.visibleQuestion) ? 'PASS' : 'FAIL — mismatch!'}
+              </span>
+            </p>
+            <p className="break-words">lastAttemptedRead: <span className="text-text-muted">{lastSpokenAssistantText.slice(0, 80) || '—'}</span></p>
+          </div>
+          {!currentStepContract.spokenText.includes(currentStepContract.visibleQuestion) && (
+            <p className="text-[10px] text-status-red mt-1 px-1 font-semibold">
+              [Dev] Prompt mismatch: spokenText does not contain visibleQuestion verbatim.
+            </p>
+          )}
+        </details>
+      )}
 
       {process.env.NODE_ENV !== 'production' && (
         <RealtimeDebugPanel {...debugPanelProps} />
