@@ -2,6 +2,42 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 275-277: Donna Director Intelligence Layer V1
+
+**Why this sprint:**
+Sprints 275-277 wire three high-value director workflows as fully guided Donna tasks — each drafts a `proposed_actions` row for director review. No live mutations, no external communications, no level movements, no curriculum changes.
+
+**Sprint 275 — Parent-Safe Communication Drafting:**
+Wires `draft_parent_update`. Donna collects player + update focus, fetches `player.first_name` (safe field), builds a parent-safe draft via the LOCKED `buildParentSupportGuidanceDraft` from `parentSafeResponseRules.ts`. Draft saved to `proposed_actions (target_module: 'parent_communication')`. Message is never sent; `show_to_parent`/`show_to_student` never touched; raw internal notes never exposed.
+
+**Sprint 276 — Level Readiness + Player Progress Recommendation:**
+Wires `review_level_readiness`. Donna reads `player_curriculum_states` and the latest `assessments` record (sequential queries, rawDb-scoped to academy_id) to build a deterministic evidence/missing-evidence summary. Saved to `proposed_actions (target_module: 'level_review')`. Player level is never moved; player profile is never updated; no notifications sent.
+
+**Sprint 277 — Curriculum Adjustment Assistant:**
+Wires `adjust_curriculum`. Donna collects adjustment_type, target_level, proposed_change, and optional reason. Saved to `proposed_actions (target_module: 'curriculum_adjustment')`. No curriculum table is written; no template, player requirement, or session is modified.
+
+**Files created:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — Three server actions: `saveParentUpdateDraftAction` (Sprint 275), `saveLevelReadinessDraftAction` (Sprint 276), `saveCurriculumAdjustmentDraftAction` (Sprint 277); all follow the `voice_commands → proposed_actions` two-step insert pattern; auth + director/head_coach check; `isPreviewMode()` guard; rawDb for TS2589; no AI, no Realtime, no migrations
+
+**Files modified:**
+- `src/components/assistant/donnaApprovalExecutionTypes.ts` — Added `'parent_update_draft'`, `'level_readiness_draft'`, `'curriculum_adjustment_draft'` to `DonnaExecutableDraftType`
+- `src/components/assistant/donnaTaskContracts.ts` — Flipped `saveApplyMethodStatus` to `'wired'` for `draft_parent_update`, `review_level_readiness`, `adjust_curriculum`
+- `src/components/assistant/donnaDraftContracts.ts` — Flipped `saveWireStatus` to `'wired'`; corrected misleading `approvalActionLabel` values: `parent_update_draft` → `'Save Parent Draft'`, `level_readiness_draft` → `'Submit for Review'`, `curriculum_adjustment_draft` → `'Submit for Review'`
+- `src/components/assistant/DonnaAssistantButton.tsx` — Imported three new actions; added `'draft_parent_update'`, `'review_level_readiness'`, `'adjust_curriculum'` to `WIRED_TASK_IDS`; added three handlers in `handleGenericDraftApprove`
+- `src/components/assistant/GenericDraftPanel.tsx` — Added "What will be saved" safety blocks for `draft_parent_update`, `review_level_readiness`, `adjust_curriculum` (draft-only, saved for director review, no communications sent, no visibility flags changed, no level movement, no curriculum changes, director approval required)
+
+**Safety guarantees:**
+- All three actions save only to `proposed_actions` — no live curriculum, player profile, or parent-facing data is changed
+- `parentSafeResponseRules.ts` imported but not modified (LOCKED module)
+- `buildParentSupportGuidanceDraft` called without `observationText` — raw internal notes are never passed to the parent draft builder
+- `_resolved_player_id` required for Sprint 275 and 276; text-only player names are rejected at the server action layer
+- No migrations; no OpenAI/API; no Realtime; no service role; no RLS bypass
+- Existing flows preserved: attendance exception, create_fitness_template, capture_coach_note, draft_player_note, create_session, populate_session_from_template, review queue, class template, object resolution
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with zero errors.
+
+---
+
 ## 2026-05-14 — Mega Sprint 274: Donna Attendance Exception Workflow V1
 
 **Why this sprint:**

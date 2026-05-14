@@ -53,6 +53,12 @@ import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaA
 import { getDonnaReviewQueueAction } from '@/app/director/_actions/donnaReviewQueueActions'
 // Sprint 274 — Attendance Exception Workflow
 import { saveAttendanceExceptionDraftAction } from '@/app/director/_actions/donnaAttendanceActions'
+// Sprint 275-277 — Director Intelligence Layer
+import {
+  saveParentUpdateDraftAction,
+  saveLevelReadinessDraftAction,
+  saveCurriculumAdjustmentDraftAction,
+} from '@/app/director/_actions/donnaDirectorIntelligenceActions'
 import type { DonnaReviewQueueSummary } from '@/components/assistant/donnaReviewQueueTypes'
 import { DonnaReviewQueuePanel } from '@/components/assistant/DonnaReviewQueuePanel'
 // Sprint 269 — Safe Object Resolution
@@ -81,6 +87,9 @@ const WIRED_TASK_IDS = new Set<DonnaTaskId>([
   'populate_session_from_template',
   'draft_player_note',
   'handle_attendance_exception',
+  'draft_parent_update',
+  'review_level_readiness',
+  'adjust_curriculum',
 ])
 
 // ---------------------------------------------------------------------------
@@ -635,6 +644,23 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         fields._resolved_session_id = resolvedObjects['session_or_group'].id
       }
       return saveAttendanceExceptionDraftAction(fields)
+    }
+    if (draft.taskId === 'draft_parent_update') {
+      const fields: Record<string, string> = { ...draft.collectedFields }
+      if (resolvedObjects['player']?.id) {
+        fields._resolved_player_id = resolvedObjects['player'].id
+      }
+      return saveParentUpdateDraftAction(fields)
+    }
+    if (draft.taskId === 'review_level_readiness') {
+      const fields: Record<string, string> = { ...draft.collectedFields }
+      if (resolvedObjects['player']?.id) {
+        fields._resolved_player_id = resolvedObjects['player'].id
+      }
+      return saveLevelReadinessDraftAction(fields)
+    }
+    if (draft.taskId === 'adjust_curriculum') {
+      return saveCurriculumAdjustmentDraftAction(draft.collectedFields)
     }
     return {
       ok: false,

@@ -187,9 +187,9 @@ export const DONNA_DRAFT_CONTRACTS: Record<DonnaDraftType, DonnaDraftContract> =
     affectedObjects: ['parent_update', 'player_profile'],
     visibilityImpact: 'Director only until explicitly approved and sent — parent never sees draft',
     approvalRequired: true,
-    approvalActionLabel: 'Approve and Schedule',
+    approvalActionLabel: 'Save Parent Draft',
     cancelActionLabel: 'Discard Update',
-    saveWireStatus: 'not_wired_yet',
+    saveWireStatus: 'wired',
   },
 
   player_note_draft: {
@@ -229,9 +229,9 @@ export const DONNA_DRAFT_CONTRACTS: Record<DonnaDraftType, DonnaDraftContract> =
     affectedObjects: ['curriculum'],
     visibilityImpact: 'Director only — curriculum data unchanged until approved',
     approvalRequired: true,
-    approvalActionLabel: 'Apply Curriculum Change',
+    approvalActionLabel: 'Submit for Review',
     cancelActionLabel: 'Discard Proposal',
-    saveWireStatus: 'not_wired_yet',
+    saveWireStatus: 'wired',
   },
 
   attendance_exception_draft: {
@@ -273,9 +273,9 @@ export const DONNA_DRAFT_CONTRACTS: Record<DonnaDraftType, DonnaDraftContract> =
     affectedObjects: ['player_profile', 'player_curriculum_states'],
     visibilityImpact: 'Director only — player level unchanged until director explicitly approves',
     approvalRequired: true,
-    approvalActionLabel: 'Approve Advancement',
+    approvalActionLabel: 'Submit for Review',
     cancelActionLabel: 'Hold at Current Level',
-    saveWireStatus: 'not_wired_yet',
+    saveWireStatus: 'wired',
   },
 
   group_creation_draft: {

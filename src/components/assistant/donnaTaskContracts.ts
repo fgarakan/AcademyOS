@@ -227,7 +227,7 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     createsDraftType: 'parent_update_draft',
     approvalRequired: true,
     unsafeWithoutApproval: ['send_parent_message_without_approval', 'expose_raw_coach_notes'],
-    saveApplyMethodStatus: 'not_wired_yet',
+    saveApplyMethodStatus: 'wired',
   },
 
   draft_player_note: {
@@ -277,7 +277,7 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     createsDraftType: 'level_readiness_draft',
     approvalRequired: true,
     unsafeWithoutApproval: ['advance_player_level_without_approval', 'send_advancement_to_parent'],
-    saveApplyMethodStatus: 'not_wired_yet',
+    saveApplyMethodStatus: 'wired',
   },
 
   handle_attendance_exception: {
@@ -324,7 +324,7 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     createsDraftType: 'curriculum_adjustment_draft',
     approvalRequired: true,
     unsafeWithoutApproval: ['modify_curriculum_without_approval', 'publish_curriculum_change'],
-    saveApplyMethodStatus: 'not_wired_yet',
+    saveApplyMethodStatus: 'wired',
   },
 
   create_group: {

@@ -32,3 +32,6 @@ export type DonnaExecutableDraftType =
   | 'session_block_population_draft'
   | 'player_note_draft'
   | 'attendance_exception_draft'
+  | 'parent_update_draft'
+  | 'level_readiness_draft'
+  | 'curriculum_adjustment_draft'

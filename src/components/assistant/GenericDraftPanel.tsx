@@ -483,6 +483,82 @@ export function GenericDraftPanel({
                       </li>
                     </>
                   )}
+                  {draft.taskId === 'draft_parent_update' && (
+                    <>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Draft only — saved for director review, not sent to parent
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        A proposed_actions draft row created in the Review Queue
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Parent and player see nothing — no visibility flags changed
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        show_to_parent and show_to_student are not touched
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        No player level, roster, or billing change
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Director approval required before any external communication
+                      </li>
+                    </>
+                  )}
+                  {draft.taskId === 'review_level_readiness' && (
+                    <>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Readiness review only — player level is NOT changed
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        A proposed_actions draft row created for director decision
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Evidence and missing-evidence summary built from curriculum state and latest assessment
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        No parent, player, or coach notification
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Director must explicitly approve advancement from the Review Queue
+                      </li>
+                    </>
+                  )}
+                  {draft.taskId === 'adjust_curriculum' && (
+                    <>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Proposal only — curriculum data is NOT changed
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        A proposed_actions draft row created for director review
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        No curriculum table, template, or player requirement is modified
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Not visible to parents, players, or coaches
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Director approval required before any curriculum change is applied
+                      </li>
+                    </>
+                  )}
                 </ul>
               </div>
 
