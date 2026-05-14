@@ -44,6 +44,19 @@ import {
   saveCoachNoteDraftAction,
 } from '@/app/director/_actions/donnaDraftExecutionActions'
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
+// Sprint 269 — Safe Object Resolution
+import { DonnaObjectResolverPanel } from '@/components/assistant/DonnaObjectResolverPanel'
+import { resolveDonnaObjectAction } from '@/app/director/_actions/donnaObjectResolutionActions'
+import type {
+  DonnaObjectResolutionResult,
+  DonnaResolvedObjectCandidate,
+} from '@/components/assistant/donnaObjectResolutionTypes'
+import {
+  FIELD_RESOLUTION_MAP,
+  fieldNeedsResolution,
+  looksLikeUserTypedName,
+} from '@/components/assistant/donnaObjectResolutionTypes'
+import { getCurrentPageObject } from '@/components/assistant/donnaCurrentObjectContext'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -202,6 +215,20 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Generic task draft state — contract-only, local only, no DB writes (Sprint 266)
   const [genericDraft, setGenericDraft] = useState<GenericTaskDraft | null>(null)
 
+  // Object resolution state — Sprint 269
+  // Tracks the active resolution request and its result. Never mutates records.
+  const [resolutionContext, setResolutionContext] = useState<{
+    objectType: import('@/components/assistant/donnaObjectResolutionTypes').DonnaResolvableObjectType
+    query: string
+    forFieldId: string
+    result: DonnaObjectResolutionResult | null
+    isLoading: boolean
+  } | null>(null)
+  // Confirmed objects keyed by fieldId — used to merge resolved IDs into the save payload
+  const [resolvedObjects, setResolvedObjects] = useState<
+    Record<string, { id: string; label: string }>
+  >({})
+
   // Page context from registry — resolves to the richest matching context for this route.
   const ctx = resolvePageContext(pathname)
   const voicePrompts = ctx.suggestedPrompts
@@ -225,6 +252,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setContextSummary(null)
     setSuggestions([])
     setIsLoadingContext(false)
+    setResolutionContext(null)
+    setResolvedObjects({})
     lastSpokenTextRef.current = null
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -255,6 +284,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setContextSummary(null)
     setSuggestions([])
     setIsLoadingContext(false)
+    setResolutionContext(null)
+    setResolvedObjects({})
     lastSpokenTextRef.current = null
   }, [pathname])
 
@@ -475,16 +506,43 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setActiveMode(null)
   }
 
-  // Start a guided task for any contract-only task (never create_class_template)
+  // Start a guided task for any contract-only task (never create_class_template).
+  // If the current page is a player/session/template profile, auto-populates
+  // the corresponding field and stores the resolved ID — skips that question.
   function handleStartGenericTask(taskId: DonnaTaskId, fromVoice = false) {
     if (taskId === 'create_class_template') return // always uses TemplateDraftPanel
-    const draft = createEmptyGenericDraft(taskId)
+    let draft = createEmptyGenericDraft(taskId)
+    const newResolvedObjects: Record<string, { id: string; label: string }> = {}
+
+    // Sprint 269: pre-populate from current page object context
+    const pageObject = getCurrentPageObject(pathname)
+    if (pageObject) {
+      const { objectType, objectId, fieldLabel } = pageObject
+      // Find the first field in this task that matches the page object type
+      const taskFieldMap = FIELD_RESOLUTION_MAP[taskId]
+      if (taskFieldMap) {
+        const matchingFieldId = Object.entries(taskFieldMap).find(
+          ([, fType]) => fType === objectType,
+        )?.[0]
+        if (matchingFieldId) {
+          draft = applyAnswerToGenericDraft(draft, matchingFieldId, `${fieldLabel} ✓`)
+          newResolvedObjects[matchingFieldId] = { id: objectId, label: fieldLabel }
+        }
+      }
+    }
+
     setGenericDraft(draft)
+    setResolvedObjects(newResolvedObjects)
     setActiveMode('guided_task')
     setFromVoiceCapture(fromVoice)
     setCommandResponse(null)
+    setResolutionContext(null)
+
+    // Speak the first unanswered question
     const contract = DONNA_TASK_CONTRACTS[taskId]
-    const firstQ = contract?.questionSequence[0] ?? null
+    const firstQ = contract?.questionSequence.find(
+      q => !draft.collectedFields[q.fieldId],
+    ) ?? null
     if (firstQ) speakAssistantText(firstQ.question)
   }
 
@@ -495,7 +553,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   }
 
   // Dispatch to the correct server action for a wired task draft.
-  // Unwired tasks return a not_wired result — GenericDraftPanel handles display.
+  // Merges resolvedObjects (confirmed IDs) into the fields payload before saving.
   async function handleGenericDraftApprove(
     draft: GenericTaskDraft,
   ): Promise<DonnaApprovalExecutionResult> {
@@ -503,12 +561,91 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return saveFitnessTemplateDraftAction(draft.collectedFields)
     }
     if (draft.taskId === 'capture_coach_note') {
-      return saveCoachNoteDraftAction(draft.collectedFields)
+      const fields: Record<string, string> = { ...draft.collectedFields }
+      // Merge confirmed player ID if the director resolved it
+      if (resolvedObjects['player']?.id) {
+        fields._resolved_player_id = resolvedObjects['player'].id
+      }
+      return saveCoachNoteDraftAction(fields)
     }
     return {
       ok: false,
       status: 'not_wired',
       message: 'Save is not yet available for this task type.',
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Object resolution handlers — Sprint 269
+  // ---------------------------------------------------------------------------
+
+  // Called when a draft field is answered and may need object resolution.
+  // Fires a read-only lookup and shows the resolver panel. Never mutates records.
+  async function handleResolveObject(
+    taskId: DonnaTaskId,
+    fieldId: string,
+    query: string,
+  ) {
+    const objectType = fieldNeedsResolution(taskId, fieldId)
+    if (!objectType) return
+    if (!looksLikeUserTypedName(query)) return
+
+    setResolutionContext({
+      objectType,
+      query,
+      forFieldId: fieldId,
+      result: null,
+      isLoading: true,
+    })
+
+    try {
+      const result = await resolveDonnaObjectAction(objectType, query)
+      setResolutionContext(prev =>
+        prev ? { ...prev, result, isLoading: false } : null,
+      )
+    } catch {
+      setResolutionContext(null)
+    }
+  }
+
+  // Called when the director selects a candidate from the resolver panel.
+  function handleSelectResolvedObject(candidate: DonnaResolvedObjectCandidate) {
+    if (!resolutionContext || !genericDraft) {
+      setResolutionContext(null)
+      return
+    }
+    const fieldId = resolutionContext.forFieldId
+    // Update draft field to show confirmed label
+    const confirmedLabel = `${candidate.label} ✓`
+    const updatedDraft = applyAnswerToGenericDraft(genericDraft, fieldId, confirmedLabel)
+    setGenericDraft(updatedDraft)
+    // Store resolved ID separately — never in draft's collectedFields
+    setResolvedObjects(prev => ({
+      ...prev,
+      [fieldId]: { id: candidate.id, label: candidate.label },
+    }))
+    setResolutionContext(null)
+  }
+
+  // Dismiss the resolver panel without selecting anything
+  function handleCancelResolution() {
+    setResolutionContext(null)
+  }
+
+  // Wrapper around setGenericDraft that triggers resolution when a resolvable
+  // field is answered. Called by GenericDraftPanel via onUpdateDraft.
+  function handleUpdateGenericDraft(updatedDraft: GenericTaskDraft) {
+    // Find which field was just answered by comparing with current draft
+    const prevFields = genericDraft?.collectedFields ?? {}
+    const newFields = updatedDraft.collectedFields
+    const newlyAnsweredFieldId = Object.keys(newFields).find(
+      fid => newFields[fid] && !prevFields[fid],
+    )
+    setGenericDraft(updatedDraft)
+    // Trigger resolution for the newly answered field if needed
+    if (newlyAnsweredFieldId) {
+      const value = newFields[newlyAnsweredFieldId]
+      void handleResolveObject(updatedDraft.taskId, newlyAnsweredFieldId, value)
     }
   }
 
@@ -1378,9 +1515,30 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                     : 'Academy Assistant will collect the information — nothing is saved until a save action is available and you explicitly approve.'}
                 </p>
               </div>
+
+              {/* Object resolver panel — shown when a field needs identity confirmation */}
+              {resolutionContext && (
+                <DonnaObjectResolverPanel
+                  result={
+                    resolutionContext.result ?? {
+                      ok: false,
+                      objectType: resolutionContext.objectType,
+                      query: resolutionContext.query,
+                      status: 'error',
+                      candidates: [],
+                      message: 'Loading…',
+                      safetyNotes: [],
+                    }
+                  }
+                  isLoading={resolutionContext.isLoading}
+                  onSelect={handleSelectResolvedObject}
+                  onCancel={handleCancelResolution}
+                />
+              )}
+
               <GenericDraftPanel
                 draft={genericDraft}
-                onUpdateDraft={d => setGenericDraft(d)}
+                onUpdateDraft={handleUpdateGenericDraft}
                 onCancel={handleCancelGenericTask}
                 fromVoice={fromVoiceCapture}
                 isWired={WIRED_TASK_IDS.has(genericDraft.taskId)}

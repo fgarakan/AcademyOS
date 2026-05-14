@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 269: Donna Safe Object Resolution + Confirmation Layer V1
+
+**Why this sprint:**
+Sprints 266–268 built guided task completion and the first two wired saves (`create_fitness_template`, `capture_coach_note`). Coach notes were intentionally saved with `player_id: null` because Donna had no safe way to resolve player names. Sprint 269 builds the safe resolution layer: Donna can now search for real players, groups, coaches, templates, and sessions and show candidates to the director for confirmation — never auto-guessing.
+
+**Files created:**
+- `src/components/assistant/donnaObjectResolutionTypes.ts` — `DonnaResolvableObjectType`, `DonnaResolvedObjectCandidate`, `DonnaObjectResolutionResult`, `FIELD_RESOLUTION_MAP`, `fieldNeedsResolution()`, `looksLikeUserTypedName()`
+- `src/app/director/_actions/donnaObjectResolutionActions.ts` — read-only server action: resolves players (via `v_player_summary`), groups (via `v_group_summary`), coaches (via `academy_memberships` + `profiles`), sessions, class templates, fitness templates; `parent_guardian` deferred; max 5 results; scoped to `academy_id`; never mutates
+- `src/components/assistant/DonnaObjectResolverPanel.tsx` — candidate selection UI: shows label, subtitle, confidence badge, Select button; no auto-select on multiple matches; safety copy; handles loading/no-match/error/not-supported states
+- `src/components/assistant/donnaCurrentObjectContext.ts` — pure pathname parser: extracts `{ objectType, objectId, fieldLabel }` from player/session/template profile routes
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — resolution state (`resolutionContext`, `resolvedObjects`); `handleUpdateGenericDraft` wrapper triggers resolution on field answer; `handleResolveObject`, `handleSelectResolvedObject`, `handleCancelResolution` handlers; `DonnaObjectResolverPanel` rendered in guided-task mode; `handleStartGenericTask` pre-populates player/group/etc. from current page object context; `handleGenericDraftApprove` merges confirmed player ID into `capture_coach_note` save payload
+- `src/app/director/_actions/donnaDraftExecutionActions.ts` — `saveCoachNoteDraftAction` updated to accept `_resolved_player_id` from fields; when present, attaches note directly to the confirmed player record; revalidates player profile path
+- `src/components/assistant/donnaApprovalExecutionTypes.ts` — included in commit (created in Sprint 268 setup, was not staged)
+
+**Object types resolved in this sprint:**
+- `player` — `v_player_summary` ILIKE search on `full_name`, scoped by `academy_id`
+- `group` — `v_group_summary` ILIKE search on `group_name`, scoped by `academy_id`
+- `coach` — `academy_memberships` + `profiles`, active coaches/head coaches/directors only
+- `session` — `sessions` ILIKE on `name`, date fallback, scoped by `academy_id`
+- `class_template` — `templates` ILIKE on `name`, no `fitness_template:true` tag
+- `fitness_template` — `templates` ILIKE on `name`, requires `fitness_template:true` tag
+
+**Object types deferred:**
+- `parent_guardian` — requires `guardians` + `player_guardians` join; deferred to Sprint 270+
+
+**Safety guarantees:**
+- Director must explicitly confirm a candidate — no auto-selection
+- Coach notes still save as `pending_review`; player attachment only when director confirmed via resolver
+- No parent/player communication, no level movement, no curriculum changes, no session publishing
+- All resolution is read-only — no mutations in `donnaObjectResolutionActions.ts`
+- Voice "save it" still does not save directly
+
+**No migrations** — all resolution uses existing tables and views
+**database.types.ts** — untouched
+**No OpenAI/API, no Realtime**
+**TypeScript:** clean
+
+---
+
 ## 2026-05-14 — Mega Sprint 268: Donna Wired Actions — create_fitness_template + capture_coach_note V1
 
 **Why this sprint:**

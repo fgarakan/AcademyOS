@@ -1,0 +1,246 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { getSupabaseServer } from '@/lib/supabase/server'
+import { isPreviewMode } from '@/lib/utils/previewMode'
+import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
+
+// ---------------------------------------------------------------------------
+// Auth + academy_id helper — shared by both actions
+// ---------------------------------------------------------------------------
+
+async function getAuthorizedContext(): Promise<
+  | { ok: true; supabase: Awaited<ReturnType<typeof getSupabaseServer>>; userId: string; academyId: string }
+  | { ok: false; result: DonnaApprovalExecutionResult }
+> {
+  const supabase = await getSupabaseServer()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return {
+      ok: false,
+      result: { ok: false, status: 'blocked', message: 'Not authenticated.' },
+    }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.academy_id) {
+    return {
+      ok: false,
+      result: { ok: false, status: 'blocked', message: 'Academy context unavailable.' },
+    }
+  }
+
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', profile.academy_id)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+
+  const role = membership?.role
+  if (role !== 'academy_director' && role !== 'head_coach') {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        status: 'blocked',
+        message: 'Director or Head Coach access required.',
+      },
+    }
+  }
+
+  return { ok: true, supabase, userId: user.id, academyId: profile.academy_id }
+}
+
+// ---------------------------------------------------------------------------
+// saveFitnessTemplateDraftAction
+//
+// Saves a fitness template draft to templates + template_blocks.
+// Tagged fitness_template:true, source:assistant, intensity:<value>.
+// track: null — target_level_or_group is stored in name/description instead.
+// Revalidates /director/fitness on success.
+// ---------------------------------------------------------------------------
+
+export async function saveFitnessTemplateDraftAction(
+  fields: Record<string, string>,
+): Promise<DonnaApprovalExecutionResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, status: 'blocked', message: 'Writes are disabled in preview mode.' }
+  }
+
+  const ctx = await getAuthorizedContext()
+  if (!ctx.ok) return ctx.result
+
+  const { supabase, userId, academyId } = ctx
+
+  const goal = (fields.training_goal ?? '').trim()
+  const group = (fields.target_level_or_group ?? '').trim()
+  const duration = parseInt(fields.duration ?? '0', 10)
+  const blockCategories = (fields.block_categories ?? '').trim()
+  const intensity = (fields.intensity ?? 'moderate').trim().toLowerCase()
+  const transfer = (fields.tennis_transfer_focus ?? '').trim()
+
+  if (!goal || !group) {
+    return {
+      ok: false,
+      status: 'error',
+      message: 'Training goal and target group are required.',
+    }
+  }
+
+  const templateName = `${goal} — ${group}`.slice(0, 200)
+  const description = transfer || blockCategories || null
+
+  // rawDb cast — tags array and track: null may cause TS2589 without it
+  const rawDb = supabase as any
+
+  const { data: templateRow, error: templateError } = await rawDb
+    .from('templates')
+    .insert({
+      academy_id: academyId,
+      created_by: userId,
+      name: templateName,
+      description,
+      track: null,
+      total_duration_min: Number.isFinite(duration) && duration > 0 ? duration : null,
+      is_active: true,
+      is_default: false,
+      tags: ['fitness_template:true', 'source:assistant', `intensity:${intensity}`],
+    })
+    .select('id')
+    .single()
+
+  if (templateError || !templateRow?.id) {
+    return {
+      ok: false,
+      status: 'error',
+      message: templateError?.message ?? 'Failed to create fitness template.',
+    }
+  }
+
+  const templateId: string = templateRow.id
+
+  // Insert one block per category listed — best-effort (template already committed)
+  if (blockCategories) {
+    const cats = blockCategories.split(/[,;]+/).map((c: string) => c.trim()).filter(Boolean)
+    if (cats.length > 0) {
+      const blockRows = cats.map((cat: string, idx: number) => ({
+        template_id: templateId,
+        name: cat,
+        type: 'fitness' as const,
+        duration_min: duration > 0 && cats.length > 0 ? Math.floor(duration / cats.length) : 0,
+        order_index: idx,
+        notes: idx === cats.length - 1 && transfer ? `Tennis transfer: ${transfer}` : null,
+      }))
+      await rawDb.from('template_blocks').insert(blockRows)
+    }
+  }
+
+  revalidatePath('/director/fitness')
+  revalidatePath('/director/class-templates')
+
+  return {
+    ok: true,
+    status: 'saved',
+    message: `Fitness template "${templateName}" saved.`,
+    createdId: templateId,
+    safetyNotes: [
+      'This template is now available in your template library.',
+      'No session has been created — you can schedule one separately.',
+    ],
+  }
+}
+
+// ---------------------------------------------------------------------------
+// saveCoachNoteDraftAction
+//
+// Saves a coach note as a voice_note with player_id: null and
+// processing_status: 'pending_review'. The director routes it to a specific
+// player from the review queue — no unsafe name-to-UUID resolution is done here.
+// Revalidates /director/review on success.
+// ---------------------------------------------------------------------------
+
+export async function saveCoachNoteDraftAction(
+  fields: Record<string, string>,
+): Promise<DonnaApprovalExecutionResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, status: 'blocked', message: 'Writes are disabled in preview mode.' }
+  }
+
+  const ctx = await getAuthorizedContext()
+  if (!ctx.ok) return ctx.result
+
+  const { supabase, userId, academyId } = ctx
+
+  const player = (fields.player ?? '').trim()
+  const observation = (fields.observation ?? '').trim()
+  const sessionContext = (fields.session_context ?? '').trim()
+  const priorityLink = (fields.priority_link ?? '').trim()
+
+  // _resolved_player_id is set only when the director explicitly confirmed a player
+  // via the object resolution panel — it is never inferred from a name guess.
+  const confirmedPlayerId = (fields._resolved_player_id ?? '').trim() || null
+
+  if (!observation) {
+    return { ok: false, status: 'error', message: 'Observation is required.' }
+  }
+
+  // Build a structured transcript
+  const parts = [`Observation: ${observation}`]
+  if (player) parts.unshift(confirmedPlayerId ? `Player: ${player}` : `Player (name only, not yet linked): ${player}`)
+  if (sessionContext) parts.push(`Session context: ${sessionContext}`)
+  if (priorityLink) parts.push(`Linked priority: ${priorityLink}`)
+  const transcript = parts.join('\n')
+
+  const { error } = await supabase.from('voice_notes').insert({
+    academy_id: academyId,
+    author_id: userId,
+    player_id: confirmedPlayerId,
+    session_id: null,
+    raw_input: transcript,
+    transcript,
+    audio_path: null,
+    processing_status: 'pending_review',
+  })
+
+  if (error) {
+    return { ok: false, status: 'error', message: error.message }
+  }
+
+  revalidatePath('/director/review')
+  if (confirmedPlayerId) {
+    revalidatePath(`/director/players/${confirmedPlayerId}`)
+  }
+
+  if (confirmedPlayerId) {
+    return {
+      ok: true,
+      status: 'saved',
+      message: `Coach note for "${player || 'this player'}" saved and linked to their player record.`,
+      safetyNotes: [
+        'This note is linked to the player you confirmed.',
+        'It is in pending review — not visible to parents or players until approved.',
+      ],
+    }
+  }
+
+  return {
+    ok: true,
+    status: 'saved',
+    message: player
+      ? `Coach note for "${player}" saved as a pending-review capture.`
+      : 'Coach note saved as a pending-review capture.',
+    safetyNotes: [
+      'This note is not yet linked to a player record.',
+      'Route it to the correct player from the Review Queue — it will not be visible to parents or players until you do.',
+    ],
+  }
+}
