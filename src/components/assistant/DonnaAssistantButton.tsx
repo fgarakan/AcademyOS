@@ -59,6 +59,11 @@ import {
   saveLevelReadinessDraftAction,
   saveCurriculumAdjustmentDraftAction,
 } from '@/app/director/_actions/donnaDirectorIntelligenceActions'
+// Sprint 282 — Coach Communication Draft
+import { saveCoachCommunicationDraftAction } from '@/app/director/_actions/saveCoachCommunicationDraftAction'
+// Sprint 286 — Multi-step planner
+import { detectMultiStepIntent } from '@/components/assistant/donnaMultiStepPlanner'
+import type { DonnaMultiStepPlan } from '@/components/assistant/donnaMultiStepPlanner'
 import type { DonnaReviewQueueSummary } from '@/components/assistant/donnaReviewQueueTypes'
 import { DonnaReviewQueuePanel } from '@/components/assistant/DonnaReviewQueuePanel'
 // Sprint 269 — Safe Object Resolution
@@ -90,6 +95,7 @@ const WIRED_TASK_IDS = new Set<DonnaTaskId>([
   'draft_parent_update',
   'review_level_readiness',
   'adjust_curriculum',
+  'draft_coach_communication',
 ])
 
 // ---------------------------------------------------------------------------
@@ -243,6 +249,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
   const [isLoadingReviewQueue, setIsLoadingReviewQueue] = useState(false)
 
+  // Multi-step plan state — Sprint 286
+  const [multiStepPlan, setMultiStepPlan] = useState<DonnaMultiStepPlan | null>(null)
+  const [multiStepIndex, setMultiStepIndex] = useState(0)
+
   // Object resolution state — Sprint 269
   // Tracks the active resolution request and its result. Never mutates records.
   const [resolutionContext, setResolutionContext] = useState<{
@@ -284,6 +294,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setResolvedObjects({})
     setReviewQueueData(null)
     setIsLoadingReviewQueue(false)
+    setMultiStepPlan(null)
+    setMultiStepIndex(0)
     lastSpokenTextRef.current = null
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -443,6 +455,17 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             label: 'Save not available yet',
           })
         }
+        return
+      }
+    }
+
+    // 4a. Multi-step intent — Sprint 286
+    if (!templateDraft && !genericDraft && !multiStepPlan) {
+      const plan = detectMultiStepIntent(text)
+      if (plan) {
+        setMultiStepPlan(plan)
+        setMultiStepIndex(0)
+        speakAssistantText(plan.summary)
         return
       }
     }
@@ -661,6 +684,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     }
     if (draft.taskId === 'adjust_curriculum') {
       return saveCurriculumAdjustmentDraftAction(draft.collectedFields)
+    }
+    if (draft.taskId === 'draft_coach_communication') {
+      return saveCoachCommunicationDraftAction(draft.collectedFields)
     }
     return {
       ok: false,
@@ -1018,6 +1044,19 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   function handleCommandSubmit() {
     const text = typedText.trim()
     if (!text) return
+
+    // Multi-step intent — Sprint 286
+    if (!templateDraft && !genericDraft && !multiStepPlan) {
+      const plan = detectMultiStepIntent(text)
+      if (plan) {
+        setMultiStepPlan(plan)
+        setMultiStepIndex(0)
+        setTypeInstead(false)
+        setTypedText('')
+        speakAssistantText(plan.summary)
+        return
+      }
+    }
 
     // Class-template creation intent — always routes to wired TemplateDraftPanel
     if (isTemplateCreationIntent(text)) {
@@ -1637,6 +1676,65 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 />
               )}
             </>
+          )}
+
+          {/* ── Multi-step plan card — Sprint 286 ── */}
+          {multiStepPlan && activeMode !== 'guided_task' && (
+            <div
+              className="rounded-xl px-3.5 py-3 space-y-2"
+              style={{ background: 'var(--bg-surface)', border: '1px solid rgba(200,255,0,0.18)' }}
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-widest font-semibold text-lime">
+                  Multi-step plan
+                </p>
+                <button
+                  onClick={() => { setMultiStepPlan(null); setMultiStepIndex(0) }}
+                  className="text-[10px] text-text-muted hover:text-status-red transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+              <p className="text-[11px] text-text-secondary leading-snug">{multiStepPlan.summary}</p>
+              <div className="space-y-1">
+                {multiStepPlan.steps.map((step, i) => (
+                  <div key={step.taskId} className="flex items-start gap-2">
+                    <span
+                      className="shrink-0 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center mt-0.5"
+                      style={
+                        i < multiStepIndex
+                          ? { background: 'rgba(48,209,88,0.15)', color: '#30D158' }
+                          : i === multiStepIndex
+                          ? { background: 'rgba(200,255,0,0.15)', color: '#C8FF00' }
+                          : { background: 'rgba(255,255,255,0.06)', color: '#555' }
+                      }
+                    >
+                      {i < multiStepIndex ? '✓' : step.stepNumber}
+                    </span>
+                    <div>
+                      <p className={`text-[11px] font-medium leading-snug ${i === multiStepIndex ? 'text-text-primary' : 'text-text-muted'}`}>
+                        {step.label}
+                      </p>
+                      <p className="text-[10px] text-text-muted leading-snug">{step.why}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {multiStepIndex < multiStepPlan.steps.length && (
+                <button
+                  onClick={() => {
+                    const step = multiStepPlan.steps[multiStepIndex]
+                    if (step) {
+                      handleStartGenericTask(step.taskId, false)
+                      setMultiStepIndex(prev => prev + 1)
+                    }
+                  }}
+                  className="btn-lime text-xs px-3 py-1.5"
+                >
+                  Start Step {multiStepPlan.steps[multiStepIndex]?.stepNumber}: {multiStepPlan.steps[multiStepIndex]?.label}
+                </button>
+              )}
+            </div>
           )}
 
           {/* ── Guided task mode — wired tasks save via server action; unwired show honest notice ── */}

@@ -13,6 +13,8 @@ import {
 } from '@/app/director/_actions/donnaReviewQueueActions'
 import { explainReviewItem } from './donnaReviewQueueExplainer'
 import { DonnaIntelligenceDraftDecisionControls } from './DonnaIntelligenceDraftDecisionControls'
+import { DonnaLevelMovementApplyControls } from './DonnaLevelMovementApplyControls'
+import { DonnaCurriculumAdjustmentApplyControls } from './DonnaCurriculumAdjustmentApplyControls'
 import type {
   DonnaReviewQueueSummary,
   DonnaReviewItem,
@@ -59,6 +61,7 @@ const ITEM_TYPE_TO_TARGET_MODULE: Partial<Record<DonnaReviewItemType, string>> =
   parent_update_pending_review: 'parent_communication',
   level_readiness_pending_review: 'level_review',
   curriculum_adjustment_pending_review: 'curriculum_adjustment',
+  coach_communication_pending_review: 'coach_communication',
 }
 
 // ---------------------------------------------------------------------------
@@ -272,14 +275,16 @@ export function DonnaReviewQueuePanel({
                               ? 'bg-blue-900/20 text-status-blue'
                               : item.type === 'parent_update_pending_review' ||
                                 item.type === 'level_readiness_pending_review' ||
-                                item.type === 'curriculum_adjustment_pending_review'
+                                item.type === 'curriculum_adjustment_pending_review' ||
+                                item.type === 'coach_communication_pending_review'
                                 ? 'text-[9px] uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded'
                               : 'bg-orange-900/20 text-status-orange',
                         )}
                         style={
                           item.type === 'parent_update_pending_review' ||
                           item.type === 'level_readiness_pending_review' ||
-                          item.type === 'curriculum_adjustment_pending_review'
+                          item.type === 'curriculum_adjustment_pending_review' ||
+                          item.type === 'coach_communication_pending_review'
                             ? { background: 'rgba(200,255,0,0.10)', color: '#C8FF00' }
                             : undefined
                         }>
@@ -289,6 +294,7 @@ export function DonnaReviewQueuePanel({
                             : item.type === 'parent_update_pending_review' ? 'Parent Draft'
                             : item.type === 'level_readiness_pending_review' ? 'Level Review'
                             : item.type === 'curriculum_adjustment_pending_review' ? 'Curriculum Proposal'
+                            : item.type === 'coach_communication_pending_review' ? 'Coach Draft'
                             : 'Pending Review'}
                         </span>
                         {item.priority === 'high' && (
@@ -512,12 +518,28 @@ export function DonnaReviewQueuePanel({
                             const targetModule = ITEM_TYPE_TO_TARGET_MODULE[item.type]
                             if (!targetModule) return null
                             return (
-                              <DonnaIntelligenceDraftDecisionControls
-                                key={action}
-                                proposedActionId={item.sourceId}
-                                targetModule={targetModule}
-                                onSuccess={onRefresh}
-                              />
+                              <div key={action} className="space-y-2">
+                                <DonnaIntelligenceDraftDecisionControls
+                                  proposedActionId={item.sourceId}
+                                  targetModule={targetModule}
+                                  onSuccess={onRefresh}
+                                />
+                                {item.type === 'level_readiness_pending_review' && (
+                                  <DonnaLevelMovementApplyControls
+                                    proposedActionId={item.sourceId}
+                                    playerLabel={item.playerLabel}
+                                    previewText={item.previewText}
+                                    onSuccess={onRefresh}
+                                  />
+                                )}
+                                {item.type === 'curriculum_adjustment_pending_review' && (
+                                  <DonnaCurriculumAdjustmentApplyControls
+                                    proposedActionId={item.sourceId}
+                                    previewText={item.previewText}
+                                    onSuccess={onRefresh}
+                                  />
+                                )}
+                              </div>
                             )
                           }
                           return null

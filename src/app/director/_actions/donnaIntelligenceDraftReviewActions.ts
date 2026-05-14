@@ -18,6 +18,7 @@ const ALLOWED_TARGET_MODULES = new Set([
   'parent_communication',
   'level_review',
   'curriculum_adjustment',
+  'coach_communication',
 ])
 
 type DraftDecision = 'approved' | 'rejected' | 'clarification_needed'

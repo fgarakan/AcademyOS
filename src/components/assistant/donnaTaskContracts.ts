@@ -24,6 +24,7 @@ export type DonnaTaskId =
   | 'review_level_readiness'
   | 'handle_attendance_exception'
   | 'adjust_curriculum'
+  | 'draft_coach_communication'
   | 'create_group'
   | 'assign_player_to_group'
   | 'summarize_player_progress'
@@ -324,6 +325,30 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     createsDraftType: 'curriculum_adjustment_draft',
     approvalRequired: true,
     unsafeWithoutApproval: ['modify_curriculum_without_approval', 'publish_curriculum_change'],
+    saveApplyMethodStatus: 'wired',
+  },
+
+  draft_coach_communication: {
+    taskId: 'draft_coach_communication',
+    label: 'Draft Coach Communication',
+    description:
+      'Help the director draft a message intended for a coach. Saved as a pending-review proposed action — not sent. No coach communication infrastructure exists; this is an internal draft only.',
+    requiredFields: [
+      { fieldId: 'coach',         label: 'Coach',          required: true, example: 'Coach Sarah' },
+      { fieldId: 'message_focus', label: 'Message Focus',  required: true, example: 'Reminder about session plan for next Tuesday' },
+    ],
+    optionalFields: [
+      { fieldId: 'context',     label: 'Context',     required: false },
+      { fieldId: 'follow_up',   label: 'Follow-up',   required: false },
+    ],
+    questionSequence: [
+      { order: 1, fieldId: 'coach',         question: 'Which coach is this message for?' },
+      { order: 2, fieldId: 'message_focus', question: 'What should the message focus on?' },
+    ],
+    reads: ['coach_profile', 'session'],
+    createsDraftType: 'coach_communication_draft',
+    approvalRequired: true,
+    unsafeWithoutApproval: ['send_coach_message_without_approval', 'notify_coach_automatically'],
     saveApplyMethodStatus: 'wired',
   },
 

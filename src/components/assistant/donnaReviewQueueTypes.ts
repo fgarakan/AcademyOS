@@ -12,6 +12,7 @@ export type DonnaReviewItemType =
   | 'parent_update_pending_review'          // proposed_action — parent_communication module
   | 'level_readiness_pending_review'        // proposed_action — level_review module
   | 'curriculum_adjustment_pending_review'  // proposed_action — curriculum_adjustment module
+  | 'coach_communication_pending_review'    // proposed_action — coach_communication module (NOT SENT)
   | 'unknown'
 
 export type DonnaReviewItemStatus =

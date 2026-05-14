@@ -13,6 +13,8 @@ import {
 import type { GenericTaskDraft } from './donnaGenericDraftTypes'
 import { applyAnswerToGenericDraft } from './donnaGenericDraftTypes'
 import type { DonnaApprovalExecutionResult } from './donnaApprovalExecutionTypes'
+import { getDonnaVisibilityRules } from './donnaVisibilityGuardrail'
+import type { DonnaDraftType } from './donnaDraftContracts'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -52,6 +54,8 @@ export function GenericDraftPanel({
 
   const contract = DONNA_TASK_CONTRACTS[draft.taskId]
   if (!contract) return null
+
+  const draftRules = getDonnaVisibilityRules(contract.createsDraftType as DonnaDraftType)
 
   const currentQuestion = getNextMissingQuestion(draft.taskId, draft.collectedFields)
   const isComplete = isTaskDraftComplete(draft.taskId, draft.collectedFields)
@@ -329,237 +333,56 @@ export function GenericDraftPanel({
           {isWired && onApprove ? (
             /* ── Wired task: Approve and Save button ── */
             <>
-              {/* What will be saved */}
-              <div
-                className="rounded-lg px-3 py-2"
-                style={{
-                  background: 'rgba(200,255,0,0.04)',
-                  border: '1px solid rgba(200,255,0,0.15)',
-                }}
-              >
-                <p
-                  className="text-[10px] uppercase tracking-widest font-semibold mb-1"
-                  style={{ color: '#C8FF00' }}
-                >
-                  What will be saved
-                </p>
-                <ul className="space-y-0.5">
-                  {DONNA_TASK_CONTRACTS[draft.taskId]?.unsafeWithoutApproval.length === 0
-                    ? <li className="text-[11px] text-text-muted">This draft will be saved after approval.</li>
-                    : null}
-                  {draft.taskId === 'create_fitness_template' && (
-                    <>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        A fitness template record (tagged fitness_template:true)
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Template blocks for each category you listed
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        No session is created — scheduling is a separate step
-                      </li>
-                    </>
-                  )}
-                  {draft.taskId === 'capture_coach_note' && (
-                    <>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Internal only — not visible to parents or players
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        A pending-review voice note saved to your Review Queue
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Does not update player level
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Does not send any communication
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Director review may still be required
-                      </li>
-                    </>
-                  )}
-                  {draft.taskId === 'draft_player_note' && (
-                    <>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Internal only — not visible to parents or players
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Updates coach summary and development focus in the player&apos;s development record
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Does not change show_to_parent or show_to_student — director must explicitly enable visibility
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Does not update player level
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Does not send any communication
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Director review may still be required
-                      </li>
-                    </>
-                  )}
-                  {draft.taskId === 'create_session' && (
-                    <>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        An internal planned session record (status: planned)
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Session blocks are not copied in this step — use &ldquo;Populate Session Blocks&rdquo; after creation
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        This creates an internal record only — no coach, parent, or player is notified
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        No attendance records are created
-                      </li>
-                    </>
-                  )}
-                  {draft.taskId === 'populate_session_from_template' && (
-                    <>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Session blocks copied from the template into this session
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        A local coach brief is generated for your review — not sent or stored
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        No coach, parent, or player is notified
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Blocked if the session already has blocks (duplicate guard)
-                      </li>
-                    </>
-                  )}
-                  {draft.taskId === 'handle_attendance_exception' && (
-                    <>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Internal only — not visible to parents or players
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        A proposed_actions draft row created for director review
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        No attendance records written — apply the draft in Review Queue to record official attendance
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Unrostered attendees flagged for director review — not added to roster or attendance
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        No billing, enrollment, or roster change
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        No parent, player, or coach notification
-                      </li>
-                    </>
-                  )}
-                  {draft.taskId === 'draft_parent_update' && (
-                    <>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Draft only — saved for director review, not sent to parent
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        A proposed_actions draft row created in the Review Queue
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Parent and player see nothing — no visibility flags changed
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        show_to_parent and show_to_student are not touched
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        No player level, roster, or billing change
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Director approval required before any external communication
-                      </li>
-                    </>
-                  )}
-                  {draft.taskId === 'review_level_readiness' && (
-                    <>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Readiness review only — player level is NOT changed
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        A proposed_actions draft row created for director decision
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Evidence and missing-evidence summary built from curriculum state and latest assessment
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        No parent, player, or coach notification
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Director must explicitly approve advancement from the Review Queue
-                      </li>
-                    </>
-                  )}
-                  {draft.taskId === 'adjust_curriculum' && (
-                    <>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Proposal only — curriculum data is NOT changed
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        A proposed_actions draft row created for director review
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        No curriculum table, template, or player requirement is modified
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Not visible to parents, players, or coaches
-                      </li>
-                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
-                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Director approval required before any curriculum change is applied
-                      </li>
-                    </>
-                  )}
-                </ul>
+              {/* Visibility guardrails — driven by donnaVisibilityGuardrail (Sprint 281) */}
+              <div className="space-y-2">
+                {draftRules.safetyNotes.length > 0 && (
+                  <div
+                    className="rounded-lg px-3 py-2"
+                    style={{
+                      background: 'rgba(200,255,0,0.04)',
+                      border: '1px solid rgba(200,255,0,0.15)',
+                    }}
+                  >
+                    <p
+                      className="text-[10px] uppercase tracking-widest font-semibold mb-1"
+                      style={{ color: '#C8FF00' }}
+                    >
+                      What is saved
+                    </p>
+                    <ul className="space-y-0.5">
+                      {draftRules.safetyNotes.map((note, i) => (
+                        <li key={i} className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                          <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                          {note}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {draftRules.willNotDo.length > 0 && (
+                  <div
+                    className="rounded-lg px-3 py-2"
+                    style={{
+                      background: 'rgba(255,59,48,0.04)',
+                      border: '1px solid rgba(255,59,48,0.18)',
+                    }}
+                  >
+                    <p
+                      className="text-[10px] uppercase tracking-widest font-semibold mb-1"
+                      style={{ color: '#FF3B30' }}
+                    >
+                      I will not
+                    </p>
+                    <ul className="space-y-0.5">
+                      {draftRules.willNotDo.map((item, i) => (
+                        <li key={i} className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                          <span className="shrink-0 mt-px text-status-red">✗</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               {/* Error state */}

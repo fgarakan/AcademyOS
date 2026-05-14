@@ -36,6 +36,7 @@ const HEAD_COACH_ALLOWED_TASKS = new Set<DonnaTaskId>([
   'draft_player_note',
   'handle_attendance_exception',
   'recommend_template_for_group',
+  'draft_coach_communication',
 ])
 
 export function checkDonnaTaskPermission(

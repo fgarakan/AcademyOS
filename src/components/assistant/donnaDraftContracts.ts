@@ -23,6 +23,7 @@ export type DonnaDraftType =
   | 'curriculum_adjustment_draft'
   | 'attendance_exception_draft'
   | 'level_readiness_draft'
+  | 'coach_communication_draft'
   | 'group_creation_draft'
   | 'template_recommendation_draft'
 
@@ -275,6 +276,27 @@ export const DONNA_DRAFT_CONTRACTS: Record<DonnaDraftType, DonnaDraftContract> =
     approvalRequired: true,
     approvalActionLabel: 'Submit for Review',
     cancelActionLabel: 'Hold at Current Level',
+    saveWireStatus: 'wired',
+  },
+
+  coach_communication_draft: {
+    draftType: 'coach_communication_draft',
+    title: 'Coach Communication Draft',
+    summary:
+      'An internal draft of a message intended for a coach. Saved to the Review Queue as pending director review. NOT SENT — no coach communication infrastructure exists in this system. The director must handle sending separately.',
+    sourceTask: 'draft_coach_communication',
+    dataUsed: ['coach_profile', 'director_input'],
+    fieldsCollected: ['coach', 'message_focus', 'context', 'follow_up'],
+    missingFields: [],
+    proposedChanges: [
+      'Create a proposed_actions draft row (status: pending_review, target_module: coach_communication)',
+      'No message is sent — the draft is internal only',
+    ],
+    affectedObjects: ['proposed_actions', 'voice_commands'],
+    visibilityImpact: 'Internal only — the coach is never notified. This draft is for director reference only.',
+    approvalRequired: true,
+    approvalActionLabel: 'Save as Draft',
+    cancelActionLabel: 'Discard Draft',
     saveWireStatus: 'wired',
   },
 

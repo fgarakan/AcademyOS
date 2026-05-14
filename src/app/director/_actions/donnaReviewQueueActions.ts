@@ -233,10 +233,10 @@ export async function getDonnaReviewQueueAction(): Promise<DonnaReviewQueueSumma
     .from('proposed_actions')
     .select('id, target_module, proposed_payload, created_at')
     .eq('academy_id', academyId)
-    .in('target_module', ['parent_communication', 'level_review', 'curriculum_adjustment'])
+    .in('target_module', ['parent_communication', 'level_review', 'curriculum_adjustment', 'coach_communication'])
     .eq('status', 'pending_review')
     .order('created_at', { ascending: false })
-    .limit(10)
+    .limit(12)
 
   const proposedActionRows: any[] = rawProposedActions ?? []
 
@@ -268,6 +268,14 @@ export async function getDonnaReviewQueueAction(): Promise<DonnaReviewQueueSumma
         currentLevel && nextLevel
           ? `${currentLevel} → ${nextLevel}`
           : (currentLevel ?? draftType)
+    } else if (targetModule === 'coach_communication') {
+      const coachLabel = (payload.coach_label as string | null) ?? null
+      const messageFocus = (payload.message_focus as string | null) ?? null
+      itemType = 'coach_communication_pending_review'
+      title = `Coach Communication Draft${coachLabel ? ` — ${coachLabel}` : ''}`
+      whyItNeedsReview =
+        'A coach communication draft is pending director review. It has NOT been sent — no messaging infrastructure exists.'
+      previewText = messageFocus ?? draftType
     } else {
       const proposedChange = (payload.proposed_change as string | null) ?? null
       const targetLevel = (payload.target_level as string | null) ?? null
@@ -282,7 +290,7 @@ export async function getDonnaReviewQueueAction(): Promise<DonnaReviewQueueSumma
     }
 
     const playerLabel =
-      targetModule !== 'curriculum_adjustment'
+      (targetModule === 'parent_communication' || targetModule === 'level_review')
         ? ((payload.player_label as string | null) ?? null)
         : null
 

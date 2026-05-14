@@ -74,6 +74,17 @@ export function explainReviewItem(item: DonnaReviewItem): DonnaReviewItemExplana
           "I will not change any curriculum requirements, templates, or drills. Approving the proposal status does not apply the change — it only records that you have reviewed the proposal.",
       }
 
+    case 'coach_communication_pending_review':
+      return {
+        headline: 'This coach communication draft is pending your review.',
+        detail: `A draft message intended for a coach was saved for director review. It has NOT been sent — no coach communication infrastructure exists in this system. This is an internal reference draft only.`,
+        safeMissingData: null,
+        suggestedNextAction:
+          'Mark reviewed to close this item. If the message needs to be sent, handle that separately outside this system.',
+        whatDonnaWillNotDo:
+          'I will not send this draft to the coach. No messaging, email, or notification will be triggered. Marking reviewed only records your review decision.',
+      }
+
     default:
       return {
         headline: 'This item needs director review.',

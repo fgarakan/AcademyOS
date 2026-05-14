@@ -19,15 +19,18 @@ const APPROVE_LABELS: Record<string, string> = {
   parent_communication: 'Approve Draft Status',
   level_review: 'Mark Reviewed',
   curriculum_adjustment: 'Approve Proposal Status',
+  coach_communication: 'Mark Reviewed',
 }
 
 const SAFETY_NOTES: Record<string, string> = {
   parent_communication:
-    'Approving status does not send the update. This draft is not visible to the parent or player. No communication will be sent.',
+    'Approving status does not send the update. This draft is not visible to the parent or player. No messaging provider exists — no communication will be sent.',
   level_review:
     'Marking reviewed does not move the player. No level change occurs until you explicitly advance the player through the level management flow.',
   curriculum_adjustment:
     'Approving status does not apply any curriculum change. No curriculum data, template, or requirement is modified.',
+  coach_communication:
+    'This draft is internal only. No coach communication infrastructure exists — the coach will not receive anything. Marking reviewed records your review decision only.',
 }
 
 export function DonnaIntelligenceDraftDecisionControls({

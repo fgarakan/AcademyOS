@@ -2,6 +2,75 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 281-288: Donna Final Form Operating Assistant V1
+
+**Why this sprint:**
+Completes Donna's final-form V1 as the safe academy operating assistant — guardrail wiring, coach communication drafting, approved level movement, curriculum override application, multi-step command chaining, session-only preferences, and voice UX improvements.
+
+**Sprint 281 — Visibility Guardrails in GenericDraftPanel:**
+Replaced the 9-branch task-specific if-chain in GenericDraftPanel's "What will be saved" section with a call to `getDonnaVisibilityRules(contract.createsDraftType as DonnaDraftType)`. Now renders `safetyNotes[]` as lime bullets ("What is saved") and `willNotDo[]` as red bullets ("I will not") from the canonical guardrail helper. All 12 draft types covered automatically.
+
+**Sprint 282 — Coach Communication Draft Flow:**
+New task `draft_coach_communication` added to Donna's task registry. Saves to `proposed_actions` (target_module: 'coach_communication', status: 'pending_review'). Clearly labelled "NOT SENT — no coach communication infrastructure exists." Director can review and mark reviewed from the Review Queue panel. Added to WIRED_TASK_IDS with full dispatch in handleGenericDraftApprove.
+
+**Sprint 283 — Parent Communication "No Messaging Provider" Notice:**
+Updated `parent_update_draft` safety notes in `donnaVisibilityGuardrail.ts` and `DonnaIntelligenceDraftDecisionControls` SAFETY_NOTES to include explicit "No messaging provider exists" notice. GenericDraftPanel renders this via the Sprint 281 guardrail wiring.
+
+**Sprint 284 — Approved Level Movement Application:**
+New server action `applyApprovedLevelMovementAction(proposedActionId)` applies an approved level_review proposed_action. Writes to `player_curriculum_states.current_level_id` + `players.current_level_id`. Writes audit_log. Marks proposed_action as 'executed'. Director-only. Requires proposed_action status = 'approved'. New `DonnaLevelMovementApplyControls` component shows two-step confirmation (click once to confirm intent, click again to apply). Wired into DonnaReviewQueuePanel for level_readiness_pending_review items.
+
+**Sprint 285 — Versioned Curriculum Override Application:**
+New server action `applyApprovedCurriculumAdjustmentAction(proposedActionId)` creates a versioned override record in `academy_curriculum_overrides`. Does not modify `curriculum_levels`, `template_blocks`, or `session_blocks`. Writes audit_log. Marks proposed_action as 'executed'. Director-only. New `DonnaCurriculumAdjustmentApplyControls` component with two-step confirmation. Wired into DonnaReviewQueuePanel for curriculum_adjustment_pending_review items.
+
+**Sprint 286 — Multi-Step Command Chaining:**
+New pure-TS `donnaMultiStepPlanner.ts` with `detectMultiStepIntent(text)` returning a `DonnaMultiStepPlan` for known patterns: prepare session (create + populate), note + parent update, level review + parent update, note + player note. Wired into both voice and typed routing in `DonnaAssistantButton`. Multi-step plan card rendered in panel with step-by-step progress tracker and "Start Step N" button.
+
+**Sprint 287 — Academy/Director Session Preferences:**
+New pure-TS `donnaSessionPreferences.ts` with `getDonnaSessionPreferences()`, `setDonnaSessionPreferences()`, `resetDonnaSessionPreferences()`. Persists to `localStorage` (key: `donna_session_prefs_v1`). No DB table. Covers: voiceFeedbackEnabled, greetingEnabled, predictiveSuggestionsEnabled, defaultMode. No server-side reads or writes.
+
+**Sprint 288 — Voice UX Improvements:**
+Multi-step intent detection added to `handleVoiceTranscript` routing at step 4a (before template intent), mirroring the typed command routing. Multi-step plan state cleared on panel close. Consistent routing parity between voice and typed input paths.
+
+**Files created:**
+- `src/app/director/_actions/saveCoachCommunicationDraftAction.ts` — Sprint 282: saves coach_communication draft to proposed_actions; two-step voice_commands+proposed_actions write; director/head_coach; preview blocked
+- `src/app/director/_actions/donnaLevelMovementActions.ts` — Sprint 284: applies approved level_review draft; writes player_curriculum_states + players + audit_logs; director only
+- `src/app/director/_actions/donnaCurriculumAdjustmentApplyActions.ts` — Sprint 285: creates academy_curriculum_overrides record for approved curriculum_adjustment; writes audit_logs; director only
+- `src/components/assistant/DonnaLevelMovementApplyControls.tsx` — Sprint 284: two-step confirmation UI for level movement; never auto-applies
+- `src/components/assistant/DonnaCurriculumAdjustmentApplyControls.tsx` — Sprint 285: two-step confirmation UI for curriculum override; never auto-applies
+- `src/components/assistant/donnaMultiStepPlanner.ts` — Sprint 286: pure-TS multi-step intent planner; 4 patterns; no DB no AI
+- `src/components/assistant/donnaSessionPreferences.ts` — Sprint 287: localStorage-only session preferences; no DB; resets on tab close
+
+**Files modified:**
+- `src/components/assistant/GenericDraftPanel.tsx` — Sprint 281: replaced 9-branch if-chain with getDonnaVisibilityRules; added imports; draftRules computed before return
+- `src/components/assistant/donnaTaskContracts.ts` — Sprint 282: added draft_coach_communication task
+- `src/components/assistant/donnaDraftContracts.ts` — Sprint 282: added coach_communication_draft draft type
+- `src/components/assistant/donnaVisibilityGuardrail.ts` — Sprint 282+283: added coach_communication_draft rules; updated parent_update_draft safetyNotes with "no messaging provider" notice
+- `src/components/assistant/donnaPermissionGuard.ts` — Sprint 282: added draft_coach_communication to HEAD_COACH_ALLOWED_TASKS
+- `src/components/assistant/donnaReviewQueueTypes.ts` — Sprint 282: added coach_communication_pending_review item type
+- `src/components/assistant/donnaReviewQueueExplainer.ts` — Sprint 282: added coach_communication_pending_review case
+- `src/app/director/_actions/donnaReviewQueueActions.ts` — Sprint 282: added coach_communication to proposed_actions query; updated mapping
+- `src/app/director/_actions/donnaIntelligenceDraftReviewActions.ts` — Sprint 282: added coach_communication to ALLOWED_TARGET_MODULES
+- `src/components/assistant/DonnaIntelligenceDraftDecisionControls.tsx` — Sprint 282+283: added coach_communication to APPROVE_LABELS and SAFETY_NOTES; updated parent_communication safety note
+- `src/components/assistant/DonnaReviewQueuePanel.tsx` — Sprint 282+284+285: added coach_communication_pending_review to ITEM_TYPE_TO_TARGET_MODULE and type chip; imported DonnaLevelMovementApplyControls + DonnaCurriculumAdjustmentApplyControls; wired apply controls for level and curriculum items
+- `src/components/assistant/DonnaAssistantButton.tsx` — Sprint 282+286+288: added saveCoachCommunicationDraftAction import + dispatch; added draft_coach_communication to WIRED_TASK_IDS; added donnaMultiStepPlanner import + multiStepPlan state; wired multi-step detection in voice and typed routing; multi-step plan card rendered in panel
+
+**Safety guarantees:**
+- No migrations created — all proposed_action_status values already exist; academy_curriculum_overrides already exists (rawDb)
+- database.types.ts untouched
+- No external messaging, email, or SMS pathways connected
+- No parent, player, or coach is ever notified automatically
+- Level movement requires proposed_action status = 'approved' AND director-only AND two-step UI confirmation
+- Curriculum override requires same double-approval gate
+- Coach communication draft is labelled "NOT SENT" throughout — no send pathway exists
+- All writes go through voice_commands FK → proposed_actions → apply actions pattern
+- All apply actions write audit_logs
+- show_to_parent and show_to_student never touched
+- Session preferences stored localStorage only — no DB reads or writes
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with zero errors.
+
+---
+
 ## 2026-05-14 — Mega Sprint 278-280: Donna Review Authority + Safety Layer V1
 
 **Why this sprint:**

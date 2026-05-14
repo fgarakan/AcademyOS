@@ -23,8 +23,8 @@ const VISIBILITY_RULES: Record<DonnaDraftType, DonnaVisibilityRules> = {
       'Notify the coach.',
     ],
     safetyNotes: [
-      'This draft is internal only. The parent never sees it until you explicitly send it through the approved communication flow.',
-      'Approving the draft status does not send the update — it only marks it reviewed.',
+      'This draft is internal only. No messaging provider exists — the parent will not receive anything from this system.',
+      'Saving this draft creates a Review Queue entry only. Approving the draft status does not send the update.',
     ],
   },
 
@@ -129,6 +129,18 @@ const VISIBILITY_RULES: Record<DonnaDraftType, DonnaVisibilityRules> = {
     ],
     safetyNotes: [
       'No attendance is written until you apply it in the Review Queue. Unrostered attendees are flagged only.',
+    ],
+  },
+
+  coach_communication_draft: {
+    willNotDo: [
+      'Send the message to the coach.',
+      'Notify the coach, player, or parent automatically.',
+      'Create a session, template, or attendance record.',
+    ],
+    safetyNotes: [
+      'This draft is internal only. No coach communication infrastructure exists — the coach will not receive anything.',
+      'The draft is saved to the Review Queue for director reference. Sending must be handled separately outside this system.',
     ],
   },
 
