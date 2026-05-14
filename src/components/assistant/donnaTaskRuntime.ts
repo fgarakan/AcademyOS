@@ -33,6 +33,21 @@ const TASK_INTENT_KEYWORDS: Array<{ taskId: DonnaTaskId; keywords: string[] }> =
     ],
   },
   {
+    taskId: 'populate_session_from_template',
+    keywords: [
+      'populate session',
+      'populate this session',
+      'populate blocks',
+      'add blocks to session',
+      'build session blocks',
+      'session blocks',
+      'prepare session for coach',
+      'copy blocks',
+      'fill session blocks',
+      'populate the session',
+    ],
+  },
+  {
     taskId: 'create_session',
     keywords: [
       'create a session',

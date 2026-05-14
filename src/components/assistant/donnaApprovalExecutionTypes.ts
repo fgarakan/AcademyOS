@@ -13,10 +13,12 @@ export interface DonnaApprovalExecutionResult {
   status: 'saved' | 'not_wired' | 'blocked' | 'error'
   /** Human-readable message shown in the approval UI after the save attempt */
   message: string
-  /** ID of the created record, if any (useful for navigation after save) */
+  /** ID of the created/updated record, if any (useful for navigation after save) */
   createdId?: string
   /** Safety notes shown below the success state — e.g. "note is pending review" */
   safetyNotes?: string[]
+  /** Optional multiline detail block — used for coach brief drafts (local-only, not persisted) */
+  details?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -27,3 +29,4 @@ export type DonnaExecutableDraftType =
   | 'fitness_template_draft'
   | 'coach_note_draft'
   | 'session_draft'
+  | 'session_block_population_draft'

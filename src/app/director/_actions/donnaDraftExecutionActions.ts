@@ -4,6 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { isPreviewMode } from '@/lib/utils/previewMode'
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
+import {
+  buildCoachBrief,
+  type CoachBriefInput,
+} from '@/components/assistant/donnaCoachBriefBuilder'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper — shared by both actions
@@ -389,7 +393,7 @@ export async function saveSessionDraftAction(
   ]
   if (!groupId) safetyNotes.push('No group was confirmed — assign one from the session detail page.')
   if (!templateId) safetyNotes.push('No template was confirmed — assign one from the session detail page.')
-  safetyNotes.push('Session blocks are not yet populated — use the session detail page to generate blocks.')
+  safetyNotes.push('Session blocks are not yet populated — use "Populate Session Blocks" in the Academy Assistant to add them.')
 
   return {
     ok: true,
@@ -397,5 +401,177 @@ export async function saveSessionDraftAction(
     message: `Session "${sessionName}" created as planned.`,
     createdId: sessionId,
     safetyNotes,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// populateSessionBlocksAction
+//
+// Copies template_blocks → session_blocks for an existing planned session.
+// Requires a confirmed session_id. Uses the session's own template_id unless
+// _resolved_class_template_id is provided as an override.
+// Duplicate guard: blocks are refused if the session already has any blocks.
+// Returns a local-only coach brief in the `details` field — never stored, never sent.
+// Revalidates /director/sessions and the session detail page on success.
+// ---------------------------------------------------------------------------
+
+export async function populateSessionBlocksAction(
+  fields: Record<string, string>,
+): Promise<DonnaApprovalExecutionResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, status: 'blocked', message: 'Writes are disabled in preview mode.' }
+  }
+
+  const ctx = await getAuthorizedContext()
+  if (!ctx.ok) return ctx.result
+
+  const { supabase, academyId } = ctx
+
+  const sessionId = (fields._resolved_session_id ?? '').trim() || null
+  if (!sessionId) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message: 'Please confirm the session before populating blocks. Use the resolver panel to search and select a session.',
+    }
+  }
+
+  const rawDb = supabase as any
+
+  // Fetch the session row
+  const { data: session, error: sessionFetchError } = await rawDb
+    .from('sessions')
+    .select('id, name, scheduled_date, status, template_id, session_notes')
+    .eq('id', sessionId)
+    .eq('academy_id', academyId)
+    .single()
+
+  if (sessionFetchError || !session) {
+    return { ok: false, status: 'error', message: 'Session not found or not accessible.' }
+  }
+
+  // Duplicate guard: refuse if session already has blocks
+  const { count: existingBlockCount } = await rawDb
+    .from('session_blocks')
+    .select('id', { count: 'exact', head: true })
+    .eq('session_id', sessionId)
+
+  if (existingBlockCount && existingBlockCount > 0) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message: `This session already has ${existingBlockCount} block${existingBlockCount === 1 ? '' : 's'}. Remove existing blocks before repopulating.`,
+    }
+  }
+
+  // Determine template: explicit override from resolver, else session's own template_id
+  const templateId =
+    (fields._resolved_class_template_id ?? '').trim() || session.template_id || null
+
+  if (!templateId) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message: 'No template is linked to this session. Link a template first, or confirm one using the resolver panel.',
+    }
+  }
+
+  // Fetch the template name
+  const { data: template, error: templateFetchError } = await rawDb
+    .from('templates')
+    .select('id, name')
+    .eq('id', templateId)
+    .eq('academy_id', academyId)
+    .single()
+
+  if (templateFetchError || !template) {
+    return { ok: false, status: 'error', message: 'Template not found or not accessible.' }
+  }
+
+  // Fetch template blocks
+  const { data: templateBlocks, error: blocksError } = await rawDb
+    .from('template_blocks')
+    .select('id, name, type, duration_min, order_index, intensity, notes')
+    .eq('template_id', templateId)
+    .order('order_index', { ascending: true })
+
+  if (blocksError) {
+    return {
+      ok: false,
+      status: 'error',
+      message: blocksError.message ?? 'Failed to fetch template blocks.',
+    }
+  }
+
+  if (!templateBlocks || templateBlocks.length === 0) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message: `The template "${template.name}" has no blocks. Add blocks to the template before populating.`,
+    }
+  }
+
+  // Copy template_blocks → session_blocks
+  const sessionBlockRows = (templateBlocks as any[]).map((tb: any) => ({
+    session_id: sessionId,
+    template_block_id: tb.id,
+    name: tb.name,
+    type: tb.type,
+    duration_min: tb.duration_min,
+    order_index: tb.order_index,
+    intensity: tb.intensity ?? null,
+    notes: tb.notes ?? null,
+    is_override: false,
+  }))
+
+  const { error: insertError } = await rawDb.from('session_blocks').insert(sessionBlockRows)
+
+  if (insertError) {
+    return {
+      ok: false,
+      status: 'error',
+      message: insertError.message ?? 'Failed to insert session blocks.',
+    }
+  }
+
+  revalidatePath('/director/sessions')
+  revalidatePath(`/director/sessions/${sessionId}`)
+
+  // Build local-only coach brief (never stored, never sent)
+  const coachBriefFocus = (fields.coach_brief_focus ?? '').trim() || null
+  const modifications = (fields.modifications ?? '').trim() || null
+
+  const briefInput: CoachBriefInput = {
+    sessionName: session.name ?? (fields.session ?? '').replace(/\s*✓$/, '').trim() ?? 'Session',
+    scheduledDate: session.scheduled_date ?? '',
+    templateName: template.name,
+    blocks: (templateBlocks as any[]).map((tb: any) => ({
+      name: tb.name,
+      type: tb.type,
+      duration_min: tb.duration_min,
+      order_index: tb.order_index,
+      notes: tb.notes ?? null,
+    })),
+    sessionFocus: session.session_notes ?? coachBriefFocus ?? null,
+    coachNotes: coachBriefFocus,
+    modifications,
+  }
+
+  const coachBriefText = buildCoachBrief(briefInput)
+
+  const blockCount = templateBlocks.length
+
+  return {
+    ok: true,
+    status: 'saved',
+    message: `${blockCount} block${blockCount === 1 ? '' : 's'} from "${template.name}" added to the session.`,
+    createdId: sessionId,
+    details: coachBriefText,
+    safetyNotes: [
+      'Session blocks have been copied from the template.',
+      'No coach, parent, or player has been notified.',
+      'The coach brief below is a local draft only — not sent or stored.',
+      'Review and edit the session before sending any communications.',
+    ],
   }
 }

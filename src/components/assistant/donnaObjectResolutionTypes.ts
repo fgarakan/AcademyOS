@@ -107,6 +107,10 @@ export const FIELD_RESOLUTION_MAP: Partial<
     coach: 'coach',
     template: 'class_template',
   },
+  populate_session_from_template: {
+    session: 'session',
+    template: 'class_template',
+  },
   create_group: {
     coach: 'coach',
   },

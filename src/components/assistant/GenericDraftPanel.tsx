@@ -387,7 +387,7 @@ export function GenericDraftPanel({
                       </li>
                       <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
                         <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Session blocks are not copied in this step — populate from the session detail page
+                        Session blocks are not copied in this step — use &ldquo;Populate Session Blocks&rdquo; after creation
                       </li>
                       <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
                         <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
@@ -396,6 +396,26 @@ export function GenericDraftPanel({
                       <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
                         <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
                         No attendance records are created
+                      </li>
+                    </>
+                  )}
+                  {draft.taskId === 'populate_session_from_template' && (
+                    <>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Session blocks copied from the template into this session
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        A local coach brief is generated for your review — not sent or stored
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        No coach, parent, or player is notified
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Blocked if the session already has blocks (duplicate guard)
                       </li>
                     </>
                   )}
@@ -492,6 +512,25 @@ export function GenericDraftPanel({
                 </li>
               ))}
             </ul>
+          )}
+          {approveResult.details && (
+            <div
+              className="rounded-lg px-3 py-2.5"
+              style={{
+                background: 'rgba(139,92,246,0.05)',
+                border: '1px solid rgba(139,92,246,0.18)',
+              }}
+            >
+              <p
+                className="text-[10px] uppercase tracking-widest font-semibold mb-1.5"
+                style={{ color: '#8b5cf6' }}
+              >
+                Coach Brief Draft
+              </p>
+              <pre className="text-[10px] text-text-muted leading-relaxed whitespace-pre-wrap font-mono overflow-x-auto">
+                {approveResult.details}
+              </pre>
+            </div>
           )}
           <button
             onClick={onCancel}

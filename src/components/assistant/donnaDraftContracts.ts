@@ -16,6 +16,7 @@ export type DonnaDraftType =
   | 'class_template_draft'
   | 'fitness_template_draft'
   | 'session_draft'
+  | 'session_block_population_draft'
   | 'coach_note_draft'
   | 'parent_update_draft'
   | 'player_note_draft'
@@ -103,6 +104,27 @@ export const DONNA_DRAFT_CONTRACTS: Record<DonnaDraftType, DonnaDraftContract> =
     approvalRequired: true,
     approvalActionLabel: 'Save Fitness Template',
     cancelActionLabel: 'Cancel Draft',
+    saveWireStatus: 'wired',
+  },
+
+  session_block_population_draft: {
+    draftType: 'session_block_population_draft',
+    title: 'Session Block Population Draft',
+    summary:
+      'Copies template_blocks into an existing planned session shell as session_blocks. A local coach brief is generated for director review only — it is never sent automatically. Director must explicitly approve before any blocks are written.',
+    sourceTask: 'populate_session_from_template',
+    dataUsed: ['session', 'template_blocks', 'coach_profile', 'group'],
+    fieldsCollected: ['session', 'template', 'coach_brief_focus', 'modifications'],
+    missingFields: [],
+    proposedChanges: [
+      'Copy template_blocks from the linked template into session_blocks for this session',
+      'Generate a local coach brief draft for director review (not sent, not stored)',
+    ],
+    affectedObjects: ['session', 'session_blocks'],
+    visibilityImpact: 'Director only — no coach, parent, or player is notified',
+    approvalRequired: true,
+    approvalActionLabel: 'Approve and Populate Blocks',
+    cancelActionLabel: 'Cancel',
     saveWireStatus: 'wired',
   },
 

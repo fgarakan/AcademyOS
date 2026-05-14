@@ -2,6 +2,46 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 271: Donna Session Block Population + Coach Brief V1
+
+**Why this sprint:**
+Sprint 270 wired `create_session` — saving a planned session shell. This sprint adds the next step: populating that shell with blocks from a template. A local coach brief is generated for director review after blocks are copied. No communications are sent.
+
+**New task contract:**
+- `populate_session_from_template` — guided task that copies `template_blocks` → `session_blocks` for an existing planned session. Requires a confirmed `session_id`. Template resolved via the session's own `template_id` or an explicit override. Duplicate guard blocks the action if the session already has blocks.
+
+**Coach brief:**
+Local-only formatted text returned in the new `details` field on `DonnaApprovalExecutionResult`. Never stored in DB, never sent to coach. Rendered in the success state of `GenericDraftPanel` as a preformatted monospace block labeled "Coach Brief Draft". Director approval required before any future communication action.
+
+**Files created:**
+- `src/components/assistant/donnaCoachBriefBuilder.ts` — pure deterministic text builder; returns formatted internal coach brief string; no DB, no API, no async
+
+**Files modified:**
+- `src/app/director/_actions/donnaDraftExecutionActions.ts` — added `populateSessionBlocksAction`: duplicate guard, block copy (template_blocks → session_blocks), coach brief via `buildCoachBrief()`, returns `details` field; added import for `buildCoachBrief`; also updated `saveSessionDraftAction` safety note to reference "Populate Session Blocks"
+- `src/components/assistant/donnaApprovalExecutionTypes.ts` — added `details?: string` to `DonnaApprovalExecutionResult`; added `'session_block_population_draft'` to `DonnaExecutableDraftType`
+- `src/components/assistant/donnaTaskContracts.ts` — added `'populate_session_from_template'` to `DonnaTaskId`; added full task contract (required: session; optional: template, coach_brief_focus, modifications; wired)
+- `src/components/assistant/donnaDraftContracts.ts` — added `'session_block_population_draft'` to `DonnaDraftType`; added draft contract (`approvalActionLabel: 'Approve and Populate Blocks'`, `saveWireStatus: 'wired'`)
+- `src/components/assistant/donnaObjectResolutionTypes.ts` — added `populate_session_from_template: { session: 'session', template: 'class_template' }` to `FIELD_RESOLUTION_MAP`
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `populate_session_from_template` to `WIRED_TASK_IDS`; imported `populateSessionBlocksAction`; wired in `handleGenericDraftApprove` with `_resolved_session_id` and `_resolved_class_template_id` merge
+- `src/components/assistant/GenericDraftPanel.tsx` — added `populate_session_from_template` "What will be saved" block; added `details` rendering in success state as preformatted coach brief
+- `src/components/assistant/donnaTaskRuntime.ts` — added keyword patterns for `populate_session_from_template` (populate session, populate blocks, build session blocks, prepare session for coach, etc.)
+
+**UI copy guardrail:**
+Approval label is "Approve and Populate Blocks". "Send to Coach" and "Publish Session" do not appear anywhere in this flow.
+
+**Safety guarantees:**
+- No coaches, parents, or players notified
+- No attendance records created
+- No session publishing
+- Coach brief is local-only — not stored, not sent
+- Duplicate guard prevents double-populate
+- Voice "save it" still does not save directly — on-screen button required
+- No OpenAI/API calls, no Realtime, no migrations
+
+**TypeScript:** clean (npx tsc --noEmit — zero errors)
+
+---
+
 ## 2026-05-14 — Mega Sprint 270: Donna Session Creation + Planning Execution V1
 
 **Why this sprint:**

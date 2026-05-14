@@ -17,6 +17,7 @@ export type DonnaTaskId =
   | 'create_class_template'
   | 'create_fitness_template'
   | 'create_session'
+  | 'populate_session_from_template'
   | 'capture_coach_note'
   | 'draft_parent_update'
   | 'draft_player_note'
@@ -122,6 +123,31 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     createsDraftType: 'fitness_template_draft',
     approvalRequired: true,
     unsafeWithoutApproval: ['save_fitness_template', 'assign_fitness_homework'],
+    saveApplyMethodStatus: 'wired',
+  },
+
+  populate_session_from_template: {
+    taskId: 'populate_session_from_template',
+    label: 'Populate Session Blocks',
+    description:
+      'Copy blocks from a template into an existing planned session shell. Returns a local coach brief draft for director review. Nothing is sent to the coach automatically.',
+    requiredFields: [
+      { fieldId: 'session', label: 'Session', required: true, example: 'Orange 2 — 2026-05-20' },
+    ],
+    optionalFields: [
+      { fieldId: 'template',           label: 'Template Override',  required: false, example: 'Orange 2 — Skills + Match' },
+      { fieldId: 'coach_brief_focus',  label: 'Coach Brief Focus',  required: false, example: 'Focus on net approach today' },
+      { fieldId: 'modifications',      label: 'Modifications',      required: false, example: 'Skip point play — extra match time' },
+    ],
+    questionSequence: [
+      { order: 1, fieldId: 'session',          question: 'Which session should I populate with blocks?' },
+      { order: 2, fieldId: 'template',         question: 'Which template should I use? (Leave blank to use the template already linked to this session)' },
+      { order: 3, fieldId: 'coach_brief_focus', question: 'Any specific focus for the coach brief? (optional)' },
+    ],
+    reads: ['session', 'class_template', 'fitness_template', 'template_blocks'],
+    createsDraftType: 'session_block_population_draft',
+    approvalRequired: true,
+    unsafeWithoutApproval: ['copy_blocks_without_review', 'notify_coach'],
     saveApplyMethodStatus: 'wired',
   },
 
