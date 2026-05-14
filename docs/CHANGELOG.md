@@ -2,6 +2,68 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 270: Donna Session Creation + Planning Execution V1
+
+**Why this sprint:**
+Sprints 264–269 built Donna's guided task contracts, live context retrieval, generic task runtime, predictive intelligence, first two wired saves (`create_fitness_template`, `capture_coach_note`), and safe object resolution for players/groups/coaches/templates. This sprint wires `create_session` as an approved save action — completing the first session-planning voice loop: group resolution → template resolution → coach resolution → date → Approve and Save.
+
+**Session schema audit results:**
+- `sessions.coach_id` is NOT NULL — a confirmed coach ID is required before saving. If missing, `saveSessionDraftAction` returns a `blocked` result with a clear message.
+- `sessions.scheduled_date` is NOT NULL — date field is parsed deterministically (handles "today", "tomorrow", weekday names, ISO format, and common natural-language strings via JS Date).
+- `sessions.group_id`, `sessions.template_id` — optional; schema allows null; omitted when not confirmed.
+- `sessions.status` enum includes `'planned'` — used as the default for all Donna-created sessions.
+- No migration needed — sessions table exists with all required columns.
+
+**Session blocks deferred:**
+Session shell only is saved (sessions row). Template blocks are NOT copied in this sprint. The existing `generateSessionFromTemplateAction` handles block copying from the session detail page. A safety note in the approval UI makes this explicit.
+
+**Files created:**
+*(none)*
+
+**Files modified:**
+- `src/app/director/_actions/donnaDraftExecutionActions.ts` — added `saveSessionDraftAction`: validates coach_id (required), parses date, merges resolved group/template/coach IDs, inserts session row with `status: 'planned'`, returns safety notes; added `parseDateToIso` helper (handles today/tomorrow/weekday/ISO/JS-Date fallback)
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `create_session` to `WIRED_TASK_IDS`; imported `saveSessionDraftAction`; added `create_session` branch in `handleGenericDraftApprove` that merges `_resolved_group_id`, `_resolved_class_template_id`, `_resolved_coach_id` before calling the action
+- `src/components/assistant/donnaTaskContracts.ts` — updated `create_session.saveApplyMethodStatus: 'wired'`; reordered question sequence to lead with group (most natural for voice); made `template` optional (schema supports null); also commits Sprint 268 pending status fixes for `create_fitness_template` and `capture_coach_note`
+- `src/components/assistant/donnaDraftContracts.ts` — updated `session_draft.saveWireStatus: 'wired'`; updated summary and proposedChanges to reflect shell-only save; also commits Sprint 268 pending status fixes for `fitness_template_draft` and `coach_note_draft`
+- `src/components/assistant/donnaApprovalExecutionTypes.ts` — added `'session_draft'` to `DonnaExecutableDraftType` union
+- `src/components/assistant/GenericDraftPanel.tsx` — added `create_session` block in "What will be saved" section: lists planned session record, blocks-not-copied note, no-notification safety copy, no-attendance safety copy; also commits Sprint 268/269 pending approval-UI additions (AlertCircle import, `onApprove` prop, `isWired` prop, approve state machine)
+
+**Object IDs required for session save:**
+- `_resolved_coach_id` — required (sessions.coach_id NOT NULL); blocks save if missing
+- `_resolved_group_id` — optional; null allowed by schema
+- `_resolved_class_template_id` — optional; null allowed by schema
+
+**Approval behavior:**
+- `create_session` now shows "Approve and Save" button when all required fields (group, coach, date) are answered
+- Voice "save it" still does not save directly — on-screen button required
+- If coach is not confirmed via resolver: blocked result shown in panel
+- If date cannot be parsed: blocked result shown in panel
+
+**What Donna can now save:**
+- create_fitness_template — fitness template + blocks (Sprint 268)
+- capture_coach_note — pending-review voice note (Sprint 268, player-linked when confirmed via Sprint 269)
+- create_session — planned session shell (this sprint)
+
+**What remains not wired:**
+- draft_parent_update, draft_player_note, review_level_readiness, handle_attendance_exception, adjust_curriculum, create_group, assign_player_to_group, summarize_player_progress, recommend_template_for_group
+
+**Safety guarantees:**
+- No coaches, parents, or players notified on save
+- No attendance records created
+- No session publishing
+- No curriculum changes
+- No player level movement
+- No OpenAI/API calls
+- No Realtime
+- No parent/player communication
+- Session is internal planned record only — only director sees it until further action
+
+**No migrations** — sessions table fully present with required columns
+**database.types.ts** — untouched
+**TypeScript** — clean (npx tsc --noEmit passes)
+
+---
+
 ## 2026-05-14 — Mega Sprint 269: Donna Safe Object Resolution + Confirmation Layer V1
 
 **Why this sprint:**

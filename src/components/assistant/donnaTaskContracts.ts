@@ -122,35 +122,35 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     createsDraftType: 'fitness_template_draft',
     approvalRequired: true,
     unsafeWithoutApproval: ['save_fitness_template', 'assign_fitness_homework'],
-    saveApplyMethodStatus: 'not_wired_yet',
+    saveApplyMethodStatus: 'wired',
   },
 
   create_session: {
     taskId: 'create_session',
     label: 'Create Session',
     description:
-      'Guide the director through creating a new session from a class or fitness template, assigned to a coach and group.',
+      'Guide the director through creating a new planned session assigned to a coach and group. A template can be linked; blocks are populated separately.',
     requiredFields: [
-      { fieldId: 'template',    label: 'Template',          required: true,  example: 'Orange 2 — Skills + Match' },
       { fieldId: 'date',        label: 'Session Date',      required: true,  example: 'Monday 19 May' },
       { fieldId: 'coach',       label: 'Assigned Coach',    required: true,  example: 'Coach Sarah' },
       { fieldId: 'group',       label: 'Assigned Group',    required: true,  example: 'Orange Ball Group A' },
     ],
     optionalFields: [
-      { fieldId: 'session_goal', label: 'Session Goal',   required: false },
-      { fieldId: 'special_notes', label: 'Special Notes', required: false },
+      { fieldId: 'template',    label: 'Template',          required: false, example: 'Orange 2 — Skills + Match' },
+      { fieldId: 'session_goal', label: 'Session Goal',     required: false },
+      { fieldId: 'special_notes', label: 'Special Notes',   required: false },
     ],
     questionSequence: [
-      { order: 1, fieldId: 'template',    question: 'Which template should this session use?' },
-      { order: 2, fieldId: 'date',        question: 'When is this session scheduled?' },
-      { order: 3, fieldId: 'coach',       question: 'Which coach will run this session?' },
-      { order: 4, fieldId: 'group',       question: 'Which group is this session for?' },
+      { order: 1, fieldId: 'group',       question: 'Which group is this session for?' },
+      { order: 2, fieldId: 'coach',       question: 'Which coach will run this session?' },
+      { order: 3, fieldId: 'date',        question: 'When is this session scheduled? (e.g. "Tuesday May 20" or "2026-05-20")' },
+      { order: 4, fieldId: 'template',    question: 'Which template should this session use? (optional — you can skip this and assign later)' },
     ],
     reads: ['class_template', 'fitness_template', 'group', 'session'],
     createsDraftType: 'session_draft',
     approvalRequired: true,
     unsafeWithoutApproval: ['create_session', 'send_session_plan_to_coach'],
-    saveApplyMethodStatus: 'not_wired_yet',
+    saveApplyMethodStatus: 'wired',
   },
 
   capture_coach_note: {
@@ -176,7 +176,7 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     createsDraftType: 'coach_note_draft',
     approvalRequired: true,
     unsafeWithoutApproval: ['save_player_note_without_review', 'expose_note_to_parent'],
-    saveApplyMethodStatus: 'not_wired_yet',
+    saveApplyMethodStatus: 'wired',
   },
 
   draft_parent_update: {

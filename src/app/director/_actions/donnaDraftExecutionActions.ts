@@ -244,3 +244,158 @@ export async function saveCoachNoteDraftAction(
     ],
   }
 }
+
+// ---------------------------------------------------------------------------
+// saveSessionDraftAction
+//
+// Saves a planned session shell (status: 'planned').
+// Requires a confirmed coach_id — sessions.coach_id is NOT NULL.
+// Uses confirmed group/template IDs when available; both are optional in the DB.
+// Does NOT copy template_blocks — session is a shell only; blocks are populated
+// from the session detail page after creation.
+// Does NOT publish, notify, or create attendance records.
+// Revalidates /director/sessions on success.
+// ---------------------------------------------------------------------------
+
+/** Converts common date expressions to ISO YYYY-MM-DD, or returns null on failure. */
+function parseDateToIso(dateText: string): string | null {
+  if (!dateText) return null
+  const text = dateText.trim().toLowerCase()
+  const now = new Date()
+
+  if (text === 'today') {
+    return now.toISOString().split('T')[0]
+  }
+  if (text === 'tomorrow') {
+    const d = new Date(now)
+    d.setDate(d.getDate() + 1)
+    return d.toISOString().split('T')[0]
+  }
+
+  // Next occurrence of a named weekday
+  const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const dayIdx = weekdays.findIndex(w => text.includes(w))
+  if (dayIdx !== -1) {
+    const d = new Date(now)
+    const currentDay = d.getDay()
+    let daysAhead = dayIdx - currentDay
+    if (daysAhead <= 0) daysAhead += 7
+    d.setDate(d.getDate() + daysAhead)
+    return d.toISOString().split('T')[0]
+  }
+
+  // Already ISO YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text
+
+  // Fallback: JS Date parse (handles "May 19", "19 May 2026", etc.)
+  const parsed = new Date(dateText)
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split('T')[0]
+  }
+
+  return null
+}
+
+export async function saveSessionDraftAction(
+  fields: Record<string, string>,
+): Promise<DonnaApprovalExecutionResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, status: 'blocked', message: 'Writes are disabled in preview mode.' }
+  }
+
+  const ctx = await getAuthorizedContext()
+  if (!ctx.ok) return ctx.result
+
+  const { supabase, userId, academyId } = ctx
+
+  // sessions.coach_id is NOT NULL — confirmed ID is required before saving
+  const coachId = (fields._resolved_coach_id ?? '').trim() || null
+  if (!coachId) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message:
+        'Please confirm the coach before saving this session. Use the resolver panel to search and select a coach.',
+    }
+  }
+
+  // scheduled_date is NOT NULL — must parse successfully
+  const rawDate = (fields.date ?? '').trim()
+  const scheduledDate = parseDateToIso(rawDate)
+  if (!scheduledDate) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message:
+        'Could not parse the session date. Please provide a clearer date (e.g. "Tuesday May 20" or "2026-05-20").',
+    }
+  }
+
+  // Optional resolved IDs — safe to omit; schema allows null
+  const groupId = (fields._resolved_group_id ?? '').trim() || null
+  const templateId = (fields._resolved_class_template_id ?? '').trim() || null
+
+  // Derive display labels (strip confirmation tick if present)
+  const coachLabel = (fields.coach ?? '').replace(/\s*✓$/, '').trim()
+  const groupLabel = (fields.group ?? '').replace(/\s*✓$/, '').trim()
+  const templateLabel = (fields.template ?? '').replace(/\s*✓$/, '').trim()
+  const sessionGoal = (fields.session_goal ?? '').trim() || null
+
+  // Auto-generate session name from available resolved info
+  const nameParts: string[] = []
+  if (templateLabel) nameParts.push(templateLabel)
+  else if (groupLabel) nameParts.push(groupLabel)
+  else if (coachLabel) nameParts.push(coachLabel)
+  nameParts.push(scheduledDate)
+  const sessionName = nameParts.join(' — ').slice(0, 200) || 'Session Draft'
+
+  // rawDb cast — avoids TS2589 on insert with nullable columns
+  const rawDb = supabase as any
+
+  const { data: sessionRow, error: sessionError } = await rawDb
+    .from('sessions')
+    .insert({
+      academy_id: academyId,
+      created_by: userId,
+      coach_id: coachId,
+      group_id: groupId,
+      template_id: templateId,
+      name: sessionName,
+      scheduled_date: scheduledDate,
+      scheduled_time: null,
+      status: 'planned',
+      session_notes: sessionGoal,
+      duration_min: null,
+    })
+    .select('id')
+    .single()
+
+  if (sessionError || !sessionRow?.id) {
+    return {
+      ok: false,
+      status: 'error',
+      message: sessionError?.message ?? 'Failed to create session.',
+    }
+  }
+
+  const sessionId: string = sessionRow.id
+
+  revalidatePath('/director/sessions')
+
+  const safetyNotes: string[] = [
+    'This is an internal planned session only.',
+    'No coaches, parents, or players have been notified.',
+    'No attendance records have been created.',
+  ]
+  if (!groupId) safetyNotes.push('No group was confirmed — assign one from the session detail page.')
+  if (!templateId) safetyNotes.push('No template was confirmed — assign one from the session detail page.')
+  safetyNotes.push('Session blocks are not yet populated — use the session detail page to generate blocks.')
+
+  return {
+    ok: true,
+    status: 'saved',
+    message: `Session "${sessionName}" created as planned.`,
+    createdId: sessionId,
+    safetyNotes,
+  }
+}

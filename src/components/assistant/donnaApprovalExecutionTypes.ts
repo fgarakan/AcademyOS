@@ -20,9 +20,10 @@ export interface DonnaApprovalExecutionResult {
 }
 
 // ---------------------------------------------------------------------------
-// Union of draft types that have a wired server action in Sprint 268
+// Union of draft types that have a wired server action
 // ---------------------------------------------------------------------------
 
 export type DonnaExecutableDraftType =
   | 'fitness_template_draft'
   | 'coach_note_draft'
+  | 'session_draft'

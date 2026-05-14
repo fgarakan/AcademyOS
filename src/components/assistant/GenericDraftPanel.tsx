@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Edit2, CheckCircle2 } from 'lucide-react'
+import { X, Edit2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { DONNA_TASK_CONTRACTS } from './donnaTaskContracts'
 import type { DonnaTaskQuestion } from './donnaTaskContracts'
 import {
@@ -12,6 +12,7 @@ import {
 } from './donnaMissingQuestionEngine'
 import type { GenericTaskDraft } from './donnaGenericDraftTypes'
 import { applyAnswerToGenericDraft } from './donnaGenericDraftTypes'
+import type { DonnaApprovalExecutionResult } from './donnaApprovalExecutionTypes'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -24,7 +25,13 @@ interface GenericDraftPanelProps {
     nextQuestion: DonnaTaskQuestion | null,
     updatedDraft: GenericTaskDraft,
   ) => void
+  /** If provided, clicking Approve calls this and shows the result inline */
+  onApprove?: (draft: GenericTaskDraft) => Promise<DonnaApprovalExecutionResult>
+  /** True when the task has a wired server action — shows Approve button instead of "not yet available" */
+  isWired?: boolean
 }
+
+type ApproveState = 'idle' | 'saving' | 'saved' | 'error'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -34,10 +41,14 @@ export function GenericDraftPanel({
   onCancel,
   fromVoice,
   onQuestionAnswered,
+  onApprove,
+  isWired,
 }: GenericDraftPanelProps) {
   const [answerInput, setAnswerInput] = useState('')
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
   const [editInput, setEditInput] = useState('')
+  const [approveState, setApproveState] = useState<ApproveState>('idle')
+  const [approveResult, setApproveResult] = useState<DonnaApprovalExecutionResult | null>(null)
 
   const contract = DONNA_TASK_CONTRACTS[draft.taskId]
   if (!contract) return null
@@ -73,6 +84,24 @@ export function GenericDraftPanel({
     }
     setEditingFieldId(null)
     setEditInput('')
+  }
+
+  async function handleApprove() {
+    if (!onApprove || approveState === 'saving') return
+    setApproveState('saving')
+    setApproveResult(null)
+    try {
+      const result = await onApprove(draft)
+      setApproveResult(result)
+      setApproveState(result.ok ? 'saved' : 'error')
+    } catch {
+      setApproveResult({
+        ok: false,
+        status: 'error',
+        message: 'An unexpected error occurred. Please try again.',
+      })
+      setApproveState('error')
+    }
   }
 
   function getFieldLabel(fieldId: string): string {
@@ -279,7 +308,7 @@ export function GenericDraftPanel({
       )}
 
       {/* Complete state — all required fields answered */}
-      {isComplete && (
+      {isComplete && approveState !== 'saved' && (
         <div
           className="rounded-xl px-3.5 py-3 space-y-2.5"
           style={{
@@ -297,31 +326,178 @@ export function GenericDraftPanel({
             Review your answers above. You can edit any field before saving.
           </p>
 
-          {/* Honest save notice — save is not yet wired for these contract-only tasks */}
-          <div
-            className="rounded-lg px-3 py-2"
-            style={{
-              background: 'rgba(255,149,0,0.06)',
-              border: '1px solid rgba(255,149,0,0.2)',
-            }}
-          >
-            <p
-              className="text-[10px] uppercase tracking-widest font-semibold mb-0.5"
-              style={{ color: '#FF9500' }}
-            >
-              Save not yet available
-            </p>
-            <p className="text-[11px] text-text-muted leading-snug">
-              The save action for {contract.label.toLowerCase()} is coming in a future sprint.
-              Your draft is held here for your review.
-            </p>
-          </div>
+          {isWired && onApprove ? (
+            /* ── Wired task: Approve and Save button ── */
+            <>
+              {/* What will be saved */}
+              <div
+                className="rounded-lg px-3 py-2"
+                style={{
+                  background: 'rgba(200,255,0,0.04)',
+                  border: '1px solid rgba(200,255,0,0.15)',
+                }}
+              >
+                <p
+                  className="text-[10px] uppercase tracking-widest font-semibold mb-1"
+                  style={{ color: '#C8FF00' }}
+                >
+                  What will be saved
+                </p>
+                <ul className="space-y-0.5">
+                  {DONNA_TASK_CONTRACTS[draft.taskId]?.unsafeWithoutApproval.length === 0
+                    ? <li className="text-[11px] text-text-muted">This draft will be saved after approval.</li>
+                    : null}
+                  {draft.taskId === 'create_fitness_template' && (
+                    <>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        A fitness template record (tagged fitness_template:true)
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Template blocks for each category you listed
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        No session is created — scheduling is a separate step
+                      </li>
+                    </>
+                  )}
+                  {draft.taskId === 'capture_coach_note' && (
+                    <>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        A pending-review capture in your Review Queue
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Not yet linked to a player — route it from Review Queue
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Not visible to parents or players
+                      </li>
+                    </>
+                  )}
+                  {draft.taskId === 'create_session' && (
+                    <>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        An internal planned session record (status: planned)
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Session blocks are not copied in this step — populate from the session detail page
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        This creates an internal record only — no coach, parent, or player is notified
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        No attendance records are created
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
 
+              {/* Error state */}
+              {approveState === 'error' && approveResult && (
+                <div
+                  className="rounded-lg px-3 py-2 flex items-start gap-2"
+                  style={{
+                    background: 'rgba(255,59,48,0.07)',
+                    border: '1px solid rgba(255,59,48,0.25)',
+                  }}
+                >
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" style={{ color: '#FF3B30' }} />
+                  <p className="text-[11px] text-text-secondary leading-snug">
+                    {approveResult.message}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleApprove}
+                  disabled={approveState === 'saving'}
+                  className="btn-lime text-xs px-3.5 py-1.5 disabled:opacity-60"
+                >
+                  {approveState === 'saving' ? 'Saving…' : 'Approve and Save'}
+                </button>
+                <button
+                  onClick={onCancel}
+                  className="text-[11px] text-text-muted hover:text-status-red transition-colors"
+                >
+                  Discard Draft
+                </button>
+              </div>
+            </>
+          ) : (
+            /* ── Not wired: honest notice ── */
+            <>
+              <div
+                className="rounded-lg px-3 py-2"
+                style={{
+                  background: 'rgba(255,149,0,0.06)',
+                  border: '1px solid rgba(255,149,0,0.2)',
+                }}
+              >
+                <p
+                  className="text-[10px] uppercase tracking-widest font-semibold mb-0.5"
+                  style={{ color: '#FF9500' }}
+                >
+                  Save not yet available
+                </p>
+                <p className="text-[11px] text-text-muted leading-snug">
+                  The save action for {contract.label.toLowerCase()} is coming in a future sprint.
+                  Your draft is held here for your review.
+                </p>
+              </div>
+
+              <button
+                onClick={onCancel}
+                className="text-[11px] text-text-muted hover:text-status-red transition-colors"
+              >
+                Discard Draft
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Saved state — shown after successful approval */}
+      {approveState === 'saved' && approveResult?.ok && (
+        <div
+          className="rounded-xl px-3.5 py-3 space-y-2.5"
+          style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid rgba(48,209,88,0.3)',
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: '#30D158' }} />
+            <p className="text-[12px] font-semibold text-text-primary">Saved successfully.</p>
+          </div>
+          <p className="text-[11px] text-text-secondary leading-relaxed">
+            {approveResult.message}
+          </p>
+          {approveResult.safetyNotes && approveResult.safetyNotes.length > 0 && (
+            <ul className="space-y-0.5">
+              {approveResult.safetyNotes.map((note, i) => (
+                <li key={i} className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                  <span className="shrink-0 mt-px" style={{ color: '#30D158' }}>·</span>
+                  {note}
+                </li>
+              ))}
+            </ul>
+          )}
           <button
             onClick={onCancel}
-            className="text-[11px] text-text-muted hover:text-status-red transition-colors"
+            className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
           >
-            Discard Draft
+            Close
           </button>
         </div>
       )}

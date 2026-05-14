@@ -103,28 +103,28 @@ export const DONNA_DRAFT_CONTRACTS: Record<DonnaDraftType, DonnaDraftContract> =
     approvalRequired: true,
     approvalActionLabel: 'Save Fitness Template',
     cancelActionLabel: 'Cancel Draft',
-    saveWireStatus: 'not_wired_yet',
+    saveWireStatus: 'wired',
   },
 
   session_draft: {
     draftType: 'session_draft',
     title: 'Session Draft',
     summary:
-      'A proposed session generated from a template — assigned to a coach and group, with a scheduled date. Requires director approval before the session is created.',
+      'A planned session shell assigned to a coach and group with a scheduled date. Requires director approval before the session record is created. Blocks are not copied in this step — populate from the session detail page after creation.',
     sourceTask: 'create_session',
-    dataUsed: ['class_template', 'coach_profile', 'group', 'schedule'],
-    fieldsCollected: ['template', 'date', 'coach', 'group', 'session_goal'],
+    dataUsed: ['coach_profile', 'group', 'schedule', 'class_template'],
+    fieldsCollected: ['group', 'coach', 'date', 'template', 'session_goal'],
     missingFields: [],
     proposedChanges: [
-      'Create a sessions record with template, coach, group, and date',
-      'Create session_blocks from template_blocks',
+      'Create a sessions record (status: planned) with coach, group, date, and optional template',
+      'Session blocks are NOT copied — assign from the session detail page',
     ],
-    affectedObjects: ['session', 'session_blocks', 'group'],
-    visibilityImpact: 'Director only until approved; coach sees it after creation',
+    affectedObjects: ['session'],
+    visibilityImpact: 'Director only — internal planned record; coach is not notified',
     approvalRequired: true,
     approvalActionLabel: 'Create Session',
     cancelActionLabel: 'Cancel Draft',
-    saveWireStatus: 'not_wired_yet',
+    saveWireStatus: 'wired',
   },
 
   coach_note_draft: {
@@ -145,7 +145,7 @@ export const DONNA_DRAFT_CONTRACTS: Record<DonnaDraftType, DonnaDraftContract> =
     approvalRequired: true,
     approvalActionLabel: 'Save Note',
     cancelActionLabel: 'Discard Note',
-    saveWireStatus: 'not_wired_yet',
+    saveWireStatus: 'wired',
   },
 
   parent_update_draft: {

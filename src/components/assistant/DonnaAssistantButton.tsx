@@ -39,9 +39,11 @@ import { computePredictiveSuggestions } from '@/components/assistant/donnaPredic
 import type { DonnaSuggestion } from '@/components/assistant/donnaPredictiveSuggestions'
 import { DonnaSuggestionCard } from '@/components/assistant/DonnaSuggestionCard'
 // Sprint 268 — Approval Execution
+// Sprint 270 — Session Draft Execution
 import {
   saveFitnessTemplateDraftAction,
   saveCoachNoteDraftAction,
+  saveSessionDraftAction,
 } from '@/app/director/_actions/donnaDraftExecutionActions'
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
 // Sprint 269 — Safe Object Resolution
@@ -66,6 +68,7 @@ import { getCurrentPageObject } from '@/components/assistant/donnaCurrentObjectC
 const WIRED_TASK_IDS = new Set<DonnaTaskId>([
   'create_fitness_template',
   'capture_coach_note',
+  'create_session',
 ])
 
 // ---------------------------------------------------------------------------
@@ -567,6 +570,20 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         fields._resolved_player_id = resolvedObjects['player'].id
       }
       return saveCoachNoteDraftAction(fields)
+    }
+    if (draft.taskId === 'create_session') {
+      const fields: Record<string, string> = { ...draft.collectedFields }
+      // Merge confirmed resolved IDs — never inferred from name text alone
+      if (resolvedObjects['group']?.id) {
+        fields._resolved_group_id = resolvedObjects['group'].id
+      }
+      if (resolvedObjects['template']?.id) {
+        fields._resolved_class_template_id = resolvedObjects['template'].id
+      }
+      if (resolvedObjects['coach']?.id) {
+        fields._resolved_coach_id = resolvedObjects['coach'].id
+      }
+      return saveSessionDraftAction(fields)
     }
     return {
       ok: false,
