@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 315–321: Donna Conversational Workflow Runtime V1
+
+**Goal:** Build the full intent-routing and draft management infrastructure for Donna's conversational workflow. Seven new pure-TypeScript modules with no DB, no API, no migrations.
+
+**Files created:**
+- `src/components/assistant/donnaIntentRouter.ts` — classifies any director input into `{ intentType, workflowId, confidence, extractedSlots, requiresApproval, safeResponse }`. Supersedes scattered `detectTaskIntent` / `isTemplateCreationIntent` / `detectMultiStepIntent` calls into one unified `classifyIntent()` entry point. 10 intent types, 9 workflow IDs.
+- `src/components/assistant/donnaWorkflowRegistry.ts` — 8 workflow definitions with full metadata: entry phrases, step sequence, approval gates, cannotDoByVoice list, opening/ready-for-review lines. `getWorkflow()`, `getAllWorkflows()`, `findWorkflowByPhrase()` public API.
+- `src/components/assistant/donnaDraftRuntime.ts` — immutable draft state manager: `createDraft`, `updateDraft`, `undoLastChange`, `resetDraft`, `getNextQuestion`, `getMissingSlots`, `markReadyForReview`, `summarizeDraft`, `toCollectedFields`. Full undo history via snapshot stack.
+- `src/components/assistant/donnaSlotFilling.ts` — per-workflow slot extraction from raw text (level, duration, playerName, dateHint, exceptionType). `extractSlots(text, workflowId)` dispatches to the correct extractor.
+- `src/components/assistant/donnaConversationController.ts` — full orchestration layer: `handleInput(text, state)` returns a `ConversationTurn` with nextState, speakText, uiAction. Handles undo/go-back/cancel/navigate/create_draft/start_workflow. `approveCurrentDraft()` and `discardCurrentDraft()` for UI layer buttons.
+- `src/components/assistant/donnaProtectedActionRouter.ts` — extended protected action classifier covering 8 protection reasons (global phrases, level changes, sends, session publish, curriculum apply, roster mutations, billing, always-listening). `checkProtectedAction(text, workflowId)` returns typed `ProtectedActionResult`.
+- `src/components/assistant/donnaFailureModes.ts` — 30-entry failure mode library. `getFailureMode(key)`, `logFailure(key, context)`, `isAutoRecoverable(key)`. Covers voice, intent, draft, protected action, context, server action, and onboarding failures.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — imported conversation controller; added `convState` state; wired `handleInput()` at top of `handleVoiceTranscript()` for undo/go-back/cancel handling; reset `convState` in `closePanel` and route-change effect; added dev-only Conversation Controller QA panel in diagnostics section.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passes with no errors.
+**Migrations:** None.
+**DB changes:** None.
+
+---
+
 ## 2026-05-14 — Sprint 314: Academy Setup Prompt Reader Contract + Read-Aloud Guarantee V1
 
 **Goal:** Guarantee that Academy Setup always reads the exact prompt shown on screen. Voice output is non-authoritative. Workflow continues regardless of audio state.

@@ -64,6 +64,13 @@ import { saveCoachCommunicationDraftAction } from '@/app/director/_actions/saveC
 // Sprint 286 — Multi-step planner
 import { detectMultiStepIntent } from '@/components/assistant/donnaMultiStepPlanner'
 import type { DonnaMultiStepPlan } from '@/components/assistant/donnaMultiStepPlanner'
+// Sprint 315–321 — Conversation Controller V1
+import {
+  createConversationState,
+  handleInput as controllerHandleInput,
+  discardCurrentDraft as controllerDiscard,
+} from '@/components/assistant/donnaConversationController'
+import type { ConversationState } from '@/components/assistant/donnaConversationController'
 // Sprint 289 — Voice UI types
 import type { DonnaVoiceTranscriptState } from '@/components/assistant/donnaVoiceUiTypes'
 // Sprint 290 — Onboarding flow
@@ -548,6 +555,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Generic task draft state — contract-only, local only, no DB writes (Sprint 266)
   const [genericDraft, setGenericDraft] = useState<GenericTaskDraft | null>(null)
 
+  // Sprint 315–321 — Conversation controller state (intent tracking + undo/go-back)
+  // Runs alongside existing routing; full migration in a future sprint.
+  const [convState, setConvState] = useState<ConversationState>(createConversationState)
+
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
   const [isLoadingReviewQueue, setIsLoadingReviewQueue] = useState(false)
@@ -642,6 +653,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     stopWakeListening()
     setWakeDetectedCommand(null)
     setVoiceOutputConfirmed(null)
+    setConvState(createConversationState())
     realtimeDisconnect()
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -696,6 +708,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     stopWakeListening()
     setWakeDetectedCommand(null)
     setVoiceOutputConfirmed(null)
+    setConvState(createConversationState())
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -748,6 +761,31 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setVoiceTranscript(text)
     setTypeInstead(false)
     const lower = text.toLowerCase()
+
+    // Sprint 315–321: Run conversation controller to track intent and handle undo/go-back.
+    // Controller runs first, before legacy routing. Undo and go-back are handled exclusively
+    // by the controller; all other intents fall through to the existing routing below.
+    const controllerTurn = controllerHandleInput(text, convState)
+    setConvState(controllerTurn.nextState)
+
+    if (
+      controllerTurn.nextState.lastIntent?.intentType === 'undo' ||
+      controllerTurn.nextState.lastIntent?.intentType === 'go_back'
+    ) {
+      setCommandResponse({ message: controllerTurn.speakText, type: 'info', label: 'Undo' })
+      speakAssistantText(controllerTurn.speakText)
+      return
+    }
+
+    if (
+      controllerTurn.nextState.lastIntent?.intentType === 'cancel' &&
+      convState.activeDraft !== null
+    ) {
+      setConvState(controllerDiscard(controllerTurn.nextState))
+      setCommandResponse({ message: controllerTurn.speakText, type: 'info', label: 'Cancelled' })
+      speakAssistantText(controllerTurn.speakText)
+      return
+    }
 
     // Voice approval safety — voice may never trigger saves, level changes, or sends.
     if (isProtectedVoicePhrase(lower)) {
@@ -2847,6 +2885,32 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 })}
               </div>
             </div>
+          )}
+
+          {/* Sprint 315–321 — Conversation Controller QA panel (dev only) */}
+          {process.env.NODE_ENV !== 'production' && (
+            <details className="mx-4 mb-2">
+              <summary className="text-[10px] uppercase tracking-widest text-text-muted cursor-pointer">
+                Conversation Controller
+              </summary>
+              <div className="mt-2 p-2 rounded text-[11px] font-mono space-y-1" style={{ background: 'var(--surface-raised)' }}>
+                <div className="text-text-secondary">Phase: <span className="text-lime">{convState.phase}</span></div>
+                {convState.lastIntent && (
+                  <>
+                    <div className="text-text-secondary">Intent: <span className="text-lime">{convState.lastIntent.intentType}</span></div>
+                    <div className="text-text-secondary">Workflow: <span className="text-lime">{convState.lastIntent.workflowId ?? 'none'}</span></div>
+                    <div className="text-text-secondary">Confidence: <span className="text-lime">{convState.lastIntent.confidence}</span></div>
+                    <div className="text-text-secondary">Approval required: <span className="text-lime">{convState.lastIntent.requiresApproval ? 'yes' : 'no'}</span></div>
+                  </>
+                )}
+                {convState.activeDraft && (
+                  <div className="text-text-secondary">Active draft: <span className="text-lime">{convState.activeDraft.taskId}</span></div>
+                )}
+                {convState.currentFieldId && (
+                  <div className="text-text-secondary">Current field: <span className="text-lime">{convState.currentFieldId}</span></div>
+                )}
+              </div>
+            </details>
           )}
 
           {/* Dev-only QA harness — Mega Sprint 297–310 */}
