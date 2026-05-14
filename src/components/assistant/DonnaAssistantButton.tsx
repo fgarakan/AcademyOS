@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Mic, Layers,
+  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Mic, Layers, Inbox,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -49,6 +49,10 @@ import {
   savePlayerNoteDraftAction,
 } from '@/app/director/_actions/donnaDraftExecutionActions'
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
+// Sprint 273 — Review Queue Command Center
+import { getDonnaReviewQueueAction } from '@/app/director/_actions/donnaReviewQueueActions'
+import type { DonnaReviewQueueSummary } from '@/components/assistant/donnaReviewQueueTypes'
+import { DonnaReviewQueuePanel } from '@/components/assistant/DonnaReviewQueuePanel'
 // Sprint 269 — Safe Object Resolution
 import { DonnaObjectResolverPanel } from '@/components/assistant/DonnaObjectResolverPanel'
 import { resolveDonnaObjectAction } from '@/app/director/_actions/donnaObjectResolutionActions'
@@ -115,7 +119,7 @@ const QUICK_LINKS = [
 // Mode config
 // ---------------------------------------------------------------------------
 
-type AssistantMode = 'guide' | 'explain' | 'find' | 'capture' | 'create_template' | 'guided_task'
+type AssistantMode = 'guide' | 'explain' | 'find' | 'capture' | 'create_template' | 'guided_task' | 'review_queue'
 
 interface ModeConfig {
   mode: AssistantMode
@@ -223,6 +227,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Generic task draft state — contract-only, local only, no DB writes (Sprint 266)
   const [genericDraft, setGenericDraft] = useState<GenericTaskDraft | null>(null)
 
+  // Review queue state — Sprint 273
+  const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
+  const [isLoadingReviewQueue, setIsLoadingReviewQueue] = useState(false)
+
   // Object resolution state — Sprint 269
   // Tracks the active resolution request and its result. Never mutates records.
   const [resolutionContext, setResolutionContext] = useState<{
@@ -262,6 +270,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setIsLoadingContext(false)
     setResolutionContext(null)
     setResolvedObjects({})
+    setReviewQueueData(null)
+    setIsLoadingReviewQueue(false)
     lastSpokenTextRef.current = null
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -294,6 +304,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setIsLoadingContext(false)
     setResolutionContext(null)
     setResolvedObjects({})
+    setReviewQueueData(null)
+    setIsLoadingReviewQueue(false)
     lastSpokenTextRef.current = null
   }, [pathname])
 
@@ -447,7 +459,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       }
     }
 
-    // 5.5. Predictive suggestion phrases — always fetch context + compute suggestions (Sprint 267)
+    // 5.5. Review queue intent — Sprint 273
+    if (isReviewQueuePhrase(lower)) {
+      void handleOpenReviewQueue()
+      return
+    }
+
+    // 6. Predictive suggestion phrases — always fetch context + compute suggestions (Sprint 267)
     // These run before the generic context query so "recommend a template" (vague) routes
     // to suggestions rather than a task intent.
     if (isPredictiveSuggestionPhrase(lower)) {
@@ -455,13 +473,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return
     }
 
-    // 6. Context query phrases — route to read-only live data summary (Sprint 265)
+    // 7. Context query phrases — route to read-only live data summary (Sprint 265)
     if (isContextQueryPhrase(lower)) {
       void handleContextSummary()
       return
     }
 
-    // 7. Generic navigation and info commands
+    // 8. Generic navigation and info commands
     detectAndHandleCommand(text)
   }
 
@@ -723,6 +741,38 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     )
   }
 
+  // Returns true if the phrase is a review queue intent.
+  function isReviewQueuePhrase(lower: string): boolean {
+    return (
+      lower.includes('what needs my attention') ||
+      lower.includes('show review queue') ||
+      lower.includes('open review queue') ||
+      lower.includes('review queue') ||
+      lower.includes('show pending notes') ||
+      lower.includes('show pending') ||
+      lower.includes('notes needing routing') ||
+      lower.includes('unlinked notes') ||
+      lower.includes('needs my review')
+    )
+  }
+
+  // Opens the review queue panel and fetches data.
+  async function handleOpenReviewQueue() {
+    setActiveMode('review_queue')
+    setGenericDraft(null)
+    setTemplateDraft(null)
+    setCommandResponse(null)
+    setIsLoadingReviewQueue(true)
+    try {
+      const data = await getDonnaReviewQueueAction()
+      setReviewQueueData(data)
+    } catch {
+      setReviewQueueData(null)
+    } finally {
+      setIsLoadingReviewQueue(false)
+    }
+  }
+
   // Fetch read-only context summary for the current page via Server Action.
   // No writes, no OpenAI, no Realtime. Returns deterministic data-derived summary.
   // Sprint 267: also computes predictive suggestions from the returned summary.
@@ -748,6 +798,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   function detectAndHandleCommand(text: string): boolean {
     const lower = text.toLowerCase().trim()
 
+    // Review queue intent — in-panel quick review (Sprint 273)
+    if (isReviewQueuePhrase(lower)) {
+      void handleOpenReviewQueue()
+      return true
+    }
+
     // Navigation commands — approved routes only, most-specific first
     const NAV_COMMANDS: Array<{ patterns: string[]; href: string }> = [
       {
@@ -759,7 +815,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         href: '/director/onboarding',
       },
       {
-        patterns: ['take me to review', 'go to review queue', 'go to review', 'open review queue', 'open review'],
+        patterns: ['take me to review', 'go to review', 'open review'],
         href: '/director/review',
       },
       {
@@ -949,6 +1005,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         setTypedText('')
         return
       }
+    }
+
+    // Review queue intent — Sprint 273
+    if (isReviewQueuePhrase(text.toLowerCase())) {
+      void handleOpenReviewQueue()
+      setTypeInstead(false)
+      setTypedText('')
+      return
     }
 
     // Predictive suggestion phrases (Sprint 267) — before generic context query
@@ -1345,8 +1409,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* ── Current context card — hidden in template and guided-task modes ── */}
-          {activeMode !== 'create_template' && activeMode !== 'guided_task' && (
+          {/* ── Current context card — hidden in template, guided-task, and review_queue modes ── */}
+          {activeMode !== 'create_template' && activeMode !== 'guided_task' && activeMode !== 'review_queue' && (
             <div
               className="rounded-xl px-3.5 py-3 space-y-2"
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
@@ -1595,8 +1659,21 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </>
           )}
 
+          {/* ── Review Queue mode — Sprint 273 ── */}
+          {activeMode === 'review_queue' && (
+            <DonnaReviewQueuePanel
+              data={reviewQueueData}
+              isLoading={isLoadingReviewQueue}
+              onRefresh={() => void handleOpenReviewQueue()}
+              onClose={closePanel}
+              onStartTask={(taskId) => {
+                handleStartGenericTask(taskId, false)
+              }}
+            />
+          )}
+
           {/* ── Predictive suggestions — shown when context is loaded (Sprint 267) ── */}
-          {suggestions.length > 0 && activeMode !== 'create_template' && activeMode !== 'guided_task' && (
+          {suggestions.length > 0 && activeMode !== 'create_template' && activeMode !== 'guided_task' && activeMode !== 'review_queue' && (
             <div className="space-y-2">
               <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5">
                 Recommendations
@@ -1620,8 +1697,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* ── Ask about this page — hidden in template and guided-task modes (Sprint 265) ── */}
-          {activeMode !== 'create_template' && activeMode !== 'guided_task' && (
+          {/* ── Ask about this page — hidden in template, guided-task, and review_queue modes ── */}
+          {activeMode !== 'create_template' && activeMode !== 'guided_task' && activeMode !== 'review_queue' && (
             <button
               onClick={() => void handleContextSummary()}
               disabled={isLoadingContext}
@@ -1650,6 +1727,42 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
               What would you like?
             </p>
+
+            {/* Review Queue button — Sprint 273 */}
+            <button
+              onClick={() => void handleOpenReviewQueue()}
+              className={cn(
+                'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150',
+                activeMode === 'review_queue'
+                  ? 'text-text-primary'
+                  : 'text-text-secondary hover:text-text-primary',
+              )}
+              style={{
+                background: activeMode === 'review_queue' ? 'rgba(139,92,246,0.06)' : 'var(--bg-surface)',
+                border: activeMode === 'review_queue' ? '1px solid rgba(139,92,246,0.2)' : '1px solid var(--border)',
+              }}
+            >
+              <div className="flex items-start gap-2.5">
+                <Inbox className={cn(
+                  'w-3.5 h-3.5 mt-0.5 shrink-0',
+                  activeMode === 'review_queue' ? 'text-violet-400' : 'text-text-muted',
+                )} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[12px] font-semibold leading-tight">Review Queue</p>
+                    {reviewQueueData && reviewQueueData.totalCount > 0 && (
+                      <span className="text-[9px] font-semibold px-1 py-0.5 rounded"
+                        style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}>
+                        {reviewQueueData.totalCount}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-text-muted leading-snug mt-0.5">
+                    Review pending notes, unlinked captures, and sessions that need blocks.
+                  </p>
+                </div>
+              </div>
+            </button>
 
             {MODES.map(({ mode, label, desc, Icon }) => (
               <button

@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 273: Donna Review Queue Command Center V1
+
+**Why this sprint:**
+Sprint 272 wired coach note structuring and player note drafting. This sprint adds an in-panel quick review layer to the Academy Assistant — giving the director "what needs my attention?" without leaving the assistant panel. It surfaces pending-review voice notes, unlinked captures, and planned sessions with no blocks, with explicit-approval routing and mark-reviewed actions.
+
+**Files created:**
+- `src/components/assistant/donnaReviewQueueTypes.ts` — all type definitions: `DonnaReviewItemType`, `DonnaReviewItem`, `DonnaReviewQueueSummary`, `DonnaReviewQueueActionResult`, `DonnaReviewItemExplanation`
+- `src/app/director/_actions/donnaReviewQueueActions.ts` — server actions: `getDonnaReviewQueueAction` (reads pending voice notes + sessions needing blocks), `markVoiceNoteReviewedAction`, `routeVoiceNoteToPlayerAction`, `routeVoiceNoteToSessionAction`; all academy_id scoped, all ownership-verified before writing
+- `src/components/assistant/donnaReviewQueueExplainer.ts` — pure deterministic explainer: given a `DonnaReviewItem` returns plain-language `DonnaReviewItemExplanation` (no AI, no DB, no async)
+- `src/components/assistant/DonnaReviewQueuePanel.tsx` — client component; shows counts, items with expand/collapse, mark-reviewed, routing flow (searching → confirming → saving → done/error), start populate blocks; imports `DonnaObjectResolverPanel` for candidate selection; explicit "Confirm Route" button required before writing
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `Inbox` icon import; added `review_queue` mode; added `reviewQueueData`/`isLoadingReviewQueue` state; added `handleOpenReviewQueue`, `isReviewQueuePhrase`; review queue detection in voice transcript, command submit, and `detectAndHandleCommand`; added Review Queue button with count badge in mode buttons; hid context card, suggestions, and "ask about this page" when `activeMode === 'review_queue'`; renders `DonnaReviewQueuePanel`
+
+**Safety guarantees:**
+- Routing never happens from voice alone — director must type a name, see resolver candidates, select one, then click explicit "Confirm Route"
+- `mark_reviewed` only changes `processing_status` — no parent/player-visible fields altered
+- `route_to_player` and `route_to_session` link internal records only — note is not published or sent to anyone
+- No level movement, no curriculum changes, no attendance records, no coach notifications, no session publishing
+- All actions verify academy ownership on both note and target (player/session) before writing
+- No migrations, no OpenAI/API, no Realtime
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with zero errors.
+
+---
+
 ## 2026-05-14 — Mega Sprint 272: Donna Coach Note + Player Note Intelligence V1
 
 **Why this sprint:**
