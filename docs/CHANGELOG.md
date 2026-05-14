@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-14 — Sprint 292: Donna Voice Playback Debug + Guaranteed Speak Test V1
+
+**Root cause identified:** `speakAssistant()` was called after `await realtimeVoice.connect()` in `startVoiceInterview()`. Chrome/Edge expire the user-gesture context on any `await`, silently blocking `speechSynthesis.speak()`. Fixed by calling `speechSynthesis.cancel()` synchronously before the `await` to prime the speech context within the gesture stack.
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — Added `testVoiceFailed` state; added `[Donna TTS]` console logs (text, speechSynthesis exists, voices loaded, onstart, onend, onerror) to `speakAssistant()`; added `window.speechSynthesis.cancel()` prime call before `await realtimeVoice.connect()` in `startVoiceInterview()` to fix user-gesture context loss; added "Test Donna Voice" button in the welcome screen that calls `speakAssistant()` synchronously and shows a visible fallback message on failure.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `[Donna TTS]` console logs (text, speechSynthesis exists, voices loaded, onstart, onend, onerror) to `speakAssistantText()`.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
+## 2026-05-14 — Sprint 291: Donna Naming + Activation + Onboarding Polish V1
+
+**What changed:** Experience-only polish pass — no migrations, no new authority, no new API work.
+
+**Files created:**
+- `src/components/assistant/donnaAssistantCopy.ts` — Single source of truth for all public-facing Donna copy: `DONNA_PUBLIC_NAME`, `DONNA_PUBLIC_TITLE`, `DONNA_FULL_LABEL`, `DONNA_SETUP_LABEL`, `DONNA_GREETING`, `DONNA_ACTIVATION_HELP`, `DONNA_SAFETY_REMINDER`. All naming now imports from here.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Panel header now shows "Donna — Academy Assistant" with subtitle and activation helper ("Open Donna, then speak naturally. No wake word required."). Trigger aria-label updated to "Ask Donna". Voice card heading: "Ask Donna". Transcript labels: "Donna is listening…", "Donna heard", "Donna heard — review before using". Safety reminder uses `DONNA_SAFETY_REMINDER` constant. Template/task notices reference Donna by name.
+- `src/components/assistant/donnaOnboardingFlow.ts` — Step 0 greeting updated to "Hi, I'm Donna, your Academy Assistant. What's your name?" Helper text references Donna by name. Imports `DONNA_FULL_LABEL` for `ASSISTANT_DISPLAY_NAME`.
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — Guided intro text: "I'm Donna, your Academy Setup Assistant." `buildPersonalizedWelcomeText`: "I'm Donna, your Academy Setup Assistant." Fallback warning now reads: "Live voice is unavailable, but Donna can still guide you with browser voice and mic answers." All on-screen labels (`GuideIntroCard`, preflight active panel, welcome static panel, welcome intro bubble) now use `DONNA_SETUP_LABEL` constant. Completion message: "Donna setup complete."
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Sprint 290 (patch): Voice Fallback Completion + Onboarding Typed Answer Fix
 
 **Files modified:**

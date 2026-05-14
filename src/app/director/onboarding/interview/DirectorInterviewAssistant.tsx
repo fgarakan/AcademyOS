@@ -18,6 +18,7 @@ import {
 import { INTERVIEW_STEPS, getStepQuestion, type InterviewField, type InterviewStep } from './interviewSteps'
 import { updateDirectorInterviewAction } from './updateDirectorInterviewAction'
 import { useRealtimeInterviewVoice, type RealtimeDebugState } from './useRealtimeInterviewVoice'
+import { DONNA_SETUP_LABEL } from '@/components/assistant/donnaAssistantCopy'
 
 // ─── Browser Speech API types (SpeechRecognition not in lib.dom) ──────────────
 interface SpeechRecognitionAlt { transcript: string }
@@ -233,7 +234,7 @@ const NAME_VOICE_PROMPT: ActiveVoicePrompt = {
 
 // Generic guided intro text — fallback only. Happy path uses buildPersonalizedWelcomeText().
 const GUIDED_INTRO_TEXT =
-  "Welcome. I'm your Academy Setup Assistant. I'll help customize your Academy OS around how your academy actually works. " +
+  "Welcome. I'm Donna, your Academy Setup Assistant. I'll help customize your Academy OS around how your academy actually works. " +
   "I'll guide you one section at a time, and you'll be able to review and edit every answer before we continue."
 
 // ─── Director name resolution ─────────────────────────────────────────────────
@@ -256,7 +257,7 @@ function buildPersonalizedWelcomeText(
   const greeting = directorName ? `Welcome, ${directorName}.` : 'Welcome.'
   const academyRef = academyName ? `${academyName}'s Academy OS` : "your academy's Academy OS"
   return (
-    `${greeting} I'm your Academy Setup Assistant. ` +
+    `${greeting} I'm Donna, your Academy Setup Assistant. ` +
     `I'll help customize ${academyRef} around how your academy actually works. ` +
     "I'll guide you one section at a time, and you'll be able to review and edit every answer before we continue."
   )
@@ -875,7 +876,7 @@ function GuideIntroCard({ text, isSpeaking }: { text: string; isSpeaking: boolea
     <div className="px-4 py-4 rounded-xl bg-surface-raised border border-lime/20 space-y-3">
       <div className="flex items-center gap-2">
         <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
-        <p className="text-xs font-medium text-lime">Academy OS Setup Assistant</p>
+        <p className="text-xs font-medium text-lime">{DONNA_SETUP_LABEL}</p>
         {isSpeaking && <AssistantDot speaking={true} listening={false} />}
       </div>
       <p className="text-sm text-text-secondary leading-relaxed">{text}</p>
@@ -1079,6 +1080,7 @@ export function DirectorInterviewAssistant({
   const [ttsSupported, setTtsSupported] = useState(false)
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('idle')
   const [audioWarning, setAudioWarning] = useState<string | null>(null)
+  const [testVoiceFailed, setTestVoiceFailed] = useState(false)
 
   // Preflight phase — guided intro before Q1 begins
   const [preflightPhase, setPreflightPhase] = useState<PreflightPhase>('idle')
@@ -1313,7 +1315,17 @@ export function DirectorInterviewAssistant({
     text: string,
     opts?: { onEnd?: () => void; onError?: () => void; timeoutMs?: number }
   ) => {
+    console.log('[Donna TTS] speakAssistant called', {
+      text: text.slice(0, 100),
+      speechSynthesisExists: typeof window !== 'undefined' && 'speechSynthesis' in window,
+      voicesLoaded: typeof window !== 'undefined' && 'speechSynthesis' in window
+        ? window.speechSynthesis.getVoices().length
+        : 0,
+      selectedVoice: selectedVoiceRef.current?.name ?? 'none',
+    })
+
     if (!isTtsSupported()) {
+      console.log('[Donna TTS] speechSynthesis not supported — aborting')
       setAudioWarning("Speech synthesis is not available in this browser.")
       setAudioStatus('error')
       opts?.onError?.()
@@ -1335,12 +1347,14 @@ export function DirectorInterviewAssistant({
     if (selectedVoiceRef.current) u.voice = selectedVoiceRef.current
 
     u.onstart = () => {
+      console.log('[Donna TTS] onstart fired')
       setIsSpeaking(true)
       setAudioStatus('speaking')
       setAudioWarning(null)
     }
 
     u.onend = () => {
+      console.log('[Donna TTS] onend fired')
       utteranceRef.current = null
       if (advanceTimerRef.current) {
         clearTimeout(advanceTimerRef.current)
@@ -1352,6 +1366,7 @@ export function DirectorInterviewAssistant({
     }
 
     u.onerror = (e) => {
+      console.log('[Donna TTS] onerror fired', { error: e.error })
       utteranceRef.current = null
       if (advanceTimerRef.current) {
         clearTimeout(advanceTimerRef.current)
@@ -1381,6 +1396,7 @@ export function DirectorInterviewAssistant({
       }
     }, timeoutMs)
 
+    console.log('[Donna TTS] calling window.speechSynthesis.speak()')
     window.speechSynthesis.speak(u)
   }, [])
 
@@ -1805,6 +1821,14 @@ export function DirectorInterviewAssistant({
     resolvedNameRef.current = resolvedName
     setDirectorDisplayName(resolvedName ?? '')
 
+    // Prime speechSynthesis within the synchronous user-gesture stack.
+    // Chrome loses the gesture context on any await — calling cancel() here
+    // unlocks speak() for the async continuation of this handler.
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+      console.log('[Donna TTS] speechSynthesis primed in user-gesture stack before await')
+    }
+
     const ok = await realtimeVoice.connect()
 
     if (!ok) {
@@ -1820,7 +1844,7 @@ export function DirectorInterviewAssistant({
       // Stay in voice mode and guide via browser TTS + browser SpeechRecognition (MicButton).
       // The rest of the interview flow already handles isRealtimeConnected === false via speakAssistant().
       setAudioWarning(
-        'Live voice is unavailable, but I can still guide you with browser voice and typed answers.',
+        'Live voice is unavailable, but Donna can still guide you with browser voice and mic answers.',
       )
       const welcomeTextFallback = buildPersonalizedWelcomeText(resolvedName, academyName)
       setPreflightPhase('guided_intro')
@@ -2192,7 +2216,7 @@ export function DirectorInterviewAssistant({
           <div className="flex items-center gap-2 mb-2">
             <AssistantDot speaking={isSpeaking} listening={false} />
             <AssistantStatus speaking={isSpeaking} listening={false} />
-            <span className="label-xs ml-1">Academy Setup Assistant</span>
+            <span className="label-xs ml-1">{DONNA_SETUP_LABEL}</span>
           </div>
           <h2 className="text-xl font-semibold text-text-primary leading-tight">Voice-led setup</h2>
           <p className="text-xs text-text-secondary leading-relaxed">
@@ -2598,7 +2622,7 @@ export function DirectorInterviewAssistant({
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-3">
             <AssistantDot speaking={isSpeaking} listening={false} />
-            <span className="label-xs">Academy Setup Assistant</span>
+            <span className="label-xs">{DONNA_SETUP_LABEL}</span>
           </div>
           <h2 className="text-xl font-semibold text-text-primary leading-tight">
             Customize Your Academy OS
@@ -2609,7 +2633,7 @@ export function DirectorInterviewAssistant({
         <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-lime/15 space-y-1">
           <div className="flex items-center gap-2 mb-1.5">
             <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
-            <p className="text-xs font-medium text-lime">Academy OS Setup Assistant</p>
+            <p className="text-xs font-medium text-lime">{DONNA_SETUP_LABEL}</p>
           </div>
           <p className="text-sm text-text-secondary leading-relaxed">
             Seven questions — your philosophy, how you group players, what your coaches need, and what a
@@ -2705,6 +2729,28 @@ export function DirectorInterviewAssistant({
               )}
               {realtimeVoice.voiceReadiness === 'ready' && !isConnecting && !voiceMode && (
                 <p className="text-[10px] text-text-muted text-center">Voice is ready. Press start and the assistant will guide you.</p>
+              )}
+              {!voiceMode && (
+                <div className="space-y-1.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTestVoiceFailed(false)
+                      speakAssistant(
+                        "Hi, I'm Donna. If you can hear this, voice playback is working.",
+                        { onError: () => setTestVoiceFailed(true) },
+                      )
+                    }}
+                    className="w-full text-xs py-2 px-3 rounded-xl border border-lime/25 text-lime/70 hover:border-lime/50 hover:text-lime hover:bg-lime/5 transition-colors"
+                  >
+                    Test Donna Voice
+                  </button>
+                  {testVoiceFailed && (
+                    <p className="text-[11px] text-status-orange px-1">
+                      Donna tried to speak, but browser audio did not start. Click Test Donna Voice again or check your browser sound settings.
+                    </p>
+                  )}
+                </div>
               )}
             </>
           )}
@@ -2884,7 +2930,7 @@ export function DirectorInterviewAssistant({
 
         {/* ── Progress message ── */}
         <p className="text-[11px] text-text-muted leading-relaxed">
-          Setup Assistant complete. Next, approve your curriculum spine so Academy OS can connect players, sessions, and development levels.
+          Donna setup complete. Next, approve your curriculum spine so Academy OS can connect players, sessions, and development levels.
         </p>
 
         {/* ── Next step CTAs ── */}

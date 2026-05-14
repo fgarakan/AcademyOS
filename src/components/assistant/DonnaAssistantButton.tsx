@@ -71,6 +71,14 @@ import {
   DONNA_ONBOARDING_STEPS,
   isOnboardingActive,
 } from '@/components/assistant/donnaOnboardingFlow'
+// Sprint 291 — Centralized copy
+import {
+  DONNA_PUBLIC_NAME,
+  DONNA_PUBLIC_TITLE,
+  DONNA_FULL_LABEL,
+  DONNA_ACTIVATION_HELP,
+  DONNA_SAFETY_REMINDER,
+} from '@/components/assistant/donnaAssistantCopy'
 import type { DonnaReviewQueueSummary } from '@/components/assistant/donnaReviewQueueTypes'
 import { DonnaReviewQueuePanel } from '@/components/assistant/DonnaReviewQueuePanel'
 // Sprint 269 — Safe Object Resolution
@@ -157,7 +165,7 @@ const MODES: ModeConfig[] = [
   {
     mode: 'create_template',
     label: 'Create Template',
-    desc: 'Draft a class template with Academy Assistant. Nothing saves until you approve.',
+    desc: 'Draft a class template with Donna. Nothing saves until you approve.',
     Icon: Layers,
   },
   {
@@ -222,16 +230,39 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // lastSpokenTextRef prevents the same string from being spoken twice in a row.
   const lastSpokenTextRef = useRef<string | null>(null)
   function speakAssistantText(text: string) {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return
-    if (lastSpokenTextRef.current === text) return
+    console.log('[Donna TTS] speakAssistantText called', {
+      text: text.slice(0, 100),
+      speechSynthesisExists: typeof window !== 'undefined' && 'speechSynthesis' in window,
+      voicesLoaded: typeof window !== 'undefined' && 'speechSynthesis' in window
+        ? window.speechSynthesis.getVoices().length
+        : 0,
+    })
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      console.log('[Donna TTS] speechSynthesis not available — aborting')
+      return
+    }
+    if (lastSpokenTextRef.current === text) {
+      console.log('[Donna TTS] duplicate text — skipping')
+      return
+    }
     lastSpokenTextRef.current = text
     window.speechSynthesis.cancel()
     const utt = new SpeechSynthesisUtterance(text)
     utt.rate = 1.0
     utt.pitch = 1.0
-    utt.onstart = () => setIsSpeaking(true)
-    utt.onend = () => setIsSpeaking(false)
-    utt.onerror = () => setIsSpeaking(false)
+    utt.onstart = () => {
+      console.log('[Donna TTS] speakAssistantText onstart fired')
+      setIsSpeaking(true)
+    }
+    utt.onend = () => {
+      console.log('[Donna TTS] speakAssistantText onend fired')
+      setIsSpeaking(false)
+    }
+    utt.onerror = (e) => {
+      console.log('[Donna TTS] speakAssistantText onerror fired', { error: e.error })
+      setIsSpeaking(false)
+    }
+    console.log('[Donna TTS] calling window.speechSynthesis.speak()')
     window.speechSynthesis.speak(utt)
   }
 
@@ -1329,8 +1360,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             speakAssistantText(DONNA_ONBOARDING_STEPS[0].spokenText)
           }
         }}
-        aria-label="Ask Academy Assistant"
-        title="Ask Academy Assistant"
+        aria-label={`Ask ${DONNA_PUBLIC_NAME}`}
+        title={`Ask ${DONNA_PUBLIC_NAME}`}
         className={cn(
           'fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full',
           'flex items-center justify-center',
@@ -1367,7 +1398,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label="Academy Assistant"
+        aria-label={DONNA_FULL_LABEL}
         className={cn(
           'fixed top-0 right-0 bottom-0 z-50 w-80 max-w-[90vw] flex flex-col',
           'transition-transform duration-200 ease-out',
@@ -1386,7 +1417,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
               <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: '#8b5cf6' }} />
-              <h2 className="text-sm font-semibold text-text-primary">Academy Assistant</h2>
+              <h2 className="text-sm font-semibold text-text-primary">{DONNA_PUBLIC_NAME}</h2>
+              <span className="text-[10px] text-text-muted font-normal">{DONNA_PUBLIC_TITLE}</span>
               {isVoiceListening && (
                 <span
                   className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold animate-pulse"
@@ -1405,7 +1437,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               )}
             </div>
             <p className="text-[11px] text-text-muted leading-snug">
-              Ask by voice, type a command, or choose an action below.
+              {DONNA_ACTIVATION_HELP}
             </p>
           </div>
           <button
@@ -1435,7 +1467,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 className="text-[10px] uppercase tracking-widest font-semibold mb-1"
                 style={{ color: '#8b5cf6' }}
               >
-                Academy Assistant
+                {DONNA_PUBLIC_NAME}
               </p>
               <p className="text-[13px] text-text-primary font-medium leading-snug">
                 {isOnboardingActive(onboardingStep)
@@ -1444,7 +1476,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               </p>
               {isOnboardingActive(onboardingStep) && (
                 <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
-                  Voice can fill drafts. Final saves still require the button.
+                  {DONNA_SAFETY_REMINDER}
                 </p>
               )}
             </div>
@@ -1464,10 +1496,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             >
               <div className="flex items-center gap-1.5 mb-1">
                 <Mic className="w-3.5 h-3.5 shrink-0" style={{ color: '#8b5cf6' }} />
-                <p className="text-sm font-semibold text-text-primary">Ask by voice</p>
+                <p className="text-sm font-semibold text-text-primary">Ask {DONNA_PUBLIC_NAME}</p>
               </div>
               <p className="text-[11px] text-text-muted leading-snug mb-3">
-                Use voice to ask what to do next, explain this screen, or capture a director note.
+                Use voice to ask {DONNA_PUBLIC_NAME} what to do next, answer the current question, or capture a director note.
               </p>
 
               {/* Sprint 290 — Onboarding current question spotlight */}
@@ -1507,7 +1539,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               {/* VoiceInputButton — browser SpeechRecognition only, no API, no DB write */}
               <VoiceInputButton
                 onTranscript={handleVoiceTranscriptRaw}
-                label="Start voice"
+                label={`Ask ${DONNA_PUBLIC_NAME}`}
                 appendMode={false}
                 onListeningChange={handleVoiceListeningChange}
                 onInterimTranscript={handleInterimTranscript}
@@ -1522,7 +1554,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)' }}
                 >
                   <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5" style={{ color: '#8b5cf6' }}>
-                    Hearing…
+                    {DONNA_PUBLIC_NAME} is listening…
                   </p>
                   <p className="text-[12px] text-text-muted leading-snug italic">
                     {interimVoiceTranscript}
@@ -1557,7 +1589,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 >
                   <div className="px-3 py-2" style={{ background: 'rgba(200,255,0,0.05)' }}>
                     <p className="text-[10px] uppercase tracking-widest font-semibold mb-1.5 text-lime">
-                      Voice captured — review before using
+                      {DONNA_PUBLIC_NAME} heard — review before using
                     </p>
                     <textarea
                       rows={2}
@@ -1607,7 +1639,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                     className="text-[10px] uppercase tracking-widest font-semibold mb-1"
                     style={{ color: '#8b5cf6' }}
                   >
-                    Voice captured
+                    {DONNA_PUBLIC_NAME} heard
                   </p>
                   <p className="text-[12px] text-text-secondary leading-relaxed">
                     {voiceTranscript}
@@ -1719,7 +1751,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                     className="text-[10px] uppercase tracking-widest font-semibold mb-1"
                     style={{ color: commandResponse.type === 'honest' ? '#FF9500' : '#8b5cf6' }}
                   >
-                    {commandResponse.label ?? (commandResponse.type === 'honest' ? 'Not available yet' : 'Academy Assistant')}
+                    {commandResponse.label ?? (commandResponse.type === 'honest' ? 'Not available yet' : DONNA_PUBLIC_NAME)}
                   </p>
                   <p className="text-[12px] text-text-secondary leading-relaxed">
                     {commandResponse.message}
@@ -1970,8 +2002,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 }}
               >
                 <p className="text-[11px] text-text-secondary leading-snug">
-                  Academy Assistant can draft this template, but nothing is saved until you
-                  approve.
+                  {DONNA_PUBLIC_NAME} can draft this template, but nothing is saved until you approve.
                 </p>
               </div>
 
@@ -2129,8 +2160,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               >
                 <p className="text-[11px] text-text-secondary leading-snug">
                   {WIRED_TASK_IDS.has(genericDraft.taskId)
-                    ? 'Academy Assistant will collect the information — nothing is saved until you click Approve and Save.'
-                    : 'Academy Assistant will collect the information — nothing is saved until a save action is available and you explicitly approve.'}
+                    ? `${DONNA_PUBLIC_NAME} will collect the information — nothing is saved until you click Approve and Save.`
+                    : `${DONNA_PUBLIC_NAME} will collect the information — nothing is saved until a save action is available and you explicitly approve.`}
                 </p>
               </div>
 
