@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-14 — Sprint 296A: Floating Donna Duplicate Speech Guard V1
+
+**Duplicate trigger source identified:** `speakAssistantText()` was logging to console BEFORE the dedup check, so both calls appeared in the console even when the second was skipped. The second call originates from React 18 StrictMode's double mount/unmount cycle in development — the `pathname` useEffect resets `lastSpokenTextRef.current = null` on remount, which can race with the `onstart → setIsSpeaking(true) → re-render` cycle, allowing the guard to be cleared before the second call fires. The text-only guard was also unbounded by time, making it fragile if the ref was cleared by any async path.
+
+**Fix 1 — 1500ms timestamp + text guard:**
+Added `lastSpokenAtRef` (tracks timestamp of last speak). `speakAssistantText` now skips if `lastSpokenTextRef.current === text && Date.now() - lastSpokenAtRef.current < 1500`. Logs `msSinceLast` to console for diagnosis. Updated `lastSpokenAtRef.current = now` on every successful speak.
+
+**Fix 2 — State key guard:**
+Added `lastSpokenKeyRef` that encodes `onboarding:N` for onboarding steps or `free:{text[:40]}` for ad-hoc phrases. If the same key is already set, the call is skipped. Key is cleared in all the same places as `lastSpokenTextRef`: `closePanel`, pathname effect, `handleOnboardingAnswer` (all three paths), `handleCommandSubmit` re-speak reset.
+
+**Fix 3 — Improved onerror logging:**
+`onerror` now logs `{ error, speaking, pending, paused, lastSpokenText }` from `window.speechSynthesis` state to identify what was in flight at error time.
+
+**Fix 4 — Isolated TTS test button:**
+Added `testBrowserVoice()` function that creates a direct utterance without touching any guard refs or `onboardingStep`. Added `testVoiceStatus` state ('idle' | 'speaking' | 'done' | 'error'). Added "Test Donna browser voice" button below `VoiceInputButton` in the panel voice card.
+
+**No migrations. No authority changes. No DB changes.**
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — `lastSpokenAtRef` + `lastSpokenKeyRef` + `testVoiceStatus` state; dual guards in `speakAssistantText`; `testBrowserVoice()` function; test button JSX; all `lastSpokenTextRef = null` reset points updated
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Sprint 295: Donna P0 Voice Reliability Fixes V1
 
 **Basis:** Sprint 294 audit (readiness score 5.5/10) identified three P0 blockers. This sprint fixes all three.

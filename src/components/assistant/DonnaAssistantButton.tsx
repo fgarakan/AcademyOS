@@ -229,6 +229,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Must be called from user-interaction event handlers to satisfy browser autoplay rules.
   // lastSpokenTextRef prevents the same string from being spoken twice in a row.
   const lastSpokenTextRef = useRef<string | null>(null)
+  // Timestamp of the last successful speak() call — used for the 1500ms duplicate guard.
+  const lastSpokenAtRef = useRef<number>(0)
+  // State key for the last spoken prompt — catches duplicates when the text ref is cleared
+  // but the same onboarding step or question fires again within the same session.
+  const lastSpokenKeyRef = useRef<string | null>(null)
   // Tracks the active utterance so cancel() is only called when one is actually in flight.
   // Unconditional cancel() before speak() triggers Chrome onerror: "canceled" race condition.
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
@@ -244,11 +249,29 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       console.log('[Donna TTS] speechSynthesis not available — aborting')
       return
     }
-    if (lastSpokenTextRef.current === text) {
-      console.log('[Donna TTS] duplicate text — skipping')
+
+    const now = Date.now()
+    const msSinceLast = now - lastSpokenAtRef.current
+
+    // Guard 1 — timestamp + text: same text spoken within 1500ms (catches StrictMode
+    // double-invocation and onstart→setIsSpeaking→re-render triggered duplicate calls).
+    if (lastSpokenTextRef.current === text && msSinceLast < 1500) {
+      console.log('[Donna TTS] 1500ms duplicate guard — skipping', { text: text.slice(0, 60), msSinceLast })
       return
     }
+
+    // Guard 2 — state key: same onboarding step or free-text key already spoken.
+    // Cleared explicitly when advancing steps or resetting speech state.
+    const stateKey = onboardingStep !== null ? `onboarding:${onboardingStep}` : `free:${text.slice(0, 40)}`
+    if (lastSpokenKeyRef.current === stateKey) {
+      console.log('[Donna TTS] state-key duplicate guard — skipping', { stateKey })
+      return
+    }
+
     lastSpokenTextRef.current = text
+    lastSpokenAtRef.current = now
+    lastSpokenKeyRef.current = stateKey
+
     // Only cancel when a tracked utterance is currently active — avoids the Chrome race
     // where cancel() + speak() in quick succession causes the new utterance to be canceled.
     if (utteranceRef.current !== null) {
@@ -268,12 +291,33 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       setIsSpeaking(false)
     }
     utt.onerror = (e) => {
-      console.log('[Donna TTS] speakAssistantText onerror fired', { error: e.error })
+      console.log('[Donna TTS] speakAssistantText onerror fired', {
+        error: e.error,
+        speaking: window.speechSynthesis.speaking,
+        pending: window.speechSynthesis.pending,
+        paused: window.speechSynthesis.paused,
+        lastSpokenText: lastSpokenTextRef.current?.slice(0, 60),
+      })
       utteranceRef.current = null
       setIsSpeaking(false)
     }
     utteranceRef.current = utt
     console.log('[Donna TTS] calling window.speechSynthesis.speak()')
+    window.speechSynthesis.speak(utt)
+  }
+
+  // Isolated TTS test — does NOT touch guard refs or onboardingStep.
+  // Only use for the "Test Donna browser voice" button to rule out guard interference.
+  function testBrowserVoice() {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      setTestVoiceStatus('error')
+      return
+    }
+    setTestVoiceStatus('speaking')
+    const utt = new SpeechSynthesisUtterance('Testing browser voice. Donna is here.')
+    utt.onstart = () => setTestVoiceStatus('speaking')
+    utt.onend = () => setTestVoiceStatus('done')
+    utt.onerror = () => setTestVoiceStatus('error')
     window.speechSynthesis.speak(utt)
   }
 
@@ -312,6 +356,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [interimVoiceTranscript, setInterimVoiceTranscript] = useState<string | null>(null)
   const [pendingVoiceAnswer, setPendingVoiceAnswer] = useState<DonnaVoiceTranscriptState | null>(null)
   const [voicePermissionError, setVoicePermissionError] = useState<string | null>(null)
+  // Sprint 296A — isolated TTS test state (never touches speech guard refs or onboardingStep)
+  const [testVoiceStatus, setTestVoiceStatus] = useState<'idle' | 'speaking' | 'done' | 'error'>('idle')
 
   // Sprint 290 — Guided onboarding intro state
   // Active when no task/mode/draft is running, and the user has not yet completed the intro.
@@ -374,9 +420,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setIsSpeaking(false)
     setVoicePermissionError(null)
     lastSpokenTextRef.current = null
+    lastSpokenAtRef.current = 0
+    lastSpokenKeyRef.current = null
     utteranceRef.current = null
     setOnboardingStep(null)
     setShowOnboardingSuggestions(false)
+    setTestVoiceStatus('idle')
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
     }
@@ -416,8 +465,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setIsSpeaking(false)
     setVoicePermissionError(null)
     lastSpokenTextRef.current = null
+    lastSpokenAtRef.current = 0
+    lastSpokenKeyRef.current = null
     setOnboardingStep(null)
     setShowOnboardingSuggestions(false)
+    setTestVoiceStatus('idle')
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -507,6 +559,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           label: 'Try again',
         })
         lastSpokenTextRef.current = null // allow re-speaking the same question next attempt
+        lastSpokenKeyRef.current = null
         return
       }
 
@@ -737,8 +790,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       const nextSpoken = spokenName
         ? `Nice to meet you, ${spokenName}. ${DONNA_ONBOARDING_STEPS[1].spokenText}`
         : DONNA_ONBOARDING_STEPS[1].spokenText
-      // Reset dedupe guard so the next question can speak even if same text
+      // Reset dedupe guards so the next step can speak even if same text
       lastSpokenTextRef.current = null
+      lastSpokenKeyRef.current = null
       speakAssistantText(nextSpoken)
       return
     }
@@ -755,6 +809,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         setFromVoiceCapture(true)
         const firstQ = draft.missingQuestions[0] ?? null
         lastSpokenTextRef.current = null
+        lastSpokenKeyRef.current = null
         if (firstQ) speakAssistantText(firstQ.question)
         else speakAssistantText('I have enough to draft this. Review it before saving.')
         return
@@ -776,6 +831,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       // No recognized intent — show suggested routes
       setShowOnboardingSuggestions(true)
       lastSpokenTextRef.current = null
+      lastSpokenKeyRef.current = null
       speakAssistantText('Here are some things you can do to get started.')
     }
   }
@@ -1558,6 +1614,19 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 onError={handleVoiceError}
                 onSupportedChange={setIsVoiceSupported}
               />
+
+              {/* Test browser TTS — isolated, no guard or onboarding side effects */}
+              <button
+                type="button"
+                onClick={testBrowserVoice}
+                disabled={testVoiceStatus === 'speaking'}
+                className="mt-1.5 w-full text-[11px] text-text-muted hover:text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-center py-1"
+              >
+                {testVoiceStatus === 'idle' && 'Test Donna browser voice'}
+                {testVoiceStatus === 'speaking' && 'Speaking…'}
+                {testVoiceStatus === 'done' && '✓ Browser voice working'}
+                {testVoiceStatus === 'error' && 'Voice test failed — check browser sound settings'}
+              </button>
 
               {/* Live interim transcript — shown while recognition is active */}
               {isVoiceListening && interimVoiceTranscript && (
