@@ -96,8 +96,7 @@ export const FIELD_RESOLUTION_MAP: Partial<
     player: 'player',
   },
   handle_attendance_exception: {
-    player: 'player',
-    session: 'session',
+    session_or_group: 'session',
   },
   assign_player_to_group: {
     player: 'player',

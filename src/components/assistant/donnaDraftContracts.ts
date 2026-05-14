@@ -236,23 +236,25 @@ export const DONNA_DRAFT_CONTRACTS: Record<DonnaDraftType, DonnaDraftContract> =
 
   attendance_exception_draft: {
     draftType: 'attendance_exception_draft',
-    title: 'Attendance Exception Draft',
+    title: 'Attendance Draft',
     summary:
-      'A proposed record of an attendance exception — absence, late arrival, unrostered attendee, or make-up. Requires director review before attendance data is updated.',
+      'A proposed attendance record created for director review. Creates a proposed_actions row — no session_attendance rows are written until the director explicitly applies the draft in the Review Queue.',
     sourceTask: 'handle_attendance_exception',
-    dataUsed: ['player_profile', 'session', 'attendance', 'group'],
-    fieldsCollected: ['player', 'session', 'exception_type', 'reason'],
+    dataUsed: ['session', 'group_memberships', 'players', 'director_input'],
+    fieldsCollected: ['session_or_group', 'attendance_statement'],
     missingFields: [],
     proposedChanges: [
-      'Create or update an attendance record for this player and session',
-      'Flag the exception type for director review',
+      'Create a proposed_actions draft row for director review',
+      'No attendance records written until director applies in Review Queue',
+      'Unrostered attendees flagged for review — not added to roster or attendance',
+      'No player profiles, billing, or parent communications modified',
     ],
-    affectedObjects: ['attendance', 'session', 'player_profile'],
-    visibilityImpact: 'Director only until approved — attendance count unchanged until applied',
+    affectedObjects: ['proposed_actions', 'voice_commands'],
+    visibilityImpact: 'Director only — attendance data unchanged until director explicitly applies',
     approvalRequired: true,
-    approvalActionLabel: 'Record Exception',
+    approvalActionLabel: 'Submit for Director Review',
     cancelActionLabel: 'Discard',
-    saveWireStatus: 'not_wired_yet',
+    saveWireStatus: 'wired',
   },
 
   level_readiness_draft: {

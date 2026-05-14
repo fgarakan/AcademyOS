@@ -282,28 +282,23 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
 
   handle_attendance_exception: {
     taskId: 'handle_attendance_exception',
-    label: 'Handle Attendance Exception',
+    label: 'Record Attendance',
     description:
-      'Help the director record or flag an attendance exception — unrostered attendance, unexpected absence, or make-up session.',
+      'Help the director record attendance for a session — who was present, who was absent, and any unrostered visitors. Creates a proposed_actions draft for director review.',
     requiredFields: [
-      { fieldId: 'player',         label: 'Player',          required: true },
-      { fieldId: 'session',        label: 'Session',         required: true },
-      { fieldId: 'exception_type', label: 'Exception Type',  required: true, example: 'Unexpected absence' },
+      { fieldId: 'session_or_group',     label: 'Session or Group',     required: true, example: "Today's Orange 2 session" },
+      { fieldId: 'attendance_statement', label: 'Attendance Statement', required: true, example: 'Everyone was here except Sarah' },
     ],
-    optionalFields: [
-      { fieldId: 'reason',    label: 'Reason',           required: false },
-      { fieldId: 'make_up',   label: 'Make-Up Needed',   required: false },
-    ],
+    optionalFields: [],
     questionSequence: [
-      { order: 1, fieldId: 'player',         question: 'Which player had an attendance exception?' },
-      { order: 2, fieldId: 'session',        question: 'Which session was affected?' },
-      { order: 3, fieldId: 'exception_type', question: 'What type of exception was this? (absent, late, unrostered attendee, make-up)' },
+      { order: 1, fieldId: 'session_or_group',     question: 'Which session or group is this attendance for?' },
+      { order: 2, fieldId: 'attendance_statement', question: 'Tell me what happened — e.g. "Everyone was here except Sarah" or "Jeremy showed up and is not on the roster".' },
     ],
-    reads: ['player_profile', 'session', 'attendance', 'group'],
+    reads: ['session', 'group_memberships', 'players'],
     createsDraftType: 'attendance_exception_draft',
     approvalRequired: true,
-    unsafeWithoutApproval: ['record_attendance_without_review', 'mark_absence_without_context'],
-    saveApplyMethodStatus: 'not_wired_yet',
+    unsafeWithoutApproval: ['write_attendance_records', 'modify_roster', 'notify_parent'],
+    saveApplyMethodStatus: 'wired',
   },
 
   adjust_curriculum: {

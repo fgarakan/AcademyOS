@@ -455,6 +455,34 @@ export function GenericDraftPanel({
                       </li>
                     </>
                   )}
+                  {draft.taskId === 'handle_attendance_exception' && (
+                    <>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Internal only — not visible to parents or players
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        A proposed_actions draft row created for director review
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        No attendance records written — apply the draft in Review Queue to record official attendance
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Unrostered attendees flagged for director review — not added to roster or attendance
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        No billing, enrollment, or roster change
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        No parent, player, or coach notification
+                      </li>
+                    </>
+                  )}
                 </ul>
               </div>
 

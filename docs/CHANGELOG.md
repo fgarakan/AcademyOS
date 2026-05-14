@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 274: Donna Attendance Exception Workflow V1
+
+**Why this sprint:**
+Sprint 273 added the in-panel Review Queue command center. This sprint wires the `handle_attendance_exception` guided task — giving the director a voice-capable attendance recording flow ("Everyone was here except Sarah", "Jeremy showed up and is not on the roster"). Donna creates a `proposed_actions` draft for the director to review and apply in `/director/review`. No attendance records are written until the director explicitly applies the draft.
+
+**Files created:**
+- `src/components/assistant/donnaAttendanceTypes.ts` — pure types: `DonnaAttendanceParsed`, `DonnaAttendanceDraftFields`; no DB, no API, no async
+- `src/components/assistant/donnaAttendanceParser.ts` — client-side rule-based attendance statement parser (`parseAttendanceStatement`); detects everyone-present baseline, extracts absent name queries, detects unrostered arrivals; no AI, no DB, no async; fresh regex instances per call (avoids stateful `/g` flag issues)
+- `src/app/director/_actions/donnaAttendanceActions.ts` — `saveAttendanceExceptionDraftAction(fields)` server action; auth + director/head_coach check; requires `_resolved_session_id` (text-only session names rejected); verifies session belongs to academy (security gate — `session_attendance` has no academy_id column); fetches roster via `group_memberships` scoped to `academy_id`; rule-based parse; creates `voice_commands` row + `proposed_actions` row with `attendance_exception_v1` payload; revalidates `/director/review`; **never writes to `session_attendance`**
+
+**Files modified:**
+- `src/components/assistant/donnaTaskContracts.ts` — redesigned `handle_attendance_exception`: new label ("Record Attendance"), new required fields (`session_or_group`, `attendance_statement`), new question sequence, `saveApplyMethodStatus: 'wired'`
+- `src/components/assistant/donnaDraftContracts.ts` — updated `attendance_exception_draft`: new summary, updated `fieldsCollected`, updated `proposedChanges`, `approvalActionLabel: 'Submit for Director Review'`, `saveWireStatus: 'wired'`
+- `src/components/assistant/donnaApprovalExecutionTypes.ts` — added `'attendance_exception_draft'` to `DonnaExecutableDraftType`
+- `src/components/assistant/donnaObjectResolutionTypes.ts` — updated `handle_attendance_exception` field map: removed `{ player, session }`, replaced with `{ session_or_group: 'session' }`
+- `src/components/assistant/donnaTaskRuntime.ts` — added attendance trigger phrases to `handle_attendance_exception`: `'everyone was here'`, `'everyone was present'`, `'absent today'`, `'was absent'`, `'showed up'`, `'not on the roster'`, `'mark attendance'`, `'take attendance'`, `'record attendance'`
+- `src/components/assistant/DonnaAssistantButton.tsx` — imported `saveAttendanceExceptionDraftAction`; added `'handle_attendance_exception'` to `WIRED_TASK_IDS`; added `handle_attendance_exception` branch in `handleGenericDraftApprove` (merges `_resolved_session_id` from `resolvedObjects['session_or_group']`)
+- `src/components/assistant/GenericDraftPanel.tsx` — added `handle_attendance_exception` "What will be saved" safety block: internal only, no parent/player notification, no billing/enrollment, no roster addition, unrostered attendees require director review, apply in Review Queue to write official attendance
+
+**Safety guarantees:**
+- Voice creates the `proposed_actions` draft — voice cannot apply attendance directly
+- Visible "Approve and Save" button required; on-screen confirmation required
+- `session_attendance` is never written by this action — only by `applyApprovedAttendanceExceptionAction` in `/director/review` after director applies
+- `_resolved_session_id` must be confirmed via session resolver — text-only session names are rejected
+- Session ownership verified against `sessions.academy_id` before any write (security gate for `session_attendance` which has no academy_id column)
+- Unrostered attendees are flagged in the draft payload — never added to `group_memberships`, `session_attendance`, billing, or parent communications
+- No player level movement, no curriculum changes, no roster additions, no parent/player/coach notifications
+- No migrations; no OpenAI/API; no Realtime
+- Existing flows (create_fitness_template, capture_coach_note, draft_player_note, create_session, populate_session_from_template, review queue, class template, object resolution) all preserved
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with zero errors.
+
+---
+
 ## 2026-05-14 — Mega Sprint 273: Donna Review Queue Command Center V1
 
 **Why this sprint:**

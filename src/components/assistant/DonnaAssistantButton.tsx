@@ -51,6 +51,8 @@ import {
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
 // Sprint 273 — Review Queue Command Center
 import { getDonnaReviewQueueAction } from '@/app/director/_actions/donnaReviewQueueActions'
+// Sprint 274 — Attendance Exception Workflow
+import { saveAttendanceExceptionDraftAction } from '@/app/director/_actions/donnaAttendanceActions'
 import type { DonnaReviewQueueSummary } from '@/components/assistant/donnaReviewQueueTypes'
 import { DonnaReviewQueuePanel } from '@/components/assistant/DonnaReviewQueuePanel'
 // Sprint 269 — Safe Object Resolution
@@ -78,6 +80,7 @@ const WIRED_TASK_IDS = new Set<DonnaTaskId>([
   'create_session',
   'populate_session_from_template',
   'draft_player_note',
+  'handle_attendance_exception',
 ])
 
 // ---------------------------------------------------------------------------
@@ -625,6 +628,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         fields._resolved_class_template_id = resolvedObjects['template'].id
       }
       return populateSessionBlocksAction(fields)
+    }
+    if (draft.taskId === 'handle_attendance_exception') {
+      const fields: Record<string, string> = { ...draft.collectedFields }
+      if (resolvedObjects['session_or_group']?.id) {
+        fields._resolved_session_id = resolvedObjects['session_or_group'].id
+      }
+      return saveAttendanceExceptionDraftAction(fields)
     }
     return {
       ok: false,
