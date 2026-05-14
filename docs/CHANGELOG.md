@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-14 — Sprint 293: Donna TTS Cancellation Fix + Browser Voice Mode V1
+
+**Root cause fixed:** `speakAssistant()` was calling `window.speechSynthesis.cancel()` unconditionally before every `speak()` call, even when `utteranceRef.current === null` (nothing was playing). Chrome has a race condition where calling `cancel()` immediately before `speak()` causes the new utterance to fire `onerror` with `error: "canceled"` before it starts. The fix: only cancel if `utteranceRef.current !== null` (an active utterance exists and needs to be interrupted).
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — (1) Fixed `speakAssistant()` to call `speechSynthesis.cancel()` only when `utteranceRef.current !== null`; (2) Updated `onerror` handler to distinguish `error: "canceled"` with message "Donna's voice was interrupted. Try Browser Voice Mode." vs `"interrupted"` (silent) vs other errors; (3) Added `browserVoiceMode` state + `browserVoiceModeRef` to force browser TTS and bypass Realtime even when connected; (4) Updated `speakWithTracking()` and `speakPrompt()` to respect `browserVoiceModeRef.current`; (5) Added "Test Browser Voice" button (replaces "Test Donna Voice") that speaks without cancelling itself; (6) Added "Use Browser Voice Instead" button in welcome, preflight-active, and answering screens; (7) Added "Browser voice mode active" status indicator in all three voice screens.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Sprint 292: Donna Voice Playback Debug + Guaranteed Speak Test V1
 
 **Root cause identified:** `speakAssistant()` was called after `await realtimeVoice.connect()` in `startVoiceInterview()`. Chrome/Edge expire the user-gesture context on any `await`, silently blocking `speechSynthesis.speak()`. Fixed by calling `speechSynthesis.cancel()` synchronously before the `await` to prime the speech context within the gesture stack.

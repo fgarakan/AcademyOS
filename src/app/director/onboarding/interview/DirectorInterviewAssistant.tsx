@@ -1076,6 +1076,8 @@ export function DirectorInterviewAssistant({
   })
 
   const [voiceMode, setVoiceMode] = useState(false)
+  // true = force browser TTS for all assistant speech, bypass Realtime even when connected
+  const [browserVoiceMode, setBrowserVoiceMode] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [ttsSupported, setTtsSupported] = useState(false)
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('idle')
@@ -1141,6 +1143,10 @@ export function DirectorInterviewAssistant({
   // without needing to include it as a useCallback dependency.
   const isRealtimeConnectedRef = useRef(false)
   isRealtimeConnectedRef.current = isRealtimeConnected
+  // Ref so speakWithTracking / speakPrompt always see current browserVoiceMode
+  // without needing it as a useCallback dependency (avoids unnecessary re-renders).
+  const browserVoiceModeRef = useRef(false)
+  browserVoiceModeRef.current = browserVoiceMode
 
   // Silently warm the voice token on page load (and again after any disconnect).
   // Browser does not require user gesture for HTTP — mic is still deferred to click.
@@ -1338,7 +1344,13 @@ export function DirectorInterviewAssistant({
       advanceTimerRef.current = null
     }
 
-    window.speechSynthesis.cancel()
+    // Only cancel if a tracked utterance is currently active.
+    // Calling cancel() immediately before speak() when nothing is playing causes Chrome
+    // to fire onerror 'canceled' on the new utterance (internal cancel race condition).
+    if (utteranceRef.current !== null) {
+      utteranceRef.current = null
+      window.speechSynthesis.cancel()
+    }
 
     const u = new SpeechSynthesisUtterance(text)
     u.rate = 0.92
@@ -1373,14 +1385,19 @@ export function DirectorInterviewAssistant({
         advanceTimerRef.current = null
       }
       setIsSpeaking(false)
-      const isCancellation = (e.error as string) === 'interrupted' || (e.error as string) === 'canceled'
-      if (!isCancellation) {
+      const errCode = e.error as string
+      if (errCode === 'canceled') {
+        // Utterance was queued but cancelled before it started — surface actionable guidance.
+        setAudioStatus('ready')
+        setAudioWarning("Donna's voice was interrupted. Try Browser Voice Mode.")
+      } else if (errCode === 'interrupted') {
+        // Utterance was cancelled while speaking (expected during stop/repeat) — silent.
+        setAudioStatus('ready')
+      } else {
         setAudioStatus('error')
         setAudioWarning("Audio didn't play. Check browser sound or switch to typed mode.")
         opts?.onError?.()
         opts?.onEnd?.()
-      } else {
-        setAudioStatus('ready')
       }
     }
 
@@ -1421,7 +1438,7 @@ export function DirectorInterviewAssistant({
       setDebugFirstSpokenText(text)
     }
     if (text === GUIDED_INTRO_TEXT) setDebugGuidedIntroRequested(true)
-    if (isRealtimeConnectedRef.current) {
+    if (isRealtimeConnectedRef.current && !browserVoiceModeRef.current) {
       realtimeVoice.speak(text, onDone)
     } else {
       speakAssistant(text, { onEnd: onDone })
@@ -1445,7 +1462,7 @@ export function DirectorInterviewAssistant({
     }
     if (prompt.id === 'director_name') setDebugNamePromptRequested(true)
     if (prompt.id === 'preflight') setDebugPreflightPromptRequested(true)
-    if (isRealtimeConnectedRef.current) {
+    if (isRealtimeConnectedRef.current && !browserVoiceModeRef.current) {
       realtimeVoice.speak(textToSpeak, onDone)
     } else {
       speakAssistant(textToSpeak, { onEnd: onDone })
@@ -2414,6 +2431,22 @@ export function DirectorInterviewAssistant({
           <p className="text-[11px] text-status-orange px-1">{audioWarning}</p>
         )}
 
+        {/* Browser Voice Mode — bypass Realtime when connected but audio isn't audible */}
+        {browserVoiceMode ? (
+          <p className="text-[11px] text-lime px-1 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-lime inline-block shrink-0" />
+            Browser voice mode active
+          </p>
+        ) : (voiceMode && isRealtimeConnected && !isSpeaking && (
+          <button
+            type="button"
+            onClick={() => setBrowserVoiceMode(true)}
+            className="w-full text-xs py-2 px-3 rounded-xl border border-border text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
+          >
+            Use Browser Voice Instead
+          </button>
+        ))}
+
         {/* Typed input — shown only while awaiting (not during capture confirm) */}
         {preflightPhase === 'awaiting_preflight_answer' && (
           <div className="space-y-1.5">
@@ -2737,18 +2770,32 @@ export function DirectorInterviewAssistant({
                     onClick={() => {
                       setTestVoiceFailed(false)
                       speakAssistant(
-                        "Hi, I'm Donna. If you can hear this, voice playback is working.",
+                        "Testing browser voice. Donna is here.",
                         { onError: () => setTestVoiceFailed(true) },
                       )
                     }}
                     className="w-full text-xs py-2 px-3 rounded-xl border border-lime/25 text-lime/70 hover:border-lime/50 hover:text-lime hover:bg-lime/5 transition-colors"
                   >
-                    Test Donna Voice
+                    Test Browser Voice
                   </button>
                   {testVoiceFailed && (
                     <p className="text-[11px] text-status-orange px-1">
-                      Donna tried to speak, but browser audio did not start. Click Test Donna Voice again or check your browser sound settings.
+                      Browser voice did not start. Click Test Browser Voice again or check your browser sound settings.
                     </p>
+                  )}
+                  {browserVoiceMode ? (
+                    <p className="text-[11px] text-lime px-1 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-lime inline-block shrink-0" />
+                      Browser voice mode active
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setBrowserVoiceMode(true)}
+                      className="w-full text-xs py-2 px-3 rounded-xl border border-border text-text-secondary hover:border-lime/30 hover:text-text-primary transition-colors"
+                    >
+                      Use Browser Voice Instead
+                    </button>
                   )}
                 </div>
               )}
@@ -3176,6 +3223,22 @@ export function DirectorInterviewAssistant({
           {!audioWarning && audioStatus === 'ready' && (
             <p className="text-[10px] text-text-muted">Voice ready</p>
           )}
+
+          {/* Browser Voice Mode status and toggle */}
+          {browserVoiceMode ? (
+            <p className="text-[10px] text-lime flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-lime inline-block shrink-0" />
+              Browser voice mode active
+            </p>
+          ) : (isRealtimeConnected && !isSpeaking && (
+            <button
+              type="button"
+              onClick={() => setBrowserVoiceMode(true)}
+              className="text-[10px] text-text-muted hover:text-text-secondary transition-colors"
+            >
+              Use Browser Voice Instead
+            </button>
+          ))}
         </div>
       )}
 
