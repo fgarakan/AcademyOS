@@ -170,6 +170,7 @@ function initAnswer(initial: string): AnswerState {
 type PreflightPhase =
   | 'idle'
   | 'guided_intro'               // assistant speaking guided intro — not a question, no ActivePromptCard
+  | 'awaiting_audio_confirmation' // "Did you hear Donna?" gate — blocks Q1 until director confirms
   | 'name_speaking'              // assistant speaking the name question
   | 'awaiting_name_answer'       // waiting for director's name (voice or typed)
   | 'name_captured'              // name transcript received, pending confirmation
@@ -1743,6 +1744,54 @@ export function DirectorInterviewAssistant({
     })
   }
 
+  // ── Preflight audio gate handlers ───────────────────────────────────────────
+  // Called when director confirms they heard Donna — proceed to Q1.
+  function handleHeardDonna() {
+    const contract = buildAssistantPromptContract(0, resolvedNameRef.current, academyName)
+    const interviewPrompt = buildInterviewPrompt(0, resolvedNameRef.current, academyName)
+    setPreflightPhase('ready_for_question_one')
+    setActiveVoicePrompt(interviewPrompt)
+    setLastSpokenQuestionText(contract.exactQuestionText ?? '')
+    setIsSpeaking(true)
+    setAudioStatus('speaking')
+    if (process.env.NODE_ENV !== 'production') {
+      const exactQ = contract.exactQuestionText ?? ''
+      if (exactQ && !contract.spokenText.includes(exactQ)) {
+        console.warn('Assistant prompt mismatch: spoken text does not include exact screen question.', {
+          spokenText: contract.spokenText,
+          exactQuestionText: exactQ,
+        })
+      }
+    }
+    speakWithTracking(contract.spokenText, () => {
+      setIsSpeaking(false)
+      setAudioStatus('ready')
+      setPreflightPhase('idle')
+      setStep(0)
+    })
+  }
+
+  // Called when director did not hear Donna — enable browser TTS and replay greeting.
+  function handleNotHeardDonna() {
+    setBrowserVoiceMode(true)
+    const welcomeText = buildPersonalizedWelcomeText(resolvedNameRef.current, academyName)
+    setIsSpeaking(true)
+    setAudioStatus('speaking')
+    setAudioWarning(null)
+    speakAssistant(welcomeText, {
+      onEnd: () => {
+        setIsSpeaking(false)
+        setAudioStatus('ready')
+        // Stay in awaiting_audio_confirmation — director must still confirm they heard it.
+      },
+      onError: () => {
+        setIsSpeaking(false)
+        setAudioStatus('ready')
+        setAudioWarning("Browser voice didn't start. Check your browser sound settings or continue with typed setup.")
+      },
+    })
+  }
+
   // ── Voice controls ──────────────────────────────────────────────────────────
   function repeatQuestion() {
     stopAssistantSpeech()
@@ -1752,7 +1801,7 @@ export function DirectorInterviewAssistant({
     const contract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
     const text = contract.spokenText
     setActiveVoicePrompt(buildInterviewPrompt(step, resolvedNameRef.current, academyName))
-    if (isRealtimeConnected) {
+    if (isRealtimeConnectedRef.current && !browserVoiceModeRef.current) {
       speakWithTracking(text, () => {
         setIsSpeaking(false)
         setVoiceAnswerPhase('listening_for_answer')
@@ -1793,9 +1842,10 @@ export function DirectorInterviewAssistant({
     setVoiceMode(false)
     setAudioStatus('idle')
     setAudioWarning(null)
-    // During guided_intro, name phases, or ready_for_question_one → jump directly to Q1 typed mode
+    // During guided_intro, audio gate, name phases, or ready_for_question_one → jump directly to Q1 typed mode
     if (
       preflightPhase === 'guided_intro' ||
+      preflightPhase === 'awaiting_audio_confirmation' ||
       preflightPhase === 'name_speaking' ||
       preflightPhase === 'awaiting_name_answer' ||
       preflightPhase === 'name_captured' ||
@@ -1875,26 +1925,8 @@ export function DirectorInterviewAssistant({
           setAudioStatus('ready')
           hasSentWelcomeRef.current = true
           setDebugFirstRequested(true)
-          const fallbackContract = buildAssistantPromptContract(0, resolvedNameRef.current, academyName)
-          const fallbackPrompt = buildInterviewPrompt(0, resolvedNameRef.current, academyName)
-          setPreflightPhase('ready_for_question_one')
-          setActiveVoicePrompt(fallbackPrompt)
-          setLastSpokenQuestionText(fallbackContract.exactQuestionText ?? '')
-          setIsSpeaking(true)
-          setAudioStatus('speaking')
-          speakAssistant(fallbackContract.spokenText, {
-            onEnd: () => {
-              setIsSpeaking(false)
-              setAudioStatus('ready')
-              setPreflightPhase('idle')
-              setStep(0)
-            },
-            onError: () => {
-              setAudioWarning("Audio didn't play. Check browser sound or type instead.")
-              setPreflightPhase('idle')
-              setStep(0)
-            },
-          })
+          // Preflight audio gate: director must confirm they heard Donna before Q1 begins.
+          setPreflightPhase('awaiting_audio_confirmation')
         },
         onError: () => {
           setAudioWarning("Audio didn't play. Check browser sound or type instead.")
@@ -1916,36 +1948,11 @@ export function DirectorInterviewAssistant({
     speakWithTracking(welcomeText, () => {
       setIsSpeaking(false)
       setAudioStatus('ready')
-      // Welcome done — go directly to Q1 (no name-capture, no preflight Q&A).
-      // hasSentWelcomeRef prevents auto-speak useEffect from re-speaking Q1 after setStep(0).
       hasSentWelcomeRef.current = true
       setDebugFirstRequested(true)
-
-      const contract = buildAssistantPromptContract(0, resolvedNameRef.current, academyName)
-      const interviewPrompt = buildInterviewPrompt(0, resolvedNameRef.current, academyName)
-      setPreflightPhase('ready_for_question_one')
-      setActiveVoicePrompt(interviewPrompt)
-      setLastSpokenQuestionText(contract.exactQuestionText ?? '')
-      setIsSpeaking(true)
-      setAudioStatus('speaking')
-
-      // QA guard: verify spokenText includes exactQuestionText before speaking
-      if (process.env.NODE_ENV !== 'production') {
-        const exactQ = contract.exactQuestionText ?? ''
-        if (exactQ && !contract.spokenText.includes(exactQ)) {
-          console.warn('Assistant prompt mismatch: spoken text does not include exact screen question.', {
-            spokenText: contract.spokenText,
-            exactQuestionText: exactQ,
-          })
-        }
-      }
-
-      speakWithTracking(contract.spokenText, () => {
-        setIsSpeaking(false)
-        setAudioStatus('ready')
-        setPreflightPhase('idle')
-        setStep(0)
-      })
+      // Preflight audio gate: director must confirm they heard Donna before Q1 begins.
+      // Do not assume onEnd == audible — autoplay policy can block Realtime audio.
+      setPreflightPhase('awaiting_audio_confirmation')
     })
   }
 
@@ -2267,6 +2274,16 @@ export function DirectorInterviewAssistant({
           <ActivePromptCard prompt={activeVoicePrompt} />
         )}
 
+        {/* Audio confirmation gate — shown after Donna's greeting, before Q1 */}
+        {preflightPhase === 'awaiting_audio_confirmation' && (
+          <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-lime/15 space-y-1">
+            <p className="text-sm font-medium text-text-primary">Did you hear Donna?</p>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Confirm before the interview begins so voice stays in sync.
+            </p>
+          </div>
+        )}
+
         {/* Voice listening status — shown while waiting for name or preflight answer */}
         {voiceMode && isRealtimeConnected && (preflightPhase === 'awaiting_preflight_answer' || preflightPhase === 'awaiting_name_answer') && !isSpeaking && (
           <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
@@ -2464,6 +2481,36 @@ export function DirectorInterviewAssistant({
 
         {/* Action buttons */}
         <div className="space-y-2.5">
+          {/* Audio confirmation gate — three-path decision */}
+          {preflightPhase === 'awaiting_audio_confirmation' && (
+            <>
+              <button
+                type="button"
+                onClick={handleHeardDonna}
+                disabled={isSpeaking}
+                className={`w-full ${BTN_LIME}`}
+              >
+                Yes, I heard her
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNotHeardDonna}
+                disabled={isSpeaking}
+                className={`w-full ${BTN_GHOST}`}
+              >
+                No, try Browser Voice
+              </button>
+              <button
+                type="button"
+                onClick={switchToTypeModePreflight}
+                className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
+              >
+                Continue with Typed Setup
+              </button>
+            </>
+          )}
+
           {/* Guided intro — skip button so director is never blocked */}
           {preflightPhase === 'guided_intro' && (
             <button

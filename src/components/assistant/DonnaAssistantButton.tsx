@@ -229,6 +229,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Must be called from user-interaction event handlers to satisfy browser autoplay rules.
   // lastSpokenTextRef prevents the same string from being spoken twice in a row.
   const lastSpokenTextRef = useRef<string | null>(null)
+  // Tracks the active utterance so cancel() is only called when one is actually in flight.
+  // Unconditional cancel() before speak() triggers Chrome onerror: "canceled" race condition.
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   function speakAssistantText(text: string) {
     console.log('[Donna TTS] speakAssistantText called', {
       text: text.slice(0, 100),
@@ -246,7 +249,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return
     }
     lastSpokenTextRef.current = text
-    window.speechSynthesis.cancel()
+    // Only cancel when a tracked utterance is currently active — avoids the Chrome race
+    // where cancel() + speak() in quick succession causes the new utterance to be canceled.
+    if (utteranceRef.current !== null) {
+      utteranceRef.current = null
+      window.speechSynthesis.cancel()
+    }
     const utt = new SpeechSynthesisUtterance(text)
     utt.rate = 1.0
     utt.pitch = 1.0
@@ -256,12 +264,15 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     }
     utt.onend = () => {
       console.log('[Donna TTS] speakAssistantText onend fired')
+      utteranceRef.current = null
       setIsSpeaking(false)
     }
     utt.onerror = (e) => {
       console.log('[Donna TTS] speakAssistantText onerror fired', { error: e.error })
+      utteranceRef.current = null
       setIsSpeaking(false)
     }
+    utteranceRef.current = utt
     console.log('[Donna TTS] calling window.speechSynthesis.speak()')
     window.speechSynthesis.speak(utt)
   }
@@ -363,6 +374,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setIsSpeaking(false)
     setVoicePermissionError(null)
     lastSpokenTextRef.current = null
+    utteranceRef.current = null
     setOnboardingStep(null)
     setShowOnboardingSuggestions(false)
     if (typeof window !== 'undefined' && window.speechSynthesis) {

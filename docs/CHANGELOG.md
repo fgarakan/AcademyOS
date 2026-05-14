@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-14 — Sprint 295: Donna P0 Voice Reliability Fixes V1
+
+**Basis:** Sprint 294 audit (readiness score 5.5/10) identified three P0 blockers. This sprint fixes all three.
+
+**Fix 1 — Floating Donna TTS cancel bug (DonnaAssistantButton.tsx):**
+`speakAssistantText()` was calling `window.speechSynthesis.cancel()` unconditionally before every `speak()` call, triggering the same Chrome race condition fixed in Sprint 293 for the interview. Added `utteranceRef` to track the active utterance. Cancel is now conditional: `if (utteranceRef.current !== null)`. Also clears `utteranceRef.current` in `onend`, `onerror`, and `closePanel`.
+
+**Fix 2 — repeatQuestion() bypassing Browser Voice Mode (DirectorInterviewAssistant.tsx):**
+`repeatQuestion()` was checking `isRealtimeConnected` state directly, which does not reflect `browserVoiceMode`. When Browser Voice Mode was active and the director pressed "Repeat", it routed back through Realtime instead of browser TTS. Fixed: replaced `if (isRealtimeConnected)` with `if (isRealtimeConnectedRef.current && !browserVoiceModeRef.current)`.
+
+**Fix 3 — Preflight audio confirmation gate (DirectorInterviewAssistant.tsx):**
+No gate existed between Donna speaking and Q1 beginning. The system assumed `onEnd` firing = director heard Donna, which is false (Chrome autoplay, muted audio, or Bluetooth disconnect can all cause silent failures). Added `'awaiting_audio_confirmation'` to `PreflightPhase`. After Donna's greeting, both Realtime and browser TTS fallback paths now transition to `awaiting_audio_confirmation` instead of immediately speaking Q1. The gate shows "Did you hear Donna?" with three buttons:
+- **Yes, I heard her** → calls `handleHeardDonna()` which speaks Q1 via `speakWithTracking()`
+- **No, try Browser Voice** → calls `handleNotHeardDonna()` which sets `browserVoiceMode = true` and replays greeting via `speakAssistant()` directly; director stays in gate until confirmed
+- **Continue with Typed Setup** → calls `switchToTypeModePreflight()` which was also updated to include `'awaiting_audio_confirmation'` in its jump-to-Q1 condition set
+
+**No migrations. No authority changes. No DB changes.**
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `utteranceRef`, conditional cancel, ref tracking in onend/onerror/closePanel
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — `awaiting_audio_confirmation` PreflightPhase value; `handleHeardDonna()` and `handleNotHeardDonna()` functions; gate card UI + action buttons; `repeatQuestion()` ref fix; `switchToTypeModePreflight()` updated
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Sprint 293: Donna TTS Cancellation Fix + Browser Voice Mode V1
 
 **Root cause fixed:** `speakAssistant()` was calling `window.speechSynthesis.cancel()` unconditionally before every `speak()` call, even when `utteranceRef.current === null` (nothing was playing). Chrome has a race condition where calling `cancel()` immediately before `speak()` causes the new utterance to fire `onerror` with `error: "canceled"` before it starts. The fix: only cancel if `utteranceRef.current !== null` (an active utterance exists and needs to be interrupted).
