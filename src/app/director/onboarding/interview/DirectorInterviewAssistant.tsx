@@ -1135,6 +1135,10 @@ export function DirectorInterviewAssistant({
   // ── OpenAI Realtime voice hook ───────────────────────────────────────────────
   const realtimeVoice = useRealtimeInterviewVoice()
   const isRealtimeConnected = realtimeVoice.status === 'connected'
+  // Ref so speakWithTracking / speakPrompt always see the current connection state
+  // without needing to include it as a useCallback dependency.
+  const isRealtimeConnectedRef = useRef(false)
+  isRealtimeConnectedRef.current = isRealtimeConnected
 
   // Silently warm the voice token on page load (and again after any disconnect).
   // Browser does not require user gesture for HTTP — mic is still deferred to click.
@@ -1393,6 +1397,7 @@ export function DirectorInterviewAssistant({
   // ── Realtime speak wrapper — tracks what was spoken for the assistant bubble ──
   // The app always knows what text it told the AI to say, so the bubble shows
   // it immediately even if Realtime transcript events are delayed or absent.
+  // Falls back to browser TTS (speakAssistant) when Realtime is not connected.
   const speakWithTracking = useCallback((text: string, onDone?: () => void) => {
     setLastSpokenAssistantText(text)
     if (!firstSpokenRef.current) {
@@ -1400,12 +1405,17 @@ export function DirectorInterviewAssistant({
       setDebugFirstSpokenText(text)
     }
     if (text === GUIDED_INTRO_TEXT) setDebugGuidedIntroRequested(true)
-    realtimeVoice.speak(text, onDone)
-  }, [realtimeVoice.speak])
+    if (isRealtimeConnectedRef.current) {
+      realtimeVoice.speak(text, onDone)
+    } else {
+      speakAssistant(text, { onEnd: onDone })
+    }
+  }, [realtimeVoice.speak, speakAssistant])
 
   // ── speakPrompt — always sets visible prompt card before speaking ─────────────
   // Rule: every question the AI speaks must also appear on screen as an active prompt.
   // Use this for all question prompts. speakWithTracking alone is for non-question speech.
+  // Falls back to browser TTS (speakAssistant) when Realtime is not connected.
   const speakPrompt = useCallback((
     prompt: ActiveVoicePrompt,
     textToSpeak: string,
@@ -1419,8 +1429,12 @@ export function DirectorInterviewAssistant({
     }
     if (prompt.id === 'director_name') setDebugNamePromptRequested(true)
     if (prompt.id === 'preflight') setDebugPreflightPromptRequested(true)
-    realtimeVoice.speak(textToSpeak, onDone)
-  }, [realtimeVoice.speak])
+    if (isRealtimeConnectedRef.current) {
+      realtimeVoice.speak(textToSpeak, onDone)
+    } else {
+      speakAssistant(textToSpeak, { onEnd: onDone })
+    }
+  }, [realtimeVoice.speak, speakAssistant])
 
   // ── Preflight response handler ───────────────────────────────────────────────
   // Classifies the director's response to the preflight question, answers briefly
@@ -1794,13 +1808,59 @@ export function DirectorInterviewAssistant({
     const ok = await realtimeVoice.connect()
 
     if (!ok) {
-      setVoiceMode(false)
-      setAudioStatus('error')
-      const errMsg =
-        realtimeVoice.status === 'mic-denied'
-          ? 'Microphone access denied. You can still complete the setup by typing.'
-          : 'Voice is not available right now. You can still complete the setup by typing.'
-      setAudioWarning(errMsg)
+      if (realtimeVoice.status === 'mic-denied') {
+        // Mic denied: user must type — no voice path available.
+        setVoiceMode(false)
+        setAudioStatus('error')
+        setAudioWarning('Microphone access denied. You can still complete the setup by typing.')
+        return
+      }
+
+      // Realtime unavailable (no API key, network error, etc.) — Sprint 290 fallback:
+      // Stay in voice mode and guide via browser TTS + browser SpeechRecognition (MicButton).
+      // The rest of the interview flow already handles isRealtimeConnected === false via speakAssistant().
+      setAudioWarning(
+        'Live voice is unavailable, but I can still guide you with browser voice and typed answers.',
+      )
+      const welcomeTextFallback = buildPersonalizedWelcomeText(resolvedName, academyName)
+      setPreflightPhase('guided_intro')
+      setPreflightAssistantText(welcomeTextFallback)
+      setDebugWelcomeSent(true)
+      setIsSpeaking(true)
+      setAudioStatus('speaking')
+      speakAssistant(welcomeTextFallback, {
+        onEnd: () => {
+          setIsSpeaking(false)
+          setAudioStatus('ready')
+          hasSentWelcomeRef.current = true
+          setDebugFirstRequested(true)
+          const fallbackContract = buildAssistantPromptContract(0, resolvedNameRef.current, academyName)
+          const fallbackPrompt = buildInterviewPrompt(0, resolvedNameRef.current, academyName)
+          setPreflightPhase('ready_for_question_one')
+          setActiveVoicePrompt(fallbackPrompt)
+          setLastSpokenQuestionText(fallbackContract.exactQuestionText ?? '')
+          setIsSpeaking(true)
+          setAudioStatus('speaking')
+          speakAssistant(fallbackContract.spokenText, {
+            onEnd: () => {
+              setIsSpeaking(false)
+              setAudioStatus('ready')
+              setPreflightPhase('idle')
+              setStep(0)
+            },
+            onError: () => {
+              setAudioWarning("Audio didn't play. Check browser sound or type instead.")
+              setPreflightPhase('idle')
+              setStep(0)
+            },
+          })
+        },
+        onError: () => {
+          setAudioWarning("Audio didn't play. Check browser sound or type instead.")
+          setPreflightPhase('idle')
+          setStep(0)
+        },
+      })
       return
     }
 
@@ -3243,11 +3303,11 @@ export function DirectorInterviewAssistant({
         </div>
       </div>
 
-      {/* Browser STT mic button — fallback / type-mode only */}
-      {!voiceMode && (
+      {/* Browser STT mic button — typed mode, or voice mode when Realtime is not connected */}
+      {(!voiceMode || !isRealtimeConnected) && (
         <MicButton
           onTranscript={(text) => appendTranscript(field, text)}
-          disabled={false}
+          disabled={isSpeaking}
         />
       )}
 

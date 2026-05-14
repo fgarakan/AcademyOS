@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-05-14 — Sprint 290 (patch): Voice Fallback Completion + Onboarding Typed Answer Fix
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — `speakWithTracking` and `speakPrompt` previously called `realtimeVoice.speak()` unconditionally; when Realtime was not connected the interview advanced but audio was silent. Fixed: both functions now check `isRealtimeConnectedRef.current` and fall back to `speakAssistant()` (browser TTS) when not connected. The `isRealtimeConnectedRef` ref keeps the callbacks stable without adding `isRealtimeConnected` as a dependency.
+- `src/components/assistant/DonnaAssistantButton.tsx` — `handleCommandSubmit` now routes typed text through `handleOnboardingAnswer` when onboarding is active, so typing a name during step 0 is handled correctly instead of falling through to "not recognized". Greeting card now shows the current onboarding step's question (was hardcoded to step 0 even during step 1).
+
+---
+
+## 2026-05-14 — Sprint 290: Voice Onboarding Repair + Guided Flow V1
+
+**Root cause found and fixed:** `startVoiceInterview()` in `DirectorInterviewAssistant.tsx` called `realtimeVoice.connect()` and exited voice mode entirely on any Realtime failure. Browser TTS fallback paths existed throughout the component but were never reached from the entry point. The assistant went completely silent whenever `OPENAI_API_KEY` was absent or the network was unavailable.
+
+**"John" naming:** No occurrence of "John" in any source file. The assistant is consistently "Academy Assistant" (floating button) and "Academy Setup Assistant" (interview page). No naming change required.
+
+**Files created:**
+- `src/components/assistant/donnaOnboardingFlow.ts` — 2-step guided intro sequence (greeting → name question; first-action question with 3 suggested routes). Single source of truth for spoken text and screen text. No DB, no API, no async.
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — Fixed `startVoiceInterview()`: when Realtime connect fails and mic is not denied, voice mode now stays enabled and falls back to browser TTS (`speakAssistant()`) with the same welcome → first question chain that the Realtime path uses. Shows fallback warning: "Live voice is unavailable, but I can still guide you with browser voice and typed answers." `MicButton` now renders when `!voiceMode || !isRealtimeConnected` so director can always speak answers via browser SpeechRecognition even in voice mode without Realtime.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added 2-step onboarding intro state machine (`onboardingStep: null|0|1`, `showOnboardingSuggestions`). On first panel open, assistant now speaks and shows `DONNA_ONBOARDING_STEPS[0].spokenText` ("Hi, I'm your Academy Assistant. What's your name?") — same text for screen and voice. Step 1 question spotlight visible in voice card. Voice answers in onboarding intercepted to `pendingVoiceAnswer` for edit-before-use. Typed answers routed through `handleVoiceTranscript → handleOnboardingAnswer`. Step 1 answers route to task intent detection; if unrecognized, shows 3 suggested routes (Create class template / Create session / Review what needs attention). Safety reminder shown in onboarding card. State cleared on close and route change. Does not interfere with any existing task/mode/draft flows.
+
+**Speak/listen safety:** Voice input not started automatically; user must press mic. VoiceInputButton still disabled while speaking (existing behavior unchanged).
+
+**Voice approval guardrail:** Unchanged — "save it", "approve it" etc. still blocked.
+
+**Regression safety:** All existing tasks (create session, class template, attendance exception, parent update, level readiness, curriculum adjustment, coach communication, review queue, multi-step planner) unchanged.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Sprint 289: Donna Real-Time Voice UI Completion V1
 
 **Why this sprint:**

@@ -66,6 +66,11 @@ import { detectMultiStepIntent } from '@/components/assistant/donnaMultiStepPlan
 import type { DonnaMultiStepPlan } from '@/components/assistant/donnaMultiStepPlanner'
 // Sprint 289 — Voice UI types
 import type { DonnaVoiceTranscriptState } from '@/components/assistant/donnaVoiceUiTypes'
+// Sprint 290 — Onboarding flow
+import {
+  DONNA_ONBOARDING_STEPS,
+  isOnboardingActive,
+} from '@/components/assistant/donnaOnboardingFlow'
 import type { DonnaReviewQueueSummary } from '@/components/assistant/donnaReviewQueueTypes'
 import { DonnaReviewQueuePanel } from '@/components/assistant/DonnaReviewQueuePanel'
 // Sprint 269 — Safe Object Resolution
@@ -266,6 +271,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [pendingVoiceAnswer, setPendingVoiceAnswer] = useState<DonnaVoiceTranscriptState | null>(null)
   const [voicePermissionError, setVoicePermissionError] = useState<string | null>(null)
 
+  // Sprint 290 — Guided onboarding intro state
+  // Active when no task/mode/draft is running, and the user has not yet completed the intro.
+  // null = not started or completed. 0 = name question. 1 = first-action question.
+  const [onboardingStep, setOnboardingStep] = useState<number | null>(null)
+  // Set to true after step 1 when no task intent was detected — shows 3 suggested routes.
+  const [showOnboardingSuggestions, setShowOnboardingSuggestions] = useState(false)
+
   // Object resolution state — Sprint 269
   // Tracks the active resolution request and its result. Never mutates records.
   const [resolutionContext, setResolutionContext] = useState<{
@@ -320,6 +332,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setIsSpeaking(false)
     setVoicePermissionError(null)
     lastSpokenTextRef.current = null
+    setOnboardingStep(null)
+    setShowOnboardingSuggestions(false)
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
     }
@@ -359,6 +373,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setIsSpeaking(false)
     setVoicePermissionError(null)
     lastSpokenTextRef.current = null
+    setOnboardingStep(null)
+    setShowOnboardingSuggestions(false)
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -398,6 +414,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
   // ── Voice transcript routing — strict priority order ────────────────────────
   //
+  // 0. Onboarding intro step (Sprint 290) — intercept when in guided onboarding
   // 1. Active class-template question  → answer it (requires level validation)
   // 2. Active generic task question    → answer it (accepts any non-empty text)
   // 3a. Class-template draft complete  → guard confirm/save to screen button
@@ -424,6 +441,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         type: 'honest',
         label: 'Use the on-screen button',
       })
+      return
+    }
+
+    // 0. Sprint 290: onboarding intro — typed answers also route through here.
+    // (Voice answers are intercepted earlier via handleVoiceTranscriptRaw → pendingVoiceAnswer.)
+    if (isOnboardingActive(onboardingStep)) {
+      handleOnboardingAnswer(onboardingStep, text)
       return
     }
 
@@ -656,6 +680,63 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setFromVoiceCapture(false)
   }
 
+  // Sprint 290 — Guided onboarding answer handler
+  // Routes the director's answer at each onboarding step.
+  // Step 0 (name): store name acknowledgment, advance to step 1.
+  // Step 1 (first action): detect task intent and start it, or show suggested routes.
+  function handleOnboardingAnswer(step: number, answer: string) {
+    const lower = answer.toLowerCase().trim()
+
+    if (step === 0) {
+      // Name step — acknowledge and advance.
+      const spokenName = answer.trim()
+      setOnboardingStep(1)
+      const nextSpoken = spokenName
+        ? `Nice to meet you, ${spokenName}. ${DONNA_ONBOARDING_STEPS[1].spokenText}`
+        : DONNA_ONBOARDING_STEPS[1].spokenText
+      // Reset dedupe guard so the next question can speak even if same text
+      lastSpokenTextRef.current = null
+      speakAssistantText(nextSpoken)
+      return
+    }
+
+    if (step === 1) {
+      // First-action step — detect intent and route.
+      setOnboardingStep(null)
+
+      // Template creation intent
+      if (isTemplateCreationIntent(answer)) {
+        const draft = parseTemplateDraft(answer)
+        setTemplateDraft(draft)
+        setActiveMode('create_template')
+        setFromVoiceCapture(true)
+        const firstQ = draft.missingQuestions[0] ?? null
+        lastSpokenTextRef.current = null
+        if (firstQ) speakAssistantText(firstQ.question)
+        else speakAssistantText('I have enough to draft this. Review it before saving.')
+        return
+      }
+
+      // Generic task intent
+      const { taskId } = detectTaskIntent(answer)
+      if (taskId && taskId !== 'create_class_template') {
+        handleStartGenericTask(taskId, true)
+        return
+      }
+
+      // Review queue intent
+      if (isReviewQueuePhrase(lower)) {
+        void handleOpenReviewQueue()
+        return
+      }
+
+      // No recognized intent — show suggested routes
+      setShowOnboardingSuggestions(true)
+      lastSpokenTextRef.current = null
+      speakAssistantText('Here are some things you can do to get started.')
+    }
+  }
+
   // Sprint 289 — Voice UI state handlers
 
   function handleVoiceListeningChange(listening: boolean) {
@@ -675,11 +756,18 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     )
   }
 
-  // Raw transcript interceptor — in guided_task mode with a pending question, captures the
-  // transcript to pendingVoiceAnswer for director review/edit before routing to handleVoiceTranscript.
-  // In all other modes, routes directly without the review gate.
+  // Raw transcript interceptor — gates on onboarding and guided_task mode to require
+  // director review/edit before the answer is committed.
+  // In all other modes, routes directly to handleVoiceTranscript.
   function handleVoiceTranscriptRaw(text: string) {
     setInterimVoiceTranscript(null)
+
+    // Sprint 290: intercept in onboarding mode so director can review their spoken name/intent
+    if (isOnboardingActive(onboardingStep)) {
+      setPendingVoiceAnswer({ raw: text, editedText: text, isEdited: false })
+      return
+    }
+
     if (
       activeMode === 'guided_task' &&
       genericDraft &&
@@ -695,6 +783,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     if (!pendingVoiceAnswer) return
     const answer = pendingVoiceAnswer.editedText.trim()
     setPendingVoiceAnswer(null)
+
+    // Sprint 290: route onboarding answers through the onboarding handler.
+    if (isOnboardingActive(onboardingStep)) {
+      handleOnboardingAnswer(onboardingStep, answer)
+      return
+    }
+
     if (answer) handleVoiceTranscript(answer)
   }
 
@@ -1134,6 +1229,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     const text = typedText.trim()
     if (!text) return
 
+    // Sprint 290: onboarding intro — typed answers route through the onboarding handler.
+    if (isOnboardingActive(onboardingStep)) {
+      handleOnboardingAnswer(onboardingStep, text)
+      setTypeInstead(false)
+      setTypedText('')
+      return
+    }
+
     // Multi-step intent — Sprint 286
     if (!templateDraft && !genericDraft && !multiStepPlan) {
       const plan = detectMultiStepIntent(text)
@@ -1219,7 +1322,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           if (!hasGreetedRef.current) {
             hasGreetedRef.current = true
             setShowGreeting(true)
-            speakAssistantText(greetingText)
+            // Sprint 290: start the guided onboarding intro instead of generic greeting.
+            // Speak the first onboarding question — same text shown on screen.
+            setOnboardingStep(0)
+            setShowOnboardingSuggestions(false)
+            speakAssistantText(DONNA_ONBOARDING_STEPS[0].spokenText)
           }
         }}
         aria-label="Ask Academy Assistant"
@@ -1314,7 +1421,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
 
-          {/* ── Spoken greeting card — shown on first open, persists while panel is open ── */}
+          {/* ── Greeting / onboarding intro card — shown on first open ── */}
+          {/* Sprint 290: shows the first onboarding question (same text spoken + displayed). */}
           {showGreeting && (
             <div
               className="rounded-xl px-3.5 py-3"
@@ -1330,8 +1438,15 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 Academy Assistant
               </p>
               <p className="text-[13px] text-text-primary font-medium leading-snug">
-                {greetingText}
+                {isOnboardingActive(onboardingStep)
+                  ? DONNA_ONBOARDING_STEPS[onboardingStep].question
+                  : greetingText}
               </p>
+              {isOnboardingActive(onboardingStep) && (
+                <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
+                  Voice can fill drafts. Final saves still require the button.
+                </p>
+              )}
             </div>
           )}
 
@@ -1355,8 +1470,27 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 Use voice to ask what to do next, explain this screen, or capture a director note.
               </p>
 
+              {/* Sprint 290 — Onboarding current question spotlight */}
+              {/* Shows when in onboarding step 1 (first-action question) */}
+              {isOnboardingActive(onboardingStep) && onboardingStep === 1 && (
+                <div
+                  className="mb-3 rounded-lg px-3 py-2"
+                  style={{ background: 'rgba(200,255,0,0.05)', border: '1px solid rgba(200,255,0,0.2)' }}
+                >
+                  <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-lime">
+                    Current question
+                  </p>
+                  <p className="text-[12px] text-text-primary font-medium leading-snug">
+                    {DONNA_ONBOARDING_STEPS[1].question}
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-1 leading-snug">
+                    {DONNA_ONBOARDING_STEPS[1].helperText}
+                  </p>
+                </div>
+              )}
+
               {/* Current question spotlight — guided_task mode only */}
-              {guidedCurrentQ && (
+              {guidedCurrentQ && !isOnboardingActive(onboardingStep) && (
                 <div
                   className="mb-3 rounded-lg px-3 py-2"
                   style={{ background: 'rgba(200,255,0,0.05)', border: '1px solid rgba(200,255,0,0.2)' }}
@@ -1599,6 +1733,49 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   <X className="w-3 h-3" />
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* ── Sprint 290: Onboarding suggested routes — shown when step 1 intent was unclear ── */}
+          {showOnboardingSuggestions && !genericDraft && !templateDraft && (
+            <div
+              className="rounded-xl px-3.5 py-3 space-y-2"
+              style={{
+                background: 'rgba(200,255,0,0.04)',
+                border: '1px solid rgba(200,255,0,0.2)',
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-widest font-semibold text-lime">
+                  Get started
+                </p>
+                <button
+                  onClick={() => setShowOnboardingSuggestions(false)}
+                  aria-label="Dismiss"
+                  className="text-text-muted hover:text-text-primary transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="space-y-1">
+                {DONNA_ONBOARDING_STEPS[1].suggestedRoutes?.map((route) => (
+                  <button
+                    key={route.taskHint}
+                    onClick={() => {
+                      setShowOnboardingSuggestions(false)
+                      handleVoiceTranscript(route.taskHint)
+                    }}
+                    className="w-full text-left text-[12px] text-text-secondary hover:text-text-primary
+                      px-3 py-2 rounded-lg hover:bg-surface-raised transition-all leading-snug border border-border"
+                    style={{ background: 'var(--bg-surface)' }}
+                  >
+                    {route.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[9px] text-text-muted leading-snug pt-1">
+                Voice can fill drafts. Final saves always require the on-screen button.
+              </p>
             </div>
           )}
 
