@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-14 — Sprint 313: Academy Setup Screen-First + Voice Gate Removal V1
+
+**Goal:** Make Academy Setup deterministic and screen-first. Voice output is optional and informational — it must never gate the workflow, block step transitions, or require confirmation before the director can answer.
+
+**Root cause — repeated question / permanent block:**
+Two bugs in combination: (1) `startVoiceInterview()` ended with `setPreflightPhase('awaiting_audio_confirmation')`, a blocking gate requiring "Yes, I heard her" before Q1 was visible. (2) The step useEffect gated `setVoiceAnswerPhase('listening_for_answer')` on `response.done` — so if Realtime timed out, the director was stuck with `voiceAnswerPhase === 'idle'` and could not answer by voice or see the question as answerable.
+
+**Fix — Screen-first architecture:**
+- Added `VoiceOutputState` type: `'idle' | 'trying_to_speak' | 'voice_unavailable' | 'voice_confirmed'` (informational only, never gates workflow).
+- Step useEffect now sets `voiceAnswerPhase('listening_for_answer')` IMMEDIATELY when step is entered. Voice output is fire-and-forget: `response.done` sets `voice_confirmed`, timeout sets `voice_unavailable` with a non-blocking warning.
+- `startVoiceInterview()` rewritten: Realtime connected path uses `pendingAckRef` to prepend short greeting to Q1, then advances to `step(0)` immediately (no blocking welcome flow). Realtime unavailable path advances to `step(0)` immediately with browser TTS attempt (non-blocking).
+- `startQ1` in `handlePreflightResponse` rewritten: sets `pendingAckRef.current = intro`, then advances to `step(0)` immediately.
+- "Skip intro" button: directly sets `preflightPhase('idle')` and `setStep(0)`.
+- Removed `awaiting_audio_confirmation` info card ("Did you hear Donna?") from preflight UI.
+- Removed `awaiting_audio_confirmation` action buttons ("Yes, I heard her" / "No, try Browser Voice" / "Continue with Typed Setup") from preflight UI.
+- Added voice output state banner in ANSWERING PHASE (informational, never blocking).
+- Changed "Looks right — continue" label to "Use this answer" in review_answer voice confirmation panel.
+- Reset `voiceOutputState` to `'idle'` in `acceptAnswer()`, `confirmAnswer()`, `goBack()`, `skipAnswer()`.
+
+**No migrations. No authority changes. No DB changes. No mic permission changes.**
+
+**Files modified:**
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — VoiceOutputState type; voiceOutputState state; step useEffect rewrite (immediate listening); startVoiceInterview rewrite (no audio gate); startQ1 rewrite; skip intro fix; audio gate UI removal; voiceOutputState banner; button label update; voiceOutputState resets
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Sprint 312: Donna Audio Output Playback + Academy Setup Deterministic Step Flow V1
 
 **Goal:** Fix two remaining Donna blockers: (A) Realtime audio never audible despite successful connection; (B) Academy Setup audio gate blocking director permanently when Realtime speech times out.

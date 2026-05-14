@@ -152,6 +152,10 @@ type VoiceAnswerPhase =
   | 'listening_for_confirmation' // alias — same confirm-command window as review_answer
   | 'confirming_answer'          // confirm command received; calling accept logic
   | 'advancing_to_next_question' // advancing to next step in progress
+
+// Sprint 313 — informational voice output state. Never gates workflow.
+type VoiceOutputState = 'idle' | 'trying_to_speak' | 'voice_unavailable' | 'voice_confirmed'
+
 type AnswerState = { chips: string[]; custom: string }
 type Answers = Record<InterviewField, AnswerState>
 
@@ -1130,6 +1134,8 @@ export function DirectorInterviewAssistant({
   // ── Sprint 242 — voice answer confirmation loop ──────────────────────────────
   // Phase tracking for the post-question voice flow.
   const [voiceAnswerPhase, setVoiceAnswerPhase] = useState<VoiceAnswerPhase>('idle')
+  // Sprint 313 — informational voice output state. Never gates the workflow.
+  const [voiceOutputState, setVoiceOutputState] = useState<VoiceOutputState>('idle')
   // The most recently captured voice answer transcript (before it was accepted).
   const [pendingAnswerTranscript, setPendingAnswerTranscript] = useState('')
   // The last confirmation command word detected (for debug display).
@@ -1485,38 +1491,14 @@ export function DirectorInterviewAssistant({
     lastAppliedTranscriptRef.current = ''
 
     const startQ1 = (intro: string) => {
-      const fullText = `${intro} First question: ${q1}`
-      hasSentWelcomeRef.current = true
+      // Sprint 313: Screen-first. Use pendingAckRef so step useEffect combines ack + Q1.
+      // Advance to step 0 immediately — voice is fire-and-forget from here.
+      pendingAckRef.current = intro
+      hasSentWelcomeRef.current = false
       setDebugFirstRequested(true)
-      setPreflightPhase('ready_for_question_one')
-      setPreflightAssistantText(fullText)
-      // Set active prompt to Q1 — the question is now visible before/while it is spoken
-      setActiveVoicePrompt(buildInterviewPrompt(0))
-      setIsSpeaking(true)
-      setAudioStatus('speaking')
-      if (isRealtimeConnected) {
-        speakWithTracking(fullText, () => {
-          setIsSpeaking(false)
-          setAudioStatus('ready')
-          setStep(0)
-          setPreflightPhase('idle')
-        })
-      } else {
-        setLastSpokenAssistantText(fullText)
-        speakAssistant(fullText, {
-          onEnd: () => {
-            setIsSpeaking(false)
-            setAudioStatus('ready')
-            setStep(0)
-            setPreflightPhase('idle')
-          },
-          onError: () => {
-            setAudioWarning("Audio didn't play. Check browser sound.")
-            setStep(0)
-            setPreflightPhase('idle')
-          },
-        })
-      }
+      console.log('[AcademySetupFlow] startQ1 — advancing to step 0 immediately | intro:', intro)
+      setPreflightPhase('idle')
+      setStep(0)
     }
 
     if (classification === 'no_questions') {
@@ -1644,28 +1626,28 @@ export function DirectorInterviewAssistant({
   }, [realtimeVoice.finalUserTranscript, preflightPhase])
 
   // ── Auto-speak question when voice mode is on and an answering step is active.
+  // Sprint 313: Screen is source of truth. voiceAnswerPhase set IMMEDIATELY on step entry.
+  // Voice output is fire-and-forget — it updates voiceOutputState but never gates workflow.
   // Realtime path: speakWithTracking (tracks text + fires response.create).
   // Browser TTS path: setLastSpokenAssistantText + speakAssistant.
   // pendingAckRef: set by acceptAnswer() to combine ack + next question.
   useEffect(() => {
     if (!voiceMode || step < 0 || step >= INTERVIEW_STEPS.length || phase !== 'answering') return
 
-    // Step 0 was already spoken as part of the combined welcome + first question.
+    // Step 0 was already spoken as part of the combined greeting + first question.
     if (step === 0 && hasSentWelcomeRef.current) {
       hasSentWelcomeRef.current = false
       setIsSpeaking(false)
       setAudioStatus('ready')
-      // Question was already spoken — move into listening phase immediately.
       setVoiceAnswerPhase('listening_for_answer')
+      setVoiceOutputState('idle')
+      console.log('[AcademySetupFlow] stepVisible | step: 0 | source: hasSentWelcome')
       return
     }
 
     // Consume any pending ack from acceptAnswer()
     const ack = pendingAckRef.current
     pendingAckRef.current = null
-
-    console.log('[AcademySetup] step useEffect — step:', step, '| ack:', ack?.slice(0, 30) ?? 'none',
-      '| isRealtimeConnected:', isRealtimeConnected, '| voiceAnswerPhase: (entering)')
 
     // Build AssistantPromptContract — single source of truth for screen and voice
     const promptContract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
@@ -1688,46 +1670,53 @@ export function DirectorInterviewAssistant({
       }
     }
 
-    // Set active prompt before speaking — question must be visible before voice starts.
-    // Sprint 243: when a transition phrase is prepended, include it in spokenText so
-    // ActivePromptCard shows the full spoken text (transition + leadIn + question).
+    // Set active prompt before voice — question must be visible before voice starts.
     const basePrompt = buildInterviewPrompt(step, resolvedNameRef.current, academyName)
     const voicePromptWithTransition: ActiveVoicePrompt = ack && basePrompt.spokenText
       ? { ...basePrompt, spokenText: `${ack} ${basePrompt.spokenText}` }
       : basePrompt
     setActiveVoicePrompt(voicePromptWithTransition)
-    setIsSpeaking(true)
-    setAudioStatus('speaking')
+
+    // Sprint 313: Listening begins immediately — screen is the source of truth.
+    // Voice output is informational only — updates voiceOutputState but does NOT gate workflow.
+    setVoiceAnswerPhase('listening_for_answer')
+    setVoiceOutputState('trying_to_speak')
+    setAudioWarning(null)
+    console.log('[AcademySetupFlow] stepVisible | step:', step, '| ack:', ack?.slice(0, 30) ?? 'none')
 
     if (isRealtimeConnected) {
+      setIsSpeaking(true)
+      setAudioStatus('speaking')
       speakWithTracking(
         textToSpeak,
         () => {
-          // Real response.done — question confirmed spoken. Now listen for answer.
+          console.log('[DonnaVoiceOutput] responseDone | step:', step)
           setIsSpeaking(false)
           setAudioStatus('ready')
-          setVoiceAnswerPhase('listening_for_answer')
+          setVoiceOutputState('voice_confirmed')
         },
         () => {
-          // Timeout — speech was NOT confirmed. Do not enter listening phase.
-          // Director must click Repeat question or switch to typed mode.
+          console.log('[DonnaVoiceOutput] timeout | step:', step)
           setIsSpeaking(false)
           setAudioStatus('ready')
-          setAudioWarning(
-            "Donna voice was not confirmed. Click Repeat question to try again, or switch to typed mode.",
-          )
+          setVoiceOutputState('voice_unavailable')
+          setAudioWarning('Donna voice is unavailable. Answer below — setup continues.')
         },
       )
       return () => { setIsSpeaking(false) }
     }
 
     setLastSpokenAssistantText(textToSpeak)
+    setIsSpeaking(true)
+    setAudioStatus('speaking')
     speakAssistant(textToSpeak, {
       onEnd: () => {
         setIsSpeaking(false)
-        setVoiceAnswerPhase('listening_for_answer')
+        setAudioStatus('ready')
+        setVoiceOutputState('voice_confirmed')
       },
       onError: () => {
+        setVoiceOutputState('voice_unavailable')
         setAudioWarning("Audio didn't play. Check browser sound or use typed mode.")
       },
     })
@@ -1916,6 +1905,7 @@ export function DirectorInterviewAssistant({
     setVoiceMode(true)
     setAudioStatus('loading')
     setAudioWarning(null)
+    setVoiceOutputState('idle')
 
     // Resolve director name: welcome screen text input → profile.display_name → null
     const resolvedName = resolveDirectorName(welcomeNameInput, directorProfileName)
@@ -1931,63 +1921,47 @@ export function DirectorInterviewAssistant({
     }
 
     const ok = await realtimeVoice.connect()
+    const shortGreeting = resolvedName ? `Welcome, ${resolvedName}.` : 'Welcome.'
 
     if (!ok) {
       if (realtimeVoice.status === 'mic-denied') {
-        // Mic denied: user must type — no voice path available.
         setVoiceMode(false)
         setAudioStatus('error')
         setAudioWarning('Microphone access denied. You can still complete the setup by typing.')
         return
       }
 
-      // Realtime unavailable (no API key, network error, etc.) — Sprint 290 fallback:
-      // Stay in voice mode and guide via browser TTS + browser SpeechRecognition (MicButton).
-      // The rest of the interview flow already handles isRealtimeConnected === false via speakAssistant().
-      setAudioWarning(
-        'Live voice is unavailable, but Donna can still guide you with browser voice and mic answers.',
-      )
-      const welcomeTextFallback = buildPersonalizedWelcomeText(resolvedName, academyName)
-      setPreflightPhase('guided_intro')
-      setPreflightAssistantText(welcomeTextFallback)
+      // Sprint 313: Realtime unavailable — advance to Q1 immediately.
+      // Screen is source of truth. Browser TTS attempts greeting + Q1 but does NOT gate workflow.
+      setVoiceOutputState('voice_unavailable')
+      setAudioWarning('Donna voice is unavailable. Answer below — the setup works the same.')
       setDebugWelcomeSent(true)
-      setIsSpeaking(true)
-      setAudioStatus('speaking')
-      speakAssistant(welcomeTextFallback, {
-        onEnd: () => {
-          setIsSpeaking(false)
-          setAudioStatus('ready')
-          hasSentWelcomeRef.current = true
-          setDebugFirstRequested(true)
-          // Preflight audio gate: director must confirm they heard Donna before Q1 begins.
-          setPreflightPhase('awaiting_audio_confirmation')
-        },
-        onError: () => {
-          setAudioWarning("Audio didn't play. Check browser sound or type instead.")
-          setPreflightPhase('idle')
-          setStep(0)
-        },
+      setDebugFirstRequested(true)
+      const contract0 = buildAssistantPromptContract(0, resolvedName, academyName)
+      const combinedText = `${shortGreeting} ${contract0.spokenText}`
+      setLastSpokenAssistantText(combinedText)
+      setActiveVoicePrompt(buildInterviewPrompt(0, resolvedName, academyName))
+      setLastSpokenQuestionText(contract0.exactQuestionText ?? '')
+      speakAssistant(combinedText, {
+        onEnd: () => { setIsSpeaking(false); setAudioStatus('ready'); setVoiceOutputState('voice_confirmed') },
+        onError: () => { setIsSpeaking(false); setAudioStatus('ready') },
       })
+      hasSentWelcomeRef.current = true // prevent step useEffect from re-speaking
+      console.log('[AcademySetupFlow] startVoice — Realtime unavailable, advancing to step 0 immediately')
+      setPreflightPhase('idle')
+      setStep(0)
       return
     }
 
-    // Connected — speak personalized welcome first (GuideIntroCard, not ActivePromptCard).
-    // First spoken word is always "Welcome." per AssistantPromptContract spec.
-    const welcomeText = buildPersonalizedWelcomeText(resolvedName, academyName)
-    setPreflightPhase('guided_intro')
-    setPreflightAssistantText(welcomeText)
+    // Sprint 313: Realtime connected — advance to Q1 immediately.
+    // Prepend greeting to step 0 via pendingAckRef so step useEffect combines them into one speak().
+    pendingAckRef.current = shortGreeting
     setDebugWelcomeSent(true)
-    setIsSpeaking(true)
-    setAudioStatus('speaking')
-    speakWithTracking(welcomeText, () => {
-      setIsSpeaking(false)
-      setAudioStatus('ready')
-      hasSentWelcomeRef.current = true
-      setDebugFirstRequested(true)
-      // Preflight audio gate: director must confirm they heard Donna before Q1 begins.
-      // Do not assume onEnd == audible — autoplay policy can block Realtime audio.
-      setPreflightPhase('awaiting_audio_confirmation')
-    })
+    setDebugFirstRequested(true)
+    setVoiceOutputState('trying_to_speak')
+    console.log('[AcademySetupFlow] startVoice — Realtime connected, advancing to step 0 immediately')
+    setPreflightPhase('idle')
+    setStep(0)
   }
 
   function startTypeInterview() {
@@ -2005,6 +1979,7 @@ export function DirectorInterviewAssistant({
   function confirmAnswer() {
     stopAssistantSpeech()
     setVoiceAnswerPhase('idle') // confirming phase takes over from voice answer phase
+    setVoiceOutputState('idle')
     const s = INTERVIEW_STEPS[step]
     const a = answers[s.field]
     const ack = getAcknowledgment(a.chips, a.custom)
@@ -2037,6 +2012,7 @@ export function DirectorInterviewAssistant({
   function acceptAnswer() {
     stopAssistantSpeech()
     setVoiceAnswerPhase('idle')
+    setVoiceOutputState('idle')
     // Sprint 243 — use natural transition phrase (library, deterministic) for voice path
     if (voiceMode && step < INTERVIEW_STEPS.length - 1) {
       pendingAckRef.current = getSpeechPhrase(NATURAL_TRANSITION_PHRASES, step)
@@ -2064,6 +2040,7 @@ export function DirectorInterviewAssistant({
   function skipAnswer() {
     stopAssistantSpeech()
     setVoiceAnswerPhase('idle')
+    setVoiceOutputState('idle')
     const s = INTERVIEW_STEPS[step]
     setAnswers(prev => ({ ...prev, [s.field]: { chips: [], custom: '' } }))
     realtimeVoice.clearUserTranscript()
@@ -2102,6 +2079,7 @@ export function DirectorInterviewAssistant({
   function goBack() {
     stopAssistantSpeech()
     setVoiceAnswerPhase('idle')
+    setVoiceOutputState('idle')
     setPhase('answering')
     setSimpler(false)
     if (step === 0) {
@@ -2310,16 +2288,6 @@ export function DirectorInterviewAssistant({
           <ActivePromptCard prompt={activeVoicePrompt} />
         )}
 
-        {/* Audio confirmation gate — shown after Donna's greeting, before Q1 */}
-        {preflightPhase === 'awaiting_audio_confirmation' && (
-          <div className="px-4 py-3.5 rounded-xl bg-surface-raised border border-lime/15 space-y-1">
-            <p className="text-sm font-medium text-text-primary">Did you hear Donna?</p>
-            <p className="text-xs text-text-secondary leading-relaxed">
-              Confirm before the interview begins so voice stays in sync.
-            </p>
-          </div>
-        )}
-
         {/* Voice listening status — shown while waiting for name or preflight answer */}
         {voiceMode && isRealtimeConnected && (preflightPhase === 'awaiting_preflight_answer' || preflightPhase === 'awaiting_name_answer') && !isSpeaking && (
           <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
@@ -2517,36 +2485,6 @@ export function DirectorInterviewAssistant({
 
         {/* Action buttons */}
         <div className="space-y-2.5">
-          {/* Audio confirmation gate — three-path decision */}
-          {preflightPhase === 'awaiting_audio_confirmation' && (
-            <>
-              <button
-                type="button"
-                onClick={handleHeardDonna}
-                disabled={isSpeaking}
-                className={`w-full ${BTN_LIME}`}
-              >
-                Yes, I heard her
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={handleNotHeardDonna}
-                disabled={isSpeaking}
-                className={`w-full ${BTN_GHOST}`}
-              >
-                No, try Browser Voice
-              </button>
-              <button
-                type="button"
-                onClick={switchToTypeModePreflight}
-                className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
-              >
-                Continue with Typed Setup
-              </button>
-            </>
-          )}
-
           {/* Guided intro — skip button so director is never blocked */}
           {preflightPhase === 'guided_intro' && (
             <button
@@ -2555,21 +2493,11 @@ export function DirectorInterviewAssistant({
                 stopAssistantSpeech()
                 setIsSpeaking(false)
                 setAudioStatus('ready')
-                // Skip welcome → go straight to Q1 (no name capture, no preflight Q&A)
-                hasSentWelcomeRef.current = true
-                const contract = buildAssistantPromptContract(0, resolvedNameRef.current, academyName)
-                const interviewPrompt = buildInterviewPrompt(0, resolvedNameRef.current, academyName)
-                setPreflightPhase('ready_for_question_one')
-                setActiveVoicePrompt(interviewPrompt)
-                setLastSpokenQuestionText(contract.exactQuestionText ?? '')
-                setIsSpeaking(true)
-                setAudioStatus('speaking')
-                speakWithTracking(contract.spokenText, () => {
-                  setIsSpeaking(false)
-                  setAudioStatus('ready')
-                  setPreflightPhase('idle')
-                  setStep(0)
-                })
+                hasSentWelcomeRef.current = false
+                pendingAckRef.current = null
+                console.log('[AcademySetupFlow] skipIntro — advancing to step 0 directly')
+                setPreflightPhase('idle')
+                setStep(0)
               }}
               className="w-full text-xs text-text-muted hover:text-text-secondary transition-colors py-1"
             >
@@ -3356,6 +3284,24 @@ export function DirectorInterviewAssistant({
         </div>
       )}
 
+      {/* Sprint 313 — Voice output state banner (informational only, never gates workflow) */}
+      {voiceMode && voiceOutputState !== 'idle' && (
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border text-[11px]"
+          style={
+            voiceOutputState === 'voice_confirmed'
+              ? { background: 'rgba(48,209,88,0.06)', borderColor: 'rgba(48,209,88,0.25)', color: '#30D158' }
+              : voiceOutputState === 'voice_unavailable'
+              ? { background: 'rgba(255,149,0,0.06)', borderColor: 'rgba(255,149,0,0.2)', color: '#FF9500' }
+              : { background: 'rgba(139,92,246,0.06)', borderColor: 'rgba(139,92,246,0.15)', color: '#c4b5fd' }
+          }
+        >
+          {voiceOutputState === 'trying_to_speak' && 'Donna will guide you on screen. Voice is optional.'}
+          {voiceOutputState === 'voice_confirmed' && 'Donna spoke.'}
+          {voiceOutputState === 'voice_unavailable' && 'Donna voice is unavailable. Answer below — setup continues.'}
+        </div>
+      )}
+
       {/* ── Voice capture status — three-branch per voiceAnswerPhase ─────────── */}
       {voiceMode && isRealtimeConnected && !isSpeaking && (
         <>
@@ -3577,7 +3523,7 @@ export function DirectorInterviewAssistant({
             onClick={acceptAnswer}
             className={`w-full ${BTN_LIME}`}
           >
-            {isLast ? 'Looks right — show me the review' : 'Looks right — continue'}
+            {isLast ? 'Use this answer — show review' : 'Use this answer'}
             <ArrowRight className="w-4 h-4" />
           </button>
           <div className="flex gap-2">
