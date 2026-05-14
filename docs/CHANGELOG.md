@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 268: Donna Wired Actions — create_fitness_template + capture_coach_note V1
+
+**Why this sprint:**
+Sprints 266–267 built the guided task loop and predictive intelligence layer. Sprint 268 wires the first two real save actions into GenericDraftPanel — directors can now complete a guided fitness template or coach note draft and click "Approve and Save" to persist it via a server action. All other contract tasks remain draft-only with an honest "not yet available" notice.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `WIRED_TASK_IDS` set (`create_fitness_template`, `capture_coach_note`); added `handleGenericDraftApprove` dispatcher that routes to the correct server action by `taskId`; passes `isWired` and `onApprove` props to `GenericDraftPanel`; updated guided-task intro notice to be wired-aware; updated voice step-3b to redirect wired drafts to on-screen button instead of showing "save not yet available"; removed duplicate `_TASK_CONTRACTS_FOR_WIRED` import
+
+**Already built (no change needed):**
+- `src/app/director/_actions/donnaDraftExecutionActions.ts` — `saveFitnessTemplateDraftAction` + `saveCoachNoteDraftAction` (created in Sprint 268 setup)
+- `src/components/assistant/donnaApprovalExecutionTypes.ts` — `DonnaApprovalExecutionResult` type (created in Sprint 268 setup)
+- `src/components/assistant/GenericDraftPanel.tsx` — `isWired` + `onApprove` props already defined
+
+**Guardrails confirmed:**
+- Fitness template saves to `templates` + `template_blocks` only — no session created
+- Coach note saves to `voice_notes` with `player_id: null`, `processing_status: 'pending_review'` — UI clearly explains pending-review routing
+- No parent/player data exposed
+- No level movement, no curriculum changes, no session publishing
+- `create_class_template` continues to route through `TemplateDraftPanel` only
+- No migrations
+
+**TypeScript:** clean
+
+---
+
 ## 2026-05-13 — Mega Sprint 267: Donna Predictive Intelligence + Ambiguity-Aware Routing V1
 
 **Why this sprint:**

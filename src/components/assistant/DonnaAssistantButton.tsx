@@ -38,6 +38,22 @@ import { getAvailableTasksForPage } from '@/components/assistant/donnaPageTaskRo
 import { computePredictiveSuggestions } from '@/components/assistant/donnaPredictiveSuggestions'
 import type { DonnaSuggestion } from '@/components/assistant/donnaPredictiveSuggestions'
 import { DonnaSuggestionCard } from '@/components/assistant/DonnaSuggestionCard'
+// Sprint 268 — Approval Execution
+import {
+  saveFitnessTemplateDraftAction,
+  saveCoachNoteDraftAction,
+} from '@/app/director/_actions/donnaDraftExecutionActions'
+import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
+
+// ---------------------------------------------------------------------------
+// Wired task IDs — tasks that have a real server action behind them.
+// Only these show "Approve and Save"; all others show "Save not yet available".
+// ---------------------------------------------------------------------------
+
+const WIRED_TASK_IDS = new Set<DonnaTaskId>([
+  'create_fitness_template',
+  'capture_coach_note',
+])
 
 // ---------------------------------------------------------------------------
 // Donna guided task infrastructure — local types only, no DB, no API.
@@ -348,14 +364,22 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       }
     }
 
-    // 3b. Generic draft complete — honest save not yet available notice
+    // 3b. Generic draft complete — wired tasks redirect to on-screen button; unwired show honest notice
     if (genericDraft && isTaskDraftComplete(genericDraft.taskId, genericDraft.collectedFields)) {
       if (lower.includes('confirm') || lower.includes('save') || lower.includes('approve')) {
-        setCommandResponse({
-          message: 'Saving this draft is not yet available. Your answers are captured here for your review.',
-          type: 'honest',
-          label: 'Save not available yet',
-        })
+        if (WIRED_TASK_IDS.has(genericDraft.taskId)) {
+          setCommandResponse({
+            message: 'Use the Approve and Save button below to save this draft safely.',
+            type: 'honest',
+            label: 'Use the on-screen button',
+          })
+        } else {
+          setCommandResponse({
+            message: 'Saving this draft is not yet available. Your answers are captured here for your review.',
+            type: 'honest',
+            label: 'Save not available yet',
+          })
+        }
         return
       }
     }
@@ -468,6 +492,24 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setGenericDraft(null)
     setActiveMode(null)
     setFromVoiceCapture(false)
+  }
+
+  // Dispatch to the correct server action for a wired task draft.
+  // Unwired tasks return a not_wired result — GenericDraftPanel handles display.
+  async function handleGenericDraftApprove(
+    draft: GenericTaskDraft,
+  ): Promise<DonnaApprovalExecutionResult> {
+    if (draft.taskId === 'create_fitness_template') {
+      return saveFitnessTemplateDraftAction(draft.collectedFields)
+    }
+    if (draft.taskId === 'capture_coach_note') {
+      return saveCoachNoteDraftAction(draft.collectedFields)
+    }
+    return {
+      ok: false,
+      status: 'not_wired',
+      message: 'Save is not yet available for this task type.',
+    }
   }
 
   // Returns true if the input phrase is a read-only context summary request.
@@ -1320,7 +1362,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </>
           )}
 
-          {/* ── Guided task mode — contract-only tasks, local draft only (Sprint 266) ── */}
+          {/* ── Guided task mode — wired tasks save via server action; unwired show honest notice ── */}
           {activeMode === 'guided_task' && genericDraft && (
             <>
               <div
@@ -1331,8 +1373,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 }}
               >
                 <p className="text-[11px] text-text-secondary leading-snug">
-                  Academy Assistant will collect the information — nothing is saved until a save
-                  action is available and you explicitly approve.
+                  {WIRED_TASK_IDS.has(genericDraft.taskId)
+                    ? 'Academy Assistant will collect the information — nothing is saved until you click Approve and Save.'
+                    : 'Academy Assistant will collect the information — nothing is saved until a save action is available and you explicitly approve.'}
                 </p>
               </div>
               <GenericDraftPanel
@@ -1340,6 +1383,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 onUpdateDraft={d => setGenericDraft(d)}
                 onCancel={handleCancelGenericTask}
                 fromVoice={fromVoiceCapture}
+                isWired={WIRED_TASK_IDS.has(genericDraft.taskId)}
+                onApprove={handleGenericDraftApprove}
                 onQuestionAnswered={(nextQ, updatedDraft) => {
                   if (nextQ) {
                     speakAssistantText(nextQ.question)
