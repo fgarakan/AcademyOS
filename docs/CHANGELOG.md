@@ -2,6 +2,49 @@
 
 ---
 
+## 2026-05-14 — Sprint 311: Donna Realtime False Success Fix + Academy Setup Voice Sync V1
+
+**Goal:** Fix two bugs: (1) Floating Donna showing "✓ Donna spoke" when Realtime only timed out, never confirmed; (2) Academy Setup voice entering listening phase before Donna confirmed speaking the question.
+
+**Root cause — Bug 1 (false success):**
+`useDonnaRealtimeVoice.speak()` had a single `onDone` callback fired on BOTH `response.done` (real confirmed speech) AND the safety timeout fallback. In `DonnaAssistantButton.tsx`, `playOnboardingVoice()` used `onDone` to call `setVoiceGreetingStatus('done')`, so a timeout always showed "✓ Donna spoke" even when no audio was produced.
+
+**Root cause — Bug 2 (Academy Setup voice sync):**
+`useRealtimeInterviewVoice.speak()` had the same single-callback problem. When Realtime timed out during a question, `onDone()` fired, which in the step useEffect set `voiceAnswerPhase('listening_for_answer')`. The interview entered listening mode without Donna ever asking the question. Next user speech was captured as an answer to an unasked question. Same issue in `handleHeardDonna()` — timeout caused silent advance to `step(0)` without Q1 being spoken.
+
+**Fix — speak() callback split:**
+Both hooks now accept a distinct `onTimeout` parameter:
+```
+speak(text, onDone?, onTimeout?)
+```
+- `onDone` fires only on `response.done` (real confirmed audio)
+- `onTimeout` fires when the safety timeout fires without `response.done`
+- Callers without `onTimeout` keep existing behavior (timeout fires `onDone`) — backward compat
+
+**Fix — Floating Donna stall copy:**
+When Realtime timeout fires (`activatedVoiceModeRef.current === 'realtime'`), stall message now reads: "Donna voice was not confirmed. Try Browser Voice or continue typed." instead of the browser-TTS-specific stall text.
+
+**Fix — Academy Setup voice sync (step useEffect):**
+The `speakWithTracking(textToSpeak, onDone)` call in the interview step useEffect now passes `onTimeout` that sets an audio warning: "Donna voice was not confirmed. Click Repeat question to try again, or switch to typed mode." The `voiceAnswerPhase` is NOT set to `listening_for_answer` on timeout — director must retry explicitly.
+
+**Fix — Academy Setup voice sync (handleHeardDonna):**
+`speakWithTracking(Q1, onDone)` now passes `onTimeout` that sets a warning and stays in `ready_for_question_one`. `setStep(0)` is NOT called on timeout — Q1 must be confirmed spoken before the interview advances.
+
+**Fix — Session-level instructions (useRealtimeInterviewVoice):**
+Added `instructions` field to `session.update` locking the model to exact-text-only mode: "You ONLY speak the exact text provided in each response.create instruction — word for word, nothing added or removed. Never improvise questions, add commentary, or generate your own responses to user audio."
+
+**No migrations. No authority changes. No DB changes. No mic permission changes.**
+
+**Files modified:**
+- `src/components/assistant/useDonnaRealtimeVoice.ts` — `speak(text, onDone?, onTimeout?)`: timeout fires `onTimeout` if provided, else `onDone` (backward compat)
+- `src/app/director/onboarding/interview/useRealtimeInterviewVoice.ts` — same timeout split; session-level `instructions` field added to `session.update`
+- `src/components/assistant/DonnaAssistantButton.tsx` — `playOnboardingVoice()` passes `onTimeout → stalled`; stall copy distinguishes Realtime timeout from browser TTS stall
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — `speakWithTracking`/`speakPrompt` updated to accept/forward `onTimeout`; step useEffect and `handleHeardDonna()` add `onTimeout` handlers that set audio warning without advancing state
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Mega Sprint 297–310: Donna Full Voice Runtime + Reliability Architecture V1
 
 **Goal:** Transform Floating Donna from a set of patched voice features into a unified, reliable, premium director-facing AI assistant. 14 phases: audit → unified runtime → Realtime primary → voice preflight → failure escalation → protected workflow router → in-panel wake phrase → transcript standardization → dev QA harness → demo mode → UX polish → TypeScript → CHANGELOG → final report.

@@ -64,8 +64,10 @@ export function useDonnaRealtimeVoice() {
   }, [clearPending])
 
   // Send a response.create event to make the model speak text aloud.
-  // onDone fires when response.done arrives or after a safety timeout.
-  const speak = useCallback((text: string, onDone?: () => void) => {
+  // onDone fires when response.done arrives (real speech confirmed).
+  // onTimeout fires when the safety timeout fires without a response.done (speech unconfirmed).
+  // If onTimeout is not provided, the timeout falls back to onDone for backward compat.
+  const speak = useCallback((text: string, onDone?: () => void, onTimeout?: () => void) => {
     const dc = dcRef.current
     if (!dc || dc.readyState !== 'open') {
       console.warn('[DonnaRealtime] speak() — data channel not ready, state:', dc?.readyState ?? 'null')
@@ -86,17 +88,25 @@ export function useDonnaRealtimeVoice() {
     console.log('[DonnaRealtime] speak() — sending response.create:', text.slice(0, 60))
     dc.send(JSON.stringify(event))
 
-    if (onDone) {
+    if (onDone || onTimeout) {
       // Safety timeout: max(4s, ~65ms per character + 1.5s buffer)
       const estimatedMs = Math.max(4000, text.length * 65 + 1500)
       const timer = setTimeout(() => {
-        console.log('[DonnaRealtime] speak() — timeout fallback fired')
+        console.log('[DonnaRealtime] speak() — timeout fallback fired (speech unconfirmed)')
         pendingDoneRef.current = null
         activeResponseIdRef.current = null
         setStatus('ready')
-        onDone()
+        // onTimeout = distinct handler for timeout (not real speech).
+        // If no onTimeout, fall back to onDone for backward compat with callers
+        // that treat timeout and real done the same way.
+        if (onTimeout) {
+          onTimeout()
+        } else {
+          onDone?.()
+        }
       }, estimatedMs)
-      pendingDoneRef.current = { cb: onDone, timer }
+      // cb is the real-done callback — only fired on response.done event.
+      pendingDoneRef.current = { cb: onDone ?? (() => {}), timer }
     }
   }, [clearPending])
 

@@ -221,9 +221,11 @@ export function useRealtimeInterviewVoice() {
   }, [])
 
   // Send a response.create to make the assistant speak text aloud.
-  // onDone fires on response.done or after a timeout fallback.
+  // onDone fires on response.done (real speech confirmed).
+  // onTimeout fires when the safety timeout fires without response.done (speech unconfirmed).
+  // If onTimeout is not provided, the timeout falls back to onDone for backward compat.
   // App owns the workflow — never let the AI choose what to say next.
-  const speak = useCallback((text: string, onDone?: () => void) => {
+  const speak = useCallback((text: string, onDone?: () => void, onTimeout?: () => void) => {
     const dc = dcRef.current
     if (!dc || dc.readyState !== 'open') {
       console.warn('[Realtime] speak() — data channel not open, state:', dc?.readyState ?? 'null')
@@ -253,13 +255,19 @@ export function useRealtimeInterviewVoice() {
     console.log('[Realtime] speak() — sending response.create:', text.slice(0, 60))
     dc.send(JSON.stringify(event))
 
-    if (onDone) {
+    if (onDone || onTimeout) {
       const timer = setTimeout(() => {
-        console.log('[Realtime] speak() — timeout fallback fired')
+        console.log('[Realtime] speak() — timeout fallback fired (speech unconfirmed)')
         pendingDoneRef.current = null
-        onDone()
+        // onTimeout = distinct handler for timeout — not real confirmed speech.
+        // If no onTimeout, fall back to onDone for callers that treat both the same.
+        if (onTimeout) {
+          onTimeout()
+        } else {
+          onDone?.()
+        }
       }, estimatedMs)
-      pendingDoneRef.current = { cb: onDone, timer }
+      pendingDoneRef.current = { cb: onDone ?? (() => {}), timer }
     }
   }, [clearPending])
 
@@ -580,10 +588,17 @@ export function useRealtimeInterviewVoice() {
 
       // App-owned workflow: server VAD transcribes director speech but does NOT
       // auto-generate responses. The app calls speak() to control every utterance.
+      // Session instructions reinforce: model must only read provided text exactly —
+      // never improvise questions, add commentary, or respond freely to user audio.
       const sessionUpdate = {
         type: 'session.update',
         session: {
           modalities: ['audio', 'text'],
+          instructions:
+            'You are an academy setup assistant. You ONLY speak the exact text provided in each response.create instruction — word for word, nothing added or removed. ' +
+            'Never improvise questions, add commentary, or generate your own responses to user audio. ' +
+            'The application controls all spoken text through explicit instructions. ' +
+            'When the user speaks, do not generate a response — wait for the application to send a new response.create.',
           turn_detection: {
             type: 'server_vad',
             create_response: false, // app owns response creation — no free-running AI

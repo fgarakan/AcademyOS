@@ -403,9 +403,17 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       if (result.ok) {
         activatedVoiceModeRef.current = 'realtime'
         setVoiceGreetingStatus('speaking')
-        realtimeSpeak(text, () => {
-          if (playVersionRef.current === version) setVoiceGreetingStatus('done')
-        })
+        realtimeSpeak(
+          text,
+          () => {
+            // Real response.done received — confirmed speech.
+            if (playVersionRef.current === version) setVoiceGreetingStatus('done')
+          },
+          () => {
+            // Timeout fired — speech was NOT confirmed. Do not show "Donna spoke".
+            if (playVersionRef.current === version) setVoiceGreetingStatus('stalled')
+          },
+        )
         return
       }
       // Realtime failed (bad token, SDP error, etc.) — fall through to browser TTS
@@ -1810,10 +1818,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                       {(voiceGreetingStatus === 'stalled' || voiceGreetingStatus === 'error') && 'Play Donna voice again'}
                       {voiceGreetingStatus === 'done' && '✓ Donna spoke'}
                     </button>
-                    {/* Stall message — browser TTS watchdog */}
+                    {/* Stall message — Realtime timeout vs browser TTS stall */}
                     {voiceGreetingStatus === 'stalled' && (
                       <p className="text-[10px] leading-snug" style={{ color: '#FF9500' }}>
-                        {"Donna's voice did not start. Click Play Donna voice again or type instead."}
+                        {activatedVoiceModeRef.current === 'realtime'
+                          ? 'Donna voice was not confirmed. Try Browser Voice or continue typed.'
+                          : "Donna's voice did not start. Click Play Donna voice again or type instead."}
                       </p>
                     )}
                     {/* Reset link — stall or error recovery */}

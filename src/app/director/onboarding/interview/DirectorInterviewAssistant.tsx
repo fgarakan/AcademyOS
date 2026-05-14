@@ -1432,7 +1432,7 @@ export function DirectorInterviewAssistant({
   // The app always knows what text it told the AI to say, so the bubble shows
   // it immediately even if Realtime transcript events are delayed or absent.
   // Falls back to browser TTS (speakAssistant) when Realtime is not connected.
-  const speakWithTracking = useCallback((text: string, onDone?: () => void) => {
+  const speakWithTracking = useCallback((text: string, onDone?: () => void, onTimeout?: () => void) => {
     setLastSpokenAssistantText(text)
     if (!firstSpokenRef.current) {
       firstSpokenRef.current = true
@@ -1440,7 +1440,7 @@ export function DirectorInterviewAssistant({
     }
     if (text === GUIDED_INTRO_TEXT) setDebugGuidedIntroRequested(true)
     if (isRealtimeConnectedRef.current && !browserVoiceModeRef.current) {
-      realtimeVoice.speak(text, onDone)
+      realtimeVoice.speak(text, onDone, onTimeout)
     } else {
       speakAssistant(text, { onEnd: onDone })
     }
@@ -1454,6 +1454,7 @@ export function DirectorInterviewAssistant({
     prompt: ActiveVoicePrompt,
     textToSpeak: string,
     onDone?: () => void,
+    onTimeout?: () => void,
   ) => {
     setActiveVoicePrompt(prompt)
     setLastSpokenAssistantText(textToSpeak)
@@ -1464,7 +1465,7 @@ export function DirectorInterviewAssistant({
     if (prompt.id === 'director_name') setDebugNamePromptRequested(true)
     if (prompt.id === 'preflight') setDebugPreflightPromptRequested(true)
     if (isRealtimeConnectedRef.current && !browserVoiceModeRef.current) {
-      realtimeVoice.speak(textToSpeak, onDone)
+      realtimeVoice.speak(textToSpeak, onDone, onTimeout)
     } else {
       speakAssistant(textToSpeak, { onEnd: onDone })
     }
@@ -1695,12 +1696,24 @@ export function DirectorInterviewAssistant({
     setAudioStatus('speaking')
 
     if (isRealtimeConnected) {
-      speakWithTracking(textToSpeak, () => {
-        setIsSpeaking(false)
-        setAudioStatus('ready')
-        // Question speech complete — enter listening phase so director knows to answer.
-        setVoiceAnswerPhase('listening_for_answer')
-      })
+      speakWithTracking(
+        textToSpeak,
+        () => {
+          // Real response.done — question confirmed spoken. Now listen for answer.
+          setIsSpeaking(false)
+          setAudioStatus('ready')
+          setVoiceAnswerPhase('listening_for_answer')
+        },
+        () => {
+          // Timeout — speech was NOT confirmed. Do not enter listening phase.
+          // Director must click Repeat question or switch to typed mode.
+          setIsSpeaking(false)
+          setAudioStatus('ready')
+          setAudioWarning(
+            "Donna voice was not confirmed. Click Repeat question to try again, or switch to typed mode.",
+          )
+        },
+      )
       return () => { setIsSpeaking(false) }
     }
 
@@ -1763,12 +1776,25 @@ export function DirectorInterviewAssistant({
         })
       }
     }
-    speakWithTracking(contract.spokenText, () => {
-      setIsSpeaking(false)
-      setAudioStatus('ready')
-      setPreflightPhase('idle')
-      setStep(0)
-    })
+    speakWithTracking(
+      contract.spokenText,
+      () => {
+        // Real response.done — Q1 confirmed spoken. Begin interview.
+        setIsSpeaking(false)
+        setAudioStatus('ready')
+        setPreflightPhase('idle')
+        setStep(0)
+      },
+      () => {
+        // Timeout — Q1 was NOT confirmed spoken. Stay in ready_for_question_one.
+        // Director can click Repeat question or switch to browser voice.
+        setIsSpeaking(false)
+        setAudioStatus('ready')
+        setAudioWarning(
+          "Donna voice was not confirmed. Click Repeat question or switch to browser voice.",
+        )
+      },
+    )
   }
 
   // Called when director did not hear Donna — enable browser TTS and replay greeting.
