@@ -34,6 +34,10 @@ import type { GenericTaskDraft } from '@/components/assistant/donnaGenericDraftT
 import { createEmptyGenericDraft, applyAnswerToGenericDraft } from '@/components/assistant/donnaGenericDraftTypes'
 import { GenericDraftPanel } from '@/components/assistant/GenericDraftPanel'
 import { getAvailableTasksForPage } from '@/components/assistant/donnaPageTaskRouter'
+// Sprint 267 — Predictive Intelligence + Ambiguity-Aware Routing
+import { computePredictiveSuggestions } from '@/components/assistant/donnaPredictiveSuggestions'
+import type { DonnaSuggestion } from '@/components/assistant/donnaPredictiveSuggestions'
+import { DonnaSuggestionCard } from '@/components/assistant/DonnaSuggestionCard'
 
 // ---------------------------------------------------------------------------
 // Donna guided task infrastructure — local types only, no DB, no API.
@@ -170,6 +174,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Context retrieval state — read-only live data summary, no DB writes (Sprint 265)
   const [contextSummary, setContextSummary] = useState<DonnaContextSummary | null>(null)
   const [isLoadingContext, setIsLoadingContext] = useState(false)
+  // Predictive suggestions — computed from context summary, local only (Sprint 267)
+  const [suggestions, setSuggestions] = useState<DonnaSuggestion[]>([])
 
   // Class-template creation state — wired, saves via saveAssistantTemplateDraftAction (Sprints 262/263)
   const [templateDraft, setTemplateDraft] = useState<TemplateDraft | null>(null)
@@ -201,6 +207,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setTemplateCommandInput('')
     setCommandResponse(null)
     setContextSummary(null)
+    setSuggestions([])
     setIsLoadingContext(false)
     lastSpokenTextRef.current = null
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -230,6 +237,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setTemplateCommandInput('')
     setCommandResponse(null)
     setContextSummary(null)
+    setSuggestions([])
     setIsLoadingContext(false)
     lastSpokenTextRef.current = null
   }, [pathname])
@@ -376,6 +384,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       }
     }
 
+    // 5.5. Predictive suggestion phrases — always fetch context + compute suggestions (Sprint 267)
+    // These run before the generic context query so "recommend a template" (vague) routes
+    // to suggestions rather than a task intent.
+    if (isPredictiveSuggestionPhrase(lower)) {
+      void handleContextSummary()
+      return
+    }
+
     // 6. Context query phrases — route to read-only live data summary (Sprint 265)
     if (isContextQueryPhrase(lower)) {
       void handleContextSummary()
@@ -467,16 +483,40 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     )
   }
 
+  // Returns true if the input phrase explicitly requests predictive suggestions.
+  // These phrases always trigger context fetch + suggestion computation (Sprint 267).
+  // Checked BEFORE generic task intent detection so "recommend a template" (vague,
+  // no specific group) routes to suggestions instead of the task guided flow.
+  function isPredictiveSuggestionPhrase(lower: string): boolean {
+    const trimmed = lower.trim().replace(/[?!.]+$/, '')
+    return (
+      trimmed === 'recommend a template' ||
+      lower.includes('what do you recommend') ||
+      lower.includes('any suggestions') ||
+      lower.includes('suggest next best actions') ||
+      lower.includes('suggest next actions') ||
+      lower.includes('who needs attention') ||
+      lower.includes('what should i look at first') ||
+      lower.includes('what should i focus on') ||
+      lower.includes('what do you suggest') ||
+      lower.includes('give me suggestions') ||
+      lower.includes('what are your recommendations')
+    )
+  }
+
   // Fetch read-only context summary for the current page via Server Action.
   // No writes, no OpenAI, no Realtime. Returns deterministic data-derived summary.
+  // Sprint 267: also computes predictive suggestions from the returned summary.
   async function handleContextSummary() {
     setIsLoadingContext(true)
     setContextSummary(null)
+    setSuggestions([])
     setCommandResponse(null)
     try {
       const req = deriveContextRequest(pathname)
       const summary = await fetchDonnaContext(req.contextType, req.params)
       setContextSummary(summary)
+      setSuggestions(computePredictiveSuggestions(summary))
     } catch {
       // Silent fail — user can retry
     } finally {
@@ -567,15 +607,29 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return true
     }
 
-    // What should I do next
+    // "Guide me" / "What's next?" — always use existing page-guidance behavior (Sprint 267 rule)
     if (
-      lower.includes('what should i do next') ||
-      lower.includes("what's next") ||
       lower.includes('guide me') ||
+      lower.includes("what's next") ||
       lower === 'what do i do'
     ) {
       setCommandResponse({ message: ctx.nextAction, type: 'info', label: 'Suggested next step' })
       setActiveMode('guide')
+      return true
+    }
+
+    // "What should I do next?" — ambiguous phrase (Sprint 267 rule):
+    //   • contextSummary already loaded → show suggestions (they are already computed)
+    //   • no contextSummary → use page-guidance behavior
+    if (lower.includes('what should i do next')) {
+      if (contextSummary) {
+        // Suggestions are already in state from the context fetch — just show the guide section
+        // so the user sees the suggestions section that is rendered below the context card.
+        setActiveMode('guide')
+      } else {
+        setCommandResponse({ message: ctx.nextAction, type: 'info', label: 'Suggested next step' })
+        setActiveMode('guide')
+      }
       return true
     }
 
@@ -676,6 +730,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         setTypedText('')
         return
       }
+    }
+
+    // Predictive suggestion phrases (Sprint 267) — before generic context query
+    if (isPredictiveSuggestionPhrase(text.toLowerCase())) {
+      void handleContextSummary()
+      setTypeInstead(false)
+      setTypedText('')
+      return
     }
 
     // Context query
@@ -1288,6 +1350,31 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 }}
               />
             </>
+          )}
+
+          {/* ── Predictive suggestions — shown when context is loaded (Sprint 267) ── */}
+          {suggestions.length > 0 && activeMode !== 'create_template' && activeMode !== 'guided_task' && (
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5">
+                Recommendations
+              </p>
+              {suggestions.map(suggestion => (
+                <DonnaSuggestionCard
+                  key={suggestion.id}
+                  suggestion={suggestion}
+                  onStartTask={(taskId) => {
+                    handleStartGenericTask(taskId, false)
+                  }}
+                  onNavigate={(href) => {
+                    router.push(href)
+                    closePanel()
+                  }}
+                  onDismiss={(id) => {
+                    setSuggestions(prev => prev.filter(s => s.id !== id))
+                  }}
+                />
+              ))}
+            </div>
           )}
 
           {/* ── Ask about this page — hidden in template and guided-task modes (Sprint 265) ── */}

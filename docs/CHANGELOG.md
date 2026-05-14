@@ -2,6 +2,39 @@
 
 ---
 
+## 2026-05-13 — Mega Sprint 267: Donna Predictive Intelligence + Ambiguity-Aware Routing V1
+
+**Why this sprint:**
+Sprint 266 gave the director a guided task completion loop for 12 contract-only tasks. Sprint 267 adds the predictive intelligence layer: when the director asks for recommendations or suggestions, Donna now computes concrete, ranked, actionable suggestions from the already-fetched context summary — no new DB calls, no AI, no Realtime. The routing logic is also updated so ambiguous phrases ("what should I do next?") behave correctly based on whether context is already loaded.
+
+**Predictive Suggestion Engine added (`src/components/assistant/donnaPredictiveSuggestions.ts`, created):**
+- `DonnaSuggestion` interface: `id`, `label`, `reason`, `confidence`, `evidencePoints`, optional `taskId` or `navigationHref`
+- `computePredictiveSuggestions(summary: DonnaContextSummary): DonnaSuggestion[]` — pure, synchronous, no side effects
+- Maps `suggestedNextSteps` (from context summary) to actionable suggestions via pattern matching
+- Supplements from `possibleSuggestionTypes` if not already covered by step mapping
+- Deduplicates, sorts by confidence (high → medium → low), returns at most 3 suggestions
+- Task mappings: create template → `create_class_template`, recommend → `recommend_template_for_group`, level readiness → `review_level_readiness`, coach note → `capture_coach_note`, parent update → `draft_parent_update`
+- Navigation mappings: placement/wrap-ups → `/director/review`, level assignment/attention → `/director/players`, session → `/director/sessions`, curriculum → `/director/curriculum` or `/director/onboarding/curriculum`
+
+**Suggestion Card component added (`src/components/assistant/DonnaSuggestionCard.tsx`, created):**
+- Renders one `DonnaSuggestion`: confidence-colored label, reason sentence, evidence bullet points
+- Action button: "Start Task" (triggers guided task via `onStartTask` callback) or "Go there" (navigates via `onNavigate` callback)
+- Dismiss button removes suggestion from the list without closing the panel
+- Confidence badge: lime (high), orange (medium), muted (low)
+
+**DonnaAssistantButton updated (`src/components/assistant/DonnaAssistantButton.tsx`, modified):**
+- Added `suggestions: DonnaSuggestion[]` state; cleared on panel close and route change
+- `handleContextSummary()` now calls `computePredictiveSuggestions(summary)` after fetch and sets `suggestions`
+- Added `isPredictiveSuggestionPhrase(lower)` — detects: "what do you recommend", "any suggestions", "suggest next best actions", "who needs attention", "what should I look at first", "what should I focus on", "recommend a template" (exact/short form), "what do you suggest", "give me suggestions", "what are your recommendations"
+- `handleVoiceTranscript`: new step 5.5 checks `isPredictiveSuggestionPhrase` BEFORE task intent detection — so "recommend a template" (vague) routes to suggestions rather than `recommend_template_for_group` task guided flow
+- `handleCommandSubmit`: same predictive suggestion check added before context query check
+- `detectAndHandleCommand`: "Guide me" / "What's next?" → always `ctx.nextAction` (unchanged); "What should I do next?" → contextSummary loaded → show suggestions section, no contextSummary → `ctx.nextAction`
+- Panel rendering: new "Recommendations" section (between context summary and "Ask about this page") renders `DonnaSuggestionCard` for each suggestion; only shown when `suggestions.length > 0` and not in template/guided-task modes
+
+**TypeScript:** clean (npx tsc --noEmit — 0 errors)
+
+---
+
 ## 2026-05-13 — Mega Sprint 266: Donna Task Runtime + Draft Builder V1
 
 **Why this sprint:**
