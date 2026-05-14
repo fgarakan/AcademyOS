@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-14 — Sprint 312: Donna Audio Output Playback + Academy Setup Deterministic Step Flow V1
+
+**Goal:** Fix two remaining Donna blockers: (A) Realtime audio never audible despite successful connection; (B) Academy Setup audio gate blocking director permanently when Realtime speech times out.
+
+**Root cause — Bug A (Realtime audio silent):**
+`useDonnaRealtimeVoice.ts` created the `<audio>` element lazily inside `ontrack`. `connect()` resolves when the DATA CHANNEL opens (not when `ontrack` fires). If `speak()` was called before `ontrack` had a chance to fire, `response.create` was sent and the model generated audio but there was no `<audio>` element to receive the WebRTC track. Audio played into nothing. Fix: create the `<audio>` element eagerly during `connect()` setup before `setRemoteDescription`. `ontrack` now just attaches the stream to the already-existing element. Also added ICE connection state logging and post-`play()` state logging (paused, muted, volume, readyState). Also added session-level `instructions` to `session.update` (same as interview hook has after Sprint 311) to lock the model to exact-text-only output.
+
+**Root cause — Bug B (Academy Setup repeats same question):**
+`handleHeardDonna()` in `DirectorInterviewAssistant.tsx` called `speakWithTracking(Q1, onDone, onTimeout)` where `onTimeout` set an audio warning but did NOT call `setStep(0)` or `setPreflightPhase('idle')`. The director was permanently blocked in `ready_for_question_one` — clicking "I heard Donna" or "Repeat question" just re-entered the same path, timed out again, and Donna appeared to repeat Q1 indefinitely. Fix: `onTimeout` now calls `setPreflightPhase('idle')` and `setStep(0)` anyway, with an updated warning: "Donna voice was not confirmed. The question is shown on screen — type your answer to continue, or switch to browser voice."
+
+**Fix — Phase 2: "Try Browser Voice" button:**
+Added explicit "Try Browser Voice" button in `DonnaAssistantButton.tsx` that appears only when `voiceGreetingStatus === 'stalled'` and `activatedVoiceModeRef.current === 'realtime'`. Clicking it sets `activatedVoiceModeRef` to 'browser', clears dedup guards, and calls `speakAssistantText()` directly — bypassing `playOnboardingVoice()` which would retry Realtime first.
+
+**Fix — Phase 5: Step transition dev logging:**
+Added `console.log('[AcademySetup] ...)` at key transitions: `acceptAnswer()` logs `step → nextStep`, the step useEffect logs entry with step index + isRealtimeConnected, `handleHeardDonna` logs onDone and onTimeout separately.
+
+**No migrations. No authority changes. No DB changes. No mic permission changes.**
+
+**Files modified:**
+- `src/components/assistant/useDonnaRealtimeVoice.ts` — eager audio element creation; ICE state logging; play() state logging; session.update instructions field added
+- `src/components/assistant/DonnaAssistantButton.tsx` — "Try Browser Voice" button in stalled state (Realtime-only, direct browser TTS bypass)
+- `src/app/director/onboarding/interview/DirectorInterviewAssistant.tsx` — `handleHeardDonna` onTimeout advances to step 0; `acceptAnswer` step transition logging; step useEffect entry logging
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Sprint 311: Donna Realtime False Success Fix + Academy Setup Voice Sync V1
 
 **Goal:** Fix two bugs: (1) Floating Donna showing "✓ Donna spoke" when Realtime only timed out, never confirmed; (2) Academy Setup voice entering listening phase before Donna confirmed speaking the question.

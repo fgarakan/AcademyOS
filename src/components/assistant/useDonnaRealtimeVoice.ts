@@ -165,25 +165,47 @@ export function useDonnaRealtimeVoice() {
     // recvonly tells OpenAI we will accept an audio track but not send one.
     pc.addTransceiver('audio', { direction: 'recvonly' })
 
-    // ── Step 3: Attach remote audio element ──────────────────────────────────
+    // Create the audio element eagerly — before setRemoteDescription so it exists
+    // when ontrack fires. Without this, speak() may send response.create before the
+    // element is ready and the model audio plays into nothing (silent ontrack race).
+    if (!audioElRef.current) {
+      const el = document.createElement('audio')
+      el.autoplay = true
+      ;(el as HTMLAudioElement & { playsInline: boolean }).playsInline = true
+      el.muted = false
+      el.volume = 1
+      document.body.appendChild(el)
+      audioElRef.current = el
+      console.log('[DonnaRealtime] audio element created eagerly')
+    }
+
+    // Log ICE state changes so audio routing failures are visible in console.
+    pc.oniceconnectionstatechange = () => {
+      console.log('[DonnaRealtime] ICE state:', pc.iceConnectionState)
+    }
+
+    // ── Step 3: Attach remote audio stream when track arrives ────────────────
     pc.ontrack = (event: RTCTrackEvent) => {
       const remoteStream = event.streams[0]
       console.log('[DonnaRealtime] ontrack — streams:', event.streams.length)
       if (!remoteStream) return
 
-      if (!audioElRef.current) {
-        const el = document.createElement('audio')
-        el.autoplay = true
-        ;(el as HTMLAudioElement & { playsInline: boolean }).playsInline = true
-        el.muted = false
-        el.volume = 1
-        document.body.appendChild(el)
-        audioElRef.current = el
+      // Audio element already exists (created eagerly above) — attach stream now.
+      const el = audioElRef.current
+      if (!el) {
+        console.warn('[DonnaRealtime] ontrack — audio element missing (unexpected)')
+        return
       }
-      audioElRef.current.srcObject = remoteStream
-      audioElRef.current.play().catch((err: Error) => {
-        console.warn('[DonnaRealtime] audio.play() blocked:', err.message)
-      })
+      el.srcObject = remoteStream
+      el.play()
+        .then(() => {
+          console.log('[DonnaRealtime] audio.play() resolved — paused:', el.paused,
+            'muted:', el.muted, 'volume:', el.volume, 'readyState:', el.readyState)
+        })
+        .catch((err: Error) => {
+          console.warn('[DonnaRealtime] audio.play() blocked:', err.message,
+            '— director must interact with page to unblock autoplay')
+        })
     }
 
     // ── Step 4: Data channel ─────────────────────────────────────────────────
@@ -258,11 +280,16 @@ export function useDonnaRealtimeVoice() {
       console.log('[DonnaRealtime] data channel open')
       setStatus('ready')
 
-      // Disable auto-response generation — app controls all responses via speak()
+      // Lock model to exact-text-only output. Disable auto-response generation.
+      // App controls all spoken text via explicit response.create instructions.
       dc.send(JSON.stringify({
         type: 'session.update',
         session: {
           modalities: ['audio', 'text'],
+          instructions:
+            'You are a voice assistant. You ONLY speak the exact text provided in each response.create instruction — word for word, nothing added or removed. ' +
+            'Never improvise, add commentary, or generate your own responses. ' +
+            'The application controls all spoken text through explicit instructions.',
           turn_detection: { type: 'server_vad', create_response: false },
         },
       }))

@@ -1663,6 +1663,10 @@ export function DirectorInterviewAssistant({
     // Consume any pending ack from acceptAnswer()
     const ack = pendingAckRef.current
     pendingAckRef.current = null
+
+    console.log('[AcademySetup] step useEffect — step:', step, '| ack:', ack?.slice(0, 30) ?? 'none',
+      '| isRealtimeConnected:', isRealtimeConnected, '| voiceAnswerPhase: (entering)')
+
     // Build AssistantPromptContract — single source of truth for screen and voice
     const promptContract = buildAssistantPromptContract(step, resolvedNameRef.current, academyName)
     const exactQ = promptContract.exactQuestionText ?? ''
@@ -1780,19 +1784,23 @@ export function DirectorInterviewAssistant({
       contract.spokenText,
       () => {
         // Real response.done — Q1 confirmed spoken. Begin interview.
+        console.log('[AcademySetup] handleHeardDonna onDone — advancing to step 0')
         setIsSpeaking(false)
         setAudioStatus('ready')
         setPreflightPhase('idle')
         setStep(0)
       },
       () => {
-        // Timeout — Q1 was NOT confirmed spoken. Stay in ready_for_question_one.
-        // Director can click Repeat question or switch to browser voice.
+        // Timeout — Q1 speech not confirmed. Advance anyway so the director is not
+        // permanently blocked in the audio gate. Show warning and allow typed answers.
+        console.log('[AcademySetup] handleHeardDonna onTimeout — advancing to step 0 (unconfirmed)')
         setIsSpeaking(false)
         setAudioStatus('ready')
         setAudioWarning(
-          "Donna voice was not confirmed. Click Repeat question or switch to browser voice.",
+          "Donna voice was not confirmed. The question is shown on screen — type your answer to continue, or switch to browser voice.",
         )
+        setPreflightPhase('idle')
+        setStep(0)
       },
     )
   }
@@ -2038,6 +2046,8 @@ export function DirectorInterviewAssistant({
     lastAppliedTranscriptRef.current = ''
     setPendingAnswerTranscript('')
 
+    const nextStep = step === INTERVIEW_STEPS.length - 1 ? 7 : step + 1
+    console.log('[AcademySetup] acceptAnswer — step', step, '→', nextStep, '| voiceMode:', voiceMode)
     if (step === INTERVIEW_STEPS.length - 1) {
       setStep(7)
     } else {

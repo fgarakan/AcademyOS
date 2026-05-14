@@ -1826,6 +1826,33 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                           : "Donna's voice did not start. Click Play Donna voice again or type instead."}
                       </p>
                     )}
+                    {/* Try Browser Voice — direct browser TTS bypass, shown only after Realtime stall */}
+                    {voiceGreetingStatus === 'stalled' && activatedVoiceModeRef.current === 'realtime' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          activatedVoiceModeRef.current = 'browser'
+                          const text = onboardingStep !== null
+                            ? (DONNA_ONBOARDING_STEPS[onboardingStep]?.spokenText ?? DONNA_ONBOARDING_STEPS[0].spokenText)
+                            : DONNA_ONBOARDING_STEPS[0].spokenText
+                          lastSpokenTextRef.current = null
+                          lastSpokenKeyRef.current = null
+                          setVoiceGreetingStatus('speaking')
+                          speakAssistantText(text, (s) => {
+                            if (s === 'done') setVoiceGreetingStatus('done')
+                            else if (s === 'error') setVoiceGreetingStatus('error')
+                          })
+                        }}
+                        className="w-full rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
+                        style={{
+                          background: 'rgba(48,209,88,0.1)',
+                          border: '1px solid rgba(48,209,88,0.25)',
+                          color: '#30D158',
+                        }}
+                      >
+                        Try Browser Voice
+                      </button>
+                    )}
                     {/* Reset link — stall or error recovery */}
                     {(voiceGreetingStatus === 'stalled' || voiceGreetingStatus === 'error') && (
                       <button
