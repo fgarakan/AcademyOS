@@ -237,7 +237,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Tracks the active utterance so cancel() is only called when one is actually in flight.
   // Unconditional cancel() before speak() triggers Chrome onerror: "canceled" race condition.
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
-  function speakAssistantText(text: string) {
+  // Sprint 296B — greeting voice status and watchdog for stuck-state detection
+  const [voiceGreetingStatus, setVoiceGreetingStatus] = useState<
+    'idle' | 'starting' | 'speaking' | 'stalled' | 'done' | 'error'
+  >('idle')
+  const voiceWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const playVersionRef = useRef<number>(0)
+
+  function speakAssistantText(text: string, onStatus?: (status: 'speaking' | 'done' | 'error') => void) {
     console.log('[Donna TTS] speakAssistantText called', {
       text: text.slice(0, 100),
       speechSynthesisExists: typeof window !== 'undefined' && 'speechSynthesis' in window,
@@ -272,10 +279,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     lastSpokenAtRef.current = now
     lastSpokenKeyRef.current = stateKey
 
-    // Only cancel when a tracked utterance is currently active — avoids the Chrome race
-    // where cancel() + speak() in quick succession causes the new utterance to be canceled.
+    // Cancel any active or stuck utterance before queueing a new one.
+    // Only cancel when tracked, or when stuck with no tracked utterance, to avoid the Chrome
+    // race where cancel() + speak() on an idle queue causes the new utterance to be canceled.
     if (utteranceRef.current !== null) {
       utteranceRef.current = null
+      window.speechSynthesis.cancel()
+    } else if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+      // Stuck state with no tracked utterance — free the queue before re-queueing.
       window.speechSynthesis.cancel()
     }
     const utt = new SpeechSynthesisUtterance(text)
@@ -284,11 +295,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     utt.onstart = () => {
       console.log('[Donna TTS] speakAssistantText onstart fired')
       setIsSpeaking(true)
+      onStatus?.('speaking')
     }
     utt.onend = () => {
       console.log('[Donna TTS] speakAssistantText onend fired')
       utteranceRef.current = null
       setIsSpeaking(false)
+      onStatus?.('done')
     }
     utt.onerror = (e) => {
       console.log('[Donna TTS] speakAssistantText onerror fired', {
@@ -300,6 +313,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       })
       utteranceRef.current = null
       setIsSpeaking(false)
+      onStatus?.('error')
     }
     utteranceRef.current = utt
     console.log('[Donna TTS] calling window.speechSynthesis.speak()')
@@ -319,6 +333,69 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     utt.onend = () => setTestVoiceStatus('done')
     utt.onerror = () => setTestVoiceStatus('error')
     window.speechSynthesis.speak(utt)
+  }
+
+  // Sprint 296B — Play onboarding voice from a clean user gesture (dedicated button onClick).
+  // Removes auto-speak from trigger button which consumed Chrome's gesture context before speak().
+  function playOnboardingVoice() {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      setVoiceGreetingStatus('error')
+      return
+    }
+    const version = playVersionRef.current + 1
+    playVersionRef.current = version
+
+    // Clear guards so speak() is not blocked by previous dedup checks.
+    lastSpokenTextRef.current = null
+    lastSpokenKeyRef.current = null
+
+    setVoiceGreetingStatus('starting')
+
+    const text = onboardingStep !== null
+      ? (DONNA_ONBOARDING_STEPS[onboardingStep]?.spokenText ?? DONNA_ONBOARDING_STEPS[0].spokenText)
+      : DONNA_ONBOARDING_STEPS[0].spokenText
+
+    // Watchdog — if onstart doesn't fire within 1500ms, mark as stalled.
+    if (voiceWatchdogRef.current !== null) clearTimeout(voiceWatchdogRef.current)
+    voiceWatchdogRef.current = setTimeout(() => {
+      if (playVersionRef.current === version) {
+        setVoiceGreetingStatus('stalled')
+        voiceWatchdogRef.current = null
+      }
+    }, 1500)
+
+    speakAssistantText(text, (status) => {
+      if (playVersionRef.current !== version) return
+      if (status === 'speaking') {
+        if (voiceWatchdogRef.current !== null) {
+          clearTimeout(voiceWatchdogRef.current)
+          voiceWatchdogRef.current = null
+        }
+        setVoiceGreetingStatus('speaking')
+      } else if (status === 'done') {
+        setVoiceGreetingStatus('done')
+      } else {
+        setVoiceGreetingStatus('error')
+      }
+    })
+  }
+
+  // Sprint 296B — Reset stuck voice state without closing the panel.
+  function resetVoice() {
+    if (voiceWatchdogRef.current !== null) {
+      clearTimeout(voiceWatchdogRef.current)
+      voiceWatchdogRef.current = null
+    }
+    playVersionRef.current += 1
+    utteranceRef.current = null
+    lastSpokenTextRef.current = null
+    lastSpokenAtRef.current = 0
+    lastSpokenKeyRef.current = null
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
+    setVoiceGreetingStatus('idle')
+    setIsSpeaking(false)
   }
 
   // Voice-specific local state — transcript never sent to AI or written to DB
@@ -426,6 +503,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setOnboardingStep(null)
     setShowOnboardingSuggestions(false)
     setTestVoiceStatus('idle')
+    setVoiceGreetingStatus('idle')
+    if (voiceWatchdogRef.current !== null) {
+      clearTimeout(voiceWatchdogRef.current)
+      voiceWatchdogRef.current = null
+    }
+    playVersionRef.current += 1
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
     }
@@ -470,6 +553,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setOnboardingStep(null)
     setShowOnboardingSuggestions(false)
     setTestVoiceStatus('idle')
+    setVoiceGreetingStatus('idle')
+    if (voiceWatchdogRef.current !== null) {
+      clearTimeout(voiceWatchdogRef.current)
+      voiceWatchdogRef.current = null
+    }
+    playVersionRef.current += 1
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -1422,10 +1511,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             hasGreetedRef.current = true
             setShowGreeting(true)
             // Sprint 290: start the guided onboarding intro instead of generic greeting.
-            // Speak the first onboarding question — same text shown on screen.
+            // Sprint 296B: do NOT auto-speak here — Chrome discards the gesture context
+            // before speak() is reached after multiple setState calls. Director presses
+            // "Play Donna voice" button for a clean gesture-backed speak().
             setOnboardingStep(0)
             setShowOnboardingSuggestions(false)
-            speakAssistantText(DONNA_ONBOARDING_STEPS[0].spokenText)
           }
         }}
         aria-label={`Ask ${DONNA_PUBLIC_NAME}`}
@@ -1543,9 +1633,50 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   : greetingText}
               </p>
               {isOnboardingActive(onboardingStep) && (
-                <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
-                  {DONNA_SAFETY_REMINDER}
-                </p>
+                <>
+                  <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
+                    {DONNA_SAFETY_REMINDER}
+                  </p>
+                  {/* Sprint 296B: dedicated play button — clean gesture, no stale Chrome context */}
+                  <div className="mt-2.5 space-y-1.5">
+                    <button
+                      type="button"
+                      onClick={playOnboardingVoice}
+                      disabled={voiceGreetingStatus === 'starting' || voiceGreetingStatus === 'speaking'}
+                      className="w-full rounded-lg px-3 py-1.5 text-xs font-semibold transition-all
+                        disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        background: voiceGreetingStatus === 'done'
+                          ? 'rgba(48,209,88,0.12)'
+                          : 'rgba(139,92,246,0.15)',
+                        border: voiceGreetingStatus === 'done'
+                          ? '1px solid rgba(48,209,88,0.3)'
+                          : '1px solid rgba(139,92,246,0.3)',
+                        color: voiceGreetingStatus === 'done' ? '#30D158' : '#c4b5fd',
+                      }}
+                    >
+                      {voiceGreetingStatus === 'idle' && 'Play Donna voice'}
+                      {voiceGreetingStatus === 'starting' && 'Starting…'}
+                      {voiceGreetingStatus === 'speaking' && 'Speaking…'}
+                      {(voiceGreetingStatus === 'stalled' || voiceGreetingStatus === 'error') && 'Play Donna voice again'}
+                      {voiceGreetingStatus === 'done' && '✓ Donna spoke'}
+                    </button>
+                    {voiceGreetingStatus === 'stalled' && (
+                      <p className="text-[10px] leading-snug" style={{ color: '#FF9500' }}>
+                        {"Donna's voice did not start. Click Play Donna voice again or type instead."}
+                      </p>
+                    )}
+                    {(voiceGreetingStatus === 'stalled' || voiceGreetingStatus === 'error') && (
+                      <button
+                        type="button"
+                        onClick={resetVoice}
+                        className="text-[10px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
+                      >
+                        Reset Donna voice
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           )}

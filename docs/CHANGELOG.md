@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-14 — Sprint 296B: Floating Donna Gesture-Gated Voice V1
+
+**Root cause identified:** Floating Donna's trigger button `onClick` called `speakAssistantText()` after four `setState` calls (`setPanelOpen`, `setShowGreeting`, `setOnboardingStep`, `setShowOnboardingSuggestions`). Chrome's autoplay gesture context is consumed by the React reconciliation pipeline triggered by those state updates — by the time `window.speechSynthesis.speak()` is reached, the gesture token is discarded. Result: `speaking: true / pending: true` with no `onstart` event and no audio.
+
+**Fix 1 — Remove auto-speak from trigger button:**
+Removed `speakAssistantText(DONNA_ONBOARDING_STEPS[0].spokenText)` from the floating button `onClick`. The question is still shown on screen; audio now requires a dedicated button click.
+
+**Fix 2 — Dedicated "Play Donna voice" button:**
+Added `playOnboardingVoice()` function called from its own `onClick` — a clean, isolated gesture context. Clears dedup guards before calling `speakAssistantText()` so the same text is not blocked by the state-key guard. Uses `onStatus` callback (new optional param on `speakAssistantText`) to update `voiceGreetingStatus` state.
+
+**Fix 3 — 1500ms watchdog:**
+`playOnboardingVoice()` sets a `setTimeout` (1500ms) stored in `voiceWatchdogRef`. If `onstart` fires, the callback clears the watchdog and sets status to `'speaking'`. If 1500ms elapses without `onstart`, status transitions to `'stalled'` and a warning message is shown: "Donna's voice did not start. Click Play Donna voice again or type instead."
+
+**Fix 4 — Stuck-state cancel in `speakAssistantText`:**
+Added `else if (window.speechSynthesis.speaking || window.speechSynthesis.pending) { window.speechSynthesis.cancel() }` branch. When no utterance is tracked but synthesis is still stuck (e.g., from a prior failed call), the queue is freed before re-queueing.
+
+**Fix 5 — `resetVoice()` function:**
+Added `resetVoice()` that cancels synthesis, clears all refs (`utteranceRef`, `lastSpokenTextRef`, `lastSpokenAtRef`, `lastSpokenKeyRef`), increments `playVersionRef` to invalidate any running watchdog, and resets `voiceGreetingStatus` to `'idle'`. A "Reset Donna voice" link appears below the stall/error message.
+
+**New state added:** `voiceGreetingStatus` ('idle' | 'starting' | 'speaking' | 'stalled' | 'done' | 'error'), `voiceWatchdogRef`, `playVersionRef`.
+
+**No migrations. No authority changes. No DB changes.**
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — auto-speak removed from trigger onClick; `voiceGreetingStatus` + watchdog refs added; `playOnboardingVoice()` + `resetVoice()` added; `speakAssistantText` updated with optional `onStatus` callback and stuck-state cancel branch; Play button + stall UI added to greeting card JSX; `closePanel` and pathname effect updated to clear new state
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Sprint 296A: Floating Donna Duplicate Speech Guard V1
 
 **Duplicate trigger source identified:** `speakAssistantText()` was logging to console BEFORE the dedup check, so both calls appeared in the console even when the second was skipped. The second call originates from React 18 StrictMode's double mount/unmount cycle in development — the `pathname` useEffect resets `lastSpokenTextRef.current = null` on remount, which can race with the `onstart → setIsSpeaking(true) → re-render` cycle, allowing the guard to be cleared before the second call fires. The text-only guard was also unbounded by time, making it fragile if the ref was cleared by any async path.
