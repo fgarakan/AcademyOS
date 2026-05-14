@@ -71,6 +71,21 @@ import {
   DONNA_ONBOARDING_STEPS,
   isOnboardingActive,
 } from '@/components/assistant/donnaOnboardingFlow'
+// Sprint 297 — Realtime voice output hook (output-only, no mic)
+import { useDonnaRealtimeVoice } from '@/components/assistant/useDonnaRealtimeVoice'
+// Mega Sprint 297–310 — Unified voice runtime types + utilities
+import {
+  type DonnaVoiceMode,
+  isProtectedVoicePhrase,
+  VOICE_PROTECTED_RESPONSE,
+  isOnboardingRoutingPhrase,
+  ONBOARDING_ROUTING_RESPONSE,
+  detectWakePhrase,
+  extractCommandAfterWake,
+  getFallbackMessage,
+} from '@/components/assistant/donnaVoiceRuntime'
+// Mega Sprint 297–310 — Dev-only QA harness
+import { DonnaVoiceDiagnostics } from '@/components/assistant/DonnaVoiceDiagnostics'
 // Sprint 291 — Centralized copy
 import {
   DONNA_PUBLIC_NAME,
@@ -78,6 +93,10 @@ import {
   DONNA_FULL_LABEL,
   DONNA_ACTIVATION_HELP,
   DONNA_SAFETY_REMINDER,
+  DONNA_WAKE_LABEL,
+  DONNA_WAKE_ACTIVE_LABEL,
+  DONNA_HEARD_CONFIRM,
+  DONNA_NOT_HEARD_CONFIRM,
 } from '@/components/assistant/donnaAssistantCopy'
 import type { DonnaReviewQueueSummary } from '@/components/assistant/donnaReviewQueueTypes'
 import { DonnaReviewQueuePanel } from '@/components/assistant/DonnaReviewQueuePanel'
@@ -217,6 +236,15 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [captureOpen, setCaptureOpen] = useState(false)
   const [activeMode, setActiveMode] = useState<AssistantMode | null>(null)
 
+  // Sprint 297 — Realtime voice output (primary path, no mic required)
+  const {
+    status: realtimeStatus,
+    unavailableReason: realtimeUnavailableReason,
+    connect: realtimeConnect,
+    disconnect: realtimeDisconnect,
+    speak: realtimeSpeak,
+  } = useDonnaRealtimeVoice()
+
   // Spoken greeting — fires once on first intentional panel open, never again in this session
   const hasGreetedRef = useRef(false)
   const [showGreeting, setShowGreeting] = useState(false)
@@ -243,6 +271,24 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   >('idle')
   const voiceWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const playVersionRef = useRef<number>(0)
+  // Tracks which voice mode was actually used to produce audio (set in playOnboardingVoice)
+  const activatedVoiceModeRef = useRef<DonnaVoiceMode>('realtime')
+
+  // Mega Sprint 297–310 — voice output confirmation after speak()
+  // null = not yet confirmed, true = heard, false = not heard
+  const [voiceOutputConfirmed, setVoiceOutputConfirmed] = useState<boolean | null>(null)
+
+  // Mega Sprint 297–310 — wake phrase ("Hey Donna") in-panel listener
+  // No global always-listening. Only active when panel is open and director clicks listen.
+  type WakeSpeechRecognition = {
+    continuous: boolean; interimResults: boolean; lang: string
+    onresult: ((e: { results: { length: number; [i: number]: { isFinal: boolean; [i: number]: { transcript: string } } } }) => void) | null
+    onerror: (() => void) | null; onend: (() => void) | null
+    start(): void; stop(): void; abort(): void
+  }
+  const wakeRecognitionRef = useRef<WakeSpeechRecognition | null>(null)
+  const [wakeListeningActive, setWakeListeningActive] = useState(false)
+  const [wakeDetectedCommand, setWakeDetectedCommand] = useState<string | null>(null)
 
   function speakAssistantText(text: string, onStatus?: (status: 'speaking' | 'done' | 'error') => void) {
     console.log('[Donna TTS] speakAssistantText called', {
@@ -335,25 +381,47 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     window.speechSynthesis.speak(utt)
   }
 
-  // Sprint 296B — Play onboarding voice from a clean user gesture (dedicated button onClick).
-  // Removes auto-speak from trigger button which consumed Chrome's gesture context before speak().
-  function playOnboardingVoice() {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      setVoiceGreetingStatus('error')
-      return
-    }
+  // Sprint 297 — Play onboarding voice.
+  // Primary: OpenAI Realtime (output-only WebRTC, no mic required).
+  // Fallback: browser speechSynthesis with 1500ms watchdog (Sprint 296B).
+  // Must be called from a user gesture (button onClick) for both paths.
+  async function playOnboardingVoice() {
     const version = playVersionRef.current + 1
     playVersionRef.current = version
-
-    // Clear guards so speak() is not blocked by previous dedup checks.
-    lastSpokenTextRef.current = null
-    lastSpokenKeyRef.current = null
 
     setVoiceGreetingStatus('starting')
 
     const text = onboardingStep !== null
       ? (DONNA_ONBOARDING_STEPS[onboardingStep]?.spokenText ?? DONNA_ONBOARDING_STEPS[0].spokenText)
       : DONNA_ONBOARDING_STEPS[0].spokenText
+
+    // ── Path 1: Realtime (primary) ────────────────────────────────────────────
+    // Skip immediately if Realtime is already known to be unavailable or errored.
+    if (realtimeStatus !== 'unavailable' && realtimeStatus !== 'error') {
+      const result = await realtimeConnect()
+      if (playVersionRef.current !== version) return // panel closed during connect
+      if (result.ok) {
+        activatedVoiceModeRef.current = 'realtime'
+        setVoiceGreetingStatus('speaking')
+        realtimeSpeak(text, () => {
+          if (playVersionRef.current === version) setVoiceGreetingStatus('done')
+        })
+        return
+      }
+      // Realtime failed (bad token, SDP error, etc.) — fall through to browser TTS
+      console.warn('[Donna] Realtime connect failed:', result.reason)
+    }
+
+    // ── Path 2: Browser TTS (fallback) ────────────────────────────────────────
+    activatedVoiceModeRef.current = 'browser'
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      setVoiceGreetingStatus('error')
+      return
+    }
+
+    // Clear dedup guards so the same text isn't blocked by a prior guard state.
+    lastSpokenTextRef.current = null
+    lastSpokenKeyRef.current = null
 
     // Watchdog — if onstart doesn't fire within 1500ms, mark as stalled.
     if (voiceWatchdogRef.current !== null) clearTimeout(voiceWatchdogRef.current)
@@ -364,15 +432,15 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       }
     }, 1500)
 
-    speakAssistantText(text, (status) => {
+    speakAssistantText(text, (callbackStatus) => {
       if (playVersionRef.current !== version) return
-      if (status === 'speaking') {
+      if (callbackStatus === 'speaking') {
         if (voiceWatchdogRef.current !== null) {
           clearTimeout(voiceWatchdogRef.current)
           voiceWatchdogRef.current = null
         }
         setVoiceGreetingStatus('speaking')
-      } else if (status === 'done') {
+      } else if (callbackStatus === 'done') {
         setVoiceGreetingStatus('done')
       } else {
         setVoiceGreetingStatus('error')
@@ -396,6 +464,60 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     }
     setVoiceGreetingStatus('idle')
     setIsSpeaking(false)
+  }
+
+  // Mega Sprint 297–310 — Phase 7: In-panel wake phrase listener.
+  // Only while Donna panel is open. No global always-listening.
+  function startWakeListening() {
+    if (typeof window === 'undefined') return
+    const w = window as unknown as Record<string, unknown>
+    const Ctor = (w['SpeechRecognition'] ?? w['webkitSpeechRecognition']) as (new () => WakeSpeechRecognition) | undefined
+    if (!Ctor) return
+
+    const rec = new Ctor()
+    rec.continuous = true
+    rec.interimResults = false
+    rec.lang = 'en-US'
+
+    rec.onresult = (event) => {
+      const results = event.results
+      const last = results[results.length - 1]
+      if (!last?.[0]) return
+      const transcript = last[0].transcript.trim()
+      if (detectWakePhrase(transcript)) {
+        const command = extractCommandAfterWake(transcript)
+        stopWakeListening()
+        if (command) {
+          setPendingVoiceAnswer({ raw: command, editedText: command, isEdited: false })
+          setWakeDetectedCommand(command)
+        } else {
+          setWakeDetectedCommand('')
+        }
+      }
+    }
+
+    rec.onerror = () => {
+      setWakeListeningActive(false)
+      wakeRecognitionRef.current = null
+    }
+
+    rec.onend = () => {
+      setWakeListeningActive(false)
+      wakeRecognitionRef.current = null
+    }
+
+    wakeRecognitionRef.current = rec
+    rec.start()
+    setWakeListeningActive(true)
+    setWakeDetectedCommand(null)
+  }
+
+  function stopWakeListening() {
+    if (wakeRecognitionRef.current) {
+      try { wakeRecognitionRef.current.stop() } catch { /* ignore */ }
+      wakeRecognitionRef.current = null
+    }
+    setWakeListeningActive(false)
   }
 
   // Voice-specific local state — transcript never sent to AI or written to DB
@@ -509,10 +631,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       voiceWatchdogRef.current = null
     }
     playVersionRef.current += 1
+    stopWakeListening()
+    setWakeDetectedCommand(null)
+    setVoiceOutputConfirmed(null)
+    realtimeDisconnect()
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
     }
-  }, [])
+  }, [realtimeDisconnect])
 
   // Escape closes the panel
   useEffect(() => {
@@ -559,6 +685,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       voiceWatchdogRef.current = null
     }
     playVersionRef.current += 1
+    stopWakeListening()
+    setWakeDetectedCommand(null)
+    setVoiceOutputConfirmed(null)
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -612,18 +741,22 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setTypeInstead(false)
     const lower = text.toLowerCase()
 
-    // Voice approval safety — Sprint 289: voice may never trigger saves, level changes, or sends.
-    // These phrases sound like approval commands but must always use the on-screen button.
-    const VOICE_APPROVAL_PHRASES = [
-      'apply it', 'send it', 'move her up', 'move him up', 'move them up',
-      'approve it', 'confirm it', 'save it now', 'do it', 'go ahead and apply',
-      'go ahead and send', 'go ahead and save', 'execute it',
-    ]
-    if (VOICE_APPROVAL_PHRASES.some(p => lower.includes(p))) {
+    // Voice approval safety — voice may never trigger saves, level changes, or sends.
+    if (isProtectedVoicePhrase(lower)) {
       setCommandResponse({
-        message: 'Approval actions always require the on-screen button. I never apply level changes, send messages, or save data from voice alone.',
+        message: VOICE_PROTECTED_RESPONSE,
         type: 'honest',
         label: 'Use the on-screen button',
+      })
+      return
+    }
+
+    // Onboarding routing — Donna explains and routes, never auto-starts.
+    if (isOnboardingRoutingPhrase(lower)) {
+      setCommandResponse({
+        message: ONBOARDING_ROUTING_RESPONSE,
+        type: 'info',
+        label: 'Academy Setup',
       })
       return
     }
@@ -1637,12 +1770,28 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
                     {DONNA_SAFETY_REMINDER}
                   </p>
-                  {/* Sprint 296B: dedicated play button — clean gesture, no stale Chrome context */}
-                  <div className="mt-2.5 space-y-1.5">
+                  {/* Voice mode status indicator */}
+                  <p className="text-[10px] mt-2 leading-snug" style={{
+                    color: realtimeStatus === 'unavailable' || realtimeStatus === 'error'
+                      ? '#FF9500'
+                      : realtimeStatus === 'ready' || realtimeStatus === 'speaking'
+                      ? '#30D158'
+                      : '#8b5cf6',
+                  }}>
+                    {realtimeStatus === 'idle' && 'Donna is ready.'}
+                    {realtimeStatus === 'connecting' && 'Donna is connecting…'}
+                    {realtimeStatus === 'ready' && 'Donna is ready.'}
+                    {realtimeStatus === 'speaking' && 'Donna is speaking.'}
+                    {realtimeStatus === 'unavailable' && (getFallbackMessage('realtime_unavailable') ?? 'Donna voice unavailable — browser voice available.')}
+                    {realtimeStatus === 'error' && getFallbackMessage('realtime_connect_failed')}
+                    {realtimeStatus === 'closed' && 'Donna is ready.'}
+                  </p>
+                  {/* Sprint 297: primary play button, Realtime → browser TTS cascade */}
+                  <div className="mt-2 space-y-1.5">
                     <button
                       type="button"
                       onClick={playOnboardingVoice}
-                      disabled={voiceGreetingStatus === 'starting' || voiceGreetingStatus === 'speaking'}
+                      disabled={voiceGreetingStatus === 'starting' || voiceGreetingStatus === 'speaking' || realtimeStatus === 'connecting'}
                       className="w-full rounded-lg px-3 py-1.5 text-xs font-semibold transition-all
                         disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
@@ -1655,17 +1804,19 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                         color: voiceGreetingStatus === 'done' ? '#30D158' : '#c4b5fd',
                       }}
                     >
-                      {voiceGreetingStatus === 'idle' && 'Play Donna voice'}
-                      {voiceGreetingStatus === 'starting' && 'Starting…'}
+                      {voiceGreetingStatus === 'idle' && (realtimeStatus === 'unavailable' ? 'Play Donna voice (browser)' : 'Play Donna voice')}
+                      {voiceGreetingStatus === 'starting' && (realtimeStatus === 'connecting' ? 'Connecting…' : 'Starting…')}
                       {voiceGreetingStatus === 'speaking' && 'Speaking…'}
                       {(voiceGreetingStatus === 'stalled' || voiceGreetingStatus === 'error') && 'Play Donna voice again'}
                       {voiceGreetingStatus === 'done' && '✓ Donna spoke'}
                     </button>
+                    {/* Stall message — browser TTS watchdog */}
                     {voiceGreetingStatus === 'stalled' && (
                       <p className="text-[10px] leading-snug" style={{ color: '#FF9500' }}>
                         {"Donna's voice did not start. Click Play Donna voice again or type instead."}
                       </p>
                     )}
+                    {/* Reset link — stall or error recovery */}
                     {(voiceGreetingStatus === 'stalled' || voiceGreetingStatus === 'error') && (
                       <button
                         type="button"
@@ -1674,6 +1825,63 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                       >
                         Reset Donna voice
                       </button>
+                    )}
+                    {/* Realtime unavailable: show browser voice option explicitly */}
+                    {realtimeStatus === 'unavailable' && voiceGreetingStatus === 'idle' && (
+                      <p className="text-[10px] text-text-muted leading-snug">
+                        Realtime voice is not configured. Browser voice or typed setup is available.
+                      </p>
+                    )}
+                    {/* After any failure: offer typed continuation */}
+                    {(voiceGreetingStatus === 'stalled' || voiceGreetingStatus === 'error' || realtimeStatus === 'error') && (
+                      <button
+                        type="button"
+                        onClick={() => { setTypeInstead(true) }}
+                        className="text-[10px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
+                      >
+                        Continue typed instead
+                      </button>
+                    )}
+                    {/* Voice output confirmation — shown after Donna speaks */}
+                    {(voiceGreetingStatus === 'done' || voiceGreetingStatus === 'speaking') && voiceOutputConfirmed === null && (
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setVoiceOutputConfirmed(true)}
+                          className="text-[10px] px-2.5 py-1 rounded-lg transition-colors"
+                          style={{ background: 'rgba(48,209,88,0.1)', border: '1px solid rgba(48,209,88,0.25)', color: '#30D158' }}
+                        >
+                          {DONNA_HEARD_CONFIRM}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVoiceOutputConfirmed(false)
+                            if (activatedVoiceModeRef.current === 'realtime') resetVoice()
+                          }}
+                          className="text-[10px] px-2.5 py-1 rounded-lg transition-colors"
+                          style={{ background: 'rgba(255,59,48,0.08)', border: '1px solid rgba(255,59,48,0.2)', color: '#FF3B30' }}
+                        >
+                          {DONNA_NOT_HEARD_CONFIRM}
+                        </button>
+                      </div>
+                    )}
+                    {voiceOutputConfirmed === true && (
+                      <p className="text-[10px] pt-0.5" style={{ color: '#30D158' }}>
+                        Donna is ready.
+                      </p>
+                    )}
+                    {voiceOutputConfirmed === false && (
+                      <div className="space-y-1 pt-0.5">
+                        <p className="text-[10px] text-text-muted">No problem — try browser voice or continue typed.</p>
+                        <button
+                          type="button"
+                          onClick={() => { setVoiceOutputConfirmed(null); void playOnboardingVoice() }}
+                          className="text-[10px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
+                        >
+                          Try again
+                        </button>
+                      </div>
                     )}
                   </div>
                 </>
@@ -1745,6 +1953,26 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 onError={handleVoiceError}
                 onSupportedChange={setIsVoiceSupported}
               />
+
+              {/* Hey Donna wake phrase — panel-only, no global always-listening */}
+              <button
+                type="button"
+                onClick={wakeListeningActive ? stopWakeListening : startWakeListening}
+                className="mt-2 w-full text-[11px] rounded-lg px-3 py-1.5 transition-all"
+                style={wakeListeningActive
+                  ? { background: 'rgba(255,59,48,0.08)', border: '1px solid rgba(255,59,48,0.2)', color: '#FF3B30' }
+                  : { background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.18)', color: '#c4b5fd' }
+                }
+              >
+                {wakeListeningActive ? DONNA_WAKE_ACTIVE_LABEL : DONNA_WAKE_LABEL}
+              </button>
+              {wakeDetectedCommand !== null && (
+                <p className="mt-1 text-[10px] text-lime leading-snug">
+                  {wakeDetectedCommand
+                    ? `Donna heard: "${wakeDetectedCommand}"`
+                    : 'Hey Donna detected. Speak your command.'}
+                </p>
+              )}
 
               {/* Test browser TTS — isolated, no guard or onboarding side effects */}
               <button
@@ -2583,6 +2811,21 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               </div>
             </div>
           )}
+
+          {/* Dev-only QA harness — Mega Sprint 297–310 */}
+          <DonnaVoiceDiagnostics
+            realtimeStatus={realtimeStatus}
+            realtimeUnavailableReason={realtimeUnavailableReason}
+            voiceGreetingStatus={voiceGreetingStatus}
+            isSpeaking={isSpeaking}
+            isVoiceListening={isVoiceListening}
+            isVoiceSupported={isVoiceSupported}
+            voiceMode={activatedVoiceModeRef.current}
+            wakeListeningActive={wakeListeningActive}
+            onTestRealtime={() => { void playOnboardingVoice() }}
+            onTestBrowserVoice={testBrowserVoice}
+            onResetVoice={resetVoice}
+          />
 
         </div>
 

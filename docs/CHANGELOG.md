@@ -2,6 +2,72 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 297–310: Donna Full Voice Runtime + Reliability Architecture V1
+
+**Goal:** Transform Floating Donna from a set of patched voice features into a unified, reliable, premium director-facing AI assistant. 14 phases: audit → unified runtime → Realtime primary → voice preflight → failure escalation → protected workflow router → in-panel wake phrase → transcript standardization → dev QA harness → demo mode → UX polish → TypeScript → CHANGELOG → final report.
+
+**Key architecture decisions:**
+- All voice type definitions, utility functions, fallback messages, protected phrase detection, onboarding routing, and wake phrase logic centralized in `donnaVoiceRuntime.ts` (no React, no DB, no API calls — pure utilities safe to import anywhere).
+- `VOICE_APPROVAL_PHRASES` inline constant removed from `DonnaAssistantButton.tsx`; replaced with `isProtectedVoicePhrase()` from runtime.
+- `ONBOARDING_ROUTING_RESPONSE` added — voice routing phrases explain and route to setup, never auto-start.
+- `activatedVoiceModeRef` set in `playOnboardingVoice()` for each path (realtime/browser) so downstream UI always knows which mode produced audio.
+- Voice output confirmation ("I heard Donna" / "I did not hear Donna") added after Donna speaks — director can confirm audio was heard or trigger recovery.
+- In-panel wake phrase listener ("Hey Donna") added — `startWakeListening()`/`stopWakeListening()` using panel-local SpeechRecognition only. No global always-listening. Stopped on panel close and route change.
+- `DonnaVoiceDiagnostics` dev-only QA harness added — visible only in development, never production. Shows 8 status rows + 3 test buttons + 8-item QA checklist.
+- Engineering terms removed from director-facing voice status UI: "via Realtime" → removed, "browser voice fallback" → director-friendly copy, status strings map through `getFallbackMessage()`.
+- New copy exports in `donnaAssistantCopy.ts`: `DONNA_WAKE_LABEL`, `DONNA_WAKE_ACTIVE_LABEL`, `DONNA_WAKE_DETECTED_LABEL`, `DONNA_HEARD_CONFIRM`, `DONNA_NOT_HEARD_CONFIRM`.
+
+**Hard rules enforced throughout:**
+- No migrations. No database.types.ts change. No new authority. No billing/enrollment/roster/curriculum/level/message mutations. No auto-save, auto-approve, auto-send, auto-move levels. No global always-listening. Typed fallback always available.
+
+**Files created:**
+- `src/components/assistant/useDonnaRealtimeVoice.ts` — output-only Realtime hook (no mic): `connect()`, `disconnect()`, `speak()`, `status`, `unavailableReason`
+- `src/components/assistant/donnaVoiceRuntime.ts` — centralized voice types, utilities, protected phrases, onboarding routing, wake phrase detection, fallback messages, status label helpers
+- `src/components/assistant/DonnaVoiceDiagnostics.tsx` — dev-only QA harness panel (never rendered in production)
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — all Mega Sprint phases wired: runtime imports, wake phrase state/functions, `activatedVoiceModeRef`, voice output confirmation UI, "Hey Donna" listen button, `DonnaVoiceDiagnostics` in JSX, protected phrase and onboarding routing via runtime, `closePanel` + pathname effect updated, engineering terms removed from voice status indicator
+- `src/components/assistant/donnaAssistantCopy.ts` — 5 new copy exports for wake phrase and voice confirmation UI
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
+## 2026-05-14 — Sprint 297: Floating Donna Realtime Voice Output V1
+
+**Goal:** Replace browser speechSynthesis as the primary Floating Donna voice output with OpenAI Realtime (WebRTC). Browser TTS retained as fallback.
+
+**Architecture decision — new hook vs. reuse:**
+`useRealtimeInterviewVoice` was audited and found unsuitable for direct reuse: its `connect()` calls `navigator.mediaDevices.getUserMedia` unconditionally (mic required even for output-only use). Floating Donna only needs voice OUTPUT. A dedicated `useDonnaRealtimeVoice` hook was created using `pc.addTransceiver('audio', { direction: 'recvonly' })` instead of adding a mic track — this receives OpenAI audio without requesting microphone permission.
+
+**API route reuse:** `/api/director/interview/realtime-session` used as-is. It is authed, director-only, academy-scoped, and returns 503 gracefully when `OPENAI_API_KEY` is absent. System instructions ("say exactly what the app gives you") apply cleanly to Donna.
+
+**`playOnboardingVoice()` cascade (new):**
+1. If `realtimeStatus` is not already `unavailable` or `error`: call `realtimeConnect()` → if ok, call `realtimeSpeak(text, onDone)` → done.
+2. If Realtime fails or is unavailable: fall through to browser TTS path (Sprint 296B watchdog preserved).
+
+**Voice mode status indicator (new):** Small color-coded line in the greeting card shows Realtime state (idle / connecting / ready / speaking / unavailable / error). Label on the "Play Donna voice" button changes to "Connecting…" during WebRTC negotiation, and "Play Donna voice (browser)" when Realtime is known unavailable.
+
+**Fallback options when voice fails:**
+- "Reset Donna voice" link (stall/error)
+- "Continue typed instead" link (stall / error / Realtime error)
+- "Realtime voice not configured" note when unavailable (503)
+
+**`closePanel` updated:** calls `realtimeDisconnect()` so WebRTC resources are cleaned up on panel close.
+
+**No migrations. No authority changes. No DB changes. No mic permission requested.**
+
+**Files created:**
+- `src/components/assistant/useDonnaRealtimeVoice.ts` — output-only Realtime hook: `connect()`, `disconnect()`, `speak()`, `status`, `unavailableReason`
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — `useDonnaRealtimeVoice` imported and called; `playOnboardingVoice()` made async with Realtime→browser cascade; voice mode status indicator added; `closePanel` updated; greeting card controls updated with Realtime state labels
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Sprint 296B: Floating Donna Gesture-Gated Voice V1
 
 **Root cause identified:** Floating Donna's trigger button `onClick` called `speakAssistantText()` after four `setState` calls (`setPanelOpen`, `setShowGreeting`, `setOnboardingStep`, `setShowOnboardingSuggestions`). Chrome's autoplay gesture context is consumed by the React reconciliation pipeline triggered by those state updates — by the time `window.speechSynthesis.speak()` is reached, the gesture token is discarded. Result: `speaking: true / pending: true` with no `onstart` event and no audio.
