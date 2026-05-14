@@ -81,6 +81,7 @@ export async function getDonnaReviewQueueAction(): Promise<DonnaReviewQueueSumma
       pendingReviewCount: 0,
       needsRoutingCount: 0,
       sessionNeedsBlocksCount: 0,
+      proposedActionsCount: 0,
       items: [],
       fetchedAt: new Date().toISOString(),
     }
@@ -226,15 +227,107 @@ export async function getDonnaReviewQueueAction(): Promise<DonnaReviewQueueSumma
       previewText: session.scheduled_date ?? '',
     }))
 
-  // ── 3. Assemble summary ──────────────────────────────────────────────────
+  // ── 3. Pending Donna intelligence draft proposed_actions ─────────────────
 
-  const allItems = [...noteItems, ...sessionItems]
+  const { data: rawProposedActions } = await rawDb
+    .from('proposed_actions')
+    .select('id, target_module, proposed_payload, created_at')
+    .eq('academy_id', academyId)
+    .in('target_module', ['parent_communication', 'level_review', 'curriculum_adjustment'])
+    .eq('status', 'pending_review')
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  const proposedActionRows: any[] = rawProposedActions ?? []
+
+  const proposedActionItems: DonnaReviewItem[] = proposedActionRows.map((row: any) => {
+    const payload = (row.proposed_payload as Record<string, unknown>) ?? {}
+    const draftType = (payload.draft_type as string) ?? ''
+    const targetModule = row.target_module as string
+
+    let itemType: DonnaReviewItem['type']
+    let title: string
+    let whyItNeedsReview: string
+    let previewText: string
+
+    if (targetModule === 'parent_communication') {
+      const playerLabel = (payload.player_label as string | null) ?? null
+      const updateFocus = (payload.update_focus as string | null) ?? null
+      itemType = 'parent_update_pending_review'
+      title = `Parent Update Draft${playerLabel ? ` — ${playerLabel}` : ''}`
+      whyItNeedsReview = `A parent update draft was created${playerLabel ? ` for ${playerLabel}` : ''} and is pending director review. It has not been sent and is not visible to the parent or player.`
+      previewText = updateFocus ?? draftType
+    } else if (targetModule === 'level_review') {
+      const playerLabel = (payload.player_label as string | null) ?? null
+      const currentLevel = (payload.current_level as string | null) ?? null
+      const nextLevel = (payload.next_level as string | null) ?? null
+      itemType = 'level_readiness_pending_review'
+      title = `Level Readiness Review${playerLabel ? ` — ${playerLabel}` : ''}`
+      whyItNeedsReview = `A level readiness review draft was created${playerLabel ? ` for ${playerLabel}` : ''} and is pending director review. No level change has occurred.`
+      previewText =
+        currentLevel && nextLevel
+          ? `${currentLevel} → ${nextLevel}`
+          : (currentLevel ?? draftType)
+    } else {
+      const proposedChange = (payload.proposed_change as string | null) ?? null
+      const targetLevel = (payload.target_level as string | null) ?? null
+      const adjustmentType = (payload.adjustment_type as string | null) ?? null
+      itemType = 'curriculum_adjustment_pending_review'
+      title = 'Curriculum Adjustment Proposal'
+      whyItNeedsReview =
+        'A curriculum adjustment proposal is pending director review. No curriculum data has been changed.'
+      previewText = proposedChange
+        ? proposedChange.slice(0, 120)
+        : (targetLevel ?? adjustmentType ?? draftType)
+    }
+
+    const playerLabel =
+      targetModule !== 'curriculum_adjustment'
+        ? ((payload.player_label as string | null) ?? null)
+        : null
+
+    return {
+      id: `proposed_action_${row.id}`,
+      type: itemType,
+      title,
+      summary: (previewText || whyItNeedsReview).slice(0, 120),
+      status: 'pending_review' as const,
+      priority: 'medium' as const,
+      createdAt: row.created_at,
+      playerId: (payload.player_id as string | null) ?? null,
+      playerLabel,
+      sessionId: null,
+      sessionLabel: null,
+      sourceTable: 'proposed_actions',
+      sourceId: row.id,
+      tags: [draftType, targetModule].filter(Boolean),
+      whyItNeedsReview,
+      allowedActions: ['mark_reviewed_proposed_action' as const],
+      blockedActions: [
+        'mark_reviewed',
+        'route_to_player',
+        'route_to_session',
+        'start_populate_blocks',
+      ] as const,
+      safetyNotes: [
+        'Internal only — not visible to parents, players, or coaches.',
+        'This decision only changes the review status — no data is applied.',
+        'No communication is sent.',
+      ],
+      previewText: previewText.slice(0, 120),
+    }
+  })
+
+  // ── 4. Assemble summary ──────────────────────────────────────────────────
+
+  const allItems = [...noteItems, ...sessionItems, ...proposedActionItems]
 
   return {
     totalCount: allItems.length,
     pendingReviewCount: noteItems.filter(i => i.type === 'coach_note_pending_review').length,
     needsRoutingCount: noteItems.filter(i => i.type === 'unlinked_voice_note').length,
     sessionNeedsBlocksCount: sessionItems.length,
+    proposedActionsCount: proposedActionItems.length,
     items: allItems,
     fetchedAt: new Date().toISOString(),
   }

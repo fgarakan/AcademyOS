@@ -40,6 +40,40 @@ export function explainReviewItem(item: DonnaReviewItem): DonnaReviewItemExplana
           'I will not populate blocks directly or automatically. The populate task requires your explicit approval. No coach, parent, or player is notified.',
       }
 
+    case 'parent_update_pending_review':
+      return {
+        headline: 'This parent update draft is pending your review.',
+        detail: `A parent-facing update draft was composed${item.playerLabel ? ` for ${item.playerLabel}` : ''} and saved for director review. It has not been sent to the parent or player. No visibility flags have been changed.`,
+        safeMissingData: null,
+        suggestedNextAction:
+          'Approve the draft status to mark it reviewed, request clarification if you need more context, or discard it if it is no longer needed.',
+        whatDonnaWillNotDo:
+          "I will not send this update to the parent or player. I will not change any show_to_parent or show_to_student flag. Approving the draft status does not send the update — it only records your review decision.",
+      }
+
+    case 'level_readiness_pending_review':
+      return {
+        headline: 'This level readiness review is pending your decision.',
+        detail: `A level readiness evidence summary was compiled${item.playerLabel ? ` for ${item.playerLabel}` : ''} and is awaiting director review. No level change has occurred. The player remains at their current level until you explicitly advance them.`,
+        safeMissingData: item.previewText ? null : 'Level details were not available at draft time.',
+        suggestedNextAction:
+          'Mark reviewed to record your decision, or request clarification if the evidence needs more context.',
+        whatDonnaWillNotDo:
+          "I will not move the player to the next level. I will not update the player profile or curriculum state. Marking reviewed only records your review — the player's level is unchanged.",
+      }
+
+    case 'curriculum_adjustment_pending_review':
+      return {
+        headline: 'This curriculum adjustment proposal is pending your review.',
+        detail:
+          'A curriculum adjustment proposal was submitted and is awaiting director review. No curriculum data, templates, or requirements have been changed.',
+        safeMissingData: null,
+        suggestedNextAction:
+          'Approve the proposal status to mark it reviewed, request clarification if you need more context, or discard it.',
+        whatDonnaWillNotDo:
+          "I will not change any curriculum requirements, templates, or drills. Approving the proposal status does not apply the change — it only records that you have reviewed the proposal.",
+      }
+
     default:
       return {
         headline: 'This item needs director review.',

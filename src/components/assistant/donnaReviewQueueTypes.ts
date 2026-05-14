@@ -6,9 +6,12 @@
 // ---------------------------------------------------------------------------
 
 export type DonnaReviewItemType =
-  | 'coach_note_pending_review'   // voice_note pending_review with player_id set
-  | 'unlinked_voice_note'         // voice_note pending_review with player_id null
-  | 'session_needs_blocks'        // planned session with no session_blocks
+  | 'coach_note_pending_review'             // voice_note pending_review with player_id set
+  | 'unlinked_voice_note'                   // voice_note pending_review with player_id null
+  | 'session_needs_blocks'                  // planned session with no session_blocks
+  | 'parent_update_pending_review'          // proposed_action — parent_communication module
+  | 'level_readiness_pending_review'        // proposed_action — level_review module
+  | 'curriculum_adjustment_pending_review'  // proposed_action — curriculum_adjustment module
   | 'unknown'
 
 export type DonnaReviewItemStatus =
@@ -25,6 +28,7 @@ export type DonnaReviewQueueActionType =
   | 'route_to_player'
   | 'route_to_session'
   | 'start_populate_blocks'
+  | 'mark_reviewed_proposed_action'  // approve/reject/clarify a Donna intelligence proposed_action
 
 // ---------------------------------------------------------------------------
 // Review item
@@ -64,6 +68,7 @@ export interface DonnaReviewQueueSummary {
   pendingReviewCount: number
   needsRoutingCount: number
   sessionNeedsBlocksCount: number
+  proposedActionsCount: number
   items: DonnaReviewItem[]
   fetchedAt: string
 }

@@ -12,9 +12,11 @@ import {
   routeVoiceNoteToSessionAction,
 } from '@/app/director/_actions/donnaReviewQueueActions'
 import { explainReviewItem } from './donnaReviewQueueExplainer'
+import { DonnaIntelligenceDraftDecisionControls } from './DonnaIntelligenceDraftDecisionControls'
 import type {
   DonnaReviewQueueSummary,
   DonnaReviewItem,
+  DonnaReviewItemType,
   DonnaReviewQueueActionType,
 } from './donnaReviewQueueTypes'
 import type { DonnaTaskId } from './donnaTaskContracts'
@@ -49,6 +51,14 @@ const ACTION_LABELS: Record<DonnaReviewQueueActionType, string> = {
   route_to_player: 'Route to Player',
   route_to_session: 'Route to Session',
   start_populate_blocks: 'Populate Blocks',
+  mark_reviewed_proposed_action: 'Review Draft',
+}
+
+// Maps DonnaReviewItemType → proposed_actions.target_module string for the decision controls.
+const ITEM_TYPE_TO_TARGET_MODULE: Partial<Record<DonnaReviewItemType, string>> = {
+  parent_update_pending_review: 'parent_communication',
+  level_readiness_pending_review: 'level_review',
+  curriculum_adjustment_pending_review: 'curriculum_adjustment',
 }
 
 // ---------------------------------------------------------------------------
@@ -206,6 +216,12 @@ export function DonnaReviewQueuePanel({
                 {data.sessionNeedsBlocksCount} need blocks
               </span>
             )}
+            {data.proposedActionsCount > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
+                style={{ background: 'rgba(200,255,0,0.10)', color: '#C8FF00' }}>
+                {data.proposedActionsCount} draft{data.proposedActionsCount !== 1 ? 's' : ''} pending
+              </span>
+            )}
             {data.totalCount === 0 && (
               <span className="text-[11px] text-status-green">All clear</span>
             )}
@@ -254,11 +270,26 @@ export function DonnaReviewQueuePanel({
                             ? 'bg-red-900/20 text-status-red'
                             : item.type === 'session_needs_blocks'
                               ? 'bg-blue-900/20 text-status-blue'
+                              : item.type === 'parent_update_pending_review' ||
+                                item.type === 'level_readiness_pending_review' ||
+                                item.type === 'curriculum_adjustment_pending_review'
+                                ? 'text-[9px] uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded'
                               : 'bg-orange-900/20 text-status-orange',
-                        )}>
+                        )}
+                        style={
+                          item.type === 'parent_update_pending_review' ||
+                          item.type === 'level_readiness_pending_review' ||
+                          item.type === 'curriculum_adjustment_pending_review'
+                            ? { background: 'rgba(200,255,0,0.10)', color: '#C8FF00' }
+                            : undefined
+                        }>
                           {item.type === 'coach_note_pending_review' ? 'Pending Review'
                             : item.type === 'unlinked_voice_note' ? 'Needs Routing'
-                            : 'Needs Blocks'}
+                            : item.type === 'session_needs_blocks' ? 'Needs Blocks'
+                            : item.type === 'parent_update_pending_review' ? 'Parent Draft'
+                            : item.type === 'level_readiness_pending_review' ? 'Level Review'
+                            : item.type === 'curriculum_adjustment_pending_review' ? 'Curriculum Proposal'
+                            : 'Pending Review'}
                         </span>
                         {item.priority === 'high' && (
                           <span className="text-[9px] text-status-red font-semibold">High priority</span>
@@ -475,6 +506,18 @@ export function DonnaReviewQueuePanel({
                               >
                                 {ACTION_LABELS[action]}
                               </button>
+                            )
+                          }
+                          if (action === 'mark_reviewed_proposed_action') {
+                            const targetModule = ITEM_TYPE_TO_TARGET_MODULE[item.type]
+                            if (!targetModule) return null
+                            return (
+                              <DonnaIntelligenceDraftDecisionControls
+                                key={action}
+                                proposedActionId={item.sourceId}
+                                targetModule={targetModule}
+                                onSuccess={onRefresh}
+                              />
                             )
                           }
                           return null

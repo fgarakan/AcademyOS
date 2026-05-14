@@ -2,6 +2,45 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 278-280: Donna Review Authority + Safety Layer V1
+
+**Why this sprint:**
+Sprints 278-280 give the Donna floating panel the ability to surface and review the three Donna intelligence draft types from `proposed_actions`, add director-safe inline decision controls, and establish two pure-TS guardrail helpers (permission guard + visibility rules) as safety documentation-as-code.
+
+**Sprint 278 — Review Queue Expansion:**
+`getDonnaReviewQueueAction()` now queries `proposed_actions` WHERE `target_module IN ('parent_communication', 'level_review', 'curriculum_adjustment')` AND `status = 'pending_review'` (limit 10). Items are mapped to typed `DonnaReviewItem[]` with `source_table: 'proposed_actions'` and `allowedActions: ['mark_reviewed_proposed_action']`. Summary badge added for `proposedActionsCount`. Explainer extended with three new cases. No migration — all `proposed_action_status` values already exist in the DB.
+
+**Sprint 279 — Review Decision Controls:**
+New server action `updateDonnaIntelligenceDraftDecisionAction(proposedActionId, targetModule, decision)` updates only `proposed_actions.status` + reviewer tracking fields. Validates target module (must be one of the three Donna intelligence modules), validates decision (`approved` / `rejected` / `clarification_needed`), verifies academy_id scoping and director/head_coach role. Never touches `proposed_payload`, player profiles, curriculum, sessions, or any other table. New client component `DonnaIntelligenceDraftDecisionControls` renders inline Approve / Needs Clarification / Discard buttons with module-specific safe button labels.
+
+**Sprint 280 — Audit/Permission/Visibility Guardrail Layer:**
+Two pure-TS helpers with no DB, no Supabase, no async, no AI:
+- `donnaPermissionGuard.ts` — `checkDonnaTaskPermission(taskId, role)` returns `{ allowed, blockedReason }` for every task ID and role combination. Director-only tasks (draft_parent_update, review_level_readiness, adjust_curriculum, create_group) are blocked for head_coach and coach.
+- `donnaVisibilityGuardrail.ts` — `getDonnaVisibilityRules(draftType)` returns canonical `{ willNotDo[], safetyNotes[] }` per draft type. Covers all 12 `DonnaDraftType` values. Parent update, level readiness, and curriculum adjustment entries include explicit safety copy confirming: no messages sent, no levels moved, no curriculum changed.
+
+**Files created:**
+- `src/app/director/_actions/donnaIntelligenceDraftReviewActions.ts` — Sprint 279 server action: `updateDonnaIntelligenceDraftDecisionAction`; academy_id scoped; director/head_coach only; preview mode blocked; no external mutations
+- `src/components/assistant/DonnaIntelligenceDraftDecisionControls.tsx` — Sprint 279 client component: Approve / Needs Clarification / Discard buttons; module-specific safe labels; `useTransition`; inline success/error state
+- `src/components/assistant/donnaPermissionGuard.ts` — Sprint 280 pure-TS task permission checker; no DB, no async
+- `src/components/assistant/donnaVisibilityGuardrail.ts` — Sprint 280 pure-TS visibility rules helper; no DB, no async
+
+**Files modified:**
+- `src/components/assistant/donnaReviewQueueTypes.ts` — Added `parent_update_pending_review`, `level_readiness_pending_review`, `curriculum_adjustment_pending_review` to `DonnaReviewItemType`; added `mark_reviewed_proposed_action` to `DonnaReviewQueueActionType`; added `proposedActionsCount: number` to `DonnaReviewQueueSummary`
+- `src/app/director/_actions/donnaReviewQueueActions.ts` — Extended `getDonnaReviewQueueAction()` with section 3 (proposed_actions query); added `proposedActionsCount` to all return objects
+- `src/components/assistant/donnaReviewQueueExplainer.ts` — Added switch cases for the three new item types with appropriate safety copy
+- `src/components/assistant/DonnaReviewQueuePanel.tsx` — Imported `DonnaIntelligenceDraftDecisionControls`; added `ITEM_TYPE_TO_TARGET_MODULE` map; added lime badge for `proposedActionsCount`; updated type chip for new item types; added `mark_reviewed_proposed_action` render branch in action buttons loop
+
+**Safety guarantees:**
+- Decision controls only update `proposed_actions.status` — no player profiles, curriculum, sessions, attendance, or billing is touched
+- No messages are sent; no `show_to_parent`/`show_to_student` flags changed; no levels moved; no curriculum modified
+- Full `/director/review` page is not modified in this sprint — new items appear only in the Donna floating panel
+- All statuses used (`approved`, `rejected`, `clarification_needed`) already exist in the `proposed_action_status` enum — no migration needed
+- Existing flows preserved: voice note routing, session block signals, attendance exception flow, all Sprint 275-277 save actions, class template flow, object resolution, quick capture
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with zero errors.
+
+---
+
 ## 2026-05-14 — Mega Sprint 275-277: Donna Director Intelligence Layer V1
 
 **Why this sprint:**
