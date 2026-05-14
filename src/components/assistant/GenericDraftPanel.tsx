@@ -367,15 +367,51 @@ export function GenericDraftPanel({
                     <>
                       <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
                         <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        A pending-review capture in your Review Queue
+                        Internal only — not visible to parents or players
                       </li>
                       <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
                         <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Not yet linked to a player — route it from Review Queue
+                        A pending-review voice note saved to your Review Queue
                       </li>
                       <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
                         <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
-                        Not visible to parents or players
+                        Does not update player level
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Does not send any communication
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Director review may still be required
+                      </li>
+                    </>
+                  )}
+                  {draft.taskId === 'draft_player_note' && (
+                    <>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Internal only — not visible to parents or players
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Updates coach summary and development focus in the player&apos;s development record
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Does not change show_to_parent or show_to_student — director must explicitly enable visibility
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Does not update player level
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Does not send any communication
+                      </li>
+                      <li className="flex items-start gap-1 text-[11px] text-text-muted leading-snug">
+                        <span className="shrink-0 mt-px" style={{ color: '#C8FF00' }}>·</span>
+                        Director review may still be required
                       </li>
                     </>
                   )}

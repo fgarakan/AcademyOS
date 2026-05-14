@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-14 — Mega Sprint 272: Donna Coach Note + Player Note Intelligence V1
+
+**Why this sprint:**
+Sprint 271 wired session block population. This sprint upgrades the two player-facing note flows: `capture_coach_note` gains session linking + deterministic structuring; `draft_player_note` is fully wired to `player_development_summary` using a safe SELECT + conditional INSERT/UPDATE pattern.
+
+**Files created:**
+- `src/components/assistant/donnaNoteStructuring.ts` — pure deterministic note classifier (no AI, no DB, no async); keyword scoring for category, visibility, parent-safe candidate, director-review flag, and suggested tags
+
+**Files modified:**
+- `src/app/director/_actions/donnaDraftExecutionActions.ts` — upgraded `saveCoachNoteDraftAction` with `_resolved_session_id` support, `structureDonnaNote` tags stored in `voice_notes.tags`, uses `rawDb` cast; added `savePlayerNoteDraftAction` (SELECT + conditional INSERT/UPDATE on `player_development_summary`, only touches `coach_summary`/`development_focus`/`source`, never modifies `show_to_parent`/`show_to_student`)
+- `src/components/assistant/donnaApprovalExecutionTypes.ts` — added `'player_note_draft'` to `DonnaExecutableDraftType`
+- `src/components/assistant/donnaTaskContracts.ts` — added session_context question (order 4) to `capture_coach_note`; changed `draft_player_note` `saveApplyMethodStatus` to `'wired'`
+- `src/components/assistant/donnaDraftContracts.ts` — updated `coach_note_draft` summary (session linking + tags); changed `player_note_draft` `saveWireStatus` to `'wired'`, updated summary and proposedChanges
+- `src/components/assistant/donnaObjectResolutionTypes.ts` — added `session_context: 'session'` to `capture_coach_note` in `FIELD_RESOLUTION_MAP`
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `draft_player_note` to `WIRED_TASK_IDS`; imported `savePlayerNoteDraftAction`; added `_resolved_session_id` merge to `capture_coach_note` branch; added `draft_player_note` branch
+- `src/components/assistant/GenericDraftPanel.tsx` — updated `capture_coach_note` "What will be saved" block with full internal-only safety copy; added `draft_player_note` "What will be saved" block
+
+**Safety guarantees:**
+- All notes default to `internal_only` visibility — no parent or player can see them
+- `player_development_summary` update never touches `show_to_parent`, `show_to_student`, `current_strengths`, `things_to_work_on`, `parent_summary`, `student_friendly_summary`
+- Does not update player level
+- Does not send any communication
+- No migrations — `voice_notes.session_id` and `tags` already existed in schema
+- No OpenAI/API calls, no Realtime
+- Voice "save it" still does not save directly — on-screen Approve and Save button required
+
+**TypeScript:** `npx tsc --noEmit` — clean, no errors
+
+---
+
 ## 2026-05-14 — Mega Sprint 271: Donna Session Block Population + Coach Brief V1
 
 **Why this sprint:**

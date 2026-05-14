@@ -8,6 +8,9 @@ import {
   buildCoachBrief,
   type CoachBriefInput,
 } from '@/components/assistant/donnaCoachBriefBuilder'
+import {
+  structureDonnaNote,
+} from '@/components/assistant/donnaNoteStructuring'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper — shared by both actions
@@ -189,13 +192,22 @@ export async function saveCoachNoteDraftAction(
   const sessionContext = (fields.session_context ?? '').trim()
   const priorityLink = (fields.priority_link ?? '').trim()
 
-  // _resolved_player_id is set only when the director explicitly confirmed a player
-  // via the object resolution panel — it is never inferred from a name guess.
+  // _resolved_player_id and _resolved_session_id are set only when the director
+  // explicitly confirmed the object via the resolution panel — never inferred.
   const confirmedPlayerId = (fields._resolved_player_id ?? '').trim() || null
+  const confirmedSessionId = (fields._resolved_session_id ?? '').trim() || null
 
   if (!observation) {
     return { ok: false, status: 'error', message: 'Observation is required.' }
   }
+
+  // Deterministic note structuring — no AI, no API
+  const structured = structureDonnaNote({
+    observation,
+    player: confirmedPlayerId ? player : null,
+    session: confirmedSessionId ? sessionContext : null,
+    priority_link: priorityLink || null,
+  })
 
   // Build a structured transcript
   const parts = [`Observation: ${observation}`]
@@ -204,15 +216,18 @@ export async function saveCoachNoteDraftAction(
   if (priorityLink) parts.push(`Linked priority: ${priorityLink}`)
   const transcript = parts.join('\n')
 
-  const { error } = await supabase.from('voice_notes').insert({
+  const rawDb = supabase as any
+
+  const { error } = await rawDb.from('voice_notes').insert({
     academy_id: academyId,
     author_id: userId,
     player_id: confirmedPlayerId,
-    session_id: null,
+    session_id: confirmedSessionId,
     raw_input: transcript,
     transcript,
     audio_path: null,
     processing_status: 'pending_review',
+    tags: structured.suggestedTags,
   })
 
   if (error) {
@@ -224,27 +239,130 @@ export async function saveCoachNoteDraftAction(
     revalidatePath(`/director/players/${confirmedPlayerId}`)
   }
 
-  if (confirmedPlayerId) {
+  const baseMessage = confirmedPlayerId
+    ? `Coach note for "${player || 'this player'}" saved and linked to their player record.`
+    : player
+      ? `Coach note for "${player}" saved as a pending-review capture.`
+      : 'Coach note saved as a pending-review capture.'
+
+  const safetyNotes = [
+    'Internal only — not visible to parents or players.',
+    ...structured.safetyNotes.filter(n => !n.startsWith('Internal only')),
+  ]
+  if (!confirmedPlayerId) {
+    safetyNotes.push('Not yet linked to a player record — route it from the Review Queue.')
+  }
+  if (confirmedSessionId) {
+    safetyNotes.push('Linked to the session you confirmed.')
+  }
+
+  return { ok: true, status: 'saved', message: baseMessage, safetyNotes }
+}
+
+// ---------------------------------------------------------------------------
+// savePlayerNoteDraftAction
+//
+// Saves a player development note to player_development_summary.
+// Requires a confirmed _resolved_player_id — never saves without a linked player.
+// Only writes: coach_summary, development_focus, source.
+// NEVER touches: show_to_parent, show_to_student, current_strengths,
+//   things_to_work_on, parent_summary, student_friendly_summary.
+// Uses SELECT + conditional INSERT/UPDATE to protect existing visibility flags.
+// Revalidates the player page on success.
+// ---------------------------------------------------------------------------
+
+export async function savePlayerNoteDraftAction(
+  fields: Record<string, string>,
+): Promise<DonnaApprovalExecutionResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, status: 'blocked', message: 'Writes are disabled in preview mode.' }
+  }
+
+  const ctx = await getAuthorizedContext()
+  if (!ctx.ok) return ctx.result
+
+  const { supabase, userId, academyId } = ctx
+
+  // Confirmed player ID is required — never infer from a name string
+  const confirmedPlayerId = (fields._resolved_player_id ?? '').trim() || null
+  if (!confirmedPlayerId) {
     return {
-      ok: true,
-      status: 'saved',
-      message: `Coach note for "${player || 'this player'}" saved and linked to their player record.`,
-      safetyNotes: [
-        'This note is linked to the player you confirmed.',
-        'It is in pending review — not visible to parents or players until approved.',
-      ],
+      ok: false,
+      status: 'blocked',
+      message: 'Please confirm the player before saving this note. Use the resolver panel to search and select a player.',
     }
   }
+
+  const playerLabel = (fields.player ?? '').replace(/\s*✓$/, '').trim() || 'this player'
+  const noteFocus = (fields.note_focus ?? '').trim()
+  const curriculumLink = (fields.curriculum_link ?? '').trim()
+
+  if (!noteFocus) {
+    return { ok: false, status: 'error', message: 'Note focus is required.' }
+  }
+
+  const developmentFocus = noteFocus.slice(0, 500)
+  const coachSummary = curriculumLink
+    ? `${noteFocus}\n\nCurriculum link: ${curriculumLink}`.slice(0, 2000)
+    : noteFocus.slice(0, 2000)
+
+  const rawDb = supabase as any
+
+  // SELECT to check if a row already exists for this player in this academy
+  const { data: existingRow } = await rawDb
+    .from('player_development_summary')
+    .select('id')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .maybeSingle()
+
+  if (existingRow?.id) {
+    // UPDATE — touch only safe internal fields; never modify visibility flags
+    const { error: updateError } = await rawDb
+      .from('player_development_summary')
+      .update({
+        coach_summary: coachSummary,
+        development_focus: developmentFocus,
+        source: 'donna_assistant',
+      })
+      .eq('id', existingRow.id)
+      .eq('academy_id', academyId)
+
+    if (updateError) {
+      return { ok: false, status: 'error', message: updateError.message }
+    }
+  } else {
+    // INSERT — set show_to_parent and show_to_student explicitly to false
+    const { error: insertError } = await rawDb
+      .from('player_development_summary')
+      .insert({
+        academy_id: academyId,
+        player_id: confirmedPlayerId,
+        created_by: userId,
+        coach_summary: coachSummary,
+        development_focus: developmentFocus,
+        source: 'donna_assistant',
+        show_to_parent: false,
+        show_to_student: false,
+      })
+
+    if (insertError) {
+      return { ok: false, status: 'error', message: insertError.message }
+    }
+  }
+
+  revalidatePath(`/director/players/${confirmedPlayerId}`)
 
   return {
     ok: true,
     status: 'saved',
-    message: player
-      ? `Coach note for "${player}" saved as a pending-review capture.`
-      : 'Coach note saved as a pending-review capture.',
+    message: `Player note for "${playerLabel}" saved to their development record.`,
     safetyNotes: [
-      'This note is not yet linked to a player record.',
-      'Route it to the correct player from the Review Queue — it will not be visible to parents or players until you do.',
+      'Internal only — not visible to parents or players.',
+      'Does not update player level.',
+      'Does not send any communication.',
+      'show_to_parent and show_to_student were not changed — director must explicitly enable visibility.',
+      'Director review may still be required.',
     ],
   }
 }

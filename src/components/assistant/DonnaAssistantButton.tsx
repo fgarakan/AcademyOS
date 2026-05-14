@@ -46,6 +46,7 @@ import {
   saveCoachNoteDraftAction,
   saveSessionDraftAction,
   populateSessionBlocksAction,
+  savePlayerNoteDraftAction,
 } from '@/app/director/_actions/donnaDraftExecutionActions'
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
 // Sprint 269 — Safe Object Resolution
@@ -72,6 +73,7 @@ const WIRED_TASK_IDS = new Set<DonnaTaskId>([
   'capture_coach_note',
   'create_session',
   'populate_session_from_template',
+  'draft_player_note',
 ])
 
 // ---------------------------------------------------------------------------
@@ -568,11 +570,20 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     }
     if (draft.taskId === 'capture_coach_note') {
       const fields: Record<string, string> = { ...draft.collectedFields }
-      // Merge confirmed player ID if the director resolved it
       if (resolvedObjects['player']?.id) {
         fields._resolved_player_id = resolvedObjects['player'].id
       }
+      if (resolvedObjects['session_context']?.id) {
+        fields._resolved_session_id = resolvedObjects['session_context'].id
+      }
       return saveCoachNoteDraftAction(fields)
+    }
+    if (draft.taskId === 'draft_player_note') {
+      const fields: Record<string, string> = { ...draft.collectedFields }
+      if (resolvedObjects['player']?.id) {
+        fields._resolved_player_id = resolvedObjects['player'].id
+      }
+      return savePlayerNoteDraftAction(fields)
     }
     if (draft.taskId === 'create_session') {
       const fields: Record<string, string> = { ...draft.collectedFields }

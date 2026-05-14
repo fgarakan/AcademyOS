@@ -194,9 +194,10 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
       { fieldId: 'parent_note',     label: 'Parent Note',       required: false },
     ],
     questionSequence: [
-      { order: 1, fieldId: 'player',         question: 'Which player is this note about?' },
-      { order: 2, fieldId: 'observation',    question: 'What did you observe?' },
-      { order: 3, fieldId: 'priority_link',  question: 'Does this connect to an active priority for this player?' },
+      { order: 1, fieldId: 'player',          question: 'Which player is this note about?' },
+      { order: 2, fieldId: 'observation',     question: 'What did you observe?' },
+      { order: 3, fieldId: 'priority_link',   question: 'Does this connect to an active priority for this player?' },
+      { order: 4, fieldId: 'session_context', question: 'Which session was this from? (optional — leave blank if not session-specific)' },
     ],
     reads: ['player_profile', 'coach_note', 'session'],
     createsDraftType: 'coach_note_draft',
@@ -250,7 +251,7 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     createsDraftType: 'player_note_draft',
     approvalRequired: true,
     unsafeWithoutApproval: ['save_note_without_review', 'expose_to_player_without_approval'],
-    saveApplyMethodStatus: 'not_wired_yet',
+    saveApplyMethodStatus: 'wired',
   },
 
   review_level_readiness: {

@@ -81,6 +81,7 @@ export const FIELD_RESOLUTION_MAP: Partial<
 > = {
   capture_coach_note: {
     player: 'player',
+    session_context: 'session',
   },
   draft_parent_update: {
     player: 'player',
