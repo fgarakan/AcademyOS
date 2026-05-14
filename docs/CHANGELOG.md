@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-14 — Sprint 289: Donna Real-Time Voice UI Completion V1
+
+**Why this sprint:**
+Fixes the real-time voice UX surface without adding new Donna authority. No migrations, no external APIs, no OpenAI. Focused entirely on interaction quality.
+
+**Changes:**
+- **donnaVoiceUiTypes.ts (new):** Defines `DonnaVoiceUiStatus` type and `DonnaVoiceTranscriptState` interface for the editable transcript review gate.
+- **VoiceInputButton.tsx:** Expanded with 4 new optional props — `onListeningChange`, `onInterimTranscript`, `onError`, `onSupportedChange`. Enabled `interimResults: true` so partial transcripts fire `onInterimTranscript` and only final results fire `onTranscript`. Error and listening state changes propagate to parent.
+- **DonnaAssistantButton.tsx:** 6 new state vars (isVoiceListening, isVoiceSupported, isSpeaking, interimVoiceTranscript, pendingVoiceAnswer, voicePermissionError). Voice status pill in panel header (Listening / Speaking). `speakAssistantText` now tracks isSpeaking via onstart/onend/onerror. `guidedCurrentQ` computed value shows the current question above the Mic button in guided_task mode. New `handleVoiceTranscriptRaw` intercepts voice in guided_task mode and gates to editable transcript review before routing. `pendingVoiceAnswer` shows an editable textarea with "Use this answer" / "Try again" buttons. Live interim transcript displays while listening. Voice permission error callout. Voice approval safety guardrail blocks phrases like "apply it", "send it", "move her up" before they can reach the approval chain.
+
+**Files created:**
+- `src/components/assistant/donnaVoiceUiTypes.ts` — DonnaVoiceUiStatus and DonnaVoiceTranscriptState types
+
+**Files modified:**
+- `src/components/assistant/VoiceInputButton.tsx` — expanded props, interimResults, onListeningChange, onInterimTranscript, onError, onSupportedChange
+- `src/components/assistant/DonnaAssistantButton.tsx` — voice state, status pill, question spotlight, interim transcript, editable transcript review gate, voice approval guardrails, isSpeaking tracking
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with no errors.
+
+---
+
 ## 2026-05-14 — Mega Sprint 281-288: Donna Final Form Operating Assistant V1
 
 **Why this sprint:**

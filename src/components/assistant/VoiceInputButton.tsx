@@ -55,6 +55,14 @@ interface VoiceInputButtonProps {
   disabled?: boolean
   label?: string
   appendMode?: boolean
+  /** Called whenever the listening state changes. */
+  onListeningChange?: (isListening: boolean) => void
+  /** Called with partial (non-final) transcripts while listening. */
+  onInterimTranscript?: (text: string) => void
+  /** Called when recognition encounters an error (e.g. 'not-allowed'). */
+  onError?: (error: string) => void
+  /** Called once on mount with whether SpeechRecognition is supported. */
+  onSupportedChange?: (supported: boolean) => void
 }
 
 type VoiceState = 'idle' | 'listening' | 'unsupported'
@@ -64,14 +72,20 @@ export function VoiceInputButton({
   disabled = false,
   label,
   appendMode = true,
+  onListeningChange,
+  onInterimTranscript,
+  onError,
+  onSupportedChange,
 }: VoiceInputButtonProps) {
   const [voiceState, setVoiceState] = useState<VoiceState>('idle')
   const [supported, setSupported] = useState<boolean | null>(null)
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
 
   useEffect(() => {
-    setSupported(getSpeechRecognitionConstructor() !== null)
-  }, [])
+    const result = getSpeechRecognitionConstructor() !== null
+    setSupported(result)
+    onSupportedChange?.(result)
+  }, []) // onSupportedChange called once on mount
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
@@ -79,7 +93,8 @@ export function VoiceInputButton({
       recognitionRef.current = null
     }
     setVoiceState('idle')
-  }, [])
+    onListeningChange?.(false)
+  }, [onListeningChange])
 
   // Clean up on unmount
   useEffect(() => {
@@ -97,31 +112,36 @@ export function VoiceInputButton({
 
     const recognition = new Constructor()
     recognition.continuous = false
-    recognition.interimResults = false
+    recognition.interimResults = true
     recognition.lang = 'en-US'
 
     recognition.onresult = (event) => {
       const result = event.results[0]
-      if (result && result[0]) {
-        const transcript = result[0].transcript.trim()
-        if (transcript) {
-          onTranscript(transcript)
-        }
+      if (!result || !result[0]) return
+      const transcript = result[0].transcript.trim()
+      if (!transcript) return
+      if (result.isFinal) {
+        onTranscript(transcript)
+      } else {
+        onInterimTranscript?.(transcript)
       }
     }
 
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
+      onError?.(event.error)
       stopListening()
     }
 
     recognition.onend = () => {
       recognitionRef.current = null
       setVoiceState('idle')
+      onListeningChange?.(false)
     }
 
     recognitionRef.current = recognition
     recognition.start()
     setVoiceState('listening')
+    onListeningChange?.(true)
   }
 
   function handleToggle() {

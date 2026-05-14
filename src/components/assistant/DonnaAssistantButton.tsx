@@ -64,6 +64,8 @@ import { saveCoachCommunicationDraftAction } from '@/app/director/_actions/saveC
 // Sprint 286 — Multi-step planner
 import { detectMultiStepIntent } from '@/components/assistant/donnaMultiStepPlanner'
 import type { DonnaMultiStepPlan } from '@/components/assistant/donnaMultiStepPlanner'
+// Sprint 289 — Voice UI types
+import type { DonnaVoiceTranscriptState } from '@/components/assistant/donnaVoiceUiTypes'
 import type { DonnaReviewQueueSummary } from '@/components/assistant/donnaReviewQueueTypes'
 import { DonnaReviewQueuePanel } from '@/components/assistant/DonnaReviewQueuePanel'
 // Sprint 269 — Safe Object Resolution
@@ -222,6 +224,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     const utt = new SpeechSynthesisUtterance(text)
     utt.rate = 1.0
     utt.pitch = 1.0
+    utt.onstart = () => setIsSpeaking(true)
+    utt.onend = () => setIsSpeaking(false)
+    utt.onerror = () => setIsSpeaking(false)
     window.speechSynthesis.speak(utt)
   }
 
@@ -253,6 +258,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [multiStepPlan, setMultiStepPlan] = useState<DonnaMultiStepPlan | null>(null)
   const [multiStepIndex, setMultiStepIndex] = useState(0)
 
+  // Voice UI state — Sprint 289
+  const [isVoiceListening, setIsVoiceListening] = useState(false)
+  const [isVoiceSupported, setIsVoiceSupported] = useState<boolean | null>(null)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [interimVoiceTranscript, setInterimVoiceTranscript] = useState<string | null>(null)
+  const [pendingVoiceAnswer, setPendingVoiceAnswer] = useState<DonnaVoiceTranscriptState | null>(null)
+  const [voicePermissionError, setVoicePermissionError] = useState<string | null>(null)
+
   // Object resolution state — Sprint 269
   // Tracks the active resolution request and its result. Never mutates records.
   const [resolutionContext, setResolutionContext] = useState<{
@@ -272,6 +285,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const voicePrompts = ctx.suggestedPrompts
   // Single source of truth for the current missing question — same text shown and spoken.
   const currentTemplateQuestion: TemplateDraftQuestion | null = templateDraft?.missingQuestions?.[0] ?? null
+  // Current missing question for the active generic task — shown in voice card spotlight.
+  const guidedCurrentQ =
+    activeMode === 'guided_task' && genericDraft
+      ? getNextMissingQuestion(genericDraft.taskId, genericDraft.collectedFields)
+      : null
 
   // Contextual task shortcuts for the current page — computed for the shortcuts section
   const pageTaskShortcuts =
@@ -296,6 +314,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setIsLoadingReviewQueue(false)
     setMultiStepPlan(null)
     setMultiStepIndex(0)
+    setPendingVoiceAnswer(null)
+    setInterimVoiceTranscript(null)
+    setIsVoiceListening(false)
+    setIsSpeaking(false)
+    setVoicePermissionError(null)
     lastSpokenTextRef.current = null
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -330,6 +353,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setResolvedObjects({})
     setReviewQueueData(null)
     setIsLoadingReviewQueue(false)
+    setPendingVoiceAnswer(null)
+    setInterimVoiceTranscript(null)
+    setIsVoiceListening(false)
+    setIsSpeaking(false)
+    setVoicePermissionError(null)
     lastSpokenTextRef.current = null
   }, [pathname])
 
@@ -381,6 +409,23 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   function handleVoiceTranscript(text: string) {
     setVoiceTranscript(text)
     setTypeInstead(false)
+    const lower = text.toLowerCase()
+
+    // Voice approval safety — Sprint 289: voice may never trigger saves, level changes, or sends.
+    // These phrases sound like approval commands but must always use the on-screen button.
+    const VOICE_APPROVAL_PHRASES = [
+      'apply it', 'send it', 'move her up', 'move him up', 'move them up',
+      'approve it', 'confirm it', 'save it now', 'do it', 'go ahead and apply',
+      'go ahead and send', 'go ahead and save', 'execute it',
+    ]
+    if (VOICE_APPROVAL_PHRASES.some(p => lower.includes(p))) {
+      setCommandResponse({
+        message: 'Approval actions always require the on-screen button. I never apply level changes, send messages, or save data from voice alone.',
+        type: 'honest',
+        label: 'Use the on-screen button',
+      })
+      return
+    }
 
     // 1. Active class-template draft with missing questions — treat as the answer
     if (templateDraft && templateDraft.missingQuestions.length > 0) {
@@ -424,8 +469,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         return
       }
     }
-
-    const lower = text.toLowerCase()
 
     // 3a. Class-template draft complete — redirect voice confirm/save to screen button
     if (templateDraft && templateDraft.missingQuestions.length === 0) {
@@ -611,6 +654,52 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setGenericDraft(null)
     setActiveMode(null)
     setFromVoiceCapture(false)
+  }
+
+  // Sprint 289 — Voice UI state handlers
+
+  function handleVoiceListeningChange(listening: boolean) {
+    setIsVoiceListening(listening)
+    if (!listening) setInterimVoiceTranscript(null)
+  }
+
+  function handleInterimTranscript(text: string) {
+    setInterimVoiceTranscript(text || null)
+  }
+
+  function handleVoiceError(error: string) {
+    setVoicePermissionError(
+      error === 'not-allowed'
+        ? 'Microphone permission was denied. Allow microphone access in your browser settings and try again.'
+        : 'Voice input encountered an error. You can type your answer instead.',
+    )
+  }
+
+  // Raw transcript interceptor — in guided_task mode with a pending question, captures the
+  // transcript to pendingVoiceAnswer for director review/edit before routing to handleVoiceTranscript.
+  // In all other modes, routes directly without the review gate.
+  function handleVoiceTranscriptRaw(text: string) {
+    setInterimVoiceTranscript(null)
+    if (
+      activeMode === 'guided_task' &&
+      genericDraft &&
+      !isTaskDraftComplete(genericDraft.taskId, genericDraft.collectedFields)
+    ) {
+      setPendingVoiceAnswer({ raw: text, editedText: text, isEdited: false })
+      return
+    }
+    handleVoiceTranscript(text)
+  }
+
+  function handleConfirmVoiceAnswer() {
+    if (!pendingVoiceAnswer) return
+    const answer = pendingVoiceAnswer.editedText.trim()
+    setPendingVoiceAnswer(null)
+    if (answer) handleVoiceTranscript(answer)
+  }
+
+  function handleRetryVoice() {
+    setPendingVoiceAnswer(null)
   }
 
   // Dispatch to the correct server action for a wired task draft.
@@ -1191,6 +1280,22 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             <div className="flex items-center gap-1.5 mb-0.5">
               <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: '#8b5cf6' }} />
               <h2 className="text-sm font-semibold text-text-primary">Academy Assistant</h2>
+              {isVoiceListening && (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold animate-pulse"
+                  style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}
+                >
+                  Listening
+                </span>
+              )}
+              {!isVoiceListening && isSpeaking && (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'rgba(139,92,246,0.15)', color: '#8b5cf6' }}
+                >
+                  Speaking
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-text-muted leading-snug">
               Ask by voice, type a command, or choose an action below.
@@ -1250,15 +1355,113 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 Use voice to ask what to do next, explain this screen, or capture a director note.
               </p>
 
+              {/* Current question spotlight — guided_task mode only */}
+              {guidedCurrentQ && (
+                <div
+                  className="mb-3 rounded-lg px-3 py-2"
+                  style={{ background: 'rgba(200,255,0,0.05)', border: '1px solid rgba(200,255,0,0.2)' }}
+                >
+                  <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-lime">
+                    Current question
+                  </p>
+                  <p className="text-[12px] text-text-primary font-medium leading-snug">
+                    {guidedCurrentQ.question}
+                  </p>
+                </div>
+              )}
+
               {/* VoiceInputButton — browser SpeechRecognition only, no API, no DB write */}
               <VoiceInputButton
-                onTranscript={handleVoiceTranscript}
+                onTranscript={handleVoiceTranscriptRaw}
                 label="Start voice"
                 appendMode={false}
+                onListeningChange={handleVoiceListeningChange}
+                onInterimTranscript={handleInterimTranscript}
+                onError={handleVoiceError}
+                onSupportedChange={setIsVoiceSupported}
               />
 
-              {/* Voice transcript — displayed locally only */}
-              {voiceTranscript && (
+              {/* Live interim transcript — shown while recognition is active */}
+              {isVoiceListening && interimVoiceTranscript && (
+                <div
+                  className="mt-2.5 rounded-lg px-3 py-2"
+                  style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)' }}
+                >
+                  <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5" style={{ color: '#8b5cf6' }}>
+                    Hearing…
+                  </p>
+                  <p className="text-[12px] text-text-muted leading-snug italic">
+                    {interimVoiceTranscript}
+                  </p>
+                </div>
+              )}
+
+              {/* Voice permission / browser error */}
+              {voicePermissionError && (
+                <div
+                  className="mt-2.5 rounded-lg px-3 py-2"
+                  style={{ background: 'rgba(255,59,48,0.06)', border: '1px solid rgba(255,59,48,0.18)' }}
+                >
+                  <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-status-red">
+                    Voice unavailable
+                  </p>
+                  <p className="text-[11px] text-text-muted leading-snug">{voicePermissionError}</p>
+                  <button
+                    onClick={() => setVoicePermissionError(null)}
+                    className="mt-1 text-[10px] text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
+              {/* Editable transcript — shown in guided_task mode after voice capture */}
+              {pendingVoiceAnswer && (
+                <div
+                  className="mt-3 rounded-lg overflow-hidden"
+                  style={{ border: '1px solid rgba(200,255,0,0.25)' }}
+                >
+                  <div className="px-3 py-2" style={{ background: 'rgba(200,255,0,0.05)' }}>
+                    <p className="text-[10px] uppercase tracking-widest font-semibold mb-1.5 text-lime">
+                      Voice captured — review before using
+                    </p>
+                    <textarea
+                      rows={2}
+                      value={pendingVoiceAnswer.editedText}
+                      onChange={e =>
+                        setPendingVoiceAnswer(prev =>
+                          prev
+                            ? { ...prev, editedText: e.target.value, isEdited: e.target.value !== prev.raw }
+                            : null,
+                        )
+                      }
+                      className="w-full rounded-lg px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
+                      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+                    />
+                  </div>
+                  <div
+                    className="flex items-center gap-2 px-3 py-2"
+                    style={{ background: 'var(--bg-surface)', borderTop: '1px solid rgba(200,255,0,0.1)' }}
+                  >
+                    <button
+                      onClick={handleConfirmVoiceAnswer}
+                      disabled={!pendingVoiceAnswer.editedText.trim()}
+                      className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
+                    >
+                      Use this answer
+                    </button>
+                    <button
+                      onClick={handleRetryVoice}
+                      className="text-[10px] text-text-muted hover:text-status-red underline underline-offset-2 transition-colors"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Voice transcript — displayed locally only; suppressed when pending review is shown */}
+              {voiceTranscript && !pendingVoiceAnswer && (
                 <div
                   className="mt-3 rounded-lg px-3 py-2.5"
                   style={{
