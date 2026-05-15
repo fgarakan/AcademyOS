@@ -148,6 +148,11 @@ import { DonnaAttentionCard } from '@/components/assistant/DonnaAttentionCard'
 import { createCoachBriefDraft } from '@/components/assistant/donnaCoachBriefWorkflow'
 // Sprint 373 — Review queue badge
 import { DonnaReviewQueueBadge } from '@/components/assistant/DonnaReviewQueueBadge'
+// Sprint 375 — Rule-based recommendations
+import { evaluateRecommendations } from '@/components/assistant/donnaRecommendationEngine'
+import type { RecommendationSignals } from '@/components/assistant/donnaRecommendationEngine'
+import type { DonnaRecommendationSet, DonnaRecommendation } from '@/components/assistant/donnaRecommendationTypes'
+import { DonnaRecommendationCard } from '@/components/assistant/DonnaRecommendationCard'
 // Sprint 361 — Audit trail
 import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
@@ -630,6 +635,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [isAttentionLoading, setIsAttentionLoading] = useState(false)
   // Sprint 373 — Review queue pending count (fetched on panel open)
   const [reviewQueuePendingCount, setReviewQueuePendingCount] = useState<number>(0)
+  // Sprint 375 — Rule-based recommendation set (computed from signals on panel open)
+  const [recommendationSet, setRecommendationSet] = useState<DonnaRecommendationSet | null>(null)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -1706,6 +1713,30 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     }
   }
 
+  // Sprint 375 — Recommendation action handler
+  // Dispatches the action from a recommendation. Never mutates data.
+  function handleRecommendationAction(rec: DonnaRecommendation) {
+    switch (rec.action.type) {
+      case 'open_review':
+        void handleOpenReviewQueue()
+        break
+      case 'navigate':
+        if (rec.action.destination) {
+          router.push(rec.action.destination)
+          closePanel()
+        }
+        break
+      case 'start_workflow':
+        if (rec.action.workflowId === 'create_class_template') {
+          setActiveMode('create_template')
+        }
+        break
+      case 'none':
+      default:
+        break
+    }
+  }
+
   // Deterministic command detection — no AI, no API calls.
   // Navigation uses approved /director routes only. Returns true if command was recognized.
   function detectAndHandleCommand(text: string): boolean {
@@ -2082,17 +2113,31 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           }
 
           // Sprint 373: fetch review queue count on panel open (read-only, no mutation)
+          // Sprint 375: also evaluate rule-based recommendations from returned signals
           void getDonnaReviewQueueAction().then((data) => {
-            if (data && data.totalCount > 0) {
-              setReviewQueuePendingCount(data.totalCount)
+            const pendingCount = data?.totalCount ?? 0
+            if (pendingCount > 0) {
+              setReviewQueuePendingCount(pendingCount)
               setCommandResponse({
-                message: `You have ${data.totalCount} ${data.totalCount === 1 ? 'item' : 'items'} waiting for your review.`,
+                message: `You have ${pendingCount} ${pendingCount === 1 ? 'item' : 'items'} waiting for your review.`,
                 type: 'info',
                 label: 'Review Queue',
               })
             } else {
               setReviewQueuePendingCount(0)
             }
+            // Sprint 375: evaluate recommendations synchronously from available signals
+            setConvState(prev => {
+              const signals: RecommendationSignals = {
+                pendingReviewCount: pendingCount,
+                pendingPlacementCount: 0,   // not yet fetched separately; engine handles 0 gracefully
+                todaySessionCount: 0,        // not yet fetched separately
+                hasActiveDraft: prev.activeDraft !== null,
+                currentPathname: pathname,
+              }
+              setRecommendationSet(evaluateRecommendations(signals))
+              return prev
+            })
           }).catch(() => {})
         }}
         aria-label={`Ask ${DONNA_PUBLIC_NAME}`}
@@ -2775,6 +2820,22 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               onDismiss={() => setAttentionReport(null)}
               onClose={closePanel}
             />
+          )}
+
+          {/* ── Sprint 375: Rule-based recommendations ── */}
+          {recommendationSet && recommendationSet.recommendations.length > 0 && !attentionReport && !dailyBrief && (
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-text-muted px-0.5">
+                Recommendations
+              </p>
+              {recommendationSet.recommendations.map((rec) => (
+                <DonnaRecommendationCard
+                  key={rec.id}
+                  recommendation={rec}
+                  onAction={handleRecommendationAction}
+                />
+              ))}
+            </div>
           )}
 
           {/* ── Sprint 366/368: Communication draft card + review panel ── */}

@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-15 — Sprint 375: Donna Rule-Based Recommendations V1
+
+**Goal:** Donna evaluates context signals and surfaces prioritized recommendations in the panel.
+
+**Files created:**
+- `src/components/assistant/donnaRecommendationEngine.ts` — `RecommendationSignals` input type; `evaluateRecommendations(signals)` — 4 rules: urgent review queue (critical >5, high >0), pending placements (high >3, normal >0), sessions today (normal), dashboard+no-draft template suggestion (low). Returns `DonnaRecommendationSet`.
+- `src/components/assistant/DonnaRecommendationCard.tsx` — Compact priority-colored card: critical=red, high=orange, normal=lime, low=muted. Shows title, rationale, action button. Action button NEVER mutates — opens workflow, navigates, or opens review queue only.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Imports engine + card; adds `recommendationSet` state; on panel open, evaluates recommendations from `getDonnaReviewQueueAction` signals + `convState.activeDraft` + `pathname`; adds `handleRecommendationAction` dispatcher; renders `DonnaRecommendationCard` list below attention card when no attention/brief report is active.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 374: Donna Recommendation Object Model V1
 
 **Goal:** Define the typed recommendation object model that Sprint 375's rule-based engine will produce.
