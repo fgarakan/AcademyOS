@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-15 — Sprint 367: Parent-Safe Communication Rules V1
+
+**Goal:** Define guardrails for what Donna can and cannot include in parent communications.
+
+**Files created:**
+- `src/components/assistant/donnaParentSafeRules.ts` — Pure utility: `PARENT_SAFE_TOPICS`, `PARENT_BLOCKED_TOPICS`, `PARENT_TONE_RULES`, `PARENT_SAFE_DISCLAIMER`, `checkParentSafeContent(text)`, `sanitizeForParent(draft)`. Keyword-based detection for 5 blocked topic categories.
+
+**Files modified:**
+- `src/components/assistant/donnaCommunicationDraft.ts` — `applyCommunicationField`: when `field === 'body'` on parent-facing draft types, runs blocked-keyword check; sets `status = 'blocked'` and attaches `violations` if triggered.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 366: Donna Communication Draft Workflow V1
 
 **Goal:** Donna can draft parent/coach communications as structured objects. No sending.

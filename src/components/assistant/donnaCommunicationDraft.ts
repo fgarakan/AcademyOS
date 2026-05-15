@@ -1,6 +1,7 @@
 // Sprint 366 — Donna Communication Draft Workflow V1
 // Types + runtime for structured communication drafts.
 // No sending. No DB writes. Pure client-side draft management.
+// Sprint 367: parent-safe check wired into applyCommunicationField.
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -114,6 +115,7 @@ export function createCommunicationDraft(
 /**
  * Apply a field update to a communication draft.
  * Returns a new draft object (immutable update).
+ * Sprint 367: when body is set on a parent-facing draft, runs parent-safe check.
  */
 export function applyCommunicationField(
   draft: CommunicationDraft,
@@ -125,6 +127,34 @@ export function applyCommunicationField(
     [field]: value,
     lastModifiedAt: new Date().toISOString(),
   }
+
+  // Sprint 367: parent-safe check on body update for parent-facing types
+  if (field === 'body' && (updated.type === 'parent_update' || updated.type === 'progress_summary')) {
+    // Dynamic import avoided — use lazy inline require pattern to avoid circular dep
+    // The check is simple keyword-based and safe to inline here.
+    const parentBlockedKeywords = [
+      'injury', 'injured', 'medical', 'doctor', 'diagnosis', 'sprain', 'fracture', 'surgery',
+      'other player', 'another player', 'compared to', 'better than', 'worse than',
+      'billing', 'payment', 'invoice', 'overdue', 'fee dispute', 'refund',
+      'should be', 'level behind', 'level ahead', 'more advanced', 'less advanced',
+      'coach complaint', 'unhappy with coach', 'problem with coach', 'coach issue',
+    ]
+    const lower = value.toLowerCase()
+    const violations: string[] = []
+    for (const kw of parentBlockedKeywords) {
+      if (lower.includes(kw)) {
+        violations.push(`Contains flagged content: "${kw}"`)
+      }
+    }
+    if (violations.length > 0) {
+      updated.status = 'blocked'
+      updated.violations = violations
+      return updated
+    } else {
+      updated.violations = []
+    }
+  }
+
   // Recalculate status
   updated.status = isCommunicationDraftReady(updated) ? 'ready' : 'draft'
   return updated
