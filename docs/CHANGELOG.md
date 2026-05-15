@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-15 — Sprint 383.5: Fix class template level to development track mapping
+
+**Root cause:** `saveAssistantTemplateDraftAction` wrote `draft.level` ("Orange 2") directly into `templates.track`, which is the `development_track` enum (`"skill"|"competition"|"fitness"|"combined"`). Level labels are not valid enum members, causing a Postgres invalid enum error on every Save Template attempt.
+
+**Fix:**
+- `src/app/director/class-templates/saveAssistantTemplateDraftAction.ts` — Set `track: null` (level labels cannot map to `development_track`). Level is preserved in the template `name` (already included) and added as a `level:<label>` tag in the `tags` array. Added `safeDevTrack` guard function that validates any future `track` value is enum-safe before insert.
+
+**No migration required** — `templates.track` is nullable; setting it to `null` is schema-valid.
+
+**Level preservation:** "Orange 2" is not lost — it appears in the template name ("Orange 2 focused on forehand prep") and in `tags: ["source:assistant", "level:Orange 2"]`.
+
+**TypeScript:** clean (`npx tsc --noEmit`)
+
+---
+
 ## 2026-05-15 — Sprint 383: Donna Attendance Exception Session Resolution V1
 
 **Goal:** Make attendance exception drafts resolve to a real session before queuing for director review. Add natural language attendance phrase parsing. Wire the "Queue for review" CTA to `saveAttendanceExceptionDraftAction` (proposed_actions only — no official writes).

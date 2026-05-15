@@ -5,6 +5,17 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { isPreviewMode } from '@/lib/utils/previewMode'
 import type { TemplateDraft } from '@/components/assistant/templateDraftTypes'
 
+// templates.track is the development_track enum: "skill"|"competition"|"fitness"|"combined".
+// It is NOT a curriculum level field. draft.level ("Orange 2", "Red 1", etc.) must never be
+// written to track — it would cause an invalid enum error. Level is preserved in the template
+// name and in a tags entry ("level:Orange 2") so it is not lost.
+const VALID_DEV_TRACKS = new Set(['skill', 'competition', 'fitness', 'combined'])
+
+function safeDevTrack(value: string | null | undefined): 'skill' | 'competition' | 'fitness' | 'combined' | null {
+  if (!value) return null
+  return VALID_DEV_TRACKS.has(value) ? (value as 'skill' | 'competition' | 'fitness' | 'combined') : null
+}
+
 // Maps draft block categories to the valid DB block_type enum values.
 // The DB enum: warm_up | technical | tactical | movement | fitness | competition | mental | cool_down | free
 type DbBlockType =
@@ -104,6 +115,10 @@ export async function saveAssistantTemplateDraftAction(
   const rawDb = supabase as any
 
   // Step 1: Create the template shell
+  // track must be a valid development_track enum value — never a level label like "Orange 2".
+  // Level is preserved in the template name and tags instead.
+  const levelTag = draft.level?.trim() ? `level:${draft.level.trim()}` : null
+
   const { data: templateRow, error: templateError } = await rawDb
     .from('templates')
     .insert({
@@ -111,11 +126,11 @@ export async function saveAssistantTemplateDraftAction(
       created_by: user.id,
       name: draft.templateName.trim(),
       description: draft.goal?.trim() ?? null,
-      track: draft.level ?? null,
+      track: null,
       total_duration_min: draft.durationMinutes,
       is_active: true,
       is_default: false,
-      tags: ['source:assistant'],
+      tags: ['source:assistant', ...(levelTag ? [levelTag] : [])],
     })
     .select('id')
     .single()
