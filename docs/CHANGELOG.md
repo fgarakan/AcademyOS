@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-15 — Sprint 361: Donna Audit Trail Foundation V1
+
+**Goal:** Local session audit trail — log what Donna proposed and what the director did.
+
+**Files created:**
+- `src/components/assistant/donnaAuditTrail.ts` — Pure utility: `DonnaAuditEvent`, `AuditEventType`, `appendAuditEvent`, `getAuditTrail`, `clearAuditTrail`. In-memory, max 100 events FIFO trim.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Imports `appendAuditEvent`/`getAuditTrail`. Fires audit events at: `draft_started` (both voice + typed paths), `undo_applied`, `revision_applied`, `protected_action_blocked`, `review_opened`, `draft_discarded`. Developer Tools: "Audit Trail" section shows last 5 events.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 360: Donna Draft Version History V1
 
 **Goal:** Surface the draft `.history` array in the draft card UI so directors can see what changed.

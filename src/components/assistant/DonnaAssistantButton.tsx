@@ -129,6 +129,8 @@ import {
 import { getCurrentPageObject } from '@/components/assistant/donnaCurrentObjectContext'
 // Sprint 360 — Version history panel
 import { DonnaVersionHistoryPanel } from '@/components/assistant/DonnaVersionHistoryPanel'
+// Sprint 361 — Audit trail
+import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
 import { DONNA_VOICE_MODE_LABELS } from '@/components/assistant/donnaVoicePolicy'
@@ -826,6 +828,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       controllerTurn.nextState.lastIntent?.intentType === 'undo' ||
       controllerTurn.nextState.lastIntent?.intentType === 'go_back'
     ) {
+      appendAuditEvent({ type: 'undo_applied', description: 'Director undid last draft change', workflowId: convState.activeDraft?.workflowId ?? undefined })
       setCommandResponse({ message: controllerTurn.speakText, type: 'info', label: 'Undo' })
       speakAssistantText(controllerTurn.speakText)
       return
@@ -849,11 +852,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         workflowId: controllerTurn.nextState.activeDraft.workflowId,
         fields: Object.keys(controllerTurn.nextState.activeDraft.fields),
       })
+      appendAuditEvent({ type: 'draft_started', description: 'Draft started via voice', workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       return
     }
 
     // Voice approval safety — voice may never trigger saves, level changes, or sends.
     if (isProtectedVoicePhrase(lower)) {
+      appendAuditEvent({ type: 'protected_action_blocked', description: 'Voice tried to execute a protected action', workflowId: convState.activeDraft?.workflowId ?? undefined })
       setCommandResponse({
         message: VOICE_PROTECTED_RESPONSE,
         type: 'honest',
@@ -872,6 +877,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         setConvState(turn.nextState)
         if (turn.speakText) speakAssistantText(turn.speakText)
         if (turn.showDraftReview) setConvShowDraftReview(true)
+        appendAuditEvent({ type: 'revision_applied', description: `Revision: ${revision.fieldId} → ${revision.value}`, workflowId: convState.activeDraft?.workflowId ?? undefined, fieldId: revision.fieldId, value: revision.value })
         return
       }
 
@@ -1176,6 +1182,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   }
 
   function handleConvDiscard() {
+    appendAuditEvent({ type: 'draft_discarded', description: 'Director discarded active draft', workflowId: convState.activeDraft?.workflowId ?? undefined })
     setConvState(controllerDiscard(convState))
     setConvShowDraftReview(false)
     // Sprint 359: clear session storage when director explicitly discards
@@ -1185,6 +1192,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
   function handleConvReview() {
     setConvShowDraftReview(true)
+    appendAuditEvent({ type: 'review_opened', description: 'Director opened draft review panel', workflowId: convState.activeDraft?.workflowId ?? undefined })
   }
 
   // Sprint 290 — Guided onboarding answer handler
@@ -1762,6 +1770,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         workflowId: controllerTurn.nextState.activeDraft.workflowId,
         fields: Object.keys(controllerTurn.nextState.activeDraft.fields),
       })
+      appendAuditEvent({ type: 'draft_started', description: 'Draft started via typed input', workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       setTypedText('')
       return
     }
@@ -3254,6 +3263,25 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 onTestBrowserVoice={testBrowserVoice}
                 onResetVoice={resetVoice}
               />
+
+              {/* Sprint 361 — Audit Trail (last 5 events) */}
+              {(() => {
+                const trail = getAuditTrail()
+                const last5 = trail.slice(-5).reverse()
+                return (
+                  <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
+                    <div className="text-text-muted uppercase tracking-widest">Audit Trail ({trail.length})</div>
+                    {last5.length === 0 ? (
+                      <div className="text-text-muted italic">No events yet.</div>
+                    ) : last5.map(ev => (
+                      <div key={ev.id} className="text-text-secondary">
+                        <span className="text-lime">{ev.type}</span>{' '}
+                        <span className="text-text-muted">{ev.description.slice(0, 40)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
 
               {/* Sprint 359 — Draft session storage state */}
               <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
