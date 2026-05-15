@@ -183,10 +183,18 @@ import {
   type AttendanceExceptionDraft,
   createAttendanceExceptionDraft,
   attendanceExceptionReadyToSubmit,
+  buildAttendanceStatement,
 } from '@/components/assistant/donnaAttendanceWorkflow'
 // Sprint 382 — Workflow Card Actions
 import { makeLastCardAction } from '@/components/assistant/donnaWorkflowCardActions'
 import type { LastCardActionRecord } from '@/components/assistant/donnaWorkflowCardActions'
+// Sprint 383 — Attendance Session Resolution
+import {
+  type AttendanceSessionOption,
+  extractNaturalAttendanceFlags,
+  looksLikeNaturalAttendancePhrase,
+} from '@/components/assistant/donnaAttendanceSessionResolution'
+import { fetchRecentSessionsAction } from '@/app/director/_actions/donnaAttendanceSessionActions'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -664,6 +672,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [attendanceExceptionDraft, setAttendanceExceptionDraft] = useState<AttendanceExceptionDraft | null>(null)
   // Sprint 382 — Last workflow card action (Dev Tools tracking)
   const [lastCardAction, setLastCardAction] = useState<LastCardActionRecord | null>(null)
+  // Sprint 383 — Attendance session resolution
+  const [attendanceSessionOptions, setAttendanceSessionOptions] = useState<AttendanceSessionOption[]>([])
+  const [isLoadingAttendanceSessions, setIsLoadingAttendanceSessions] = useState(false)
+  const [attendanceQueueing, setAttendanceQueueing] = useState(false)
+  const [attendanceQueueResult, setAttendanceQueueResult] = useState<DonnaApprovalExecutionResult | null>(null)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -768,6 +781,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setConvShowDraftReview(false)
     setCommunicationDraft(null)
     setAttendanceExceptionDraft(null)
+    setAttendanceSessionOptions([])
+    setAttendanceQueueResult(null)
     realtimeDisconnect()
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -835,6 +850,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setDraftRestoredFromSession(false)
     setCommunicationDraft(null)
     setAttendanceExceptionDraft(null)
+    setAttendanceSessionOptions([])
+    setAttendanceQueueResult(null)
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -1127,11 +1144,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       }
     }
 
-    // 5.4. Sprint 381 — New COO commands: attendance exception + recommendation summary
+    // 5.4. Sprint 381/383 — New COO commands: attendance exception + recommendation summary
+    // Sprint 383: pass text for natural language attendance phrases
     {
       const cooCmd = matchDirectorWorkflowCommand(lower)
       if (cooCmd === 'attendance_exception_draft' || cooCmd === 'recommendation_summary') {
-        dispatchCooCommand(cooCmd)
+        dispatchCooCommand(cooCmd, text)
         return
       }
     }
@@ -1832,17 +1850,101 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     }
   }
 
-  // Sprint 381 — Start an attendance exception draft (director-initiated)
-  function handleStartAttendanceExceptionDraft() {
+  // Sprint 381/383 — Start an attendance exception draft (director-initiated)
+  // Sprint 383: accepts optional sourceText to populate naturalInput + extracted flags
+  function handleStartAttendanceExceptionDraft(sourceText?: string) {
     recordSignal('workflow_started', { workflowId: 'attendance_exception' })
-    const draft = createAttendanceExceptionDraft()
-    setAttendanceExceptionDraft(draft)
-    setPreferences(recordWorkflowUsed('attendance_exception'))
-    setCommandResponse({
-      message: "Attendance exception draft started. Which player is this for?",
-      type: 'info',
-      label: 'Attendance Exception',
+
+    // Determine if this is a natural language phrase or just a command trigger
+    const isNatural = !!sourceText && looksLikeNaturalAttendancePhrase(sourceText)
+    const naturalInput = isNatural ? sourceText : undefined
+    const flags = naturalInput ? extractNaturalAttendanceFlags(naturalInput) : { absences: [], unrostered: [] }
+
+    const draft = createAttendanceExceptionDraft({
+      naturalInput,
+      flaggedAbsences: flags.absences.length > 0 ? flags.absences : undefined,
+      flaggedUnrostered: flags.unrostered.length > 0 ? flags.unrostered : undefined,
     })
+    setAttendanceExceptionDraft(draft)
+    setAttendanceQueueResult(null)
+    setPreferences(recordWorkflowUsed('attendance_exception'))
+
+    // Load recent sessions for the session picker
+    void (async () => {
+      setIsLoadingAttendanceSessions(true)
+      try {
+        const result = await fetchRecentSessionsAction()
+        if (result.ok) setAttendanceSessionOptions(result.sessions)
+      } catch {}
+      setIsLoadingAttendanceSessions(false)
+    })()
+
+    if (isNatural) {
+      const flagSummary = flags.absences.length > 0
+        ? `Flagged: ${flags.absences.join(', ')} absent${flags.unrostered.length > 0 ? `; ${flags.unrostered.join(', ')} possibly unrostered` : ''}. `
+        : ''
+      setCommandResponse({
+        message: `${flagSummary}Now choose which session this applies to.`,
+        type: 'info',
+        label: 'Attendance Exception',
+      })
+    } else {
+      setCommandResponse({
+        message: "Attendance exception draft started. Which player is this for?",
+        type: 'info',
+        label: 'Attendance Exception',
+      })
+    }
+  }
+
+  // Sprint 383 — Handle session selection in the attendance exception card
+  function handleAttendanceSessionSelect(option: AttendanceSessionOption) {
+    if (!attendanceExceptionDraft) return
+    if (option.sessionId === 'manual_placeholder') {
+      // Clear session selection (director will confirm later)
+      setAttendanceExceptionDraft({ ...attendanceExceptionDraft, sessionId: undefined, sessionLabel: undefined })
+      return
+    }
+    const label = formatSessionLabel(option)
+    setAttendanceExceptionDraft({
+      ...attendanceExceptionDraft,
+      sessionId: option.sessionId,
+      sessionLabel: label,
+    })
+  }
+
+  function formatSessionLabel(option: AttendanceSessionOption): string {
+    const parts = [option.title]
+    if (option.dateLabel) parts.push(option.dateLabel)
+    return parts.join(' · ')
+  }
+
+  // Sprint 383 — Queue attendance exception for director review
+  async function handleQueueAttendanceForReview() {
+    if (!attendanceExceptionDraft) return
+    setAttendanceQueueing(true)
+    try {
+      const statement = buildAttendanceStatement(attendanceExceptionDraft)
+      const fields: Record<string, string> = {
+        attendance_statement: statement,
+        _resolved_session_id: attendanceExceptionDraft.sessionId ?? '',
+      }
+      if (attendanceExceptionDraft.playerName) fields.player_name = attendanceExceptionDraft.playerName
+      if (attendanceExceptionDraft.reason) fields.reason = attendanceExceptionDraft.reason
+      const result = await saveAttendanceExceptionDraftAction(fields)
+      setAttendanceQueueResult(result)
+      if (result.ok) {
+        recordSignal('workflow_completed', { workflowId: 'attendance_exception' })
+      }
+    } catch (e: unknown) {
+      setAttendanceQueueResult({
+        ok: false,
+        status: 'error',
+        message: e instanceof Error ? e.message : 'Unknown error queuing attendance draft.',
+        safetyNotes: ['No attendance data was changed.'],
+      })
+    }
+    setAttendanceQueueing(false)
   }
 
   // Sprint 381 — Apply a typed/spoken answer to the next unfilled attendance exception field
@@ -1857,8 +1959,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     return { ...draft, type }
   }
 
-  // Sprint 381 — Dispatch a COO-layer director workflow command by ID
-  function dispatchCooCommand(id: DirectorWorkflowCommandId): void {
+  // Sprint 381/383 — Dispatch a COO-layer director workflow command by ID
+  // Sprint 383: sourceText passed for attendance commands to support natural input
+  function dispatchCooCommand(id: DirectorWorkflowCommandId, sourceText?: string): void {
     switch (id) {
       case 'what_needs_attention':
         void handleFetchAttention()
@@ -1882,7 +1985,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         void handleOpenReviewQueue()
         break
       case 'attendance_exception_draft':
-        handleStartAttendanceExceptionDraft()
+        handleStartAttendanceExceptionDraft(sourceText)
         break
       case 'recommendation_summary':
         handleShowRecommendationSummary()
@@ -2087,6 +2190,24 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return
     }
 
+    // Sprint 383: COO attendance commands must be checked before the controller.
+    // detectTaskIntent matches 'handle_attendance_exception' keywords (e.g. "attendance exception",
+    // "everyone was here", "showed up"), routing typed input to DonnaDraftCard instead of
+    // DonnaAttendanceExceptionCard, bypassing session resolution and queue-for-review.
+    if (convState.activeDraft === null && !genericDraft && !templateDraft) {
+      const earlyCmd = matchDirectorWorkflowCommand(text.toLowerCase())
+      if (earlyCmd === 'attendance_exception_draft') {
+        dispatchCooCommand('attendance_exception_draft', text)
+        setTypedText('')
+        return
+      }
+      if (looksLikeNaturalAttendancePhrase(text)) {
+        dispatchCooCommand('attendance_exception_draft', text)
+        setTypedText('')
+        return
+      }
+    }
+
     // Call controller first — handles both new draft creation and active draft routing
     const controllerTurn = controllerHandleInput(text, convState)
 
@@ -2190,11 +2311,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       }
     }
 
-    // Sprint 381 — New COO commands: attendance exception + recommendation summary
+    // Sprint 381/383 — New COO commands: attendance exception + recommendation summary
+    // Sprint 383: pass text for natural language attendance phrases
     {
       const cooCmd = matchDirectorWorkflowCommand(text.toLowerCase())
       if (cooCmd === 'attendance_exception_draft' || cooCmd === 'recommendation_summary') {
-        dispatchCooCommand(cooCmd)
+        dispatchCooCommand(cooCmd, text)
         setTypedText('')
         return
       }
@@ -3074,7 +3196,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             />
           )}
 
-          {/* ── Sprint 381: Attendance exception draft card ── */}
+          {/* ── Sprint 381/383: Attendance exception draft card + session resolution ── */}
           {attendanceExceptionDraft && (
             <DonnaAttendanceExceptionCard
               draft={attendanceExceptionDraft}
@@ -3082,7 +3204,15 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 const r = makeLastCardAction('discard_draft')
                 if (r) setLastCardAction(r)
                 setAttendanceExceptionDraft(null)
+                setAttendanceSessionOptions([])
+                setAttendanceQueueResult(null)
               }}
+              sessionOptions={attendanceSessionOptions}
+              isLoadingSessions={isLoadingAttendanceSessions}
+              onSelectSession={handleAttendanceSessionSelect}
+              onQueueForReview={() => { void handleQueueAttendanceForReview() }}
+              isQueueing={attendanceQueueing}
+              queueResult={attendanceQueueResult}
             />
           )}
 
@@ -3819,10 +3949,42 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   Attendance draft:{' '}
                   <span className={attendanceExceptionDraft ? 'text-lime' : 'text-text-muted'}>
                     {attendanceExceptionDraft
-                      ? `active — ${attendanceExceptionDraft.playerName ?? 'no player'} / ${attendanceExceptionDraft.type}`
+                      ? `active — ${attendanceExceptionDraft.playerName ?? (attendanceExceptionDraft.naturalInput ? 'natural input' : 'no player')} / ${attendanceExceptionDraft.type}`
                       : 'none'}
                   </span>
                 </div>
+                {attendanceExceptionDraft && (
+                  <>
+                    <div className="text-text-secondary">
+                      Session:{' '}
+                      <span className={attendanceExceptionDraft.sessionId ? 'text-status-green' : 'text-text-muted'}>
+                        {attendanceExceptionDraft.sessionLabel ?? attendanceExceptionDraft.sessionId ?? 'not selected'}
+                      </span>
+                    </div>
+                    <div className="text-text-secondary">
+                      Ready for queue:{' '}
+                      <span className={attendanceExceptionDraft.sessionId && (attendanceExceptionDraft.naturalInput || attendanceExceptionDraft.playerName) ? 'text-status-green' : 'text-status-orange'}>
+                        {attendanceExceptionDraft.sessionId && (attendanceExceptionDraft.naturalInput || attendanceExceptionDraft.playerName) ? 'YES' : 'no'}
+                      </span>
+                    </div>
+                    {attendanceExceptionDraft.flaggedAbsences && attendanceExceptionDraft.flaggedAbsences.length > 0 && (
+                      <div className="text-text-secondary">
+                        Flagged absent: <span className="text-status-red">{attendanceExceptionDraft.flaggedAbsences.join(', ')}</span>
+                      </div>
+                    )}
+                    {attendanceExceptionDraft.flaggedUnrostered && attendanceExceptionDraft.flaggedUnrostered.length > 0 && (
+                      <div className="text-text-secondary">
+                        Possible unrostered: <span className="text-status-orange">{attendanceExceptionDraft.flaggedUnrostered.join(', ')}</span>
+                      </div>
+                    )}
+                    {attendanceQueueResult && (
+                      <div className={attendanceQueueResult.ok ? 'text-status-green' : 'text-status-red'}>
+                        Queue: {attendanceQueueResult.ok ? 'submitted ✓' : `blocked — ${attendanceQueueResult.message.slice(0, 40)}`}
+                      </div>
+                    )}
+                    <div className="text-text-muted">Official attendance execution: blocked</div>
+                  </>
+                )}
                 <div className="text-text-secondary">
                   Recommendations:{' '}
                   <span className={recommendationSet && recommendationSet.recommendations.length > 0 ? 'text-lime' : 'text-text-muted'}>

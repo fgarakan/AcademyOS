@@ -1,5 +1,6 @@
 // Sprint 372 — Donna Attendance Exception Draft V1
-// Typed workflow for attendance exceptions.
+// Sprint 383 — Extended with naturalInput, flaggedAbsences, flaggedUnrostered fields
+//              Added attendanceExceptionReadyForQueue (requires session resolution)
 // Uses existing saveAttendanceExceptionDraftAction (already wired, goes to proposed_actions).
 // No new server actions. Director must confirm before submission.
 
@@ -17,6 +18,10 @@ export interface AttendanceExceptionDraft {
   type: AttendanceExceptionType
   coachNotified: boolean
   createdAt: string
+  // Sprint 383 — Natural language input fields
+  naturalInput?: string       // The original natural phrase if this started from natural language
+  flaggedAbsences?: string[]  // Names extracted as possibly absent
+  flaggedUnrostered?: string[] // Names extracted as possibly unrostered/unexpected
 }
 
 // ── Slot-filling questions ─────────────────────────────────────────────────────
@@ -55,12 +60,16 @@ function generateId(): string {
 
 /**
  * Create an empty attendance exception draft.
+ * Sprint 383: accepts naturalInput and pre-extracted flags.
  */
 export function createAttendanceExceptionDraft(context: {
   playerId?: string
   playerName?: string
   sessionId?: string
   sessionLabel?: string
+  naturalInput?: string
+  flaggedAbsences?: string[]
+  flaggedUnrostered?: string[]
 } = {}): AttendanceExceptionDraft {
   return {
     id: generateId(),
@@ -72,20 +81,51 @@ export function createAttendanceExceptionDraft(context: {
     type: 'absence',
     coachNotified: false,
     createdAt: new Date().toISOString(),
+    naturalInput: context.naturalInput,
+    flaggedAbsences: context.flaggedAbsences,
+    flaggedUnrostered: context.flaggedUnrostered,
   }
 }
 
 // ── Validation ─────────────────────────────────────────────────────────────────
 
 /**
- * Returns true when the draft has enough information to submit.
+ * Returns true when the draft has enough field content to proceed to session selection.
+ * Sprint 383: natural language drafts are considered field-ready immediately.
  */
 export function attendanceExceptionReadyToSubmit(draft: AttendanceExceptionDraft): boolean {
+  // Natural language draft: the original phrase is sufficient to proceed to session selection
+  if (draft.naturalInput && draft.naturalInput.trim().length > 0) return true
+  // Slot-filled: requires player, type, and reason
   return (
     !!draft.reason.trim() &&
     !!draft.type &&
     (!!draft.playerName || !!draft.playerId)
   )
+}
+
+/**
+ * Returns true when the draft is ready to be queued for review.
+ * Requires both field readiness AND a confirmed session/group ID.
+ * Sprint 383: session must be resolved before the draft can be submitted.
+ */
+export function attendanceExceptionReadyForQueue(draft: AttendanceExceptionDraft): boolean {
+  return attendanceExceptionReadyToSubmit(draft) && !!draft.sessionId
+}
+
+/**
+ * Build the attendance_statement for saveAttendanceExceptionDraftAction.
+ * Uses naturalInput if available; otherwise constructs from slot-filled fields.
+ */
+export function buildAttendanceStatement(draft: AttendanceExceptionDraft): string {
+  if (draft.naturalInput && draft.naturalInput.trim()) return draft.naturalInput.trim()
+  const who = draft.playerName ?? 'Unknown player'
+  const typeLabel =
+    draft.type === 'late' ? 'arrived late' :
+    draft.type === 'early_leave' ? 'left early' :
+    'was absent'
+  const reasonPart = draft.reason ? `: ${draft.reason}` : ''
+  return `${who} ${typeLabel}${reasonPart}`
 }
 
 // ── Formatting ─────────────────────────────────────────────────────────────────
@@ -101,5 +141,11 @@ export function formatAttendanceException(draft: AttendanceExceptionDraft): stri
     `Session: ${draft.sessionLabel ?? draft.sessionId ?? 'Not specified'}`,
     `Coach notified: ${draft.coachNotified ? 'Yes' : 'No'}`,
   ]
+  if (draft.flaggedAbsences && draft.flaggedAbsences.length > 0) {
+    lines.push(`Flagged absences: ${draft.flaggedAbsences.join(', ')}`)
+  }
+  if (draft.flaggedUnrostered && draft.flaggedUnrostered.length > 0) {
+    lines.push(`Possible unrostered: ${draft.flaggedUnrostered.join(', ')}`)
+  }
   return lines.join('\n')
 }

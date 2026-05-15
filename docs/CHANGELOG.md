@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-15 — Sprint 383: Donna Attendance Exception Session Resolution V1
+
+**Goal:** Make attendance exception drafts resolve to a real session before queuing for director review. Add natural language attendance phrase parsing. Wire the "Queue for review" CTA to `saveAttendanceExceptionDraftAction` (proposed_actions only — no official writes).
+
+**New files:**
+- `src/components/assistant/donnaAttendanceSessionResolution.ts` — Client-side types (`AttendanceSessionOption`, `AttendanceDraftPhase`), constants (`ATTENDANCE_DEMO_SESSIONS`, `MANUAL_PLACEHOLDER`), and helpers: `formatSessionOptionLabel`, `hasEveryoneBaseline`, `extractNaturalAttendanceFlags`, `looksLikeNaturalAttendancePhrase`, `getAttendanceDraftPhase`.
+- `src/app/director/_actions/donnaAttendanceSessionActions.ts` — `fetchRecentSessionsAction()`: read-only, returns last 7 days of sessions scoped to `academy_id`, batch-fetches group names. No mutations.
+
+**Modified files:**
+- `src/components/assistant/donnaAttendanceWorkflow.ts` — Extended `AttendanceExceptionDraft` with `naturalInput?`, `flaggedAbsences?`, `flaggedUnrostered?`; updated `createAttendanceExceptionDraft` to accept new fields; `attendanceExceptionReadyToSubmit` returns `true` immediately for natural language drafts; added `attendanceExceptionReadyForQueue` (requires field readiness + confirmed `sessionId`); added `buildAttendanceStatement(draft)`.
+- `src/components/assistant/DonnaAttendanceExceptionCard.tsx` — Full rewrite: three-phase UI (Collecting → Choose session → Ready to review); natural language flags display; session picker with buttons + "Not sure / confirm later"; "Queue for review" CTA gated on `attendanceExceptionReadyForQueue`; success/error queue result display.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added Sprint 383 imports; 4 new state variables (`attendanceSessionOptions`, `isLoadingAttendanceSessions`, `attendanceQueueing`, `attendanceQueueResult`); `handleStartAttendanceExceptionDraft` now accepts `sourceText?` and detects natural language phrases; added `handleAttendanceSessionSelect`, `formatSessionLabel`, `handleQueueAttendanceForReview`; `dispatchCooCommand` passes `sourceText`; Dev Tools COO section shows session, readyForQueue, flagged names, queue result, and "Official attendance execution: blocked".
+
+**Safety model:**
+- `handleQueueAttendanceForReview` calls `saveAttendanceExceptionDraftAction` — creates a `proposed_actions` row only. Never writes to `session_attendance`, `players`, billing, or any communication table.
+- Session must be confirmed before "Queue for review" is enabled (gated by `attendanceExceptionReadyForQueue`).
+- `manual_placeholder` session shows "Confirm session to enable review queue" instead of the queue button.
+- All Dev Tools show "Official attendance execution: blocked".
+
+**Natural language example:** "Everyone was here except Sarah. Jeremy showed up." → `flaggedAbsences: ["Sarah"]`, `flaggedUnrostered: ["Jeremy"]`, skips slot-filling, goes straight to session picker.
+
+**TypeScript:** clean (`npx tsc --noEmit`)
+
+---
+
 ## 2026-05-15 — Sprint 382: Director Workflow Cards + Review Queue Deep Links V1
 
 **Goal:** Make Donna's director-initiated workflow cards visually useful, reviewable, and connected to the correct operating surfaces — without adding risky backend mutations.
