@@ -1,10 +1,10 @@
 'use client'
 
 // Sprint 381 — Donna Attendance Exception Card V1
-// Display card for an in-progress AttendanceExceptionDraft.
+// Sprint 382 — Improved approval boundary copy + "Continue filling" status
 // Shows collected fields, the next question, and what's still needed.
 // No DB writes here. Director must explicitly queue for review via the save action.
-// "Queue for review" is intentionally not wired in Sprint 381 — session ID resolution
+// "Queue for review" is intentionally not wired — session ID resolution
 // is required before saveAttendanceExceptionDraftAction can be called safely.
 
 import { X, ClipboardList } from 'lucide-react'
@@ -53,7 +53,7 @@ export function DonnaAttendanceExceptionCard({ draft, onDiscard }: Props) {
               : { background: 'rgba(255,149,0,0.08)', border: '1px solid rgba(255,149,0,0.25)', color: '#FF9500' }
             }
           >
-            {isReady ? 'Ready' : 'Collecting'}
+            {isReady ? 'Ready to review' : 'Collecting'}
           </span>
         </div>
         <button
@@ -93,6 +93,9 @@ export function DonnaAttendanceExceptionCard({ draft, onDiscard }: Props) {
           className="rounded-lg px-2.5 py-2"
           style={{ background: 'rgba(255,149,0,0.06)', border: '1px solid rgba(255,149,0,0.18)' }}
         >
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-status-orange mb-0.5">
+            Continue filling
+          </p>
           <p className="text-[11px] text-status-orange leading-snug">{nextMissing.question}</p>
           {nextMissing.hint && (
             <p className="text-[10px] text-text-muted mt-0.5">{nextMissing.hint}</p>
@@ -100,13 +103,13 @@ export function DonnaAttendanceExceptionCard({ draft, onDiscard }: Props) {
         </div>
       )}
 
-      {/* Safety notice */}
+      {/* Approval boundary notice */}
       <div
         className="rounded-lg px-2.5 py-1.5"
         style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.15)' }}
       >
         <p className="text-[10px] text-text-muted leading-snug">
-          Donna cannot record attendance directly. Session ID confirmation is required before this can be queued for review.
+          Draft only. Official attendance changes require visible approval. Session ID must be confirmed before this can be queued for review.
         </p>
       </div>
 

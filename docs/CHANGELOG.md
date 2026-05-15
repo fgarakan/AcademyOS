@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-05-15 — Sprint 382: Director Workflow Cards + Review Queue Deep Links V1
+
+**Goal:** Make Donna's director-initiated workflow cards visually useful, reviewable, and connected to the correct operating surfaces — without adding risky backend mutations.
+
+**Dirty workspace check:**
+- `package.json` / `package-lock.json` had `@playwright/test` added during Sprint 381 QA. Reverted to HEAD before coding Sprint 382.
+
+**New files:**
+- `src/components/assistant/donnaWorkflowCardActions.ts` — Safe action model defining `WorkflowCardAction`, `WorkflowCardActionSafetyLevel`, the `WORKFLOW_CARD_ACTIONS` catalog, `LastCardActionRecord` type, and `makeLastCardAction()` helper for Dev Tools tracking. All Sprint 382 actions are non-mutating (`mutatesData: false`).
+
+**Modified files:**
+- `src/components/assistant/DonnaAttentionCard.tsx` — Added `onOpenReviewQueue` prop; per-item "Ask Donna why?" toggle (ChevronDown/Up) showing urgency rationale, approval boundary copy, and suggested action; "Open review queue" footer CTA.
+- `src/components/assistant/DonnaDailyBriefCard.tsx` — Added `onOpenReviewQueue` and `onPrepareCoachBriefs` props; "Show pending approvals" and "Prepare coach briefs" CTAs in card footer.
+- `src/components/assistant/DonnaCommunicationDraftCard.tsx` — Added `onRevise` prop; "Make warmer" / "Make shorter" revision buttons (pass command through `handleVoiceTranscript`); "Review on screen" now shown when body exists (not just `status=ready`).
+- `src/components/assistant/DonnaAttendanceExceptionCard.tsx` — Improved safety copy: "Draft only. Official attendance changes require visible approval. Session ID must be confirmed first."; "Continue filling" section header for next question prompt; "Ready to review" badge label.
+- `src/components/assistant/DonnaRecommendationCard.tsx` — Added `showEvidence` local state toggle; evidence panel showing rationale + signal key/value; approval boundary copy inside evidence panel.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Imported `makeLastCardAction` + `LastCardActionRecord` from `donnaWorkflowCardActions`; added `lastCardAction` state; wired `onOpenReviewQueue` to DonnaAttentionCard + DonnaDailyBriefCard (calls `handleOpenReviewQueue()`); wired `onPrepareCoachBriefs` to DonnaDailyBriefCard (calls `dispatchCooCommand('coach_brief')`); wired `onRevise` to DonnaCommunicationDraftCard; `setLastCardAction` called on every card CTA; Dev Tools "Last Card Action" section showing id, safetyLevel, mutatesData, requiresApproval, targetRoute, blockedReason.
+
+**Review queue deep-link behavior:**
+- `/director/review` route already exists. `DonnaReviewQueuePanel` already has "Open full Review Queue" link to it.
+- DonnaAttentionCard + DonnaDailyBriefCard now call `handleOpenReviewQueue()` — opens the in-panel review queue, which has a direct link to `/director/review`.
+
+**Protected action boundaries preserved:**
+- No DB writes in any card CTA.
+- No messages sent. No sessions published. No level movement. No curriculum applied.
+- "Queue for review" and "Approve and send" defined as `review_required` / `blocked` in the action catalog — not wired to any execution adapter.
+
+**TypeScript:** clean (`npx tsc --noEmit`)
+
+**Browser QA — 26 PASS / 0 FAIL / 1 WARN:**
+- Golden path (GP1–GP6): all pass including `protected_action_blocked` in Dev Tools
+- COO commands (COO1–COO7): all pass
+- COO5 WARN: natural language attendance card appears (expected positive result)
+- Workflow cards (WC1–WC6): all pass — attention CTA, brief CTAs, comm draft, recommendation card, attendance copy, Dev Tools last action section
+
+---
+
 ## 2026-05-15 — Sprint 381: Director-Initiated Donna Workflows V1
 
 **Goal:** Wire 2 missing COO-layer commands (`attendance_exception_draft`, `recommendation_summary`) and create a unified director workflow command map for all 7 Donna COO commands.

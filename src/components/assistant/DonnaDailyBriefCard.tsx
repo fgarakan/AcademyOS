@@ -1,19 +1,20 @@
 'use client'
 
 // Sprint 369 — Donna Daily Brief Card V1
-// Compact card showing daily brief sections.
-// High-priority items highlighted in lime. "Full brief" expand option.
+// Sprint 382 — Added "Show pending approvals" + "Prepare coach briefs" CTAs
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, X, ArrowRight, Inbox, Users } from 'lucide-react'
 import type { DailyBrief } from './donnaDailyBrief'
 
 interface Props {
   brief: DailyBrief
   onDismiss: () => void
+  onOpenReviewQueue?: () => void
+  onPrepareCoachBriefs?: () => void
 }
 
-export function DonnaDailyBriefCard({ brief, onDismiss }: Props) {
+export function DonnaDailyBriefCard({ brief, onDismiss, onOpenReviewQueue, onPrepareCoachBriefs }: Props) {
   const [expanded, setExpanded] = useState(false)
 
   const urgentSections = brief.sections.filter(s => s.priority === 'high')
@@ -89,6 +90,33 @@ export function DonnaDailyBriefCard({ brief, onDismiss }: Props) {
           <ChevronUp className="w-3 h-3" />
           Show less
         </button>
+      )}
+
+      {/* CTAs */}
+      {(onOpenReviewQueue || onPrepareCoachBriefs) && (
+        <div className="flex items-center gap-2 flex-wrap pt-0.5" style={{ borderTop: '1px solid rgba(200,255,0,0.1)' }}>
+          {onOpenReviewQueue && (
+            <button
+              type="button"
+              onClick={onOpenReviewQueue}
+              className="flex items-center gap-1 text-[10px] font-semibold text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <Inbox className="w-3 h-3" />
+              Show pending approvals
+            </button>
+          )}
+          {onPrepareCoachBriefs && (
+            <button
+              type="button"
+              onClick={onPrepareCoachBriefs}
+              className="flex items-center gap-1 text-[10px] font-semibold text-lime hover:opacity-80 transition-opacity"
+            >
+              <Users className="w-3 h-3" />
+              Prepare coach briefs
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       )}
 
       <p className="text-[9px] text-text-muted">

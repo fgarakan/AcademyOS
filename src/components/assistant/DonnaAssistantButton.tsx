@@ -184,6 +184,9 @@ import {
   createAttendanceExceptionDraft,
   attendanceExceptionReadyToSubmit,
 } from '@/components/assistant/donnaAttendanceWorkflow'
+// Sprint 382 — Workflow Card Actions
+import { makeLastCardAction } from '@/components/assistant/donnaWorkflowCardActions'
+import type { LastCardActionRecord } from '@/components/assistant/donnaWorkflowCardActions'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -659,6 +662,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [preferences, setPreferences] = useState<DonnaPreferences>(() => loadPreferences())
   // Sprint 381 — Attendance exception draft (director-initiated)
   const [attendanceExceptionDraft, setAttendanceExceptionDraft] = useState<AttendanceExceptionDraft | null>(null)
+  // Sprint 382 — Last workflow card action (Dev Tools tracking)
+  const [lastCardAction, setLastCardAction] = useState<LastCardActionRecord | null>(null)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -2986,6 +2991,16 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             <DonnaDailyBriefCard
               brief={dailyBrief}
               onDismiss={() => setDailyBrief(null)}
+              onOpenReviewQueue={() => {
+                const r = makeLastCardAction('open_review_queue')
+                if (r) setLastCardAction(r)
+                void handleOpenReviewQueue()
+              }}
+              onPrepareCoachBriefs={() => {
+                const r = makeLastCardAction('prepare_coach_briefs')
+                if (r) setLastCardAction(r)
+                dispatchCooCommand('coach_brief')
+              }}
             />
           )}
 
@@ -3000,6 +3015,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               report={attentionReport}
               onDismiss={() => setAttentionReport(null)}
               onClose={closePanel}
+              onOpenReviewQueue={() => {
+                const r = makeLastCardAction('open_review_queue')
+                if (r) setLastCardAction(r)
+                void handleOpenReviewQueue()
+              }}
             />
           )}
 
@@ -3013,7 +3033,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 <DonnaRecommendationCard
                   key={rec.id}
                   recommendation={rec}
-                  onAction={handleRecommendationAction}
+                  onAction={(r) => {
+                    const action = makeLastCardAction('view_recommendation_evidence')
+                    if (action) setLastCardAction(action)
+                    handleRecommendationAction(r)
+                  }}
                 />
               ))}
             </div>
@@ -3023,8 +3047,23 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           {communicationDraft && !showMessageReview && (
             <DonnaCommunicationDraftCard
               draft={communicationDraft}
-              onDiscard={() => { setCommunicationDraft(null); setShowMessageReview(false) }}
-              onReview={() => setShowMessageReview(true)}
+              onDiscard={() => {
+                const r = makeLastCardAction('discard_draft')
+                if (r) setLastCardAction(r)
+                setCommunicationDraft(null)
+                setShowMessageReview(false)
+              }}
+              onReview={() => {
+                const r = makeLastCardAction('open_draft_review')
+                if (r) setLastCardAction(r)
+                setShowMessageReview(true)
+              }}
+              onRevise={(cmd) => {
+                const actionId = cmd.includes('warmer') ? 'revise_warmer' : 'revise_shorter'
+                const r = makeLastCardAction(actionId)
+                if (r) setLastCardAction(r)
+                handleVoiceTranscript(cmd)
+              }}
             />
           )}
           {communicationDraft && showMessageReview && (
@@ -3039,7 +3078,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           {attendanceExceptionDraft && (
             <DonnaAttendanceExceptionCard
               draft={attendanceExceptionDraft}
-              onDiscard={() => setAttendanceExceptionDraft(null)}
+              onDiscard={() => {
+                const r = makeLastCardAction('discard_draft')
+                if (r) setLastCardAction(r)
+                setAttendanceExceptionDraft(null)
+              }}
             />
           )}
 
@@ -3786,6 +3829,47 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                     {recommendationSet ? `${recommendationSet.recommendations.length} loaded` : 'not loaded'}
                   </span>
                 </div>
+              </div>
+
+              {/* Sprint 382 — Last workflow card action */}
+              <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
+                <div className="text-text-muted uppercase tracking-widest">Last Card Action</div>
+                {lastCardAction ? (
+                  <>
+                    <div className="text-text-secondary">
+                      Action: <span className="text-lime">{lastCardAction.id}</span>
+                    </div>
+                    <div className="text-text-secondary">
+                      Safety: <span className={
+                        lastCardAction.safetyLevel === 'safe' ? 'text-status-green'
+                          : lastCardAction.safetyLevel === 'blocked' ? 'text-status-red'
+                          : 'text-status-orange'
+                      }>{lastCardAction.safetyLevel}</span>
+                    </div>
+                    <div className="text-text-secondary">
+                      Mutates data: <span className={lastCardAction.mutatesData ? 'text-status-red' : 'text-status-green'}>
+                        {lastCardAction.mutatesData ? 'YES' : 'no'}
+                      </span>
+                    </div>
+                    <div className="text-text-secondary">
+                      Requires approval: <span className={lastCardAction.requiresApproval ? 'text-status-orange' : 'text-text-muted'}>
+                        {lastCardAction.requiresApproval ? 'YES' : 'no'}
+                      </span>
+                    </div>
+                    {lastCardAction.targetRoute && (
+                      <div className="text-text-secondary">
+                        Route: <span className="text-lime">{lastCardAction.targetRoute}</span>
+                      </div>
+                    )}
+                    {lastCardAction.blockedReason && (
+                      <div className="text-status-red truncate">
+                        Blocked: {lastCardAction.blockedReason.slice(0, 50)}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-text-muted italic">No card action yet.</div>
+                )}
               </div>
 
               {/* Sprint 359 — Draft session storage state */}

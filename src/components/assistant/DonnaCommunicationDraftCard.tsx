@@ -1,17 +1,19 @@
 'use client'
 
 // Sprint 366 — Donna Communication Draft Card V1
-// Compact display card for in-progress communication drafts.
+// Sprint 382 — Added "Make warmer" / "Make shorter" revision buttons + review CTA
+//              for draft status (not just ready). Sending remains blocked.
 // Never shows a "Send" button — always shows "Review before sending".
 // No DB writes. No API calls.
 
-import { X, MessageSquare } from 'lucide-react'
+import { X, MessageSquare, Wand2 } from 'lucide-react'
 import type { CommunicationDraft } from './donnaCommunicationDraft'
 
 interface Props {
   draft: CommunicationDraft
   onDiscard: () => void
   onReview?: () => void
+  onRevise?: (command: string) => void
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -27,10 +29,11 @@ const STATUS_STYLES = {
   blocked: { bg: 'rgba(255,59,48,0.08)',  border: '1px solid rgba(255,59,48,0.2)',   color: '#FF3B30' },
 }
 
-export function DonnaCommunicationDraftCard({ draft, onDiscard, onReview }: Props) {
+export function DonnaCommunicationDraftCard({ draft, onDiscard, onReview, onRevise }: Props) {
   const statusStyle = STATUS_STYLES[draft.status]
   const typeLabel = TYPE_LABELS[draft.type] ?? draft.type
   const bodyPreview = draft.body ? draft.body.slice(0, 120) + (draft.body.length > 120 ? '…' : '') : null
+  const hasBody = !!draft.body && draft.body.trim().length > 0
 
   return (
     <div
@@ -86,6 +89,32 @@ export function DonnaCommunicationDraftCard({ draft, onDiscard, onReview }: Prop
         </div>
       )}
 
+      {/* Revision buttons — only when there is body content to revise */}
+      {hasBody && onRevise && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="flex items-center gap-1 text-[10px] text-text-muted">
+            <Wand2 className="w-3 h-3" />
+            Revise:
+          </span>
+          <button
+            type="button"
+            onClick={() => onRevise('make the message warmer and more personal')}
+            className="text-[10px] px-2 py-1 rounded-md font-medium transition-all hover:opacity-80"
+            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', color: '#c4b5fd' }}
+          >
+            Make warmer
+          </button>
+          <button
+            type="button"
+            onClick={() => onRevise('make the message shorter and more concise')}
+            className="text-[10px] px-2 py-1 rounded-md font-medium transition-all hover:opacity-80"
+            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', color: '#c4b5fd' }}
+          >
+            Make shorter
+          </button>
+        </div>
+      )}
+
       {/* Review boundary notice — never a "Send" button */}
       <div
         className="rounded-lg px-2.5 py-1.5"
@@ -98,7 +127,7 @@ export function DonnaCommunicationDraftCard({ draft, onDiscard, onReview }: Prop
 
       {/* Action buttons */}
       <div className="flex items-center gap-2">
-        {draft.status === 'ready' && onReview && (
+        {hasBody && onReview && (
           <button
             onClick={onReview}
             className="btn-lime text-xs px-3 py-1.5"
