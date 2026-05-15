@@ -8,6 +8,21 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-15 — Sprint 387: Sessions Detail DONNA Context V1
+
+**What changed:** Added `donnaPageContextRegistry` entry for `/director/sessions/[sessionId]` and four "Ask DONNA" prompt chips on the session detail page. The session detail is now DONNA-capable — the panel will match this route and surface the correct intro and suggested prompts.
+
+**Integrates with:**
+- `donnaPageContextRegistry` — new entry inserted between Sessions list entry and Player Profile entry; correctly ordered before `/director` prefix-match fallback
+- `src/app/director/sessions/[sessionId]/page.tsx` — chips section added after session header, before Curriculum Focus section; display-only spans, no server actions involved
+
+**Decisions recorded:**
+- Chips are display-only `<span>` elements (`cursor-default select-none`). Wiring them to open the DONNA panel with pre-filled text requires the DONNA panel's internal state — deferred to a future polish sprint (same decision pattern as Sprint 386 Today's Academy chips).
+- The existing "Coach Briefing" section (deterministic synthesis, no AI) was NOT replaced or modified — it remains as the server-rendered static brief. The DONNA chips are a separate, additive section for AI-assisted drafting via the panel.
+- `draft_coach_communication` is already wired in the DONNA layer (Sprint context). The registry entry makes it discoverable from this route.
+
+---
+
 ## 2026-05-15 — Sprint 386: Today's Academy V1
 
 **What changed:** New route `/director/today` — the director's morning anchor screen. Shows today's sessions, stat strip, risk flags, DONNA Intelligence section, and quick actions. DONNA context entry added for this route.
@@ -144,4 +159,4 @@ Do not record:
 
 ---
 
-*Last updated: Sprint 385.5*
+*Last updated: Sprint 387*

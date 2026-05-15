@@ -31,6 +31,27 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 387 — Sessions Detail DONNA Context V1
+
+**Date:** 2026-05-15
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** 24 PASS / 0 FAIL / 1 WARN (WARN: test DB has 0 sessions — chip code verified by static analysis)
+**Files committed:**
+- `src/components/assistant/donnaPageContextRegistry.ts`
+- `src/app/director/sessions/[sessionId]/page.tsx`
+- `docs/CHANGELOG.md`
+- `docs/SPRINT_BOARD.md`
+- `docs/MERGE_QUEUE.md`
+- `docs/INTEGRATION_LOG.md`
+- `docs/QA_GATE.md`
+- `docs/MODULE_MATURITY_MAP.md`
+- `docs/SCREEN_BACKEND_READINESS_MAP.md`
+**Commit hash:** *(pending)*
+**Push result:** *(pending)*
+**Issues:** None
+
+---
+
 ### Sprint 386 — Today's Academy V1
 
 **Date:** 2026-05-15
@@ -121,4 +142,4 @@ This file records:
 
 ---
 
-*Last updated: Sprint 385.5*
+*Last updated: Sprint 387*

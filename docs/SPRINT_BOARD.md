@@ -13,9 +13,9 @@ How to use:
 
 ## Active Sprint
 
-### Sprint 387 — Sessions Detail DONNA Context V1
+### Sprint 388 — Level Up / Readiness Review V1
 
-**Status:** READY — awaiting PM/CTO Agent to open session
+**Status:** READY — next sprint
 
 **Phase checklist:**
 - [ ] `PLAN: ✓`
@@ -23,6 +23,15 @@ How to use:
 - [ ] `QA: ✓`
 - [ ] `UIUX: ✓`
 - [ ] `DOCS: ✓`
+
+**Sprint spec (source: `SCREEN_BACKEND_READINESS_MAP.md` Screen 6):**
+
+Goal: Build `/director/level-up` — the Level Up / Readiness Review screen. Query `getReassessmentPipeline()`, render player readiness cards, filter row, wire "Review" CTA to `review_level_readiness` DONNA task.
+
+**Architecture red line:** Level movement MUST go through `proposed_actions` → director approval → `finalize_player_placement()`. No exceptions. Never auto-execute.
+
+**Migration required:** No
+**DB schema changes:** No
 
 **Sprint spec (source: `SCREEN_BACKEND_READINESS_MAP.md`):**
 
@@ -38,6 +47,23 @@ Goal: Add DONNA context entry for `/director/sessions/[sessionId]` and wire "Dra
 ---
 
 ## Completed This Run
+
+### Sprint 387 — Sessions Detail DONNA Context V1 ✓
+
+**Status:** COMPLETE — all phases passed
+
+**Phase checklist:**
+- [x] `PLAN: ✓` — PM/CTO confirmed scope (context-only, no migration)
+- [x] `BUILD: ✓` — 2 files modified, tsc clean
+- [x] `QA: ✓` — 24 PASS / 0 FAIL / 1 WARN (test DB has no sessions — chip code verified statically)
+- [x] `UIUX: ✓` — chip styling matches Sprint 386 pattern, design system compliant
+- [x] `DOCS: ✓` — all 7 docs updated
+
+**Files modified:**
+- `src/components/assistant/donnaPageContextRegistry.ts`
+- `src/app/director/sessions/[sessionId]/page.tsx`
+
+---
 
 ### Sprint 386 — Today's Academy V1 ✓
 
@@ -120,7 +146,7 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 | Sprint | Screen | Route | Readiness | Notes |
 |---|---|---|---|---|
-| 387 | Sessions Detail DONNA | `/director/sessions/[sessionId]` | Level 6 → 8 | Add DONNA context; wire coach brief CTA |
+| 388 | Level Up Review | `/director/level-up` | Level 3 → 8 | New route; readiness list; red line: finalize_player_placement() only |
 | 388 | Level Up Review | `/director/level-up` | Level 3 → 8 | New route; readiness list; red line: finalize_player_placement() only |
 | 389 | Parent Comms Center | `/director/parents` | Level 3 → 8 | New route; proposed_actions filter; parent-safe preview |
 | 390 | Coach Recap + Context | `/coach/recap`, `/coach/sessions/[sessionId]` | Level 6 → 7 | Context entry + /coach/recap shortcut only |
@@ -133,7 +159,8 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 | Sprint | Description | Commit | Date |
 |---|---|---|---|
-| 386 | Today's Academy V1 | *(pending commit)* | 2026-05-15 |
+| 387 | Sessions Detail DONNA Context V1 | *(pending commit)* | 2026-05-15 |
+| 386 | Today's Academy V1 | a5d1a5f | 2026-05-15 |
 | 385.5 | Five-Agent Workflow Setup V1 | 16db990 | 2026-05-15 |
 | 385 | Prototype Screen Adoption Audit V1 | d390ca4 | 2026-05-15 |
 | 384 | DONNA Modularization for Parallel Agent Development V1 | fffdd1e | 2026-05-15 |
@@ -142,4 +169,4 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 ---
 
-*Last updated: Sprint 386*
+*Last updated: Sprint 387*

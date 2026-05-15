@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-15 — Sprint 387: Sessions Detail DONNA Context V1
+
+**Route targeted:** `/director/sessions/[sessionId]`
+
+**Goal:** Make the session detail page DONNA-aware by registering its context in `donnaPageContextRegistry` and surfacing four pre-session prompt chips on the page.
+
+**Files modified:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — Added `/director/sessions/[sessionId]` context entry (all 10 DonnaPageContext fields). Placed after the Sessions list entry and before Player Profile, correctly ordered before the `/director` prefix-match fallback.
+- `src/app/director/sessions/[sessionId]/page.tsx` — Added "Ask DONNA" prompt chips section after the session header and before Curriculum Focus. Four display-only chips matching the session's key DONNA actions.
+
+**DONNA context entry added:**
+- `routePattern: '/director/sessions/[sessionId]'`
+- `screenName: 'Director Session Plan'`
+- `objectType: 'session'`
+- `safeDraftActions`: draft_coach_brief, summarize_session_plan, identify_missing_blocks, show_session_risks
+- `approvalRequiredFor`: publish_session_plan, send_coach_brief, update_session_blocks, official_session_status_change
+- `unsafeActions`: auto_send_coach_brief, auto_modify_session_plan, auto_publish_session, auto_change_roster
+- `suggestedPrompts`: "Draft a coach brief for this session.", "What is missing from this session plan?", "Summarise this session for the coach.", "What should I review before this session?"
+
+**No migrations. No new server actions. Context-only sprint.**
+
+---
+
 ## 2026-05-15 — Sprint 386: Today's Academy V1
 
 **Route added:** `/director/today`

@@ -303,6 +303,53 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     unsafeActions: ['auto_create_session', 'cancel_session_without_approval'],
   },
 
+  // ── Session Detail ────────────────────────────────────────────────────────
+  {
+    routePattern: '/director/sessions/[sessionId]',
+    screenName: 'Director Session Plan',
+    objectType: 'session',
+    purpose:
+      'Review and finalise the plan for a single session — blocks, curriculum focus, coach briefing, roster intelligence, and adaptive suggestions. The pre-session command screen.',
+    nextAction: 'Ask DONNA to draft a coach brief or identify what is missing before the session starts.',
+    assistantIntro:
+      'I can help you draft a coach brief, summarise what is planned for this session, flag what is missing, or identify risks before the session starts. Anything I produce needs your review before it leaves this screen.',
+    readableContext: [
+      'session',
+      'session_blocks',
+      'session_status',
+      'coach_assignment',
+      'template_connection',
+      'player_roster',
+      'curriculum_focus',
+      'adaptive_suggestions',
+      'coach_notes',
+    ],
+    safeDraftActions: [
+      'draft_coach_brief',
+      'summarize_session_plan',
+      'identify_missing_blocks',
+      'show_session_risks',
+    ],
+    approvalRequiredFor: [
+      'publish_session_plan',
+      'send_coach_brief',
+      'update_session_blocks',
+      'official_session_status_change',
+    ],
+    suggestedPrompts: [
+      'Draft a coach brief for this session.',
+      'What is missing from this session plan?',
+      'Summarise this session for the coach.',
+      'What should I review before this session?',
+    ],
+    unsafeActions: [
+      'auto_send_coach_brief',
+      'auto_modify_session_plan',
+      'auto_publish_session',
+      'auto_change_roster',
+    ],
+  },
+
   // ── Player Profile ────────────────────────────────────────────────────────
   {
     routePattern: '/director/players/[playerId]',

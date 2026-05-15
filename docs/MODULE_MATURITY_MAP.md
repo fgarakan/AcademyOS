@@ -44,13 +44,13 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | `sessions` table + RLS | 10 | Stable. All session fields typed. |
 | `session_blocks` table + RLS | 10 | Separate from `template_blocks` (red line enforced). |
 | Sessions list route (`/director/sessions`) | 10 | Renders real data, filtered by academy. |
-| Session detail route (`/director/sessions/[sessionId]`) | 8 | Route built, blocks shown. DONNA context NOT registered. |
+| Session detail route (`/director/sessions/[sessionId]`) | 8 | Route built, blocks shown. DONNA context registered Sprint 387. |
 | Coach sessions route (`/coach/sessions`) | 8 | Built. Coach-gated queries. |
 | Coach session workspace (`/coach/sessions/[sessionId]`) | 8 | Built. Wrap-up drawer functional. |
 | `create_session` server action | 9 | Wired. Goes through `proposed_actions`. |
 | `populate_session_from_template` server action | 9 | Wired. Copies template blocks. |
 | `applyWrapUpDraftAction` | 8 | Built. Wrap-up applied on director approval. |
-| Session detail DONNA context | 3 | Missing. Needed before Sprint 387. |
+| Session detail DONNA context | 8 | Registered Sprint 387. Prompt chips added to page. |
 | `/director/sessions/[sessionId]/brief` route | 0 | Plan only. No build yet. |
 
 **Rating: 9** — Core sessions backend is complete. DONNA context for detail + coach brief route are the remaining gaps.
@@ -196,7 +196,7 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | Module | Level | Sprint to reach Level 10 |
 |---|---|---|
 | Auth & Identity | 9 | Sprint 392+ (platform_roles migration) |
-| Sessions | 9 | Sprint 387 (session detail DONNA context + brief route) |
+| Sessions | 9 | Sprint 390 (coach session DONNA context) |
 | Templates | 10 | Done |
 | Players | 9 | Sprint 388 (Level Up screen) |
 | Curriculum | 8 | Sprint 388 (Level Up screen) |
@@ -208,4 +208,4 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 
 ---
 
-*Last updated: Sprint 385*
+*Last updated: Sprint 387*

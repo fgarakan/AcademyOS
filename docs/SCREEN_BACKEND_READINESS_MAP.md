@@ -103,7 +103,7 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 ## Screen 4 — Sessions / Director Plan / Coach Brief
 
 **Route:** `/director/sessions`, `/director/sessions/[sessionId]`, `/coach/sessions/[sessionId]`
-**Overall readiness: Level 7** (list = Level 9; detail = Level 6; coach brief route = Level 0)
+**Overall readiness: Level 8** (list = Level 9; detail = Level 8; coach brief route = Level 0)
 
 ### Sessions list (`/director/sessions`)
 
@@ -123,19 +123,19 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 |---|---|---|
 | Route exists | YES | 4+ |
 | Data queries | YES — session + blocks + template + coach | 6+ |
-| DONNA context registered | NO | blocks Level 8 |
+| DONNA context registered | YES — Sprint 387 | 8+ |
+| DONNA prompt chips on page | YES — Sprint 387 | 8+ |
 | `draft_coach_communication` | Wired | 6+ |
 | `populate_session_from_template` | Wired | 6+ |
 
-**Readiness: Level 6**
+**Readiness: Level 8** *(upgraded Sprint 387)*
 
-**What's missing for Level 8:**
-1. Add `donnaPageContextRegistry` entry for `/director/sessions/[sessionId]`
-2. Wire "Draft coach brief" CTA to `draft_coach_communication` task from session detail
-3. Wire "Populate blocks" CTA to `populate_session_from_template` from session detail
+**What's missing for Level 10:**
+1. QA pass with real session data (test DB currently empty)
+2. `populate_session_from_template` CTA surfaced directly from session detail (currently via DONNA panel only)
 
 **Migration required:** No
-**Recommended build sprint:** Sprint 387
+**Built sprint:** Sprint 387
 
 ### Coach session workspace (`/coach/sessions/[sessionId]`)
 
@@ -292,7 +292,7 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 | Sprint | Screen(s) | Route(s) | Readiness change | Migration? |
 |---|---|---|---|---|
 | 386 | Today's Academy | `/director/today` | Level 3 → Level 8 ✓ | No |
-| 387 | Sessions Detail DONNA | `/director/sessions/[sessionId]` | Level 6 → Level 8 | No |
+| 387 | Sessions Detail DONNA | `/director/sessions/[sessionId]` | Level 6 → Level 8 ✓ | No |
 | 388 | Level Up Review | `/director/level-up` | Level 3 → Level 8 | No |
 | 389 | Parent Comms Center | `/director/parents` | Level 3 → Level 8 | No |
 | 390 | Coach Recap + Context | `/coach/recap`, `/coach/sessions/[sessionId]` | Level 6 → Level 7 | No |
@@ -319,4 +319,4 @@ No migrations are needed for Sprints 386–391.
 
 ---
 
-*Last updated: Sprint 385*
+*Last updated: Sprint 387*

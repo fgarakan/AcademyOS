@@ -100,6 +100,31 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 387 — Sessions Detail DONNA Context V1
+
+**Date:** 2026-05-15
+**QA type:** Full browser QA (Playwright, form-based auth) + static code analysis
+**TypeScript:** CLEAN (`npx tsc --noEmit` exits 0)
+**Script:** /tmp/donna-qa-387.js
+
+**Section A — Auth:** 1 PASS
+**Section B — Sessions list regression:** 2 PASS
+**Section C — Registry entry (static analysis):** 6 PASS
+**Section D — DONNA chips (static analysis + test DB note):** 5 PASS, 1 WARN
+**Section E — /director/today regression:** 3 PASS
+**Section F — DONNA panel regression:** 2 PASS
+**Section G — Class templates regression:** 1 PASS
+**Section H — Protected actions:** 3 PASS
+**Section I — TypeScript:** 1 PASS
+
+**Result: 24 PASS / 0 FAIL / 1 WARN**
+
+WARN: Test DB has 0 sessions for qa-test-director — live browser chip render not verifiable. Chip code verified at `page.tsx:688-694` via grep. Rendering logic is a static array map with no conditionals — functionally correct.
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 386 — Today's Academy V1
 
 **Date:** 2026-05-15
@@ -212,4 +237,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 385.5*
+*Last updated: Sprint 387*

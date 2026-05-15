@@ -683,6 +683,26 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
         <DirectorSessionStatusCTA sessionId={session.id} initialStatus={session.status} />
       </div>
 
+      {/* DONNA Session Intelligence — prompt chips for pre-session tasks */}
+      <div className="px-4 py-3 rounded-xl bg-surface border border-border">
+        <p className="text-[9px] uppercase tracking-widest text-text-muted mb-2.5">Ask DONNA</p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            'Draft a coach brief for this session.',
+            'What is missing from this session plan?',
+            'Summarise this session for the coach.',
+            'What should I review before this session?',
+          ].map((prompt) => (
+            <span
+              key={prompt}
+              className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] text-text-secondary bg-surface-raised border border-border cursor-default select-none"
+            >
+              {prompt}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Curriculum Focus — near top for coaching context */}
       {curriculumContext && (
         <div>
