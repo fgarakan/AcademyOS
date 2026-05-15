@@ -31,6 +31,29 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 386 — Today's Academy V1
+
+**Date:** 2026-05-15
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** 30 PASS / 0 FAIL / 1 WARN (WARN: pre-existing 406 from background Supabase call, not Sprint 386)
+**Files committed:**
+- `src/app/director/today/page.tsx`
+- `src/app/director/today/loading.tsx`
+- `src/app/director/today/error.tsx`
+- `src/components/assistant/donnaPageContextRegistry.ts`
+- `docs/CHANGELOG.md`
+- `docs/SPRINT_BOARD.md`
+- `docs/MERGE_QUEUE.md`
+- `docs/INTEGRATION_LOG.md`
+- `docs/QA_GATE.md`
+- `docs/MODULE_MATURITY_MAP.md`
+- `docs/SCREEN_BACKEND_READINESS_MAP.md`
+**Commit hash:** *(pending)*
+**Push result:** *(pending)*
+**Issues:** None
+
+---
+
 ### Sprint 385.5 — Five-Agent Workflow Setup V1
 
 **Date:** 2026-05-15

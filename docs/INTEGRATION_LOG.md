@@ -8,6 +8,25 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-15 — Sprint 386: Today's Academy V1
+
+**What changed:** New route `/director/today` — the director's morning anchor screen. Shows today's sessions, stat strip, risk flags, DONNA Intelligence section, and quick actions. DONNA context entry added for this route.
+
+**Integrates with:**
+- `sessions` table — filtered by `scheduled_date = today` (server-side date string)
+- `session_blocks` table — block count per session for "No blocks" risk flag
+- `proposed_actions` table — pending review count badge
+- `profiles` + `templates` tables — coach and template names (batch fetch)
+- `donnaPageContextRegistry` — new entry for `/director/today` with all 10 required fields
+- Director layout (`src/app/director/layout.tsx`) — unchanged; DONNA panel renders automatically
+
+**Decisions recorded:**
+- Daily brief and attention items are NOT fetched server-side in `page.tsx`. Reason: calling `/api/donna/attention` and `/api/donna/brief` from a server component requires absolute URLs and adds latency to page render. These are AI-powered and belong in the DONNA panel flow. The "DONNA Intelligence" card on the page prompts the director to open the DONNA panel.
+- DONNA suggestion chips are display-only (not interactive triggers). Reason: wiring them to open the DONNA panel with pre-filled text requires a client component and the DONNA panel's internal state — deferred to a future polish sprint.
+- `getTodayString()` uses `new Date().toISOString().split('T')[0]` (UTC). This is server-side, so the date is deterministic regardless of the director's timezone. Edge case: directors in UTC+ timezones may see "today" as one day behind late at night. Acceptable for V1.
+
+---
+
 ## 2026-05-15 — Sprint 385.5: Five-Agent Workflow Setup V1
 
 **What changed:** Created 6 agent workflow docs. No source code touched.

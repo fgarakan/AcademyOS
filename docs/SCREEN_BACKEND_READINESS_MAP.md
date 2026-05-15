@@ -77,34 +77,26 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 
 ## Screen 3 — Today's Academy
 
-**Route:** `/director/today` *(does not exist)*
-**Overall readiness: Level 3**
+**Route:** `/director/today` *(built Sprint 386)*
+**Overall readiness: Level 8**
 
 | Dimension | Status | Level |
 |---|---|---|
 | Data model | Sessions, players, attention API, brief API — all available | 6 |
-| Route exists | NO | 0 |
-| DONNA context registered | NO | 0 |
-| Server actions available | YES — sessions queries, `/api/donna/attention`, `/api/donna/brief` | 6 |
-| `proposed_actions` pipeline | Available | 6 |
-| Demo-safe fallback | Static sessions array + brief text available | — |
-
-**What's missing for Level 8:**
-1. Create route `/director/today` with `page.tsx` and director layout
-2. Add `donnaPageContextRegistry` entry for `/director/today`
-3. Wire session list query filtered by `scheduled_date = today`
-4. Render attention card from `/api/donna/attention`
-5. Render daily brief card from `/api/donna/brief`
-6. Render review queue count badge
-7. DONNA panel opens with today-specific intro
+| Route exists | YES — built Sprint 386 | 8+ |
+| DONNA context registered | YES — Sprint 386 | 8+ |
+| Session list query | YES — `scheduled_date = today`, server-side UTC date | 8+ |
+| Stats strip | YES — Sessions Today, Completed, Pending Review, Risk Flags | 8+ |
+| Risk flags | YES — missing blocks + pending review count | 8+ |
+| DONNA suggestion chips | YES — 4 chips rendered | 8+ |
+| Server-rendered brief/attention | NO — accessed via DONNA panel | — |
 
 **What's missing for Level 10:**
-- QA pass on date filtering (test timezone edge cases)
-- No stale-data regression (verify date filter is server-time, not client-time)
+- DONNA suggestion chips wired to open panel with pre-filled prompt (future polish)
+- Timezone-aware date filter (UTC+ directors may see off-by-one late at night)
 
 **Migration required:** No
-**Effort estimate:** 1 sprint
-**Recommended build sprint:** Sprint 386 (highest readiness, no migration, data all available)
+**Built sprint:** Sprint 386
 
 ---
 
@@ -299,7 +291,7 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 
 | Sprint | Screen(s) | Route(s) | Readiness change | Migration? |
 |---|---|---|---|---|
-| 386 | Today's Academy | `/director/today` | Level 3 → Level 8 | No |
+| 386 | Today's Academy | `/director/today` | Level 3 → Level 8 ✓ | No |
 | 387 | Sessions Detail DONNA | `/director/sessions/[sessionId]` | Level 6 → Level 8 | No |
 | 388 | Level Up Review | `/director/level-up` | Level 3 → Level 8 | No |
 | 389 | Parent Comms Center | `/director/parents` | Level 3 → Level 8 | No |

@@ -13,16 +13,42 @@ How to use:
 
 ## Active Sprint
 
-### Sprint 386 — Today's Academy V1
+### Sprint 387 — Sessions Detail DONNA Context V1
 
 **Status:** READY — awaiting PM/CTO Agent to open session
 
 **Phase checklist:**
-- [ ] `PLAN: ✓` — PM/CTO Agent confirms scope and human approves
-- [ ] `BUILD: ✓` — Builder Agent implements, tsc clean
-- [ ] `QA: ✓` — QA Agent runs browser QA, 0 FAIL
-- [ ] `UIUX: ✓` — UI/UX Agent verifies design system
-- [ ] `DOCS: ✓` — Docs Agent updates CHANGELOG + integration docs
+- [ ] `PLAN: ✓`
+- [ ] `BUILD: ✓`
+- [ ] `QA: ✓`
+- [ ] `UIUX: ✓`
+- [ ] `DOCS: ✓`
+
+**Sprint spec (source: `SCREEN_BACKEND_READINESS_MAP.md`):**
+
+Goal: Add DONNA context entry for `/director/sessions/[sessionId]` and wire "Draft coach brief" + "Populate blocks" CTAs from session detail.
+
+**Files to modify:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — add entry for `/director/sessions/[sessionId]`
+- `src/app/director/sessions/[sessionId]/page.tsx` — add "Draft coach brief" DONNA prompt CTA (if not already present)
+
+**Migration required:** No
+**DB schema changes:** No
+
+---
+
+## Completed This Run
+
+### Sprint 386 — Today's Academy V1 ✓
+
+**Status:** COMPLETE — all phases passed
+
+**Phase checklist:**
+- [x] `PLAN: ✓` — PM/CTO confirmed scope
+- [x] `BUILD: ✓` — 3 files created, 1 modified, tsc clean
+- [x] `QA: ✓` — 30 PASS / 0 FAIL / 1 WARN (pre-existing 406)
+- [x] `UIUX: ✓` — design system verified, no blocking issues
+- [x] `DOCS: ✓` — CHANGELOG, SPRINT_BOARD, MERGE_QUEUE, INTEGRATION_LOG, QA_GATE, MODULE_MATURITY_MAP, SCREEN_BACKEND_READINESS_MAP all updated
 
 **Sprint spec (source: `SCREEN_BACKEND_READINESS_MAP.md` + `PROTOTYPE_SCREEN_ADOPTION_MAP.md`):**
 
@@ -107,7 +133,8 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 | Sprint | Description | Commit | Date |
 |---|---|---|---|
-| 385.5 | Five-Agent Workflow Setup V1 | *(this sprint)* | 2026-05-15 |
+| 386 | Today's Academy V1 | *(pending commit)* | 2026-05-15 |
+| 385.5 | Five-Agent Workflow Setup V1 | 16db990 | 2026-05-15 |
 | 385 | Prototype Screen Adoption Audit V1 | d390ca4 | 2026-05-15 |
 | 384 | DONNA Modularization for Parallel Agent Development V1 | fffdd1e | 2026-05-15 |
 | 383.5 | Fix class template level to development_track mapping | 4bb6834 | 2026-05-15 |
@@ -115,4 +142,4 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 ---
 
-*Last updated: Sprint 385.5*
+*Last updated: Sprint 386*

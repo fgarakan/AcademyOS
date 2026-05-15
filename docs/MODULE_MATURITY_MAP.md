@@ -170,9 +170,9 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | `/api/donna/brief` | 8 | Built. Sprint 369. Returns daily brief. |
 | Recommendation engine | 8 | Sprint 374–375. Rule-based, client-side. |
 | Learning feedback signals | 8 | Sprint 376. Captured on card actions. |
-| Today's Academy screen | 0 | Route does not exist. Primary surface for signals. Proposed Sprint 386. |
+| Today's Academy screen | 10 | Route built Sprint 386. Sessions, stat strip, DONNA context, risk flags. |
 
-**Rating: 7** — Signals APIs are built. Today's Academy screen (primary display surface) is missing.
+**Rating: 8** — Today's Academy screen built. Signals APIs are wired. AI-powered attention/brief still go through DONNA panel (not server-rendered).
 
 ---
 
@@ -203,7 +203,7 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | DONNA / Proposed Actions | 9 | Ongoing (4 stub tasks) |
 | Communications | 6 | Sprint 389 (parent comms screen) + future (email delivery) |
 | Attendance | 9 | No blockers — QA ongoing |
-| Signals | 7 | Sprint 386 (Today's Academy screen) |
+| Signals | 8 | Sprint 387+ (session detail DONNA context) |
 | Platform | 2 | Sprint 392+ (migration required first) |
 
 ---

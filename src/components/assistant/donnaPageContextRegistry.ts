@@ -394,6 +394,49 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     unsafeActions: ['auto_act_on_signals', 'send_alerts_without_approval'],
   },
 
+  // ── Today's Academy ──────────────────────────────────────────────────────────
+  {
+    routePattern: '/director/today',
+    screenName: "Today's Academy",
+    objectType: 'today_overview',
+    purpose:
+      "See everything happening today — sessions on court, what needs attention, and what needs your approval. The morning anchor screen.",
+    nextAction: 'Ask DONNA for your daily brief or open the review queue.',
+    assistantIntro:
+      "I can see today's sessions, what needs your attention, and your pending review items. Ask me for your daily brief, to check what needs approval, or to log an attendance exception.",
+    readableContext: [
+      'todays_sessions',
+      'session_block_status',
+      'pending_reviews',
+      'attention_flags',
+      'coach_assignments',
+      'risk_flags',
+    ],
+    safeDraftActions: [
+      'what_needs_attention',
+      'daily_brief',
+      'attendance_exception_draft',
+      'capture_coach_note',
+      'show_review_queue',
+    ],
+    approvalRequiredFor: [
+      'session_status_change',
+      'official_attendance_write',
+      'session_creation',
+    ],
+    suggestedPrompts: [
+      "What needs my attention today?",
+      "Give me my daily brief.",
+      "Log an attendance exception.",
+      "What needs approval?",
+    ],
+    unsafeActions: [
+      'auto_update_session_status',
+      'bulk_attendance_write',
+      'auto_session_creation',
+    ],
+  },
+
   // ── Dashboard — registered last so /director prefix doesn't shadow other routes ──
   {
     routePattern: '/director',

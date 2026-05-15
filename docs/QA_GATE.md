@@ -100,6 +100,30 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 386 — Today's Academy V1
+
+**Date:** 2026-05-15
+**QA type:** Full browser QA (Playwright, form-based auth)
+**TypeScript:** CLEAN (`npx tsc --noEmit` exits 0)
+**Script:** /tmp/donna-qa-386.js
+
+**Section A — /director regression:** 3 PASS
+**Section B — /director/today core:** 3 PASS
+**Section C — Key UI sections:** 8 PASS
+**Section D — DONNA availability:** 2 PASS
+**Section E — Stability:** 1 PASS, 1 WARN
+**Section F — Safety:** 5 PASS
+**Section G — Template + session + review regression:** 5 PASS
+**Section H — Edge cases:** 2 PASS
+
+**Result: 30 PASS / 0 FAIL / 1 WARN**
+
+WARN: `Failed to load resource: 406 ()` — pre-existing background Supabase call (present in prior sprints, not caused by Sprint 386). Likely `academy_suggestions` or similar table returning 406 in test environment.
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 385.5 — Five-Agent Workflow Setup V1
 
 **Date:** 2026-05-15

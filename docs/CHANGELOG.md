@@ -2,6 +2,66 @@
 
 ---
 
+## 2026-05-15 — Sprint 386: Today's Academy V1
+
+**Route added:** `/director/today`
+
+**Goal:** Build the director's morning anchor screen — a purpose-built "Today" view showing what is happening today, what needs attention, and what needs approval. Replaces scrolling through the general dashboard for daily operating context.
+
+**Files created:**
+- `src/app/director/today/page.tsx` — Server component. Queries: today's sessions (filtered by `scheduled_date = today`), coach names (batch from `profiles`), template names (batch from `templates`), session block counts (from `session_blocks`), pending review count (from `proposed_actions`). Renders: header with date in `font-mono text-lime`, stat strip (Sessions Today, Completed, Pending Review, Risk Flags), session list with status pills + block-missing warning, DONNA Intelligence section with 4 suggestion chips, Risk Flags card, Quick Actions panel.
+- `src/app/director/today/loading.tsx` — Animated skeleton loading state using `SkeletonCard` from `src/components/ui`.
+- `src/app/director/today/error.tsx` — Error boundary with retry button and "Go to Dashboard" fallback.
+
+**Files modified:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — Added `/director/today` context entry (all 10 DonnaPageContext fields). Entry placed before the `/director` dashboard fallback so it matches correctly. `assistantIntro`, `suggestedPrompts`, `safeDraftActions`, `approvalRequiredFor`, `unsafeActions` all set correctly.
+
+**Data source approach:**
+- All data from direct Supabase queries — no fetch() to internal APIs
+- Sessions filtered server-side with `scheduled_date = today` using `new Date().toISOString().split('T')[0]`
+- Attention items and daily brief are NOT fetched server-side — DONNA panel handles these via existing COO commands (`what_needs_attention`, `daily_brief`)
+- Session block counts derived from `session_blocks` table join — sessions with `blockCount === 0` flagged as "No blocks"
+
+**DONNA context entry:**
+- `routePattern: '/director/today'`
+- `screenName: "Today's Academy"`
+- `suggestedPrompts`: "What needs my attention today?", "Give me my daily brief.", "Log an attendance exception.", "What needs approval?"
+- `unsafeActions`: auto_update_session_status, bulk_attendance_write, auto_session_creation
+
+**QA result:** 30 PASS / 0 FAIL / 1 WARN
+- WARN: 406 from background Supabase call — pre-existing issue, not Sprint 386
+- Auth via login form (form-based, not manual cookie)
+- DONNA panel opens on `/director/today` ✓
+- Stat strip renders correctly ✓
+- Session list (or empty state) renders ✓
+- All prior sprint regression tests pass ✓
+
+**UI/UX result:**
+- Background `#0A0A0A` ✓ (CSS var `--bg-app`)
+- h1 text-primary ✓
+- Lime accents: 21 elements ✓
+- Card components (not raw divs): 31 surface elements ✓
+- Director sidebar 240px (`w-60`) ✓
+- `label-xs` utility: 7 uses ✓
+- `font-mono` numbers: 13 elements ✓
+- Mobile: h1 visible, content scrollable ✓
+
+**Safety:**
+- No migrations ✓
+- No schema changes ✓
+- No protected execution ✓
+- No external sends ✓
+- No roster/player/attendance mutations ✓
+
+**Known limitations:**
+- DONNA suggestion chips are display-only; they do not pre-fill the DONNA input on click (future polish sprint)
+- Attention items and daily brief content not fetched server-side; director must open DONNA panel to access them
+- Session time display shows `scheduled_time` if available; otherwise falls back to the date string (some sessions may not have time set)
+
+**TypeScript:** clean (`npx tsc --noEmit`)
+
+---
+
 ## 2026-05-15 — Sprint 385.5: Five-Agent Workflow Setup V1
 
 **Goal:** Set up the Option A five-agent sequential workflow for AcademyOS. Documentation only — no runtime code, no migrations, no DB schema changes, no package changes.
