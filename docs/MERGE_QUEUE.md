@@ -31,6 +31,18 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 391 — Coach Recap Structuring and Review Draft V1
+
+**Date:** 2026-05-15
+**Phases:** All ✓
+**QA result:** 26 PASS / 0 FAIL / 0 WARN
+**Files committed:**
+- `src/app/coach/recap/page.tsx`
+- docs (7 files)
+**Commit hash:** *(pending)*
+
+---
+
 ### Sprint 390 — Coach Recap Flow Shell V1
 
 **Date:** 2026-05-15
@@ -194,4 +206,4 @@ This file records:
 
 ---
 
-*Last updated: Sprint 390*
+*Last updated: Sprint 391*

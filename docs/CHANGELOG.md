@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-15 — Sprint 391: Coach Recap Structuring and Review Draft V1
+
+**Route modified:** `/coach/recap`
+
+**Goal:** Upgrade the recap review screen to show structured draft sections with pipeline labels. No backend writes — client-side structuring only.
+
+**Files modified:**
+- `src/app/coach/recap/page.tsx` — Added `buildDraftSections()` and `DraftSectionCard` component. Review screen now shows 5 structured sections (Attendance Note, Session Plan, Player Observations, Safety/Readiness, Parent Follow-Up) with pipeline destination labels (→ Attendance Exception Draft, → Session Actual Draft, etc.). Added "View raw answers" disclosure toggle. Updated submit note to explain session ID requirement for full pipeline integration.
+
+**Structured sections:**
+1. Attendance Note → Attendance Exception Draft
+2. Session Plan → Session Actual Draft
+3. Player Observations → Player Observation Draft
+4. Safety/Readiness → Director Review Item
+5. Parent/Director Follow-Up → Parent-Safe Draft Placeholder
+
+**No backend writes.** Sprint 392 (coach session workspace integration) will connect these to `saveWrapUpDraftAction` with a real sessionId.
+
+---
+
 ## 2026-05-15 — Sprint 390: Coach Recap Flow Shell V1
 
 **Route added:** `/coach/recap`

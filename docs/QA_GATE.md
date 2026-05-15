@@ -100,6 +100,19 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 391 — Coach Recap Structuring and Review Draft V1
+
+**Date:** 2026-05-15
+**QA type:** Full browser QA (Playwright) — full recap flow with 6 answers
+**TypeScript:** CLEAN
+**Script:** /tmp/donna-qa-391.js
+
+**Result: 26 PASS / 0 FAIL / 0 WARN**
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 390 — Coach Recap Flow Shell V1
 
 **Date:** 2026-05-15
@@ -289,4 +302,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 390*
+*Last updated: Sprint 391*

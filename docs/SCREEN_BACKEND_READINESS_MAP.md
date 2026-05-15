@@ -302,4 +302,4 @@ No migrations are needed for Sprints 386–391.
 
 ---
 
-*Last updated: Sprint 390*
+*Last updated: Sprint 391*

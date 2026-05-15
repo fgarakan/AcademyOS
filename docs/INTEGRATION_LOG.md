@@ -8,6 +8,20 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-15 — Sprint 391: Coach Recap Structuring and Review Draft V1
+
+**What changed:** `/coach/recap` review screen enhanced with structured draft sections. Answers now display as 5 pipeline-preview cards, each showing what the content would become in the director review queue. Raw answers available via disclosure toggle.
+
+**Integrates with:**
+- `/coach/recap` — replaces flat Q&A review with structured section cards
+- Pipeline preview labels match existing action types: Attendance Exception Draft, Session Actual Draft, Player Observation Draft, Director Review Item, Parent-Safe Draft Placeholder
+
+**Decisions recorded:**
+- No backend write added in Sprint 391. `saveWrapUpDraftAction` requires a `sessionId` FK that the standalone `/coach/recap` page doesn't have. Full pipeline write will be Sprint session workspace integration in a later sprint.
+- `buildDraftSections()` is a pure client-side function — no server calls, no side effects. Safe to use anywhere.
+
+---
+
 ## 2026-05-15 — Sprint 390: Coach Recap Flow Shell V1
 
 **What changed:** New route `/coach/recap` — a client-side 6-question session recap shell for coaches. Progress indicator, one-question-at-a-time flow, review screen, submitted confirmation. No backend writes.

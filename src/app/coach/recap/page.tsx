@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, ArrowRight, CheckCircle2, Mic, ClipboardList } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Mic, ClipboardList, Users, Activity, Star, AlertTriangle, MessageSquare, FileText } from 'lucide-react'
 import Link from 'next/link'
 
 // ── Questions ─────────────────────────────────────────────────────────────────
@@ -88,6 +88,84 @@ function ReviewAnswerCard({ q, answer }: { q: typeof RECAP_QUESTIONS[number]; an
   )
 }
 
+// ── Structured draft preview section ──────────────────────────────────────────
+
+interface DraftSection {
+  icon: React.ElementType
+  label: string
+  pipelineLabel: string
+  color: string
+  content: string | null
+  placeholder: string
+}
+
+function buildDraftSections(answers: Answers): DraftSection[] {
+  return [
+    {
+      icon: Users,
+      label: 'Attendance Note',
+      pipelineLabel: 'Attendance Exception Draft',
+      color: 'text-status-orange',
+      content: answers.attendance?.trim() || null,
+      placeholder: 'No attendance answer provided.',
+    },
+    {
+      icon: Activity,
+      label: 'Session Plan',
+      pipelineLabel: 'Session Actual Draft',
+      color: 'text-status-blue',
+      content: answers.session_plan?.trim() || null,
+      placeholder: 'No session plan answer provided.',
+    },
+    {
+      icon: Star,
+      label: 'Player Observations',
+      pipelineLabel: 'Player Observation Draft',
+      color: 'text-lime',
+      content: [answers.standouts, answers.attention].filter(Boolean).join(' | ') || null,
+      placeholder: 'No player observation answers provided.',
+    },
+    {
+      icon: AlertTriangle,
+      label: 'Safety / Readiness',
+      pipelineLabel: 'Director Review Item',
+      color: 'text-status-red',
+      content: answers.safety?.trim() || null,
+      placeholder: 'No safety concerns noted.',
+    },
+    {
+      icon: MessageSquare,
+      label: 'Parent / Director Follow-Up',
+      pipelineLabel: 'Parent-Safe Draft Placeholder',
+      color: 'text-text-muted',
+      content: answers.followup?.trim() || null,
+      placeholder: 'No follow-up items noted.',
+    },
+  ]
+}
+
+function DraftSectionCard({ section }: { section: DraftSection }) {
+  const Icon = section.icon
+  return (
+    <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Icon className={`w-3.5 h-3.5 shrink-0 ${section.color}`} />
+          <p className="text-[11px] font-semibold text-text-primary">{section.label}</p>
+        </div>
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider text-text-muted bg-surface border border-border">
+          → {section.pipelineLabel}
+        </span>
+      </div>
+      {section.content ? (
+        <p className="text-sm text-text-secondary leading-relaxed pl-5">{section.content}</p>
+      ) : (
+        <p className="text-sm text-text-muted italic pl-5">{section.placeholder}</p>
+      )}
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function CoachRecapPage() {
@@ -156,6 +234,7 @@ export default function CoachRecapPage() {
 
   // ── Review ──
   if (stage === 'review') {
+    const draftSections = buildDraftSections(answers)
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-3">
@@ -166,22 +245,38 @@ export default function CoachRecapPage() {
             <ArrowLeft className="w-4 h-4 text-text-muted" />
           </button>
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-text-muted">Review</p>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted">Structured Draft Preview</p>
             <h1 className="text-lg font-bold text-text-primary">Session Recap</h1>
           </div>
+          <FileText className="w-5 h-5 text-text-muted ml-auto shrink-0" />
         </div>
 
-        <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
+        <div className="px-4 py-3 rounded-xl bg-surface border border-border">
           <p className="text-[10px] text-text-muted leading-relaxed">
-            Review your answers before submitting. Nothing is saved to the database yet — a director will review all items before anything becomes official.
+            Your answers have been organised into draft sections below. Each section shows what it will become in the director review queue. Nothing is official until the director approves.
           </p>
         </div>
 
+        {/* Structured draft sections */}
         <div className="space-y-3">
-          {RECAP_QUESTIONS.map(q => (
-            <ReviewAnswerCard key={q.id} q={q} answer={answers[q.id] ?? ''} />
+          {draftSections.map(s => (
+            <DraftSectionCard key={s.label} section={s} />
           ))}
         </div>
+
+        {/* Raw answers toggle */}
+        <details className="group">
+          <summary className="flex items-center gap-2 cursor-pointer text-[11px] text-text-muted hover:text-text-secondary transition-colors list-none">
+            <span className="group-open:hidden">▶</span>
+            <span className="hidden group-open:inline">▼</span>
+            View raw answers
+          </summary>
+          <div className="mt-3 space-y-2">
+            {RECAP_QUESTIONS.map(q => (
+              <ReviewAnswerCard key={q.id} q={q} answer={answers[q.id] ?? ''} />
+            ))}
+          </div>
+        </details>
 
         <div className="pt-2">
           <button
@@ -191,7 +286,7 @@ export default function CoachRecapPage() {
             Submit for Director Review
           </button>
           <p className="text-[10px] text-text-muted text-center mt-2">
-            No official writes occur — this creates a draft pending director approval.
+            Session ID required for full pipeline write — connect from a session workspace to submit to the review queue.
           </p>
         </div>
       </div>
