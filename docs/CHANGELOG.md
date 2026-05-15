@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-15 — Sprint 372: Donna Attendance Exception Draft V1
+
+**Goal:** Refine the attendance exception workflow with typed draft utilities.
+
+**Files created:**
+- `src/components/assistant/donnaAttendanceWorkflow.ts` — `AttendanceExceptionDraft` type, `ATTENDANCE_EXCEPTION_QUESTIONS` (3 slot-filling questions), `createAttendanceExceptionDraft`, `attendanceExceptionReadyToSubmit`, `formatAttendanceException`. The existing `saveAttendanceExceptionDraftAction` (Sprint 274) handles DB submission — no new server actions.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 371: Donna Coach Brief Draft V1
 
 **Goal:** Donna can draft a structured brief for a coach about their upcoming session.
