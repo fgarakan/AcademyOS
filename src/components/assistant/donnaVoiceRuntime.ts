@@ -125,6 +125,8 @@ export const VOICE_PROTECTED_PHRASES: readonly string[] = [
   'apply it', 'send it', 'move her up', 'move him up', 'move them up',
   'approve it', 'confirm it', 'save it now', 'do it',
   'go ahead and apply', 'go ahead and send', 'go ahead and save', 'execute it',
+  // Sprint 346: explicit save phrases that must always require the on-screen button
+  'save it', 'save this', 'save the draft', 'save this draft',
 ]
 
 export function isProtectedVoicePhrase(lower: string): boolean {

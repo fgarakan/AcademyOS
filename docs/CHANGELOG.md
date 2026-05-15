@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-15 — Sprint 346: Donna Golden Path Bug Fixes V1
+
+**Goal:** Fix three bugs found during static QA of Sprint 336–345. Completes the full end-to-end golden path for `class_template_creation`.
+
+**Files modified:**
+- `src/components/assistant/donnaConversationController.ts` — (1) Expanded revision handler phase guard from `state.phase === 'collecting'` to `(state.phase === 'collecting' || state.phase === 'ready_for_review')` so revision commands ("Make it more competitive") work after all required fields are filled. (2) Added `[DonnaGoldenPath] revision_applied` console log. (3) Added `[DonnaGoldenPath] protected_action_blocked` console log in `approve_or_execute` handler. (4) Added `[DonnaGoldenPath] undo_applied` console log in undo handler.
+- `src/components/assistant/donnaVoiceRuntime.ts` — Added four phrases to `VOICE_PROTECTED_PHRASES`: `'save it'`, `'save this'`, `'save the draft'`, `'save this draft'`. Previously only `'save it now'` was protected; "save it" by itself fell through to the unknown handler and returned a generic "I'm not sure" message instead of the correct "use the on-screen button" message.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Fixed `protected_action_blocked` golden path checklist condition from `convState.lastIntent?.requiresApproval === true` (always false for `approve_or_execute` intents, which correctly have `requiresApproval: false`) to `convState.lastIntent?.intentType === 'approve_or_execute'`.
+
+**Golden path after this sprint:**
+1. "Create a class template for Orange 2 focused on forehand prep" → draft created, level + focusAreas pre-filled, Donna asks for duration ✅
+2. "90 minutes" → same draft updated, durationMinutes collected, draft becomes `ready_for_review` ✅
+3. "Make it more competitive" → revision fires even in `ready_for_review`, version increments, preview updates ✅
+4. "Undo that" → reverts the competitive revision only ✅
+5. "Show me the draft" → review panel opens ✅
+6. "Save it" → `approve_or_execute` intent, Donna blocks with correct message, QA checklist `protected_action_blocked = ✓` ✅
+
+**TypeScript:** Clean — `npx tsc --noEmit` passes with no errors.
+**Migrations:** None.
+**DB changes:** None.
+
+---
+
 ## 2026-05-15 — Mega Sprint 336–345: Donna Execution Proof + Golden Path QA V1
 
 **Goal:** Prove Donna can complete one full end-to-end operating loop reliably for `class_template_creation`. All 10 golden path states verified: draft_started → collecting → revision → undo → review_requested → protected_action_blocked.

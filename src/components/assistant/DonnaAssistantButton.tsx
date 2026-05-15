@@ -3194,7 +3194,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                             { label: 'focusAreas collected',       done: !!convState.activeDraft.fields['focusAreas'] },
                             { label: 'ready_for_preview',          done: s.isComplete },
                             { label: 'review_panel_open',          done: convShowDraftReview },
-                            { label: 'protected_action_blocked',   done: convState.lastIntent?.requiresApproval === true },
+                            { label: 'protected_action_blocked',   done: convState.lastIntent?.intentType === 'approve_or_execute' },
                           ].map(({ label, done }) => (
                             <div key={label} className={done ? 'text-status-green' : 'text-text-muted'}>
                               {done ? '✓' : '○'} {label}

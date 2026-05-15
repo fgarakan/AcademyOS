@@ -296,6 +296,11 @@ export function handleInput(
     const speakText = nextQ
       ? `Undone. ${nextQ.question}`
       : "Undone. The draft is back to its previous state."
+    console.log('[DonnaGoldenPath] undo_applied', {
+      version: reverted.history.length + 1,
+      phase: reverted.phase,
+      fields: Object.keys(reverted.fields),
+    })
     return buildCollectingTurn(stateWithIntent, reverted, speakText)
   }
 
@@ -326,6 +331,10 @@ export function handleInput(
 
   // ── Protected approval phrase ────────────────────────────────────────────────
   if (intent.intentType === 'approve_or_execute') {
+    console.log('[DonnaGoldenPath] protected_action_blocked', {
+      input: text,
+      activeDraft: state.activeDraft?.taskId ?? null,
+    })
     return idleTurn(
       stateWithIntent,
       intent.safeResponse,
@@ -350,7 +359,12 @@ export function handleInput(
   }
 
   // ── Natural revision command (when active draft exists) ───────────────────────
-  if (state.activeDraft !== null && state.phase === 'collecting') {
+  // Sprint 346: allow revisions in both collecting AND ready_for_review phases —
+  // the draft is ready to review but the director may still want to refine it.
+  if (
+    state.activeDraft !== null &&
+    (state.phase === 'collecting' || state.phase === 'ready_for_review')
+  ) {
     const revision = detectRevisionCommand(text)
     if (revision) {
       let fieldValue = revision.value
@@ -362,6 +376,13 @@ export function handleInput(
       const updated = updateDraft(state.activeDraft, revision.fieldId, fieldValue)
       const nextQ = getNextQuestion(updated)
       const workflow = getWorkflow(updated.workflowId ?? ('' as WorkflowId))
+
+      console.log('[DonnaGoldenPath] revision_applied', {
+        fieldId: revision.fieldId,
+        value: fieldValue,
+        version: updated.history.length + 1,
+        phase: updated.phase,
+      })
 
       if (updated.phase === 'ready_for_review') {
         const finalized = markReadyForReview(updated)
