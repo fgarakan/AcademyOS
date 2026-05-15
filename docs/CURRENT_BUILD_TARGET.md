@@ -1,15 +1,44 @@
 # Current Build Target
 
-**Last updated:** 2026-05-04
-**Current phase:** Phase 1 — Director-facing player operating spine + Voice Intake OS Foundation (Sprints 219–249 complete)
+**Last updated:** 2026-05-15
+**Current phase:** Phase 1 — Donna COO Foundation Layer COMPLETE (Mega Sprint 359–378 complete)
 
 ---
 
 ## Active target
 
-**Voice Intake OS Foundation** — Sprint 249 complete.
+**Donna COO Foundation Layer — Mega Sprint 359–378 COMPLETE (2026-05-15)**
 
-Next up: **Step 5 — Director Dashboard** `/director` or **Step 6 — Placement Engine**.
+Donna has been built out from a class-template assistant into an executive assistant / COO foundation layer. All 20 sprints complete and pushed.
+
+Next up: Sprint 379+ — Director-initiated Donna workflows or Production readiness pass.
+
+---
+
+## Donna COO Foundation Layer — COMPLETE (Sprints 359–378)
+
+| Sprint | Deliverable | Status |
+|---|---|---|
+| 359 | Draft Persistence (sessionStorage) | COMPLETE |
+| 360 | Version History Panel | COMPLETE |
+| 361 | Audit Trail (in-memory) | COMPLETE |
+| 362 | Approval Contract | COMPLETE |
+| 363 | Role Permission Matrix | COMPLETE |
+| 364 | Protected Action Registry | COMPLETE |
+| 365 | Execution Adapter + Registry | COMPLETE |
+| 366 | Communication Draft + Card | COMPLETE |
+| 367 | Parent-Safe Rules + Content Filter | COMPLETE |
+| 368 | Message Review Panel | COMPLETE |
+| 369 | Daily Brief (API route + card) | COMPLETE |
+| 370 | What Needs Attention Engine | COMPLETE |
+| 371 | Coach Brief Workflow | COMPLETE |
+| 372 | Attendance Exception Workflow | COMPLETE |
+| 373 | Review Queue Badge Integration | COMPLETE |
+| 374 | Recommendation Object Model | COMPLETE |
+| 375 | Rule-Based Recommendation Engine + Card | COMPLETE |
+| 376 | Learning Feedback Signals | COMPLETE |
+| 377 | Preference Memory (localStorage) | COMPLETE |
+| 378 | COO Command QA + Demo Readiness | COMPLETE |
 
 ---
 

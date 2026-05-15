@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-15 — Sprint 378: Donna COO Command QA + Demo Readiness
+
+**Goal:** QA sweep and demo readiness for the full Mega Sprint 359–378 block.
+
+**QA results:** 24 PASS, 0 FAIL, 1 WARN (review queue count = 0 in test env — expected).
+
+**Files created:**
+- `/tmp/pw-qa/test-378.cjs` — Playwright QA test: golden path regression (6 steps), Sprint 373 review queue badge, Sprint 374/375 recommendation engine, Sprint 376 learning signals, Sprint 377 preference memory (localStorage), API smoke tests (brief + attention + unauthenticated 401), no-crash final check.
+
+**Files modified:**
+- `docs/CURRENT_BUILD_TARGET.md` — Updated to mark Mega Sprint 359–378 COMPLETE. Added full sprint table. Updated active target and next step.
+- `docs/CHANGELOG.md` — Sprint 378 entry.
+
+**Permanent golden path:** PASS — all 6 steps (create Orange 2 → 90m → competitive → undo → show draft → save blocked).
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 377: Donna Preference Memory V1
 
 **Goal:** Donna persists director preferences across sessions using localStorage.
