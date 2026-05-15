@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-15 — Sprint 374: Donna Recommendation Object Model V1
+
+**Goal:** Define the typed recommendation object model that Sprint 375's rule-based engine will produce.
+
+**Files created:**
+- `src/components/assistant/donnaRecommendationTypes.ts` — Pure types: `RecommendationCategory`, `RecommendationPriority`, `RecommendationActionType`, `RecommendationAction`, `DonnaRecommendation`, `DonnaRecommendationSet`. Functions: `sortRecommendations` (priority-first sort), `createEmptyRecommendationSet`, `buildRecommendationSet`.
+
+**No files modified.** Pure types — zero DB, zero API, zero React.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 373: Donna Review Queue Integration V1
 
 **Goal:** Show a live review queue badge in the Donna panel header and auto-mention pending items on panel open.
