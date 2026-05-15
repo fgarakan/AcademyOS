@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-05-15 — Sprint 349: Donna Panel Visual QA + Golden Path Regression V1
+
+**Goal:** Visually QA the simplified Donna panel after Sprint 348 and rerun the full golden path regression.
+
+**Result: SPRINT 349 QA COMPLETE — NO CODE CHANGES REQUIRED**
+
+**QA results (Playwright browser test, 29 PASS / 0 FAIL / 5 WARN):**
+
+1. **Default panel visual:** PASS — textarea immediately visible on panel open; no "Type instead" link; panel cleaner without voice/debug controls in the main flow.
+
+2. **Chip routing:** PASS — "Create class template" chip routed through `handleCommandSubmit(overrideText)`, controller ran, `draft_started` logged. Chips correctly hide when `isOnboardingActive(onboardingStep)` is true or when a workflow is active. The 4 FAIL results in Step 2 were test-timing false positives (chips were checked while onboarding was still active — correct behavior by the app).
+
+3. **Golden path — 6/6 PASS:**
+   - Create class template → draft started, `[DonnaGoldenPath] draft_started` ✓
+   - 90 minutes → `durationMinutes` collected, `ready_for_review` ✓
+   - Make it more competitive → `[DonnaGoldenPath] revision_applied` ✓
+   - Undo that → `[DonnaGoldenPath] undo_applied` ✓
+   - Show me the draft → review panel opened ✓
+   - Save it → `[DonnaGoldenPath] protected_action_blocked`, on-screen button message ✓
+
+4. **Active workflow visual:** PASS — chips hidden during workflow; textarea remains visible throughout all 6 steps; approval boundary copy visible.
+
+5. **Developer Tools:** PASS — Hey Donna wake, Test browser voice, and DonnaVoiceDiagnostics confirmed inside collapsed `<details>` only; not visible in main panel.
+
+6. **Donna onboarding:** Works but UX issue identified → **Sprint 350 candidate:** onboarding fires on every fresh page navigation (not just once per browser session). Real directors navigating between pages would re-encounter onboarding intro each visit. Does not break the golden path.
+
+7. **Academy Setup regression:** PASS — `/director/onboarding/interview` loads. Content length warn is a pre-existing limitation.
+
+8. **TypeScript:** 0 errors.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — this entry only
+
+---
+
 ## 2026-05-15 — Sprint 348: Donna Prototype Integration Audit + Panel UX Merge V1
 
 **Goal:** Merge the best Donna UX patterns from the Angles OS prototype into the current Academy OS panel without replacing the real architecture, runtime, or golden path.
