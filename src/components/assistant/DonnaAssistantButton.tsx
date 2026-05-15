@@ -544,7 +544,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
   // Voice-specific local state — transcript never sent to AI or written to DB
   const [voiceTranscript, setVoiceTranscript] = useState<string | null>(null)
-  const [typeInstead, setTypeInstead] = useState(false)
   const [typedText, setTypedText] = useState('')
 
   // Context retrieval state — read-only live data summary, no DB writes (Sprint 265)
@@ -684,7 +683,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   useEffect(() => {
     setActiveMode(null)
     setVoiceTranscript(null)
-    setTypeInstead(false)
     setTypedText('')
     setTemplateDraft(null)
     setGenericDraft(null)
@@ -770,7 +768,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // 7. Navigation / help commands      → detectAndHandleCommand
   function handleVoiceTranscript(text: string) {
     setVoiceTranscript(text)
-    setTypeInstead(false)
     const lower = text.toLowerCase()
 
     // Sprint 315–321: Run conversation controller to track intent and handle undo/go-back.
@@ -1044,7 +1041,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     }
     const handled = detectAndHandleCommand(prompt)
     if (!handled) {
-      setTypeInstead(true)
       setTypedText(prompt)
     }
   }
@@ -1690,14 +1686,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     return false
   }
 
-  function handleCommandSubmit() {
-    const text = typedText.trim()
+  function handleCommandSubmit(overrideText?: string) {
+    const text = (overrideText ?? typedText).trim()
     if (!text) return
 
     // Sprint 290: onboarding intro — typed answers route through the onboarding handler.
     if (isOnboardingActive(onboardingStep)) {
       handleOnboardingAnswer(onboardingStep, text)
-      setTypeInstead(false)
       setTypedText('')
       return
     }
@@ -1714,8 +1709,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         workflowId: controllerTurn.nextState.activeDraft.workflowId,
         fields: Object.keys(controllerTurn.nextState.activeDraft.fields),
       })
-      // Sprint 347: keep textarea visible while collecting — director needs to type answers
-      if (controllerTurn.nextState.phase !== 'collecting') setTypeInstead(false)
       setTypedText('')
       return
     }
@@ -1753,8 +1746,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           void handleContextSummary()
           break
       }
-      // Sprint 347: keep textarea visible while collecting — director needs to type answers
-      if (turn.nextState.phase !== 'collecting') setTypeInstead(false)
       setTypedText('')
       return
     }
@@ -1765,7 +1756,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       if (plan) {
         setMultiStepPlan(plan)
         setMultiStepIndex(0)
-        setTypeInstead(false)
         setTypedText('')
         speakAssistantText(plan.summary)
         return
@@ -1778,7 +1768,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       setTemplateDraft(draft)
       setFromVoiceCapture(false)
       setActiveMode('create_template')
-      setTypeInstead(false)
       const firstQ = draft.missingQuestions[0] ?? null
       if (firstQ) speakAssistantText(firstQ.question)
       else speakAssistantText('I have enough to draft this. Review it before saving.')
@@ -1790,7 +1779,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       const { taskId } = detectTaskIntent(text)
       if (taskId && taskId !== 'create_class_template') {
         handleStartGenericTask(taskId, false)
-        setTypeInstead(false)
         setTypedText('')
         return
       }
@@ -1799,7 +1787,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     // Review queue intent — Sprint 273
     if (isReviewQueuePhrase(text.toLowerCase())) {
       void handleOpenReviewQueue()
-      setTypeInstead(false)
       setTypedText('')
       return
     }
@@ -1807,7 +1794,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     // Predictive suggestion phrases (Sprint 267) — before generic context query
     if (isPredictiveSuggestionPhrase(text.toLowerCase())) {
       void handleContextSummary()
-      setTypeInstead(false)
       setTypedText('')
       return
     }
@@ -1815,7 +1801,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     // Context query
     if (isContextQueryPhrase(text.toLowerCase())) {
       void handleContextSummary()
-      setTypeInstead(false)
       setTypedText('')
       return
     }
@@ -1829,7 +1814,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         label: 'Not recognized',
       })
     }
-    setTypeInstead(false)
     setTypedText('')
   }
 
@@ -2062,16 +2046,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                         Realtime voice is not configured. Browser voice or typed setup is available.
                       </p>
                     )}
-                    {/* After any failure: offer typed continuation */}
-                    {(voiceGreetingStatus === 'stalled' || voiceGreetingStatus === 'error' || realtimeStatus === 'error') && (
-                      <button
-                        type="button"
-                        onClick={() => { setTypeInstead(true) }}
-                        className="text-[10px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
-                      >
-                        Continue typed instead
-                      </button>
-                    )}
+                    {/* After any failure: typed input is always available in the panel below */}
                     {/* Voice output confirmation — shown after Donna speaks */}
                     {(voiceGreetingStatus === 'done' || voiceGreetingStatus === 'speaking') && voiceOutputConfirmed === null && (
                       <div className="flex items-center gap-2 pt-0.5">
@@ -2184,39 +2159,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 onSupportedChange={setIsVoiceSupported}
               />
 
-              {/* Hey Donna wake phrase — panel-only, no global always-listening */}
-              <button
-                type="button"
-                onClick={wakeListeningActive ? stopWakeListening : startWakeListening}
-                className="mt-2 w-full text-[11px] rounded-lg px-3 py-1.5 transition-all"
-                style={wakeListeningActive
-                  ? { background: 'rgba(255,59,48,0.08)', border: '1px solid rgba(255,59,48,0.2)', color: '#FF3B30' }
-                  : { background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.18)', color: '#c4b5fd' }
-                }
-              >
-                {wakeListeningActive ? DONNA_WAKE_ACTIVE_LABEL : DONNA_WAKE_LABEL}
-              </button>
-              {wakeDetectedCommand !== null && (
-                <p className="mt-1 text-[10px] text-lime leading-snug">
-                  {wakeDetectedCommand
-                    ? `Donna heard: "${wakeDetectedCommand}"`
-                    : 'Hey Donna detected. Speak your command.'}
-                </p>
-              )}
-
-              {/* Test browser TTS — isolated, no guard or onboarding side effects */}
-              <button
-                type="button"
-                onClick={testBrowserVoice}
-                disabled={testVoiceStatus === 'speaking'}
-                className="mt-1.5 w-full text-[11px] text-text-muted hover:text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-center py-1"
-              >
-                {testVoiceStatus === 'idle' && 'Test Donna browser voice'}
-                {testVoiceStatus === 'speaking' && 'Speaking…'}
-                {testVoiceStatus === 'done' && '✓ Browser voice working'}
-                {testVoiceStatus === 'error' && 'Voice test failed — check browser sound settings'}
-              </button>
-
               {/* Live interim transcript — shown while recognition is active */}
               {isVoiceListening && interimVoiceTranscript && (
                 <div
@@ -2328,77 +2270,161 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 </div>
               )}
 
-              {/* Type instead */}
-              {!typeInstead ? (
+              {/* Primary text input — always visible (Sprint 348) */}
+              <div className="mt-3 space-y-2">
+                <textarea
+                  rows={2}
+                  placeholder='Ask Donna — e.g. "Create a class template for Orange 2."'
+                  value={typedText}
+                  onChange={e => setTypedText(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleCommandSubmit()
+                    }
+                  }}
+                  className="w-full rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
+                  style={{
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                  }}
+                />
                 <button
-                  onClick={() => setTypeInstead(true)}
-                  className="mt-2.5 text-[11px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
+                  onClick={() => handleCommandSubmit()}
+                  disabled={!typedText.trim()}
+                  className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
                 >
-                  Type instead
+                  Send
                 </button>
-              ) : (
-                <div className="mt-3 space-y-2">
-                  <textarea
-                    rows={3}
-                    placeholder='Type a command or question — e.g. "What is this page?" or "Create a template for Orange 2."'
-                    value={typedText}
-                    onChange={e => setTypedText(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleCommandSubmit()
-                      }
-                    }}
-                    className="w-full rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
-                    style={{
-                      background: 'var(--bg-surface)',
-                      border: '1px solid var(--border-subtle)',
-                    }}
-                  />
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      onClick={handleCommandSubmit}
-                      disabled={!typedText.trim()}
-                      className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
-                    >
-                      Send
-                    </button>
-                    <button
-                      onClick={() => { setTypeInstead(false); setTypedText('') }}
-                      className="text-[10px] text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Route-aware suggestions — from page context registry */}
-            <div
-              className="px-4 py-3"
-              style={{
-                borderTop: '1px solid rgba(139,92,246,0.1)',
-                background: 'var(--bg-surface)',
-              }}
-            >
-              <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-2">
-                Suggested questions
-              </p>
-              <div className="space-y-0.5">
-                {voicePrompts.map((prompt, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSuggestionClick(prompt)}
-                    className="w-full text-left text-[11px] text-text-secondary hover:text-text-primary
-                      px-2.5 py-1.5 rounded-lg hover:bg-surface-raised transition-all leading-snug"
-                  >
-                    &ldquo;{prompt}&rdquo;
-                  </button>
-                ))}
               </div>
             </div>
+
+            {/* Suggestion chips — Sprint 348: shown only when no active workflow */}
+            {!isOnboardingActive(onboardingStep) && convState.activeDraft === null && !genericDraft && !templateDraft && (
+              <div
+                className="px-4 py-3"
+                style={{
+                  borderTop: '1px solid rgba(139,92,246,0.1)',
+                  background: 'var(--bg-surface)',
+                }}
+              >
+                <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-2">
+                  Try asking
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Create class template',
+                    'What needs attention today?',
+                    'Help me with Academy Setup',
+                    'Draft a parent update',
+                  ].map(chip => (
+                    <button
+                      key={chip}
+                      onClick={() => handleCommandSubmit(chip)}
+                      className="text-[11px] px-2.5 py-1 rounded-full transition-all leading-snug"
+                      style={{
+                        background: 'rgba(139,92,246,0.08)',
+                        border: '1px solid rgba(139,92,246,0.2)',
+                        color: '#c4b5fd',
+                      }}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* ── Sprint 322: Active conversation draft card — Sprint 348: promoted above mode buttons ── */}
+          {/* Shown when the conversation controller owns an active draft (no legacy draft running). */}
+          {convState.activeDraft !== null && !genericDraft && !templateDraft && (
+            <>
+              <DonnaDraftCard
+                draft={convState.activeDraft}
+                onUndo={handleConvUndo}
+                onStartOver={handleConvStartOver}
+                onDiscard={handleConvDiscard}
+                onReview={handleConvReview}
+              />
+
+              {/* Sprint 336–345: Class template live preview — shown when workflow is class_template_creation */}
+              {convState.activeDraft.workflowId === 'class_template_creation' && (
+                <DonnaClassTemplateDraftPreviewFromDraft draft={convState.activeDraft} />
+              )}
+
+              {/* Sprint 322 Phase 8 — Draft review panel: shown when director says "show me the draft" */}
+              {convShowDraftReview && (() => {
+                const summary = summarizeDraft(convState.activeDraft)
+                return (
+                  <div
+                    className="rounded-xl p-4 space-y-3"
+                    style={{ background: 'var(--surface-raised)', border: '1px solid rgba(200,255,0,0.2)' }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] uppercase tracking-widest font-semibold text-lime">
+                        Draft Review
+                      </p>
+                      <button
+                        onClick={() => setConvShowDraftReview(false)}
+                        aria-label="Close draft review"
+                        className="text-text-muted hover:text-text-primary transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    {/* Collected fields */}
+                    {summary.fieldLines.length > 0 ? (
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">
+                          What I have
+                        </p>
+                        {summary.fieldLines.map(({ label, value }) => (
+                          <div key={label} className="flex items-start gap-1.5 text-[11px]">
+                            <span className="text-lime mt-px shrink-0">·</span>
+                            <span>
+                              <span className="text-text-muted uppercase tracking-wide text-[10px]">{label}: </span>
+                              <span className="text-text-primary">{value}</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-text-muted italic">No fields collected yet.</p>
+                    )}
+
+                    {/* Still needed */}
+                    {summary.missingRequiredIds.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">
+                          Still needed
+                        </p>
+                        {summary.missingRequiredIds.map(fieldId => (
+                          <p key={fieldId} className="text-[11px] text-text-muted">· {fieldId.replace(/_/g, ' ')}</p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* What approval would do */}
+                    <div
+                      className="px-3 py-2 rounded-lg"
+                      style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.12)' }}
+                    >
+                      <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold mb-0.5">
+                        What approval does
+                      </p>
+                      <p className="text-[11px] text-text-secondary leading-snug">
+                        {convState.activeDraft.phase === 'ready_for_review'
+                          ? 'This draft is ready. Clicking the approval button will save it safely with a full audit trail.'
+                          : 'Answer remaining questions, then click the approval button — nothing saves until you do.'}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })()}
+            </>
+          )}
 
           {/* ── Command response card ── */}
           {commandResponse && (
@@ -2941,96 +2967,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </button>
           )}
 
-          {/* ── Sprint 322: Active conversation draft card ── */}
-          {/* Shown when the conversation controller owns an active draft (no legacy draft running). */}
-          {convState.activeDraft !== null && !genericDraft && !templateDraft && (
-            <>
-              <DonnaDraftCard
-                draft={convState.activeDraft}
-                onUndo={handleConvUndo}
-                onStartOver={handleConvStartOver}
-                onDiscard={handleConvDiscard}
-                onReview={handleConvReview}
-              />
-
-              {/* Sprint 336–345: Class template live preview — shown when workflow is class_template_creation */}
-              {convState.activeDraft.workflowId === 'class_template_creation' && (
-                <DonnaClassTemplateDraftPreviewFromDraft draft={convState.activeDraft} />
-              )}
-
-              {/* Sprint 322 Phase 8 — Draft review panel: shown when director says "show me the draft" */}
-              {convShowDraftReview && (() => {
-                const summary = summarizeDraft(convState.activeDraft)
-                return (
-                  <div
-                    className="rounded-xl p-4 space-y-3"
-                    style={{ background: 'var(--surface-raised)', border: '1px solid rgba(200,255,0,0.2)' }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-widest font-semibold text-lime">
-                        Draft Review
-                      </p>
-                      <button
-                        onClick={() => setConvShowDraftReview(false)}
-                        aria-label="Close draft review"
-                        className="text-text-muted hover:text-text-primary transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-
-                    {/* Collected fields */}
-                    {summary.fieldLines.length > 0 ? (
-                      <div className="space-y-1.5">
-                        <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">
-                          What I have
-                        </p>
-                        {summary.fieldLines.map(({ label, value }) => (
-                          <div key={label} className="flex items-start gap-1.5 text-[11px]">
-                            <span className="text-lime mt-px shrink-0">·</span>
-                            <span>
-                              <span className="text-text-muted uppercase tracking-wide text-[10px]">{label}: </span>
-                              <span className="text-text-primary">{value}</span>
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[11px] text-text-muted italic">No fields collected yet.</p>
-                    )}
-
-                    {/* Still needed */}
-                    {summary.missingRequiredIds.length > 0 && (
-                      <div className="space-y-1">
-                        <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">
-                          Still needed
-                        </p>
-                        {summary.missingRequiredIds.map(fieldId => (
-                          <p key={fieldId} className="text-[11px] text-text-muted">· {fieldId.replace(/_/g, ' ')}</p>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* What approval would do */}
-                    <div
-                      className="px-3 py-2 rounded-lg"
-                      style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.12)' }}
-                    >
-                      <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold mb-0.5">
-                        What approval does
-                      </p>
-                      <p className="text-[11px] text-text-secondary leading-snug">
-                        {convState.activeDraft.phase === 'ready_for_review'
-                          ? 'This draft is ready. Clicking the approval button will save it safely with a full audit trail.'
-                          : 'Answer remaining questions, then click the approval button — nothing saves until you do.'}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })()}
-            </>
-          )}
-
           {/* ── Mode buttons ── */}
           <div className="space-y-1.5">
             <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
@@ -3136,13 +3072,66 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* Sprint 336–345 — Golden Path QA panel (dev only) */}
+          {/* Sprint 336–348 — Developer Tools panel (dev only) */}
           {process.env.NODE_ENV !== 'production' && (
             <details className="mx-4 mb-2">
               <summary className="text-[10px] uppercase tracking-widest text-text-muted cursor-pointer">
-                Golden Path QA
+                Developer Tools
               </summary>
-              <div className="mt-2 p-2 rounded text-[11px] font-mono space-y-1" style={{ background: 'var(--surface-raised)' }}>
+              <div className="mt-2 space-y-3">
+
+              {/* Hey Donna wake phrase — panel-only, no global always-listening */}
+              <div>
+                <button
+                  type="button"
+                  onClick={wakeListeningActive ? stopWakeListening : startWakeListening}
+                  className="w-full text-[11px] rounded-lg px-3 py-1.5 transition-all"
+                  style={wakeListeningActive
+                    ? { background: 'rgba(255,59,48,0.08)', border: '1px solid rgba(255,59,48,0.2)', color: '#FF3B30' }
+                    : { background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.18)', color: '#c4b5fd' }
+                  }
+                >
+                  {wakeListeningActive ? DONNA_WAKE_ACTIVE_LABEL : DONNA_WAKE_LABEL}
+                </button>
+                {wakeDetectedCommand !== null && (
+                  <p className="mt-1 text-[10px] text-lime leading-snug">
+                    {wakeDetectedCommand
+                      ? `Donna heard: "${wakeDetectedCommand}"`
+                      : 'Hey Donna detected. Speak your command.'}
+                  </p>
+                )}
+              </div>
+
+              {/* Test browser TTS — isolated, no guard or onboarding side effects */}
+              <button
+                type="button"
+                onClick={testBrowserVoice}
+                disabled={testVoiceStatus === 'speaking'}
+                className="w-full text-[11px] text-text-muted hover:text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-center py-1"
+              >
+                {testVoiceStatus === 'idle' && 'Test Donna browser voice'}
+                {testVoiceStatus === 'speaking' && 'Speaking…'}
+                {testVoiceStatus === 'done' && '✓ Browser voice working'}
+                {testVoiceStatus === 'error' && 'Voice test failed — check browser sound settings'}
+              </button>
+
+              {/* Voice diagnostics */}
+              <DonnaVoiceDiagnostics
+                realtimeStatus={realtimeStatus}
+                realtimeUnavailableReason={realtimeUnavailableReason}
+                voiceGreetingStatus={voiceGreetingStatus}
+                isSpeaking={isSpeaking}
+                isVoiceListening={isVoiceListening}
+                isVoiceSupported={isVoiceSupported}
+                voiceMode={activatedVoiceModeRef.current}
+                wakeListeningActive={wakeListeningActive}
+                onTestRealtime={() => { void playOnboardingVoice() }}
+                onTestBrowserVoice={testBrowserVoice}
+                onResetVoice={resetVoice}
+              />
+
+              {/* Golden Path QA state */}
+              <div className="p-2 rounded text-[11px] font-mono space-y-1" style={{ background: 'var(--surface-raised)' }}>
                 {/* Controller state */}
                 <div className="text-text-muted text-[10px] uppercase tracking-widest">Controller</div>
                 <div className="text-text-secondary">Phase: <span className="text-lime">{convState.phase}</span></div>
@@ -3208,23 +3197,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   )
                 })()}
               </div>
+              </div>
             </details>
           )}
-
-          {/* Dev-only QA harness — Mega Sprint 297–310 */}
-          <DonnaVoiceDiagnostics
-            realtimeStatus={realtimeStatus}
-            realtimeUnavailableReason={realtimeUnavailableReason}
-            voiceGreetingStatus={voiceGreetingStatus}
-            isSpeaking={isSpeaking}
-            isVoiceListening={isVoiceListening}
-            isVoiceSupported={isVoiceSupported}
-            voiceMode={activatedVoiceModeRef.current}
-            wakeListeningActive={wakeListeningActive}
-            onTestRealtime={() => { void playOnboardingVoice() }}
-            onTestBrowserVoice={testBrowserVoice}
-            onResetVoice={resetVoice}
-          />
 
         </div>
 

@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-15 — Sprint 348: Donna Prototype Integration Audit + Panel UX Merge V1
+
+**Goal:** Merge the best Donna UX patterns from the Angles OS prototype into the current Academy OS panel without replacing the real architecture, runtime, or golden path.
+
+**Changes in `DonnaAssistantButton.tsx`:**
+
+1. **Always-visible typed input (removed `typeInstead` toggle):** The "Type instead" link and the associated `useState(false)` for `typeInstead` have been removed. The textarea is now always rendered — no click required to reveal it. All 14+ `setTypeInstead(...)` call sites were cleaned up. The Sprint 347 collecting-phase fix is preserved inherently: the textarea is always visible, so it never disappears during a workflow.
+
+2. **`handleCommandSubmit(overrideText?: string)`:** Added an optional `overrideText` parameter so chip buttons can submit text directly without a stale React state race. Chips call `handleCommandSubmit(chipText)` synchronously.
+
+3. **4 suggestion chips replace route-aware voice prompt list:** The route-aware `voicePrompts` list was replaced with four fixed chip buttons — "Create class template", "What needs attention today?", "Help me with Academy Setup", "Draft a parent update". Chips are hidden during an active workflow (`convState.activeDraft !== null`) and during Donna intro onboarding. All chips route through `handleCommandSubmit`.
+
+4. **Active draft card promoted:** The `DonnaDraftCard` / draft review / class template preview block was moved from below the mode-buttons section to immediately after the suggestion chips — the top of the scrollable content when a workflow is active.
+
+5. **Debug voice controls collapsed into dev-only `<details>`:** "Hey Donna" wake phrase button, "Test Donna browser voice" button, and `DonnaVoiceDiagnostics` (which was previously rendering in production with no env guard) have been moved into the `<details>` block, renamed "Developer Tools". The block remains `NODE_ENV !== 'production'` gated.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — all five changes above
+
+**TypeScript:** clean (0 errors)
+
+**Golden path preserved:** Create class template → 90 minutes → Make it more competitive → Undo that → Show me the draft → Save it (blocked). All `[DonnaGoldenPath]` console log points intact.
+
+---
+
 ## 2026-05-15 — Sprint 347: Donna Golden Path Browser QA + Typed Input Fix V1
 
 **Goal:** Run the full Donna golden path in a real Playwright browser session and fix all blocking bugs found during the run.
