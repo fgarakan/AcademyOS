@@ -155,6 +155,13 @@ import type { DonnaRecommendationSet, DonnaRecommendation } from '@/components/a
 import { DonnaRecommendationCard } from '@/components/assistant/DonnaRecommendationCard'
 // Sprint 376 — Learning feedback signals
 import { recordSignal } from '@/components/assistant/donnaLearningSignals'
+// Sprint 377 — Preference memory (localStorage-backed)
+import {
+  loadPreferences,
+  recordWorkflowUsed,
+  recordCategoryUsed,
+} from '@/components/assistant/donnaPreferenceMemory'
+import type { DonnaPreferences } from '@/components/assistant/donnaPreferenceMemory'
 // Sprint 361 — Audit trail
 import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
@@ -639,6 +646,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [reviewQueuePendingCount, setReviewQueuePendingCount] = useState<number>(0)
   // Sprint 375 — Rule-based recommendation set (computed from signals on panel open)
   const [recommendationSet, setRecommendationSet] = useState<DonnaRecommendationSet | null>(null)
+  // Sprint 377 — Preference memory (loaded from localStorage on mount)
+  const [preferences, setPreferences] = useState<DonnaPreferences>(() => loadPreferences())
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -896,6 +905,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       })
       appendAuditEvent({ type: 'draft_started', description: 'Draft started via voice', workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       recordSignal('workflow_started', { workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
+      if (controllerTurn.nextState.activeDraft.workflowId) {
+        setPreferences(recordWorkflowUsed(controllerTurn.nextState.activeDraft.workflowId))
+      }
       return
     }
 
@@ -1724,6 +1736,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Dispatches the action from a recommendation. Never mutates data.
   function handleRecommendationAction(rec: DonnaRecommendation) {
     recordSignal('recommendation_acted', { category: rec.category, recommendationId: rec.id })
+    setPreferences(recordCategoryUsed(rec.category))
     switch (rec.action.type) {
       case 'open_review':
         void handleOpenReviewQueue()
@@ -1956,6 +1969,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       })
       appendAuditEvent({ type: 'draft_started', description: 'Draft started via typed input', workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       recordSignal('workflow_started', { workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
+      if (controllerTurn.nextState.activeDraft.workflowId) {
+        setPreferences(recordWorkflowUsed(controllerTurn.nextState.activeDraft.workflowId))
+      }
       setTypedText('')
       return
     }
@@ -3585,6 +3601,17 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   </div>
                 )
               })()}
+
+              {/* Sprint 377 — Preference memory */}
+              <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
+                <div className="text-text-muted uppercase tracking-widest">Preferences (localStorage)</div>
+                <div className="text-text-secondary">
+                  Last workflow: <span className="text-lime">{preferences.lastUsedWorkflowId ?? 'none'}</span>
+                </div>
+                <div className="text-text-secondary">
+                  Frequent categories: <span className="text-lime">{preferences.frequentCategories.join(', ') || 'none'}</span>
+                </div>
+              </div>
 
               {/* Sprint 359 — Draft session storage state */}
               <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>

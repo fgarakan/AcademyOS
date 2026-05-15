@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-15 — Sprint 377: Donna Preference Memory V1
+
+**Goal:** Donna persists director preferences across sessions using localStorage.
+
+**Files created:**
+- `src/components/assistant/donnaPreferenceMemory.ts` — `DonnaPreferences` type (preferVoiceInput, skipGreeting, expandRecommendationsDefault, lastUsedWorkflowId, frequentCategories, preferredParentTone). Functions: `loadPreferences` (reads + merges with defaults), `savePreferences`, `patchPreference`, `recordWorkflowUsed`, `recordCategoryUsed`, `markGreetingSeen`, `clearPreferences`. Key: `academyos:donna:preferences:v1`. Safe to call server-side (no-op when window undefined).
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Imports `loadPreferences`, `recordWorkflowUsed`, `recordCategoryUsed`; initializes `preferences` state via `useState(() => loadPreferences())`; calls `recordWorkflowUsed` when draft started (voice + typed paths); calls `recordCategoryUsed` when recommendation acted on; displays `lastUsedWorkflowId` + `frequentCategories` in Developer Tools panel.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 376: Donna Learning Feedback Signals V1
 
 **Goal:** Donna tracks what it surfaces and what the director acts on — in-memory, session-only, no DB writes.
