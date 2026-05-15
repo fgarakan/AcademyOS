@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-15 — Sprint 373: Donna Review Queue Integration V1
+
+**Goal:** Show a live review queue badge in the Donna panel header and auto-mention pending items on panel open.
+
+**Files created:**
+- `src/components/assistant/DonnaReviewQueueBadge.tsx` — Compact badge component: lime coloring when count ≤ 3, orange when count > 3. Shows "N items need review". Clicking calls `onOpen` callback.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Imports `DonnaReviewQueueBadge`; adds `reviewQueuePendingCount` state (number, initialized to 0); on panel open, fetches review queue count via `getDonnaReviewQueueAction` and sets count + auto-sets `commandResponse` ("You have N items waiting for your review") when count > 0; renders `DonnaReviewQueueBadge` in panel header below the activation help text when count > 0, with `onOpen={handleOpenReviewQueue}`.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 372: Donna Attendance Exception Draft V1
 
 **Goal:** Refine the attendance exception workflow with typed draft utilities.

@@ -146,6 +146,8 @@ import type { AttentionReport } from '@/components/assistant/donnaAttentionEngin
 import { DonnaAttentionCard } from '@/components/assistant/DonnaAttentionCard'
 // Sprint 371 — Coach brief workflow
 import { createCoachBriefDraft } from '@/components/assistant/donnaCoachBriefWorkflow'
+// Sprint 373 — Review queue badge
+import { DonnaReviewQueueBadge } from '@/components/assistant/DonnaReviewQueueBadge'
 // Sprint 361 — Audit trail
 import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
@@ -626,6 +628,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Sprint 370 — Attention report state
   const [attentionReport, setAttentionReport] = useState<AttentionReport | null>(null)
   const [isAttentionLoading, setIsAttentionLoading] = useState(false)
+  // Sprint 373 — Review queue pending count (fetched on panel open)
+  const [reviewQueuePendingCount, setReviewQueuePendingCount] = useState<number>(0)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -2076,6 +2080,20 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               setShowOnboardingSuggestions(false)
             }
           }
+
+          // Sprint 373: fetch review queue count on panel open (read-only, no mutation)
+          void getDonnaReviewQueueAction().then((data) => {
+            if (data && data.totalCount > 0) {
+              setReviewQueuePendingCount(data.totalCount)
+              setCommandResponse({
+                message: `You have ${data.totalCount} ${data.totalCount === 1 ? 'item' : 'items'} waiting for your review.`,
+                type: 'info',
+                label: 'Review Queue',
+              })
+            } else {
+              setReviewQueuePendingCount(0)
+            }
+          }).catch(() => {})
         }}
         aria-label={`Ask ${DONNA_PUBLIC_NAME}`}
         title={`Ask ${DONNA_PUBLIC_NAME}`}
@@ -2156,6 +2174,15 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             <p className="text-[11px] text-text-muted leading-snug">
               {DONNA_ACTIVATION_HELP}
             </p>
+            {/* Sprint 373 — Review queue badge */}
+            {reviewQueuePendingCount > 0 && (
+              <div className="mt-1.5">
+                <DonnaReviewQueueBadge
+                  count={reviewQueuePendingCount}
+                  onOpen={handleOpenReviewQueue}
+                />
+              </div>
+            )}
           </div>
           <button
             onClick={closePanel}
