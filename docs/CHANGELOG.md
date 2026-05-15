@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-15 — Sprint 362: Donna Approval Request Contract V1
+
+**Goal:** Define a typed approval request contract — the shape of what Donna submits for director approval.
+
+**Files created:**
+- `src/components/assistant/donnaApprovalContract.ts` — Pure types + utilities: `DonnaApprovalRequest`, `DonnaApprovalStatus`, `DonnaApprovalRecord`, `createApprovalRequest(draft, requestedBy)`, `formatApprovalSummary(request)`. No React, no API, no DB.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 361: Donna Audit Trail Foundation V1
 
 **Goal:** Local session audit trail — log what Donna proposed and what the director did.
