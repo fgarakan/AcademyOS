@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-05-15 — Sprint 384: DONNA Modularization for Parallel Agent Development V1
+
+**Goal:** Refactor `DonnaAssistantButton.tsx` from a 4,168-line monolith into a prop-driven orchestrator shell by extracting JSX clusters into dedicated components. Future agents can own a named module without touching the orchestrator.
+
+**New files (real extractions):**
+- `src/components/assistant/DonnaVoiceLayer.tsx` — Primary voice card: VoiceInputButton, interim transcript, voice permission error, editable voice answer, transcript display, typed text input + Send button, suggestion chips.
+- `src/components/assistant/DonnaWorkflowCards.tsx` — Output card cluster: active draft card + version history + draft review panel, command response, daily brief, attention report, recommendations, communication draft + review panel, attendance exception layer, onboarding suggestions, context summary.
+- `src/components/assistant/DonnaDeveloperTools.tsx` — Dev-only diagnostic panel: reset intro, TTS display, wake listener toggle, browser voice test, voice diagnostics, audit trail, preferences, COO state, last card action, draft session storage, golden path checklist.
+- `src/components/assistant/DonnaAttendanceLayer.tsx` — Null-guard wrapper around `DonnaAttendanceExceptionCard`.
+
+**New files (documentation stubs):**
+- `src/components/assistant/DonnaPanelShell.tsx` — Documents why panel shell extraction was deferred.
+- `src/components/assistant/DonnaCommandDispatcher.ts` — Documents dispatch contract and why runtime cannot yet be extracted.
+- `src/components/assistant/DonnaDraftLayer.tsx` — Documents that draft sub-components are already extracted.
+- `src/components/assistant/DonnaReviewLayer.tsx` — Documents that `DonnaReviewQueuePanel` is the review boundary.
+- `src/components/assistant/DonnaInputBar.tsx` — Documents that input bar lives in `DonnaVoiceLayer`.
+
+**New docs:**
+- `docs/DONNA_MODULARIZATION_MAP.md` — Module boundary map, orchestrator role, future path to further extraction.
+
+**Modified files:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Import cleanup; voice layer JSX replaced with `<DonnaVoiceLayer .../>`, workflow cards JSX replaced with `<DonnaWorkflowCards .../>`, dev tools JSX replaced with `<DonnaDeveloperTools .../>`. Reduced from 4,168 lines to 3,346 lines (~820 lines extracted). All behavior preserved.
+
+**Architecture rules preserved:**
+- All state stays in the orchestrator (`DonnaAssistantButton.tsx`)
+- No state shared via React context — props only
+- Sprint 383 attendance routing preserved
+- Sprint 383.5 template save fix preserved
+- No migrations, no DB schema changes, no backend writes
+
+**TypeScript:** clean (`npx tsc --noEmit`)
+
+---
+
 ## 2026-05-15 — Sprint 383.5: Fix class template level to development track mapping
 
 **Root cause:** `saveAssistantTemplateDraftAction` wrote `draft.level` ("Orange 2") directly into `templates.track`, which is the `development_track` enum (`"skill"|"competition"|"fitness"|"combined"`). Level labels are not valid enum members, causing a Postgres invalid enum error on every Save Template attempt.

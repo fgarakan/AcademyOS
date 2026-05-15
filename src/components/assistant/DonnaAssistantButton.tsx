@@ -3,12 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Mic, Layers, Inbox,
+  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Layers, Inbox,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { QuickCaptureDrawer } from '@/components/capture/QuickCaptureDrawer'
-import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
 import { TemplateDraftPanel } from '@/components/assistant/TemplateDraftPanel'
 import type { TemplateDraft, TemplateDraftQuestion } from '@/components/assistant/templateDraftTypes'
 import {
@@ -73,10 +72,8 @@ import {
 } from '@/components/assistant/donnaConversationController'
 import type { ConversationState } from '@/components/assistant/donnaConversationController'
 // Sprint 322–335 — Draft Card + Preview + Failure Modes
-import { DonnaDraftCard } from '@/components/assistant/DonnaDraftCard'
 import { DonnaClassTemplateDraftPreview } from '@/components/assistant/DonnaClassTemplateDraftPreview'
-import { DonnaClassTemplateDraftPreviewFromDraft } from '@/components/assistant/DonnaClassTemplateDraftPreviewFromDraft'
-import { resetDraft, getNextQuestion as runtimeNextQuestion, summarizeDraft } from '@/components/assistant/donnaDraftRuntime'
+import { resetDraft, getNextQuestion as runtimeNextQuestion } from '@/components/assistant/donnaDraftRuntime'
 import { getFailureMode } from '@/components/assistant/donnaFailureModes'
 // Sprint 289 — Voice UI types
 import type { DonnaVoiceTranscriptState } from '@/components/assistant/donnaVoiceUiTypes'
@@ -98,8 +95,6 @@ import {
   extractCommandAfterWake,
   getFallbackMessage,
 } from '@/components/assistant/donnaVoiceRuntime'
-// Mega Sprint 297–310 — Dev-only QA harness
-import { DonnaVoiceDiagnostics } from '@/components/assistant/DonnaVoiceDiagnostics'
 // Sprint 291 — Centralized copy
 import {
   DONNA_PUBLIC_NAME,
@@ -135,15 +130,10 @@ import {
   applyCommunicationField,
 } from '@/components/assistant/donnaCommunicationDraft'
 import type { CommunicationDraft } from '@/components/assistant/donnaCommunicationDraft'
-import { DonnaCommunicationDraftCard } from '@/components/assistant/DonnaCommunicationDraftCard'
-// Sprint 368 — Message review panel
-import { DonnaMessageReviewPanel } from '@/components/assistant/DonnaMessageReviewPanel'
-// Sprint 369 — Daily brief
+// Sprint 369 — Daily brief (type only — card rendered in DonnaWorkflowCards)
 import type { DailyBrief } from '@/components/assistant/donnaDailyBrief'
-import { DonnaDailyBriefCard } from '@/components/assistant/DonnaDailyBriefCard'
-// Sprint 370 — Attention engine
+// Sprint 370 — Attention engine (type only — card rendered in DonnaWorkflowCards)
 import type { AttentionReport } from '@/components/assistant/donnaAttentionEngine'
-import { DonnaAttentionCard } from '@/components/assistant/DonnaAttentionCard'
 // Sprint 371 — Coach brief workflow
 import { createCoachBriefDraft } from '@/components/assistant/donnaCoachBriefWorkflow'
 // Sprint 373 — Review queue badge
@@ -152,7 +142,6 @@ import { DonnaReviewQueueBadge } from '@/components/assistant/DonnaReviewQueueBa
 import { evaluateRecommendations } from '@/components/assistant/donnaRecommendationEngine'
 import type { RecommendationSignals } from '@/components/assistant/donnaRecommendationEngine'
 import type { DonnaRecommendationSet, DonnaRecommendation } from '@/components/assistant/donnaRecommendationTypes'
-import { DonnaRecommendationCard } from '@/components/assistant/DonnaRecommendationCard'
 // Sprint 376 — Learning feedback signals
 import { recordSignal } from '@/components/assistant/donnaLearningSignals'
 // Sprint 377 — Preference memory (localStorage-backed)
@@ -162,31 +151,30 @@ import {
   recordCategoryUsed,
 } from '@/components/assistant/donnaPreferenceMemory'
 import type { DonnaPreferences } from '@/components/assistant/donnaPreferenceMemory'
-// Sprint 361 — Audit trail
-import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
+// Sprint 361 — Audit trail (getAuditTrail used in DonnaDeveloperTools)
+import { appendAuditEvent } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
-import { DONNA_VOICE_MODE_LABELS } from '@/components/assistant/donnaVoicePolicy'
+// DONNA_VOICE_MODE_LABELS used in DonnaDeveloperTools
 import type { DonnaVoiceOutputMode } from '@/components/assistant/donnaVoicePolicy'
 // Sprint 359 — Persistent draft storage (sessionStorage only)
+// hasDraftSession used in DonnaDeveloperTools
 import {
   saveDraftToSession,
   loadDraftFromSession,
   clearDraftSession,
-  hasDraftSession,
 } from '@/components/assistant/donnaDraftPersistence'
 // Sprint 381 — Director-Initiated Donna Workflows
 import { matchDirectorWorkflowCommand } from '@/components/assistant/donnaDirectorWorkflowCommands'
 import type { DirectorWorkflowCommandId } from '@/components/assistant/donnaDirectorWorkflowCommands'
-import { DonnaAttendanceExceptionCard } from '@/components/assistant/DonnaAttendanceExceptionCard'
+// DonnaAttendanceExceptionCard used via DonnaAttendanceLayer in DonnaWorkflowCards
 import {
   type AttendanceExceptionDraft,
   createAttendanceExceptionDraft,
   attendanceExceptionReadyToSubmit,
   buildAttendanceStatement,
 } from '@/components/assistant/donnaAttendanceWorkflow'
-// Sprint 382 — Workflow Card Actions
-import { makeLastCardAction } from '@/components/assistant/donnaWorkflowCardActions'
+// Sprint 382 — Workflow Card Actions (makeLastCardAction used in DonnaWorkflowCards)
 import type { LastCardActionRecord } from '@/components/assistant/donnaWorkflowCardActions'
 // Sprint 383 — Attendance Session Resolution
 import {
@@ -195,6 +183,10 @@ import {
   looksLikeNaturalAttendancePhrase,
 } from '@/components/assistant/donnaAttendanceSessionResolution'
 import { fetchRecentSessionsAction } from '@/app/director/_actions/donnaAttendanceSessionActions'
+// Sprint 384 — Extracted modular components
+import { DonnaDeveloperTools } from '@/components/assistant/DonnaDeveloperTools'
+import { DonnaVoiceLayer } from '@/components/assistant/DonnaVoiceLayer'
+import { DonnaWorkflowCards } from '@/components/assistant/DonnaWorkflowCards'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -2715,634 +2707,83 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* ── Primary voice card ── */}
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ border: '1px solid rgba(139,92,246,0.2)' }}
-          >
-            {/* Voice input area */}
-            <div
-              className="px-4 py-3.5"
-              style={{
-                background: 'linear-gradient(135deg, rgba(109,40,217,0.09), rgba(67,56,202,0.05))',
-              }}
-            >
-              <div className="flex items-center gap-1.5 mb-1">
-                <Mic className="w-3.5 h-3.5 shrink-0" style={{ color: '#8b5cf6' }} />
-                <p className="text-sm font-semibold text-text-primary">Ask {DONNA_PUBLIC_NAME}</p>
-              </div>
-              <p className="text-[11px] text-text-muted leading-snug mb-3">
-                Use voice to ask {DONNA_PUBLIC_NAME} what to do next, answer the current question, or capture a director note.
-              </p>
+          {/* ── Primary voice card — Sprint 384: extracted to DonnaVoiceLayer ── */}
+          <DonnaVoiceLayer
+            onboardingStep={onboardingStep}
+            guidedCurrentQ={guidedCurrentQ}
+            onVoiceTranscriptRaw={handleVoiceTranscriptRaw}
+            onListeningChange={handleVoiceListeningChange}
+            onInterimTranscript={handleInterimTranscript}
+            onVoiceError={handleVoiceError}
+            onSupportedChange={setIsVoiceSupported}
+            isVoiceListening={isVoiceListening}
+            interimVoiceTranscript={interimVoiceTranscript}
+            voicePermissionError={voicePermissionError}
+            onDismissVoiceError={() => setVoicePermissionError(null)}
+            pendingVoiceAnswer={pendingVoiceAnswer}
+            onPendingVoiceAnswerChange={updated => setPendingVoiceAnswer(updated)}
+            onConfirmVoiceAnswer={handleConfirmVoiceAnswer}
+            onRetryVoice={handleRetryVoice}
+            voiceTranscript={voiceTranscript}
+            activeMode={activeMode}
+            onClearVoiceTranscript={() => setVoiceTranscript(null)}
+            typedText={typedText}
+            onTypedTextChange={setTypedText}
+            onCommandSubmit={handleCommandSubmit}
+            convState={convState}
+            genericDraft={genericDraft}
+            templateDraft={templateDraft}
+          />
 
-              {/* Sprint 290 — Onboarding current question spotlight */}
-              {/* Shows when in onboarding step 1 (first-action question) */}
-              {isOnboardingActive(onboardingStep) && onboardingStep === 1 && (
-                <div
-                  className="mb-3 rounded-lg px-3 py-2"
-                  style={{ background: 'rgba(200,255,0,0.05)', border: '1px solid rgba(200,255,0,0.2)' }}
-                >
-                  <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-lime">
-                    Current question
-                  </p>
-                  <p className="text-[12px] text-text-primary font-medium leading-snug">
-                    {DONNA_ONBOARDING_STEPS[1].question}
-                  </p>
-                  <p className="text-[10px] text-text-muted mt-1 leading-snug">
-                    {DONNA_ONBOARDING_STEPS[1].helperText}
-                  </p>
-                </div>
-              )}
-
-              {/* Current question spotlight — guided_task mode only */}
-              {guidedCurrentQ && !isOnboardingActive(onboardingStep) && (
-                <div
-                  className="mb-3 rounded-lg px-3 py-2"
-                  style={{ background: 'rgba(200,255,0,0.05)', border: '1px solid rgba(200,255,0,0.2)' }}
-                >
-                  <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-lime">
-                    Current question
-                  </p>
-                  <p className="text-[12px] text-text-primary font-medium leading-snug">
-                    {guidedCurrentQ.question}
-                  </p>
-                </div>
-              )}
-
-              {/* VoiceInputButton — browser SpeechRecognition only, no API, no DB write */}
-              <VoiceInputButton
-                onTranscript={handleVoiceTranscriptRaw}
-                label={`Ask ${DONNA_PUBLIC_NAME}`}
-                appendMode={false}
-                onListeningChange={handleVoiceListeningChange}
-                onInterimTranscript={handleInterimTranscript}
-                onError={handleVoiceError}
-                onSupportedChange={setIsVoiceSupported}
-              />
-
-              {/* Live interim transcript — shown while recognition is active */}
-              {isVoiceListening && interimVoiceTranscript && (
-                <div
-                  className="mt-2.5 rounded-lg px-3 py-2"
-                  style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)' }}
-                >
-                  <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5" style={{ color: '#8b5cf6' }}>
-                    {DONNA_PUBLIC_NAME} is listening…
-                  </p>
-                  <p className="text-[12px] text-text-muted leading-snug italic">
-                    {interimVoiceTranscript}
-                  </p>
-                </div>
-              )}
-
-              {/* Voice permission / browser error */}
-              {voicePermissionError && (
-                <div
-                  className="mt-2.5 rounded-lg px-3 py-2"
-                  style={{ background: 'rgba(255,59,48,0.06)', border: '1px solid rgba(255,59,48,0.18)' }}
-                >
-                  <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-status-red">
-                    Voice unavailable
-                  </p>
-                  <p className="text-[11px] text-text-muted leading-snug">{voicePermissionError}</p>
-                  <button
-                    onClick={() => setVoicePermissionError(null)}
-                    className="mt-1 text-[10px] text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              )}
-
-              {/* Editable transcript — shown in guided_task mode after voice capture */}
-              {pendingVoiceAnswer && (
-                <div
-                  className="mt-3 rounded-lg overflow-hidden"
-                  style={{ border: '1px solid rgba(200,255,0,0.25)' }}
-                >
-                  <div className="px-3 py-2" style={{ background: 'rgba(200,255,0,0.05)' }}>
-                    <p className="text-[10px] uppercase tracking-widest font-semibold mb-1.5 text-lime">
-                      {DONNA_PUBLIC_NAME} heard — review before using
-                    </p>
-                    <textarea
-                      rows={2}
-                      value={pendingVoiceAnswer.editedText}
-                      onChange={e =>
-                        setPendingVoiceAnswer(prev =>
-                          prev
-                            ? { ...prev, editedText: e.target.value, isEdited: e.target.value !== prev.raw }
-                            : null,
-                        )
-                      }
-                      className="w-full rounded-lg px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
-                      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-                    />
-                  </div>
-                  <div
-                    className="flex items-center gap-2 px-3 py-2"
-                    style={{ background: 'var(--bg-surface)', borderTop: '1px solid rgba(200,255,0,0.1)' }}
-                  >
-                    <button
-                      onClick={handleConfirmVoiceAnswer}
-                      disabled={!pendingVoiceAnswer.editedText.trim()}
-                      className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
-                    >
-                      Use this answer
-                    </button>
-                    <button
-                      onClick={handleRetryVoice}
-                      className="text-[10px] text-text-muted hover:text-status-red underline underline-offset-2 transition-colors"
-                    >
-                      Try again
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Voice transcript — displayed locally only; suppressed when pending review is shown */}
-              {voiceTranscript && !pendingVoiceAnswer && (
-                <div
-                  className="mt-3 rounded-lg px-3 py-2.5"
-                  style={{
-                    background: 'var(--bg-surface)',
-                    border: '1px solid rgba(139,92,246,0.18)',
-                  }}
-                >
-                  <p
-                    className="text-[10px] uppercase tracking-widest font-semibold mb-1"
-                    style={{ color: '#8b5cf6' }}
-                  >
-                    {DONNA_PUBLIC_NAME} heard
-                  </p>
-                  <p className="text-[12px] text-text-secondary leading-relaxed">
-                    {voiceTranscript}
-                  </p>
-                  {activeMode !== 'create_template' && activeMode !== 'guided_task' && (
-                    <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
-                      To save, use &quot;Capture a note&quot; below.
-                    </p>
-                  )}
-                  <button
-                    onClick={() => setVoiceTranscript(null)}
-                    className="mt-1 text-[10px] text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
-                  >
-                    Clear
-                  </button>
-                </div>
-              )}
-
-              {/* Primary text input — always visible (Sprint 348) */}
-              <div className="mt-3 space-y-2">
-                <textarea
-                  rows={2}
-                  placeholder='Ask Donna — e.g. "Create a class template for Orange 2."'
-                  value={typedText}
-                  onChange={e => setTypedText(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      handleCommandSubmit()
-                    }
-                  }}
-                  className="w-full rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
-                  style={{
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border-subtle)',
-                  }}
-                />
-                <button
-                  onClick={() => handleCommandSubmit()}
-                  disabled={!typedText.trim()}
-                  className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-
-            {/* Suggestion chips — Sprint 348: shown only when no active workflow */}
-            {!isOnboardingActive(onboardingStep) && convState.activeDraft === null && !genericDraft && !templateDraft && (
-              <div
-                className="px-4 py-3"
-                style={{
-                  borderTop: '1px solid rgba(139,92,246,0.1)',
-                  background: 'var(--bg-surface)',
-                }}
-              >
-                <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-2">
-                  Try asking
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    'Create class template',
-                    'What needs attention today?',
-                    'Help me with Academy Setup',
-                    'Draft a parent update',
-                  ].map(chip => (
-                    <button
-                      key={chip}
-                      onClick={() => handleCommandSubmit(chip)}
-                      className="text-[11px] px-2.5 py-1 rounded-full transition-all leading-snug"
-                      style={{
-                        background: 'rgba(139,92,246,0.08)',
-                        border: '1px solid rgba(139,92,246,0.2)',
-                        color: '#c4b5fd',
-                      }}
-                    >
-                      {chip}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── Sprint 322: Active conversation draft card — Sprint 348: promoted above mode buttons ── */}
-          {/* Shown when the conversation controller owns an active draft (no legacy draft running). */}
-          {convState.activeDraft !== null && !genericDraft && !templateDraft && (
-            <>
-              <DonnaDraftCard
-                draft={convState.activeDraft}
-                onUndo={handleConvUndo}
-                onStartOver={handleConvStartOver}
-                onDiscard={handleConvDiscard}
-                onReview={handleConvReview}
-              />
-              {/* Sprint 360: Version history — shown when history has entries */}
-              {convState.activeDraft.history.length > 0 && (
-                <DonnaVersionHistoryPanel draft={convState.activeDraft} />
-              )}
-
-              {/* Sprint 359: "Clear saved draft" — shown when a draft was restored from sessionStorage */}
-              {draftRestoredFromSession && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    clearDraftSession()
-                    setDraftRestoredFromSession(false)
-                  }}
-                  className="w-full text-[10px] text-text-muted hover:text-status-red transition-colors text-center py-0.5 underline underline-offset-2"
-                >
-                  Clear saved draft
-                </button>
-              )}
-
-              {/* Sprint 336–345: Class template live preview — shown when workflow is class_template_creation */}
-              {convState.activeDraft.workflowId === 'class_template_creation' && (
-                <DonnaClassTemplateDraftPreviewFromDraft draft={convState.activeDraft} />
-              )}
-
-              {/* Sprint 322 Phase 8 — Draft review panel: shown when director says "show me the draft" */}
-              {convShowDraftReview && (() => {
-                const summary = summarizeDraft(convState.activeDraft)
-                return (
-                  <div
-                    className="rounded-xl p-4 space-y-3"
-                    style={{ background: 'var(--surface-raised)', border: '1px solid rgba(200,255,0,0.2)' }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-widest font-semibold text-lime">
-                        Draft Review
-                      </p>
-                      <button
-                        onClick={() => setConvShowDraftReview(false)}
-                        aria-label="Close draft review"
-                        className="text-text-muted hover:text-text-primary transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-
-                    {/* Collected fields */}
-                    {summary.fieldLines.length > 0 ? (
-                      <div className="space-y-1.5">
-                        <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">
-                          What I have
-                        </p>
-                        {summary.fieldLines.map(({ label, value }) => (
-                          <div key={label} className="flex items-start gap-1.5 text-[11px]">
-                            <span className="text-lime mt-px shrink-0">·</span>
-                            <span>
-                              <span className="text-text-muted uppercase tracking-wide text-[10px]">{label}: </span>
-                              <span className="text-text-primary">{value}</span>
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[11px] text-text-muted italic">No fields collected yet.</p>
-                    )}
-
-                    {/* Still needed */}
-                    {summary.missingRequiredIds.length > 0 && (
-                      <div className="space-y-1">
-                        <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">
-                          Still needed
-                        </p>
-                        {summary.missingRequiredIds.map(fieldId => (
-                          <p key={fieldId} className="text-[11px] text-text-muted">· {fieldId.replace(/_/g, ' ')}</p>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* What approval would do */}
-                    <div
-                      className="px-3 py-2 rounded-lg"
-                      style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.12)' }}
-                    >
-                      <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold mb-0.5">
-                        What approval does
-                      </p>
-                      <p className="text-[11px] text-text-secondary leading-snug">
-                        {convState.activeDraft.phase === 'ready_for_review'
-                          ? 'This draft is ready. Clicking the approval button will save it safely with a full audit trail.'
-                          : 'Answer remaining questions, then click the approval button — nothing saves until you do.'}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })()}
-            </>
-          )}
-
-          {/* ── Command response card ── */}
-          {commandResponse && (
-            <div
-              className="rounded-xl px-3.5 py-3"
-              style={{
-                background:
-                  commandResponse.type === 'honest'
-                    ? 'rgba(255,149,0,0.06)'
-                    : 'rgba(139,92,246,0.06)',
-                border:
-                  commandResponse.type === 'honest'
-                    ? '1px solid rgba(255,149,0,0.2)'
-                    : '1px solid rgba(139,92,246,0.18)',
-              }}
-            >
-              <div className="flex items-start gap-2">
-                <div className="flex-1 min-w-0">
-                  <p
-                    className="text-[10px] uppercase tracking-widest font-semibold mb-1"
-                    style={{ color: commandResponse.type === 'honest' ? '#FF9500' : '#8b5cf6' }}
-                  >
-                    {commandResponse.label ?? (commandResponse.type === 'honest' ? 'Not available yet' : DONNA_PUBLIC_NAME)}
-                  </p>
-                  <p className="text-[12px] text-text-secondary leading-relaxed">
-                    {commandResponse.message}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setCommandResponse(null)}
-                  aria-label="Dismiss"
-                  className="shrink-0 text-text-muted hover:text-text-primary transition-colors mt-0.5"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ── Sprint 369: Daily brief card ── */}
-          {isDailyBriefLoading && (
-            <div className="text-[11px] text-text-muted text-center py-2 animate-pulse">
-              Loading daily brief…
-            </div>
-          )}
-          {dailyBrief && !isDailyBriefLoading && (
-            <DonnaDailyBriefCard
-              brief={dailyBrief}
-              onDismiss={() => setDailyBrief(null)}
-              onOpenReviewQueue={() => {
-                const r = makeLastCardAction('open_review_queue')
-                if (r) setLastCardAction(r)
-                void handleOpenReviewQueue()
-              }}
-              onPrepareCoachBriefs={() => {
-                const r = makeLastCardAction('prepare_coach_briefs')
-                if (r) setLastCardAction(r)
-                dispatchCooCommand('coach_brief')
-              }}
-            />
-          )}
-
-          {/* ── Sprint 370: Attention card ── */}
-          {isAttentionLoading && (
-            <div className="text-[11px] text-text-muted text-center py-2 animate-pulse">
-              Checking what needs attention…
-            </div>
-          )}
-          {attentionReport && !isAttentionLoading && (
-            <DonnaAttentionCard
-              report={attentionReport}
-              onDismiss={() => setAttentionReport(null)}
-              onClose={closePanel}
-              onOpenReviewQueue={() => {
-                const r = makeLastCardAction('open_review_queue')
-                if (r) setLastCardAction(r)
-                void handleOpenReviewQueue()
-              }}
-            />
-          )}
-
-          {/* ── Sprint 375: Rule-based recommendations ── */}
-          {recommendationSet && recommendationSet.recommendations.length > 0 && !attentionReport && !dailyBrief && (
-            <div className="space-y-2">
-              <p className="text-[10px] uppercase tracking-widest font-semibold text-text-muted px-0.5">
-                Recommendations
-              </p>
-              {recommendationSet.recommendations.map((rec) => (
-                <DonnaRecommendationCard
-                  key={rec.id}
-                  recommendation={rec}
-                  onAction={(r) => {
-                    const action = makeLastCardAction('view_recommendation_evidence')
-                    if (action) setLastCardAction(action)
-                    handleRecommendationAction(r)
-                  }}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* ── Sprint 366/368: Communication draft card + review panel ── */}
-          {communicationDraft && !showMessageReview && (
-            <DonnaCommunicationDraftCard
-              draft={communicationDraft}
-              onDiscard={() => {
-                const r = makeLastCardAction('discard_draft')
-                if (r) setLastCardAction(r)
-                setCommunicationDraft(null)
-                setShowMessageReview(false)
-              }}
-              onReview={() => {
-                const r = makeLastCardAction('open_draft_review')
-                if (r) setLastCardAction(r)
-                setShowMessageReview(true)
-              }}
-              onRevise={(cmd) => {
-                const actionId = cmd.includes('warmer') ? 'revise_warmer' : 'revise_shorter'
-                const r = makeLastCardAction(actionId)
-                if (r) setLastCardAction(r)
-                handleVoiceTranscript(cmd)
-              }}
-            />
-          )}
-          {communicationDraft && showMessageReview && (
-            <DonnaMessageReviewPanel
-              draft={communicationDraft}
-              onUpdate={(updated) => { setCommunicationDraft(updated); setShowMessageReview(false) }}
-              onDiscard={() => { setCommunicationDraft(null); setShowMessageReview(false) }}
-            />
-          )}
-
-          {/* ── Sprint 381/383: Attendance exception draft card + session resolution ── */}
-          {attendanceExceptionDraft && (
-            <DonnaAttendanceExceptionCard
-              draft={attendanceExceptionDraft}
-              onDiscard={() => {
-                const r = makeLastCardAction('discard_draft')
-                if (r) setLastCardAction(r)
-                setAttendanceExceptionDraft(null)
-                setAttendanceSessionOptions([])
-                setAttendanceQueueResult(null)
-              }}
-              sessionOptions={attendanceSessionOptions}
-              isLoadingSessions={isLoadingAttendanceSessions}
-              onSelectSession={handleAttendanceSessionSelect}
-              onQueueForReview={() => { void handleQueueAttendanceForReview() }}
-              isQueueing={attendanceQueueing}
-              queueResult={attendanceQueueResult}
-            />
-          )}
-
-          {/* ── Sprint 290: Onboarding suggested routes — shown when step 1 intent was unclear ── */}
-          {showOnboardingSuggestions && !genericDraft && !templateDraft && (
-            <div
-              className="rounded-xl px-3.5 py-3 space-y-2"
-              style={{
-                background: 'rgba(200,255,0,0.04)',
-                border: '1px solid rgba(200,255,0,0.2)',
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] uppercase tracking-widest font-semibold text-lime">
-                  Get started
-                </p>
-                <button
-                  onClick={() => setShowOnboardingSuggestions(false)}
-                  aria-label="Dismiss"
-                  className="text-text-muted hover:text-text-primary transition-colors"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-              <div className="space-y-1">
-                {DONNA_ONBOARDING_STEPS[1].suggestedRoutes?.map((route) => (
-                  <button
-                    key={route.taskHint}
-                    onClick={() => {
-                      setShowOnboardingSuggestions(false)
-                      handleVoiceTranscript(route.taskHint)
-                    }}
-                    className="w-full text-left text-[12px] text-text-secondary hover:text-text-primary
-                      px-3 py-2 rounded-lg hover:bg-surface-raised transition-all leading-snug border border-border"
-                    style={{ background: 'var(--bg-surface)' }}
-                  >
-                    {route.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[9px] text-text-muted leading-snug pt-1">
-                Voice can fill drafts. Final saves always require the on-screen button.
-              </p>
-            </div>
-          )}
-
-          {/* ── Context summary result card — read-only live data, no writes (Sprint 265) ── */}
-          {contextSummary && (
-            <div
-              className="rounded-xl px-3.5 py-3 space-y-2.5"
-              style={{
-                background: 'rgba(200,255,0,0.04)',
-                border: '1px solid rgba(200,255,0,0.18)',
-              }}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-lime">
-                    {contextSummary.title}
-                  </p>
-                  <p className="text-[12px] text-text-secondary leading-relaxed">
-                    {contextSummary.summary}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setContextSummary(null)}
-                  aria-label="Dismiss summary"
-                  className="shrink-0 text-text-muted hover:text-text-primary transition-colors mt-0.5"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-              {contextSummary.keyFacts.length > 0 && (
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">
-                    Key facts
-                  </p>
-                  <ul className="space-y-0.5">
-                    {contextSummary.keyFacts.map((fact, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-[11px] text-text-secondary leading-snug">
-                        <span className="shrink-0 mt-px text-lime">·</span>
-                        {fact}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {contextSummary.suggestedNextSteps.length > 0 && (
-                <div
-                  className="pt-2"
-                  style={{ borderTop: '1px solid rgba(200,255,0,0.1)' }}
-                >
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">
-                    Suggested next steps
-                  </p>
-                  <ul className="space-y-0.5">
-                    {contextSummary.suggestedNextSteps.map((step, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-[11px] text-text-secondary leading-snug">
-                        <span className="shrink-0 mt-px text-lime">{i + 1}.</span>
-                        {step}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {contextSummary.missingData.length > 0 && (
-                <div
-                  className="pt-2"
-                  style={{ borderTop: '1px solid rgba(200,255,0,0.1)' }}
-                >
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">
-                    Missing data
-                  </p>
-                  <ul className="space-y-0.5">
-                    {contextSummary.missingData.map((m, i) => (
-                      <li key={i} className="text-[11px] text-text-muted leading-snug">
-                        {m}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <p
-                className="text-[9px] text-text-muted pt-1"
-                style={{ borderTop: '1px solid rgba(200,255,0,0.08)' }}
-              >
-                Read-only · fetched {new Date(contextSummary.fetchedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </p>
-            </div>
-          )}
+          {/* ── Sprint 384: Workflow output cards — extracted to DonnaWorkflowCards ── */}
+          <DonnaWorkflowCards
+            convState={convState}
+            convShowDraftReview={convShowDraftReview}
+            onConvUndo={handleConvUndo}
+            onConvStartOver={handleConvStartOver}
+            onConvDiscard={handleConvDiscard}
+            onConvReview={handleConvReview}
+            onCloseConvReview={() => setConvShowDraftReview(false)}
+            draftRestoredFromSession={draftRestoredFromSession}
+            onClearSavedDraft={() => setDraftRestoredFromSession(false)}
+            genericDraft={genericDraft}
+            templateDraft={templateDraft}
+            commandResponse={commandResponse}
+            onDismissCommandResponse={() => setCommandResponse(null)}
+            dailyBrief={dailyBrief}
+            isDailyBriefLoading={isDailyBriefLoading}
+            onDismissDailyBrief={() => setDailyBrief(null)}
+            onDailyBriefOpenReviewQueue={() => void handleOpenReviewQueue()}
+            onDailyBriefPrepareCoachBriefs={() => dispatchCooCommand('coach_brief')}
+            attentionReport={attentionReport}
+            isAttentionLoading={isAttentionLoading}
+            onDismissAttention={() => setAttentionReport(null)}
+            onClosePanel={closePanel}
+            onAttentionOpenReviewQueue={() => void handleOpenReviewQueue()}
+            recommendationSet={recommendationSet}
+            onRecommendationAction={handleRecommendationAction}
+            onSetLastCardAction={setLastCardAction}
+            communicationDraft={communicationDraft}
+            showMessageReview={showMessageReview}
+            onCommunicationDraftDiscard={() => { setCommunicationDraft(null); setShowMessageReview(false) }}
+            onCommunicationDraftReview={() => setShowMessageReview(true)}
+            onCommunicationDraftRevise={handleVoiceTranscript}
+            onCommunicationDraftUpdate={(updated) => { setCommunicationDraft(updated); setShowMessageReview(false) }}
+            onCommunicationDraftMessageDiscard={() => { setCommunicationDraft(null); setShowMessageReview(false) }}
+            attendanceExceptionDraft={attendanceExceptionDraft}
+            attendanceSessionOptions={attendanceSessionOptions}
+            isLoadingAttendanceSessions={isLoadingAttendanceSessions}
+            attendanceQueueing={attendanceQueueing}
+            attendanceQueueResult={attendanceQueueResult}
+            onAttendanceDiscard={() => { setAttendanceExceptionDraft(null); setAttendanceSessionOptions([]); setAttendanceQueueResult(null) }}
+            onAttendanceSessionSelect={handleAttendanceSessionSelect}
+            onAttendanceQueueForReview={() => void handleQueueAttendanceForReview()}
+            showOnboardingSuggestions={showOnboardingSuggestions}
+            onDismissOnboardingSuggestions={() => setShowOnboardingSuggestions(false)}
+            onOnboardingSuggestionClick={(hint) => { setShowOnboardingSuggestions(false); handleVoiceTranscript(hint) }}
+            contextSummary={contextSummary}
+            onDismissContextSummary={() => setContextSummary(null)}
+          />
 
           {/* ── Current context card — hidden in template, guided-task, and review_queue modes ── */}
           {activeMode !== 'create_template' && activeMode !== 'guided_task' && activeMode !== 'review_queue' && (
@@ -3824,305 +3265,42 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* Sprint 336–350 — Developer Tools panel (dev only) */}
+          {/* Sprint 384: Developer Tools — extracted to DonnaDeveloperTools */}
           {process.env.NODE_ENV !== 'production' && (
-            <details className="mx-4 mb-2">
-              <summary className="text-[10px] uppercase tracking-widest text-text-muted cursor-pointer">
-                Developer Tools
-              </summary>
-              <div className="mt-2 space-y-3">
-
-              {/* Sprint 350 — Reset Donna intro (clears sessionStorage key) */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.sessionStorage.removeItem('academyos:donna:introCompleted:v1')
-                  }
-                  hasGreetedRef.current = false
-                  setOnboardingStep(0)
-                  setShowOnboardingSuggestions(false)
-                }}
-                className="w-full text-[11px] rounded-lg px-3 py-1.5 transition-all"
-                style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.2)', color: '#C8FF00' }}
-              >
-                Reset Donna intro
-              </button>
-
-              {/* Sprint 350 — TTS source display */}
-              {lastServerTtsInfo && (
-                <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
-                  <div className="text-text-muted uppercase tracking-widest">Last TTS</div>
-                  <div className="text-text-secondary">
-                    Source: <span className="text-lime">{DONNA_VOICE_MODE_LABELS[lastServerTtsInfo.source]}</span>
-                  </div>
-                  <div className="text-text-secondary truncate">
-                    Text: <span className="text-text-primary">{lastServerTtsInfo.text}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Hey Donna wake phrase — panel-only, no global always-listening */}
-              <div>
-                <button
-                  type="button"
-                  onClick={wakeListeningActive ? stopWakeListening : startWakeListening}
-                  className="w-full text-[11px] rounded-lg px-3 py-1.5 transition-all"
-                  style={wakeListeningActive
-                    ? { background: 'rgba(255,59,48,0.08)', border: '1px solid rgba(255,59,48,0.2)', color: '#FF3B30' }
-                    : { background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.18)', color: '#c4b5fd' }
-                  }
-                >
-                  {wakeListeningActive ? DONNA_WAKE_ACTIVE_LABEL : DONNA_WAKE_LABEL}
-                </button>
-                {wakeDetectedCommand !== null && (
-                  <p className="mt-1 text-[10px] text-lime leading-snug">
-                    {wakeDetectedCommand
-                      ? `Donna heard: "${wakeDetectedCommand}"`
-                      : 'Hey Donna detected. Speak your command.'}
-                  </p>
-                )}
-              </div>
-
-              {/* Test browser TTS — isolated, no guard or onboarding side effects */}
-              <button
-                type="button"
-                onClick={testBrowserVoice}
-                disabled={testVoiceStatus === 'speaking'}
-                className="w-full text-[11px] text-text-muted hover:text-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-center py-1"
-              >
-                {testVoiceStatus === 'idle' && 'Test Donna browser voice'}
-                {testVoiceStatus === 'speaking' && 'Speaking…'}
-                {testVoiceStatus === 'done' && '✓ Browser voice working'}
-                {testVoiceStatus === 'error' && 'Voice test failed — check browser sound settings'}
-              </button>
-
-              {/* Voice diagnostics */}
-              <DonnaVoiceDiagnostics
-                realtimeStatus={realtimeStatus}
-                realtimeUnavailableReason={realtimeUnavailableReason}
-                voiceGreetingStatus={voiceGreetingStatus}
-                isSpeaking={isSpeaking}
-                isVoiceListening={isVoiceListening}
-                isVoiceSupported={isVoiceSupported}
-                voiceMode={activatedVoiceModeRef.current}
-                wakeListeningActive={wakeListeningActive}
-                onTestRealtime={() => { void playOnboardingVoice() }}
-                onTestBrowserVoice={testBrowserVoice}
-                onResetVoice={resetVoice}
-              />
-
-              {/* Sprint 361 — Audit Trail (last 5 events) */}
-              {(() => {
-                const trail = getAuditTrail()
-                const last5 = trail.slice(-5).reverse()
-                return (
-                  <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
-                    <div className="text-text-muted uppercase tracking-widest">Audit Trail ({trail.length})</div>
-                    {last5.length === 0 ? (
-                      <div className="text-text-muted italic">No events yet.</div>
-                    ) : last5.map(ev => (
-                      <div key={ev.id} className="text-text-secondary">
-                        <span className="text-lime">{ev.type}</span>{' '}
-                        <span className="text-text-muted">{ev.description.slice(0, 40)}</span>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })()}
-
-              {/* Sprint 377 — Preference memory */}
-              <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
-                <div className="text-text-muted uppercase tracking-widest">Preferences (localStorage)</div>
-                <div className="text-text-secondary">
-                  Last workflow: <span className="text-lime">{preferences.lastUsedWorkflowId ?? 'none'}</span>
-                </div>
-                <div className="text-text-secondary">
-                  Frequent categories: <span className="text-lime">{preferences.frequentCategories.join(', ') || 'none'}</span>
-                </div>
-              </div>
-
-              {/* Sprint 381 — COO command routing state */}
-              <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
-                <div className="text-text-muted uppercase tracking-widest">COO Commands</div>
-                <div className="text-text-secondary">
-                  Attendance draft:{' '}
-                  <span className={attendanceExceptionDraft ? 'text-lime' : 'text-text-muted'}>
-                    {attendanceExceptionDraft
-                      ? `active — ${attendanceExceptionDraft.playerName ?? (attendanceExceptionDraft.naturalInput ? 'natural input' : 'no player')} / ${attendanceExceptionDraft.type}`
-                      : 'none'}
-                  </span>
-                </div>
-                {attendanceExceptionDraft && (
-                  <>
-                    <div className="text-text-secondary">
-                      Session:{' '}
-                      <span className={attendanceExceptionDraft.sessionId ? 'text-status-green' : 'text-text-muted'}>
-                        {attendanceExceptionDraft.sessionLabel ?? attendanceExceptionDraft.sessionId ?? 'not selected'}
-                      </span>
-                    </div>
-                    <div className="text-text-secondary">
-                      Ready for queue:{' '}
-                      <span className={attendanceExceptionDraft.sessionId && (attendanceExceptionDraft.naturalInput || attendanceExceptionDraft.playerName) ? 'text-status-green' : 'text-status-orange'}>
-                        {attendanceExceptionDraft.sessionId && (attendanceExceptionDraft.naturalInput || attendanceExceptionDraft.playerName) ? 'YES' : 'no'}
-                      </span>
-                    </div>
-                    {attendanceExceptionDraft.flaggedAbsences && attendanceExceptionDraft.flaggedAbsences.length > 0 && (
-                      <div className="text-text-secondary">
-                        Flagged absent: <span className="text-status-red">{attendanceExceptionDraft.flaggedAbsences.join(', ')}</span>
-                      </div>
-                    )}
-                    {attendanceExceptionDraft.flaggedUnrostered && attendanceExceptionDraft.flaggedUnrostered.length > 0 && (
-                      <div className="text-text-secondary">
-                        Possible unrostered: <span className="text-status-orange">{attendanceExceptionDraft.flaggedUnrostered.join(', ')}</span>
-                      </div>
-                    )}
-                    {attendanceQueueResult && (
-                      <div className={attendanceQueueResult.ok ? 'text-status-green' : 'text-status-red'}>
-                        Queue: {attendanceQueueResult.ok ? 'submitted ✓' : `blocked — ${attendanceQueueResult.message.slice(0, 40)}`}
-                      </div>
-                    )}
-                    <div className="text-text-muted">Official attendance execution: blocked</div>
-                  </>
-                )}
-                <div className="text-text-secondary">
-                  Recommendations:{' '}
-                  <span className={recommendationSet && recommendationSet.recommendations.length > 0 ? 'text-lime' : 'text-text-muted'}>
-                    {recommendationSet ? `${recommendationSet.recommendations.length} loaded` : 'not loaded'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Sprint 382 — Last workflow card action */}
-              <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
-                <div className="text-text-muted uppercase tracking-widest">Last Card Action</div>
-                {lastCardAction ? (
-                  <>
-                    <div className="text-text-secondary">
-                      Action: <span className="text-lime">{lastCardAction.id}</span>
-                    </div>
-                    <div className="text-text-secondary">
-                      Safety: <span className={
-                        lastCardAction.safetyLevel === 'safe' ? 'text-status-green'
-                          : lastCardAction.safetyLevel === 'blocked' ? 'text-status-red'
-                          : 'text-status-orange'
-                      }>{lastCardAction.safetyLevel}</span>
-                    </div>
-                    <div className="text-text-secondary">
-                      Mutates data: <span className={lastCardAction.mutatesData ? 'text-status-red' : 'text-status-green'}>
-                        {lastCardAction.mutatesData ? 'YES' : 'no'}
-                      </span>
-                    </div>
-                    <div className="text-text-secondary">
-                      Requires approval: <span className={lastCardAction.requiresApproval ? 'text-status-orange' : 'text-text-muted'}>
-                        {lastCardAction.requiresApproval ? 'YES' : 'no'}
-                      </span>
-                    </div>
-                    {lastCardAction.targetRoute && (
-                      <div className="text-text-secondary">
-                        Route: <span className="text-lime">{lastCardAction.targetRoute}</span>
-                      </div>
-                    )}
-                    {lastCardAction.blockedReason && (
-                      <div className="text-status-red truncate">
-                        Blocked: {lastCardAction.blockedReason.slice(0, 50)}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-text-muted italic">No card action yet.</div>
-                )}
-              </div>
-
-              {/* Sprint 359 — Draft session storage state */}
-              <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
-                <div className="text-text-muted uppercase tracking-widest">Draft Session Storage</div>
-                <div className="text-text-secondary">
-                  Key present:{' '}
-                  <span className={hasDraftSession() ? 'text-lime' : 'text-text-muted'}>
-                    {hasDraftSession() ? 'yes' : 'no'}
-                  </span>
-                </div>
-                {convState.activeDraft && (
-                  <div className="text-text-secondary">
-                    Draft taskId:{' '}
-                    <span className="text-lime">{convState.activeDraft.taskId}</span>
-                  </div>
-                )}
-                {draftRestoredFromSession && (
-                  <div className="text-status-green">Restored from session ✓</div>
-                )}
-              </div>
-
-              {/* Golden Path QA state */}
-              <div className="p-2 rounded text-[11px] font-mono space-y-1" style={{ background: 'var(--surface-raised)' }}>
-                {/* Controller state */}
-                <div className="text-text-muted text-[10px] uppercase tracking-widest">Controller</div>
-                <div className="text-text-secondary">Phase: <span className="text-lime">{convState.phase}</span></div>
-                <div className="text-text-secondary">Review panel: <span className="text-lime">{convShowDraftReview ? 'open' : 'closed'}</span></div>
-
-                {/* Last intent */}
-                {convState.lastIntent && (
-                  <>
-                    <div className="text-text-muted text-[10px] uppercase tracking-widest mt-1">Last Intent</div>
-                    <div className="text-text-secondary">Type: <span className="text-lime">{convState.lastIntent.intentType}</span></div>
-                    <div className="text-text-secondary">Workflow: <span className="text-lime">{convState.lastIntent.workflowId ?? 'none'}</span></div>
-                    <div className="text-text-secondary">Confidence: <span className="text-lime">{convState.lastIntent.confidence}</span></div>
-                    <div className="text-text-secondary">Approval required: <span className="text-lime">{convState.lastIntent.requiresApproval ? 'YES' : 'no'}</span></div>
-                  </>
-                )}
-
-                {/* Active draft */}
-                {convState.activeDraft && (() => {
-                  const s = summarizeDraft(convState.activeDraft)
-                  const isClassTemplate = convState.activeDraft.workflowId === 'class_template_creation'
-                  return (
-                    <>
-                      <div className="text-text-muted text-[10px] uppercase tracking-widest mt-1">Active Draft</div>
-                      <div className="text-text-secondary">Task: <span className="text-lime">{convState.activeDraft.taskId}</span></div>
-                      <div className="text-text-secondary">Version: <span className="text-lime">v{convState.activeDraft.history.length + 1}</span></div>
-                      <div className="text-text-secondary">Draft phase: <span className="text-lime">{convState.activeDraft.phase}</span></div>
-                      <div className="text-text-secondary">Undo stack depth: <span className="text-lime">{convState.activeDraft.history.length}</span></div>
-                      <div className="text-text-secondary">Progress: <span className="text-lime">{s.answeredCount} / {s.totalRequired} required</span></div>
-                      {s.missingRequiredIds.length > 0 && (
-                        <div className="text-text-secondary">Missing: <span className="text-status-orange">{s.missingRequiredIds.join(', ')}</span></div>
-                      )}
-                      {s.fieldLines.length > 0 && (
-                        <div className="text-text-secondary space-y-0.5">
-                          {s.fieldLines.map(f => (
-                            <div key={f.label}>· <span className="text-text-muted">{f.label}:</span> <span className="text-lime">{f.value}</span></div>
-                          ))}
-                        </div>
-                      )}
-                      {convState.currentFieldId && (
-                        <div className="text-text-secondary">Asking for: <span className="text-lime">{convState.currentFieldId}</span></div>
-                      )}
-
-                      {/* Golden path checklist — class_template_creation only */}
-                      {isClassTemplate && (
-                        <>
-                          <div className="text-text-muted text-[10px] uppercase tracking-widest mt-1.5">Golden Path Checklist</div>
-                          {[
-                            { label: 'draft_started',              done: true },
-                            { label: 'level collected',            done: !!convState.activeDraft.fields['level'] },
-                            { label: 'durationMinutes collected',  done: !!convState.activeDraft.fields['durationMinutes'] },
-                            { label: 'focusAreas collected',       done: !!convState.activeDraft.fields['focusAreas'] },
-                            { label: 'ready_for_preview',          done: s.isComplete },
-                            { label: 'review_panel_open',          done: convShowDraftReview },
-                            { label: 'protected_action_blocked',   done: convState.lastIntent?.intentType === 'approve_or_execute' },
-                          ].map(({ label, done }) => (
-                            <div key={label} className={done ? 'text-status-green' : 'text-text-muted'}>
-                              {done ? '✓' : '○'} {label}
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    </>
-                  )
-                })()}
-              </div>
-              </div>
-            </details>
+            <DonnaDeveloperTools
+              convState={convState}
+              convShowDraftReview={convShowDraftReview}
+              attendanceExceptionDraft={attendanceExceptionDraft}
+              attendanceQueueResult={attendanceQueueResult}
+              preferences={preferences}
+              recommendationSet={recommendationSet}
+              lastCardAction={lastCardAction}
+              realtimeStatus={realtimeStatus}
+              realtimeUnavailableReason={realtimeUnavailableReason}
+              voiceGreetingStatus={voiceGreetingStatus}
+              isSpeaking={isSpeaking}
+              isVoiceListening={isVoiceListening}
+              isVoiceSupported={isVoiceSupported}
+              voiceMode={activatedVoiceModeRef.current}
+              wakeListeningActive={wakeListeningActive}
+              wakeDetectedCommand={wakeDetectedCommand}
+              testVoiceStatus={testVoiceStatus}
+              lastServerTtsInfo={lastServerTtsInfo}
+              draftRestoredFromSession={draftRestoredFromSession}
+              onResetIntro={() => {
+                if (typeof window !== 'undefined') {
+                  window.sessionStorage.removeItem('academyos:donna:introCompleted:v1')
+                }
+                hasGreetedRef.current = false
+                setOnboardingStep(0)
+                setShowOnboardingSuggestions(false)
+              }}
+              onTestBrowserVoice={testBrowserVoice}
+              onStartWakeListening={startWakeListening}
+              onStopWakeListening={stopWakeListening}
+              onTestRealtime={() => void playOnboardingVoice()}
+              onResetVoice={resetVoice}
+            />
           )}
 
         </div>
