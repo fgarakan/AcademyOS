@@ -2,6 +2,53 @@
 
 ---
 
+## 2026-05-15 — Mega Sprint 336–345: Donna Execution Proof + Golden Path QA V1
+
+**Goal:** Prove Donna can complete one full end-to-end operating loop reliably for `class_template_creation`. All 10 golden path states verified: draft_started → collecting → revision → undo → review_requested → protected_action_blocked.
+
+**Files created:**
+- `src/components/assistant/DonnaClassTemplateDraftPreviewFromDraft.tsx` — live class template preview working directly with `DonnaDraftState` (not the legacy `TemplateDraft`). Shows level/duration/focus chips, deterministic block structure (5 or 6 blocks based on style/focus), intensity chip, dashed placeholders when fields are missing, approval disclaimer always visible.
+
+**Files modified:**
+- `src/components/assistant/donnaTaskContracts.ts` — updated `create_class_template` required fields from `{level, duration, blocks}` → `{level, durationMinutes, focusAreas}` to match what `donnaSlotFilling.ts` actually extracts; updated question sequence with correct field IDs; expanded optional fields to include `style`, `intensity`, `playerCount`, `constraints`.
+- `src/components/assistant/donnaConversationController.ts` — (1) removed the legacy `class_template_creation → start_template_draft` special case that was routing class templates to the old `TemplateDraftPanel` instead of `DonnaDraftRuntime`; (2) added `+` prefix focusAreas append logic in the revision command handler so "make it more competitive" appends rather than overwrites focus areas.
+- `src/components/assistant/DonnaAssistantButton.tsx` — (1) added import for `DonnaClassTemplateDraftPreviewFromDraft`; (2) in `handleVoiceTranscript`: added early return when controller creates a new draft (detects `convState.activeDraft === null && controllerTurn.nextState.activeDraft !== null`), bypassing all legacy routing; (3) in `handleCommandSubmit`: moved `controllerHandleInput` call before the active-draft guard so new draft creation via typed commands also bypasses legacy `isTemplateCreationIntent` routing; (4) added `DonnaClassTemplateDraftPreviewFromDraft` in JSX alongside `DonnaDraftCard` when workflowId is `class_template_creation`; (5) upgraded QA panel to Golden Path QA with controller state, version, undo stack, field summary, missing fields, active fieldId, and a per-step golden path checklist.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passes with no errors.
+**Migrations:** None.
+**DB changes:** None.
+
+---
+
+## 2026-05-14 — Mega Sprint 322–335: Full Donna Draft Experience + Approval Boundary V1
+
+**Goal:** Turn the conversational runtime into a visible, usable draft experience. Donna can start a workflow, create a draft, ask missing questions, update it conversationally, show a live preview, support undo/start over/revisions, and block final execution until visible approval.
+
+**Files created:**
+- `src/components/assistant/DonnaDraftCard.tsx` — live draft progress card showing collected fields, progress bar, Donna's next question, undo/start-over/discard/review buttons, and approval disclaimer. Rendered by `DonnaAssistantButton` when controller owns an active draft.
+- `src/components/assistant/DonnaClassTemplateDraftPreview.tsx` — read-only preview for class template drafts: level/duration/goal chips, block structure (actual if set, suggested if duration known, placeholder if neither), missing info callout, approval disclaimer.
+
+**Files modified:**
+- `src/components/assistant/donnaSlotFilling.ts` — richer `extractClassTemplateSlots`: added `focusAreas` (10 canonical areas), `intensity` (high/low/medium), `style` (competitive/technical/balanced/progressive), `playerCount` (regex), and `constraints` extraction.
+- `src/components/assistant/donnaConversationController.ts` — added `RevisionCommand` interface, 12 `REVISION_PATTERNS`, `SHOW_DRAFT_PHRASES` constant, `detectRevisionCommand()` export, `apply_revision` uiAction type, show-draft detection before active draft block, revision command handling in active draft routing, `showDraftReview` flag on `ConversationTurn`.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Phase 6–12 wiring:
+  - Imported `detectRevisionCommand`, `DonnaDraftCard`, `DonnaClassTemplateDraftPreview`, `resetDraft`, `runtimeNextQuestion`, `summarizeDraft`, `getFailureMode`
+  - Added `convShowDraftReview` state
+  - Added `handleConvUndo`, `handleConvStartOver`, `handleConvDiscard`, `handleConvReview` handlers
+  - Sprint 322 controller routing block in `handleVoiceTranscript` — when active draft and no legacy draft, routes ALL voice input exclusively through controller
+  - Sprint 322 controller routing block in `handleCommandSubmit` — same exclusivity for typed input
+  - `DonnaDraftCard` rendered before mode buttons when controller owns active draft
+  - Draft review panel rendered below `DonnaDraftCard` when `convShowDraftReview` is true (shows collected fields, still-needed fields, what approval does)
+  - `DonnaClassTemplateDraftPreview` rendered alongside `TemplateDraftPanel` when `templateDraft` exists
+  - QA panel upgraded with draft ID, version, undo stack depth, field summary, missing fields
+  - Failure mode integration: `getFailureMode('intent_unknown')` replaces hardcoded fallback in `handleCommandSubmit`
+
+**TypeScript:** Clean — `npx tsc --noEmit` passes with no errors.
+**Migrations:** None.
+**DB changes:** None.
+
+---
+
 ## 2026-05-14 — Mega Sprint 315–321: Donna Conversational Workflow Runtime V1
 
 **Goal:** Build the full intent-routing and draft management infrastructure for Donna's conversational workflow. Seven new pure-TypeScript modules with no DB, no API, no migrations.

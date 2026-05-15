@@ -71,6 +71,137 @@ export type ConversationUiAction =
   | { type: 'show_draft_review' }                          // show review panel
   | { type: 'close_draft' }                                // clear draft state
   | { type: 'fetch_context' }                              // context summary request
+  | { type: 'apply_revision'; fieldId: string; value: string }  // natural revision command
+
+// ── Revision command detection ─────────────────────────────────────────────────
+
+export interface RevisionCommand {
+  fieldId: string
+  value: string
+  confirmationText: string  // what Donna says after applying
+}
+
+const TENNIS_LEVELS_FOR_REVISION: readonly string[] = [
+  'high performance 3', 'high performance 2', 'high performance 1',
+  'yellow 3', 'yellow 2', 'yellow 1',
+  'green 3', 'green 2', 'green 1',
+  'orange 3', 'orange 2', 'orange 1',
+  'red 3', 'red 2', 'red 1',
+]
+
+const REVISION_PATTERNS: Array<{
+  phrases: readonly string[]
+  fieldId: string
+  value: string
+  confirmationText: string
+}> = [
+  {
+    phrases: ['make it more competitive', 'more competitive', 'add more competition', 'competitive game'],
+    fieldId: 'style', value: 'competitive',
+    confirmationText: "Made it more competitive. The structure now emphasizes game-based drilling.",
+  },
+  {
+    phrases: ['make it more technical', 'more technical', 'focus on technique', 'technical focus'],
+    fieldId: 'style', value: 'technical',
+    confirmationText: "Made it more technical. The structure now prioritizes skill-building blocks.",
+  },
+  {
+    phrases: ['make it more balanced', 'more balanced', 'balanced approach'],
+    fieldId: 'style', value: 'balanced',
+    confirmationText: "Balanced it out — mix of technical work and match play.",
+  },
+  {
+    phrases: ['make it harder', 'make it more intense', 'higher intensity', 'more intense', 'push harder'],
+    fieldId: 'intensity', value: 'high',
+    confirmationText: "Intensity raised. This template will challenge the players more.",
+  },
+  {
+    phrases: ['make it simpler', 'make it easier', 'lower intensity', 'less intense', 'beginner-friendly', 'beginner friendly'],
+    fieldId: 'intensity', value: 'low',
+    confirmationText: "Intensity lowered. This template is more approachable.",
+  },
+  {
+    phrases: ['add a live ball game', 'add live ball', 'include a live ball game'],
+    fieldId: 'focusAreas', value: '+live ball game',
+    confirmationText: "Added a live-ball game block to the structure.",
+  },
+  {
+    phrases: ['add transition to net', 'add net approach', 'add volley', 'volley focus'],
+    fieldId: 'focusAreas', value: '+transition to net',
+    confirmationText: "Added a net approach / volley block.",
+  },
+  {
+    phrases: ['focus more on footwork', 'add footwork', 'footwork focus', 'movement focus'],
+    fieldId: 'focusAreas', value: '+footwork',
+    confirmationText: "Added footwork emphasis to the plan.",
+  },
+  {
+    phrases: ['focus more on forehand', 'add forehand work', 'forehand prep'],
+    fieldId: 'focusAreas', value: '+forehand',
+    confirmationText: "Forehand prep added as a focus area.",
+  },
+  {
+    phrases: ['focus more on serve', 'add serve work', 'serve and return'],
+    fieldId: 'focusAreas', value: '+serve',
+    confirmationText: "Serve work added as a focus area.",
+  },
+  {
+    phrases: ['add a cool-down', 'add cool down', 'add recap'],
+    fieldId: 'focusAreas', value: '+cool-down',
+    confirmationText: "Cool-down / recap block added.",
+  },
+]
+
+/**
+ * Detect a natural revision command in director input.
+ * Returns a RevisionCommand when matched, or null when no revision pattern is found.
+ * Used when there is an active draft to apply targeted field updates without
+ * disrupting the current question sequence.
+ */
+export function detectRevisionCommand(text: string): RevisionCommand | null {
+  const lower = text.toLowerCase().trim()
+
+  for (const pattern of REVISION_PATTERNS) {
+    if (pattern.phrases.some(p => lower.includes(p))) {
+      return { fieldId: pattern.fieldId, value: pattern.value, confirmationText: pattern.confirmationText }
+    }
+  }
+
+  // Duration change: "change duration to X" / "change it to X minutes" / "make it X minutes"
+  const durMatch = lower.match(/(?:change (?:duration|it|the class) to|make it)\s+(\d+)\s*(?:min(?:utes?)?|mins?)?/)
+  if (durMatch) {
+    return {
+      fieldId: 'durationMinutes',
+      value: durMatch[1],
+      confirmationText: `Updated duration to ${durMatch[1]} minutes.`,
+    }
+  }
+
+  // Level change: "change level to Orange 2" / "change it to Green 1"
+  if (lower.includes('change') || lower.includes('switch to') || lower.includes('make it')) {
+    for (const level of TENNIS_LEVELS_FOR_REVISION) {
+      if (lower.includes(level)) {
+        const formatted = level.replace(/\b\w/g, c => c.toUpperCase())
+        return {
+          fieldId: 'level',
+          value: formatted,
+          confirmationText: `Level updated to ${formatted}.`,
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+// ── Show-draft phrase detection ────────────────────────────────────────────────
+
+const SHOW_DRAFT_PHRASES: readonly string[] = [
+  'show me the draft', 'review it', 'what did you build', 'show the draft',
+  'review draft', 'show me what you have', 'what have you built',
+  'show me the plan', 'what did you make', 'let me see it', 'let me see the draft',
+  'show me so far', 'what do you have so far',
+]
 
 // ── Initial state ──────────────────────────────────────────────────────────────
 
@@ -202,6 +333,48 @@ export function handleInput(
     )
   }
 
+  // ── Show draft (when active draft exists + show-draft phrase) ───────────────
+  if (state.activeDraft !== null && SHOW_DRAFT_PHRASES.some(p => text.toLowerCase().includes(p))) {
+    const summary = summarizeDraft(state.activeDraft)
+    const speakText = summary.isComplete
+      ? "Here's the draft — it's ready for your review."
+      : `Here's what I have so far. Still need: ${summary.missingRequiredIds.join(', ')}.`
+    return {
+      nextState: stateWithIntent,
+      speakText,
+      displayMessage: null,
+      expectingInput: true,
+      showDraftReview: true,
+      uiAction: { type: 'show_draft_review' },
+    }
+  }
+
+  // ── Natural revision command (when active draft exists) ───────────────────────
+  if (state.activeDraft !== null && state.phase === 'collecting') {
+    const revision = detectRevisionCommand(text)
+    if (revision) {
+      let fieldValue = revision.value
+      if (revision.fieldId === 'focusAreas' && revision.value.startsWith('+')) {
+        const newFocus = revision.value.slice(1).trim()
+        const existing = state.activeDraft.fields['focusAreas']?.value ?? ''
+        fieldValue = existing ? `${existing}, ${newFocus}` : newFocus
+      }
+      const updated = updateDraft(state.activeDraft, revision.fieldId, fieldValue)
+      const nextQ = getNextQuestion(updated)
+      const workflow = getWorkflow(updated.workflowId ?? ('' as WorkflowId))
+
+      if (updated.phase === 'ready_for_review') {
+        const finalized = markReadyForReview(updated)
+        return buildReadyForReviewTurn(stateWithIntent, finalized, workflow)
+      }
+
+      const speakText = nextQ
+        ? `${revision.confirmationText} ${nextQ.question}`
+        : revision.confirmationText
+      return buildCollectingTurn(stateWithIntent, updated, speakText)
+    }
+  }
+
   // ── Continue an active draft: treat input as the next field answer ───────────
   if (state.phase === 'collecting' && state.activeDraft && state.currentFieldId) {
     // Only treat as draft answer if not a navigation/workflow command
@@ -261,6 +434,17 @@ export function handleInput(
 
   // ── General question / context / suggestions ─────────────────────────────────
   if (intent.intentType === 'general_question') {
+    // If a draft is active and the question looks like "show draft", surface the review
+    if (state.activeDraft !== null && SHOW_DRAFT_PHRASES.some(p => text.toLowerCase().includes(p))) {
+      return {
+        nextState: stateWithIntent,
+        speakText: "Here's what I've built so far.",
+        displayMessage: null,
+        expectingInput: true,
+        showDraftReview: true,
+        uiAction: { type: 'show_draft_review' },
+      }
+    }
     return {
       nextState: { ...stateWithIntent, phase: 'idle' },
       speakText: intent.safeResponse,
@@ -274,18 +458,6 @@ export function handleInput(
   // ── Create draft (single-task) ───────────────────────────────────────────────
   if (intent.intentType === 'create_draft') {
     const { workflowId } = intent
-
-    // Class template always hands off to TemplateDraftPanel
-    if (workflowId === 'class_template_creation') {
-      return {
-        nextState: { ...stateWithIntent, phase: 'idle' },
-        speakText: intent.safeResponse,
-        displayMessage: null,
-        expectingInput: true,
-        showDraftReview: false,
-        uiAction: { type: 'start_template_draft', initialText: text },
-      }
-    }
 
     // Review queue is a read operation — open the panel
     if (workflowId === 'review_queue') {

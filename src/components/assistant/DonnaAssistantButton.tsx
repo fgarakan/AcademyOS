@@ -69,8 +69,15 @@ import {
   createConversationState,
   handleInput as controllerHandleInput,
   discardCurrentDraft as controllerDiscard,
+  detectRevisionCommand,
 } from '@/components/assistant/donnaConversationController'
 import type { ConversationState } from '@/components/assistant/donnaConversationController'
+// Sprint 322–335 — Draft Card + Preview + Failure Modes
+import { DonnaDraftCard } from '@/components/assistant/DonnaDraftCard'
+import { DonnaClassTemplateDraftPreview } from '@/components/assistant/DonnaClassTemplateDraftPreview'
+import { DonnaClassTemplateDraftPreviewFromDraft } from '@/components/assistant/DonnaClassTemplateDraftPreviewFromDraft'
+import { resetDraft, getNextQuestion as runtimeNextQuestion, summarizeDraft } from '@/components/assistant/donnaDraftRuntime'
+import { getFailureMode } from '@/components/assistant/donnaFailureModes'
 // Sprint 289 — Voice UI types
 import type { DonnaVoiceTranscriptState } from '@/components/assistant/donnaVoiceUiTypes'
 // Sprint 290 — Onboarding flow
@@ -558,6 +565,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Sprint 315–321 — Conversation controller state (intent tracking + undo/go-back)
   // Runs alongside existing routing; full migration in a future sprint.
   const [convState, setConvState] = useState<ConversationState>(createConversationState)
+  // Sprint 322 — show draft review panel triggered by controller or "show me the draft"
+  const [convShowDraftReview, setConvShowDraftReview] = useState(false)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -654,6 +663,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setWakeDetectedCommand(null)
     setVoiceOutputConfirmed(null)
     setConvState(createConversationState())
+    setConvShowDraftReview(false)
     realtimeDisconnect()
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -709,6 +719,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setWakeDetectedCommand(null)
     setVoiceOutputConfirmed(null)
     setConvState(createConversationState())
+    setConvShowDraftReview(false)
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -787,6 +798,17 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return
     }
 
+    // Early return when controller just created a new draft — bypass legacy routing
+    if (convState.activeDraft === null && controllerTurn.nextState.activeDraft !== null) {
+      if (controllerTurn.speakText) speakAssistantText(controllerTurn.speakText)
+      if (controllerTurn.showDraftReview) setConvShowDraftReview(true)
+      console.log('[DonnaGoldenPath] draft_started', {
+        workflowId: controllerTurn.nextState.activeDraft.workflowId,
+        fields: Object.keys(controllerTurn.nextState.activeDraft.fields),
+      })
+      return
+    }
+
     // Voice approval safety — voice may never trigger saves, level changes, or sends.
     if (isProtectedVoicePhrase(lower)) {
       setCommandResponse({
@@ -794,6 +816,54 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         type: 'honest',
         label: 'Use the on-screen button',
       })
+      return
+    }
+
+    // Sprint 322: When the controller has an active draft and no legacy draft exists,
+    // route ALL input through the controller (it owns this session).
+    if (convState.activeDraft !== null && !genericDraft && !templateDraft) {
+      // First check for natural revision commands (e.g. "make it more competitive")
+      const revision = detectRevisionCommand(text)
+      if (revision) {
+        const turn = controllerHandleInput(text, convState)
+        setConvState(turn.nextState)
+        if (turn.speakText) speakAssistantText(turn.speakText)
+        if (turn.showDraftReview) setConvShowDraftReview(true)
+        return
+      }
+
+      // Route all other input through the controller
+      const turn = controllerHandleInput(text, convState)
+      setConvState(turn.nextState)
+      if (turn.speakText) speakAssistantText(turn.speakText)
+      if (turn.showDraftReview) setConvShowDraftReview(true)
+      if (turn.displayMessage) {
+        setCommandResponse({ message: turn.displayMessage, type: 'info', label: 'Donna' })
+      }
+      // Handle UI actions from controller
+      switch (turn.uiAction.type) {
+        case 'start_template_draft': {
+          const draft = parseTemplateDraft(turn.uiAction.initialText)
+          setTemplateDraft(draft)
+          setFromVoiceCapture(true)
+          setActiveMode('create_template')
+          const firstQ = draft.missingQuestions[0] ?? null
+          if (firstQ) speakAssistantText(firstQ.question)
+          break
+        }
+        case 'open_review_queue':
+          void handleOpenReviewQueue()
+          break
+        case 'navigate':
+          router.push(turn.uiAction.destination)
+          break
+        case 'open_onboarding':
+          router.push('/director/onboarding/interview')
+          break
+        case 'fetch_context':
+          void handleContextSummary()
+          break
+      }
       return
     }
 
@@ -1042,6 +1112,34 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setGenericDraft(null)
     setActiveMode(null)
     setFromVoiceCapture(false)
+  }
+
+  // Sprint 322 — Conversation controller draft action handlers
+
+  function handleConvUndo() {
+    if (!convState.activeDraft) return
+    const turn = controllerHandleInput('undo that', convState)
+    setConvState(turn.nextState)
+    if (turn.speakText) speakAssistantText(turn.speakText)
+  }
+
+  function handleConvStartOver() {
+    if (!convState.activeDraft) return
+    const fresh = resetDraft(convState.activeDraft)
+    setConvState(prev => ({ ...prev, activeDraft: fresh, phase: 'collecting', currentFieldId: null }))
+    setConvShowDraftReview(false)
+    const nextQ = runtimeNextQuestion(fresh)
+    if (nextQ) speakAssistantText(nextQ.question)
+    else speakAssistantText("Draft reset. Tell me what you'd like to build.")
+  }
+
+  function handleConvDiscard() {
+    setConvState(controllerDiscard(convState))
+    setConvShowDraftReview(false)
+  }
+
+  function handleConvReview() {
+    setConvShowDraftReview(true)
   }
 
   // Sprint 290 — Guided onboarding answer handler
@@ -1604,6 +1702,61 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return
     }
 
+    // Call controller first — handles both new draft creation and active draft routing
+    const controllerTurn = controllerHandleInput(text, convState)
+
+    // New draft just created from a create_draft intent — bypass legacy routing
+    if (convState.activeDraft === null && controllerTurn.nextState.activeDraft !== null) {
+      setConvState(controllerTurn.nextState)
+      if (controllerTurn.speakText) speakAssistantText(controllerTurn.speakText)
+      if (controllerTurn.showDraftReview) setConvShowDraftReview(true)
+      console.log('[DonnaGoldenPath] draft_started', {
+        workflowId: controllerTurn.nextState.activeDraft.workflowId,
+        fields: Object.keys(controllerTurn.nextState.activeDraft.fields),
+      })
+      setTypeInstead(false)
+      setTypedText('')
+      return
+    }
+
+    // Sprint 322: When the controller has an active draft and no legacy draft exists,
+    // route ALL typed input through the controller (mirrors handleVoiceTranscript).
+    if (convState.activeDraft !== null && !genericDraft && !templateDraft) {
+      const turn = controllerTurn
+      setConvState(turn.nextState)
+      if (turn.speakText) speakAssistantText(turn.speakText)
+      if (turn.showDraftReview) setConvShowDraftReview(true)
+      if (turn.displayMessage) {
+        setCommandResponse({ message: turn.displayMessage, type: 'info', label: 'Donna' })
+      }
+      switch (turn.uiAction.type) {
+        case 'start_template_draft': {
+          const draft = parseTemplateDraft(turn.uiAction.initialText)
+          setTemplateDraft(draft)
+          setFromVoiceCapture(false)
+          setActiveMode('create_template')
+          const firstQ = draft.missingQuestions[0] ?? null
+          if (firstQ) speakAssistantText(firstQ.question)
+          break
+        }
+        case 'open_review_queue':
+          void handleOpenReviewQueue()
+          break
+        case 'navigate':
+          router.push(turn.uiAction.destination)
+          break
+        case 'open_onboarding':
+          router.push('/director/onboarding/interview')
+          break
+        case 'fetch_context':
+          void handleContextSummary()
+          break
+      }
+      setTypeInstead(false)
+      setTypedText('')
+      return
+    }
+
     // Multi-step intent — Sprint 286
     if (!templateDraft && !genericDraft && !multiStepPlan) {
       const plan = detectMultiStepIntent(text)
@@ -1667,9 +1820,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
     const handled = detectAndHandleCommand(text)
     if (!handled) {
+      const fallback = getFailureMode('intent_unknown')
       setCommandResponse({
-        message:
-          'I didn\'t recognize that command. Try: "What is this page?", "What should I do next?", "Open review queue", or start a template with "Create a template for…"',
+        message: fallback.userMessage,
         type: 'honest',
         label: 'Not recognized',
       })
@@ -2587,19 +2740,23 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
               {/* Live draft panel — shown once a draft exists */}
               {templateDraft && (
-                <TemplateDraftPanel
-                  draft={templateDraft}
-                  onUpdateDraft={d => setTemplateDraft(d)}
-                  onCancel={handleCancelTemplate}
-                  fromVoice={fromVoiceCapture}
-                  onQuestionAnswered={(nextQ, updatedDraft) => {
-                    if (nextQ) {
-                      speakAssistantText(nextQ.question)
-                    } else if (isDraftReadyForReview(updatedDraft)) {
-                      speakAssistantText('I have enough to draft this. Review it before saving.')
-                    }
-                  }}
-                />
+                <>
+                  <TemplateDraftPanel
+                    draft={templateDraft}
+                    onUpdateDraft={d => setTemplateDraft(d)}
+                    onCancel={handleCancelTemplate}
+                    fromVoice={fromVoiceCapture}
+                    onQuestionAnswered={(nextQ, updatedDraft) => {
+                      if (nextQ) {
+                        speakAssistantText(nextQ.question)
+                      } else if (isDraftReadyForReview(updatedDraft)) {
+                        speakAssistantText('I have enough to draft this. Review it before saving.')
+                      }
+                    }}
+                  />
+                  {/* Sprint 322: Template draft preview — read-only, nothing saves here */}
+                  <DonnaClassTemplateDraftPreview draft={templateDraft} />
+                </>
               )}
             </>
           )}
@@ -2782,6 +2939,96 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </button>
           )}
 
+          {/* ── Sprint 322: Active conversation draft card ── */}
+          {/* Shown when the conversation controller owns an active draft (no legacy draft running). */}
+          {convState.activeDraft !== null && !genericDraft && !templateDraft && (
+            <>
+              <DonnaDraftCard
+                draft={convState.activeDraft}
+                onUndo={handleConvUndo}
+                onStartOver={handleConvStartOver}
+                onDiscard={handleConvDiscard}
+                onReview={handleConvReview}
+              />
+
+              {/* Sprint 336–345: Class template live preview — shown when workflow is class_template_creation */}
+              {convState.activeDraft.workflowId === 'class_template_creation' && (
+                <DonnaClassTemplateDraftPreviewFromDraft draft={convState.activeDraft} />
+              )}
+
+              {/* Sprint 322 Phase 8 — Draft review panel: shown when director says "show me the draft" */}
+              {convShowDraftReview && (() => {
+                const summary = summarizeDraft(convState.activeDraft)
+                return (
+                  <div
+                    className="rounded-xl p-4 space-y-3"
+                    style={{ background: 'var(--surface-raised)', border: '1px solid rgba(200,255,0,0.2)' }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] uppercase tracking-widest font-semibold text-lime">
+                        Draft Review
+                      </p>
+                      <button
+                        onClick={() => setConvShowDraftReview(false)}
+                        aria-label="Close draft review"
+                        className="text-text-muted hover:text-text-primary transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    {/* Collected fields */}
+                    {summary.fieldLines.length > 0 ? (
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">
+                          What I have
+                        </p>
+                        {summary.fieldLines.map(({ label, value }) => (
+                          <div key={label} className="flex items-start gap-1.5 text-[11px]">
+                            <span className="text-lime mt-px shrink-0">·</span>
+                            <span>
+                              <span className="text-text-muted uppercase tracking-wide text-[10px]">{label}: </span>
+                              <span className="text-text-primary">{value}</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-text-muted italic">No fields collected yet.</p>
+                    )}
+
+                    {/* Still needed */}
+                    {summary.missingRequiredIds.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold">
+                          Still needed
+                        </p>
+                        {summary.missingRequiredIds.map(fieldId => (
+                          <p key={fieldId} className="text-[11px] text-text-muted">· {fieldId.replace(/_/g, ' ')}</p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* What approval would do */}
+                    <div
+                      className="px-3 py-2 rounded-lg"
+                      style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.12)' }}
+                    >
+                      <p className="text-[10px] text-text-muted uppercase tracking-widest font-semibold mb-0.5">
+                        What approval does
+                      </p>
+                      <p className="text-[11px] text-text-secondary leading-snug">
+                        {convState.activeDraft.phase === 'ready_for_review'
+                          ? 'This draft is ready. Clicking the approval button will save it safely with a full audit trail.'
+                          : 'Answer remaining questions, then click the approval button — nothing saves until you do.'}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })()}
+            </>
+          )}
+
           {/* ── Mode buttons ── */}
           <div className="space-y-1.5">
             <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
@@ -2887,28 +3134,77 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* Sprint 315–321 — Conversation Controller QA panel (dev only) */}
+          {/* Sprint 336–345 — Golden Path QA panel (dev only) */}
           {process.env.NODE_ENV !== 'production' && (
             <details className="mx-4 mb-2">
               <summary className="text-[10px] uppercase tracking-widest text-text-muted cursor-pointer">
-                Conversation Controller
+                Golden Path QA
               </summary>
               <div className="mt-2 p-2 rounded text-[11px] font-mono space-y-1" style={{ background: 'var(--surface-raised)' }}>
+                {/* Controller state */}
+                <div className="text-text-muted text-[10px] uppercase tracking-widest">Controller</div>
                 <div className="text-text-secondary">Phase: <span className="text-lime">{convState.phase}</span></div>
+                <div className="text-text-secondary">Review panel: <span className="text-lime">{convShowDraftReview ? 'open' : 'closed'}</span></div>
+
+                {/* Last intent */}
                 {convState.lastIntent && (
                   <>
-                    <div className="text-text-secondary">Intent: <span className="text-lime">{convState.lastIntent.intentType}</span></div>
+                    <div className="text-text-muted text-[10px] uppercase tracking-widest mt-1">Last Intent</div>
+                    <div className="text-text-secondary">Type: <span className="text-lime">{convState.lastIntent.intentType}</span></div>
                     <div className="text-text-secondary">Workflow: <span className="text-lime">{convState.lastIntent.workflowId ?? 'none'}</span></div>
                     <div className="text-text-secondary">Confidence: <span className="text-lime">{convState.lastIntent.confidence}</span></div>
-                    <div className="text-text-secondary">Approval required: <span className="text-lime">{convState.lastIntent.requiresApproval ? 'yes' : 'no'}</span></div>
+                    <div className="text-text-secondary">Approval required: <span className="text-lime">{convState.lastIntent.requiresApproval ? 'YES' : 'no'}</span></div>
                   </>
                 )}
-                {convState.activeDraft && (
-                  <div className="text-text-secondary">Active draft: <span className="text-lime">{convState.activeDraft.taskId}</span></div>
-                )}
-                {convState.currentFieldId && (
-                  <div className="text-text-secondary">Current field: <span className="text-lime">{convState.currentFieldId}</span></div>
-                )}
+
+                {/* Active draft */}
+                {convState.activeDraft && (() => {
+                  const s = summarizeDraft(convState.activeDraft)
+                  const isClassTemplate = convState.activeDraft.workflowId === 'class_template_creation'
+                  return (
+                    <>
+                      <div className="text-text-muted text-[10px] uppercase tracking-widest mt-1">Active Draft</div>
+                      <div className="text-text-secondary">Task: <span className="text-lime">{convState.activeDraft.taskId}</span></div>
+                      <div className="text-text-secondary">Version: <span className="text-lime">v{convState.activeDraft.history.length + 1}</span></div>
+                      <div className="text-text-secondary">Draft phase: <span className="text-lime">{convState.activeDraft.phase}</span></div>
+                      <div className="text-text-secondary">Undo stack depth: <span className="text-lime">{convState.activeDraft.history.length}</span></div>
+                      <div className="text-text-secondary">Progress: <span className="text-lime">{s.answeredCount} / {s.totalRequired} required</span></div>
+                      {s.missingRequiredIds.length > 0 && (
+                        <div className="text-text-secondary">Missing: <span className="text-status-orange">{s.missingRequiredIds.join(', ')}</span></div>
+                      )}
+                      {s.fieldLines.length > 0 && (
+                        <div className="text-text-secondary space-y-0.5">
+                          {s.fieldLines.map(f => (
+                            <div key={f.label}>· <span className="text-text-muted">{f.label}:</span> <span className="text-lime">{f.value}</span></div>
+                          ))}
+                        </div>
+                      )}
+                      {convState.currentFieldId && (
+                        <div className="text-text-secondary">Asking for: <span className="text-lime">{convState.currentFieldId}</span></div>
+                      )}
+
+                      {/* Golden path checklist — class_template_creation only */}
+                      {isClassTemplate && (
+                        <>
+                          <div className="text-text-muted text-[10px] uppercase tracking-widest mt-1.5">Golden Path Checklist</div>
+                          {[
+                            { label: 'draft_started',              done: true },
+                            { label: 'level collected',            done: !!convState.activeDraft.fields['level'] },
+                            { label: 'durationMinutes collected',  done: !!convState.activeDraft.fields['durationMinutes'] },
+                            { label: 'focusAreas collected',       done: !!convState.activeDraft.fields['focusAreas'] },
+                            { label: 'ready_for_preview',          done: s.isComplete },
+                            { label: 'review_panel_open',          done: convShowDraftReview },
+                            { label: 'protected_action_blocked',   done: convState.lastIntent?.requiresApproval === true },
+                          ].map(({ label, done }) => (
+                            <div key={label} className={done ? 'text-status-green' : 'text-text-muted'}>
+                              {done ? '✓' : '○'} {label}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
             </details>
           )}
