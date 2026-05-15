@@ -1714,7 +1714,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         workflowId: controllerTurn.nextState.activeDraft.workflowId,
         fields: Object.keys(controllerTurn.nextState.activeDraft.fields),
       })
-      setTypeInstead(false)
+      // Sprint 347: keep textarea visible while collecting — director needs to type answers
+      if (controllerTurn.nextState.phase !== 'collecting') setTypeInstead(false)
       setTypedText('')
       return
     }
@@ -1752,7 +1753,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           void handleContextSummary()
           break
       }
-      setTypeInstead(false)
+      // Sprint 347: keep textarea visible while collecting — director needs to type answers
+      if (turn.nextState.phase !== 'collecting') setTypeInstead(false)
       setTypedText('')
       return
     }

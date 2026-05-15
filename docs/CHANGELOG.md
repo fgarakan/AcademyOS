@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-05-15 — Sprint 347: Donna Golden Path Browser QA + Typed Input Fix V1
+
+**Goal:** Run the full Donna golden path in a real Playwright browser session and fix all blocking bugs found during the run.
+
+**Root causes found and fixed:**
+
+1. **Donna intro onboarding intercepts typed commands (test setup):** When the Donna panel opens for the first time, `setOnboardingStep(0)` fires. All subsequent typed input routes through `handleOnboardingAnswer` (step 0 = name, step 1 = first action), bypassing the controller entirely. Fix: Playwright test now completes the Donna intro (types a name for step 0, a neutral phrase for step 1) before running the golden path.
+
+2. **`setTypeInstead(false)` hides textarea during `collecting` phase (app bug):** After `handleCommandSubmit` creates a new draft or processes a collecting-phase answer, `setTypeInstead(false)` was unconditionally called, hiding the textarea. The director then had no way to type subsequent answers. Fix: `setTypeInstead(false)` is now only called when `nextState.phase !== 'collecting'` — in collecting mode, the textarea stays visible for follow-up answers.
+
+3. **Playwright `keyboard.press('Enter')` stale closure (test bug):** Pressing Enter after `fill()` fired before React committed the `onChange` state update, so `handleCommandSubmit` read empty `typedText` and returned early. Fix: test now uses `page.keyboard.type(text, { delay: 30 })` + click the Send button, which processes properly through React's event system.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — (1) In `handleCommandSubmit` new-draft branch: changed `setTypeInstead(false)` to `if (controllerTurn.nextState.phase !== 'collecting') setTypeInstead(false)`. (2) In `handleCommandSubmit` active-draft branch: same conditional on `turn.nextState.phase !== 'collecting'`.
+
+**Test artifacts (not committed):**
+- `/tmp/pw-qa/test.cjs` — Playwright golden path test, now passing 21/21 checks, 0 failures.
+  - Login → /director (PASS)
+  - Draft created — draft_started logged (PASS)
+  - 90 minutes → durationMinutes collected, ready_for_review (PASS)
+  - Make it more competitive → revision_applied logged (PASS)
+  - Undo that → undo_applied logged (PASS)
+  - Show me the draft → review panel opened (PASS)
+  - Save it → protected_action_blocked logged, on-screen button message (PASS)
+  - Academy Setup regression — /onboarding/interview loads (PASS)
+
+**Browser QA result: 21 PASS / 0 FAIL / 0 WARN**
+
+**TypeScript:** Clean — `./node_modules/.bin/tsc --noEmit` passes with no errors.
+**Migrations:** None.
+**DB changes:** None.
+
+---
+
 ## 2026-05-15 — Sprint 346: Donna Golden Path Bug Fixes V1
 
 **Goal:** Fix three bugs found during static QA of Sprint 336–345. Completes the full end-to-end golden path for `class_template_creation`.
