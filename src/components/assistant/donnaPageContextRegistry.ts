@@ -441,6 +441,44 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     unsafeActions: ['auto_act_on_signals', 'send_alerts_without_approval'],
   },
 
+  // ── Coach Recap ───────────────────────────────────────────────────────────────
+  {
+    routePattern: '/coach/recap',
+    screenName: 'Coach Recap',
+    objectType: 'session_recap',
+    purpose:
+      'Guide the coach through a 6-question session recap. Answers are captured as a draft — nothing is official until the director reviews and approves.',
+    nextAction: 'Complete all 6 questions and submit for director review.',
+    assistantIntro:
+      'I can help you structure your recap. Answer each question in your own words — I will help turn it into a clean draft for the director to review. Nothing is saved officially until approval.',
+    readableContext: [
+      'recap_answers',
+      'session_context',
+      'attendance_flags',
+      'player_observations',
+    ],
+    safeDraftActions: [
+      'structure_recap_draft',
+      'suggest_attendance_note',
+      'capture_player_observation',
+    ],
+    approvalRequiredFor: [
+      'official_attendance_write',
+      'player_note_submission',
+      'parent_update_send',
+    ],
+    suggestedPrompts: [
+      'Help me finish this recap.',
+      'Structure my attendance note.',
+      'What should I include in my follow-up?',
+    ],
+    unsafeActions: [
+      'auto_write_attendance',
+      'auto_update_player_profile',
+      'auto_send_parent_message',
+    ],
+  },
+
   // ── Parent Communication Center ──────────────────────────────────────────────
   {
     routePattern: '/director/parents',

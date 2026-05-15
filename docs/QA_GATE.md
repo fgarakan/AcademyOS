@@ -100,6 +100,21 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 390 — Coach Recap Flow Shell V1
+
+**Date:** 2026-05-15
+**QA type:** Full browser QA (Playwright)
+**TypeScript:** CLEAN
+**Script:** /tmp/donna-qa-390.js
+
+**Result: 19 PASS / 0 FAIL / 0 WARN**
+
+Notes: /coach/recap accessible to director test account (no role gate added in Sprint 390). Navigation between questions verified in browser. Submit button confirmed to not write DB.
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 389 — Parent Communication Center V1
 
 **Date:** 2026-05-15
@@ -274,4 +289,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 389*
+*Last updated: Sprint 390*

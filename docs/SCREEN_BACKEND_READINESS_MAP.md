@@ -159,8 +159,8 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 
 ## Screen 5 — Coach Recap Flow
 
-**Route:** `/coach/sessions/[sessionId]` wrap-up tab *(exists)*; `/coach/recap` *(proposed — do not build yet)*
-**Overall readiness: Level 6**
+**Route:** `/coach/sessions/[sessionId]` wrap-up tab *(exists)*; `/coach/recap` *(built Sprint 390 — shell)*
+**Overall readiness: Level 7**
 
 | Dimension | Status | Level |
 |---|---|---|
@@ -169,7 +169,7 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 | `applyWrapUpDraftAction` | YES — proposed_action → approval → execute | 6+ |
 | Coach DONNA panel | NOT BUILT | 0 |
 | DONNA context for coach routes | NO | 0 |
-| `/coach/recap` dedicated route | NO — plan only | 0 |
+| `/coach/recap` dedicated route | YES — built Sprint 390 | 4+ |
 
 **What's missing for Level 8:**
 1. DONNA coach panel — significant new feature (separate sprint)
@@ -278,7 +278,7 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 | 387 | Sessions Detail DONNA | `/director/sessions/[sessionId]` | Level 6 → Level 8 ✓ | No |
 | 388 | Level Up Review | `/director/level-up` | Level 3 → Level 8 ✓ | No |
 | 389 | Parent Comms Center | `/director/parents` | Level 3 → Level 8 ✓ | No |
-| 390 | Coach Recap + Context | `/coach/recap`, `/coach/sessions/[sessionId]` | Level 6 → Level 7 | No |
+| 390 | Coach Recap Shell | `/coach/recap` | Level 0 → Level 4+ ✓ | No |
 | 391 | Command Center Refresh | `/director/command-center` | Level 8 → Level 9 | No |
 | 392+ | Platform Portal | `/platform/academies` | Level 2 → Level 6 | YES |
 
@@ -302,4 +302,4 @@ No migrations are needed for Sprints 386–391.
 
 ---
 
-*Last updated: Sprint 389*
+*Last updated: Sprint 390*

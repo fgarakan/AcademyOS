@@ -8,6 +8,22 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-15 — Sprint 390: Coach Recap Flow Shell V1
+
+**What changed:** New route `/coach/recap` — a client-side 6-question session recap shell for coaches. Progress indicator, one-question-at-a-time flow, review screen, submitted confirmation. No backend writes.
+
+**Integrates with:**
+- Coach layout (`src/app/coach/layout.tsx`) — uses BottomTabBar + max-w-2xl container automatically
+- `donnaPageContextRegistry` — `/coach/recap` entry added for future coach DONNA panel
+- Sprint 391 will connect the submit action to the draft pipeline
+
+**Decisions recorded:**
+- Sprint 390 is shell-only: submit button does not write to the DB. This is by design — Sprint 391 will add the `saveWrapUpDraftAction` connection.
+- `/coach/recap` is accessible to director test account (no role gate added in Sprint 390). A future sprint may add coach-only middleware guard.
+- Voice input placeholder is honest: shown as "Available via DONNA on director view" — no fake voice input wired on coach route yet.
+
+---
+
 ## 2026-05-15 — Sprint 389: Parent Communication Center V1
 
 **What changed:** New route `/director/parents` — the parent communication operating surface. Queries `parent_updates` table, groups by status, shows 4-step workflow, parent-safe content preview on every card, DONNA chips for drafting. No send capability — delivery pipeline not built.

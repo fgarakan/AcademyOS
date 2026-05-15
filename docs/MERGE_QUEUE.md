@@ -31,6 +31,20 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 390 — Coach Recap Flow Shell V1
+
+**Date:** 2026-05-15
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** 19 PASS / 0 FAIL / 0 WARN
+**Files committed:**
+- `src/app/coach/recap/page.tsx`
+- `src/components/assistant/donnaPageContextRegistry.ts`
+- docs (7 files)
+**Commit hash:** *(pending)*
+**Issues:** None
+
+---
+
 ### Sprint 389 — Parent Communication Center V1
 
 **Date:** 2026-05-15
@@ -180,4 +194,4 @@ This file records:
 
 ---
 
-*Last updated: Sprint 389*
+*Last updated: Sprint 390*

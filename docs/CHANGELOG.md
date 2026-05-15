@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-15 — Sprint 390: Coach Recap Flow Shell V1
+
+**Route added:** `/coach/recap`
+
+**Goal:** Build the coach-facing session recap shell. 6-question guided flow with progress indicator. No backend writes in this sprint — shell only.
+
+**Files created:**
+- `src/app/coach/recap/page.tsx` — Client component. 6-question guided flow with step counter, progress bar, textarea per question, navigation (Next/Back), review screen, and submitted confirmation. No DB writes. "Submit for Director Review" shows confirmation only — Sprint 391 will wire to draft pipeline.
+
+**Files modified:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — Added `/coach/recap` context entry for future coach DONNA panel integration.
+
+**6 questions:** Attendance → Session Plan → Positive Standouts → Needs Attention → Safety/Readiness → Follow-Up Needed.
+
+**Shell constraints:** No official attendance writes. No player profile updates. No parent messages. Everything pending director approval.
+
+---
+
 ## 2026-05-15 — Sprint 389: Parent Communication Center V1
 
 **Route added:** `/director/parents`
