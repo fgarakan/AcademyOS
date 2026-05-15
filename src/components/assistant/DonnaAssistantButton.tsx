@@ -175,6 +175,15 @@ import {
   clearDraftSession,
   hasDraftSession,
 } from '@/components/assistant/donnaDraftPersistence'
+// Sprint 381 — Director-Initiated Donna Workflows
+import { matchDirectorWorkflowCommand } from '@/components/assistant/donnaDirectorWorkflowCommands'
+import type { DirectorWorkflowCommandId } from '@/components/assistant/donnaDirectorWorkflowCommands'
+import { DonnaAttendanceExceptionCard } from '@/components/assistant/DonnaAttendanceExceptionCard'
+import {
+  type AttendanceExceptionDraft,
+  createAttendanceExceptionDraft,
+  attendanceExceptionReadyToSubmit,
+} from '@/components/assistant/donnaAttendanceWorkflow'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -648,6 +657,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [recommendationSet, setRecommendationSet] = useState<DonnaRecommendationSet | null>(null)
   // Sprint 377 — Preference memory (loaded from localStorage on mount)
   const [preferences, setPreferences] = useState<DonnaPreferences>(() => loadPreferences())
+  // Sprint 381 — Attendance exception draft (director-initiated)
+  const [attendanceExceptionDraft, setAttendanceExceptionDraft] = useState<AttendanceExceptionDraft | null>(null)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -751,6 +762,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setConvState(createConversationState())
     setConvShowDraftReview(false)
     setCommunicationDraft(null)
+    setAttendanceExceptionDraft(null)
     realtimeDisconnect()
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -817,6 +829,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setConvShowDraftReview(false)
     setDraftRestoredFromSession(false)
     setCommunicationDraft(null)
+    setAttendanceExceptionDraft(null)
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -1032,6 +1045,16 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       }
     }
 
+    // 2.5. Sprint 381 — Attendance exception slot-filling (active draft, still collecting)
+    if (attendanceExceptionDraft && !attendanceExceptionReadyToSubmit(attendanceExceptionDraft)) {
+      const updated = applyAttendanceAnswer(attendanceExceptionDraft, text)
+      setAttendanceExceptionDraft(updated)
+      if (attendanceExceptionReadyToSubmit(updated)) {
+        speakDonna('Attendance exception draft is ready for your review.')
+      }
+      return
+    }
+
     // 3a. Class-template draft complete — redirect voice confirm/save to screen button
     if (templateDraft && templateDraft.missingQuestions.length === 0) {
       if (lower.includes('confirm') || lower.includes('save') || lower.includes('approve')) {
@@ -1095,6 +1118,15 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       const { taskId } = detectTaskIntent(text)
       if (taskId && taskId !== 'create_class_template') {
         handleStartGenericTask(taskId, true)
+        return
+      }
+    }
+
+    // 5.4. Sprint 381 — New COO commands: attendance exception + recommendation summary
+    {
+      const cooCmd = matchDirectorWorkflowCommand(lower)
+      if (cooCmd === 'attendance_exception_draft' || cooCmd === 'recommendation_summary') {
+        dispatchCooCommand(cooCmd)
         return
       }
     }
@@ -1642,7 +1674,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       lower.includes('show pending') ||
       lower.includes('notes needing routing') ||
       lower.includes('unlinked notes') ||
-      lower.includes('needs my review')
+      lower.includes('needs my review') ||
+      lower.includes('what needs approval') ||
+      lower.includes('pending approvals')
     )
   }
 
@@ -1754,6 +1788,99 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         break
       case 'none':
       default:
+        break
+    }
+  }
+
+  // Sprint 381 — Show recommendation summary on demand (command-triggered)
+  function handleShowRecommendationSummary() {
+    recordSignal('attention_requested')
+    if (recommendationSet && recommendationSet.recommendations.length > 0) {
+      setCommandResponse({
+        message: `Here are ${recommendationSet.recommendations.length} ${recommendationSet.recommendations.length === 1 ? 'recommendation' : 'recommendations'} for right now.`,
+        type: 'info',
+        label: 'Recommendations',
+      })
+    } else {
+      const signals: RecommendationSignals = {
+        pendingReviewCount: reviewQueuePendingCount,
+        pendingPlacementCount: 0,
+        todaySessionCount: 0,
+        hasActiveDraft: convState.activeDraft !== null,
+        currentPathname: pathname,
+      }
+      const recSet = evaluateRecommendations(signals)
+      setRecommendationSet(recSet)
+      if (recSet.recommendations.length > 0) {
+        setCommandResponse({
+          message: `Here are ${recSet.recommendations.length} ${recSet.recommendations.length === 1 ? 'recommendation' : 'recommendations'}.`,
+          type: 'info',
+          label: 'Recommendations',
+        })
+      } else {
+        setCommandResponse({
+          message: 'No recommendations right now — everything looks good.',
+          type: 'info',
+          label: 'Recommendations',
+        })
+      }
+    }
+  }
+
+  // Sprint 381 — Start an attendance exception draft (director-initiated)
+  function handleStartAttendanceExceptionDraft() {
+    recordSignal('workflow_started', { workflowId: 'attendance_exception' })
+    const draft = createAttendanceExceptionDraft()
+    setAttendanceExceptionDraft(draft)
+    setPreferences(recordWorkflowUsed('attendance_exception'))
+    setCommandResponse({
+      message: "Attendance exception draft started. Which player is this for?",
+      type: 'info',
+      label: 'Attendance Exception',
+    })
+  }
+
+  // Sprint 381 — Apply a typed/spoken answer to the next unfilled attendance exception field
+  function applyAttendanceAnswer(draft: AttendanceExceptionDraft, text: string): AttendanceExceptionDraft {
+    const lower = text.toLowerCase().trim()
+    let type = draft.type
+    if (lower.includes('late') || lower.includes('tardy')) type = 'late'
+    else if (lower.includes('early leave') || lower.includes('left early')) type = 'early_leave'
+    else if (lower.includes('absent') || lower.includes('absence') || lower.includes('miss')) type = 'absence'
+    if (!draft.playerName) return { ...draft, playerName: text.trim(), type }
+    if (!draft.reason) return { ...draft, reason: text.trim(), type }
+    return { ...draft, type }
+  }
+
+  // Sprint 381 — Dispatch a COO-layer director workflow command by ID
+  function dispatchCooCommand(id: DirectorWorkflowCommandId): void {
+    switch (id) {
+      case 'what_needs_attention':
+        void handleFetchAttention()
+        break
+      case 'daily_brief':
+        void handleFetchDailyBrief()
+        break
+      case 'draft_parent_update': {
+        const draft = createCommunicationDraft('parent_update')
+        setCommunicationDraft(draft)
+        setCommandResponse({ message: "I've started a parent update draft. What's the topic?", type: 'info', label: 'Communication Draft' })
+        break
+      }
+      case 'coach_brief': {
+        const draft = createCoachBriefDraft()
+        setCommunicationDraft(draft)
+        setCommandResponse({ message: "Coach brief started. Which coach or session is this for?", type: 'info', label: 'Coach Brief' })
+        break
+      }
+      case 'show_review_queue':
+        void handleOpenReviewQueue()
+        break
+      case 'attendance_exception_draft':
+        handleStartAttendanceExceptionDraft()
+        break
+      case 'recommendation_summary':
+        handleShowRecommendationSummary()
         break
     }
   }
@@ -2013,6 +2140,17 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       return
     }
 
+    // Sprint 381 — Attendance exception slot-filling (active draft, still collecting)
+    if (attendanceExceptionDraft && !attendanceExceptionReadyToSubmit(attendanceExceptionDraft)) {
+      const updated = applyAttendanceAnswer(attendanceExceptionDraft, text)
+      setAttendanceExceptionDraft(updated)
+      if (attendanceExceptionReadyToSubmit(updated)) {
+        setCommandResponse({ message: 'Attendance exception draft is ready for your review.', type: 'info', label: 'Attendance' })
+      }
+      setTypedText('')
+      return
+    }
+
     // Multi-step intent — Sprint 286
     if (!templateDraft && !genericDraft && !multiStepPlan) {
       const plan = detectMultiStepIntent(text)
@@ -2042,6 +2180,16 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       const { taskId } = detectTaskIntent(text)
       if (taskId && taskId !== 'create_class_template') {
         handleStartGenericTask(taskId, false)
+        setTypedText('')
+        return
+      }
+    }
+
+    // Sprint 381 — New COO commands: attendance exception + recommendation summary
+    {
+      const cooCmd = matchDirectorWorkflowCommand(text.toLowerCase())
+      if (cooCmd === 'attendance_exception_draft' || cooCmd === 'recommendation_summary') {
+        dispatchCooCommand(cooCmd)
         setTypedText('')
         return
       }
@@ -2887,6 +3035,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             />
           )}
 
+          {/* ── Sprint 381: Attendance exception draft card ── */}
+          {attendanceExceptionDraft && (
+            <DonnaAttendanceExceptionCard
+              draft={attendanceExceptionDraft}
+              onDiscard={() => setAttendanceExceptionDraft(null)}
+            />
+          )}
+
           {/* ── Sprint 290: Onboarding suggested routes — shown when step 1 intent was unclear ── */}
           {showOnboardingSuggestions && !genericDraft && !templateDraft && (
             <div
@@ -3610,6 +3766,25 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 </div>
                 <div className="text-text-secondary">
                   Frequent categories: <span className="text-lime">{preferences.frequentCategories.join(', ') || 'none'}</span>
+                </div>
+              </div>
+
+              {/* Sprint 381 — COO command routing state */}
+              <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
+                <div className="text-text-muted uppercase tracking-widest">COO Commands</div>
+                <div className="text-text-secondary">
+                  Attendance draft:{' '}
+                  <span className={attendanceExceptionDraft ? 'text-lime' : 'text-text-muted'}>
+                    {attendanceExceptionDraft
+                      ? `active — ${attendanceExceptionDraft.playerName ?? 'no player'} / ${attendanceExceptionDraft.type}`
+                      : 'none'}
+                  </span>
+                </div>
+                <div className="text-text-secondary">
+                  Recommendations:{' '}
+                  <span className={recommendationSet && recommendationSet.recommendations.length > 0 ? 'text-lime' : 'text-text-muted'}>
+                    {recommendationSet ? `${recommendationSet.recommendations.length} loaded` : 'not loaded'}
+                  </span>
                 </div>
               </div>
 

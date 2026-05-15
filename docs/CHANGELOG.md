@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-05-15 — Sprint 381: Director-Initiated Donna Workflows V1
+
+**Goal:** Wire 2 missing COO-layer commands (`attendance_exception_draft`, `recommendation_summary`) and create a unified director workflow command map for all 7 Donna COO commands.
+
+**New files:**
+- `src/components/assistant/donnaDirectorWorkflowCommands.ts` — `DirectorWorkflowCommandId` type + `DIRECTOR_WORKFLOW_COMMANDS` map + `matchDirectorWorkflowCommand(text)` matcher covering all 7 COO director commands
+- `src/components/assistant/DonnaAttendanceExceptionCard.tsx` — display card for `AttendanceExceptionDraft`; shows collected fields, next question, safety notice; no DB writes in Sprint 381 (session ID resolution is a follow-on step)
+
+**Modified files:**
+- `src/components/assistant/DonnaAssistantButton.tsx`:
+  - Added imports for new command map, card, and attendance workflow types
+  - Added `attendanceExceptionDraft` state (Sprint 381)
+  - Added `handleShowRecommendationSummary()` — shows recommendations on demand or evaluates fresh from current signals
+  - Added `handleStartAttendanceExceptionDraft()` — creates draft, records learning signal, updates preference memory
+  - Added `applyAttendanceAnswer(draft, text)` — slots typed/spoken answers into playerName → reason (with type detection from keywords)
+  - Added `dispatchCooCommand(id)` — central dispatcher for all 7 COO-layer command IDs
+  - `handleVoiceTranscript`: slot-filling for active attendance draft (step 2.5) + COO routing for 2 new commands (step 5.4)
+  - `handleCommandSubmit`: same slot-filling + COO routing additions
+  - `closePanel` + route-change `useEffect`: clear `attendanceExceptionDraft`
+  - Panel render: `DonnaAttendanceExceptionCard` shown when draft is active
+  - Developer Tools: COO Commands section showing attendance draft state + recommendation count
+
+**Command routing:**
+- 5 existing commands: `what_needs_attention`, `daily_brief`, `draft_parent_update`, `coach_brief`, `show_review_queue` — already wired, untouched, preserved
+- 2 new commands: `attendance_exception_draft`, `recommendation_summary` — now wired
+
+**Security check:** No migrations. No DB writes in new code. `saveAttendanceExceptionDraftAction` is referenced but not called (requires session ID confirmation). No sending. No billing. No roster changes. No player level movement. Protected action pattern preserved.
+
+**Golden path:** Unchanged. Create class template → duration → revision → undo → show draft → save (blocked). All steps verified structurally.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 380: Working Tree Cleanup + Missing File Commit V1
 
 **Goal:** Fix broken HEAD state found in Sprint 379 audit. Repo was uncloneable because `DonnaAssistantButton.tsx` imported 3 files that existed on disk but had never been committed.
