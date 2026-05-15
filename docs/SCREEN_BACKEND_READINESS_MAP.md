@@ -212,36 +212,28 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 
 ## Screen 7 — Parent Communication Center
 
-**Route:** `/director/parents` *(does not exist)*
-**Overall readiness: Level 3**
+**Route:** `/director/parents` *(built Sprint 389)*
+**Overall readiness: Level 8**
 
 | Dimension | Status | Level |
 |---|---|---|
-| Data model | `proposed_actions` (parent updates), `players` — available | 6 |
-| Route exists | NO | 0 |
-| DONNA context registered | NO | 0 |
-| `draft_parent_update` action | YES — wired Sprint 275 | 6+ |
-| `sanitizeParentFacingText` | YES — locked | 10 |
-| `parentSafeResponseRules` | YES — locked | 10 |
+| Data model | `parent_updates` table + players join | 8 |
+| Route exists | YES — built Sprint 389 | 8+ |
+| DONNA context registered | YES — Sprint 389 | 8+ |
+| Update cards (draft/approved/sent) | YES | 8+ |
+| Parent-safe content preview | YES — truncated + ShieldCheck note | 8+ |
+| Workflow banner (4 steps) | YES | 8+ |
+| "Review in queue" CTA | YES — links to /director/review | 8+ |
 | External email/SMS delivery | NOT BUILT | 0 |
-| Private lesson request view | Partial — `requestPrivateLessonAction` in parent portal | 5 |
-
-**What's missing for Level 8:**
-1. Create route `/director/parents` with `page.tsx`
-2. Add `donnaPageContextRegistry` entry for `/director/parents`
-3. Query `proposed_actions` filtered by `action_type = 'parent_update'`
-4. Render pending / approved / executed communication cards
-5. "Draft parent update" CTA → `draft_parent_update` DONNA task
-6. Parent-safe content preview applied before render
-7. Private lesson requests section (read-only first pass)
+| Private lesson request view | NOT BUILT | 0 |
 
 **What's missing for Level 10:**
-- External email/SMS delivery pipeline (separate sprint — NOT Sprint 389)
-- Parent reply tracking (future)
+- External delivery pipeline (future sprint)
+- Private lesson requests section (future sprint)
+- QA pass with real parent_update data
 
-**Migration required:** No (external delivery is separate from this screen)
-**Architecture rule:** Director must explicitly approve before any communication leaves the system. No auto-send.
-**Recommended build sprint:** Sprint 389
+**Architecture rule:** No auto-send. Director must approve before any message leaves.
+**Built sprint:** Sprint 389
 
 ---
 
@@ -285,7 +277,7 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 | 386 | Today's Academy | `/director/today` | Level 3 → Level 8 ✓ | No |
 | 387 | Sessions Detail DONNA | `/director/sessions/[sessionId]` | Level 6 → Level 8 ✓ | No |
 | 388 | Level Up Review | `/director/level-up` | Level 3 → Level 8 ✓ | No |
-| 389 | Parent Comms Center | `/director/parents` | Level 3 → Level 8 | No |
+| 389 | Parent Comms Center | `/director/parents` | Level 3 → Level 8 ✓ | No |
 | 390 | Coach Recap + Context | `/coach/recap`, `/coach/sessions/[sessionId]` | Level 6 → Level 7 | No |
 | 391 | Command Center Refresh | `/director/command-center` | Level 8 → Level 9 | No |
 | 392+ | Platform Portal | `/platform/academies` | Level 2 → Level 6 | YES |
@@ -310,4 +302,4 @@ No migrations are needed for Sprints 386–391.
 
 ---
 
-*Last updated: Sprint 388*
+*Last updated: Sprint 389*

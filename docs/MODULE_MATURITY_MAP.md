@@ -138,7 +138,7 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | `sanitizeParentFacingText` | 10 | Locked. Parent content safety enforced. |
 | `parentSafeResponseRules` | 10 | Locked. Director-visible only. |
 | Parent portal (`/parent`) | 8 | Built. Approved content visible. |
-| Parent Communication Center (`/director/parents`) | 0 | Route does not exist. Proposed Sprint 389. |
+| Parent Communication Center (`/director/parents`) | 8 | Built Sprint 389. DONNA context registered. |
 | External email/SMS delivery | 0 | NOT built. Approved communications are staged, not delivered. |
 | Private lesson requests | 5 | `requestPrivateLessonAction` in parent portal. No director-side view yet. |
 
@@ -201,11 +201,11 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | Players | 9 | Sprint 393+ (summarize_player_progress stub) |
 | Curriculum | 8 | Sprint 393+ (DONNA context wiring pass) |
 | DONNA / Proposed Actions | 9 | Ongoing (4 stub tasks) |
-| Communications | 6 | Sprint 389 (parent comms screen) + future (email delivery) |
+| Communications | 7 | Sprint 389 built comms screen. External delivery still future. |
 | Attendance | 9 | No blockers — QA ongoing |
 | Signals | 8 | Sprint 387+ (session detail DONNA context) |
 | Platform | 2 | Sprint 392+ (migration required first) |
 
 ---
 
-*Last updated: Sprint 388*
+*Last updated: Sprint 389*

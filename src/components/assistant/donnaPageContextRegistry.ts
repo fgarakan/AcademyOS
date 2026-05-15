@@ -441,6 +441,45 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     unsafeActions: ['auto_act_on_signals', 'send_alerts_without_approval'],
   },
 
+  // ── Parent Communication Center ──────────────────────────────────────────────
+  {
+    routePattern: '/director/parents',
+    screenName: 'Parent Communication Center',
+    objectType: 'parent_communications',
+    purpose:
+      'Review, approve, and manage parent-safe updates drafted by DONNA from coach recaps. Nothing is sent without explicit director approval.',
+    nextAction: 'Review drafts waiting for approval or ask DONNA to draft an update.',
+    assistantIntro:
+      "I can identify players who need a parent update, draft parent-safe content, and show you what is waiting for approval. I never send anything — that's your call.",
+    readableContext: [
+      'parent_updates',
+      'update_status',
+      'player_names',
+      'approved_updates',
+      'pending_drafts',
+    ],
+    safeDraftActions: [
+      'draft_parent_update',
+      'summarize_parent_safe_progress',
+      'show_pending_parent_drafts',
+    ],
+    approvalRequiredFor: [
+      'send_parent_message',
+      'publish_parent_update',
+    ],
+    suggestedPrompts: [
+      'Who needs a parent update?',
+      'Draft a parent-safe update.',
+      'Show pending parent drafts.',
+      'What updates are waiting for approval?',
+    ],
+    unsafeActions: [
+      'auto_send_parent_message',
+      'expose_internal_notes',
+      'send_without_director_approval',
+    ],
+  },
+
   // ── Level Up Review ──────────────────────────────────────────────────────────
   {
     routePattern: '/director/level-up',

@@ -13,7 +13,7 @@ How to use:
 
 ## Active Sprint
 
-### Sprint 389 — Parent Communication Center V1
+### Sprint 390 — Coach Recap Flow Shell V1
 
 **Status:** READY — next sprint
 
@@ -43,6 +43,13 @@ Goal: Add DONNA context entry for `/director/sessions/[sessionId]` and wire "Dra
 ---
 
 ## Completed This Run
+
+### Sprint 389 — Parent Communication Center V1 ✓
+
+**Status:** COMPLETE
+**QA:** 23 PASS / 0 FAIL / 1 WARN
+
+---
 
 ### Sprint 388 — Level Up Readiness Review V1 ✓
 
@@ -167,7 +174,8 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 | Sprint | Description | Commit | Date |
 |---|---|---|---|
-| 388 | Level Up Readiness Review V1 | *(pending commit)* | 2026-05-15 |
+| 389 | Parent Communication Center V1 | *(pending commit)* | 2026-05-15 |
+| 388 | Level Up Readiness Review V1 | a7f5c65 | 2026-05-15 |
 | 387 | Sessions Detail DONNA Context V1 | 81e808b | 2026-05-15 |
 | 386 | Today's Academy V1 | a5d1a5f | 2026-05-15 |
 | 385.5 | Five-Agent Workflow Setup V1 | 16db990 | 2026-05-15 |
@@ -178,4 +186,4 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 ---
 
-*Last updated: Sprint 388*
+*Last updated: Sprint 389*

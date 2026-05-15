@@ -8,6 +8,22 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-15 — Sprint 389: Parent Communication Center V1
+
+**What changed:** New route `/director/parents` — the parent communication operating surface. Queries `parent_updates` table, groups by status, shows 4-step workflow, parent-safe content preview on every card, DONNA chips for drafting. No send capability — delivery pipeline not built.
+
+**Integrates with:**
+- `parent_updates` table — filtered by academy_id, joined to `players(full_name)`, excludes cancelled
+- `donnaPageContextRegistry` — `/director/parents` entry with `auto_send_parent_message` in unsafeActions
+- `/director/review` — "Review in queue" CTA links to existing review queue for pending drafts
+
+**Decisions recorded:**
+- `parent_updates` join uses `players(full_name)` via Supabase foreign key join syntax. This relies on the FK relationship being defined in the schema. If it fails in production, fall back to a separate `players` query (same pattern as Sprint 386).
+- Pre-existing `button[text="Send"]` found in DONNA panel on all director pages — this is the voice input submit. It is NOT an auto-send for parent messages. QA check explicitly scoped to page content only.
+- "External delivery is not yet active" note shown to set honest expectations for the demo.
+
+---
+
 ## 2026-05-15 — Sprint 388: Level Up Readiness Review V1
 
 **What changed:** New route `/director/level-up` — the director's evidence-based player level readiness review screen. Queries `v_reassessment_pipeline` view, groups players by urgency (overdue/due_soon/upcoming), shows score and assessment data, and surfaces DONNA prompt chips. DONNA context registered.

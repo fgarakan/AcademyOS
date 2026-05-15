@@ -31,6 +31,22 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 389 — Parent Communication Center V1
+
+**Date:** 2026-05-15
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** 23 PASS / 0 FAIL / 1 WARN (WARN: test DB empty; parent-safe preview verified by code review)
+**Files committed:**
+- `src/app/director/parents/page.tsx`
+- `src/app/director/parents/loading.tsx`
+- `src/app/director/parents/error.tsx`
+- `src/components/assistant/donnaPageContextRegistry.ts`
+- docs (7 files)
+**Commit hash:** *(pending)*
+**Issues:** None
+
+---
+
 ### Sprint 388 — Level Up Readiness Review V1
 
 **Date:** 2026-05-15
@@ -164,4 +180,4 @@ This file records:
 
 ---
 
-*Last updated: Sprint 388*
+*Last updated: Sprint 389*

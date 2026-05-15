@@ -100,6 +100,21 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 389 — Parent Communication Center V1
+
+**Date:** 2026-05-15
+**QA type:** Full browser QA (Playwright)
+**TypeScript:** CLEAN
+**Script:** /tmp/donna-qa-389.js
+
+**Result: 23 PASS / 0 FAIL / 1 WARN**
+
+WARN: Test DB has no parent_updates — parent-safe preview card not browser-verified. Code verified: content truncated to 120 chars with `ShieldCheck` icon, "internal notes not shown" note. Pre-existing DONNA panel "Send" button confirmed not in page content.
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 388 — Level Up Readiness Review V1
 
 **Date:** 2026-05-15
@@ -259,4 +274,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 388*
+*Last updated: Sprint 389*

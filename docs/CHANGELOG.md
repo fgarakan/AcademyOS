@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-15 — Sprint 389: Parent Communication Center V1
+
+**Route added:** `/director/parents`
+
+**Goal:** Build the director's parent-safe communication center. Shows all parent update drafts staged for review/approval. No external sends — approved messages are staged, not delivered.
+
+**Files created:**
+- `src/app/director/parents/page.tsx` — Server component. Queries `parent_updates` filtered by academy_id (joined to players for full_name). Renders: workflow banner (4 steps), stat strip, DONNA chips, update cards grouped by status (needs approval / approved / sent). Every card shows parent-safe content preview and "Review in queue" CTA for pending items. No send button in page content.
+- `src/app/director/parents/loading.tsx` — Skeleton loading state.
+- `src/app/director/parents/error.tsx` — Error boundary.
+
+**Files modified:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — Added `/director/parents` context entry. `unsafeActions`: auto_send_parent_message, expose_internal_notes, send_without_director_approval.
+
+**Safety enforced:** Page explicitly states external delivery is not active. No send button in page content. "Parent-safe preview — internal notes not shown" on every card.
+
+---
+
 ## 2026-05-15 — Sprint 388: Level Up Readiness Review V1
 
 **Route added:** `/director/level-up`
