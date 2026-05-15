@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-15 — Sprint 364: Protected Action Registry V1
+
+**Goal:** Centralize the registry of all actions Donna can propose but never execute directly.
+
+**Files created:**
+- `src/components/assistant/donnaProtectedActionRegistry.ts` — Pure utility: `ProtectedActionId`, `ProtectedActionDefinition`, `PROTECTED_ACTION_REGISTRY` (8 actions: save_template, publish_session, move_player_level, send_parent_message, send_coach_message, update_curriculum, record_attendance, execute_billing), `isProtectedAction`, `getBlockMessage`, `getApprovalMessage`. No React, no API.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 363: Donna Role Permission Matrix V1
 
 **Goal:** Define what roles can approve what types of Donna actions.
