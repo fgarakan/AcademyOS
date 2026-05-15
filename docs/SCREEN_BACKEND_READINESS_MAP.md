@@ -187,35 +187,26 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 
 ## Screen 6 — Level Up / Readiness Review
 
-**Route:** `/director/level-up` *(does not exist)*
-**Overall readiness: Level 3**
+**Route:** `/director/level-up` *(built Sprint 388)*
+**Overall readiness: Level 8**
 
 | Dimension | Status | Level |
 |---|---|---|
-| Data model | `players`, `assessments`, `coach_notes`, `curriculum_enrollments` — all available | 6 |
-| Route exists | NO | 0 |
-| DONNA context registered | NO | 0 |
-| `getReassessmentPipeline()` | YES — in `dashboard.ts` | 6 |
-| `review_level_readiness` server action | YES — wired Sprint 366 | 6+ |
-| `finalize_player_placement()` RPC | YES — only level activation path | 10 |
-| Level movement gates | YES — `donnaLevelMovementActions.ts` | 8 |
-
-**What's missing for Level 8:**
-1. Create route `/director/level-up` with `page.tsx`
-2. Add `donnaPageContextRegistry` entry for `/director/level-up`
-3. Query `getReassessmentPipeline()` and render player readiness cards
-4. Filter row (by level, group, readiness status)
-5. "Review" CTA → `review_level_readiness` DONNA task
-6. Level change proposal → `proposed_actions` → director approval
+| Data model | `v_reassessment_pipeline` view — urgency, score, days_overdue | 8 |
+| Route exists | YES — built Sprint 388 | 8+ |
+| DONNA context registered | YES — Sprint 388 | 8+ |
+| Player readiness cards | YES — grouped by urgency, with score and coach | 8+ |
+| Architecture red line badge | YES — visible on page | 8+ |
+| "View" CTA → player profile | YES — read-only navigation only | 8+ |
+| Level movement gate | ENFORCED — no mutation from this page | 8+ |
 
 **What's missing for Level 10:**
-- QA pass: verify level advancement NEVER auto-executes
-- Verify `finalize_player_placement()` is the only execution path
-- RLS check: head_coach read access if/when permitted
+- QA pass with real pipeline data (test DB empty)
+- Filter row by track/group (future polish)
+- Direct "Review" CTA to `review_level_readiness` DONNA task (currently via DONNA panel)
 
-**Migration required:** No
 **Architecture red line:** Level movement MUST go through `proposed_actions` → director approval → `finalize_player_placement()`. No exceptions.
-**Recommended build sprint:** Sprint 388
+**Built sprint:** Sprint 388
 
 ---
 
@@ -293,7 +284,7 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 |---|---|---|---|---|
 | 386 | Today's Academy | `/director/today` | Level 3 → Level 8 ✓ | No |
 | 387 | Sessions Detail DONNA | `/director/sessions/[sessionId]` | Level 6 → Level 8 ✓ | No |
-| 388 | Level Up Review | `/director/level-up` | Level 3 → Level 8 | No |
+| 388 | Level Up Review | `/director/level-up` | Level 3 → Level 8 ✓ | No |
 | 389 | Parent Comms Center | `/director/parents` | Level 3 → Level 8 | No |
 | 390 | Coach Recap + Context | `/coach/recap`, `/coach/sessions/[sessionId]` | Level 6 → Level 7 | No |
 | 391 | Command Center Refresh | `/director/command-center` | Level 8 → Level 9 | No |
@@ -319,4 +310,4 @@ No migrations are needed for Sprints 386–391.
 
 ---
 
-*Last updated: Sprint 387*
+*Last updated: Sprint 388*

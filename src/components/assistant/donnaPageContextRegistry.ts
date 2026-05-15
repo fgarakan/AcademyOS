@@ -441,6 +441,48 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     unsafeActions: ['auto_act_on_signals', 'send_alerts_without_approval'],
   },
 
+  // ── Level Up Review ──────────────────────────────────────────────────────────
+  {
+    routePattern: '/director/level-up',
+    screenName: 'Level Up Review',
+    objectType: 'level_readiness_pipeline',
+    purpose:
+      'Review evidence-based readiness for player level movement. All level changes require director approval and go through the proposed_actions pipeline.',
+    nextAction: 'Ask DONNA who is overdue for assessment or needs an evidence review.',
+    assistantIntro:
+      'I can summarise the readiness pipeline, identify players with missing evidence, and help you prepare a level movement proposal for your approval. I never move a player automatically.',
+    readableContext: [
+      'reassessment_pipeline',
+      'player_urgency',
+      'assessment_scores',
+      'days_overdue',
+      'coach_assignments',
+      'group_assignments',
+    ],
+    safeDraftActions: [
+      'review_level_readiness',
+      'summarize_readiness_pipeline',
+      'identify_missing_evidence',
+      'show_overdue_players',
+    ],
+    approvalRequiredFor: [
+      'player_level_movement',
+      'publish_readiness_decision',
+      'parent_notification',
+    ],
+    suggestedPrompts: [
+      'Who is ready for level review?',
+      'What evidence is missing?',
+      "Summarize this player's readiness.",
+      'Who is overdue for assessment?',
+    ],
+    unsafeActions: [
+      'auto_promote_player',
+      'auto_change_level',
+      'auto_notify_parent',
+    ],
+  },
+
   // ── Today's Academy ──────────────────────────────────────────────────────────
   {
     routePattern: '/director/today',

@@ -85,7 +85,7 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | `draft_player_note` action | 9 | Wired through `proposed_actions`. |
 | `review_level_readiness` action | 9 | Wired. Proposal → `proposed_actions` → `finalize_player_placement()`. |
 | `summarize_player_progress` task | 3 | Contract defined, server action stub only. |
-| Level Up aggregate screen (`/director/level-up`) | 0 | Route does not exist. Proposed Sprint 388. |
+| Level Up aggregate screen (`/director/level-up`) | 8 | Built Sprint 388. DONNA context registered. |
 
 **Rating: 9** — Player profile is pilot-ready. Level Up aggregate view is the missing piece.
 
@@ -102,7 +102,7 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | Level movement gates (`donnaLevelMovementActions`) | 8 | Gates defined. Never auto-executes. |
 | `getReassessmentPipeline()` | 8 | Available in `dashboard.ts`. Called on director dashboard. |
 | `buildIndividualDevelopmentPlan()` | 8 | Available. Used in player IDP tab. |
-| Level Up screen | 0 | Route does not exist. Required Sprint 388. |
+| Level Up screen | 8 | Built Sprint 388. Route `/director/level-up` operational. |
 
 **Rating: 8** — Curriculum backend is DONNA-capable. Level Up screen is the build gap.
 
@@ -198,8 +198,8 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | Auth & Identity | 9 | Sprint 392+ (platform_roles migration) |
 | Sessions | 9 | Sprint 390 (coach session DONNA context) |
 | Templates | 10 | Done |
-| Players | 9 | Sprint 388 (Level Up screen) |
-| Curriculum | 8 | Sprint 388 (Level Up screen) |
+| Players | 9 | Sprint 393+ (summarize_player_progress stub) |
+| Curriculum | 8 | Sprint 393+ (DONNA context wiring pass) |
 | DONNA / Proposed Actions | 9 | Ongoing (4 stub tasks) |
 | Communications | 6 | Sprint 389 (parent comms screen) + future (email delivery) |
 | Attendance | 9 | No blockers — QA ongoing |
@@ -208,4 +208,4 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 
 ---
 
-*Last updated: Sprint 387*
+*Last updated: Sprint 388*

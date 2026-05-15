@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-15 — Sprint 388: Level Up Readiness Review V1
+
+**Route added:** `/director/level-up`
+
+**Goal:** Build the director's evidence-based player level readiness review screen. All level movement requires director approval — page is read-only and DONNA-draft only.
+
+**Files created:**
+- `src/app/director/level-up/page.tsx` — Server component. Queries `v_reassessment_pipeline` filtered by academy_id. Renders: header, architecture red line badge, stat strip (total/overdue/due-soon/upcoming), DONNA chip section, player readiness cards grouped by urgency. "View" CTA links to `/director/players/[id]` — no mutations.
+- `src/app/director/level-up/loading.tsx` — Skeleton loading state.
+- `src/app/director/level-up/error.tsx` — Error boundary with retry.
+
+**Files modified:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — Added `/director/level-up` context entry. `approvalRequiredFor`: player_level_movement, publish_readiness_decision, parent_notification. `unsafeActions`: auto_promote_player, auto_change_level, auto_notify_parent.
+
+**Architecture red line enforced:** Visible badge on page confirms level movement requires director approval and goes through proposed_actions pipeline.
+
+---
+
 ## 2026-05-15 — Sprint 387: Sessions Detail DONNA Context V1
 
 **Route targeted:** `/director/sessions/[sessionId]`

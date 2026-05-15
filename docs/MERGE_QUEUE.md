@@ -31,6 +31,28 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 388 — Level Up Readiness Review V1
+
+**Date:** 2026-05-15
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** 23 PASS / 0 FAIL / 0 WARN
+**Files committed:**
+- `src/app/director/level-up/page.tsx`
+- `src/app/director/level-up/loading.tsx`
+- `src/app/director/level-up/error.tsx`
+- `src/components/assistant/donnaPageContextRegistry.ts`
+- `docs/CHANGELOG.md`
+- `docs/SPRINT_BOARD.md`
+- `docs/MERGE_QUEUE.md`
+- `docs/INTEGRATION_LOG.md`
+- `docs/QA_GATE.md`
+- `docs/MODULE_MATURITY_MAP.md`
+- `docs/SCREEN_BACKEND_READINESS_MAP.md`
+**Commit hash:** *(pending)*
+**Issues:** None
+
+---
+
 ### Sprint 387 — Sessions Detail DONNA Context V1
 
 **Date:** 2026-05-15
@@ -142,4 +164,4 @@ This file records:
 
 ---
 
-*Last updated: Sprint 387*
+*Last updated: Sprint 388*

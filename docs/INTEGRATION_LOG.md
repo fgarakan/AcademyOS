@@ -8,6 +8,22 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-15 — Sprint 388: Level Up Readiness Review V1
+
+**What changed:** New route `/director/level-up` — the director's evidence-based player level readiness review screen. Queries `v_reassessment_pipeline` view, groups players by urgency (overdue/due_soon/upcoming), shows score and assessment data, and surfaces DONNA prompt chips. DONNA context registered.
+
+**Integrates with:**
+- `v_reassessment_pipeline` view — filtered by academy_id, ordered by days_overdue desc
+- `profiles` table — academy_id lookup for the authenticated director
+- `donnaPageContextRegistry` — `/director/level-up` entry with level movement approval gates
+- Director layout — DONNA panel renders automatically via existing layout
+
+**Decisions recorded:**
+- Level movement CTA is intentionally absent from this page. The page shows a visible "Level movement is director-approved only" badge and links to player profiles for evidence review. Level changes go through DONNA → proposed_actions → director approval → `finalize_player_placement()` — this page does not accelerate that path.
+- `v_reassessment_pipeline` does not include `level_label` (it has `current_track`). Track label is displayed instead. This is sufficient for V1 — a future sprint can join with curriculum level data.
+
+---
+
 ## 2026-05-15 — Sprint 387: Sessions Detail DONNA Context V1
 
 **What changed:** Added `donnaPageContextRegistry` entry for `/director/sessions/[sessionId]` and four "Ask DONNA" prompt chips on the session detail page. The session detail is now DONNA-capable — the panel will match this route and surface the correct intro and suggested prompts.
@@ -159,4 +175,4 @@ Do not record:
 
 ---
 
-*Last updated: Sprint 387*
+*Last updated: Sprint 388*

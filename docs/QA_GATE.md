@@ -100,6 +100,28 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 388 — Level Up Readiness Review V1
+
+**Date:** 2026-05-15
+**QA type:** Full browser QA (Playwright, form-based auth)
+**TypeScript:** CLEAN
+**Script:** /tmp/donna-qa-388.js
+
+**Section A — Auth:** 1 PASS
+**Section B — /director/level-up:** 9 PASS
+**Section C — /director/today regression:** 2 PASS
+**Section D — Sessions regression:** 1 PASS
+**Section E — DONNA dashboard:** 2 PASS
+**Section F — Templates regression:** 1 PASS
+**Section G — Safety:** 5 PASS
+**Section H — Console errors:** 1 PASS (1 filtered pre-existing)
+
+**Result: 23 PASS / 0 FAIL / 0 WARN**
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 387 — Sessions Detail DONNA Context V1
 
 **Date:** 2026-05-15
@@ -237,4 +259,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 387*
+*Last updated: Sprint 388*
