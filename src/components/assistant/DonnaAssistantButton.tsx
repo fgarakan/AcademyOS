@@ -138,6 +138,9 @@ import type { CommunicationDraft } from '@/components/assistant/donnaCommunicati
 import { DonnaCommunicationDraftCard } from '@/components/assistant/DonnaCommunicationDraftCard'
 // Sprint 368 — Message review panel
 import { DonnaMessageReviewPanel } from '@/components/assistant/DonnaMessageReviewPanel'
+// Sprint 369 — Daily brief
+import type { DailyBrief } from '@/components/assistant/donnaDailyBrief'
+import { DonnaDailyBriefCard } from '@/components/assistant/DonnaDailyBriefCard'
 // Sprint 361 — Audit trail
 import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
@@ -612,6 +615,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [communicationDraft, setCommunicationDraft] = useState<CommunicationDraft | null>(null)
   // Sprint 368 — Message review panel (shows when communicationDraft.status === 'ready')
   const [showMessageReview, setShowMessageReview] = useState(false)
+  // Sprint 369 — Daily brief state
+  const [dailyBrief, setDailyBrief] = useState<DailyBrief | null>(null)
+  const [isDailyBriefLoading, setIsDailyBriefLoading] = useState(false)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -1062,6 +1068,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     // 5.5. Review queue intent — Sprint 273
     if (isReviewQueuePhrase(lower)) {
       void handleOpenReviewQueue()
+      return
+    }
+
+    // 5.55. Sprint 369 — Daily brief intent
+    if (isDailyBriefPhrase(lower)) {
+      void handleFetchDailyBrief()
       return
     }
 
@@ -1547,6 +1559,20 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     )
   }
 
+  // Returns true if the phrase is a daily brief intent.
+  function isDailyBriefPhrase(lower: string): boolean {
+    return (
+      lower.includes("what's happening today") ||
+      lower.includes('daily brief') ||
+      lower.includes('morning brief') ||
+      lower.includes("what's going on today") ||
+      lower.includes('brief me') ||
+      lower.includes('give me a brief') ||
+      lower.includes('whats happening today') ||
+      lower.includes('today brief')
+    )
+  }
+
   // Returns true if the phrase is a review queue intent.
   function isReviewQueuePhrase(lower: string): boolean {
     return (
@@ -1560,6 +1586,29 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       lower.includes('unlinked notes') ||
       lower.includes('needs my review')
     )
+  }
+
+  // Sprint 369 — Fetch daily director brief (read-only, auth-required endpoint)
+  async function handleFetchDailyBrief() {
+    setIsDailyBriefLoading(true)
+    setDailyBrief(null)
+    try {
+      const res = await fetch('/api/donna/brief')
+      if (res.ok) {
+        const json = await res.json() as { ok: boolean; brief?: DailyBrief }
+        if (json.ok && json.brief) {
+          setDailyBrief(json.brief)
+        } else {
+          setCommandResponse({ message: 'Brief unavailable — check back later.', type: 'info', label: 'Daily Brief' })
+        }
+      } else {
+        setCommandResponse({ message: 'Brief unavailable — check back later.', type: 'info', label: 'Daily Brief' })
+      }
+    } catch {
+      setCommandResponse({ message: 'Brief unavailable — check back later.', type: 'info', label: 'Daily Brief' })
+    } finally {
+      setIsDailyBriefLoading(false)
+    }
   }
 
   // Opens the review queue panel and fetches data.
@@ -1887,6 +1936,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     // Review queue intent — Sprint 273
     if (isReviewQueuePhrase(text.toLowerCase())) {
       void handleOpenReviewQueue()
+      setTypedText('')
+      return
+    }
+
+    // Daily brief intent — Sprint 369
+    if (isDailyBriefPhrase(text.toLowerCase())) {
+      void handleFetchDailyBrief()
       setTypedText('')
       return
     }
@@ -2604,6 +2660,19 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 </button>
               </div>
             </div>
+          )}
+
+          {/* ── Sprint 369: Daily brief card ── */}
+          {isDailyBriefLoading && (
+            <div className="text-[11px] text-text-muted text-center py-2 animate-pulse">
+              Loading daily brief…
+            </div>
+          )}
+          {dailyBrief && !isDailyBriefLoading && (
+            <DonnaDailyBriefCard
+              brief={dailyBrief}
+              onDismiss={() => setDailyBrief(null)}
+            />
           )}
 
           {/* ── Sprint 366/368: Communication draft card + review panel ── */}

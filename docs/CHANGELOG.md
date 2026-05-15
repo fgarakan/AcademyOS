@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-15 — Sprint 369: Daily Director Brief V1
+
+**Goal:** Donna can generate a structured daily brief for the director.
+
+**Files created:**
+- `src/components/assistant/donnaDailyBrief.ts` — Types: `DailyBrief`, `DailyBriefSection`, `BriefPriority`. Functions: `createEmptyBrief`, `formatBriefAsText`.
+- `src/app/api/donna/brief/route.ts` — GET route: auth + director-role check (via academy_memberships), reads pending_review count, today's sessions, pending placements. Falls back gracefully. Returns `DailyBrief`.
+- `src/components/assistant/DonnaDailyBriefCard.tsx` — Compact card: sections, high-priority items in lime, collapsible full brief.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `dailyBrief` state, `handleFetchDailyBrief`, `isDailyBriefPhrase` detection, chip routing. Renders `DonnaDailyBriefCard`.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 368: Donna Message Revision + Approval Flow V1
 
 **Goal:** Director can revise Donna's communication drafts and see a clear approval boundary.
