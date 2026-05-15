@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-15 — Sprint 394: Premium UI Consistency Pass V1
+
+**Screens modified:** `/director/level-up`, `/director/parents`
+
+**Goal:** Audit UI consistency across all screens built in Sprints 386–393. Two targeted fixes found and applied.
+
+**Files modified:**
+- `src/app/director/level-up/page.tsx` — `StatCard` label: replaced `text-[11px] uppercase tracking-widest text-text-muted` with `label-xs` utility class
+- `src/app/director/parents/page.tsx` — same `StatCard` label fix
+
+**Audit findings:**
+- No hardcoded hex values in any new screen
+- All screens use design tokens (`bg-surface`, `text-text-*`, `status-*`)
+- All director screens use `page-title` utility on h1
+- `Card` component imported from `@/components/ui` in all director screens
+- `text-[9px]` micro-labels are intentionally smaller than `label-xs` (11px) — used in tight spaces like stat card score labels and workflow step labels. Not replaced.
+
+---
+
 ## 2026-05-15 — Sprint 393: Cross-Screen DONNA Context Wiring Pass V1
 
 **Component modified:** `donnaPageContextRegistry.ts`

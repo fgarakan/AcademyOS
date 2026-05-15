@@ -8,6 +8,18 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-15 — Sprint 394: Premium UI Consistency Pass V1
+
+**What changed:** 2-line fix across `/director/level-up` and `/director/parents` — `StatCard` label now uses `label-xs` utility instead of the expanded inline form.
+
+**Integrates with:** `globals.css` `label-xs` utility (`text-[11px] uppercase tracking-widest text-text-muted font-medium`)
+
+**Decisions recorded:**
+- Full audit found no other inconsistencies across the 4 new screens (today, level-up, parents, recap). The screens are already design-token compliant, using `page-title`, `Card`, `bg-surface`, and `text-text-*` correctly.
+- `text-[9px]` micro-labels are intentionally smaller than `label-xs` and were not replaced — they appear in space-constrained components (score labels, workflow step labels).
+
+---
+
 ## 2026-05-15 — Sprint 393: Cross-Screen DONNA Context Wiring Pass V1
 
 **What changed:** `donnaPageContextRegistry.ts` tightened across 3 screen entries. `/director/today` now correctly lists `daily_brief` and `attention_report` as readable context items. `/coach/recap` and `/director` dashboard have updated suggested prompts and safe draft actions.

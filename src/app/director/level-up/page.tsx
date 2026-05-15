@@ -59,7 +59,7 @@ function StatCard({ value, label, color }: { value: number; label: string; color
   return (
     <div className="bg-surface-raised border border-border rounded-xl px-5 py-4">
       <p className={`text-2xl font-mono font-bold ${color}`}>{value}</p>
-      <p className="text-[11px] uppercase tracking-widest text-text-muted mt-0.5">{label}</p>
+      <p className="label-xs mt-0.5">{label}</p>
     </div>
   )
 }

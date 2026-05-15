@@ -100,6 +100,27 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 394 — Premium UI Consistency Pass V1
+
+**Date:** 2026-05-15
+**QA type:** Static analysis (UI consistency audit — no new routes, no behavior changes)
+**TypeScript:** CLEAN
+**Script:** inline node assertion
+
+**Section A — No hardcoded hex in className (4 screens):** 4 PASS
+**Section B — Design tokens used (4 screens):** 4 PASS
+**Section C — label-xs applied (level-up + parents):** 4 PASS
+**Section D — page-title class on h1 (3 director screens):** 3 PASS
+**Section E — Card component imported (3 director screens):** 3 PASS
+**Section F — Naming (no DANA, 4 screens):** 4 PASS
+**Section G — TypeScript:** 1 PASS
+
+**Result: 23 PASS / 0 FAIL / 0 WARN**
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 393 — Cross-Screen DONNA Context Wiring Pass V1
 
 **Date:** 2026-05-15
@@ -345,4 +366,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 393*
+*Last updated: Sprint 394*
