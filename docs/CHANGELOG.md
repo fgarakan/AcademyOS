@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-15 — Sprint 368: Donna Message Revision + Approval Flow V1
+
+**Goal:** Director can revise Donna's communication drafts and see a clear approval boundary.
+
+**Files created:**
+- `src/components/assistant/DonnaMessageReviewPanel.tsx` — Review UI: full draft display (type, recipient, subject, body), editable textarea pre-filled with body, parent-safe check results shown inline (violations highlighted), "Approve for review" button (→ status='ready' + "Use the Send button on screen" message), Discard button. Never a "Send now" button.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `showMessageReview` state; renders `DonnaMessageReviewPanel` when `showMessageReview && communicationDraft`; `DonnaCommunicationDraftCard.onReview` opens review panel.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 367: Parent-Safe Communication Rules V1
 
 **Goal:** Define guardrails for what Donna can and cannot include in parent communications.

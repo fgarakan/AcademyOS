@@ -136,6 +136,8 @@ import {
 } from '@/components/assistant/donnaCommunicationDraft'
 import type { CommunicationDraft } from '@/components/assistant/donnaCommunicationDraft'
 import { DonnaCommunicationDraftCard } from '@/components/assistant/DonnaCommunicationDraftCard'
+// Sprint 368 — Message review panel
+import { DonnaMessageReviewPanel } from '@/components/assistant/DonnaMessageReviewPanel'
 // Sprint 361 — Audit trail
 import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
@@ -608,6 +610,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [draftRestoredFromSession, setDraftRestoredFromSession] = useState(false)
   // Sprint 366 — Communication draft (alongside genericDraft/templateDraft)
   const [communicationDraft, setCommunicationDraft] = useState<CommunicationDraft | null>(null)
+  // Sprint 368 — Message review panel (shows when communicationDraft.status === 'ready')
+  const [showMessageReview, setShowMessageReview] = useState(false)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -2602,16 +2606,19 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* ── Sprint 366: Communication draft card — shown when a comm draft is active ── */}
-          {communicationDraft && (
+          {/* ── Sprint 366/368: Communication draft card + review panel ── */}
+          {communicationDraft && !showMessageReview && (
             <DonnaCommunicationDraftCard
               draft={communicationDraft}
-              onDiscard={() => setCommunicationDraft(null)}
-              onReview={() => {
-                setCommunicationDraft(prev =>
-                  prev ? applyCommunicationField(prev, 'status' as keyof typeof prev, 'ready') : null
-                )
-              }}
+              onDiscard={() => { setCommunicationDraft(null); setShowMessageReview(false) }}
+              onReview={() => setShowMessageReview(true)}
+            />
+          )}
+          {communicationDraft && showMessageReview && (
+            <DonnaMessageReviewPanel
+              draft={communicationDraft}
+              onUpdate={(updated) => { setCommunicationDraft(updated); setShowMessageReview(false) }}
+              onDiscard={() => { setCommunicationDraft(null); setShowMessageReview(false) }}
             />
           )}
 
