@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-15 — Sprint 363: Donna Role Permission Matrix V1
+
+**Goal:** Define what roles can approve what types of Donna actions.
+
+**Files created:**
+- `src/components/assistant/donnaRolePermissions.ts` — Pure utility: `DonnaActionCategory`, `ROLE_PERMISSION_MATRIX` (director=all, head_coach=curriculum+scheduling+reporting, coach=reporting only), `WORKFLOW_CATEGORY_MAP`, `canRoleApprove(role, category)`, `getRequiredRoleForWorkflow(workflowId)`. No React, no DB.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 362: Donna Approval Request Contract V1
 
 **Goal:** Define a typed approval request contract — the shape of what Donna submits for director approval.
