@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-15 — Sprint 380: Working Tree Cleanup + Missing File Commit V1
+
+**Goal:** Fix broken HEAD state found in Sprint 379 audit. Repo was uncloneable because `DonnaAssistantButton.tsx` imported 3 files that existed on disk but had never been committed.
+
+**Sprint 379 pre-work (not a commit — restore only):**
+- Restored `supabase/migrations/057_session_block_status.sql` — content had been wiped
+- Restored `supabase/migrations/058_template_block_exercises_rls.sql` — content had been wiped (critical RLS migration)
+- Restored `supabase/migrations/053_curriculum_seed.sql` — accidental `23\` appended at EOF
+- Restored `index.html` — Step 04 block deleted and text truncated mid-word
+- Restored `data/airtable-import/reports/exercise-import-dry-run-report.json` — corrupted description + stale timestamp
+
+**Files committed:**
+- `src/components/assistant/DonnaDraftCard.tsx` — Sprint 322 live draft progress card; pure display, no DB writes
+- `src/components/assistant/DonnaClassTemplateDraftPreview.tsx` — Sprint 322 read-only class template draft preview; no saves
+- `src/components/assistant/donnaOnboardingFlow.ts` — Sprint 290 onboarding step contract; pure types and constants, no DB
+- `src/components/assistant/donnaSlotFilling.ts` — +81 lines of Sprint 322 slot extractors (focus areas, intensity, style, player count, constraints)
+- `next.config.mjs` — Standard Next.js config (serverActions allowedOrigins, empty remotePatterns)
+- `tsconfig.json` — Standard TypeScript config for Next.js App Router
+- `postcss.config.js` — Standard PostCSS/Tailwind config
+
+**Security check:** All 4 Donna files confirmed — no secrets, no DB mutations, no external sends, no protected action execution. Config files contain no credentials.
+
+**TypeScript:** Clean — 0 errors.
+**Commit:** `bd708f7`
+
+---
+
 ## 2026-05-15 — Sprint 378: Donna COO Command QA + Demo Readiness
 
 **Goal:** QA sweep and demo readiness for the full Mega Sprint 359–378 block.
