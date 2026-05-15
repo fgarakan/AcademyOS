@@ -127,6 +127,8 @@ import {
   looksLikeUserTypedName,
 } from '@/components/assistant/donnaObjectResolutionTypes'
 import { getCurrentPageObject } from '@/components/assistant/donnaCurrentObjectContext'
+// Sprint 360 — Version history panel
+import { DonnaVersionHistoryPanel } from '@/components/assistant/DonnaVersionHistoryPanel'
 // Sprint 350 — Server TTS client + voice policy
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
 import { DONNA_VOICE_MODE_LABELS } from '@/components/assistant/donnaVoicePolicy'
@@ -2422,6 +2424,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 onDiscard={handleConvDiscard}
                 onReview={handleConvReview}
               />
+              {/* Sprint 360: Version history — shown when history has entries */}
+              {convState.activeDraft.history.length > 0 && (
+                <DonnaVersionHistoryPanel draft={convState.activeDraft} />
+              )}
+
               {/* Sprint 359: "Clear saved draft" — shown when a draft was restored from sessionStorage */}
               {draftRestoredFromSession && (
                 <button

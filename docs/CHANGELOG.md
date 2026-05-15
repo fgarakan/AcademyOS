@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-15 — Sprint 360: Donna Draft Version History V1
+
+**Goal:** Surface the draft `.history` array in the draft card UI so directors can see what changed.
+
+**Files created:**
+- `src/components/assistant/DonnaVersionHistoryPanel.tsx` — Collapsible panel showing each `DraftSnapshot` as a diff row (field + old → new value). Shows version number and timestamp. Collapsed by default, expands via "N changes" button.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added import + renders `DonnaVersionHistoryPanel` below `DonnaDraftCard` when `draft.history.length > 0`.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 359: Donna Persistent Draft Storage V1
 
 **Goal:** Persist active ConversationState draft across route changes using sessionStorage so directors can navigate away and return without losing in-progress work.
