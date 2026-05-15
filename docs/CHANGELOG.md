@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-15 — Sprint 371: Donna Coach Brief Draft V1
+
+**Goal:** Donna can draft a structured brief for a coach about their upcoming session.
+
+**Files created:**
+- `src/components/assistant/donnaCoachBriefWorkflow.ts` — `CoachBriefDraft` (extends `CommunicationDraft` with sessionId, coachId, playerCount, focusArea, keyPoints), `COACH_BRIEF_QUESTIONS` (3 slot-filling questions), `createCoachBriefDraft(context)`.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Imports `createCoachBriefDraft`; coach brief intent detection routes to `createCoachBriefDraft()` instead of generic `createCommunicationDraft('coach_brief')`. Rendered via existing `DonnaCommunicationDraftCard`.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 370: Donna What Needs Attention Engine V1
 
 **Goal:** Donna surfaces urgent items that need director attention.

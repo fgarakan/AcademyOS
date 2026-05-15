@@ -144,6 +144,8 @@ import { DonnaDailyBriefCard } from '@/components/assistant/DonnaDailyBriefCard'
 // Sprint 370 — Attention engine
 import type { AttentionReport } from '@/components/assistant/donnaAttentionEngine'
 import { DonnaAttentionCard } from '@/components/assistant/DonnaAttentionCard'
+// Sprint 371 — Coach brief workflow
+import { createCoachBriefDraft } from '@/components/assistant/donnaCoachBriefWorkflow'
 // Sprint 361 — Audit trail
 import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
@@ -1103,11 +1105,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       }
       if (
         lower.includes('draft a coach') || lower.includes('coach brief') ||
-        lower.includes('brief the coach') || lower.includes('message to coach')
+        lower.includes('brief the coach') || lower.includes('message to coach') ||
+        lower.includes('prepare coach brief') || lower.includes('brief for coach')
       ) {
-        const draft = createCommunicationDraft('coach_brief', { recipientRole: 'coach' })
+        const draft = createCoachBriefDraft()
         setCommunicationDraft(draft)
-        setCommandResponse({ message: "Coach brief started. What's the topic or session?", type: 'info', label: 'Communication Draft' })
+        setCommandResponse({ message: "Coach brief started. Which coach or session is this for?", type: 'info', label: 'Coach Brief' })
         return
       }
     }
