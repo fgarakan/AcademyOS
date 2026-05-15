@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-15 — Sprint 359: Donna Persistent Draft Storage V1
+
+**Goal:** Persist active ConversationState draft across route changes using sessionStorage so directors can navigate away and return without losing in-progress work.
+
+**Files created:**
+- `src/components/assistant/donnaDraftPersistence.ts` — Pure utility: `saveDraftToSession`, `loadDraftFromSession`, `clearDraftSession`, `hasDraftSession`. Key: `academyos:donna:draft:v1`. Guarded against corrupt data with try/catch. Only persists non-terminal phases with an active draft.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx`:
+  - Added `draftRestoredFromSession` state
+  - Route-change useEffect: calls `saveDraftToSession` before clearing state
+  - Panel-open button: restores draft from session if no active draft; shows "Draft restored" commandResponse
+  - DonnaDraftCard section: shows "Clear saved draft" button when `draftRestoredFromSession === true`
+  - `handleConvDiscard`: clears session storage + resets `draftRestoredFromSession`
+  - Developer Tools: shows session key presence, draft taskId, restored indicator
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Mega Sprint 350–358: Donna Onboarding Persistence + Server TTS + Voice Output Policy V1
 
 **Goal:** Fix onboarding repetition, establish a server TTS pipeline, and wire contract TTS into targeted Donna prompts without replacing all voice paths.

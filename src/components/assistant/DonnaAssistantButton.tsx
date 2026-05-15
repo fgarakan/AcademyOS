@@ -131,6 +131,13 @@ import { getCurrentPageObject } from '@/components/assistant/donnaCurrentObjectC
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
 import { DONNA_VOICE_MODE_LABELS } from '@/components/assistant/donnaVoicePolicy'
 import type { DonnaVoiceOutputMode } from '@/components/assistant/donnaVoicePolicy'
+// Sprint 359 — Persistent draft storage (sessionStorage only)
+import {
+  saveDraftToSession,
+  loadDraftFromSession,
+  clearDraftSession,
+  hasDraftSession,
+} from '@/components/assistant/donnaDraftPersistence'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -586,6 +593,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [convState, setConvState] = useState<ConversationState>(createConversationState)
   // Sprint 322 — show draft review panel triggered by controller or "show me the draft"
   const [convShowDraftReview, setConvShowDraftReview] = useState(false)
+  // Sprint 359 — tracks whether the current draft was restored from sessionStorage
+  const [draftRestoredFromSession, setDraftRestoredFromSession] = useState(false)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -707,6 +716,14 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
   // Clear all inline state on route change
   useEffect(() => {
+    // Sprint 359: Save active draft to session BEFORE clearing state
+    setConvState(prev => {
+      if (prev.activeDraft !== null && prev.phase !== 'cancelled' && prev.phase !== 'approved') {
+        saveDraftToSession(prev)
+      }
+      return prev
+    })
+
     setActiveMode(null)
     setVoiceTranscript(null)
     setTypedText('')
@@ -744,6 +761,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setVoiceOutputConfirmed(null)
     setConvState(createConversationState())
     setConvShowDraftReview(false)
+    setDraftRestoredFromSession(false)
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -1158,6 +1176,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   function handleConvDiscard() {
     setConvState(controllerDiscard(convState))
     setConvShowDraftReview(false)
+    // Sprint 359: clear session storage when director explicitly discards
+    clearDraftSession()
+    setDraftRestoredFromSession(false)
   }
 
   function handleConvReview() {
@@ -1855,6 +1876,24 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       <button
         onClick={() => {
           setPanelOpen(true)
+          // Sprint 359: restore draft from session if no active draft currently
+          // Must run before the onboarding check so restored drafts skip intro.
+          setConvState(prev => {
+            if (prev.activeDraft === null) {
+              const restored = loadDraftFromSession()
+              if (restored && restored.activeDraft !== null) {
+                setDraftRestoredFromSession(true)
+                setCommandResponse({
+                  message: 'Draft restored from your previous session.',
+                  type: 'info',
+                  label: 'Draft restored',
+                })
+                return restored
+              }
+            }
+            return prev
+          })
+
           if (!hasGreetedRef.current) {
             hasGreetedRef.current = true
             setShowGreeting(true)
@@ -2383,6 +2422,19 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 onDiscard={handleConvDiscard}
                 onReview={handleConvReview}
               />
+              {/* Sprint 359: "Clear saved draft" — shown when a draft was restored from sessionStorage */}
+              {draftRestoredFromSession && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearDraftSession()
+                    setDraftRestoredFromSession(false)
+                  }}
+                  className="w-full text-[10px] text-text-muted hover:text-status-red transition-colors text-center py-0.5 underline underline-offset-2"
+                >
+                  Clear saved draft
+                </button>
+              )}
 
               {/* Sprint 336–345: Class template live preview — shown when workflow is class_template_creation */}
               {convState.activeDraft.workflowId === 'class_template_creation' && (
@@ -3195,6 +3247,26 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 onTestBrowserVoice={testBrowserVoice}
                 onResetVoice={resetVoice}
               />
+
+              {/* Sprint 359 — Draft session storage state */}
+              <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
+                <div className="text-text-muted uppercase tracking-widest">Draft Session Storage</div>
+                <div className="text-text-secondary">
+                  Key present:{' '}
+                  <span className={hasDraftSession() ? 'text-lime' : 'text-text-muted'}>
+                    {hasDraftSession() ? 'yes' : 'no'}
+                  </span>
+                </div>
+                {convState.activeDraft && (
+                  <div className="text-text-secondary">
+                    Draft taskId:{' '}
+                    <span className="text-lime">{convState.activeDraft.taskId}</span>
+                  </div>
+                )}
+                {draftRestoredFromSession && (
+                  <div className="text-status-green">Restored from session ✓</div>
+                )}
+              </div>
 
               {/* Golden Path QA state */}
               <div className="p-2 rounded text-[11px] font-mono space-y-1" style={{ background: 'var(--surface-raised)' }}>
