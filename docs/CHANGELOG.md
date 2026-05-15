@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-15 — Sprint 393: Cross-Screen DONNA Context Wiring Pass V1
+
+**Component modified:** `donnaPageContextRegistry.ts`
+
+**Goal:** Audit and tighten DONNA context entries across all screens built in Sprints 386–392. Four targeted improvements.
+
+**Files modified:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — 4 changes:
+  1. `/director/today` — added `daily_brief` and `attention_report` to `readableContext`; added 5th `suggestedPrompt`: "Show me today's risk flags."
+  2. `/coach/recap` — added 4th `suggestedPrompt`: "What should I include in my safety note?"
+  3. `/director` (dashboard) — updated `nextAction` to reference review queue; added `show_review_queue` and `daily_brief` to `safeDraftActions`; updated `assistantIntro` to mention review queue
+
+**No route changes. No migration. No behavior changes.**
+
+---
+
 ## 2026-05-15 — Sprint 392: DONNA Executive Panel Upgrade V1
 
 **Component modified:** `DonnaAssistantButton.tsx` (global, all `/director/**` routes)

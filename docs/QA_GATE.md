@@ -100,6 +100,27 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 393 — Cross-Screen DONNA Context Wiring Pass V1
+
+**Date:** 2026-05-15
+**QA type:** Static analysis (docs/registry-only sprint — no UI changes, no browser QA required)
+**TypeScript:** CLEAN
+**Script:** inline node assertion
+
+**Section A — Route entries present (6 routes):** 6 PASS
+**Section B — /director last in registry (prefix safety):** 1 PASS (confirmed via grep line 612 vs FALLBACK at 651)
+**Section C — Sprint 393 improvements (4 targeted changes):** 5 PASS
+**Section D — Naming (no DANA):** 1 PASS
+**Section E — TypeScript:** 1 PASS
+
+**Result: 13 PASS / 0 FAIL / 0 WARN**
+
+Note: QA script initially showed 1 FAIL for "last registry entry" check — the check incorrectly matched `FALLBACK_CONTEXT`'s `routePattern: '*'` (line 651) instead of the last registry array entry `'/director'` (line 612). Confirmed correct by grep. No actual issue.
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 392 — DONNA Executive Panel Upgrade V1
 
 **Date:** 2026-05-15
@@ -324,4 +345,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 392*
+*Last updated: Sprint 393*

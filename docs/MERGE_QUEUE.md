@@ -31,6 +31,19 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 393 — Cross-Screen DONNA Context Wiring Pass V1
+
+**Date:** 2026-05-15
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** 13 PASS / 0 FAIL / 0 WARN (static analysis)
+**Files committed:**
+- `src/components/assistant/donnaPageContextRegistry.ts`
+- docs (7 files)
+**Commit hash:** *(pending)*
+**Issues:** None
+
+---
+
 ### Sprint 392 — DONNA Executive Panel Upgrade V1
 
 **Date:** 2026-05-15
@@ -219,4 +232,4 @@ This file records:
 
 ---
 
-*Last updated: Sprint 392*
+*Last updated: Sprint 393*

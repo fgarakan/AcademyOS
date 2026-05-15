@@ -8,6 +8,20 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-15 — Sprint 393: Cross-Screen DONNA Context Wiring Pass V1
+
+**What changed:** `donnaPageContextRegistry.ts` tightened across 3 screen entries. `/director/today` now correctly lists `daily_brief` and `attention_report` as readable context items. `/coach/recap` and `/director` dashboard have updated suggested prompts and safe draft actions.
+
+**Integrates with:**
+- `DonnaAssistantButton.tsx` — reads registry to populate context card, suggested prompts, and safe action shortcuts
+- All `/director/**` routes — registry changes take effect immediately on next panel open
+
+**Decisions recorded:**
+- Sprint 393 was a light pass — the registry was already in good shape from per-screen additions in Sprints 386–390. Only 4 improvements were made; no entries were restructured.
+- The `FALLBACK_CONTEXT` (`routePattern: '*'`) is defined after the array close and does NOT affect the `/director` prefix-match ordering. QA script confirmed `/director` is the last entry in `PAGE_CONTEXT_REGISTRY` at line 612.
+
+---
+
 ## 2026-05-15 — Sprint 392: DONNA Executive Panel Upgrade V1
 
 **What changed:** `DonnaAssistantButton.tsx` panel upgraded with 4 visual/structural changes: desktop overlay (backdrop-blur), expanded panel width (w-96), tab chip navigation strip, and approval boundary footer copy. No behavior or routing changes.

@@ -471,6 +471,7 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
       'Help me finish this recap.',
       'Structure my attendance note.',
       'What should I include in my follow-up?',
+      'What should I include in my safety note?',
     ],
     unsafeActions: [
       'auto_write_attendance',
@@ -577,6 +578,8 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
       'attention_flags',
       'coach_assignments',
       'risk_flags',
+      'daily_brief',
+      'attention_report',
     ],
     safeDraftActions: [
       'what_needs_attention',
@@ -595,6 +598,7 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
       "Give me my daily brief.",
       "Log an attendance exception.",
       "What needs approval?",
+      "Show me today's risk flags.",
     ],
     unsafeActions: [
       'auto_update_session_status',
@@ -610,9 +614,9 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     objectType: 'academy_overview',
     purpose:
       'See what needs attention across the academy — setup progress, players, sessions, review items, and signals all in one view.',
-    nextAction: 'Review what needs attention.',
+    nextAction: 'Check your review queue or ask DONNA for a daily brief.',
     assistantIntro:
-      'This is your academy command center. I can brief you on what needs attention, help you create templates, or guide you to any section.',
+      'This is your academy command center. I can brief you on what needs attention, open your review queue, help you create templates, or guide you to any section.',
     readableContext: [
       'academy_status',
       'setup_progress',
@@ -626,6 +630,8 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
       'summarize_academy_status',
       'draft_next_steps',
       'create_class_template_draft',
+      'show_review_queue',
+      'daily_brief',
     ],
     approvalRequiredFor: ['publish_changes', 'send_messages'],
     suggestedPrompts: [

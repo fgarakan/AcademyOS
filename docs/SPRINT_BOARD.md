@@ -13,7 +13,7 @@ How to use:
 
 ## Active Sprint
 
-### Sprint 393 — Cross-Screen DONNA Context Wiring Pass V1
+### Sprint 394 — Premium UI Consistency Pass V1
 
 **Status:** READY — next sprint
 
@@ -24,10 +24,7 @@ How to use:
 - [ ] `UIUX: ✓`
 - [ ] `DOCS: ✓`
 
-**Sprint spec:** Verify and tighten DONNA context entries across all screens built in Sprints 386–392. Ensure every screen has accurate `assistantIntro`, `suggestedPrompts`, and `approvalRequiredFor` fields. No new routes. No migrations.
-
-**Files to modify:**
-- `src/components/assistant/donnaPageContextRegistry.ts` — audit and update context entries
+**Sprint spec:** Audit and polish UI consistency across new screens (Sprints 386–393). Verify design token usage, card component usage, typography, and layout alignment. No migrations. No new routes.
 
 **Migration required:** No
 **DB schema changes:** No
@@ -35,6 +32,13 @@ How to use:
 ---
 
 ## Completed This Run
+
+### Sprint 393 — Cross-Screen DONNA Context Wiring Pass V1 ✓
+
+**Status:** COMPLETE
+**QA:** 13 PASS / 0 FAIL / 0 WARN (static analysis — registry-only sprint)
+
+---
 
 ### Sprint 392 — DONNA Executive Panel Upgrade V1 ✓
 
@@ -187,7 +191,8 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 | Sprint | Description | Commit | Date |
 |---|---|---|---|
-| 392 | DONNA Executive Panel Upgrade V1 | *(pending commit)* | 2026-05-15 |
+| 393 | Cross-Screen DONNA Context Wiring Pass V1 | *(pending commit)* | 2026-05-15 |
+| 392 | DONNA Executive Panel Upgrade V1 | dce85cd | 2026-05-15 |
 | 391 | Coach Recap Structuring and Review Draft V1 | *(pending commit)* | 2026-05-15 |
 | 390 | Coach Recap Flow Shell V1 | c0addfc | 2026-05-15 |
 | 389 | Parent Communication Center V1 | b08c414 | 2026-05-15 |
@@ -202,4 +207,4 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 ---
 
-*Last updated: Sprint 392*
+*Last updated: Sprint 393*
