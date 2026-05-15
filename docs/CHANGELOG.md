@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-15 — Sprint 365: Execution Adapter Shell V1
+
+**Goal:** Define the interface shell for execution adapters.
+
+**Files created:**
+- `src/components/assistant/donnaExecutionAdapter.ts` — `DonnaExecutionContext`, `DonnaExecutionResult`, `DonnaExecutionOutcome`, `DonnaExecutionAdapter` interface, `DonnaExecutionRegistry` class, `executionRegistry` singleton. Includes `ClassTemplateExecutionAdapter` stub (returns `not_wired`). No DB calls, no server imports.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 364: Protected Action Registry V1
 
 **Goal:** Centralize the registry of all actions Donna can propose but never execute directly.
