@@ -129,6 +129,13 @@ import {
 import { getCurrentPageObject } from '@/components/assistant/donnaCurrentObjectContext'
 // Sprint 360 — Version history panel
 import { DonnaVersionHistoryPanel } from '@/components/assistant/DonnaVersionHistoryPanel'
+// Sprint 366 — Communication draft
+import {
+  createCommunicationDraft,
+  applyCommunicationField,
+} from '@/components/assistant/donnaCommunicationDraft'
+import type { CommunicationDraft } from '@/components/assistant/donnaCommunicationDraft'
+import { DonnaCommunicationDraftCard } from '@/components/assistant/DonnaCommunicationDraftCard'
 // Sprint 361 — Audit trail
 import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
@@ -599,6 +606,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [convShowDraftReview, setConvShowDraftReview] = useState(false)
   // Sprint 359 — tracks whether the current draft was restored from sessionStorage
   const [draftRestoredFromSession, setDraftRestoredFromSession] = useState(false)
+  // Sprint 366 — Communication draft (alongside genericDraft/templateDraft)
+  const [communicationDraft, setCommunicationDraft] = useState<CommunicationDraft | null>(null)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -701,6 +710,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setVoiceOutputConfirmed(null)
     setConvState(createConversationState())
     setConvShowDraftReview(false)
+    setCommunicationDraft(null)
     realtimeDisconnect()
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -766,6 +776,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setConvState(createConversationState())
     setConvShowDraftReview(false)
     setDraftRestoredFromSession(false)
+    setCommunicationDraft(null)
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -1048,6 +1059,29 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     if (isReviewQueuePhrase(lower)) {
       void handleOpenReviewQueue()
       return
+    }
+
+    // 5.6. Sprint 366 — Communication draft intent (for unrouted cases)
+    // Only triggers when no draft/template is active and no controller draft is running.
+    if (!genericDraft && !templateDraft && convState.activeDraft === null) {
+      if (
+        lower.includes('draft a parent') || lower.includes('parent message') ||
+        lower.includes('parent update') || lower.includes('write to the parent')
+      ) {
+        const draft = createCommunicationDraft('parent_update')
+        setCommunicationDraft(draft)
+        setCommandResponse({ message: "I've started a parent update draft. What's the topic?", type: 'info', label: 'Communication Draft' })
+        return
+      }
+      if (
+        lower.includes('draft a coach') || lower.includes('coach brief') ||
+        lower.includes('brief the coach') || lower.includes('message to coach')
+      ) {
+        const draft = createCommunicationDraft('coach_brief', { recipientRole: 'coach' })
+        setCommunicationDraft(draft)
+        setCommandResponse({ message: "Coach brief started. What's the topic or session?", type: 'info', label: 'Communication Draft' })
+        return
+      }
     }
 
     // 6. Predictive suggestion phrases — always fetch context + compute suggestions (Sprint 267)
@@ -2566,6 +2600,19 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 </button>
               </div>
             </div>
+          )}
+
+          {/* ── Sprint 366: Communication draft card — shown when a comm draft is active ── */}
+          {communicationDraft && (
+            <DonnaCommunicationDraftCard
+              draft={communicationDraft}
+              onDiscard={() => setCommunicationDraft(null)}
+              onReview={() => {
+                setCommunicationDraft(prev =>
+                  prev ? applyCommunicationField(prev, 'status' as keyof typeof prev, 'ready') : null
+                )
+              }}
+            />
           )}
 
           {/* ── Sprint 290: Onboarding suggested routes — shown when step 1 intent was unclear ── */}

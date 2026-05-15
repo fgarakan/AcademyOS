@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-15 — Sprint 366: Donna Communication Draft Workflow V1
+
+**Goal:** Donna can draft parent/coach communications as structured objects. No sending.
+
+**Files created:**
+- `src/components/assistant/donnaCommunicationDraft.ts` — Types: `CommunicationDraftType`, `CommunicationDraft`, `COMMUNICATION_REQUIRED_FIELDS`, `COMMUNICATION_QUESTIONS`. Functions: `createCommunicationDraft`, `applyCommunicationField`, `isCommunicationDraftReady`.
+- `src/components/assistant/DonnaCommunicationDraftCard.tsx` — Compact UI card: type label, recipient, body preview (120 chars), violations display, "Review before sending" notice, Discard button. Never shows "Send".
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `communicationDraft` state; clears on panel close + route change. Intent detection for `draft_parent_update` and `draft_coach_communication` phrases. Renders `DonnaCommunicationDraftCard`.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 365: Execution Adapter Shell V1
 
 **Goal:** Define the interface shell for execution adapters.
