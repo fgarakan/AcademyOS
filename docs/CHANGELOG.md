@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-15 — Sprint 385: Prototype Screen Adoption Audit V1
+
+**Goal:** Map the 8 Manus prototype operating screens into the current AcademyOS product before coding them. Establish route map, role access map, DONNA capability map, backend module maturity ratings, and per-screen backend readiness ratings. Documentation only — no product screens built, no migrations, no DB schema changes.
+
+**New docs:**
+- `docs/PROTOTYPE_SCREEN_ADOPTION_MAP.md` — Full spec for all 8 prototype screens: purpose, user role, proposed route, existing route, layout models, data sources, DONNA context, draftable actions, protected actions, approval boundaries, audit needs, QA checklist, dependencies, what must not be built yet. Includes recommended Sprint 386–392+ build order.
+- `docs/DONNA_SCREEN_CAPABILITY_MAP.md` — DONNA context registry status per route, COO commands available per screen, task contracts relevant per screen, draftable actions, protected actions, and what is missing before each screen can use DONNA.
+- `docs/ROLE_ROUTE_MAP.md` — Role hierarchy, route access map per role, middleware routing logic, DONNA availability per role, RLS data isolation summary, and authorization checks for all protected actions.
+- `docs/MODULE_MATURITY_MAP.md` — Backend readiness ratings (Level 0–10) per product module: Auth, Sessions, Templates, Players, Curriculum, DONNA/Proposed Actions, Communications, Attendance, Signals, Platform. Summary table with sprint-to-pilot-ready paths.
+- `docs/SCREEN_BACKEND_READINESS_MAP.md` — Per-screen backend readiness ratings with all 8 prototype screens rated, missing-pieces list for each, migration requirements, and sprint order table (Sprint 386–392+).
+
+**Key findings:**
+- Screens 3 (Today's Academy), 6 (Level Up), 7 (Parent Comms): all backend available, only new routes + DONNA context entries needed. No migrations.
+- Screen 8 (Platform Portal): blocked on `platform_roles` migration before any real build.
+- DONNA panel is Level 9 — context entries for 5 new routes are the only gap.
+- Templates module is the only module at Level 10 (pilot-ready).
+- Sessions, Players, DONNA/Proposed Actions, Attendance are all Level 9.
+- Communications module is Level 6 — parent comms center route missing, email delivery not built.
+
+**TypeScript:** No code changed — docs only. No tsc run required.
+
+---
+
 ## 2026-05-15 — Sprint 384: DONNA Modularization for Parallel Agent Development V1
 
 **Goal:** Refactor `DonnaAssistantButton.tsx` from a 4,168-line monolith into a prop-driven orchestrator shell by extracting JSX clusters into dedicated components. Future agents can own a named module without touching the orchestrator.
