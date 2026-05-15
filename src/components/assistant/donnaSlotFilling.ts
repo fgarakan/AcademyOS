@@ -86,12 +86,93 @@ function extractDateHint(text: string): string | null {
 
 // ── Per-workflow slot extractors ───────────────────────────────────────────────
 
+// Sprint 322: Richer class template slot extraction
+// Focus areas extracted as comma-separated string; intensity and style as single values.
+
+const FOCUS_AREA_KEYWORDS: Array<{ phrases: string[]; canonical: string }> = [
+  { phrases: ['forehand prep', 'forehand preparation', 'forehand'], canonical: 'forehand' },
+  { phrases: ['backhand prep', 'backhand preparation', 'backhand'], canonical: 'backhand' },
+  { phrases: ['transition to net', 'net approach', 'volley', 'approach shot'], canonical: 'transition to net' },
+  { phrases: ['serve and return', 'serve return', 'return of serve'], canonical: 'serve and return' },
+  { phrases: ['serve practice', 'serve work', 'serving'], canonical: 'serve' },
+  { phrases: ['movement', 'footwork', 'court movement', 'agility'], canonical: 'footwork and movement' },
+  { phrases: ['point play', 'point construction', 'rally'], canonical: 'point play' },
+  { phrases: ['live ball', 'live-ball', 'live ball game'], canonical: 'live-ball games' },
+  { phrases: ['match play', 'competitive match', 'game-based'], canonical: 'match play' },
+  { phrases: ['consistency', 'control', 'rallying'], canonical: 'consistency' },
+]
+
+const INTENSITY_KEYWORDS: Array<{ phrases: string[]; canonical: string }> = [
+  { phrases: ['high intensity', 'intense', 'challenging', 'push hard'], canonical: 'high' },
+  { phrases: ['low intensity', 'easy', 'beginner-friendly', 'beginner friendly', 'relaxed'], canonical: 'low' },
+  { phrases: ['moderate intensity', 'medium intensity'], canonical: 'medium' },
+]
+
+const STYLE_KEYWORDS: Array<{ phrases: string[]; canonical: string }> = [
+  { phrases: ['competitive', 'game-focused', 'match-oriented'], canonical: 'competitive' },
+  { phrases: ['technical', 'skill-focused', 'technique-heavy'], canonical: 'technical' },
+  { phrases: ['balanced', 'mixed', 'all-around'], canonical: 'balanced' },
+  { phrases: ['progressive', 'gradual build', 'build up'], canonical: 'progressive' },
+]
+
+function extractFocusAreas(text: string): string | null {
+  const lower = text.toLowerCase()
+  const found: string[] = []
+  for (const { phrases, canonical } of FOCUS_AREA_KEYWORDS) {
+    if (phrases.some(p => lower.includes(p)) && !found.includes(canonical)) {
+      found.push(canonical)
+    }
+  }
+  return found.length > 0 ? found.join(', ') : null
+}
+
+function extractIntensity(text: string): string | null {
+  const lower = text.toLowerCase()
+  for (const { phrases, canonical } of INTENSITY_KEYWORDS) {
+    if (phrases.some(p => lower.includes(p))) return canonical
+  }
+  return null
+}
+
+function extractStyle(text: string): string | null {
+  const lower = text.toLowerCase()
+  for (const { phrases, canonical } of STYLE_KEYWORDS) {
+    if (phrases.some(p => lower.includes(p))) return canonical
+  }
+  return null
+}
+
+function extractPlayerCount(text: string): string | null {
+  const match = text.match(/(\d+)\s*(?:player|kid|student|athlete)s?/)
+  if (match) return match[1]
+  return null
+}
+
+function extractConstraints(text: string): string | null {
+  const lower = text.toLowerCase()
+  const constraints: string[] = []
+  if (lower.includes('with constraint') || lower.includes('with limitations')) constraints.push('constraints')
+  if (lower.includes('without net') || lower.includes('no net')) constraints.push('no net')
+  if (lower.includes('small court') || lower.includes('mini court')) constraints.push('small court')
+  return constraints.length > 0 ? constraints.join(', ') : null
+}
+
 function extractClassTemplateSlots(text: string): SlotMap {
   const slots: SlotMap = {}
   const level = extractLevel(text)
   if (level) slots.level = level
   const duration = extractDurationMinutes(text)
   if (duration) slots.durationMinutes = duration
+  const focusAreas = extractFocusAreas(text)
+  if (focusAreas) slots.focusAreas = focusAreas
+  const intensity = extractIntensity(text)
+  if (intensity) slots.intensity = intensity
+  const style = extractStyle(text)
+  if (style) slots.style = style
+  const playerCount = extractPlayerCount(text)
+  if (playerCount) slots.playerCount = playerCount
+  const constraints = extractConstraints(text)
+  if (constraints) slots.constraints = constraints
   return slots
 }
 
