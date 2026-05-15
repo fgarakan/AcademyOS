@@ -1,0 +1,128 @@
+# Integration Log — AcademyOS
+
+Running log of sprint completions, module integrations, and significant architectural decisions.
+
+**Last updated:** 2026-05-15
+
+Each entry records: what changed, what it integrates with, and any decisions made that future agents must know.
+
+---
+
+## 2026-05-15 — Sprint 385.5: Five-Agent Workflow Setup V1
+
+**What changed:** Created 6 agent workflow docs. No source code touched.
+
+**Integrates with:** All future sprints — these docs govern the five-agent sequential handoff workflow.
+
+**Decisions recorded:**
+- Option A (single Codespace, sequential handoff) chosen over Option B (parallel agents, branch merges). Reason: simpler coordination, no merge conflicts.
+- Five roles defined: PM/CTO → Builder → QA → UI/UX → Docs/Integration.
+- Sprint 386 (Today's Academy) confirmed as next build sprint.
+
+**Files created:**
+- `docs/AGENT_GUARDRAILS.md`
+- `docs/AGENT_ASSIGNMENTS.md`
+- `docs/SPRINT_BOARD.md`
+- `docs/MERGE_QUEUE.md`
+- `docs/INTEGRATION_LOG.md`
+- `docs/QA_GATE.md`
+
+---
+
+## 2026-05-15 — Sprint 385: Prototype Screen Adoption Audit V1
+
+**What changed:** 5 new docs mapping 8 Manus prototype screens into AcademyOS. No source code touched.
+
+**Integrates with:** Sprint 386+ build sprints — these docs are the source of truth for screen specs, route assignments, DONNA capability per screen, role access, and backend readiness.
+
+**Decisions recorded:**
+- Sprint 386 (Today's Academy `/director/today`) is the highest-readiness new screen: all backend available, no migration.
+- Screen 8 (Multi-Academy Portal) blocked on `platform_roles` migration — do not build before Sprint 392.
+- Templates module is the only module at Level 10 (pilot-ready). Sessions, Players, DONNA at Level 9.
+- Communications module at Level 6 — parent comms center route missing; external email delivery not built.
+
+**Files created:**
+- `docs/PROTOTYPE_SCREEN_ADOPTION_MAP.md`
+- `docs/DONNA_SCREEN_CAPABILITY_MAP.md`
+- `docs/ROLE_ROUTE_MAP.md`
+- `docs/MODULE_MATURITY_MAP.md`
+- `docs/SCREEN_BACKEND_READINESS_MAP.md`
+
+---
+
+## 2026-05-15 — Sprint 384: DONNA Modularization for Parallel Agent Development V1
+
+**What changed:** `DonnaAssistantButton.tsx` refactored from 4,168-line monolith to 3,346-line prop-driven orchestrator. 4 real JSX extractions, 5 documentation stubs.
+
+**Integrates with:**
+- All DONNA components — module boundaries now documented in `docs/DONNA_MODULARIZATION_MAP.md`
+- Sprint 383 attendance routing — preserved exactly
+- Sprint 383.5 template save fix — preserved exactly
+
+**Decisions recorded:**
+- State stays in `DonnaAssistantButton.tsx`. Extracted components are presentational (props only). Reason: `dispatchCooCommand`, `detectAndHandleCommand`, `closePanel` close over 25–30+ state setters — extraction requires useReducer + context migration (documented as future path).
+- Future path: DonnaPanelContext → DonnaCommandContext → DonnaDraftContext migrations unlock further extraction.
+
+**Extracted components:**
+- `DonnaVoiceLayer.tsx` — voice card + text input + suggestion chips
+- `DonnaWorkflowCards.tsx` — all workflow output cards
+- `DonnaDeveloperTools.tsx` — dev-only diagnostic panel
+- `DonnaAttendanceLayer.tsx` — attendance exception null-guard wrapper
+
+**QA result:** 41 PASS / 0 FAIL / 2 WARN
+
+---
+
+## 2026-05-15 — Sprint 383.5: Fix class template level to development_track mapping
+
+**What changed:** `saveAssistantTemplateDraftAction.ts` — `track: null` guard. Level label preserved in template name and `tags: ["level:<label>"]`.
+
+**Root cause:** `draft.level` ("Orange 2") was being written directly to `templates.track` (`development_track` enum). Invalid enum value caused Postgres error on every Save Template attempt.
+
+**Integrates with:** `templates` table, `development_track` enum, all template draft flows.
+
+**Decisions recorded:**
+- Level labels ("Orange 2") cannot map to `development_track` enum values (`"skill"|"competition"|"fitness"|"combined"`). They are different axes.
+- Level label preserved in `tags` array as `"level:Orange 2"` — searchable and recoverable.
+- `safeDevTrack` guard function added to validate future `track` values before insert.
+
+---
+
+## 2026-05-15 — Sprint 383: DONNA Attendance Exception Session Resolution V1
+
+**What changed:** Attendance exception drafts now resolve to a real session before queuing. Natural language attendance phrase parsing added. "Queue for review" CTA wired to `saveAttendanceExceptionDraftAction`.
+
+**Integrates with:**
+- `proposed_actions` pipeline — attendance exceptions now create real proposed_action rows
+- `/director/review` — attendance exceptions visible in review queue
+- DONNA COO command routing — `attendance_exception_draft` command now fully wired
+
+**Decisions recorded:**
+- `fetchRecentSessionsAction` returns last 7 days of sessions for the director's academy. Read-only — no mutations.
+- "Everyone was here" → clears exception flags. Natural phrase overrides slot-filled data.
+- `MANUAL_PLACEHOLDER` used when no session match found — preserves draft without blocking the flow.
+
+---
+
+## How to Add an Entry
+
+When a sprint completes, the Docs/Integration Agent adds a new entry at the TOP of the log (newest first) with:
+
+```markdown
+## YYYY-MM-DD — Sprint NNN: [Title]
+
+**What changed:** [1-2 sentences]
+
+**Integrates with:** [modules, routes, tables, or components affected]
+
+**Decisions recorded:** [non-obvious choices, trade-offs, or constraints that future agents must know]
+```
+
+Do not record:
+- Code that is self-explanatory from reading the diff
+- Implementation details that belong in commit messages
+- Ephemeral state or in-progress notes
+
+---
+
+*Last updated: Sprint 385.5*

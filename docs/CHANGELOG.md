@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-15 — Sprint 385.5: Five-Agent Workflow Setup V1
+
+**Goal:** Set up the Option A five-agent sequential workflow for AcademyOS. Documentation only — no runtime code, no migrations, no DB schema changes, no package changes.
+
+**New docs:**
+- `docs/AGENT_ASSIGNMENTS.md` — Role definitions for all 5 agents (PM/CTO, Builder, QA, UI/UX, Docs/Integration): responsibilities, file ownership, handoff conditions, stop-and-ask triggers. Handoff sequence table and file ownership matrix.
+- `docs/AGENT_GUARDRAILS.md` — Rules applying to every agent every sprint: architecture red lines, forbidden files, never-do-without-approval list, stop-and-ask triggers, commit rules, TypeScript gate, DONNA naming rule, design system rules, source-of-truth hierarchy.
+- `docs/SPRINT_BOARD.md` — Active sprint tracker with Sprint 386 (Today's Academy) fully specced as the next build sprint. Backlog table for Sprints 387–392+. Done column seeded with Sprints 383–385.5.
+- `docs/MERGE_QUEUE.md` — Merge rules, commit history with hashes, and pending queue. Seeded with Sprint 383–385 commit records.
+- `docs/INTEGRATION_LOG.md` — Running log of sprint completions and architectural decisions. Seeded with Sprint 383–385.5 entries. Documents key decisions (level label → development_track fix, DONNA modularization rationale, screen audit findings).
+- `docs/QA_GATE.md` — Gate requirements (TypeScript + browser QA + protected actions), Playwright browser QA protocol (auth pattern, script location, result format, standard sections A–F), QA template for new sprints. Seeded with Sprint 383–385.5 QA results.
+
+**Sprint 386 starting point documented in `SPRINT_BOARD.md`:**
+- Build `/director/today` — Today's Academy screen
+- No migration, no new packages, all backend available
+- DONNA context entry to add: `/director/today` → "Today's Academy"
+
+**TypeScript:** Not applicable — docs only.
+
+---
+
 ## 2026-05-15 — Sprint 385: Prototype Screen Adoption Audit V1
 
 **Goal:** Map the 8 Manus prototype operating screens into the current AcademyOS product before coding them. Establish route map, role access map, DONNA capability map, backend module maturity ratings, and per-screen backend readiness ratings. Documentation only — no product screens built, no migrations, no DB schema changes.
