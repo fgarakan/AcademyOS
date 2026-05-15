@@ -124,6 +124,7 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | Voice input (`useDonnaRealtimeVoice`) | 8 | Sprints 297–350. TTS + STT stable. |
 | Audit trail | 9 | `appendAuditEvent` instrumented in all major flows. |
 | `DonnaAssistantButton.tsx` modularization | 9 | Sprint 384. Prop-driven orchestrator. 4 real extractions. |
+| Executive panel upgrade | 9 | Sprint 392. w-96, backdrop overlay, tab chips, approval boundary copy. |
 
 **Rating: 9** — DONNA core is pilot-ready. 4 stub task contracts are the known gap.
 
@@ -208,4 +209,4 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 
 ---
 
-*Last updated: Sprint 391*
+*Last updated: Sprint 392*

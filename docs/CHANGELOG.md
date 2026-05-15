@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-15 — Sprint 392: DONNA Executive Panel Upgrade V1
+
+**Component modified:** `DonnaAssistantButton.tsx` (global, all `/director/**` routes)
+
+**Goal:** Upgrade the DONNA executive panel with premium visual presence, desktop overlay, tab chips for quick navigation, and approval boundary copy.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — 4 targeted changes:
+  1. Overlay: removed `md:hidden` and added `backdrop-blur-sm` — overlay now shows on all screen sizes when panel open
+  2. Panel width: `w-80` → `w-96` (320px → 384px) for executive presence
+  3. Tab chips strip: added "Review Today", "Prepare Coaches", "Player Progress", "Parent Updates" chips between panel header and body — each wires to an existing handler (review queue, COO coach_brief, router.push)
+  4. Footer: replaced verbose "What I can do right now" list with "DONNA proposes. You approve. Always in control." approval boundary copy
+
+**No behavior changes.** All routing/commands preserved. No protected execution changes. No external sends.
+
+---
+
 ## 2026-05-15 — Sprint 391: Coach Recap Structuring and Review Draft V1
 
 **Route modified:** `/coach/recap`

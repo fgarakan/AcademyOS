@@ -100,6 +100,28 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 392 — DONNA Executive Panel Upgrade V1
+
+**Date:** 2026-05-15
+**QA type:** Full browser QA (Playwright)
+**TypeScript:** CLEAN
+**Script:** /tmp/donna-qa-392b.js
+
+**Section A — Auth + /director load:** 3 PASS
+**Section B — Panel width (w-96):** 2 PASS
+**Section C — Tab chips (4):** 4 PASS
+**Section D — Approval boundary copy:** 4 PASS
+**Section E — Source checks (backdrop-blur, w-96, md:hidden removed):** 3 PASS
+**Section F — Naming (no DANA):** 1 PASS
+**Section G — Regressions (Review Queue button, old footer removed):** 2 PASS
+**Section H — Prior screen regressions (5 routes):** 5 PASS
+
+**Result: 24 PASS / 0 FAIL / 0 WARN**
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 391 — Coach Recap Structuring and Review Draft V1
 
 **Date:** 2026-05-15
@@ -302,4 +324,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 391*
+*Last updated: Sprint 392*

@@ -61,17 +61,15 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 | Audit trail | Instrumented | 9+ |
 | Preference memory | Sprint 377 | 8+ |
 | Recommendation engine | Sprint 374–375 | 8+ |
-| Context entries for new screens | MISSING for 5 routes | blocks Level 10 |
+| Executive panel upgrade | Sprint 392 — w-96, backdrop blur, tab chips, approval copy | 9+ |
+| Context entries for new screens | Added per-screen Sprints 386–390 | 9+ |
 
-**Missing context entries (add in same sprint as each new screen):**
-- `/director/today` → Sprint 386
-- `/director/level-up` → Sprint 388
-- `/director/parents` → Sprint 389
-- `/coach/sessions/[sessionId]` → Sprint 390
-- `/coach/recap` → Sprint 390
+**What's missing for Level 10:**
+- 4 stub task contracts remain unwired
+- Coach DONNA panel (separate sprint)
 
 **Migration required:** No
-**Recommended build sprint:** Context entries added per-screen as each screen is built.
+**Recommended build sprint:** Sprint 393 (context wiring pass)
 
 ---
 
@@ -302,4 +300,4 @@ No migrations are needed for Sprints 386–391.
 
 ---
 
-*Last updated: Sprint 391*
+*Last updated: Sprint 392*

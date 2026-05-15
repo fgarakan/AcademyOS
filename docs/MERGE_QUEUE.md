@@ -31,6 +31,19 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 392 — DONNA Executive Panel Upgrade V1
+
+**Date:** 2026-05-15
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** 24 PASS / 0 FAIL / 0 WARN
+**Files committed:**
+- `src/components/assistant/DonnaAssistantButton.tsx`
+- docs (7 files)
+**Commit hash:** *(pending)*
+**Issues:** None
+
+---
+
 ### Sprint 391 — Coach Recap Structuring and Review Draft V1
 
 **Date:** 2026-05-15
@@ -202,8 +215,8 @@ This file records:
 
 ## Pending
 
-*(None — queue is clear. Sprint 386 not yet started.)*
+*(None — queue is clear.)*
 
 ---
 
-*Last updated: Sprint 391*
+*Last updated: Sprint 392*

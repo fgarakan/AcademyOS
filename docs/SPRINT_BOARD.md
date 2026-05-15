@@ -13,7 +13,7 @@ How to use:
 
 ## Active Sprint
 
-### Sprint 392 — DONNA Executive Panel Upgrade V1
+### Sprint 393 — Cross-Screen DONNA Context Wiring Pass V1
 
 **Status:** READY — next sprint
 
@@ -24,18 +24,10 @@ How to use:
 - [ ] `UIUX: ✓`
 - [ ] `DOCS: ✓`
 
-**Sprint spec:** Build `/director/parents` — the parent-safe communication operating surface. Show draft/status cards, parent-safe preview, workflow explanation. No real sends.
-
-**Migration required:** No
-**DB schema changes:** No
-
-**Sprint spec (source: `SCREEN_BACKEND_READINESS_MAP.md`):**
-
-Goal: Add DONNA context entry for `/director/sessions/[sessionId]` and wire "Draft coach brief" + "Populate blocks" CTAs from session detail.
+**Sprint spec:** Verify and tighten DONNA context entries across all screens built in Sprints 386–392. Ensure every screen has accurate `assistantIntro`, `suggestedPrompts`, and `approvalRequiredFor` fields. No new routes. No migrations.
 
 **Files to modify:**
-- `src/components/assistant/donnaPageContextRegistry.ts` — add entry for `/director/sessions/[sessionId]`
-- `src/app/director/sessions/[sessionId]/page.tsx` — add "Draft coach brief" DONNA prompt CTA (if not already present)
+- `src/components/assistant/donnaPageContextRegistry.ts` — audit and update context entries
 
 **Migration required:** No
 **DB schema changes:** No
@@ -43,6 +35,13 @@ Goal: Add DONNA context entry for `/director/sessions/[sessionId]` and wire "Dra
 ---
 
 ## Completed This Run
+
+### Sprint 392 — DONNA Executive Panel Upgrade V1 ✓
+
+**Status:** COMPLETE
+**QA:** 24 PASS / 0 FAIL / 0 WARN
+
+---
 
 ### Sprint 391 — Coach Recap Structuring and Review Draft V1 ✓
 
@@ -188,6 +187,7 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 | Sprint | Description | Commit | Date |
 |---|---|---|---|
+| 392 | DONNA Executive Panel Upgrade V1 | *(pending commit)* | 2026-05-15 |
 | 391 | Coach Recap Structuring and Review Draft V1 | *(pending commit)* | 2026-05-15 |
 | 390 | Coach Recap Flow Shell V1 | c0addfc | 2026-05-15 |
 | 389 | Parent Communication Center V1 | b08c414 | 2026-05-15 |
@@ -202,4 +202,4 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 ---
 
-*Last updated: Sprint 391*
+*Last updated: Sprint 392*

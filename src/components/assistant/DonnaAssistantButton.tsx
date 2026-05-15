@@ -2466,7 +2466,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       {/* ------------------------------------------------------------------ */}
       {panelOpen && (
         <div
-          className="fixed inset-0 z-40 md:hidden bg-black/50"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
           onClick={closePanel}
           aria-hidden="true"
         />
@@ -2480,7 +2480,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         aria-modal="true"
         aria-label={DONNA_FULL_LABEL}
         className={cn(
-          'fixed top-0 right-0 bottom-0 z-50 w-80 max-w-[90vw] flex flex-col',
+          'fixed top-0 right-0 bottom-0 z-50 w-96 max-w-[90vw] flex flex-col',
           'transition-transform duration-200 ease-out',
           panelOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none',
         )}
@@ -2537,6 +2537,29 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           >
             <X className="w-3.5 h-3.5" />
           </button>
+        </div>
+
+        {/* Tab chips — executive quick actions */}
+        <div
+          className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 overflow-x-auto"
+          style={{ borderBottom: '1px solid var(--border-subtle)' }}
+        >
+          {([
+            { label: 'Review Today', action: () => void handleOpenReviewQueue() },
+            { label: 'Prepare Coaches', action: () => dispatchCooCommand('coach_brief') },
+            { label: 'Player Progress', action: () => { router.push('/director/level-up'); closePanel() } },
+            { label: 'Parent Updates', action: () => { router.push('/director/parents'); closePanel() } },
+          ] as { label: string; action: () => void }[]).map(chip => (
+            <button
+              key={chip.label}
+              type="button"
+              onClick={chip.action}
+              className="shrink-0 text-[11px] px-2.5 py-1 rounded-full transition-all text-text-secondary hover:text-text-primary"
+              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', whiteSpace: 'nowrap' }}
+            >
+              {chip.label}
+            </button>
+          ))}
         </div>
 
         {/* Scrollable body */}
@@ -3305,32 +3328,16 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
         </div>
 
-        {/* Footer — capability summary */}
+        {/* Footer — approval boundary */}
         <div
-          className="px-4 py-3 shrink-0 space-y-2"
+          className="px-4 py-3 shrink-0 space-y-1"
           style={{ borderTop: '1px solid var(--border-subtle)' }}
         >
-          <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
-            What I can do right now
+          <p className="text-[11px] font-semibold" style={{ color: 'rgba(200,255,0,0.7)' }}>
+            DONNA proposes. You approve. Always in control.
           </p>
-          <ul className="space-y-1">
-            {[
-              'Summarize any page with live academy data',
-              'Guide you through the current page',
-              'Take you to approved Academy OS pages',
-              'Capture notes',
-              'Draft class templates for review',
-              'Collect info for sessions, notes, groups, and more',
-              'Save only after your explicit approval',
-            ].map(item => (
-              <li key={item} className="flex items-start gap-1.5 text-[11px] text-text-muted">
-                <span className="mt-px shrink-0" style={{ color: '#8b5cf6' }}>·</span>
-                {item}
-              </li>
-            ))}
-          </ul>
           <p className="text-[10px] text-text-muted leading-snug">
-            Some commands, like advancing setup questions by voice, still use the on-screen controls for safety.
+            All actions go to your review queue before anything changes.
           </p>
         </div>
       </aside>
