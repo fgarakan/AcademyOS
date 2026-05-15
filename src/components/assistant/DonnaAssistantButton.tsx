@@ -127,6 +127,10 @@ import {
   looksLikeUserTypedName,
 } from '@/components/assistant/donnaObjectResolutionTypes'
 import { getCurrentPageObject } from '@/components/assistant/donnaCurrentObjectContext'
+// Sprint 350 — Server TTS client + voice policy
+import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
+import { DONNA_VOICE_MODE_LABELS } from '@/components/assistant/donnaVoicePolicy'
+import type { DonnaVoiceOutputMode } from '@/components/assistant/donnaVoicePolicy'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -470,6 +474,22 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     })
   }
 
+  // Sprint 350 — Contract TTS: server → browser cascade for known Donna prompts.
+  // Use ONLY for: onboarding questions, next missing-field questions, protected_action_blocked.
+  // Do NOT call globally — speakAssistantText remains for voice greeter, test paths, etc.
+  function speakDonna(text: string) {
+    void speakWithServerTts(text, (status) => {
+      if (status === 'speaking') setIsSpeaking(true)
+      else if (status === 'done' || status === 'error') setIsSpeaking(false)
+    }).then((result) => {
+      const source: DonnaVoiceOutputMode =
+        result.source === 'server' ? 'contract_tts'
+        : result.source === 'browser' ? 'browser_tts'
+        : 'silent'
+      setLastServerTtsInfo({ source, text: text.slice(0, 80) })
+    })
+  }
+
   // Sprint 296B — Reset stuck voice state without closing the panel.
   function resetVoice() {
     if (voiceWatchdogRef.current !== null) {
@@ -584,6 +604,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   const [voicePermissionError, setVoicePermissionError] = useState<string | null>(null)
   // Sprint 296A — isolated TTS test state (never touches speech guard refs or onboardingStep)
   const [testVoiceStatus, setTestVoiceStatus] = useState<'idle' | 'speaking' | 'done' | 'error'>('idle')
+  // Sprint 350 — tracks last server TTS call result for Developer Tools display
+  const [lastServerTtsInfo, setLastServerTtsInfo] = useState<{
+    source: DonnaVoiceOutputMode
+    text: string
+  } | null>(null)
 
   // Sprint 290 — Guided onboarding intro state
   // Active when no task/mode/draft is running, and the user has not yet completed the intro.
@@ -667,6 +692,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
     }
+    stopServerTts()
   }, [realtimeDisconnect])
 
   // Escape closes the panel
@@ -901,9 +927,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       setTemplateDraft(updated)
       const nextQ = updated.missingQuestions[0] ?? null
       if (nextQ) {
-        speakAssistantText(nextQ.question)
+        speakDonna(nextQ.question)
       } else {
-        speakAssistantText('I have enough to draft this. Review it before saving.')
+        speakDonna('I have enough to draft this. Review it before saving.')
       }
       return
     }
@@ -916,10 +942,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         setGenericDraft(updated)
         const nextQ = getNextMissingQuestion(updated.taskId, updated.collectedFields)
         if (nextQ) {
-          speakAssistantText(nextQ.question)
+          speakDonna(nextQ.question)
         } else {
           const c = DONNA_TASK_CONTRACTS[updated.taskId]
-          speakAssistantText(`${c?.label ?? 'Draft'} is ready to review.`)
+          speakDonna(`${c?.label ?? 'Draft'} is ready to review.`)
         }
         return
       }
@@ -1101,7 +1127,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     const firstQ = contract?.questionSequence.find(
       q => !draft.collectedFields[q.fieldId],
     ) ?? null
-    if (firstQ) speakAssistantText(firstQ.question)
+    if (firstQ) speakDonna(firstQ.question)
   }
 
   function handleCancelGenericTask() {
@@ -1116,7 +1142,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     if (!convState.activeDraft) return
     const turn = controllerHandleInput('undo that', convState)
     setConvState(turn.nextState)
-    if (turn.speakText) speakAssistantText(turn.speakText)
+    if (turn.speakText) speakDonna(turn.speakText)
   }
 
   function handleConvStartOver() {
@@ -1125,8 +1151,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setConvState(prev => ({ ...prev, activeDraft: fresh, phase: 'collecting', currentFieldId: null }))
     setConvShowDraftReview(false)
     const nextQ = runtimeNextQuestion(fresh)
-    if (nextQ) speakAssistantText(nextQ.question)
-    else speakAssistantText("Draft reset. Tell me what you'd like to build.")
+    if (nextQ) speakDonna(nextQ.question)
+    else speakDonna("Draft reset. Tell me what you'd like to build.")
   }
 
   function handleConvDiscard() {
@@ -1155,13 +1181,17 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       // Reset dedupe guards so the next step can speak even if same text
       lastSpokenTextRef.current = null
       lastSpokenKeyRef.current = null
-      speakAssistantText(nextSpoken)
+      speakDonna(nextSpoken)
       return
     }
 
     if (step === 1) {
       // First-action step — detect intent and route.
       setOnboardingStep(null)
+      // Sprint 350: mark intro completed so it does not repeat on route change.
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('academyos:donna:introCompleted:v1', 'true')
+      }
 
       // Template creation intent
       if (isTemplateCreationIntent(answer)) {
@@ -1172,8 +1202,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         const firstQ = draft.missingQuestions[0] ?? null
         lastSpokenTextRef.current = null
         lastSpokenKeyRef.current = null
-        if (firstQ) speakAssistantText(firstQ.question)
-        else speakAssistantText('I have enough to draft this. Review it before saving.')
+        if (firstQ) speakDonna(firstQ.question)
+        else speakDonna('I have enough to draft this. Review it before saving.')
         return
       }
 
@@ -1194,7 +1224,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       setShowOnboardingSuggestions(true)
       lastSpokenTextRef.current = null
       lastSpokenKeyRef.current = null
-      speakAssistantText('Here are some things you can do to get started.')
+      speakDonna('Here are some things you can do to get started.')
     }
   }
 
@@ -1703,7 +1733,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     // New draft just created from a create_draft intent — bypass legacy routing
     if (convState.activeDraft === null && controllerTurn.nextState.activeDraft !== null) {
       setConvState(controllerTurn.nextState)
-      if (controllerTurn.speakText) speakAssistantText(controllerTurn.speakText)
+      if (controllerTurn.speakText) speakDonna(controllerTurn.speakText)
       if (controllerTurn.showDraftReview) setConvShowDraftReview(true)
       console.log('[DonnaGoldenPath] draft_started', {
         workflowId: controllerTurn.nextState.activeDraft.workflowId,
@@ -1718,7 +1748,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     if (convState.activeDraft !== null && !genericDraft && !templateDraft) {
       const turn = controllerTurn
       setConvState(turn.nextState)
-      if (turn.speakText) speakAssistantText(turn.speakText)
+      if (turn.speakText) speakDonna(turn.speakText)
       if (turn.showDraftReview) setConvShowDraftReview(true)
       if (turn.displayMessage) {
         setCommandResponse({ message: turn.displayMessage, type: 'info', label: 'Donna' })
@@ -1730,7 +1760,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           setFromVoiceCapture(false)
           setActiveMode('create_template')
           const firstQ = draft.missingQuestions[0] ?? null
-          if (firstQ) speakAssistantText(firstQ.question)
+          if (firstQ) speakDonna(firstQ.question)
           break
         }
         case 'open_review_queue':
@@ -1828,12 +1858,18 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           if (!hasGreetedRef.current) {
             hasGreetedRef.current = true
             setShowGreeting(true)
-            // Sprint 290: start the guided onboarding intro instead of generic greeting.
-            // Sprint 296B: do NOT auto-speak here — Chrome discards the gesture context
-            // before speak() is reached after multiple setState calls. Director presses
-            // "Play Donna voice" button for a clean gesture-backed speak().
-            setOnboardingStep(0)
-            setShowOnboardingSuggestions(false)
+            // Sprint 350: skip onboarding if already completed this session.
+            const introCompleted =
+              typeof window !== 'undefined' &&
+              window.sessionStorage.getItem('academyos:donna:introCompleted:v1') === 'true'
+            if (!introCompleted) {
+              // Sprint 290: start the guided onboarding intro instead of generic greeting.
+              // Sprint 296B: do NOT auto-speak here — Chrome discards the gesture context
+              // before speak() is reached after multiple setState calls. Director presses
+              // "Play Donna voice" button for a clean gesture-backed speak().
+              setOnboardingStep(0)
+              setShowOnboardingSuggestions(false)
+            }
           }
         }}
         aria-label={`Ask ${DONNA_PUBLIC_NAME}`}
@@ -3072,13 +3108,43 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             </div>
           )}
 
-          {/* Sprint 336–348 — Developer Tools panel (dev only) */}
+          {/* Sprint 336–350 — Developer Tools panel (dev only) */}
           {process.env.NODE_ENV !== 'production' && (
             <details className="mx-4 mb-2">
               <summary className="text-[10px] uppercase tracking-widest text-text-muted cursor-pointer">
                 Developer Tools
               </summary>
               <div className="mt-2 space-y-3">
+
+              {/* Sprint 350 — Reset Donna intro (clears sessionStorage key) */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.sessionStorage.removeItem('academyos:donna:introCompleted:v1')
+                  }
+                  hasGreetedRef.current = false
+                  setOnboardingStep(0)
+                  setShowOnboardingSuggestions(false)
+                }}
+                className="w-full text-[11px] rounded-lg px-3 py-1.5 transition-all"
+                style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.2)', color: '#C8FF00' }}
+              >
+                Reset Donna intro
+              </button>
+
+              {/* Sprint 350 — TTS source display */}
+              {lastServerTtsInfo && (
+                <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
+                  <div className="text-text-muted uppercase tracking-widest">Last TTS</div>
+                  <div className="text-text-secondary">
+                    Source: <span className="text-lime">{DONNA_VOICE_MODE_LABELS[lastServerTtsInfo.source]}</span>
+                  </div>
+                  <div className="text-text-secondary truncate">
+                    Text: <span className="text-text-primary">{lastServerTtsInfo.text}</span>
+                  </div>
+                </div>
+              )}
 
               {/* Hey Donna wake phrase — panel-only, no global always-listening */}
               <div>

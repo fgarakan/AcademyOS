@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-15 — Mega Sprint 350–358: Donna Onboarding Persistence + Server TTS + Voice Output Policy V1
+
+**Goal:** Fix onboarding repetition, establish a server TTS pipeline, and wire contract TTS into targeted Donna prompts without replacing all voice paths.
+
+**Files created:**
+- `src/components/assistant/donnaVoicePolicy.ts` — Voice output mode type + policy resolver + label map (pure utility, no React)
+- `src/app/api/donna/tts/route.ts` — Server TTS POST route: auth-required, 500-char limit, OpenAI TTS if OPENAI_API_KEY configured, returns `audio/mpeg` or safe JSON error (no fake success)
+- `src/components/assistant/donnaServerTtsClient.ts` — Client helper: `speakWithServerTts` (server TTS → browser TTS → silent cascade), `stopServerTts`
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx`:
+  - Added `speakDonna()` helper (server TTS → browser TTS, used only for contract prompts)
+  - Panel-open click: reads `sessionStorage` key `academyos:donna:introCompleted:v1` — skips onboarding if already completed this browser session
+  - `handleOnboardingAnswer` step 1 completion: writes sessionStorage key so onboarding does not repeat on route change
+  - Replaced `speakAssistantText` with `speakDonna` at targeted contract call sites: onboarding step transitions, next missing-field questions (template + generic draft), controller speakText (draft start, revision, undo, protected_action_blocked), handleConvUndo/handleConvStartOver
+  - Added `stopServerTts()` to `closePanel` cleanup
+  - Developer Tools: added "Reset Donna intro" button (clears sessionStorage key + restarts onboarding), added Last TTS source + text snippet display
+
+**TypeScript:** Clean — `npx tsc --noEmit` passed with 0 errors.
+
+**Voice policy:**
+- Server TTS is used for contract prompts (onboarding, missing-field questions, controller responses)
+- Browser TTS is the automatic fallback if server TTS fails or is not configured (`server_tts_not_configured` reason)
+- Screen text remains the source of truth if all audio fails
+- `speakAssistantText` (browser-only) remains unchanged for voice greeter, test paths, multi-step plan summary
+- `donnaConversationController.ts` and `donnaSlotFilling.ts` not touched — golden path preserved
+- Academy Setup voice system not rebuilt — out of scope for this sprint
+
+---
+
 ## 2026-05-15 — Sprint 349: Donna Panel Visual QA + Golden Path Regression V1
 
 **Goal:** Visually QA the simplified Donna panel after Sprint 348 and rerun the full golden path regression.
