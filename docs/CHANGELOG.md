@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-15 — Sprint 370: Donna What Needs Attention Engine V1
+
+**Goal:** Donna surfaces urgent items that need director attention.
+
+**Files created:**
+- `src/components/assistant/donnaAttentionEngine.ts` — Types: `AttentionItem`, `AttentionReport`. Functions: `sortAttentionItems`, `formatAttentionSummary`.
+- `src/app/api/donna/attention/route.ts` — GET route: auth + director role check, reads pending_review count and pending_placement count. Returns `AttentionReport`.
+- `src/components/assistant/DonnaAttentionCard.tsx` — UI card: urgency badges (critical/high/normal), item list with optional links.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `attentionReport` state, `handleFetchAttention`, `isAttentionPhrase` detection, renders `DonnaAttentionCard`.
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 369: Daily Director Brief V1
 
 **Goal:** Donna can generate a structured daily brief for the director.

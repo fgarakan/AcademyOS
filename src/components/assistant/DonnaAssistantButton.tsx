@@ -141,6 +141,9 @@ import { DonnaMessageReviewPanel } from '@/components/assistant/DonnaMessageRevi
 // Sprint 369 — Daily brief
 import type { DailyBrief } from '@/components/assistant/donnaDailyBrief'
 import { DonnaDailyBriefCard } from '@/components/assistant/DonnaDailyBriefCard'
+// Sprint 370 — Attention engine
+import type { AttentionReport } from '@/components/assistant/donnaAttentionEngine'
+import { DonnaAttentionCard } from '@/components/assistant/DonnaAttentionCard'
 // Sprint 361 — Audit trail
 import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
@@ -618,6 +621,9 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Sprint 369 — Daily brief state
   const [dailyBrief, setDailyBrief] = useState<DailyBrief | null>(null)
   const [isDailyBriefLoading, setIsDailyBriefLoading] = useState(false)
+  // Sprint 370 — Attention report state
+  const [attentionReport, setAttentionReport] = useState<AttentionReport | null>(null)
+  const [isAttentionLoading, setIsAttentionLoading] = useState(false)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -1074,6 +1080,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     // 5.55. Sprint 369 — Daily brief intent
     if (isDailyBriefPhrase(lower)) {
       void handleFetchDailyBrief()
+      return
+    }
+
+    // 5.56. Sprint 370 — Attention intent
+    if (isAttentionPhrase(lower)) {
+      void handleFetchAttention()
       return
     }
 
@@ -1559,6 +1571,22 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     )
   }
 
+  // Returns true if the phrase is an attention/urgent items intent.
+  function isAttentionPhrase(lower: string): boolean {
+    return (
+      lower.includes('what needs attention') ||
+      lower.includes('anything urgent') ||
+      lower.includes('what should i do first') ||
+      lower.includes('what is urgent') ||
+      lower.includes('whats urgent') ||
+      lower.includes("what's urgent") ||
+      lower.includes('urgent items') ||
+      lower.includes('needs attention') ||
+      lower.includes('any urgent') ||
+      lower.includes('priority items')
+    )
+  }
+
   // Returns true if the phrase is a daily brief intent.
   function isDailyBriefPhrase(lower: string): boolean {
     return (
@@ -1586,6 +1614,29 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       lower.includes('unlinked notes') ||
       lower.includes('needs my review')
     )
+  }
+
+  // Sprint 370 — Fetch attention report
+  async function handleFetchAttention() {
+    setIsAttentionLoading(true)
+    setAttentionReport(null)
+    try {
+      const res = await fetch('/api/donna/attention')
+      if (res.ok) {
+        const json = await res.json() as { ok: boolean; report?: AttentionReport }
+        if (json.ok && json.report) {
+          setAttentionReport(json.report)
+        } else {
+          setCommandResponse({ message: 'Could not load attention items. Try again.', type: 'info', label: 'Attention' })
+        }
+      } else {
+        setCommandResponse({ message: 'Could not load attention items. Try again.', type: 'info', label: 'Attention' })
+      }
+    } catch {
+      setCommandResponse({ message: 'Could not load attention items. Try again.', type: 'info', label: 'Attention' })
+    } finally {
+      setIsAttentionLoading(false)
+    }
   }
 
   // Sprint 369 — Fetch daily director brief (read-only, auth-required endpoint)
@@ -1943,6 +1994,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     // Daily brief intent — Sprint 369
     if (isDailyBriefPhrase(text.toLowerCase())) {
       void handleFetchDailyBrief()
+      setTypedText('')
+      return
+    }
+
+    // Attention intent — Sprint 370
+    if (isAttentionPhrase(text.toLowerCase())) {
+      void handleFetchAttention()
       setTypedText('')
       return
     }
@@ -2672,6 +2730,20 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             <DonnaDailyBriefCard
               brief={dailyBrief}
               onDismiss={() => setDailyBrief(null)}
+            />
+          )}
+
+          {/* ── Sprint 370: Attention card ── */}
+          {isAttentionLoading && (
+            <div className="text-[11px] text-text-muted text-center py-2 animate-pulse">
+              Checking what needs attention…
+            </div>
+          )}
+          {attentionReport && !isAttentionLoading && (
+            <DonnaAttentionCard
+              report={attentionReport}
+              onDismiss={() => setAttentionReport(null)}
+              onClose={closePanel}
             />
           )}
 
