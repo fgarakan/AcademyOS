@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-15 — Sprint 376: Donna Learning Feedback Signals V1
+
+**Goal:** Donna tracks what it surfaces and what the director acts on — in-memory, session-only, no DB writes.
+
+**Files created:**
+- `src/components/assistant/donnaLearningSignals.ts` — `LearningSignalType` (11 types), `LearningSignal` type, in-memory FIFO store (max 200). Functions: `recordSignal`, `getSignals`, `getSignalsByType`, `countSignals`, `clearSignals`, `summarizeSignals`.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Imports `recordSignal`; wires 8 signal recording points: workflow_started (draft created via voice + typed), workflow_discarded (discard handler), recommendation_acted (recommendation action handler), review_queue_opened, daily_brief_requested, attention_requested, command_issued/command_unrecognized (handleCommandSubmit fallback), recommendation_shown (on panel open for each rec in the set).
+
+**TypeScript:** Clean — 0 errors.
+
+---
+
 ## 2026-05-15 — Sprint 375: Donna Rule-Based Recommendations V1
 
 **Goal:** Donna evaluates context signals and surfaces prioritized recommendations in the panel.

@@ -153,6 +153,8 @@ import { evaluateRecommendations } from '@/components/assistant/donnaRecommendat
 import type { RecommendationSignals } from '@/components/assistant/donnaRecommendationEngine'
 import type { DonnaRecommendationSet, DonnaRecommendation } from '@/components/assistant/donnaRecommendationTypes'
 import { DonnaRecommendationCard } from '@/components/assistant/DonnaRecommendationCard'
+// Sprint 376 — Learning feedback signals
+import { recordSignal } from '@/components/assistant/donnaLearningSignals'
 // Sprint 361 — Audit trail
 import { appendAuditEvent, getAuditTrail } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
@@ -893,6 +895,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         fields: Object.keys(controllerTurn.nextState.activeDraft.fields),
       })
       appendAuditEvent({ type: 'draft_started', description: 'Draft started via voice', workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
+      recordSignal('workflow_started', { workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       return
     }
 
@@ -1259,6 +1262,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
   function handleConvDiscard() {
     appendAuditEvent({ type: 'draft_discarded', description: 'Director discarded active draft', workflowId: convState.activeDraft?.workflowId ?? undefined })
+    recordSignal('workflow_discarded', { workflowId: convState.activeDraft?.workflowId ?? undefined })
     setConvState(controllerDiscard(convState))
     setConvShowDraftReview(false)
     // Sprint 359: clear session storage when director explicitly discards
@@ -1632,6 +1636,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
   // Sprint 370 — Fetch attention report
   async function handleFetchAttention() {
+    recordSignal('attention_requested')
     setIsAttentionLoading(true)
     setAttentionReport(null)
     try {
@@ -1655,6 +1660,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
   // Sprint 369 — Fetch daily director brief (read-only, auth-required endpoint)
   async function handleFetchDailyBrief() {
+    recordSignal('daily_brief_requested')
     setIsDailyBriefLoading(true)
     setDailyBrief(null)
     try {
@@ -1678,6 +1684,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
   // Opens the review queue panel and fetches data.
   async function handleOpenReviewQueue() {
+    recordSignal('review_queue_opened')
     setActiveMode('review_queue')
     setGenericDraft(null)
     setTemplateDraft(null)
@@ -1716,6 +1723,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Sprint 375 — Recommendation action handler
   // Dispatches the action from a recommendation. Never mutates data.
   function handleRecommendationAction(rec: DonnaRecommendation) {
+    recordSignal('recommendation_acted', { category: rec.category, recommendationId: rec.id })
     switch (rec.action.type) {
       case 'open_review':
         void handleOpenReviewQueue()
@@ -1947,6 +1955,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         fields: Object.keys(controllerTurn.nextState.activeDraft.fields),
       })
       appendAuditEvent({ type: 'draft_started', description: 'Draft started via typed input', workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
+      recordSignal('workflow_started', { workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       setTypedText('')
       return
     }
@@ -2059,12 +2068,15 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
 
     const handled = detectAndHandleCommand(text)
     if (!handled) {
+      recordSignal('command_unrecognized')
       const fallback = getFailureMode('intent_unknown')
       setCommandResponse({
         message: fallback.userMessage,
         type: 'honest',
         label: 'Not recognized',
       })
+    } else {
+      recordSignal('command_issued')
     }
     setTypedText('')
   }
@@ -2127,6 +2139,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               setReviewQueuePendingCount(0)
             }
             // Sprint 375: evaluate recommendations synchronously from available signals
+            // Sprint 376: record each recommendation shown as a learning signal
             setConvState(prev => {
               const signals: RecommendationSignals = {
                 pendingReviewCount: pendingCount,
@@ -2135,7 +2148,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 hasActiveDraft: prev.activeDraft !== null,
                 currentPathname: pathname,
               }
-              setRecommendationSet(evaluateRecommendations(signals))
+              const recSet = evaluateRecommendations(signals)
+              setRecommendationSet(recSet)
+              recSet.recommendations.forEach(rec => {
+                recordSignal('recommendation_shown', { category: rec.category, recommendationId: rec.id })
+              })
               return prev
             })
           }).catch(() => {})
