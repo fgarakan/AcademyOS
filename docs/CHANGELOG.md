@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 445: Review Queue Session Recap and Voice Intake Full Status Coverage V1
+
+**Type:** Hardening — code change, no migration.
+
+**Goal:** Fix the final 2 action types (`session_recap_structuring` and `voice_intake`) missing `clarification_needed` and `rejected` from their status filters.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — added `clarification_needed` + `rejected` to 2 query status filters; computed 4 new collections; added to `completedCount`; rendered in Completed tab (clarification in 2 new named sections, rejected consolidated in "Not Approved")
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 444: Review Queue Rejected Items Visibility V1
 
 **Type:** Hardening — code change, no migration.
