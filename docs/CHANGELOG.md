@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 495: DONNA Daily Command Brief Integration V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** COO-focused DONNA command brief surfacing today's key numbers (sessions, players, pending review, awaiting execution), attention flags, and per-session wrap-up status. DONNA voice prompt adapts to urgency. Props-only data — no DB calls.
+
+**Files created:**
+- `src/components/assistant/DonnaCommandBriefIntegration.tsx` — `'use client'` component. `DonnaCommandBriefData` type. 4-stat grid (sessions, players, pending review, awaiting execution). Attention flags with urgency sorting (high first). Per-session wrap-up status rows. "Review N pending items" CTA. `buildDonnaCommandBriefPrompt()` helper for adaptive DONNA prompt text. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 494: Review Execution Regression V1
 
 **Type:** Regression QA document — no code changes, no migration.
