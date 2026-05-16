@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 489: Coach Observation Application Preview V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes, no profile mutations.
+
+**Goal:** Director-facing card showing a coach observation draft with profile impact preview. `profileMutationApplied: false` always visible. 4-state status system (pending/approved/rejected/promoted_to_profile). Two-stage approval: approve first, then "Add to player profile" as a second explicit action. Callbacks only.
+
+**Files created:**
+- `src/components/review/CoachObservationApplicationPreview.tsx` — `'use client'` card. `CoachObservationDraft` with `profileMutationApplied: false`, `directorReviewRequired: true`. `ProfileImpactPreview` sub-component showing what would be added to player profile. Observation type config (positive/concern/neutral) with icons. Visibility config. Two-stage action flow: approve then promote-to-profile. Parent-safe candidate note. Director review banner.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 488: Attendance Exception Approval State V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes, no attendance changes.
