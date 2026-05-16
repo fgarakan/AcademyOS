@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 488: Attendance Exception Approval State V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes, no attendance changes.
+
+**Goal:** Director-facing card for attendance exception review. `officialWriteApplied: false` always visible. `directorReviewRequired: true` enforced. Two exception types (absence/unrostered_attendee). 4-state status system. Approve/Reject/Note callbacks only — no DB writes.
+
+**Files created:**
+- `src/components/review/AttendanceExceptionApprovalCard.tsx` — `'use client'` card. `AttendanceExceptionDraft` type with `officialWriteApplied: false`, `directorReviewRequired: true` literals. `EXCEPTION_TYPE_CONFIG` for absence (orange) vs unrostered_attendee (blue). 4-state `StatusConfig`. Coach free text display. Director review required banner. Safety footer. Approve/Reject/Note callbacks. Status state notes.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 487: Level Readiness Approval State V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes, no level changes.
