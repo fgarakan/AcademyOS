@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 502: Parent Trust Coverage Dashboard V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
+
+**Goal:** Director panel showing parent communication coverage per player. Status: covered/at_risk/not_started/no_parent. Days-since-contact display. "Draft update" action (callback only — no send). Coverage % summary strip. Director safety note on drafts. DONNA summary from KPI map. Props-only — no DB calls.
+
+**Files created:**
+- `src/components/assistant/ParentTrustCoverageDashboard.tsx` — `'use client'` component. `ParentCoverageEntry` type. `COVERAGE_CONFIG` and `CONTACT_TYPE_LABELS` maps. `CoverageRow` with status dot, parent name, days since contact, pending draft count, draft CTA. `CoverageSummary` strip. Draft-only safety note. DONNA NBA footer.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 501: Coach Support Needed Dashboard V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
