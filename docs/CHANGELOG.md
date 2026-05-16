@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 451: DONNA Coach Intelligence Steps 6-9 V1
+
+**Type:** Code change — no migration.
+
+**Goal:** Extend `donnaCoachIntelligenceAction.ts` with Steps 6-9: observation activity, pending review items, group names, data gap analysis.
+
+**Files modified:**
+- `src/app/director/_actions/donnaCoachIntelligenceAction.ts` — added Steps 6-9: (6) observations by this coach in 30d from `coach_observations.coach_id`; (7) pending review items from `proposed_actions.proposed_by_id`; (8) group names for coached sessions from `groups`; (9) structured data gap summary. Fixed TS2802 (`Set<string>` spread → `Array.from`).
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 450: DONNA Coach Intelligence Action Foundation V1
 
 **Type:** New server action — code change, no migration.
