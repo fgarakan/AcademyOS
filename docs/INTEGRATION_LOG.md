@@ -8,6 +8,22 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 431: DONNA KPI Summary Engine V1
+
+**What changed:** Added `donnaKpiSummaryEngine.ts`. `PlayerKpiSummary` interface aggregates all per-player KPI result arrays plus `liveCount`, `partialCount`, `demoCount`, `insufficientCount`. `buildPlayerKpiSummary()` accepts pre-computed KPI result objects and returns the structured summary. `formatKpiSummaryForDonna()` produces a quality header line for DONNA output.
+
+**Integrates with:**
+- All KPI engines in `src/lib/kpi/` — consumes `KpiResult[]` objects already computed
+- Future Sprint 432 Director KPI Dashboard — `PlayerKpiSummary` will be the payload
+- Future server action wiring — `buildPlayerKpiSummary()` assembles from existing result variables
+
+**Decisions recorded:**
+- **Orchestration-only**: no DB calls. All inputs are already-computed `KpiResult` objects from prior steps in the server action.
+- **Quality header line**: `formatKpiSummaryForDonna()` outputs a terse "KPI coverage: N signals — X live, Y partial, Z demo, W data gaps" line. Director sees data quality upfront before any detail.
+- **Not yet wired**: sprint 432 will wire `buildPlayerKpiSummary()` into `fetchPlayerProgressSummaryAction` and the dashboard.
+
+---
+
 ## 2026-05-16 — Sprint 430: Makeup and Private Lesson Conversion KPI V1
 
 **What changed:** Added `privateLessonKpiEngine.ts`. KPI 11 (Private Lesson Conversion) and makeup session signal both implemented as `insufficient_data` stubs. Not wired into any server action — nothing computable to surface.

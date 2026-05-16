@@ -13,13 +13,23 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 430 complete.)*
+*(No active sprint — Sprint 431 complete.)*
 
-**Next available:** Sprint 431
+**Next available:** Sprint 432
 
 ---
 
 ## Completed This Run
+
+### Sprint 431 — DONNA KPI Summary Engine V1 ✓
+
+**Status:** COMPLETE
+**QA:** 6 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files created:** `src/lib/kpi/donnaKpiSummaryEngine.ts`
+**Decision:** Orchestration-only engine. `PlayerKpiSummary` aggregates all per-player KPI result buckets + status counts. Ready for Sprint 432 dashboard wiring.
+
+---
 
 ### Sprint 430 — Makeup and Private Lesson Conversion KPI V1 ✓
 

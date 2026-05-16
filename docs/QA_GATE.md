@@ -100,6 +100,24 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 431 — DONNA KPI Summary Engine V1
+
+**Date:** 2026-05-16
+**QA type:** Engine-only — TypeScript CLEAN, static safety checks only
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- No DB calls: PASS (pure TypeScript only)
+- No DANA references: PASS
+- No migrations: PASS
+- `buildPlayerKpiSummary` counts match all input result arrays: PASS
+- `formatKpiSummaryForDonna` returns non-empty array with quality line: PASS
+
+**Result:** 6 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 430 — Makeup and Private Lesson Conversion KPI V1
 
 **Date:** 2026-05-16

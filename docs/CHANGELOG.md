@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-16 — Sprint 431: DONNA KPI Summary Engine V1
+
+**Type:** Feature — new KPI orchestration layer. No server action wiring. No migrations, no package changes, no DB writes.
+
+**Goal:** Build a pure KPI summary engine that aggregates all per-player KPI results into a structured `PlayerKpiSummary` object. Produces a DONNA-readable quality header line showing live / partial / demo / gap counts.
+
+**Files created:**
+- `src/lib/kpi/donnaKpiSummaryEngine.ts` — `PlayerKpiSummary` interface (all KPI result buckets + status counts), `buildPlayerKpiSummary()` aggregator, `formatKpiSummaryForDonna()` (outputs KPI coverage quality header line).
+
+**Key design decisions:**
+- Engine-only: no DB calls, no server action wiring yet. This is the orchestration layer that future sprints (432+) will wire into the director KPI dashboard.
+- `PlayerKpiSummary` contains `liveCount`, `partialCount`, `demoCount`, `insufficientCount` so directors immediately see data quality at a glance.
+- `formatKpiSummaryForDonna()` produces a single terse header line appended at the top of DONNA output — director sees coverage quality before any detail lines.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 430: Makeup and Private Lesson Conversion KPI V1
 
 **Type:** Feature — new KPI engine (stubs only). No server action wiring. No migrations, no package changes, no DB writes.

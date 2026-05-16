@@ -31,6 +31,18 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 431 — DONNA KPI Summary Engine V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Engine-only (no server action wiring) — TypeScript CLEAN, 6 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/lib/kpi/donnaKpiSummaryEngine.ts`
+- `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`, `docs/DONNA_KPI_INTELLIGENCE_MAP.md`
+
+---
+
 ### Sprint 430 — Makeup and Private Lesson Conversion KPI V1
 
 **Date:** 2026-05-16
