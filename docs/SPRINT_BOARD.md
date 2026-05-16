@@ -13,13 +13,21 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 436 complete.)*
+*(No active sprint — Sprint 437 complete.)*
 
-**Next available:** Sprint 437
+**Next available:** Sprint 438
 
 ---
 
 ## Completed This Run
+
+### Sprint 437 — KPI Regression and Demo Data Pass V1 ✓
+
+**Status:** COMPLETE (docs only — no code changes)
+**QA:** Full TypeScript regression PASS. No circular imports. All wired components import-clean.
+**TypeScript:** CLEAN
+
+---
 
 ### Sprint 436 — KPI Safety and Data Sufficiency Pass V1 ✓
 

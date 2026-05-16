@@ -31,6 +31,17 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 437 — KPI Regression and Demo Data Pass V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Regression pass — TypeScript CLEAN, no circular imports, all imports resolve.
+**TypeScript:** CLEAN
+**Files committed:**
+- `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`, `docs/DONNA_KPI_INTELLIGENCE_MAP.md`
+
+---
+
 ### Sprint 436 — KPI Safety and Data Sufficiency Pass V1
 
 **Date:** 2026-05-16

@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-16 — Sprint 437: KPI Regression and Demo Data Pass V1
+
+**Type:** Regression audit — no code changes. Docs only.
+
+**Goal:** Verify TypeScript compilation is clean across all Sprints 429–436 code. Check for circular imports between KPI engines. Verify import integrity of all components added in this block.
+
+**Files changed:** Docs only.
+
+**Regression findings:**
+- `npx tsc --noEmit` exits 0 — full project TypeScript is CLEAN ✓
+- 12 KPI engine files in `src/lib/kpi/` — all import only from `./kpiTypes` (no cross-engine imports → no circular dependencies) ✓
+- 3 wired screens (`kpi/page.tsx`, `PlayerKpiDrilldownCard.tsx`, `AcademyKpiCardsSection.tsx`) — all imports resolve correctly ✓
+- `donnaDirectorIntelligenceActions.ts` — all 8 KPI engine imports resolve correctly ✓
+- `groupKpiSummaryAction.ts` — single KPI engine import resolves correctly ✓
+- No `privateLessonKpiEngine` or `donnaKpiSummaryEngine` wired anywhere (as expected — both are engine-only stubs) ✓
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 436: KPI Safety and Data Sufficiency Pass V1
 
 **Type:** Audit — no code changes. Docs only.

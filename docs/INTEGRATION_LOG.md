@@ -8,6 +8,19 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 437: KPI Regression and Demo Data Pass V1
+
+**What changed:** Regression audit only. No code changes. TypeScript compilation verified clean for the full project. Import graph for all 12 KPI engine files and 3 wired screens checked for circular dependencies and resolution errors.
+
+**Key findings:**
+- All 12 KPI engine files only import from `./kpiTypes` — no cross-engine imports, no circular dependencies.
+- All 3 wired KPI screens resolve imports correctly.
+- `donnaDirectorIntelligenceActions.ts` imports all 8 KPI engines cleanly.
+- `groupKpiSummaryAction.ts` imports `groupHealthKpiEngine` cleanly.
+- `privateLessonKpiEngine` and `donnaKpiSummaryEngine` are unused — expected (engine-only stubs not yet wired).
+
+---
+
 ## 2026-05-16 — Sprint 436: KPI Safety and Data Sufficiency Pass V1
 
 **What changed:** Audit-only sprint. No code changes. All KPI engines (Sprints 421–435) and all wired KPI code verified for safety, null-handling, academy_id scoping, and DONNA output honesty.

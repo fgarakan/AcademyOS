@@ -100,6 +100,23 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 437 — KPI Regression and Demo Data Pass V1
+
+**Date:** 2026-05-16
+**QA type:** Regression audit — TypeScript CLEAN, import graph clean.
+
+**Regression checks:**
+- `npx tsc --noEmit` exits 0 (full project): PASS
+- No circular imports in 12 KPI engine files: PASS
+- All 3 wired KPI screens import without errors: PASS
+- DONNA server action imports all 8 engines cleanly: PASS
+- Group KPI action imports groupHealthKpiEngine cleanly: PASS
+- No `.next/` cache artifacts affecting imports: PASS
+
+**Result:** 6 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 436 — KPI Safety and Data Sufficiency Pass V1
 
 **Date:** 2026-05-16
