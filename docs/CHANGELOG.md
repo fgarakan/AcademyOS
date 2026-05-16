@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 460: DONNA Advancement Status Enhancement V1
+
+**Type:** Code change — no migration.
+
+**Goal:** Enrich advancement status line in DONNA player intelligence: adds blocker details (from `advancement_blocked_by`) and time-in-level context (from `enrolled_at`, already fetched).
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — replaced 3-branch `advancementStatus` const with 4-branch computation: eligible + days at level; not eligible + blocker text + days; unknown; no state. `daysInLevel` computed from `enrolled_at` — no extra DB query.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 459: DONNA Player Curriculum Level Label V1
 
 **Type:** Code change — no migration.

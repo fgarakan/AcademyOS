@@ -2,7 +2,7 @@
 
 Tracks the active sprint, phase status, and backlog.
 
-**Last updated:** 2026-05-15
+**Last updated:** 2026-05-16
 
 How to use:
 - PM/CTO Agent writes the sprint plan here at session start.
@@ -13,13 +13,213 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 439 complete.)*
+*(No active sprint — Sprint 460 complete.)*
 
-**Next available:** Sprint 440
+**Next available:** Sprint 461
+
+**Block in progress:** Curriculum Ripple Sprints 459-467.
 
 ---
 
 ## Completed This Run
+
+### Sprint 460 — DONNA Advancement Status Enhancement V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. Advancement status now includes blocker details and time-in-level from already-fetched enrolled_at. No extra DB query.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`
+
+---
+
+### Sprint 459 — DONNA Player Curriculum Level Label V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. DONNA player intelligence now shows resolved curriculum level name instead of raw UUID. Step 2b added.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`
+
+---
+
+### Sprint 458 — Coach-Side DONNA Block Audit and Docs V1 ✓
+
+**Status:** COMPLETE (docs only)
+**QA:** Docs only — no code changes. MODULE_MATURITY_MAP updated. Coach module at level 9. Sprint 450-458 block closure documented.
+**TypeScript:** Not run
+**Files modified:** `docs/MODULE_MATURITY_MAP.md`
+
+---
+
+### Sprint 457 — Coach Profile Links in Player Profile V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. Coach name in observation feed now links to `/director/coaches/[coachId]` when coach_id is present.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/players/[playerId]/CoachObservationsFeed.tsx`, `src/app/director/players/[playerId]/page.tsx`
+
+---
+
+### Sprint 456 — DONNA Coach Brief Workflow V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. Coach Intelligence Brief task wired end to end: contract → object resolution → WIRED/READONLY sets → handler calling `fetchCoachIntelligenceAction`.
+**TypeScript:** CLEAN
+**Files modified:** `src/components/assistant/donnaTaskContracts.ts`, `src/components/assistant/donnaObjectResolutionTypes.ts`, `src/components/assistant/DonnaAssistantButton.tsx`
+
+---
+
+### Sprint 455 — Coaches Sidebar Nav Link V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. `UserCog` icon + Coaches link added between Players and Sessions in `ACADEMY_ITEMS`.
+**TypeScript:** CLEAN
+**Files modified:** `src/components/nav/SidebarNav.tsx`
+
+---
+
+### Sprint 454 — Director Coaches List Page V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. Coach roster list at `/director/coaches`. Head coaches and coaches in separate sections. 30d session counts. Links to individual coach profiles.
+**TypeScript:** CLEAN
+**Files created:** `src/app/director/coaches/page.tsx`
+
+---
+
+### Sprint 453 — Director Coach Profile Page V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. Coach profile page at `/director/coaches/[coachId]`. KPI row (sessions, observations, pending review), recent sessions list, pending items preview. DONNA context auto-triggers via Sprint 452 route wiring.
+**TypeScript:** CLEAN
+**Files created:** `src/app/director/coaches/[coachId]/page.tsx`
+
+---
+
+### Sprint 452 — DONNA Coach Context Type V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. `coach_profile` added to DonnaContextType. `/director/coaches/[uuid]` wired into deriveContextRequest. `fetchCoachContext` handler added with full read-only data pipeline.
+**TypeScript:** CLEAN
+**Files modified:** `src/components/assistant/donnaContextTypes.ts`, `src/app/director/_actions/donnaContextActions.ts`
+
+---
+
+### Sprint 451 — DONNA Coach Intelligence Steps 6-9 V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. Steps 6-9 added to coach intelligence action. Covers observations, pending review items, group names, data gaps. Fixed TS2802 (`Set<string>` spread → `Array.from`).
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/_actions/donnaCoachIntelligenceAction.ts`
+
+---
+
+### Sprint 450 — DONNA Coach Intelligence Action Foundation V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. New server action `donnaCoachIntelligenceAction.ts` created. Steps 1-5: auth, coach profile, sessions coached (30d), session completion rate, recap coverage (KPI 4).
+**TypeScript:** CLEAN
+**Files created:** `src/app/director/_actions/donnaCoachIntelligenceAction.ts`
+**Decision:** Backend-only sprint — no UI wiring this sprint. Action ready for future DONNA coach context type + coach profile page wiring.
+
+---
+
+### Sprint 449 — DONNA Coach Recap Completion Rate Signal V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. Step 14 added to per-player DONNA intelligence action — queries `voice_notes` for group session IDs, computes KPI 4 (Recap Completion Rate), emits `recapCompletionLines` into `summaryLines`.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`
+**Decision:** KPI 4 status = `partial` (gap G8: `voice_notes` has no `recap_type` column — any voice note counts as recap proxy). Reuses `groupSessions` already fetched in Step 6, no extra session query.
+
+---
+
+### Sprint 448 — Review Queue Maturity Audit and Docs V1 ✓
+
+**Status:** COMPLETE (docs only)
+**QA:** Docs only — no code changes.
+**TypeScript:** Not run
+**Files modified:** `docs/MODULE_MATURITY_MAP.md`
+**Decision:** Review queue upgraded to maturity level 10 after 8-sprint hardening block (440-447). Full status coverage, stale awareness, ready-to-apply visibility, accurate copy all complete.
+
+---
+
+### Sprint 447 — Review Queue Completed Tab Accuracy V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. Completed tab empty state, summary card, and footer note now accurately describe what appears there.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/review/page.tsx`
+
+---
+
+### Sprint 446 — Review Queue Stale Alert Banner V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. Orange alert banner renders when any section has pending items ≥7d. Lists stale sections with age. Hidden when all sections are current or queue is empty.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/review/page.tsx`
+
+---
+
+### Sprint 445 — Review Queue Session Recap and Voice Intake Full Status Coverage V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. All `proposed_actions` target_module types now have full status coverage (pending_review + approved + clarification_needed + rejected).
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/review/page.tsx`
+**Decision:** Final 2 types (session_recap_structuring, voice_intake) now have complete status filter coverage. `completedCount` now includes 17 sources. Full Completed tab closure achieved.
+
+---
+
+### Sprint 444 — Review Queue Rejected Items Visibility V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. 6 types fixed. All rejected items now visible in consolidated "Not Approved" Completed tab section. `completedCount` now includes 13 sources.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/review/page.tsx`
+**Decision:** Collapsed all rejected items into single "Not Approved" section with total count badge. Previously only wrapup rejected items were shown.
+
+---
+
+### Sprint 443 — Review Queue Multi-Type Clarification Visibility V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. 4 action types fixed. `clarification_needed` items now visible in Completed tab.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/review/page.tsx`
+**Decision:** Priority recommendation, attendance exception, requirement evidence link, and curriculum override all had `clarification_needed` decision controls but their queries didn't fetch those items. Gap closed by broadening all 4 status filters and rendering in Completed tab.
+
+---
+
+### Sprint 442 — Review Queue Ready-to-Apply Summary Counts V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. "X ready to apply" in lime shown on all 3 active section summary cards when ready count > 0.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/review/page.tsx`
+**Decision:** `needsApprovalReady`, `playerUpdatesReady`, `curriculumSessionReady` were already computed but not surfaced in summary cards. Now visible at a glance.
+
+---
+
+### Sprint 441 — Review Queue Observation Clarification Display V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. `clarificationNeededObservationDrafts` now rendered in Completed tab. `completedCount` now includes observation clarifications.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/review/page.tsx`
+**Decision:** Observation `clarification_needed` items were fetched but never displayed — now visible in Completed tab alongside wrapup clarification items.
+
+---
+
+### Sprint 440 — Review Queue Stale Age Indicators V1 ✓
+
+**Status:** COMPLETE
+**QA:** TypeScript CLEAN. Age indicator renders per-section. Stale warning at ≥7 days in orange. No new DB queries.
+**TypeScript:** CLEAN
+**Files modified:** `src/app/director/review/page.tsx`
+**Decision:** Added `oldestDaysAgo` helper + 3 per-section computations + "oldest: Xd" in section summary cards. Orange highlight when pending item is ≥7 days old.
+
+---
 
 ### Sprint 439 — Review Queue Action Model Audit V1 ✓
 

@@ -2,9 +2,217 @@
 
 Running log of sprint completions, module integrations, and significant architectural decisions.
 
-**Last updated:** 2026-05-15
+**Last updated:** 2026-05-16
 
 Each entry records: what changed, what it integrates with, and any decisions made that future agents must know.
+
+---
+
+## 2026-05-16 — Sprint 460: DONNA Advancement Status Enhancement V1
+
+**What changed:** `donnaDirectorIntelligenceActions.ts` — `daysInLevel` computed in pure TypeScript from `enrolled_at` (already fetched in Step 2 — no extra DB query). `advancementStatus` expanded from 3-branch to 4-branch logic: `curriculumState` absent → "unknown"; `advancement_eligible === true` → "Eligible… (N days at this level)"; `advancement_eligible === false` → "Not yet eligible. Blocked by: X, Y, Z. N days at this level." handling both `Array` and `string` types for `advancement_blocked_by`, sliced to 3 items max; else → "eligibility not evaluated." `levelLabel` and `advancementStatus` strings joined into the DONNA brief in Step 3.
+
+**Why this matters:** Directors see a concrete, actionable advancement summary per player: blockers are named, time-in-level is shown. DONNA brief no longer says "advancement eligible: false" — it says "Blocked by: incomplete_assessments, missing_video. 47 days at this level." Second Curriculum Ripple sprint.
+
+**Architectural note:** `advancement_blocked_by` column may be JSON array or plain string depending on how coaches enter blockers. Both cases handled defensively. `Array.isArray()` check is the authoritative branch.
+
+---
+
+## 2026-05-16 — Sprint 459: DONNA Player Curriculum Level Label V1
+
+**What changed:** `donnaDirectorIntelligenceActions.ts` — Step 2b added between Step 2 and Step 3. Queries `curriculum_levels` for `display_name` + `stage` when `current_level_id` is non-null. `levelLabel` at line ~1102 now uses the resolved name: "Level: Orange 2 (yellow_ball)" instead of "Level ID: <uuid>". Fallback: "Level assigned (name unavailable)" if level row not found.
+
+**Why this matters:** DONNA player briefs are now readable to a director without needing to look up the level UUID. This is the first Curriculum Ripple sprint — curriculum data flows meaningfully through the DONNA output layer.
+
+---
+
+## 2026-05-16 — Sprint 458: Coach-Side DONNA Block Audit and Docs V1
+
+**What changed:** `docs/MODULE_MATURITY_MAP.md` — Coach Module section added between Signals and Platform. Documents all 8 Sprint 450-458 components, maturity levels, and block summary. Coach entry added to Summary Table at level 9. Last updated timestamp updated to Sprint 458.
+
+**Block closure:** Coach-Side DONNA (9 sprints, 450-458) is complete. Remaining Coach module gaps: observation trend chart, coach performance comparison, filter on coach list by session count/activity. These are enhancement sprints, not blockers.
+
+**Next block:** Curriculum Ripple Sprints (459-467) — focuses on curriculum data flowing through DONNA intelligence and the director surface.
+
+---
+
+## 2026-05-16 — Sprint 457: Coach Profile Links in Player Profile V1
+
+**What changed:** `CoachObservationsFeed.tsx` — `coach_id: string | null` added to `CoachObservationRow` type; `Link` from next/link imported; coach name now renders as `<Link href="/director/coaches/${obs.coach_id}">` with `hover:text-lime` when `coach_id` is non-null (fallback: plain span). `page.tsx` — `'coach_id'` added to the coach_observations select at line 755.
+
+**Navigation integration:** Director clicking a coach name on a player observation now navigates directly to that coach's profile page (Sprint 453). Closes the navigation loop: Player Profile → Coach Profile → Coach Sessions → back to player context.
+
+---
+
+## 2026-05-16 — Sprint 456: DONNA Coach Brief Workflow V1
+
+**What changed:** `donnaTaskContracts.ts` — `'draft_coach_brief'` added to `DonnaTaskId`; contract added with 1 required field (`coach`), reads list, `saveApplyMethodStatus: 'wired'`. `donnaObjectResolutionTypes.ts` — `draft_coach_brief: { coach: 'coach' }` added to `FIELD_RESOLUTION_MAP`. `DonnaAssistantButton.tsx` — import, WIRED_TASK_IDS entry, READONLY_TASK_IDS entry, handler that passes `resolvedObjects['coach']?.id` to `fetchCoachIntelligenceAction`.
+
+**Integration complete:** Director can now ask DONNA "brief me on [coach name]", DONNA resolves the coach (Sprint 269 coach resolution), director confirms, DONNA calls `fetchCoachIntelligenceAction(coachId)` and displays the 30d intelligence summary. No DB write. Read-only.
+
+---
+
+## 2026-05-16 — Sprint 455: Coaches Sidebar Nav Link V1
+
+**What changed:** `src/components/nav/SidebarNav.tsx` — `UserCog` imported from lucide-react; `Coaches` entry added to `ACADEMY_ITEMS` between Players and Sessions, pointing to `/director/coaches`. The `isActive` function uses `startsWith('/director/coaches')` — correctly highlights when on both list and profile pages.
+
+**Integration closure:** Coach-Side DONNA surface (Sprints 450-455) is now fully navigable: Sidebar → Coach List → Coach Profile → DONNA panel (auto-context via deriveContextRequest). Director can also invoke `fetchCoachIntelligenceAction` from a DONNA workflow.
+
+---
+
+## 2026-05-16 — Sprint 454: Director Coaches List Page V1
+
+**What changed:** `src/app/director/coaches/page.tsx` — new server component. Queries `academy_memberships` filtered to `role in ('coach', 'head_coach')` + `is_active = true`, joins `profiles` for names, fetches 30d session counts per coach from `sessions`. Separates head coaches from regular coaches. Each row links to `/director/coaches/[profileId]`.
+
+**Navigation integration:** `/director/coaches` is now a discoverable entry point into the coach roster. `/director/coaches/[uuid]` remains accessible directly. Sidebar nav not yet updated to include Coaches link — that is a follow-on sprint.
+
+---
+
+## 2026-05-16 — Sprint 453: Director Coach Profile Page V1
+
+**What changed:** `src/app/director/coaches/[coachId]/page.tsx` created — new server component route. Fetches: profiles (coach name), academy_memberships (role + active guard), sessions (30d coached, completion rate), coach_observations (30d count + distinct players), proposed_actions (pending count + preview list). `notFound()` on missing user, academy, or inactive membership. DONNA panel auto-shows `coach_profile` context from Sprint 452 `deriveContextRequest` wiring.
+
+**Navigation note:** Back link → `/director` dashboard (no coach list page exists yet). `/director/coaches/[uuid]` deeplinks work — coaches can be linked to from anywhere. A `/director/coaches` list page would be a natural follow-on sprint.
+
+**Security:** All queries scoped to `academy_id` from caller's session. Coach must be an active member of the same academy. Callers not authenticated go to `notFound()`.
+
+---
+
+## 2026-05-16 — Sprint 452: DONNA Coach Context Type V1
+
+**What changed:** `donnaContextTypes.ts` — `coach_profile` added to `DonnaContextType` union; `coachId?` added to `DonnaContextRequest.params`; `/director/coaches/[uuid]` UUID route pattern added to `deriveContextRequest`. `donnaContextActions.ts` — `fetchDonnaContext` params extended with `coachId?`; `coach_profile` case added to switch; `fetchCoachContext()` handler added at file end (7 queries: profiles, academy_memberships, sessions, coach_observations ×2, proposed_actions).
+
+**Architecture note:** `fetchCoachContext` provides a lightweight DONNA panel intro — not the full 9-step intelligence action. Full intelligence is in `donnaCoachIntelligenceAction.ts` (Sprint 450-451) and would be called from a DONNA workflow draft. Both exist independently and serve different use cases: context intro vs. structured intelligence report.
+
+---
+
+## 2026-05-16 — Sprint 451: DONNA Coach Intelligence Steps 6-9 V1
+
+**What changed:** `src/app/director/_actions/donnaCoachIntelligenceAction.ts` — Steps 6-9 added: (6) `coach_observations` queried by `coach_id` for 30d observation count + distinct player count; (7) `proposed_actions` queried by `proposed_by_id` + `status = 'pending_review'` for pending review count; (8) `groups` queried for group names in coached sessions; (9) data gap analysis flags zero sessions, zero observations with sessions, or completion rate <50%.
+
+**Bug fixed:** TS2802 — `[...new Set(...)]` spread on `Set<string>` fails at lower TypeScript targets. Replaced with `for...of` loop + `Array.from`. Pattern to remember for all future `Set<string>` usage in this project.
+
+**Output structure:** `summaryLines` now has 6 labelled sections: header (Coach/Role/Groups), SESSIONS, COACHING QUALITY (recap), OBSERVATIONS, PENDING REVIEW, DATA GAPS. Ready for DONNA panel display.
+
+---
+
+## 2026-05-16 — Sprint 450: DONNA Coach Intelligence Action Foundation V1
+
+**What changed:** `src/app/director/_actions/donnaCoachIntelligenceAction.ts` — new server action with Steps 1-5. `fetchCoachIntelligenceAction(coachProfileId)` is the entry point. Auth guard allows director and head_coach only. Steps: (1) coach profile from `profiles`, (2) role from `academy_memberships`, (3) sessions coached in last 30d from `sessions where coach_id = coachProfileId`, (4) session completion rate, (5) recap coverage via `computeRecapCompletionRate` + `voice_notes` query.
+
+**Architecture pattern:** Mirrors `fetchPlayerProgressSummaryAction` exactly — same auth helper shape, same `rawDb as any` pattern for untyped tables, same return shape (`DonnaApprovalExecutionResult`), same `summaryLines.join('\n')` output. Adding coach steps 6+ in subsequent sprints follows the same additive pattern.
+
+**Next integration points:** (a) `donnaContextTypes.ts` — add `coach_profile` to `DonnaContextType`; (b) `deriveContextRequest` — wire `/director/coaches/[uuid]` route; (c) DONNA workflow card for coach intelligence summary.
+
+---
+
+## 2026-05-16 — Sprint 449: DONNA Coach Recap Completion Rate Signal V1
+
+**What changed:** `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — added Step 14 to the per-player DONNA intelligence action. Imports `computeRecapCompletionRate` and `RecapCheckRow` from `@/lib/kpi/coachExecutionKpiEngine`. Step 14 reuses `groupSessions` from Step 6, queries `voice_notes` for those session IDs via `rawDb as any` pattern, builds `RecapCheckRow[]`, calls `computeRecapCompletionRate`, and emits `recapCompletionLines` into `summaryLines` between `coachExecutionLines` and `parentTrustLines`.
+
+**Architecture decision:** KPI 4 (Coach Recap Completion Rate) uses `voice_notes` as a recap proxy because the data model has gap G8: no `recap_type` column on `voice_notes`. Any voice note attached to a session counts as a recap. Status reported as `partial` to signal the gap. This avoids a migration and remains read-only.
+
+**Integration point:** `coachExecutionKpiEngine` (`src/lib/kpi/coachExecutionKpiEngine.ts`) — KPI 4 engine is already built; this sprint wires it into per-player DONNA intelligence for the first time.
+
+---
+
+## 2026-05-16 — Sprint 448: Review Queue Maturity Audit and Docs V1
+
+**What changed:** `docs/MODULE_MATURITY_MAP.md` — review queue module entry upgraded from level 9 to level 10. Added 8-sprint hardening summary block. Complete documentation of what each sprint achieved.
+
+**Architecture closure:** After 8 review queue hardening sprints (440-447), the review queue is now feature-complete for the current phase. All 9 target_module types have full 4-status coverage. The Completed tab is comprehensive (17 sources in `completedCount`). Stale awareness (per-card age, stale alert banner) is complete. Section summary cards show pending + ready counts + stale age. Copy is accurate.
+
+---
+
+## 2026-05-16 — Sprint 447: Review Queue Completed Tab Accuracy V1
+
+**What changed:** `src/app/director/review/page.tsx` — 3 copy fixes: (1) Completed tab empty state: title changed from "Approved and resolved items will appear here." to "Nothing sent back or rejected yet." and description updated to clarify that approved items stay in Needs Approval/Player Updates until applied; (2) Completed summary card: description changed from "Resolved items" to "Sent back or not approved"; (3) Footer note: updated to direct directors to Needs Approval/Player Updates for approved ready-to-apply items.
+
+**Why this matters:** The previous copy was written before Sprints 441-445 built out the Completed tab comprehensively. Directors reading "Approved and resolved items will appear here" while seeing clarification/rejected items would be confused. The correct model: approved items → stay in active tabs until applied; clarification_needed + rejected → appear in Completed tab.
+
+---
+
+## 2026-05-16 — Sprint 446: Review Queue Stale Alert Banner V1
+
+**What changed:** `src/app/director/review/page.tsx` — added `AlertTriangle` to lucide-react imports. Added stale alert banner between section summary cards and all-clear state. Banner only shows when: (a) at least one section has pending items AND (b) at least one of those sections has items ≥7 days old. Banner text lists all stale sections with their oldest age.
+
+**UX design:** Banner is dismissal-free (no close button) — directors must process items to make it disappear. Shows specific section names and ages so directors know where to go without scanning all tabs.
+
+---
+
+## 2026-05-16 — Sprint 445: Review Queue Session Recap and Voice Intake Full Status Coverage V1
+
+**What changed:** `src/app/director/review/page.tsx` — final 2 type gaps closed: `session_recap_structuring` and `voice_intake` now include `clarification_needed` and `rejected` in their status filters. Added `clarificationNeededDrafts`, `rejectedDrafts`, `clarificationNeededVoiceIntakeDrafts`, `rejectedVoiceIntakeDrafts`. Completed tab: 2 named clarification sections + rejected items added to consolidated "Not Approved" section.
+
+**Architecture milestone:** All 9 `proposed_actions` target_module types fetched by the review queue now have complete 4-status coverage (pending_review, approved, clarification_needed, rejected). The Completed tab is now comprehensive — no item that received a director decision can go invisible.
+
+**`completedCount` now includes 17 sources:**
+- WrapUp: clarification + rejected
+- Observation: clarification + rejected
+- Priority: clarification + rejected
+- Evidence: clarification + rejected
+- Attendance: clarification + rejected
+- Curriculum: clarification + rejected
+- Summary: rejected
+- SessionRecap: clarification + rejected
+- VoiceIntake: clarification + rejected
+
+---
+
+## 2026-05-16 — Sprint 444: Review Queue Rejected Items Visibility V1
+
+**What changed:** `src/app/director/review/page.tsx` — added `rejected` to 6 more status filters: `coach_observation_draft_v1`, `priority_recommendation`, `requirement_evidence_link`, `attendance_exception`, `curriculum_override`, `development_summary_draft_v1`. 6 new `rejectedXXX` collections computed. All collapsed into a single "Not Approved" section in Completed tab (total count badge). `completedCount` now sums 13 sources.
+
+**Design decision:** Collapsed all rejected types into one "Not Approved" section (rather than 6 separate sections) for visual cleanliness. A director sees "Not Approved — 3" with cards grouped by type.
+
+**`completedCount` now comprehensive:** wrapup clarification + wrapup rejected + observation clarification + observation rejected + priority clarification + priority rejected + evidence clarification + evidence rejected + attendance clarification + attendance rejected + curriculum clarification + curriculum rejected + summary rejected = 13 sources.
+
+---
+
+## 2026-05-16 — Sprint 443: Review Queue Multi-Type Clarification Visibility V1
+
+**What changed:** `src/app/director/review/page.tsx` — 4 query status filters broadened from `['pending_review', 'approved']` to `['pending_review', 'approved', 'clarification_needed']` for: `priority_recommendation`, `attendance_exception`, `requirement_evidence_link`, `curriculum_override`. Added 4 computed clarification collections + 4 Completed tab sections using existing card components.
+
+**Gap confirmed:** All 4 decision controls (`PriorityDraftDecisionControls`, `AttendanceExceptionDraftDecisionControls`, `EvidenceRequirementDraftDecisionControls`, `CurriculumOverrideDraftDecisionControls`) have "Send back for clarification" buttons that call `handleDecision('clarification_needed')`. Items sent back were permanently invisible.
+
+**Pattern consistent with:** Sprint 441 observation fix + `clarificationNeededWrapUpDrafts` (original pattern from wrap-up drafts).
+
+**`completedCount` now includes:** 7 sources — wrapup clarification, wrapup rejected, observation clarification, priority clarification, evidence clarification, attendance clarification, curriculum clarification.
+
+---
+
+## 2026-05-16 — Sprint 442: Review Queue Ready-to-Apply Summary Counts V1
+
+**What changed:** `src/app/director/review/page.tsx` — added lime "X ready to apply" lines to section summary cards for Needs Approval, Player Updates, Curriculum/Sessions. Uses existing `needsApprovalReady`, `playerUpdatesReady`, `curriculumSessionReady` variables — no new computations needed.
+
+**Pattern:** Secondary metric in summary card — shown only when > 0, in `text-lime` to distinguish from pending (orange/blue/lime primary) and age indicators (text-muted/text-status-orange).
+
+---
+
+## 2026-05-16 — Sprint 441: Review Queue Observation Clarification Display V1
+
+**What changed:** `src/app/director/review/page.tsx` — computed `clarificationNeededObservationDrafts` from existing `enrichedObservationDrafts`; added to `completedCount`; rendered in Completed tab under "Player Observations — Sent Back for Clarification" section using `WrapUpObservationDraftCard`.
+
+**Gap fixed:** `coach_observation_draft_v1` queries fetched `clarification_needed` items (line 642) but nothing computed or rendered them. Directors who sent an observation back for clarification would see it vanish from the queue with no trace. Now appears in Completed tab.
+
+**Pattern consistent with:** `clarificationNeededWrapUpDrafts` (existing pattern for wrapup drafts).
+
+---
+
+## 2026-05-16 — Sprint 440: Review Queue Stale Age Indicators V1
+
+**What changed:** `src/app/director/review/page.tsx` — added `oldestDaysAgo` helper that computes days since oldest `createdAt` in a collection. Per-section oldest age computed for Needs Approval, Player Updates, and Curriculum/Sessions sections. Section summary cards now show "oldest: Xd" when items are pending; turns orange when ≥7 days old.
+
+**Integration pattern:**
+- Pure computation from `createdAt` data already fetched in each section's query
+- No new DB queries added
+- Helper function defined as a local function inside the async page component
+- Orange stale threshold: 7 days (matches typical director review cadence)
+
+**Design decisions:**
+- Age hidden when pending count is 0 (no items, no age to show)
+- Age shown in `text-text-muted` for <7 days (informational), `text-status-orange` for ≥7 days (stale warning)
+- `tabular-nums` class for consistent number width
 
 ---
 

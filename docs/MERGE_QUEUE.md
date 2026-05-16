@@ -31,6 +31,216 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 460 — DONNA Advancement Status Enhancement V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. `daysInLevel` computed from `enrolled_at`. `advancement_blocked_by` handled as Array and string. 4-branch `advancementStatus` logic replacing 3-branch.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 459 — DONNA Player Curriculum Level Label V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Step 2b added. levelLabel now human-readable.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 458 — Coach-Side DONNA Block Audit and Docs V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Docs only — no code changes. MODULE_MATURITY_MAP updated.
+**TypeScript:** Not run
+**Files committed:** `docs/MODULE_MATURITY_MAP.md`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 457 — Coach Profile Links in Player Profile V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Additive change — adds coach_id to query and wraps existing coach name text in Link.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/players/[playerId]/CoachObservationsFeed.tsx`, `src/app/director/players/[playerId]/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 456 — DONNA Coach Brief Workflow V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Four targeted changes: task contract, resolution map, import, handler. No regressions to existing tasks.
+**TypeScript:** CLEAN
+**Files committed:** `src/components/assistant/donnaTaskContracts.ts`, `src/components/assistant/donnaObjectResolutionTypes.ts`, `src/components/assistant/DonnaAssistantButton.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 455 — Coaches Sidebar Nav Link V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. One icon import + one nav item.
+**TypeScript:** CLEAN
+**Files committed:** `src/components/nav/SidebarNav.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 454 — Director Coaches List Page V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Server component. All queries scoped to academy_id. Separates head_coach and coach roles.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/coaches/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 453 — Director Coach Profile Page V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. New server component route. notFound guards on auth, academy, and membership. All queries scoped to academy_id.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/coaches/[coachId]/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 452 — DONNA Coach Context Type V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Fixed stray closing brace. `coach_profile` context type wired end to end.
+**TypeScript:** CLEAN
+**Files committed:** `src/components/assistant/donnaContextTypes.ts`, `src/app/director/_actions/donnaContextActions.ts`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 451 — DONNA Coach Intelligence Steps 6-9 V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Fixed TS2802. Steps 6-9 complete.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/_actions/donnaCoachIntelligenceAction.ts`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 450 — DONNA Coach Intelligence Action Foundation V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. New server action created. Steps 1-5 implemented. No migrations, no mutations.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/_actions/donnaCoachIntelligenceAction.ts`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 449 — DONNA Coach Recap Completion Rate Signal V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Step 14 added to DONNA intelligence action. No new DB tables queried except `voice_notes` (existing). No mutations.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 448 — Review Queue Maturity Audit and Docs V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Docs only — no code changes. MODULE_MATURITY_MAP updated.
+**TypeScript:** Not run
+**Files committed:** `docs/MODULE_MATURITY_MAP.md`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 447 — Review Queue Completed Tab Accuracy V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Copy accuracy fix — no logic changes.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/review/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 446 — Review Queue Stale Alert Banner V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Stale banner uses already-computed age data. No new queries.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/review/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 445 — Review Queue Session Recap and Voice Intake Full Status Coverage V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. All proposed_actions types now have complete status coverage.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/review/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 444 — Review Queue Rejected Items Visibility V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. 6 types fixed. `completedCount` now comprehensive — 13 sources.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/review/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 443 — Review Queue Multi-Type Clarification Visibility V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. 4 types fixed: priority_recommendation, attendance_exception, requirement_evidence_link, curriculum_override. No new DB queries beyond broadened status filters.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/review/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 442 — Review Queue Ready-to-Apply Summary Counts V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Ready counts shown in lime. No new DB queries.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/review/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 441 — Review Queue Observation Clarification Display V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Gap fixed: clarification_needed observation drafts now visible in Completed tab. No new DB queries.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/review/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
+### Sprint 440 — Review Queue Stale Age Indicators V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** TypeScript CLEAN. Age indicators computed from existing createdAt data. No new DB queries. Stale warning at ≥7 days.
+**TypeScript:** CLEAN
+**Files committed:** `src/app/director/review/page.tsx`, `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
 ### Sprint 439 — Review Queue Action Model Audit V1
 
 **Date:** 2026-05-16

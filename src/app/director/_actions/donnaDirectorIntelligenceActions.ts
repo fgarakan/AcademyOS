@@ -37,8 +37,10 @@ import {
 } from '@/lib/kpi/curriculumCoverageKpiEngine'
 import {
   computeObservationQuality,
+  computeRecapCompletionRate,
   formatCoachExecutionForDonna,
   type ObservationRow as CoachObsRow,
+  type RecapCheckRow,
 } from '@/lib/kpi/coachExecutionKpiEngine'
 import {
   computeParentTrustCoverage,
@@ -797,6 +799,22 @@ export async function fetchPlayerProgressSummaryAction(
     .eq('academy_id', academyId)
     .maybeSingle()
 
+  // Step 2b — Resolve curriculum level display name (Sprint 459)
+  let curriculumLevelName: string | null = null
+  if (curriculumState?.current_level_id) {
+    const { data: levelRow } = await rawDb
+      .from('curriculum_levels')
+      .select('display_name, stage')
+      .eq('id', curriculumState.current_level_id)
+      .maybeSingle()
+    if (levelRow?.display_name) {
+      curriculumLevelName = String(levelRow.display_name)
+      if (levelRow.stage) {
+        curriculumLevelName += ` (${levelRow.stage})`
+      }
+    }
+  }
+
   // Step 3 — Latest assessment (scoped to academy_id)
   const { data: latestAssessment } = await rawDb
     .from('assessments')
@@ -1065,6 +1083,31 @@ export async function fetchPlayerProgressSummaryAction(
   const dropoutRiskResult = computeDropoutRisk(dropoutRiskInput)
   const retentionLines = formatRetentionForDonna(dropoutRiskResult)
 
+  // Step 14 — Coach Recap Completion Rate (KPI 4, Sprint 449)
+  // Checks which of the player's group sessions in the last 30 days have a voice_note (recap proxy).
+  // voice_notes are scoped to academy_id; session_id links note to session.
+  let recapCompletionLines: string[] = []
+  if (groupSessions.length > 0) {
+    const groupSessionIds = groupSessions.map(s => s.id)
+    const { data: voiceNoteSessionIds } = await rawDb
+      .from('voice_notes')
+      .select('session_id')
+      .eq('academy_id', academyId)
+      .in('session_id', groupSessionIds)
+      .not('session_id', 'is', null)
+    const recapSessionSet = new Set<string>(
+      ((voiceNoteSessionIds ?? []) as Array<{ session_id: string | null }>)
+        .map(r => r.session_id)
+        .filter((id): id is string => id !== null)
+    )
+    const recapCheckRows: RecapCheckRow[] = groupSessionIds.map(id => ({
+      session_id: id,
+      has_note: recapSessionSet.has(id),
+    }))
+    const recapCompletionResult = computeRecapCompletionRate(recapCheckRows, 30)
+    recapCompletionLines = formatCoachExecutionForDonna([recapCompletionResult])
+  }
+
   // Build deterministic summary — no AI, no external API
   const firstName: string =
     (playerRow?.first_name as string | null) ??
@@ -1072,16 +1115,37 @@ export async function fetchPlayerProgressSummaryAction(
     playerLabel.split(' ')[0] ??
     'Player'
 
-  const levelLabel: string = curriculumState?.current_level_id
-    ? `Level ID: ${curriculumState.current_level_id}`
+  const levelLabel: string = curriculumLevelName
+    ? `Level: ${curriculumLevelName}`
+    : curriculumState?.current_level_id
+    ? `Level assigned (name unavailable)`
     : 'Level not assigned'
 
-  const advancementStatus: string =
-    curriculumState?.advancement_eligible === true
-      ? 'Eligible for advancement'
-      : curriculumState?.advancement_eligible === false
-      ? 'Not yet eligible for advancement'
-      : 'Advancement status unknown'
+  // Compute time-in-level days from enrolled_at (Sprint 460)
+  const daysInLevel: number | null = curriculumState?.enrolled_at
+    ? Math.floor((Date.now() - new Date(String(curriculumState.enrolled_at)).getTime()) / (1000 * 60 * 60 * 24))
+    : null
+
+  // Build advancement status with blockers and time context (Sprint 460)
+  let advancementStatus: string
+  if (!curriculumState) {
+    advancementStatus = 'Advancement status unknown — no curriculum state found.'
+  } else if (curriculumState.advancement_eligible === true) {
+    const timePart = daysInLevel !== null ? ` (${daysInLevel} days at this level)` : ''
+    advancementStatus = `Eligible for advancement${timePart}.`
+  } else if (curriculumState.advancement_eligible === false) {
+    const blockers = curriculumState.advancement_blocked_by
+    let blockerText = ''
+    if (Array.isArray(blockers) && blockers.length > 0) {
+      blockerText = ` Blocked by: ${(blockers as string[]).slice(0, 3).join(', ')}.`
+    } else if (typeof blockers === 'string' && blockers) {
+      blockerText = ` Blocked by: ${blockers}.`
+    }
+    const timePart = daysInLevel !== null ? ` ${daysInLevel} days at this level.` : ''
+    advancementStatus = `Not yet eligible for advancement.${blockerText}${timePart}`
+  } else {
+    advancementStatus = 'Advancement eligibility not evaluated.'
+  }
 
   const observationHighlights: string[] = observations
     .slice(0, 3)
@@ -1118,6 +1182,7 @@ export async function fetchPlayerProgressSummaryAction(
     ...evidenceLines,
     ...sessionYieldLines,
     ...coachExecutionLines,
+    ...recapCompletionLines,
     ...parentTrustLines,
     ...(dataGaps.length > 0 ? ['', 'DATA GAPS:'] : []),
     ...dataGaps.map((g: string) => `⚠ ${g}`),
