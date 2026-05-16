@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 486: Parent Draft Approval State V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes, no sends.
+
+**Goal:** Director-facing card showing a parent message draft with full approval/reject/edit controls. `sendApplied: false` always visible. `directorReviewRequired: true` enforced. Status badge (draft/pending/approved/rejected). Callbacks only — no DB writes in this sprint.
+
+**Files created:**
+- `src/components/review/ParentDraftApprovalCard.tsx` — `'use client'` card. `ParentMessageDraft` type with `sendApplied: false`, `directorReviewRequired: true` literals. 4-state `StatusConfig` (draft/pending_director_review/approved/rejected). Director review required banner (orange). Safety footer showing `sendApplied: false`. Approve/Reject/Edit buttons wired to callbacks only. Approved and rejected state notes.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 485: Review Execution Adapter Architecture Audit V1
 
 **Type:** Architecture document — no code changes, no migration.
