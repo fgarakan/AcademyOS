@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 481: DONNA Spoken Prompt UX Shell V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes, no package installs.
+
+**Goal:** DONNA avatar + spoken question prompt component for wrap-up flow. Browser speechSynthesis TTS where available. Visual glow/pulse on DONNA avatar when speaking. "Read aloud" / "Stop" toggle button. `autoSpeak` prop for optional auto-play on question change. `buildDonnaPreamble()` helper for conversational lead-ins. Text fallback always present. No package installs.
+
+**Files created:**
+- `src/components/capture/DonnaWrapUpPrompt.tsx` — `'use client'` component. `hasSpeechSynthesis()`, `speakText()`, `stopSpeaking()` TTS helpers (no package). `DonnaWrapUpPrompt` with DONNA avatar (lime glow when speaking), preamble paragraph, main question text, Volume2/VolumeX toggle button, auto-voice/off toggle. `buildDonnaPreamble(step, prevAnswerCount)` for contextual lead-ins. All text always visible regardless of TTS support.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 480: Voice Dictation Input UX V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes, no package installs.
