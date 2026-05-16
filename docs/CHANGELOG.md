@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 462: Curriculum Change Scope Model V1
+
+**Type:** Code — TypeScript model only. No migration, no schema changes, no DB writes, no UI.
+
+**Goal:** Define the safe scope model for curriculum changes — 7 scopes from today-only through global/master — with typed definitions, approval requirements, risk levels, guard functions, and draft struct.
+
+**Files created:**
+- `src/lib/curriculum/curriculumChangeScope.ts` — Pure TypeScript model: `CurriculumChangeScopeDefinition` type, 7 scope definitions (`CURRICULUM_CHANGE_SCOPES`), `SCOPE_BY_ID` map, `CurriculumChangeDraft` struct, `CurriculumChangeType`, `CurriculumChangeTargetType`, `CurriculumChangeDraftStatus`, guard functions (`scopeRequiresRollbackNote`, `isDirectorAllowedScope`, `scopeAffectsParentLanguage`, `scopeAffectsPlayers`), `createCurriculumChangeDraftShell` helper. No DB calls. No mutations.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 461: Curriculum Ripple Architecture Audit V1
 
 **Type:** Documentation only — no migration, no schema changes, no code changes, no DB writes.
