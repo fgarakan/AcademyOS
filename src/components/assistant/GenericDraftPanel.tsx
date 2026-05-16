@@ -259,9 +259,14 @@ export function GenericDraftPanel({
           className="rounded-xl px-3.5 py-3 space-y-2.5"
           style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
         >
-          <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
-            Draft so far
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
+              Draft so far
+            </p>
+            <p className="text-[9px] text-text-muted">
+              click ✏ to revise any answer
+            </p>
+          </div>
           {Object.entries(draft.collectedFields).map(([fieldId, value]) => (
             <div key={fieldId}>
               {editingFieldId === fieldId ? (
@@ -304,7 +309,8 @@ export function GenericDraftPanel({
                   <button
                     onClick={() => handleEditField(fieldId)}
                     aria-label={`Edit ${getFieldLabel(fieldId)}`}
-                    className="shrink-0 mt-0.5 text-text-muted hover:text-text-secondary transition-colors"
+                    title="Revise this answer"
+                    className="shrink-0 mt-0.5 p-1 rounded text-text-muted hover:text-lime hover:bg-lime/10 transition-colors"
                   >
                     <Edit2 className="w-3 h-3" />
                   </button>
@@ -331,7 +337,7 @@ export function GenericDraftPanel({
             </p>
           </div>
           <p className="text-[11px] text-text-secondary leading-relaxed">
-            Review your answers above. You can edit any field before saving.
+            Review your answers above. Click ✏ on any field to revise it before saving.
           </p>
 
           {isWired && onApprove ? (

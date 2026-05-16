@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-16 — Sprint 412: DONNA Draft Revision Flow V1
+
+**Type:** Frontend UX polish — no DB writes, no migrations, no new packages
+
+**Goal:** Make draft field revision more discoverable in the GenericDraftPanel. The edit-per-field flow already existed (Edit2 button, handleEditField/handleSaveEdit); this sprint surfaces it more clearly through copy and visual affordance changes.
+
+**Files modified:**
+- `src/components/assistant/GenericDraftPanel.tsx` — "Draft so far" section header now shows "click ✏ to revise any answer" hint; `Edit2` button updated to `hover:text-lime hover:bg-lime/10` for better discoverability and tooltip added; "You can edit any field" copy now says "Click ✏ on any field to revise it".
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Copy/styling changes only. No logic changes. No new props or state.
+
+---
+
 ## 2026-05-16 — Sprint 411: DONNA Review Queue UX Hardening V1
 
 **Type:** Frontend — no DB writes, no migrations, no new packages
