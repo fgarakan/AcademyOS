@@ -100,6 +100,26 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 434 — Player KPI Drilldown V1
+
+**Date:** 2026-05-16
+**QA type:** Player profile addition — TypeScript CLEAN, static safety checks
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- Both queries academy_id AND player_id scoped: PASS
+- `session_attendance` scoped via `sessions!inner(academy_id)` join: PASS
+- No automatic level movement: PASS
+- No player data exposed cross-academy: PASS
+- KPI signals read-only (no proposed_actions triggered): PASS
+
+**Result:** 8 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 433 — Today's Academy KPI Cards V1
 
 **Date:** 2026-05-16

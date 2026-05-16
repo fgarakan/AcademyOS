@@ -8,6 +8,24 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 434: Player KPI Drilldown V1
+
+**What changed:** Added `PlayerKpiDrilldownCard` server component to player profile Overview tab. Fetches curriculum state and 30-day attendance internally. Computes KPI 13 (time in level) and KPI 3 (recent absences). Links to `/director/kpi` all-player dashboard.
+
+**Integrates with:**
+- `player_curriculum_states` — `enrolled_at`, `advancement_eligible` fetched per player
+- `session_attendance` + `sessions!inner` — 30-day window, academy_id and player_id scoped
+- `attendanceKpiEngine.computeRecentAbsences` — KPI 3
+- `developmentVelocityKpiEngine.computeTimeInLevel` — KPI 13
+- Player profile Overview slot — card inserted after `PlayerCommandCenterCard`
+
+**Decisions recorded:**
+- **Self-contained**: `enrolled_at` is not fetched by the existing player profile page. Rather than adding it to the already-complex page query chain, the card fetches its own data. Two small targeted queries.
+- **`rawDb as any` pattern**: consistent with existing player profile page approach for tables that may not be in generated types.
+- **No circular dependency**: component imports only from `src/lib/kpi/` and `@/lib/supabase/server` — no imports from the player profile page or its sibling files.
+
+---
+
 ## 2026-05-16 — Sprint 433: Today's Academy KPI Cards V1
 
 **What changed:** Added `AcademyKpiCardsSection` component. Director dashboard now shows a KPI signals section with 3 metric cards (active players, advancement-ready count, attention signals) above the "Today's Priorities" section. Advancement-ready count computed from a new `player_curriculum_states` query.

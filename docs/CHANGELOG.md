@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-16 — Sprint 434: Player KPI Drilldown V1
+
+**Type:** Feature — KPI drilldown card on player profile Overview tab. No mutations. No migrations, no package changes.
+
+**Goal:** Add a compact KPI signals card to the player profile page showing time in level (live), recent absences (demo), and advancement readiness for that individual player.
+
+**Files created:**
+- `src/app/director/players/[playerId]/_components/PlayerKpiDrilldownCard.tsx` — Self-contained server component. Fetches `player_curriculum_states` (enrolled_at, advancement_eligible) and 30-day session_attendance (scoped via sessions inner join). Computes KPI 13 (time in level) and KPI 3 (absences). Renders 3-column KPI grid with colour-coded status.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Import added; `<PlayerKpiDrilldownCard>` rendered at top of Overview slot (after PlayerCommandCenterCard, before PlayerActionSummaryCard).
+
+**Key design decisions:**
+- Self-contained server component: fetches its own data rather than threading enrolled_at through the already-complex player profile page. `enrolled_at` is not currently fetched by the player profile page.
+- Uses `rawDb as any` cast consistent with existing player profile page pattern for tables not in generated types.
+- `sessions!inner(academy_id)` join for attendance scoping — identical to DONNA server action pattern.
+- Links to `/director/kpi` for all-player dashboard context.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 433: Today's Academy KPI Cards V1
 
 **Type:** Feature — KPI cards section on director dashboard. No mutations. No migrations, no package changes.

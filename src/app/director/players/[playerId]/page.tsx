@@ -70,6 +70,7 @@ import { PlayerActionSummaryCard } from './_components/PlayerActionSummaryCard'
 import { PlayerCurriculumConnectionBlock } from './_components/PlayerCurriculumConnectionBlock'
 import { PlayerCoachNotesBlock } from './_components/PlayerCoachNotesBlock'
 import { PlayerParentSummaryBlock } from './_components/PlayerParentSummaryBlock'
+import { PlayerKpiDrilldownCard } from './_components/PlayerKpiDrilldownCard'
 
 interface PageProps {
   params: { playerId: string }
@@ -781,6 +782,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         advancementEligible={curriculumSummary?.advancement_eligible ?? null}
         hasCurriculumState={hasCurriculum}
       />
+
+      {/* KPI signals — Sprint 434 */}
+      <PlayerKpiDrilldownCard playerId={params.playerId} academyId={academyId} />
 
       {/* ── Sprint 253: Action layer ─────────────────────────────────────── */}
       {/* Action summary + clickable CTAs */}

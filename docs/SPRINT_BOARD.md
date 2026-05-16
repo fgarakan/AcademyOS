@@ -13,13 +13,24 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 433 complete.)*
+*(No active sprint — Sprint 434 complete.)*
 
-**Next available:** Sprint 434
+**Next available:** Sprint 435
 
 ---
 
 ## Completed This Run
+
+### Sprint 434 — Player KPI Drilldown V1 ✓
+
+**Status:** COMPLETE
+**QA:** 8 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files created:** `src/app/director/players/[playerId]/_components/PlayerKpiDrilldownCard.tsx`
+**Files modified:** `src/app/director/players/[playerId]/page.tsx`
+**Decision:** Self-contained server component with own data fetching. Placed in Overview slot after PlayerCommandCenterCard.
+
+---
 
 ### Sprint 433 — Today's Academy KPI Cards V1 ✓
 
