@@ -803,6 +803,21 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [panelOpen, closePanel])
 
+  // Sprint 405 — donna:open custom event listener
+  // Allows any page component to open DONNA and pre-fill the input via:
+  // window.dispatchEvent(new CustomEvent('donna:open', { detail: { prompt: '...' } }))
+  useEffect(() => {
+    function handleDonnaOpen(e: Event) {
+      const detail = (e as CustomEvent<{ prompt?: string }>).detail
+      setPanelOpen(true)
+      if (detail?.prompt) {
+        setTypedText(detail.prompt)
+      }
+    }
+    window.addEventListener('donna:open', handleDonnaOpen)
+    return () => window.removeEventListener('donna:open', handleDonnaOpen)
+  }, [])
+
   // Clear all inline state on route change
   useEffect(() => {
     // Sprint 359: Save active draft to session BEFORE clearing state

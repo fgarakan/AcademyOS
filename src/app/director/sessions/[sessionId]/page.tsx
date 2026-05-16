@@ -25,6 +25,7 @@ import { SessionCurriculumContextPanel, SessionNoCurriculumContextPanel } from '
 import { PlannedVsActualDiffPanel } from './PlannedVsActualDiffPanel'
 import { SessionExposureSummaryPanel } from './SessionExposureSummaryPanel'
 import { DirectorSessionStatusCTA } from './DirectorSessionStatusCTA'
+import { SessionCoachBriefCTA } from './SessionCoachBriefCTA'
 import { SessionBlockCurriculumContent } from './SessionBlockCurriculumContent'
 import type { CurriculumItem } from './SessionBlockCurriculumContent'
 import { SessionActualDisplay } from './SessionActualDisplay'
@@ -682,6 +683,9 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
         </div>
         <DirectorSessionStatusCTA sessionId={session.id} initialStatus={session.status} />
       </div>
+
+      {/* Sprint 405 — Draft Coach Brief CTA */}
+      <SessionCoachBriefCTA />
 
       {/* DONNA Session Intelligence — prompt chips for pre-session tasks */}
       <div className="px-4 py-3 rounded-xl bg-surface border border-border">

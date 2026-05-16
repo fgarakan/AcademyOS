@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-16 — Sprint 405: Session Detail to Coach Brief Review Flow V1
+
+**Type:** Frontend — no DB writes, no migrations, no new packages
+
+**Goal:** Add a "Draft Coach Brief with DONNA" CTA to the director session detail page. Clicking it opens the DONNA panel and pre-fills the input with "Draft a coach brief for this session." — ready for the director to send. Uses a `donna:open` custom DOM event to bridge the server component page and the client component DONNA panel.
+
+**Files created:**
+- `src/app/director/sessions/[sessionId]/SessionCoachBriefCTA.tsx` — client component button that dispatches `donna:open` custom event with pre-filled prompt.
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/page.tsx` — imported and placed `SessionCoachBriefCTA` in the session detail layout.
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `useEffect` that listens for `donna:open` custom event and opens the DONNA panel with optional pre-filled prompt text.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Zero DB writes. Zero migrations. Custom DOM event only — no shared React state or context. DONNA panel opens in its existing state; director must manually send the pre-filled prompt. No session mutation. No auto-send.
+
+---
+
 ## 2026-05-16 — Sprint 404: Coach Recap to Structured Draft Hardening V1
 
 **Type:** Frontend — no DB writes, no migrations, no new packages
