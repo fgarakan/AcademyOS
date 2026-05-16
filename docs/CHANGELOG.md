@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 440: Review Queue Stale Age Indicators V1
+
+**Type:** Hardening — code change, no migration.
+
+**Goal:** Surface oldest pending draft age per section in the review queue summary cards, with a stale warning (≥7 days) in orange.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — added `oldestDaysAgo` helper; computed per-section oldest age from existing `createdAt` data; rendered "oldest: Xd" in section summary cards with orange highlight when ≥7 days
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 439: Review Queue Action Model Audit V1
 
 **Type:** Audit — no code changes. Docs only.
