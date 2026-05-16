@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 463: Curriculum Impact Preview Shell V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Create a safe preview shell showing what a proposed curriculum change would affect across 6 impact domains: gate requirements, players, session templates, coach briefs, parent/player language, and DONNA recommendations.
+
+**Files created:**
+- `src/components/curriculum/CurriculumImpactPreview.tsx` — `'use client'` component. Accepts `CurriculumChangeDraft` and `CurriculumImpactSummary` props. Renders 6 collapsible impact sections (requirements, players, templates, coach briefs, parent language, DONNA). Scope/risk header with approver label. Footer safety copy. Preview-only — no DB calls, no mutations.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 462: Curriculum Change Scope Model V1
 
 **Type:** Code — TypeScript model only. No migration, no schema changes, no DB writes, no UI.
