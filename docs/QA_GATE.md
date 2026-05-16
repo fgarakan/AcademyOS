@@ -100,6 +100,35 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 436 — KPI Safety and Data Sufficiency Pass V1
+
+**Date:** 2026-05-16
+**QA type:** Audit pass — no code changes. Static analysis only.
+
+**Safety checks (18 total):**
+- No DB imports in any of 10 KPI engine files: PASS
+- No DANA references in KPI sprint files: PASS
+- No service role usage in KPI dashboard, drilldown, group action: PASS
+- Players query academy_id scoped (KPI dashboard): PASS
+- Curriculum states query academy_id scoped: PASS
+- session_attendance scoped via sessions!inner + eq(sessions.academy_id) in 3 screens: PASS
+- group_memberships academy_id scoped (group action): PASS
+- coach_observations academy_id scoped (group action): PASS
+- player_development_signals academy_id scoped (group action): PASS
+- All KPI formatters include [live]/[partial]/[demo]/[insufficient data] tags: PASS
+- computeAttendanceRate returns null value (not 0) when no sessions: PASS
+- computeMissedSessionStreak handles empty group sessions gracefully: PASS
+- computeDropoutRisk handles null health score and null streak: PASS
+- computeGroupHealth returns insufficient_data when <2 inputs: PASS
+- computeGroupRetention returns null value when no memberships: PASS
+- developmentHealthKpiEngine returns insufficient_data when <2 inputs: PASS
+- parentTrustKpiEngine DONNA output always says "draft — not sent": PASS
+- formatRetentionForDonna returns [] for null/insufficient_data: PASS
+
+**Result:** 18 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 435 — Group KPI Drilldown V1
 
 **Date:** 2026-05-16

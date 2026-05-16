@@ -31,6 +31,17 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 436 — KPI Safety and Data Sufficiency Pass V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Audit pass — no code changes. 18 safety checks: all PASS.
+**TypeScript:** Not run (no code changes)
+**Files committed:**
+- `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`, `docs/DONNA_KPI_INTELLIGENCE_MAP.md`
+
+---
+
 ### Sprint 435 — Group KPI Drilldown V1
 
 **Date:** 2026-05-16

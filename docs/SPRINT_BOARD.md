@@ -13,13 +13,22 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 435 complete.)*
+*(No active sprint — Sprint 436 complete.)*
 
-**Next available:** Sprint 436
+**Next available:** Sprint 437
 
 ---
 
 ## Completed This Run
+
+### Sprint 436 — KPI Safety and Data Sufficiency Pass V1 ✓
+
+**Status:** COMPLETE (docs only — no code changes needed)
+**QA:** All KPI engines and wired code PASS (18 safety checks)
+**TypeScript:** Not run — no code changes
+**Open items:** donnaKpiSummaryEngine not yet wired (future sprint). groupKpiSummaryAction has 2 null inputs (documented gaps).
+
+---
 
 ### Sprint 435 — Group KPI Drilldown V1 ✓
 

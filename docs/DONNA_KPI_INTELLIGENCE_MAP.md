@@ -159,6 +159,7 @@ When a director asks DONNA a question, these KPIs are triggered:
 
 | Sprint | Change |
 |---|---|
+| 436 | KPI Safety Pass — audit of all 10 KPI engines + 3 wired screens. 18 safety checks, all PASS. No code changes needed. `donnaKpiSummaryEngine` flagged for future wiring. |
 | 435 | Group KPI Drilldown V1 — `fetchGroupKpiSummaryAction` wires groupHealthKpiEngine. KPI 7 (retention, demo) and KPI 16 (health composite, demo) computed from real DB. Not yet wired into UI. |
 | 434 | Player KPI Drilldown V1 — `PlayerKpiDrilldownCard` added to player profile Overview tab. KPI 13 (time in level, live) + KPI 3 (absences 30d, demo) + advancement status per player. |
 | 433 | Today's Academy KPI Cards V1 — KPI signals section added to director dashboard homepage. Active players, advancement-ready count, attention signals. Links to `/director/kpi`. |

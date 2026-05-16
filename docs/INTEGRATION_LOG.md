@@ -8,6 +8,20 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 436: KPI Safety and Data Sufficiency Pass V1
+
+**What changed:** Audit-only sprint. No code changes. All KPI engines (Sprints 421–435) and all wired KPI code verified for safety, null-handling, academy_id scoping, and DONNA output honesty.
+
+**Audit scope:** 10 KPI engine files, `donnaDirectorIntelligenceActions.ts`, `groupKpiSummaryAction.ts`, `kpi/page.tsx`, `PlayerKpiDrilldownCard.tsx`, `AcademyKpiCardsSection.tsx`.
+
+**Key findings:**
+- All clear: no DB imports in engines, no DANA, no service role, all queries scoped correctly.
+- `donnaKpiSummaryEngine` (Sprint 431) is built but not wired — flagged for future sprint.
+- `recapCompletionRatePct` and `sessionFrequencyRatio` remain null in group action — documented as expected schema gaps, not safety issues.
+- `computeDropoutRisk` threshold alignment verified: dev health riskScore ≥50 → high risk, ≥25 → watch zone. Thresholds match intended semantics.
+
+---
+
 ## 2026-05-16 — Sprint 435: Group KPI Drilldown V1
 
 **What changed:** Added `groupKpiSummaryAction.ts`. Server action that wires the group health KPI engine (Sprint 428) with real DB queries. Computes KPI 7 (retention from group_memberships) and KPI 16 (health composite from attendance + observation coverage + signal pct). Not yet wired into any UI route.

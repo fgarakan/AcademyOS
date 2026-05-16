@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-16 — Sprint 436: KPI Safety and Data Sufficiency Pass V1
+
+**Type:** Audit — no code changes. Docs only.
+
+**Goal:** Verify all KPI engines and wired code for safety issues: misleading low-density results, missing caveats, cross-academy leakage risk, null-input safety.
+
+**Files changed:** Docs only.
+
+**Audit findings (all PASS — no code changes needed):**
+- No DB imports in any KPI engine — all pure TypeScript (10 engine files) ✓
+- No DANA references in any KPI sprint file ✓
+- No service role usage in KPI dashboard, drilldown, or group action ✓
+- All server-side queries academy_id scoped: dashboard, PlayerKpiDrilldownCard, groupKpiSummaryAction ✓
+- session_attendance scoped via sessions!inner join in all three wired screens ✓
+- `formatAttendanceKpisForDonna` always includes [live]/[partial]/[demo]/[insufficient data] tags ✓
+- Null input handling: all engines return null value or insufficient_data status when inputs absent ✓
+- `computeDropoutRisk` threshold alignment: development health riskScore (0-100 accumulator) correctly threshold-mapped (≥50 high risk, ≥25 watch) ✓
+- `donnaKpiSummaryEngine` (Sprint 431) not yet wired into server action — noted, not a safety issue ✓
+
+**Open items noted (not safety issues):**
+- `donnaKpiSummaryEngine.buildPlayerKpiSummary` / `formatKpiSummaryForDonna` unused — future wiring sprint.
+- `recapCompletionRatePct` and `sessionFrequencyRatio` null in groupKpiSummaryAction — expected gaps G8 and schema limitation. Documented.
+
+**TypeScript:** Not run — no code changes.
+
+---
+
 ## 2026-05-16 — Sprint 435: Group KPI Drilldown V1
 
 **Type:** Feature — group KPI summary server action. No UI route (no groups screen exists yet). No migrations, no package changes.
