@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 448: Review Queue Maturity Audit and Docs V1
+
+**Type:** Docs only — no code changes.
+
+**Goal:** Document the review queue hardening block (Sprints 440-447) in MODULE_MATURITY_MAP.md. Upgraded review queue maturity from 9 to 10.
+
+**Files modified:**
+- `docs/MODULE_MATURITY_MAP.md` — updated review queue entry with Sprint 440-447 summary; upgraded from level 9 to level 10; added hardening summary block
+
+**TypeScript:** Not run (no code changes)
+
+---
+
 ## 2026-05-16 — Sprint 447: Review Queue Completed Tab Accuracy V1
 
 **Type:** Hardening — copy/UX accuracy fix, no code logic change.
