@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 484: Coach Wrap-Up Regression V1
+
+**Type:** Regression QA document — no code changes, no migration, no schema changes.
+
+**Goal:** Full regression pass across all 15 coach wrap-up artifacts (Sprints 469–483). 10 checks: 'use client' directives, TypeScript integrity, shell integration, data flow, step navigation, voice regression, parser regression, adaptive logic regression, safety flag regression, scope containment.
+
+**Files created:**
+- `docs/COACH_WRAPUP_REGRESSION_QA.md` — 10 regression checks across all wrap-up files. All PASS. Full component inventory table (Sprint 469–483). Data flow trace from UI capture to `WrapUpReviewQueueMapping`. Step navigation matrix. Deferred capabilities table for Sprints 485+.
+
+**TypeScript:** CLEAN (0 errors, no code changes)
+
+---
+
 ## 2026-05-16 — Sprint 483: Coach Wrap-Up Safety Pass V1
 
 **Type:** Audit document — no code changes, no migration, no schema changes.
