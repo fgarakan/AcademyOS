@@ -57,6 +57,7 @@ import {
   saveParentUpdateDraftAction,
   saveLevelReadinessDraftAction,
   saveCurriculumAdjustmentDraftAction,
+  fetchPlayerProgressSummaryAction,
 } from '@/app/director/_actions/donnaDirectorIntelligenceActions'
 // Sprint 282 — Coach Communication Draft
 import { saveCoachCommunicationDraftAction } from '@/app/director/_actions/saveCoachCommunicationDraftAction'
@@ -204,6 +205,13 @@ const WIRED_TASK_IDS = new Set<DonnaTaskId>([
   'review_level_readiness',
   'adjust_curriculum',
   'draft_coach_communication',
+  'summarize_player_progress',
+])
+
+// Tasks that are wired but produce a read-only summary (no DB write).
+// These show "Generate Summary" instead of "Approve and Save".
+const READONLY_TASK_IDS = new Set<DonnaTaskId>([
+  'summarize_player_progress',
 ])
 
 // ---------------------------------------------------------------------------
@@ -1544,6 +1552,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     }
     if (draft.taskId === 'draft_coach_communication') {
       return saveCoachCommunicationDraftAction(draft.collectedFields)
+    }
+    if (draft.taskId === 'summarize_player_progress') {
+      const fields: Record<string, string> = { ...draft.collectedFields }
+      if (resolvedObjects['player']?.id) {
+        fields._resolved_player_id = resolvedObjects['player'].id
+      }
+      return fetchPlayerProgressSummaryAction(fields)
     }
     return {
       ok: false,
@@ -3119,6 +3134,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 onCancel={handleCancelGenericTask}
                 fromVoice={fromVoiceCapture}
                 isWired={WIRED_TASK_IDS.has(genericDraft.taskId)}
+                approveButtonLabel={
+                  WIRED_TASK_IDS.has(genericDraft.taskId)
+                    ? READONLY_TASK_IDS.has(genericDraft.taskId)
+                      ? 'Generate Summary'
+                      : 'Approve and Save'
+                    : undefined
+                }
                 onApprove={handleGenericDraftApprove}
                 onQuestionAnswered={(nextQ, updatedDraft) => {
                   if (nextQ) {

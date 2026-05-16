@@ -571,3 +571,152 @@ export async function saveCurriculumAdjustmentDraftAction(
     ],
   }
 }
+
+// ---------------------------------------------------------------------------
+// fetchPlayerProgressSummaryAction — Sprint 400
+//
+// Read-only server action. Reads player curriculum state, latest assessment,
+// recent coach observations, and active priorities — then returns a structured
+// deterministic summary for display in the DONNA panel.
+//
+// Security guarantees:
+//   - NO proposed_actions write
+//   - NO voice_commands write
+//   - NO player profile mutation
+//   - NO level movement
+//   - NO parent/player exposure
+//   - All reads are scoped to academy_id
+//   - Summary is displayed only in the director-facing DONNA panel
+// ---------------------------------------------------------------------------
+
+export async function fetchPlayerProgressSummaryAction(
+  fields: Record<string, string>,
+): Promise<DonnaApprovalExecutionResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, status: 'blocked', message: 'Writes are disabled in preview mode.' }
+  }
+
+  const ctx = await getAuthorizedContext()
+  if (!ctx.ok) return { ok: false, status: 'blocked', message: ctx.error }
+
+  const { supabase, academyId } = ctx
+  const rawDb = supabase as any
+
+  const confirmedPlayerId = (fields._resolved_player_id ?? '').trim() || null
+  if (!confirmedPlayerId) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message:
+        'Please confirm the player before generating a summary. Use the resolver panel to search and select a player.',
+    }
+  }
+
+  const playerLabel = (fields.player ?? '').replace(/\s*✓$/, '').trim() || 'this player'
+  const summaryFor = (fields.summary_for ?? '').trim() || 'director reference'
+
+  // Step 1 — Player name (scoped to academy_id)
+  const { data: playerRow } = await rawDb
+    .from('players')
+    .select('first_name, full_name')
+    .eq('id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .single()
+
+  // Step 2 — Curriculum state (scoped to academy_id)
+  const { data: curriculumState } = await rawDb
+    .from('player_curriculum_states')
+    .select('current_level_id, advancement_eligible, advancement_blocked_by')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .maybeSingle()
+
+  // Step 3 — Latest assessment (scoped to academy_id)
+  const { data: latestAssessment } = await rawDb
+    .from('assessments')
+    .select('overall_score, promotion_ready, strengths, priorities')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // Step 4 — Recent coach observations: last 5 (scoped to academy_id)
+  const { data: observationsRaw } = await rawDb
+    .from('coach_observations')
+    .select('content, observation_type, created_at')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .order('created_at', { ascending: false })
+    .limit(5)
+  const observations: any[] = observationsRaw ?? []
+
+  // Step 5 — Active priorities: top 3 (scoped to academy_id)
+  const { data: prioritiesRaw } = await rawDb
+    .from('player_priorities')
+    .select('title, category, status')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .eq('status', 'active')
+    .limit(3)
+  const priorities: any[] = prioritiesRaw ?? []
+
+  // Build deterministic summary — no AI, no external API
+  const firstName: string =
+    (playerRow?.first_name as string | null) ??
+    ((playerRow?.full_name as string | null)?.split(' ')[0]) ??
+    playerLabel.split(' ')[0] ??
+    'Player'
+
+  const levelLabel: string = curriculumState?.current_level_id
+    ? `Level ID: ${curriculumState.current_level_id}`
+    : 'Level not assigned'
+
+  const advancementStatus: string =
+    curriculumState?.advancement_eligible === true
+      ? 'Eligible for advancement'
+      : curriculumState?.advancement_eligible === false
+      ? 'Not yet eligible for advancement'
+      : 'Advancement status unknown'
+
+  const observationHighlights: string[] = observations
+    .slice(0, 3)
+    .map((o: any) => String(o.content ?? o.observation_type ?? '').slice(0, 150))
+    .filter(Boolean)
+
+  const prioritySummary: string[] = priorities
+    .map((p: any) => String(p.title ?? p.category ?? '').slice(0, 100))
+    .filter(Boolean)
+
+  const assessmentLine: string =
+    latestAssessment?.overall_score != null
+      ? `Latest assessment score: ${latestAssessment.overall_score}`
+      : 'No formal assessment on record'
+
+  const summaryLines: string[] = [
+    `Player: ${firstName}`,
+    `Curriculum: ${levelLabel}`,
+    `Advancement: ${advancementStatus}`,
+    assessmentLine,
+    ...(observationHighlights.length > 0 ? [`Recent observations (${observationHighlights.length}):`] : []),
+    ...observationHighlights.map((o: string) => `• ${o}`),
+    ...(prioritySummary.length > 0 ? ['Active priorities:'] : []),
+    ...prioritySummary.map((p: string) => `• ${p}`),
+  ]
+
+  const progressSummary = summaryLines.join('\n')
+
+  return {
+    ok: true,
+    status: 'saved',
+    message: progressSummary,
+    createdId: undefined,
+    safetyNotes: [
+      'Read-only summary — no data was written or changed.',
+      `Summary prepared for: ${summaryFor}`,
+      'Review required before sharing with parent, player, or coach.',
+      'Not parent-facing until director explicitly approves communication.',
+      'No player level, profile, or proposed action was modified.',
+    ],
+  }
+}

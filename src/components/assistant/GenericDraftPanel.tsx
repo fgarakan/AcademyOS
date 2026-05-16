@@ -31,6 +31,8 @@ interface GenericDraftPanelProps {
   onApprove?: (draft: GenericTaskDraft) => Promise<DonnaApprovalExecutionResult>
   /** True when the task has a wired server action — shows Approve button instead of "not yet available" */
   isWired?: boolean
+  /** Override the default "Approve and Save" button label for read-only tasks */
+  approveButtonLabel?: string
 }
 
 type ApproveState = 'idle' | 'saving' | 'saved' | 'error'
@@ -45,6 +47,7 @@ export function GenericDraftPanel({
   onQuestionAnswered,
   onApprove,
   isWired,
+  approveButtonLabel,
 }: GenericDraftPanelProps) {
   const [answerInput, setAnswerInput] = useState('')
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
@@ -407,7 +410,7 @@ export function GenericDraftPanel({
                   disabled={approveState === 'saving'}
                   className="btn-lime text-xs px-3.5 py-1.5 disabled:opacity-60"
                 >
-                  {approveState === 'saving' ? 'Saving…' : 'Approve and Save'}
+                  {approveState === 'saving' ? 'Saving…' : (approveButtonLabel ?? 'Approve and Save')}
                 </button>
                 <button
                   onClick={onCancel}

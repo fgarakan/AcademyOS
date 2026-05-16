@@ -424,7 +424,7 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     createsDraftType: 'player_note_draft',
     approvalRequired: true,
     unsafeWithoutApproval: ['expose_summary_without_review', 'send_summary_to_parent'],
-    saveApplyMethodStatus: 'not_wired_yet',
+    saveApplyMethodStatus: 'wired',
   },
 
   recommend_template_for_group: {

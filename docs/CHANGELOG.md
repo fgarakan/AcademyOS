@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-16 — Sprint 400: DONNA Summarize Player Progress V1
+
+**Type:** Frontend + read-only server action — no DB writes, no migrations, no new packages
+
+**Goal:** Wire the `summarize_player_progress` DONNA task contract as a read-only summary. When a director completes the DONNA guided Q&A (player confirmed, summary_for answered), DONNA calls a read-only server action that reads player curriculum state, latest assessment, recent observations, and active priorities — then displays a structured progress summary directly in the panel. Nothing is written to any database table.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — added `fetchPlayerProgressSummaryAction`: read-only server action that reads player data and returns structured summary for DONNA panel display. No proposed_actions write. No voice_commands write.
+- `src/components/assistant/DonnaAssistantButton.tsx` — 5 targeted changes: (1) import `fetchPlayerProgressSummaryAction`. (2) `'summarize_player_progress'` added to `WIRED_TASK_IDS`. (3) `READONLY_TASK_IDS` set introduced. (4) dispatch branch added in `handleGenericDraftApprove`. (5) `approveButtonLabel` prop passed to `GenericDraftPanel` — renders "Generate Summary" for read-only tasks instead of "Approve and Save".
+- `src/components/assistant/GenericDraftPanel.tsx` — added `approveButtonLabel` optional prop to support task-specific button label overrides. Button displays `approveButtonLabel ?? 'Approve and Save'`.
+- `src/components/assistant/donnaTaskContracts.ts` — `summarize_player_progress.saveApplyMethodStatus` flipped from `'not_wired_yet'` to `'wired'`.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Zero DB writes. Zero migrations. No player level, profile, or proposed action modified. No parent or player data exposed. All reads are academy_id-scoped. Summary is displayed only in the director-facing DONNA panel. Labels: "Read-only summary · Review required before sharing · Not parent-facing until director approves."
+
+**Table discovery:** `coach_observations` exists in database.types.ts (uses `content`, `observation_type` columns). `player_priorities` exists (uses `title`, `category`, `status` columns — not `priority_text`/`domain` as initially specified; corrected in implementation).
+
+---
+
 ## 2026-05-16 — Sprint 399: Persistent DONNA Panel State V1
 
 **Type:** Frontend — UX behavior change (no DB, no migrations, no new packages)
