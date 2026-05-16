@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-16 — Sprint 438: KPI Block Audit and Next Roadmap V1
+
+**Type:** Audit and roadmap — no code changes. Docs only.
+
+**Goal:** Final audit of the KPI block (Sprints 421–438). Document what was built, what's wired vs. engine-only, open schema gaps, and next roadmap.
+
+**Files changed:** `docs/DONNA_KPI_INTELLIGENCE_MAP.md` (Block 2 sprint table updated to COMPLETE status; next roadmap added).
+
+**Block 2 completion summary:**
+- 12 KPI engines built across 9 engine files
+- 9 KPIs wired into DONNA player summary (KPIs 1, 2, 3, 9, 12, 13, 14, 15, 19, 21, 22, 25 + dropout risk signal)
+- 3 UI screens live: `/director/kpi` dashboard, director homepage KPI cards, player profile KPI drilldown
+- 1 group KPI server action ready for future UI wiring
+- 5 schema gaps remain open (G1, G2, G3, G4, G8) — require migration approval before touching
+
+**Open gaps:**
+- G1: `players.deactivated_at` → KPI 8 (dropout rate) blocked
+- G2: `private_lesson_requests.triggered_by_session_id` → KPI 11 blocked
+- G3: `curriculum_levels.expected_duration_days` → KPI 24 blocked
+- G4: `session_blocks.actual_status` persisted → KPIs 18, 20 blocked
+- G8: `voice_notes.recap_type` → KPI 4 partial proxy only
+
+**TypeScript:** Not run — no code changes.
+
+---
+
 ## 2026-05-16 — Sprint 437: KPI Regression and Demo Data Pass V1
 
 **Type:** Regression audit — no code changes. Docs only.

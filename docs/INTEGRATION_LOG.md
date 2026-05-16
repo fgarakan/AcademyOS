@@ -8,6 +8,26 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 438: KPI Block Audit and Next Roadmap V1
+
+**What changed:** Docs only. `DONNA_KPI_INTELLIGENCE_MAP.md` updated: Block 2 sprint table marked COMPLETE with per-sprint wiring status. 5 open schema gaps documented (G1, G2, G3, G4, G8). Next roadmap defined for Sprints 439+.
+
+**Block 2 architecture summary:**
+- 12 KPI engines across 9 engine files in `src/lib/kpi/`
+- `donnaDirectorIntelligenceActions.ts` wires 8 engines into player progress summary (Steps 6–13)
+- `groupKpiSummaryAction.ts` wires group health engine into a callable server action
+- 3 director-facing screens: `/director/kpi`, `/director` KPI cards section, player profile KPI drilldown
+- All engines pure TypeScript (no DB imports, no async) — DB queries live in server actions and server components
+
+**Open gaps for Block 3+ migration approval:**
+- G1: `players.deactivated_at` — KPI 8 (formal dropout rate) blocked
+- G2: `private_lesson_requests.triggered_by_session_id` — KPI 11 blocked
+- G3: `curriculum_levels.expected_duration_days` — KPI 24 blocked
+- G4: `session_blocks.actual_status` persisted — KPIs 18, 20 blocked
+- G8: `voice_notes.recap_type` — KPI 4 partial proxy only
+
+---
+
 ## 2026-05-16 — Sprint 437: KPI Regression and Demo Data Pass V1
 
 **What changed:** Regression audit only. No code changes. TypeScript compilation verified clean for the full project. Import graph for all 12 KPI engine files and 3 wired screens checked for circular dependencies and resolution errors.

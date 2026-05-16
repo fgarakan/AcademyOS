@@ -100,6 +100,20 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 438 — KPI Block Audit and Next Roadmap V1
+
+**Date:** 2026-05-16
+**QA type:** Docs-only audit sprint. No code to validate.
+
+**Block audit checks:**
+- All 18 Block 2 sprints documented with correct wiring status: PASS
+- 5 open gaps correctly categorised (require migration approval): PASS
+- Next roadmap Sprint 439+ defined: PASS
+
+**Result:** 3 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 437 — KPI Regression and Demo Data Pass V1
 
 **Date:** 2026-05-16

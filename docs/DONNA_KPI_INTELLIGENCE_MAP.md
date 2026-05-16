@@ -93,29 +93,42 @@ When a director asks DONNA a question, these KPIs are triggered:
 
 ---
 
-## Block 2 Sprint Build Sequence
+## Block 2 Sprint Build Sequence — COMPLETE (Sprint 438)
 
-### Priority Group A — Unblock Tier 2 (no migration required)
+### Priority Group A — COMPLETE
 
-| Sprint | Goal |
-|---|---|
-| 421 | Attendance KPI Engine — compute KPIs 1, 2, 3, 9 from `session_attendance` and surface in DONNA |
-| 422 | Coach Operations KPI Engine — compute KPIs 4, 19, 25 from `voice_notes` and `coach_observations` |
-| 423 | Development KPI Engine — compute KPIs 12, 13, 22, 23 from `player_curriculum_states` and history |
-| 424 | Risk & Retention Engine — compute KPIs 7, 10, 15, 16 as composite scores |
-| 425 | Parent Trust KPI — compute KPI 21 from `parent_updates` drafts (proxy) |
-| 426 | DONNA KPI Dashboard V1 — director-facing KPI panel with Tier 1 + Tier 2 scores |
+| Sprint | Goal | Status |
+|---|---|---|
+| 421 | Attendance KPI Engine — KPIs 1, 2, 3, 9 | DONE — wired into DONNA player summary |
+| 422 | Development Health KPI Engine — KPI 15 | DONE — wired into DONNA player summary |
+| 423 | Development Velocity KPI Engine — KPIs 12, 13 + stalled flag | DONE — wired into DONNA player summary |
+| 424 | Evidence Coverage KPI Engine — KPIs 14, 22 | DONE — wired into DONNA player summary |
+| 425 | Curriculum Coverage KPI Engine — KPI 25, stubs 17/18/20 | DONE — KPI 25 wired; stubs engine-only |
+| 426 | Coach Execution KPI Engine — KPI 19, stub 4 | DONE — KPI 19 wired; KPI 4 engine-only |
+| 427 | Parent Trust KPI Engine — KPI 21, stubs 5/6 | DONE — KPI 21 wired; stubs engine-only |
+| 428 | Group Health KPI Engine — KPIs 16, 7 | DONE — engine-only; group action Sprint 435 |
+| 429 | Retention KPI Engine — KPI 8 stub + dropout risk signal | DONE — dropout risk wired into DONNA |
+| 430 | Private Lesson Conversion KPI Engine — KPI 11 stub + makeup stub | DONE — engine-only (both insufficient_data) |
+| 431 | DONNA KPI Summary Engine — `PlayerKpiSummary` orchestration | DONE — engine-only; not yet wired |
+| 432 | Director KPI Dashboard — `/director/kpi` route + sidebar | DONE — live route |
+| 433 | Today's Academy KPI Cards — dashboard homepage section | DONE — live on `/director` |
+| 434 | Player KPI Drilldown — player profile Overview tab card | DONE — live on player profile |
+| 435 | Group KPI Drilldown — `fetchGroupKpiSummaryAction` | DONE — action-only; no groups UI yet |
+| 436 | KPI Safety Pass — 18 safety checks | DONE — all PASS |
+| 437 | KPI Regression Pass — TypeScript + import graph | DONE — all PASS |
+| 438 | KPI Block Audit and Roadmap | DONE — this sprint |
 
-### Priority Group B — Resolve Schema Gaps (requires migration confirmation)
+### Priority Group B — Schema Gaps (requires migration confirmation)
 
 > Stop and ask Farshad before any of these sprints.
 
-| Sprint | Goal | Migration needed |
-|---|---|---|
-| 427 | Dropout Rate Fix — add `deactivated_at` to `players` | Yes — KPI 8 |
-| 428 | Private Lesson Conversion — add `triggered_by_session_id` to `private_lesson_requests` | Yes — KPI 11 |
-| 429 | Curriculum Effectiveness Fix — add `expected_duration_days` to `curriculum_levels` | Yes — KPI 24 |
-| 430 | Block Status Persistence — persist `session_blocks.actual_status` to DB | Yes — KPIs 18, 20 |
+| Gap | KPI | Migration needed | Status |
+|---|---|---|---|
+| G1 — `players.deactivated_at` | KPI 8 (dropout rate) | Yes | OPEN — KPI 8 stub only |
+| G2 — `private_lesson_requests.triggered_by_session_id` | KPI 11 | Yes | OPEN — KPI 11 stub only |
+| G3 — `curriculum_levels.expected_duration_days` | KPI 24 | Yes | OPEN — not yet implemented |
+| G4 — `session_blocks.actual_status` persisted to DB | KPIs 18, 20 | Yes | OPEN — stubs only |
+| G8 — `voice_notes.recap_type` | KPI 4 | Schema change | OPEN — KPI 4 partial proxy |
 
 ### Priority Group C — Infrastructure (Block 3+)
 
@@ -123,6 +136,17 @@ When a director asks DONNA a question, these KPIs are triggered:
 |---|---|
 | 431+ | Parent Communication Send Infrastructure — KPIs 5, 6 |
 | 432+ | Apply pending migrations (041–062) to live DB — KPI 14, 17 |
+
+### Next Roadmap (Block 3+ Sprints 439+)
+
+| Sprint Range | Focus |
+|---|---|
+| 439–448 | Review Queue hardening — proposed_actions audit model |
+| 449–458 | Coach-Side DONNA — session intelligence, recap flows |
+| 459–467 | Curriculum Ripple — curriculum signal propagation |
+| 468 | DONNA Weekly COO Report Draft |
+| 469 | DONNA Daily Command Brief |
+| 470 | 50-Sprint Block Audit |
 
 ---
 
@@ -159,6 +183,7 @@ When a director asks DONNA a question, these KPIs are triggered:
 
 | Sprint | Change |
 |---|---|
+| 438 | KPI Block Audit and Roadmap — Block 2 sprint table updated to COMPLETE. 5 open gaps documented (G1, G2, G3, G4, G8). Next roadmap defined for Sprints 439+ (Review Queue, Coach-Side DONNA, Curriculum Ripple). |
 | 437 | KPI Regression Pass — full TypeScript check CLEAN. No circular imports in 12 engine files. All wired screens import-clean. `privateLessonKpiEngine` and `donnaKpiSummaryEngine` confirmed as intentional unwired stubs. |
 | 436 | KPI Safety Pass — audit of all 10 KPI engines + 3 wired screens. 18 safety checks, all PASS. No code changes needed. `donnaKpiSummaryEngine` flagged for future wiring. |
 | 435 | Group KPI Drilldown V1 — `fetchGroupKpiSummaryAction` wires groupHealthKpiEngine. KPI 7 (retention, demo) and KPI 16 (health composite, demo) computed from real DB. Not yet wired into UI. |

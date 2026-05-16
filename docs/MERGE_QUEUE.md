@@ -31,6 +31,18 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 438 — KPI Block Audit and Next Roadmap V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Docs-only audit sprint. Block 2 complete.
+**TypeScript:** Not run (no code changes)
+**Files committed:**
+- `docs/DONNA_KPI_INTELLIGENCE_MAP.md` (Block 2 completion table + next roadmap)
+- `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`
+
+---
+
 ### Sprint 437 — KPI Regression and Demo Data Pass V1
 
 **Date:** 2026-05-16

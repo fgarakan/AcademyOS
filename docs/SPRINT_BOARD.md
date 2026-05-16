@@ -13,13 +13,22 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 437 complete.)*
+*(No active sprint — Sprint 438 complete.)*
 
-**Next available:** Sprint 438
+**Next available:** Sprint 439
 
 ---
 
 ## Completed This Run
+
+### Sprint 438 — KPI Block Audit and Next Roadmap V1 ✓
+
+**Status:** COMPLETE (docs only)
+**QA:** Block audit complete — 18 sprints summarised, 5 open gaps documented, next roadmap set.
+**TypeScript:** Not run (no code changes)
+**Files modified:** `docs/DONNA_KPI_INTELLIGENCE_MAP.md` (Block 2 sprint table updated; next roadmap added)
+
+---
 
 ### Sprint 437 — KPI Regression and Demo Data Pass V1 ✓
 
