@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 496: DONNA Weekly COO Report Integration V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
+
+**Goal:** DONNA's weekly COO report component surfacing week-over-week operating metrics: sessions completed, wrap-up rates, observations, review queue throughput, approvals applied. Delta indicators with trend arrows. Collapsible sections. DONNA headline adapts to whether action is required. Props-only — no DB calls.
+
+**Files created:**
+- `src/components/assistant/DonnaCOOWeeklyReport.tsx` — `'use client'` component. `DonnaCOOReportData`, `COOReportSection`, `COOReportMetric` types. `MetricRow` with this-week vs last-week delta (% and absolute). `ReportSection` collapsible. DONNA headline and top insight. Action-required banner (orange) or "no action" (green). `buildWrapUpSection()` and `buildReviewQueueSection()` preset builders. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 495: DONNA Daily Command Brief Integration V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
