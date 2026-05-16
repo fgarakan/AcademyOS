@@ -5,13 +5,14 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
   LogOut, ClipboardList,
-  LayoutTemplate, Terminal, Activity, Settings, Rocket, BarChart2,
+  LayoutTemplate, Terminal, Activity, Settings, Rocket, BarChart2, UserCog,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
 const ACADEMY_ITEMS = [
   { label: 'Dashboard',    href: '/director',                 icon: LayoutDashboard },
   { label: 'Players',      href: '/director/players',         icon: Users },
+  { label: 'Coaches',      href: '/director/coaches',         icon: UserCog },
   { label: 'Sessions',     href: '/director/sessions',        icon: Calendar },
   { label: 'Review Queue', href: '/director/review',          icon: ClipboardList },
   { label: 'Signals',      href: '/director/signals',         icon: Activity },

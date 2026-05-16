@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 455: Coaches Sidebar Nav Link V1
+
+**Type:** Code change — no migration.
+
+**Goal:** Add "Coaches" link to the director sidebar so the coach roster is discoverable without knowing the URL.
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — added `UserCog` import from lucide-react; added `Coaches` item (`/director/coaches`) to `ACADEMY_ITEMS` between Players and Sessions.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 454: Director Coaches List Page V1
 
 **Type:** New route — code change, no migration.
