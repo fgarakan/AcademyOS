@@ -40,7 +40,8 @@ This file records:
 **Files committed:**
 - `src/components/assistant/DonnaAssistantButton.tsx`
 - docs (7 files)
-**Commit hash:** (pending — awaiting human "commit" instruction)
+**Commit hash:** 640be00
+**Push result:** `main -> main (eb6e76b..640be00)`
 **Issues:** None. SPA navigation persistence works via layout-level component state (DonnaAssistantButton in DirectorLayout never unmounts on intra-director navigation). The `/director/sessions` NotFoundErrorBoundary on empty test DB is a pre-existing limitation.
 
 ---
