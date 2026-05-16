@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-16 — Sprint 423: Development Velocity and Time in Level KPI V1
+
+**Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.
+
+**Goal:** Compute KPI 13 (Time in Current Level, `live`) and KPI 12 (Development Velocity, `demo`) from `player_curriculum_states.enrolled_at` and `player_curriculum_history.advanced_at`. Add stalled-player flag when player has been at a level >120 days without becoming eligible.
+
+**Files created:**
+- `src/lib/kpi/developmentVelocityKpiEngine.ts` — `computeTimeInLevel()` (KPI 13, live), `computeDevelopmentVelocity()` (KPI 12, demo), `computeDevelopmentVelocityKpis()` wrapper with stalled-flag logic, `formatDevelopmentVelocityForDonna()`.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — Import added; Step 2 select updated to include `last_evaluated_at`; Step 8 added: fetch `player_curriculum_history` ordered by `advanced_at`; velocity KPIs wired into DONNA summary.
+
+**Key design decisions:**
+- KPI 13 is `live`: `enrolled_at` has a NOT NULL default and is reliably populated. No caveat shown.
+- KPI 12 is `demo`: velocity requires ≥2 advancements. Empty/single history returns honest explanation, not null silence.
+- Stalled-player flag (KPI 23 proxy): if `days > 120 AND advancement_eligible = false`, DONNA surfaces it as a `live` flag — direct computation, no proxy.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** No migrations. No RLS changes. No package installs. All fetches read-only and academy_id scoped.
+
+---
+
 ## 2026-05-16 — Sprint 422: Player Development Health KPI V1
 
 **Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.

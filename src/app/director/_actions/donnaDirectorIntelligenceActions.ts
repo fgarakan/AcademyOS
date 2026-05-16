@@ -17,6 +17,12 @@ import {
   formatDevelopmentHealthForDonna,
   type DevelopmentHealthInput,
 } from '@/lib/kpi/developmentHealthKpiEngine'
+import {
+  computeDevelopmentVelocityKpis,
+  formatDevelopmentVelocityForDonna,
+  type HistoryRow,
+  type DevelopmentVelocityInput,
+} from '@/lib/kpi/developmentVelocityKpiEngine'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper (director/head_coach only)
@@ -754,9 +760,10 @@ export async function fetchPlayerProgressSummaryAction(
 
   // Step 2 — Curriculum state (scoped to academy_id)
   // enrolled_at added Sprint 422 for time-in-level health KPI
+  // last_evaluated_at added Sprint 423 for velocity KPI context
   const { data: curriculumState } = await rawDb
     .from('player_curriculum_states')
-    .select('current_level_id, advancement_eligible, advancement_blocked_by, enrolled_at')
+    .select('current_level_id, advancement_eligible, advancement_blocked_by, enrolled_at, last_evaluated_at')
     .eq('player_id', confirmedPlayerId)
     .eq('academy_id', academyId)
     .maybeSingle()
@@ -891,6 +898,28 @@ export async function fetchPlayerProgressSummaryAction(
   const developmentHealthResult = computeDevelopmentHealth(healthInput)
   const developmentHealthLines = formatDevelopmentHealthForDonna(developmentHealthResult)
 
+  // Step 8 — Development Velocity KPIs: time in level + advancement history (Sprint 423)
+  const { data: curriculumHistoryRaw } = await rawDb
+    .from('player_curriculum_history')
+    .select('from_level_id, to_level_id, advanced_at')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .order('advanced_at', { ascending: true })
+  const curriculumHistory: HistoryRow[] = (curriculumHistoryRaw ?? []).map((h: any) => ({
+    from_level_id: h.from_level_id ? String(h.from_level_id) : null,
+    to_level_id: String(h.to_level_id ?? ''),
+    advanced_at: String(h.advanced_at ?? ''),
+  }))
+
+  const velocityInput: DevelopmentVelocityInput = {
+    enrolledAt: curriculumState?.enrolled_at ? String(curriculumState.enrolled_at) : null,
+    advancementEligible: curriculumState?.advancement_eligible ?? null,
+    lastEvaluatedAt: curriculumState?.last_evaluated_at ? String(curriculumState.last_evaluated_at) : null,
+    history: curriculumHistory,
+  }
+  const velocityKpiResults = computeDevelopmentVelocityKpis(velocityInput)
+  const velocityLines = formatDevelopmentVelocityForDonna(velocityKpiResults)
+
   // Build deterministic summary — no AI, no external API
   const firstName: string =
     (playerRow?.first_name as string | null) ??
@@ -940,6 +969,7 @@ export async function fetchPlayerProgressSummaryAction(
     ...prioritySummary.map((p: string) => `• ${p}`),
     ...attendanceLines,
     ...developmentHealthLines,
+    ...velocityLines,
     ...(dataGaps.length > 0 ? ['', 'DATA GAPS:'] : []),
     ...dataGaps.map((g: string) => `⚠ ${g}`),
   ]

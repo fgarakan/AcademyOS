@@ -31,6 +31,21 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 423 — Development Velocity and Time in Level KPI V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Engine-only sprint — TypeScript CLEAN, 10 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/lib/kpi/developmentVelocityKpiEngine.ts` (new)
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`
+- docs (6 files)
+**Commit hash:** — (pending)
+**Issues:** None.
+
+---
+
 ### Sprint 422 — Player Development Health KPI V1
 
 **Date:** 2026-05-16

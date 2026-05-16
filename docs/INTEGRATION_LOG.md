@@ -8,6 +8,23 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 423: Development Velocity and Time in Level KPI V1
+
+**What changed:** Added `developmentVelocityKpiEngine.ts`. Step 8 added to `fetchPlayerProgressSummaryAction`: fetches `player_curriculum_history` and computes KPI 13 (Time in Level, live) and KPI 12 (Development Velocity, demo). A stalled-player flag (KPI 23 proxy) is emitted when `days > 120 AND advancement_eligible = false`.
+
+**Integrates with:**
+- `player_curriculum_history` — read-only, academy_id scoped, ordered by `advanced_at`
+- `player_curriculum_states` — `last_evaluated_at` added to Step 2 select
+- `src/lib/kpi/kpiTypes.ts` — KpiResult/KpiStatus
+- DONNA player progress summary — velocity lines appended after health lines
+
+**Decisions recorded:**
+- **KPI 13 (`live`)**: `enrolled_at` has a NOT NULL default — this is genuinely live, no caveat needed. Computed as `Date.now() - enrolled_at`.
+- **KPI 12 (`demo`)**: requires ≥2 advancements. Zero or one history records return an honest English explanation — never show null silently.
+- **Stalled flag**: 120-day threshold chosen as a reasonable "long" stay without eligibility. Does not trigger any action — director sees the flag and decides.
+
+---
+
 ## 2026-05-16 — Sprint 422: Player Development Health KPI V1
 
 **What changed:** Added `developmentHealthKpiEngine.ts` — pure TypeScript composite KPI 15 engine. Step 7 added to `fetchPlayerProgressSummaryAction`: fetches active high-severity development signals and most recent parent update draft, then computes Development Health label (Healthy / Watch / At Risk / Insufficient Data) and appends to DONNA player progress summary.

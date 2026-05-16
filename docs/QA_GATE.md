@@ -100,6 +100,28 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 423 — Development Velocity and Time in Level KPI V1
+
+**Date:** 2026-05-16
+**QA type:** Engine-only — TypeScript CLEAN, static safety checks only
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- All queries academy_id scoped: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- KPI 13 status is `live` (correct — direct computation): PASS
+- KPI 12 status is `demo` (correct — data-density dependent): PASS
+- Empty history returns honest explanation (no null silence): PASS
+- Stalled flag only emitted when days > 120 AND not eligible (no false positives for recent enrollments): PASS
+- No level movement triggered by flag: PASS
+- DONNA output shows status tag and caveat for demo KPIs: PASS
+
+**Result:** 10 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 422 — Player Development Health KPI V1
 
 **Date:** 2026-05-16
