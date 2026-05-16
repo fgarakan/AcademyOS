@@ -44,7 +44,8 @@ This file records:
 - `src/app/director/parents/page.tsx`
 - `src/components/assistant/DonnaAssistantButton.tsx`
 - docs (7 files)
-**Commit hash:** *(pending)*
+**Commit hash:** 1cb1ca8
+**Push result:** `main -> main (325d24f..1cb1ca8)`
 **Issues:** One QA false positive resolved — `button[text="Send"]` found was inside the DONNA panel overlay (disabled), not a parent-comms auto-send button.
 
 ---
@@ -56,7 +57,7 @@ This file records:
 **QA result:** 43 PASS / 0 FAIL / 0 WARN
 **Files committed:**
 - docs (7 files)
-**Commit hash:** *(pending)*
+**Commit hash:** 1d6e5f3
 **Issues:** None — relay complete.
 
 ---
@@ -70,7 +71,7 @@ This file records:
 - `src/components/demo/DemoModeBanner.tsx` (new)
 - `src/app/director/layout.tsx`
 - docs (7 files)
-**Commit hash:** *(pending)*
+**Commit hash:** 2aa272a
 **Issues:** None
 
 ---
@@ -84,7 +85,7 @@ This file records:
 - `src/app/director/level-up/page.tsx`
 - `src/app/director/parents/page.tsx`
 - docs (7 files)
-**Commit hash:** *(pending)*
+**Commit hash:** 1526b10
 **Issues:** None
 
 ---
@@ -97,7 +98,7 @@ This file records:
 **Files committed:**
 - `src/components/assistant/donnaPageContextRegistry.ts`
 - docs (7 files)
-**Commit hash:** *(pending)*
+**Commit hash:** 1c4e701
 **Issues:** None
 
 ---
@@ -110,7 +111,7 @@ This file records:
 **Files committed:**
 - `src/components/assistant/DonnaAssistantButton.tsx`
 - docs (7 files)
-**Commit hash:** *(pending)*
+**Commit hash:** dce85cd
 **Issues:** None
 
 ---
@@ -123,7 +124,7 @@ This file records:
 **Files committed:**
 - `src/app/coach/recap/page.tsx`
 - docs (7 files)
-**Commit hash:** *(pending)*
+**Commit hash:** 2a8180e
 
 ---
 
@@ -136,7 +137,7 @@ This file records:
 - `src/app/coach/recap/page.tsx`
 - `src/components/assistant/donnaPageContextRegistry.ts`
 - docs (7 files)
-**Commit hash:** *(pending)*
+**Commit hash:** c0addfc
 **Issues:** None
 
 ---
@@ -152,7 +153,7 @@ This file records:
 - `src/app/director/parents/error.tsx`
 - `src/components/assistant/donnaPageContextRegistry.ts`
 - docs (7 files)
-**Commit hash:** *(pending)*
+**Commit hash:** b08c414
 **Issues:** None
 
 ---
@@ -174,7 +175,7 @@ This file records:
 - `docs/QA_GATE.md`
 - `docs/MODULE_MATURITY_MAP.md`
 - `docs/SCREEN_BACKEND_READINESS_MAP.md`
-**Commit hash:** *(pending)*
+**Commit hash:** a7f5c65
 **Issues:** None
 
 ---
@@ -194,8 +195,8 @@ This file records:
 - `docs/QA_GATE.md`
 - `docs/MODULE_MATURITY_MAP.md`
 - `docs/SCREEN_BACKEND_READINESS_MAP.md`
-**Commit hash:** *(pending)*
-**Push result:** *(pending)*
+**Commit hash:** 81e808b
+**Push result:** `main -> main`
 **Issues:** None
 
 ---
@@ -217,8 +218,8 @@ This file records:
 - `docs/QA_GATE.md`
 - `docs/MODULE_MATURITY_MAP.md`
 - `docs/SCREEN_BACKEND_READINESS_MAP.md`
-**Commit hash:** *(pending)*
-**Push result:** *(pending)*
+**Commit hash:** a5d1a5f
+**Push result:** `main -> main`
 **Issues:** None
 
 ---
@@ -236,8 +237,8 @@ This file records:
 - `docs/INTEGRATION_LOG.md`
 - `docs/QA_GATE.md`
 - `docs/CHANGELOG.md`
-**Commit hash:** *(pending — not yet committed)*
-**Push result:** *(pending)*
+**Commit hash:** 16db990
+**Push result:** `main -> main`
 **Issues:** None
 
 ---

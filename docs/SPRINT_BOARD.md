@@ -216,12 +216,13 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 | Sprint | Description | Commit | Date |
 |---|---|---|---|
-| 396 | Final Prototype Visual Match + Regression V1 | *(pending commit)* | 2026-05-15 |
+| 398 | Demo Data Seed and DONNA Stub Visibility V1 | 1cb1ca8 | 2026-05-16 |
+| 396 | Final Prototype Visual Match + Regression V1 | 1d6e5f3 | 2026-05-15 |
 | 395 | Guided Director Demo Flow V1 | 2aa272a | 2026-05-15 |
 | 394 | Premium UI Consistency Pass V1 | 1526b10 | 2026-05-15 |
 | 393 | Cross-Screen DONNA Context Wiring Pass V1 | 1c4e701 | 2026-05-15 |
 | 392 | DONNA Executive Panel Upgrade V1 | dce85cd | 2026-05-15 |
-| 391 | Coach Recap Structuring and Review Draft V1 | *(pending commit)* | 2026-05-15 |
+| 391 | Coach Recap Structuring and Review Draft V1 | 2a8180e | 2026-05-15 |
 | 390 | Coach Recap Flow Shell V1 | c0addfc | 2026-05-15 |
 | 389 | Parent Communication Center V1 | b08c414 | 2026-05-15 |
 | 388 | Level Up Readiness Review V1 | a7f5c65 | 2026-05-15 |
@@ -235,4 +236,4 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 ---
 
-*Last updated: Sprint 396*
+*Last updated: Sprint 398*
