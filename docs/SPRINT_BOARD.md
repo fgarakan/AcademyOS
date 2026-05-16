@@ -13,13 +13,24 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 431 complete.)*
+*(No active sprint — Sprint 432 complete.)*
 
-**Next available:** Sprint 432
+**Next available:** Sprint 433
 
 ---
 
 ## Completed This Run
+
+### Sprint 432 — Director KPI Dashboard V1 ✓
+
+**Status:** COMPLETE
+**QA:** 10 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files created:** `src/app/director/kpi/page.tsx`
+**Files modified:** `src/components/nav/SidebarNav.tsx`
+**Decision:** Two-query pattern (players + curriculum states). Streak not shown (group-scope required). KPI 3 + KPI 13 shown with honest status labels.
+
+---
 
 ### Sprint 431 — DONNA KPI Summary Engine V1 ✓
 

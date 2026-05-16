@@ -100,6 +100,28 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 432 — Director KPI Dashboard V1
+
+**Date:** 2026-05-16
+**QA type:** New route — TypeScript CLEAN, static safety checks
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- All queries academy_id scoped: PASS
+- `session_attendance` scoped via `sessions!inner(academy_id)` join: PASS
+- Players not fetched via service role: PASS
+- No automatic level movement: PASS
+- No player data exposed cross-academy: PASS
+- Data quality labels shown inline (live/demo): PASS
+- Player links deep-link to profile (not auto-action): PASS
+
+**Result:** 10 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 431 — DONNA KPI Summary Engine V1
 
 **Date:** 2026-05-16

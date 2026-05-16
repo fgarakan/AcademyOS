@@ -31,6 +31,19 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 432 — Director KPI Dashboard V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** New route + sidebar nav — TypeScript CLEAN, 10 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/app/director/kpi/page.tsx`
+- `src/components/nav/SidebarNav.tsx`
+- `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`, `docs/DONNA_KPI_INTELLIGENCE_MAP.md`
+
+---
+
 ### Sprint 431 — DONNA KPI Summary Engine V1
 
 **Date:** 2026-05-16

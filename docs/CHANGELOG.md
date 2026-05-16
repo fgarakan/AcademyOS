@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-16 — Sprint 432: Director KPI Dashboard V1
+
+**Type:** Feature — new director screen `/director/kpi` + sidebar nav item. No mutations. No migrations, no package changes.
+
+**Goal:** Build director-facing KPI dashboard page. Shows per-player signals: time in level (live), absences in 30d (demo), and advancement readiness. Summary cards: active player count, advancement-ready count, attention signals count.
+
+**Files created:**
+- `src/app/director/kpi/page.tsx` — Server component. Fetches active players + curriculum states + 30-day attendance (academy_id scoped via sessions inner join). Computes per-player KPI 3 (absences) and KPI 13 (time in level). Renders summary cards + player table with status colours and deep links to player profiles.
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — Added `BarChart2` import and `{ label: 'KPI', href: '/director/kpi', icon: BarChart2 }` to ACADEMY_ITEMS.
+
+**Key design decisions:**
+- `advancement_eligible` and `enrolled_at` are on `player_curriculum_states`, not `players`. Two queries: players + curriculum states joined client-side.
+- `session_attendance` has no `academy_id` — scoped via `sessions!inner(academy_id)` join, consistent with server action pattern.
+- Streak (KPI 2) not shown on dashboard — requires player-specific group session roster to be accurate. Absences (KPI 3) computable from attendance rows only.
+- Data quality labels shown inline in table headers: "live" / "demo".
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 431: DONNA KPI Summary Engine V1
 
 **Type:** Feature — new KPI orchestration layer. No server action wiring. No migrations, no package changes, no DB writes.

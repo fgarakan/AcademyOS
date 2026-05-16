@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar,
   LogOut, ClipboardList,
-  LayoutTemplate, Terminal, Activity, Settings, Rocket,
+  LayoutTemplate, Terminal, Activity, Settings, Rocket, BarChart2,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
@@ -15,6 +15,7 @@ const ACADEMY_ITEMS = [
   { label: 'Sessions',     href: '/director/sessions',        icon: Calendar },
   { label: 'Review Queue', href: '/director/review',          icon: ClipboardList },
   { label: 'Signals',      href: '/director/signals',         icon: Activity },
+  { label: 'KPI',          href: '/director/kpi',             icon: BarChart2 },
   { label: 'Curriculum',   href: '/director/curriculum',      icon: BookOpen },
   { label: 'Templates',    href: '/director/class-templates', icon: LayoutTemplate },
 ]

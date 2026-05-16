@@ -8,6 +8,26 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 432: Director KPI Dashboard V1
+
+**What changed:** Added `/director/kpi` page (server component). Fetches active players, curriculum states, and 30-day attendance (all academy_id scoped). Computes KPI 3 (absences) and KPI 13 (time in level) per player. Added KPI nav item to sidebar.
+
+**Integrates with:**
+- `players` — active player list (is_active, full_name, academy_id)
+- `player_curriculum_states` — advancement_eligible, enrolled_at per player
+- `session_attendance` + `sessions!inner` — 30-day attendance scoped via join (consistent with DONNA server action pattern)
+- `SidebarNav` — KPI nav item added to ACADEMY_ITEMS section
+- `attendanceKpiEngine.computeRecentAbsences` — KPI 3 per player
+- `developmentVelocityKpiEngine.computeTimeInLevel` — KPI 13 per player
+
+**Decisions recorded:**
+- **Two-query approach**: `players` + `player_curriculum_states` fetched separately, joined client-side by player_id. Avoids complex Supabase nested select for fields on different tables.
+- **No streak on dashboard**: `computeMissedSessionStreak` requires the player's group session roster for accurate computation. Dashboard uses absences (KPI 3) instead — computable from attendance rows alone.
+- **`__none__` sentinel**: `player_curriculum_states` query uses `.in('player_id', playerIds.length > 0 ? playerIds : ['__none__'])` to avoid empty array errors when no players.
+- **Data quality inline labels**: "live" and "demo" shown next to column headers so directors see KPI tier at a glance.
+
+---
+
 ## 2026-05-16 — Sprint 431: DONNA KPI Summary Engine V1
 
 **What changed:** Added `donnaKpiSummaryEngine.ts`. `PlayerKpiSummary` interface aggregates all per-player KPI result arrays plus `liveCount`, `partialCount`, `demoCount`, `insufficientCount`. `buildPlayerKpiSummary()` accepts pre-computed KPI result objects and returns the structured summary. `formatKpiSummaryForDonna()` produces a quality header line for DONNA output.
