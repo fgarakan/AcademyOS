@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-16 — Sprint 443: Review Queue Multi-Type Clarification Visibility V1
+
+**Type:** Hardening — code change, no migration.
+
+**Goal:** Fix 4 action types where `clarification_needed` items were fetched by decision controls but invisible in the review queue.
+
+**Root cause:** Priority recommendation, attendance exception, requirement evidence link, and curriculum override queries all used `.in('status', ['pending_review', 'approved'])`, missing `clarification_needed`. Their decision controls have "Send back for clarification" buttons — items clicked would vanish from the queue.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — added `clarification_needed` to 4 status filters; computed 4 new clarification collections; added all 4 to `completedCount`; rendered 4 new sections in Completed tab using their respective card components
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 442: Review Queue Ready-to-Apply Summary Counts V1
 
 **Type:** Hardening — code change, no migration.
