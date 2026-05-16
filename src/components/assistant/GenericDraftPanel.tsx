@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { X, Edit2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { DONNA_TASK_CONTRACTS } from './donnaTaskContracts'
 import type { DonnaTaskQuestion } from './donnaTaskContracts'
@@ -497,6 +498,14 @@ export function GenericDraftPanel({
                 {approveResult.details}
               </pre>
             </div>
+          )}
+          {approveResult.createdId && (
+            <Link
+              href="/director/review"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm text-lime hover:text-lime/80 font-medium transition-colors"
+            >
+              View draft in Review Queue →
+            </Link>
           )}
           <button
             onClick={onCancel}

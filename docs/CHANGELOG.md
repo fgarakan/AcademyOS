@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-16 — Sprint 403: DONNA Review Queue Connection V1
+
+**Type:** Frontend — no DB writes, no migrations, no new packages
+
+**Goal:** After DONNA saves a draft to proposed_actions, show a "View draft in Review Queue →" navigation link in the DONNA panel. Connects the DONNA workflow to the review queue at `/director/review`.
+
+**Files modified:**
+- `src/components/assistant/GenericDraftPanel.tsx` — added "View draft in Review Queue →" link in the approval success state, shown only when `approvalResult.createdId` is a non-empty string (real saved drafts only, not read-only summaries).
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** No new DB writes. No approve/reject execution changes. The link navigates to the existing `/director/review` route. No auth or RLS changes.
+
+---
+
 ## 2026-05-16 — Sprint 402: DONNA Parent-Safe Update Draft V1
 
 **Type:** Backend enhancement — no new write paths, no migrations, no new packages
