@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 509: Full COO Demo Walkthrough V1
+
+**Type:** Next.js demo page — no migration, no schema changes, no DB writes. Demo seed data only.
+
+**Goal:** Director-facing demo page showcasing all 7 COO Intelligence dashboard components in a single tabbed walkthrough. Section nav pills, demo banner with `DEMO_SEED_MARKER`, each section renders its dashboard with seed data from `donnaDemoSeed.ts`. Nothing on this page writes to the database.
+
+**Files created:**
+- `src/app/director/donna-coo-demo/page.tsx` — `'use client'` demo walkthrough. 7-section nav (command_brief, coo_report, player_attention, group_health, coach_support, parent_coverage, curriculum). `DemoBanner` with `DEMO_SEED_MARKER`. Lime active pill nav. Renders all 7 COO dashboard components with demo seed props. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 508: Production Safety Audit V1
 
 **Type:** Safety audit document — no code changes, no migration.
