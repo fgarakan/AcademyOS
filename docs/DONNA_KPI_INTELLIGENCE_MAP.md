@@ -159,4 +159,6 @@ When a director asks DONNA a question, these KPIs are triggered:
 
 | Sprint | Change |
 |---|---|
+| 422 | Player Development Health (KPI 15) engine built — composite Healthy/Watch/At Risk/Insufficient Data label added to DONNA player progress summary. Status: `partial`. |
+| 421 | Attendance KPI Engine built — KPIs 1, 2, 3, 9 computed from `session_attendance` and surfaced in DONNA. Four-tier status system introduced. |
 | 420 | Initial audit — 25 KPIs defined, 2 live / 16 demo-only / 7 data-insufficient, 8 gaps registered |

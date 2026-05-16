@@ -8,6 +8,26 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 422: Player Development Health KPI V1
+
+**What changed:** Added `developmentHealthKpiEngine.ts` — pure TypeScript composite KPI 15 engine. Step 7 added to `fetchPlayerProgressSummaryAction`: fetches active high-severity development signals and most recent parent update draft, then computes Development Health label (Healthy / Watch / At Risk / Insufficient Data) and appends to DONNA player progress summary.
+
+**Integrates with:**
+- `src/lib/kpi/attendanceKpiEngine.ts` — attendance KPI results (values) are passed as inputs to the health engine
+- `src/lib/kpi/kpiTypes.ts` — `KpiResult` and `KpiStatus` types used
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — Step 7 added after Step 6 (attendance KPIs)
+- `player_development_signals` table — read-only, academy_id scoped, severity = 'high' + is_active = true filter
+- `parent_updates` table — read-only, academy_id scoped, most recent draft created_at
+- `player_curriculum_states` — enrolled_at now included in Step 2 select for time-in-level calculation
+
+**Decisions recorded:**
+- **Composite status `partial`**: inherits proxy from attendance streak (group roster inference) and parent update (draft creation proxy). Cannot be `live` or pure `demo` — explicit caveat shown in DONNA output.
+- **Insufficient Data threshold**: fewer than 2 non-null inputs returns `insufficient_data` status, not a manufactured score.
+- **Risk score thresholds**: 0–24 Healthy, 25–49 Watch, 50+ At Risk. Chosen to be conservative — a single missed streak of 2 alone puts player in Watch.
+- **No new server action**: wired into existing `fetchPlayerProgressSummaryAction` as Step 7, consistent with attendance KPI pattern from Sprint 421.
+
+---
+
 ## 2026-05-16 — Sprint 399: Persistent DONNA Panel State V1
 
 **What changed:** Converted DONNA from a modal-like panel (clicking outside closes it) to a persistent executive side panel (only intentional close actions close it). Seven targeted edits to `DonnaAssistantButton.tsx`.

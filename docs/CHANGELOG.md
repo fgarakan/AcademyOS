@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-16 — Sprint 422: Player Development Health KPI V1
+
+**Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.
+
+**Goal:** Build the Player Development Health composite KPI (KPI 15) as a pure TypeScript engine and wire it into the DONNA player progress summary. Composite of: attendance rate, missed streak, time in level, coach observation recency, active high-severity signals, parent update recency.
+
+**Files created:**
+- `src/lib/kpi/developmentHealthKpiEngine.ts` — `DevelopmentHealthInput` interface, `computeDevelopmentHealth()` composite engine, `formatDevelopmentHealthForDonna()` output formatter. Status: `partial`. Labels: Healthy / Watch / At Risk / Insufficient Data.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — Import added; Step 2 select updated to include `enrolled_at`; Step 7 added: fetch active high-severity signals + most recent parent update; health engine called and wired into DONNA summary output.
+
+**Key design decisions:**
+- KPI 15 status is `partial`: inherits proxy from attendance streak (group roster inference) and parent update (draft creation date, not delivery)
+- `Insufficient Data` returned when fewer than 2 inputs are available — never shows a score with no basis
+- Component breakdown always shown in DONNA output so director can inspect the risk factors
+- Risk score threshold: Healthy 0–24, Watch 25–49, At Risk 50+
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** No migrations. No RLS changes. No package installs. All fetches read-only and academy_id scoped. DONNA output is director-facing only.
+
+---
+
 ## 2026-05-16 — Sprint 421: Attendance KPI Engine V1
 
 **Type:** Feature — new KPI engine library + server action wiring. No migrations, no package changes, no DB writes.

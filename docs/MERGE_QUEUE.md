@@ -31,6 +31,21 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 422 — Player Development Health KPI V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Engine-only sprint — TypeScript CLEAN, no browser QA required (pure engine, no UI route)
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/lib/kpi/developmentHealthKpiEngine.ts` (new)
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`
+- docs (6 files)
+**Commit hash:** — (pending user "commit")
+**Issues:** None.
+
+---
+
 ### Sprint 399 — Persistent DONNA Panel State V1
 
 **Date:** 2026-05-16

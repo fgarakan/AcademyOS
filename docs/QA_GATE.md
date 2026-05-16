@@ -100,6 +100,30 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 422 — Player Development Health KPI V1
+
+**Date:** 2026-05-16
+**QA type:** Engine-only (pure TypeScript — no UI route, no browser QA required)
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0
+
+**Static safety checks:**
+- No DB writes in engine: PASS
+- No DB writes in server action Step 7: PASS (read-only queries only)
+- All queries academy_id scoped: PASS
+- No DANA references: PASS
+- No parent sends: PASS
+- No player level movement: PASS
+- No roster changes: PASS
+- No migrations: PASS
+- No package changes: PASS
+- Composite status `partial` (not `live`): PASS
+- `Insufficient Data` returned when <2 inputs available: PASS
+- DONNA output shows component breakdown for director inspection: PASS
+
+**Result:** 12 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 399 — Persistent DONNA Panel State V1
 
 **Date:** 2026-05-16

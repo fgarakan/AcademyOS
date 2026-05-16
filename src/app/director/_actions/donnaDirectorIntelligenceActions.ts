@@ -12,6 +12,11 @@ import {
   type AttendanceRow,
   type SessionRow,
 } from '@/lib/kpi/attendanceKpiEngine'
+import {
+  computeDevelopmentHealth,
+  formatDevelopmentHealthForDonna,
+  type DevelopmentHealthInput,
+} from '@/lib/kpi/developmentHealthKpiEngine'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper (director/head_coach only)
@@ -748,9 +753,10 @@ export async function fetchPlayerProgressSummaryAction(
     .single()
 
   // Step 2 — Curriculum state (scoped to academy_id)
+  // enrolled_at added Sprint 422 for time-in-level health KPI
   const { data: curriculumState } = await rawDb
     .from('player_curriculum_states')
-    .select('current_level_id, advancement_eligible, advancement_blocked_by')
+    .select('current_level_id, advancement_eligible, advancement_blocked_by, enrolled_at')
     .eq('player_id', confirmedPlayerId)
     .eq('academy_id', academyId)
     .maybeSingle()
@@ -842,6 +848,49 @@ export async function fetchPlayerProgressSummaryAction(
   })
   const attendanceLines = formatAttendanceKpisForDonna(attendanceKpiResults)
 
+  // Step 7 — Development Health KPI inputs (Sprint 422)
+  // Fetch active high-severity signals + most recent parent update draft
+  const { data: activeSignalsRaw } = await rawDb
+    .from('player_development_signals')
+    .select('title, severity')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .eq('severity', 'high')
+    .limit(5)
+  const activeSignalTitles: string[] = (activeSignalsRaw ?? []).map((s: any) => String(s.title ?? ''))
+
+  const { data: latestParentUpdateRaw } = await rawDb
+    .from('parent_updates')
+    .select('created_at')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const lastParentUpdateAt: string | null =
+    latestParentUpdateRaw?.created_at ? String(latestParentUpdateRaw.created_at) : null
+
+  const lastObservationAt: string | null =
+    observations.length > 0 && observations[0]?.created_at
+      ? String(observations[0].created_at)
+      : null
+
+  const healthInput: DevelopmentHealthInput = {
+    playerId: confirmedPlayerId,
+    attendanceRatePct: attendanceKpiResults[0]?.value ?? null,
+    missedStreak: attendanceKpiResults[1]?.value ?? null,
+    recentAbsenceCount: attendanceKpiResults[2]?.value ?? null,
+    enrolledAt: curriculumState?.enrolled_at ? String(curriculumState.enrolled_at) : null,
+    advancementEligible: curriculumState?.advancement_eligible ?? null,
+    lastObservationAt,
+    hasActiveHighSeveritySignal: activeSignalTitles.length > 0,
+    activeSignalTitles,
+    lastParentUpdateAt,
+  }
+  const developmentHealthResult = computeDevelopmentHealth(healthInput)
+  const developmentHealthLines = formatDevelopmentHealthForDonna(developmentHealthResult)
+
   // Build deterministic summary — no AI, no external API
   const firstName: string =
     (playerRow?.first_name as string | null) ??
@@ -890,6 +939,7 @@ export async function fetchPlayerProgressSummaryAction(
     ...(prioritySummary.length > 0 ? ['Active priorities:'] : []),
     ...prioritySummary.map((p: string) => `• ${p}`),
     ...attendanceLines,
+    ...developmentHealthLines,
     ...(dataGaps.length > 0 ? ['', 'DATA GAPS:'] : []),
     ...dataGaps.map((g: string) => `⚠ ${g}`),
   ]
