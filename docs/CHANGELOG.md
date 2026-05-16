@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 507: Demo QA Seed Polish V1
+
+**Type:** TypeScript utility — no migration, no schema changes, no DB writes. Demo data only.
+
+**Goal:** Realistic mock/demo seed data for all 7 COO Intelligence dashboard components. Command brief, COO weekly report, player attention risk, group health, coach support, parent coverage, curriculum bottleneck. `DEMO_SEED_MARKER` constant clearly labels all data as demo-only. Import in demo pages only.
+
+**Files created:**
+- `src/lib/donna/donnaDemoSeed.ts` — `DEMO_SEED_MARKER` sentinel. 7 typed seed data exports matching each dashboard's props interface. Fixed: `'serve'` → `'serve_return'` to match `ObservationSkillTag` type.
+
+**TypeScript:** CLEAN (0 errors, 1 skill tag fix applied)
+
+---
+
 ## 2026-05-16 — Sprint 506: DONNA Cross-Module Context Ranking V1
 
 **Type:** TypeScript utility — no migration, no schema changes, no DB writes.
