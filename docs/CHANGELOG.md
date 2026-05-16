@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-16 — Sprint 418: DONNA COO Block Regression V1
+
+**Type:** Regression audit — no code changes, no migrations, no new packages
+
+**Goal:** Verify all Block 1 sprints (400–417) are intact after 18 sequential sprints.
+
+**Checks performed:**
+- `npx tsc --noEmit` → CLEAN (0 errors)
+- All 4 new component files present: `LevelUpDonnaCTA.tsx`, `TodayDonnaSuggestionChip.tsx`, `DonnaOpenChip.tsx`, `DonnaDraftCard.tsx`
+- `DonnaOpenChip` wired in: level-up, parents, sessions detail (3 director pages)
+- `TodayDonnaSuggestionChip` wired in `today/page.tsx` (4 chips)
+- `LevelUpDonnaCTA` wired in `level-up/page.tsx`
+- `DonnaDraftCard` wired in `review/page.tsx` (parent_communication + level_review sections)
+- `DonnaAssistantButton`: READONLY_TASK_IDS, WIRED_TASK_IDS, "Save Draft for Review" label all intact
+- `GenericDraftPanel`: success state headings, "Click ✏" hint, `hover:text-lime` edit button all intact
+- `donnaVisibilityGuardrail.ts`: private obs copy and sanitizer note intact
+- `donnaPageContextRegistry.ts`: coach session workspace context present
+- `donnaDirectorIntelligenceActions.ts`: DATA GAPS and PREPARATION NEEDED sections intact; observation count in safetyNotes intact
+- `coach/recap/page.tsx`: Sprint 417 copy changes verified
+
+**Files modified:** None (audit only)
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 417: DONNA Coach-Facing Recap UX Pass V1
 
 **Type:** UX copy pass — no DB writes, no migrations, no new packages, no new components
