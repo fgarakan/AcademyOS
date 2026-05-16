@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-16 — Sprint 397: Human Demo Review and DONNA Operating Gap Audit V1
+
+**Type:** Audit only — no source code changes, no migrations, no package changes
+
+**Goal:** Produce a structured human demo review checklist and a comprehensive gap audit across DONNA capabilities, UI polish, and backend/workflow execution. Recommend Sprint 398–406 build order.
+
+**Docs created:**
+- `docs/HUMAN_DEMO_REVIEW_SPRINT_397.md` — Manual review checklist for Farshad to walk through the 5-step demo tour. 15 audit areas. Per-screen checklists with known limitations pre-documented.
+- `docs/DONNA_OPERATING_GAP_AUDIT.md` — 22 gaps across DONNA capabilities (7), UI polish (7), and backend/workflow execution (8). Each gap has severity (P0–P3), impact description, and fix recommendation.
+- `docs/NEXT_SPRINT_RECOMMENDATION.md` — Sprint 398–406 sequence. Strategic recommendation: UI polish first (Sprint 398–401), then workflow execution (Sprint 402+). Explicit stop conditions for high-consequence sprints (external delivery, multi-academy portal).
+
+**Key findings:**
+- P1 gaps: 4 stub DONNA task contracts, no coach DONNA context, empty test DB (all screens show zero data), coach recap has no DB write
+- P0 gap (production): no RLS verification with two coach accounts
+- Recommended next sprint: Sprint 398 — Demo Data Seed + DONNA Stub Visibility
+- Strategic recommendation: UI polish before workflow execution; external delivery (Sprint 406) gated behind full pipeline QA
+
+**No code changes in Sprint 397.** Docs only.
+
+---
+
 ## 2026-05-15 — Sprint 396: Final Prototype Visual Match + Regression V1
 
 **Type:** Full regression QA — no source code changes
