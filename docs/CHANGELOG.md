@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 470: Coach Wrap-Up Guided Question Flow V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Create the guided 5-question coach wrap-up flow. One question at a time, with DONNA prompt, progress bar, free-text input, Back/Skip/Next controls, and a review summary screen before submit. No official writes.
+
+**Files created:**
+- `src/components/capture/WrapUpGuidedFlow.tsx` — `'use client'` guided flow. `WrapUpAnswer` and `WrapUpAnswerSet` types. 5 `WrapUpQuestion` definitions (attendance, session actual, standouts, needs attention, follow-up). `ProgressBar`, `WrapUpSummaryScreen`, and `WrapUpGuidedFlow` components. DONNA avatar prompt line per question. Skip/Back/Next controls. Summary review with per-question display. `onComplete(WrapUpAnswerSet)` callback for parent. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 469: Coach Daily Wrap-Up Architecture Audit V1
 
 **Type:** Documentation only — no migration, no schema changes, no code changes.
