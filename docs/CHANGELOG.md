@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 478: Recap to Review Queue Routing V1
+
+**Type:** TypeScript utility — no migration, no schema changes, no DB writes.
+
+**Goal:** Map WrapUpFullDraft to proposed_action input shapes for the director review queue. Defines routing contract: attendance exceptions → attendance_exception, session actual → session_wrap_up_v1, observations → coach_observation, follow-ups → their respective modules. Source metadata includes coach_wrap_up_v2, sessionId, reviewRequired: true, notOfficial: true.
+
+**Files created:**
+- `src/lib/wrap-up/wrapUpReviewQueueMapper.ts` — Pure mapper. `ProposedActionInput`, `ReviewItemSource`, `WrapUpReviewQueueMapping` types. `mapWrapUpToReviewQueue()` main function that produces all review items from all 4 wrap-up sections. `itemsByModule` grouping. Summary string. `assertAllItemsPendingReview()` safety assertion. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 477: Coach Review Summary Before Submit V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
