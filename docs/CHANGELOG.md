@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-16 — Sprint 421: Attendance KPI Engine V1
+
+**Type:** Feature — new KPI engine library + server action wiring. No migrations, no package changes, no DB writes.
+
+**Goal:** Build a pure-TypeScript attendance KPI engine (KPIs 1, 2, 3, 9) and wire it into the DONNA player progress summary. Introduce the four-tier `KpiStatus` type (`live` / `partial` / `demo` / `insufficient_data`) replacing the old `demo-only` / `data-insufficient` labels.
+
+**Files created:**
+- `src/lib/kpi/kpiTypes.ts` — `KpiStatus` type, `KpiResult` interface, `formatRateDisplay` helper. No DB imports, no async.
+- `src/lib/kpi/attendanceKpiEngine.ts` — pure computation functions for KPIs 1 (Attendance Rate, `demo`), 2 (Missed-Session Streak, `partial`), 3 (2+ Absences in 30 Days, `demo`), 9 (Follow-Up Latency, `partial`). Wrapper `computeAttendanceKpis()` and `formatAttendanceKpisForDonna()` for DONNA output.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — Step 6 added: fetches `session_attendance` (academy-scoped via `sessions!inner(academy_id)` join), group sessions, and follow-up `proposed_actions`; maps to plain objects; calls KPI engine; appends formatted attendance lines to DONNA summary.
+- `docs/ACADEMY_COO_KPI_DICTIONARY.md` — Sufficiency Labels table updated to four-tier system; KPIs 2, 3, 9 individual entries updated to correct four-tier labels (`partial`, `demo`, `partial`); Summary Table updated for all 25 KPIs; totals updated to 2 live · 6 partial · 9 demo · 8 insufficient_data.
+
+**Key design decisions:**
+- KPI 2 is `partial` (not `demo`): streak inference from group roster is an approximation — only accurate when absence rows are explicitly recorded.
+- KPI 9 is `partial` (not `demo`): attribution of follow-up actions to missed sessions uses timing proximity, not a direct FK.
+- `session_attendance` has no `academy_id` — scoped via `sessions!inner(academy_id)` join throughout.
+- Engine functions are pure (no DB, no async) — all querying stays in the server action.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** No migrations. No RLS changes. No package installs. DONNA reads only; all output flows through existing review queue pattern.
+
+---
+
 ## 2026-05-16 — Sprint 420: Academy COO KPI Data Model Audit V1
 
 **Type:** Docs/audit only — no code changes, no migrations, no package changes, no DB writes

@@ -6,6 +6,12 @@ import { isPreviewMode } from '@/lib/utils/previewMode'
 import type { Json } from '@/lib/supabase/database.types'
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
 import { buildParentSupportGuidanceDraft, sanitizeParentFacingText } from '@/lib/communications/parentSafeResponseRules'
+import {
+  computeAttendanceKpis,
+  formatAttendanceKpisForDonna,
+  type AttendanceRow,
+  type SessionRow,
+} from '@/lib/kpi/attendanceKpiEngine'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper (director/head_coach only)
@@ -733,10 +739,10 @@ export async function fetchPlayerProgressSummaryAction(
   const playerLabel = (fields.player ?? '').replace(/\s*✓$/, '').trim() || 'this player'
   const summaryFor = (fields.summary_for ?? '').trim() || 'director reference'
 
-  // Step 1 — Player name (scoped to academy_id)
+  // Step 1 — Player name + group (scoped to academy_id)
   const { data: playerRow } = await rawDb
     .from('players')
-    .select('first_name, full_name')
+    .select('first_name, full_name, current_group_id')
     .eq('id', confirmedPlayerId)
     .eq('academy_id', academyId)
     .single()
@@ -778,6 +784,63 @@ export async function fetchPlayerProgressSummaryAction(
     .eq('status', 'active')
     .limit(3)
   const priorities: any[] = prioritiesRaw ?? []
+
+  // Step 6 — Attendance KPIs: last 30 days, scoped via sessions.academy_id
+  // session_attendance has no academy_id — must join through sessions.
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString()
+
+  const { data: playerAttendanceRaw } = await rawDb
+    .from('session_attendance')
+    .select('player_id, session_id, status, marked_at, sessions!inner(academy_id)')
+    .eq('player_id', confirmedPlayerId)
+    .eq('sessions.academy_id', academyId)
+    .gte('marked_at', thirtyDaysAgoStr)
+  const playerAttendance: AttendanceRow[] = (playerAttendanceRaw ?? []).map((a: any) => ({
+    player_id: String(a.player_id),
+    session_id: String(a.session_id),
+    status: String(a.status ?? ''),
+    marked_at: String(a.marked_at ?? ''),
+  }))
+
+  // Group sessions (last 30 days) — player's current group defines the expected roster
+  const playerGroupId: string | null =
+    typeof playerRow?.current_group_id === 'string' ? playerRow.current_group_id : null
+  let groupSessions: SessionRow[] = []
+  if (playerGroupId) {
+    const { data: groupSessionsRaw } = await rawDb
+      .from('sessions')
+      .select('id, scheduled_date, group_id')
+      .eq('academy_id', academyId)
+      .eq('group_id', playerGroupId)
+      .gte('scheduled_date', thirtyDaysAgoStr)
+      .order('scheduled_date', { ascending: false })
+    groupSessions = (groupSessionsRaw ?? []).map((s: any) => ({
+      id: String(s.id),
+      scheduled_date: String(s.scheduled_date),
+      group_id: s.group_id ? String(s.group_id) : null,
+    }))
+  }
+
+  // Follow-up proposed_actions for KPI 9 (parent_communication or attendance_exception modules)
+  const { data: followUpsRaw } = await rawDb
+    .from('proposed_actions')
+    .select('created_at')
+    .eq('academy_id', academyId)
+    .eq('target_object_id', confirmedPlayerId)
+    .in('target_module', ['parent_communication', 'attendance_exception'])
+    .gte('created_at', thirtyDaysAgoStr)
+  const followUpDates: string[] = (followUpsRaw ?? []).map((f: any) => String(f.created_at ?? ''))
+
+  const attendanceKpiResults = computeAttendanceKpis({
+    playerId: confirmedPlayerId,
+    playerAttendance,
+    groupSessions,
+    followUpCreatedAtDates: followUpDates,
+    windowDays: 30,
+  })
+  const attendanceLines = formatAttendanceKpisForDonna(attendanceKpiResults)
 
   // Build deterministic summary — no AI, no external API
   const firstName: string =
@@ -826,6 +889,7 @@ export async function fetchPlayerProgressSummaryAction(
     ...observationHighlights.map((o: string) => `• ${o}`),
     ...(prioritySummary.length > 0 ? ['Active priorities:'] : []),
     ...prioritySummary.map((p: string) => `• ${p}`),
+    ...attendanceLines,
     ...(dataGaps.length > 0 ? ['', 'DATA GAPS:'] : []),
     ...dataGaps.map((g: string) => `⚠ ${g}`),
   ]

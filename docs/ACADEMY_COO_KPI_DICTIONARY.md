@@ -10,9 +10,12 @@
 
 | Label | Meaning |
 |---|---|
-| `live` | All required data exists in DB. Can be computed today from real records. |
-| `demo-only` | Required tables exist but may have sparse or no seed data in the demo academy. Computable logic is correct; result may be 0 or null. |
-| `data-insufficient` | Critical data is missing from the schema. Cannot be honestly computed until schema gap is resolved. |
+| `live` | Direct DB query, data reliably populated by normal system operation, computation is exact. No disclaimer needed in DONNA output. |
+| `partial` | Schema complete but computation uses a proxy, approximation, or has a meaningful caveat that reduces precision. DONNA must surface the caveat alongside the value. |
+| `demo` | Schema correct, formula correct, but meaningful only when sufficient real data exists. Data-density dependent. DONNA must show raw counts (e.g. "8 of 10") not just percentages. |
+| `insufficient_data` | Critical schema element or infrastructure missing. Cannot be honestly computed. DONNA must explain what is missing instead of showing a value. |
+
+> **Note (Sprint 421):** Labels updated from the original three-tier system (`demo-only`, `data-insufficient`) to the four-tier system. `partial` now distinguishes proxy/approximation KPIs from purely data-density-dependent ones.
 
 ---
 
@@ -35,10 +38,10 @@
 **Required data:** `session_attendance.player_id`, `session_attendance.status`, `session_attendance.marked_at`, `sessions.scheduled_date`, `sessions.academy_id`  
 **Source tables:** `session_attendance`, `sessions`  
 **Missing data:** None. `session_attendance` exists with `status` and `marked_at`. Need to confirm which status values map to "attended" — likely `'present'` or `'attended'`.  
-**Data sufficiency:** `demo-only` — schema is complete; demo data density determines usefulness.  
+**Data sufficiency:** `demo` — schema is complete and formula is direct. Meaningful only when session_attendance rows are consistently recorded for both attended and absent sessions.  
 **DONNA interpretation:** "Alex attended 8 of 10 scheduled sessions in the last 30 days (80%). That's within the healthy range for group training. No follow-up needed."  
 **Safe next action:** Flag players below 70% for DONNA to surface in the Review Queue as an attendance concern draft.  
-**Status:** `demo-only`
+**Status:** `demo`
 
 ---
 
@@ -50,10 +53,10 @@
 **Required data:** `session_attendance.player_id`, `session_attendance.status`, `sessions.scheduled_date` (ordered), `sessions.group_id`, `players.current_group_id`  
 **Source tables:** `session_attendance`, `sessions`, `players`  
 **Missing data:** No per-session roster — the list of players expected at each session must be derived from `players.current_group_id = sessions.group_id`. If a player is absent with no `session_attendance` row, they cannot be distinguished from a player who had no obligation. Requires `session_attendance` row to exist (even as `status = 'absent'`) for reliable streak counting.  
-**Data sufficiency:** `demo-only` — logic is correct if attendance is marked; if rows are only written on present, absent rows must be inferred from group roster.  
+**Data sufficiency:** `partial` — logic is correct if absence rows are explicitly recorded. If only "present" rows are written, absent sessions must be inferred from group roster — which is imprecise when session rosters are not stable. Streak may undercount or misattribute when no absence row exists.  
 **DONNA interpretation:** "Tyler has missed 3 consecutive sessions. This triggers a follow-up flag. DONNA suggests a check-in note for the director to review."  
 **Safe next action:** Streak ≥ 2 → DONNA creates an attendance-exception draft for director review.  
-**Status:** `demo-only`
+**Status:** `partial`
 
 ---
 
@@ -65,10 +68,10 @@
 **Required data:** `session_attendance.player_id`, `session_attendance.status`, `session_attendance.marked_at`, `players.academy_id`, `players.is_active`  
 **Source tables:** `session_attendance`, `players`  
 **Missing data:** Same caveat as KPI 2 — absences must be explicitly recorded, not inferred.  
-**Data sufficiency:** `demo-only`  
+**Data sufficiency:** `demo` — schema correct, formula direct. Meaningful only when coaches explicitly mark absences. If only "present" rows are written, this count will be 0 for all players regardless of actual attendance.  
 **DONNA interpretation:** "3 players have 2 or more absences in the last 30 days: Tyler M., Emma R., and Sam K. DONNA recommends a follow-up for each."  
 **Safe next action:** DONNA surfaces these players in the director's attention queue with a proposed parent communication draft (pending director approval).  
-**Status:** `demo-only`
+**Status:** `demo`
 
 ---
 
@@ -155,10 +158,10 @@
 **Required data:** `session_attendance.player_id`, `session_attendance.session_id`, `sessions.scheduled_date`, `proposed_actions.created_at`, `proposed_actions.target_object_id` (player_id), `proposed_actions.target_module`  
 **Source tables:** `session_attendance`, `sessions`, `proposed_actions`, `parent_updates`  
 **Missing data:** `proposed_actions` does not have a direct FK to `session_attendance`. The link between "missed session" and "follow-up draft" must be inferred from `target_object_id` matching a player_id and timing. This is an approximation.  
-**Data sufficiency:** `demo-only` — computable as a rough timing proxy. Exact attribution requires a `trigger_session_id` FK on `proposed_actions`.  
+**Data sufficiency:** `partial` — computable as a timing-proximity approximation. The link between a missed session and a follow-up action is inferred by matching `target_object_id = player_id` and date ordering, not by a direct FK. Attribution is approximate. Exact attribution requires a `trigger_session_id` FK on `proposed_actions`.  
 **DONNA interpretation:** "On average, follow-up actions for missed sessions are created within 2.3 days. The goal is under 24 hours."  
 **Safe next action:** DONNA flags when no follow-up exists for a player who missed a session more than 48 hours ago.  
-**Status:** `demo-only`
+**Status:** `partial`
 
 ---
 
@@ -420,33 +423,33 @@
 
 | # | KPI Name | Category | Status |
 |---|---|---|---|
-| 1 | Attendance Rate by Player | Attendance & Engagement | `demo-only` |
-| 2 | Missed-Session Streak | Attendance & Engagement | `demo-only` |
-| 3 | Players with 2+ Absences in 30 Days | Attendance & Engagement | `demo-only` |
-| 4 | Coach Recap Completion Rate | Coach Operations | `demo-only` |
-| 5 | Parent Update Frequency | Parent & Communication | `data-insufficient` |
-| 6 | Parent Response Rate | Parent & Communication | `data-insufficient` |
-| 7 | Player Retention by Group | Retention & Health | `demo-only` |
-| 8 | Dropout Rate by Level | Retention & Health | `data-insufficient` |
-| 9 | Time from Missed Attendance to Follow-Up | Attendance & Engagement | `demo-only` |
-| 10 | Level-Readiness Delay Caused by Missed Sessions | Player Development | `demo-only` |
-| 11 | Private Lesson / Makeup Conversion | Attendance & Engagement | `data-insufficient` |
-| 12 | Player Development Velocity | Player Development | `demo-only` |
+| 1 | Attendance Rate by Player | Attendance & Engagement | `demo` |
+| 2 | Missed-Session Streak | Attendance & Engagement | `partial` |
+| 3 | Players with 2+ Absences in 30 Days | Attendance & Engagement | `demo` |
+| 4 | Coach Recap Completion Rate | Coach Operations | `partial` |
+| 5 | Parent Update Frequency | Parent & Communication | `insufficient_data` |
+| 6 | Parent Response Rate | Parent & Communication | `insufficient_data` |
+| 7 | Player Retention by Group | Retention & Health | `demo` |
+| 8 | Dropout Rate by Level | Retention & Health | `insufficient_data` |
+| 9 | Time from Missed Attendance to Follow-Up | Attendance & Engagement | `partial` |
+| 10 | Level-Readiness Delay Caused by Missed Sessions | Player Development | `partial` |
+| 11 | Private Lesson / Makeup Conversion | Attendance & Engagement | `insufficient_data` |
+| 12 | Player Development Velocity | Player Development | `demo` |
 | 13 | Time in Current Level | Player Development | `live` |
-| 14 | Evidence Coverage Score | Player Development | `demo-only` |
-| 15 | Player Attention Risk Score | Retention & Health | `demo-only` |
-| 16 | Group Health Score | Retention & Health | `demo-only` |
-| 17 | Curriculum Coverage by Group | Curriculum & Session Quality | `data-insufficient` |
-| 18 | Session Plan Completion Rate | Curriculum & Session Quality | `data-insufficient` |
-| 19 | Coach Observation Quality Score | Coach Operations | `demo-only` |
-| 20 | Coach Plan Alignment Score | Coach Operations | `data-insufficient` |
-| 21 | Parent Trust Coverage | Parent & Communication | `demo-only` |
-| 22 | Level Readiness Accuracy | Player Development | `demo-only` |
+| 14 | Evidence Coverage Score | Player Development | `demo` |
+| 15 | Player Attention Risk Score | Retention & Health | `demo` |
+| 16 | Group Health Score | Retention & Health | `demo` |
+| 17 | Curriculum Coverage by Group | Curriculum & Session Quality | `insufficient_data` |
+| 18 | Session Plan Completion Rate | Curriculum & Session Quality | `insufficient_data` |
+| 19 | Coach Observation Quality Score | Coach Operations | `demo` |
+| 20 | Coach Plan Alignment Score | Coach Operations | `insufficient_data` |
+| 21 | Parent Trust Coverage | Parent & Communication | `partial` |
+| 22 | Level Readiness Accuracy | Player Development | `partial` |
 | 23 | Development Bottleneck by Level | Player Development | `live` |
-| 24 | Curriculum Effectiveness Score | Curriculum & Session Quality | `data-insufficient` |
-| 25 | Session Development Yield | Curriculum & Session Quality | `demo-only` |
+| 24 | Curriculum Effectiveness Score | Curriculum & Session Quality | `insufficient_data` |
+| 25 | Session Development Yield | Curriculum & Session Quality | `demo` |
 
-**Totals: 2 live · 16 demo-only · 7 data-insufficient**
+**Totals: 2 live · 6 partial · 9 demo · 8 insufficient_data**
 
 ---
 
