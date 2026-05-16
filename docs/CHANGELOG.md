@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 459: DONNA Player Curriculum Level Label V1
+
+**Type:** Code change — no migration.
+
+**Goal:** Resolve raw UUID in DONNA player intelligence summary to human-readable curriculum level name. Previously showed "Level ID: <uuid>", now shows "Level: Orange 2 (yellow_ball)".
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — added Step 2b: queries `curriculum_levels` for `display_name` + `stage` when `current_level_id` is set; updated `levelLabel` to use resolved name with stage parenthetical
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 458: Coach-Side DONNA Block Audit and Docs V1
 
 **Type:** Docs only — no code changes.
