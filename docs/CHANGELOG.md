@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 468: Curriculum Ripple Regression and Audit V1
+
+**Type:** Documentation only — no migration, no schema changes, no code changes.
+
+**Goal:** Regression and audit for the full curriculum ripple block (Sprints 461–468). Confirms no curriculum mutation, no parent publish, no player level movement, no template overwrite, no schema changes, no migration staged.
+
+**Files created:**
+- `docs/CURRICULUM_RIPPLE_REGRESSION_QA.md` — Full audit checklist: 7 check categories (curriculum mutation, parent/player publication, player level movement, template overwrite, schema/migration, DANA references, TypeScript). Files delivered table. What-not-built deferred table. Block completion summary.
+
+**TypeScript:** Not applicable (docs only)
+
+---
+
 ## 2026-05-16 — Sprint 467: Template and Coach Brief Impact Preview V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
