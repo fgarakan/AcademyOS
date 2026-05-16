@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 497: Academy Health Source Map V1
+
+**Type:** TypeScript utility — no migration, no schema changes, no DB writes.
+
+**Goal:** Document the data source map for DONNA's 7 academy health KPIs: player attention risk, group health, coach support needed, parent trust coverage, curriculum bottleneck, wrap-up coverage rate, review queue throughput. For each: tables, fields, query pattern, update frequency, availability (live/partial/deferred/not_yet_built), DONNA missing-data copy, blockers.
+
+**Files created:**
+- `src/lib/donna/academyHealthSourceMap.ts` — `HealthKPISource` and `HealthKPIAvailability` types. `ACADEMY_HEALTH_SOURCE_MAP` array with 7 KPI definitions. `getHealthKPISource()`, `getLiveHealthKPIs()`, `getDeferredHealthKPIs()`, `getHealthKPIsByAvailability()` lookup helpers. Pure constants — no DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 496: DONNA Weekly COO Report Integration V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
