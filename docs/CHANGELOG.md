@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 441: Review Queue Observation Clarification Display V1
+
+**Type:** Hardening — code change, no migration.
+
+**Goal:** Fix invisible `clarification_needed` observation drafts in the review queue Completed tab.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — computed `clarificationNeededObservationDrafts`; added to `completedCount`; rendered in Completed tab under "Player Observations — Sent Back for Clarification"
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 440: Review Queue Stale Age Indicators V1
 
 **Type:** Hardening — code change, no migration.
