@@ -100,6 +100,27 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 427 — Parent Trust KPI Engine V1
+
+**Date:** 2026-05-16
+**QA type:** Engine-only — TypeScript CLEAN, static safety checks only
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No parent sends: PASS
+- No raw notes exposed: PASS
+- DONNA output includes "draft — not sent" disclaimer: PASS
+- KPI 5 stub returns `insufficient_data` (sent_at always null): PASS
+- KPI 6 stub returns `insufficient_data` (no response tracking): PASS
+- KPI 21 handles empty draft list (no drafts → director attention message): PASS
+- No DB writes: PASS
+- All queries academy_id scoped: PASS
+- No DANA references: PASS
+
+**Result:** 9 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 426 — Coach Execution KPI Engine V1
 
 **Date:** 2026-05-16

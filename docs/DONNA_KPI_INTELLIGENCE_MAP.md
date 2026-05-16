@@ -159,6 +159,7 @@ When a director asks DONNA a question, these KPIs are triggered:
 
 | Sprint | Change |
 |---|---|
+| 427 | Parent Trust KPI Engine built — KPI 21 (partial, draft coverage) wired into DONNA summary. KPIs 5/6 implemented as `insufficient_data` stubs (no send/response infrastructure). |
 | 426 | Coach Execution KPI Engine built — KPI 19 (demo, observation quality) wired into DONNA player summary. KPI 4 (partial, recap completion) engine built, ready for group/session summary wiring. |
 | 425 | Curriculum Coverage KPI Engine built — KPI 25 (demo, session yield) wired into DONNA summary. KPIs 17/18/20 implemented as `insufficient_data` stubs (migration 062 + Sprint 48 gaps). |
 | 424 | Evidence Coverage KPI Engine built — KPI 14 (demo, gate evidence coverage) and KPI 22 (partial, readiness confidence) added to DONNA summary. Returns `insufficient_data` when gates not seeded for level. |

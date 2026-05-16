@@ -8,6 +8,20 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 427: Parent Trust KPI Engine V1
+
+**What changed:** Added `parentTrustKpiEngine.ts`. Step 7's parent update query expanded from single-row to 60-day window with `status` and `sent_at` fields. Step 12 added: KPI 21 (Parent Trust Coverage) computed from fetched drafts and appended to DONNA summary.
+
+**Integrates with:**
+- `parent_updates` — Step 7 extended to 60-day window with `status` field; `sent_at` fetched to enable future KPI 5 proxy
+- DONNA player progress summary — parent trust line appended after coach execution lines
+
+**Decisions recorded:**
+- **DONNA says "draft created — not sent"**: `formatParentTrustForDonna` output always includes the delivery disclaimer. No implied delivery.
+- **KPI 21 window = 60 days**: Longer than attendance window because parent updates are less frequent. 60 days captures reasonable update cycles.
+
+---
+
 ## 2026-05-16 — Sprint 426: Coach Execution KPI Engine V1
 
 **What changed:** Added `coachExecutionKpiEngine.ts`. Step 4 select updated to include `tags, ai_parsed`. Step 11 added to `fetchPlayerProgressSummaryAction`: maps Step 4 observations to KPI engine input, calls `computeObservationQuality()` (KPI 19), appends coach execution lines to DONNA summary.

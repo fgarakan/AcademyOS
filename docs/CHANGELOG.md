@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-16 — Sprint 427: Parent Trust KPI Engine V1
+
+**Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no parent sends.
+
+**Goal:** KPI 21 (Parent Trust Coverage, `partial`) engine built and wired. KPIs 5 and 6 implemented as `insufficient_data` stubs. Step 7's parent update query expanded from single most-recent to 60-day window with `status` field.
+
+**Files created:**
+- `src/lib/kpi/parentTrustKpiEngine.ts` — `ParentUpdateRow`/`ParentTrustInput` interfaces, `computeParentTrustCoverage()` (KPI 21, partial), `computeParentUpdateFrequencyStub()` (KPI 5, insufficient_data), `computeParentResponseRateStub()` (KPI 6, insufficient_data), `formatParentTrustForDonna()`.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — Import added; Step 7 parent update query expanded to 60-day window with `status` and `sent_at` fields; Step 12 added: parent trust KPI computed and wired into DONNA summary.
+
+**Key design decisions:**
+- KPI 21 (`partial`): DONNA explicitly says "draft created — not sent to parent." No implication of delivery.
+- KPIs 5/6 stubs explain the blocker concisely (no send infrastructure, no response tracking).
+- No raw notes or internal scores exposed in parent trust output.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 426: Coach Execution KPI Engine V1
 
 **Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.

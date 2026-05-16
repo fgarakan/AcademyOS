@@ -40,6 +40,12 @@ import {
   formatCoachExecutionForDonna,
   type ObservationRow as CoachObsRow,
 } from '@/lib/kpi/coachExecutionKpiEngine'
+import {
+  computeParentTrustCoverage,
+  formatParentTrustForDonna,
+  type ParentUpdateRow,
+  type ParentTrustInput,
+} from '@/lib/kpi/parentTrustKpiEngine'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper (director/head_coach only)
@@ -885,16 +891,23 @@ export async function fetchPlayerProgressSummaryAction(
     .limit(5)
   const activeSignalTitles: string[] = (activeSignalsRaw ?? []).map((s: any) => String(s.title ?? ''))
 
-  const { data: latestParentUpdateRaw } = await rawDb
+  // Fetch all parent updates in last 60 days for parent trust KPI (Sprint 427)
+  const sixtyDaysAgo = new Date()
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+  const { data: parentUpdatesRaw } = await rawDb
     .from('parent_updates')
-    .select('created_at')
+    .select('created_at, status, sent_at')
     .eq('player_id', confirmedPlayerId)
     .eq('academy_id', academyId)
+    .gte('created_at', sixtyDaysAgo.toISOString())
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const parentUpdateRows: ParentUpdateRow[] = (parentUpdatesRaw ?? []).map((u: any) => ({
+    created_at: String(u.created_at ?? ''),
+    status: String(u.status ?? ''),
+    sent_at: u.sent_at ? String(u.sent_at) : null,
+  }))
   const lastParentUpdateAt: string | null =
-    latestParentUpdateRaw?.created_at ? String(latestParentUpdateRaw.created_at) : null
+    parentUpdateRows.length > 0 ? parentUpdateRows[0].created_at : null
 
   const lastObservationAt: string | null =
     observations.length > 0 && observations[0]?.created_at
@@ -1022,6 +1035,16 @@ export async function fetchPlayerProgressSummaryAction(
   const observationQualityResult = computeObservationQuality(coachObsRows, 30)
   const coachExecutionLines = formatCoachExecutionForDonna([observationQualityResult])
 
+  // Step 12 — Parent Trust Coverage (KPI 21, Sprint 427)
+  // Uses parent_updates fetched in Step 7 (expanded to 60-day window with status field).
+  const parentTrustInput: ParentTrustInput = {
+    playerId: confirmedPlayerId,
+    playerParentUpdates: parentUpdateRows,
+    windowDays: 60,
+  }
+  const parentTrustResult = computeParentTrustCoverage(parentTrustInput)
+  const parentTrustLines = formatParentTrustForDonna(parentTrustResult)
+
   // Build deterministic summary — no AI, no external API
   const firstName: string =
     (playerRow?.first_name as string | null) ??
@@ -1075,6 +1098,7 @@ export async function fetchPlayerProgressSummaryAction(
     ...evidenceLines,
     ...sessionYieldLines,
     ...coachExecutionLines,
+    ...parentTrustLines,
     ...(dataGaps.length > 0 ? ['', 'DATA GAPS:'] : []),
     ...dataGaps.map((g: string) => `⚠ ${g}`),
   ]
