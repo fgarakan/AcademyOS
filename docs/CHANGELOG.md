@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 449: DONNA Coach Recap Completion Rate Signal V1
+
+**Type:** KPI wiring — code change, no migration.
+
+**Goal:** Wire `computeRecapCompletionRate` (KPI 4) into the per-player DONNA intelligence action. Adds a coach accountability signal showing what % of this player's group sessions have been recapped.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — added `computeRecapCompletionRate` + `RecapCheckRow` to coachExecutionKpiEngine import; added Step 14 querying voice_notes for group session IDs; computed KPI 4; wired into `recapCompletionLines` and added to `summaryLines`
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 448: Review Queue Maturity Audit and Docs V1
 
 **Type:** Docs only — no code changes.
