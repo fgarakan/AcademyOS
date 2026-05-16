@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 482: Adaptive Coach Follow-Up Question Logic V1
+
+**Type:** TypeScript utility — no migration, no schema changes, no DB writes, no package installs.
+
+**Goal:** Pure logic module that decides which follow-up questions DONNA should ask based on the current wrap-up state. Rules: if attendance is clear → skip re-ask; if no observations → nudge prompt; if parent follow-up mentioned with sparse detail → ask for more; cap at 0–7 questions sorted by priority.
+
+**Files created:**
+- `src/lib/wrap-up/adaptiveFollowUpLogic.ts` — `buildAdaptiveFollowUpQuestions(state)` main function. Rule evaluators for attendance, session actual, observations, and follow-up sections. 13 typed `AdaptiveFollowUpQuestionId` values. `AdaptiveFollowUpQuestion` with priority sorting. `AdaptiveFollowUpResult` with `totalBeforeCap`, `cappedAt`, `skippedReasons`. Utility functions `getAdaptiveQuestion()` and `countAdaptiveQuestionsByCategory()`. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 481: DONNA Spoken Prompt UX Shell V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes, no package installs.
