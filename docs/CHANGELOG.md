@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 469: Coach Daily Wrap-Up Architecture Audit V1
+
+**Type:** Documentation only — no migration, no schema changes, no code changes.
+
+**Goal:** Define the coach daily wrap-up system architecture before building Sprints 470–484. Covers question order, input model, text/voice paths, adaptive logic, structured draft outputs, director review routing, safety boundaries, and mobile UX requirements.
+
+**Files created:**
+- `docs/COACH_WRAPUP_ARCHITECTURE_V2.md` — V2 architecture doc extending Sprint 11 baseline. Defines: 5-question sequence (attendance, session actual, standouts, needs attention, follow-up), WrapUpAnswer struct, AttendanceAnswer/SessionActualAnswer/PlayerObservationAnswer/FollowUpAnswer types, text input spec, voice dictation path, adaptive question logic, CoachWrapUpDraft output struct, director review routing table, 8 hard safety rules, mobile UX requirements, sprint 470–484 sequence map.
+
+**TypeScript:** Not applicable (docs only)
+
+---
+
 ## 2026-05-16 — Sprint 468: Curriculum Ripple Regression and Audit V1
 
 **Type:** Documentation only — no migration, no schema changes, no code changes.
