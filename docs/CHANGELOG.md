@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-16 — Sprint 428: Group Health and Fit KPI Engine V1
+
+**Type:** Feature — new KPI engine (group-level). No server action wiring (group KPIs belong in a future group summary action). No migrations, no package changes, no DB writes.
+
+**Goal:** Build group health and retention KPI engine. KPI 16 (Group Health Score, `demo`) as a weighted composite of attendance, observation coverage, recap completion, session frequency, and signal flags. KPI 7 (Player Retention by Group, `demo`) from `group_memberships.left_at`.
+
+**Files created:**
+- `src/lib/kpi/groupHealthKpiEngine.ts` — `GroupHealthInput`/`GroupRetentionInput` interfaces, `computeGroupHealth()` (KPI 16, demo), `computeGroupRetention()` (KPI 7, demo). Ready for future group summary action wiring.
+
+**Key design decisions:**
+- Group-level KPIs not wired into player progress summary action — wrong context. Engine is ready for a group summary server action in Sprint 435+.
+- KPI 16 returns `insufficient_data` when fewer than 2 input components are available — never shows a score with no basis.
+- KPI 7 retention uses `left_at = null OR is_current = true` as "still active" proxy.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 427: Parent Trust KPI Engine V1
 
 **Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no parent sends.

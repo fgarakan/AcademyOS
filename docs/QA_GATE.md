@@ -100,6 +100,26 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 428 — Group Health and Fit KPI Engine V1
+
+**Date:** 2026-05-16
+**QA type:** Engine-only (no server action wiring) — TypeScript CLEAN
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- KPI 16 returns `insufficient_data` when <2 inputs available: PASS
+- KPI 7 handles empty memberships: PASS
+- KPI 7 handles group with no 90-day history: PASS
+- No roster changes: PASS
+- No level movement: PASS
+
+**Result:** 8 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 427 — Parent Trust KPI Engine V1
 
 **Date:** 2026-05-16

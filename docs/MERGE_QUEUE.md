@@ -31,6 +31,20 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 428 — Group Health and Fit KPI Engine V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Engine-only (no server action wiring) — TypeScript CLEAN, 8 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/lib/kpi/groupHealthKpiEngine.ts` (new)
+- docs (6 files)
+**Commit hash:** — (pending)
+**Issues:** None.
+
+---
+
 ### Sprint 427 — Parent Trust KPI Engine V1
 
 **Date:** 2026-05-16

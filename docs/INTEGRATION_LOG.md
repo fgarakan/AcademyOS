@@ -8,6 +8,20 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 428: Group Health and Fit KPI Engine V1
+
+**What changed:** Added `groupHealthKpiEngine.ts`. Group-level KPIs 16 and 7 implemented as pure functions. Not wired into any server action — awaiting group summary action (Sprint 435+).
+
+**Integrates with:**
+- `group_memberships` (future) — retention uses `joined_at` and `left_at`
+- `sessions`, `session_attendance`, `coach_observations`, `player_development_signals` (future inputs to group health composite)
+
+**Decisions recorded:**
+- **KPI 16 insufficient_data threshold < 2**: Group health composite requires at least 2 signal types. Shows clearly what is missing rather than a meaningless score.
+- **KPI 7 retention proxy**: `left_at = null` as "still active" may overcount if players transferred groups and their `left_at` wasn't set. Documented in caveat.
+
+---
+
 ## 2026-05-16 — Sprint 427: Parent Trust KPI Engine V1
 
 **What changed:** Added `parentTrustKpiEngine.ts`. Step 7's parent update query expanded from single-row to 60-day window with `status` and `sent_at` fields. Step 12 added: KPI 21 (Parent Trust Coverage) computed from fetched drafts and appended to DONNA summary.
