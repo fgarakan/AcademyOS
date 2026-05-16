@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 494: Review Execution Regression V1
+
+**Type:** Regression QA document — no code changes, no migration.
+
+**Goal:** Full regression pass across all 9 review execution artifacts (Sprints 485–493). 10 checks: TypeScript, 'use client' directives, DB mutations, safety flags, approved vs applied separation, callback-only pattern, two-stage observation approval, guardrail copy, audit trail read-only, adapter architecture.
+
+**Files created:**
+- `docs/REVIEW_EXECUTION_REGRESSION_QA.md` — 10 regression checks across all review files. All PASS. TS error history noted (2 fixed during block). Deferred table for post-510 adapter work.
+
+**TypeScript:** CLEAN (0 errors, no code changes)
+
+---
+
 ## 2026-05-16 — Sprint 493: Execution Guardrail Copy System V1
 
 **Type:** TypeScript utility — no migration, no schema changes, no DB writes.
