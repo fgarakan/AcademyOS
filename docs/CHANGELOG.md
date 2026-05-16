@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 465: Readiness Recalculation Preview V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Preview how a proposed curriculum change could affect player readiness — per-player before/after readiness state, gate progress bars, missing evidence items, summary stats. No level changes applied.
+
+**Files created:**
+- `src/components/curriculum/ReadinessRecalculationPreview.tsx` — `'use client'` component. Accepts `ReadinessRecalculationSummary` (scopeId, changeDescription, 4 summary counts, player rows). Each row shows: current readiness badge + gate bar → arrow → preview readiness badge + gate bar, change reason, missing new evidence list, level-change-not-applied guard. Preview-only safety banner and footer.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 464: Curriculum Override Draft Shell V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
