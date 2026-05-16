@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 490: Session Actual Application Preview V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Director-facing card showing a coach's session actual wrap-up with a preview of what would be written to the session record if approved. `officialWriteApplied: false` always visible. 4-state status. Approve/Reject callbacks only.
+
+**Files created:**
+- `src/components/review/SessionActualApplicationPreview.tsx` — `'use client'` card. `SessionActualDraft` type with `officialWriteApplied: false`, `directorReviewRequired: true`. `SessionRecordImpactPreview` sub-component showing `completed_as_planned`, `modifications` chips, and `coach_notes` as they would appear in the DB. Modification labels for all 9 `SessionModificationType` values. Director review banner. Status state notes.
+
+**TypeScript:** CLEAN (0 errors, 1 modification label key fix applied)
+
+---
+
 ## 2026-05-16 — Sprint 489: Coach Observation Application Preview V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes, no profile mutations.
