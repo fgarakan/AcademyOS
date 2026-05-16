@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-16 — Sprint 456: DONNA Coach Brief Workflow V1
+
+**Type:** Code change — no migration.
+
+**Goal:** Wire `fetchCoachIntelligenceAction` as a DONNA workflow task ("Coach Intelligence Brief"). Director can ask DONNA "brief me on [coach]" and get a structured 30d summary.
+
+**Files modified:**
+- `src/components/assistant/donnaTaskContracts.ts` — added `'draft_coach_brief'` to `DonnaTaskId`; added contract: 1 required field (`coach`), reads sessions/observations/proposed_actions/voice_notes, `saveApplyMethodStatus: 'wired'`
+- `src/components/assistant/donnaObjectResolutionTypes.ts` — added `draft_coach_brief: { coach: 'coach' }` to `FIELD_RESOLUTION_MAP`
+- `src/components/assistant/DonnaAssistantButton.tsx` — imported `fetchCoachIntelligenceAction`; added `'draft_coach_brief'` to `WIRED_TASK_IDS` and `READONLY_TASK_IDS`; added handler in `handleSaveDraft`
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 455: Coaches Sidebar Nav Link V1
 
 **Type:** Code change — no migration.

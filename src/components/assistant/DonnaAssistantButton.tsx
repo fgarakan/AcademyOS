@@ -62,6 +62,8 @@ import {
 } from '@/app/director/_actions/donnaDirectorIntelligenceActions'
 // Sprint 282 — Coach Communication Draft
 import { saveCoachCommunicationDraftAction } from '@/app/director/_actions/saveCoachCommunicationDraftAction'
+// Sprint 456 — Coach Intelligence Brief
+import { fetchCoachIntelligenceAction } from '@/app/director/_actions/donnaCoachIntelligenceAction'
 // Sprint 286 — Multi-step planner
 import { detectMultiStepIntent } from '@/components/assistant/donnaMultiStepPlanner'
 import type { DonnaMultiStepPlan } from '@/components/assistant/donnaMultiStepPlanner'
@@ -208,6 +210,7 @@ const WIRED_TASK_IDS = new Set<DonnaTaskId>([
   'draft_coach_communication',
   'summarize_player_progress',
   'draft_session_brief',
+  'draft_coach_brief',
 ])
 
 // Tasks that are wired but produce a read-only summary (no DB write).
@@ -215,6 +218,7 @@ const WIRED_TASK_IDS = new Set<DonnaTaskId>([
 const READONLY_TASK_IDS = new Set<DonnaTaskId>([
   'summarize_player_progress',
   'draft_session_brief',
+  'draft_coach_brief',
 ])
 
 // ---------------------------------------------------------------------------
@@ -1584,6 +1588,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         fields._resolved_session_id = resolvedObjects['session'].id
       }
       return fetchSessionBriefAction(fields)
+    }
+    if (draft.taskId === 'draft_coach_brief') {
+      const coachId = resolvedObjects['coach']?.id ?? draft.collectedFields._resolved_coach_id ?? ''
+      return fetchCoachIntelligenceAction(coachId)
     }
     return {
       ok: false,

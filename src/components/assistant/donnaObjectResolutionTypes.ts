@@ -114,6 +114,9 @@ export const FIELD_RESOLUTION_MAP: Partial<
   draft_session_brief: {
     session: 'session',
   },
+  draft_coach_brief: {
+    coach: 'coach',
+  },
   create_group: {
     coach: 'coach',
   },

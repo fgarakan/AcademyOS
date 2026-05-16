@@ -30,6 +30,7 @@ export type DonnaTaskId =
   | 'summarize_player_progress'
   | 'recommend_template_for_group'
   | 'draft_session_brief'
+  | 'draft_coach_brief'
 
 export interface DonnaTaskField {
   fieldId: string
@@ -471,6 +472,25 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     ],
     reads: ['session', 'session_blocks', 'coach_profile', 'group'],
     createsDraftType: 'session_brief_readonly',
+    approvalRequired: false,
+    unsafeWithoutApproval: [],
+    saveApplyMethodStatus: 'wired',
+  },
+
+  draft_coach_brief: {
+    taskId: 'draft_coach_brief',
+    label: 'Coach Intelligence Brief',
+    description:
+      'Generate a structured intelligence summary for a specific coach — covering sessions, completion rate, recap coverage, observations logged, and pending review items over the last 30 days. Read-only output. No data is written.',
+    requiredFields: [
+      { fieldId: 'coach', label: 'Coach', required: true, example: 'Brian Martinez' },
+    ],
+    optionalFields: [],
+    questionSequence: [
+      { order: 1, fieldId: 'coach', question: 'Which coach should I generate an intelligence brief for?' },
+    ],
+    reads: ['coach_profile', 'sessions', 'coach_observations', 'proposed_actions', 'voice_notes'],
+    createsDraftType: 'coach_brief_readonly',
     approvalRequired: false,
     unsafeWithoutApproval: [],
     saveApplyMethodStatus: 'wired',
