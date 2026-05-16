@@ -56,6 +56,24 @@ const RECAP_QUESTIONS = [
 type Answers = Record<string, string>
 type Stage = 'questions' | 'review' | 'submitted'
 
+// ── Copy text builder ─────────────────────────────────────────────────────────
+
+function buildCopyText(answers: Answers): string {
+  const lines = [
+    'SESSION RECAP DRAFT',
+    '─────────────────────',
+    answers.attendance ? `ATTENDANCE: ${answers.attendance}` : null,
+    answers.session_plan ? `SESSION PLAN: ${answers.session_plan}` : null,
+    answers.standouts ? `POSITIVE STANDOUTS: ${answers.standouts}` : null,
+    answers.attention ? `NEEDS ATTENTION: ${answers.attention}` : null,
+    answers.safety ? `SAFETY / READINESS: ${answers.safety}` : null,
+    answers.followup ? `FOLLOW-UP NEEDED: ${answers.followup}` : null,
+    '─────────────────────',
+    'Draft only — director review required before any official update.',
+  ]
+  return lines.filter(Boolean).join('\n')
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function ProgressBar({ current, total }: { current: number; total: number }) {
@@ -106,7 +124,7 @@ function buildDraftSections(answers: Answers): DraftSection[] {
       label: 'Attendance Note',
       pipelineLabel: 'Attendance Exception Draft',
       color: 'text-status-orange',
-      content: answers.attendance?.trim() || null,
+      content: answers.attendance?.trim() ? `Attendance update: ${answers.attendance.trim()}` : null,
       placeholder: 'No attendance answer provided.',
     },
     {
@@ -114,7 +132,7 @@ function buildDraftSections(answers: Answers): DraftSection[] {
       label: 'Session Plan',
       pipelineLabel: 'Session Actual Draft',
       color: 'text-status-blue',
-      content: answers.session_plan?.trim() || null,
+      content: answers.session_plan?.trim() ? `Session delivery: ${answers.session_plan.trim()}` : null,
       placeholder: 'No session plan answer provided.',
     },
     {
@@ -122,7 +140,10 @@ function buildDraftSections(answers: Answers): DraftSection[] {
       label: 'Player Observations',
       pipelineLabel: 'Player Observation Draft',
       color: 'text-lime',
-      content: [answers.standouts, answers.attention].filter(Boolean).join(' | ') || null,
+      content: [
+        answers.standouts?.trim() ? `Positive: ${answers.standouts.trim()}` : null,
+        answers.attention?.trim() ? `Needs attention: ${answers.attention.trim()}` : null,
+      ].filter(Boolean).join('\n') || null,
       placeholder: 'No player observation answers provided.',
     },
     {
@@ -138,7 +159,7 @@ function buildDraftSections(answers: Answers): DraftSection[] {
       label: 'Parent / Director Follow-Up',
       pipelineLabel: 'Parent-Safe Draft Placeholder',
       color: 'text-text-muted',
-      content: answers.followup?.trim() || null,
+      content: answers.followup?.trim() ? `Follow-up: ${answers.followup.trim()}` : null,
       placeholder: 'No follow-up items noted.',
     },
   ]
@@ -158,7 +179,7 @@ function DraftSectionCard({ section }: { section: DraftSection }) {
         </span>
       </div>
       {section.content ? (
-        <p className="text-sm text-text-secondary leading-relaxed pl-5">{section.content}</p>
+        <p className="text-sm text-text-secondary leading-relaxed pl-5 whitespace-pre-line">{section.content}</p>
       ) : (
         <p className="text-sm text-text-muted italic pl-5">{section.placeholder}</p>
       )}
@@ -172,6 +193,7 @@ export default function CoachRecapPage() {
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<Answers>({})
   const [stage, setStage] = useState<Stage>('questions')
+  const [copied, setCopied] = useState(false)
 
   const currentQ = RECAP_QUESTIONS[step]
   const totalSteps = RECAP_QUESTIONS.length
@@ -208,13 +230,16 @@ export default function CoachRecapPage() {
             <CheckCircle2 className="w-7 h-7 text-status-green" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-text-primary">Recap Captured</h1>
+            <h1 className="text-xl font-bold text-text-primary">Recap Ready</h1>
             <p className="text-sm text-text-secondary mt-1.5 max-w-xs mx-auto">
-              Your session recap has been saved as a draft. A director will review it before any official updates are made.
+              Your recap is ready to submit. Connect this recap from a session workspace to route it to the director review queue.
             </p>
           </div>
           <p className="text-[10px] text-text-muted bg-surface-raised border border-border rounded-lg px-4 py-2.5 max-w-xs">
             Nothing is official yet — attendance, player notes, and parent updates all require director approval.
+          </p>
+          <p className="text-[10px] text-text-muted max-w-xs">
+            Once connected to a session, your director can review each section before any official update is made.
           </p>
           <div className="flex gap-3 mt-2">
             <Link href="/coach/sessions" className="btn-lime text-sm">
@@ -224,7 +249,7 @@ export default function CoachRecapPage() {
               onClick={() => { setStep(0); setAnswers({}); setStage('questions') }}
               className="btn-ghost text-sm"
             >
-              New Recap
+              Submit Another Recap
             </button>
           </div>
         </div>
@@ -253,7 +278,7 @@ export default function CoachRecapPage() {
 
         <div className="px-4 py-3 rounded-xl bg-surface border border-border">
           <p className="text-[10px] text-text-muted leading-relaxed">
-            Your answers have been organised into draft sections below. Each section shows what it will become in the director review queue. Nothing is official until the director approves.
+            Your answers are organised as draft sections below. Each section shows what it will become once submitted from a session workspace. Nothing is official until the director approves — attendance, observations, and parent updates all require review.
           </p>
         </div>
 
@@ -263,6 +288,19 @@ export default function CoachRecapPage() {
             <DraftSectionCard key={s.label} section={s} />
           ))}
         </div>
+
+        {/* Copy to clipboard */}
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(buildCopyText(answers)).then(() => {
+              setCopied(true)
+              setTimeout(() => setCopied(false), 2000)
+            })
+          }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-surface border border-border text-sm text-text-secondary hover:border-lime/30 transition-colors"
+        >
+          {copied ? '✓ Copied' : 'Copy recap summary'}
+        </button>
 
         {/* Raw answers toggle */}
         <details className="group">
@@ -283,10 +321,10 @@ export default function CoachRecapPage() {
             onClick={handleSubmit}
             className="w-full btn-lime text-sm py-3"
           >
-            Submit for Director Review
+            Mark as Ready for Review
           </button>
           <p className="text-[10px] text-text-muted text-center mt-2">
-            Session ID required for full pipeline write — connect from a session workspace to submit to the review queue.
+            Open this recap from a session workspace to route it directly to the director review queue.
           </p>
         </div>
       </div>

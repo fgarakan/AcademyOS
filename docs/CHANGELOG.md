@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-16 — Sprint 404: Coach Recap to Structured Draft Hardening V1
+
+**Type:** Frontend — no DB writes, no migrations, no new packages
+
+**Goal:** Harden the coach recap page draft section display. Fix misleading "saved as draft" language in the submitted state (nothing is actually saved — the submitted state now honestly says "Recap Ready" and explains the pipeline connection needed). Improve section labels and content prefixes. Add copy-to-clipboard for the full recap summary. Update the submit button and helper text to be accurate.
+
+**Files modified:**
+- `src/app/coach/recap/page.tsx` — 5 targeted improvements: (1) submitted state title/copy fixed to "Recap Ready", (2) buildDraftSections content prefixes improved, (3) review stage info banner copy updated, (4) "Submit" button renamed to "Mark as Ready for Review" with honest helper text, (5) copy-to-clipboard button added in review stage.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Zero DB writes. Zero migrations. No proposed_actions write. No parent or player data exposed. Client-state only changes.
+
+---
+
 ## 2026-05-16 — Sprint 403: DONNA Review Queue Connection V1
 
 **Type:** Frontend — no DB writes, no migrations, no new packages
