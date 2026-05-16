@@ -31,6 +31,21 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 426 — Coach Execution KPI Engine V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Engine-only — TypeScript CLEAN, 9 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/lib/kpi/coachExecutionKpiEngine.ts` (new)
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`
+- docs (6 files)
+**Commit hash:** — (pending)
+**Issues:** None.
+
+---
+
 ### Sprint 425 — Curriculum Coverage KPI Engine V1
 
 **Date:** 2026-05-16

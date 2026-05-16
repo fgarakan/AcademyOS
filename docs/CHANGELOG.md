@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-16 — Sprint 426: Coach Execution KPI Engine V1
+
+**Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.
+
+**Goal:** Build coach execution KPI engine. KPI 19 (Observation Quality Score, `demo`) computed from observations already fetched in Step 4. KPI 4 (Recap Completion Rate, `partial`) engine implemented for future wiring. Step 4 select updated to include `tags` and `ai_parsed` fields.
+
+**Files created:**
+- `src/lib/kpi/coachExecutionKpiEngine.ts` — `ObservationRow` and `RecapCheckRow` interfaces, `computeObservationQuality()` (KPI 19, demo), `computeRecapCompletionRate()` (KPI 4, partial), `formatCoachExecutionForDonna()`.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — Import added; Step 4 select updated to include `tags, ai_parsed`; Step 11 added: maps Step 4 observations to KPI engine input, calls quality scorer, appends to DONNA summary.
+
+**Key design decisions:**
+- KPI 19 (`demo`): 3-dimension score — tag usage (35 pts), structured parse/ai_parsed (35 pts), frequency (30 pts). Uses observations already fetched in Step 4 — no extra DB query.
+- KPI 4 (`partial`): `computeRecapCompletionRate()` engine exists but not wired into player summary (it's a session/coach-level KPI, not per-player). Data model gap G8 (`voice_notes.recap_type`) required for precision.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 425: Curriculum Coverage KPI Engine V1
 
 **Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.

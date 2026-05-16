@@ -35,6 +35,11 @@ import {
   formatSessionYieldForDonna,
   type YieldInput,
 } from '@/lib/kpi/curriculumCoverageKpiEngine'
+import {
+  computeObservationQuality,
+  formatCoachExecutionForDonna,
+  type ObservationRow as CoachObsRow,
+} from '@/lib/kpi/coachExecutionKpiEngine'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper (director/head_coach only)
@@ -791,9 +796,10 @@ export async function fetchPlayerProgressSummaryAction(
     .maybeSingle()
 
   // Step 4 — Recent coach observations: last 5 (scoped to academy_id)
+  // tags and ai_parsed added Sprint 426 for observation quality KPI
   const { data: observationsRaw } = await rawDb
     .from('coach_observations')
-    .select('content, observation_type, created_at')
+    .select('content, observation_type, created_at, tags, ai_parsed')
     .eq('player_id', confirmedPlayerId)
     .eq('academy_id', academyId)
     .order('created_at', { ascending: false })
@@ -1004,6 +1010,18 @@ export async function fetchPlayerProgressSummaryAction(
   const sessionYieldResult = computeSessionYield(yieldInput)
   const sessionYieldLines = formatSessionYieldForDonna(sessionYieldResult)
 
+  // Step 11 — Coach Observation Quality (KPI 19, Sprint 426)
+  // Derived from observations already fetched in Step 4 — no additional DB query needed.
+  const coachObsRows: CoachObsRow[] = observations.map((o: any) => ({
+    content: String(o.content ?? ''),
+    observation_type: String(o.observation_type ?? ''),
+    created_at: String(o.created_at ?? ''),
+    tags: Array.isArray(o.tags) ? (o.tags as string[]) : null,
+    ai_parsed: Boolean(o.ai_parsed),
+  }))
+  const observationQualityResult = computeObservationQuality(coachObsRows, 30)
+  const coachExecutionLines = formatCoachExecutionForDonna([observationQualityResult])
+
   // Build deterministic summary — no AI, no external API
   const firstName: string =
     (playerRow?.first_name as string | null) ??
@@ -1056,6 +1074,7 @@ export async function fetchPlayerProgressSummaryAction(
     ...velocityLines,
     ...evidenceLines,
     ...sessionYieldLines,
+    ...coachExecutionLines,
     ...(dataGaps.length > 0 ? ['', 'DATA GAPS:'] : []),
     ...dataGaps.map((g: string) => `⚠ ${g}`),
   ]

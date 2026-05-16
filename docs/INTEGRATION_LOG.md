@@ -8,6 +8,20 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 426: Coach Execution KPI Engine V1
+
+**What changed:** Added `coachExecutionKpiEngine.ts`. Step 4 select updated to include `tags, ai_parsed`. Step 11 added to `fetchPlayerProgressSummaryAction`: maps Step 4 observations to KPI engine input, calls `computeObservationQuality()` (KPI 19), appends coach execution lines to DONNA summary.
+
+**Integrates with:**
+- `coach_observations` — Step 4 extended to include `tags` and `ai_parsed` fields
+- DONNA player progress summary — coaching quality lines appended after session yield
+
+**Decisions recorded:**
+- **No extra DB query for KPI 19**: observations already fetched in Step 4. The new fields (`tags`, `ai_parsed`) were added to the existing select.
+- **KPI 4 not wired into player summary**: `computeRecapCompletionRate()` is a session-level KPI requiring coach/session data, not player-specific. Ready for future group summary action.
+
+---
+
 ## 2026-05-16 — Sprint 425: Curriculum Coverage KPI Engine V1
 
 **What changed:** Added `curriculumCoverageKpiEngine.ts`. KPIs 17, 18, 20 implemented as `insufficient_data` stubs (honest engine stubs ready for future wiring). KPI 25 (Session Development Yield) implemented as `demo` and wired into `fetchPlayerProgressSummaryAction` as Step 10.

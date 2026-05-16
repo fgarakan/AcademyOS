@@ -100,6 +100,27 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 426 — Coach Execution KPI Engine V1
+
+**Date:** 2026-05-16
+**QA type:** Engine-only — TypeScript CLEAN, static safety checks only
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- All queries academy_id scoped: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- KPI 19 null-safe when no observations: PASS
+- Tag score uses Array.isArray guard: PASS
+- ai_parsed typed as boolean (not null check needed): PASS
+- KPI 4 not wired into player summary (correct — session-level KPI): PASS
+- No coaching surveillance framing: PASS
+
+**Result:** 9 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 425 — Curriculum Coverage KPI Engine V1
 
 **Date:** 2026-05-16
