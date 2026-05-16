@@ -1259,6 +1259,18 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // the corresponding field and stores the resolved ID — skips that question.
   function handleStartGenericTask(taskId: DonnaTaskId, fromVoice = false) {
     if (taskId === 'create_class_template') return // always uses TemplateDraftPanel
+
+    // Sprint 398: honest early return for tasks not yet wired — no silent failure
+    if (!WIRED_TASK_IDS.has(taskId)) {
+      const contract = DONNA_TASK_CONTRACTS[taskId]
+      setCommandResponse({
+        message: `${contract?.label ?? taskId} is coming soon. This capability is in the roadmap and will be connected in a future sprint. Try one of the active DONNA commands instead.`,
+        type: 'honest',
+        label: 'Coming soon',
+      })
+      return
+    }
+
     let draft = createEmptyGenericDraft(taskId)
     const newResolvedObjects: Record<string, { id: string; label: string }> = {}
 
@@ -3272,15 +3284,25 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               <div className="space-y-0.5">
                 {pageTaskShortcuts.map(taskId => {
                   const contract = DONNA_TASK_CONTRACTS[taskId]
+                  const isWired = WIRED_TASK_IDS.has(taskId)
                   if (!contract) return null
                   return (
                     <button
                       key={taskId}
                       onClick={() => handleStartGenericTask(taskId, false)}
-                      className="w-full text-left text-[11px] text-text-secondary hover:text-text-primary
-                        px-2.5 py-1.5 rounded-lg hover:bg-surface-raised transition-all leading-snug"
+                      className={cn(
+                        'w-full text-left px-2.5 py-1.5 rounded-lg transition-all leading-snug flex items-center justify-between gap-2',
+                        isWired
+                          ? 'text-[11px] text-text-secondary hover:text-text-primary hover:bg-surface-raised'
+                          : 'text-[11px] text-text-muted hover:bg-surface-raised',
+                      )}
                     >
-                      {contract.label}
+                      <span>{contract.label}</span>
+                      {!isWired && (
+                        <span className="shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-surface border border-border text-text-muted leading-none">
+                          Coming soon
+                        </span>
+                      )}
                     </button>
                   )
                 })}

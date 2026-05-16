@@ -8,6 +8,26 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 398: Demo Data Seed and DONNA Stub Visibility V1
+
+**What changed:** Added a safe local static demo data layer (`src/lib/demo/demoData.ts`) for the three director screens that were showing empty states during demos. Added DONNA stub honesty: unwired task shortcuts now show a "Coming soon" badge and respond with an honest "coming soon" message instead of silently failing.
+
+**Integrates with:**
+- `/director/today` — uses `DEMO_SESSIONS` + `DEMO_PENDING_COUNT` when `?demo=1`
+- `/director/level-up` — uses `DEMO_PIPELINE_ROWS` when `?demo=1`
+- `/director/parents` — uses `DEMO_PARENT_UPDATES` when `?demo=1`
+- `DonnaAssistantButton.tsx` — `WIRED_TASK_IDS` set gates badge rendering; `handleStartGenericTask` returns honest "coming soon" message for unwired task IDs
+- No Supabase reads or writes in demo mode — all data is static TypeScript constants
+
+**Decisions recorded:**
+- Demo mode is gated exclusively on `searchParams.demo === '1'`. Normal mode DB queries are unchanged and run in the `else` branch only.
+- Demo data is pure TypeScript constants computed at module load time. No server actions, no DB reads, no faker libraries.
+- `DemoSession` interface in `demoData.ts` is structurally identical to `SessionWithMeta` in `today/page.tsx` — TypeScript structural typing allows direct use without a separate cast on most fields.
+- "Coming soon" badge (9px, pill, text-muted) renders only for task shortcuts where `!WIRED_TASK_IDS.has(taskId)`. Four task IDs are unwired: `create_group`, `assign_player_to_group`, `summarize_player_progress`, `recommend_template_for_group`.
+- The DONNA panel "Send" button found during QA was the voice draft submit button inside the DONNA overlay (disabled) — NOT a parent-comms auto-send. This is a pre-existing, already-safe element.
+
+---
+
 ## 2026-05-15 — Sprint 396: Final Prototype Visual Match + Regression V1
 
 **What changed:** Docs only. Full regression QA pass — no source code modified.
@@ -298,4 +318,4 @@ Do not record:
 
 ---
 
-*Last updated: Sprint 388*
+*Last updated: Sprint 398*

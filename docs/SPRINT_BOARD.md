@@ -13,13 +13,29 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 387–396 relay complete.)*
+*(No active sprint — Sprint 398 complete.)*
 
-**Next available:** Sprint 397
+**Next available:** Sprint 399
 
 ---
 
 ## Completed This Run
+
+### Sprint 398 — Demo Data Seed and DONNA Stub Visibility V1 ✓
+
+**Status:** COMPLETE
+**QA:** 27 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files created:** `src/lib/demo/demoData.ts`
+**Files modified:** today/page.tsx, level-up/page.tsx, parents/page.tsx, DonnaAssistantButton.tsx
+
+---
+
+### Sprint 397 — Human Demo Review and DONNA Operating Gap Audit V1 ✓
+
+**Status:** COMPLETE (docs only)
+
+---
 
 ### Sprint 396 — Final Prototype Visual Match + Regression V1 ✓
 

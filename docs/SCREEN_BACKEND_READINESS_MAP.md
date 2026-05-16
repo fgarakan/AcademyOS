@@ -63,13 +63,14 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 | Recommendation engine | Sprint 374–375 | 8+ |
 | Executive panel upgrade | Sprint 392 — w-96, backdrop blur, tab chips, approval copy | 9+ |
 | Context entries for new screens | Added per-screen Sprints 386–390 | 9+ |
+| Stub honesty layer | Sprint 398 — "Coming soon" badge + honest early-return for 4 unwired tasks | 9+ |
 
 **What's missing for Level 10:**
-- 4 stub task contracts remain unwired
+- 4 stub task contracts remain unwired (now honestly labeled — not silently failing)
 - Coach DONNA panel (separate sprint)
 
 **Migration required:** No
-**Recommended build sprint:** Sprint 393 (context wiring pass)
+**Recommended build sprint:** Sprint 393 (context wiring pass) ✓ done
 
 ---
 
@@ -93,8 +94,10 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 - DONNA suggestion chips wired to open panel with pre-filled prompt (future polish)
 - Timezone-aware date filter (UTC+ directors may see off-by-one late at night)
 
+**Demo data:** `DEMO_SESSIONS` + `DEMO_PENDING_COUNT` from `src/lib/demo/demoData.ts` — available via `?demo=1` (Sprint 398).
+
 **Migration required:** No
-**Built sprint:** Sprint 386
+**Built sprint:** Sprint 386 | **Demo data sprint:** Sprint 398
 
 ---
 
@@ -203,8 +206,10 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 - Filter row by track/group (future polish)
 - Direct "Review" CTA to `review_level_readiness` DONNA task (currently via DONNA panel)
 
+**Demo data:** `DEMO_PIPELINE_ROWS` from `src/lib/demo/demoData.ts` — 4 players (1 overdue, 2 due soon, 1 upcoming) available via `?demo=1` (Sprint 398).
+
 **Architecture red line:** Level movement MUST go through `proposed_actions` → director approval → `finalize_player_placement()`. No exceptions.
-**Built sprint:** Sprint 388
+**Built sprint:** Sprint 388 | **Demo data sprint:** Sprint 398
 
 ---
 
@@ -230,8 +235,10 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 - Private lesson requests section (future sprint)
 - QA pass with real parent_update data
 
+**Demo data:** `DEMO_PARENT_UPDATES` from `src/lib/demo/demoData.ts` — 4 updates (1 reviewed, 2 approved, 1 draft) available via `?demo=1` (Sprint 398).
+
 **Architecture rule:** No auto-send. Director must approve before any message leaves.
-**Built sprint:** Sprint 389
+**Built sprint:** Sprint 389 | **Demo data sprint:** Sprint 398
 
 ---
 

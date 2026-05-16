@@ -31,6 +31,24 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 398 — Demo Data Seed and DONNA Stub Visibility V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | DOCS ✓
+**QA result:** 27 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/lib/demo/demoData.ts` (new)
+- `src/app/director/today/page.tsx`
+- `src/app/director/level-up/page.tsx`
+- `src/app/director/parents/page.tsx`
+- `src/components/assistant/DonnaAssistantButton.tsx`
+- docs (7 files)
+**Commit hash:** *(pending)*
+**Issues:** One QA false positive resolved — `button[text="Send"]` found was inside the DONNA panel overlay (disabled), not a parent-comms auto-send button.
+
+---
+
 ### Sprint 396 — Final Prototype Visual Match + Regression V1
 
 **Date:** 2026-05-15
@@ -272,4 +290,4 @@ This file records:
 
 ---
 
-*Last updated: Sprint 396*
+*Last updated: Sprint 398*

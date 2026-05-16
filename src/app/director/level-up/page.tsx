@@ -3,6 +3,7 @@ import { ArrowRight, AlertTriangle, Clock, CheckCircle2, Users, TrendingUp, Shie
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
+import { DEMO_PIPELINE_ROWS } from '@/lib/demo/demoData'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -133,7 +134,12 @@ function UrgencySection({ title, rows, icon: Icon, color }: {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function LevelUpPage() {
+export default async function LevelUpPage({
+  searchParams,
+}: {
+  searchParams: { demo?: string }
+}) {
+  const isDemoMode = searchParams.demo === '1'
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -162,13 +168,22 @@ export default async function LevelUpPage() {
     )
   }
 
-  const { data: pipeline } = await supabase
-    .from('v_reassessment_pipeline')
-    .select('player_id, full_name, coach_name, group_name, current_track, overall_score, urgency, days_overdue, last_assessed_at, next_assessment_due')
-    .eq('academy_id', academyId)
-    .order('days_overdue', { ascending: false })
+  // ── Data source ────────────────────────────────────────────────────────────
+  // Demo mode: use local static fixtures. Normal mode: query Supabase.
 
-  const rows: PipelineRow[] = (pipeline ?? []).map(r => ({ ...r, academy_id: academyId }))
+  let rows: PipelineRow[]
+
+  if (isDemoMode) {
+    rows = DEMO_PIPELINE_ROWS as PipelineRow[]
+  } else {
+    const { data: pipeline } = await supabase
+      .from('v_reassessment_pipeline')
+      .select('player_id, full_name, coach_name, group_name, current_track, overall_score, urgency, days_overdue, last_assessed_at, next_assessment_due')
+      .eq('academy_id', academyId)
+      .order('days_overdue', { ascending: false })
+
+    rows = (pipeline ?? []).map(r => ({ ...r, academy_id: academyId }))
+  }
 
   const overdue = rows.filter(r => r.urgency === 'overdue')
   const dueSoon = rows.filter(r => r.urgency === 'due_soon')

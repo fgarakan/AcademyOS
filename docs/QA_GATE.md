@@ -100,6 +100,30 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 398 — Demo Data Seed and DONNA Stub Visibility V1
+
+**Date:** 2026-05-16
+**QA type:** Full browser QA (Playwright)
+**TypeScript:** CLEAN
+**Script:** /tmp/donna-qa-398.js
+
+**Section A — Normal mode (no ?demo=1, 3 routes):** 3 PASS
+**Section B — Demo mode today (/director/today?demo=1):** 5 PASS
+**Section C — Demo mode level-up (/director/level-up?demo=1):** 5 PASS
+**Section D — Demo mode parents (/director/parents?demo=1):** 5 PASS
+**Section E — Demo data isolation (no leak into normal mode):** 3 PASS
+**Section F — DONNA "Coming soon" badge (unwired shortcuts):** 2 PASS
+**Section G — DONNA golden path regression:** 2 PASS
+**Section H — Protected actions (no external sends, no DB writes):** 2 PASS
+
+**Result: 27 PASS / 0 FAIL / 0 WARN**
+
+Note: One false positive resolved during QA. The check for `button[text="Send"]` as a protected-action risk matched a disabled DONNA panel submit button inside the overlay `<aside>` element — not a parent communications send button. The parents page has no capability to send external messages. Adjusted from initial 26 PASS / 1 FAIL → 27 PASS / 0 FAIL after investigation.
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 396 — Final Prototype Visual Match + Regression V1
 
 **Date:** 2026-05-15
@@ -415,4 +439,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 396*
+*Last updated: Sprint 398*

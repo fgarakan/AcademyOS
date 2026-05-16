@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-16 — Sprint 398: Demo Data Seed and DONNA Stub Visibility V1
+
+**Type:** Frontend — local static demo data injection + DONNA stub visibility fix
+
+**Goal:** Make the post-Sprint-396 demo feel alive. Fix P1 gap: all director screens showing empty states in test DB. Fix P1 gap: DONNA stub commands silently failing.
+
+**Files created:**
+- `src/lib/demo/demoData.ts` — Static local demo fixtures: 5 sessions, 4 level-up pipeline rows, 4 parent update drafts. Realistic tennis academy language (Orange/Green/Yellow Ball groups). Used ONLY when `?demo=1` is in the URL.
+
+**Files modified:**
+- `src/app/director/today/page.tsx` — Added `searchParams` prop; when `demo=1`, replaces DB session data with demo sessions (5 sessions, 3 pending count). Normal mode unchanged.
+- `src/app/director/level-up/page.tsx` — Added `searchParams` prop; when `demo=1`, injects 4 demo pipeline rows (1 overdue, 2 due-soon, 1 upcoming). Normal mode unchanged.
+- `src/app/director/parents/page.tsx` — Added `searchParams` prop; when `demo=1`, injects 4 demo parent update drafts (reviewed, approved, draft, approved). Normal mode unchanged.
+- `src/components/assistant/DonnaAssistantButton.tsx` — (1) `handleStartGenericTask`: early honest return for unwired tasks instead of silent draft failure. (2) `pageTaskShortcuts` render: "Coming soon" badge on stub task shortcuts.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Zero DB writes. Zero migrations. Demo data is local/static only. Normal mode (no `?demo=1`) is completely unchanged.
+
+---
+
 ## 2026-05-16 — Sprint 397: Human Demo Review and DONNA Operating Gap Audit V1
 
 **Type:** Audit only — no source code changes, no migrations, no package changes

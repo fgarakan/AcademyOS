@@ -9,6 +9,8 @@ import {
   Card, CardHeader, CardContent, CardFooter, EmptyState,
 } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
+import { DEMO_SESSIONS, DEMO_PENDING_COUNT } from '@/lib/demo/demoData'
+import type { DemoSession } from '@/lib/demo/demoData'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -48,7 +50,12 @@ function sessionSortKey(s: SessionRow): string {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function TodaysAcademyPage() {
+export default async function TodaysAcademyPage({
+  searchParams,
+}: {
+  searchParams: { demo?: string }
+}) {
+  const isDemoMode = searchParams.demo === '1'
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -77,87 +84,101 @@ export default async function TodaysAcademyPage() {
     )
   }
 
-  const today = getTodayString()
   const formattedToday = getFormattedToday()
 
-  // ── Data fetches (parallel) ────────────────────────────────────────────────
+  // ── Data source ────────────────────────────────────────────────────────────
+  // Demo mode: use local static fixtures. Normal mode: query Supabase.
 
-  const [
-    { data: todaySessions },
-    { count: pendingCount },
-    { data: activeProfiles },
-  ] = await Promise.all([
-    supabase
-      .from('sessions')
-      .select('id, name, scheduled_date, scheduled_time, status, coach_id, template_id, group_id, duration_min')
-      .eq('academy_id', academyId)
-      .eq('scheduled_date', today)
-      .order('scheduled_time', { ascending: true, nullsFirst: false }),
-    supabase
-      .from('proposed_actions')
-      .select('id', { count: 'exact', head: true })
-      .eq('academy_id', academyId)
-      .eq('status', 'pending_review'),
-    supabase
-      .from('profiles')
-      .select('id, display_name')
-      .eq('academy_id', academyId),
-  ])
+  let enrichedSessions: DemoSession[]
+  let pending: number
 
-  const sessions = (todaySessions ?? []) as SessionRow[]
-  const sessionsSorted = [...sessions].sort((a, b) =>
-    sessionSortKey(a).localeCompare(sessionSortKey(b))
-  )
+  if (isDemoMode) {
+    enrichedSessions = DEMO_SESSIONS
+    pending = DEMO_PENDING_COUNT
+  } else {
+    const today = getTodayString()
 
-  // ── Batch: coach names ─────────────────────────────────────────────────────
+    // ── Data fetches (parallel) ──────────────────────────────────────────────
 
-  const coachIds = Array.from(new Set(sessions.map(s => s.coach_id)))
-  const coachMap = new Map<string, string>()
-  const profileRows = activeProfiles ?? []
-  for (const p of profileRows) {
-    if (coachIds.includes(p.id)) {
-      coachMap.set(p.id, p.display_name ?? p.id.slice(0, 8))
+    const [
+      { data: todaySessions },
+      { count: pendingCount },
+      { data: activeProfiles },
+    ] = await Promise.all([
+      supabase
+        .from('sessions')
+        .select('id, name, scheduled_date, scheduled_time, status, coach_id, template_id, group_id, duration_min')
+        .eq('academy_id', academyId)
+        .eq('scheduled_date', today)
+        .order('scheduled_time', { ascending: true, nullsFirst: false }),
+      supabase
+        .from('proposed_actions')
+        .select('id', { count: 'exact', head: true })
+        .eq('academy_id', academyId)
+        .eq('status', 'pending_review'),
+      supabase
+        .from('profiles')
+        .select('id, display_name')
+        .eq('academy_id', academyId),
+    ])
+
+    const sessions = (todaySessions ?? []) as SessionRow[]
+    const sessionsSorted = [...sessions].sort((a, b) =>
+      sessionSortKey(a).localeCompare(sessionSortKey(b))
+    )
+
+    // ── Batch: coach names ───────────────────────────────────────────────────
+
+    const coachIds = Array.from(new Set(sessions.map(s => s.coach_id)))
+    const coachMap = new Map<string, string>()
+    const profileRows = activeProfiles ?? []
+    for (const p of profileRows) {
+      if (coachIds.includes(p.id)) {
+        coachMap.set(p.id, p.display_name ?? p.id.slice(0, 8))
+      }
     }
-  }
 
-  // ── Batch: template names ──────────────────────────────────────────────────
+    // ── Batch: template names ────────────────────────────────────────────────
 
-  const templateIds = Array.from(
-    new Set(sessions.map(s => s.template_id).filter(Boolean) as string[])
-  )
-  const templateMap = new Map<string, string>()
-  if (templateIds.length > 0) {
-    const { data: templates } = await supabase
-      .from('templates')
-      .select('id, name')
-      .in('id', templateIds)
-    for (const t of (templates ?? [])) {
-      templateMap.set(t.id, t.name ?? 'Untitled Template')
+    const templateIds = Array.from(
+      new Set(sessions.map(s => s.template_id).filter(Boolean) as string[])
+    )
+    const templateMap = new Map<string, string>()
+    if (templateIds.length > 0) {
+      const { data: templates } = await supabase
+        .from('templates')
+        .select('id, name')
+        .in('id', templateIds)
+      for (const t of (templates ?? [])) {
+        templateMap.set(t.id, t.name ?? 'Untitled Template')
+      }
     }
-  }
 
-  // ── Batch: session block counts ────────────────────────────────────────────
+    // ── Batch: session block counts ──────────────────────────────────────────
 
-  const sessionIds = sessions.map(s => s.id)
-  const blockCountMap = new Map<string, number>()
-  if (sessionIds.length > 0) {
-    const { data: blockRows } = await supabase
-      .from('session_blocks')
-      .select('session_id')
-      .in('session_id', sessionIds)
-    for (const row of (blockRows ?? [])) {
-      blockCountMap.set(row.session_id, (blockCountMap.get(row.session_id) ?? 0) + 1)
+    const sessionIds = sessions.map(s => s.id)
+    const blockCountMap = new Map<string, number>()
+    if (sessionIds.length > 0) {
+      const { data: blockRows } = await supabase
+        .from('session_blocks')
+        .select('session_id')
+        .in('session_id', sessionIds)
+      for (const row of (blockRows ?? [])) {
+        blockCountMap.set(row.session_id, (blockCountMap.get(row.session_id) ?? 0) + 1)
+      }
     }
+
+    // ── Enrich sessions ──────────────────────────────────────────────────────
+
+    enrichedSessions = sessionsSorted.map(s => ({
+      ...s,
+      coachName: coachMap.get(s.coach_id) ?? 'Unknown coach',
+      templateName: s.template_id ? (templateMap.get(s.template_id) ?? 'No template') : 'No template',
+      blockCount: blockCountMap.get(s.id) ?? 0,
+    })) as DemoSession[]
+
+    pending = pendingCount ?? 0
   }
-
-  // ── Enrich sessions ────────────────────────────────────────────────────────
-
-  const enrichedSessions: SessionWithMeta[] = sessionsSorted.map(s => ({
-    ...s,
-    coachName: coachMap.get(s.coach_id) ?? 'Unknown coach',
-    templateName: s.template_id ? (templateMap.get(s.template_id) ?? 'No template') : 'No template',
-    blockCount: blockCountMap.get(s.id) ?? 0,
-  }))
 
   // ── Derived stats ──────────────────────────────────────────────────────────
 
@@ -165,7 +186,6 @@ export default async function TodaysAcademyPage() {
   const inProgress = enrichedSessions.filter(s => s.status === 'in_progress').length
   const completed = enrichedSessions.filter(s => s.status === 'completed').length
   const missingBlocks = enrichedSessions.filter(s => s.blockCount === 0 && s.status !== 'cancelled').length
-  const pending = pendingCount ?? 0
 
   const riskFlags = missingBlocks + (pending > 0 ? 1 : 0)
 

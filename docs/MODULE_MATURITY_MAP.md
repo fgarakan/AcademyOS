@@ -85,9 +85,9 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | `draft_player_note` action | 9 | Wired through `proposed_actions`. |
 | `review_level_readiness` action | 9 | Wired. Proposal → `proposed_actions` → `finalize_player_placement()`. |
 | `summarize_player_progress` task | 3 | Contract defined, server action stub only. |
-| Level Up aggregate screen (`/director/level-up`) | 8 | Built Sprint 388. DONNA context registered. |
+| Level Up aggregate screen (`/director/level-up`) | 8 | Built Sprint 388. Demo data available via ?demo=1 (Sprint 398). |
 
-**Rating: 9** — Player profile is pilot-ready. Level Up aggregate view is the missing piece.
+**Rating: 9** — Player profile is pilot-ready. Level Up demo data available; live pipeline data requires real test records.
 
 ---
 
@@ -125,8 +125,9 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | Audit trail | 9 | `appendAuditEvent` instrumented in all major flows. |
 | `DonnaAssistantButton.tsx` modularization | 9 | Sprint 384. Prop-driven orchestrator. 4 real extractions. |
 | Executive panel upgrade | 9 | Sprint 392. w-96, backdrop overlay, tab chips, approval boundary copy. |
+| Stub task honesty layer | 9 | Sprint 398. Unwired tasks show "Coming soon" badge + honest response. No silent fail. |
 
-**Rating: 9** — DONNA core is pilot-ready. 4 stub task contracts are the known gap.
+**Rating: 9** — DONNA core is pilot-ready. 4 stub task contracts are the known gap (now honestly labeled).
 
 ---
 
@@ -139,7 +140,7 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | `sanitizeParentFacingText` | 10 | Locked. Parent content safety enforced. |
 | `parentSafeResponseRules` | 10 | Locked. Director-visible only. |
 | Parent portal (`/parent`) | 8 | Built. Approved content visible. |
-| Parent Communication Center (`/director/parents`) | 8 | Built Sprint 389. DONNA context registered. |
+| Parent Communication Center (`/director/parents`) | 8 | Built Sprint 389. Demo data available via ?demo=1 (Sprint 398). |
 | External email/SMS delivery | 0 | NOT built. Approved communications are staged, not delivered. |
 | Private lesson requests | 5 | `requestPrivateLessonAction` in parent portal. No director-side view yet. |
 
@@ -171,9 +172,9 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | `/api/donna/brief` | 8 | Built. Sprint 369. Returns daily brief. |
 | Recommendation engine | 8 | Sprint 374–375. Rule-based, client-side. |
 | Learning feedback signals | 8 | Sprint 376. Captured on card actions. |
-| Today's Academy screen | 10 | Route built Sprint 386. Sessions, stat strip, DONNA context, risk flags. |
+| Today's Academy screen | 10 | Route built Sprint 386. Demo data available via ?demo=1 (Sprint 398). |
 
-**Rating: 8** — Today's Academy screen built. Signals APIs are wired. AI-powered attention/brief still go through DONNA panel (not server-rendered).
+**Rating: 8** — Today's Academy screen built. Signals APIs are wired. AI-powered attention/brief still go through DONNA panel (not server-rendered). Demo data fills the screen in demo mode.
 
 ---
 
@@ -209,4 +210,4 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 
 ---
 
-*Last updated: Sprint 396*
+*Last updated: Sprint 398*

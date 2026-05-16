@@ -3,6 +3,7 @@ import { MessageSquare, CheckCircle2, Clock, Send, ArrowRight, ShieldCheck, Eye 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
+import { DEMO_PARENT_UPDATES } from '@/lib/demo/demoData'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -128,7 +129,12 @@ function UpdateCard({ row }: { row: ParentUpdateRow }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function ParentCommunicationCenterPage() {
+export default async function ParentCommunicationCenterPage({
+  searchParams,
+}: {
+  searchParams: { demo?: string }
+}) {
+  const isDemoMode = searchParams.demo === '1'
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -155,27 +161,36 @@ export default async function ParentCommunicationCenterPage() {
     )
   }
 
-  // Query parent_updates with player name
-  const { data: rawUpdates } = await supabase
-    .from('parent_updates')
-    .select('id, player_id, status, subject, content, content_draft, created_at, approved_at, sent_at, players(full_name)')
-    .eq('academy_id', academyId)
-    .not('status', 'eq', 'cancelled')
-    .order('created_at', { ascending: false })
-    .limit(50)
+  // ── Data source ────────────────────────────────────────────────────────────
+  // Demo mode: use local static fixtures. Normal mode: query Supabase.
 
-  const updates: ParentUpdateRow[] = (rawUpdates ?? []).map(r => ({
-    id: r.id,
-    player_id: r.player_id,
-    status: r.status as ParentUpdateStatus,
-    subject: r.subject,
-    content: r.content,
-    content_draft: r.content_draft,
-    created_at: r.created_at,
-    approved_at: r.approved_at,
-    sent_at: r.sent_at,
-    player_full_name: (r.players as { full_name: string | null } | null)?.full_name ?? null,
-  }))
+  let updates: ParentUpdateRow[]
+
+  if (isDemoMode) {
+    updates = DEMO_PARENT_UPDATES as ParentUpdateRow[]
+  } else {
+    // Query parent_updates with player name
+    const { data: rawUpdates } = await supabase
+      .from('parent_updates')
+      .select('id, player_id, status, subject, content, content_draft, created_at, approved_at, sent_at, players(full_name)')
+      .eq('academy_id', academyId)
+      .not('status', 'eq', 'cancelled')
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    updates = (rawUpdates ?? []).map(r => ({
+      id: r.id,
+      player_id: r.player_id,
+      status: r.status as ParentUpdateStatus,
+      subject: r.subject,
+      content: r.content,
+      content_draft: r.content_draft,
+      created_at: r.created_at,
+      approved_at: r.approved_at,
+      sent_at: r.sent_at,
+      player_full_name: (r.players as { full_name: string | null } | null)?.full_name ?? null,
+    }))
+  }
 
   const needsApproval = updates.filter(u => u.status === 'draft' || u.status === 'reviewed')
   const approved = updates.filter(u => u.status === 'approved')
