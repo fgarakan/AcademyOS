@@ -2,6 +2,46 @@
 
 ---
 
+## 2026-05-16 — Sprint 439: Review Queue Action Model Audit V1
+
+**Type:** Audit — no code changes. Docs only.
+
+**Goal:** Audit the current review queue action model: what action types exist, which have full execute paths, what gaps remain.
+
+**Files changed:** Docs only.
+
+**Audit findings:**
+
+15 `target_module` types confirmed in `review/page.tsx`:
+1. `session_recap_structuring` — Structured draft card. Decision + apply flow ✓
+2. `priority_recommendation` — Priority recommendation. Decision + apply flow ✓
+3. `requirement_evidence_link` — Evidence requirement. Decision + apply flow ✓
+4. `attendance_exception` — Attendance exception. Decision + apply flow ✓
+5. `curriculum_override` — Curriculum override. Decision + apply flow ✓
+6. `voice_intake` — Voice intake batch. Decision + execute flow ✓
+7. `session_wrap_up_v1` — Wrap-up draft. Decision + apply flow ✓
+8. `coach_observation_draft_v1` — Coach observation draft. Decision + apply flow ✓
+9. `development_summary_draft_v1` — Development summary. Decision + apply flow ✓
+10. `placement_review` — Placement review. Decision flow; creates placement_assessment_draft ✓
+11. `placement_intake_candidate` — Placement intake candidate. Display only (creates recommendation_draft) ✓
+12. `placement_assessment_draft` — Placement assessment. Decision flow ✓
+13. `placement_recommendation_draft` — Placement recommendation. Decision + finalize flow ✓
+14. `parent_communication` — Parent communication draft. Decision flow; execution requires send infrastructure (Block 3+) ⚠
+15. `level_review` — Level review. Decision flow; limited execution path noted ⚠
+
+**Pattern:** All types have: display card, decision controls (approved/rejected/clarification_needed), status update in proposed_actions.
+**Apply flows:** Most types have a separate "Apply" button that reads approved action and executes. Decision and execution are always separated.
+
+**Gaps found:**
+- `parent_communication` approved → no send execution (Block 3+ send infrastructure not built)
+- `level_review` has a tab but limited execution documentation — likely creates a level change proposal only
+
+**Architecture integrity:** DONNA proposes → director decides → system records → separate "Apply" triggers execution. No automatic execution on approval. All correct per the product operating model.
+
+**TypeScript:** Not run — no code changes.
+
+---
+
 ## 2026-05-16 — Sprint 438: KPI Block Audit and Next Roadmap V1
 
 **Type:** Audit and roadmap — no code changes. Docs only.
