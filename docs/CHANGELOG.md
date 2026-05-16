@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-16 — Sprint 408: Cross-Workflow Regression V1
+
+**Type:** Static audit — no code changes
+
+**Goal:** Full regression pass across the DONNA workflow intelligence block (Sprints 400–407). Verify all wired task flows are internally consistent.
+
+**Findings — all pass:**
+- All 12 `WIRED_TASK_IDS` have corresponding dispatch branches in `handleGenericDraftApprove`
+- Both `READONLY_TASK_IDS` (`summarize_player_progress`, `draft_session_brief`) return `createdId: undefined` — GenericDraftPanel correctly shows "Summary generated." in success state
+- `donna:open` event listener is correctly placed at Sprint 405 position; `setPanelOpen` + `setTypedText` both called correctly
+- Session detail page `/director/sessions/[uuid]` matches `getCurrentPageObject` pattern → `draft_session_brief` session field auto-populated from page context
+- Level Up page `/director/level-up` has no UUID → no auto-population → correct (LevelUpDonnaCTA passes player name/track via prompt text)
+- `DonnaTaskId` union, `DONNA_TASK_CONTRACTS` Record, and `getUnwiredTaskContracts` all consistent
+- TypeScript clean across all 8 sprints (400–407)
+
+**Files modified:** None (audit-only sprint)
+
+---
+
 ## 2026-05-16 — Sprint 407: DONNA Action Safety and Permission Copy Pass V1
 
 **Type:** Frontend copy pass — no DB writes, no migrations, no new packages
