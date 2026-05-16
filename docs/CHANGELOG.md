@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 472: Attendance Exception Parser V1
+
+**Type:** TypeScript utility — no migration, no schema changes, no DB writes.
+
+**Goal:** Parse free-text coach attendance phrases ("Everyone was here except Sarah. Jeremy showed up.") into structured absence drafts and unrostered attendee drafts. Director review required on all outputs.
+
+**Files created:**
+- `src/lib/wrap-up/attendanceExceptionParser.ts` — Pure deterministic parser. `AbsenceDraft`, `UnrosteredAttendeeDraft`, `AttendanceExceptionParseResult` types (all with `directorReviewRequired: true`, `officialWriteApplied: false`). Regex patterns for everyone-present, exception clauses, explicit absences, unrostered players. EXCLUDED_WORDS guard. `parseAttendanceExceptions()` main function. `summarizeAttendanceParseResult()` helper. Warnings for no-match and short/ambiguous names. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 471: Coach Wrap-Up Attendance First V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
