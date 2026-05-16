@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 492: Audit Trail Surface Placeholder V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes. Read-only display only.
+
+**Goal:** Placeholder audit trail component showing recent action log entries. Visual distinction between system events and official writes. Expand/collapse for long lists. Placeholder note that production entries come from `audit_logs` table. No DB calls.
+
+**Files created:**
+- `src/components/review/AuditTrailPlaceholder.tsx` — `'use client'` component. `AuditLogEntry` type (12 action types, 4 actor roles). `AuditEntryRow` with official-write lime badge. Sorted by timestamp descending. Expand/collapse for entries beyond default limit. `OFFICIAL_WRITE_ACTIONS` set for write-tagging. Read-only with placeholder DB source note.
+
+**TypeScript:** CLEAN (0 errors, 1 `Set<AuditLogActionType>` type annotation fix applied)
+
+---
+
 ## 2026-05-16 — Sprint 491: Review Queue Approved vs Applied Separation V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
