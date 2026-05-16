@@ -1,8 +1,10 @@
+import { Suspense } from 'react'
 import { SidebarNav } from '@/components/nav/SidebarNav'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { PreviewBanner } from '@/components/platform/PreviewBanner'
 import { DonnaAssistantButton } from '@/components/assistant/DonnaAssistantButton'
 import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
+import { DemoModeBanner } from '@/components/demo/DemoModeBanner'
 
 export default async function DirectorLayout({
   children,
@@ -86,6 +88,9 @@ export default async function DirectorLayout({
       />
       <main className="flex-1 ml-60 min-h-screen">
         <PreviewBanner />
+        <Suspense>
+          <DemoModeBanner />
+        </Suspense>
         <FirstRunDeckGate hasSeenDeck={hasSeenFirstRunDeck} role="director">
           {children}
         </FirstRunDeckGate>

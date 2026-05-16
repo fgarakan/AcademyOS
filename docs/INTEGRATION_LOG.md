@@ -8,6 +8,22 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-15 — Sprint 395: Guided Director Demo Flow V1
+
+**What changed:** New `DemoModeBanner` client component injected into the director layout via `<Suspense>`. When `?demo=1` is present in the URL, a sticky banner appears below `PreviewBanner` showing the current demo step, label, hint, and Next → navigation.
+
+**Integrates with:**
+- `src/app/director/layout.tsx` — banner injected globally for all `/director/**` routes
+- `next/navigation` — `useSearchParams()`, `useRouter()`, `usePathname()` hooks
+- No Supabase calls, no server actions, no proposed_actions — fully client-side
+
+**Decisions recorded:**
+- `<Suspense>` wrapper is required in Next.js 14 App Router for any client component using `useSearchParams()`. Missing it causes a build error.
+- Step detection uses `pathname.startsWith(s.path + '/')` to match session detail routes (`/director/sessions/[id]?demo=1` → Step 2). The `/director` fallback uses exact match only to avoid capturing all director routes.
+- Template literal `` `Demo · Step ${n} of ${total}` `` used instead of JSX expressions to ensure single text node in innerHTML (avoids React adjacent-expression splitting that broke QA string matching in initial run).
+
+---
+
 ## 2026-05-15 — Sprint 394: Premium UI Consistency Pass V1
 
 **What changed:** 2-line fix across `/director/level-up` and `/director/parents` — `StatCard` label now uses `label-xs` utility instead of the expanded inline form.

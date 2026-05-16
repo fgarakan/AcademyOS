@@ -13,7 +13,7 @@ How to use:
 
 ## Active Sprint
 
-### Sprint 395 — Guided Director Demo Flow V1
+### Sprint 396 — Final Prototype Visual Match + Regression V1
 
 **Status:** READY — next sprint
 
@@ -24,7 +24,7 @@ How to use:
 - [ ] `UIUX: ✓`
 - [ ] `DOCS: ✓`
 
-**Sprint spec:** Build a guided demo path surface — a lightweight "Start Demo" entry point that navigates through: Today's Academy → Session Detail → Level Up Review → Parent Communication Center → DONNA panel. Demo reads from existing data (no fake seed data). No new backend. No migrations.
+**Sprint spec:** Full regression QA pass across all routes built in Sprints 386–395. Verify DONNA naming (no "DANA"), design token compliance, protected action safety, and mobile smoke pass on coach routes. No new features. No migrations.
 
 **Migration required:** No
 **DB schema changes:** No
@@ -32,6 +32,13 @@ How to use:
 ---
 
 ## Completed This Run
+
+### Sprint 395 — Guided Director Demo Flow V1 ✓
+
+**Status:** COMPLETE
+**QA:** 26 PASS / 0 FAIL / 0 WARN
+
+---
 
 ### Sprint 394 — Premium UI Consistency Pass V1 ✓
 
@@ -198,7 +205,8 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 | Sprint | Description | Commit | Date |
 |---|---|---|---|
-| 394 | Premium UI Consistency Pass V1 | *(pending commit)* | 2026-05-15 |
+| 395 | Guided Director Demo Flow V1 | *(pending commit)* | 2026-05-15 |
+| 394 | Premium UI Consistency Pass V1 | 1526b10 | 2026-05-15 |
 | 393 | Cross-Screen DONNA Context Wiring Pass V1 | 1c4e701 | 2026-05-15 |
 | 392 | DONNA Executive Panel Upgrade V1 | dce85cd | 2026-05-15 |
 | 391 | Coach Recap Structuring and Review Draft V1 | *(pending commit)* | 2026-05-15 |
@@ -215,4 +223,4 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 ---
 
-*Last updated: Sprint 394*
+*Last updated: Sprint 395*

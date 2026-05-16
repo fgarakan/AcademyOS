@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-15 — Sprint 395: Guided Director Demo Flow V1
+
+**Component added:** `DemoModeBanner` — global demo mode bar for all `/director/**` routes
+**Layout modified:** `src/app/director/layout.tsx`
+
+**Goal:** Add a lightweight guided demo path that walks a director through the 5 key screens. Activated by `?demo=1` query param. No backend, no fake data, no migration.
+
+**Files created:**
+- `src/components/demo/DemoModeBanner.tsx` — `'use client'` banner component; reads `?demo=1`; shows current step (1–5), step label, hint text, Next → button, and exit (×) button
+
+**Files modified:**
+- `src/app/director/layout.tsx` — added `<Suspense><DemoModeBanner /></Suspense>` after `PreviewBanner` in main
+
+**Demo path (5 steps):**
+1. `/director/today?demo=1` → "Today's Academy" — morning anchor screen
+2. `/director/sessions?demo=1` → "Sessions" — weekly session overview
+3. `/director/level-up?demo=1` → "Level Up Review" — evidence-based readiness
+4. `/director/parents?demo=1` → "Parent Communications" — draft and approval workflow
+5. `/director?demo=1` → "DONNA Command Center" — opens DONNA panel hint
+
+**No backend writes. No fake data. Empty states shown when test DB is empty.**
+
+---
+
 ## 2026-05-15 — Sprint 394: Premium UI Consistency Pass V1
 
 **Screens modified:** `/director/level-up`, `/director/parents`

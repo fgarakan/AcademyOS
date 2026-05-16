@@ -100,6 +100,33 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 395 — Guided Director Demo Flow V1
+
+**Date:** 2026-05-15
+**QA type:** Full browser QA (Playwright)
+**TypeScript:** CLEAN
+**Script:** /tmp/donna-qa-395b.js
+
+**Section A — Banner hidden without ?demo=1:** 1 PASS
+**Section B — Banner visible, step 1 counter, label:** 3 PASS
+**Section C — Next button navigates to step 2:** 3 PASS
+**Section D — Step 2 on /director/sessions:** 2 PASS
+**Section E — Step 3 on /director/level-up:** 1 PASS
+**Section F — Step 4 on /director/parents:** 1 PASS
+**Section G — Step 5 on /director, Tour complete, no Next button:** 3 PASS
+**Section H — Exit demo removes ?demo=1:** 2 PASS
+**Section I — Source checks (use client, useSearchParams, layout, Suspense, no DANA):** 5 PASS
+**Section J — TypeScript:** 1 PASS
+**Section K — Page regressions (3 routes):** 3 PASS
+
+**Result: 26 PASS / 0 FAIL / 0 WARN**
+
+Note: Initial QA run had 1 FAIL — "Step 1/5" counter not matched. Root cause: JSX `{expr}/{expr}` created adjacent text nodes in React that rendered as split text in innerHTML. Fixed by using a template literal: `` `Step ${n} of ${total}` ``. All checks pass after fix.
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 394 — Premium UI Consistency Pass V1
 
 **Date:** 2026-05-15
@@ -366,4 +393,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 394*
+*Last updated: Sprint 395*

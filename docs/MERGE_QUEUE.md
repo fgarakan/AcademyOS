@@ -31,6 +31,20 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 395 — Guided Director Demo Flow V1
+
+**Date:** 2026-05-15
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** 26 PASS / 0 FAIL / 0 WARN
+**Files committed:**
+- `src/components/demo/DemoModeBanner.tsx` (new)
+- `src/app/director/layout.tsx`
+- docs (7 files)
+**Commit hash:** *(pending)*
+**Issues:** None
+
+---
+
 ### Sprint 394 — Premium UI Consistency Pass V1
 
 **Date:** 2026-05-15
@@ -246,4 +260,4 @@ This file records:
 
 ---
 
-*Last updated: Sprint 394*
+*Last updated: Sprint 395*
