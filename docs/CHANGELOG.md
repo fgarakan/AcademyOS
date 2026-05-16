@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 476: Parent Director Follow-Up Capture V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes, no sends.
+
+**Goal:** Q5 follow-up capture for coach wrap-up. 5 follow-up types (parent update / director / coach / player support / admin note). Multi-entry list per type, urgency selector, draft-only safety notes. No send action.
+
+**Files created:**
+- `src/components/capture/WrapUpFollowUpInput.tsx` — `'use client'` component. `FollowUpItem` and `FollowUpAnswer` types (`sendApplied: false`, `directorReviewRequired: true`). `FOLLOW_UP_TYPES` config with icons, accents, player-name requirement. `FollowUpEntry` sub-component with description, optional player name, urgency picker (low/medium/high), parent-draft warning, remove. Type picker modal on add. `onChange(FollowUpAnswer)` callback.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 475: Standouts and Needs Attention Capture V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
