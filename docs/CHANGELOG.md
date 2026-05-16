@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 442: Review Queue Ready-to-Apply Summary Counts V1
+
+**Type:** Hardening — code change, no migration.
+
+**Goal:** Surface "X ready to apply" counts in the section summary cards so directors can see approved-but-not-yet-applied items without clicking into each tab.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — added lime "X ready to apply" secondary line to Needs Approval, Player Updates, and Curriculum/Sessions summary cards; shown only when ready count > 0
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 441: Review Queue Observation Clarification Display V1
 
 **Type:** Hardening — code change, no migration.
