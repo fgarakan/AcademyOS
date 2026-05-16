@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 479: Coach Mobile Wrap-Up UX V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Mobile-optimized wrap-up shell tying together all Sprint 470–478 components. One step per screen, large buttons (py-4 rounded-2xl), DONNA prompt line, progress dots, sticky header + footer controls, Back/Skip/Next, edit-from-review navigation.
+
+**Files created:**
+- `src/components/capture/WrapUpMobileShell.tsx` — `'use client'` orchestration shell. 5 steps: attendance, session_actual, observations, follow_up, review. `MobileStepHeader` with DONNA prompt and progress dots. `MobileStepFooter` with large Next + Skip buttons. Full draft built from all section state into `WrapUpFullDraft`. `mapWrapUpToReviewQueue()` called on submit. `onComplete(mapping)` callback. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 478: Recap to Review Queue Routing V1
 
 **Type:** TypeScript utility — no migration, no schema changes, no DB writes.
