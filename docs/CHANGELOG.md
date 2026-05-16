@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 505: DONNA Ask Coach Wrap-Up Questions V1
+
+**Type:** TypeScript utility — no migration, no schema changes, no DB writes.
+
+**Goal:** DONNA question templates for coach wrap-up queries. 12 question definitions across 5 categories (submission status, session summary, observations, follow-ups, review queue). Intent triggers, proactive prompts, data-available and no-data response templates, follow-up IDs. `matchWrapUpQuestionByTrigger()` for natural language matching.
+
+**Files created:**
+- `src/lib/donna/donnaWrapUpQuestions.ts` — `DonnaWrapUpQuestion` type. 12 question entries with intent triggers. `getDonnaWrapUpQuestion()`, `getWrapUpQuestionsByCategory()`, `matchWrapUpQuestionByTrigger()` helpers. Pure constants — no DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 504: DONNA Ask Academy Health Questions V1
 
 **Type:** TypeScript utility — no migration, no schema changes, no DB writes.
