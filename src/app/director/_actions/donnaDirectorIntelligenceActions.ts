@@ -810,6 +810,12 @@ export async function fetchPlayerProgressSummaryAction(
       ? `Latest assessment score: ${latestAssessment.overall_score}`
       : 'No formal assessment on record'
 
+  const dataGaps: string[] = []
+  if (!curriculumState) dataGaps.push('Curriculum state not set — assign a curriculum level to enable advancement tracking.')
+  if (!latestAssessment) dataGaps.push('No assessment on record — an assessment is needed to evaluate readiness.')
+  if (observations.length === 0) dataGaps.push('No recent coach observations — ask coaches to log observations after sessions.')
+  if (priorities.length === 0) dataGaps.push('No active priorities set — add player priorities to guide coaching focus.')
+
   const summaryLines: string[] = [
     `Player: ${firstName}`,
     `Curriculum: ${levelLabel}`,
@@ -819,6 +825,8 @@ export async function fetchPlayerProgressSummaryAction(
     ...observationHighlights.map((o: string) => `• ${o}`),
     ...(prioritySummary.length > 0 ? ['Active priorities:'] : []),
     ...prioritySummary.map((p: string) => `• ${p}`),
+    ...(dataGaps.length > 0 ? ['', 'DATA GAPS:'] : []),
+    ...dataGaps.map((g: string) => `⚠ ${g}`),
   ]
 
   const progressSummary = summaryLines.join('\n')
@@ -929,6 +937,11 @@ export async function fetchSessionBriefAction(
         })
       : ['• No blocks assigned to this session yet']
 
+  const sessionDataGaps: string[] = []
+  if (coachName === 'Coach not assigned') sessionDataGaps.push('No coach assigned — assign a coach to this session before sharing a brief.')
+  if (!Array.isArray(blocks) || blocks.length === 0) sessionDataGaps.push('No session blocks planned — add blocks from a template before the brief is meaningful.')
+  if (groupName === 'Group not assigned') sessionDataGaps.push('No group assigned — a player group is needed to give the coach attendance context.')
+
   const briefLines = [
     `SESSION: ${sessionTitle}`,
     `DATE: ${session.scheduled_date ?? 'Not scheduled'}`,
@@ -948,6 +961,8 @@ export async function fetchSessionBriefAction(
     session.session_notes
       ? `SESSION NOTES: ${String(session.session_notes).slice(0, 300)}`
       : 'SESSION NOTES: None added.',
+    ...(sessionDataGaps.length > 0 ? ['', 'PREPARATION NEEDED:'] : []),
+    ...sessionDataGaps.map((g: string) => `⚠ ${g}`),
   ]
 
   const briefText = briefLines.join('\n')

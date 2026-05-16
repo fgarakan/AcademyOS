@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-16 — Sprint 413: DONNA Missing Data Explanation V1
+
+**Type:** Backend output — no DB writes, no migrations, no new packages
+
+**Goal:** When key data is missing from DONNA read-only summaries, surface explicit "DATA GAPS" and "PREPARATION NEEDED" sections with actionable explanations instead of silent inline "not assigned" strings.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — `fetchPlayerProgressSummaryAction` now appends a "DATA GAPS:" section listing missing curriculum state, assessment, observations, or priorities with actionable context. `fetchSessionBriefAction` now appends a "PREPARATION NEEDED:" section when coach, blocks, or group are missing.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Output-only changes. No DB writes. No logic changes affecting the saved payload or createdId. All data gaps are advisory — no enforcement or blocking behavior added.
+
+---
+
 ## 2026-05-16 — Sprint 412: DONNA Draft Revision Flow V1
 
 **Type:** Frontend UX polish — no DB writes, no migrations, no new packages
