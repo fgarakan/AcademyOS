@@ -4,7 +4,7 @@ import {
   Users, Calendar, ChevronRight, Activity,
   Clock, Brain, AlertTriangle,
   GraduationCap, Sparkles, ClipboardList,
-  ShieldCheck, Layers,
+  Layers,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
@@ -20,6 +20,7 @@ import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 import { OnboardingProgressCard } from './OnboardingProgressCard'
 import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
 import { DonnaExecutiveCard, type DonnaExecutivePriorityItem } from './_components/DonnaExecutiveCard'
+import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -330,7 +331,23 @@ export default async function DirectorDashboard() {
           <p className="text-text-secondary text-base mt-1">{academyName}</p>
         </div>
         {/* Academy Health Badge */}
-        <AcademyHealthBadge pct={academyHealthPct} />
+        <AcademyHealthBadgeWithDrawer
+          healthPct={academyHealthPct}
+          activePlayers={activePlayers}
+          pendingWrapUpsCount={pendingWrapUpsCount}
+          attentionCount={attentionCount}
+          reassessmentDueCount={reassessmentDue}
+          missingFocusCount={missingFocus}
+          newRequestsCount={newRequests}
+          pendingCount={pendingCount}
+          playersWithoutLevel={playersWithoutLevel}
+          curricGapCount={curricGapCount}
+          highPrioritySuggestionsCount={highPrioritySuggestionsCount}
+          pendingSuggestionsCount={pendingSuggestionsCount}
+          sessionsThisWeek={sessionsThisWeek}
+          improvingCount={improvingCount}
+          advancementReadyCount={advancementReadyCount}
+        />
       </div>
 
       {/* ── DONNA Executive Attention Card ─────────────────── */}
@@ -727,34 +744,6 @@ export default async function DirectorDashboard() {
       </div>
 
     </div>
-  )
-}
-
-// ── Academy Health Badge ────────────────────────────────────────
-
-function AcademyHealthBadge({ pct }: { pct: number }) {
-  const isHealthy = pct >= 80
-  const isWarning = pct >= 60 && pct < 80
-
-  const color = isHealthy
-    ? { text: 'text-teal-400', border: 'border-teal-400/30', bg: 'bg-teal-400/8', dot: 'bg-teal-400' }
-    : isWarning
-    ? { text: 'text-yellow-400', border: 'border-yellow-500/30', bg: 'bg-yellow-500/8', dot: 'bg-yellow-400' }
-    : { text: 'text-status-red', border: 'border-status-red/30', bg: 'bg-status-red/8', dot: 'bg-status-red' }
-
-  return (
-    <Link href="/director/signals" className="shrink-0 group">
-      <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${color.border} transition-all hover:scale-[1.02]`}
-        style={{ background: 'rgba(0,0,0,0.3)' }}
-      >
-        <span className={`w-2 h-2 rounded-full shrink-0 ${color.dot}`} style={{ boxShadow: isHealthy ? '0 0 6px rgba(45,212,191,0.6)' : undefined }} />
-        <div className="text-right">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-text-muted leading-none mb-0.5">Academy Health</p>
-          <p className={`font-mono font-bold text-xl leading-none ${color.text}`}>{pct}%</p>
-        </div>
-        <ShieldCheck className={`w-4 h-4 ${color.text} opacity-60 shrink-0`} />
-      </div>
-    </Link>
   )
 }
 

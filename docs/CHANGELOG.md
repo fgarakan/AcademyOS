@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-16 — Sprint 460.4.1: Academy Health Breakdown Drawer V1
+
+**Type:** UI/layout/copy only — no migration, no schema changes, no DB writes.
+
+**Goal:** When the director clicks the Academy Health badge in the top-right of the dashboard, a right-side drawer opens with a full breakdown of the health score. Breakdown includes: overall score with status label, 7-category breakdown with weighted progress bars and explanations, helping contributors (up to 5), lowering contributors (up to 5), ranked focus actions (safe: Review / Open Review Queue / View Coach Recaps), and footer safety copy. All scoring is computed locally from existing dashboard counts — no new DB queries. Academy Health badge converted from a Link to an interactive button.
+
+**Score logic:** Each of 7 categories starts at 100 and is deducted based on existing counts (wrap-ups pending, attention players, missing focus, missing curriculum level, parent requests, high-priority suggestions, sessions this week). Weights: Attendance & Retention 20%, Player Development 20%, Coach Execution 15%, Curriculum Execution 15%, Parent Communication 10%, Review Queue Health 10%, Session Operations 10%. Overall score continues to use the existing server-computed formula on the badge. Category breakdown is labeled "Operational health estimate based on current academy signals."
+
+**Files created:**
+- `src/app/director/_components/AcademyHealthBreakdown.tsx` — `'use client'` component. Exports `AcademyHealthBadgeWithDrawer`. Renders badge as a button (replaces Link), controls drawer open state, renders right-side drawer with category breakdown, contributing factors, ranked focus actions, and footer safety copy.
+
+**Files modified:**
+- `src/app/director/page.tsx` — Replaced `<AcademyHealthBadge>` (local Link-based function) with `<AcademyHealthBadgeWithDrawer>` (client component). Removed old `AcademyHealthBadge` function. Removed unused `ShieldCheck` import. Passes all required count props to the new client component.
+- `docs/CHANGELOG.md` — This entry.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 460.5: DONNA Side Panel UX Clarity Pass V1
 
 **Type:** UI/layout/copy only — no migration, no schema changes, no DB writes.
