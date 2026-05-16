@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 475: Standouts and Needs Attention Capture V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Two named observation sections — "Stood out positively" (lime) and "Could use extra support" (blue). Non-judgmental language. Staff-private by default with explicit privacy note. No parent exposure.
+
+**Files created:**
+- `src/components/capture/WrapUpStandoutsSection.tsx` — `'use client'` compound component. `StandoutsAndAttentionDraft` type (`directorReviewRequired: true`, `parentExposureApplied: false`). Two `WrapUpPlayerObservationInput` instances (positive + concern). Non-judgmental section headers (Star/Heart icons). Explicit privacy note. `onChange(StandoutsAndAttentionDraft)` callback.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 474: Coach Player Observation Capture V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
