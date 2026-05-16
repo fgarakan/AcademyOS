@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 447: Review Queue Completed Tab Accuracy V1
+
+**Type:** Hardening — copy/UX accuracy fix, no code logic change.
+
+**Goal:** Fix misleading Completed tab empty state and section summary card description. After Sprints 441-445, the Completed tab shows clarification_needed and rejected items — NOT approved items. The old copy said "Approved and resolved items will appear here."
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — updated Completed tab empty state title + description; updated Completed summary card description from "Resolved items" to "Sent back or not approved"; updated footer note to clarify where approved/ready items live
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 446: Review Queue Stale Alert Banner V1
 
 **Type:** Hardening — code change, no migration.

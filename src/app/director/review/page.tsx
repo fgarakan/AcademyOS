@@ -1,4 +1,4 @@
-import { BookOpen, CheckCircle, Users } from 'lucide-react'
+import { AlertTriangle, BookOpen, CheckCircle, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -132,7 +132,7 @@ export default async function DirectorReviewQueuePage({
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
     .eq('academy_id', academyId)
-    .in('status', ['pending_review', 'approved'])
+    .in('status', ['pending_review', 'approved', 'clarification_needed', 'rejected'])
     .eq('target_module', 'session_recap_structuring')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -196,6 +196,8 @@ export default async function DirectorReviewQueuePage({
 
   const pendingDrafts = allEnriched.filter(d => d.status === 'pending_review')
   const approvedDrafts = allEnriched.filter(d => d.status === 'approved')
+  const clarificationNeededDrafts = allEnriched.filter(d => d.status === 'clarification_needed')
+  const rejectedDrafts = allEnriched.filter(d => d.status === 'rejected')
 
   // ─── Priority recommendation drafts ─────────────────────────
 
@@ -205,7 +207,7 @@ export default async function DirectorReviewQueuePage({
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
     .eq('academy_id', academyId)
-    .in('status', ['pending_review', 'approved'])
+    .in('status', ['pending_review', 'approved', 'clarification_needed', 'rejected'])
     .eq('target_module', 'priority_recommendation')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -265,6 +267,8 @@ export default async function DirectorReviewQueuePage({
 
   const pendingPriorityDrafts = enrichedPriorityDrafts.filter(d => d.status === 'pending_review')
   const approvedPriorityDrafts = enrichedPriorityDrafts.filter(d => d.status === 'approved')
+  const clarificationNeededPriorityDrafts = enrichedPriorityDrafts.filter(d => d.status === 'clarification_needed')
+  const rejectedPriorityDrafts = enrichedPriorityDrafts.filter(d => d.status === 'rejected')
 
   // ─── Evidence requirement link drafts ─────────────────────────
 
@@ -273,7 +277,7 @@ export default async function DirectorReviewQueuePage({
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
     .eq('academy_id', academyId)
-    .in('status', ['pending_review', 'approved'])
+    .in('status', ['pending_review', 'approved', 'clarification_needed', 'rejected'])
     .eq('target_module', 'requirement_evidence_link')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -333,6 +337,8 @@ export default async function DirectorReviewQueuePage({
 
   const pendingEvidenceDrafts = enrichedEvidenceDrafts.filter(d => d.status === 'pending_review')
   const approvedEvidenceDrafts = enrichedEvidenceDrafts.filter(d => d.status === 'approved')
+  const clarificationNeededEvidenceDrafts = enrichedEvidenceDrafts.filter(d => d.status === 'clarification_needed')
+  const rejectedEvidenceDrafts = enrichedEvidenceDrafts.filter(d => d.status === 'rejected')
 
   // ─── Attendance exception drafts ─────────────────────────────
 
@@ -341,7 +347,7 @@ export default async function DirectorReviewQueuePage({
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
     .eq('academy_id', academyId)
-    .in('status', ['pending_review', 'approved'])
+    .in('status', ['pending_review', 'approved', 'clarification_needed', 'rejected'])
     .eq('target_module', 'attendance_exception')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -405,6 +411,8 @@ export default async function DirectorReviewQueuePage({
 
   const pendingAttendanceDrafts = enrichedAttendanceDrafts.filter(d => d.status === 'pending_review')
   const approvedAttendanceDrafts = enrichedAttendanceDrafts.filter(d => d.status === 'approved')
+  const clarificationNeededAttendanceDrafts = enrichedAttendanceDrafts.filter(d => d.status === 'clarification_needed')
+  const rejectedAttendanceDrafts = enrichedAttendanceDrafts.filter(d => d.status === 'rejected')
 
   // ─── Curriculum override drafts ────────────────────────────────
 
@@ -413,7 +421,7 @@ export default async function DirectorReviewQueuePage({
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
     .eq('academy_id', academyId)
-    .in('status', ['pending_review', 'approved'])
+    .in('status', ['pending_review', 'approved', 'clarification_needed', 'rejected'])
     .eq('target_module', 'curriculum_override')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -450,6 +458,8 @@ export default async function DirectorReviewQueuePage({
 
   const pendingCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'pending_review')
   const approvedCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'approved')
+  const clarificationNeededCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'clarification_needed')
+  const rejectedCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'rejected')
 
   // ─── Voice intake drafts ───────────────────────────────────────
 
@@ -458,7 +468,7 @@ export default async function DirectorReviewQueuePage({
     .from('proposed_actions')
     .select('id, status, proposed_payload, created_at, proposed_by_id, risk_level')
     .eq('academy_id', academyId)
-    .in('status', ['pending_review', 'approved'])
+    .in('status', ['pending_review', 'approved', 'clarification_needed', 'rejected'])
     .eq('target_module', 'voice_intake')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -496,6 +506,8 @@ export default async function DirectorReviewQueuePage({
 
   const pendingVoiceIntakeDrafts = enrichedVoiceIntakeDrafts.filter(d => d.status === 'pending_review')
   const approvedVoiceIntakeDrafts = enrichedVoiceIntakeDrafts.filter(d => d.status === 'approved')
+  const clarificationNeededVoiceIntakeDrafts = enrichedVoiceIntakeDrafts.filter(d => d.status === 'clarification_needed')
+  const rejectedVoiceIntakeDrafts = enrichedVoiceIntakeDrafts.filter(d => d.status === 'rejected')
 
   // ─── General captures (unrouted Quick Captures) ────────────────
   const { data: captureRows } = await supabase
@@ -639,7 +651,7 @@ export default async function DirectorReviewQueuePage({
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
     .eq('academy_id', academyId)
-    .in('status', ['pending_review', 'approved', 'clarification_needed'])
+    .in('status', ['pending_review', 'approved', 'clarification_needed', 'rejected'])
     .eq('target_module', 'coach_observation_draft_v1')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -696,6 +708,8 @@ export default async function DirectorReviewQueuePage({
 
   const pendingObservationDrafts = enrichedObservationDrafts.filter(d => d.status === 'pending_review')
   const approvedObservationDrafts = enrichedObservationDrafts.filter(d => d.status === 'approved')
+  const clarificationNeededObservationDrafts = enrichedObservationDrafts.filter(d => d.status === 'clarification_needed')
+  const rejectedObservationDrafts = enrichedObservationDrafts.filter(d => d.status === 'rejected')
 
   // ─── Development summary drafts ───────────────────────────────
 
@@ -703,7 +717,7 @@ export default async function DirectorReviewQueuePage({
     .from('proposed_actions')
     .select('id, status, target_object_id, proposed_payload, created_at, proposed_by_id')
     .eq('academy_id', academyId)
-    .in('status', ['pending_review', 'approved'])
+    .in('status', ['pending_review', 'approved', 'rejected'])
     .eq('target_module', 'development_summary_draft_v1')
     .order('created_at', { ascending: false })
     .limit(100)
@@ -760,6 +774,7 @@ export default async function DirectorReviewQueuePage({
 
   const pendingSummaryDrafts = enrichedSummaryDrafts.filter(d => d.status === 'pending_review')
   const approvedSummaryDrafts = enrichedSummaryDrafts.filter(d => d.status === 'approved')
+  const rejectedSummaryDrafts = enrichedSummaryDrafts.filter(d => d.status === 'rejected')
 
   // ─── Placement review follow-ups ──────────────────────────────
   // Created when a director applies an attendance_exception draft that has
@@ -1107,7 +1122,60 @@ export default async function DirectorReviewQueuePage({
   const curriculumSessionReady = approvedDrafts.length + approvedCurriculumOverrideDrafts.length
 
   // Completed: resolved items (sent back for clarification, rejected)
-  const completedCount = clarificationNeededWrapUpDrafts.length + rejectedWrapUpDrafts.length
+  const completedCount =
+    clarificationNeededWrapUpDrafts.length +
+    rejectedWrapUpDrafts.length +
+    clarificationNeededObservationDrafts.length +
+    rejectedObservationDrafts.length +
+    clarificationNeededPriorityDrafts.length +
+    rejectedPriorityDrafts.length +
+    clarificationNeededEvidenceDrafts.length +
+    rejectedEvidenceDrafts.length +
+    clarificationNeededAttendanceDrafts.length +
+    rejectedAttendanceDrafts.length +
+    clarificationNeededCurriculumOverrideDrafts.length +
+    rejectedCurriculumOverrideDrafts.length +
+    rejectedSummaryDrafts.length +
+    clarificationNeededDrafts.length +
+    rejectedDrafts.length +
+    clarificationNeededVoiceIntakeDrafts.length +
+    rejectedVoiceIntakeDrafts.length
+
+  // Oldest pending item age per section — used to surface stale drafts in summary cards
+  function oldestDaysAgo(items: Array<{ createdAt: string }>): number | null {
+    if (items.length === 0) return null
+    const now = Date.now()
+    const oldest = items.reduce((min, item) => {
+      const t = new Date(item.createdAt).getTime()
+      return t < min ? t : min
+    }, now)
+    return Math.floor((now - oldest) / (1000 * 60 * 60 * 24))
+  }
+
+  const needsApprovalOldestDays = oldestDaysAgo([
+    ...pendingWrapUpDrafts,
+    ...pendingAttendanceDrafts,
+    ...pendingPlacementReviews,
+    ...enrichedIntakeCandidates,
+    ...enrichedAssessmentDrafts,
+    ...pendingRecommendationDrafts,
+    ...pendingVoiceIntakeDrafts,
+    ...generalCaptures,
+    ...parentCommDrafts,
+    ...levelReviewDrafts,
+  ])
+
+  const playerUpdatesOldestDays = oldestDaysAgo([
+    ...pendingObservationDrafts,
+    ...pendingSummaryDrafts,
+    ...pendingPriorityDrafts,
+    ...pendingEvidenceDrafts,
+  ])
+
+  const curriculumSessionOldestDays = oldestDaysAgo([
+    ...pendingDrafts,
+    ...pendingCurriculumOverrideDrafts,
+  ])
 
   // Default tab — first section with pending items, fallback to needs_approval
   const defaultTab = [
@@ -1143,6 +1211,14 @@ export default async function DirectorReviewQueuePage({
             {needsApprovalPending}
           </p>
           <p className="text-[9px] text-text-muted">Wrap-ups, attendance, placement</p>
+          {needsApprovalOldestDays !== null && needsApprovalPending > 0 && (
+            <p className={`text-[9px] font-semibold tabular-nums ${needsApprovalOldestDays >= 7 ? 'text-status-orange' : 'text-text-muted'}`}>
+              oldest: {needsApprovalOldestDays}d
+            </p>
+          )}
+          {needsApprovalReady > 0 && (
+            <p className="text-[9px] font-semibold tabular-nums text-lime">{needsApprovalReady} ready to apply</p>
+          )}
         </div>
         <div className={`rounded-xl border px-4 py-3 space-y-1 ${playerUpdatesPending > 0 ? 'bg-status-blue/5 border-status-blue/20' : 'bg-surface-raised border-border'}`}>
           <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Player Updates</p>
@@ -1150,6 +1226,14 @@ export default async function DirectorReviewQueuePage({
             {playerUpdatesPending}
           </p>
           <p className="text-[9px] text-text-muted">Notes, summaries, priorities</p>
+          {playerUpdatesOldestDays !== null && playerUpdatesPending > 0 && (
+            <p className={`text-[9px] font-semibold tabular-nums ${playerUpdatesOldestDays >= 7 ? 'text-status-orange' : 'text-text-muted'}`}>
+              oldest: {playerUpdatesOldestDays}d
+            </p>
+          )}
+          {playerUpdatesReady > 0 && (
+            <p className="text-[9px] font-semibold tabular-nums text-lime">{playerUpdatesReady} ready to apply</p>
+          )}
         </div>
         <div className={`rounded-xl border px-4 py-3 space-y-1 ${curriculumSessionPending > 0 ? 'bg-lime/5 border-lime/20' : 'bg-surface-raised border-border'}`}>
           <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Curriculum / Sessions</p>
@@ -1157,13 +1241,45 @@ export default async function DirectorReviewQueuePage({
             {curriculumSessionPending}
           </p>
           <p className="text-[9px] text-text-muted">Recaps, curriculum changes</p>
+          {curriculumSessionOldestDays !== null && curriculumSessionPending > 0 && (
+            <p className={`text-[9px] font-semibold tabular-nums ${curriculumSessionOldestDays >= 7 ? 'text-status-orange' : 'text-text-muted'}`}>
+              oldest: {curriculumSessionOldestDays}d
+            </p>
+          )}
+          {curriculumSessionReady > 0 && (
+            <p className="text-[9px] font-semibold tabular-nums text-lime">{curriculumSessionReady} ready to apply</p>
+          )}
         </div>
         <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-1">
           <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Completed</p>
           <p className="text-xl font-mono font-bold text-text-muted">{completedCount}</p>
-          <p className="text-[9px] text-text-muted">Resolved items</p>
+          <p className="text-[9px] text-text-muted">Sent back or not approved</p>
         </div>
       </div>
+
+      {/* Stale alert banner — shown when any section has pending items older than 7 days */}
+      {(needsApprovalPending > 0 || playerUpdatesPending > 0 || curriculumSessionPending > 0) && (
+        [needsApprovalOldestDays, playerUpdatesOldestDays, curriculumSessionOldestDays].some(d => d !== null && d >= 7)
+      ) && (
+        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-status-orange/10 border border-status-orange/30">
+          <AlertTriangle className="w-4 h-4 text-status-orange shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <p className="text-sm text-status-orange font-semibold">
+              Stale items in your review queue
+            </p>
+            <p className="text-[11px] text-status-orange/80">
+              {[
+                needsApprovalOldestDays !== null && needsApprovalOldestDays >= 7 && needsApprovalPending > 0
+                  ? `Needs Approval (oldest: ${needsApprovalOldestDays}d)` : null,
+                playerUpdatesOldestDays !== null && playerUpdatesOldestDays >= 7 && playerUpdatesPending > 0
+                  ? `Player Updates (oldest: ${playerUpdatesOldestDays}d)` : null,
+                curriculumSessionOldestDays !== null && curriculumSessionOldestDays >= 7 && curriculumSessionPending > 0
+                  ? `Curriculum / Sessions (oldest: ${curriculumSessionOldestDays}d)` : null,
+              ].filter(Boolean).join(' · ')}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* All clear state */}
       {needsApprovalPending + playerUpdatesPending + curriculumSessionPending === 0 && (
@@ -1770,11 +1886,45 @@ export default async function DirectorReviewQueuePage({
               <CardContent className="py-12">
                 <EmptyState
                   icon={<CheckCircle className="w-5 h-5" />}
-                  title="Approved and resolved items will appear here."
-                  description="Items you've reviewed, approved, or dismissed will be listed here for your reference."
+                  title="Nothing sent back or rejected yet."
+                  description="Items you send back for clarification or explicitly decline will appear here. Approved items that are ready to apply remain in Needs Approval and Player Updates until applied."
                 />
               </CardContent>
             </Card>
+          )}
+
+          {/* Session recaps sent back for clarification */}
+          {clarificationNeededDrafts.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Session Recaps — Sent Back for Clarification</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  {clarificationNeededDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {clarificationNeededDrafts.map(draft => (
+                  <StructuredDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Voice commands sent back for clarification */}
+          {clarificationNeededVoiceIntakeDrafts.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Voice Commands — Sent Back for Clarification</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  {clarificationNeededVoiceIntakeDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {clarificationNeededVoiceIntakeDrafts.map(draft => (
+                  <VoiceIntakeDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Sent back for clarification */}
@@ -1794,18 +1944,127 @@ export default async function DirectorReviewQueuePage({
             </div>
           )}
 
+          {/* Observation drafts sent back for clarification */}
+          {clarificationNeededObservationDrafts.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Player Observations — Sent Back for Clarification</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  {clarificationNeededObservationDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {clarificationNeededObservationDrafts.map(draft => (
+                  <WrapUpObservationDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Priority recommendations sent back for clarification */}
+          {clarificationNeededPriorityDrafts.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Priority Recommendations — Sent Back for Clarification</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  {clarificationNeededPriorityDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {clarificationNeededPriorityDrafts.map(draft => (
+                  <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Evidence requirement links sent back for clarification */}
+          {clarificationNeededEvidenceDrafts.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Evidence Links — Sent Back for Clarification</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  {clarificationNeededEvidenceDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {clarificationNeededEvidenceDrafts.map(draft => (
+                  <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Attendance exceptions sent back for clarification */}
+          {clarificationNeededAttendanceDrafts.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Attendance Exceptions — Sent Back for Clarification</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  {clarificationNeededAttendanceDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {clarificationNeededAttendanceDrafts.map(draft => (
+                  <AttendanceExceptionDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Curriculum overrides sent back for clarification */}
+          {clarificationNeededCurriculumOverrideDrafts.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Curriculum Overrides — Sent Back for Clarification</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  {clarificationNeededCurriculumOverrideDrafts.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {clarificationNeededCurriculumOverrideDrafts.map(draft => (
+                  <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Not approved */}
-          {rejectedWrapUpDrafts.length > 0 && (
+          {(rejectedDrafts.length + rejectedVoiceIntakeDrafts.length + rejectedWrapUpDrafts.length + rejectedObservationDrafts.length + rejectedPriorityDrafts.length + rejectedEvidenceDrafts.length + rejectedAttendanceDrafts.length + rejectedCurriculumOverrideDrafts.length + rejectedSummaryDrafts.length) > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Not Approved</h3>
                 <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-red/15 text-status-red border border-status-red/20 leading-none">
-                  {rejectedWrapUpDrafts.length}
+                  {rejectedDrafts.length + rejectedVoiceIntakeDrafts.length + rejectedWrapUpDrafts.length + rejectedObservationDrafts.length + rejectedPriorityDrafts.length + rejectedEvidenceDrafts.length + rejectedAttendanceDrafts.length + rejectedCurriculumOverrideDrafts.length + rejectedSummaryDrafts.length}
                 </span>
               </div>
               <div className="space-y-4">
+                {rejectedDrafts.map(draft => (
+                  <StructuredDraftCard key={draft.id} draft={draft} />
+                ))}
+                {rejectedVoiceIntakeDrafts.map(draft => (
+                  <VoiceIntakeDraftCard key={draft.id} draft={draft} />
+                ))}
                 {rejectedWrapUpDrafts.map(draft => (
                   <WrapUpDraftCard key={draft.id} draft={draft} />
+                ))}
+                {rejectedObservationDrafts.map(draft => (
+                  <WrapUpObservationDraftCard key={draft.id} draft={draft} />
+                ))}
+                {rejectedPriorityDrafts.map(draft => (
+                  <PriorityRecommendationDraftCard key={draft.id} draft={draft} />
+                ))}
+                {rejectedEvidenceDrafts.map(draft => (
+                  <EvidenceRequirementDraftCard key={draft.id} draft={draft} />
+                ))}
+                {rejectedAttendanceDrafts.map(draft => (
+                  <AttendanceExceptionDraftCard key={draft.id} draft={draft} />
+                ))}
+                {rejectedCurriculumOverrideDrafts.map(draft => (
+                  <CurriculumOverrideDraftCard key={draft.id} draft={draft} />
+                ))}
+                {rejectedSummaryDrafts.map(draft => (
+                  <DevelopmentSummaryDraftCard key={draft.id} draft={draft} />
                 ))}
               </div>
             </div>
@@ -1813,7 +2072,7 @@ export default async function DirectorReviewQueuePage({
 
           <div className="rounded-xl bg-surface-raised border border-border px-4 py-3">
             <p className="text-[11px] text-text-muted">
-              Fully applied items (executed) will be visible here in a future update.
+              Applied and executed items will be visible in a future update. Approved items ready to apply are in the Needs Approval and Player Updates tabs.
             </p>
           </div>
         </TabsContent>
