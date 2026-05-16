@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-16 — Sprint 452: DONNA Coach Context Type V1
+
+**Type:** Code change — no migration.
+
+**Goal:** Add `coach_profile` to the DONNA context type system. Wire `/director/coaches/[uuid]` into `deriveContextRequest`. Add `fetchCoachContext` handler to `donnaContextActions.ts`.
+
+**Files modified:**
+- `src/components/assistant/donnaContextTypes.ts` — added `coach_profile` to `DonnaContextType`; added `coachId?` to `DonnaContextRequest.params`; added `/director/coaches/[uuid]` pattern to `deriveContextRequest`
+- `src/app/director/_actions/donnaContextActions.ts` — added `coachId?` to `fetchDonnaContext` params; added `coach_profile` case to switch; added `fetchCoachContext()` handler (profiles, academy_memberships, sessions, coach_observations, proposed_actions — all scoped to academy_id)
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 451: DONNA Coach Intelligence Steps 6-9 V1
 
 **Type:** Code change — no migration.

@@ -35,7 +35,7 @@ async function resolveAcademyId(): Promise<{ supabase: Awaited<ReturnType<typeof
 
 export async function fetchDonnaContext(
   contextType: DonnaContextType,
-  params?: { playerId?: string },
+  params?: { playerId?: string; coachId?: string },
 ): Promise<DonnaContextSummary> {
   try {
     const { supabase, academyId } = await resolveAcademyId()
@@ -47,6 +47,7 @@ export async function fetchDonnaContext(
       case 'academy_overview':           return fetchAcademyOverview(supabase, academyId)
       case 'player_collection':          return fetchPlayerCollection(supabase, academyId)
       case 'player_profile':             return fetchPlayerProfile(supabase, academyId, params?.playerId)
+      case 'coach_profile':              return fetchCoachContext(supabase, academyId, params?.coachId)
       case 'group_context':              return fetchGroupContext(supabase, academyId)
       case 'session_context':            return fetchSessionContext(supabase, academyId)
       case 'class_template_collection':  return fetchClassTemplateCollection(supabase, academyId)
@@ -1028,6 +1029,131 @@ async function fetchSignalsContext(
       ...(recentSessionIds.length === 0 ? ['session_history'] : []),
     ],
     possibleSuggestionTypes: ['player_attention_signal', 'attendance_risk_suggestion', 'parent_update_suggestion'],
+    fetchedAt: new Date().toISOString(),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Coach profile context — Sprint 452
+// ---------------------------------------------------------------------------
+
+async function fetchCoachContext(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  academyId: string,
+  coachId?: string,
+): Promise<DonnaContextSummary> {
+  if (!coachId) {
+    return makeFallbackSummary('coach_profile', 'No coach selected. Navigate to a specific coach profile to see coach context.')
+  }
+
+  const rawDb = supabase as any
+
+  // Coach profile
+  const { data: profileRaw } = await rawDb
+    .from('profiles')
+    .select('full_name, first_name')
+    .eq('id', coachId)
+    .maybeSingle()
+
+  const coachName: string =
+    profileRaw?.full_name
+      ? String(profileRaw.full_name)
+      : profileRaw?.first_name
+      ? String(profileRaw.first_name)
+      : 'Unknown Coach'
+
+  // Coach membership
+  const { data: membershipRaw } = await rawDb
+    .from('academy_memberships')
+    .select('role, is_active')
+    .eq('profile_id', coachId)
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (!membershipRaw?.is_active) {
+    return makeFallbackSummary('coach_profile', `${coachName} is not an active member of this academy.`)
+  }
+
+  const roleLabel: string =
+    membershipRaw?.role === 'head_coach'
+      ? 'Head Coach'
+      : membershipRaw?.role === 'academy_director'
+      ? 'Director'
+      : 'Coach'
+
+  // Sessions in last 30d
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString()
+
+  const { data: sessionsRaw } = await rawDb
+    .from('sessions')
+    .select('id, status')
+    .eq('academy_id', academyId)
+    .eq('coach_id', coachId)
+    .gte('scheduled_date', thirtyDaysAgoStr)
+
+  const sessions = (sessionsRaw ?? []) as Array<{ id: string; status: string }>
+  const totalSessions = sessions.length
+  const completedSessions = sessions.filter(s => s.status === 'completed' || s.status === 'done').length
+
+  // Observations in last 30d
+  const { data: obsRaw } = await rawDb
+    .from('coach_observations')
+    .select('id', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+    .eq('coach_id', coachId)
+    .gte('created_at', thirtyDaysAgoStr)
+
+  const observationCount: number = Array.isArray(obsRaw) ? obsRaw.length : 0
+
+  // Pending review items
+  const { data: pendingRaw } = await rawDb
+    .from('proposed_actions')
+    .select('id', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+    .eq('proposed_by_id', coachId)
+    .eq('status', 'pending_review')
+
+  const pendingCount: number = Array.isArray(pendingRaw) ? pendingRaw.length : 0
+
+  const keyFacts: string[] = [
+    `${roleLabel} — active member of this academy`,
+    `${totalSessions} session${totalSessions !== 1 ? 's' : ''} coached in last 30 days (${completedSessions} completed)`,
+    `${observationCount} observation${observationCount !== 1 ? 's' : ''} logged in last 30 days`,
+    ...(pendingCount > 0 ? [`${pendingCount} pending review item${pendingCount !== 1 ? 's' : ''} awaiting director approval`] : []),
+  ]
+
+  const missingData: string[] = []
+  if (totalSessions === 0) missingData.push('No sessions assigned in last 30 days')
+  if (observationCount === 0 && totalSessions > 0) missingData.push('No observations logged in last 30 days')
+
+  const nextSteps: string[] = []
+  if (pendingCount > 0) nextSteps.push(`Review ${pendingCount} pending item${pendingCount !== 1 ? 's' : ''} from ${coachName} in the Review Queue`)
+  if (observationCount === 0 && totalSessions > 0) nextSteps.push(`Ask ${coachName} to log observations after sessions`)
+  if (nextSteps.length === 0) nextSteps.push(`Check ${coachName}'s full session and observation history`)
+
+  return {
+    contextType: 'coach_profile',
+    title: `Coach: ${coachName}`,
+    summary: `${coachName} is a ${roleLabel} with ${totalSessions} session${totalSessions !== 1 ? 's' : ''} and ${observationCount} observation${observationCount !== 1 ? 's' : ''} in the last 30 days.`,
+    keyFacts,
+    openQuestions: pendingCount > 0 ? [`${coachName} has ${pendingCount} pending item${pendingCount !== 1 ? 's' : ''} — have they been reviewed?`] : [],
+    suggestedNextSteps: nextSteps,
+    dataUsed: ['profiles', 'academy_memberships', 'sessions', 'coach_observations', 'proposed_actions'],
+    missingData,
+    safetyNotes: ['Read-only summary. No coach data was changed.'],
+    recommendationInputsAvailable: [
+      'coach_role',
+      ...(totalSessions > 0 ? ['session_count', 'completion_rate'] : []),
+      ...(observationCount > 0 ? ['observation_count'] : []),
+    ],
+    recommendationInputsMissing: [
+      ...(totalSessions === 0 ? ['session_history'] : []),
+      ...(observationCount === 0 ? ['observation_history'] : []),
+    ],
+    possibleSuggestionTypes: ['coach_execution_suggestion', 'observation_coverage_suggestion'],
     fetchedAt: new Date().toISOString(),
   }
 }

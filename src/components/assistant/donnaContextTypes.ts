@@ -9,6 +9,7 @@ export type DonnaContextType =
   | 'academy_overview'
   | 'player_collection'
   | 'player_profile'
+  | 'coach_profile'
   | 'group_context'
   | 'session_context'
   | 'class_template_collection'
@@ -21,6 +22,7 @@ export interface DonnaContextRequest {
   contextType: DonnaContextType
   params?: {
     playerId?: string
+    coachId?: string
   }
 }
 
@@ -62,7 +64,16 @@ export function deriveContextRequest(pathname: string): DonnaContextRequest {
     }
   }
 
+  // /director/coaches/[uuid] → coach_profile with coachId
+  if (/^\/director\/coaches\/[^/]+$/.test(pathname)) {
+    const lastSegment = pathname.split('/').pop() ?? ''
+    if (UUID_RE.test(lastSegment)) {
+      return { contextType: 'coach_profile', params: { coachId: lastSegment } }
+    }
+  }
+
   if (pathname.startsWith('/director/players'))         return { contextType: 'player_collection' }
+  if (pathname.startsWith('/director/coaches'))         return { contextType: 'academy_overview' }
   if (pathname.startsWith('/director/sessions'))        return { contextType: 'session_context' }
   if (pathname.startsWith('/director/class-templates')) return { contextType: 'class_template_collection' }
   if (pathname.startsWith('/director/fitness'))         return { contextType: 'fitness_template_collection' }
