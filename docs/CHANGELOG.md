@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 499: Player Attention Risk Dashboard V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
+
+**Goal:** Director dashboard panel showing players flagged for attention. Risk levels: high/medium/low. Flag types: support flagged, coach concern, repeated absence, no progress note, parent concern. DONNA summary from KPI Next Best Action map. Prioritized sections. Pending review count per player. Props-only — no DB calls.
+
+**Files created:**
+- `src/components/assistant/PlayerAttentionRiskDashboard.tsx` — `'use client'` component. `PlayerAttentionRiskData` type. `RISK_CONFIG` and `FLAG_TYPE_CONFIG` maps. Three risk sections (high/medium/low) sorted by priority. `PlayerRiskRow` with risk dot, flag type icon, pending action count. DONNA next-best-action CTA from `kpiNextBestActionMap`. Read-only note.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 498: KPI to Next Best Action Mapping V1
 
 **Type:** TypeScript utility — no migration, no schema changes, no DB writes.
