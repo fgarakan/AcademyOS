@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 498: KPI to Next Best Action Mapping V1
+
+**Type:** TypeScript utility — no migration, no schema changes, no DB writes.
+
+**Goal:** Map each academy health KPI × severity combination to DONNA's next-best-action recommendation. 7 KPIs × 4 severities (critical/warning/healthy/no_data) = 28 action entries. Each entry has: donnaSummary, recommendedAction, actionCta, routingDestination, requiresDirectorApproval, isExecutable, executionNote. Pure constants — no DB calls.
+
+**Files created:**
+- `src/lib/donna/kpiNextBestActionMap.ts` — `KPINextBestAction`, `KPISeverity`, `ActionRoutingDestination` types. `KPI_NEXT_BEST_ACTION_MAP` with 28 entries. `getNextBestAction(kpiId, severity)`, `getActionsByDestination()`, `getActionsRequiringDirectorApproval()` lookup helpers.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 497: Academy Health Source Map V1
 
 **Type:** TypeScript utility — no migration, no schema changes, no DB writes.
