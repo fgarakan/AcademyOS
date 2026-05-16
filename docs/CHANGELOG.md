@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-16 — Sprint 420: Academy COO KPI Data Model Audit V1
+
+**Type:** Docs/audit only — no code changes, no migrations, no package changes, no DB writes
+
+**Goal:** Define the full KPI dictionary for DONNA's COO intelligence layer before building runtime dashboards.
+
+**Files created:**
+- `docs/ACADEMY_COO_KPI_DICTIONARY.md` — 25 KPI entries, each with: name, category, definition, formula, required data, source tables, missing data, data sufficiency label (`live` / `demo-only` / `data-insufficient`), DONNA interpretation, safe next action, and status. Totals: 2 live · 16 demo-only · 7 data-insufficient.
+- `docs/DONNA_KPI_INTELLIGENCE_MAP.md` — maps each KPI to DONNA's query intent, groups into Tier 1 (live) / Tier 2 (demo-only) / Tier 3 (data-insufficient), defines DONNA safety rules for KPI responses, registers 8 data model gaps (G1–G8), and outlines Block 2 sprint build sequence (Sprints 421–432+).
+
+**Key findings:**
+- 2 KPIs fully live: Time in Current Level (13) and Development Bottleneck by Level (23)
+- 16 KPIs demo-only: complete schema, computed at app layer, dependent on data density
+- 7 KPIs data-insufficient: blocked by missing columns, unapplied migrations, or missing infrastructure
+- Critical gaps: `session_blocks.actual_status` not persisted to DB (Sprint 48); no `deactivated_at` on players; no parent send or response infrastructure; `curriculum_levels` lacks expected duration
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0 (docs-only sprint).
+
+**Safety:** No code changes. No migrations. No schema changes. Audit and roadmap only.
+
+---
+
 ## 2026-05-16 — Sprint 419: DONNA COO Block Audit + Next Roadmap V1
 
 **Type:** Audit + roadmap — one new doc, no code changes, no migrations
