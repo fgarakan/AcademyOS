@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-16 — Sprint 402: DONNA Parent-Safe Update Draft V1
+
+**Type:** Backend enhancement — no new write paths, no migrations, no new packages
+
+**Goal:** Enhance `saveParentUpdateDraftAction` to produce a structured 5-section parent-safe draft: (1) What the player is working on, (2) What improved, (3) What needs continued support, (4) How parent can help, (5) What is next. Replaces the previous 1–2 sentence keyword-only output with a genuinely useful parent update draft grounded in real player data.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — enhanced `saveParentUpdateDraftAction`: added sequential reads of curriculum state, active priorities, latest assessment, and non-private coach observations; builds structured 5-section draft via `sanitizeParentFacingText`; updates payload to `draft_type: 'parent_update_v2'` with `draft_sections` field. Write path (proposed_actions) unchanged.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** No new DB write path. No external send. No parent notification. All observation text sanitized via `sanitizeParentFacingText`. No raw internal notes exposed. Proposed_actions write is the existing safe draft pipeline — unchanged.
+
+---
+
 ## 2026-05-16 — Sprint 401: DONNA Draft Coach Brief V1
 
 **Type:** Frontend + read-only server action — no DB writes, no migrations, no new packages

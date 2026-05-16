@@ -5,7 +5,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { isPreviewMode } from '@/lib/utils/previewMode'
 import type { Json } from '@/lib/supabase/database.types'
 import type { DonnaApprovalExecutionResult } from '@/components/assistant/donnaApprovalExecutionTypes'
-import { buildParentSupportGuidanceDraft } from '@/lib/communications/parentSafeResponseRules'
+import { buildParentSupportGuidanceDraft, sanitizeParentFacingText } from '@/lib/communications/parentSafeResponseRules'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper (director/head_coach only)
@@ -108,16 +108,122 @@ export async function saveParentUpdateDraftAction(
     playerLabel.split(' ')[0] ??
     'the player'
 
-  // Parse update_focus into focus keywords — max 3 terms
+  // Parse update_focus into focus keywords — max 3 terms (kept for short-form fallback)
   const focusKeywords = updateFocus
     .split(/[,;]+/)
     .map((s: string) => s.trim())
     .filter(Boolean)
     .slice(0, 3)
 
-  // Build parent-safe draft via LOCKED utility — no AI, no external API
-  // observationText is deliberately omitted — never pass raw internal notes to parent draft
-  const draftText = buildParentSupportGuidanceDraft({
+  // Step A — Curriculum level (for "what's next" context)
+  const { data: curriculumState } = await rawDb
+    .from('player_curriculum_states')
+    .select('current_level_id, advancement_eligible')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .maybeSingle()
+
+  // Step B — Active priorities (what the player is working on)
+  // Columns: title, description, status, is_active, priority_rank, category
+  const { data: priorities } = await rawDb
+    .from('player_priorities')
+    .select('title, description, status, priority_rank, category')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .eq('status', 'active')
+    .order('priority_rank', { ascending: true })
+    .limit(2)
+
+  // Step C — Latest assessment (strengths and priorities — both string[] | null)
+  const { data: latestAssessment } = await rawDb
+    .from('assessments')
+    .select('strengths, priorities, overall_score, promotion_notes')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // Step D — Recent non-private coach observation (sanitized — internal text never exposed raw)
+  const { data: recentObservations } = await rawDb
+    .from('coach_observations')
+    .select('content, observation_type')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .eq('is_private', false)
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  // ── Section 1: Working on (from active priorities, sanitized) ───────────────
+  const workingOnItems = ((priorities ?? []) as Array<{ title: string; description: string | null }>)
+    .map((p) => {
+      const text = String(p.title ?? p.description ?? '').slice(0, 120)
+      return sanitizeParentFacingText(text)
+    })
+    .filter(Boolean)
+
+  const workingOn =
+    workingOnItems.length > 0
+      ? `${firstName} is currently focused on: ${workingOnItems.join(', ')}.`
+      : `${firstName} is continuing to develop their tennis skills across key technical areas.`
+
+  // ── Section 2: What improved (from assessment strengths, sanitized) ──────────
+  const strengthsRaw = Array.isArray(latestAssessment?.strengths)
+    ? (latestAssessment.strengths as string[]).map((s) => String(s)).slice(0, 2)
+    : latestAssessment?.strengths
+      ? [String(latestAssessment.strengths).slice(0, 200)]
+      : []
+
+  const improved =
+    strengthsRaw.length > 0
+      ? `Recent assessment highlights include: ${strengthsRaw.map((s) => sanitizeParentFacingText(s)).filter(Boolean).join('; ')}.`
+      : 'Progress is steady — we continue to track improvement across training sessions.'
+
+  // ── Section 3: Needs continued support (from assessment priorities, sanitized)
+  const assessmentPrioritiesRaw = Array.isArray(latestAssessment?.priorities)
+    ? (latestAssessment.priorities as string[]).slice(0, 1).join(', ')
+    : latestAssessment?.priorities
+      ? String(latestAssessment.priorities).slice(0, 200)
+      : null
+
+  const needsSupport = assessmentPrioritiesRaw
+    ? `Areas to continue working on: ${sanitizeParentFacingText(assessmentPrioritiesRaw)}.`
+    : `${firstName} is working through the natural challenges of their current level — continued practice and patience will help.`
+
+  // ── Section 4: How parent can help ──────────────────────────────────────────
+  const parentCanDo =
+    workingOnItems.length > 0
+      ? `You can support ${firstName} by encouraging regular practice of ${workingOnItems[0] ?? 'their current focus'}. Ask them about their sessions — curiosity and encouragement go a long way.`
+      : `You can support ${firstName} by encouraging them to talk about what they're working on in training. Your enthusiasm makes a real difference.`
+
+  // ── Section 5: What's next (from curriculum advancement eligibility) ─────────
+  const advancementEligible = curriculumState?.advancement_eligible === true
+  const whatsNext = advancementEligible
+    ? `${firstName} is approaching readiness for advancement — we will review together before any changes are made.`
+    : `${firstName} is continuing to build their skills at their current level. We will assess progress at the next scheduled review.`
+
+  // ── Build structured 5-section draft text ────────────────────────────────────
+  const structuredDraftText = [
+    `Parent Update — ${firstName}`,
+    '',
+    `WHAT ${firstName.toUpperCase()} IS WORKING ON:`,
+    workingOn,
+    '',
+    'WHAT HAS IMPROVED:',
+    improved,
+    '',
+    'WHAT NEEDS CONTINUED SUPPORT:',
+    needsSupport,
+    '',
+    'HOW YOU CAN HELP:',
+    parentCanDo,
+    '',
+    "WHAT'S NEXT:",
+    whatsNext,
+  ].join('\n')
+
+  // Short-form draft kept for reference (unused in primary payload)
+  void buildParentSupportGuidanceDraft({
     firstName,
     focusKeywords: focusKeywords.length > 0 ? focusKeywords : [updateFocus.slice(0, 80)],
   })
@@ -154,16 +260,27 @@ export async function saveParentUpdateDraftAction(
   }
 
   const payload = {
-    draft_type: 'parent_update_v1',
+    draft_type: 'parent_update_v2',
     source: 'donna_assistant',
     player_id: confirmedPlayerId,
     player_label: playerLabel,
     update_focus: updateFocus,
     tone: tone || null,
-    draft_text: draftText,
+    draft_text: structuredDraftText,
+    draft_sections: {
+      working_on: workingOn,
+      improved,
+      needs_support: needsSupport,
+      parent_can_do: parentCanDo,
+      whats_next: whatsNext,
+    },
+    has_assessment: !!latestAssessment,
+    has_priorities: ((priorities as unknown[]) ?? []).length > 0,
+    advancement_eligible: curriculumState?.advancement_eligible ?? null,
     warnings: [
       'Draft only — not sent to parent.',
       'Director must explicitly approve and send from the parent communication module.',
+      'No raw internal coach notes were included in this draft.',
       'show_to_parent was not changed.',
       'No player profile, level, or roster was modified.',
     ],
@@ -209,9 +326,9 @@ export async function saveParentUpdateDraftAction(
     createdId: proposedAction.id as string,
     safetyNotes: [
       'Draft only — no message has been sent.',
-      'Parent and player see nothing until director explicitly sends from the communication module.',
-      'show_to_parent was not changed.',
-      'No player level or roster was modified.',
+      "Structured in 5 sections: working on, improved, needs support, parent can do, what's next.",
+      'No raw coach notes were included.',
+      'No parent or player visibility was changed.',
       'Review and approve this draft in the Review Queue before any external action.',
     ],
   }
