@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 503: Curriculum Bottleneck Dashboard V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
+
+**Goal:** Director panel showing curriculum skills with repeated concern observations. Severity: critical/notable/minor. Per-entry: skill tag, concern count, affected players, affected groups, DONNA note. Sorted critical first. "View curriculum panel" CTA (callback only). Curriculum change note. DONNA summary from KPI map. Props-only — no DB calls.
+
+**Files created:**
+- `src/components/assistant/CurriculumBottleneckDashboard.tsx` — `'use client'` component. `SkillBottleneckEntry` type (uses `ObservationSkillTag`). `SEVERITY_CONFIG` map. `BottleneckRow` with player preview, group list, DONNA note. Sorted by severity. Summary strip. Curriculum changes note. DONNA NBA footer.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 502: Parent Trust Coverage Dashboard V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
