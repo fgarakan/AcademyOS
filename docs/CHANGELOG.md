@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 491: Review Queue Approved vs Applied Separation V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Director-facing review queue summary component that visually separates pending/approved/applied/rejected items. Shows counts per status tier. Approved (green) = reviewed but not written. Applied (lime) = written to official records. Clear footnote explaining the separation. Callbacks only.
+
+**Files created:**
+- `src/components/review/ReviewQueueStatusSummary.tsx` — `'use client'` component. `ReviewQueueItem` type with 4-state status. 4 `StatTile` count widgets. Sectioned list: approved-awaiting-execution, pending-review, applied, rejected. `ItemRow` with module label, player name, and status chip. `onApplyAll` callback for bulk approval. Separation note footer explaining approved vs applied distinction. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 490: Session Actual Application Preview V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
