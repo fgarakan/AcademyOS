@@ -31,6 +31,19 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 433 — Today's Academy KPI Cards V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Dashboard section addition — TypeScript CLEAN, 8 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/app/director/_components/AcademyKpiCardsSection.tsx`
+- `src/app/director/page.tsx`
+- `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`, `docs/DONNA_KPI_INTELLIGENCE_MAP.md`
+
+---
+
 ### Sprint 432 — Director KPI Dashboard V1
 
 **Date:** 2026-05-16

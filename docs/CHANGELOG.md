@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-16 — Sprint 433: Today's Academy KPI Cards V1
+
+**Type:** Feature — KPI cards section on director dashboard. No mutations. No migrations, no package changes.
+
+**Goal:** Add a compact KPI signals section to the director dashboard homepage. Shows: active player count (from existing data), advancement-ready count (new query), and attention signal count (from existing `attentionCount`). Links to `/director/kpi` for full detail.
+
+**Files created:**
+- `src/app/director/_components/AcademyKpiCardsSection.tsx` — Presentational component. 3 metric cards (Active Players, Advancement Ready, Attention Signals) + KPI Dashboard link.
+
+**Files modified:**
+- `src/app/director/page.tsx` — Import added; advancement-ready query added (`player_curriculum_states` where `advancement_eligible = true`); `<AcademyKpiCardsSection>` rendered between Academy Setup and Today's Priorities sections.
+
+**Key design decisions:**
+- Advancement-ready count from a new `rawDb` query — separate from the existing `curricStateRows` query which only selects `player_id`.
+- `attentionCount` (players on hold or reassessment due) reused as the "attention signals" count — consistent with existing dashboard metric meaning.
+- Section placed above "Today's Priorities" so directors see KPI signals before operational detail.
+- Link to `/director/kpi` in section header for full player-level breakdown.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 432: Director KPI Dashboard V1
 
 **Type:** Feature — new director screen `/director/kpi` + sidebar nav item. No mutations. No migrations, no package changes.

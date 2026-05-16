@@ -159,6 +159,7 @@ When a director asks DONNA a question, these KPIs are triggered:
 
 | Sprint | Change |
 |---|---|
+| 433 | Today's Academy KPI Cards V1 — KPI signals section added to director dashboard homepage. Active players, advancement-ready count, attention signals. Links to `/director/kpi`. |
 | 432 | Director KPI Dashboard V1 — `/director/kpi` page live. KPI 3 (absences 30d, demo) + KPI 13 (time in level, live) + advancement readiness per player. KPI nav item added to sidebar. |
 | 431 | DONNA KPI Summary Engine built — `PlayerKpiSummary` aggregates all per-player KPI result buckets + live/partial/demo/gap counts. `formatKpiSummaryForDonna()` outputs quality header line. Not yet wired — Sprint 432 will wire into player summary and dashboard. |
 | 430 | Private Lesson Conversion KPI Engine built — KPI 11 stub (insufficient_data, gap G2 — no triggered_by_session_id FK) and makeup session stub (insufficient_data — no session_type column). Not wired — both insufficient_data. |

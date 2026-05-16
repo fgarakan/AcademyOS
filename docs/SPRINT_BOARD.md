@@ -13,13 +13,24 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 432 complete.)*
+*(No active sprint — Sprint 433 complete.)*
 
-**Next available:** Sprint 433
+**Next available:** Sprint 434
 
 ---
 
 ## Completed This Run
+
+### Sprint 433 — Today's Academy KPI Cards V1 ✓
+
+**Status:** COMPLETE
+**QA:** 8 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files created:** `src/app/director/_components/AcademyKpiCardsSection.tsx`
+**Files modified:** `src/app/director/page.tsx`
+**Decision:** KPI signals section added above "Today's Priorities". Advancement-ready count added via separate `rawDb` query.
+
+---
 
 ### Sprint 432 — Director KPI Dashboard V1 ✓
 

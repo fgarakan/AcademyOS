@@ -17,6 +17,7 @@ import { formatDate } from '@/lib/utils'
 import { SetupProgressChecklist } from '@/components/onboarding/SetupProgressChecklist'
 import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 import { OnboardingProgressCard } from './OnboardingProgressCard'
+import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -172,6 +173,14 @@ export default async function DirectorDashboard() {
     .eq('suggestion_type', 'curriculum_gap')
   const curricGapCount = (curricGapData ?? []).length
 
+  // Advancement-ready count for KPI cards section (Sprint 433)
+  const { data: advancementReadyData } = await rawDb
+    .from('player_curriculum_states')
+    .select('player_id')
+    .eq('academy_id', academyId)
+    .eq('advancement_eligible', true)
+  const advancementReadyCount = (advancementReadyData ?? []).length
+
   // Pending coach wrap-ups awaiting director review
   const { data: pendingWrapUpData } = await rawDb
     .from('proposed_actions')
@@ -290,6 +299,13 @@ export default async function DirectorDashboard() {
           </div>
         )}
       </div>
+
+      {/* ── KPI Signals ───────────────────────────────────── */}
+      <AcademyKpiCardsSection
+        activePlayers={activePlayers}
+        advancementReadyCount={advancementReadyCount}
+        attentionSignalCount={attentionCount}
+      />
 
       {/* ── Today's Priorities ────────────────────────────── */}
       <div>

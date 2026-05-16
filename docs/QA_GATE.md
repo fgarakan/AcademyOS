@@ -100,6 +100,26 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 433 — Today's Academy KPI Cards V1
+
+**Date:** 2026-05-16
+**QA type:** Dashboard section addition — TypeScript CLEAN, static safety checks
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- Advancement-ready query academy_id scoped: PASS
+- No automatic level movement: PASS
+- Existing dashboard sections not removed: PASS
+- KPI cards link to dashboard (not auto-action): PASS
+- `attentionCount` reused consistently with existing metric meaning: PASS
+
+**Result:** 8 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 432 — Director KPI Dashboard V1
 
 **Date:** 2026-05-16
