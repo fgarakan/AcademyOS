@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 444: Review Queue Rejected Items Visibility V1
+
+**Type:** Hardening — code change, no migration.
+
+**Goal:** Fix 6 action types where `rejected` items were invisible in the review queue. Decision controls for all types had "Not Approved / Reject" buttons but queries only fetched `pending_review` and `approved`.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — added `rejected` to status filters for 6 types (observation, priority, attendance, evidence, curriculum override, development summary); computed 6 new rejected collections; added all 6 to `completedCount`; collapsed all rejected items into a single "Not Approved" section in Completed tab
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 443: Review Queue Multi-Type Clarification Visibility V1
 
 **Type:** Hardening — code change, no migration.
