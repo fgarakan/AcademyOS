@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-16 — Sprint 401: DONNA Draft Coach Brief V1
+
+**Type:** Frontend + read-only server action — no DB writes, no migrations, no new packages
+
+**Goal:** Add `draft_session_brief` as a wired, read-only DONNA task contract. Director confirms a session via the object resolver, DONNA fetches session details, planned blocks, coach name, and group — then returns a structured pre-session brief in the DONNA panel. Nothing is written to any table.
+
+**Files modified:**
+- `src/components/assistant/donnaTaskContracts.ts` — added `'draft_session_brief'` to `DonnaTaskId` union and full contract entry in `DONNA_TASK_CONTRACTS`.
+- `src/components/assistant/donnaObjectResolutionTypes.ts` — added `draft_session_brief: { session: 'session' }` to `FIELD_RESOLUTION_MAP`.
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — added `fetchSessionBriefAction`: reads session, blocks, coach profile, group. Returns structured brief text. Zero DB writes.
+- `src/components/assistant/DonnaAssistantButton.tsx` — 4 changes: import, WIRED_TASK_IDS, READONLY_TASK_IDS, dispatch branch.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Zero DB writes. Zero migrations. No session, coach, or player data modified. No proposed_action created. No parent or player exposed. All reads scoped to academy_id. Brief is read-only in DONNA panel only. Labels: "Read-only session brief · Review required before sharing with coach · No session data was modified."
+
+---
+
 ## 2026-05-16 — Sprint 400: DONNA Summarize Player Progress V1
 
 **Type:** Frontend + read-only server action — no DB writes, no migrations, no new packages

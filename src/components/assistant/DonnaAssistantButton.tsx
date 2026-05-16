@@ -58,6 +58,7 @@ import {
   saveLevelReadinessDraftAction,
   saveCurriculumAdjustmentDraftAction,
   fetchPlayerProgressSummaryAction,
+  fetchSessionBriefAction,
 } from '@/app/director/_actions/donnaDirectorIntelligenceActions'
 // Sprint 282 — Coach Communication Draft
 import { saveCoachCommunicationDraftAction } from '@/app/director/_actions/saveCoachCommunicationDraftAction'
@@ -206,12 +207,14 @@ const WIRED_TASK_IDS = new Set<DonnaTaskId>([
   'adjust_curriculum',
   'draft_coach_communication',
   'summarize_player_progress',
+  'draft_session_brief',
 ])
 
 // Tasks that are wired but produce a read-only summary (no DB write).
 // These show "Generate Summary" instead of "Approve and Save".
 const READONLY_TASK_IDS = new Set<DonnaTaskId>([
   'summarize_player_progress',
+  'draft_session_brief',
 ])
 
 // ---------------------------------------------------------------------------
@@ -1559,6 +1562,13 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
         fields._resolved_player_id = resolvedObjects['player'].id
       }
       return fetchPlayerProgressSummaryAction(fields)
+    }
+    if (draft.taskId === 'draft_session_brief') {
+      const fields: Record<string, string> = { ...draft.collectedFields }
+      if (resolvedObjects['session']?.id) {
+        fields._resolved_session_id = resolvedObjects['session'].id
+      }
+      return fetchSessionBriefAction(fields)
     }
     return {
       ok: false,

@@ -720,3 +720,132 @@ export async function fetchPlayerProgressSummaryAction(
     ],
   }
 }
+
+// ---------------------------------------------------------------------------
+// fetchSessionBriefAction — Sprint 401
+//
+// Reads session, session_blocks, coach profile, and group — returns a
+// structured pre-session brief as plain text in the DONNA panel.
+// Zero DB writes. Zero migrations. All reads scoped to academy_id.
+// ---------------------------------------------------------------------------
+
+export async function fetchSessionBriefAction(
+  fields: Record<string, string>,
+): Promise<DonnaApprovalExecutionResult> {
+  if (await isPreviewMode()) {
+    return { ok: false, status: 'blocked', message: 'Writes are disabled in preview mode.' }
+  }
+
+  const ctx = await getAuthorizedContext()
+  if (!ctx.ok) return { ok: false, status: 'blocked', message: ctx.error }
+
+  const { supabase, academyId } = ctx
+  const rawDb = supabase as any
+
+  const confirmedSessionId = (fields._resolved_session_id ?? '').trim() || null
+  if (!confirmedSessionId) {
+    return {
+      ok: false,
+      status: 'blocked',
+      message:
+        'Please confirm the session before generating a brief. Use the resolver panel to search and select a session.',
+    }
+  }
+
+  const focusNotes = (fields.focus_notes ?? '').trim()
+
+  // Step 1 — Read session
+  const { data: session } = await rawDb
+    .from('sessions')
+    .select('id, name, scheduled_date, status, coach_id, group_id, session_notes')
+    .eq('id', confirmedSessionId)
+    .eq('academy_id', academyId)
+    .maybeSingle()
+
+  if (!session) {
+    return {
+      ok: false,
+      status: 'error',
+      message: 'Session not found or you do not have access to this session.',
+    }
+  }
+
+  // Step 2 — Read session blocks
+  const { data: blocks } = await rawDb
+    .from('session_blocks')
+    .select('name, duration_min, order_index, type')
+    .eq('session_id', confirmedSessionId)
+    .order('order_index', { ascending: true })
+
+  // Step 3 — Read coach name (if coach_id present)
+  let coachName = 'Coach not assigned'
+  if (session.coach_id) {
+    const { data: coachProfile } = await rawDb
+      .from('profiles')
+      .select('full_name, first_name')
+      .eq('id', session.coach_id)
+      .maybeSingle()
+    if (coachProfile) {
+      coachName = coachProfile.full_name ?? coachProfile.first_name ?? coachName
+    }
+  }
+
+  // Step 4 — Read group name (if group_id present)
+  let groupName = 'Group not assigned'
+  if (session.group_id) {
+    const { data: group } = await rawDb
+      .from('groups')
+      .select('name')
+      .eq('id', session.group_id)
+      .maybeSingle()
+    if (group?.name) groupName = String(group.name)
+  }
+
+  // Build structured brief — no AI, no external API
+  const sessionTitle = session.name ?? `Session on ${session.scheduled_date ?? 'Unknown date'}`
+  const blockLines =
+    Array.isArray(blocks) && blocks.length > 0
+      ? blocks.map((b: any) => {
+          const dur = b.duration_min ? ` (${b.duration_min}min)` : ''
+          const type = b.type ? ` [${b.type}]` : ''
+          return `• ${String(b.name ?? 'Unnamed block')}${dur}${type}`
+        })
+      : ['• No blocks assigned to this session yet']
+
+  const briefLines = [
+    `SESSION: ${sessionTitle}`,
+    `DATE: ${session.scheduled_date ?? 'Not scheduled'}`,
+    `COACH: ${coachName}`,
+    `GROUP: ${groupName}`,
+    `STATUS: ${session.status ?? 'planned'}`,
+    '',
+    'PLANNED BLOCKS:',
+    ...blockLines,
+    '',
+    focusNotes
+      ? `FOCUS / EMPHASIS: ${focusNotes}`
+      : 'FOCUS / EMPHASIS: Not specified — deliver session plan as designed.',
+    '',
+    'PLAYER WATCH-FORS: Review individual player priorities before the session. Flag any returning players or attendance concerns.',
+    '',
+    session.session_notes
+      ? `SESSION NOTES: ${String(session.session_notes).slice(0, 300)}`
+      : 'SESSION NOTES: None added.',
+  ]
+
+  const briefText = briefLines.join('\n')
+
+  return {
+    ok: true,
+    status: 'saved',
+    message: briefText,
+    createdId: undefined,
+    safetyNotes: [
+      'Read-only session brief — no session data was modified.',
+      'This brief has not been sent to the coach.',
+      'Review required before sharing with coach or anyone else.',
+      'No proposed action was created. No official record was changed.',
+      'To formally send this brief, use the Coach Communication draft flow.',
+    ],
+  }
+}

@@ -29,6 +29,7 @@ export type DonnaTaskId =
   | 'assign_player_to_group'
   | 'summarize_player_progress'
   | 'recommend_template_for_group'
+  | 'draft_session_brief'
 
 export interface DonnaTaskField {
   fieldId: string
@@ -451,6 +452,28 @@ export const DONNA_TASK_CONTRACTS: Record<DonnaTaskId, DonnaTaskContract> = {
     approvalRequired: true,
     unsafeWithoutApproval: ['auto_schedule_session_with_template', 'send_plan_without_approval'],
     saveApplyMethodStatus: 'not_wired_yet',
+  },
+
+  draft_session_brief: {
+    taskId: 'draft_session_brief',
+    label: 'Draft Session Brief',
+    description:
+      'Generate a structured pre-session brief for the assigned coach — covering session objective, planned blocks, player watch-fors, and focus notes. Read-only output. Review required before sharing with coach.',
+    requiredFields: [
+      { fieldId: 'session', label: 'Session', required: true, example: 'Orange 2 — Tuesday 20 May' },
+    ],
+    optionalFields: [
+      { fieldId: 'focus_notes', label: 'Focus or Emphasis', required: false, example: 'Emphasize footwork today' },
+    ],
+    questionSequence: [
+      { order: 1, fieldId: 'session', question: 'Which session should I draft a brief for?' },
+      { order: 2, fieldId: 'focus_notes', question: 'Any specific focus or emphasis for this brief? (optional — skip to generate from session data)' },
+    ],
+    reads: ['session', 'session_blocks', 'coach_profile', 'group'],
+    createsDraftType: 'session_brief_readonly',
+    approvalRequired: false,
+    unsafeWithoutApproval: [],
+    saveApplyMethodStatus: 'wired',
   },
 
 }

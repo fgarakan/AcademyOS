@@ -111,6 +111,9 @@ export const FIELD_RESOLUTION_MAP: Partial<
     session: 'session',
     template: 'class_template',
   },
+  draft_session_brief: {
+    session: 'session',
+  },
   create_group: {
     coach: 'coach',
   },
