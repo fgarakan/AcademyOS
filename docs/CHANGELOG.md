@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-16 — Sprint 460.4: Command Center Prototype UI Alignment V1
+
+**Type:** UI/layout only — no migration, no schema changes, no DB writes.
+
+**Goal:** Align director dashboard with Manus prototype visual direction: premium dark hero header, inline DONNA executive attention card, 8-card Academy Overview KPI grid, Academy Health sparkline chart (static SVG), Live Activity panel, updated bottom quick-action cards with correct routes.
+
+**Files created:**
+- `src/app/director/_components/DonnaExecutiveCard.tsx` — Presentational DONNA executive card for the dashboard. Numbered priority rows (up to 5), action chips, safe footer note. No DB calls, no server actions, no execution logic.
+
+**Files modified:**
+- `src/app/director/page.tsx` — Full layout redesign: premium "Good morning, Director." hero + Academy Health badge; inline DonnaExecutiveCard built from existing computed data; 8-card Academy Overview grid; static SVG Academy Health sparkline + Live Activity card; Bottom quick-actions (View Today's Academy, Session Planning, Player Profiles, Multi-Academy View [disabled]). Removed unused `avgDelta` variable and unused `sessions` param from AcademyAlertsPanel. Also extends profile select to include `display_name` for personalized greeting.
+- `src/app/director/_components/AcademyKpiCardsSection.tsx` — Expanded from 3-card to 8-card grid. New props: sessionsToday, attendanceExceptions, coachRecaps, levelUpCandidates, parentUpdates, academyHealthPct, curriculumExecution, playerProgress, activePlayers. Added teal accent for healthy states.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 460: DONNA Advancement Status Enhancement V1
 
 **Type:** Code change — no migration.

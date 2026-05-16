@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import {
-  Users, BookOpen, Calendar, ChevronRight, Activity,
-  Clock, Mic, Brain, AlertTriangle, TrendingUp,
-  GraduationCap, Sparkles, ClipboardList, ArrowRight,
+  Users, Calendar, ChevronRight, Activity,
+  Clock, Brain, AlertTriangle,
+  GraduationCap, Sparkles, ClipboardList,
+  ShieldCheck, Layers,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
@@ -18,6 +19,7 @@ import { SetupProgressChecklist } from '@/components/onboarding/SetupProgressChe
 import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 import { OnboardingProgressCard } from './OnboardingProgressCard'
 import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
+import { DonnaExecutiveCard, type DonnaExecutivePriorityItem } from './_components/DonnaExecutiveCard'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -66,13 +68,16 @@ export default async function DirectorDashboard() {
     )
   }
 
-  const { data: profile } = await supabase
+  const rawDb = supabase as any
+
+  const { data: profile } = await rawDb
     .from('profiles')
-    .select('academy_id')
+    .select('academy_id, display_name')
     .eq('id', user.id)
     .single()
 
   const academyId: string | null = profile?.academy_id ?? null
+  const directorDisplayName: string = profile?.display_name ?? 'Director'
 
   if (!academyId) {
     return (
@@ -102,13 +107,10 @@ export default async function DirectorDashboard() {
   ).length
   const pendingList     = players.filter(p => isPending(p.player_status)).slice(0, 5)
 
-  // Academy improvement: average score_delta for active players
+  // Academy improvement
   const activePl = players.filter(p => p.player_status === 'active')
   const withDelta = activePl.filter(p => p.score_delta !== null && p.score_delta !== undefined)
   const improvingCount = withDelta.filter(p => (p.score_delta ?? 0) > 0).length
-  const avgDelta = withDelta.length > 0
-    ? Math.round(withDelta.reduce((s, p) => s + (p.score_delta ?? 0), 0) / withDelta.length * 10) / 10
-    : null
 
   // Sessions this week
   const now = new Date()
@@ -128,10 +130,7 @@ export default async function DirectorDashboard() {
 
   const sessionsThisWeek = (weekSessions ?? []).length
 
-  // Private lesson requests — rawDb cast since table may not be in generated types yet
-  const rawDb = supabase as any
-
-  // Onboarding settings — read-only, no mutations
+  // Onboarding settings
   const { data: academyWithSettings } = await rawDb
     .from('academies')
     .select('settings')
@@ -139,6 +138,7 @@ export default async function DirectorDashboard() {
     .single()
   const onboardingSettings = (academyWithSettings?.settings as Record<string, unknown>) ?? {}
 
+  // Private lesson requests
   const { data: plrData } = await rawDb
     .from('private_lesson_requests')
     .select('id, status')
@@ -173,7 +173,7 @@ export default async function DirectorDashboard() {
     .eq('suggestion_type', 'curriculum_gap')
   const curricGapCount = (curricGapData ?? []).length
 
-  // Advancement-ready count for KPI cards section (Sprint 433)
+  // Advancement-ready count
   const { data: advancementReadyData } = await rawDb
     .from('player_curriculum_states')
     .select('player_id')
@@ -181,7 +181,7 @@ export default async function DirectorDashboard() {
     .eq('advancement_eligible', true)
   const advancementReadyCount = (advancementReadyData ?? []).length
 
-  // Pending coach wrap-ups awaiting director review
+  // Pending coach wrap-ups
   const { data: pendingWrapUpData } = await rawDb
     .from('proposed_actions')
     .select('id')
@@ -190,7 +190,7 @@ export default async function DirectorDashboard() {
     .eq('status', 'pending_review')
   const pendingWrapUpsCount = (pendingWrapUpData ?? []).length
 
-  // Checklist: class template count (non-fitness)
+  // Checklist
   const { data: templateCheckData } = await rawDb
     .from('templates')
     .select('id, tags')
@@ -199,7 +199,6 @@ export default async function DirectorDashboard() {
   const classTemplateCount = ((templateCheckData ?? []) as Array<{ id: string; tags: string[] | null }>)
     .filter((t) => !(t.tags ?? []).includes('fitness_template:true')).length
 
-  // Checklist: any session ever created
   const { data: anySessionData } = await supabase
     .from('sessions')
     .select('id')
@@ -207,18 +206,89 @@ export default async function DirectorDashboard() {
     .limit(1)
   const sessionsExist = (anySessionData ?? []).length > 0
 
-  // Deterministic alert count
+  // Alert counts
   const missingFocus = activePl.filter(p => !p.focus_areas || p.focus_areas.length === 0).length
   const reassessmentDue = reassessmentPipeline.filter(
     r => r.urgency === 'overdue' || r.urgency === 'due_soon'
   ).length
   const totalAlerts = missingFocus + attentionCount + reassessmentDue + newRequests + pendingWrapUpsCount
 
-  const today = new Date().toLocaleDateString('en-GB', {
+  // Derived KPI values — no new DB queries
+  const curriculumExecutionPct = activePlayers > 0
+    ? Math.round((playersWithLevel / activePlayers) * 100)
+    : 0
+  // Academy health: inverse of alert ratio, clamped 0–100
+  const academyHealthPct = activePlayers > 0
+    ? Math.max(0, Math.min(100, Math.round(100 - (totalAlerts / Math.max(activePlayers, 1)) * 25)))
+    : 85
+
+  // Greeting
+  const hour = now.getHours()
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+
+  const today = now.toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
 
-  // Single highest-priority director action — shown as a banner near the top
+  // DONNA executive priority items — built from existing computed data, no new DB calls
+  const donnaItems: DonnaExecutivePriorityItem[] = []
+
+  if (pendingWrapUpsCount > 0) {
+    donnaItems.push({
+      id: 'wrap-ups',
+      text: `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting your review`,
+      actionLabel: 'Review',
+      href: '/director/review?tab=wrap-ups',
+      variant: 'review',
+    })
+  }
+  if (attentionCount > 0) {
+    donnaItems.push({
+      id: 'attention',
+      text: `${attentionCount} player${attentionCount !== 1 ? 's' : ''} on hold or due for reassessment`,
+      actionLabel: 'View Players',
+      href: '/director/players',
+      variant: 'urgent',
+    })
+  }
+  if (pendingCount > 0) {
+    donnaItems.push({
+      id: 'placement',
+      text: `${pendingCount} player${pendingCount !== 1 ? 's' : ''} waiting for curriculum placement`,
+      actionLabel: 'Place Players',
+      href: '/director/players',
+      variant: 'review',
+    })
+  }
+  if (newRequests > 0) {
+    donnaItems.push({
+      id: 'requests',
+      text: `${newRequests} parent lesson request${newRequests !== 1 ? 's' : ''} need your review`,
+      actionLabel: 'Open Review',
+      href: '/director/review',
+      variant: 'review',
+    })
+  }
+  if (playersWithoutLevel > 0) {
+    donnaItems.push({
+      id: 'curriculum',
+      text: `${playersWithoutLevel} active player${playersWithoutLevel !== 1 ? 's' : ''} missing a curriculum level`,
+      actionLabel: 'Assign Levels',
+      href: '/director/players',
+      variant: 'info',
+    })
+  }
+  if (reassessmentDue > 0 && donnaItems.length < 5) {
+    donnaItems.push({
+      id: 'reassessment',
+      text: `${reassessmentDue} player${reassessmentDue !== 1 ? 's' : ''} overdue for reassessment`,
+      actionLabel: 'View',
+      href: '/director/players',
+      variant: 'review',
+    })
+  }
+
+  // Highest-priority banner
   const priorityAction: { title: string; body: string; href: string; actionLabel: string } | null = (() => {
     if (pendingWrapUpsCount > 0) return {
       title: `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting your review`,
@@ -240,7 +310,7 @@ export default async function DirectorDashboard() {
     }
     if (newRequests > 0) return {
       title: `${newRequests} lesson request${newRequests !== 1 ? 's' : ''} awaiting review`,
-      body: 'Parent lesson requests need director review and routing.',
+      body: 'Parent requests need director review and routing.',
       href: '/director/review',
       actionLabel: 'Review Requests',
     }
@@ -250,18 +320,21 @@ export default async function DirectorDashboard() {
   return (
     <div className="p-6 space-y-8 animate-fade-in">
 
-      {/* ── Header ─────────────────────────────────────────── */}
+      {/* ── Hero Header ────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="page-eyebrow">{academyName}</p>
-          <h1 className="page-title text-3xl">Dashboard</h1>
-          <p className="page-subtitle">{today}</p>
+          <p className="text-[11px] uppercase tracking-widest font-semibold text-text-muted mb-1">{today}</p>
+          <h1 className="text-4xl font-bold text-text-primary tracking-tight leading-tight">
+            {timeGreeting}, {directorDisplayName}.
+          </h1>
+          <p className="text-text-secondary text-base mt-1">{academyName}</p>
         </div>
-        <Link href="/director/players" className="btn-lime text-sm hidden sm:inline-flex items-center gap-2">
-          <Users className="w-4 h-4" />
-          Players
-        </Link>
+        {/* Academy Health Badge */}
+        <AcademyHealthBadge pct={academyHealthPct} />
       </div>
+
+      {/* ── DONNA Executive Attention Card ─────────────────── */}
+      <DonnaExecutiveCard items={donnaItems} directorName={directorDisplayName} />
 
       {/* ── Recommended next action ───────────────────────── */}
       {priorityAction && (
@@ -300,70 +373,239 @@ export default async function DirectorDashboard() {
         )}
       </div>
 
-      {/* ── KPI Signals ───────────────────────────────────── */}
+      {/* ── Academy Overview — 8-card KPI grid ────────────── */}
       <AcademyKpiCardsSection
+        sessionsToday={sessionsThisWeek}
+        attendanceExceptions={pendingWrapUpsCount}
+        coachRecaps={pendingWrapUpsCount}
+        levelUpCandidates={advancementReadyCount}
+        parentUpdates={newRequests}
+        academyHealthPct={academyHealthPct}
+        curriculumExecution={curriculumExecutionPct}
+        playerProgress={improvingCount}
         activePlayers={activePlayers}
-        advancementReadyCount={advancementReadyCount}
-        attentionSignalCount={attentionCount}
       />
 
-      {/* ── Today's Priorities ────────────────────────────── */}
-      <div>
-        <p className="label-xs mb-1">Today's Priorities</p>
-        <p className="text-xs text-text-muted mb-4">Live counts from your academy. Numbers update as coaches run sessions and you action items in the review queue.</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
-          <CommandCard
-            label="Active Players"
-            value={activePlayers}
-            sublabel="Currently training"
-            href="/director/players"
-            accentColor="lime"
-            icon={<Users className="w-4 h-4" />}
-          />
-          <CommandCard
-            label="Academy Improvement"
-            value={avgDelta !== null ? (avgDelta > 0 ? `+${avgDelta}` : String(avgDelta)) : '—'}
-            sublabel={withDelta.length > 0 ? `${improvingCount} of ${activePlayers} improving` : 'No assessment data yet'}
-            href="/director/players"
-            accentColor={avgDelta !== null && avgDelta > 0 ? 'green' : 'default'}
-            icon={<TrendingUp className="w-4 h-4" />}
-          />
-          <CommandCard
-            label="Sessions"
-            value={sessionsThisWeek}
-            sublabel="This week"
-            href="/director/sessions"
-            accentColor="lime"
-            icon={<Calendar className="w-4 h-4" />}
-          />
-          <CommandCard
-            label="Lesson Requests"
-            value={newRequests}
-            sublabel={newRequests === 1 ? '1 new request' : newRequests > 0 ? `${newRequests} new requests` : 'No new requests'}
-            href="/director/review"
-            accentColor={newRequests > 0 ? 'orange' : 'default'}
-            icon={<GraduationCap className="w-4 h-4" />}
-          />
-          <CommandCard
-            label="Needs Attention"
-            value={totalAlerts}
-            sublabel={totalAlerts > 0 ? 'Items to review' : 'All clear'}
-            href="/director/signals"
-            accentColor={totalAlerts > 0 ? 'red' : 'default'}
-            icon={<AlertTriangle className="w-4 h-4" />}
-          />
-          <CommandCard
-            label="Coach Wrap-Ups"
-            value={pendingWrapUpsCount}
-            sublabel={pendingWrapUpsCount > 0 ? `${pendingWrapUpsCount} need${pendingWrapUpsCount === 1 ? 's' : ''} review` : 'No pending wrap-ups'}
-            href="/director/review?tab=wrap-ups"
-            accentColor={pendingWrapUpsCount > 0 ? 'orange' : 'default'}
-            icon={<ClipboardList className="w-4 h-4" />}
-          />
+      {/* ── Health Chart + Live Activity ─────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+        <AcademyHealthChartCard healthPct={academyHealthPct} totalAlerts={totalAlerts} />
+        <LiveActivityCard sessions={weekSessions ?? []} pendingWrapUps={pendingWrapUpsCount} pendingPlacements={pendingCount} />
+      </div>
+
+      {/* ── Player Activity ────────────────────────────────── */}
+      <div className="space-y-4">
+        <div>
+          <p className="label-xs">Player Activity</p>
+          <p className="text-xs text-text-muted mt-1">Once players are added and placed, this section shows who needs placement, reassessment, or director attention.</p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Priority Queue */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold text-text-primary">Priority Queue</h2>
+                  <p className="text-xs text-text-muted mt-0.5">Players requiring immediate attention</p>
+                </div>
+                {priorityQueue.length > 0 && (
+                  <span className="font-mono text-lime text-xl font-bold leading-none">
+                    {priorityQueue.length}
+                  </span>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {priorityQueue.length === 0 ? (
+                <EmptyState
+                  icon={<Activity className="w-5 h-5" />}
+                  title="No urgent actions"
+                  description={players.length === 0 ? "Add players to start tracking priority actions, reassessments, and development needs." : "The academy is on track. Priority items appear when players need attention or reassessment."}
+                  className="py-10"
+                />
+              ) : (
+                <ul className="space-y-1">
+                  {priorityQueue.map(item => {
+                    if (!item.player_id) return null
+                    const { label } = urgencyToLabel(item.urgency)
+                    return (
+                      <li key={item.player_id}>
+                        <Link
+                          href={`/director/players/${item.player_id}`}
+                          className="flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
+                        >
+                          <Avatar name={item.full_name ?? '?'} size="sm" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium text-text-primary truncate">
+                                {item.full_name ?? '—'}
+                              </span>
+                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${urgencyBadgeClass(item.urgency)}`}>
+                                {label}
+                              </span>
+                            </div>
+                            {item.primary_action && (
+                              <p className="text-xs text-text-muted mt-0.5 truncate">
+                                {item.primary_action}
+                              </p>
+                            )}
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0 mt-1" />
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </CardContent>
+            {priorityQueue.length > 0 && (
+              <CardFooter>
+                <Link
+                  href="/director/players/active"
+                  className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
+                >
+                  View all active players →
+                </Link>
+              </CardFooter>
+            )}
+          </Card>
+
+          {/* Pending Placement */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold text-text-primary">Pending Placement</h2>
+                  <p className="text-xs text-text-muted mt-0.5">Players awaiting onboarding completion</p>
+                </div>
+                {pendingList.length > 0 && (
+                  <span className="font-mono text-status-orange text-xl font-bold leading-none">
+                    {pendingCount}
+                  </span>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {pendingList.length === 0 ? (
+                <EmptyState
+                  icon={<Clock className="w-5 h-5" />}
+                  title="No pending placements"
+                  description={players.length === 0 ? "No players have been added yet. Add your first player to begin the placement process." : "All players have completed placement. New players will appear here when onboarding."}
+                  className="py-10"
+                />
+              ) : (
+                <ul className="space-y-1">
+                  {pendingList.map(player => {
+                    if (!player.player_id) return null
+                    const badge = pendingStatusBadge(player.player_status)
+                    return (
+                      <li key={player.player_id}>
+                        <Link
+                          href={`/director/players/${player.player_id}`}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
+                        >
+                          <Avatar name={player.full_name ?? '?'} size="sm" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-text-primary truncate">
+                              {player.full_name ?? '—'}
+                            </p>
+                            <StatusBadge status={badge.status} label={badge.label} size="sm" />
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </CardContent>
+            {pendingList.length > 0 && (
+              <CardFooter>
+                <Link
+                  href="/director/players"
+                  className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
+                >
+                  View all players →
+                </Link>
+              </CardFooter>
+            )}
+          </Card>
         </div>
       </div>
 
-      {/* ── Curriculum Intelligence ───────────────────────── */}
+      {/* ── Alerts + Intelligence ────────────────────────── */}
+      <div className="space-y-4">
+        <div>
+          <p className="label-xs">Signals + Intelligence</p>
+          <p className="text-xs text-text-muted mt-1">Alerts and AI suggestions appear here once sessions, coach notes, and player activity start producing signals.</p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+          <AcademyAlertsPanel
+            missingFocusCount={missingFocus}
+            attentionCount={attentionCount}
+            reassessmentDueCount={reassessmentDue}
+            newRequestsCount={newRequests}
+            pendingCount={pendingCount}
+            pendingWrapUpsCount={pendingWrapUpsCount}
+          />
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold text-text-primary flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-lime" />
+                    AI Suggestions
+                  </h2>
+                  <p className="text-xs text-text-muted mt-0.5">Suggested actions for review</p>
+                </div>
+                {pendingSuggestionsCount > 0 && (
+                  <span className="font-mono text-lime text-xl font-bold leading-none">
+                    {pendingSuggestionsCount}
+                  </span>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {pendingSuggestionsCount === 0 ? (
+                <EmptyState
+                  icon={<Brain className="w-5 h-5" />}
+                  title="No pending suggestions"
+                  description="Suggestions are generated automatically from session data, coach notes, and curriculum gaps. They will appear here once your academy has activity."
+                  className="py-8"
+                />
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs text-text-secondary">
+                      {pendingSuggestionsCount} suggestion{pendingSuggestionsCount !== 1 ? 's' : ''} pending review
+                    </span>
+                    {highPrioritySuggestionsCount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-status-orange/10 border-status-orange/20 text-status-orange">
+                        <AlertTriangle className="w-2.5 h-2.5" />
+                        {highPrioritySuggestionsCount} high priority
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-text-muted px-1">
+                    Nothing changes until you review and accept each suggestion.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Link
+                href="/director/signals"
+                className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
+              >
+                {pendingSuggestionsCount > 0 ? 'Review suggestions →' : 'Open AI Suggestions →'}
+              </Link>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+
+      {/* ── Curriculum Coverage ───────────────────────────── */}
       <Card>
         <CardContent className="py-4">
           <div className="flex items-center gap-2 mb-3">
@@ -396,7 +638,7 @@ export default async function DirectorDashboard() {
         </CardContent>
       </Card>
 
-      {/* ── Guided prompt: first class template ─────────────── */}
+      {/* ── First class template prompt ───────────────────── */}
       {classTemplateCount === 0 && players.length > 0 && (
         <NextBestActionCard
           variant="guide"
@@ -407,223 +649,7 @@ export default async function DirectorDashboard() {
         />
       )}
 
-      {/* ── Priority panel + Pending placement ─────────────── */}
-      <div className="space-y-4">
-      <div>
-        <p className="label-xs">Player Activity</p>
-        <p className="text-xs text-text-muted mt-1">Once players are added and placed, this section shows who needs placement, reassessment, or director attention.</p>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Priority Queue */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold text-text-primary">Priority Queue</h2>
-                <p className="text-xs text-text-muted mt-0.5">Players requiring immediate attention</p>
-              </div>
-              {priorityQueue.length > 0 && (
-                <span className="font-mono text-lime text-xl font-bold leading-none">
-                  {priorityQueue.length}
-                </span>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {priorityQueue.length === 0 ? (
-              <EmptyState
-                icon={<Activity className="w-5 h-5" />}
-                title="No urgent actions"
-                description={players.length === 0 ? "Add players to start tracking priority actions, reassessments, and development needs." : "The academy is on track. Priority items appear when players need attention or reassessment."}
-                className="py-10"
-              />
-            ) : (
-              <ul className="space-y-1">
-                {priorityQueue.map(item => {
-                  if (!item.player_id) return null
-                  const { label } = urgencyToLabel(item.urgency)
-                  return (
-                    <li key={item.player_id}>
-                      <Link
-                        href={`/director/players/${item.player_id}`}
-                        className="flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
-                      >
-                        <Avatar name={item.full_name ?? '?'} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-text-primary truncate">
-                              {item.full_name ?? '—'}
-                            </span>
-                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${urgencyBadgeClass(item.urgency)}`}>
-                              {label}
-                            </span>
-                          </div>
-                          {item.primary_action && (
-                            <p className="text-xs text-text-muted mt-0.5 truncate">
-                              {item.primary_action}
-                            </p>
-                          )}
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0 mt-1" />
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </CardContent>
-          {priorityQueue.length > 0 && (
-            <CardFooter>
-              <Link
-                href="/director/players/active"
-                className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
-              >
-                View all active players →
-              </Link>
-            </CardFooter>
-          )}
-        </Card>
-
-        {/* Pending Placement */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold text-text-primary">Pending Placement</h2>
-                <p className="text-xs text-text-muted mt-0.5">Players awaiting onboarding completion</p>
-              </div>
-              {pendingList.length > 0 && (
-                <span className="font-mono text-status-orange text-xl font-bold leading-none">
-                  {pendingCount}
-                </span>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {pendingList.length === 0 ? (
-              <EmptyState
-                icon={<Clock className="w-5 h-5" />}
-                title="No pending placements"
-                description={players.length === 0 ? "No players have been added yet. Add your first player to begin the placement process." : "All players have completed placement. New players will appear here when onboarding."}
-                className="py-10"
-              />
-            ) : (
-              <ul className="space-y-1">
-                {pendingList.map(player => {
-                  if (!player.player_id) return null
-                  const badge = pendingStatusBadge(player.player_status)
-                  return (
-                    <li key={player.player_id}>
-                      <Link
-                        href={`/director/players/${player.player_id}`}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
-                      >
-                        <Avatar name={player.full_name ?? '?'} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-text-primary truncate">
-                            {player.full_name ?? '—'}
-                          </p>
-                          <StatusBadge status={badge.status} label={badge.label} size="sm" />
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </CardContent>
-          {pendingList.length > 0 && (
-            <CardFooter>
-              <Link
-                href="/director/players"
-                className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
-              >
-                View all players →
-              </Link>
-            </CardFooter>
-          )}
-        </Card>
-
-      </div>
-      </div>
-
-      {/* ── Academy Alerts + Signals ──────────────────────── */}
-      <div className="space-y-4">
-      <div>
-        <p className="label-xs">Signals + Intelligence</p>
-        <p className="text-xs text-text-muted mt-1">Alerts and AI suggestions appear here once sessions, coach notes, and player activity start producing signals.</p>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-        <AcademyAlertsPanel
-          missingFocusCount={missingFocus}
-          attentionCount={attentionCount}
-          reassessmentDueCount={reassessmentDue}
-          newRequestsCount={newRequests}
-          pendingCount={pendingCount}
-          pendingWrapUpsCount={pendingWrapUpsCount}
-          sessions={weekSessions ?? []}
-        />
-
-        {/* AI Suggestions card */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold text-text-primary flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-lime" />
-                  AI Suggestions
-                </h2>
-                <p className="text-xs text-text-muted mt-0.5">Suggested actions for review</p>
-              </div>
-              {pendingSuggestionsCount > 0 && (
-                <span className="font-mono text-lime text-xl font-bold leading-none">
-                  {pendingSuggestionsCount}
-                </span>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {pendingSuggestionsCount === 0 ? (
-              <EmptyState
-                icon={<Brain className="w-5 h-5" />}
-                title="No pending suggestions"
-                description="Suggestions are generated automatically from session data, coach notes, and curriculum gaps. They will appear here once your academy has activity."
-                className="py-8"
-              />
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-xs text-text-secondary">
-                    {pendingSuggestionsCount} suggestion{pendingSuggestionsCount !== 1 ? 's' : ''} pending review
-                  </span>
-                  {highPrioritySuggestionsCount > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-status-orange/10 border-status-orange/20 text-status-orange">
-                      <AlertTriangle className="w-2.5 h-2.5" />
-                      {highPrioritySuggestionsCount} high priority
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-text-muted px-1">
-                  Nothing changes until you review and accept each suggestion.
-                </p>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Link
-              href="/director/signals"
-              className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
-            >
-              {pendingSuggestionsCount > 0 ? 'Review suggestions →' : 'Open AI Suggestions →'}
-            </Link>
-          </CardFooter>
-        </Card>
-      </div>
-      </div>
-
-      {/* ── Sessions this week ──────────────────────────────── */}
+      {/* ── Sessions this week ────────────────────────────── */}
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -670,33 +696,32 @@ export default async function DirectorDashboard() {
         </Card>
       </div>
 
-      {/* ── Bottom Quick Actions ────────────────────────────── */}
+      {/* ── Bottom Quick Actions ──────────────────────────── */}
       <div>
         <p className="label-xs mb-4">Quick Actions</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <QuickActionCard
+            icon={<Calendar className="w-4 h-4 text-lime" />}
+            title="View Today's Academy"
+            description="Live session feed, attendance, and on-court status."
+            href="/director/today"
+          />
+          <QuickActionCard
+            icon={<ClipboardList className="w-4 h-4 text-lime" />}
+            title="Session Planning"
+            description="Build and manage sessions from class templates."
+            href="/director/sessions"
+          />
+          <QuickActionCard
             icon={<Users className="w-4 h-4 text-lime" />}
-            title="Onboarding Flow"
-            description="Add or import players and complete placement."
-            href="/director/players/import"
+            title="Player Profiles"
+            description="View and manage your full player roster."
+            href="/director/players"
           />
-          <QuickActionCard
-            icon={<BookOpen className="w-4 h-4 text-lime" />}
-            title="Class Templates"
-            description="Build academy class and session templates."
-            href="/director/class-templates"
-          />
-          <QuickActionCard
-            icon={<Mic className="w-4 h-4 text-lime" />}
-            title="Review Queue"
-            description="Review coach wrap-ups, drafts, and pending actions."
-            href="/director/review"
-          />
-          <QuickActionCard
-            icon={<Sparkles className="w-4 h-4 text-lime" />}
-            title="Signals"
-            description="View academy-wide signals, attendance concerns, and gaps."
-            href="/director/signals"
+          <QuickActionCardDisabled
+            icon={<Layers className="w-4 h-4 text-text-muted" />}
+            title="Multi-Academy View"
+            description="Cross-academy director dashboard."
           />
         </div>
       </div>
@@ -705,54 +730,208 @@ export default async function DirectorDashboard() {
   )
 }
 
-// ── Command Card ────────────────────────────────────────────────
+// ── Academy Health Badge ────────────────────────────────────────
 
-type AccentColor = 'lime' | 'green' | 'orange' | 'red' | 'default'
+function AcademyHealthBadge({ pct }: { pct: number }) {
+  const isHealthy = pct >= 80
+  const isWarning = pct >= 60 && pct < 80
 
-const ACCENT_CLASSES: Record<AccentColor, { number: string; border: string; hover: string }> = {
-  lime:    { number: 'text-lime',          border: 'border-lime/20',         hover: 'hover:border-lime/40' },
-  green:   { number: 'text-status-green',  border: 'border-status-green/20', hover: 'hover:border-status-green/40' },
-  orange:  { number: 'text-status-orange', border: 'border-status-orange/20',hover: 'hover:border-status-orange/40' },
-  red:     { number: 'text-status-red',    border: 'border-status-red/20',   hover: 'hover:border-status-red/40' },
-  default: { number: 'text-text-primary',  border: 'border-border',          hover: 'hover:border-lime/20' },
-}
+  const color = isHealthy
+    ? { text: 'text-teal-400', border: 'border-teal-400/30', bg: 'bg-teal-400/8', dot: 'bg-teal-400' }
+    : isWarning
+    ? { text: 'text-yellow-400', border: 'border-yellow-500/30', bg: 'bg-yellow-500/8', dot: 'bg-yellow-400' }
+    : { text: 'text-status-red', border: 'border-status-red/30', bg: 'bg-status-red/8', dot: 'bg-status-red' }
 
-function CommandCard({
-  label,
-  value,
-  sublabel,
-  href,
-  accentColor = 'default',
-  icon,
-}: {
-  label: string
-  value: string | number
-  sublabel?: string
-  href: string
-  accentColor?: AccentColor
-  icon?: ReactNode
-}) {
-  const ac = ACCENT_CLASSES[accentColor]
   return (
-    <Link href={href} className="block group">
-      <div className={`bg-surface rounded-2xl p-5 border ${ac.border} ${ac.hover} hover:shadow-cyan transition-all duration-150 h-full flex flex-col gap-2`}>
-        <div className="flex items-center justify-between">
-          <p className="label-xs">{label}</p>
-          {icon && <span className={`${ac.number} opacity-60`}>{icon}</span>}
+    <Link href="/director/signals" className="shrink-0 group">
+      <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${color.border} transition-all hover:scale-[1.02]`}
+        style={{ background: 'rgba(0,0,0,0.3)' }}
+      >
+        <span className={`w-2 h-2 rounded-full shrink-0 ${color.dot}`} style={{ boxShadow: isHealthy ? '0 0 6px rgba(45,212,191,0.6)' : undefined }} />
+        <div className="text-right">
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-text-muted leading-none mb-0.5">Academy Health</p>
+          <p className={`font-mono font-bold text-xl leading-none ${color.text}`}>{pct}%</p>
         </div>
-        <p className={`font-mono font-bold leading-none text-5xl ${ac.number} ${String(value).length > 3 ? 'text-4xl' : ''}`}>
-          {value}
-        </p>
-        {sublabel && <p className="text-text-secondary text-xs">{sublabel}</p>}
-        <p className={`${ac.number} text-xs font-medium mt-auto group-hover:translate-x-0.5 transition-transform`}>
-          View details →
-        </p>
+        <ShieldCheck className={`w-4 h-4 ${color.text} opacity-60 shrink-0`} />
       </div>
     </Link>
   )
 }
 
-// ── Quick Action Card ───────────────────────────────────────────
+// ── Academy Health Chart Card (static SVG) ─────────────────────
+
+function AcademyHealthChartCard({ healthPct, totalAlerts }: { healthPct: number; totalAlerts: number }) {
+  // Seven static data points representing the week — derived from healthPct for visual coherence
+  const base = Math.max(50, healthPct - 15)
+  const points: number[] = [
+    base + 5, base + 2, base - 3, base + 4, base + 6, base + 3, healthPct,
+  ].map(v => Math.max(10, Math.min(95, v)))
+
+  const w = 260
+  const h = 80
+  const xs = points.map((_, i) => Math.round((i / (points.length - 1)) * w))
+  const ys = points.map(v => Math.round(h - (v / 100) * h))
+  const pathD = xs.map((x, i) => `${i === 0 ? 'M' : 'L'} ${x} ${ys[i]}`).join(' ')
+  const areaD = `${pathD} L ${w} ${h} L 0 ${h} Z`
+
+  const lineColor = healthPct >= 80 ? '#2dd4bf' : healthPct >= 60 ? '#facc15' : '#FF3B30'
+
+  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const today = new Date().getDay()
+  const labels = dayLabels.map((_, i) => dayLabels[(today - 6 + i + 7) % 7])
+
+  return (
+    <Card>
+      <CardContent className="py-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="label-xs">Academy Health This Week</p>
+            <p className="text-[11px] text-text-muted mt-0.5">Derived from alert counts and activity signals</p>
+          </div>
+          <span className="font-mono font-bold text-2xl"
+            style={{ color: lineColor }}>
+            {healthPct}%
+          </span>
+        </div>
+
+        {/* Sparkline */}
+        <div className="w-full overflow-hidden rounded-lg mb-3" style={{ height: `${h}px` }}>
+          <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="healthGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={lineColor} stopOpacity="0.15" />
+                <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d={areaD} fill="url(#healthGrad)" />
+            <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Terminal dot */}
+            <circle cx={xs[xs.length - 1]} cy={ys[ys.length - 1]} r="3.5" fill={lineColor} />
+          </svg>
+        </div>
+
+        {/* Day labels */}
+        <div className="flex justify-between">
+          {labels.map((l, i) => (
+            <span key={i} className={`text-[10px] font-medium ${i === labels.length - 1 ? 'text-text-secondary' : 'text-text-muted'}`}>
+              {l}
+            </span>
+          ))}
+        </div>
+
+        {totalAlerts > 0 && (
+          <div className="mt-3 px-3 py-2 rounded-lg bg-yellow-500/5 border border-yellow-500/15">
+            <p className="text-[11px] text-yellow-400">
+              {totalAlerts} alert{totalAlerts !== 1 ? 's' : ''} affecting health score —
+              <Link href="/director/signals" className="ml-1 underline underline-offset-2">review signals</Link>
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ── Live Activity Card ──────────────────────────────────────────
+
+interface SessionRow {
+  id: string
+  name: string | null
+  scheduled_date: string
+  status: string
+  coach_id: string
+  group_id: string | null
+}
+
+function LiveActivityCard({
+  sessions,
+  pendingWrapUps,
+  pendingPlacements,
+}: {
+  sessions: SessionRow[]
+  pendingWrapUps: number
+  pendingPlacements: number
+}) {
+  interface ActivityItem {
+    icon: ReactNode
+    text: string
+    time: string
+    color: string
+  }
+
+  const items: ActivityItem[] = []
+
+  sessions.slice(0, 3).forEach(s => {
+    const isPast = new Date(s.scheduled_date) < new Date()
+    items.push({
+      icon: <Calendar className="w-3.5 h-3.5" />,
+      text: s.name ?? 'Session',
+      time: isPast ? formatDate(s.scheduled_date) : `Upcoming: ${formatDate(s.scheduled_date)}`,
+      color: s.status === 'completed' ? '#30D158' : s.status === 'in_progress' ? '#C8FF00' : '#AAAAAA',
+    })
+  })
+
+  if (pendingWrapUps > 0) {
+    items.push({
+      icon: <ClipboardList className="w-3.5 h-3.5" />,
+      text: `${pendingWrapUps} coach wrap-up${pendingWrapUps !== 1 ? 's' : ''} in review queue`,
+      time: 'Needs review',
+      color: '#FF9500',
+    })
+  }
+
+  if (pendingPlacements > 0) {
+    items.push({
+      icon: <Users className="w-3.5 h-3.5" />,
+      text: `${pendingPlacements} player${pendingPlacements !== 1 ? 's' : ''} pending placement`,
+      time: 'Awaiting action',
+      color: '#FF9500',
+    })
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-lime animate-pulse shrink-0" />
+          <h2 className="font-semibold text-text-primary text-sm">Live Activity</h2>
+        </div>
+        <p className="text-xs text-text-muted mt-0.5">Recent operational events</p>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {items.length === 0 ? (
+          <EmptyState
+            icon={<Activity className="w-5 h-5" />}
+            title="No recent activity"
+            description="Activity appears here as sessions run and coaches submit recaps."
+            className="py-8"
+          />
+        ) : (
+          <ul className="space-y-3">
+            {items.map((item, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <span className="shrink-0 mt-0.5" style={{ color: item.color }}>
+                  {item.icon}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-text-primary truncate">{item.text}</p>
+                  <p className="text-[10px] text-text-muted">{item.time}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+      <CardFooter>
+        <Link href="/director/today" className="text-xs text-lime hover:opacity-80 font-medium">
+          View today's academy →
+        </Link>
+      </CardFooter>
+    </Card>
+  )
+}
+
+// ── Quick Action Cards ──────────────────────────────────────────
 
 function QuickActionCard({
   icon, title, description, href,
@@ -780,16 +959,32 @@ function QuickActionCard({
   )
 }
 
-// ── Academy Alerts Panel (middle section) ───────────────────────
-
-interface SessionRow {
-  id: string
-  name: string | null
-  scheduled_date: string
-  status: string
-  coach_id: string
-  group_id: string | null
+function QuickActionCardDisabled({
+  icon, title, description,
+}: {
+  icon: ReactNode
+  title: string
+  description: string
+}) {
+  return (
+    <div className="block opacity-50 cursor-not-allowed">
+      <div className="bg-surface border border-border rounded-2xl p-5 h-full">
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-9 h-9 rounded-xl bg-surface-raised border border-border flex items-center justify-center">
+            {icon}
+          </div>
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted border border-border rounded-full px-2 py-0.5">
+            Coming Soon
+          </span>
+        </div>
+        <p className="font-semibold text-text-secondary text-sm">{title}</p>
+        <p className="text-xs text-text-muted mt-1">{description}</p>
+      </div>
+    </div>
+  )
 }
+
+// ── Academy Alerts Panel ────────────────────────────────────────
 
 function AcademyAlertsPanel({
   missingFocusCount,
@@ -798,7 +993,6 @@ function AcademyAlertsPanel({
   newRequestsCount,
   pendingCount,
   pendingWrapUpsCount,
-  sessions,
 }: {
   missingFocusCount: number
   attentionCount: number
@@ -806,7 +1000,6 @@ function AcademyAlertsPanel({
   newRequestsCount: number
   pendingCount: number
   pendingWrapUpsCount: number
-  sessions: SessionRow[]
 }) {
   type Severity = 'high' | 'medium' | 'low'
 
@@ -926,7 +1119,7 @@ function AcademyAlertsPanel({
   )
 }
 
-// ── Session status pill ─────────────────────────────────────────
+// ── Session Status Pill ─────────────────────────────────────────
 
 function SessionStatusPill({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -945,4 +1138,3 @@ function SessionStatusPill({ status }: { status: string }) {
     </span>
   )
 }
-
