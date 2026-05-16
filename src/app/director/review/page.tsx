@@ -36,6 +36,8 @@ import { PlacementRecommendationDraftCard } from './PlacementRecommendationDraft
 import type { EnrichedRecommendationDraftItem, PlacementRecommendationDraftPayload, AcademyGroup } from './PlacementRecommendationDraftCard'
 import { VoiceIntakeBatchPanel } from './VoiceIntakeBatchPanel'
 import { CapturesBatchPanel } from './CapturesBatchPanel'
+import { DonnaDraftCard } from './DonnaDraftCard'
+import type { DonnaDraftItem } from './DonnaDraftCard'
 
 const VALID_TAB_PARAMS: Record<string, string> = {
   // Director-facing section names (Sprint 247)
@@ -1005,6 +1007,67 @@ export default async function DirectorReviewQueuePage({
     track: g.track ?? null,
   }))
 
+  // ─── DONNA-generated parent communication drafts ─────────────
+  const { data: parentCommRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, created_at, action_label, proposed_payload')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'parent_communication')
+    .in('status', ['pending_review'])
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  const parentCommDrafts: DonnaDraftItem[] = ((parentCommRows ?? []) as Array<{
+    id: string; status: string; created_at: string; action_label: string | null; proposed_payload: Record<string, unknown>
+  }>).map(r => {
+    const p = r.proposed_payload ?? {}
+    const sections = (p.draft_sections as Record<string, string> | null) ?? {}
+    const contentLines: string[] = []
+    if (sections.working_on) contentLines.push(`Working on: ${String(sections.working_on).slice(0, 200)}`)
+    if (sections.improved) contentLines.push(`Improved: ${String(sections.improved).slice(0, 200)}`)
+    if (sections.whats_next) contentLines.push(`What's next: ${String(sections.whats_next).slice(0, 200)}`)
+    return {
+      id: r.id,
+      status: r.status,
+      createdAt: r.created_at,
+      actionLabel: r.action_label,
+      draftType: String(p.draft_type ?? 'parent_update'),
+      warnings: (p.warnings as string[] | null) ?? [],
+      contentLines,
+    }
+  })
+
+  // ─── DONNA-generated level readiness drafts ───────────────────
+  const { data: levelReviewRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, created_at, action_label, proposed_payload')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'level_review')
+    .in('status', ['pending_review'])
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  const levelReviewDrafts: DonnaDraftItem[] = ((levelReviewRows ?? []) as Array<{
+    id: string; status: string; created_at: string; action_label: string | null; proposed_payload: Record<string, unknown>
+  }>).map(r => {
+    const p = r.proposed_payload ?? {}
+    const evidencePresent = (p.evidence_present as string[] | null) ?? []
+    const evidenceMissing = (p.evidence_missing as string[] | null) ?? []
+    const contentLines: string[] = []
+    if (p.readiness_summary) contentLines.push(String(p.readiness_summary).slice(0, 300))
+    if (evidencePresent.length > 0) contentLines.push(`Evidence present (${evidencePresent.length}): ${evidencePresent.slice(0, 3).join(', ')}`)
+    if (evidenceMissing.length > 0) contentLines.push(`Evidence missing (${evidenceMissing.length}): ${evidenceMissing.slice(0, 3).join(', ')}`)
+    return {
+      id: r.id,
+      status: r.status,
+      createdAt: r.created_at,
+      actionLabel: r.action_label,
+      draftType: String(p.draft_type ?? 'level_readiness'),
+      warnings: (p.warnings as string[] | null) ?? [],
+      contentLines,
+    }
+  })
+
   // ─── Section counts for the 4 director-facing tabs ────────────
 
   // Needs Approval: items waiting for director action (pending or approved-but-not-applied)
@@ -1016,7 +1079,9 @@ export default async function DirectorReviewQueuePage({
     enrichedAssessmentDrafts.length +
     pendingRecommendationDrafts.length +
     pendingVoiceIntakeDrafts.length +
-    generalCaptures.length
+    generalCaptures.length +
+    parentCommDrafts.length +
+    levelReviewDrafts.length
 
   const needsApprovalReady =
     approvedWrapUpDrafts.length +
@@ -1358,6 +1423,42 @@ export default async function DirectorReviewQueuePage({
                   <CapturesBatchPanel captures={generalCaptures} players={playerOptions} />
                 </section>
               )}
+            </div>
+          )}
+
+          {/* DONNA Parent Communication Drafts */}
+          {parentCommDrafts.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Parent Communication Drafts</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  {parentCommDrafts.length} to review
+                </span>
+              </div>
+              <p className="text-[10px] text-text-muted">DONNA-generated parent update drafts. Structured in 5 sections. No message has been sent — review the draft and approve before any external action.</p>
+              <div className="space-y-3">
+                {parentCommDrafts.map(item => (
+                  <DonnaDraftCard key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* DONNA Level Readiness Drafts */}
+          {levelReviewDrafts.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Level Readiness Reviews</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                  {levelReviewDrafts.length} to review
+                </span>
+              </div>
+              <p className="text-[10px] text-text-muted">DONNA-generated level readiness assessments. Player level has NOT been changed — this is a review-only draft for your decision.</p>
+              <div className="space-y-3">
+                {levelReviewDrafts.map(item => (
+                  <DonnaDraftCard key={item.id} item={item} />
+                ))}
+              </div>
             </div>
           )}
         </TabsContent>

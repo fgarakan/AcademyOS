@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-16 — Sprint 411: DONNA Review Queue UX Hardening V1
+
+**Type:** Frontend — no DB writes, no migrations, no new packages
+
+**Goal:** Surface DONNA-generated parent communication drafts and level readiness review drafts in the director review queue. Previously these `proposed_actions` records were being created but never shown to the director.
+
+**Files created:**
+- `src/app/director/review/DonnaDraftCard.tsx` — read-only card component for DONNA-generated drafts; shows draft content, section previews, and safety guardrails ("I did not" list); no apply/execute button — informational only.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — added queries for `target_module: 'parent_communication'` and `target_module: 'level_review'` proposed_actions; added `DonnaDraftCard` rendering in "Needs Approval" tab; included both counts in `needsApprovalPending`.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** No DB writes. No migrations. Draft cards are read-only display — no approve/apply button added. Director can see the draft content but no execution action is wired yet. Both draft types remain `pending_review` until a future sprint wires explicit approval.
+
+---
+
 ## 2026-05-16 — Sprint 410: Human Review Prep + Manual Demo Audit V1
 
 **Type:** Frontend polish — no DB writes, no migrations, no new packages
