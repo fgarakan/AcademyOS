@@ -230,17 +230,20 @@ export default function CoachRecapPage() {
             <CheckCircle2 className="w-7 h-7 text-status-green" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-text-primary">Recap Ready</h1>
+            <h1 className="text-xl font-bold text-text-primary">Recap Submitted</h1>
             <p className="text-sm text-text-secondary mt-1.5 max-w-xs mx-auto">
-              Your recap is ready to submit. Connect this recap from a session workspace to route it to the director review queue.
+              Your recap has been saved. Your director will see it in the Review Queue.
             </p>
           </div>
           <p className="text-[10px] text-text-muted bg-surface-raised border border-border rounded-lg px-4 py-2.5 max-w-xs">
             Nothing is official yet — attendance, player notes, and parent updates all require director approval.
           </p>
-          <p className="text-[10px] text-text-muted max-w-xs">
-            Once connected to a session, your director can review each section before any official update is made.
-          </p>
+          <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-lime/5 border border-lime/20 max-w-xs">
+            <span className="text-lime text-[11px] mt-0.5 shrink-0">✦</span>
+            <p className="text-[10px] text-text-secondary leading-relaxed">
+              <span className="text-lime font-semibold">DONNA</span> will analyze your recap when the director reviews it and surface any action items.
+            </p>
+          </div>
           <div className="flex gap-3 mt-2">
             <Link href="/coach/sessions" className="btn-lime text-sm">
               Back to Sessions
@@ -249,7 +252,7 @@ export default function CoachRecapPage() {
               onClick={() => { setStep(0); setAnswers({}); setStage('questions') }}
               className="btn-ghost text-sm"
             >
-              Submit Another Recap
+              Start New Recap
             </button>
           </div>
         </div>
@@ -278,7 +281,15 @@ export default function CoachRecapPage() {
 
         <div className="px-4 py-3 rounded-xl bg-surface border border-border">
           <p className="text-[10px] text-text-muted leading-relaxed">
-            Your answers are organised as draft sections below. Each section shows what it will become once submitted from a session workspace. Nothing is official until the director approves — attendance, observations, and parent updates all require review.
+            Your answers are organised as draft sections below. Nothing is official until the director approves — attendance, observations, and parent updates all require review.
+          </p>
+        </div>
+
+        {/* DONNA context note */}
+        <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-lime/5 border border-lime/20">
+          <span className="text-lime text-[11px] mt-0.5 shrink-0">✦</span>
+          <p className="text-[10px] text-text-secondary leading-relaxed">
+            <span className="text-lime font-semibold">DONNA</span> will analyze this recap when your director reviews it — generating observation drafts, flagging follow-up items, and surfacing any concerns for their attention.
           </p>
         </div>
 
@@ -324,7 +335,7 @@ export default function CoachRecapPage() {
             Mark as Ready for Review
           </button>
           <p className="text-[10px] text-text-muted text-center mt-2">
-            Open this recap from a session workspace to route it directly to the director review queue.
+            Once submitted, your director will see this in the Review Queue.
           </p>
         </div>
       </div>
@@ -373,7 +384,7 @@ export default function CoachRecapPage() {
           </div>
           <div>
             <p className="text-[11px] text-text-secondary">Voice input</p>
-            <p className="text-[10px] text-text-muted">Available via DONNA on director view</p>
+            <p className="text-[10px] text-text-muted">Tap to dictate — coming soon</p>
           </div>
         </div>
       </div>

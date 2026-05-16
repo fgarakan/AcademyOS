@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-16 — Sprint 417: DONNA Coach-Facing Recap UX Pass V1
+
+**Type:** UX copy pass — no DB writes, no migrations, no new packages, no new components
+
+**Goal:** Surface DONNA as a concept in the coach recap flow with accurate copy and clearer state messaging.
+
+**Changes:**
+- Fixed misleading voice placeholder: "Available via DONNA on director view" → "Tap to dictate — coming soon"
+- Review stage: added lime-accented DONNA context strip explaining DONNA will analyze the recap when the director reviews it
+- Submit button note: replaced confusing "session workspace" copy → "Once submitted, your director will see this in the Review Queue."
+- Submitted state: changed "Recap Ready" → "Recap Submitted"; rewrote confusing body copy; replaced DONNA context strip (same messaging as review stage); renamed "Submit Another Recap" → "Start New Recap"
+
+**Files modified:**
+- `src/app/coach/recap/page.tsx` — four targeted UX copy + layout fixes across question, review, and submitted stages
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** No logic, data, or behavior changes — copy and layout only.
+
+---
+
 ## 2026-05-16 — Sprint 416: DONNA Parent Communication Safety Pass V1
 
 **Type:** Safety copy pass — no DB writes, no migrations, no new packages
