@@ -46,6 +46,11 @@ import {
   type ParentUpdateRow,
   type ParentTrustInput,
 } from '@/lib/kpi/parentTrustKpiEngine'
+import {
+  computeDropoutRisk,
+  formatRetentionForDonna,
+  type DropoutRiskInput,
+} from '@/lib/kpi/retentionKpiEngine'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper (director/head_coach only)
@@ -774,9 +779,10 @@ export async function fetchPlayerProgressSummaryAction(
   const summaryFor = (fields.summary_for ?? '').trim() || 'director reference'
 
   // Step 1 — Player name + group (scoped to academy_id)
+  // is_active added Sprint 429 for dropout risk KPI
   const { data: playerRow } = await rawDb
     .from('players')
-    .select('first_name, full_name, current_group_id')
+    .select('first_name, full_name, current_group_id, is_active')
     .eq('id', confirmedPlayerId)
     .eq('academy_id', academyId)
     .single()
@@ -1044,6 +1050,20 @@ export async function fetchPlayerProgressSummaryAction(
   }
   const parentTrustResult = computeParentTrustCoverage(parentTrustInput)
   const parentTrustLines = formatParentTrustForDonna(parentTrustResult)
+
+  // Step 13 — Dropout Risk Signal (Sprint 429)
+  // Derived from development health score + missed streak — no extra DB query.
+  const dropoutRiskInput: DropoutRiskInput = {
+    playerId: confirmedPlayerId,
+    isActive: playerRow?.is_active !== false,  // default true if null
+    missedStreak: attendanceKpiResults[1]?.value ?? null,
+    developmentHealthScore: developmentHealthResult.riskScore,
+    daysSinceLastObservation: lastObservationAt
+      ? Math.round((Date.now() - new Date(lastObservationAt).getTime()) / (1000 * 60 * 60 * 24))
+      : null,
+  }
+  const dropoutRiskResult = computeDropoutRisk(dropoutRiskInput)
+  const retentionLines = formatRetentionForDonna(dropoutRiskResult)
 
   // Build deterministic summary — no AI, no external API
   const firstName: string =

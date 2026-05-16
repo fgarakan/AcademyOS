@@ -100,6 +100,27 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 429 — Retention and Dropout KPI Engine V1
+
+**Date:** 2026-05-16
+**QA type:** Engine + server action wiring — TypeScript CLEAN, static safety checks only
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- KPI 8 stub returns `insufficient_data` (no deactivated_at — gap G1): PASS
+- `formatRetentionForDonna` returns `[]` when value null or status insufficient_data: PASS
+- `is_active` fetched but never mutated: PASS
+- Dropout risk is read-only signal only (no actions triggered): PASS
+- No level movement: PASS
+- No roster changes: PASS
+
+**Result:** 9 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 428 — Group Health and Fit KPI Engine V1
 
 **Date:** 2026-05-16

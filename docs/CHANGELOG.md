@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-16 — Sprint 429: Retention and Dropout KPI Engine V1
+
+**Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.
+
+**Goal:** Build retention and dropout KPI engine. KPI 8 (Dropout Rate by Level) implemented as `insufficient_data` stub (no `deactivated_at` — data model gap G1). Per-player dropout risk signal (`partial`) computed from development health score and missed-session streak composite.
+
+**Files created:**
+- `src/lib/kpi/retentionKpiEngine.ts` — `DropoutRiskInput` interface, `computeDropoutRateStub()` (KPI 8, insufficient_data), `computeDropoutRisk()` (per-player partial dropout risk signal), `formatRetentionForDonna()`.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — Import added; Step 1 select updated to include `is_active`; Step 13 added: dropout risk computed and appended to DONNA summary.
+
+**Key design decisions:**
+- KPI 8 permanently `insufficient_data` until `players.deactivated_at` migration is approved (stop and confirm with Farshad).
+- Dropout risk is a composite proxy: development health riskScore ≥50 → +40pts, ≥25 → +15pts; missed streak ≥3 → +35pts, ≥2 → +15pts. High ≥50, Moderate ≥25, Low <25.
+- `formatRetentionForDonna` returns `[]` (empty array) when value is null or status is `insufficient_data` — no noise in DONNA output when data is absent.
+- `daysSinceLastObservation` threaded to engine from existing `lastObservationAt` variable — no extra DB query.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 428: Group Health and Fit KPI Engine V1
 
 **Type:** Feature — new KPI engine (group-level). No server action wiring (group KPIs belong in a future group summary action). No migrations, no package changes, no DB writes.

@@ -13,13 +13,24 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 428 complete.)*
+*(No active sprint — Sprint 429 complete.)*
 
-**Next available:** Sprint 429
+**Next available:** Sprint 430
 
 ---
 
 ## Completed This Run
+
+### Sprint 429 — Retention and Dropout KPI Engine V1 ✓
+
+**Status:** COMPLETE
+**QA:** 9 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files created:** `src/lib/kpi/retentionKpiEngine.ts`
+**Files modified:** `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`
+**Decision:** KPI 8 permanently `insufficient_data` (no `deactivated_at`). Dropout risk is a composite proxy wired into DONNA player summary.
+
+---
 
 ### Sprint 399 — Persistent DONNA Panel State V1 ✓
 

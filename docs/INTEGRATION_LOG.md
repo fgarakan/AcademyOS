@@ -8,6 +8,24 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 429: Retention and Dropout KPI Engine V1
+
+**What changed:** Added `retentionKpiEngine.ts`. KPI 8 stub (insufficient_data — no `deactivated_at`). Per-player dropout risk signal (partial) computed from development health score and missed-session streak. Step 1 select updated to include `is_active`. Step 13 added: dropout risk computed and appended to DONNA player progress summary.
+
+**Integrates with:**
+- `players.is_active` — Step 1 select extended to include `is_active` for dropout risk gate
+- `developmentHealthKpiEngine` — dropout risk consumes `riskScore` from development health result
+- `attendanceKpiEngine` — dropout risk consumes `missedStreak` (KPI 2 value) from attendance KPI results
+- DONNA player progress summary — retention lines appended after parent trust lines
+
+**Decisions recorded:**
+- **KPI 8 blocked by gap G1**: `players.deactivated_at` does not exist. Stub will remain `insufficient_data` until migration explicitly approved by Farshad.
+- **Composite proxy approach**: Dropout risk is NOT a formal KPI. It is a derived risk signal using existing signals rather than dropout history. DONNA surface text reflects this.
+- **No extra DB query**: `daysSinceLastObservation` derived from `lastObservationAt` already available in the action. No additional round-trip.
+- **Empty output when no data**: `formatRetentionForDonna` returns `[]` for null value or `insufficient_data` status — summaryLines spread remains clean.
+
+---
+
 ## 2026-05-16 — Sprint 428: Group Health and Fit KPI Engine V1
 
 **What changed:** Added `groupHealthKpiEngine.ts`. Group-level KPIs 16 and 7 implemented as pure functions. Not wired into any server action — awaiting group summary action (Sprint 435+).
