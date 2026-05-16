@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 453: Director Coach Profile Page V1
+
+**Type:** New route — code change, no migration.
+
+**Goal:** Build the director-facing coach profile page at `/director/coaches/[coachId]`. Server component. Shows coach name, role badge, 30d KPI row (sessions, observations, pending review), recent sessions list, pending items preview.
+
+**Files created:**
+- `src/app/director/coaches/[coachId]/page.tsx` — Server component. Queries profiles, academy_memberships, sessions, coach_observations, proposed_actions — all scoped to academy_id. DONNA context auto-triggers `coach_profile` via Sprint 452 route wiring.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 452: DONNA Coach Context Type V1
 
 **Type:** Code change — no migration.
