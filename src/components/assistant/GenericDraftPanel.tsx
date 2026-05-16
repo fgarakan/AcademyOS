@@ -465,10 +465,17 @@ export function GenericDraftPanel({
         >
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: '#30D158' }} />
-            <p className="text-[12px] font-semibold text-text-primary">Saved successfully.</p>
+            <p className="text-[12px] font-semibold text-text-primary">
+              {approveResult.createdId ? 'Draft saved — pending review.' : 'Summary generated.'}
+            </p>
           </div>
           <p className="text-[11px] text-text-secondary leading-relaxed">
             {approveResult.message}
+          </p>
+          <p className="text-[10px] text-text-muted leading-snug">
+            {approveResult.createdId
+              ? 'Director approval required before any action is taken. Nothing has been sent.'
+              : 'Read-only summary — no data was written. Review before sharing with players or parents.'}
           </p>
           {approveResult.safetyNotes && approveResult.safetyNotes.length > 0 && (
             <ul className="space-y-0.5">

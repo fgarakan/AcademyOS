@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-16 — Sprint 407: DONNA Action Safety and Permission Copy Pass V1
+
+**Type:** Frontend copy pass — no DB writes, no migrations, no new packages
+
+**Goal:** Standardize DONNA language to consistently communicate draft-vs-final, read-only-vs-write, and approval-required status across all guided task flows. Labels applied: Draft-only, Read-only, Review required, Director approval required, Not sent, Not official yet.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — updated guided-task info banner to show context-appropriate label (Read-only summary / Draft-only / Coming soon). Changed "Approve and Save" button label → "Save Draft for Review" for wired tasks.
+- `src/components/assistant/GenericDraftPanel.tsx` — updated success state heading and subtext: shows "Draft saved — pending review." with approval notice for write tasks; shows "Summary generated." with read-only notice for readonly tasks. Both driven by `approveResult.createdId` presence.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Copy-only changes. No logic changes. No new props or state. No DB writes.
+
+---
+
 ## 2026-05-16 — Sprint 406: Level Readiness to Review Draft Flow V1
 
 **Type:** Frontend — no DB writes, no migrations, no new packages

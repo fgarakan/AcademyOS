@@ -3128,8 +3128,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               >
                 <p className="text-[11px] text-text-secondary leading-snug">
                   {WIRED_TASK_IDS.has(genericDraft.taskId)
-                    ? `${DONNA_PUBLIC_NAME} will collect the information — nothing is saved until you click Approve and Save.`
-                    : `${DONNA_PUBLIC_NAME} will collect the information — nothing is saved until a save action is available and you explicitly approve.`}
+                    ? READONLY_TASK_IDS.has(genericDraft.taskId)
+                      ? 'Read-only summary — no data is written. Review required before sharing with players or parents.'
+                      : 'Draft-only — saved as pending review. Director approval required before any action is taken. Nothing is sent.'
+                    : 'This capability is coming soon — no data is written.'}
                 </p>
               </div>
 
@@ -3163,7 +3165,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   WIRED_TASK_IDS.has(genericDraft.taskId)
                     ? READONLY_TASK_IDS.has(genericDraft.taskId)
                       ? 'Generate Summary'
-                      : 'Approve and Save'
+                      : 'Save Draft for Review'
                     : undefined
                 }
                 onApprove={handleGenericDraftApprove}
