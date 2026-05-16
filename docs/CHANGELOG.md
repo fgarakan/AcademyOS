@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 454: Director Coaches List Page V1
+
+**Type:** New route — code change, no migration.
+
+**Goal:** Build the director-facing coach roster list at `/director/coaches`. Enables navigation to individual coach profiles without needing a deeplink.
+
+**Files created:**
+- `src/app/director/coaches/page.tsx` — Server component. Fetches active coach memberships, profiles, 30d session counts. Separates head coaches from coaches. Links to `/director/coaches/[profileId]`.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 453: Director Coach Profile Page V1
 
 **Type:** New route — code change, no migration.
