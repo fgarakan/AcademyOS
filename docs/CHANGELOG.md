@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 450: DONNA Coach Intelligence Action Foundation V1
+
+**Type:** New server action — code change, no migration.
+
+**Goal:** Create the per-coach DONNA intelligence action. Mirrors the per-player `fetchPlayerProgressSummaryAction` pattern but scoped to a single coach profile. Steps 1-5: auth guard, coach profile (name + role), sessions coached in last 30d, session completion rate, recap coverage (KPI 4).
+
+**Files created:**
+- `src/app/director/_actions/donnaCoachIntelligenceAction.ts` — `fetchCoachIntelligenceAction(coachProfileId)`. Steps 1-5. Director/head_coach only. All queries scoped to `academy_id`. Returns `DonnaApprovalExecutionResult` with plain-text summary lines.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 449: DONNA Coach Recap Completion Rate Signal V1
 
 **Type:** KPI wiring — code change, no migration.
