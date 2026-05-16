@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-16 — Sprint 457: Coach Profile Links in Player Profile V1
+
+**Type:** Code change — no migration.
+
+**Goal:** Link coach names in player observations to their coach profile pages at `/director/coaches/[coachId]`.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/CoachObservationsFeed.tsx` — added `Link` import; added `coach_id: string | null` to `CoachObservationRow` type; coach name now renders as `<Link>` when `coach_id` present, plain `<span>` as fallback
+- `src/app/director/players/[playerId]/page.tsx` — added `'coach_id'` to coach_observations select query
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 456: DONNA Coach Brief Workflow V1
 
 **Type:** Code change — no migration.

@@ -752,7 +752,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const { data: rawObs } = await rawDb
     .from('coach_observations')
     .select([
-      'id', 'content', 'observation_type', 'tags', 'is_private', 'ai_entities', 'created_at',
+      'id', 'coach_id', 'content', 'observation_type', 'tags', 'is_private', 'ai_entities', 'created_at',
       'profiles!coach_observations_coach_id_fkey(display_name)',
       'sessions!coach_observations_session_id_fkey(name, scheduled_date)',
     ].join(', '))

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { MessageSquare } from 'lucide-react'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -17,6 +18,7 @@ const OBS_TYPE_LABELS: Record<string, string> = {
 
 export interface CoachObservationRow {
   id: string
+  coach_id: string | null
   content: string
   observation_type: string
   tags: string[] | null
@@ -90,7 +92,16 @@ export function CoachObservationsFeed({ observations, onSelectForDraft }: Props)
                 {obs.profiles?.display_name && (
                   <span className="text-[11px] text-text-muted">
                     Coach:{' '}
-                    <span className="text-text-secondary">{obs.profiles.display_name}</span>
+                    {obs.coach_id ? (
+                      <Link
+                        href={`/director/coaches/${obs.coach_id}`}
+                        className="text-text-secondary hover:text-lime transition-colors"
+                      >
+                        {obs.profiles.display_name}
+                      </Link>
+                    ) : (
+                      <span className="text-text-secondary">{obs.profiles.display_name}</span>
+                    )}
                   </span>
                 )}
                 {obs.sessions && (
