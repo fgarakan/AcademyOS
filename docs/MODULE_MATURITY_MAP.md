@@ -115,7 +115,7 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | `proposed_actions` table + RLS | 10 | Core pipeline table. Stable. |
 | `audit_logs` table + RLS | 10 | All major mutations write here. |
 | `execute_approved_action()` RPC | 10 | Only execution path for approved actions. |
-| Review queue route (`/director/review`) | 9 | Built. DONNA context registered. |
+| Review queue route (`/director/review`) | 10 | Sprints 440-447. Full status coverage (all 9 target_module types have pending/approved/clarification_needed/rejected), stale age indicators, stale alert banner, ready-to-apply counts, Completed tab comprehensive. |
 | `getDonnaReviewQueueAction` | 10 | Wired. Real-time count for badge. |
 | COO commands (7) | 9 | All 7 wired. Routing stable as of Sprint 383. |
 | Task contracts (15) | 8 | 11/15 wired; 4 stubs only. |
@@ -128,7 +128,17 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | Stub task honesty layer | 9 | Sprint 398. Unwired tasks show "Coming soon" badge + honest response. No silent fail. |
 | Persistent panel state | 9 | Sprint 399. DONNA stays open until director explicitly closes with X. Not a modal. |
 
-**Rating: 9** — DONNA core is pilot-ready. 4 stub task contracts are the known gap (now honestly labeled). Panel persistence complete.
+**Review Queue Hardening Summary (Sprints 440-447):**
+- **Sprint 440**: Age indicators per section ("oldest: Xd", orange ≥7d)
+- **Sprint 441**: Observation `clarification_needed` items visible in Completed tab
+- **Sprint 442**: "X ready to apply" lime count in section summary cards
+- **Sprint 443**: `clarification_needed` for 4 more types (priority, attendance, evidence, curriculum)
+- **Sprint 444**: `rejected` for 6 types (observation, priority, attendance, evidence, curriculum, summary)
+- **Sprint 445**: Full status coverage for session_recap_structuring and voice_intake
+- **Sprint 446**: Page-level stale alert banner (shows stale sections with age)
+- **Sprint 447**: Completed tab copy accuracy — no longer says "approved items" appear there
+
+**Rating: 9** — DONNA core is pilot-ready. 4 stub task contracts are the known gap (now honestly labeled). Panel persistence complete. Review queue now level 10 — full status coverage, stale awareness, accurate UI copy.
 
 ---
 
@@ -179,6 +189,34 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 
 ---
 
+## Coach Module
+
+**Sprints 450–458 — Coach-Side DONNA block**
+
+| Component | Level | Notes |
+|---|---|---|
+| Coach profile route (`/director/coaches/[coachId]`) | 8 | Built Sprint 453. Server component. Session KPI row, observations, pending items. |
+| Coaches list route (`/director/coaches`) | 8 | Built Sprint 454. Separates head_coach / coach roles. 30d session counts. |
+| Coaches sidebar nav link | 9 | Sprint 455. Sidebar now has Coaches between Players and Sessions. |
+| `coach_profile` DONNA context type | 9 | Sprint 452. `deriveContextRequest` wired for `/director/coaches/[uuid]`. `fetchCoachContext` handler added. |
+| `fetchCoachIntelligenceAction` | 9 | Sprints 450-451. Steps 1-9: auth, profile, sessions (30d), completion rate, recap coverage (KPI 4), observations, pending review, groups, data gaps. |
+| `draft_coach_brief` DONNA task | 9 | Sprint 456. Task contract + resolution map + handler in DonnaAssistantButton. Director can ask DONNA to brief them on a coach. |
+| Coach name links in player observations | 9 | Sprint 457. Coach name in CoachObservationsFeed now links to `/director/coaches/[coachId]`. |
+
+**Rating: 9** — Coach-Side DONNA surface is complete for Phase 1. Full navigation loop: Sidebar → Coach List → Coach Profile → DONNA brief. Coach names in player observations link to profiles. Intelligence action covers 9 data steps. Known gaps: no coach-authored proposed_actions count on list page, no observation trend chart, no coach performance comparison.
+
+**Sprint 450–458 hardening summary:**
+- Sprint 450: `donnaCoachIntelligenceAction.ts` foundation (Steps 1-5)
+- Sprint 451: Steps 6-9 (observations, pending review, groups, data gaps). Fixed TS2802.
+- Sprint 452: `coach_profile` context type, `deriveContextRequest` wiring, `fetchCoachContext` handler
+- Sprint 453: `/director/coaches/[coachId]/page.tsx` — KPI cards, session list, pending items preview
+- Sprint 454: `/director/coaches/page.tsx` — roster list, separated by role
+- Sprint 455: Sidebar nav Coaches link with `UserCog` icon
+- Sprint 456: `draft_coach_brief` DONNA task — wired to `fetchCoachIntelligenceAction`
+- Sprint 457: Coach name in player observations links to coach profile
+
+---
+
 ## Platform Module
 
 | Component | Level | Notes |
@@ -207,8 +245,9 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | Communications | 7 | Sprint 389 built comms screen. External delivery still future. |
 | Attendance | 9 | No blockers — QA ongoing |
 | Signals | 8 | Sprint 387+ (session detail DONNA context) |
+| Coach | 9 | Sprints 450–458 complete. Observation trend and coach comparison TBD. |
 | Platform | 2 | Sprint 392+ (migration required first) |
 
 ---
 
-*Last updated: Sprint 399*
+*Last updated: Sprint 458*

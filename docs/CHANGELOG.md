@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 458: Coach-Side DONNA Block Audit and Docs V1
+
+**Type:** Docs only — no code changes.
+
+**Goal:** Document the Coach-Side DONNA block (Sprints 450-458) in MODULE_MATURITY_MAP.md. Coach module added at maturity level 9.
+
+**Files modified:**
+- `docs/MODULE_MATURITY_MAP.md` — added Coach Module section; added sprint 450-458 hardening summary; added Coach entry to Summary Table at level 9.
+
+**TypeScript:** Not run (no code changes)
+
+---
+
 ## 2026-05-16 — Sprint 457: Coach Profile Links in Player Profile V1
 
 **Type:** Code change — no migration.
