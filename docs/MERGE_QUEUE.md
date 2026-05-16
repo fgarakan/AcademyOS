@@ -31,6 +31,21 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 424 — Evidence Coverage and Readiness Confidence KPI V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Engine-only — TypeScript CLEAN, 11 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/lib/kpi/evidenceCoverageKpiEngine.ts` (new)
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts`
+- docs (6 files)
+**Commit hash:** — (pending)
+**Issues:** None.
+
+---
+
 ### Sprint 423 — Development Velocity and Time in Level KPI V1
 
 **Date:** 2026-05-16

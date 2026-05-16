@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-16 — Sprint 424: Evidence Coverage and Readiness Confidence KPI V1
+
+**Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.
+
+**Goal:** Compute KPI 14 (Evidence Coverage Score, `demo`) from `curriculum_gates` and `player_gate_status`. Compute KPI 22 (Readiness Confidence, `partial`) as composite of advancement_eligible + evidence coverage. Honest `insufficient_data` when gates are not seeded for the player's level.
+
+**Files created:**
+- `src/lib/kpi/evidenceCoverageKpiEngine.ts` — `GateRow`/`GateStatusRow` interfaces, `computeEvidenceCoverage()` (KPI 14), `computeReadinessConfidence()` (KPI 22), `computeEvidenceCoverageKpis()` wrapper, `formatEvidenceCoverageForDonna()`.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — Import added; Step 9 added: fetch `curriculum_gates` (by player's `current_level_id`) + `player_gate_status`; evidence engine called; evidence lines appended to DONNA summary.
+
+**Key design decisions:**
+- If no gates for this level: `insufficient_data` with explicit message about migrations 041–044.
+- If gates exist but no player_gate_status rows: `demo` with 0/N coverage (data density issue).
+- KPI 22 is `partial`: uses `last_evaluated_at` as proxy for assessment recency; no `eligible_since_at` exists.
+- EVIDENCED_STATUSES covers `confirmed`, `met`, `complete`, `waived` — waived gates count as evidenced.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** No migrations. Read-only. Academy_id scoped. DONNA-facing only.
+
+---
+
 ## 2026-05-16 — Sprint 423: Development Velocity and Time in Level KPI V1
 
 **Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.

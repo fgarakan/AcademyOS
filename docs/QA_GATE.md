@@ -100,6 +100,29 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 424 — Evidence Coverage and Readiness Confidence KPI V1
+
+**Date:** 2026-05-16
+**QA type:** Engine-only — TypeScript CLEAN, static safety checks only
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- All queries academy_id scoped: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- Empty gates → `insufficient_data` (not false 0%): PASS
+- Waived gates counted as evidenced (correct semantics): PASS
+- KPI 22 status is `partial` (last_evaluated_at proxy documented): PASS
+- No level movement triggered: PASS
+- DONNA output shows `[insufficient data]` tag when data absent: PASS
+- Evidence missing list truncated at 3 items to prevent overflow: PASS
+- No parent/player exposure: PASS
+
+**Result:** 11 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 423 — Development Velocity and Time in Level KPI V1
 
 **Date:** 2026-05-16

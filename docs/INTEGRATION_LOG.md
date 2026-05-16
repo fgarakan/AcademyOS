@@ -8,6 +8,22 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 424: Evidence Coverage and Readiness Confidence KPI V1
+
+**What changed:** Added `evidenceCoverageKpiEngine.ts`. Step 9 added to `fetchPlayerProgressSummaryAction`: fetches `curriculum_gates` for the player's current level and `player_gate_status` for the player; computes KPI 14 (Evidence Coverage) and KPI 22 (Readiness Confidence).
+
+**Integrates with:**
+- `curriculum_gates` — read-only, queried by `from_level_id = current_level_id`
+- `player_gate_status` — read-only, academy_id scoped
+- DONNA player progress summary — evidence lines appended after velocity lines
+
+**Decisions recorded:**
+- **Empty gates → `insufficient_data`**: If no active gates are defined for the player's level, the engine returns `insufficient_data` with a migration explanation rather than showing a false 0% score.
+- **Waived gates count as evidenced**: `waived_at` gates indicate the director explicitly waived the requirement — counted as covered.
+- **KPI 22 `partial`**: `last_evaluated_at` is a proxy for when eligibility was assessed, not when it was set. No `eligible_since_at` column exists in the schema.
+
+---
+
 ## 2026-05-16 — Sprint 423: Development Velocity and Time in Level KPI V1
 
 **What changed:** Added `developmentVelocityKpiEngine.ts`. Step 8 added to `fetchPlayerProgressSummaryAction`: fetches `player_curriculum_history` and computes KPI 13 (Time in Level, live) and KPI 12 (Development Velocity, demo). A stalled-player flag (KPI 23 proxy) is emitted when `days > 120 AND advancement_eligible = false`.

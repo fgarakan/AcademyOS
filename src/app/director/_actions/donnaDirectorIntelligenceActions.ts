@@ -23,6 +23,13 @@ import {
   type HistoryRow,
   type DevelopmentVelocityInput,
 } from '@/lib/kpi/developmentVelocityKpiEngine'
+import {
+  computeEvidenceCoverageKpis,
+  formatEvidenceCoverageForDonna,
+  type GateRow,
+  type GateStatusRow,
+  type EvidenceCoverageInput,
+} from '@/lib/kpi/evidenceCoverageKpiEngine'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper (director/head_coach only)
@@ -920,6 +927,50 @@ export async function fetchPlayerProgressSummaryAction(
   const velocityKpiResults = computeDevelopmentVelocityKpis(velocityInput)
   const velocityLines = formatDevelopmentVelocityForDonna(velocityKpiResults)
 
+  // Step 9 — Evidence Coverage KPIs: curriculum gates + player gate status (Sprint 424)
+  // curriculum_gates queried by from_level_id = player's current level
+  // player_gate_status queried by player_id + academy_id
+  // If no gates exist (migrations 041–044 not applied to live DB), returns insufficient_data honestly
+  const currentLevelId: string | null =
+    curriculumState?.current_level_id ? String(curriculumState.current_level_id) : null
+
+  let levelGates: GateRow[] = []
+  if (currentLevelId) {
+    const { data: levelGatesRaw } = await rawDb
+      .from('curriculum_gates')
+      .select('gate_id, criterion, domain, is_active')
+      .eq('from_level_id', currentLevelId)
+    levelGates = (levelGatesRaw ?? []).map((g: any) => ({
+      gate_id: String(g.gate_id ?? ''),
+      criterion: String(g.criterion ?? ''),
+      domain: String(g.domain ?? ''),
+      is_active: Boolean(g.is_active),
+    }))
+  }
+
+  const { data: playerGateStatusesRaw } = await rawDb
+    .from('player_gate_status')
+    .select('gate_id, evidence_count, status, last_evidence_at')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+  const playerGateStatuses: GateStatusRow[] = (playerGateStatusesRaw ?? []).map((s: any) => ({
+    gate_id: String(s.gate_id ?? ''),
+    evidence_count: Number(s.evidence_count ?? 0),
+    status: String(s.status ?? ''),
+    last_evidence_at: s.last_evidence_at ? String(s.last_evidence_at) : null,
+  }))
+
+  const evidenceInput: EvidenceCoverageInput = {
+    playerId: confirmedPlayerId,
+    currentLevelId,
+    levelGates,
+    playerGateStatuses,
+    advancementEligible: curriculumState?.advancement_eligible ?? null,
+    lastEvaluatedAt: curriculumState?.last_evaluated_at ? String(curriculumState.last_evaluated_at) : null,
+  }
+  const evidenceKpiResults = computeEvidenceCoverageKpis(evidenceInput)
+  const evidenceLines = formatEvidenceCoverageForDonna(evidenceKpiResults)
+
   // Build deterministic summary — no AI, no external API
   const firstName: string =
     (playerRow?.first_name as string | null) ??
@@ -970,6 +1021,7 @@ export async function fetchPlayerProgressSummaryAction(
     ...attendanceLines,
     ...developmentHealthLines,
     ...velocityLines,
+    ...evidenceLines,
     ...(dataGaps.length > 0 ? ['', 'DATA GAPS:'] : []),
     ...dataGaps.map((g: string) => `⚠ ${g}`),
   ]
