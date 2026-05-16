@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-15 — Sprint 396: Final Prototype Visual Match + Regression V1
+
+**Type:** Full regression QA — no source code changes
+
+**Goal:** Comprehensive regression pass across all Sprint 386–395 output. Verify route load, DONNA panel, context registry, design tokens, protected actions, demo mode, mobile smoke, and naming.
+
+**Result:** 43 PASS / 0 FAIL / 0 WARN across 8 sections.
+
+**What was verified:**
+- All 7 new routes load without error or redirect (Sprints 386–390)
+- DONNA panel: w-96 width, 4 tab chips, approval boundary copy, Review Queue button all present (Sprint 392)
+- Context registry: 6 entries confirmed, `/director` last for prefix safety (Sprint 393)
+- Design tokens: no hardcoded hex in any new screen; `label-xs` applied in StatCard (Sprint 394)
+- Protected actions: no direct DB writes in any new page component; coach recap is client-side only
+- Demo mode: banner appears with `?demo=1`, step counter correct, hidden without param (Sprint 395)
+- Mobile smoke: `/coach/recap` loads on 390px viewport with no horizontal overflow
+- Naming: no "DANA" in any sprint file
+
+**No code changes in Sprint 396.** Docs only.
+
+---
+
 ## 2026-05-15 — Sprint 395: Guided Director Demo Flow V1
 
 **Component added:** `DemoModeBanner` — global demo mode bar for all `/director/**` routes

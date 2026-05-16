@@ -31,6 +31,18 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 396 — Final Prototype Visual Match + Regression V1
+
+**Date:** 2026-05-15
+**Phases:** PLAN ✓ | BUILD ✓ (docs only) | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** 43 PASS / 0 FAIL / 0 WARN
+**Files committed:**
+- docs (7 files)
+**Commit hash:** *(pending)*
+**Issues:** None — relay complete.
+
+---
+
 ### Sprint 395 — Guided Director Demo Flow V1
 
 **Date:** 2026-05-15
@@ -260,4 +272,4 @@ This file records:
 
 ---
 
-*Last updated: Sprint 395*
+*Last updated: Sprint 396*

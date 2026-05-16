@@ -13,25 +13,20 @@ How to use:
 
 ## Active Sprint
 
-### Sprint 396 — Final Prototype Visual Match + Regression V1
+*(No active sprint — Sprint 387–396 relay complete.)*
 
-**Status:** READY — next sprint
-
-**Phase checklist:**
-- [ ] `PLAN: ✓`
-- [ ] `BUILD: ✓`
-- [ ] `QA: ✓`
-- [ ] `UIUX: ✓`
-- [ ] `DOCS: ✓`
-
-**Sprint spec:** Full regression QA pass across all routes built in Sprints 386–395. Verify DONNA naming (no "DANA"), design token compliance, protected action safety, and mobile smoke pass on coach routes. No new features. No migrations.
-
-**Migration required:** No
-**DB schema changes:** No
+**Next available:** Sprint 397
 
 ---
 
 ## Completed This Run
+
+### Sprint 396 — Final Prototype Visual Match + Regression V1 ✓
+
+**Status:** COMPLETE
+**QA:** 43 PASS / 0 FAIL / 0 WARN — relay complete
+
+---
 
 ### Sprint 395 — Guided Director Demo Flow V1 ✓
 
@@ -205,7 +200,8 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 | Sprint | Description | Commit | Date |
 |---|---|---|---|
-| 395 | Guided Director Demo Flow V1 | *(pending commit)* | 2026-05-15 |
+| 396 | Final Prototype Visual Match + Regression V1 | *(pending commit)* | 2026-05-15 |
+| 395 | Guided Director Demo Flow V1 | 2aa272a | 2026-05-15 |
 | 394 | Premium UI Consistency Pass V1 | 1526b10 | 2026-05-15 |
 | 393 | Cross-Screen DONNA Context Wiring Pass V1 | 1c4e701 | 2026-05-15 |
 | 392 | DONNA Executive Panel Upgrade V1 | dce85cd | 2026-05-15 |
@@ -223,4 +219,4 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 ---
 
-*Last updated: Sprint 395*
+*Last updated: Sprint 396*

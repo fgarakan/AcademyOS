@@ -100,6 +100,28 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 396 — Final Prototype Visual Match + Regression V1
+
+**Date:** 2026-05-15
+**QA type:** Full browser QA (Playwright) — regression only, no new features
+**TypeScript:** CLEAN
+**Script:** /tmp/donna-qa-396.js
+
+**Section A — Route load (7 routes):** 7 PASS
+**Section B — DONNA panel (w-96, tab chips, approval copy, Review Queue):** 9 PASS
+**Section C — Context registry (6 entries, /director last):** 7 PASS
+**Section D — Design tokens (no hex, label-xs):** 6 PASS
+**Section E — Protected actions (no direct DB writes, 5 files):** 5 PASS
+**Section F — Demo mode (banner, step counter, absent without param):** 3 PASS
+**Section G — Mobile smoke (390px viewport, no overflow):** 3 PASS
+**Section H — DONNA naming + TypeScript:** 2 PASS
+
+**Result: 43 PASS / 0 FAIL / 0 WARN**
+
+**Approved for commit:** Yes — relay complete, all gates passed.
+
+---
+
 ### Sprint 395 — Guided Director Demo Flow V1
 
 **Date:** 2026-05-15
@@ -393,4 +415,4 @@ When the QA Agent writes a new result, use this structure:
 
 ---
 
-*Last updated: Sprint 395*
+*Last updated: Sprint 396*

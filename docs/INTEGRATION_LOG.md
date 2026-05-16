@@ -8,6 +8,24 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-15 — Sprint 396: Final Prototype Visual Match + Regression V1
+
+**What changed:** Docs only. Full regression QA pass — no source code modified.
+
+**Verified clean:**
+- 7 routes (386–395): all load, no redirects, no crashes
+- DONNA panel (Sprint 392): w-96, 4 tab chips, approval copy, Review Queue intact
+- Context registry (Sprint 393): all 6 entries present, `/director` is last (prefix-match safe)
+- Design tokens (Sprint 394): label-xs applied, no hardcoded hex
+- Protected actions: no direct DB writes in any new screen
+- Demo mode (Sprint 395): functional, no regression
+- Mobile viewport (390px): coach recap loads clean, no overflow
+- Naming: 0 DANA occurrences across all sprint files
+
+**Sprint 387–396 relay complete.**
+
+---
+
 ## 2026-05-15 — Sprint 395: Guided Director Demo Flow V1
 
 **What changed:** New `DemoModeBanner` client component injected into the director layout via `<Suspense>`. When `?demo=1` is present in the URL, a sticky banner appears below `PreviewBanner` showing the current demo step, label, hint, and Next → navigation.
