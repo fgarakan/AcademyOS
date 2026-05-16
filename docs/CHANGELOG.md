@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 477: Coach Review Summary Before Submit V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Pre-submit review summary for coach wrap-up. Shows all collected sections (attendance, session actual, standouts, needs attention, follow-ups, parent-safe candidates) in collapsible sections before the coach submits. No official write.
+
+**Files created:**
+- `src/components/capture/WrapUpReviewSummary.tsx` — `'use client'` component. `WrapUpFullDraft` type. 5 `ReviewSection` collapsible blocks. Per-section renderers: `AttendanceSummary`, `SessionActualSummary`, `ObservationList`, `FollowUpList`. Parent-safe candidates callout. Safety summary banner. Submit button with loading state. Footer draft-only note. `onSubmit()` + `onEdit(section)` callbacks. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 476: Parent Director Follow-Up Capture V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes, no sends.
