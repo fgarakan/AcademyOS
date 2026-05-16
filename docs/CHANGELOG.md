@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 506: DONNA Cross-Module Context Ranking V1
+
+**Type:** TypeScript utility — no migration, no schema changes, no DB writes.
+
+**Goal:** Pure scoring function that ranks which DONNA insights to surface first given current session state. Input: time-of-day, pending/approved counts, player flags, group health, coach support, parent overdue, curriculum bottleneck counts. Output: ranked `DonnaContextSuggestion[]` + opening line. Signal scorers weight urgency > pending review > approved-not-applied > time-sensitive state.
+
+**Files created:**
+- `src/lib/donna/donnaContextRanking.ts` — `DonnaContextRankingInput`, `DonnaContextSuggestion`, `DonnaContextRankingResult` types. 8 signal scorers. `rankDonnaContext()` main function. `buildOpeningLine()` for DONNA's first utterance. `getSuggestionsForModule()` and `getImmediateAttentionItems()` utilities. Pure function — no DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 505: DONNA Ask Coach Wrap-Up Questions V1
 
 **Type:** TypeScript utility — no migration, no schema changes, no DB writes.
