@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 467: Template and Coach Brief Impact Preview V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Preview how a curriculum change affects session templates (block-level) and coach briefs (focus lines + recommended edits). Tabbed view — Templates | Coach Briefs. No template overwrite.
+
+**Files created:**
+- `src/components/curriculum/TemplateCoachBriefImpactPreview.tsx` — `'use client'` component. Two tabs: Templates (collapsible per-template with block-level change rows, impact level badge, recommended action, no-overwrite guard) and Coach Briefs (collapsible per-group with current/removed/added focus lines, recommended edits). 3-stat summary grid. Footer safety copy. No DB calls, no template mutations.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 466: Parent Player Curriculum Language Preview V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes, no sends.
