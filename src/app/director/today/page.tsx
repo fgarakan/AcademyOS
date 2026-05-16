@@ -11,6 +11,7 @@ import {
 import { formatDate } from '@/lib/utils'
 import { DEMO_SESSIONS, DEMO_PENDING_COUNT } from '@/lib/demo/demoData'
 import type { DemoSession } from '@/lib/demo/demoData'
+import { TodayDonnaSuggestionChip } from './TodayDonnaSuggestionChip'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -305,10 +306,10 @@ export default async function TodaysAcademyPage({
                 </div>
               </div>
               <div className="space-y-2 pt-1">
-                <DonnaSuggestionChip label="What needs my attention today?" />
-                <DonnaSuggestionChip label="Give me my daily brief." />
-                <DonnaSuggestionChip label="Log an attendance exception." />
-                <DonnaSuggestionChip label="What needs approval?" />
+                <TodayDonnaSuggestionChip label="What needs my attention today?" />
+                <TodayDonnaSuggestionChip label="Give me my daily brief." />
+                <TodayDonnaSuggestionChip label="Log an attendance exception." />
+                <TodayDonnaSuggestionChip label="What needs approval?" />
               </div>
             </CardContent>
           </Card>

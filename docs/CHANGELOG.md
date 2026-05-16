@@ -2,6 +2,49 @@
 
 ---
 
+## 2026-05-16 — Sprint 409: Director Demo Polish and DONNA Workflow Audit V1
+
+**Type:** Frontend + audit — no DB writes, no migrations, no new packages
+
+**Goal:** Wire the four DONNA suggestion chips on the Today's Academy page to actually open the DONNA panel. Previously `cursor-default` static labels; now dispatching the `donna:open` event established in Sprint 405.
+
+**Files created:**
+- `src/app/director/today/TodayDonnaSuggestionChip.tsx` — client component button that dispatches `donna:open` custom event with the chip's label as the pre-filled prompt.
+
+**Files modified:**
+- `src/app/director/today/page.tsx` — replaced static `DonnaSuggestionChip` renders with interactive `TodayDonnaSuggestionChip` component.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**DONNA COO Block Audit — Sprints 400–409:**
+
+| Sprint | Feature | Status |
+|---|---|---|
+| 400 | DONNA Summarize Player Progress (read-only) | ✓ Wired — `fetchPlayerProgressSummaryAction` |
+| 401 | DONNA Draft Coach Brief (read-only) | ✓ Wired — `fetchSessionBriefAction` |
+| 402 | DONNA Parent-Safe Update Draft (5-section structured) | ✓ Wired — `saveParentUpdateDraftAction` enhanced |
+| 403 | DONNA Review Queue Connection | ✓ Wired — "View draft in Review Queue →" CTA in success state |
+| 404 | Coach Recap to Structured Draft Hardening | ✓ Honest copy, copy button, no misleading save |
+| 405 | Session Detail → Coach Brief via donna:open | ✓ SessionCoachBriefCTA + DonnaAssistantButton event listener |
+| 406 | Level Up → Review Draft via donna:open | ✓ LevelUpDonnaCTA on each candidate card |
+| 407 | DONNA Action Safety Copy Pass | ✓ Consistent labels: Draft-only, Read-only, Review required |
+| 408 | Cross-Workflow Regression | ✓ All 12 wired tasks verified, no issues found |
+| 409 | Today Page Suggestion Chips wired | ✓ TodayDonnaSuggestionChip dispatches donna:open |
+
+**Recommended Sprint 410–419 priorities:**
+1. Sprint 410 — Human Review Prep: Demo walk-through audit (static analysis + manual test notes)
+2. Sprint 411 — Review Queue UX Hardening: Better draft card presentation in `/director/review`
+3. Sprint 412 — DONNA Draft Revision Flow: Allow re-answers in guided task before saving
+4. Sprint 413 — DONNA Missing Data Explanation: Honest "data not available" messaging per field
+5. Sprint 414–415 — DONNA Session and Player Context Awareness deepening
+6. Sprint 416 — Parent Communication Safety Pass
+7. Sprint 417 — Coach Recap UX Pass
+8. Sprint 418–419 — Final regression and roadmap audit
+
+**Safety:** No DB writes. No migrations. Custom DOM event only.
+
+---
+
 ## 2026-05-16 — Sprint 408: Cross-Workflow Regression V1
 
 **Type:** Static audit — no code changes
