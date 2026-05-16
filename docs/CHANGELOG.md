@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 474: Coach Player Observation Capture V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Structured observation entry for coach wrap-up Q3/Q4. Fields: player name, observation, skill/priority tag (13 options), next step, visibility (staff only / director review / parent-safe candidate). Multi-entry list. No profile mutation.
+
+**Files created:**
+- `src/components/capture/WrapUpPlayerObservationInput.tsx` — `'use client'` component. `PlayerObservationDraft` type (`directorReviewRequired: true`, `profileMutationApplied: false`). `ObservationEntry` sub-component with expandable extra fields. `WrapUpPlayerObservationInput` multi-entry list with add/remove. Skill tag chip grid. Visibility selector with parent-safe candidate warning. `onChange(PlayerObservationDraft[])` callback.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 473: Session Actuals Capture V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
