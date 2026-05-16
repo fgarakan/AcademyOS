@@ -126,8 +126,9 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | `DonnaAssistantButton.tsx` modularization | 9 | Sprint 384. Prop-driven orchestrator. 4 real extractions. |
 | Executive panel upgrade | 9 | Sprint 392. w-96, backdrop overlay, tab chips, approval boundary copy. |
 | Stub task honesty layer | 9 | Sprint 398. Unwired tasks show "Coming soon" badge + honest response. No silent fail. |
+| Persistent panel state | 9 | Sprint 399. DONNA stays open until director explicitly closes with X. Not a modal. |
 
-**Rating: 9** — DONNA core is pilot-ready. 4 stub task contracts are the known gap (now honestly labeled).
+**Rating: 9** — DONNA core is pilot-ready. 4 stub task contracts are the known gap (now honestly labeled). Panel persistence complete.
 
 ---
 
@@ -210,4 +211,4 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 
 ---
 
-*Last updated: Sprint 398*
+*Last updated: Sprint 399*

@@ -1805,7 +1805,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       case 'navigate':
         if (rec.action.destination) {
           router.push(rec.action.destination)
-          closePanel()
         }
         break
       case 'start_workflow':
@@ -2043,7 +2042,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     for (const { patterns, href } of NAV_COMMANDS) {
       if (patterns.some(p => lower.includes(p))) {
         router.push(href)
-        closePanel()
         return true
       }
     }
@@ -2052,7 +2050,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     if (lower.includes('go back') || lower === 'back') {
       if (pathname.startsWith('/director') && pathname !== '/director') {
         router.back()
-        closePanel()
       } else {
         setCommandResponse({
           message: 'You are already at the main director screen.',
@@ -2465,7 +2462,11 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           'focus-visible:ring-offset-2 focus-visible:ring-offset-black',
           'active:scale-95 transition-all duration-200',
         )}
-        style={{
+        style={panelOpen ? {
+          background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+          border: '1px solid rgba(139,92,246,0.7)',
+          boxShadow: '0 4px 16px rgba(139,92,246,0.6), 0 0 0 3px rgba(139,92,246,0.18)',
+        } : {
           background: 'linear-gradient(135deg, #6d28d9, #4338ca)',
           border: '1px solid rgba(139,92,246,0.35)',
         }}
@@ -2474,12 +2475,12 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
       </button>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Mobile backdrop                                                      */}
+      {/* Backdrop — visual only; DONNA is a side panel, not a modal.          */}
+      {/* pointer-events-none so page content stays interactive while open.   */}
       {/* ------------------------------------------------------------------ */}
       {panelOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-          onClick={closePanel}
+          className="fixed inset-0 z-40 bg-black/20 pointer-events-none"
           aria-hidden="true"
         />
       )}
@@ -2559,8 +2560,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           {([
             { label: 'Review Today', action: () => void handleOpenReviewQueue() },
             { label: 'Prepare Coaches', action: () => dispatchCooCommand('coach_brief') },
-            { label: 'Player Progress', action: () => { router.push('/director/level-up'); closePanel() } },
-            { label: 'Parent Updates', action: () => { router.push('/director/parents'); closePanel() } },
+            { label: 'Player Progress', action: () => { router.push('/director/level-up') } },
+            { label: 'Parent Updates', action: () => { router.push('/director/parents') } },
           ] as { label: string; action: () => void }[]).map(chip => (
             <button
               key={chip.label}
@@ -2901,7 +2902,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    onClick={closePanel}
                     className="flex items-center justify-between px-2 py-1.5 rounded-lg
                       text-[12px] text-text-secondary hover:text-text-primary hover:bg-surface-raised
                       transition-all"
@@ -3160,7 +3160,6 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                   }}
                   onNavigate={(href) => {
                     router.push(href)
-                    closePanel()
                   }}
                   onDismiss={(id) => {
                     setSuggestions(prev => prev.filter(s => s.id !== id))

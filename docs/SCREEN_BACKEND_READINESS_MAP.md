@@ -64,6 +64,7 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 | Executive panel upgrade | Sprint 392 — w-96, backdrop blur, tab chips, approval copy | 9+ |
 | Context entries for new screens | Added per-screen Sprints 386–390 | 9+ |
 | Stub honesty layer | Sprint 398 — "Coming soon" badge + honest early-return for 4 unwired tasks | 9+ |
+| Persistent panel state | Sprint 399 — stays open until X; backdrop pointer-events-none; active glow on button | 9+ |
 
 **What's missing for Level 10:**
 - 4 stub task contracts remain unwired (now honestly labeled — not silently failing)
@@ -307,4 +308,4 @@ No migrations are needed for Sprints 386–391.
 
 ---
 
-*Last updated: Sprint 396*
+*Last updated: Sprint 399*

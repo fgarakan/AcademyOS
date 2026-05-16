@@ -13,13 +13,23 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 398 complete.)*
+*(No active sprint — Sprint 399 complete.)*
 
-**Next available:** Sprint 399
+**Next available:** Sprint 400
 
 ---
 
 ## Completed This Run
+
+### Sprint 399 — Persistent DONNA Panel State V1 ✓
+
+**Status:** COMPLETE
+**QA:** 22 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files modified:** `src/components/assistant/DonnaAssistantButton.tsx`
+**Decision:** X button closes DONNA. Clicking outside / navigating does NOT close. Backdrop is `pointer-events-none` visual overlay (not a modal close target). Active glow on floating button when open.
+
+---
 
 ### Sprint 398 — Demo Data Seed and DONNA Stub Visibility V1 ✓
 

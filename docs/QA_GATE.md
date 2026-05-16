@@ -100,6 +100,36 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 399 — Persistent DONNA Panel State V1
+
+**Date:** 2026-05-16
+**QA type:** Full browser QA (Playwright)
+**TypeScript:** CLEAN
+**Script:** /tmp/donna-qa-399.js
+
+**Section A — Auth + page load + initial state:** 3 PASS
+**Section B — DONNA opens on button click:** 1 PASS
+**Section C — Clicking page content does not close DONNA:** 2 PASS
+**Section D — Typing in DONNA input does not close DONNA:** 2 PASS
+**Section E — X button closes DONNA:** 1 PASS
+**Section F — DONNA reopens after close:** 1 PASS
+**Section G — Active glow on floating button when open:** 1 PASS
+**Section H — SPA navigation: DONNA stays open (layout-level state persistence):** 1 PASS
+**Section I — Demo data regression (3 routes):** 4 PASS
+**Section J — Coming soon labels regression (Sprint 398):** 1 PASS
+**Section K — No DANA naming:** 1 PASS
+**Section L — No unprotected execution:** 1 PASS
+**Section M — No console errors:** 1 PASS
+**Section N — TypeScript:** 1 PASS
+
+**Result: 22 PASS / 0 FAIL / 0 WARN**
+
+Note: H1 SPA navigation test uses `/director/players` as the nav target. The `/director/sessions` route triggers a `NotFoundErrorBoundary` in the test environment (empty test DB — pre-existing issue, not caused by Sprint 399). For `/director/players`, navigation completes and `panelOpen` state persists correctly via layout-level component state.
+
+**Approved for commit:** Yes
+
+---
+
 ### Sprint 398 — Demo Data Seed and DONNA Stub Visibility V1
 
 **Date:** 2026-05-16

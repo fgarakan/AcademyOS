@@ -8,6 +8,28 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 399: Persistent DONNA Panel State V1
+
+**What changed:** Converted DONNA from a modal-like panel (clicking outside closes it) to a persistent executive side panel (only intentional close actions close it). Seven targeted edits to `DonnaAssistantButton.tsx`.
+
+**Integrates with:**
+- `DonnaAssistantButton.tsx` — core change: backdrop is now `pointer-events-none` (visual only, not a close target); all `closePanel()` calls on navigation/chip/link events removed
+- `DirectorLayout` — no change; DONNA persistence on SPA navigation already works because `DonnaAssistantButton` lives in the layout and never unmounts on intra-director navigation
+- All director routes (`/director/**`) — DONNA now stays open across page transitions
+
+**Decisions recorded:**
+- **Backdrop**: changed from `bg-black/40 backdrop-blur-sm onClick={closePanel}` to `bg-black/20 pointer-events-none`. This removes the modal behavior — page content is fully interactive while DONNA is open.
+- **Navigation chips**: removed `closePanel()` from `Player Progress` and `Parent Updates` quick-nav chip handlers.
+- **NAV_COMMANDS text navigation**: removed `closePanel()` from loop body and go-back handler — voice/text navigation no longer closes DONNA.
+- **Recommendation card navigate**: removed `closePanel()` from `case 'navigate'`.
+- **Quick links**: removed `onClick={closePanel}` from `<Link>` elements.
+- **Suggestion card**: `onNavigate` prop no longer calls `closePanel()`.
+- **Active glow**: floating button uses brighter gradient (`#7c3aed/#4f46e5`) + `boxShadow` when `panelOpen` is true. Restores to default when closed.
+- **Close actions**: only the X button (`aria-label="Close assistant"`) and pre-existing Escape key handler close DONNA. These are intentional close actions.
+- **SPA persistence**: `panelOpen` is `useState` in `DonnaAssistantButton`. Because the component lives in `DirectorLayout` (a shared layout), it does NOT remount on intra-director client-side navigation. State naturally persists.
+
+---
+
 ## 2026-05-16 — Sprint 398: Demo Data Seed and DONNA Stub Visibility V1
 
 **What changed:** Added a safe local static demo data layer (`src/lib/demo/demoData.ts`) for the three director screens that were showing empty states during demos. Added DONNA stub honesty: unwired task shortcuts now show a "Coming soon" badge and respond with an honest "coming soon" message instead of silently failing.

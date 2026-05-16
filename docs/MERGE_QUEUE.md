@@ -31,6 +31,20 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 399 — Persistent DONNA Panel State V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | DOCS ✓
+**QA result:** 22 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/components/assistant/DonnaAssistantButton.tsx`
+- docs (7 files)
+**Commit hash:** (pending — awaiting human "commit" instruction)
+**Issues:** None. SPA navigation persistence works via layout-level component state (DonnaAssistantButton in DirectorLayout never unmounts on intra-director navigation). The `/director/sessions` NotFoundErrorBoundary on empty test DB is a pre-existing limitation.
+
+---
+
 ### Sprint 398 — Demo Data Seed and DONNA Stub Visibility V1
 
 **Date:** 2026-05-16

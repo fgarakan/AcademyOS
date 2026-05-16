@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-16 — Sprint 399: Persistent DONNA Panel State V1
+
+**Type:** Frontend — UX behavior change (no DB, no migrations, no new packages)
+
+**Goal:** Make DONNA behave as a persistent executive operating side panel. Once opened, DONNA stays open until the director intentionally closes her. DONNA no longer behaves as a modal that closes when clicking outside.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — 7 targeted changes: (1) Backdrop changed from `onClick={closePanel}` close target to `pointer-events-none` visual-only overlay. (2) Navigation chips no longer call `closePanel()` on route push. (3) `NAV_COMMANDS` text navigation and go-back no longer call `closePanel()`. (4) Recommendation card `navigate` action no longer calls `closePanel()`. (5) Quick links `<Link>` elements no longer have `onClick={closePanel}`. (6) Suggestion card `onNavigate` no longer calls `closePanel()`. (7) Floating DONNA button shows active glow (brighter gradient + box-shadow) when panel is open.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Zero DB writes. Zero migrations. No command routing changes. No protected action behavior changes. No new packages. Layout-level component state (panelOpen) persists across SPA navigation naturally — `DonnaAssistantButton` lives in `DirectorLayout` and is never unmounted on intra-director navigation.
+
+**Sprint decision — close behavior:** X button closes DONNA. Escape key is an intentional keyboard shortcut — behavior unchanged from prior sprint (handled by existing `useEffect` on escape). Clicking outside the panel, clicking content, clicking nav links, and SPA navigation do NOT close DONNA.
+
+**Known limitation:** Navigating to `/director/sessions` from certain routes triggers a `NotFoundErrorBoundary` in the test environment (pre-existing issue — sessions page with empty test DB). This causes a momentary layout re-render that resets `panelOpen`. Does not affect production where sessions data exists.
+
+---
+
 ## 2026-05-16 — Sprint 398: Demo Data Seed and DONNA Stub Visibility V1
 
 **Type:** Frontend — local static demo data injection + DONNA stub visibility fix
