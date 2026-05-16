@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 473: Session Actuals Capture V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Capture Q2 of coach wrap-up — whether the session went as planned, with structured modification types (skipped block, added block, weather, etc.) and free-text notes. Draft only.
+
+**Files created:**
+- `src/components/capture/WrapUpSessionActualInput.tsx` — `'use client'` component. `SessionActualAnswer` type with `directorReviewRequired: true`, `officialWriteApplied: false`. 2-mode selector (as planned / modified). 9-option modification type chip grid (multi-select). Context notes textarea. `onChange(SessionActualAnswer)` callback. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 472: Attendance Exception Parser V1
 
 **Type:** TypeScript utility — no migration, no schema changes, no DB writes.
