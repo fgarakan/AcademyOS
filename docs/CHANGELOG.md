@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 466: Parent Player Curriculum Language Preview V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes, no sends.
+
+**Goal:** Preview parent-safe and player-safe language for curriculum changes across 3 audience tabs: internal/staff, parent-safe, player mission-style. Copy buttons, approval state, safety notes. No send/publish actions.
+
+**Files created:**
+- `src/components/curriculum/CurriculumLanguagePreview.tsx` — `'use client'` component. 3-tab audience switcher (Internal/Parent/Player). Each panel: audience badge, tone label, headline with copy button, body with copy button, safety note, approval state. Footer: not-sent note. `buildPlaceholderLanguagePreview()` factory helper. No DB calls, no sends.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 465: Readiness Recalculation Preview V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
