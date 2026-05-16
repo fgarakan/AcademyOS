@@ -312,7 +312,7 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
       'Review and finalise the plan for a single session — blocks, curriculum focus, coach briefing, roster intelligence, and adaptive suggestions. The pre-session command screen.',
     nextAction: 'Ask DONNA to draft a coach brief or identify what is missing before the session starts.',
     assistantIntro:
-      'I can help you draft a coach brief, summarise what is planned for this session, flag what is missing, or identify risks before the session starts. Anything I produce needs your review before it leaves this screen.',
+      'I can help you draft a coach brief, summarise what is planned for this session, flag what is missing, or identify risks before the session starts. If the session is already in progress or completed, I can also help you review what was captured. Anything I produce needs your review before it leaves this screen.',
     readableContext: [
       'session',
       'session_blocks',
@@ -439,6 +439,48 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
       'Summarize what needs attention.',
     ],
     unsafeActions: ['auto_act_on_signals', 'send_alerts_without_approval'],
+  },
+
+  // ── Coach Session Workspace ───────────────────────────────────────────────────
+  {
+    routePattern: '/coach/sessions/[sessionId]',
+    screenName: 'Session Workspace',
+    objectType: 'coach_session',
+    purpose:
+      'The coach\'s in-session command view — see the session plan, track blocks, record observations, and flag anything that needs the director\'s attention.',
+    nextAction: 'Review the session blocks or log an observation. Use the recap flow after the session ends.',
+    assistantIntro:
+      'I can help you log a player observation, structure your session notes, or remind you what was planned. Anything I capture goes to the review queue — nothing is official until the director approves.',
+    readableContext: [
+      'session_blocks',
+      'session_plan',
+      'coach_assignment',
+      'player_roster',
+      'session_status',
+      'group_assignments',
+    ],
+    safeDraftActions: [
+      'draft_coach_note',
+      'capture_player_observation',
+      'flag_attendance_exception',
+      'summarize_session_plan',
+    ],
+    approvalRequiredFor: [
+      'official_attendance_write',
+      'player_note_submission',
+      'session_status_change',
+    ],
+    suggestedPrompts: [
+      'Log a player observation.',
+      'Flag an attendance exception.',
+      'What is the session plan?',
+      'Help me structure my session notes.',
+    ],
+    unsafeActions: [
+      'auto_write_attendance',
+      'auto_update_player',
+      'change_session_status_without_approval',
+    ],
   },
 
   // ── Coach Recap ───────────────────────────────────────────────────────────────

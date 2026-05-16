@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-16 — Sprint 414: DONNA Session Context Awareness Pass V1
+
+**Type:** Registry-only — no DB writes, no migrations, no new packages, no component changes
+
+**Goal:** Add `/coach/sessions/[sessionId]` context to the DONNA page context registry (closing Gap 1.2 from the original audit). Enrich the director session context intro with session-status awareness.
+
+**Files modified:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — added coach session workspace context entry with coach-appropriate readable context, safe draft actions, prompts, and guardrails. Updated director session detail `assistantIntro` to reference in-progress and completed session states.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Registry-only change. No behavior changes. DONNA will now show "Session Workspace" context card and coach-appropriate prompts when a coach opens the DONNA panel on `/coach/sessions/[sessionId]`.
+
+---
+
 ## 2026-05-16 — Sprint 413: DONNA Missing Data Explanation V1
 
 **Type:** Backend output — no DB writes, no migrations, no new packages
