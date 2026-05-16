@@ -386,6 +386,69 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     unsafeActions: ['send_message_without_approval', 'change_level_without_approval'],
   },
 
+  // ── Players — Active List ─────────────────────────────────────────────────
+  {
+    routePattern: '/director/players/active',
+    screenName: 'Active Players',
+    objectType: 'active_player_collection',
+    purpose:
+      'View and manage all currently active players at the academy — their levels, groups, coaches, and development status.',
+    nextAction: 'Review players who need attention or navigate to a specific player profile.',
+    assistantIntro:
+      'I can help you find players needing attention, check who is missing a curriculum level, or navigate to a player. Any changes to player records require your explicit approval.',
+    readableContext: ['active_players', 'player_levels', 'group_assignments', 'coach_assignments'],
+    safeDraftActions: ['summarize_player_directory', 'flag_players_needing_attention'],
+    approvalRequiredFor: ['move_player_level', 'change_player_status'],
+    suggestedPrompts: [
+      'Which players need attention?',
+      'Who is missing a curriculum level?',
+      'Find all players in Orange track.',
+    ],
+    unsafeActions: ['auto_move_players', 'change_status_without_approval'],
+  },
+
+  // ── Players — Development Intake ─────────────────────────────────────────
+  {
+    routePattern: '/director/players/development-intake',
+    screenName: 'Development Intake',
+    objectType: 'development_intake',
+    purpose:
+      'Review players going through the development intake process — not yet active, pending assessment, or waiting for placement decision.',
+    nextAction: 'Review intake candidates and progress them toward a placement decision.',
+    assistantIntro:
+      'I can explain the intake process and help you understand what each candidate needs next. Placement decisions go through the review queue — nothing is finalized without your approval.',
+    readableContext: ['intake_candidates', 'intake_status', 'placement_queue', 'assessment_status'],
+    safeDraftActions: ['summarize_intake_status', 'explain_placement_steps'],
+    approvalRequiredFor: ['finalize_player_placement', 'reject_intake_candidate'],
+    suggestedPrompts: [
+      'Who is waiting for a placement decision?',
+      'Explain the intake process.',
+      'What does this candidate need next?',
+    ],
+    unsafeActions: ['auto_place_player', 'reject_without_review'],
+  },
+
+  // ── Players — Onboarding Review ───────────────────────────────────────────
+  {
+    routePattern: '/director/players/onboarding-review',
+    screenName: 'Onboarding Review',
+    objectType: 'onboarding_review',
+    purpose:
+      'Review new player onboarding — assessment drafts, placement recommendations, and decisions waiting for director approval.',
+    nextAction: 'Review pending placement recommendations in the review queue.',
+    assistantIntro:
+      'I can summarize where each new player is in the onboarding process and explain what decision needs to be made next. All placements require your explicit approval.',
+    readableContext: ['onboarding_candidates', 'placement_drafts', 'assessment_results', 'pending_decisions'],
+    safeDraftActions: ['summarize_onboarding_status', 'explain_placement_recommendation'],
+    approvalRequiredFor: ['finalize_placement', 'skip_assessment'],
+    suggestedPrompts: [
+      'Who is waiting for a placement decision?',
+      'Explain this placement recommendation.',
+      'What is missing before I can place this player?',
+    ],
+    unsafeActions: ['auto_place_player', 'skip_assessment_without_approval'],
+  },
+
   // ── Players List ──────────────────────────────────────────────────────────
   {
     routePattern: '/director/players',

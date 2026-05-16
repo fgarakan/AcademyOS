@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-16 — Sprint 415: DONNA Player Context Awareness Pass V1
+
+**Type:** Registry-only — no DB writes, no migrations, no new packages, no component changes
+
+**Goal:** Add DONNA context for three player sub-pages that previously fell through to the generic `/director/players` context.
+
+**Files modified:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — added context entries for `/director/players/active`, `/director/players/development-intake`, and `/director/players/onboarding-review`. Each entry has appropriate screen name, purpose, readable context, safe draft actions, suggested prompts, and unsafe action guardrails.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Registry-only change. No behavior changes to any DONNA actions.
+
+---
+
 ## 2026-05-16 — Sprint 414: DONNA Session Context Awareness Pass V1
 
 **Type:** Registry-only — no DB writes, no migrations, no new packages, no component changes
