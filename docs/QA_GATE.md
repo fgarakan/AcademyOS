@@ -100,6 +100,28 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 425 — Curriculum Coverage KPI Engine V1
+
+**Date:** 2026-05-16
+**QA type:** Engine-only — TypeScript CLEAN, static safety checks only
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- All queries academy_id scoped: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- KPI 17 stub returns `insufficient_data` with migration explanation: PASS
+- KPI 18 stub returns `insufficient_data` with Sprint 48 explanation: PASS
+- KPI 20 stub returns `insufficient_data`: PASS
+- KPI 25 denominator = attended sessions (not just any session): PASS
+- KPI 25 returns null value when no attended sessions: PASS
+- No template/session mutation: PASS
+
+**Result:** 10 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 424 — Evidence Coverage and Readiness Confidence KPI V1
 
 **Date:** 2026-05-16

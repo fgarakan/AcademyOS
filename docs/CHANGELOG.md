@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-16 — Sprint 425: Curriculum Coverage KPI Engine V1
+
+**Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.
+
+**Goal:** Build curriculum coverage KPI engine. KPIs 17, 18, 20 are blocked by infrastructure gaps and return `insufficient_data` with honest explanations. KPI 25 (Session Development Yield, `demo`) is directly computable per player and is wired into DONNA player progress summary.
+
+**Files created:**
+- `src/lib/kpi/curriculumCoverageKpiEngine.ts` — `computeCurriculumCoverageStub()` (KPI 17, insufficient_data), `computeSessionPlanCompletionStub()` (KPI 18, insufficient_data), `computeCoachPlanAlignmentStub()` (KPI 20, insufficient_data), `computeSessionYield()` (KPI 25, demo), `formatSessionYieldForDonna()`.
+
+**Files modified:**
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — Import added; Step 10 added: fetch observation session_ids for last 30 days; KPI 25 computed and wired into DONNA summary.
+
+**Key design decisions:**
+- KPIs 17/18/20 stubs are not wired into the player progress summary — they are group/session-level KPIs that belong in a future group summary action. The stubs exist so the engine is complete and ready for wiring.
+- KPI 25 (`demo`): uses attended session_ids (from Step 6 attendance data) + observation session_ids (Step 10 query). A session "has yield" if any coach_observations row exists for this player + session in the 30-day window.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 424: Evidence Coverage and Readiness Confidence KPI V1
 
 **Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.

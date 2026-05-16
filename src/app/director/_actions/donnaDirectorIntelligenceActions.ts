@@ -30,6 +30,11 @@ import {
   type GateStatusRow,
   type EvidenceCoverageInput,
 } from '@/lib/kpi/evidenceCoverageKpiEngine'
+import {
+  computeSessionYield,
+  formatSessionYieldForDonna,
+  type YieldInput,
+} from '@/lib/kpi/curriculumCoverageKpiEngine'
 
 // ---------------------------------------------------------------------------
 // Auth + academy_id helper (director/head_coach only)
@@ -971,6 +976,34 @@ export async function fetchPlayerProgressSummaryAction(
   const evidenceKpiResults = computeEvidenceCoverageKpis(evidenceInput)
   const evidenceLines = formatEvidenceCoverageForDonna(evidenceKpiResults)
 
+  // Step 10 — Session Development Yield (KPI 25, Sprint 425)
+  // Fetch observation session_ids for this player in the last 30 days to compute
+  // what fraction of attended sessions had a coach observation recorded.
+  const { data: observationSessionsRaw } = await rawDb
+    .from('coach_observations')
+    .select('session_id')
+    .eq('player_id', confirmedPlayerId)
+    .eq('academy_id', academyId)
+    .gte('created_at', thirtyDaysAgoStr)
+    .not('session_id', 'is', null)
+  const observedSessionIds: string[] = (observationSessionsRaw ?? [])
+    .map((o: any) => String(o.session_id ?? ''))
+    .filter(Boolean)
+
+  const ATTENDED_STATUSES_SET = new Set(['present', 'attended', 'late'])
+  const attendedSessionIds: string[] = playerAttendance
+    .filter(a => ATTENDED_STATUSES_SET.has(a.status.toLowerCase()))
+    .map(a => a.session_id)
+
+  const yieldInput: YieldInput = {
+    playerId: confirmedPlayerId,
+    attendedSessionIds,
+    observedSessionIds,
+    windowDays: 30,
+  }
+  const sessionYieldResult = computeSessionYield(yieldInput)
+  const sessionYieldLines = formatSessionYieldForDonna(sessionYieldResult)
+
   // Build deterministic summary — no AI, no external API
   const firstName: string =
     (playerRow?.first_name as string | null) ??
@@ -1022,6 +1055,7 @@ export async function fetchPlayerProgressSummaryAction(
     ...developmentHealthLines,
     ...velocityLines,
     ...evidenceLines,
+    ...sessionYieldLines,
     ...(dataGaps.length > 0 ? ['', 'DATA GAPS:'] : []),
     ...dataGaps.map((g: string) => `⚠ ${g}`),
   ]

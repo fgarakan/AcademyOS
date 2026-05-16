@@ -13,9 +13,9 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 424 complete.)*
+*(No active sprint — Sprint 425 complete.)*
 
-**Next available:** Sprint 425
+**Next available:** Sprint 426
 
 ---
 
@@ -226,7 +226,8 @@ Goal: Build `/director/today` — the director's "Today's Academy" morning ancho
 
 | Sprint | Description | Commit | Date |
 |---|---|---|---|
-| 424 | Evidence Coverage and Readiness Confidence KPI V1 | — | 2026-05-16 |
+| 425 | Curriculum Coverage KPI Engine V1 | — | 2026-05-16 |
+| 424 | Evidence Coverage and Readiness Confidence KPI V1 | 53cb06a | 2026-05-16 |
 | 423 | Development Velocity and Time in Level KPI V1 | bb500d6 | 2026-05-16 |
 | 422 | Player Development Health KPI V1 | 4079df8 | 2026-05-16 |
 | 421 | Attendance KPI Engine V1 | 0aa9f0d | 2026-05-16 |

@@ -8,6 +8,21 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 425: Curriculum Coverage KPI Engine V1
+
+**What changed:** Added `curriculumCoverageKpiEngine.ts`. KPIs 17, 18, 20 implemented as `insufficient_data` stubs (honest engine stubs ready for future wiring). KPI 25 (Session Development Yield) implemented as `demo` and wired into `fetchPlayerProgressSummaryAction` as Step 10.
+
+**Integrates with:**
+- `coach_observations` — Step 10 fetches observation session_ids for this player in last 30 days
+- Step 6 attendance data (`playerAttendance`) — attended session_ids derived for yield denominator
+- DONNA player progress summary — session yield line appended after evidence lines
+
+**Decisions recorded:**
+- **KPI 17/18/20 not wired into player summary**: These are group/session-level KPIs. Stubs exist in the engine for future group summary action.
+- **KPI 25 window = 30 days**: Consistent with attendance KPI window for comparability.
+
+---
+
 ## 2026-05-16 — Sprint 424: Evidence Coverage and Readiness Confidence KPI V1
 
 **What changed:** Added `evidenceCoverageKpiEngine.ts`. Step 9 added to `fetchPlayerProgressSummaryAction`: fetches `curriculum_gates` for the player's current level and `player_gate_status` for the player; computes KPI 14 (Evidence Coverage) and KPI 22 (Readiness Confidence).
