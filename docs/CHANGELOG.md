@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 464: Curriculum Override Draft Shell V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Create a read-only curriculum override draft shell for the ripple block, showing proposed change, reason, scope/risk, affected object counts, rollback note, and approval-required banner. No decision controls, no execution.
+
+**Files created:**
+- `src/components/curriculum/CurriculumOverrideDraftShell.tsx` — `'use client'` component. Accepts `CurriculumChangeDraft` + optional `CurriculumDraftAffectedSummary`. Renders: approval-required banner, proposed change, reason, affected objects grid (players/templates/gates/groups/levels), scope impact chips, rollback note with required warning, metadata, footer safety copy. Status badge (draft/pending/approved/rejected/applied). No decision controls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 463: Curriculum Impact Preview Shell V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
