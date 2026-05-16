@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 500: Group Health Review Dashboard V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
+
+**Goal:** Director dashboard panel showing per-group health indicators. Score tiers: strong/stable/at_risk/no_data. Metrics: attendance rate, wrap-up submission rate, top observation type, health trend. DONNA summary from KPI map. Sorted at-risk first. Summary count strip. Props-only — no DB calls.
+
+**Files created:**
+- `src/components/assistant/GroupHealthReviewDashboard.tsx` — `'use client'` component. `GroupHealthData` type. `SCORE_CONFIG` and `TREND_ICON` maps. `GroupHealthRow` with rate pills, trend icon, flag count. `SummaryCounts` strip (strong/stable/at_risk totals). Sorted by risk. DONNA NBA recommendation footer. Read-only note.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 499: Player Attention Risk Dashboard V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
