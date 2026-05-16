@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 485: Review Execution Adapter Architecture Audit V1
+
+**Type:** Architecture document — no code changes, no migration.
+
+**Goal:** Define the review execution adapter contract before any adapter is built. Map all 8 `ReviewItemTargetModule` types to pre-conditions, post-conditions, safety constraints, and build readiness. Establish `ApprovedActionInput` / `ExecutionResult` interface. Document the invariants (no adapter runs without `status === 'approved'` AND `director_id` set).
+
+**Files created:**
+- `docs/REVIEW_EXECUTION_ADAPTER_ARCHITECTURE.md` — Full adapter contract. 8 module specs with pre/post conditions. Build readiness table (all DEFERRED for this sprint). Sprint 486–494 build order. 6 invariants that can never be violated. `execute_approved_action()` as the only entry point.
+
+**TypeScript:** CLEAN (0 errors, no code changes)
+
+---
+
 ## 2026-05-16 — Sprint 484: Coach Wrap-Up Regression V1
 
 **Type:** Regression QA document — no code changes, no migration, no schema changes.
