@@ -8,6 +8,26 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 435: Group KPI Drilldown V1
+
+**What changed:** Added `groupKpiSummaryAction.ts`. Server action that wires the group health KPI engine (Sprint 428) with real DB queries. Computes KPI 7 (retention from group_memberships) and KPI 16 (health composite from attendance + observation coverage + signal pct). Not yet wired into any UI route.
+
+**Integrates with:**
+- `groups` table — group name fetch (academy_id scoped)
+- `group_memberships` — KPI 7 retention computation (joined_at, left_at, is_current)
+- `sessions` — group session IDs for 30-day window (group_id, academy_id scoped)
+- `session_attendance` — attendance rate computation from group sessions
+- `coach_observations` — 14-day observation coverage per current group player
+- `player_development_signals` — at-risk player count (high severity, is_active)
+- `groupHealthKpiEngine` — KPI 16 and KPI 7 pure functions
+
+**Decisions recorded:**
+- **3 of 5 inputs computed**: attendance rate, observation coverage, and no-high-severity pct are computable. recapCompletionRatePct null (gap G8) and sessionFrequencyRatio null (no scheduled session count). KPI 16 requires ≥2 inputs — this action satisfies that.
+- **totalExpected = groupSessionIds.length × currentPlayerIds.length**: proxy for "expected" attendance. Only valid when all current players are in all group sessions. Acceptable for demo tier.
+- **Action-only sprint**: no groups screen exists (per LOCKED_MODULES.md). Ready for UI wiring in a future sprint.
+
+---
+
 ## 2026-05-16 — Sprint 434: Player KPI Drilldown V1
 
 **What changed:** Added `PlayerKpiDrilldownCard` server component to player profile Overview tab. Fetches curriculum state and 30-day attendance internally. Computes KPI 13 (time in level) and KPI 3 (recent absences). Links to `/director/kpi` all-player dashboard.

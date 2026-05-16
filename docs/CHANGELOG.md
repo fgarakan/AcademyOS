@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-16 — Sprint 435: Group KPI Drilldown V1
+
+**Type:** Feature — group KPI summary server action. No UI route (no groups screen exists yet). No migrations, no package changes.
+
+**Goal:** Wire the group health KPI engine (Sprint 428) into a server action. `fetchGroupKpiSummaryAction(groupId)` fetches group data and computes KPI 7 (retention) and KPI 16 (group health composite) using real DB queries.
+
+**Files created:**
+- `src/app/director/_actions/groupKpiSummaryAction.ts` — Server action: fetches group name, group memberships (KPI 7), sessions (30d), session attendance (average attendance rate), coach observations (14d coverage), and high-severity signals (at-risk count). Computes KPI 16 with 3 available inputs (attendance, observation coverage, no-high-severity pct). Returns `GroupKpiSummaryResult`.
+
+**Key design decisions:**
+- `recapCompletionRatePct` and `sessionFrequencyRatio` passed as null — gap G8 (no recap_type) and no scheduled session count in schema. KPI 16 still computes with the 3 available inputs (≥2 required).
+- Auth check via same `getAuthorizedContext()` pattern as `donnaDirectorIntelligenceActions.ts` — director or head coach only.
+- Not wired into any UI — group screens don't exist yet. Action is ready for Sprint 435+ UI build when groups route is added.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 434: Player KPI Drilldown V1
 
 **Type:** Feature — KPI drilldown card on player profile Overview tab. No mutations. No migrations, no package changes.

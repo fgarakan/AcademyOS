@@ -13,13 +13,23 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 434 complete.)*
+*(No active sprint — Sprint 435 complete.)*
 
-**Next available:** Sprint 435
+**Next available:** Sprint 436
 
 ---
 
 ## Completed This Run
+
+### Sprint 435 — Group KPI Drilldown V1 ✓
+
+**Status:** COMPLETE
+**QA:** 9 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files created:** `src/app/director/_actions/groupKpiSummaryAction.ts`
+**Decision:** Action-only sprint. No groups UI exists yet. KPI 7 and KPI 16 computed from real DB data. recapCompletionRatePct and sessionFrequencyRatio null (schema gaps).
+
+---
 
 ### Sprint 434 — Player KPI Drilldown V1 ✓
 

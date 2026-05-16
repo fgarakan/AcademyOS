@@ -100,6 +100,27 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 435 — Group KPI Drilldown V1
+
+**Date:** 2026-05-16
+**QA type:** Action-only — TypeScript CLEAN, static safety checks
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- All queries academy_id scoped: PASS
+- group_memberships scoped by group_id + academy_id: PASS
+- Coach observations scoped by academy_id + player_ids: PASS
+- Auth check: director or head_coach only: PASS
+- No automatic level movement: PASS
+- No roster changes: PASS
+
+**Result:** 9 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 434 — Player KPI Drilldown V1
 
 **Date:** 2026-05-16

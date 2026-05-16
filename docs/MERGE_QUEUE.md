@@ -31,6 +31,18 @@ This file records:
 
 ## Committed Sprints
 
+### Sprint 435 — Group KPI Drilldown V1
+
+**Date:** 2026-05-16
+**Phases:** PLAN ✓ | BUILD ✓ | QA ✓ | UIUX ✓ | DOCS ✓
+**QA result:** Action-only — TypeScript CLEAN, 9 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files committed:**
+- `src/app/director/_actions/groupKpiSummaryAction.ts`
+- `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MERGE_QUEUE.md`, `docs/INTEGRATION_LOG.md`, `docs/QA_GATE.md`, `docs/DONNA_KPI_INTELLIGENCE_MAP.md`
+
+---
+
 ### Sprint 434 — Player KPI Drilldown V1
 
 **Date:** 2026-05-16
