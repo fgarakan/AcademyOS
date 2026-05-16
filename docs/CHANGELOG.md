@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 501: Coach Support Needed Dashboard V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
+
+**Goal:** Director dashboard panel showing coaches who may need support. Support levels: high/medium/low. Flag types: wrap-up gap, no observations, unresolved follow-ups, low attendance, no recent activity. Wrap-up rate display. Sorted needs-support first. DONNA summary from KPI map. Props-only — no DB calls.
+
+**Files created:**
+- `src/components/assistant/CoachSupportNeededDashboard.tsx` — `'use client'` component. `CoachSupportData` type. `SUPPORT_CONFIG` and `FLAG_LABELS` maps. `CoachSupportRow` with wrap-up rate, observation count, flag label, unresolved follow-up count. Summary strip (needs support / check-in counts). DONNA NBA footer. Read-only note.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 500: Group Health Review Dashboard V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
