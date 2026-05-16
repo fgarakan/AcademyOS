@@ -327,7 +327,8 @@ export async function saveParentUpdateDraftAction(
     safetyNotes: [
       'Draft only — no message has been sent.',
       "Structured in 5 sections: working on, improved, needs support, parent can do, what's next.",
-      'No raw coach notes were included.',
+      `Only public (non-private) coach observations used — ${((recentObservations as unknown[]) ?? []).length} observation(s) referenced.`,
+      'All content passed through the parent-safe sanitizer — internal jargon and raw scores excluded.',
       'No parent or player visibility was changed.',
       'Review and approve this draft in the Review Queue before any external action.',
     ],

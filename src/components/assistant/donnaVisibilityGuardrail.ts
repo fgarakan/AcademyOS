@@ -21,10 +21,12 @@ const VISIBILITY_RULES: Record<DonnaDraftType, DonnaVisibilityRules> = {
       'Change show_to_parent or show_to_student flags.',
       'Modify any player profile or development record.',
       'Notify the coach.',
+      'Expose raw or private coach observation notes — only public observations are used.',
     ],
     safetyNotes: [
       'This draft is internal only. No messaging provider exists — the parent will not receive anything from this system.',
       'Saving this draft creates a Review Queue entry only. Approving the draft status does not send the update.',
+      'All content was passed through the parent-safe sanitizer — internal jargon, private notes, and raw scores are excluded.',
     ],
   },
 

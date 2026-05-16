@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-16 — Sprint 416: DONNA Parent Communication Safety Pass V1
+
+**Type:** Safety copy pass — no DB writes, no migrations, no new packages
+
+**Goal:** Strengthen the parent communication safety guardrails. Verify private observation filtering, sanitization usage, and explicit copy about what was and was not included in the draft.
+
+**Verification findings:**
+- `saveParentUpdateDraftAction` filters `is_private = false` on coach_observations ✓
+- `sanitizeParentFacingText()` called on all 5 draft sections ✓
+- Raw assessment scores not exposed verbatim ✓
+- `createsDraftType: 'parent_update_draft'` maps to correct visibility guardrail rules ✓
+
+**Files modified:**
+- `src/components/assistant/donnaVisibilityGuardrail.ts` — added "Expose raw or private coach notes" to `parent_update_draft.willNotDo`; added sanitizer confirmation to `safetyNotes`.
+- `src/app/director/_actions/donnaDirectorIntelligenceActions.ts` — enhanced `safetyNotes` return from `saveParentUpdateDraftAction` to include observation count and explicit privacy confirmation.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** No logic changes — verification and copy improvements only.
+
+---
+
 ## 2026-05-16 — Sprint 415: DONNA Player Context Awareness Pass V1
 
 **Type:** Registry-only — no DB writes, no migrations, no new packages, no component changes
