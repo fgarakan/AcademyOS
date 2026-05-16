@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 504: DONNA Ask Academy Health Questions V1
+
+**Type:** TypeScript utility — no migration, no schema changes, no DB writes.
+
+**Goal:** DONNA question templates for academy health queries. 12 question definitions across 5 categories (player attention, group health, coach support, parent coverage, curriculum). Each has intent triggers, proactive prompt, data-available response template, no-data response template, and follow-up question IDs. `matchHealthQuestionByTrigger()` for natural language matching.
+
+**Files created:**
+- `src/lib/donna/donnaAcademyHealthQuestions.ts` — `DonnaHealthQuestion` type. 12 question entries with intent triggers. `getDonnaHealthQuestion()`, `getHealthQuestionsByCategory()`, `matchHealthQuestionByTrigger()` helpers. Pure constants — no DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 503: Curriculum Bottleneck Dashboard V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes. Read-only.
