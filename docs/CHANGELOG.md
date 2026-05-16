@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 493: Execution Guardrail Copy System V1
+
+**Type:** TypeScript utility — no migration, no schema changes, no DB writes.
+
+**Goal:** Centralized copy string module for all director review and execution guardrail messages. 7 guardrail copy sets covering parent send, level change, attendance write, observation profile, observation promote, session record, and DONNA proposal. `getGuardrailCopy(key)` lookup helper. Pure constants — no logic, no DB.
+
+**Files created:**
+- `src/lib/review/executionGuardrailCopy.ts` — `GuardrailCopySet` interface (banner, safetyFlag, safetyFlagTooltip, confirmPrompt, successNote, rejectionNote). 7 named constant sets. `GuardrailCopyKey` type. `getGuardrailCopy()` lookup. Import this in all review components for consistent safety copy.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 492: Audit Trail Surface Placeholder V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes. Read-only display only.
