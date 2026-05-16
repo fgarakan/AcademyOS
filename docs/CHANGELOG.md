@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-16 — Sprint 461: Curriculum Ripple Architecture Audit V1
+
+**Type:** Documentation only — no migration, no schema changes, no code changes, no DB writes.
+
+**Goal:** Define how curriculum changes safely ripple across requirements, player readiness, session templates, coach briefs, parent/player language, and DONNA recommendations. Establishes the architecture foundation for Sprints 462–468 (Curriculum Ripple Block).
+
+**Files created:**
+- `docs/CURRICULUM_RIPPLE_ARCHITECTURE.md` — Core ripple architecture: ripple map (6 downstream domains), scope model (7 scopes), guard conditions, and the full safe curriculum change pipeline (propose → preview → approve → apply → audit).
+- `docs/DONNA_CURRICULUM_IMPACT_MAP.md` — DONNA's curriculum impact capability map: Tier A (live), Tier B (data-limited), Tier C (deferred), intent→trigger mapping, response structure template, COO report curriculum section, safety rules.
+
+**TypeScript:** Not applicable (docs only)
+
+---
+
 ## 2026-05-16 — Sprint 460.4.1: Academy Health Breakdown Drawer V1
 
 **Type:** UI/layout/copy only — no migration, no schema changes, no DB writes.
