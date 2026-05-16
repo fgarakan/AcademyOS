@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 446: Review Queue Stale Alert Banner V1
+
+**Type:** Hardening — code change, no migration.
+
+**Goal:** Add a page-level orange alert banner when any section has pending items ≥7 days old. Stronger director nudge than per-card age indicators.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — added `AlertTriangle` to lucide-react imports; added stale alert banner showing section names and oldest ages for any stale section
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 445: Review Queue Session Recap and Voice Intake Full Status Coverage V1
 
 **Type:** Hardening — code change, no migration.
