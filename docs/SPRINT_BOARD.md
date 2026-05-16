@@ -13,15 +13,25 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 460 complete.)*
+*(No active sprint — Sprint 511 complete.)*
 
-**Next available:** Sprint 461
+**Next available:** Sprint 512
 
-**Block in progress:** Curriculum Ripple Sprints 459-467.
+**Recommended Sprint 512:** Command Brief Live Data Wiring — extend `/api/donna/brief` to return full `DonnaCommandBriefData` (players attending, wrap-up coverage per session, attention flags from coach_notes). No migration. Read-only queries. Surface on `/director/today`.
 
 ---
 
 ## Completed This Run
+
+### Sprint 511 — COO Live Data Wiring Audit V1 ✓
+
+**Status:** COMPLETE
+**QA:** Docs only — no code changes. Audit of all 14 COO surfaces. 2 new docs created. SPRINT_BOARD, CHANGELOG, MODULE_MATURITY_MAP, SCREEN_BACKEND_READINESS_MAP updated.
+**TypeScript:** Not run (docs-only sprint)
+**Files created:** `docs/COO_LIVE_DATA_WIRING_MAP.md`, `docs/DONNA_LIVE_DATA_GAPS.md`
+**Files modified:** `docs/CHANGELOG.md`, `docs/SPRINT_BOARD.md`, `docs/MODULE_MATURITY_MAP.md`, `docs/SCREEN_BACKEND_READINESS_MAP.md`
+
+---
 
 ### Sprint 460 — DONNA Advancement Status Enhancement V1 ✓
 

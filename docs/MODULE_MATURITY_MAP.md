@@ -232,6 +232,34 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 
 ---
 
+## COO Intelligence Module
+
+**Sprints 461–510 — COO Intelligence block (complete)**
+
+| Component | Level | Notes |
+|---|---|---|
+| `/api/donna/brief` (Daily Brief API) | 8 | Live — returns pending_review count, today's sessions, pending_placement. Wrap-up coverage and attention flags not yet wired. |
+| `/api/donna/attention` (Attention API) | 8 | Live — returns pending_review and pending_placement attention items. Coach concern and absence signals not yet wired. |
+| `DonnaCommandBriefIntegration.tsx` | 6 | Props-only component. Full `DonnaCommandBriefData` shape not yet populated from live API. |
+| `DonnaCOOWeeklyReport.tsx` | 4 | Props-only component. No live data loader built. Demo-only. |
+| `PlayerAttentionRiskDashboard.tsx` | 5 | Props-only component. Tables available; server action not yet built. |
+| `GroupHealthReviewDashboard.tsx` | 4 | Props-only component. No aggregation server action. Demo-only. |
+| `CoachSupportNeededDashboard.tsx` | 4 | Props-only component. No aggregation server action. Demo-only. |
+| `ParentTrustCoverageDashboard.tsx` | 3 | Props-only component. `applied_at` column unverified; no adapter. |
+| `CurriculumBottleneckDashboard.tsx` | 2 | Props-only component. Blocked by schema gap (migrations 041–044 unapplied). |
+| `donnaAcademyHealthQuestions.ts` | 8 | Question templates + intent routing complete. Data retrieval partially live. |
+| `donnaWrapUpQuestions.ts` | 7 | Question templates complete. Review queue questions live; wrap-up submission not wired. |
+| `donnaContextRanking.ts` | 7 | Ranking algorithm complete. Input struct partially populated (pending_review + approved live; others default 0). |
+| Coach Daily Wrap-Up flow | 8 | Capture UI + proposed_actions write-back live. `session_actuals` table not yet built. |
+| Curriculum Ripple (461–468) | 7 | Change scope model, diff engine, safety gates complete. No DB execution yet. |
+| `/director/donna-coo-demo` | 10 | Demo showcase route — demo-only by design. All 7 components rendered with seed data. |
+
+**Rating: 7** — COO Intelligence architecture is complete and demo-ready. Live data wiring is the next phase. Priority gaps: Command Brief (Sprint 512), Attention signals (Sprint 513), Group/Coach aggregations (Sprint 515). Curriculum Bottleneck blocked by unapplied migrations.
+
+**Sprint 511 audit reference:** `COO_LIVE_DATA_WIRING_MAP.md`, `DONNA_LIVE_DATA_GAPS.md`
+
+---
+
 ## Summary Table
 
 | Module | Level | Sprint to reach Level 10 |
@@ -244,10 +272,11 @@ Odd levels (1, 3, 5, 7, 9) indicate a module that is between two milestones.
 | DONNA / Proposed Actions | 9 | Ongoing (4 stub tasks) |
 | Communications | 7 | Sprint 389 built comms screen. External delivery still future. |
 | Attendance | 9 | No blockers — QA ongoing |
-| Signals | 8 | Sprint 387+ (session detail DONNA context) |
+| Signals | 9 | `/api/donna/brief` and `/api/donna/attention` live. Full attention signals pending Sprint 513. |
 | Coach | 9 | Sprints 450–458 complete. Observation trend and coach comparison TBD. |
+| COO Intelligence | 7 | Sprint 512–516 wiring block. Architecture complete. Data adapters are the gap. |
 | Platform | 2 | Sprint 392+ (migration required first) |
 
 ---
 
-*Last updated: Sprint 458*
+*Last updated: Sprint 511*

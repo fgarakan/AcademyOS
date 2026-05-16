@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-16 — Sprint 511: COO Live Data Wiring Audit V1
+
+**Type:** Audit documents — no code changes, no migration.
+
+**Goal:** Audit all 14 COO Intelligence surfaces (Sprints 461–510) and classify each by live-data readiness. Map which Supabase tables/views can power each surface today. Produce a prioritized gap register and recommended Sprint 512 scope.
+
+**Files created:**
+- `docs/COO_LIVE_DATA_WIRING_MAP.md` — Full per-surface audit: classification (live/partial/demo-only/blocked), required data, existing table sources, missing adapter/schema, RLS risk, recommended sprint. Includes recommended Sprint 512 scope (Command Brief Live Data Wiring).
+- `docs/DONNA_LIVE_DATA_GAPS.md` — Prioritized gap register: 17 gaps classified by type (adapter/schema/data/rls), priority tier (P1–P4), migration requirement, and target sprint.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — Sprint 511 entry
+- `docs/SPRINT_BOARD.md` — Sprint 511 marked complete; Sprint 512 set as next
+- `docs/MODULE_MATURITY_MAP.md` — COO Intelligence module added; Signals module updated
+- `docs/SCREEN_BACKEND_READINESS_MAP.md` — COO demo screen entry added; COO surfaces readiness documented
+
+**Audit findings summary:**
+- **Live:** Review Queue (`/director/review`), `/api/donna/brief` (3 core counts), `/api/donna/attention` (2 core signals)
+- **Partial (can wire now, no migration):** Daily Command Brief, Player Attention Risk, Ask Coach Wrap-Up Questions, Cross-Module Context Ranking
+- **Demo-only (blocked-adapter, no migration needed):** Weekly COO Report, Group Health Review, Coach Support Needed
+- **Partial (blocked-adapter, schema verification needed):** Parent Trust Coverage
+- **Blocked-schema (migration required):** Curriculum Bottleneck Dashboard, Session Actuals write-back
+
+**TypeScript:** CLEAN (0 errors, no code changes)
+
+---
+
 ## 2026-05-16 — Sprint 510: 50-Sprint COO Block Audit and Next Roadmap V1
 
 **Type:** Audit document — no code changes, no migration.

@@ -302,9 +302,76 @@ Cross-reference: `MODULE_MATURITY_MAP.md` for per-module ratings, `DONNA_SCREEN_
 | Feature | Migration needed | Sprint |
 |---|---|---|
 | `platform_roles` table formalization | Add to schema, generate types | Before Sprint 392 |
+| `session_actuals` table | New table + RLS required | Before normalized wrap-up write-back |
+| `curriculum_requirements` (migrations 041–044) | Chain of 4 migrations unapplied | Before Curriculum Bottleneck Dashboard |
+| `coach_notes.skill_tag` column | Verify column exists; add if missing | Before Curriculum Bottleneck |
 | Any new table without RLS | Always blocked — must add RLS policy | N/A |
 
-No migrations are needed for Sprints 386–391.
+No migrations are needed for Sprints 512–513 (Command Brief + Attention signals — all adapter-only).
+
+---
+
+## Screen 9 — DONNA COO Demo
+
+**Route:** `/director/donna-coo-demo` *(built Sprint 509)*
+**Overall readiness: Level 4** (demo-only by design — this is the showcase route)
+
+| Dimension | Status | Level |
+|---|---|---|
+| Route exists | YES — built Sprint 509 | 4+ |
+| Demo data displayed | YES — all 7 COO components with seed data | 4+ |
+| Demo banner | YES — `DEMO_SEED_MARKER` displayed | 4+ |
+| No DB reads | CONFIRMED — zero Supabase calls from this page | — |
+| No DB writes | CONFIRMED | — |
+| DONNA context registered | NO | — |
+| Live data loader | NO — all from `donnaDemoSeed.ts` | — |
+
+**Design intent:** This route is intentionally demo-only. It is the walkthrough showcase for all 7 COO Intelligence dashboard components. It will remain demo-only until individual live loaders are built and a live director route is chosen to surface them.
+
+**What's missing for live production surface:**
+- Individual server actions / API routes per dashboard (Sprints 512–516)
+- Integration into `/director/today` or a new `/director/academy-health` route
+- DONNA context entry for the live route
+
+**Migration required:** No (for demo route — live integration may need schema verification per surface)
+**Sprint history:** Sprint 509 (demo page) | Sprint 511 audit (classified as demo-only by design)
+
+---
+
+## COO Intelligence API Routes
+
+**Added Sprint 511 audit classification**
+
+| Route | Classification | Tables queried | Notes |
+|---|---|---|---|
+| `GET /api/donna/brief` | Partial | `proposed_actions`, `sessions`, `players` | 3 core counts live. Wrap-up coverage and attention flags not yet wired. Extend in Sprint 512. |
+| `GET /api/donna/attention` | Partial | `proposed_actions`, `players` | 2 core signals live. Coach concerns and absence signals not yet wired. Extend in Sprint 513. |
+| `/api/donna/tts` | Stable | None — TTS only | Browser SpeechSynthesis proxy. No DB interaction. |
+
+---
+
+## Sprint Order Summary (updated Sprint 511)
+
+| Sprint | Screen(s) | Route(s) | Readiness change | Migration? |
+|---|---|---|---|---|
+| 386 | Today's Academy | `/director/today` | Level 3 → Level 8 ✓ | No |
+| 387 | Sessions Detail DONNA | `/director/sessions/[sessionId]` | Level 6 → Level 8 ✓ | No |
+| 388 | Level Up Review | `/director/level-up` | Level 3 → Level 8 ✓ | No |
+| 389 | Parent Comms Center | `/director/parents` | Level 3 → Level 8 ✓ | No |
+| 390 | Coach Recap Shell | `/coach/recap` | Level 0 → Level 4+ ✓ | No |
+| 391 | Command Center Refresh | `/director/command-center` | Level 8 → Level 9 | No |
+| 392+ | Platform Portal | `/platform/academies` | Level 2 → Level 6 | YES |
+| 509 | DONNA COO Demo | `/director/donna-coo-demo` | Level 0 → Level 4 (demo-only) ✓ | No |
+| 512 | Command Brief Live Wiring | `/api/donna/brief` + `/director/today` | Level 6 → Level 8 | No |
+| 513 | Attention Signals + Player Risk | `/api/donna/attention` + new action | Level 6 → Level 8 | No |
+| 514 | COO Weekly Report Loader | `/api/donna/coo-report` (new) | Level 4 → Level 7 | Verify schema |
+| 515 | Group Health + Coach Support | new server actions | Level 4 → Level 7 | No |
+| 516 | Parent Trust Coverage (partial) | new server action | Level 3 → Level 6 | Verify schema |
+
+**Rationale (Sprints 512–516):**
+- All are read-only query sprints — no migrations, no schema changes for 512/513/515.
+- Sprint 514 and 516 require schema verification before build (see `DONNA_LIVE_DATA_GAPS.md` Gaps 2.1, 2.2).
+- Curriculum Bottleneck Dashboard (Surface 9) is blocked until migrations 041–044 are applied — not in 512–516 sequence.
 
 ---
 
