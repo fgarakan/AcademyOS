@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 480: Voice Dictation Input UX V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes, no package installs.
+
+**Goal:** Voice-dictation-ready textarea for coach wrap-up. Browser SpeechRecognition where available. Mic button toggles listening state, appends transcript to textarea. Text fallback and device dictation fallback always present. No package installs.
+
+**Files created:**
+- `src/components/capture/WrapUpVoiceInput.tsx` — `'use client'` component. Browser `SpeechRecognition`/`webkitSpeechRecognition` detection (no package). Interim text display during listening. `isListening` pulse animation. Voice error handling (not-allowed, no-speech). Keyboard / voice mode toggle. Device dictation fallback note for unsupported browsers. `onChange(text)` callback fills parent textarea. No external API calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 479: Coach Mobile Wrap-Up UX V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
