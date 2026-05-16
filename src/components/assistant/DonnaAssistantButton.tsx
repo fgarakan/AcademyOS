@@ -267,6 +267,8 @@ interface ModeConfig {
   label: string
   desc: string
   Icon: React.ElementType
+  category: 'Suggestion' | 'Opportunity' | 'Reminder' | 'Navigation'
+  safeStatus: string
 }
 
 const MODES: ModeConfig[] = [
@@ -275,30 +277,40 @@ const MODES: ModeConfig[] = [
     label: 'Create Template',
     desc: 'Draft a class template with Donna. Nothing saves until you approve.',
     Icon: Layers,
+    category: 'Suggestion',
+    safeStatus: 'Saves only after your review',
   },
   {
     mode: 'guide',
     label: 'Guide me',
     desc: 'See the suggested next step for this page.',
     Icon: Compass,
+    category: 'Suggestion',
+    safeStatus: 'Read-only — no changes made',
   },
   {
     mode: 'find',
     label: 'Find something',
     desc: 'Jump to players, sessions, curriculum, or review items.',
     Icon: Search,
+    category: 'Navigation',
+    safeStatus: 'Navigation only — no edits',
   },
   {
     mode: 'capture',
     label: 'Capture a note',
     desc: 'Save a player observation or capture a director thought.',
     Icon: PenLine,
+    category: 'Reminder',
+    safeStatus: 'Goes to draft — not saved automatically',
   },
   {
     mode: 'explain',
     label: 'Explain this screen',
     desc: 'Understand what this page is for.',
     Icon: BookOpen,
+    category: 'Opportunity',
+    safeStatus: 'Informational only',
   },
 ]
 
@@ -2556,10 +2568,20 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           style={{ borderBottom: '1px solid var(--border-subtle)' }}
         >
           <div>
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: '#8b5cf6' }} />
+            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', boxShadow: '0 0 8px rgba(139,92,246,0.2)' }}
+              >
+                <Sparkles className="w-3.5 h-3.5" style={{ color: '#8b5cf6' }} />
+              </div>
               <h2 className="text-sm font-semibold text-text-primary">{DONNA_PUBLIC_NAME}</h2>
-              <span className="text-[10px] text-text-muted font-normal">{DONNA_PUBLIC_TITLE}</span>
+              <span
+                className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                style={{ background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.25)', color: '#2dd4bf' }}
+              >
+                Review-first
+              </span>
               {isVoiceListening && (
                 <span
                   className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold animate-pulse"
@@ -2577,7 +2599,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-text-muted leading-snug">
+            <p className="text-[10px] text-text-muted leading-snug mt-0.5">
+              {DONNA_PUBLIC_TITLE}
+            </p>
+            <p className="text-[11px] text-text-secondary leading-snug mt-0.5">
               {DONNA_ACTIVATION_HELP}
             </p>
             {/* Sprint 373 — Review queue badge */}
@@ -2593,10 +2618,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
           <button
             onClick={closePanel}
             aria-label="Close assistant"
-            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ml-2 mt-0.5
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ml-2 mt-0.5
               text-text-muted hover:text-text-primary hover:bg-surface-raised transition-all"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -2610,6 +2635,18 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
             { label: 'Prepare Coaches', action: () => dispatchCooCommand('coach_brief') },
             { label: 'Player Progress', action: () => { router.push('/director/level-up') } },
             { label: 'Parent Updates', action: () => { router.push('/director/parents') } },
+            {
+              label: 'Ask Anything',
+              action: () => {
+                setActiveMode(null)
+                setCommandResponse(null)
+                setTimeout(() => {
+                  const el = document.querySelector<HTMLTextAreaElement>('[data-donna-input]')
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  el?.focus()
+                }, 50)
+              },
+            },
           ] as { label: string; action: () => void }[]).map(chip => (
             <button
               key={chip.label}
@@ -3293,7 +3330,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               </div>
             </button>
 
-            {MODES.map(({ mode, label, desc, Icon }) => (
+            {MODES.map(({ mode, label, desc, Icon, category, safeStatus }) => (
               <button
                 key={mode}
                 onClick={() => handleModeClick(mode)}
@@ -3319,9 +3356,18 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
                       activeMode === mode ? 'text-violet-400' : 'text-text-muted',
                     )}
                   />
-                  <div>
-                    <p className="text-[12px] font-semibold leading-tight">{label}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-[12px] font-semibold leading-tight">{label}</p>
+                      <span
+                        className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                        style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.18)', color: '#a78bfa' }}
+                      >
+                        {category}
+                      </span>
+                    </div>
                     <p className="text-[11px] text-text-muted leading-snug mt-0.5">{desc}</p>
+                    <p className="text-[10px] leading-snug mt-1" style={{ color: '#2dd4bf' }}>{safeStatus}</p>
                   </div>
                 </div>
               </button>

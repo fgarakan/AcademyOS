@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-16 — Sprint 460.5: DONNA Side Panel UX Clarity Pass V1
+
+**Type:** UI/layout/copy only — no migration, no schema changes, no DB writes.
+
+**Goal:** Improve DONNA side panel clarity: updated title/label/help copy to emphasize review-first posture, premium header with avatar glow and "Review-first" teal chip, larger close button, 5th "Ask Anything" tab chip (resets state + focuses input), ModeConfig extended with `category` and `safeStatus` fields shown per mode button, input placeholder updated to "Ask DONNA what needs attention…", safety copy line added below Send button, suggestion chips reordered to put attention/review items first.
+
+**Files modified:**
+- `src/components/assistant/donnaAssistantCopy.ts` — updated DONNA_PUBLIC_TITLE, DONNA_FULL_LABEL, DONNA_ACTIVATION_HELP
+- `src/components/assistant/DonnaAssistantButton.tsx` — header glow + Review-first chip, larger close button, Ask Anything 5th tab chip, ModeConfig category+safeStatus fields, mode button rendering updated
+- `src/components/assistant/DonnaVoiceLayer.tsx` — placeholder, data-donna-input attr, safety copy, reordered chips
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 460.4: Command Center Prototype UI Alignment V1
 
 **Type:** UI/layout only — no migration, no schema changes, no DB writes.

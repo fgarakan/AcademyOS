@@ -267,7 +267,7 @@ export function DonnaVoiceLayer({
         <div className="mt-3 space-y-2">
           <textarea
             rows={2}
-            placeholder='Ask Donna — e.g. "Create a class template for Orange 2."'
+            placeholder="Ask DONNA what needs attention…"
             value={typedText}
             onChange={e => onTypedTextChange(e.target.value)}
             onKeyDown={e => {
@@ -276,19 +276,25 @@ export function DonnaVoiceLayer({
                 onCommandSubmit()
               }
             }}
+            data-donna-input
             className="w-full rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
             style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',
             }}
           />
-          <button
-            onClick={() => onCommandSubmit()}
-            disabled={!typedText.trim()}
-            className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
-          >
-            Send
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => onCommandSubmit()}
+              disabled={!typedText.trim()}
+              className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
+            >
+              Send
+            </button>
+            <p className="text-[10px] text-text-muted leading-snug">
+              Nothing executes without your review.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -306,10 +312,10 @@ export function DonnaVoiceLayer({
           </p>
           <div className="flex flex-wrap gap-1.5">
             {[
-              'Create class template',
               'What needs attention today?',
-              'Help me with Academy Setup',
               'Draft a parent update',
+              'Create class template',
+              'Help me with Academy Setup',
             ].map(chip => (
               <button
                 key={chip}
