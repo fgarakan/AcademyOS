@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-16 — Sprint 410: Human Review Prep + Manual Demo Audit V1
+
+**Type:** Frontend polish — no DB writes, no migrations, no new packages
+
+**Goal:** Wire all remaining static "Ask DONNA" pill chips across director screens. Remove dead `DonnaSuggestionChip` function from Today page. All director screens now have interactive DONNA chips dispatching `donna:open`.
+
+**Files created:**
+- `src/components/assistant/DonnaOpenChip.tsx` — shared pill-style client component dispatching `donna:open` custom event; used by Level Up, Parents, and Session Detail pages.
+
+**Files modified:**
+- `src/app/director/today/page.tsx` — removed dead `DonnaSuggestionChip` function (replaced by `TodayDonnaSuggestionChip` in Sprint 409).
+- `src/app/director/level-up/page.tsx` — replaced static `<span>` chips with `DonnaOpenChip`.
+- `src/app/director/parents/page.tsx` — replaced static `<span>` chips with `DonnaOpenChip`.
+- `src/app/director/sessions/[sessionId]/page.tsx` — replaced static `<span>` chips with `DonnaOpenChip`.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** No DB writes. No migrations. Custom DOM event only. Every chip pre-fills the DONNA input — director must still explicitly send before any action is considered.
+
+**Demo readiness status after Sprint 410:**
+- Today's Academy → all 4 chips wired ✓
+- Level Up Review → all 4 chips wired ✓
+- Parent Communications → all 4 chips wired ✓
+- Session Detail → all 4 chips wired ✓
+- Session Detail → "Draft Coach Brief with DONNA" CTA ✓
+- Level Up → "Review" CTA on each candidate card ✓
+
+---
+
 ## 2026-05-16 — Sprint 409: Director Demo Polish and DONNA Workflow Audit V1
 
 **Type:** Frontend + audit — no DB writes, no migrations, no new packages

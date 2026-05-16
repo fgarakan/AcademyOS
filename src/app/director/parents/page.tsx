@@ -4,6 +4,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { DEMO_PARENT_UPDATES } from '@/lib/demo/demoData'
+import { DonnaOpenChip } from '@/components/assistant/DonnaOpenChip'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -255,12 +256,7 @@ export default async function ParentCommunicationCenterPage({
             'Show pending parent drafts.',
             'What updates are waiting for approval?',
           ].map((prompt) => (
-            <span
-              key={prompt}
-              className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] text-text-secondary bg-surface-raised border border-border cursor-default select-none"
-            >
-              {prompt}
-            </span>
+            <DonnaOpenChip key={prompt} prompt={prompt} />
           ))}
         </div>
       </div>

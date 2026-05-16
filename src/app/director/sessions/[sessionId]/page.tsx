@@ -26,6 +26,7 @@ import { PlannedVsActualDiffPanel } from './PlannedVsActualDiffPanel'
 import { SessionExposureSummaryPanel } from './SessionExposureSummaryPanel'
 import { DirectorSessionStatusCTA } from './DirectorSessionStatusCTA'
 import { SessionCoachBriefCTA } from './SessionCoachBriefCTA'
+import { DonnaOpenChip } from '@/components/assistant/DonnaOpenChip'
 import { SessionBlockCurriculumContent } from './SessionBlockCurriculumContent'
 import type { CurriculumItem } from './SessionBlockCurriculumContent'
 import { SessionActualDisplay } from './SessionActualDisplay'
@@ -697,12 +698,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
             'Summarise this session for the coach.',
             'What should I review before this session?',
           ].map((prompt) => (
-            <span
-              key={prompt}
-              className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] text-text-secondary bg-surface-raised border border-border cursor-default select-none"
-            >
-              {prompt}
-            </span>
+            <DonnaOpenChip key={prompt} prompt={prompt} />
           ))}
         </div>
       </div>

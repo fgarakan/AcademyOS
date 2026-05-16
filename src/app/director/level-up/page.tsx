@@ -5,6 +5,7 @@ import { Card, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { DEMO_PIPELINE_ROWS } from '@/lib/demo/demoData'
 import { LevelUpDonnaCTA } from './LevelUpDonnaCTA'
+import { DonnaOpenChip } from '@/components/assistant/DonnaOpenChip'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -237,12 +238,7 @@ export default async function LevelUpPage({
             "Summarize this player's readiness.",
             'Who is overdue for assessment?',
           ].map((prompt) => (
-            <span
-              key={prompt}
-              className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] text-text-secondary bg-surface-raised border border-border cursor-default select-none"
-            >
-              {prompt}
-            </span>
+            <DonnaOpenChip key={prompt} prompt={prompt} />
           ))}
         </div>
       </div>

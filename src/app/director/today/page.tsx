@@ -471,15 +471,6 @@ function SessionRow({ session }: { session: SessionWithMeta }) {
   )
 }
 
-function DonnaSuggestionChip({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border hover:border-lime/30 transition-colors cursor-default">
-      <span className="w-1.5 h-1.5 rounded-full bg-lime shrink-0" />
-      <p className="text-xs text-text-secondary">{label}</p>
-    </div>
-  )
-}
-
 type RiskSeverity = 'high' | 'medium' | 'low'
 
 const RISK_STYLES: Record<RiskSeverity, string> = {
