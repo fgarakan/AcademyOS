@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-16 — Sprint 406: Level Readiness to Review Draft Flow V1
+
+**Type:** Frontend — no DB writes, no migrations, no new packages
+
+**Goal:** Add a "Review" CTA on every player readiness card in the Level Up page. Clicking it opens the DONNA panel pre-filled with the player's name, current track, and urgency context — ready for the director to initiate a `review_level_readiness` task. Uses the `donna:open` custom DOM event established in Sprint 405.
+
+**Files created:**
+- `src/app/director/level-up/LevelUpDonnaCTA.tsx` — client component button that builds a player-context prompt and dispatches `donna:open` custom event.
+
+**Files modified:**
+- `src/app/director/level-up/page.tsx` — imported `LevelUpDonnaCTA` and rendered it in `PlayerReadinessCard` alongside the existing "View" link.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+**Safety:** Zero DB writes. Zero migrations. No level movement. No player record mutation. No parent notification. DONNA still asks follow-up questions (current level, next level) per the existing `review_level_readiness` contract — approval required before any proposed action is executed.
+
+---
+
 ## 2026-05-16 — Sprint 405: Session Detail to Coach Brief Review Flow V1
 
 **Type:** Frontend — no DB writes, no migrations, no new packages

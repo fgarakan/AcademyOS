@@ -4,6 +4,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { DEMO_PIPELINE_ROWS } from '@/lib/demo/demoData'
+import { LevelUpDonnaCTA } from './LevelUpDonnaCTA'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -95,6 +96,13 @@ function PlayerReadinessCard({ row }: { row: PipelineRow }) {
             </p>
             <p className="text-[9px] uppercase tracking-widest text-text-muted">score</p>
           </div>
+        )}
+        {row.player_id && row.full_name && (
+          <LevelUpDonnaCTA
+            playerName={row.full_name}
+            currentTrack={row.current_track}
+            urgency={row.urgency}
+          />
         )}
         {row.player_id && (
           <Link
