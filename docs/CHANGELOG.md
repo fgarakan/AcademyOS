@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 471: Coach Wrap-Up Attendance First V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes.
+
+**Goal:** Structured attendance input for Q1 of the coach wrap-up. Four quick-select states (everyone / absences / unexpected player / unsure) with name list inputs, "also both" checkbox, optional free text, and draft-only safety note.
+
+**Files created:**
+- `src/components/capture/WrapUpAttendanceInput.tsx` — `'use client'` component. `AttendanceAnswer` type with everyonePresent, absences, unrostered, unsure, freeText. 2×2 quick-select grid with lime/orange/blue/neutral accents. `NameListInput` sub-component (add by name, remove chip). Absence + unrostered both-mode checkbox. `onChange(AttendanceAnswer)` callback. No DB calls.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 470: Coach Wrap-Up Guided Question Flow V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes.
