@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-16 — Sprint 487: Level Readiness Approval State V1
+
+**Type:** UI component — no migration, no schema changes, no DB writes, no level changes.
+
+**Goal:** Director-facing card showing a player level advancement proposal. `levelChangeApplied: false` always visible. `directorReviewRequired: true` enforced. Level change preview (current → proposed) with supporting evidence. 5-state status system. Approve/Reject/Defer callbacks only — no DB writes.
+
+**Files created:**
+- `src/components/review/LevelReadinessApprovalCard.tsx` — `'use client'` card. `LevelReadinessDraft` type with `levelChangeApplied: false`, `directorReviewRequired: true` literals. 5-state `StatusConfig` (proposed/pending_director_review/approved/rejected/deferred). Level change preview with current→proposed layout. Evidence bullet list. Director review required banner. Safety footer showing `levelChangeApplied: false`. Approve/Reject/Defer callbacks. Approved/rejected/deferred state notes.
+
+**TypeScript:** CLEAN (0 errors)
+
+---
+
 ## 2026-05-16 — Sprint 486: Parent Draft Approval State V1
 
 **Type:** UI component — no migration, no schema changes, no DB writes, no sends.
