@@ -13,13 +13,23 @@ How to use:
 
 ## Active Sprint
 
-*(No active sprint — Sprint 429 complete.)*
+*(No active sprint — Sprint 430 complete.)*
 
-**Next available:** Sprint 430
+**Next available:** Sprint 431
 
 ---
 
 ## Completed This Run
+
+### Sprint 430 — Makeup and Private Lesson Conversion KPI V1 ✓
+
+**Status:** COMPLETE
+**QA:** 7 PASS / 0 FAIL / 0 WARN
+**TypeScript:** CLEAN
+**Files created:** `src/lib/kpi/privateLessonKpiEngine.ts`
+**Decision:** KPI 11 and makeup signal both `insufficient_data`. Engine ready for future wiring when schema gaps G2 and session_type are resolved.
+
+---
 
 ### Sprint 429 — Retention and Dropout KPI Engine V1 ✓
 

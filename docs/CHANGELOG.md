@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-16 — Sprint 430: Makeup and Private Lesson Conversion KPI V1
+
+**Type:** Feature — new KPI engine (stubs only). No server action wiring. No migrations, no package changes, no DB writes.
+
+**Goal:** Build private lesson conversion and makeup session KPI engine. KPI 11 (Private Lesson Conversion) is `insufficient_data` — no FK from `private_lesson_requests` to `session_attendance` (data model gap G2). Makeup session signal is also `insufficient_data` — `session_attendance` has no `session_type` or `makeup_flag` column.
+
+**Files created:**
+- `src/lib/kpi/privateLessonKpiEngine.ts` — `computePrivateLessonConversionStub()` (KPI 11, insufficient_data), `computeMakeupSessionStub()` (insufficient_data), `formatPrivateLessonForDonna()` (always returns `[]`).
+
+**Key design decisions:**
+- Both signals are `insufficient_data` — nothing useful to wire into DONNA player summary. Engine created and ready for future wiring when schema gaps are resolved.
+- `formatPrivateLessonForDonna()` always returns `[]` so a future wiring attempt silently no-ops unless the status changes.
+- Gap G2 documented in stubs: `private_lesson_requests.triggered_by_session_id` FK missing. Stop and confirm with Farshad before adding migration.
+
+**TypeScript:** CLEAN — `npx tsc --noEmit` exits 0.
+
+---
+
 ## 2026-05-16 — Sprint 429: Retention and Dropout KPI Engine V1
 
 **Type:** Feature — new KPI engine + server action wiring. No migrations, no package changes, no DB writes.

@@ -8,6 +8,21 @@ Each entry records: what changed, what it integrates with, and any decisions mad
 
 ---
 
+## 2026-05-16 — Sprint 430: Makeup and Private Lesson Conversion KPI V1
+
+**What changed:** Added `privateLessonKpiEngine.ts`. KPI 11 (Private Lesson Conversion) and makeup session signal both implemented as `insufficient_data` stubs. Not wired into any server action — nothing computable to surface.
+
+**Integrates with:**
+- `private_lesson_requests` (future) — KPI 11 needs `triggered_by_session_id` FK to session_attendance (gap G2)
+- `session_attendance` (future) — makeup signal needs `session_type` or `makeup_flag` column
+
+**Decisions recorded:**
+- **KPI 11 gap G2**: `private_lesson_requests.triggered_by_session_id` does not exist. Stop and confirm with Farshad before adding this migration.
+- **Makeup session schema gap**: `session_attendance` has no way to distinguish a makeup from a regular session in another group. A `session_type` or `makeup_flag` column is needed.
+- **No wiring into player summary**: Both stubs return `insufficient_data`. `formatPrivateLessonForDonna()` always returns `[]` — wiring would be silent no-op. Reserved for future sprint when gaps are resolved.
+
+---
+
 ## 2026-05-16 — Sprint 429: Retention and Dropout KPI Engine V1
 
 **What changed:** Added `retentionKpiEngine.ts`. KPI 8 stub (insufficient_data — no `deactivated_at`). Per-player dropout risk signal (partial) computed from development health score and missed-session streak. Step 1 select updated to include `is_active`. Step 13 added: dropout risk computed and appended to DONNA player progress summary.

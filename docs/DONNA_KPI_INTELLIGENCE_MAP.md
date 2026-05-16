@@ -159,6 +159,7 @@ When a director asks DONNA a question, these KPIs are triggered:
 
 | Sprint | Change |
 |---|---|
+| 430 | Private Lesson Conversion KPI Engine built — KPI 11 stub (insufficient_data, gap G2 — no triggered_by_session_id FK) and makeup session stub (insufficient_data — no session_type column). Not wired — both insufficient_data. |
 | 429 | Retention KPI Engine built — KPI 8 stub (insufficient_data, gap G1 — no deactivated_at). Per-player dropout risk signal (partial) built and wired into DONNA player summary. |
 | 428 | Group Health KPI Engine built — KPI 16 (demo, composite) and KPI 7 (demo, retention) implemented. Not wired yet — awaiting group summary action (Sprint 435+). |
 | 427 | Parent Trust KPI Engine built — KPI 21 (partial, draft coverage) wired into DONNA summary. KPIs 5/6 implemented as `insufficient_data` stubs (no send/response infrastructure). |

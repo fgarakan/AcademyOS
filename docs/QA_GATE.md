@@ -100,6 +100,25 @@ Every sprint with UI changes should cover:
 
 ---
 
+### Sprint 430 — Makeup and Private Lesson Conversion KPI V1
+
+**Date:** 2026-05-16
+**QA type:** Engine-only (no server action wiring) — TypeScript CLEAN, static safety checks only
+**TypeScript:** CLEAN
+
+**Static safety checks:**
+- No DB writes: PASS
+- No DANA references: PASS
+- No migrations: PASS
+- KPI 11 stub returns `insufficient_data` (no triggered_by_session_id FK — gap G2): PASS
+- Makeup stub returns `insufficient_data` (no session_type/makeup_flag column): PASS
+- `formatPrivateLessonForDonna` always returns `[]`: PASS
+- No roster changes: PASS
+
+**Result:** 7 PASS / 0 FAIL / 0 WARN
+
+---
+
 ### Sprint 429 — Retention and Dropout KPI Engine V1
 
 **Date:** 2026-05-16
