@@ -1195,7 +1195,7 @@ export default async function DirectorReviewQueuePage({
   const wrapUpCoverage = await loadWrapUpReviewSurface(supabase, academyId)
 
   return (
-    <div className="animate-fade-in p-6 space-y-6">
+    <div className="animate-fade-in p-6 space-y-6 max-w-5xl">
 
       {/* Back link */}
       <Link
@@ -1208,7 +1208,7 @@ export default async function DirectorReviewQueuePage({
 
       {/* Page header */}
       <div className="space-y-1">
-        <p className="page-eyebrow">Review Queue</p>
+        <p className="page-eyebrow">Operations</p>
         <h1 className="page-title">Review Queue</h1>
         <p className="page-subtitle">
           Coach notes, attendance exceptions, placement decisions, and system suggestions wait here until you review them.

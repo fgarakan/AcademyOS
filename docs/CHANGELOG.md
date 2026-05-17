@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 684: Review Queue Premium Polish V1
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — Two targeted polish changes:
+  1. Root container: added `max-w-5xl` for consistent content-width constraint across all director linear-layout pages
+  2. Page eyebrow: "Review Queue" → "Operations" (was redundant with the h1 title; "Operations" follows the established pattern used by private-lessons and signals pages)
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 683: Coach Wrap-Up Mobile Polish V1
 
 **Files modified:**
