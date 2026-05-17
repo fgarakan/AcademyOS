@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 531: Coach Wrap-Up Review Queue Context V1
+
+**Files created:**
+- `src/lib/coach/wrapUpReviewQueueLoader.ts` — `loadCoachReviewQueue(db, coachUserId, academyId)` returns the coach's own pending/approved proposed_actions (last 7 days). Gives coaches visibility into what they've submitted. Returns `pendingItems[]` and `approvedItems[]` with action label, module, status, and session linkage.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 530: Coach Wrap-Up Player Name Match V1
 
 **Files created:**
