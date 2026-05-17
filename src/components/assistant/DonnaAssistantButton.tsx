@@ -191,6 +191,12 @@ import { fetchRecentSessionsAction } from '@/app/director/_actions/donnaAttendan
 import { DonnaDeveloperTools } from '@/components/assistant/DonnaDeveloperTools'
 import { DonnaVoiceLayer } from '@/components/assistant/DonnaVoiceLayer'
 import { DonnaWorkflowCards } from '@/components/assistant/DonnaWorkflowCards'
+// Sprint 647 — First Daily Welcome
+import {
+  getDailyGreetingState,
+  markGreetedToday,
+  type DailyGreetingState,
+} from '@/lib/donna/donnaDailyGreeting'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -349,6 +355,8 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
   // Spoken greeting — fires once on first intentional panel open, never again in this session
   const hasGreetedRef = useRef(false)
   const [showGreeting, setShowGreeting] = useState(false)
+  // Sprint 647 — daily greeting state (localStorage-backed, once per day)
+  const [dailyGreetingState, setDailyGreetingState] = useState<DailyGreetingState | null>(null)
   const firstName = directorName ? directorName.split(' ')[0] : null
   const greetingText = firstName
     ? `Hi ${firstName}, how can I help you today?`
@@ -764,6 +772,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setTemplateDraft(null)
     setGenericDraft(null)
     setFromVoiceCapture(false)
+    setDailyGreetingState(null)
     setTemplateCommandInput('')
     setCommandResponse(null)
     setContextSummary(null)
@@ -886,6 +895,7 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
     setAttendanceExceptionDraft(null)
     setAttendanceSessionOptions([])
     setAttendanceQueueResult(null)
+    setDailyGreetingState(null)
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -2473,6 +2483,19 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               // "Play Donna voice" button for a clean gesture-backed speak().
               setOnboardingStep(0)
               setShowOnboardingSuggestions(false)
+            } else {
+              // Sprint 647 — daily welcome (onboarding already complete).
+              // Check localStorage to determine first open today vs. same-day return.
+              const greeting = getDailyGreetingState(firstName)
+              setDailyGreetingState(greeting)
+              if (greeting.isFirstOpenToday) {
+                markGreetedToday()
+                // Attempt voice — inside button click (user gesture); failure is silent.
+                // Text always renders regardless of voice outcome.
+                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                  speakAssistantText(greeting.primaryText)
+                }
+              }
             }
           }
 
@@ -2682,8 +2705,29 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               <p className="text-[13px] text-text-primary font-medium leading-snug">
                 {isOnboardingActive(onboardingStep)
                   ? DONNA_ONBOARDING_STEPS[onboardingStep].question
-                  : greetingText}
+                  : (dailyGreetingState?.primaryText ?? greetingText)}
               </p>
+              {/* Sprint 647 — daily welcome follow-up and CTA (intro already complete) */}
+              {!isOnboardingActive(onboardingStep) && dailyGreetingState?.followUp && (
+                <p className="text-[12px] text-text-secondary mt-2 leading-snug">
+                  {dailyGreetingState.followUp}
+                </p>
+              )}
+              {!isOnboardingActive(onboardingStep) && dailyGreetingState?.isFirstOpenToday && (
+                <button
+                  type="button"
+                  onClick={() => void handleFetchDailyBrief()}
+                  className="mt-3 w-full rounded-lg px-3 py-1.5 text-xs font-semibold transition-all
+                    hover:brightness-110 active:scale-[0.98]"
+                  style={{
+                    background: 'rgba(200,255,0,0.07)',
+                    border: '1px solid rgba(200,255,0,0.2)',
+                    color: '#C8FF00',
+                  }}
+                >
+                  Walk me through today
+                </button>
+              )}
               {isOnboardingActive(onboardingStep) && (
                 <>
                   <p className="text-[10px] text-text-muted mt-1.5 leading-snug">

@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-17 — Sprint 647: DONNA First Daily Welcome V1
+
+**Files created:**
+- `src/lib/donna/donnaDailyGreeting.ts` — Stateless helper: time-of-day label, localStorage-backed "first open today" check, greeting copy builder. No DB reads. No API calls.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `dailyGreetingState` state; imported `getDailyGreetingState` / `markGreetedToday`; updated panel open handler to compute and store daily greeting (once per day via localStorage, once per session via `hasGreetedRef`); updated greeting display card to show time-aware primary text, follow-up line, and "Walk me through today" CTA on first daily open; added `setDailyGreetingState(null)` to `closePanel()` and route-change effect.
+
+**Behavior:**
+- First DONNA open of the day: time-aware greeting ("Good morning/afternoon/evening, Coach {Name}. I'm ready to help you run the academy today.") + follow-up ("Would you like me to walk you through what needs attention?") + lime "Walk me through today" CTA (triggers `handleFetchDailyBrief`, safe read-only).
+- Same-day return opens: "Welcome back. What would you like to check next." No CTA.
+- Onboarding flow (intro not yet completed): unchanged — existing onboarding takes priority.
+- Voice: attempts `speakAssistantText(primaryText)` in button click handler; silent if `speechSynthesis` unavailable. Text always renders.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 646: Overnight 100-Sprint Campaign Final Audit V1
 
 **Files created:**
