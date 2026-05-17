@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 576: Coach Observation Apply Confirmation UI V1
+
+**Files created:**
+- `src/components/donna/ObservationApplyConfirmation.tsx` — confirmation UI before observation apply. Shows type icon, type label, player name, visibility (coach_only/director/parent_safe). Warns that parent-safe still requires separate director approval for any send. Parent-safe candidate note. "Cannot be automatically removed" notice. Cancel and lime Apply CTA. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 575: Coach Observation Apply Preview V1
 
 **Files created:**
