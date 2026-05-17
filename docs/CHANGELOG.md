@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 551: Voice Transcript Review V1
+
+**Files created:**
+- `src/components/donna/VoiceTranscriptReview.tsx` — review/edit voice transcript before DONNA structures it. Shows real-time interim (italic/muted) and final transcript. `isEditing` state with editable textarea. Discard and "Use this" CTA. Syncs to `transcript` prop when listening stops. No auto-submit — coach must explicitly confirm. Props: `transcript`, `interimTranscript`, `isListening`, `onConfirm(editedText)`, `onDiscard()`. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 550: Spoken Prompt Shell V1
 
 **Files created:**
