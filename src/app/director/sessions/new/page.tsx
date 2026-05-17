@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, LayoutTemplate } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { SessionFromTemplateForm } from './SessionFromTemplateForm'
@@ -78,14 +78,15 @@ export default async function NewSessionPage() {
         <Card>
           <CardContent className="py-10">
             <EmptyState
+              icon={<LayoutTemplate className="w-5 h-5" />}
               title="No templates found"
               description="Create a fitness template first, then return here to generate a session."
+              action={
+                <Link href="/director/fitness/templates" className="btn-lime text-xs px-4 py-2">
+                  Go to Fitness Templates
+                </Link>
+              }
             />
-            <div className="flex justify-center mt-4">
-              <Link href="/director/fitness/templates" className="btn-lime text-xs px-4 py-2">
-                Go to Fitness Templates
-              </Link>
-            </div>
           </CardContent>
         </Card>
       ) : (

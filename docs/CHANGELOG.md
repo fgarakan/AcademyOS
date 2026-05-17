@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 691: Empty States Pass V2
+
+**Files modified:**
+- `src/app/director/class-templates/page.tsx` — Replaced misleading EmptyState description ("Fitness templates are managed separately under Fitness Templates.") with accurate copy explaining that class templates are curriculum-aligned session plans coaches run on court
+- `src/app/director/sessions/new/page.tsx` — Added missing `icon` prop (`LayoutTemplate`) to bare EmptyState; moved sibling CTA `Link` into the `action` prop for consistency with the EmptyState component contract
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 690: Error States Pass V1
 
 **Files created:**

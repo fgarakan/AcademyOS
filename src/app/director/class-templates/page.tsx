@@ -215,7 +215,7 @@ export default async function ClassTemplatesPage() {
               <EmptyState
                 icon={<BookOpen className="w-5 h-5" />}
                 title="No class templates yet"
-                description="Fitness templates are managed separately under Fitness Templates."
+                description="Templates you create will appear here. Each template is a curriculum-aligned session plan coaches can run on court."
               />
             </CardContent>
           </Card>
