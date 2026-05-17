@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 641: Pilot Feedback Capture Model V1
+
+**Files created:**
+- `src/lib/donna/pilotFeedbackModel.ts` — typed model for pilot feedback capture. `PilotFeedbackEntry` interface with category (11 types), severity (5 levels: demo_blocker/high/medium/low/positive), source (4: director/head_coach/coach/internal_observer), and status (6: new/triaged/in_sprint/fixed/wont_fix/deferred). Labels, color classes, and helper functions (isDemoBlocker, isOpenFeedback, groupByCategory, countBySeverity). No DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 640: Coach First-Run Pilot Guide V1
 
 **Files created:**
