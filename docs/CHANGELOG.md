@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 635: Pilot Navigation Polish V1
+
+**Files created:**
+- `src/components/donna/DONNAPilotDemoNav.tsx` — pilot demo flow navigation card. Shows 5 default pilot steps (dashboard/review/players/command center/COO) with step status (complete/active/pending), descriptions, Link navigation, and compact dot-progress mode. Configurable via `PilotDemoStep[]` prop. Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 634: Pilot Runtime Error Cleanup V1
 
 **Files modified:**
