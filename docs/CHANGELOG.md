@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 583: Level Readiness Apply Preview V1
+
+**Files created:**
+- `src/components/donna/LevelReadinessApplyPreview.tsx` — level readiness preview card. Shows direction (promotion/demotion/lateral/initial_placement) with color-coded banner, player name, current→proposed level, readiness score, evidence criteria (met/unmet), reason, and warning if not all criteria met. Shield notice: "level changes are protected — `finalize_player_placement()` required." Preview only. No mutation. No DB.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 582: Level Readiness Application Adapter Audit V1
 
 **Files created:**
