@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 605: Protected Execution Safety Audit V1
+
+**Files created:**
+- `docs/PROTECTED_EXECUTION_SAFETY_AUDIT_605.md` — full protected execution audit. `execute_approved_action`: 1 call site (voice.ts:94). `finalize_player_placement`: 3 call sites (assessments.ts:106, placementDraftAction.ts:112, review/actions.ts:3840) — all director-only server actions. All 9+ DONNA files confirmed incapable of calling protected functions. Corrects Sprint 604 which undercounted finalize_player_placement call sites. No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 604: Review Queue Execution Regression V1
 
 **Files created:**
