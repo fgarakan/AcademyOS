@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 513: Attention Signals Live Data Wiring V1
+
+**Files modified:**
+- `src/app/api/donna/attention/route.ts` — added signals 3 (coach concern observations, last 7 days from `coach_observations WHERE observation_type='concern'`) and 4 (attendance risk, absences in `session_attendance.status != 'present'` across last-7-day sessions). Both read-only, RLS-scoped by `academy_id`. Graceful fallback preserved.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 512: Command Brief Live Data Wiring V1
 
 **Files created:**
