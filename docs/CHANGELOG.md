@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 614: DONNA COO Intelligence Confidence Display V1
+
+**Files created:**
+- `src/components/donna/DONNACOOIntelligencePanel.tsx` — COO intelligence confidence panel. Shows 6 dimensions (health score, attendance risk, wrap-up coverage, review queue, parent backlog, level readiness flags) with their `COOFieldStatus` (live/partial/insufficient_data/blocked_by_rls/blocked_by_schema), live values, and colored status badges. Header shows live count fraction. Footer summarizes data quality. `COOContext` prop. Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 613: Voice-First Coach Session Shell V1
 
 **Files created:**
