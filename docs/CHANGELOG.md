@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 609: Pilot Demo Script V2
+
+**Files created:**
+- `docs/PILOT_DEMO_SCRIPT_V2_609.md` — updated 30-minute demo script for Brian pilot. 6 sections: (1) Director morning brief with execution readiness + top priorities, (2) DONNA command flow (voice → classify → preview → confirm → review queue), (3) Coach wrap-up via voice (DonnaConversationalPanel → VoiceWrapUpShell → submit), (4) Director review queue approve/apply, (5) Player profile + level readiness preview, (6) Academy health COO query. Safety Q&A for demos. Incorporates all new features from Sprints 540–608.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 608: Director Command Center Execution Readiness V1
 
 **Files created:**
