@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-17 — Sprint 689: Loading States Pass V1
+
+**Files created:**
+- `src/app/director/signals/loading.tsx` — New Next.js loading UI for the Signals page; shows eyebrow/title/subtitle skeletons + 4 `SkeletonCard`s while the server component fetches attendance, wrap-up, and lesson request data
+- `src/app/director/kpi/loading.tsx` — New Next.js loading UI for the KPI Dashboard; shows header skeletons + 3 summary card skeletons + 1 table skeleton while player KPI data loads
+
+**Files modified:**
+- `src/app/director/level-up/loading.tsx` — Rewrote to use `LoadingSkeleton` + `SkeletonCard` components consistently (previously used raw `bg-surface-raised` divs with `animate-pulse`); added `max-w-5xl` to match page constraint
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 688: Coach Session Detail Premium Polish V1
 
 **Files modified:**
