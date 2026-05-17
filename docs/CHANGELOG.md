@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 667: Director Today Page DONNA Integration V1
+
+**Files modified:**
+- `src/app/director/today/page.tsx` — Made "Ask DONNA" suggestion chips context-aware: conditionally prepends chips for "Help me clear the review queue" (when `pending > 0`), "Walk me through players who need attention" (when `attentionRisk.players.length > 0`), and "Status update on active sessions" (when `inProgress > 0`). Static "daily brief" and "attendance exception" chips always shown.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 666: Coach Home Wrap-Up Alert V1
 
 **Files modified:**

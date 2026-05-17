@@ -399,13 +399,21 @@ export default async function TodaysAcademyPage({
             </div>
           )}
 
-          {/* DONNA suggestion chips */}
+          {/* DONNA suggestion chips — context-aware */}
           <div className="space-y-2">
             <p className="label-xs">Ask DONNA</p>
-            <TodayDonnaSuggestionChip label="What needs my attention today?" />
+            {pending > 0 && (
+              <TodayDonnaSuggestionChip label={`Help me clear the review queue. There are ${pending} item${pending !== 1 ? 's' : ''} waiting.`} />
+            )}
+            {attentionRisk.players.length > 0 && (
+              <TodayDonnaSuggestionChip label={`Walk me through the ${attentionRisk.players.length} player${attentionRisk.players.length !== 1 ? 's' : ''} who need${attentionRisk.players.length === 1 ? 's' : ''} attention.`} />
+            )}
+            {inProgress > 0 && (
+              <TodayDonnaSuggestionChip label={`Give me a status update on today's ${inProgress} active session${inProgress !== 1 ? 's' : ''}.`} />
+            )}
             <TodayDonnaSuggestionChip label="Give me my daily brief." />
+            <TodayDonnaSuggestionChip label="What needs my attention today?" />
             <TodayDonnaSuggestionChip label="Log an attendance exception." />
-            <TodayDonnaSuggestionChip label="What needs approval?" />
           </div>
 
           {/* Risk flags ─────────────────────────────────────────────────────── */}
