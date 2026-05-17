@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 553: Natural Coach Wrap-Up Voice Shell V1
+
+**Files created:**
+- `src/components/donna/DonnaVoiceWrapUpShell.tsx` — voice orchestration shell for coach wrap-up. Combines `useVoiceDictation`, `useSpeechOutput`, `VoiceTranscriptReview`, `VoiceErrorFallback`. Speaks current question when it changes (muted by default, coach controls). Mic toggle button (start/stop). Transcript review before confirm. Error retry + text fallback. Skip and "Type instead" always available. Props: `currentQuestion`, `currentQuestionId`, `canSkip`, `onTranscriptConfirmed`, `onSkip`, `onTextMode`. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 552: Voice Error and Fallback UX V1
 
 **Files created:**
