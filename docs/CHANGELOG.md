@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 722: Live Partial Demo Label QA V1
+
+**Files created:**
+- `docs/LIVE_PARTIAL_DEMO_LABEL_QA_722.md` — Label audit: 5-state status system (live/partial/insufficient_data/blocked_by_rls/blocked_by_schema) confirmed accurate. Demo page uses demo-seed-only disclosure. DONNA type="honest" response confirmed. No fake certainty in any surface.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 721: Demo Mode Isolation QA V1
 
 **Files created:**
