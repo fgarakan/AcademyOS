@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 564: Review Queue Approved vs Applied Logic V1
+
+**Files created:**
+- `src/components/donna/ApplyStatusBadge.tsx` — `ApplyStatusBadge` (compact/full) shows status dot + label + optional description + "requires human action" note. `ApprovedVsAppliedBanner` renders a blue info banner when status is approved/approved_not_applied, clearly stating approved ≠ applied. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 563: Proposed Action Apply Status Model V1
 
 **Files created:**
