@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 737: Hydration Error Cleanup V1
+
+**Files created:**
+- `docs/HYDRATION_ERROR_CLEANUP_737.md` — Hydration audit: no hydration errors found. `typeof window` checks in JSX are isolated to conditionally-mounted client-only components (never SSR'd); `DirectorInterviewAssistant` uses `useState(false)` + `useEffect` for TTS detection; `AudioRecorderButton` uses `useState(null)` + `useEffect` for MediaRecorder detection; `SetupProgressChecklist` uses `mounted` guard for localStorage reads; `new Date()` in Server Component JSX is safe (not re-run on client); `Math.random()` only in event callbacks, not render body. No changes needed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 736: Console Warning Cleanup V1
 
 **Files created:**
