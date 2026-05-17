@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-17 — Sprint 512: Command Brief Live Data Wiring V1
+
+**Files created:**
+- `src/lib/donna/commandBriefLiveLoader.ts` — 9-step sequential read-only loader: sessions today, pending review, approved count, players attending (session_attendance.status='present'), wrap-up coverage (voice_notes with session_id), coach names, group names, concern observations, player names for flags. Returns `DonnaCommandBriefData` + per-field `COOFieldStatus` + overall status.
+- `src/app/director/today/TodayCommandBrief.tsx` — `'use client'` wrapper. Receives serialized data from server, provides `useRouter` callbacks to `DonnaCommandBriefIntegration`. Shows data status badge (live/partial/insufficient_data).
+
+**Files modified:**
+- `src/app/director/today/page.tsx` — wires live loader in non-demo branch; uses `DEMO_COMMAND_BRIEF_DATA` in demo mode; replaces static "DONNA is ready" card with live `TodayCommandBrief`; keeps suggestion chips below.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-16 — Sprint 511: COO Live Data Wiring Audit V1
 
 **Type:** Audit documents — no code changes, no migration.

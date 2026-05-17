@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import {
   Calendar, CheckCircle2, Clock, AlertTriangle,
-  ChevronRight, Users, ClipboardList, Zap, Activity,
+  ChevronRight, Users, ClipboardList, Activity,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import {
@@ -12,6 +12,10 @@ import { formatDate } from '@/lib/utils'
 import { DEMO_SESSIONS, DEMO_PENDING_COUNT } from '@/lib/demo/demoData'
 import type { DemoSession } from '@/lib/demo/demoData'
 import { TodayDonnaSuggestionChip } from './TodayDonnaSuggestionChip'
+import { TodayCommandBrief } from './TodayCommandBrief'
+import { loadCommandBriefLive } from '@/lib/donna/commandBriefLiveLoader'
+import type { CommandBriefLiveResult } from '@/lib/donna/commandBriefLiveLoader'
+import { DEMO_COMMAND_BRIEF_DATA } from '@/lib/donna/donnaDemoSeed'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -92,10 +96,22 @@ export default async function TodaysAcademyPage({
 
   let enrichedSessions: DemoSession[]
   let pending: number
+  let commandBriefResult: CommandBriefLiveResult
 
   if (isDemoMode) {
     enrichedSessions = DEMO_SESSIONS
     pending = DEMO_PENDING_COUNT
+    commandBriefResult = {
+      data: DEMO_COMMAND_BRIEF_DATA,
+      fieldStatus: {
+        sessions: 'partial',
+        attendance: 'partial',
+        wrapUpCoverage: 'partial',
+        attentionFlags: 'partial',
+        reviewQueue: 'partial',
+      },
+      overallStatus: 'partial',
+    }
   } else {
     const today = getTodayString()
 
@@ -179,6 +195,9 @@ export default async function TodaysAcademyPage({
     })) as DemoSession[]
 
     pending = pendingCount ?? 0
+
+    // ── Command Brief live loader (Sprint 512) ───────────────────────────────
+    commandBriefResult = await loadCommandBriefLive(supabase, academyId)
   }
 
   // ── Derived stats ──────────────────────────────────────────────────────────
@@ -287,32 +306,24 @@ export default async function TodaysAcademyPage({
         {/* Right column — 1/3 width */}
         <div className="space-y-4">
 
-          {/* DONNA Intelligence ─────────────────────────────────────────────── */}
+          {/* DONNA Command Brief — live/partial data (Sprint 512) ──────────── */}
           <div>
-            <p className="label-xs">DONNA Intelligence</p>
-            <p className="text-xs text-text-muted mt-1">Ask DONNA for live analysis.</p>
+            <p className="label-xs">DONNA Command Brief</p>
+            <p className="text-xs text-text-muted mt-1">Live academy operating summary.</p>
           </div>
-          <Card>
-            <CardContent className="py-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
-                  <Zap className="w-4 h-4 text-lime" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">DONNA is ready</p>
-                  <p className="text-xs text-text-muted mt-0.5">
-                    Open the DONNA panel to get your daily brief, check what needs attention, or log an attendance exception.
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-2 pt-1">
-                <TodayDonnaSuggestionChip label="What needs my attention today?" />
-                <TodayDonnaSuggestionChip label="Give me my daily brief." />
-                <TodayDonnaSuggestionChip label="Log an attendance exception." />
-                <TodayDonnaSuggestionChip label="What needs approval?" />
-              </div>
-            </CardContent>
-          </Card>
+          <TodayCommandBrief
+            data={commandBriefResult.data}
+            overallStatus={commandBriefResult.overallStatus}
+          />
+
+          {/* DONNA suggestion chips */}
+          <div className="space-y-2">
+            <p className="label-xs">Ask DONNA</p>
+            <TodayDonnaSuggestionChip label="What needs my attention today?" />
+            <TodayDonnaSuggestionChip label="Give me my daily brief." />
+            <TodayDonnaSuggestionChip label="Log an attendance exception." />
+            <TodayDonnaSuggestionChip label="What needs approval?" />
+          </div>
 
           {/* Risk flags ─────────────────────────────────────────────────────── */}
           {(missingBlocks > 0 || pending > 0) && (
