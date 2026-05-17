@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 687: Parent Preview Premium Polish V1
+
+**Files modified:**
+- `src/app/parent/layout.tsx` — `pb-20` → `pb-24`: BottomTabBar height (~56px) + iOS home indicator safe area (~34px) totals ~90px, exceeding `pb-20` (80px); `pb-24` (96px) provides proper clearance on all devices
+- `src/app/coach/layout.tsx` — same `pb-20` → `pb-24` fix (identical pattern)
+- `src/app/player/layout.tsx` — same `pb-20` → `pb-24` fix (identical pattern)
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 686: Player Profile Premium Polish V1
 
 **Files modified:**

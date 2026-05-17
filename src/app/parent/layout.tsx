@@ -26,7 +26,7 @@ export default async function ParentLayout({ children }: { children: React.React
   }
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-24">
       <main className="p-4 max-w-lg mx-auto">
         <PreviewBanner />
         <FirstRunDeckGate hasSeenDeck={hasSeenFirstRunDeck} role="parent">

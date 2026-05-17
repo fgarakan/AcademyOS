@@ -31,7 +31,7 @@ export default async function CoachLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-24">
       <main className="p-4 max-w-2xl mx-auto">
         <PreviewBanner />
         <FirstRunDeckGate hasSeenDeck={hasSeenFirstRunDeck} role="coach">
