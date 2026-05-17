@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 686: Player Profile Premium Polish V1
+
+**Files modified:**
+- `src/app/director/players/page.tsx` — Added `max-w-5xl` to the root container; brings the player directory listing into alignment with the width constraint used by all other director linear-layout pages (player profile page already had `max-w-5xl`)
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 685: Academy Health Drawer Premium Polish V1
 
 **Files modified:**

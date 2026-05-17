@@ -86,7 +86,7 @@ export default async function PlayersPage() {
     .slice(0, 5)
 
   return (
-    <div className="p-6 animate-fade-in space-y-6">
+    <div className="p-6 animate-fade-in space-y-6 max-w-5xl">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="page-eyebrow">Academy</p>
