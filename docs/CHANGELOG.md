@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 711: UX Trust Layer Audit V1
+
+**Files created:**
+- `docs/UX_TRUST_LAYER_AUDIT_710.md` — Full trust layer audit: DONNA, review queue, coach wrap-up, daily brief, end-of-day summary, weekly COO report, Academy Health, pilot demo. Classifications: live/draft-only/review-first/apply-enabled/blocked/demo. Issues logged for future targeted sprints.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-17 — Sprint 710: Button Type Polish Final Pass V1
 
 **Files modified:**
