@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 600: DONNA Weekly Operating Loop V1
+
+**Files created:**
+- `src/lib/donna/donnaWeeklyOperatingLoop.ts` — DONNA's weekly operating brief. `buildDonnaWeeklyBrief(ctx)` computes wrap-up completion rate, average attendance rate, at-risk player count (≥2 missed sessions), review queue clearance rate, weekly trend items (improving/stable/declining), top priority for next week, and week summary text. `WeeklyOperatingContext` input type with sessions/players/coaches/review stats. `TREND_LABELS` and `TREND_COLORS` for UI. No DB. No execution.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 599: DONNA Daily Operating Loop V1
 
 **Files created:**
