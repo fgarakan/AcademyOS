@@ -12,6 +12,7 @@ import { formatDate } from '@/lib/utils'
 import type { Tables } from '@/lib/supabase/database.types'
 import { loadWrapUpSessionSelector } from '@/lib/coach/wrapUpSessionSelector'
 import type { WrapUpSessionSelectorResult } from '@/lib/coach/wrapUpSessionSelector'
+import { DonnaOpenChip } from '@/components/assistant/DonnaOpenChip'
 
 type SessionRow = Pick<Tables<'sessions'>, 'id' | 'name' | 'scheduled_date' | 'scheduled_time' | 'status'>
 
@@ -117,26 +118,37 @@ export default async function CoachSessionsPage() {
         <p className="text-text-muted text-sm mt-1">{today}</p>
       </div>
 
-      {/* ── Wrap-Ups Needed — Sprint 526 ─────────────────────── */}
+      {/* ── Wrap-Ups Needed — Sprint 526/652 ────────────────────── */}
+      {/* Sprint 652: primary CTA is Ask DONNA; session link preserved as secondary. */}
       {wrapUpSelector.needsWrapUp.length > 0 && (
         <div>
           <SectionHeader title="WRAP-UPS NEEDED" />
           <div className="space-y-2">
             {wrapUpSelector.needsWrapUp.map(s => (
-              <Link key={s.sessionId} href={`/coach/sessions/${s.sessionId}`} className="block">
-                <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-status-orange/30 bg-status-orange/5 hover:bg-status-orange/10 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <ClipboardList className="w-4 h-4 text-status-orange shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-text-primary truncate">{s.sessionName}</p>
-                      <p className="text-[11px] text-text-muted">{formatDate(s.scheduledDate)}{s.scheduledTime ? ` · ${s.scheduledTime.slice(0, 5)}` : ''}</p>
-                    </div>
+              <div
+                key={s.sessionId}
+                className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-status-orange/30 bg-status-orange/5"
+              >
+                <Link
+                  href={`/coach/sessions/${s.sessionId}`}
+                  className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-80 transition-opacity"
+                >
+                  <ClipboardList className="w-4 h-4 text-status-orange shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-text-primary truncate">{s.sessionName}</p>
+                    <p className="text-[11px] text-text-muted">{formatDate(s.scheduledDate)}{s.scheduledTime ? ` · ${s.scheduledTime.slice(0, 5)}` : ''}</p>
                   </div>
-                  <span className="text-xs text-status-orange font-medium shrink-0 flex items-center gap-1">
-                    Submit wrap-up <ChevronRight className="w-3 h-3" />
-                  </span>
+                </Link>
+                <div className="flex items-center gap-2 shrink-0">
+                  <DonnaOpenChip prompt={`Help me wrap up: ${s.sessionName}`} />
+                  <Link
+                    href={`/coach/sessions/${s.sessionId}`}
+                    className="text-xs text-text-muted hover:text-lime transition-colors flex items-center gap-0.5"
+                  >
+                    Open <ChevronRight className="w-3 h-3" />
+                  </Link>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>

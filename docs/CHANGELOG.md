@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 652: Coach Session Card DONNA CTA V1
+
+**Files modified:**
+- `src/app/coach/sessions/page.tsx` — Imported `DonnaOpenChip`; restructured "WRAP-UPS NEEDED" rows so the primary CTA is "Ask DONNA" (dispatches `donna:open` with session-specific prompt) and "Open →" becomes a secondary navigation link. Session info area still links to session detail.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 651: DONNA Session Context Opening V1
 
 **Files modified:**
