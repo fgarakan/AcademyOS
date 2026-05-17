@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 546: DONNA Conversation Summary UI V1
+
+**Files created:**
+- `src/components/donna/DonnaConversationSummary.tsx` — review card rendered inside `DonnaConversationalPanel` via the `children` slot when `state === 'summarizing'`. Shows all 5 wrap-up question rows (answered/skipped/no-response) with dot indicators, answered count, Edit button, and "Wrap up session" confirm CTA. Accepts `messages`, `onConfirm`, `onEdit`, `isSubmitting`. Pure client component, no DB.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 545: DONNA Correction Handling V1
 
 **Files created:**
