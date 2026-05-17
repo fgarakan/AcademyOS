@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 721: Demo Mode Isolation QA V1
+
+**Files created:**
+- `docs/DEMO_MODE_ISOLATION_QA_721.md` — Demo mode isolation confirmed: 4 pages use demo data, all URL-param gated (`?demo=1`). Zero DB writes from demo data. demo- prefixed IDs cannot collide with real uuid records. cooDemo.ts confirmed "never touches database in demo mode."
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 720: Parent Preview Browser QA V1
 
 **Files created:**
