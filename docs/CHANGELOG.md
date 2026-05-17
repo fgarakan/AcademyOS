@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 601: Academy Health Action Application Links V1
+
+**Files created:**
+- `src/components/donna/AcademyHealthActionLinks.tsx` — navigation links from academy health items to action surfaces. 6 `HealthActionType` values (open_review_queue/view_player_profile/start_wrap_up/view_curriculum/draft_parent_update/view_level_readiness). Builder functions: `buildReviewQueueLink`, `buildPlayerProfileLink`, `buildWrapUpLink`, `buildParentDraftLink`, `buildLevelReadinessLink`. `AcademyHealthActionLinks` panel renders rows with icon, label, description, hover state, disabled state. No DB. No mutations.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 600: DONNA Weekly Operating Loop V1
 
 **Files created:**
