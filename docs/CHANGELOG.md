@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 630: Full Academy Week Simulation V1
+
+**Files created:**
+- `src/lib/donna/academyWeekSimulation.ts` — full simulated academy week dataset (Dabul, May 11–15, 2026). Mon–Fri day summaries (sessions/players/wrap-ups/exceptions/health score), weekly trends (health/wrap-up coverage/attendance/queue), 3 at-risk players, DONNA weekly brief with headline + top 3 priorities + next-week focus. Clearly marked `SIMULATION_ONLY`. No DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 629: Full Academy Day Simulation V1
 
 **Files created:**
