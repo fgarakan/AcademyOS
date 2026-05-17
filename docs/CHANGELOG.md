@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 679: V1 DONNA Language Consistency Pass V1
+
+**Files modified:**
+- `src/components/assistant/donnaAssistantCopy.ts` — Updated all instances of `'Donna'` → `'DONNA'` in public-facing copy constants (`DONNA_PUBLIC_NAME`, `DONNA_FULL_LABEL`, `DONNA_SETUP_LABEL`, `DONNA_GREETING`, `DONNA_ACTIVATION_HELP`, `DONNA_SAFETY_REMINDER`, `DONNA_WAKE_LABEL`, `DONNA_WAKE_ACTIVE_LABEL`, `DONNA_WAKE_DETECTED_LABEL`); consistent with all-caps DONNA brand identity used across UI labels
+- `src/components/assistant/DonnaAssistantButton.tsx` — Fixed two `label: 'Donna'` → `label: 'DONNA'` in `setCommandResponse` calls (workflow controller display messages)
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 678: V1 Safety Copy Pass V1
 
 **Files modified:**

@@ -1008,7 +1008,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       if (turn.speakText) speakAssistantText(turn.speakText)
       if (turn.showDraftReview) setConvShowDraftReview(true)
       if (turn.displayMessage) {
-        setCommandResponse({ message: turn.displayMessage, type: 'info', label: 'Donna' })
+        setCommandResponse({ message: turn.displayMessage, type: 'info', label: 'DONNA' })
       }
       // Handle UI actions from controller
       switch (turn.uiAction.type) {
@@ -2306,7 +2306,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       if (turn.speakText) speakDonna(turn.speakText)
       if (turn.showDraftReview) setConvShowDraftReview(true)
       if (turn.displayMessage) {
-        setCommandResponse({ message: turn.displayMessage, type: 'info', label: 'Donna' })
+        setCommandResponse({ message: turn.displayMessage, type: 'info', label: 'DONNA' })
       }
       switch (turn.uiAction.type) {
         case 'start_template_draft': {
