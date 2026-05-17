@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 580: Parent Draft Send-Blocked Safe State V1
+
+**Files created:**
+- `src/components/donna/ParentDraftSendBlockedBanner.tsx` — `ParentDraftSendBlockedBanner` (compact/full). Shows state label, portal visibility note, send-blocked explanation ("no email, SMS, or push will be sent"), and reassurance copy. Only renders for relevant states (not draft/rejected/archived). No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 579: Parent Draft Internal Approval State V1
 
 **Files created:**
