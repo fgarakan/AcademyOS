@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 554: DONNA Ask From Live COO Context V1
+
+**Files created:**
+- `src/lib/donna/donnaCOOAnswerEngine.ts` — pure TypeScript answer engine for DONNA COO questions. `COOContext` input type (health score, attendance risk, wrap-up coverage, review queue, parent backlog, level flags). `DONNAAnswer` output type with `text`, `confidence` (high/partial/insufficient/blocked), `sourceNote`, `followUpSuggestion`. Three answer functions: `answerWhatNeedsAttention`, `answerWhoIsAtRisk`, `answerWhyIsHealthLow`. Handles blocked/insufficient/partial data gracefully. No new DB queries. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 553: Natural Coach Wrap-Up Voice Shell V1
 
 **Files created:**
