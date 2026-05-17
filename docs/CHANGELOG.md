@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 607: Voice and Command Regression V1
+
+**Files created:**
+- `docs/VOICE_COMMAND_REGRESSION_607.md` — regression audit on 8 DONNA command-layer files (Sprints 591–598). Confirms: router returns data not action, classifier uses keyword matching only (no AI API), all UI components use callbacks not direct DB, session memory is ephemeral module store, multi-step flow is a pure state machine. All routes terminate at preview/proposal — director approval required. No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 606: Natural Conversation Regression V1
 
 **Files created:**
