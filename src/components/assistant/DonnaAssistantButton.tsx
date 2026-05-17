@@ -1469,8 +1469,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   function handleVoiceError(error: string) {
     setVoicePermissionError(
       error === 'not-allowed'
-        ? 'Microphone permission was denied. Allow microphone access in your browser settings and try again.'
-        : 'Voice input encountered an error. You can type your answer instead.',
+        ? 'Microphone access is blocked. You can enable it in your browser settings or type instead.'
+        : 'Voice is unavailable right now. You can type instead.',
     )
   }
 

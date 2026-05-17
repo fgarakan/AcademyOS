@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 701: DONNA Voice Shell UX Polish V1
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Updated `handleVoiceError` copy to match spec: `not-allowed` → "Microphone access is blocked. You can enable it in your browser settings or type instead."; generic → "Voice is unavailable right now. You can type instead."
+- `src/components/assistant/VoiceInputButton.tsx` — Updated unsupported browser message from "Voice input is not supported…" to "Voice is unavailable in this browser. You can type instead." Styled as flex row with shrunk icon.
+- `src/components/assistant/DonnaVoiceLayer.tsx` — Replaced alarming red error panel (rgba red borders) with calm surface-raised style that matches the design system; added `type="button"` to all action buttons (dismiss, confirm, retry, clear, send, suggestion chips); fixed hardcoded `"Ask DONNA"` placeholder to use the `DONNA_PUBLIC_NAME` constant
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 700: Navigation Active State Pass V1
 
 **Files modified:**

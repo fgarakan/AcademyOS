@@ -155,12 +155,12 @@ export function VoiceInputButton({
   // Still detecting support
   if (supported === null) return null
 
-  // Unsupported browser — show static disabled note, not a button
+  // Unsupported browser — show calm inline note, not a button
   if (!supported) {
     return (
-      <p className="text-[10px] text-text-muted leading-snug">
-        <MicOff className="w-3 h-3 inline mr-1 opacity-50" />
-        Voice input is not supported in this browser. You can still type or use your keyboard dictation.
+      <p className="text-[10px] text-text-muted leading-snug flex items-center gap-1.5">
+        <MicOff className="w-3 h-3 shrink-0 opacity-40" />
+        Voice is unavailable in this browser. You can type instead.
       </p>
     )
   }

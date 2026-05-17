@@ -167,21 +167,20 @@ export function DonnaVoiceLayer({
           </div>
         )}
 
-        {/* Voice permission / browser error */}
+        {/* Voice permission / browser notice — calm, not alarming */}
         {voicePermissionError && (
           <div
-            className="mt-2.5 rounded-lg px-3 py-2"
-            style={{ background: 'rgba(255,59,48,0.06)', border: '1px solid rgba(255,59,48,0.18)' }}
+            className="mt-2.5 rounded-lg px-3 py-2.5 flex items-start justify-between gap-3"
+            style={{ background: 'var(--bg-surface-raised)', border: '1px solid var(--border-subtle)' }}
           >
-            <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-status-red">
-              Voice unavailable
-            </p>
             <p className="text-[11px] text-text-muted leading-snug">{voicePermissionError}</p>
             <button
+              type="button"
               onClick={onDismissVoiceError}
-              className="mt-1 text-[10px] text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
+              aria-label="Dismiss voice notice"
+              className="shrink-0 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
             >
-              Dismiss
+              ✕
             </button>
           </div>
         )}
@@ -215,6 +214,7 @@ export function DonnaVoiceLayer({
               style={{ background: 'var(--bg-surface)', borderTop: '1px solid rgba(200,255,0,0.1)' }}
             >
               <button
+                type="button"
                 onClick={onConfirmVoiceAnswer}
                 disabled={!pendingVoiceAnswer.editedText.trim()}
                 className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
@@ -222,6 +222,7 @@ export function DonnaVoiceLayer({
                 Use this answer
               </button>
               <button
+                type="button"
                 onClick={onRetryVoice}
                 className="text-[10px] text-text-muted hover:text-status-red underline underline-offset-2 transition-colors"
               >
@@ -255,6 +256,7 @@ export function DonnaVoiceLayer({
               </p>
             )}
             <button
+              type="button"
               onClick={onClearVoiceTranscript}
               className="mt-1 text-[10px] text-text-muted underline underline-offset-2 hover:text-text-secondary transition-colors"
             >
@@ -267,7 +269,7 @@ export function DonnaVoiceLayer({
         <div className="mt-3 space-y-2">
           <textarea
             rows={2}
-            placeholder="Ask DONNA what needs attention…"
+            placeholder={`Ask ${DONNA_PUBLIC_NAME} what needs attention…`}
             value={typedText}
             onChange={e => onTypedTextChange(e.target.value)}
             onKeyDown={e => {
@@ -285,6 +287,7 @@ export function DonnaVoiceLayer({
           />
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={() => onCommandSubmit()}
               disabled={!typedText.trim()}
               className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
@@ -319,6 +322,7 @@ export function DonnaVoiceLayer({
             ].map(chip => (
               <button
                 key={chip}
+                type="button"
                 onClick={() => onCommandSubmit(chip)}
                 className="text-[11px] px-2.5 py-1 rounded-full transition-all leading-snug"
                 style={{
