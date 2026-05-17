@@ -38,6 +38,7 @@ export function VoiceTranscriptReview({
   }, [transcript, isListening])
 
   const hasContent = editedText.trim().length > 0
+  const isEdited = !isListening && hasContent && editedText.trim() !== transcript.trim()
   const displayText = isListening
     ? (transcript + (interimTranscript ? ' ' + interimTranscript : ''))
     : editedText
@@ -49,10 +50,17 @@ export function VoiceTranscriptReview({
       <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border">
         <div className={`w-2 h-2 rounded-full shrink-0 ${isListening ? 'bg-status-red animate-pulse' : 'bg-text-muted'}`} />
         <p className="text-xs text-text-muted">
-          {isListening ? 'Listening…' : 'Review your words'}
+          {isListening ? 'Listening…' : 'Review — edit if needed'}
         </p>
+        {isEdited && !isEditing && (
+          <span className="ml-1 text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-lime/10 text-lime border border-lime/20">
+            Edited
+          </span>
+        )}
         {!isListening && hasContent && !isEditing && (
           <button
+            type="button"
+            aria-label="Edit transcript"
             onClick={() => setIsEditing(true)}
             className="ml-auto flex items-center gap-1 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
           >
@@ -99,6 +107,7 @@ export function VoiceTranscriptReview({
       {!isListening && (
         <div className="flex gap-2 px-3.5 py-2.5 border-t border-border">
           <button
+            type="button"
             onClick={onDiscard}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-xs text-text-muted hover:text-status-red hover:border-status-red/40 transition-colors"
           >
@@ -106,6 +115,7 @@ export function VoiceTranscriptReview({
             Discard
           </button>
           <button
+            type="button"
             onClick={() => onConfirm(editedText.trim())}
             disabled={!hasContent}
             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-lime text-base text-sm font-semibold hover:bg-lime/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"

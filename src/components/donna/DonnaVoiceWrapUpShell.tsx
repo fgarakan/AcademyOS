@@ -120,13 +120,15 @@ export function DonnaVoiceWrapUpShell({
           {/* Mic button */}
           {!isUnavailable && (
             <button
+              type="button"
+              aria-label={isListening ? 'Stop recording' : 'Start voice input'}
+              aria-pressed={isListening}
               onClick={handleMicToggle}
               className={`flex items-center justify-center w-11 h-11 rounded-xl border transition-colors ${
                 isListening
                   ? 'bg-status-red/10 border-status-red/40 text-status-red'
                   : 'bg-surface border-border text-text-secondary hover:border-lime/40 hover:text-lime'
               }`}
-              title={isListening ? 'Stop recording' : 'Start voice input'}
             >
               {isListening ? (
                 <MicOff className="w-4 h-4 animate-pulse" />
@@ -139,9 +141,11 @@ export function DonnaVoiceWrapUpShell({
           {/* Speech output toggle */}
           {speech.isAvailable && (
             <button
+              type="button"
+              aria-label={speech.isMuted ? 'Unmute voice' : 'Mute voice'}
+              aria-pressed={speech.isMuted}
               onClick={speech.toggleMute}
               className="flex items-center justify-center w-9 h-9 rounded-xl border border-border text-text-muted hover:text-text-secondary transition-colors"
-              title={speech.isMuted ? 'Unmute DONNA' : 'Mute DONNA'}
             >
               {speech.isMuted ? (
                 <VolumeX className="w-3.5 h-3.5" />
@@ -154,6 +158,7 @@ export function DonnaVoiceWrapUpShell({
           {/* Skip */}
           {canSkip && currentQuestionId && (
             <button
+              type="button"
               onClick={() => onSkip(currentQuestionId)}
               className="ml-auto text-xs text-text-muted hover:text-text-secondary transition-colors px-2 py-1.5"
             >
@@ -163,6 +168,7 @@ export function DonnaVoiceWrapUpShell({
 
           {/* Switch to text mode */}
           <button
+            type="button"
             onClick={onTextMode}
             className="text-xs text-text-muted hover:text-text-secondary transition-colors px-2 py-1.5"
           >

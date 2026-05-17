@@ -252,7 +252,7 @@ export function DonnaVoiceLayer({
             </p>
             {activeMode !== 'create_template' && activeMode !== 'guided_task' && (
               <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
-                To save, use &quot;Capture a note&quot; below.
+                To save this note, type it in the field below and send.
               </p>
             )}
             <button

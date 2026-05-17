@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 702: Transcript Review UX Polish V1
+
+**Files modified:**
+- `src/components/donna/VoiceTranscriptReview.tsx` — Added `type="button"` to all three action buttons (Edit, Discard, Use this); added `aria-label="Edit transcript"` to Edit button; changed header from "Review your words" to "Review — edit if needed"; added "Edited" chip when the transcript text differs from the original captured text
+- `src/components/donna/DonnaVoiceWrapUpShell.tsx` — Added `type="button"` and converted `title` to `aria-label` + `aria-pressed` on mic and speech buttons; added `type="button"` to Skip and "Type instead" buttons
+- `src/components/assistant/DonnaVoiceLayer.tsx` — Clarified instruction text on "DONNA heard" voice transcript panel from "To save, use Capture a note below" to "To save this note, type it in the field below and send."
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 701: DONNA Voice Shell UX Polish V1
 
 **Files modified:**
