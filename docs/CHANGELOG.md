@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-17 — Sprint 760: Curriculum Builder Low Cognitive Load Entry V1
+
+**Files created/modified:**
+- `src/components/curriculum/builder/CurriculumBuilderWelcome.tsx` — DONNA welcome panel for curriculum entry: lime-bordered card with Sparkles icon, "What would you like to work on today?" prompt, 4 chips when active (map / guided review / change queue / advanced tools) or 2 chips when no version (start setup / explore).
+- `src/components/curriculum/builder/CurriculumLevelMap.tsx` — Full visual level map: all 15 levels as clickable cards grouped by stage, gate count + drill count per level, selected level opens inline `CurriculumLevelDetailPanel`.
+- `src/components/curriculum/builder/CurriculumGuidedReviewShell.tsx` — Guided review: step-through shell with CurriculumLevelDetailPanel, prev/next/skip controls, reviewed state tracking, jump-to-level modal trigger.
+- `src/components/curriculum/builder/CurriculumProgressRail.tsx` — Progress rail: progress bar, reviewed count badge, level dot indicators, jump-to-level button.
+- `src/components/curriculum/builder/CurriculumJumpToLevelModal.tsx` — Jump-to-level modal: full-screen overlay, all levels listed with current/reviewed indicators, tap any to jump.
+- `src/app/director/curriculum/map/page.tsx` — New `/director/curriculum/map` route: loads `getCurriculumExplorerData` and renders `CurriculumLevelMap`.
+- `src/app/director/curriculum/guided/page.tsx` — New `/director/curriculum/guided` route: loads data and renders `CurriculumGuidedReviewShell`.
+- `src/app/director/curriculum/page.tsx` — Added `CurriculumBuilderWelcome` between page header and status hero card.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 759: Curriculum Builder Architecture Mapping V1
 
 **Files created:**

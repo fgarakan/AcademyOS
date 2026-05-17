@@ -10,6 +10,7 @@ import { VoiceOverrideInputPanel } from './VoiceOverrideInputPanel'
 import { PageExplainerCard } from '@/components/onboarding/PageExplainerCard'
 import { CurriculumCustomizationAssistant } from '@/components/curriculum/CurriculumCustomizationAssistant'
 import { CurriculumLoopDiagram } from '@/components/onboarding/CurriculumLoopDiagram'
+import { CurriculumBuilderWelcome } from '@/components/curriculum/builder/CurriculumBuilderWelcome'
 
 // ─── Static spine data ────────────────────────────────────────────────────────
 
@@ -244,6 +245,9 @@ export default async function DirectorCurriculumPage() {
           templates, and player progress all connect back to this spine.
         </p>
       </div>
+
+      {/* ── 1b. DONNA Welcome ─────────────────────────────────────────────── */}
+      <CurriculumBuilderWelcome hasActiveVersion={!!versionData} />
 
       {/* ── 2. Curriculum Status hero card ───────────────────────────────── */}
       <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
