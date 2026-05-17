@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 709: Pilot Demo UX Polish V1
+
+**Files modified:**
+- `src/components/donna/DONNAPilotDemoNav.tsx` — Imported `DONNA_PUBLIC_NAME`; replaced hardcoded "DONNA" in default step label and two description strings with constant
+- `src/components/demo/DemoModeBanner.tsx` — Imported `DONNA_PUBLIC_NAME`; replaced hardcoded "DONNA" in Level Up hint and Command Center label/hint with constant
+- `src/components/donna/PilotFeedbackReviewPanel.tsx` — Added `type="button"` to entry toggle button
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 708: Weekly COO Report UX Polish V1
 
 **Files modified:**

@@ -46,6 +46,7 @@ function FeedbackEntryCard({ entry }: { entry: PilotFeedbackEntry }) {
       isDemoBlocker(entry) ? 'border-status-red/30 bg-status-red/5' : 'border-border bg-surface-raised'
     } overflow-hidden`}>
       <button
+        type="button"
         onClick={() => setExpanded(v => !v)}
         className="w-full flex items-start gap-3 px-3 py-2.5 text-left"
       >

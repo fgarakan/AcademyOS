@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { ChevronRight, Play, X } from 'lucide-react'
+import { DONNA_PUBLIC_NAME } from '@/components/assistant/donnaAssistantCopy'
 
 const DEMO_STEPS = [
   {
@@ -17,7 +18,7 @@ const DEMO_STEPS = [
   {
     path: '/director/level-up',
     label: 'Level Up Review',
-    hint: 'Evidence-based readiness. DONNA never moves a player automatically.',
+    hint: `Evidence-based readiness. ${DONNA_PUBLIC_NAME} never moves a player automatically.`,
   },
   {
     path: '/director/parents',
@@ -26,8 +27,8 @@ const DEMO_STEPS = [
   },
   {
     path: '/director',
-    label: 'DONNA Command Center',
-    hint: 'Open the DONNA panel (✦ top-right) to explore the full executive command suite.',
+    label: `${DONNA_PUBLIC_NAME} Command Center`,
+    hint: `Open the ${DONNA_PUBLIC_NAME} panel (✦ top-right) to explore the full executive command suite.`,
   },
 ]
 

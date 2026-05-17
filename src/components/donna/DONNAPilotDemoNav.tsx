@@ -7,6 +7,7 @@
 
 import { CheckCircle2, Circle, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
+import { DONNA_PUBLIC_NAME } from '@/components/assistant/donnaAssistantCopy'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -48,15 +49,15 @@ const DEFAULT_PILOT_STEPS: PilotDemoStep[] = [
   },
   {
     id: 'command',
-    label: 'DONNA command center',
+    label: `${DONNA_PUBLIC_NAME} command center`,
     href: '/director/command-center',
-    description: 'Ask DONNA a question or give a voice command',
+    description: `Ask ${DONNA_PUBLIC_NAME} a question or give a voice command`,
   },
   {
     id: 'coo',
     label: 'COO intelligence',
     href: '/director/donna-coo-demo',
-    description: 'Full DONNA COO academy view',
+    description: `Full ${DONNA_PUBLIC_NAME} COO academy view`,
   },
 ]
 
