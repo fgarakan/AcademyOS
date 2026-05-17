@@ -23,11 +23,20 @@ export function ImpactPreviewPanel({ ifAccepted, willNotChange, evidence, confid
               · {CONFIDENCE_LABEL[confidence]}
             </span>
           </p>
-          <ul className="space-y-1.5">
+          <ul className="space-y-2">
             {evidence.map((item, i) => (
               <li key={i} className="flex gap-2 text-sm text-text-secondary">
                 <span className="text-lime shrink-0 mt-0.5">·</span>
-                <span className="leading-relaxed">{item.description}</span>
+                <span className="leading-relaxed space-y-0.5">
+                  <span className="block">{item.description}</span>
+                  {(item.type || item.date) && (
+                    <span className="flex items-center gap-2 text-[10px] text-text-muted">
+                      {item.type && <span className="uppercase tracking-widest">{item.type.replace(/_/g, ' ')}</span>}
+                      {item.type && item.date && <span>·</span>}
+                      {item.date && <span>{new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
+                    </span>
+                  )}
+                </span>
               </li>
             ))}
           </ul>

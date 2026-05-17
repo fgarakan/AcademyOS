@@ -103,6 +103,14 @@ export function SuggestionCard({ suggestion, onAccept, onDeny, onDefer }: Props)
               {suggestion.title}
             </p>
 
+            {/* Generated date */}
+            <p className="text-[10px] text-text-muted mt-0.5">
+              Generated{' '}
+              {new Date(suggestion.created_at).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric',
+              })}
+            </p>
+
             {/* Summary */}
             {suggestion.summary && !expanded && (
               <p className="text-xs text-text-secondary mt-1 leading-relaxed">

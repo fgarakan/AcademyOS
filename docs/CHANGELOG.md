@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 693: Source Citation UI Pass V1
+
+**Files modified:**
+- `src/components/suggestions/SuggestionCard.tsx` — Added "Generated [date]" label below the suggestion title so directors can see when the suggestion was produced and gauge staleness
+- `src/components/suggestions/ImpactPreviewPanel.tsx` — Extended each evidence item to show its `type` (uppercase, e.g., "coach observation") and `date` below the description text, giving directors a traceable source for each piece of evidence
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 692: Data Sufficiency Labels Pass V1
 
 **Files modified:**
