@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 619: DONNA Parent Communication Status V1
+
+**Files created:**
+- `src/components/donna/DONNAParentCommunicationStatus.tsx` — parent communication status panel. Uses `ParentDraftInternalState` (draft/under_review/approved_internal/approved_for_send/send_blocked/rejected/archived). Shows each player's parent communication state, days since last contact, priority flag, and overdue alert (14+ days). "Send blocked" notice prominently shown: director approval required, never automatic. Display only — no sends, no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 618: DONNA Wrap-Up Coverage Tracker V1
 
 **Files created:**
