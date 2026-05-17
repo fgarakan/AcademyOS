@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 664: Academy Health Action Link Polish V1
+
+**Files modified:**
+- `src/app/director/_components/AcademyKpiCardsSection.tsx` — Updated "Attendance Exceptions", "Coach Recaps", and "Parent Updates" KPI card hrefs from `/director/review` to `/director/review?tab=needs-approval`, so clicking these cards lands directly on the pending items tab (built in Sprint 662).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 663: Player Profile COO Context Polish V1
 
 **Files modified:**
