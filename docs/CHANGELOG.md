@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 582: Level Readiness Application Adapter Audit V1
+
+**Files created:**
+- `docs/LEVEL_READINESS_ADAPTER_AUDIT_582.md` — audit of level readiness → player movement path. Key finding: `finalize_player_placement()` is confirmed the only level change function (found in 2 places). DONNA cannot trigger it. Readiness flags are display-only. Director approval required at every step. No auto-demotion. No parent notification. Gaps: preview (Sprint 583) and guardrail (Sprint 584). No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 581: Parent Draft Review Regression V1
 
 **Files created:**
