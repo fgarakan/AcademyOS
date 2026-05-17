@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 625: Director Approval Flow Polish V1
+
+**Files created:**
+- `src/components/donna/DONNAApprovalOutcomeExplainer.tsx` — collapsible inline explainer showing the director exactly what happens after approve/clarify/reject for each draft category. `ApprovalDraftCategory` (7 types). Per-category outcome copy for all 3 decisions. No DB writes — pure display polish.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 624: DONNA Draft Parent Updates From Evidence Safe Preview V1
 
 **Files created:**
