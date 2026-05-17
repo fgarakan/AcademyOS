@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 589: Execution Audit Trail Source Context V1
+
+**Files created:**
+- `src/lib/donna/executionAuditSourceContext.ts` — source context enrichment for execution audit entries. `AuditSourceContext` type with contextType (voice_transcript/wrap_up_question/donna_command/director_decision/system_rule), label, excerpt, questionId, commandText, sessionLabel. Builders: `buildVoiceTranscriptContext`, `buildWrapUpQuestionContext`, `buildDonnaCommandContext`, `buildDirectorDecisionContext`, `buildSystemRuleContext`. `defaultContextTypeForSource()` maps `ExecutionSourceType` to context type. No DB. No execution.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 588: Execution Audit Trail UI V1
 
 **Files created:**
