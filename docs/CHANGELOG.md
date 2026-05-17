@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 610: Brian Academy Pilot Readiness Checklist V1
+
+**Files created:**
+- `docs/BRIAN_PILOT_READINESS_CHECKLIST_610.md` — structured pre-pilot readiness checklist. 7 sections: data readiness, auth/role verification, core flow verification (review queue, wrap-up, voice, approve/apply, audit log), safety verification (6 rules), UI/UX verification, pilot demo readiness, and known acceptable gaps. Go/No-Go gate at bottom. All items currently marked ⬜ for completion by Farshad before pilot.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 609: Pilot Demo Script V2
 
 **Files created:**
