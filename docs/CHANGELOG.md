@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 719: Player Profile Browser QA V1
+
+**Files created:**
+- `docs/PLAYER_PROFILE_QA_719.md` — Player profile static QA: 6 tabs confirmed (Session History is 6th, CLAUDE.md listed 5), internal-only markers verified, parent/student send prevention confirmed (show_to_parent: false default), gate evidence flow review-first confirmed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 718: Academy Health Browser QA V1
 
 **Files created:**
