@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-17 — Sprint 680: V1 Workflow Integration Audit V1
+
+**Files modified:**
+- `src/app/director/signals/page.tsx` — Updated pending wrap-up signal rows from `href="/director/review"` → `href="/director/review?tab=wrap-ups"` so signals deep-link directly to the wrap-up section of the review queue
+
+**TypeScript:** CLEAN
+
+**Workflow audit findings:**
+- Coach wrap-up → `proposed_actions` (session_wrap_up_v1) → Review Queue: CONNECTED ✓
+- Director review → approve → apply via `applyWrapUpDraftAction`: CONNECTED ✓
+- Coach sees wrap-up status on session detail page: CONNECTED ✓
+- Coach home banner (pending wrap-up count): CONNECTED ✓
+- Signals page → Review Queue deep-link: FIXED (was missing tab param)
+- Today's Academy → Review Queue: OK (general link, auto-routes to pending tab) ✓
+
+---
+
 ## 2026-05-17 — Sprint 679: V1 DONNA Language Consistency Pass V1
 
 **Files modified:**

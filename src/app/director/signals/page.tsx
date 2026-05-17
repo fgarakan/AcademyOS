@@ -232,7 +232,7 @@ export default async function SignalsPage() {
           {pendingWrapUps.map(w => (
             <SignalRow
               key={w.id}
-              href="/director/review"
+              href="/director/review?tab=wrap-ups"
               primary="Session wrap-up"
               secondary={`Submitted ${formatDate(w.created_at)}`}
             />
