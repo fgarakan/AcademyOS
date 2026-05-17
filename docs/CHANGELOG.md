@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 638: Brian Pilot Handoff Notes V1
+
+**Files created:**
+- `docs/BRIAN_PILOT_HANDOFF_NOTES_638.md` — Brian-facing pilot handoff notes. Sections: what is real (7 live features), what is draft/preview only (4 items), what is not wired (4 items), browser requirements, things to test (17 checkboxes across 4 areas), what feedback to give (7 questions), issue reporting process, and data transparency. Written for Brian as the first pilot director.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 637: DONNA Pilot Script Integration V1
 
 **Files created:**
