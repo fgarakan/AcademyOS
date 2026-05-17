@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 741: Brian Demo Flow Final Polish V1
+
+**Files created/modified:**
+- `src/app/director/demo/DemoScriptPanel.tsx` — Collapsible "Live Demo Script" panel with exact steps and voice prompts from Brian Voice Demo Script: pre-demo checklist (5 items), 10 numbered steps with route, exact words to say, voice prompt callouts (lime/mic icon), and "what to point out" guidance.
+- `src/app/director/demo/page.tsx` — Added DemoScriptPanel between Sandbox Controls and "What This Shows" section.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — AcademyOS Product Guardrail Skill Stack
 
 **Files created:**

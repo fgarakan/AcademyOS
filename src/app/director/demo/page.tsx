@@ -6,6 +6,7 @@ import {
 import { Card, CardContent } from '@/components/ui'
 import { getDemoSandboxStatusAction } from './demoSandboxActions'
 import { DemoSandboxControls } from './DemoSandboxControls'
+import { DemoScriptPanel } from './DemoScriptPanel'
 
 const DEMO_PATH = [
   {
@@ -195,6 +196,11 @@ export default async function DemoTourPage() {
 
         <DemoSandboxControls status={sandbox} />
       </div>
+
+      {/* ============================================================
+          Live Demo Script
+          ============================================================ */}
+      <DemoScriptPanel />
 
       {/* ============================================================
           Section 2 — What This Shows
