@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 591: DONNA Command Router Architecture V1
+
+**Files created:**
+- `src/lib/donna/donnaCommandRouter.ts` — command routing architecture for DONNA intent. `DonnaCommandCategory` (10 types: attendance/session_actual/coach_observation/parent_draft/level_readiness/curriculum_override/review_queue/academy_health/wrap_up/unknown). `DonnaCommandDestination` (10 destinations). `DonnaRouteResult` with requiresDirectorApproval, isReadOnly, canAutoRoute, routingNote. `routeDonnaCommand(category)` dispatches to correct preview/proposal flow. `DONNA_ROUTING_INVARIANTS` constants encoding safety rules. No DB. No execution. All routes produce previews or proposals only.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 590: Execution Audit Trail Regression V1
 
 **Files created:**
