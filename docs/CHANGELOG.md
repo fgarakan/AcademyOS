@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 740: V1 Reliability Audit V1
+
+**Files created:**
+- `docs/V1_RELIABILITY_AUDIT_740.md` — V1 reliability audit: all portals have layered auth guards (middleware → layout → server action); all 4 portal error boundaries confirmed with reset button; 10 director loading boundaries confirmed; all API routes authenticate or degrade gracefully when keys absent; AI/voice features degrade safely without config; `ToastProvider` wraps root; `assertNotPreviewMode()` guards all real-data server actions. QA campaign 710–740 closed — all 18 audit sprints (723–740) PASSED.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 739: Final V1 Regression V1
 
 **Files created:**
