@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 642: Pilot Feedback Review Queue V1
+
+**Files created:**
+- `src/components/donna/PilotFeedbackReviewPanel.tsx` — UI panel for reviewing pilot feedback entries. Groups entries by severity (demo_blocker → high → medium → low → positive) with expandable cards showing description, verbatim quote, route, suggested fix, and sprint assignment. Header shows blocker count and open items. Uses `PilotFeedbackEntry` from Sprint 641. Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 641: Pilot Feedback Capture Model V1
 
 **Files created:**
