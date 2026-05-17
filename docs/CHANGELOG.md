@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 590: Execution Audit Trail Regression V1
+
+**Files created:**
+- `docs/EXECUTION_AUDIT_TRAIL_REGRESSION_590.md` — regression audit for Sprints 588–589. Confirms `ExecutionAuditTrailPanel` is read-only (no DB, no server actions, no mutations on interact). Confirms `executionAuditSourceContext.ts` is pure TypeScript (no DB, no external calls). Pipeline invariant confirmed: DONNA proposes → director approves → system executes → audit trail displays. No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 589: Execution Audit Trail Source Context V1
 
 **Files created:**
