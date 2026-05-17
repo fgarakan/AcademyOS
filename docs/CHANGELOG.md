@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 573: Session Actual Apply Guardrails V1
+
+**Files created:**
+- `src/lib/donna/sessionActualApplyGuardrails.ts` — `checkSessionActualApplyGuardrails(payload, draftStatus, sessionAlreadyHasNotes)` returns blockers (NOT_APPROVED, NO_SESSION), warnings (OVERWRITES_EXISTING_NOTES high, NO_COMPLETED_BLOCKS, ALL_BLOCKS_SKIPPED, DRAFT_WARNINGS), `requiresExtraConfirmation`. `SESSION_ACTUAL_GUARDRAIL_COPY` confirms template immutability. No DB. No execution.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 572: Session Actual Apply Confirmation UI V1
 
 **Files created:**
