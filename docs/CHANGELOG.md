@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 515: Academy Health Live Source Status V1
+
+**Files created:**
+- `src/lib/donna/academyHealthLiveStatus.ts` — `loadAcademyHealthLiveStatus(db, academyId)` returns `Record<string, COOFieldStatus>` per KPI ID. Static baseline maps `HealthKPIAvailability` → `COOFieldStatus`. Three live probes: `player_attention_risk` (coach_observations concern count), `wrap_up_coverage_rate` (voice_notes with session_id), `review_queue_throughput` (approved_at present; partial since applied_at is missing). Deferred/not_yet_built KPIs → `blocked_by_schema`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 514: COO Data Status Model V1
 
 **Files created:**
