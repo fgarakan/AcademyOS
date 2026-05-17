@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 597: DONNA Command Memory Within Session V1
+
+**Files created:**
+- `src/lib/donna/donnaSessionMemory.ts` — in-session DONNA command memory. Module-level store (no DB, no persistence). `SessionMemoryEntry` with id/timestamp/category/rawInput/actionSummary/status/playerName/sessionLabel. Helpers: `addSessionMemoryEntry`, `updateSessionMemoryEntryStatus`, `clearSessionMemory`, `getRecentSessionMemory`, `getLastEntryForCategory`, `getSubmittedEntries`, `hasPriorContextForCategory`, `getSessionMemorySummary`. Capped at 50 entries. Reset on page reload.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 596: DONNA Command Rejection and Cancel Flow V1
 
 **Files created:**
