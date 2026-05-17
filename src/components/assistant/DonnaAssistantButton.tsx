@@ -333,10 +333,13 @@ const TEMPLATE_QUICK_STARTS = [
 
 interface Props {
   academyId: string
+  /** Display name for the logged-in user (director or coach). */
   directorName?: string
+  /** Role context for greeting and priority routing. Defaults to 'director'. */
+  role?: 'director' | 'coach'
 }
 
-export function DonnaAssistantButton({ academyId, directorName }: Props) {
+export function DonnaAssistantButton({ academyId, directorName, role = 'director' }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [panelOpen, setPanelOpen] = useState(false)
@@ -2484,9 +2487,10 @@ export function DonnaAssistantButton({ academyId, directorName }: Props) {
               setOnboardingStep(0)
               setShowOnboardingSuggestions(false)
             } else {
-              // Sprint 647 — daily welcome (onboarding already complete).
+              // Sprint 647/648 — daily welcome (onboarding already complete).
               // Check localStorage to determine first open today vs. same-day return.
-              const greeting = getDailyGreetingState(firstName)
+              // role='coach' produces coach-specific priority routing copy.
+              const greeting = getDailyGreetingState(firstName, role)
               setDailyGreetingState(greeting)
               if (greeting.isFirstOpenToday) {
                 markGreetedToday()

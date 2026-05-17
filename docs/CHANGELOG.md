@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 648: Coach DONNA Priority Routing Shell V1
+
+**Files modified:**
+- `src/app/coach/layout.tsx` — Extended profile query to fetch `display_name` + `academy_id`; added `DonnaAssistantButton` with `role="coach"` so coaches now have DONNA access.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `role?: 'director' | 'coach'` prop (defaults `'director'`); passes role into `getDailyGreetingState`.
+- `src/lib/donna/donnaDailyGreeting.ts` — `getDailyGreetingState` now accepts `role` param; coach variant returns: primary "Good {time}, Coach {name}. I'm here to help with your sessions today." + follow-up "If you have a session to wrap up, I'll bring it up first."
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 647: DONNA First Daily Welcome V1
 
 **Files created:**

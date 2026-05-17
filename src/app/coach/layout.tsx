@@ -2,6 +2,7 @@ import { BottomTabBar } from '@/components/nav/BottomTabBar'
 import { PreviewBanner } from '@/components/platform/PreviewBanner'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
+import { DonnaAssistantButton } from '@/components/assistant/DonnaAssistantButton'
 
 const COACH_TABS = [
   { label: 'Home', href: '/coach', iconKey: 'home', exact: true },
@@ -14,14 +15,19 @@ export default async function CoachLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser()
 
   let hasSeenFirstRunDeck = true
+  let coachDisplayName: string | undefined
+  let coachAcademyId: string | undefined
+
   if (user) {
     const rawDb = supabase as any
     const { data: profile } = await rawDb
       .from('profiles')
-      .select('has_seen_first_run_deck')
+      .select('has_seen_first_run_deck, display_name, academy_id')
       .eq('id', user.id)
       .single()
     hasSeenFirstRunDeck = (profile?.has_seen_first_run_deck ?? true) as boolean
+    coachDisplayName = (profile?.display_name as string | null) ?? undefined
+    coachAcademyId = (profile?.academy_id as string | null) ?? undefined
   }
 
   return (
@@ -33,6 +39,13 @@ export default async function CoachLayout({ children }: { children: React.ReactN
         </FirstRunDeckGate>
       </main>
       <BottomTabBar items={COACH_TABS} />
+      {coachAcademyId && (
+        <DonnaAssistantButton
+          academyId={coachAcademyId}
+          directorName={coachDisplayName}
+          role="coach"
+        />
+      )}
     </div>
   )
 }

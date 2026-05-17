@@ -37,8 +37,14 @@ function buildPrimaryText(firstName: string | null, timeOfDay: TimeOfDay): strin
  * Returns the daily greeting state for the given user.
  * Reads localStorage — must only be called in a browser context.
  * Call markGreetedToday() separately after confirming a first open.
+ *
+ * role='coach' returns coach-specific priority routing copy.
+ * role='director' (default) returns director/academy-operations copy.
  */
-export function getDailyGreetingState(firstName: string | null): DailyGreetingState {
+export function getDailyGreetingState(
+  firstName: string | null,
+  role: 'director' | 'coach' = 'director',
+): DailyGreetingState {
   if (typeof window === 'undefined') {
     return {
       isFirstOpenToday: false,
@@ -53,6 +59,18 @@ export function getDailyGreetingState(firstName: string | null): DailyGreetingSt
 
   if (isFirstOpenToday) {
     const timeOfDay = getTimeOfDay()
+    if (role === 'coach') {
+      const salutation = firstName ? `Coach ${firstName}` : 'Coach'
+      const greeting =
+        timeOfDay === 'morning' ? 'Good morning'
+        : timeOfDay === 'afternoon' ? 'Good afternoon'
+        : 'Good evening'
+      return {
+        isFirstOpenToday: true,
+        primaryText: `${greeting}, ${salutation}. I'm here to help with your sessions today.`,
+        followUp: 'If you have a session to wrap up, I\'ll bring it up first.',
+      }
+    }
     return {
       isFirstOpenToday: true,
       primaryText: buildPrimaryText(firstName, timeOfDay),
