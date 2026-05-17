@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 523: COO Dashboard Data Sufficiency UI Pass V1
+
+**Files modified:**
+- `src/app/director/donna-coo-demo/page.tsx` — added `DataSufficiencyBadge` component using `getStatusLabel`/`getStatusDot` from `cooDataStatus`; status dots added to each section nav pill; sufficiency badge shown in each section header; `parent_coverage` and `curriculum` sections show a schema-block notice above demo data.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 522: COO Demo Live/Demo Toggle V1
 
 **Files created:**

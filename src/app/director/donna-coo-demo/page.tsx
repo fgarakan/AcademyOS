@@ -1,6 +1,7 @@
 'use client'
 
 // Sprint 509 — Full COO Demo Walkthrough V1
+// Sprint 523 — COO Dashboard Data Sufficiency UI Pass V1
 // Director-facing demo page showcasing all 7 COO Intelligence dashboard components.
 // Uses DEMO seed data only. Clearly labeled. No DB calls.
 
@@ -22,6 +23,8 @@ import {
   DEMO_CURRICULUM_BOTTLENECKS,
   DEMO_SEED_MARKER,
 } from '@/lib/donna/donnaDemoSeed'
+import { getStatusLabel, getStatusDot } from '@/lib/donna/cooDataStatus'
+import type { COOFieldStatus } from '@/lib/donna/cooDataStatus'
 
 // ── Section nav ───────────────────────────────────────────────────────────────
 
@@ -34,15 +37,26 @@ type DemoSection =
   | 'parent_coverage'
   | 'curriculum'
 
-const SECTIONS: { id: DemoSection; label: string }[] = [
-  { id: 'command_brief', label: 'Command Brief' },
-  { id: 'coo_report', label: 'COO Report' },
-  { id: 'player_attention', label: 'Player Attention' },
-  { id: 'group_health', label: 'Group Health' },
-  { id: 'coach_support', label: 'Coach Support' },
-  { id: 'parent_coverage', label: 'Parent Coverage' },
-  { id: 'curriculum', label: 'Curriculum' },
+const SECTIONS: { id: DemoSection; label: string; dataStatus: COOFieldStatus }[] = [
+  { id: 'command_brief', label: 'Command Brief', dataStatus: 'partial' },
+  { id: 'coo_report', label: 'COO Report', dataStatus: 'partial' },
+  { id: 'player_attention', label: 'Player Attention', dataStatus: 'partial' },
+  { id: 'group_health', label: 'Group Health', dataStatus: 'partial' },
+  { id: 'coach_support', label: 'Coach Support', dataStatus: 'partial' },
+  { id: 'parent_coverage', label: 'Parent Coverage', dataStatus: 'blocked_by_schema' },
+  { id: 'curriculum', label: 'Curriculum', dataStatus: 'blocked_by_schema' },
 ]
+
+// ── Data sufficiency badge ────────────────────────────────────────────────────
+
+function DataSufficiencyBadge({ status }: { status: COOFieldStatus }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getStatusDot(status)}`} />
+      <span className="text-[10px] text-text-muted">{getStatusLabel(status)}</span>
+    </span>
+  )
+}
 
 // ── Demo banner ───────────────────────────────────────────────────────────────
 
@@ -73,12 +87,13 @@ function SectionNav({
         <button
           key={s.id}
           onClick={() => onChange(s.id)}
-          className={`text-[11px] px-3 py-1.5 rounded-lg border transition-colors ${
+          className={`inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border transition-colors ${
             active === s.id
               ? 'bg-lime text-black border-lime font-semibold'
               : 'bg-surface-raised text-text-muted border-border hover:text-text-secondary'
           }`}
         >
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getStatusDot(s.dataStatus)}`} />
           {s.label}
         </button>
       ))}
@@ -111,8 +126,11 @@ export default function DonnaCOODemoPage() {
       {/* Command Brief */}
       {activeSection === 'command_brief' && (
         <div className="space-y-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="label-xs">Daily Command Brief</p>
+            <DataSufficiencyBadge status="partial" />
+          </div>
           <div>
-            <p className="label-xs mb-2">Daily Command Brief</p>
             <DonnaCommandBriefIntegration
               data={DEMO_COMMAND_BRIEF_DATA}
               onOpenReviewQueue={() => setActiveSection('player_attention')}
@@ -125,7 +143,10 @@ export default function DonnaCOODemoPage() {
       {/* COO Weekly Report */}
       {activeSection === 'coo_report' && (
         <div className="space-y-4">
-          <p className="label-xs mb-2">Weekly COO Report</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="label-xs">Weekly COO Report</p>
+            <DataSufficiencyBadge status="partial" />
+          </div>
           <DonnaCOOWeeklyReport data={DEMO_COO_REPORT_DATA} />
         </div>
       )}
@@ -133,7 +154,10 @@ export default function DonnaCOODemoPage() {
       {/* Player Attention Risk */}
       {activeSection === 'player_attention' && (
         <div className="space-y-4">
-          <p className="label-xs mb-2">Player Attention Risk</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="label-xs">Player Attention Risk</p>
+            <DataSufficiencyBadge status="partial" />
+          </div>
           <PlayerAttentionRiskDashboard
             players={DEMO_PLAYER_ATTENTION_RISK}
             overallSeverity="warning"
@@ -145,7 +169,10 @@ export default function DonnaCOODemoPage() {
       {/* Group Health */}
       {activeSection === 'group_health' && (
         <div className="space-y-4">
-          <p className="label-xs mb-2">Group Health Review</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="label-xs">Group Health Review</p>
+            <DataSufficiencyBadge status="partial" />
+          </div>
           <GroupHealthReviewDashboard
             groups={DEMO_GROUP_HEALTH}
             overallSeverity="warning"
@@ -157,7 +184,10 @@ export default function DonnaCOODemoPage() {
       {/* Coach Support */}
       {activeSection === 'coach_support' && (
         <div className="space-y-4">
-          <p className="label-xs mb-2">Coach Support Needed</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="label-xs">Coach Support Needed</p>
+            <DataSufficiencyBadge status="partial" />
+          </div>
           <CoachSupportNeededDashboard
             coaches={DEMO_COACH_SUPPORT}
             overallSeverity="warning"
@@ -169,7 +199,13 @@ export default function DonnaCOODemoPage() {
       {/* Parent Coverage */}
       {activeSection === 'parent_coverage' && (
         <div className="space-y-4">
-          <p className="label-xs mb-2">Parent Trust Coverage</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="label-xs">Parent Trust Coverage</p>
+            <DataSufficiencyBadge status="blocked_by_schema" />
+          </div>
+          <div className="bg-surface-raised border border-border rounded-xl px-4 py-3 text-[12px] text-text-muted">
+            Live data blocked — requires <code className="font-mono text-status-orange">proposed_actions.applied_at</code> and a parent contact history table (pending migration).
+          </div>
           <ParentTrustCoverageDashboard
             entries={DEMO_PARENT_COVERAGE}
             overallSeverity="warning"
@@ -181,7 +217,13 @@ export default function DonnaCOODemoPage() {
       {/* Curriculum Bottlenecks */}
       {activeSection === 'curriculum' && (
         <div className="space-y-4">
-          <p className="label-xs mb-2">Curriculum Bottlenecks</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="label-xs">Curriculum Bottlenecks</p>
+            <DataSufficiencyBadge status="blocked_by_schema" />
+          </div>
+          <div className="bg-surface-raised border border-border rounded-xl px-4 py-3 text-[12px] text-text-muted">
+            Live data blocked — requires <code className="font-mono text-status-orange">curriculum_requirements</code> and <code className="font-mono text-status-orange">player_curriculum_levels</code> tables (migrations 041–044 pending).
+          </div>
           <CurriculumBottleneckDashboard
             bottlenecks={DEMO_CURRICULUM_BOTTLENECKS}
             overallSeverity="critical"
@@ -193,7 +235,7 @@ export default function DonnaCOODemoPage() {
       {/* Sprint info footer */}
       <div className="mt-8 pt-4 border-t border-border">
         <p className="text-[10px] text-text-muted">
-          Sprint 509 — Full COO Demo Walkthrough V1 · Sprints 461–509 · 2026-05-16
+          Sprint 523 — COO Dashboard Data Sufficiency UI Pass V1 · Sprints 461–523 · 2026-05-17
         </p>
         <p className="text-[10px] text-text-muted">
           All data is demo-only. No DB reads or writes from this page.
