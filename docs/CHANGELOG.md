@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 738: Route 404 Cleanup V1
+
+**Files created:**
+- `docs/ROUTE_404_CLEANUP_738.md` — Route 404 audit: all 28 static internal links verified against filesystem (all exist); all 7 dynamic route pages (`[playerId]`, `[sessionId]`, `[templateId]`, `[coachId]`) call `notFound()` on missing resource; middleware handles cross-role access via redirect not 404; no custom `not-found.tsx` (default Next.js 404 used — acceptable for V1). No changes needed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 737: Hydration Error Cleanup V1
 
 **Files created:**
