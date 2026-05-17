@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 571: Session Actual Apply Preview V1
+
+**Files created:**
+- `src/components/donna/SessionActualApplyPreview.tsx` — preview card for session actual apply. Shows session name, block completion rows (completed/skipped/modified with status icons), summary chips, session notes to write (changes/next focus/group note), preview-only disclaimer. Props: `payload: SessionActualDraftPayload`. No DB. No writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 570: Session Actual Application Adapter Audit V1
 
 **Files created:**
