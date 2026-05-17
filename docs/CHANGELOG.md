@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-17 — Sprint 672: V1 Information Architecture Pass V1
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — `page-eyebrow` "Director" → "Review Queue"
+- `src/app/director/sessions/page.tsx` — `page-eyebrow` "Director" → "Sessions"
+- `src/app/director/curriculum/page.tsx` — `page-eyebrow` "Director" → "Curriculum"
+- `src/app/director/signals/page.tsx` — `page-eyebrow` "Director" → "Intelligence"
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 671: Cross-Module Navigation Cleanup V1
 
 **Files modified:**

@@ -237,7 +237,7 @@ export default async function DirectorCurriculumPage() {
 
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}
       <div>
-        <p className="page-eyebrow">Director</p>
+        <p className="page-eyebrow">Curriculum</p>
         <h1 className="page-title">Your Curriculum</h1>
         <p className="page-subtitle max-w-xl">
           This is where your academy's development system lives — levels, requirements,

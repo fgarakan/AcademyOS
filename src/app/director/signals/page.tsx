@@ -153,7 +153,7 @@ export default async function SignalsPage() {
     <div className="p-6 animate-fade-in space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="page-eyebrow">Director</p>
+          <p className="page-eyebrow">Intelligence</p>
           <h1 className="page-title">Signals</h1>
           <p className="page-subtitle">
             Patterns worth noticing — missing curriculum levels, attendance concerns, pending coach reviews, and lesson requests. Review items here and take action before they affect players or sessions.

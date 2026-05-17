@@ -202,7 +202,7 @@ function PageHeader() {
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <p className="page-eyebrow">Director</p>
+        <p className="page-eyebrow">Sessions</p>
         <h1 className="page-title">Sessions</h1>
         <p className="page-subtitle">
           Sessions are created from class and fitness templates. Each session gives coaches a plan to run on court. After a session, coaches submit a wrap-up you can review in the Review Queue.

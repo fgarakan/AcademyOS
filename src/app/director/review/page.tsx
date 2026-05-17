@@ -1208,7 +1208,7 @@ export default async function DirectorReviewQueuePage({
 
       {/* Page header */}
       <div className="space-y-1">
-        <p className="page-eyebrow">Director</p>
+        <p className="page-eyebrow">Review Queue</p>
         <h1 className="page-title">Review Queue</h1>
         <p className="page-subtitle">
           Coach notes, attendance exceptions, placement decisions, and system suggestions wait here until you review them.
