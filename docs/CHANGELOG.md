@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 644: Pilot Data Safety Checklist V1
+
+**Files created:**
+- `docs/PILOT_DATA_SAFETY_CHECKLIST_644.md` — data safety checklist for the real academy pilot. Pre-pilot sections: access/auth (7 checks), data setup (5 checks), Supabase configuration (5 checks). During pilot: what coaches can/cannot do, what director can/cannot do. External send safety table (email/SMS/push/portal/Slack all confirmed inactive). Data retention/privacy, known scope limitations (HIPAA/financial/legal/video out of scope), incident response process, and sign-off checklist.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 643: Pilot KPI Success Criteria V1
 
 **Files created:**
