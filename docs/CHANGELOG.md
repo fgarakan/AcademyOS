@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 626: Coach Wrap-Up Friction Audit V1
+
+**Files created:**
+- `docs/COACH_WRAPUP_FRICTION_AUDIT_626.md` — full friction and cognitive load audit for the coach wrap-up flow. Covers entry friction, per-question friction (7 questions), cognitive load contributors, estimated completion times (3–10 min depending on path), 5 priority recommendations, what is working well, and protected invariants. Verdict: MEDIUM friction. No code changes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 625: Director Approval Flow Polish V1
 
 **Files created:**
