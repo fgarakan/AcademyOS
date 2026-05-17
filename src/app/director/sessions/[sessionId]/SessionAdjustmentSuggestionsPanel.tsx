@@ -51,6 +51,12 @@ const RISK_COLORS: Record<string, string> = {
   high: 'text-status-red',
 }
 
+const CONFIDENCE_COLORS: Record<string, string> = {
+  high:   'text-status-green',
+  medium: 'text-status-orange',
+  low:    'text-status-red',
+}
+
 const STATUS_STYLES: Record<string, string> = {
   pending_review: 'bg-status-blue/10 text-status-blue border-status-blue/30',
   approved: 'bg-status-green/10 text-status-green border-status-green/30',
@@ -160,7 +166,7 @@ function SuggestionCard({ row, onStatusChange }: { row: SuggestionRow; onStatusC
               </div>
               <div>
                 <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Confidence</p>
-                <p className="text-xs text-text-secondary capitalize">{row.confidence}</p>
+                <p className={`text-xs font-medium capitalize ${CONFIDENCE_COLORS[row.confidence] ?? 'text-text-secondary'}`}>{row.confidence}</p>
               </div>
             </div>
             {row.curriculum_context.override && (

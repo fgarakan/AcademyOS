@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 694: Confidence UI Pass V1
+
+**Files modified:**
+- `src/app/director/sessions/[sessionId]/SessionAdjustmentSuggestionsPanel.tsx` — Added `CONFIDENCE_COLORS` map (green/orange/red) and applied it to the confidence label, matching the existing `RISK_COLORS` pattern so high/medium/low confidence is visually distinct at a glance
+- `src/app/director/review/StructuredDraftCard.tsx` — Added `CONFIDENCE_COLOR` map and applied it to the inline confidence text on attendance exception rows, splitting "low confidence · review required" so the confidence value is colored and the review hint stays muted
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 693: Source Citation UI Pass V1
 
 **Files modified:**

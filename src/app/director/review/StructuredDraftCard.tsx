@@ -17,6 +17,12 @@ export interface EnrichedDraftItem {
   proposerName: string | null
 }
 
+const CONFIDENCE_COLOR: Record<string, string> = {
+  high:   'text-status-green',
+  medium: 'text-status-orange',
+  low:    'text-status-red',
+}
+
 export function StructuredDraftCard({ draft }: { draft: EnrichedDraftItem }) {
   const { payload } = draft
   const detectedCount = payload.detected_players.length
@@ -132,7 +138,10 @@ export function StructuredDraftCard({ draft }: { draft: EnrichedDraftItem }) {
                     {a.status}
                   </span>
                   <span className="text-text-primary">{a.player_name}</span>
-                  <span className="text-text-muted">({a.confidence} confidence · review required)</span>
+                  <span className={`font-medium ${CONFIDENCE_COLOR[a.confidence] ?? 'text-text-muted'}`}>
+                    {a.confidence} confidence
+                  </span>
+                  <span className="text-text-muted">· review required</span>
                 </div>
               ))}
             </div>
