@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 543: DONNA Coach Wrap-Up Conversation Script V1
+
+**Files created:**
+- `src/lib/donna/wrapUpConversationScript.ts` — full 5-step question sequence for the coach wrap-up conversation. Each `WrapUpScriptStep` has: `questionId`, `donnaOpener` (natural-language lead-in), `questionText`, `hint`, `placeholder`, `canSkip`, and `donnaAcknowledgements` (answered/skipped variants). Lookup helpers: `getScriptStep`, `getNextQuestionId`, `getFirstUnansweredQuestion`, `isAllQuestionsAddressed`. Closing line constants for ready/partial/all-skipped states.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 542: DONNA Conversational Panel Shell V1
 
 **Files created:**
