@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 620: DONNA Voice Input Polish V1
+
+**Files created:**
+- `src/components/donna/DONNAVoiceInputButton.tsx` — polished standalone voice input button. 3 sizes (sm/md/lg). State-aware styling: idle (neutral hover), listening (lime ring + animate), processing (muted pulse), done (green), error (red). Status label changes per state. `MicOff` shown while listening (tap to stop). `Loader2` for processing. `aria-label` for accessibility. `VoiceDictationStatus` typed. No DB.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 619: DONNA Parent Communication Status V1
 
 **Files created:**
