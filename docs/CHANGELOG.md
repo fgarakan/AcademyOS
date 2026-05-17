@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 604: Review Queue Execution Regression V1
+
+**Files created:**
+- `docs/REVIEW_QUEUE_EXECUTION_REGRESSION_604.md` — regression audit on director review queue execution gate. Confirms `execute_approved_action()` has exactly 1 call site (`src/lib/backend/voice.ts:94`). Confirms `finalize_player_placement()` has exactly 1 call site (review/actions.ts:3840). All 4 apply paths in actions.ts gated by `status === 'approved'` check. No bypass found. DONNA components produce no execution calls. No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 603: Coach Wrap-Up to Approved Action Flow V1
 
 **Files created:**
