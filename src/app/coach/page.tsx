@@ -1,4 +1,4 @@
-import { Calendar, Users, FileText, ChevronRight } from 'lucide-react'
+import { Calendar, Users, FileText, ChevronRight, ClipboardList } from 'lucide-react'
 import Link from 'next/link'
 import {
   Card,
@@ -13,6 +13,7 @@ import {
   getCoachWorkspaceSummary,
   type CoachWorkspaceSummary,
 } from '@/lib/backend/coachWorkspace'
+import { loadWrapUpSessionSelector } from '@/lib/coach/wrapUpSessionSelector'
 
 function playerInitials(fullName: string | null): string {
   if (!fullName) return '?'
@@ -52,6 +53,16 @@ export default async function CoachHome() {
 
   const { profile, assignedPlayers, recentObservations, todaySessions } = summary
 
+  let pendingWrapUpCount = 0
+  if (profile?.id && profile?.academy_id) {
+    try {
+      const wrapUpSelector = await loadWrapUpSessionSelector(supabase, profile.id, profile.academy_id)
+      pendingWrapUpCount = wrapUpSelector.needsWrapUp.length
+    } catch {
+      // non-critical — alert stays hidden if query fails
+    }
+  }
+
   const now = new Date()
   const hour = now.getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -74,6 +85,23 @@ export default async function CoachHome() {
         </h1>
         <p className="page-subtitle">{today}</p>
       </div>
+
+      {/* ── Wrap-up alert ────────────────────────────────────────── */}
+      {pendingWrapUpCount > 0 && (
+        <Link
+          href="/coach/sessions"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl border border-status-orange/30 bg-status-orange/5 hover:bg-status-orange/10 transition-colors group"
+        >
+          <ClipboardList className="w-4 h-4 text-status-orange shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-status-orange">
+              {pendingWrapUpCount} session{pendingWrapUpCount !== 1 ? 's' : ''} need{pendingWrapUpCount === 1 ? 's' : ''} a wrap-up
+            </p>
+            <p className="text-[11px] text-text-muted">Go to Sessions to submit your notes.</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-status-orange/60 shrink-0 group-hover:text-status-orange transition-colors" />
+        </Link>
+      )}
 
       {/* ── Quick stats ────────────────────────────────────────── */}
       <div className="flex gap-4">

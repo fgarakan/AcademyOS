@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 666: Coach Home Wrap-Up Alert V1
+
+**Files modified:**
+- `src/app/coach/page.tsx` — Added `loadWrapUpSessionSelector` call; renders an orange alert banner ("N sessions need a wrap-up") when pending wrap-ups exist, linking directly to `/coach/sessions`. Alert is hidden when no wrap-ups are pending.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 665: Director Navigation Consistency V1
 
 **Files modified:**
