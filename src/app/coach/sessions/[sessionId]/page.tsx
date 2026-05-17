@@ -349,14 +349,28 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           Use <span className="text-text-secondary font-medium">Wrap Up Session</span> for your structured end-of-session recap.
           Player observations go directly to the director review queue.
         </p>
-        {/* Sprint 653 — DONNA entry when no wrap-up submitted yet */}
+        {/* DONNA entry when no wrap-up submitted yet */}
         {!existingWrapUpStatus && (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-surface-raised mb-3">
-            <Sparkles className="w-4 h-4 shrink-0" style={{ color: '#8b5cf6' }} />
+          <div
+            className="flex items-center gap-3 px-4 py-3 rounded-xl border mb-3"
+            style={{
+              background: 'rgba(200,255,0,0.04)',
+              border: '1px solid rgba(200,255,0,0.15)',
+            }}
+          >
+            <Sparkles className="w-4 h-4 text-lime shrink-0" />
             <p className="text-xs text-text-secondary flex-1 leading-snug">
-              Ready to wrap up? DONNA can guide you through it.
+              {session.status === 'completed'
+                ? 'Session complete. DONNA can help you capture notes and submit your wrap-up.'
+                : 'DONNA can help you capture player observations and wrap up when you\'re done.'}
             </p>
-            <DonnaOpenChip prompt={`Start my session wrap-up: ${session.name ?? 'this session'}`} />
+            <DonnaOpenChip
+              prompt={
+                session.status === 'completed'
+                  ? `Help me write my wrap-up for ${session.name ?? 'this session'}.`
+                  : `I'm running ${session.name ?? 'a session'}. Help me capture observations as I coach.`
+              }
+            />
           </div>
         )}
         <div className="space-y-3">

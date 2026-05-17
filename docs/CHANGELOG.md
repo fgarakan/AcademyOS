@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 670: Coach Session Detail DONNA Entry Polish V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Updated DONNA wrap-up entry card: changed Sparkles icon from purple (`#8b5cf6`) to lime (design system DONNA color); replaced static background with lime-tinted surface; made copy and chip prompt session-status-aware (completed session shows "capture notes and submit wrap-up" copy; in-progress shows "capture observations as you coach").
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 669: Director Players List Action Density V1
 
 **Files modified:**
