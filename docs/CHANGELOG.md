@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 735: Runtime Error Cleanup V2
+
+**Files created:**
+- `docs/RUNTIME_ERROR_CLEANUP_735.md` — Runtime error audit: no unhandled errors found. API route `console.error` calls are server-side logging only; backend throws propagate to server actions (all caught); client-side throw in `useRealtimeInterviewVoice` is inside try/catch; dev `console.warn` gated by `NODE_ENV`. No changes needed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 734: Codespaces Dev Stability QA V1
 
 **Files created:**
