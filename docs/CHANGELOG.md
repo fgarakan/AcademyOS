@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 608: Director Command Center Execution Readiness V1
+
+**Files created:**
+- `src/components/donna/DirectorExecutionReadinessPanel.tsx` — execution readiness summary panel for director command center. Shows 4 metric tiles: pending review (orange if >0), approved-not-applied (blue if >0), applied today (lime), blocked (red if >0). Urgent count badge in header. All-clear state. Last activity timestamp. Pipeline attribution footer. `ExecutionReadinessSummary` input type. Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 607: Voice and Command Regression V1
 
 **Files created:**
