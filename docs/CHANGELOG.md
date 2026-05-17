@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 632: Pilot Readiness QA Gate V1
+
+**Files created:**
+- `docs/PILOT_READINESS_QA_GATE_632.md` — hard QA gate for Brian/Dabul pilot readiness covering Sprints 547–631. TypeScript CLEAN, 0 migrations, 0 package changes, protected functions verified (finalize_player_placement 3 call sites, execute_approved_action 1 call site), all 6 architecture invariants PASS, all 10 Go/No-Go gates PASS. **OVERALL: GO FOR BRIAN PILOT.**
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 631: Brian Demo Dataset Polish V1
 
 **Files created:**
