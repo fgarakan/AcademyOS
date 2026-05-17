@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 518: Coach Support Live Adapter V1
+
+**Files created:**
+- `src/lib/donna/coachSupportLoader.ts` — `loadCoachSupport(db, academyId)` identifies coaches needing support. Signals: wrap-up gap (>3 sessions without wrap-up → 'monitor'/'needs_support'), observation frequency (0 obs with >5 sessions). Sources: `academy_memberships` (coach roles), `sessions`, `voice_notes` (wrap-up proxy), `coach_observations`. Returns sorted `CoachSupportSummary[]` with `supportSignal`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 517: Group Health Live Adapter V1
 
 **Files created:**
