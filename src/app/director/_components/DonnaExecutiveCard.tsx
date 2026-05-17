@@ -72,10 +72,16 @@ export function DonnaExecutiveCard({ items, directorName }: Props) {
         <ol className="space-y-2">
           {visibleItems.map((item, idx) => (
             <li key={item.id}>
+              {/* Sprint 659 — "Do this first" label on top item */}
+              {idx === 0 && (
+                <p className="text-[9px] uppercase tracking-widest font-bold text-lime/60 px-1 mb-1">
+                  Do this first
+                </p>
+              )}
               <Link
                 href={item.href}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
-                style={{ border: '1px solid rgba(255,255,255,0.04)' }}
+                style={{ border: idx === 0 ? '1px solid rgba(200,255,0,0.12)' : '1px solid rgba(255,255,255,0.04)' }}
               >
                 {/* Number ring */}
                 <span

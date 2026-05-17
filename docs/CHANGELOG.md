@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 659: Director Dashboard Flow Cleanup V1
+
+**Files modified:**
+- `src/app/director/page.tsx` — Added "Today's Academy →" quick-link below greeting in header, linking to `/director/today`.
+- `src/app/director/_components/DonnaExecutiveCard.tsx` — Added "Do this first" label above the #1 priority item; first item row border highlighted with lime tint.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 658: V1 Workflow Audit V1
 
 **Files created:**

@@ -329,6 +329,15 @@ export default async function DirectorDashboard() {
             {timeGreeting}, {directorDisplayName}.
           </h1>
           <p className="text-text-secondary text-base mt-1">{academyName}</p>
+          {/* Sprint 659 — Today quick-link */}
+          <Link
+            href="/director/today"
+            className="inline-flex items-center gap-1 mt-3 text-xs text-text-muted hover:text-lime transition-colors"
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            Today&apos;s Academy
+            <ChevronRight className="w-3 h-3" />
+          </Link>
         </div>
         {/* Academy Health Badge */}
         <AcademyHealthBadgeWithDrawer
