@@ -156,9 +156,9 @@ export default async function ImprovementPage() {
           sub={hasData ? `Based on ${withDelta.length} players` : 'No assessment data yet'}
           accent={avgDelta !== null && avgDelta > 0 ? 'green' : avgDelta !== null && avgDelta < 0 ? 'red' : 'default'}
         />
-        <SummaryCard label="Improving" value={improving.length} accent="green" />
-        <SummaryCard label="Flat / No Data" value={flat.length} accent="default" />
-        <SummaryCard label="Needs Attention" value={attention.length} accent={attention.length > 0 ? 'red' : 'default'} />
+        <SummaryCard label="Improving" value={improving.length} sub={activePlayers.length > 0 ? `of ${activePlayers.length} active` : undefined} accent="green" />
+        <SummaryCard label="Flat / No Data" value={flat.length} sub={activePlayers.length > 0 ? `of ${activePlayers.length} active` : undefined} accent="default" />
+        <SummaryCard label="Needs Attention" value={attention.length} sub={activePlayers.length > 0 ? `of ${activePlayers.length} active` : undefined} accent={attention.length > 0 ? 'red' : 'default'} />
       </div>
 
       {/* Player table */}

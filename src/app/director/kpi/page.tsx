@@ -169,6 +169,7 @@ export default async function KpiDashboardPage() {
           <CardContent className="p-4">
             <p className="label-xs mb-1">Active Players</p>
             <p className="font-mono text-2xl text-lime font-semibold">{players.length}</p>
+            <p className="text-[10px] text-text-muted mt-1">current roster</p>
           </CardContent>
         </Card>
         <Card>
@@ -177,6 +178,7 @@ export default async function KpiDashboardPage() {
             <p className="font-mono text-2xl text-status-green font-semibold">
               {playerKpis.filter(p => p.advancementEligible).length}
             </p>
+            <p className="text-[10px] text-text-muted mt-1">curriculum flag set</p>
           </CardContent>
         </Card>
         <Card>
@@ -189,6 +191,7 @@ export default async function KpiDashboardPage() {
             >
               {atRiskCount}
             </p>
+            <p className="text-[10px] text-text-muted mt-1">absences or long level tenure</p>
           </CardContent>
         </Card>
       </div>

@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 692: Data Sufficiency Labels Pass V1
+
+**Files modified:**
+- `src/app/director/improvement/page.tsx` — Added `sub` props to "Improving", "Flat / No Data", and "Needs Attention" SummaryCards showing count context (e.g., "of 12 active") so directors know the denominator when reading each segment
+- `src/app/director/kpi/page.tsx` — Added micro sub-labels to all three summary cards: "current roster" on Active Players, "curriculum flag set" on Advancement Ready, and "absences or long level tenure" on Attention Signals
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 691: Empty States Pass V2
 
 **Files modified:**
