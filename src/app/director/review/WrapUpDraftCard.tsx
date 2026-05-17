@@ -49,7 +49,7 @@ export function WrapUpDraftCard({ draft }: { draft: EnrichedWrapUpDraftItem }) {
             <p className="text-[10px] uppercase tracking-widest text-lime font-medium">
               Session Wrap-Up Draft ·{' '}
               {draft.status === 'approved'
-                ? 'approved — apply coming next'
+                ? 'approved — ready to apply'
                 : draft.status === 'clarification_needed'
                 ? 'needs clarification'
                 : draft.status === 'rejected'

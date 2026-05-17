@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 695: Approved vs Applied UI Pass V1
+
+**Files modified:**
+- `src/app/director/review/WrapUpDraftCard.tsx` — Changed eyebrow status label from "approved — apply coming next" to "approved — ready to apply", making it consistent with every other review queue card (StructuredDraftCard, DevelopmentSummaryDraftCard, PriorityRecommendationDraftCard, WrapUpObservationDraftCard, CurriculumOverrideDraftCard all use "ready to apply")
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 694: Confidence UI Pass V1
 
 **Files modified:**
