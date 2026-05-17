@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 599: DONNA Daily Operating Loop V1
+
+**Files created:**
+- `src/lib/donna/donnaDailyOperatingLoop.ts` — DONNA's daily operating brief. `buildDonnaDailyBrief(ctx, phase, date)` builds `DonnaDailyBrief` from `COOContext`. Generates attention items from: urgent review queue, attendance-risk players (from attendanceRisk.playerNames), wrap-up coverage gap, level readiness flags. Calls `rankNextBestActions(ctx)` for top 3 NBA items. `isHealthy` / `healthSummary` computed from urgentCount and atRiskCount. `DailyLoopPhase` (4 phases). No DB. No execution.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 598: DONNA Multi-Step Task Flow V1
 
 **Files created:**
