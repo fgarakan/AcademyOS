@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 683: Coach Wrap-Up Mobile Polish V1
+
+**Files modified:**
+- `src/app/globals.css` — Moved `safe-area-bottom` from `@layer components` to a new `@layer utilities` block so it wins over `pb-*` Tailwind utilities when placed on the same element; added `pb-safe` utility (`padding-bottom: max(1rem, env(safe-area-inset-bottom))`) for bottom-fixed footers that need both a minimum base padding and iOS home-indicator clearance
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDrawer.tsx` — Applied `pb-safe` to both fixed-bottom footer divs (question navigation bar and summary action bar): changed `py-4` → `pt-4 pb-safe`; these footers now clear the iPhone home indicator on notch devices while keeping 1rem padding on all others
+- `src/app/coach/sessions/[sessionId]/CoachSessionActions.tsx` — Fixed copy inconsistency: "Wrap Up Session" → "Wrap-Up Session" in the Quick Note helper text to match the button label (aligned with Sprint 677)
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 682: DONNA Side Panel Premium Polish V1
 
 **Files modified:**

@@ -175,8 +175,18 @@ body {
     @apply bg-surface border border-border rounded-2xl overflow-hidden;
   }
 
-  /* iOS safe area — adds bottom padding equal to the home indicator height */
+}
+
+@layer utilities {
+  /* iOS safe area — adds bottom padding equal to the home indicator height.
+     Placed in @layer utilities so it wins over pb-* utility classes on the same element. */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Use on fixed bottom-of-screen footers: gives at least 1rem (16px) of padding,
+     expanding to the home-indicator safe area on notch devices. */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 }

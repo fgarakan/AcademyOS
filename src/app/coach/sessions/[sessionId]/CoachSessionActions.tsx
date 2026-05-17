@@ -102,7 +102,7 @@ export function CoachSessionActions({ sessionId, academyId, sessionName, blocks,
       {!cta.disabled && (
         <p className="text-[10px] text-text-muted text-center leading-snug">
           Quick Note is an informal internal capture — not a session recap.
-          Use <span className="text-text-secondary">Wrap Up Session</span> to submit your end-of-session review.
+          Use <span className="text-text-secondary">Wrap-Up Session</span> to submit your end-of-session review.
         </p>
       )}
 

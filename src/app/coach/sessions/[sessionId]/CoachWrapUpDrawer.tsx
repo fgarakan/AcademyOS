@@ -781,7 +781,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
           </div>
         </div>
 
-        <div className="px-5 py-4 border-t border-border space-y-3">
+        <div className="px-5 pt-4 pb-safe border-t border-border space-y-3">
           {saveError && (
             <p className="text-xs text-status-red">{saveError}</p>
           )}
@@ -991,7 +991,7 @@ export function CoachWrapUpDrawer({ sessionId, sessionName, blocks, roster, onCl
       </div>
 
       {/* Navigation */}
-      <div className="px-5 py-4 border-t border-border flex items-center gap-3">
+      <div className="px-5 pt-4 pb-safe border-t border-border flex items-center gap-3">
         <button
           onClick={goBack}
           disabled={stepIndex === 0}
