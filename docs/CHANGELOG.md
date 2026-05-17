@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 544: DONNA Adaptive Clarifying Questions V1
+
+**Files created:**
+- `src/lib/donna/wrapUpClarifyingQuestions.ts` — clarification logic. `assessAnswer(text, questionId, attempts)` returns `ClarifyAssessment` with `needsClarification`, `reason` ('too_short' | 'vague_pattern' | 'none'), and a targeted `clarifyingQuestion`. Per-question clarifying question banks (3 options each). VAGUE_PATTERNS regex bank for trivial answers (yes/no/fine/all good etc.). Never clarifies more than once per question. Short-answer nudge for standouts/attention questions only. `ClarifyAttemptMap` utility to track attempts per question ID.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 543: DONNA Coach Wrap-Up Conversation Script V1
 
 **Files created:**
