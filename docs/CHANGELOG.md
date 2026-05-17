@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 594: DONNA Command Clarification V1
+
+**Files created:**
+- `src/components/donna/DONNACommandClarification.tsx` — clarification UI for ambiguous or unknown DONNA commands. Shows prompt, option buttons (category/label/description), optional free-text refinement input. `buildDefaultClarificationOptions()` builds full 9-category list. `buildAmbiguousClarificationOptions(candidates)` for two-option disambiguation. `onSelect(category)` + `onTypeRefinement(input)` + `onCancel` callbacks. No DB. No execution.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 593: DONNA Safe Command Preview V1
 
 **Files created:**
