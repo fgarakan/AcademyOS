@@ -411,15 +411,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [wakeDetectedCommand, setWakeDetectedCommand] = useState<string | null>(null)
 
   function speakAssistantText(text: string, onStatus?: (status: 'speaking' | 'done' | 'error') => void) {
-    console.log('[Donna TTS] speakAssistantText called', {
-      text: text.slice(0, 100),
-      speechSynthesisExists: typeof window !== 'undefined' && 'speechSynthesis' in window,
-      voicesLoaded: typeof window !== 'undefined' && 'speechSynthesis' in window
-        ? window.speechSynthesis.getVoices().length
-        : 0,
-    })
     if (typeof window === 'undefined' || !window.speechSynthesis) {
-      console.log('[Donna TTS] speechSynthesis not available — aborting')
       return
     }
 
@@ -429,7 +421,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     // Guard 1 — timestamp + text: same text spoken within 1500ms (catches StrictMode
     // double-invocation and onstart→setIsSpeaking→re-render triggered duplicate calls).
     if (lastSpokenTextRef.current === text && msSinceLast < 1500) {
-      console.log('[Donna TTS] 1500ms duplicate guard — skipping', { text: text.slice(0, 60), msSinceLast })
       return
     }
 
@@ -437,7 +428,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     // Cleared explicitly when advancing steps or resetting speech state.
     const stateKey = onboardingStep !== null ? `onboarding:${onboardingStep}` : `free:${text.slice(0, 40)}`
     if (lastSpokenKeyRef.current === stateKey) {
-      console.log('[Donna TTS] state-key duplicate guard — skipping', { stateKey })
       return
     }
 
@@ -459,30 +449,20 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     utt.rate = 1.0
     utt.pitch = 1.0
     utt.onstart = () => {
-      console.log('[Donna TTS] speakAssistantText onstart fired')
       setIsSpeaking(true)
       onStatus?.('speaking')
     }
     utt.onend = () => {
-      console.log('[Donna TTS] speakAssistantText onend fired')
       utteranceRef.current = null
       setIsSpeaking(false)
       onStatus?.('done')
     }
-    utt.onerror = (e) => {
-      console.log('[Donna TTS] speakAssistantText onerror fired', {
-        error: e.error,
-        speaking: window.speechSynthesis.speaking,
-        pending: window.speechSynthesis.pending,
-        paused: window.speechSynthesis.paused,
-        lastSpokenText: lastSpokenTextRef.current?.slice(0, 60),
-      })
+    utt.onerror = () => {
       utteranceRef.current = null
       setIsSpeaking(false)
       onStatus?.('error')
     }
     utteranceRef.current = utt
-    console.log('[Donna TTS] calling window.speechSynthesis.speak()')
     window.speechSynthesis.speak(utt)
   }
 
@@ -989,10 +969,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (convState.activeDraft === null && controllerTurn.nextState.activeDraft !== null) {
       if (controllerTurn.speakText) speakAssistantText(controllerTurn.speakText)
       if (controllerTurn.showDraftReview) setConvShowDraftReview(true)
-      console.log('[DonnaGoldenPath] draft_started', {
-        workflowId: controllerTurn.nextState.activeDraft.workflowId,
-        fields: Object.keys(controllerTurn.nextState.activeDraft.fields),
-      })
       appendAuditEvent({ type: 'draft_started', description: 'Draft started via voice', workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       recordSignal('workflow_started', { workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       if (controllerTurn.nextState.activeDraft.workflowId) {
@@ -2313,10 +2289,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       setConvState(controllerTurn.nextState)
       if (controllerTurn.speakText) speakDonna(controllerTurn.speakText)
       if (controllerTurn.showDraftReview) setConvShowDraftReview(true)
-      console.log('[DonnaGoldenPath] draft_started', {
-        workflowId: controllerTurn.nextState.activeDraft.workflowId,
-        fields: Object.keys(controllerTurn.nextState.activeDraft.fields),
-      })
       appendAuditEvent({ type: 'draft_started', description: 'Draft started via typed input', workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       recordSignal('workflow_started', { workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       if (controllerTurn.nextState.activeDraft.workflowId) {

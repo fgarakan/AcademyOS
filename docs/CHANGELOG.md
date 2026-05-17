@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 673: V1 Runtime Error Cleanup V1
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Removed 8 TTS debug `console.log` statements from `speakAssistantText` function; removed 2 `[DonnaGoldenPath] draft_started` console.log statements from voice and typed-input draft paths. Only intentional `console.warn` for Realtime connect failure preserved.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 672: V1 Information Architecture Pass V1
 
 **Files modified:**
