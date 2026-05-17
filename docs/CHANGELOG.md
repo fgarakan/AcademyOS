@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 578: Parent Draft Application Adapter Audit V1
+
+**Files created:**
+- `docs/PARENT_DRAFT_ADAPTER_AUDIT_578.md` — audit of parent draft approval/send pathway. Key finding: external sends (email/SMS/push/Slack) are ALL absent — intentionally. Internal path is safe: proposed_actions → director approval → apply to player_development_summaries only. No auto-notify. Parent can only see content via portal login. No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 577: Coach Observation Profile Update Guardrails V1
 
 **Files created:**
