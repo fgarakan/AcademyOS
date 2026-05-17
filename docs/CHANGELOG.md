@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 717: DONNA Panel Browser QA V1
+
+**Files created:**
+- `docs/DONNA_PANEL_QA_717.md` — DONNA panel static QA: role-aware mount confirmed (director/coach), 32 checks pass, voice fallback copy verified (Sprint 701), all button type attributes confirmed, zero DANA references. 10 items need browser verification.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 716: Review Queue Browser QA V1
 
 **Files created:**
