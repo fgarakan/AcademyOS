@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-17 — Sprint 534: Coach Wrap-Up Detail Panel V1
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDetailPanel.tsx` — async server component. Calls `getSupabaseServer()` and runs `loadWrapUpRoster`, `loadWrapUpAttendanceDraft`, `loadWrapUpSessionActual` sequentially. Renders 5 sections: session context (name/date/time + draft-only notice), roster list with colored attendance dots and status labels, attendance draft counts (present/away/unrecorded), session plan with per-block completion bars, and next-action hint driven by `existingWrapUpStatus`. All copy is draft-only / review-only. Empty/insufficient-data states for each section.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — added `CoachWrapUpDetailPanel` import; renders panel in the "After Session" section above `CoachWrapUpStatusCard` and `CoachSessionActions`, passing `sessionId`, `academyId`, `sessionName`, `scheduledDate`, `scheduledTime`, `existingWrapUpStatus`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 533: Coach Wrap-Up Live Data Regression V1
 
 **Files created:**

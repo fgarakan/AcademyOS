@@ -12,6 +12,7 @@ import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 import { saveSessionExecutionAction, saveAttendanceAction, saveSessionRecapAction } from './actions'
 import { structureCoachRecapAction } from './structureCoachRecapAction'
 import { CoachWrapUpStatusCard } from './CoachWrapUpStatusCard'
+import { CoachWrapUpDetailPanel } from './CoachWrapUpDetailPanel'
 
 interface PageProps {
   params: { sessionId: string }
@@ -348,6 +349,14 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           Player observations go directly to the director review queue.
         </p>
         <div className="space-y-3">
+          <CoachWrapUpDetailPanel
+            sessionId={session.id}
+            academyId={academyId}
+            sessionName={session.name ?? 'Session'}
+            scheduledDate={session.scheduled_date}
+            scheduledTime={session.scheduled_time ?? null}
+            existingWrapUpStatus={existingWrapUpStatus}
+          />
           <CoachWrapUpStatusCard status={existingWrapUpStatus} reviewerNote={existingWrapUpNote} />
           <CoachSessionActions
             sessionId={session.id}
