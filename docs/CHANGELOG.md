@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 596: DONNA Command Rejection and Cancel Flow V1
+
+**Files created:**
+- `src/components/donna/DONNACommandRejectionBanner.tsx` — rejection/cancel feedback banner. 7 `RejectionReason` types (user_cancelled/director_rejected/blocked_by_guardrail/insufficient_permissions/input_too_short/classification_failed/no_context). Each with title, body, icon, and color config. `onRetry`/`onDismiss` optional callbacks. No DB. No execution.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 595: DONNA Command Confirmation V1
 
 **Files created:**
