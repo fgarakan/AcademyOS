@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 725: No Roster Mutation Audit V1
+
+**Files created:**
+- `docs/NO_ROSTER_MUTATION_AUDIT_725.md` — Full roster mutation audit: no automated player creation/deletion/archival exists. Three authorized paths confirmed (new player form, placement finalization, demo cleanup) — all role-gated, `assertNotPreviewMode()`, director/head_coach only. No bulk import in app. Demo sandbox scoped to `[DEMO]%` prefix only.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 724: No Level Movement Audit V1
 
 **Files created:**
