@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 602: Top 5 Academy Priorities Live Actions V1
+
+**Files created:**
+- `src/components/donna/AcademyTopPrioritiesPanel.tsx` — director panel showing top 5 DONNA NBA-ranked actions. Renders `PriorityRow` per action with rank, urgency dot (red/orange/grey), title, reason, blocked indicator, and action link (lime "→" button). Header shows urgent count badge. Loading and empty states. `onActionClick(action)` callback. DONNA attribution footer. Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 601: Academy Health Action Application Links V1
 
 **Files created:**
