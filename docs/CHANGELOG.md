@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 593: DONNA Safe Command Preview V1
+
+**Files created:**
+- `src/components/donna/DONNACommandPreviewCard.tsx` — command preview card shown after intent classification. Echoes raw input, shows classification (category + confidence badge + matched signals), route destination, safety flags (director approval required / read-only), clarification prompt if needed, and Proceed/Clarify/Cancel actions. Preview only. No DB. No execution.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 592: DONNA Intent Classification V1
 
 **Files created:**
