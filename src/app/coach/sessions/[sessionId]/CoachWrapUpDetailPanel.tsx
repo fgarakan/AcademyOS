@@ -200,54 +200,66 @@ export async function CoachWrapUpDetailPanel({
         </p>
       </div>
 
-      {/* ── Attendance summary (only if any records exist) ── */}
-      {attendance.hasAnyRecord && (
-        <div className="px-4 py-4 border-b border-border space-y-3">
-          <p className="label-xs">Attendance Draft</p>
+      {/* ── Attendance summary ── */}
+      <div className="px-4 py-4 border-b border-border space-y-3">
+        <p className="label-xs">Attendance Draft</p>
 
-          <div className="flex gap-6">
-            <div>
-              <p className="text-2xl font-mono font-bold text-status-green">{attendance.presentCount}</p>
-              <p className="text-xs text-text-muted mt-0.5">Present</p>
-            </div>
-            <div>
-              <p className={`text-2xl font-mono font-bold ${attendance.absentCount > 0 ? 'text-status-orange' : 'text-text-muted'}`}>
-                {attendance.absentCount}
-              </p>
-              <p className="text-xs text-text-muted mt-0.5">Away</p>
-            </div>
-            {attendance.unrecordedCount > 0 && (
-              <div>
-                <p className="text-2xl font-mono font-bold text-status-orange">{attendance.unrecordedCount}</p>
-                <p className="text-xs text-text-muted mt-0.5">Unrecorded</p>
-              </div>
-            )}
-          </div>
-
-          {attendance.isPartiallyFilled && (
-            <p className="text-sm text-status-orange leading-snug">
-              {attendance.unrecordedCount} player{attendance.unrecordedCount !== 1 ? 's' : ''} not yet marked —
-              complete attendance in the run panel before wrapping up.
-            </p>
-          )}
-
-          <p className="text-xs text-text-muted/60">
-            Draft — not official until director applies the wrap-up.
+        {!attendance.hasAnyRecord ? (
+          <p className="text-sm text-text-muted leading-snug">
+            No attendance marked yet — use the run panel above to record each player.
           </p>
-        </div>
-      )}
+        ) : (
+          <>
+            <div className="flex gap-6">
+              <div>
+                <p className="text-2xl font-mono font-bold text-status-green">{attendance.presentCount}</p>
+                <p className="text-xs text-text-muted mt-0.5">Present</p>
+              </div>
+              <div>
+                <p className={`text-2xl font-mono font-bold ${attendance.absentCount > 0 ? 'text-status-orange' : 'text-text-muted'}`}>
+                  {attendance.absentCount}
+                </p>
+                <p className="text-xs text-text-muted mt-0.5">Away</p>
+              </div>
+              {attendance.unrecordedCount > 0 && (
+                <div>
+                  <p className="text-2xl font-mono font-bold text-status-orange">{attendance.unrecordedCount}</p>
+                  <p className="text-xs text-text-muted mt-0.5">Unrecorded</p>
+                </div>
+              )}
+            </div>
+
+            {attendance.isPartiallyFilled && (
+              <p className="text-sm text-status-orange leading-snug">
+                {attendance.unrecordedCount} player{attendance.unrecordedCount !== 1 ? 's' : ''} not yet marked —
+                complete attendance in the run panel before wrapping up.
+              </p>
+            )}
+          </>
+        )}
+
+        <p className="text-xs text-text-muted/60">
+          Draft — not official until director applies the wrap-up.
+        </p>
+      </div>
 
       {/* ── Session actual — blocks ── */}
-      {sessionActual.hasBlockData && (
-        <div className="px-4 py-4 border-b border-border space-y-3">
-          <div className="flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-text-muted shrink-0" />
-            <p className="label-xs">Session Plan</p>
+      <div className="px-4 py-4 border-b border-border space-y-3">
+        <div className="flex items-center gap-2">
+          <BarChart2 className="w-4 h-4 text-text-muted shrink-0" />
+          <p className="label-xs">Session Plan</p>
+          {sessionActual.hasBlockData && (
             <span className="text-[10px] font-mono text-text-muted ml-0.5">
               {sessionActual.fullyCompletedBlocks}/{sessionActual.totalBlocks} blocks complete
             </span>
-          </div>
+          )}
+        </div>
 
+        {!sessionActual.hasBlockData ? (
+          <p className="text-sm text-text-muted leading-snug">
+            No blocks in this session yet. Ask your director to add blocks to the template.
+          </p>
+        ) : (
           <div className="space-y-3">
             {sessionActual.blocks.map(block => (
               <div key={block.blockId} className="py-1">
@@ -260,12 +272,12 @@ export async function CoachWrapUpDetailPanel({
               </div>
             ))}
           </div>
+        )}
 
-          <p className="text-xs text-text-muted/60">
-            Draft — not applied to the official session record.
-          </p>
-        </div>
-      )}
+        <p className="text-xs text-text-muted/60">
+          Draft — not applied to the official session record.
+        </p>
+      </div>
 
       {/* ── Next action ── */}
       <div className="px-4 py-4">

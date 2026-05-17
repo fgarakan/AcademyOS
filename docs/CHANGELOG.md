@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 536: Coach Wrap-Up Detail Panel Empty States V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDetailPanel.tsx` — attendance and session plan sections now always render (removed conditional guards); each shows a calm empty-state message when no data exists ("No attendance marked yet…" / "No blocks in this session yet…"). Block-count badge in session plan header hidden when `!hasBlockData`. All empty-state copy is non-alarming.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 535: Coach Wrap-Up Detail Panel Mobile UX V1
 
 **Files modified:**
