@@ -170,8 +170,8 @@ export function GenerateSessionFromTemplateButton({
             </div>
             <button
               onClick={closePanel}
-              className="shrink-0 p-1 rounded text-text-muted hover:text-text-primary transition-colors"
-              title="Close"
+              aria-label="Close"
+              className="shrink-0 p-2 rounded-lg text-text-muted hover:text-text-primary transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -196,8 +196,8 @@ export function GenerateSessionFromTemplateButton({
             <button
               onClick={closePanel}
               disabled={isPending}
-              className="p-1 rounded text-text-muted hover:text-text-primary disabled:opacity-50 transition-colors"
-              title="Cancel"
+              aria-label="Cancel"
+              className="p-2 rounded-lg text-text-muted hover:text-text-primary disabled:opacity-50 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>

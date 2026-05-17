@@ -197,7 +197,7 @@ export function DonnaWorkflowCards({
                   <button
                     onClick={onCloseConvReview}
                     aria-label="Close draft review"
-                    className="text-text-muted hover:text-text-primary transition-colors"
+                    className="p-2 -mr-1 -mt-1 rounded-lg text-text-muted hover:text-text-primary transition-colors"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -282,7 +282,7 @@ export function DonnaWorkflowCards({
             <button
               onClick={onDismissCommandResponse}
               aria-label="Dismiss"
-              className="shrink-0 text-text-muted hover:text-text-primary transition-colors mt-0.5"
+              className="shrink-0 p-2 -mr-1 -mt-1 rounded-lg text-text-muted hover:text-text-primary transition-colors"
             >
               <X className="w-3 h-3" />
             </button>
@@ -410,7 +410,7 @@ export function DonnaWorkflowCards({
             <button
               onClick={onDismissOnboardingSuggestions}
               aria-label="Dismiss"
-              className="text-text-muted hover:text-text-primary transition-colors"
+              className="p-2 -mr-1 -mt-1 rounded-lg text-text-muted hover:text-text-primary transition-colors"
             >
               <X className="w-3 h-3" />
             </button>
@@ -455,7 +455,7 @@ export function DonnaWorkflowCards({
             <button
               onClick={onDismissContextSummary}
               aria-label="Dismiss summary"
-              className="shrink-0 text-text-muted hover:text-text-primary transition-colors mt-0.5"
+              className="shrink-0 p-2 -mr-1 -mt-1 rounded-lg text-text-muted hover:text-text-primary transition-colors"
             >
               <X className="w-3 h-3" />
             </button>

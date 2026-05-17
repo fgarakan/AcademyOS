@@ -62,7 +62,7 @@ export function DonnaSuggestionCard({ suggestion, onStartTask, onNavigate, onDis
         <button
           onClick={() => onDismiss(suggestion.id)}
           aria-label="Dismiss suggestion"
-          className="shrink-0 text-text-muted hover:text-text-primary transition-colors mt-0.5"
+          className="shrink-0 p-2 -mr-1 -mt-1 rounded-lg text-text-muted hover:text-text-primary transition-colors"
         >
           <X className="w-3 h-3" />
         </button>

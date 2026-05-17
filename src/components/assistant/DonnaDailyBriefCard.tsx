@@ -37,7 +37,7 @@ export function DonnaDailyBriefCard({ brief, onDismiss, onOpenReviewQueue, onPre
         <button
           onClick={onDismiss}
           aria-label="Dismiss brief"
-          className="shrink-0 text-text-muted hover:text-text-primary transition-colors"
+          className="shrink-0 p-2 -mr-2 -mt-1 rounded-lg text-text-muted hover:text-text-primary transition-colors"
         >
           <X className="w-3.5 h-3.5" />
         </button>

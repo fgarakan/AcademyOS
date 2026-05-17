@@ -124,7 +124,7 @@ export function SuggestionCard({ suggestion, onAccept, onDeny, onDefer }: Props)
           {/* Expand toggle */}
           <button
             onClick={() => setExpanded(e => !e)}
-            className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-secondary hover:bg-surface-raised transition-colors"
+            className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-text-muted hover:text-text-secondary hover:bg-surface-raised transition-colors"
             aria-label={expanded ? 'Collapse' : 'Expand'}
           >
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
