@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 650: DONNA First Daily Welcome Final V1
+
+**Files modified:**
+- `src/lib/donna/donnaDailyGreeting.ts` — Fixed `todayDateString()` to use local calendar date (was using UTC — broke for users in negative-offset timezones after midnight); extracted `greetingWord()` shared helper; coach branch now uses same helper (no duplication).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 649: Director DONNA Priority Routing Polish V1
 
 **Files modified:**

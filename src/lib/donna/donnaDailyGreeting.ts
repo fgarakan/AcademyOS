@@ -1,4 +1,4 @@
-// Sprint 647 — First Daily Welcome
+// Sprint 647/650 — First Daily Welcome (final)
 // Stateless helper. No DB reads. No API calls. localStorage only.
 
 const STORAGE_KEY = 'academyos:donna:lastGreetedDate:v1'
@@ -11,8 +11,14 @@ export interface DailyGreetingState {
   followUp: string
 }
 
+// Use local calendar date — toISOString() returns UTC which can mismatch local
+// date for users in negative-offset timezones after midnight.
 function todayDateString(): string {
-  return new Date().toISOString().slice(0, 10)
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 function getTimeOfDay(): TimeOfDay {
@@ -23,14 +29,16 @@ function getTimeOfDay(): TimeOfDay {
   return 'late night'
 }
 
+// Shared salutation — used by both director and coach branches.
+function greetingWord(timeOfDay: TimeOfDay): string {
+  if (timeOfDay === 'morning') return 'Good morning'
+  if (timeOfDay === 'afternoon') return 'Good afternoon'
+  return 'Good evening'
+}
+
 function buildPrimaryText(firstName: string | null, timeOfDay: TimeOfDay): string {
   const salutation = firstName ? `Coach ${firstName}` : 'Coach'
-  const greeting =
-    timeOfDay === 'morning' ? 'Good morning'
-    : timeOfDay === 'afternoon' ? 'Good afternoon'
-    : timeOfDay === 'evening' ? 'Good evening'
-    : 'Good evening'
-  return `${greeting}, ${salutation}. I'm ready to help you run the academy today.`
+  return `${greetingWord(timeOfDay)}, ${salutation}. I'm ready to help you run the academy today.`
 }
 
 /**
@@ -61,14 +69,10 @@ export function getDailyGreetingState(
     const timeOfDay = getTimeOfDay()
     if (role === 'coach') {
       const salutation = firstName ? `Coach ${firstName}` : 'Coach'
-      const greeting =
-        timeOfDay === 'morning' ? 'Good morning'
-        : timeOfDay === 'afternoon' ? 'Good afternoon'
-        : 'Good evening'
       return {
         isFirstOpenToday: true,
-        primaryText: `${greeting}, ${salutation}. I'm here to help with your sessions today.`,
-        followUp: 'If you have a session to wrap up, I\'ll bring it up first.',
+        primaryText: `${greetingWord(timeOfDay)}, ${salutation}. I'm here to help with your sessions today.`,
+        followUp: "If you have a session to wrap up, I'll bring it up first.",
       }
     }
     return {
