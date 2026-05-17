@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 558: Review Queue COO Signal Integration V1
+
+**Files created:**
+- `src/lib/donna/reviewQueueCOOSignal.ts` — `ReviewQueueCOOSignal` type with source, sourceLabel, linkedKPI, priorityReason, confidence, urgency. `buildCOOSignal` factory + specialized builders: `buildWrapUpCOOSignal`, `buildAttendanceCOOSignal`, `buildParentUpdateCOOSignal`, `buildLevelReadinessCOOSignal`. No DB. No writes.
+- `src/components/donna/ReviewQueueCOOSignalBadge.tsx` — badge UI showing source, KPI, confidence color, urgency flag, and priority reason. Compact and full variants. No DB.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 557: DONNA Next Best Action Live Ranking V1
 
 **Files created:**
