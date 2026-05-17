@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 636: Pilot Empty State Polish V1
+
+**Files created:**
+- `src/components/donna/DONNAEmptyStateSurface.tsx` — polished empty state component for 7 pilot surfaces (review_queue/player_list/academy_health/wrap_up_coverage/conversation_history/donna_command/parent_drafts). Each has an icon, tone-coded title (positive/neutral/informational), and contextual description explaining why data is absent. Optional CTA button. Makes empty states feel intentional during pilot.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 635: Pilot Navigation Polish V1
 
 **Files created:**
