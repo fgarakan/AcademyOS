@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 540: DONNA Conversation State Machine V1
+
+**Files created:**
+- `src/lib/donna/conversationTypes.ts` — pure TypeScript types: `ConversationState` (8 states), `MessageRole`, `MessageKind`, `ConversationMessage`, `ConversationSession`, `ConversationEvent` (12 event types). No DB, no 'use client'.
+- `src/lib/donna/useConversationState.ts` — `'use client'` React hook. Implements `applyTransition` reducer enforcing all state machine transitions from architecture doc. Exports `useConversationState(sessionId)` returning `session`, `state`, `messages`, `dispatch`, `addDonnaMessage`, `reset`. No DB calls — all writes flow through `saveWrapUpDraftAction`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 539: Natural Conversation Architecture Audit V1
 
 **Files created:**
