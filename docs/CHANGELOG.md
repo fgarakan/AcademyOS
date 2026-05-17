@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 730: Missing Data State QA V1
+
+**Files created:**
+- `docs/MISSING_DATA_STATE_QA_730.md` — Missing data state audit: KPI engines return `insufficient_data`/`no_data` status (never null/throw); UI uses `<EmptyState>`, `?? []`, length guards; DONNA degrades gracefully through live/partial/insufficient_data/blocked. No surface crashes on empty data. No fixes needed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 729: RLS Blocked State QA V1
 
 **Files created:**
