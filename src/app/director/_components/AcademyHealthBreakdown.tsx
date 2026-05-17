@@ -292,19 +292,19 @@ function AcademyHealthDrawer({
 
       {/* Drawer panel */}
       <div
-        className="fixed inset-y-0 right-0 z-50 w-full sm:w-[500px] max-w-full bg-[#111111] border-l border-[#222222] flex flex-col overflow-hidden"
+        className="fixed inset-y-0 right-0 z-50 w-full sm:w-[500px] max-w-full bg-surface border-l border-border flex flex-col overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-label="Academy Health Breakdown"
       >
         {/* Header */}
-        <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-[#222222] shrink-0">
+        <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-border shrink-0">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl bg-teal-400/10 border border-teal-400/20 flex items-center justify-center shrink-0 mt-0.5">
               <ShieldCheck className="w-4 h-4 text-teal-400" />
             </div>
             <div>
-              <h2 className="font-semibold text-white text-base leading-tight">Academy Health</h2>
+              <h2 className="font-semibold text-text-primary text-base leading-tight">Academy Health</h2>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className={`font-mono font-bold text-2xl ${scoreTextColor(data.healthPct)}`}>
                   {data.healthPct}%
@@ -315,14 +315,14 @@ function AcademyHealthDrawer({
                   {status}
                 </span>
               </div>
-              <p className="text-[11px] text-[#555555] mt-1 leading-snug">
+              <p className="text-[11px] text-text-muted mt-1 leading-snug">
                 Operational health estimate based on current academy signals
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-[#555555] hover:text-white transition-colors p-1.5 -mr-1 rounded-lg hover:bg-[#1A1A1A] shrink-0"
+            className="text-text-muted hover:text-text-primary transition-colors p-1.5 -mr-1 rounded-lg hover:bg-surface-raised shrink-0"
             aria-label="Close breakdown"
           >
             <X className="w-5 h-5" />
@@ -334,29 +334,29 @@ function AcademyHealthDrawer({
 
           {/* Category Breakdown */}
           <section>
-            <p className="text-[11px] uppercase tracking-widest font-semibold text-[#555555] mb-3">
+            <p className="text-[11px] uppercase tracking-widest font-semibold text-text-muted mb-3">
               Category Breakdown
             </p>
             <div className="space-y-3">
               {categories.map((cat) => (
-                <div key={cat.name} className="bg-[#1A1A1A] rounded-xl px-4 py-3 border border-[#222222]">
+                <div key={cat.name} className="bg-surface-raised rounded-xl px-4 py-3 border border-border">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-white">{cat.name}</span>
-                      <span className="text-[10px] text-[#555555] font-mono">{cat.weight}%</span>
+                      <span className="text-sm font-medium text-text-primary">{cat.name}</span>
+                      <span className="text-[10px] text-text-muted font-mono">{cat.weight}%</span>
                     </div>
                     <span className={`font-mono font-bold text-base ${scoreTextColor(cat.score)}`}>
                       {cat.score}
                     </span>
                   </div>
                   {/* Progress bar */}
-                  <div className="w-full h-1.5 rounded-full bg-[#222222] overflow-hidden mb-1.5">
+                  <div className="w-full h-1.5 rounded-full bg-border overflow-hidden mb-1.5">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${scoreBgColor(cat.score)}`}
                       style={{ width: `${cat.score}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-[#AAAAAA] leading-snug">{cat.explanation}</p>
+                  <p className="text-[11px] text-text-secondary leading-snug">{cat.explanation}</p>
                 </div>
               ))}
             </div>
@@ -367,7 +367,7 @@ function AcademyHealthDrawer({
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <TrendingUp className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                <p className="text-[11px] uppercase tracking-widest font-semibold text-[#555555]">
+                <p className="text-[11px] uppercase tracking-widest font-semibold text-text-muted">
                   What is helping
                 </p>
               </div>
@@ -375,7 +375,7 @@ function AcademyHealthDrawer({
                 {helping.map((item, i) => (
                   <li key={i} className="flex items-start gap-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0 mt-1.5" />
-                    <span className="text-sm text-[#AAAAAA] leading-snug">{item}</span>
+                    <span className="text-sm text-text-secondary leading-snug">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -386,16 +386,16 @@ function AcademyHealthDrawer({
           {lowering.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3">
-                <TrendingDown className="w-3.5 h-3.5 text-[#FF9500] shrink-0" />
-                <p className="text-[11px] uppercase tracking-widest font-semibold text-[#555555]">
+                <TrendingDown className="w-3.5 h-3.5 text-status-orange shrink-0" />
+                <p className="text-[11px] uppercase tracking-widest font-semibold text-text-muted">
                   What is lowering the score
                 </p>
               </div>
               <ul className="space-y-2">
                 {lowering.map((item, i) => (
                   <li key={i} className="flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF9500] shrink-0 mt-1.5" />
-                    <span className="text-sm text-[#AAAAAA] leading-snug">{item}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-status-orange shrink-0 mt-1.5" />
+                    <span className="text-sm text-text-secondary leading-snug">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -405,8 +405,8 @@ function AcademyHealthDrawer({
           {/* Focus first */}
           <section>
             <div className="flex items-center gap-2 mb-3">
-              <Target className="w-3.5 h-3.5 text-[#C8FF00] shrink-0" />
-              <p className="text-[11px] uppercase tracking-widest font-semibold text-[#555555]">
+              <Target className="w-3.5 h-3.5 text-lime shrink-0" />
+              <p className="text-[11px] uppercase tracking-widest font-semibold text-text-muted">
                 Focus first
               </p>
             </div>
@@ -416,18 +416,18 @@ function AcademyHealthDrawer({
                   key={i}
                   href={action.href}
                   onClick={onClose}
-                  className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#1A1A1A] border border-[#222222] hover:border-[#C8FF00]/20 hover:bg-[#C8FF00]/5 transition-all group"
+                  className="flex items-start gap-3 px-4 py-3 rounded-xl bg-surface-raised border border-border hover:border-lime/20 hover:bg-lime/5 transition-all group"
                 >
-                  <span className="text-[11px] font-bold font-mono text-[#555555] shrink-0 mt-0.5 w-4 text-right">
+                  <span className="text-[11px] font-bold font-mono text-text-muted shrink-0 mt-0.5 w-4 text-right">
                     {i + 1}.
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white group-hover:text-[#C8FF00] transition-colors">
+                    <p className="text-sm font-semibold text-text-primary group-hover:text-lime transition-colors">
                       {action.label}
                     </p>
-                    <p className="text-[11px] text-[#AAAAAA] mt-0.5 leading-snug">{action.detail}</p>
+                    <p className="text-[11px] text-text-secondary mt-0.5 leading-snug">{action.detail}</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-[#555555] group-hover:text-[#C8FF00] transition-colors shrink-0 mt-0.5" />
+                  <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0 mt-0.5" />
                 </Link>
               ))}
             </div>
@@ -436,8 +436,8 @@ function AcademyHealthDrawer({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-[#222222] shrink-0 bg-[#0A0A0A]">
-          <p className="text-[11px] text-[#555555] leading-snug text-center">
+        <div className="px-5 py-4 border-t border-border shrink-0 bg-base">
+          <p className="text-[11px] text-text-muted leading-snug text-center">
             DONNA can recommend what to review next. Nothing official changes from this panel.
           </p>
         </div>

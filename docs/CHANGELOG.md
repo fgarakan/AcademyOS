@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-17 — Sprint 685: Academy Health Drawer Premium Polish V1
+
+**Files modified:**
+- `src/app/director/_components/AcademyHealthBreakdown.tsx` — Replaced all hardcoded hex color values with canonical design system tokens throughout the drawer component. Specific changes:
+  - Drawer panel: `bg-[#111111] border-[#222222]` → `bg-surface border-border`
+  - Header, section borders: `border-[#222222]` → `border-border`
+  - h2 title, category names, focus action labels: `text-white` → `text-text-primary`
+  - Descriptive text, section headers: `text-[#555555]` → `text-text-muted`; `text-[#AAAAAA]` → `text-text-secondary`
+  - Category cards, focus action cards: `bg-[#1A1A1A] border-[#222222]` → `bg-surface-raised border-border`
+  - Progress bar track: `bg-[#222222]` → `bg-border`
+  - Lowering indicator: `bg-[#FF9500]`/`text-[#FF9500]` → `bg-status-orange`/`text-status-orange`
+  - Lime accents: `text-[#C8FF00]`, `hover:border-[#C8FF00]/20`, `hover:bg-[#C8FF00]/5`, `group-hover:text-[#C8FF00]` → `text-lime`, `hover:border-lime/20`, `hover:bg-lime/5`, `group-hover:text-lime`
+  - Footer: `bg-[#0A0A0A] border-[#222222] text-[#555555]` → `bg-base border-border text-text-muted`
+  - Semantic health score colors (teal/yellow/red) intentionally preserved
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 684: Review Queue Premium Polish V1
 
 **Files modified:**
