@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 628: Director Command Center Mobile Polish V1
+
+**Files created:**
+- `src/components/donna/DONNADirectorMobileCommandBar.tsx` — compact mobile bottom bar for the director. 3 tap zones: academy health score (color-coded green/orange/red), DONNA command input (expandable inline text field with Submit/Escape), review queue badge (urgent indicator + count/clear). Callbacks only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 627: Mobile Coach Flow Polish V1
 
 **Files created:**
