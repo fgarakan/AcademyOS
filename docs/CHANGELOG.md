@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 584: Level Readiness Approval Guardrails V1
+
+**Files created:**
+- `src/lib/donna/levelReadinessGuardrails.ts` — `checkLevelReadinessGuardrails(direction, evidenceItems, readinessScore, proposedByRole, reviewerRole)` returns `canReview`, `canApprove`, blockers (INSUFFICIENT_ROLE), warnings (DEMOTION_REVIEW critical, INCOMPLETE_EVIDENCE, NO_EVIDENCE, LOW_READINESS_SCORE, HIGH_SCORE_DEMOTION). `LEVEL_CHANGE_PROTECTION_COPY` constants confirming DONNA cannot trigger level movement, wrap-ups cannot trigger level movement. No DB. No execution.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 583: Level Readiness Apply Preview V1
 
 **Files created:**
