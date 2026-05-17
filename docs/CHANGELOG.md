@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 654: Coach DONNA Wrap-Up Priority Copy V1
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — When coach opens DONNA on a session detail page, greeting card shows an orange "This session needs a wrap-up. Start now?" CTA that pre-fills the DONNA input with "Help me wrap up this session". URL-based detection (no DB query).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 653: Coach Session Detail DONNA CTA V1
 
 **Files modified:**

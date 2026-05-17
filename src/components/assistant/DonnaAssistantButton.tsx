@@ -2735,6 +2735,30 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                     : `${reviewQueuePendingCount} items are waiting in your review queue.`}
                 </p>
               )}
+              {/* Sprint 654 — wrap-up priority CTA when coach is on a session page */}
+              {!isOnboardingActive(onboardingStep) && role === 'coach' && (() => {
+                const sessionSegment = pathname.includes('/sessions/')
+                  ? pathname.split('/sessions/')[1]
+                  : null
+                const sessionId = sessionSegment && !sessionSegment.startsWith('undefined') ? sessionSegment.split('/')[0] : null
+                return sessionId ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTypedText('Help me wrap up this session')
+                    }}
+                    className="mt-3 w-full rounded-lg px-3 py-1.5 text-xs font-semibold transition-all
+                      hover:brightness-110 active:scale-[0.98]"
+                    style={{
+                      background: 'rgba(255,149,0,0.08)',
+                      border: '1px solid rgba(255,149,0,0.25)',
+                      color: '#FF9500',
+                    }}
+                  >
+                    This session needs a wrap-up. Start now?
+                  </button>
+                ) : null
+              })()}
               {!isOnboardingActive(onboardingStep) && dailyGreetingState?.isFirstOpenToday && (
                 <button
                   type="button"
