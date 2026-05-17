@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 703: Correction Handling UX Polish V1
+
+**Files modified:**
+- `src/components/donna/DONNACommandClarification.tsx` — Imported `DONNA_PUBLIC_NAME`; replaced hardcoded "DONNA" in header with constant; added `type="button"` to option buttons and Cancel button
+- `src/components/donna/DONNACommandRejectionBanner.tsx` — Imported `DONNA_PUBLIC_NAME`; replaced hardcoded "DONNA" in `input_too_short` and `classification_failed` body copy with constant; added `type="button"` to Retry and Dismiss buttons
+- `src/components/donna/DONNACommandConfirmation.tsx` — Imported `DONNA_PUBLIC_NAME`; replaced hardcoded "DONNA" in header with constant; added `type="button"` to Confirm, Edit, and Cancel buttons
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 702: Transcript Review UX Polish V1
 
 **Files modified:**

@@ -7,6 +7,7 @@
 
 import { CheckCircle2, Shield, AlertTriangle } from 'lucide-react'
 import type { DonnaCommandCategory } from '@/lib/donna/donnaCommandRouter'
+import { DONNA_PUBLIC_NAME } from '@/components/assistant/donnaAssistantCopy'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ export function DONNACommandConfirmation({
       {/* ── Header ── */}
       <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border">
         <div className="w-2 h-2 rounded-full bg-lime shrink-0" />
-        <p className="text-xs font-semibold text-text-secondary">DONNA — confirm proposal</p>
+        <p className="text-xs font-semibold text-text-secondary">{DONNA_PUBLIC_NAME} — confirm proposal</p>
       </div>
 
       {/* ── Summary ── */}
@@ -133,6 +134,7 @@ export function DONNACommandConfirmation({
       {/* ── Actions ── */}
       <div className="flex items-center gap-2 px-3.5 py-2.5">
         <button
+          type="button"
           onClick={onConfirm}
           disabled={isSubmitting}
           className="flex-1 btn-lime text-xs py-1.5 flex items-center justify-center gap-1.5"
@@ -141,12 +143,12 @@ export function DONNACommandConfirmation({
           {isSubmitting ? 'Submitting…' : confirmLabel}
         </button>
         {onEdit && (
-          <button onClick={onEdit} disabled={isSubmitting} className="btn-ghost text-xs py-1.5 px-3">
+          <button type="button" onClick={onEdit} disabled={isSubmitting} className="btn-ghost text-xs py-1.5 px-3">
             Edit
           </button>
         )}
         {onCancel && (
-          <button onClick={onCancel} disabled={isSubmitting} className="btn-ghost text-xs py-1.5 px-3">
+          <button type="button" onClick={onCancel} disabled={isSubmitting} className="btn-ghost text-xs py-1.5 px-3">
             Cancel
           </button>
         )}

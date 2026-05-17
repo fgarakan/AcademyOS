@@ -8,6 +8,7 @@
 import { HelpCircle } from 'lucide-react'
 import type { DonnaCommandCategory } from '@/lib/donna/donnaCommandRouter'
 import { formatCategoryLabel } from '@/lib/donna/donnaIntentClassifier'
+import { DONNA_PUBLIC_NAME } from '@/components/assistant/donnaAssistantCopy'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -87,7 +88,7 @@ export function DONNACommandClarification({
       {/* ── Header ── */}
       <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border">
         <HelpCircle className="w-3.5 h-3.5 text-status-orange shrink-0" />
-        <p className="text-xs font-semibold text-text-secondary">DONNA — clarification needed</p>
+        <p className="text-xs font-semibold text-text-secondary">{DONNA_PUBLIC_NAME} — clarification needed</p>
       </div>
 
       {/* ── Prompt ── */}
@@ -100,6 +101,7 @@ export function DONNACommandClarification({
         {options.map(opt => (
           <button
             key={opt.category}
+            type="button"
             onClick={() => onSelect(opt.category)}
             disabled={isLoading}
             className="w-full text-left rounded-lg border border-border bg-surface px-3 py-2.5 hover:border-lime/40 hover:bg-lime/5 transition-colors group"
@@ -143,6 +145,7 @@ export function DONNACommandClarification({
       {onCancel && (
         <div className="px-3.5 pb-3">
           <button
+            type="button"
             onClick={onCancel}
             className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
           >
