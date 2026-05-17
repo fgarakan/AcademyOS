@@ -2759,7 +2759,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   </button>
                 ) : null
               })()}
-              {!isOnboardingActive(onboardingStep) && dailyGreetingState?.isFirstOpenToday && (
+              {!isOnboardingActive(onboardingStep) && dailyGreetingState?.isFirstOpenToday && role === 'director' && (
                 <button
                   type="button"
                   onClick={() => void handleFetchDailyBrief()}
@@ -2771,9 +2771,46 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                     color: '#C8FF00',
                   }}
                 >
-                  {role === 'coach' ? 'What needs attention today?' : 'Walk me through academy priorities'}
+                  Walk me through academy priorities
                 </button>
               )}
+              {/* Sprint 655 — Coach quick actions when not on a session detail page */}
+              {!isOnboardingActive(onboardingStep) && role === 'coach' && activeMode === null && !genericDraft && !templateDraft && (() => {
+                const sessionSegment = pathname.includes('/sessions/') ? pathname.split('/sessions/')[1] : null
+                const sessionId = sessionSegment && !sessionSegment.startsWith('undefined') ? sessionSegment.split('/')[0] : null
+                if (sessionId) return null
+                return (
+                  <div className="mt-3 space-y-1.5">
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-text-muted">Quick actions</p>
+                    <div className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => { setTypedText('Capture a player note') }}
+                        className="w-full text-left rounded-lg px-3 py-1.5 text-xs transition-all hover:brightness-110 active:scale-[0.98]"
+                        style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.15)', color: '#AAAAAA' }}
+                      >
+                        Capture a player note
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleFetchDailyBrief()}
+                        className="w-full text-left rounded-lg px-3 py-1.5 text-xs transition-all hover:brightness-110 active:scale-[0.98]"
+                        style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.15)', color: '#AAAAAA' }}
+                      >
+                        What needs attention today?
+                      </button>
+                      <Link
+                        href="/coach/sessions"
+                        onClick={closePanel}
+                        className="block rounded-lg px-3 py-1.5 text-xs transition-all hover:brightness-110"
+                        style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.15)', color: '#AAAAAA' }}
+                      >
+                        Go to my sessions
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })()}
               {isOnboardingActive(onboardingStep) && (
                 <>
                   <p className="text-[10px] text-text-muted mt-1.5 leading-snug">

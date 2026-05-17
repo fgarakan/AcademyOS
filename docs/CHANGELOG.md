@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 655: Coach DONNA No-Wrap-Up Needed State V1
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — When coach opens DONNA on any page that is NOT a session detail page, the greeting card shows three quick-action buttons: "Capture a player note" (pre-fills input), "What needs attention today?" (triggers daily brief), and "Go to my sessions" (navigation link). Director "Walk me through academy priorities" CTA now scoped to director role only.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 654: Coach DONNA Wrap-Up Priority Copy V1
 
 **Files modified:**
