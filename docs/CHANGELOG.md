@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-17 — Sprint 699: Responsive Layout Pass V1
+
+**Files modified:**
+- `src/app/director/kpi/page.tsx` — Changed summary cards grid from `grid-cols-3` to `grid-cols-1 sm:grid-cols-3` so it stacks on narrow screens instead of cramping three columns
+- `src/app/director/kpi/loading.tsx` — Matching responsive grid change for the loading skeleton
+- `src/app/director/alerts/page.tsx` — Changed summary row grid from `grid-cols-3` to `grid-cols-1 sm:grid-cols-3`
+- `src/app/director/players/[playerId]/_components/PlayerKpiDrilldownCard.tsx` — Changed KPI metrics grid from `grid-cols-3` to `grid-cols-1 sm:grid-cols-3`
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 698: Touch Target Pass V1
 
 **Files modified:**

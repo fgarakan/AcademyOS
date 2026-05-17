@@ -78,7 +78,7 @@ export async function PlayerKpiDrilldownCard({ playerId, academyId }: Props) {
         </Link>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Time in Level */}
           <div>
             <p className="label-xs mb-1.5">

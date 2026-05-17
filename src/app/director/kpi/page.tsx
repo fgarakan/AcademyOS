@@ -164,7 +164,7 @@ export default async function KpiDashboardPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <p className="label-xs mb-1">Active Players</p>

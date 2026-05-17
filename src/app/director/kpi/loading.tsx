@@ -9,7 +9,7 @@ export default function KpiLoading() {
         <LoadingSkeleton className="h-8 w-48 mb-1" />
         <LoadingSkeleton className="h-4 w-80" />
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[0, 1, 2].map(i => (
           <Card key={i}>
             <CardContent className="p-4 space-y-2">

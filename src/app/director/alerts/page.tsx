@@ -285,7 +285,7 @@ export default async function AlertsPage({
       </div>
 
       {/* Summary row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-surface border border-border rounded-lg p-4 text-center">
           <p className="font-mono text-2xl font-bold text-text-primary">{allAlerts.length}</p>
           <p className="text-text-muted text-xs uppercase tracking-widest mt-1">Total Alerts</p>
