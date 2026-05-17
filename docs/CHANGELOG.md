@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 579: Parent Draft Internal Approval State V1
+
+**Files created:**
+- `src/lib/donna/parentDraftApprovalState.ts` — `ParentDraftInternalState` (7 states: draft/under_review/approved_internal/approved_for_send/send_blocked/rejected/archived). `PARENT_DRAFT_STATE_META` with label, description, isVisible (portal), isSendReady, sendBlockedReason, colorClass. `deriveParentDraftState(proposedActionStatus, sendIntegrationAvailable)` maps from proposed_actions. Helper functions. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 578: Parent Draft Application Adapter Audit V1
 
 **Files created:**
