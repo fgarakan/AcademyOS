@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 559: Player Profile COO Context Integration V1
+
+**Files created:**
+- `src/lib/donna/playerCOOContext.ts` — `PlayerCOOContext` type with attendance risk (level/absences/period/confidence), parent update recency (status/days/pendingDrafts/confidence), recent observations (count/hasPositive/hasConcern/recency/confidence), readiness blockers array, next best action. Label/color helpers for each. `buildDemoPlayerCOOContext` for preview use. No DB.
+- `src/components/donna/PlayerCOOContextPanel.tsx` — compact player profile COO panel. Shows attendance risk, parent update status, observations, readiness blocker chips, and next best action. Confidence badges per row. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 558: Review Queue COO Signal Integration V1
 
 **Files created:**
