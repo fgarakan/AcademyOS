@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 716: Review Queue Browser QA V1
+
+**Files created:**
+- `docs/REVIEW_QUEUE_QA_716.md` — Review queue static QA: 15 draft card types confirmed, tab routing/status separation verified, 2 of 7 apply controls scope-verified, draft-only language confirmed in 3 cards. Flags 5 apply controls for Sprint 722 verification.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 715: Coach Flow Browser QA V1
 
 **Files created:**
