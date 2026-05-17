@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { AlertTriangle, BookOpen, CheckCircle, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
@@ -1208,9 +1209,9 @@ export default async function DirectorReviewQueuePage({
         </p>
       </div>
 
-      {/* Section summary cards */}
+      {/* Section summary cards — Sprint 662: now clickable links to respective tabs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className={`rounded-xl border px-4 py-3 space-y-1 ${needsApprovalPending > 0 ? 'bg-status-orange/5 border-status-orange/20' : 'bg-surface-raised border-border'}`}>
+        <Link href="/director/review?tab=needs-approval" className={`rounded-xl border px-4 py-3 space-y-1 hover:opacity-80 transition-opacity ${needsApprovalPending > 0 ? 'bg-status-orange/5 border-status-orange/20' : 'bg-surface-raised border-border'}`}>
           <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Needs Approval</p>
           <p className={`text-xl font-mono font-bold ${needsApprovalPending > 0 ? 'text-status-orange' : 'text-text-muted'}`}>
             {needsApprovalPending}
@@ -1224,8 +1225,8 @@ export default async function DirectorReviewQueuePage({
           {needsApprovalReady > 0 && (
             <p className="text-[9px] font-semibold tabular-nums text-lime">{needsApprovalReady} ready to apply</p>
           )}
-        </div>
-        <div className={`rounded-xl border px-4 py-3 space-y-1 ${playerUpdatesPending > 0 ? 'bg-status-blue/5 border-status-blue/20' : 'bg-surface-raised border-border'}`}>
+        </Link>
+        <Link href="/director/review?tab=player-updates" className={`rounded-xl border px-4 py-3 space-y-1 hover:opacity-80 transition-opacity ${playerUpdatesPending > 0 ? 'bg-status-blue/5 border-status-blue/20' : 'bg-surface-raised border-border'}`}>
           <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Player Updates</p>
           <p className={`text-xl font-mono font-bold ${playerUpdatesPending > 0 ? 'text-status-blue' : 'text-text-muted'}`}>
             {playerUpdatesPending}
@@ -1239,8 +1240,8 @@ export default async function DirectorReviewQueuePage({
           {playerUpdatesReady > 0 && (
             <p className="text-[9px] font-semibold tabular-nums text-lime">{playerUpdatesReady} ready to apply</p>
           )}
-        </div>
-        <div className={`rounded-xl border px-4 py-3 space-y-1 ${curriculumSessionPending > 0 ? 'bg-lime/5 border-lime/20' : 'bg-surface-raised border-border'}`}>
+        </Link>
+        <Link href="/director/review?tab=curriculum-session" className={`rounded-xl border px-4 py-3 space-y-1 hover:opacity-80 transition-opacity ${curriculumSessionPending > 0 ? 'bg-lime/5 border-lime/20' : 'bg-surface-raised border-border'}`}>
           <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Curriculum / Sessions</p>
           <p className={`text-xl font-mono font-bold ${curriculumSessionPending > 0 ? 'text-lime' : 'text-text-muted'}`}>
             {curriculumSessionPending}
@@ -1254,12 +1255,12 @@ export default async function DirectorReviewQueuePage({
           {curriculumSessionReady > 0 && (
             <p className="text-[9px] font-semibold tabular-nums text-lime">{curriculumSessionReady} ready to apply</p>
           )}
-        </div>
-        <div className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-1">
+        </Link>
+        <Link href="/director/review?tab=completed" className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-1 hover:opacity-80 transition-opacity">
           <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Completed</p>
           <p className="text-xl font-mono font-bold text-text-muted">{completedCount}</p>
-          <p className="text-[9px] text-text-muted">Sent back or not approved</p>
-        </div>
+          <p className="text-[9px] text-text-muted">Approved, applied, or rejected</p>
+        </Link>
       </div>
 
       {/* Wrap-up coverage — Sprint 532 */}

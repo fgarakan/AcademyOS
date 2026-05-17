@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 662: Review Queue Source and Status Polish V1
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — Added `Link` import; converted 4 summary stat cards from non-clickable `<div>` to `<Link>` elements pointing to `?tab=needs-approval`, `?tab=player-updates`, `?tab=curriculum-session`, `?tab=completed`; updated "Completed" card description from "Sent back or not approved" to "Approved, applied, or rejected".
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 661: Coach Wrap-Up to Review Queue Polish V1
 
 **Files modified:**
