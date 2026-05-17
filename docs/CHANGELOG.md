@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 613: Voice-First Coach Session Shell V1
+
+**Files created:**
+- `src/components/donna/CoachSessionVoiceShell.tsx` — coach-facing voice entry point for a session. Integrates `useVoiceDictation`, `donnaIntentClassifier`, `donnaCommandRouter`, `donnaMultiStepFlow`. Shows mic button (voice mode) or text input. On voice completion, classifies input → routes → shows `DONNACommandPreviewCard`. Handles clarification via `DONNACommandClarification`. Cancel shows `DONNACommandRejectionBanner`. `onCommandConfirmed(category, rawInput)` callback. No DB writes from component.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 612: 50-Sprint Safe Execution and Conversation Audit V1
 
 **Files created:**
