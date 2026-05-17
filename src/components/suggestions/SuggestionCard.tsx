@@ -39,9 +39,9 @@ export function SuggestionCard({ suggestion, onAccept, onDeny, onDefer }: Props)
       if (result && 'error' in result && result.error) {
         setActionResult(`Error: ${result.error}`)
       } else if (result && 'nextStep' in result && result.nextStep) {
-        setActionResult(`Accepted. Next step: ${result.nextStep}`)
+        setActionResult(`Accepted — your decision is recorded. No data was changed automatically. Next step: ${result.nextStep}`)
       } else {
-        setActionResult('Accepted.')
+        setActionResult('Accepted — your decision is recorded. No player data was changed automatically.')
       }
     })
   }

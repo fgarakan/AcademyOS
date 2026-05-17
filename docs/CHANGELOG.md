@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 696: Draft Review Official Language Pass V1
+
+**Files modified:**
+- `src/components/suggestions/SuggestionCard.tsx` — Strengthened the acceptance confirmation message to explicitly state "your decision is recorded. No data was changed automatically." Previously the message said only "Accepted." or "Accepted. Next step: ..." which could be misread as an immediate data change. Now both the with-next-step and without-next-step branches include the "no data changed automatically" clarifier.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 695: Approved vs Applied UI Pass V1
 
 **Files modified:**
