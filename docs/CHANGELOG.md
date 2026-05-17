@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 675: V1 Mobile Layout Audit V1
+
+**Files modified:**
+- `src/app/layout.tsx` — Added `viewportFit: 'cover'` to the viewport export so `env(safe-area-inset-bottom)` works correctly on iOS notch/home-indicator devices
+- `src/app/globals.css` — Added `.safe-area-bottom` utility class (was referenced by `BottomTabBar` but was undefined); adds `padding-bottom: env(safe-area-inset-bottom)` to prevent the tab bar from being obscured by the iOS home indicator
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 674: V1 Empty State Cleanup V1
 
 **Files modified:**

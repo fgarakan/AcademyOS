@@ -174,4 +174,9 @@ body {
   .table-card {
     @apply bg-surface border border-border rounded-2xl overflow-hidden;
   }
+
+  /* iOS safe area — adds bottom padding equal to the home indicator height */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
