@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 528: Coach Wrap-Up Attendance Draft V1
+
+**Files created:**
+- `src/lib/coach/wrapUpAttendanceDraftLoader.ts` — `loadWrapUpAttendanceDraft(db, sessionId, academyId)` reads current `session_attendance` records merged with group roster. Returns per-player attendance status (`present/absent/late/excused/unrecorded`), counts, and `isPartiallyFilled` flag for the wrap-up attendance step.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 527: Coach Wrap-Up Roster Context V1
 
 **Files created:**
