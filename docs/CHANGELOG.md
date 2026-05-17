@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 517: Group Health Live Adapter V1
+
+**Files created:**
+- `src/lib/donna/groupHealthLoader.ts` — `loadGroupHealth(db, academyId)` returns per-group `GroupHealthSummary[]`: session count (last 30 days), attendance rate (session_attendance), wrap-up rate (voice_notes). `healthSignal`: 'healthy' (≥70% attendance AND ≥50% wrap-ups), 'at_risk', or 'insufficient_data'. `fieldStatus: 'partial'` if sessions exist, `'insufficient_data'` otherwise.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 516: Player Attention Risk Live Adapter V1
 
 **Files created:**
