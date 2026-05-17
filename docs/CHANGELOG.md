@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 539: Natural Conversation Architecture Audit V1
+
+**Files created:**
+- `docs/DONNA_CONVERSATION_ARCHITECTURE.md` — architecture design doc for the DONNA conversation state machine. Defines 8 states (idle/typing/listening/clarifying/summarizing/awaiting_review/complete/error), state transitions with invariants, `ConversationMessage` and `ConversationSession` TypeScript interfaces, integration points with existing files (`DonnaWrapUpPrompt`, `WrapUpGuidedFlow`, `wrapUpPlayerNameMatcher`, `proposed_actions`), voice constraints, safety rules for Sprint 540+, and Sprint 540–547 build order.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-17 — Sprint 538: Coach Wrap-Up Detail Panel Regression V1
 
 **Files created:**
