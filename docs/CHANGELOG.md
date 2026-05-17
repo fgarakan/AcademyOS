@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 570: Session Actual Application Adapter Audit V1
+
+**Files created:**
+- `docs/SESSION_ACTUAL_ADAPTER_AUDIT_570.md` — audit of session actual → session record path. Key finding: `applyWrapUpDraftAction` is substantially built with role check, approval check, module check, academy isolation. What it writes: `sessions.session_notes`. No parent sends, no level movement, no template overwrite. Gaps: preview UI (Sprint 571), confirmation (Sprint 572), guardrails (Sprint 573). No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 569: Attendance Draft Apply Regression V1
 
 **Files created:**
