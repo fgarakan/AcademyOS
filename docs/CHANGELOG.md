@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 618: DONNA Wrap-Up Coverage Tracker V1
+
+**Files created:**
+- `src/components/donna/DONNAWrapUpCoverageTracker.tsx` — daily wrap-up coverage tracker. Shows sessions as rows (label/coach/time/status: complete/pending/overdue), progress bar (lime when all done, orange otherwise), completion count/percentage, and "Remind →" link for incomplete sessions. `SessionWrapUpItem` type. Director view. Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 617: DONNA Academy Pulse Card V1
 
 **Files created:**
