@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 621: DONNA Conversation State Display V1
+
+**Files created:**
+- `src/components/donna/DONNAConversationStateDisplay.tsx` — visual indicator for DONNA conversation state machine. All 8 `ConversationState` values configured (idle/typing/listening/clarifying/summarizing/awaiting_review/complete/error) with dot color, text color, and pulse animation. Compact mode (single line) and full mode (with progress bar + answered count). No DB.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 620: DONNA Voice Input Polish V1
 
 **Files created:**
