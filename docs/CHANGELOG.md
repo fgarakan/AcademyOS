@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 603: Coach Wrap-Up to Approved Action Flow V1
+
+**Files created:**
+- `docs/COACH_WRAPUP_TO_APPROVED_ACTION_FLOW_603.md` — full flow map from DONNA conversation → WrapUpAnswerSet draft → `saveWrapUpDraftAction` (voice_commands + proposed_actions created, status: pending_review) → director review → approve → apply via `execute_approved_action()`. Key file table. Safety invariants confirmed: no auto-apply, no parent send, no level movement, auth checked, academy_id from profile. No code mutation.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 602: Top 5 Academy Priorities Live Actions V1
 
 **Files created:**
