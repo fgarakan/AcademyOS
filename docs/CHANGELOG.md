@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 525: Director Command Center COO Integration V1
+
+**Files modified:**
+- `src/app/director/command-center/page.tsx` — added `loadWeeklyCoOReport` call; added a 4-cell weekly metrics strip (sessions, attendance rate, wrap-up coverage, concern observations) above the Director Assistant Panel using live data.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 524: Director Today COO Integration V1
 
 **Files modified:**

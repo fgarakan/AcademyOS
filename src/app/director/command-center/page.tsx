@@ -3,6 +3,7 @@ import { Card, CardContent, EmptyState } from '@/components/ui'
 import { CommandCenterClient } from './CommandCenterClient'
 import { DirectorAssistantPanel } from './DirectorAssistantPanel'
 import { Terminal } from 'lucide-react'
+import { loadWeeklyCoOReport } from '@/lib/donna/weeklyCoOReportLoader'
 
 export default async function CommandCenterPage() {
   const supabase = await getSupabaseServer()
@@ -75,6 +76,9 @@ export default async function CommandCenterPage() {
     .eq('academy_id', academyId)
     .eq('status', 'reassessment_due')
 
+  // Weekly COO metrics (Sprint 525)
+  const weeklyReport = await loadWeeklyCoOReport(supabase, academyId)
+
   // Fetch recent command-created proposed_actions (Sprint 224)
   const { data: recentDraftRows } = await rawDb
     .from('proposed_actions')
@@ -96,6 +100,40 @@ export default async function CommandCenterPage() {
   return (
     <div className="animate-fade-in p-6 space-y-6 max-w-3xl">
       <PageHeader pendingDraftCount={pendingDraftCount ?? 0} />
+
+      {/* Weekly COO metrics strip — Sprint 525 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-surface border border-border rounded-xl px-4 py-3">
+          <p className="text-[10px] text-text-muted uppercase tracking-widest">Sessions</p>
+          <p className="font-mono text-lime text-xl font-bold mt-1">{weeklyReport.totalSessions}</p>
+          <p className="text-[11px] text-text-muted">this week</p>
+        </div>
+        <div className="bg-surface border border-border rounded-xl px-4 py-3">
+          <p className="text-[10px] text-text-muted uppercase tracking-widest">Attendance</p>
+          <p className="font-mono text-lime text-xl font-bold mt-1">
+            {weeklyReport.attendanceRate !== null
+              ? `${Math.round(weeklyReport.attendanceRate * 100)}%`
+              : '—'}
+          </p>
+          <p className="text-[11px] text-text-muted">present rate</p>
+        </div>
+        <div className="bg-surface border border-border rounded-xl px-4 py-3">
+          <p className="text-[10px] text-text-muted uppercase tracking-widest">Wrap-Ups</p>
+          <p className="font-mono text-lime text-xl font-bold mt-1">
+            {weeklyReport.wrapUpRate !== null
+              ? `${Math.round(weeklyReport.wrapUpRate * 100)}%`
+              : '—'}
+          </p>
+          <p className="text-[11px] text-text-muted">coverage</p>
+        </div>
+        <div className="bg-surface border border-border rounded-xl px-4 py-3">
+          <p className="text-[10px] text-text-muted uppercase tracking-widest">Concerns</p>
+          <p className={`font-mono text-xl font-bold mt-1 ${weeklyReport.newConcernObservations > 0 ? 'text-status-orange' : 'text-lime'}`}>
+            {weeklyReport.newConcernObservations}
+          </p>
+          <p className="text-[11px] text-text-muted">this week</p>
+        </div>
+      </div>
 
       <DirectorAssistantPanel
         pendingWrapUpsCount={pendingWrapUpsCount ?? 0}
