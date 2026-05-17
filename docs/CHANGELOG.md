@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 720: Parent Preview Browser QA V1
+
+**Files created:**
+- `docs/PARENT_PREVIEW_QA_720.md` — Definitive parent send audit: ZERO email/SMS/push functions in codebase. ParentDraftSendBlockedBanner confirmed. Voice intake parent-send guardrail confirmed. parent_trust_coverage KPI correctly marked blocked_by_schema.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 719: Player Profile Browser QA V1
 
 **Files created:**
