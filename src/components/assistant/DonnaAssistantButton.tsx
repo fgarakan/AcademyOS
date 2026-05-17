@@ -2487,10 +2487,20 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               setOnboardingStep(0)
               setShowOnboardingSuggestions(false)
             } else {
-              // Sprint 647/648 — daily welcome (onboarding already complete).
+              // Sprint 647/648/651 — daily welcome (onboarding already complete).
               // Check localStorage to determine first open today vs. same-day return.
               // role='coach' produces coach-specific priority routing copy.
               const greeting = getDailyGreetingState(firstName, role)
+              // Sprint 651 — session context override: when on a session page, replace
+              // the follow-up with session-specific help copy regardless of first-open state.
+              const isOnSessionPage =
+                pathname.includes('/sessions/') && pathname.split('/sessions/')[1]?.length > 0
+              if (isOnSessionPage) {
+                greeting.followUp =
+                  role === 'coach'
+                    ? "I can help with notes, observations, or wrap-up for this session."
+                    : "I can help you review this session or capture a coach note."
+              }
               setDailyGreetingState(greeting)
               if (greeting.isFirstOpenToday) {
                 markGreetedToday()

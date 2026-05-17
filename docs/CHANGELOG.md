@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 651: DONNA Session Context Opening V1
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — When DONNA opens on a session page (`/*/sessions/[id]`), follow-up text is overridden with session-specific help copy: coach context → "I can help with notes, observations, or wrap-up for this session." / director context → "I can help you review this session or capture a coach note." No DB queries.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 650: DONNA First Daily Welcome Final V1
 
 **Files modified:**
