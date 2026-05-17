@@ -109,6 +109,7 @@ export function DONNAApprovalOutcomeExplainer({
   return (
     <div className={`rounded-lg border border-border/60 bg-surface-raised overflow-hidden ${className}`}>
       <button
+        type="button"
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-surface transition-colors"
       >

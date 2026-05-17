@@ -201,9 +201,10 @@ export function DonnaConversationalPanel({
 
           {canSkip && currentQuestionId && !isInputDisabled && (
             <button
+              type="button"
               onClick={handleSkip}
+              aria-label="Skip this question"
               className="flex items-center gap-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-xs text-text-muted hover:text-text-secondary transition-colors min-h-[44px]"
-              title="Skip this question"
             >
               <SkipForward className="w-3.5 h-3.5" />
               <span>Skip</span>
@@ -211,10 +212,11 @@ export function DonnaConversationalPanel({
           )}
 
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={!inputText.trim() || isInputDisabled}
+            aria-label="Send"
             className="flex items-center justify-center w-11 h-11 rounded-xl bg-lime text-base disabled:opacity-30 disabled:cursor-not-allowed hover:bg-lime/90 transition-colors shrink-0"
-            title="Send"
           >
             <Send className="w-4 h-4 text-base" />
           </button>

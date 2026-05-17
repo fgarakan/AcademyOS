@@ -92,6 +92,7 @@ export function DONNAAnswerCard({ answer, question, onFollowUp }: DONNAAnswerCar
           </p>
           {onFollowUp && (
             <button
+              type="button"
               onClick={onFollowUp}
               className="text-[10px] text-lime hover:text-lime/80 transition-colors whitespace-nowrap ml-2"
             >

@@ -125,6 +125,7 @@ export function DonnaConversationSummary({
       {/* ── Actions ── */}
       <div className="flex gap-2 px-3.5 py-3 border-t border-lime/10">
         <button
+          type="button"
           onClick={onEdit}
           disabled={isSubmitting}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-xs text-text-secondary hover:text-text-primary hover:border-border/80 transition-colors disabled:opacity-40"
@@ -133,6 +134,7 @@ export function DonnaConversationSummary({
           Edit
         </button>
         <button
+          type="button"
           onClick={onConfirm}
           disabled={isSubmitting}
           className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-lime text-base text-sm font-semibold hover:bg-lime/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"

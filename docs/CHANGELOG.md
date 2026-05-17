@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-17 — Sprint 705: Cancel Reject Flow Polish V1
+
+**Files modified:**
+- `src/components/donna/DONNAApprovalOutcomeExplainer.tsx` — Added `type="button"` to toggle button
+- `src/components/donna/DonnaConversationalPanel.tsx` — Added `type="button"` and converted `title` to `aria-label` on Skip and Send buttons
+- `src/components/donna/DONNAAnswerCard.tsx` — Added `type="button"` to follow-up "Go →" button
+- `src/components/donna/DonnaConversationSummary.tsx` — Added `type="button"` to Edit and "Wrap up session" confirm buttons
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 704: Command Preview UX Polish V1
 
 **Files modified:**
