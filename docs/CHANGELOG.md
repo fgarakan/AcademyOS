@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-17 — Sprint 745: Final Pilot Walkthrough Script V1
+
+**Files created:**
+- `docs/PILOT_WALKTHROUGH_SCRIPT_745.md` — 8-part pilot walkthrough script for Farshad running Brian through onboarding: orientation (5 min), voice demo (15 min), player import (10 min), player profile deep dive (10 min), curriculum explorer (5 min), review queue (5 min), coach view (5 min), close. Includes key talking points, expected questions with answers, and handoff checklist.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 744: V1 Internal Operator Guide V1
+
+**Files created:**
+- `docs/V1_INTERNAL_OPERATOR_GUIDE_744.md` — Operator guide: env var requirements (Supabase, Anthropic, OpenAI — all degrade gracefully if absent); academy setup steps (SQL snippets for profiles + memberships); roster import flow; demo sandbox management; review queue operations table; voice/AI operations; monitoring SQL queries; safety invariants; support escalation table.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-17 — Sprint 743: V1 Release Notes V1
 
 **Files created:**
