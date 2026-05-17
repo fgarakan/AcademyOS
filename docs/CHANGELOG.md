@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 665: Director Navigation Consistency V1
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — Added "Today's Academy" nav item (Sun icon) to ACADEMY_ITEMS between Dashboard and Players, making `/director/today` directly reachable from the sidebar (previously only accessible via dashboard quick link).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 664: Academy Health Action Link Polish V1
 
 **Files modified:**

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
-  LayoutDashboard, Users, BookOpen, Calendar,
+  LayoutDashboard, Users, BookOpen, Calendar, Sun,
   LogOut, ClipboardList,
   LayoutTemplate, Terminal, Activity, Settings, Rocket, BarChart2, UserCog,
 } from 'lucide-react'
@@ -11,6 +11,7 @@ import { getInitials } from '@/lib/utils'
 
 const ACADEMY_ITEMS = [
   { label: 'Dashboard',    href: '/director',                 icon: LayoutDashboard },
+  { label: "Today's Academy", href: '/director/today',        icon: Sun },
   { label: 'Players',      href: '/director/players',         icon: Users },
   { label: 'Coaches',      href: '/director/coaches',         icon: UserCog },
   { label: 'Sessions',     href: '/director/sessions',        icon: Calendar },
