@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 516: Player Attention Risk Live Adapter V1
+
+**Files created:**
+- `src/lib/donna/playerAttentionRiskLoader.ts` — `loadPlayerAttentionRisk(db, academyId)` derives per-player risk from concern observations (last 30 days) and attendance gaps (last 7 days). Returns sorted `PlayerAttentionRisk[]` with `riskLevel` ('high'/'medium'/'low') and `factors[]`. `fieldStatus: 'insufficient_data'` if no flagged players, `'partial'` otherwise. No migrations, no writes, RLS-scoped.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 515: Academy Health Live Source Status V1
 
 **Files created:**
