@@ -8,6 +8,7 @@ import {
   Eye,
   CheckCircle2,
 } from 'lucide-react'
+import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Card, CardContent, CardHeader, LevelBadge } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -41,9 +42,9 @@ function StatPill({ value, label, color }: { value: number; label: string; color
   )
 }
 
-function ActionRow({ icon, label, tab }: { icon: ReactNode; label: string; tab: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 py-2 px-3">
+function ActionRow({ icon, label, tab, href }: { icon: ReactNode; label: string; tab: string; href?: string }) {
+  const inner = (
+    <>
       <div className="flex items-center gap-2">
         <span className="text-text-muted shrink-0">{icon}</span>
         <span className="text-xs text-text-secondary">{label}</span>
@@ -51,6 +52,23 @@ function ActionRow({ icon, label, tab }: { icon: ReactNode; label: string; tab: 
       <span className="text-[10px] text-text-muted bg-surface border border-border px-2 py-0.5 rounded shrink-0 whitespace-nowrap">
         {tab}
       </span>
+    </>
+  )
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="flex items-center justify-between gap-3 py-2 px-3 hover:bg-surface-raised transition-colors"
+      >
+        {inner}
+      </Link>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 py-2 px-3">
+      {inner}
     </div>
   )
 }
@@ -223,26 +241,31 @@ export function PlayerCommandCenterCard({
               icon={<MessageSquare className="w-3.5 h-3.5" />}
               label="Add a coach note"
               tab="Notes"
+              href="?tab=notes"
             />
             <ActionRow
               icon={<Eye className="w-3.5 h-3.5" />}
               label="Review or generate AI summary"
               tab="Notes → AI Draft"
+              href="?tab=notes"
             />
             <ActionRow
               icon={<CheckCircle2 className="w-3.5 h-3.5" />}
               label="Record gate evidence"
               tab="Skill Path"
+              href="?tab=skill-path"
             />
             <ActionRow
               icon={<ClipboardList className="w-3.5 h-3.5" />}
               label="Run a quick assessment"
-              tab="Overview ↓ scroll"
+              tab="Overview ↓"
+              href="?tab=overview"
             />
             <ActionRow
               icon={<ArrowRight className="w-3.5 h-3.5" />}
               label="Evaluate advancement readiness"
               tab="Skill Path"
+              href="?tab=skill-path"
             />
           </div>
         </div>

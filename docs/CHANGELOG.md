@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 663: Player Profile COO Context Polish V1
+
+**Files modified:**
+- `src/app/director/players/[playerId]/_components/PlayerProfileTabs.tsx` — Added URL-aware tab state: reads `?tab` search param as initial active tab; updates URL via `router.replace` on tab change (enables shareable/bookmarkable tab links).
+- `src/components/player/PlayerCommandCenterCard.tsx` — Added `Link` import; converted `ActionRow` to support optional `href` prop (renders as `<Link>` when provided, plain div otherwise); wired all 5 "Next Best Actions" rows to `?tab=` URLs so directors can click directly to the relevant tab.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 662: Review Queue Source and Status Polish V1
 
 **Files modified:**
