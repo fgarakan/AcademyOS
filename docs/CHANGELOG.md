@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 615: DONNA Player Risk Surface V1
+
+**Files created:**
+- `src/components/donna/DONNAPlayerRiskSurface.tsx` — at-risk player surface panel. `PlayerRiskSignal` type with playerId/playerName/riskTypes (attendance/parent_engagement/level_readiness/coach_concern)/primaryRiskLabel/riskNote/lastSeenLabel/profileHref. Rows show player name, risk type badges, primary label, note, and View link. Empty state and loading state. DONNA attribution footer: "no action taken automatically." Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 614: DONNA COO Intelligence Confidence Display V1
 
 **Files created:**
