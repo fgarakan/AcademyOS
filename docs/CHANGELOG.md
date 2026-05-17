@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 586: Curriculum Override Apply Preview V1
+
+**Files created:**
+- `src/components/donna/CurriculumOverrideApplyPreview.tsx` — preview card for curriculum overrides before director applies. Shows override type (level_adjustment/focus_shift/pathway_change/scope_change/custom) with colored banner, target label, scope (session/player_session/group/program), before→after change diffs per field, override reason, optional warnings, and template immutability shield notice: "template blocks are not modified — override writes to `curriculum_overrides` table only." Preview only. No DB write. No mutation.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 585: Curriculum Override Application Adapter Audit V1
 
 **Files created:**
