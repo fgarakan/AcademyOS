@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 640: Coach First-Run Pilot Guide V1
+
+**Files created:**
+- `docs/COACH_FIRST_RUN_PILOT_GUIDE_640.md` — first-run guide for coaches using DONNA wrap-up during the pilot. 7-question wrap-up table, voice vs. text instructions, what happens after submit, common situations (forgot to mention something / voice not working / don't know answer / parent flag / level mention), first wrap-up walkthrough, DONNA processing table, quick tips, and coach route map.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 639: Director First-Run Pilot Guide V1
 
 **Files created:**
