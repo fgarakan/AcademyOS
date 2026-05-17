@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 718: Academy Health Browser QA V1
+
+**Files created:**
+- `docs/ACADEMY_HEALTH_QA_718.md` — Academy Health static QA: 7 KPIs audited (3 live-probed, 4 blocked_by_schema), all read-only confirmed, drawer ARIA labels verified, action links checked. No fake certainty. Zero DB writes from health layer.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 717: DONNA Panel Browser QA V1
 
 **Files created:**
