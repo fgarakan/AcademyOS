@@ -129,9 +129,9 @@ export function DonnaVoiceWrapUpShell({
               title={isListening ? 'Stop recording' : 'Start voice input'}
             >
               {isListening ? (
-                <MicOff className="w-4.5 h-4.5 animate-pulse" />
+                <MicOff className="w-4 h-4 animate-pulse" />
               ) : (
-                <Mic className="w-4.5 h-4.5" />
+                <Mic className="w-4 h-4" />
               )}
             </button>
           )}

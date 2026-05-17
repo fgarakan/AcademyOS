@@ -89,7 +89,7 @@ export const SIM_ATTENDANCE_EVENTS: SimAttendanceEvent[] = [
 export interface SimWrapUp {
   sessionId: string
   coachName: string
-  submittedAt: string
+  submittedAt: string | null
   answers: {
     attendance: string
     sessionActual: string
@@ -151,7 +151,7 @@ export const SIM_WRAP_UPS: SimWrapUp[] = [
   {
     sessionId: 'sim-session-004',
     coachName: 'Coach Thompson',
-    submittedAt: null as unknown as string, // Not yet submitted at end of day
+    submittedAt: null,
     answers: {
       attendance: '',
       sessionActual: '',

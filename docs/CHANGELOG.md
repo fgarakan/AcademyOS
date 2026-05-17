@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 634: Pilot Runtime Error Cleanup V1
+
+**Files modified:**
+- `src/components/donna/DonnaVoiceWrapUpShell.tsx` — fixed `w-4.5 h-4.5` (non-existent Tailwind classes) → `w-4 h-4` on mic icons. No visual breakage — icons were using fallback size.
+- `src/lib/donna/academyDaySimulation.ts` — fixed `SimWrapUp.submittedAt` type from `string` → `string | null` and removed `null as unknown as string` type hack for the outstanding wrap-up entry.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 633: 100-Sprint DONNA COO Campaign Audit V1
 
 **Files created:**
