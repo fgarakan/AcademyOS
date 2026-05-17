@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 545: DONNA Correction Handling V1
+
+**Files created:**
+- `src/lib/donna/wrapUpCorrectionHandler.ts` — correction detection and application. `assessCorrection(text, recentMessages)` returns `CorrectionAssessment` with `isCorrection`, `scope`, `targetQuestionId`, and `correctedText`. CORRECTION_PATTERNS regex bank ("actually", "wait", "I meant", "scratch that", etc.). `QUESTION_TOPIC_HINTS` map associates topic keywords with `WrapUpQuestionId`. `applyCorrection(messages, questionId, correctedText)` replaces the last matching coach answer in the message history. `buildCorrectionAcknowledgement` returns natural DONNA response.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 544: DONNA Adaptive Clarifying Questions V1
 
 **Files created:**
