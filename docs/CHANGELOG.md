@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-17 — Sprint 514: COO Data Status Model V1
+
+**Files created:**
+- `src/lib/donna/cooDataStatus.ts` — shared `COOFieldStatus` type, `getStatusLabel()`, `getStatusDot()`, `deriveOverallStatus()` helpers for all COO surfaces.
+
+**Files modified:**
+- `src/lib/donna/commandBriefLiveLoader.ts` — imports `COOFieldStatus` and `deriveOverallStatus` from `cooDataStatus`; re-exports `COOFieldStatus` for backward compat; removes inline status derivation.
+- `src/app/director/today/TodayCommandBrief.tsx` — replaces local `STATUS_COPY`/`STATUS_DOT` records with `getStatusLabel`/`getStatusDot` from shared module.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 513: Attention Signals Live Data Wiring V1
 
 **Files modified:**

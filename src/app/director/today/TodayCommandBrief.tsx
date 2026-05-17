@@ -1,30 +1,14 @@
 'use client'
 
 // Sprint 512 — Command Brief Live Data Wiring V1
+// Sprint 514 — uses shared status helpers from cooDataStatus
 // Client wrapper: receives serialized live data from server, provides callbacks.
 
 import { useRouter } from 'next/navigation'
 import { DonnaCommandBriefIntegration } from '@/components/assistant/DonnaCommandBriefIntegration'
 import type { DonnaCommandBriefData } from '@/components/assistant/DonnaCommandBriefIntegration'
-import type { COOFieldStatus } from '@/lib/donna/commandBriefLiveLoader'
-
-// ── Status display ────────────────────────────────────────────────────────────
-
-const STATUS_COPY: Record<COOFieldStatus, string> = {
-  live: 'Live',
-  partial: 'Partial',
-  insufficient_data: 'No data yet',
-  blocked_by_rls: 'Blocked',
-  blocked_by_schema: 'Schema gap',
-}
-
-const STATUS_DOT: Record<COOFieldStatus, string> = {
-  live: 'bg-status-green',
-  partial: 'bg-status-orange',
-  insufficient_data: 'bg-text-muted',
-  blocked_by_rls: 'bg-status-red',
-  blocked_by_schema: 'bg-status-red',
-}
+import { getStatusLabel, getStatusDot } from '@/lib/donna/cooDataStatus'
+import type { COOFieldStatus } from '@/lib/donna/cooDataStatus'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -38,8 +22,8 @@ export interface TodayCommandBriefProps {
 export function TodayCommandBrief({ data, overallStatus }: TodayCommandBriefProps) {
   const router = useRouter()
 
-  const statusDot = STATUS_DOT[overallStatus]
-  const statusCopy = STATUS_COPY[overallStatus]
+  const statusDot = getStatusDot(overallStatus)
+  const statusCopy = getStatusLabel(overallStatus)
 
   return (
     <div className="space-y-2">

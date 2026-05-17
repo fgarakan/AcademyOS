@@ -1,4 +1,5 @@
 // Sprint 512 — Command Brief Live Data Wiring V1
+// Sprint 514 — uses shared COOFieldStatus from cooDataStatus
 // Server-side loader: sequential RLS-safe read-only queries.
 // Returns DonnaCommandBriefData + per-field data status.
 // No mutations. No writes. No migrations required.
@@ -10,15 +11,11 @@ import type {
   CommandBriefSessionSummary,
 } from '@/components/assistant/DonnaCommandBriefIntegration'
 import { buildDonnaCommandBriefPrompt } from '@/components/assistant/DonnaCommandBriefIntegration'
+import { deriveOverallStatus } from '@/lib/donna/cooDataStatus'
 
-// ── Status types ──────────────────────────────────────────────────────────────
-
-export type COOFieldStatus =
-  | 'live'
-  | 'partial'
-  | 'insufficient_data'
-  | 'blocked_by_rls'
-  | 'blocked_by_schema'
+// ── Status types (re-exported for backward compatibility) ─────────────────────
+export type { COOFieldStatus } from '@/lib/donna/cooDataStatus'
+import type { COOFieldStatus } from '@/lib/donna/cooDataStatus'
 
 export interface CommandBriefFieldStatus {
   sessions: COOFieldStatus
@@ -200,13 +197,7 @@ export async function loadCommandBriefLive(
     reviewQueue: 'live',
   }
 
-  const hasInsufficient = Object.values(fieldStatus).includes('insufficient_data')
-  const hasPartial = Object.values(fieldStatus).includes('partial')
-  const overallStatus: 'live' | 'partial' | 'insufficient_data' = hasInsufficient
-    ? 'insufficient_data'
-    : hasPartial
-      ? 'partial'
-      : 'live'
+  const overallStatus = deriveOverallStatus(Object.values(fieldStatus))
 
   return { data, fieldStatus, overallStatus }
 }
