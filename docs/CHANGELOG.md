@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 588: Execution Audit Trail UI V1
+
+**Files created:**
+- `src/components/donna/ExecutionAuditTrailPanel.tsx` — director view of DONNA-proposed action execution events. Shows entries sorted newest-first with event type badges (proposed/approved/rejected/applied/failed/rolled_back/blocked), source (DONNA Voice/Text/Coach Wrap-Up/Director/System), actor, player, session label, timestamp, and "write" badge for official write events. Expandable beyond default 6. Read-only — no DB connection, accepts pre-fetched entries. Footer explains proposed_actions pipeline flow.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 587: Curriculum Override Rollback Preview V1
 
 **Files created:**
