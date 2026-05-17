@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 643: Pilot KPI Success Criteria V1
+
+**Files created:**
+- `docs/PILOT_KPI_SUCCESS_CRITERIA_643.md` — 5-KPI success criteria for the Brian/Dabul pilot: wrap-up completion ≥80%, review queue cleared ≥4/5 days, ≥2 hrs/week time saved, ≥2 parent drafts approved, director clarity ≥4/5. Measurement schedule (Day 1, Week 1, Week 2), success/promising/insufficient gates, and what to do if each KPI misses.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 642: Pilot Feedback Review Queue V1
 
 **Files created:**
