@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-17 — Sprint 682: DONNA Side Panel Premium Polish V1
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Three design system alignment changes to the panel interior:
+  1. Panel header icon: replaced purple `rgba(139,92,246,...)` container + `#8b5cf6` Sparkles icon with lime `bg-lime/10 border-lime/25` container + `text-lime` icon
+  2. "Review-first" badge: replaced custom cyan (`#2dd4bf`) with design system lime classes (`bg-lime/10 border-lime/20 text-lime`)
+  3. Greeting card: replaced purple tint (`rgba(139,92,246,0.06)` background, `rgba(139,92,246,0.18)` border) with lime tint (`rgba(200,255,0,0.04)` / `rgba(200,255,0,0.15)`), consistent with Sprint 670 coach session DONNA entry card; DONNA name label changed from purple `#8b5cf6` to `text-lime`
+  FAB button retains purple — intentional brand identity for the floating assistant trigger
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 681: Director Command Center Premium Polish V1
 
 **Files modified:**

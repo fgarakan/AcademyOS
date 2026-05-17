@@ -2602,15 +2602,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           <div>
             <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
               <div
-                className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', boxShadow: '0 0 8px rgba(139,92,246,0.2)' }}
+                className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 bg-lime/10 border border-lime/25"
               >
-                <Sparkles className="w-3.5 h-3.5" style={{ color: '#8b5cf6' }} />
+                <Sparkles className="w-3.5 h-3.5 text-lime" />
               </div>
               <h2 className="text-sm font-semibold text-text-primary">{DONNA_PUBLIC_NAME}</h2>
               <span
-                className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-                style={{ background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.25)', color: '#2dd4bf' }}
+                className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-lime/10 border border-lime/20 text-lime"
               >
                 Review-first
               </span>
@@ -2719,14 +2717,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             <div
               className="rounded-xl px-3.5 py-3"
               style={{
-                background: 'rgba(139,92,246,0.06)',
-                border: '1px solid rgba(139,92,246,0.18)',
+                background: 'rgba(200,255,0,0.04)',
+                border: '1px solid rgba(200,255,0,0.15)',
               }}
             >
-              <p
-                className="text-[10px] uppercase tracking-widest font-semibold mb-1"
-                style={{ color: '#8b5cf6' }}
-              >
+              <p className="text-[10px] uppercase tracking-widest font-semibold mb-1 text-lime">
                 {DONNA_PUBLIC_NAME}
               </p>
               <p className="text-[13px] text-text-primary font-medium leading-snug">
