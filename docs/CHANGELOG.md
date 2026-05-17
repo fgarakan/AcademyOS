@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 606: Natural Conversation Regression V1
+
+**Files created:**
+- `docs/NATURAL_CONVERSATION_REGRESSION_606.md` — regression audit on 10 DONNA conversation/voice files (Sprints 540–555). Confirms: no DB writes in any file, voice uses browser-native APIs (no external key), `continuous: false` + manual confirm prevents auto-submit, conversation panel calls `onSubmit` callback only (no direct DB), wrap-up adapter is pure TS. Pipeline invariant confirmed: DONNA guides → coach confirms → server action submits. No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 605: Protected Execution Safety Audit V1
 
 **Files created:**
