@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 552: Voice Error and Fallback UX V1
+
+**Files created:**
+- `src/components/donna/VoiceErrorFallback.tsx` — friendly error UI for all voice failure scenarios. `VoiceErrorFallback` handles: `unavailable`, `permission_denied`, `no_speech`, `aborted`, `network`, `unsupported`, `unknown`. Shows icon, title, message, optional "Try again" and always-visible fallback CTA. `VoiceUnavailableNotice` for inline muted notice. Never leaves coach stuck. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 551: Voice Transcript Review V1
 
 **Files created:**
