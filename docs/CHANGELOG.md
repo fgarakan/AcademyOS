@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 714: Director Flow Browser QA V1
+
+**Files created:**
+- `docs/DIRECTOR_FLOW_QA_714.md` — Static code QA of director dashboard, today, review, players, Academy Health, DONNA. 28 checks pass. 9 items flagged for browser verification. Zero DANA references. Zero blockers.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 713: Route Smoke Test Audit V1
 
 **Files created:**
