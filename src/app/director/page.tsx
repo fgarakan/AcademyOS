@@ -4,7 +4,6 @@ import {
   Users, Calendar, ChevronRight, Activity,
   Clock, Brain, AlertTriangle,
   GraduationCap, Sparkles, ClipboardList,
-  Layers,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
@@ -289,6 +288,9 @@ export default async function DirectorDashboard() {
     })
   }
 
+  // Academy live state — all 4 setup steps complete
+  const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
+
   // Highest-priority banner
   const priorityAction: { title: string; body: string; href: string; actionLabel: string } | null = (() => {
     if (pendingWrapUpsCount > 0) return {
@@ -329,15 +331,28 @@ export default async function DirectorDashboard() {
             {timeGreeting}, {directorDisplayName}.
           </h1>
           <p className="text-text-secondary text-base mt-1">{academyName}</p>
-          {/* Sprint 659 — Today quick-link */}
-          <Link
-            href="/director/today"
-            className="inline-flex items-center gap-1 mt-3 text-xs text-text-muted hover:text-lime transition-colors"
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            Today&apos;s Academy
-            <ChevronRight className="w-3 h-3" />
-          </Link>
+          <div className="flex items-center gap-4 mt-3 flex-wrap">
+            <Link
+              href="/director/today"
+              className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-lime transition-colors"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              Today&apos;s Academy
+              <ChevronRight className="w-3 h-3" />
+            </Link>
+            <Link
+              href="/director/review"
+              className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-lime transition-colors"
+            >
+              <ClipboardList className="w-3.5 h-3.5" />
+              Review Queue
+              {pendingWrapUpsCount > 0 && (
+                <span className="font-mono text-[10px] font-bold text-status-orange bg-status-orange/10 border border-status-orange/30 px-1.5 py-0.5 rounded-full">
+                  {pendingWrapUpsCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
         {/* Academy Health Badge */}
         <AcademyHealthBadgeWithDrawer
@@ -374,30 +389,34 @@ export default async function DirectorDashboard() {
       )}
 
       {/* ── Academy Setup ─────────────────────────────────── */}
-      <div className="space-y-3">
-        <div>
-          <p className="label-xs">Academy Setup</p>
-          <p className="text-xs text-text-muted mt-1">Complete these steps first. Academy OS uses this information to guide curriculum, placement, sessions, and coach workflows.</p>
-        </div>
-        <OnboardingProgressCard settings={onboardingSettings} />
-        <SetupProgressChecklist
-          playersExist={players.length > 0}
-          curriculumLevelsAssigned={playersWithLevel > 0}
-          templatesExist={classTemplateCount > 0}
-          sessionsExist={sessionsExist}
-        />
-        {players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist && (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/5 border border-status-green/20">
-            <Sparkles className="w-4 h-4 text-status-green shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-status-green">Academy OS is live</p>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Players, curriculum, templates, and sessions are all connected. Coaches have everything they need on court.
-              </p>
-            </div>
+      {isAcademyLive ? (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/5 border border-status-green/20">
+          <Sparkles className="w-4 h-4 text-status-green shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-status-green">Academy OS is live</p>
+            <p className="text-xs text-text-secondary mt-0.5">
+              Players, curriculum, templates, and sessions are all connected.
+            </p>
           </div>
-        )}
-      </div>
+          <Link href="/director/onboarding" className="shrink-0 text-[11px] text-text-muted hover:text-lime transition-colors">
+            Setup →
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div>
+            <p className="label-xs">Academy Setup</p>
+            <p className="text-xs text-text-muted mt-1">Complete these steps first. Academy OS uses this information to guide curriculum, placement, sessions, and coach workflows.</p>
+          </div>
+          <OnboardingProgressCard settings={onboardingSettings} />
+          <SetupProgressChecklist
+            playersExist={players.length > 0}
+            curriculumLevelsAssigned={playersWithLevel > 0}
+            templatesExist={classTemplateCount > 0}
+            sessionsExist={sessionsExist}
+          />
+        </div>
+      )}
 
       {/* ── Academy Overview — 8-card KPI grid ────────────── */}
       <AcademyKpiCardsSection
@@ -621,7 +640,7 @@ export default async function DirectorDashboard() {
             </CardContent>
             <CardFooter>
               <Link
-                href="/director/signals"
+                href="/director/ai-suggestions"
                 className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
               >
                 {pendingSuggestionsCount > 0 ? 'Review suggestions →' : 'Open AI Suggestions →'}
@@ -744,10 +763,11 @@ export default async function DirectorDashboard() {
             description="View and manage your full player roster."
             href="/director/players"
           />
-          <QuickActionCardDisabled
-            icon={<Layers className="w-4 h-4 text-text-muted" />}
-            title="Multi-Academy View"
-            description="Cross-academy director dashboard."
+          <QuickActionCard
+            icon={<Activity className="w-4 h-4 text-lime" />}
+            title="Signals"
+            description="Attendance concerns, missing levels, pending reviews, and lesson requests."
+            href="/director/signals"
           />
         </div>
       </div>
@@ -954,31 +974,6 @@ function QuickActionCard({
         </p>
       </div>
     </Link>
-  )
-}
-
-function QuickActionCardDisabled({
-  icon, title, description,
-}: {
-  icon: ReactNode
-  title: string
-  description: string
-}) {
-  return (
-    <div className="block opacity-50 cursor-not-allowed">
-      <div className="bg-surface border border-border rounded-2xl p-5 h-full">
-        <div className="flex items-start justify-between mb-3">
-          <div className="w-9 h-9 rounded-xl bg-surface-raised border border-border flex items-center justify-center">
-            {icon}
-          </div>
-          <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted border border-border rounded-full px-2 py-0.5">
-            Coming Soon
-          </span>
-        </div>
-        <p className="font-semibold text-text-secondary text-sm">{title}</p>
-        <p className="text-xs text-text-muted mt-1">{description}</p>
-      </div>
-    </div>
   )
 }
 

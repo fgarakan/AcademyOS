@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-17 — Sprint 681: Director Command Center Premium Polish V1
+
+**Files modified:**
+- `src/app/director/page.tsx` — Four targeted improvements:
+  1. Added "Review Queue" quick-link with `pendingWrapUpsCount` badge to hero header (beside "Today's Academy" link)
+  2. Collapsed "Academy Setup" section to a compact green "Academy OS is live" banner with setup link when all 4 setup conditions are met; full checklist only shows during setup
+  3. Fixed AI Suggestions card footer link from `/director/signals` (wrong route) → `/director/ai-suggestions` (correct route)
+  4. Replaced dead "Multi-Academy View (Coming Soon)" quick action card with live "Signals" quick action; removed unused `Layers` import and `QuickActionCardDisabled` component
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 680: V1 Workflow Integration Audit V1
 
 **Files modified:**
