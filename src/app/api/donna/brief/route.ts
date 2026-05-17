@@ -90,6 +90,42 @@ export async function GET() {
       })
     }
 
+    // 4. Advancement-ready players
+    const rawDb = supabase as any
+    const { count: advancementCount } = await rawDb
+      .from('v_player_curriculum_summary')
+      .select('player_id', { count: 'exact', head: true })
+      .eq('academy_id', academyId)
+      .eq('advancement_eligible', true)
+
+    if (advancementCount !== null && advancementCount > 0) {
+      sections.push({
+        title: 'Advancement Ready',
+        priority: 'normal',
+        items: [
+          `${advancementCount} player${advancementCount !== 1 ? 's' : ''} meet${advancementCount === 1 ? 's' : ''} the criteria to advance to the next level. Review their profiles.`,
+        ],
+      })
+    }
+
+    // 5. Active players missing curriculum level
+    const { count: noLevelCount } = await supabase
+      .from('players')
+      .select('id', { count: 'exact', head: true })
+      .eq('academy_id', academyId)
+      .eq('status', 'active')
+      .is('current_level_id', null)
+
+    if (noLevelCount !== null && noLevelCount > 0) {
+      sections.push({
+        title: 'No Curriculum Level',
+        priority: noLevelCount > 2 ? 'high' : 'normal',
+        items: [
+          `${noLevelCount} active player${noLevelCount !== 1 ? 's' : ''} do${noLevelCount === 1 ? 'es' : ''} not have a curriculum level assigned yet.`,
+        ],
+      })
+    }
+
   } catch {
     // Graceful fallback if any query fails
   }

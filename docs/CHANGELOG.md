@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 668: DONNA Director Daily Brief Context V1
+
+**Files modified:**
+- `src/app/api/donna/brief/route.ts` — Added two new brief sections: "Advancement Ready" (count of players with `advancement_eligible = true` in `v_player_curriculum_summary`) and "No Curriculum Level" (count of active players with null `current_level_id`). Both are read-only queries scoped by `academy_id`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 667: Director Today Page DONNA Integration V1
 
 **Files modified:**
