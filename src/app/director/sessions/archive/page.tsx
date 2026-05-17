@@ -101,7 +101,7 @@ export default async function SessionArchivePage() {
   }
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
+    <div className="p-6 space-y-6 animate-fade-in max-w-5xl">
       <BackLink />
 
       <div>

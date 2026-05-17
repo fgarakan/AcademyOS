@@ -200,7 +200,7 @@ export default async function LevelUpPage({
   const other = rows.filter(r => !['overdue', 'due_soon', 'upcoming'].includes(r.urgency ?? ''))
 
   return (
-    <div className="animate-fade-in p-6 space-y-6">
+    <div className="animate-fade-in p-6 space-y-6 max-w-5xl">
 
       {/* Header */}
       <div>

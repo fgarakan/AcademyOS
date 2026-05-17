@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 676: V1 Desktop Layout Audit V1
+
+**Files modified:**
+- `src/app/director/signals/page.tsx` — Added `max-w-5xl` to root container; prevents linear signal list from stretching uncomfortably on ultra-wide monitors
+- `src/app/director/level-up/page.tsx` — Added `max-w-5xl` to root container; same ultra-wide fix for the assessment pipeline list
+- `src/app/director/sessions/archive/page.tsx` — Added `max-w-5xl` to root container; same fix for the completed sessions archive list
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 675: V1 Mobile Layout Audit V1
 
 **Files modified:**
