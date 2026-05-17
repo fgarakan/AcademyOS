@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 649: Director DONNA Priority Routing Polish V1
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Greeting card now shows live review-queue count hint (orange) when director has pending items; CTA label is role-differentiated: "Walk me through academy priorities" (director) / "What needs attention today?" (coach).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 648: Coach DONNA Priority Routing Shell V1
 
 **Files modified:**

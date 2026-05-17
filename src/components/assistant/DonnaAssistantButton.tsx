@@ -2711,10 +2711,18 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   ? DONNA_ONBOARDING_STEPS[onboardingStep].question
                   : (dailyGreetingState?.primaryText ?? greetingText)}
               </p>
-              {/* Sprint 647 — daily welcome follow-up and CTA (intro already complete) */}
+              {/* Sprint 647/649 — daily welcome follow-up, priority hint, and role-aware CTA */}
               {!isOnboardingActive(onboardingStep) && dailyGreetingState?.followUp && (
                 <p className="text-[12px] text-text-secondary mt-2 leading-snug">
                   {dailyGreetingState.followUp}
+                </p>
+              )}
+              {/* Sprint 649 — live priority hint for director role */}
+              {!isOnboardingActive(onboardingStep) && role === 'director' && reviewQueuePendingCount > 0 && (
+                <p className="text-[11px] mt-2 leading-snug" style={{ color: '#FF9500' }}>
+                  {reviewQueuePendingCount === 1
+                    ? '1 item is waiting in your review queue.'
+                    : `${reviewQueuePendingCount} items are waiting in your review queue.`}
                 </p>
               )}
               {!isOnboardingActive(onboardingStep) && dailyGreetingState?.isFirstOpenToday && (
@@ -2729,7 +2737,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                     color: '#C8FF00',
                   }}
                 >
-                  Walk me through today
+                  {role === 'coach' ? 'What needs attention today?' : 'Walk me through academy priorities'}
                 </button>
               )}
               {isOnboardingActive(onboardingStep) && (
