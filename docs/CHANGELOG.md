@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 732: Mobile Safari Layout QA V1
+
+**Files created:**
+- `docs/MOBILE_SAFARI_LAYOUT_QA_732.md` — Mobile Safari layout audit: `viewportFit: 'cover'` and `maximumScale: 1` set in viewport config; `safe-area-bottom` CSS utility in globals.css; BottomTabBar uses `safe-area-bottom`; coach/player/parent layouts have `pb-24` bottom padding; `pb-safe` in wrap-up drawer footers. Live device testing recommended before V1 launch. No code fixes needed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 731: Voice Unsupported Browser QA V1
 
 **Files created:**
