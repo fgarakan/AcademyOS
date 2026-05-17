@@ -16,6 +16,7 @@ import { TodayCommandBrief } from './TodayCommandBrief'
 import { loadCommandBriefLive } from '@/lib/donna/commandBriefLiveLoader'
 import type { CommandBriefLiveResult } from '@/lib/donna/commandBriefLiveLoader'
 import { DEMO_COMMAND_BRIEF_DATA } from '@/lib/donna/donnaDemoSeed'
+import { isDemoMode } from '@/lib/donna/cooDemo'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -58,9 +59,9 @@ function sessionSortKey(s: SessionRow): string {
 export default async function TodaysAcademyPage({
   searchParams,
 }: {
-  searchParams: { demo?: string }
+  searchParams: Record<string, string | string[] | undefined>
 }) {
-  const isDemoMode = searchParams.demo === '1'
+  const demoMode = isDemoMode(searchParams)
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -98,7 +99,7 @@ export default async function TodaysAcademyPage({
   let pending: number
   let commandBriefResult: CommandBriefLiveResult
 
-  if (isDemoMode) {
+  if (demoMode) {
     enrichedSessions = DEMO_SESSIONS
     pending = DEMO_PENDING_COUNT
     commandBriefResult = {

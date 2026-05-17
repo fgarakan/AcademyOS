@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-17 — Sprint 522: COO Demo Live/Demo Toggle V1
+
+**Files created:**
+- `src/lib/donna/cooDemo.ts` — shared `isDemoMode(searchParams)`, `demoPath(path)`, `livePath(path)` helpers for demo mode detection and URL manipulation across all COO surfaces.
+
+**Files modified:**
+- `src/app/director/today/page.tsx` — replaces inline `searchParams.demo === '1'` with `isDemoMode()` from shared utility; `searchParams` type updated to `Record<string, string | string[] | undefined>`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 521: Curriculum Bottleneck Blocked State V1
 
 **Files created:**
