@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 541: DONNA Conversation Message Model V1
+
+**Files created:**
+- `src/lib/donna/conversationMessageBuilder.ts` — message builder utilities. DONNA builders: `buildDonnaQuestion`, `buildDonnaClarification`, `buildDonnaSummary`, `buildDonnaSystem`. Coach builders: `buildCoachAnswer`, `buildCoachSkip`, `buildCoachConfirmation`. Predicates: `isDonnaMessage`, `isCoachMessage`, `isSkipped`, `isAnswered`. List utilities: `getLastDonnaMessage`, `getAnswerForQuestion`, `getAnsweredCount`, `getSkippedCount`, `filterByKind`. Pure TypeScript, no DB, no 'use client'.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 540: DONNA Conversation State Machine V1
 
 **Files created:**
