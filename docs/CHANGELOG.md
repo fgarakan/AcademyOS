@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 713: Route Smoke Test Audit V1
+
+**Files created:**
+- `docs/ROUTE_SMOKE_TEST_AUDIT_713.md` — Full route audit: 44 routes pass, 4 confirmed non-existent (locked). Error boundary and loading state coverage documented. Key discovery: `/director/curriculum/builder` already exists with CurriculumSetupBuilder component — must be reviewed before Sprint 760 curriculum builder work.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 712: TypeScript Strict Regression V1
 
 **Files modified:** None (no code changes needed)
