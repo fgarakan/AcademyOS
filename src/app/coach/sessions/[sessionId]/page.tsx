@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Info, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Info, AlertTriangle, Sparkles } from 'lucide-react'
+import { DonnaOpenChip } from '@/components/assistant/DonnaOpenChip'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 import { CoachSessionExecutionClient } from './CoachSessionExecutionClient'
@@ -348,6 +349,16 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           Use <span className="text-text-secondary font-medium">Wrap Up Session</span> for your structured end-of-session recap.
           Player observations go directly to the director review queue.
         </p>
+        {/* Sprint 653 — DONNA entry when no wrap-up submitted yet */}
+        {!existingWrapUpStatus && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-surface-raised mb-3">
+            <Sparkles className="w-4 h-4 shrink-0" style={{ color: '#8b5cf6' }} />
+            <p className="text-xs text-text-secondary flex-1 leading-snug">
+              Ready to wrap up? DONNA can guide you through it.
+            </p>
+            <DonnaOpenChip prompt={`Start my session wrap-up: ${session.name ?? 'this session'}`} />
+          </div>
+        )}
         <div className="space-y-3">
           <CoachWrapUpDetailPanel
             sessionId={session.id}

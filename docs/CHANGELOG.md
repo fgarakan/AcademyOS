@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 653: Coach Session Detail DONNA CTA V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Added DONNA entry prompt card in "After Session" section when no wrap-up submitted yet: "Ready to wrap up? DONNA can guide you through it." + DonnaOpenChip with session-specific prompt. Sparkles icon imported.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 652: Coach Session Card DONNA CTA V1
 
 **Files modified:**
