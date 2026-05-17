@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 557: DONNA Next Best Action Live Ranking V1
+
+**Files created:**
+- `src/lib/donna/donnaNBAEngine.ts` — pure TypeScript ranking engine. `rankNextBestActions(ctx: COOContext)` returns up to 5 `NextBestAction` items ranked by urgency then confidence. Categories: review_queue, coach_wrap_up, attendance, parent_update, level_readiness, academy_health. Each has rank, title, reason, urgency (high/medium/low), confidence, actionLabel, actionRoute (or null if route not built), isBlocked, blockedReason. No execution. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 556: DONNA Confidence and Missing Data UI V1
 
 **Files created:**
