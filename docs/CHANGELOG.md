@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 575: Coach Observation Apply Preview V1
+
+**Files created:**
+- `src/components/donna/ObservationPlayerProfilePreview.tsx` — player profile perspective preview for observation apply. Shows observation card as it would appear on profile (type icon/label/color, skill tag, observation text, next step). Visibility badge (coach_only/director/parent_safe). Parent-safe candidate indicator. Preview-only disclaimer. No DB. No mutation.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 574: Coach Observation Application Adapter Audit V1
 
 **Files created:**
