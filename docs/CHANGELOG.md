@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 560: Live Data and Conversation Regression V1
+
+**Files created:**
+- `docs/DONNA_REGRESSION_560.md` — regression audit for Sprints 547–559. TypeScript clean. Safety scan: zero DB writes, zero external sends, zero protected execution calls found in all 15 new donna files. Voice transcript requires explicit coach confirm. NBA ranking is read-only. COO answer engine is pure TypeScript. All operating model rules verified.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 559: Player Profile COO Context Integration V1
 
 **Files created:**
