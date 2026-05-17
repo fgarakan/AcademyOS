@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 535: Coach Wrap-Up Detail Panel Mobile UX V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDetailPanel.tsx` — mobile UX pass: roster rows get `min-h-[44px]` touch targets + `divide-y` list styling; `NextActionHint` upgraded to colored pill cards with larger icons (`w-5 h-5`) and two-line layout (title + body); section padding increased to `py-4`; section headers use `label-xs` class; attendance numbers bumped to `text-2xl`; `StatusChip` text size increased to `text-xs`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 534: Coach Wrap-Up Detail Panel V1
 
 **Files created:**
