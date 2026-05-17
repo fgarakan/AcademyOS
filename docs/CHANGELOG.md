@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 728: Data Loading Failure QA V1
+
+**Files created:**
+- `docs/DATA_LOADING_FAILURE_QA_728.md` — Data loading failure audit: all four portals have error boundaries; auth failure inline messages consistent; all Supabase results use `?? []` fallbacks; server actions return `{ ok: false, error }` structured results; KPI engines return `insufficient_data`/`no_data` on missing data. No fixes needed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 727: No Co-Author Commit Audit V1
 
 **Files created:**
