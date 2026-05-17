@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 595: DONNA Command Confirmation V1
+
+**Files created:**
+- `src/components/donna/DONNACommandConfirmation.tsx` — final confirmation step before DONNA submits a proposal. Shows action summary, key field grid, director approval notice (proposal goes to review queue — not applied until approved), parent draft notice (send always blocked), level readiness notice (no level move — finalize_player_placement() required), optional warnings. `onConfirm`/`onEdit`/`onCancel` callbacks. No DB write from component — triggers callback only.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 594: DONNA Command Clarification V1
 
 **Files created:**
