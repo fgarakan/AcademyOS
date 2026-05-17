@@ -54,6 +54,7 @@ export function FilterChip({
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
         'px-3 py-2 rounded-xl text-sm font-medium border transition-all duration-100',
         active

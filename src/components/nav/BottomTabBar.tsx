@@ -55,6 +55,7 @@ export function BottomTabBar({ items }: { items: TabItem[] }) {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'flex-1 flex flex-col items-center gap-1 py-3 px-2 transition-colors duration-100',
                 isActive ? 'text-lime' : 'text-text-muted hover:text-text-secondary'

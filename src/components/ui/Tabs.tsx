@@ -33,6 +33,7 @@ export function TabsList({ children, className, scrollable = false }: {
 }) {
   return (
     <div
+      role="tablist"
       className={cn(
         'flex gap-0.5',
         scrollable && 'overflow-x-auto scrollbar-none',
@@ -54,6 +55,8 @@ export function TabsTrigger({ value, children, className }: {
   const isActive = active === value
   return (
     <button
+      role="tab"
+      aria-selected={isActive}
       onClick={() => set(value)}
       className={cn(
         'px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all duration-150 border-b-2 -mb-px',

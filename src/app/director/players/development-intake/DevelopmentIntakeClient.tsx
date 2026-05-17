@@ -202,6 +202,8 @@ export function DevelopmentIntakeClient({ players }: { players: IntakePlayerRow[
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <button
+          type="button"
+          aria-pressed={filter === 'all'}
           onClick={() => setFilter('all')}
           className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${filter === 'all' ? 'border-lime text-lime' : 'border-border text-text-muted hover:text-text-secondary'}`}
         >
@@ -209,6 +211,8 @@ export function DevelopmentIntakeClient({ players }: { players: IntakePlayerRow[
         </button>
         {emptyCount > 0 && (
           <button
+            type="button"
+            aria-pressed={filter === 'empty'}
             onClick={() => setFilter('empty')}
             className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${filter === 'empty' ? 'border-status-orange text-status-orange' : 'border-border text-text-muted hover:text-text-secondary'}`}
           >

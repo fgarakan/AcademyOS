@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-17 — Sprint 700: Navigation Active State Pass V1
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — Added `aria-current="page"` to active nav links so screen readers announce "current page" when on the active route
+- `src/components/nav/BottomTabBar.tsx` — Added `aria-current="page"` to active tab links
+- `src/components/ui/Tabs.tsx` — Added `role="tablist"` to `TabsList` and `role="tab"` + `aria-selected` to `TabsTrigger` for proper ARIA tab semantics
+- `src/components/ui/SearchFilterBar.tsx` — Added `aria-pressed={active}` to `FilterChip` so screen readers announce toggle state
+- `src/app/director/players/development-intake/DevelopmentIntakeClient.tsx` — Added `aria-pressed` and `type="button"` to filter buttons (All Players / Missing Data)
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 699: Responsive Layout Pass V1
 
 **Files modified:**
