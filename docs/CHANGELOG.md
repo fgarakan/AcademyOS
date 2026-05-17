@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-17 — Sprint 533: Coach Wrap-Up Live Data Regression V1
+
+**Files created:**
+- `docs/COACH_WRAP_UP_LIVE_DATA_REGRESSION_QA.md` — full regression QA pass for Sprints 526–532. Covers session selector, roster, attendance draft, session actual, player name matcher, review queue context, director coverage panel, and review page integration. All 40+ checks pass. Safety verified. Limitations and Sprint 534 recommendation documented.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — Sprint 533 entry
+
+**TypeScript:** CLEAN (baseline confirmed before sprint, no code changes made)
+
+**Findings:** No regressions. Two loaders (`wrapUpRosterLoader`, `wrapUpAttendanceDraftLoader`) query `session_attendance` without explicit `academy_id` — confirmed safe via RLS JOIN. Sprints 527–531 loaders are foundation-only and not yet wired to UI by design. No DANA references. No migrations needed.
+
+---
+
 ## 2026-05-17 — Sprint 532: Director Review Surface Wrap-Up V1
 
 **Files created:**
