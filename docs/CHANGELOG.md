@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 520: Weekly COO Report Live Adapter V1
+
+**Files created:**
+- `src/lib/donna/weeklyCoOReportLoader.ts` — `loadWeeklyCoOReport(db, academyId)` compiles 7-day COO metrics: sessions, attendance rate, wrap-up rate, concern observations, review queue (pending + approved this week), new players. `fieldStatus: 'partial'` if sessions exist, `'insufficient_data'` if no sessions. Sequential reads only, no mutations.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 519: Parent Trust Live Adapter V1
 
 **Files created:**
