@@ -131,6 +131,7 @@ function NextActionHint({ status }: { status: string | null }) {
         <p className="text-sm font-medium text-text-primary leading-snug">Ready to wrap up</p>
         <p className="text-xs text-text-secondary mt-0.5">
           Use the <span className="text-lime font-medium">Wrap Up Session</span> button below when you&apos;re done.
+          Your wrap-up goes to your director for review — nothing changes officially until they approve it.
         </p>
       </div>
     </div>
@@ -158,14 +159,14 @@ export async function CoachWrapUpDetailPanel({
 
       {/* ── Session context ── */}
       <div className="px-4 py-4 border-b border-border">
-        <p className="label-xs mb-1">Session Summary</p>
+        <p className="label-xs mb-1">Wrap-Up Draft</p>
         <p className="text-base font-semibold text-text-primary leading-snug">{sessionName}</p>
         <p className="text-sm text-text-muted mt-0.5">
           {formatDate(scheduledDate)}
           {scheduledTime ? ` · ${scheduledTime.slice(0, 5)}` : ''}
         </p>
         <p className="text-xs text-text-muted/60 mt-2">
-          Draft only — nothing official changes until your director reviews.
+          Everything below is a draft preview — nothing becomes official until your director reviews and approves your wrap-up.
         </p>
       </div>
 
@@ -195,9 +196,6 @@ export async function CoachWrapUpDetailPanel({
           </ul>
         )}
 
-        <p className="text-xs text-text-muted/60">
-          Draft — not the official attendance record.
-        </p>
       </div>
 
       {/* ── Attendance summary ── */}
@@ -238,9 +236,6 @@ export async function CoachWrapUpDetailPanel({
           </>
         )}
 
-        <p className="text-xs text-text-muted/60">
-          Draft — not official until director applies the wrap-up.
-        </p>
       </div>
 
       {/* ── Session actual — blocks ── */}
@@ -274,9 +269,6 @@ export async function CoachWrapUpDetailPanel({
           </div>
         )}
 
-        <p className="text-xs text-text-muted/60">
-          Draft — not applied to the official session record.
-        </p>
       </div>
 
       {/* ── Next action ── */}

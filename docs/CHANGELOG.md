@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 537: Coach Wrap-Up Detail Panel Review CTA Pass V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpDetailPanel.tsx` — review-safety copy pass: panel header renamed from "Session Summary" to "Wrap-Up Draft"; session context disclaimer expanded to "Everything below is a draft preview — nothing becomes official until your director reviews and approves"; 3 repetitive per-section "Draft —" footers removed (panel header now owns the draft framing); `null` status `NextActionHint` body extended to explain that the wrap-up goes to the director for review before anything changes officially.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 536: Coach Wrap-Up Detail Panel Empty States V1
 
 **Files modified:**
