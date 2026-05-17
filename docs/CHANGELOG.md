@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-17 — Sprint 657: Role-Aware DONNA Regression V1
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — (1) `getDonnaReviewQueueAction()` fetch on panel open now gated on `role === 'director'`; (2) `DonnaReviewQueueBadge` render gated on `role === 'director'`; (3) `detectAndHandleCommand` returns early for coach role — director-only navigation commands (/director/* routes) not executed for coaches.
+
+**Regression findings fixed:**
+- Review queue data was fetched for all roles on panel open — now director-only.
+- Review queue badge was rendered for all roles — now director-only.
+- Director-only navigation commands (go to players, go to review, etc.) were runnable by coaches — now blocked.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 656: Role-Aware DONNA Safety Boundaries V1
 
 **Files created:**

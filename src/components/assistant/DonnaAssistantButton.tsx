@@ -2090,14 +2090,18 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
   // Deterministic command detection — no AI, no API calls.
   // Navigation uses approved /director routes only. Returns true if command was recognized.
+  // Sprint 657: director-only navigation commands are skipped for coach role.
   function detectAndHandleCommand(text: string): boolean {
     const lower = text.toLowerCase().trim()
 
-    // Review queue intent — in-panel quick review (Sprint 273)
+    // Review queue intent — guarded for coach in handleOpenReviewQueue (Sprint 656)
     if (isReviewQueuePhrase(lower)) {
       void handleOpenReviewQueue()
       return true
     }
+
+    // Sprint 657: director-only navigation commands not available for coach role
+    if (role === 'coach') return false
 
     // Navigation commands — approved routes only, most-specific first
     const NAV_COMMANDS: Array<{ patterns: string[]; href: string }> = [
@@ -2532,9 +2536,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             }
           }
 
-          // Sprint 373: fetch review queue count on panel open (read-only, no mutation)
+          // Sprint 373: fetch review queue count on panel open (director only — Sprint 657 regression fix)
           // Sprint 375: also evaluate rule-based recommendations from returned signals
-          void getDonnaReviewQueueAction().then((data) => {
+          void (role === 'director' ? getDonnaReviewQueueAction() : Promise.resolve(null)).then((data) => {
             const pendingCount = data?.totalCount ?? 0
             if (pendingCount > 0) {
               setReviewQueuePendingCount(pendingCount)
@@ -2661,8 +2665,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             <p className="text-[11px] text-text-secondary leading-snug mt-0.5">
               {DONNA_ACTIVATION_HELP}
             </p>
-            {/* Sprint 373 — Review queue badge */}
-            {reviewQueuePendingCount > 0 && (
+            {/* Sprint 373 — Review queue badge (director only — Sprint 657 regression fix) */}
+            {role === 'director' && reviewQueuePendingCount > 0 && (
               <div className="mt-1.5">
                 <DonnaReviewQueueBadge
                   count={reviewQueuePendingCount}
