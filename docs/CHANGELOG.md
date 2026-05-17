@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 547: DONNA Conversation to Draft Adapter V1
+
+**Files created:**
+- `src/lib/donna/wrapUpDraftAdapter.ts` — converts `ConversationMessage[]` into a `WrapUpAnswerSet` for the review queue. `buildDraftFromConversation(messages, sessionId)` returns `ConversationToDraftResult` with `draft`, `answeredCount`, `skippedCount`, `unansweredCount`, `isComplete`, `isPartial`. Uses last coach message per question (supports corrections). `getDraftSummaryLabel` and `isDraftSafeToSubmit` helpers. No DB. No external sends. Preview-only until a save adapter is wired.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 546: DONNA Conversation Summary UI V1
 
 **Files created:**
