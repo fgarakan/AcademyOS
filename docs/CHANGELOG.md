@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 592: DONNA Intent Classification V1
+
+**Files created:**
+- `src/lib/donna/donnaIntentClassifier.ts` — keyword-matching intent classifier. `classifyDonnaIntent(input)` returns `IntentClassificationResult` with category, confidence (high/medium/low), matchedSignals, requiresClarification, clarificationPrompt. Signal map covers all 9 action categories. Ambiguity detection: when top two matches tie in score, prompts clarification. No AI API calls. No DB. Pure TypeScript.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 591: DONNA Command Router Architecture V1
 
 **Files created:**
