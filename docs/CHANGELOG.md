@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 529: Coach Wrap-Up Session Actual Draft V1
+
+**Files created:**
+- `src/lib/coach/wrapUpSessionActualLoader.ts` — `loadWrapUpSessionActual(db, sessionId, academyId)` reads `session_blocks` + `session_block_exercises.completed` to produce a session actual draft. Returns per-block `completionRate`, overall completion rate, and counts of fully/partially/not-started blocks.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 528: Coach Wrap-Up Attendance Draft V1
 
 **Files created:**
