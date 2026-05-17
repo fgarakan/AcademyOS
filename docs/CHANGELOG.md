@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 566: Attendance Draft Apply Preview V1
+
+**Files created:**
+- `src/components/donna/AttendanceApplyPreview.tsx` — attendance draft apply preview. Shows present/absent/unknown player rows with icons, unrostered attendees, warnings, and summary chips. Preview-only disclaimer. No write. Props: `rostered`, `unrostered`, `warnings`, `sessionName?`. No DB.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 565: Attendance Draft Application Adapter Audit V1
 
 **Files created:**
