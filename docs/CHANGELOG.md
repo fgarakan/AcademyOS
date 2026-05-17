@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 611: Production Risk Register V1
+
+**Files created:**
+- `docs/PRODUCTION_RISK_REGISTER_611.md` — 15 risks across 4 severity levels. Critical: RLS gap, wrong action_id, unauthorized finalize_player_placement, parent send bypass (all Low likelihood with mitigations). High: voice unavailable (fallback built), misclassification (preview + clarification), RLS block (degraded mode), orphaned approvals (readiness panel shows count). Medium/Low: classifier ambiguity, template mutation, audit log failure, duplicate wrap-ups, ephemeral session memory. Pre-pilot actions listed. Accepted V1 risks documented.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 610: Brian Academy Pilot Readiness Checklist V1
 
 **Files created:**
