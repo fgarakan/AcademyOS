@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-17 — Sprint 690: Error States Pass V1
+
+**Files created:**
+- `src/app/director/signals/error.tsx` — Next.js error boundary for Signals page; icon + message + retry button, consistent with director error pattern
+- `src/app/director/kpi/error.tsx` — Next.js error boundary for KPI Dashboard; icon + message + retry button
+- `src/app/director/review/error.tsx` — Next.js error boundary for Review Queue; icon + message + retry + Dashboard link (review queue is high-stakes, always offers escape route)
+
+**Files modified:**
+- `src/app/director/level-up/error.tsx` — Rewrote from bare minimal state (no icon, plain text, no design system classes) to match the established director error pattern (status-red icon circle, page-title-level error message, retry + Dashboard link)
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 689: Loading States Pass V1
 
 **Files created:**

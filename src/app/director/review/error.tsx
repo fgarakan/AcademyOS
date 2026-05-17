@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 
-export default function LevelUpError({
+export default function ReviewQueueError({
   error,
   reset,
 }: {
@@ -16,9 +16,9 @@ export default function LevelUpError({
         <AlertCircle className="w-6 h-6 text-status-red" />
       </div>
       <div className="text-center space-y-1.5">
-        <p className="text-base font-semibold text-text-primary">Failed to load level readiness</p>
+        <p className="text-base font-semibold text-text-primary">Failed to load review queue</p>
         <p className="text-sm text-text-muted max-w-xs leading-relaxed">
-          {error.message || 'Could not load player advancement data. Try again or return to the dashboard.'}
+          {error.message || 'Could not load pending review items. Try again or return to the dashboard.'}
         </p>
       </div>
       <div className="flex items-center gap-3">
