@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-17 — Sprint 526: Coach Wrap-Up Live Session Selector V1
+
+**Files created:**
+- `src/lib/coach/wrapUpSessionSelector.ts` — `loadWrapUpSessionSelector(db, coachId, academyId)` returns sessions from last 7 days split into `needsWrapUp[]` and `alreadySubmitted[]`. Wrap-up detection via `voice_notes.session_id`. Read-only, no migrations.
+
+**Files modified:**
+- `src/app/coach/sessions/page.tsx` — added `wrapUpSelector` call; added "WRAP-UPS NEEDED" section above TODAY when pending wrap-ups exist (orange border, links to session detail).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 525: Director Command Center COO Integration V1
 
 **Files modified:**
