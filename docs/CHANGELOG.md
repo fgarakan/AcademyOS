@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 572: Session Actual Apply Confirmation UI V1
+
+**Files created:**
+- `src/components/donna/SessionActualApplyConfirmation.tsx` — confirmation UI before session actual apply. Shows session name, block completion summary, skipped/modified notes, "cannot be automatically reversed" note. Cancel and blue "Apply session notes" CTA. `isApplying` state. Does not apply — delegates to caller. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 571: Session Actual Apply Preview V1
 
 **Files created:**
