@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 549: Voice Dictation Capture V1
+
+**Files created:**
+- `src/lib/donna/useVoiceDictation.ts` — `'use client'` React hook wrapping browser Web Speech API. `useVoiceDictation()` returns status (`unavailable`/`idle`/`listening`/`processing`/`done`/`error`), `transcript`, `interimTranscript`, `error` (`permission_denied`/`no_speech`/`aborted`/`network`/`unsupported`/`unknown`), `isAvailable`, `start()`, `stop()`, `reset()`. Detects availability on mount. Gracefully degrades to `unavailable` when API absent. `continuous: false`, `interimResults: true`, `lang: en-US`. No package installs. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 548: DONNA Conversation Safety Pass V1
 
 **Files created:**
