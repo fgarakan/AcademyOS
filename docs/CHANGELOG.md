@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 563: Proposed Action Apply Status Model V1
+
+**Files created:**
+- `src/lib/donna/proposedActionApplyStatus.ts` — `ProposedActionApplyStatus` type (8 states: draft/needs_review/approved/approved_not_applied/applied/rejected/blocked/failed). `APPLY_STATUS_META` record with label, description, isTerminal, requiresHumanAction, colorClass, dotClass per state. `VALID_TRANSITIONS` map. `canTransitionTo`, `isActionable`, `requiresHumanAction`, `getStatusLabel`, `getStatusColor`, `getStatusDot` helpers. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 562: Safe Execution Adapter Architecture Audit V1
 
 **Files created:**
