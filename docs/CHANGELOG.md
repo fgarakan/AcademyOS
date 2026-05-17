@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 569: Attendance Draft Apply Regression V1
+
+**Files created:**
+- `docs/ATTENDANCE_DRAFT_REGRESSION_569.md` — regression for Sprints 565–568. TypeScript clean. Safety scan: zero DB writes, zero external sends in all 3 new files. Logic: guardrails block unapproved/empty drafts, high absence warns, preview shows "no changes yet", confirmation does not write directly. Operating model verified. Regression PASSED.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 568: Attendance Draft Apply Guardrails V1
 
 **Files created:**
