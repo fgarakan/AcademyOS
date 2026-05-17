@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 660: Today's Academy Integration Polish V1
+
+**Files modified:**
+- `src/app/director/today/page.tsx` — Added "← Dashboard" back-link at page top; added pending-review notice banner (orange) when `pending > 0` with direct "Review now →" link.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 659: Director Dashboard Flow Cleanup V1
 
 **Files modified:**

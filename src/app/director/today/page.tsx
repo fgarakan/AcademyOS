@@ -3,6 +3,7 @@ import Link from 'next/link'
 import {
   Calendar, CheckCircle2, Clock, AlertTriangle,
   ChevronRight, Users, ClipboardList, Activity,
+  ArrowLeft,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import {
@@ -229,6 +230,15 @@ export default async function TodaysAcademyPage({
   return (
     <div className="p-6 space-y-8 animate-fade-in">
 
+      {/* Sprint 660 — Dashboard back-link */}
+      <Link
+        href="/director"
+        className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Dashboard
+      </Link>
+
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -247,6 +257,24 @@ export default async function TodaysAcademyPage({
           )}
         </Link>
       </div>
+
+      {/* Sprint 660 — Pending wrap-ups notice */}
+      {pending > 0 && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-status-orange/30 bg-status-orange/5">
+          <div className="flex items-center gap-2 min-w-0">
+            <ClipboardList className="w-4 h-4 text-status-orange shrink-0" />
+            <p className="text-sm font-semibold text-status-orange">
+              {pending} item{pending !== 1 ? 's' : ''} need{pending === 1 ? 's' : ''} your review
+            </p>
+          </div>
+          <Link
+            href="/director/review"
+            className="shrink-0 text-xs font-semibold text-status-orange hover:opacity-80 transition-opacity flex items-center gap-0.5"
+          >
+            Review now <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
+      )}
 
       {/* ── Stat strip ──────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
