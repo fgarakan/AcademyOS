@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 561: 50-Sprint Live Data and Conversation Block Audit V1
+
+**Files created:**
+- `docs/BLOCK_AUDIT_561.md` — closes Sprints 546–561. 16 sprints completed. Conversation foundation: 7/8 capabilities LIVE (save caller not yet wired). Voice layer: 5/6 capabilities LIVE (shell not yet mounted). COO intelligence: 8/9 capabilities LIVE (DB data not yet piped). Readiness: conversation 85%, voice 70%, COO 45%, pilot 40%. TypeScript CLEAN. QA Gate PASSED.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 560: Live Data and Conversation Regression V1
 
 **Files created:**
