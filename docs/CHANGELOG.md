@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 629: Full Academy Day Simulation V1
+
+**Files created:**
+- `src/lib/donna/academyDaySimulation.ts` — full simulated academy day dataset (Dabul, 2026-05-17). 4 sessions, 4 coaches, attendance events, 3 submitted wrap-ups + 1 outstanding, DONNA daily brief output, 4 review queue items (1 urgent), end-of-day summary. Clearly marked `SIMULATION_ONLY`. No DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 628: Director Command Center Mobile Polish V1
 
 **Files created:**
