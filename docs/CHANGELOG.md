@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 637: DONNA Pilot Script Integration V1
+
+**Files created:**
+- `docs/DONNA_PILOT_SCRIPT_INTEGRATION_637.md` — exact walkthrough path for the Brian/Dabul pilot. 6-step flow with routes, demo actions, talking points, and expected UI state. Pre-demo setup, common Brian questions + answers, demo route summary, and closing script. Total demo time: ~20 min.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 636: Pilot Empty State Polish V1
 
 **Files created:**
