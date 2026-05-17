@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-17 — Sprint 532: Director Review Surface Wrap-Up V1
+
+**Files created:**
+- `src/app/director/review/WrapUpCoveragePanel.tsx` — read-only coverage card. Renders weekly wrap-up coverage rate, submitted/missing counts, and per-session status rows (name, date, icon, status label). Shows calm empty state when no sessions exist. Review-safe language throughout.
+- `src/lib/donna/wrapUpReviewSurfaceLoader.ts` — (created Sprint 532 prior session) `loadWrapUpReviewSurface(db, academyId)` returns session-level wrap-up coverage for the past 7 days: `pendingSet` via voice_notes, `paStatusMap` via proposed_actions, per-session `wrapUpSubmitted`/`wrapUpStatus`, counts, and `coverageRate`.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — added import of `WrapUpCoveragePanel` and `loadWrapUpReviewSurface`; calls loader and renders panel below the summary cards grid.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 531: Coach Wrap-Up Review Queue Context V1
 
 **Files created:**

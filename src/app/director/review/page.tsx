@@ -38,6 +38,8 @@ import { VoiceIntakeBatchPanel } from './VoiceIntakeBatchPanel'
 import { CapturesBatchPanel } from './CapturesBatchPanel'
 import { DonnaDraftCard } from './DonnaDraftCard'
 import type { DonnaDraftItem } from './DonnaDraftCard'
+import { loadWrapUpReviewSurface } from '@/lib/donna/wrapUpReviewSurfaceLoader'
+import { WrapUpCoveragePanel } from './WrapUpCoveragePanel'
 
 const VALID_TAB_PARAMS: Record<string, string> = {
   // Director-facing section names (Sprint 247)
@@ -1188,6 +1190,9 @@ export default async function DirectorReviewQueuePage({
   const resolvedTab = requestedTabParam ? (VALID_TAB_PARAMS[requestedTabParam] ?? null) : null
   const activeDefaultTab = resolvedTab ?? defaultTab
 
+  // Wrap-up coverage context — Sprint 532
+  const wrapUpCoverage = await loadWrapUpReviewSurface(supabase, academyId)
+
   return (
     <div className="animate-fade-in p-6 space-y-6">
 
@@ -1256,6 +1261,9 @@ export default async function DirectorReviewQueuePage({
           <p className="text-[9px] text-text-muted">Sent back or not approved</p>
         </div>
       </div>
+
+      {/* Wrap-up coverage — Sprint 532 */}
+      <WrapUpCoveragePanel coverage={wrapUpCoverage} />
 
       {/* Stale alert banner — shown when any section has pending items older than 7 days */}
       {(needsApprovalPending > 0 || playerUpdatesPending > 0 || curriculumSessionPending > 0) && (
