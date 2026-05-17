@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 527: Coach Wrap-Up Roster Context V1
+
+**Files created:**
+- `src/lib/coach/wrapUpRosterLoader.ts` — `loadWrapUpRoster(db, sessionId, academyId)` returns merged roster: `group_memberships` (if group_id) + `session_attendance` attendees. Handles unrostered attendees. Returns `WrapUpRosterEntry[]` with `attendanceStatus` and `isRostered` flag. No migrations, no writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 526: Coach Wrap-Up Live Session Selector V1
 
 **Files created:**
