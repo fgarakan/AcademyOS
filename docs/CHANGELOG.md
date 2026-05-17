@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-17 — Sprint 656: Role-Aware DONNA Safety Boundaries V1
+
+**Files created:**
+- `src/lib/donna/donnaRoleBoundaries.ts` — Pure utility: `COACH_ALLOWED_TASK_IDS`, `COACH_ALLOWED_MODES`, `COACH_QUICK_LINKS`, `DIRECTOR_REQUIRED_COPY`, `isTaskAllowedForRole()`, `isModeAllowedForRole()`.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — (1) Imports from `donnaRoleBoundaries`; (2) `handleStartGenericTask` blocks director-only tasks for coach with "That requires director approval" copy; (3) `handleOpenReviewQueue` blocks for coach; (4) Tab chips are role-conditional — coach sees My Sessions / Player Notes / Ask Anything, director keeps Review Today / Prepare Coaches / Player Progress / Parent Updates / Ask Anything; (5) Review Queue mode button hidden for coach; (6) MODES rendered through `isModeAllowedForRole` filter (hides Create Template for coach); (7) "Find" mode quick links show coach-safe routes for coach role.
+
+**Coach allowed:** capture player note, draft player note, guide me, explain this screen, find something (coach routes), capture a note.
+**Coach blocked:** review queue, create template, all director task flows, parent update, level readiness, curriculum adjust, coach communication, session creation, attendance exception.
+**Director behavior:** unchanged — all actions preserved.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 655: Coach DONNA No-Wrap-Up Needed State V1
 
 **Files modified:**

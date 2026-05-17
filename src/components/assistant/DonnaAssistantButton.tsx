@@ -197,6 +197,14 @@ import {
   markGreetedToday,
   type DailyGreetingState,
 } from '@/lib/donna/donnaDailyGreeting'
+// Sprint 656 — Role Boundaries
+import {
+  isTaskAllowedForRole,
+  isModeAllowedForRole,
+  DIRECTOR_REQUIRED_COPY,
+  COACH_QUICK_LINKS,
+  type DonnaRole,
+} from '@/lib/donna/donnaRoleBoundaries'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -336,7 +344,7 @@ interface Props {
   /** Display name for the logged-in user (director or coach). */
   directorName?: string
   /** Role context for greeting and priority routing. Defaults to 'director'. */
-  role?: 'director' | 'coach'
+  role?: DonnaRole
 }
 
 export function DonnaAssistantButton({ academyId, directorName, role = 'director' }: Props) {
@@ -1315,6 +1323,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   function handleStartGenericTask(taskId: DonnaTaskId, fromVoice = false) {
     if (taskId === 'create_class_template') return // always uses TemplateDraftPanel
 
+    // Sprint 656: block director-only tasks for coach role
+    if (!isTaskAllowedForRole(taskId, role)) {
+      setCommandResponse({ message: DIRECTOR_REQUIRED_COPY, type: 'honest', label: 'Director only' })
+      return
+    }
+
     // Sprint 398: honest early return for tasks not yet wired — no silent failure
     if (!WIRED_TASK_IDS.has(taskId)) {
       const contract = DONNA_TASK_CONTRACTS[taskId]
@@ -1830,6 +1844,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
   // Opens the review queue panel and fetches data.
   async function handleOpenReviewQueue() {
+    // Sprint 656: coaches do not have access to the director review queue
+    if (role === 'coach') {
+      setCommandResponse({ message: DIRECTOR_REQUIRED_COPY, type: 'honest', label: 'Director only' })
+      return
+    }
     recordSignal('review_queue_opened')
     setActiveMode('review_queue')
     setGenericDraft(null)
@@ -2662,29 +2681,47 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           </button>
         </div>
 
-        {/* Tab chips — executive quick actions */}
+        {/* Tab chips — role-aware quick actions (Sprint 656) */}
         <div
           className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 overflow-x-auto"
           style={{ borderBottom: '1px solid var(--border-subtle)' }}
         >
-          {([
-            { label: 'Review Today', action: () => void handleOpenReviewQueue() },
-            { label: 'Prepare Coaches', action: () => dispatchCooCommand('coach_brief') },
-            { label: 'Player Progress', action: () => { router.push('/director/level-up') } },
-            { label: 'Parent Updates', action: () => { router.push('/director/parents') } },
-            {
-              label: 'Ask Anything',
-              action: () => {
-                setActiveMode(null)
-                setCommandResponse(null)
-                setTimeout(() => {
-                  const el = document.querySelector<HTMLTextAreaElement>('[data-donna-input]')
-                  el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                  el?.focus()
-                }, 50)
-              },
-            },
-          ] as { label: string; action: () => void }[]).map(chip => (
+          {(role === 'coach'
+            ? ([
+                { label: 'My Sessions', action: () => { router.push('/coach/sessions'); closePanel() } },
+                { label: 'Player Notes', action: () => setTypedText('Capture a player note') },
+                {
+                  label: 'Ask Anything',
+                  action: () => {
+                    setActiveMode(null)
+                    setCommandResponse(null)
+                    setTimeout(() => {
+                      const el = document.querySelector<HTMLTextAreaElement>('[data-donna-input]')
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      el?.focus()
+                    }, 50)
+                  },
+                },
+              ] as { label: string; action: () => void }[])
+            : ([
+                { label: 'Review Today', action: () => void handleOpenReviewQueue() },
+                { label: 'Prepare Coaches', action: () => dispatchCooCommand('coach_brief') },
+                { label: 'Player Progress', action: () => { router.push('/director/level-up') } },
+                { label: 'Parent Updates', action: () => { router.push('/director/parents') } },
+                {
+                  label: 'Ask Anything',
+                  action: () => {
+                    setActiveMode(null)
+                    setCommandResponse(null)
+                    setTimeout(() => {
+                      const el = document.querySelector<HTMLTextAreaElement>('[data-donna-input]')
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      el?.focus()
+                    }, 50)
+                  },
+                },
+              ] as { label: string; action: () => void }[])
+          ).map(chip => (
             <button
               key={chip.label}
               type="button"
@@ -3100,7 +3137,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             </div>
           )}
 
-          {/* ── Inline response: Find something ── */}
+          {/* ── Inline response: Find something — role-aware links (Sprint 656) ── */}
           {activeMode === 'find' && (
             <div
               className="rounded-xl px-3.5 py-3"
@@ -3110,7 +3147,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 Jump to
               </p>
               <div className="space-y-0.5">
-                {QUICK_LINKS.map(link => (
+                {(role === 'coach' ? COACH_QUICK_LINKS : QUICK_LINKS).map(link => (
                   <Link
                     key={link.href}
                     href={link.href}
@@ -3421,43 +3458,45 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               What would you like?
             </p>
 
-            {/* Review Queue button — Sprint 273 */}
-            <button
-              onClick={() => void handleOpenReviewQueue()}
-              className={cn(
-                'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150',
-                activeMode === 'review_queue'
-                  ? 'text-text-primary'
-                  : 'text-text-secondary hover:text-text-primary',
-              )}
-              style={{
-                background: activeMode === 'review_queue' ? 'rgba(139,92,246,0.06)' : 'var(--bg-surface)',
-                border: activeMode === 'review_queue' ? '1px solid rgba(139,92,246,0.2)' : '1px solid var(--border)',
-              }}
-            >
-              <div className="flex items-start gap-2.5">
-                <Inbox className={cn(
-                  'w-3.5 h-3.5 mt-0.5 shrink-0',
-                  activeMode === 'review_queue' ? 'text-violet-400' : 'text-text-muted',
-                )} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-[12px] font-semibold leading-tight">Review Queue</p>
-                    {reviewQueueData && reviewQueueData.totalCount > 0 && (
-                      <span className="text-[9px] font-semibold px-1 py-0.5 rounded"
-                        style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}>
-                        {reviewQueueData.totalCount}
-                      </span>
-                    )}
+            {/* Review Queue button — Sprint 273; director-only (Sprint 656) */}
+            {role === 'director' && (
+              <button
+                onClick={() => void handleOpenReviewQueue()}
+                className={cn(
+                  'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150',
+                  activeMode === 'review_queue'
+                    ? 'text-text-primary'
+                    : 'text-text-secondary hover:text-text-primary',
+                )}
+                style={{
+                  background: activeMode === 'review_queue' ? 'rgba(139,92,246,0.06)' : 'var(--bg-surface)',
+                  border: activeMode === 'review_queue' ? '1px solid rgba(139,92,246,0.2)' : '1px solid var(--border)',
+                }}
+              >
+                <div className="flex items-start gap-2.5">
+                  <Inbox className={cn(
+                    'w-3.5 h-3.5 mt-0.5 shrink-0',
+                    activeMode === 'review_queue' ? 'text-violet-400' : 'text-text-muted',
+                  )} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[12px] font-semibold leading-tight">Review Queue</p>
+                      {reviewQueueData && reviewQueueData.totalCount > 0 && (
+                        <span className="text-[9px] font-semibold px-1 py-0.5 rounded"
+                          style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}>
+                          {reviewQueueData.totalCount}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-text-muted leading-snug mt-0.5">
+                      Review pending notes, unlinked captures, and sessions that need blocks.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-text-muted leading-snug mt-0.5">
-                    Review pending notes, unlinked captures, and sessions that need blocks.
-                  </p>
                 </div>
-              </div>
-            </button>
+              </button>
+            )}
 
-            {MODES.map(({ mode, label, desc, Icon, category, safeStatus }) => (
+            {MODES.filter(({ mode }) => isModeAllowedForRole(mode, role)).map(({ mode, label, desc, Icon, category, safeStatus }) => (
               <button
                 key={mode}
                 onClick={() => handleModeClick(mode)}
