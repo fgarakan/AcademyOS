@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 587: Curriculum Override Rollback Preview V1
+
+**Files created:**
+- `src/components/donna/CurriculumOverrideRollbackPreview.tsx` — preview card for curriculum override rollback. Shows original override summary (what was applied, by whom, when), what rollback restores, audit trail note (rollback record created in `academy_curriculum_overrides`, original marked `rolled_back`, `audit_logs` written), and optional warnings. Shield notice: director-only, master template unchanged. Preview only. No DB write. No mutation.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 586: Curriculum Override Apply Preview V1
 
 **Files created:**
