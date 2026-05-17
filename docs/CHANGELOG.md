@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 555: DONNA Context Source Citation UI V1
+
+**Files created:**
+- `src/components/donna/DONNAAnswerCard.tsx` — reusable answer card for all DONNA COO surfaces. Shows DONNA avatar, answer text, confidence badge (high/partial/insufficient/blocked with color-coded icon), source note, and follow-up suggestion with optional "Go →" action. Props: `answer: DONNAAnswer`, `question?`, `onFollowUp?`. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 554: DONNA Ask From Live COO Context V1
 
 **Files created:**
