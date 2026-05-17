@@ -274,6 +274,8 @@ export function CoachSessionExecutionClient({
                       <button
                         key={s}
                         type="button"
+                        aria-label={`Mark ${s}`}
+                        aria-pressed={attendanceMap[player.playerId] === s}
                         onClick={() => markAttendance(player.playerId, s)}
                         className={`w-10 py-2 rounded-lg text-xs font-bold uppercase border transition-all ${
                           attendanceMap[player.playerId] === s

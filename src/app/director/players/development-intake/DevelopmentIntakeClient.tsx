@@ -91,8 +91,13 @@ function PlayerIntakeCard({ player }: PlayerCardProps) {
   return (
     <div className={`rounded-xl border bg-surface-raised transition-colors ${saved ? 'border-status-green/40' : 'border-border'}`}>
       <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        aria-label={`${expanded ? 'Collapse' : 'Expand'} development intake for ${player.fullName}`}
         className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface/60 transition-colors"
         onClick={() => setExpanded(v => !v)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(v => !v) } }}
       >
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-text-primary truncate">{player.fullName}</p>

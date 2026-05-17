@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 697: Accessibility Pass V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionExecutionClient.tsx` — Added `aria-label="Mark [status]"` and `aria-pressed` to single-letter attendance status buttons (P/A/L/E). Screen readers now announce "Mark present", "Mark absent", etc. instead of individual letters.
+- `src/app/director/curriculum/learning/LearningModulesClient.tsx` — Added `aria-expanded` and `aria-label="Expand/Collapse [module title]"` to the module card expand button so screen readers announce the toggle intent and current state.
+- `src/app/director/players/development-intake/DevelopmentIntakeClient.tsx` — Added `role="button"`, `tabIndex={0}`, `aria-expanded`, `aria-label`, and `onKeyDown` (Enter/Space) to the div-as-button row header, making it keyboard-navigable.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 696: Draft Review Official Language Pass V1
 
 **Files modified:**

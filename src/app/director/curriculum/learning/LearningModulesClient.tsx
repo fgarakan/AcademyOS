@@ -35,6 +35,8 @@ function ModuleCard({ module }: { module: CurriculumLearningModule }) {
       {/* Header row */}
       <button
         type="button"
+        aria-expanded={expanded}
+        aria-label={expanded ? `Collapse ${module.title}` : `Expand ${module.title}`}
         onClick={() => setExpanded(e => !e)}
         className="w-full flex items-start justify-between gap-3 px-4 py-3 hover:bg-surface transition-colors text-left"
       >
