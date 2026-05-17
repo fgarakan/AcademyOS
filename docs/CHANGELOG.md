@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 623: DONNA Review Queue Summary V1
+
+**Files created:**
+- `src/components/donna/DONNAReviewQueueSummary.tsx` — compact summary card for the director review queue. `ReviewQueueCategory` (6 types: wrap_up/attendance_exception/parent_draft/level_readiness/curriculum_override/voice_intake). Shows total pending + urgent counts in header, per-category breakdown with urgent badges, all-clear state, and "Open review queue" link. Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 622: DONNA Answer History Panel V1
 
 **Files created:**
