@@ -72,7 +72,7 @@ export const KPI_NEXT_BEST_ACTION_MAP: KPINextBestAction[] = [
     severity: 'no_data',
     donnaSummary: "Not enough wrap-up data yet to assess player attention risk.",
     recommendedAction: 'Remind coaches to submit wrap-ups so I can surface patterns.',
-    actionCta: 'Send wrap-up reminder',
+    actionCta: 'View wrap-up queue',
     routingDestination: 'wrap_up_reminder',
     requiresDirectorApproval: false,
     isExecutable: false,

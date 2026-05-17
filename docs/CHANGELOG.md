@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-17 — Sprint 723: No Parent Sends Audit V1
+
+**Files created:**
+- `docs/NO_PARENT_SENDS_AUDIT_723.md` — Full no-send audit: no external parent send infrastructure exists. No email/SMS/push providers installed. All parent communication paths are draft-only, blocked at routing layer, or `proposed_actions` pipeline only. One copy fix: `kpiNextBestActionMap.ts` `actionCta` changed from `'Send wrap-up reminder'` to `'View wrap-up queue'` (button opened review queue, not an outbound send).
+
+**Files modified:**
+- `src/lib/donna/kpiNextBestActionMap.ts` — Copy fix: `player_attention_risk / no_data` `actionCta` corrected from `'Send wrap-up reminder'` → `'View wrap-up queue'`
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 722: Live Partial Demo Label QA V1
 
 **Files created:**
