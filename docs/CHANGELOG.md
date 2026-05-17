@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 542: DONNA Conversational Panel Shell V1
+
+**Files created:**
+- `src/components/donna/DonnaConversationalPanel.tsx` — `'use client'` message history UI. Renders DONNA bubbles (lime "D" avatar, rounded left) and coach bubbles (lime tint, rounded right) with timestamps. Skipped answers shown as italic "Skipped". Textarea input with Enter-to-send, Skip button (conditional on `canSkip`), Send button. Scrolls to bottom on new messages. State indicator for listening/clarifying/summarizing/awaiting_review/complete/error states. `children` slot for Sprint 546 summary UI. No question script (Sprint 543) or voice (Sprint 549).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 541: DONNA Conversation Message Model V1
 
 **Files created:**
