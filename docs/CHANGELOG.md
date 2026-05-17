@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 678: V1 Safety Copy Pass V1
+
+**Files modified:**
+- `src/app/director/placement/PlacementEngineClient.tsx` — Added safety note before "Activate Player" button explaining that activation is irreversible from this screen and what it writes (group, track, level assignment)
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 677: V1 Copy Consistency Pass V1
 
 **Files modified:**

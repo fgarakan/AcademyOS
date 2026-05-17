@@ -201,15 +201,18 @@ function PlayerPlacementCard({ player, academyId, groups, levels }: PlayerCardPr
             )}
 
             {rec.status === 'approved' && (
-              <button
-                onClick={handleActivate}
-                disabled={isPending}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-status-green text-base hover:bg-status-green/90 transition-all"
-              >
-                {isPending
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Activating…</>
-                  : <><Zap className="w-4 h-4" /> Activate Player</>}
-              </button>
+              <div className="space-y-2">
+                <p className="text-[10px] text-text-muted">Activating moves the player from pending to active and writes their group, track, and level assignment. This cannot be undone from this screen — contact support if you need to reverse an activation.</p>
+                <button
+                  onClick={handleActivate}
+                  disabled={isPending}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-status-green text-base hover:bg-status-green/90 transition-all"
+                >
+                  {isPending
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Activating…</>
+                    : <><Zap className="w-4 h-4" /> Activate Player</>}
+                </button>
+              </div>
             )}
           </div>
         )}
