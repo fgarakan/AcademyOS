@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 742: Brian Demo Dataset Final Pass V1
+
+**Files created:**
+- `docs/BRIAN_DEMO_DATASET_AUDIT_742.md` — Demo dataset audit: voice prompts aligned (Sarah/Mia/Leo match Step 8 prompt; curriculum prompt matches Step 3); all demo data labeled with DEMO badge or Preview Mode banner; sandbox isolation confirmed; no demo record can mutate real data; 3 minor gaps identified (all acceptable V1). PASSED.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-17 — Sprint 741: Brian Demo Flow Final Polish V1
 
 **Files created/modified:**
