@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-17 — AcademyOS Product Guardrail Skill Stack
+
+**Files created:**
+- `.claude/skills/academy-os-role-permission-guard/SKILL.md` — Guards role-based data visibility and server action auth. Prevents cross-role data leakage, unscoped queries, and coach/parent access to director approval power.
+- `.claude/skills/academy-os-donna-integration-guard/SKILL.md` — Guards DONNA integration points. Enforces proposal-only posture, honest data disclosure, role-aware DONNA separation, `NEVER_AUTOMATIC` integrity, and command routing `routingNote` requirement.
+- `.claude/skills/academy-os-curriculum-builder-guard/SKILL.md` — Guards Curriculum Builder UX. Enforces 7 principles: no blank workspace, DONNA-led welcome, guided mode default, all edits are drafts, impact preview, director approval gate, skip/jump freedom.
+- `.claude/skills/academy-os-trust-data-guard/SKILL.md` — Guards data provenance and demo/live honesty. Enforces trust taxonomy (live/partial/insufficient_data/no_data/blocked_by_rls/blocked_by_schema/demo/draft) and `DonnaStatusDisclosureRow` usage.
+- `.claude/skills/academy-os-coach-adoption-guard/SKILL.md` — Guards coach-facing UX against friction. Enforces 90-second test, 7-question cap, required field prohibition, voice fallback, wrap-up drawer pattern, and mobile-first chip selection.
+- `.claude/skills/academy-os-platform-owner-command-center-guard/SKILL.md` — Guards platform owner vs. director command center separation. Enforces preview mode write block, cross-academy data isolation, command routing integrity, and platform role verification.
+- `.claude/skills/academy-os-pilot-readiness-guard/SKILL.md` — Guards V1 pilot readiness for Dabul Tennis Academy (Brian Dabul). Enforces demo script alignment, first-run experience, coming-soon labeling, demo sandbox isolation, and pilot-visible route integrity.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 740: V1 Reliability Audit V1
 
 **Files created:**
