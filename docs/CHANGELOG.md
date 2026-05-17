@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 731: Voice Unsupported Browser QA V1
+
+**Files created:**
+- `docs/VOICE_UNSUPPORTED_BROWSER_QA_731.md` — Voice browser support audit: `useVoiceDictation` detects SpeechRecognition API at mount; `VoiceInputButton` renders calm "type instead" message when unsupported; all voice surfaces have text fallback; permission denied/no-speech/network errors mapped to named types; Realtime voice has fallback to browser STT or typed input. No fixes needed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 730: Missing Data State QA V1
 
 **Files created:**
