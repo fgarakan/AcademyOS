@@ -342,21 +342,17 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* ── After Session ── primary: Wrap Up Session ── */}
+      {/* ── After Session ── primary: Wrap-Up Session ── */}
       <section>
         <p className="label-xs mb-1">After Session</p>
         <p className="text-[11px] text-text-muted mb-3">
-          Use <span className="text-text-secondary font-medium">Wrap Up Session</span> for your structured end-of-session recap.
+          Use <span className="text-text-secondary font-medium">Wrap-Up Session</span> for your structured end-of-session recap.
           Player observations go directly to the director review queue.
         </p>
         {/* DONNA entry when no wrap-up submitted yet */}
         {!existingWrapUpStatus && (
           <div
-            className="flex items-center gap-3 px-4 py-3 rounded-xl border mb-3"
-            style={{
-              background: 'rgba(200,255,0,0.04)',
-              border: '1px solid rgba(200,255,0,0.15)',
-            }}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl border border-lime/20 bg-lime/5 mb-3"
           >
             <Sparkles className="w-4 h-4 text-lime shrink-0" />
             <p className="text-xs text-text-secondary flex-1 leading-snug">

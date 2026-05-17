@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 688: Coach Session Detail Premium Polish V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Two targeted polish changes:
+  1. Helper text copy: "Wrap Up Session" → "Wrap-Up Session" (consistent with button label from Sprint 677 and CoachSessionActions fix from Sprint 683)
+  2. DONNA entry chip: replaced inline `style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.15)' }}` with design system Tailwind classes `bg-lime/5 border-lime/20`; also removed the conflicting `border` utility class that was overridden by the inline style
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 687: Parent Preview Premium Polish V1
 
 **Files modified:**
