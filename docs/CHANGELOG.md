@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 616: DONNA Session Debrief Surface V1
+
+**Files created:**
+- `src/components/donna/DONNASessionDebriefCard.tsx` — post-session debrief card from DONNA. Shows session label/date/coach, attended/rostered count, intensity label, DONNA signals (attendance/intensity/player_observation/level_readiness/parent_flag) with icons and review indicators, and "In review queue" / "No wrap-up" badges. Director review alert if any signals require review. Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 615: DONNA Player Risk Surface V1
 
 **Files created:**
