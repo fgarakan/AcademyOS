@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 631: Brian Demo Dataset Polish V1
+
+**Files created:**
+- `src/lib/donna/brianDemoDataset.ts` — polished Dabul Academy demo dataset for the Brian pilot. Academy context (Brian Dabul, Miami, 24 players), 3 coaches, 7 players with UTR/level/context notes, 5 DONNA conversation exchange examples (attendance/observation/session/level readiness/parent draft), 4 review queue items with demo talking points, academy health snapshot. Clearly marked `DEMO_ONLY`. No DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 630: Full Academy Week Simulation V1
 
 **Files created:**
