@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 519: Parent Trust Live Adapter V1
+
+**Files created:**
+- `src/lib/donna/parentTrustLoader.ts` — `loadParentTrust(db, academyId)` documents the `blocked_by_schema` state for parent communication coverage. Probes: active player count (coverage denominator), parent-related proposed_actions count (via `target_module ILIKE '%parent%'`). Full coverage tracking blocked pending `proposed_actions.applied_at` + parent contact history table.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 518: Coach Support Live Adapter V1
 
 **Files created:**
