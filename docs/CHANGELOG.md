@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 729: RLS Blocked State QA V1
+
+**Files created:**
+- `docs/RLS_BLOCKED_STATE_QA_729.md` — RLS blocked state audit: `blocked_by_rls` is first-class status in DONNA COO system (NBA suppression, disclosure component, COO answer engine). Service role client confined to 3 unused backend functions. All UI queries use session-bound client. No RLS bypass reachable from UI. No fixes needed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 728: Data Loading Failure QA V1
 
 **Files created:**
