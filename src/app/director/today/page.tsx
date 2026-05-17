@@ -15,8 +15,10 @@ import { TodayDonnaSuggestionChip } from './TodayDonnaSuggestionChip'
 import { TodayCommandBrief } from './TodayCommandBrief'
 import { loadCommandBriefLive } from '@/lib/donna/commandBriefLiveLoader'
 import type { CommandBriefLiveResult } from '@/lib/donna/commandBriefLiveLoader'
-import { DEMO_COMMAND_BRIEF_DATA } from '@/lib/donna/donnaDemoSeed'
+import { DEMO_COMMAND_BRIEF_DATA, DEMO_PLAYER_ATTENTION_RISK } from '@/lib/donna/donnaDemoSeed'
 import { isDemoMode } from '@/lib/donna/cooDemo'
+import { loadPlayerAttentionRisk } from '@/lib/donna/playerAttentionRiskLoader'
+import type { PlayerAttentionRiskResult } from '@/lib/donna/playerAttentionRiskLoader'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -98,6 +100,7 @@ export default async function TodaysAcademyPage({
   let enrichedSessions: DemoSession[]
   let pending: number
   let commandBriefResult: CommandBriefLiveResult
+  let attentionRisk: PlayerAttentionRiskResult
 
   if (demoMode) {
     enrichedSessions = DEMO_SESSIONS
@@ -112,6 +115,16 @@ export default async function TodaysAcademyPage({
         reviewQueue: 'partial',
       },
       overallStatus: 'partial',
+    }
+    attentionRisk = {
+      players: DEMO_PLAYER_ATTENTION_RISK.slice(0, 3).map(p => ({
+        playerId: p.playerId ?? 'demo-player',
+        playerName: p.playerName,
+        riskLevel: p.riskLevel as 'high' | 'medium' | 'low',
+        factors: [{ type: 'concern_observation' as const, detail: p.flagSummary }],
+      })),
+      totalAtRisk: DEMO_PLAYER_ATTENTION_RISK.length,
+      fieldStatus: 'partial',
     }
   } else {
     const today = getTodayString()
@@ -199,6 +212,9 @@ export default async function TodaysAcademyPage({
 
     // ── Command Brief live loader (Sprint 512) ───────────────────────────────
     commandBriefResult = await loadCommandBriefLive(supabase, academyId)
+
+    // ── Player Attention Risk live loader (Sprint 524) ───────────────────────
+    attentionRisk = await loadPlayerAttentionRisk(supabase, academyId)
   }
 
   // ── Derived stats ──────────────────────────────────────────────────────────
@@ -316,6 +332,44 @@ export default async function TodaysAcademyPage({
             data={commandBriefResult.data}
             overallStatus={commandBriefResult.overallStatus}
           />
+
+          {/* Player Attention Risk — Sprint 524 ─────────────────────────────── */}
+          {attentionRisk.players.length > 0 && (
+            <div className="space-y-2">
+              <p className="label-xs">Players Needing Attention</p>
+              <Card>
+                <CardContent className="py-3 space-y-2">
+                  {attentionRisk.players.slice(0, 3).map(p => (
+                    <div key={p.playerId} className="flex items-start gap-2">
+                      <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${
+                        p.riskLevel === 'high'
+                          ? 'bg-status-red'
+                          : p.riskLevel === 'medium'
+                            ? 'bg-status-orange'
+                            : 'bg-text-muted'
+                      }`} />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-text-primary truncate">{p.playerName}</p>
+                        <p className="text-[11px] text-text-muted truncate">
+                          {p.factors[0]?.detail ?? p.riskLevel}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {attentionRisk.totalAtRisk > 3 && (
+                    <p className="text-[11px] text-text-muted pl-3.5">
+                      +{attentionRisk.totalAtRisk - 3} more
+                    </p>
+                  )}
+                </CardContent>
+                <CardFooter>
+                  <Link href="/director/players" className="text-xs text-lime hover:opacity-80 font-medium">
+                    View all players →
+                  </Link>
+                </CardFooter>
+              </Card>
+            </div>
+          )}
 
           {/* DONNA suggestion chips */}
           <div className="space-y-2">

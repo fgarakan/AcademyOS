@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 524: Director Today COO Integration V1
+
+**Files modified:**
+- `src/app/director/today/page.tsx` — added `loadPlayerAttentionRisk` server call; demo branch maps `DEMO_PLAYER_ATTENTION_RISK` to `PlayerAttentionRisk[]`; right column shows "Players Needing Attention" card (top 3, color-coded dots, factor detail, overflow count) when at-risk players exist.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 523: COO Dashboard Data Sufficiency UI Pass V1
 
 **Files modified:**
