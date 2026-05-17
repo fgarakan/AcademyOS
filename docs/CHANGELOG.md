@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-17 — Sprint 759: Curriculum Builder Architecture Mapping V1
+
+**Files created:**
+- `docs/CURRICULUM_BUILDER_ARCHITECTURE_759.md` — Route architecture (new sub-routes /map, /guided, /level/[id]); component architecture (25 new builder components in `src/components/curriculum/builder/`); data architecture (reuses `getCurriculumExplorerData()`); state architecture; design system tokens; safety pipeline; sprint sequencing rationale by phase.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 758: Curriculum Builder Zip Audit V1
+
+**Files created:**
+- `docs/CURRICULUM_BUILDER_ZIP_AUDIT_758.md` — Pre-block inventory: 10 components, 5 lib files, 4 routes all confirmed existing; gap list for 10/10 target (DONNA welcome, visual map, guided review, level detail, change queue, impact preview, relationship map, mobile polish); implementation constraints (no migrations, no DB writes, proposed_actions only).
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-17 — Sprint 757: V1 Completion and Curriculum Builder Transition Audit V1
 
 **Files created:**
