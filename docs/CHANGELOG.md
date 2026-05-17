@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 562: Safe Execution Adapter Architecture Audit V1
+
+**Files created:**
+- `docs/SAFE_EXECUTION_ADAPTER_MAP_562.md` — maps all 6 draft-to-official-record paths. Defines adapter required, blocker, and safety level (CRITICAL/HIGH/MEDIUM/LOW) for: wrap-up → session, observation → player profile, attendance exception, parent update (BLOCKED), level readiness (CRITICAL/protected), curriculum override. Build priority order defined. No code changes.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 561: 50-Sprint Live Data and Conversation Block Audit V1
 
 **Files created:**
