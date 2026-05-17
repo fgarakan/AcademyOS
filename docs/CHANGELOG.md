@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 581: Parent Draft Review Regression V1
+
+**Files created:**
+- `docs/PARENT_DRAFT_REGRESSION_581.md` — regression for Sprints 578–580. TypeScript clean. Safety scan: zero external sends, zero DB writes in all new files. Logic: send_blocked banner correct, portal visibility ≠ send, director approval required, no auto-notify, reassurance copy present. Regression PASSED.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 580: Parent Draft Send-Blocked Safe State V1
 
 **Files created:**
