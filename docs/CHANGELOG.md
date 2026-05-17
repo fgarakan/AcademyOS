@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 521: Curriculum Bottleneck Blocked State V1
+
+**Files created:**
+- `src/lib/donna/curriculumBottleneckLoader.ts` — `loadCurriculumBottleneck(db, academyId)` documents `blocked_by_schema` state (curriculum_requirements + player_curriculum_levels tables missing, migrations 041–044 unapplied). Probes: skill-tagged concern observations count and top-5 repeated tags as future bottleneck signals. Returns `fieldStatus: 'blocked_by_schema'`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 520: Weekly COO Report Live Adapter V1
 
 **Files created:**
