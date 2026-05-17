@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { AlertTriangle, BookOpen, CheckCircle, Users } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, BookOpen, CheckCircle, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -1196,6 +1196,15 @@ export default async function DirectorReviewQueuePage({
 
   return (
     <div className="animate-fade-in p-6 space-y-6">
+
+      {/* Back link */}
+      <Link
+        href="/director"
+        className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Dashboard
+      </Link>
 
       {/* Page header */}
       <div className="space-y-1">

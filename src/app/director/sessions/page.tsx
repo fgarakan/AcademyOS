@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Calendar, Zap } from 'lucide-react'
+import { ArrowLeft, Calendar, Sun, Zap } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
@@ -103,6 +103,23 @@ export default async function DirectorSessionsPage() {
 
   return (
     <div className="p-6 animate-fade-in space-y-6">
+      {/* Cross-module nav */}
+      <div className="flex items-center justify-between">
+        <Link
+          href="/director"
+          className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Dashboard
+        </Link>
+        <Link
+          href="/director/today"
+          className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-lime transition-colors"
+        >
+          <Sun className="w-3.5 h-3.5" />
+          Today&apos;s Academy
+        </Link>
+      </div>
       <PageHeader />
 
       {sessionList.length === 0 ? (

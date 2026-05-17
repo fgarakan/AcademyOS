@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 671: Cross-Module Navigation Cleanup V1
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — Added `ArrowLeft` import; added "← Dashboard" back link at top of page (same pattern as Today's Academy page).
+- `src/app/director/sessions/page.tsx` — Added `ArrowLeft` + `Sun` imports; added cross-module nav bar with "← Dashboard" (left) and "Today's Academy →" (right) above the page header.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 670: Coach Session Detail DONNA Entry Polish V1
 
 **Files modified:**
