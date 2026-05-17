@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 567: Attendance Draft Apply Confirmation UI V1
+
+**Files created:**
+- `src/components/donna/AttendanceApplyConfirmation.tsx` — confirmation UI before attendance apply. Shows per-status counts, warnings, unknown player callout, "cannot be automatically undone" note. Cancel and orange Apply CTA with player count. `isApplying` state. Does not apply — caller handles actual apply via existing `ApplyApprovedAttendanceExceptionControls`. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 566: Attendance Draft Apply Preview V1
 
 **Files created:**
