@@ -7,6 +7,7 @@
 import { Shield, ArrowRight, AlertCircle, CheckCircle2, HelpCircle } from 'lucide-react'
 import type { DonnaCommandCategory, DonnaCommandDestination } from '@/lib/donna/donnaCommandRouter'
 import type { IntentClassificationResult } from '@/lib/donna/donnaIntentClassifier'
+import { DONNA_PUBLIC_NAME } from '@/components/assistant/donnaAssistantCopy'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ export function DONNACommandPreviewCard({
       <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border">
         <div className="w-2 h-2 rounded-full bg-lime shrink-0" />
         <p className="text-xs font-semibold text-text-secondary">
-          DONNA — command preview
+          {DONNA_PUBLIC_NAME} — command preview
         </p>
       </div>
 
@@ -181,6 +182,7 @@ export function DONNACommandPreviewCard({
       <div className="flex items-center gap-2 px-3.5 py-2.5">
         {needsClarification && onClarify && (
           <button
+            type="button"
             onClick={onClarify}
             className="flex-1 btn-lime text-xs py-1.5"
           >
@@ -189,6 +191,7 @@ export function DONNACommandPreviewCard({
         )}
         {!needsClarification && onProceed && (
           <button
+            type="button"
             onClick={onProceed}
             className="flex-1 btn-lime text-xs py-1.5"
           >
@@ -197,6 +200,7 @@ export function DONNACommandPreviewCard({
         )}
         {onCancel && (
           <button
+            type="button"
             onClick={onCancel}
             className="btn-ghost text-xs py-1.5 px-3"
           >

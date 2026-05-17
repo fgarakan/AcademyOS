@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 704: Command Preview UX Polish V1
+
+**Files modified:**
+- `src/components/donna/DONNACommandPreviewCard.tsx` — Imported `DONNA_PUBLIC_NAME`; replaced hardcoded "DONNA" in header with constant; added `type="button"` to Clarify, Proceed, and Cancel buttons
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 703: Correction Handling UX Polish V1
 
 **Files modified:**
