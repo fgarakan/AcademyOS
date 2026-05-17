@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 669: Director Players List Action Density V1
+
+**Files modified:**
+- `src/app/director/players/page.tsx` — Added `Zap` and `ChevronRight` imports; computed `advancementReadyPlayers` list (up to 5) from existing `curriculumMap`; renders a lime-tinted "N players ready to advance" section above the directory when any are ready, with direct links to each player's Skill Path tab (`?tab=skill-path`).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 668: DONNA Director Daily Brief Context V1
 
 **Files modified:**

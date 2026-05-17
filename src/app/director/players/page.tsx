@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Upload, Users, UserPlus } from 'lucide-react'
+import { Upload, Users, UserPlus, Zap, ChevronRight } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { PlayersDirectoryClient } from './_components/PlayersDirectoryClient'
@@ -81,6 +81,10 @@ export default async function PlayersPage() {
     id => !curriculumMap[id]
   ).length
 
+  const advancementReadyPlayers = players
+    .filter(p => p.player_id && curriculumMap[p.player_id]?.advancementEligible)
+    .slice(0, 5)
+
   return (
     <div className="p-6 animate-fade-in space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -115,6 +119,32 @@ export default async function PlayersPage() {
           </Link>
         </div>
       </div>
+
+      {/* Advancement-ready players — action prompt */}
+      {advancementReadyPlayers.length > 0 && (
+        <div className="rounded-xl border border-lime/20 bg-lime/5 px-4 py-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <Zap className="w-3.5 h-3.5 text-lime shrink-0" />
+            <p className="text-[11px] uppercase tracking-widest font-semibold text-lime/80">
+              {advancementReadyPlayers.length} player{advancementReadyPlayers.length !== 1 ? 's' : ''} ready to advance
+            </p>
+          </div>
+          <div className="space-y-1">
+            {advancementReadyPlayers.map(p => (
+              <Link
+                key={p.player_id}
+                href={`/director/players/${p.player_id}?tab=skill-path`}
+                className="flex items-center justify-between gap-3 text-xs text-text-primary hover:text-lime transition-colors py-0.5"
+              >
+                <span>{p.full_name ?? '—'}</span>
+                <span className="flex items-center gap-0.5 text-lime/60 hover:text-lime">
+                  Review readiness <ChevronRight className="w-3 h-3" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <PlayersDirectoryClient players={players} curriculumMap={curriculumMap} />
     </div>
