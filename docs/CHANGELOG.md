@@ -2,6 +2,114 @@
 
 ---
 
+## 2026-05-17 — Sprint 757: V1 Completion and Curriculum Builder Transition Audit V1
+
+**Files created:**
+- `docs/V1_CURRICULUM_BUILDER_TRANSITION_AUDIT_757.md` — V1 phase closure; Sprints 741–757 ledger (all COMPLETE); current curriculum builder state vs. 10/10 goal; transition to Curriculum Builder Completion Block (Sprints 758–840).
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 756: V1 Launch Decision Checklist V1
+
+**Files created:**
+- `docs/V1_LAUNCH_DECISION_CHECKLIST_756.md` — Go/no-go checklist: infrastructure (env vars, deploy), database (director/coach accounts, academy row), pilot-blocking migrations, safety invariants (assertNotPreviewMode, no parent send), demo readiness, pilot materials. No-go conditions listed.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 755: V1 Pilot Feedback Intake Guide V1
+
+**Files created:**
+- `docs/V1_PILOT_FEEDBACK_INTAKE_GUIDE_755.md` — 4-category feedback guide (adoption friction / trust signals / missing features / DONNA value); feedback log template; severity definitions (blocking/friction/minor/enhancement); check-in schedule (Week 1/2/4/8); processing protocol.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 754: UTR and In-House Match Evidence Readiness V1
+
+**Files created:**
+- `docs/UTR_MATCH_EVIDENCE_READINESS_754.md` — UTR display live in Competition tab; in-house match entry and `/director/competition` route not built; competition management V2+. Coaches can record match observations as notes in V1.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 753: Angles App Evidence Integration Readiness V1
+
+**Files created:**
+- `docs/ANGLES_APP_INTEGRATION_READINESS_753.md` — Angles App integration not built in V1; curriculum mapping doc exists; architecture defined for V2+; coaches record Angles evidence as notes in V1.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 752: Assessment Engine Readiness V1
+
+**Files created:**
+- `docs/ASSESSMENT_ENGINE_READINESS_752.md` — Gate evidence server action built; `player_gate_status` table created but repair migrations 041–044, 060 not applied; gate evidence UI blocked until migrations applied; director gate confirmation (Sprint 107) not yet built. Fix: apply repair migrations.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 751: Player Profile Mission Readiness V1
+
+**Files created:**
+- `docs/PLAYER_PROFILE_MISSION_READINESS_751.md` — All 5 tabs verified live; all 6 player mission components surfaced (level, needs, gates, evidence, coach priority, parent-safe summary); player self-access requires profile_id linkage (known limitation); ready for director use.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 750: Director Trust Friction Audit V1
+
+**Files created:**
+- `docs/DIRECTOR_TRUST_FRICTION_AUDIT_750.md` — All major trust surfaces show source/confidence/status; no anti-patterns detected; 2 low-severity flags (Academy Health weighting explanation; DONNA date range context); PASSED with acceptable flags.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 749: Coach Adoption Friction Audit V1
+
+**Files created:**
+- `docs/COACH_ADOPTION_FRICTION_AUDIT_749.md` — 90-second test passes (~70s); no required fields; mobile-safe; voice fallback present; 3 low/medium friction flags (wrap-up question count, two recap UIs, heuristic name matching) all acceptable V1. PASSED.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 748: Role-Aware DONNA Real-World Test Script V1
+
+**Files created:**
+- `docs/ROLE_AWARE_DONNA_TEST_SCRIPT_748.md` — 11 manual tests across director/coach/player/parent roles; fill-in results table for pre-pilot verification session; covers DONNA response scoping, cross-role redirect enforcement, voice fallback.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 747: Post-V1 Manual QA Triage V1
+
+**Files created:**
+- `docs/POST_V1_MANUAL_QA_TRIAGE_747.md` — QA triage matrix (14 checks); pre-pilot verification checklist; known gaps (STT, parent send, portal linkage, gate confirmation); 3 items require manual verification before pilot.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
+## 2026-05-17 — Sprint 746: AcademyOS V1 Completion Audit V1
+
+**Files created:**
+- `docs/V1_COMPLETION_AUDIT_746.md` — Core loop completion matrix (director, coach, curriculum); safety architecture audit (NEVER_AUTOMATIC, finalize_player_placement, execute_approved_action, assertNotPreviewMode all intact); auth guard audit (3 layers); error boundary audit; V1 completion verdict: READY.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-17 — Sprint 745: Final Pilot Walkthrough Script V1
 
 **Files created:**
