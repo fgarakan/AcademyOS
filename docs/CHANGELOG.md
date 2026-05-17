@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 598: DONNA Multi-Step Task Flow V1
+
+**Files created:**
+- `src/lib/donna/donnaMultiStepFlow.ts` — typed state machine for DONNA command flows. `DonnaFlowStep` (10 steps: idle/input/classifying/clarifying/previewing/confirming/submitting/complete/cancelled/error). `DonnaFlowState` and `DonnaFlowEvent` union. `transitionFlow(state, event)` pure transition function. Guards: `canAdvance`, `isTerminal`, `isInProgress`. `FLOW_STEP_LABELS` for UI display. No DB. No execution. Pure TypeScript.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 597: DONNA Command Memory Within Session V1
 
 **Files created:**
