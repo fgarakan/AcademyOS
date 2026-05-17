@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 574: Coach Observation Application Adapter Audit V1
+
+**Files created:**
+- `docs/COACH_OBSERVATION_ADAPTER_AUDIT_574.md` — audit of observation draft → player profile note path. Key finding: 8 files already built and safe. Observations write to internal `coach_observations` table — not parent-visible by default. Parent visibility requires a separate approval step. No auto-send. Gaps: parent-visibility guardrail (Sprint 577). No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 573: Session Actual Apply Guardrails V1
 
 **Files created:**
