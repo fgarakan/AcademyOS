@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-17 — Sprint 712: TypeScript Strict Regression V1
+
+**Files modified:** None (no code changes needed)
+
+**TypeScript result:** CLEAN — `npx tsc --noEmit` exits with 0 errors across the full codebase as of Sprint 712.
+
+---
+
 ## 2026-05-17 — Sprint 711: UX Trust Layer Audit V1
 
 **Files created:**
