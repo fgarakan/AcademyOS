@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 658: V1 Workflow Audit V1
+
+**Files created:**
+- `docs/V1_WORKFLOW_AUDIT_658.md` — Comprehensive audit of 9 major V1 workflows: director dashboard, today, review queue, coach wrap-up, DONNA (director + coach), Academy Health, player profiles, coach sessions, navigation. Documents friction points, broken paths, and recommended next sprints.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-17 — Sprint 657: Role-Aware DONNA Regression V1
 
 **Files modified:**
