@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 724: No Level Movement Audit V1
+
+**Files created:**
+- `docs/NO_LEVEL_MOVEMENT_AUDIT_724.md` — Full level movement audit: no automated level movement exists. `NEVER_AUTOMATIC` constant confirmed. DONNA/voice/wrap-up all surface signals only. One authorized director-explicit path (`setCurriculumLevelAction`) confirmed gated by role + academy + player checks. No copy fixes needed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 723: No Parent Sends Audit V1
 
 **Files created:**
