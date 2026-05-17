@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 556: DONNA Confidence and Missing Data UI V1
+
+**Files created:**
+- `src/components/donna/DONNAConfidenceDisclosure.tsx` — standalone confidence disclosure component. `ConfidenceLevel`: high/partial/insufficient/blocked_missing/blocked_rls/blocked_schema. `DONNAConfidenceDisclosure` renders full block or compact inline badge. `statusToConfidenceLevel(status)` maps `COOFieldStatus` to confidence level. Each level has distinct icon, label, description, and color. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 555: DONNA Context Source Citation UI V1
 
 **Files created:**
