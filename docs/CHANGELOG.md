@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 661: Coach Wrap-Up to Review Queue Polish V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachWrapUpStatusCard.tsx` — Updated all 5 status helper texts to be clearer and more actionable: `pending_review` now says "in director review queue"; `approved` names director explicitly; `executed` confirms no further action; `clarification_needed` tells coach to update form above and resubmit; `rejected` tells coach to contact director directly.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 660: Today's Academy Integration Polish V1
 
 **Files modified:**
