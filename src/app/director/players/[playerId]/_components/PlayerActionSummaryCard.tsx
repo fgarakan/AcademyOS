@@ -271,7 +271,7 @@ export function PlayerActionSummaryCard({
                 }
 
                 return (
-                  <button key={action.label} onClick={action.onClick} className={sharedClasses}>
+                  <button key={action.label} type="button" onClick={action.onClick} className={sharedClasses}>
                     {inner}
                   </button>
                 )

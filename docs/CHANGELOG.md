@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-17 — Sprint 710: Button Type Polish Final Pass V1
+
+**Files modified:**
+- `src/app/director/fitness/templates/[templateId]/FitnessExercisePicker.tsx` — Added `type="button"` to close and Cancel buttons
+- `src/app/director/fitness/templates/[templateId]/FitnessExerciseSwitcher.tsx` — Added `type="button"` to close and Cancel buttons
+- `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` — Added `type="button"` to status dismiss, block type close, and observation close buttons
+- `src/app/director/parents/error.tsx` — Added `type="button"` to Retry button
+- `src/app/director/players/[playerId]/GateEvidenceButton.tsx` — Added `type="button"` to close button
+- `src/app/director/players/[playerId]/_components/PlayerActionSummaryCard.tsx` — Added `type="button"` to action buttons
+- `src/app/director/review/CapturesBatchPanel.tsx` — Added `type="button"` to cancel confirmation close button
+- `src/app/director/review/VoiceIntakeBatchPanel.tsx` — Added `type="button"` to cancel confirmation close button
+- `src/components/assistant/DonnaReviewQueuePanel.tsx` — Added `type="button"` to Retry button
+- `src/components/curriculum/CurriculumLevelDetailPanel.tsx` — Added `type="button"` to drill expand/collapse toggle
+- `src/components/donna/CoachSessionVoiceShell.tsx` — Added `type="button"` to close button
+- `src/components/ui/SectionHeader.tsx` — Added `type="button"` to action button
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 709: Pilot Demo UX Polish V1
 
 **Files modified:**

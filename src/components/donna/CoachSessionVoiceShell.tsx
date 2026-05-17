@@ -104,7 +104,7 @@ export function CoachSessionVoiceShell({
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] text-text-muted">{FLOW_STEP_LABELS[flow.step]}</span>
           {onClose && (
-            <button onClick={onClose} className="text-text-muted hover:text-text-secondary transition-colors">
+            <button type="button" onClick={onClose} className="text-text-muted hover:text-text-secondary transition-colors">
               <X className="w-3.5 h-3.5" />
             </button>
           )}

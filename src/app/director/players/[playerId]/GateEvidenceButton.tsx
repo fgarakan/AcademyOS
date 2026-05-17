@@ -57,7 +57,7 @@ export function GateEvidenceButton({ playerId, academyId, gateId, gateCriterion 
     <div className="mt-2 space-y-2 border-t border-border pt-2">
       <div className="flex items-center justify-between">
         <p className="text-[10px] text-text-muted">Describe what you observed:</p>
-        <button onClick={() => { setOpen(false); setText(''); setError(null) }} className="text-text-muted hover:text-text-secondary transition-colors">
+        <button type="button" onClick={() => { setOpen(false); setText(''); setError(null) }} className="text-text-muted hover:text-text-secondary transition-colors">
           <X className="w-3 h-3" />
         </button>
       </div>

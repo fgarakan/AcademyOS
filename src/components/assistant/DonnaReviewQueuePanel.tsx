@@ -184,7 +184,7 @@ export function DonnaReviewQueuePanel({
     return (
       <div className="rounded-xl px-3.5 py-4 text-center" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
         <p className="text-[12px] text-text-muted">Could not load review queue.</p>
-        <button onClick={onRefresh} className="mt-2 text-[11px] text-lime underline underline-offset-2">
+        <button type="button" onClick={onRefresh} className="mt-2 text-[11px] text-lime underline underline-offset-2">
           Retry
         </button>
       </div>

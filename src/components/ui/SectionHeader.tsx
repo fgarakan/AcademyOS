@@ -23,7 +23,7 @@ export function SectionHeader({ title, action, actionHref, onAction, className, 
           </Link>
         )}
         {action && onAction && !actionHref && (
-          <button onClick={onAction} className="text-lime text-xs font-medium hover:opacity-80 transition-opacity">
+          <button type="button" onClick={onAction} className="text-lime text-xs font-medium hover:opacity-80 transition-opacity">
             {action} →
           </button>
         )}

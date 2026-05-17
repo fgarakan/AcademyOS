@@ -173,7 +173,7 @@ export function FitnessTemplateBuilderClient({
             : 'bg-status-red/5 border-status-red/20 text-status-red',
         ].join(' ')}>
           <span>{statusMsg.text}</span>
-          <button onClick={() => setStatusMsg(null)}><X className="w-3.5 h-3.5" /></button>
+          <button type="button" onClick={() => setStatusMsg(null)}><X className="w-3.5 h-3.5" /></button>
         </div>
       )}
 
@@ -248,7 +248,7 @@ export function FitnessTemplateBuilderClient({
           <CardContent className="py-4">
             <div className="flex items-center justify-between mb-3">
               <p className="label-xs">Choose Block Type</p>
-              <button onClick={() => setAddingBlock(false)} className="text-text-muted hover:text-text-secondary">
+              <button type="button" onClick={() => setAddingBlock(false)} className="text-text-muted hover:text-text-secondary">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -275,7 +275,7 @@ export function FitnessTemplateBuilderClient({
           <div className="bg-surface border border-border rounded-2xl w-full max-w-lg p-5 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-text-primary">Block Observation</p>
-              <button onClick={() => setObservationBlockId(null)} className="text-text-muted hover:text-text-secondary">
+              <button type="button" onClick={() => setObservationBlockId(null)} className="text-text-muted hover:text-text-secondary">
                 <X className="w-4 h-4" />
               </button>
             </div>

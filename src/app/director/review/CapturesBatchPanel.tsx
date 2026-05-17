@@ -133,7 +133,7 @@ export function CapturesBatchPanel({ captures, players }: Props) {
               </button>
             </div>
           </div>
-          <button onClick={() => setConfirming(false)} className="shrink-0 text-text-muted hover:text-text-secondary">
+          <button type="button" onClick={() => setConfirming(false)} className="shrink-0 text-text-muted hover:text-text-secondary">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>

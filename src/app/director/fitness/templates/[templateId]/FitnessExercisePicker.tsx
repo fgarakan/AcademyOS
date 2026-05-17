@@ -93,7 +93,7 @@ export function FitnessExercisePicker({
               {fitnessBlockType ? `Showing ${blockLabel} matches first` : `Adding to: ${blockName}`}
             </p>
           </div>
-          <button onClick={onClose} className="text-text-muted hover:text-text-secondary transition-colors">
+          <button type="button" onClick={onClose} className="text-text-muted hover:text-text-secondary transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -197,7 +197,7 @@ export function FitnessExercisePicker({
                 Add to Block
               </span>
             </button>
-            <button onClick={onClose} className="btn-ghost text-xs px-4 py-2">
+            <button type="button" onClick={onClose} className="btn-ghost text-xs px-4 py-2">
               Cancel
             </button>
           </div>

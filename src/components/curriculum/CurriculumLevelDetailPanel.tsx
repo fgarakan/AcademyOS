@@ -300,7 +300,7 @@ function DrillRow({ drill }: { drill: CurriculumDrill }) {
     >
       <div className="px-3 py-2.5 flex items-start gap-2">
         {hasDetail ? (
-          <button onClick={() => setExpanded(!expanded)} className="shrink-0 mt-1">
+          <button type="button" onClick={() => setExpanded(!expanded)} className="shrink-0 mt-1">
             {expanded
               ? <ChevronDown className="w-3 h-3 text-text-muted" />
               : <ChevronRight className="w-3 h-3 text-text-muted" />

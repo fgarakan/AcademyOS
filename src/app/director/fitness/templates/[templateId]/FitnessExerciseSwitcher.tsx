@@ -80,7 +80,7 @@ export function FitnessExerciseSwitcher({
               Showing {blockLabel} matches first
             </p>
           </div>
-          <button onClick={onClose} className="text-text-muted hover:text-text-secondary transition-colors">
+          <button type="button" onClick={onClose} className="text-text-muted hover:text-text-secondary transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -154,7 +154,7 @@ export function FitnessExerciseSwitcher({
                 Confirm Switch
               </span>
             </button>
-            <button onClick={onClose} className="btn-ghost text-xs px-4 py-2">
+            <button type="button" onClick={onClose} className="btn-ghost text-xs px-4 py-2">
               Cancel
             </button>
           </div>
