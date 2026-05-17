@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 743: V1 Release Notes V1
+
+**Files created:**
+- `docs/V1_RELEASE_NOTES_743.md` — V1 release notes: full feature matrix for director/coach/player/parent portals; "not in V1" table (parent sends, auto level movement, CRM); safety architecture summary (NEVER_AUTOMATIC, finalize_player_placement, execute_approved_action, assertNotPreviewMode); known limitations at pilot start; pilot scope (Dabul Tennis Academy, Brian Dabul).
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-17 — Sprint 742: Brian Demo Dataset Final Pass V1
 
 **Files created:**
