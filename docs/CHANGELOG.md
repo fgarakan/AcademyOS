@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 565: Attendance Draft Application Adapter Audit V1
+
+**Files created:**
+- `docs/ATTENDANCE_DRAFT_ADAPTER_AUDIT_565.md` — audit of attendance draft → official record path. Key finding: path is already built and safe (9 existing files). Coach saves to proposed_actions → director reviews → director approves → director clicks Apply → execute_approved_action() → official rows upserted. Missing: apply status badge (Sprint 564 ready to wire), preview (Sprint 566), confirmation UI (Sprint 567). No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 564: Review Queue Approved vs Applied Logic V1
 
 **Files created:**
