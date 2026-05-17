@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 727: No Co-Author Commit Audit V1
+
+**Files created:**
+- `docs/NO_COAUTHOR_COMMIT_AUDIT_727.md` — Co-author audit: historical co-author footers exist in Sprints 391–439 (~113 commits). No history rewrite. Sprints 723–727 confirmed clean (single-line commits, no co-author footer). Permanent forward rule documented: all future commits must be single-line sprint commits only.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 726: No Migration Drift Audit V1
 
 **Files created:**
