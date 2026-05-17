@@ -122,12 +122,12 @@ export default async function PrivateLessonsPage() {
   }))
 
   return (
-    <div className="space-y-8">
+    <div className="p-6 animate-fade-in space-y-6 max-w-5xl">
       {/* Page header */}
       <div>
-        <p className="label-xs text-lime mb-1">OPERATIONS</p>
-        <h1 className="text-2xl font-bold text-text-primary">Private Lesson Requests</h1>
-        <p className="text-text-secondary text-sm mt-1">
+        <p className="page-eyebrow">Operations</p>
+        <h1 className="page-title">Private Lesson Requests</h1>
+        <p className="page-subtitle">
           Review parent and player requests and route them to the right coach.
         </p>
       </div>

@@ -153,12 +153,13 @@ export default async function KpiDashboardPage() {
   ).length
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 animate-fade-in space-y-6 max-w-5xl">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-semibold text-text-primary">KPI Dashboard</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Per-player KPI signals — absences 30d (demo), time in level (live), advancement readiness.
+        <p className="page-eyebrow">Academy Health</p>
+        <h1 className="page-title">KPI Dashboard</h1>
+        <p className="page-subtitle">
+          Per-player KPI signals — absences 30d, time in level, and advancement readiness.
         </p>
       </div>
 

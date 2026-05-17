@@ -60,7 +60,7 @@ function resolveWrapUpCTA(status: string | null | undefined): WrapUpCTA {
         disabled: false,
       }
     default:
-      return { label: 'Wrap Up Session', helper: '', helperColor: '', disabled: false }
+      return { label: 'Wrap-Up Session', helper: '', helperColor: '', disabled: false }
   }
 }
 
@@ -71,7 +71,7 @@ export function CoachSessionActions({ sessionId, academyId, sessionName, blocks,
 
   return (
     <div className="space-y-2">
-      <p className="text-[10px] uppercase tracking-widest text-text-muted">Wrap Up</p>
+      <p className="text-[10px] uppercase tracking-widest text-text-muted">Wrap-Up</p>
 
       {/* Primary CTA — guarded by existing wrap-up status */}
       <button

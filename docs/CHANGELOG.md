@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 677: V1 Copy Consistency Pass V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/CoachSessionActions.tsx` — Fixed "Wrap Up" (missing hyphen) → "Wrap-Up" in section label and default CTA label ("Wrap Up Session" → "Wrap-Up Session")
+- `src/app/director/private-lessons/page.tsx` — Added missing `p-6 animate-fade-in max-w-5xl` wrapper; replaced non-standard `label-xs text-lime` heading with `page-eyebrow`/`page-title`/`page-subtitle` classes
+- `src/app/director/kpi/page.tsx` — Added `animate-fade-in max-w-5xl` to wrapper; added `page-eyebrow` ("Academy Health") and converted heading to `page-title`/`page-subtitle` pattern; removed "(demo)" from subtitle
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 676: V1 Desktop Layout Audit V1
 
 **Files modified:**
