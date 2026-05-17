@@ -6,6 +6,7 @@
 // readiness blockers, and next best action.
 
 import { AlertCircle, CheckCircle2, Clock, BookOpen, ArrowRight } from 'lucide-react'
+import { DONNA_PUBLIC_NAME } from '@/components/assistant/donnaAssistantCopy'
 import {
   getAttendanceRiskLabel,
   getAttendanceRiskColor,
@@ -50,7 +51,7 @@ export function PlayerCOOContextPanel({
       {/* ── Header ── */}
       <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border">
         <div className="w-2 h-2 rounded-full bg-lime shrink-0" />
-        <p className="text-xs font-semibold text-text-secondary">DONNA COO Context</p>
+        <p className="text-xs font-semibold text-text-secondary">{DONNA_PUBLIC_NAME} COO Context</p>
       </div>
 
       {/* ── Rows ── */}
@@ -161,6 +162,7 @@ export function PlayerCOOContextPanel({
           </div>
           {nextBestAction.actionRoute && onActionClick && (
             <button
+              type="button"
               onClick={() => onActionClick(nextBestAction.actionRoute!)}
               className="text-[10px] text-lime hover:text-lime/80 transition-colors whitespace-nowrap"
             >

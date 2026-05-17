@@ -8,6 +8,7 @@
 import { CheckCircle2, AlertCircle, Ban, HelpCircle } from 'lucide-react'
 import type { COOContext } from '@/lib/donna/donnaCOOAnswerEngine'
 import type { COOFieldStatus } from '@/lib/donna/cooDataStatus'
+import { DONNA_PUBLIC_NAME } from '@/components/assistant/donnaAssistantCopy'
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -95,7 +96,7 @@ export function DONNACOOIntelligencePanel({ ctx, className = '' }: DONNACOOIntel
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-lime shrink-0" />
-          <p className="text-sm font-medium text-text-primary">DONNA intelligence</p>
+          <p className="text-sm font-medium text-text-primary">{DONNA_PUBLIC_NAME} intelligence</p>
         </div>
         <span className={`text-[10px] font-medium ${allLive ? 'text-status-green' : 'text-status-orange'}`}>
           {liveCount}/{totalDimensions} live
@@ -140,8 +141,8 @@ export function DONNACOOIntelligencePanel({ ctx, className = '' }: DONNACOOIntel
       <div className="px-4 py-2 border-t border-border bg-surface">
         <p className="text-[10px] text-text-muted">
           {allLive
-            ? 'All dimensions are live. DONNA answers reflect real-time academy data.'
-            : 'Some dimensions are limited. DONNA will note reduced confidence in answers.'}
+            ? `All dimensions are live. ${DONNA_PUBLIC_NAME} answers reflect real-time academy data.`
+            : `Some dimensions are limited. ${DONNA_PUBLIC_NAME} will note reduced confidence in answers.`}
         </p>
       </div>
     </div>

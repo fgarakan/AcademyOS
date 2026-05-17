@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-17 — Sprint 708: Weekly COO Report UX Polish V1
+
+**Files modified:**
+- `src/components/assistant/DonnaCOOWeeklyReport.tsx` — Imported `DONNA_PUBLIC_NAME`; replaced hardcoded "DONNA" in report header label with constant; added `type="button"` to section toggle button
+- `src/components/donna/DONNACOOIntelligencePanel.tsx` — Imported `DONNA_PUBLIC_NAME`; replaced hardcoded "DONNA" in header text and two footer body copy strings with constant
+- `src/components/donna/PlayerCOOContextPanel.tsx` — Imported `DONNA_PUBLIC_NAME`; replaced hardcoded "DONNA" in panel header; added `type="button"` to "Go →" action button
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 707: End-of-Day Summary UX Polish V1
 
 **Files modified:**

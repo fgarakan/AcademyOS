@@ -6,6 +6,7 @@
 
 import { TrendingUp, TrendingDown, Minus, BarChart2, CheckCircle, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
+import { DONNA_PUBLIC_NAME } from '@/components/assistant/donnaAssistantCopy'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -100,6 +101,7 @@ function ReportSection({
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-3 py-2.5 bg-surface-raised hover:bg-surface transition-colors text-left"
       >
@@ -137,7 +139,7 @@ export function DonnaCOOWeeklyReport({ data, className }: DonnaCOOWeeklyReportPr
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-[10px] text-text-muted uppercase tracking-widest">DONNA · Weekly COO Report</p>
+            <p className="text-[10px] text-text-muted uppercase tracking-widest">{DONNA_PUBLIC_NAME} · Weekly COO Report</p>
             <BarChart2 size={11} className="text-text-muted" />
           </div>
           <p className="text-sm font-medium text-text-primary leading-snug">{data.donnaHeadline}</p>
