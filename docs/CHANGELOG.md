@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 639: Director First-Run Pilot Guide V1
+
+**Files created:**
+- `docs/DIRECTOR_FIRST_RUN_PILOT_GUIDE_639.md` — 5-step first-run guide for a director using DONNA during the pilot. Covers login, review queue, first DONNA command, player profiles, and Academy Health Score. Lists what DONNA does automatically vs. never-without-approval. Week 1 checklist and quick reference route table.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 638: Brian Pilot Handoff Notes V1
 
 **Files created:**
