@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 550: Spoken Prompt Shell V1
+
+**Files created:**
+- `src/lib/donna/useSpeechOutput.ts` — `'use client'` React hook wrapping browser Speech Synthesis API. `useSpeechOutput(defaultMuted?)` returns `status` (`unavailable`/`idle`/`speaking`/`muted`), `isAvailable`, `isMuted`, `speak(text)`, `stop()`, `toggleMute()`. Detects availability on mount. Cancels ongoing speech before new utterance. `lang: en-US`, `rate: 0.95`, `pitch: 1.0`, `volume: 0.9`. Always mutable/off-able. Text fallback always visible. No package installs. No DB. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 549: Voice Dictation Capture V1
 
 **Files created:**
