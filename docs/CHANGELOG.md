@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 627: Mobile Coach Flow Polish V1
+
+**Files created:**
+- `src/components/donna/DONNAWrapUpMobileHeader.tsx` — sticky mobile header for the DONNA wrap-up conversation. Shows pill progress dots (answered/active/pending), question number (N of 7), DONNA opener text, current question text, and "Skip rest" shortcut after question 3. Complete state shows checkmark. Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 626: Coach Wrap-Up Friction Audit V1
 
 **Files created:**
