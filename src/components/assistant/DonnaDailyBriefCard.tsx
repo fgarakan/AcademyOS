@@ -35,6 +35,7 @@ export function DonnaDailyBriefCard({ brief, onDismiss, onOpenReviewQueue, onPre
           <p className="text-[11px] text-text-muted mt-0.5">{brief.date}</p>
         </div>
         <button
+          type="button"
           onClick={onDismiss}
           aria-label="Dismiss brief"
           className="shrink-0 p-2 -mr-2 -mt-1 rounded-lg text-text-muted hover:text-text-primary transition-colors"

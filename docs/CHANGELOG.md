@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 706: Daily Brief UX Polish V1
+
+**Files modified:**
+- `src/components/assistant/DonnaDailyBriefCard.tsx` — Added `type="button"` to dismiss button
+- `src/components/assistant/DonnaWorkflowCards.tsx` — Added `type="button"` to Close draft review, Dismiss command response, Dismiss onboarding suggestions, onboarding route buttons, and Dismiss context summary buttons
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 705: Cancel Reject Flow Polish V1
 
 **Files modified:**
