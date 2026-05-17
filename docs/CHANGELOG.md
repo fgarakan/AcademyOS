@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 585: Curriculum Override Application Adapter Audit V1
+
+**Files created:**
+- `docs/CURRICULUM_OVERRIDE_ADAPTER_AUDIT_585.md` — audit of curriculum override path. Key finding: template immutability confirmed — override writes only to `curriculum_overrides` table (session-level layer), never to `template_blocks`, `session_blocks`, `program_templates`, or `curriculum_spine`. Rollback exists at `src/lib/actions/rollbackCurriculumOverride.ts`. Director approval required. All 7 infrastructure files confirmed built. Gaps: override preview (Sprint 586) and rollback preview (Sprint 587). No migration needed.
+
+**TypeScript:** CLEAN (docs-only sprint)
+
+---
+
 ## 2026-05-17 — Sprint 584: Level Readiness Approval Guardrails V1
 
 **Files created:**
