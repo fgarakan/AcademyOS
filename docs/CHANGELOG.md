@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 538: Coach Wrap-Up Detail Panel Regression V1
+
+**Files created:**
+- `docs/COACH_WRAP_UP_DETAIL_PANEL_REGRESSION_QA.md` — full regression QA pass for Sprints 534–537. Covers architecture (server component, sequential loaders, no writes), security (RLS, academy scoping, no mutations), mobile UX checks (44px touch targets, label-xs, icon sizes), empty state checks (both attendance and session plan always render), and review CTA copy audit (all 5 wrap-up statuses verified, draft framing confirmed, no unsafe action language).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 537: Coach Wrap-Up Detail Panel Review CTA Pass V1
 
 **Files modified:**
