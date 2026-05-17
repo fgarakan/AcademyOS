@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 530: Coach Wrap-Up Player Name Match V1
+
+**Files created:**
+- `src/lib/coach/wrapUpPlayerNameMatcher.ts` — pure utility: `matchPlayerNames(text, roster)` matches roster players mentioned in free-text wrap-up input (full name > first name > last name > partial prefix). `matchPlayerNamesPerSentence()` groups results by sentence for per-observation extraction. No DB calls, no server imports.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 529: Coach Wrap-Up Session Actual Draft V1
 
 **Files created:**
