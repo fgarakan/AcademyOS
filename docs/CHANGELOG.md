@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 624: DONNA Draft Parent Updates From Evidence Safe Preview V1
+
+**Files created:**
+- `src/components/donna/DONNAParentUpdateDraftPreview.tsx` — preview card for DONNA-drafted parent-safe updates from player evidence. Shows evidence sources with safety level (parent_safe/sensitive/internal_only), filtered count notice, draft message text, collapsible evidence list, director approval reminder. `EvidenceSourceType` (5 types), `EvidenceSafetyLevel` (3 levels). Submit-for-review and discard callbacks only — no DB writes, no sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 623: DONNA Review Queue Summary V1
 
 **Files created:**
