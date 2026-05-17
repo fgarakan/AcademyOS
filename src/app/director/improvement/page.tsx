@@ -172,6 +172,11 @@ export default async function ImprovementPage() {
               icon={<BarChart3 className="w-5 h-5" />}
               title="No active players found"
               description="Active players with at least one assessment will appear here with progress trends."
+              action={
+                <Link href="/director/players" className="text-xs text-lime hover:opacity-80 font-medium transition-opacity">
+                  Go to Players →
+                </Link>
+              }
             />
           ) : (
             <div className="divide-y divide-border">

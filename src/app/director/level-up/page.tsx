@@ -250,7 +250,12 @@ export default async function LevelUpPage({
             <EmptyState
               icon={<TrendingUp className="w-8 h-8 text-text-muted" />}
               title="No players in the assessment pipeline"
-              description="Players appear here when they are approaching or overdue for reassessment."
+              description="Players appear here when they are approaching or overdue for reassessment. Check player profiles to set or update assessment dates."
+              action={
+                <Link href="/director/players" className="text-xs text-lime hover:opacity-80 font-medium transition-opacity">
+                  Go to Players →
+                </Link>
+              }
             />
           </CardContent>
         </Card>

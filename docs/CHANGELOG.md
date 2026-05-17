@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-17 — Sprint 674: V1 Empty State Cleanup V1
+
+**Files modified:**
+- `src/app/director/improvement/page.tsx` — Added `action` prop with "Go to Players →" link to the "No active players found" empty state
+- `src/app/director/level-up/page.tsx` — Added `action` prop with "Go to Players →" link and improved description on the "No players in the assessment pipeline" empty state
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 673: V1 Runtime Error Cleanup V1
 
 **Files modified:**
