@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 622: DONNA Answer History Panel V1
+
+**Files created:**
+- `src/components/donna/DONNAAnswerHistoryPanel.tsx` — in-session answer history panel. Shows `ConversationMessage[]` as rows (coach=lime C badge, DONNA=grey D badge) with text, timestamp, and skipped indicator. Loads last 6 by default, expandable. Coach answer count in header. Empty state. Read-only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 621: DONNA Conversation State Display V1
 
 **Files created:**
