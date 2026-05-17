@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 715: Coach Flow Browser QA V1
+
+**Files created:**
+- `docs/COACH_FLOW_QA_715.md` — Static code QA of coach home, sessions, session detail, wrap-up flow, DONNA coach context. 22 checks pass. Review-first pipeline confirmed — no coach action bypasses proposed_actions. Zero DANA references in coach/capture components.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 714: Director Flow Browser QA V1
 
 **Files created:**
