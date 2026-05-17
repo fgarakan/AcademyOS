@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 577: Coach Observation Profile Update Guardrails V1
+
+**Files created:**
+- `src/lib/donna/observationVisibilityGuardrails.ts` — `checkObservationVisibilityGuardrails(text, nextStep, type, visibility, draftStatus)` returns blockers (NOT_APPROVED, INTERNAL_LANGUAGE_IN_PARENT_SAFE), warnings (CONCERN_MARKED_PARENT_SAFE high, INTERNAL_LANGUAGE_DETECTED, OBSERVATION_TOO_SHORT). Internal language pattern regex bank. `OBSERVATION_VISIBILITY_COPY` constants confirming observations are never auto-visible. No DB. No execution.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 576: Coach Observation Apply Confirmation UI V1
 
 **Files created:**
