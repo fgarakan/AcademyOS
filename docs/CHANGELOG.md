@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 617: DONNA Academy Pulse Card V1
+
+**Files created:**
+- `src/components/donna/DONNAAcademyPulseCard.tsx` — compact one-glance academy health card. Shows health score (large font, lime/orange/red by threshold), trend indicator (up/down/stable/unknown with icon), urgent items count, at-risk players count, live/demo badge, last updated label, and optional "See details →" drill-down. `PulseTrend` type. Display only — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 616: DONNA Session Debrief Surface V1
 
 **Files created:**
