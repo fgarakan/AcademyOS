@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 736: Console Warning Cleanup V1
+
+**Files created:**
+- `docs/CONSOLE_WARNING_CLEANUP_736.md` — Console warning audit: server-side `console.log` in API routes (realtime-session, tts, transcribe) is server-only, not browser-visible; two `console.warn` in `DirectorInterviewAssistant.tsx` correctly gated behind `process.env.NODE_ENV !== 'production'`; client-side diagnostic logs in `DirectorInterviewAssistant.tsx` and `useRealtimeInterviewVoice.ts` are acceptable for V1 (no sensitive data, essential for diagnosing WebRTC/voice issues). No changes needed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 735: Runtime Error Cleanup V2
 
 **Files created:**
