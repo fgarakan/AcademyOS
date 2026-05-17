@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-17 — Sprint 568: Attendance Draft Apply Guardrails V1
+
+**Files created:**
+- `src/lib/donna/attendanceApplyGuardrails.ts` — `checkAttendanceApplyGuardrails(rostered, unrosteredCount, draftStatus, existingWarnings)` returns `AttendanceApplyGuardrailResult` with `canApply`, `blockers` (NOT_APPROVED, EMPTY_DRAFT), `warnings` (UNKNOWN_STATUS, HIGH_ABSENCE_RATE, UNROSTERED_ATTENDEES, PARSER_WARNINGS), `requiresExtraConfirmation`. `ATTENDANCE_APPLY_GUARDRAIL_COPY` constants. No DB. No execution.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 567: Attendance Draft Apply Confirmation UI V1
 
 **Files created:**
