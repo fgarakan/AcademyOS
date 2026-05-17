@@ -44,6 +44,7 @@ function ReviewSection({
   return (
     <div className="border border-border rounded-xl overflow-hidden">
       <button
+        type="button"
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-raised transition-colors text-left"
       >
@@ -286,6 +287,7 @@ export function WrapUpReviewSummary({ draft, onSubmit, onEdit: _onEdit, isSubmit
 
         {/* Submit */}
         <button
+          type="button"
           onClick={onSubmit}
           disabled={isSubmitting}
           className="w-full btn-lime text-sm py-3 rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"

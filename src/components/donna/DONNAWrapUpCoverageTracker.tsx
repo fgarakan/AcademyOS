@@ -70,6 +70,7 @@ function SessionRow({ item }: { item: SessionWrapUpItem }) {
         <span className={`text-[10px] font-medium ${cfg.colorClass}`}>{cfg.label}</span>
         {item.status !== 'complete' && (item.onOpen || item.sessionHref) && (
           <button
+            type="button"
             onClick={handleClick}
             className="text-[10px] text-lime hover:text-lime/80 transition-colors"
           >

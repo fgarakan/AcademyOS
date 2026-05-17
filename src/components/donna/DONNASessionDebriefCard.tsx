@@ -5,6 +5,7 @@
 // Display only — no DB writes, no mutations.
 
 import { BookOpen, Users, AlertCircle, TrendingUp, MessageSquare } from 'lucide-react'
+import { DONNA_PUBLIC_NAME } from '@/components/assistant/donnaAssistantCopy'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -112,7 +113,7 @@ export function DONNASessionDebriefCard({
       {/* Signals */}
       {signals.length > 0 && (
         <div className="px-3.5 py-2.5 border-b border-border/50 space-y-2">
-          <p className="text-[10px] text-text-muted uppercase tracking-wider">DONNA signals</p>
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">{DONNA_PUBLIC_NAME} signals</p>
           {signals.map((signal, i) => {
             const cfg = SIGNAL_CONFIG[signal.type]
             return (

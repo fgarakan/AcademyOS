@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-17 — Sprint 707: End-of-Day Summary UX Polish V1
+
+**Files modified:**
+- `src/components/donna/DONNASessionDebriefCard.tsx` — Imported `DONNA_PUBLIC_NAME`; replaced hardcoded "DONNA signals" label with constant
+- `src/components/donna/DONNAWrapUpCoverageTracker.tsx` — Added `type="button"` to "Remind →" button
+- `src/components/capture/WrapUpReviewSummary.tsx` — Added `type="button"` to section toggle and Submit buttons
+- `src/components/capture/WrapUpGuidedFlow.tsx` — Added `type="button"` to Back/Cancel, Submit Wrap-Up Draft, Back, Skip, and Next/Review buttons
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 706: Daily Brief UX Polish V1
 
 **Files modified:**

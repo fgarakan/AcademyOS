@@ -151,6 +151,7 @@ function WrapUpSummaryScreen({
 
       <div className="flex items-center gap-2 pt-1">
         <button
+          type="button"
           onClick={onBack}
           className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary border border-border rounded-lg px-3 py-2 transition-colors"
         >
@@ -158,6 +159,7 @@ function WrapUpSummaryScreen({
           Back
         </button>
         <button
+          type="button"
           onClick={handleSubmit}
           className="flex-1 btn-lime text-sm py-2.5 rounded-lg font-medium"
         >
@@ -308,6 +310,7 @@ export function WrapUpGuidedFlow({ sessionId, onComplete, onCancel, className }:
         {/* Controls */}
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={handleBack}
             className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary border border-border rounded-lg px-3 py-2.5 transition-colors"
           >
@@ -316,6 +319,7 @@ export function WrapUpGuidedFlow({ sessionId, onComplete, onCancel, className }:
           </button>
 
           <button
+            type="button"
             onClick={handleSkip}
             className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary border border-border rounded-lg px-3 py-2.5 transition-colors"
           >
@@ -324,6 +328,7 @@ export function WrapUpGuidedFlow({ sessionId, onComplete, onCancel, className }:
           </button>
 
           <button
+            type="button"
             onClick={handleNext}
             disabled={!currentText.trim()}
             className={`flex-1 flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg py-2.5 transition-colors ${
