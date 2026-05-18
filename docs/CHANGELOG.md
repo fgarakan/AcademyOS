@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-18 — Sprint 981: Fitness Template Create Save Wiring V1
+
+**Files modified:**
+- `src/lib/actions/templateDraftAction.ts` -- Added `saveFitnessTemplateDraftFromWizardAction` wizard-specific server action resolving `academyId` from session.
+- `src/app/director/templates/fitness/create/page.tsx` -- Wired Save Draft button to real server action; added `saveStatus`/`saveError` state; removed demo-only language; added status-specific feedback UI.
+
+**Docs created:**
+- `docs/TEMPLATE_FITNESS_CREATE_SAVE_WIRING_981.md`
+
+**Save flow:**
+- Client calls `saveFitnessTemplateDraftFromWizardAction({ curriculumLevel, fitnessGoalId, fitnessGoalLabel, load, durationMin, blocks })`.
+- Server resolves `userId` and `academyId` from session — no client-supplied academy context.
+- INSERTs into `template_review_requests` with `template_type='fitness_template'`, `status='pending'`, `request_type='create_template'`.
+- Draft JSONB includes `fitness_load` field and per-block exercise arrays.
+
+**Safety:**
+- No auto-approval. Draft always lands pending for director review.
+- No curriculum mutation. No parent sends. No external sends.
+- Schema-missing handled gracefully — orange banner, no throw.
+- Director or head_coach only. Coach role blocked server-side.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 980: Class Template Create Save Wiring V1
 
 **Files modified:**

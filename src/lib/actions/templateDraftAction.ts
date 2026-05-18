@@ -269,6 +269,120 @@ export async function saveClassTemplateDraftFromWizardAction(
   }
 }
 
+// ── Wizard-specific action (Fitness Template) ──────────────────────────────
+// Called from the 'use client' fitness create wizard.
+// Resolves academyId from the session — client does not supply it.
+
+export interface SaveFitnessTemplateDraftWizardInput {
+  curriculumLevel: string
+  fitnessGoalId: string
+  fitnessGoalLabel: string
+  load: string
+  durationMin: number
+  blocks: Array<{
+    type: string
+    durationMin: number
+    exercises: string[]
+  }>
+}
+
+export async function saveFitnessTemplateDraftFromWizardAction(
+  input: SaveFitnessTemplateDraftWizardInput
+): Promise<SaveTemplateDraftResult> {
+  if (!input.curriculumLevel?.trim()) {
+    return { success: false, error: 'Curriculum level is required.' }
+  }
+
+  let db: Awaited<ReturnType<typeof getSupabaseServer>>
+  try {
+    db = await getSupabaseServer()
+  } catch {
+    return { success: false, error: 'Could not connect to database.' }
+  }
+
+  const rawDb = db as any
+
+  let userId: string
+  let academyId: string
+  let userRole: string
+  try {
+    const { data: { user } } = await db.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated.' }
+
+    const { data: profile } = await rawDb
+      .from('profiles')
+      .select('id, role, academy_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) return { success: false, error: 'Profile not found.' }
+    if (profile.role !== 'academy_director' && profile.role !== 'head_coach') {
+      return { success: false, error: 'Only directors and head coaches can submit template drafts.' }
+    }
+    if (!profile.academy_id) return { success: false, error: 'No academy found for this account.' }
+
+    userId = profile.id as string
+    academyId = profile.academy_id as string
+    userRole = profile.role as string
+  } catch {
+    return { success: false, error: 'Authentication failed.' }
+  }
+
+  const templateDraft = {
+    template_type: 'fitness_template',
+    name: `${input.curriculumLevel} — Fitness Template`,
+    description: input.fitnessGoalLabel || null,
+    total_duration_min: input.durationMin || null,
+    curriculum_level_key: input.curriculumLevel,
+    curriculum_source_label: input.curriculumLevel,
+    template_goal: input.fitnessGoalLabel || null,
+    tags: ['fitness_template', (input.load || '').toLowerCase()].filter(Boolean),
+    blocks: input.blocks.map(b => ({
+      type: b.type,
+      name: b.type,
+      durationMin: b.durationMin,
+      exercises: b.exercises.map((e: string) => ({ label: e })),
+    })),
+    fitness_load: input.load || null,
+    submitted_at: new Date().toISOString(),
+    submitted_by_role: userRole,
+  }
+
+  try {
+    const { data, error } = await rawDb
+      .from('template_review_requests')
+      .insert({
+        academy_id: academyId,
+        template_id: null,
+        template_draft: templateDraft,
+        request_type: 'create_template',
+        status: 'pending',
+        requested_by: userId,
+      })
+      .select('id')
+      .single()
+
+    if (error) {
+      if (
+        error.code === '42P01' ||
+        error.code === '42703' ||
+        (typeof error.message === 'string' && error.message.includes('does not exist'))
+      ) {
+        return {
+          success: false,
+          error: 'Template backend is not connected yet. Your draft is ready but cannot be saved until the migration is applied.',
+          isSchemaMissing: true,
+        }
+      }
+      return { success: false, error: error.message ?? 'Failed to save template draft.' }
+    }
+
+    return { success: true, reviewRequestId: (data as { id: string }).id }
+  } catch {
+    return { success: false, error: 'Unexpected error saving fitness template draft.' }
+  }
+}
+
 // ── Update action (existing template) ─────────────────────────────────────
 // Creates an update request for a template that already exists in the DB.
 // Director review required before changes are applied to the live template row.

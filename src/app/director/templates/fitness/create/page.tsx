@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Info, LayoutTemplate, Zap, Eye } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Info, LayoutTemplate, Zap, Eye, Loader2 } from 'lucide-react'
+import { saveFitnessTemplateDraftFromWizardAction } from '@/lib/actions/templateDraftAction'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumStage, getFitnessCurriculumPreview, getCurriculumLevelPreview } from '@/lib/templates/templateCurriculumPreview'
 import { FitnessBlockType, FITNESS_BLOCK_TYPES, getFitnessBlockLabel, getFitnessBlockIntent, getFitnessBlockAccent, getFitnessBlockBorderAccent, getDefaultBlockDuration } from '@/lib/fitness/fitnessBlockTypes'
 import { getExercisesForBlock, getExerciseProgressionRegression } from '@/lib/templates/fitnessExerciseAutoPopulate'
-
-// demo-only — no writes — no saves — local state only
 
 type Step = 1 | 2 | 3 | 4 | 5
 
@@ -59,7 +58,8 @@ export default function CreateFitnessTemplatePage() {
   const [durationMin, setDurationMin] = useState<number>(30)
   const [fitnessBlocks, setFitnessBlocks] = useState<FitnessBlock[]>([])
   const [expandedBlockId, setExpandedBlockId] = useState<string | null>(null)
-  const [draftSaved, setDraftSaved] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error' | 'schema_missing'>('idle')
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   function addBlock(type: FitnessBlockType) {
     if (fitnessBlocks.find(b => b.type === type)) return
@@ -83,6 +83,32 @@ export default function CreateFitnessTemplatePage() {
     setFitnessBlocks(prev => prev.map(b =>
       b.id === blockId ? { ...b, exercises: b.exercises.filter(e => e !== name) } : b
     ))
+  }
+
+  async function handleSaveDraft() {
+    setSaveStatus('saving')
+    setSaveError(null)
+    const currentGoalInfo = FITNESS_GOALS.find(g => g.id === selectedGoal)
+    const result = await saveFitnessTemplateDraftFromWizardAction({
+      curriculumLevel: selectedLevel,
+      fitnessGoalId: selectedGoal,
+      fitnessGoalLabel: currentGoalInfo?.label ?? selectedGoal,
+      load,
+      durationMin,
+      blocks: fitnessBlocks.map(b => ({
+        type: b.type,
+        durationMin: b.durationMin,
+        exercises: b.exercises,
+      })),
+    })
+    if (result.success) {
+      setSaveStatus('success')
+    } else if (result.isSchemaMissing) {
+      setSaveStatus('schema_missing')
+    } else {
+      setSaveStatus('error')
+      setSaveError(result.error ?? 'Failed to save draft.')
+    }
   }
 
   const goalInfo = FITNESS_GOALS.find(g => g.id === selectedGoal)
@@ -132,10 +158,10 @@ export default function CreateFitnessTemplatePage() {
           <p className="page-subtitle">Build a physical training block step by step.</p>
         </div>
 
-        {/* Demo notice */}
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          <span>Demo flow — no data is saved. Backend wiring coming in a future sprint.</span>
+        {/* Review notice */}
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-border bg-surface-raised text-[11px] text-text-secondary">
+          <Info className="w-3.5 h-3.5 shrink-0" />
+          <span>Template drafts are submitted for director review — nothing goes live until a director approves.</span>
         </div>
 
         {/* Step progress */}
@@ -669,36 +695,56 @@ export default function CreateFitnessTemplatePage() {
                   </p>
                   <p>This is a curriculum-derived fitness template draft. All exercises, loads, and block structures are coaching guidance — not a medical fitness plan.</p>
                   <p>Individual player load management should be reviewed by qualified coaching staff before delivery.</p>
-                  <p className="text-status-orange/70">Demo mode — Save Draft does not persist anything. Backend wiring coming in a future sprint.</p>
                 </div>
-                {draftSaved && (
+                {saveStatus === 'success' && (
                   <div className="rounded-xl border border-status-green/20 bg-status-green/5 p-4 mb-3 space-y-2">
                     <p className="text-sm font-semibold text-status-green flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 shrink-0" />
-                      Draft saved (demo mode — not persisted)
+                      Draft submitted for director review
                     </p>
-                    <p className="text-[11px] text-text-secondary font-semibold">What happens next in the real flow:</p>
+                    <p className="text-[11px] text-text-secondary">Your fitness template draft has been saved. A director must approve it before it becomes available for coaching sessions.</p>
                     <ol className="space-y-1 pl-4 list-decimal text-[11px] text-text-muted">
-                      <li>Fitness template enters the Draft queue for Director review</li>
-                      <li>Director reviews load, exercises, and tennis transfers — approves or requests changes</li>
-                      <li>Approved template appears in coach session builder and fitness calendar</li>
-                      <li>Load data feeds into player load tracking system over time</li>
+                      <li>Director reviews load, exercises, and tennis transfers</li>
+                      <li>Once approved, template status moves to Ready</li>
+                      <li>Coaches can then use it in their session builder</li>
                     </ol>
-                    <button
-                      onClick={() => setDraftSaved(false)}
-                      className="text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-100"
-                    >
-                      Dismiss
-                    </button>
+                  </div>
+                )}
+                {saveStatus === 'schema_missing' && (
+                  <div className="rounded-xl border border-status-orange/20 bg-status-orange/5 p-4 mb-3 space-y-1">
+                    <p className="text-sm font-semibold text-status-orange flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      Backend not yet available
+                    </p>
+                    <p className="text-[11px] text-text-muted">The template database is not connected yet. Your draft is ready but cannot be saved until the backend migration is applied.</p>
+                  </div>
+                )}
+                {saveStatus === 'error' && (
+                  <div className="rounded-xl border border-status-red/20 bg-status-red/5 p-4 mb-3 space-y-1">
+                    <p className="text-sm font-semibold text-status-red flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      Failed to save draft
+                    </p>
+                    <p className="text-[11px] text-text-muted">{saveError}</p>
                   </div>
                 )}
                 <div className="flex items-center gap-3 flex-wrap">
                   <button
-                    onClick={() => setDraftSaved(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-status-purple border border-status-purple/30 bg-status-purple/10 hover:bg-status-purple/15 active:scale-95 transition-all duration-100"
+                    onClick={handleSaveDraft}
+                    disabled={saveStatus === 'saving' || saveStatus === 'success'}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-status-purple border border-status-purple/30 bg-status-purple/10 hover:bg-status-purple/15 active:scale-95 transition-all duration-100 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
-                    Save as Draft
+                    {saveStatus === 'saving' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        Save as Draft
+                      </>
+                    )}
                   </button>
                   {selectedLevel && (
                     <Link
