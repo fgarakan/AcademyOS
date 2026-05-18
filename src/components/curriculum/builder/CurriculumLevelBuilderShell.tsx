@@ -130,6 +130,9 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
             level={level}
             drillCount={levelDrills.length}
             gateCount={levelGates.length}
+            onAddDrill={() => { setDrillDraftOpen(true); setTab('drills') }}
+            onAddGate={() => { setGateDraftOpen(true); setTab('gates') }}
+            onAddFitness={() => { setFitnessDraftOpen(true); setTab('fitness') }}
           />
           <DonnaSafetyDisclosure context="level_edit" />
         </div>
