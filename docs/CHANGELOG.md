@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-18 — Sprint 979: Template Approval Application V1
+
+**Files created:**
+- `src/lib/actions/templateApprovalAction.ts` -- Director-only approval/rejection server actions.
+- `docs/TEMPLATE_APPROVAL_APPLICATION_979.md` -- Approval doc.
+
+**Actions:**
+- `approveTemplateReviewRequestAction(reviewRequestId)` -- Applies draft to templates table, writes version history, marks request approved.
+- `rejectTemplateReviewRequestAction(reviewRequestId, notes)` -- Marks request rejected with review notes. No template mutation.
+
+**Safety:**
+- academy_director only. head_coach/coach blocked.
+- Schema-missing detection on all DB operations.
+- Version history INSERT failure non-fatal (does not block template creation).
+- No auto-approval. status='ready' set explicitly on approval only.
+- No curriculum mutation. No parent sends. No external sends.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 978: Template Review Queue Handoff V1
 
 **Files created:**
