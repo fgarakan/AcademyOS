@@ -6,7 +6,7 @@ import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, C
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumStage, getFitnessCurriculumPreview } from '@/lib/templates/templateCurriculumPreview'
 import { FitnessBlockType, FITNESS_BLOCK_TYPES, getFitnessBlockLabel, getFitnessBlockIntent, getFitnessBlockAccent, getFitnessBlockBorderAccent, getDefaultBlockDuration } from '@/lib/fitness/fitnessBlockTypes'
-import { getExercisesForBlock } from '@/lib/templates/fitnessExerciseAutoPopulate'
+import { getExercisesForBlock, getExerciseProgressionRegression } from '@/lib/templates/fitnessExerciseAutoPopulate'
 
 // demo-only — no writes — no saves — local state only
 
@@ -472,29 +472,44 @@ export default function CreateFitnessTemplatePage() {
                                   <p className="text-[10px] uppercase tracking-widest text-text-muted">Curriculum exercises for {selectedLevel}</p>
                                   {exerciseSuggestions.map(ex => {
                                     const isAdded = blk.exercises.includes(ex.name)
+                                    const progReg = getExerciseProgressionRegression(ex.name)
                                     return (
-                                      <div key={ex.name} className="flex items-center gap-3 p-2.5 rounded-lg border border-border bg-surface-raised">
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-xs font-medium text-text-primary">{ex.name}</p>
-                                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                            <span className="text-[10px] text-text-muted">{ex.sets} sets · {ex.reps}</span>
-                                            <span className="text-[10px] text-status-purple">{ex.tennisTransfer}</span>
-                                            {ex.loadNote && (
-                                              <span className="text-[10px] text-status-orange">{ex.loadNote}</span>
-                                            )}
+                                      <div key={ex.name} className="rounded-lg border border-border bg-surface-raised overflow-hidden">
+                                        <div className="flex items-center gap-3 p-2.5">
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium text-text-primary">{ex.name}</p>
+                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                              <span className="text-[10px] text-text-muted">{ex.sets} sets · {ex.reps}</span>
+                                              <span className="text-[10px] text-status-purple">{ex.tennisTransfer}</span>
+                                              {ex.loadNote && (
+                                                <span className="text-[10px] text-status-orange">{ex.loadNote}</span>
+                                              )}
+                                            </div>
                                           </div>
+                                          <button
+                                            onClick={() => isAdded ? removeExerciseFromBlock(blk.id, ex.name) : addExerciseToBlock(blk.id, ex.name)}
+                                            className={[
+                                              'w-7 h-7 rounded-lg border flex items-center justify-center transition-all duration-100 shrink-0',
+                                              isAdded
+                                                ? 'border-status-green/30 bg-status-green/10 text-status-green'
+                                                : 'border-border bg-surface text-text-muted hover:border-status-purple/20 hover:text-status-purple',
+                                            ].join(' ')}
+                                          >
+                                            {isAdded ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                                          </button>
                                         </div>
-                                        <button
-                                          onClick={() => isAdded ? removeExerciseFromBlock(blk.id, ex.name) : addExerciseToBlock(blk.id, ex.name)}
-                                          className={[
-                                            'w-7 h-7 rounded-lg border flex items-center justify-center transition-all duration-100 shrink-0',
-                                            isAdded
-                                              ? 'border-status-green/30 bg-status-green/10 text-status-green'
-                                              : 'border-border bg-surface text-text-muted hover:border-status-purple/20 hover:text-status-purple',
-                                          ].join(' ')}
-                                        >
-                                          {isAdded ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-                                        </button>
+                                        {progReg && (
+                                          <div className="px-2.5 pb-2 pt-1.5 border-t border-border/50 space-y-1">
+                                            <div className="flex items-start gap-1.5">
+                                              <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wide font-semibold border border-status-green/20 bg-status-green/8 text-status-green">Harder</span>
+                                              <p className="text-[10px] text-text-muted leading-relaxed">{progReg.progression}</p>
+                                            </div>
+                                            <div className="flex items-start gap-1.5">
+                                              <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wide font-semibold border border-status-blue/20 bg-status-blue/8 text-status-blue">Easier</span>
+                                              <p className="text-[10px] text-text-muted leading-relaxed">{progReg.regression}</p>
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
                                     )
                                   })}

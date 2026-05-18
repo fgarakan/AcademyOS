@@ -12,6 +12,61 @@ export interface FitnessExerciseSuggestion {
   loadNote?: string
 }
 
+export interface ProgressionRegression {
+  progression: string
+  regression: string
+}
+
+// Curated progressions and regressions for key exercises
+const EXERCISE_PROGRESSION_MAP: Record<string, ProgressionRegression> = {
+  // Agility
+  'T-pattern cone drill':          { progression: 'T-pattern with ball toss — catch on arrival', regression: 'T-walk drill — walk the pattern first' },
+  'Pro agility shuttle':           { progression: 'Pro agility with reactive start cue', regression: 'T-walk + jog — walk the first 3 passes' },
+  'Lateral cone sprint — 4-point': { progression: 'Lateral cone sprint — 6-point with stagger', regression: 'Lateral shuffle to cone — controlled speed' },
+  'Mirror drill with partner':     { progression: 'Mirror drill — reaction ball cue added', regression: 'Shadow drill — leader only, no reaction required' },
+
+  // Speed
+  'Court sprint — baseline to net': { progression: 'Sprint + split-step at net', regression: 'Jog to net with decelerate and plant' },
+  'Acceleration sprint — 10m':     { progression: 'Sprint + reactive cut — coach cue direction', regression: 'Slow build sprint — 50% first 5m' },
+  'Periodized sprint interval — 60/30': { progression: 'Sprint interval 60/20 — shorter rest', regression: 'Sprint interval 45/45 — equal work/rest' },
+
+  // Plyometrics
+  'Squat jump — bodyweight':       { progression: 'Tuck jump', regression: 'Jump squat without air — partial jump' },
+  'Depth jump — box':              { progression: 'Depth jump + sprint 5m', regression: 'Step-off box and land — no jump' },
+  'Broad jump — standing':         { progression: 'Broad jump + lateral sprint', regression: 'Standing long jump — reduced distance target' },
+  'Single-leg bound — alternating': { progression: 'Consecutive single-leg hops x5', regression: 'Single-leg hop forward — short distance only' },
+
+  // Strength
+  'Bodyweight squat':              { progression: 'Goblet squat with light dumbbell', regression: 'Sit-to-stand from chair — assisted' },
+  'Single-leg squat — bodyweight': { progression: 'Bulgarian split squat', regression: 'Split squat — both feet on floor' },
+  'Medicine ball rotational throw': { progression: 'Heavier medicine ball or rapid-fire 10 reps', regression: 'Standing rotation with bodyweight — no throw' },
+  'Dumbbell Romanian deadlift':    { progression: 'Barbell RDL at controlled load', regression: 'Hip hinge with dowel — pattern only, no load' },
+  'Barbell squat — periodized load': { progression: 'Pause squat — 3s hold at bottom', regression: 'Goblet squat at same volume' },
+
+  // Coordination
+  'Ball drop reaction — two-hand catch': { progression: 'Single-hand catch — alternating', regression: 'Toss and catch with partner — seated' },
+  'Reaction ball drill':           { progression: 'Reaction ball + lateral move before catch', regression: 'Predictable bounce catch — straight toss' },
+  'Footwork ladder — ickey shuffle': { progression: 'Ladder — triple Ickey with acceleration sprint', regression: 'Ladder — two-in two-out basic' },
+
+  // Mobility
+  'Hip 90/90 stretch':             { progression: 'Active 90/90 — hip circles in position', regression: 'Seated hip external rotation — minimal range' },
+  'Hip 90/90 — active rotation':   { progression: 'Weighted 90/90 press — light load at end range', regression: 'Passive 90/90 hold — supported on hands' },
+  'World greatest stretch':        { progression: 'World greatest + thoracic rotation hold', regression: 'Lunge with reach — single plane only' },
+  'Thoracic rotation with reach':  { progression: 'Kneeling thoracic rotation + press', regression: 'Seated rotation — limited range' },
+
+  // Movement
+  'Shadow footwork drill':         { progression: 'Shadow footwork — coach cues direction', regression: 'Mirror walk — slow deliberate pattern' },
+  'Lateral shuffle + cone touch':  { progression: 'Lateral shuffle + cone touch + split-step', regression: 'Side-step walk — controlled' },
+
+  // Recovery
+  'Structured cool-down — 8 min': { progression: 'Recovery protocol — 10 min + foam roll', regression: 'Light walk + breathing — 5 min' },
+  'Recovery protocol — full circuit': { progression: 'Ice bath + full circuit — competition level', regression: 'Light mobility + breathing only — low load' },
+}
+
+export function getExerciseProgressionRegression(name: string): ProgressionRegression | null {
+  return EXERCISE_PROGRESSION_MAP[name] ?? null
+}
+
 export type ExerciseBank = Record<FitnessBlockType, Record<BallStage, FitnessExerciseSuggestion[]>>
 
 export const FITNESS_EXERCISE_BANK: ExerciseBank = {

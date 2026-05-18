@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 949: Fitness Exercise Progression Regression Suggestions V1
+
+**Files modified:**
+- `src/lib/templates/fitnessExerciseAutoPopulate.ts` — Added `ProgressionRegression` interface (`progression: string`, `regression: string`). Added `EXERCISE_PROGRESSION_MAP` with curated progressions and regressions for 24 key exercises across all block types. Added `getExerciseProgressionRegression(name)` export.
+- `src/app/director/templates/fitness/create/page.tsx` — Imported `getExerciseProgressionRegression`. Each exercise row in the expanded block now shows a "Harder" (green) and "Easier" (blue) progression/regression hint when available in the map.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 948: Fitness Duplicate Exercise Prevention V1
 
 **Files modified:**
