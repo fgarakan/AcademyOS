@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 970: Curriculum-Aware Templates Completion Audit V1
+
+**Files created:**
+- `docs/CURRICULUM_AWARE_TEMPLATES_COMPLETION_AUDIT_970.md` — Full completion audit for sprint block 935–970: sprint-by-sprint status table (36 sprints, all COMPLETE), what is complete in demo mode, what is deferred to backend wiring (template save, DONNA flags, coverage map live queries, edit draft pre-fill, impact metrics), key architecture files, curriculum data constants list, and production readiness summary.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-18 — Sprint 969: Curriculum-Aware Template System Regression V1
 
 **Files created:**
