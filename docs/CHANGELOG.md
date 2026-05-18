@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-18 — Sprint 999: Coach Wrap-Up Review Submit V1
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/wrap-up/review/page.tsx` — Server Component review screen: fetches most recent wrap-up proposed_action, shows status banner (pending/approved/rejected), DONNA summary draft (all 6 question answers), block completion list, next focus box, attendance note, safety notice, submitted timestamp. Empty state with "Start Wrap-Up" link.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/wrap-up/WrapUpPageClient.tsx` — Success state now offers "Review Submitted Draft" primary CTA + "Back to Session" secondary link.
+
+**Docs created:**
+- `docs/WRAP_UP_REVIEW_SUBMIT_999.md`
+
+---
+
 ## 2026-05-18 — Sprint 998: Parent-Safe Draft Summary V1
 
 **Files created:**

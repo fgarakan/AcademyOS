@@ -129,12 +129,20 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
             Your notes have been submitted for director review. Nothing has been sent to parents or applied to player profiles yet.
           </p>
         </div>
-        <Link
-          href={returnHref}
-          className="px-5 py-3 rounded-xl bg-lime text-black text-sm font-bold hover:bg-lime/90 transition-all"
-        >
-          Back to Session
-        </Link>
+        <div className="flex flex-col gap-2 w-full max-w-xs">
+          <Link
+            href={`/coach/sessions/${sessionId}/wrap-up/review`}
+            className="px-5 py-3 rounded-xl bg-lime text-black text-sm font-bold hover:bg-lime/90 transition-all text-center"
+          >
+            Review Submitted Draft
+          </Link>
+          <Link
+            href={returnHref}
+            className="px-5 py-3 rounded-xl border border-border text-sm font-medium text-text-secondary hover:bg-surface-raised transition-all text-center"
+          >
+            Back to Session
+          </Link>
+        </div>
       </div>
     )
   }
