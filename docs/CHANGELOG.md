@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 943: Class Template Coach Preview Connection V1
+
+**Files modified:**
+- `src/app/director/templates/coach-preview/page.tsx` — Converted to async Server Component with `searchParams` for `level`, `goal`, `type`. Shows curriculum source banner. Pulls watch-fors and curriculum drills per block using `templateCurriculumPreview` helpers. Wrap-up prompt references curriculum level. All demo/read-only.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 942: Class Template Review Step Curriculum Summary V1
 
 **Files modified:**

@@ -1,51 +1,54 @@
 import Link from 'next/link'
-import { ChevronRight, Clock, Users, Target, CheckCircle2, AlertCircle, Eye, LayoutTemplate, Sparkles, MessageSquare, ChevronDown } from 'lucide-react'
+import { ChevronRight, Clock, Users, Target, CheckCircle2, AlertCircle, Eye, LayoutTemplate, Sparkles, MessageSquare, ChevronDown, GraduationCap, BookOpen } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
+import { getCurriculumLevelPreview, getCurriculumStage, getWatchForsForBlock, getCurriculumDrillsForBlock } from '@/lib/templates/templateCurriculumPreview'
 
 // demo-only — not saved — not applied — local-only
 
-const DEMO_TEMPLATE = {
+interface PageProps {
+  searchParams: Promise<{ level?: string; goal?: string; type?: string }>
+}
+
+const DEFAULT_TEMPLATE = {
   name: 'Net Approach & Volley Patterns',
-  level: 'Intermediate',
-  goal: 'Build approach shot + volley patterns using split-step timing',
+  level: 'Orange Ball 2',
+  goal: 'Net approach and first volley',
   durationMin: 75,
   coachesAssigned: ['Marco T.', 'Priya K.'],
   groupSize: 6,
 }
 
-const BLOCKS = [
+const DEMO_BLOCKS = [
   {
     id: 'b1',
-    type: 'Warm-Up',
+    type: 'warm_up',
+    displayType: 'Warm-Up',
     title: 'Dynamic Warm-Up',
     durationMin: 10,
     todaysFocus: 'Get players moving and establish rhythm. Focus on split-step timing from the start.',
     steps: [
-      'Ladder footwork — 2 sets each direction',
+      'Split-step ladder — 2 sets each direction',
       'Shadow swings (FH + BH) — 3 minutes',
       'Mini cooperative rally — 5 consecutive',
     ],
   },
   {
     id: 'b2',
-    type: 'Technical',
+    type: 'technical',
+    displayType: 'Technical',
     title: 'Approach Shot Mechanics',
     durationMin: 20,
-    todaysFocus: 'Contact point in front. Swing to low-to-high. Eyes on the ball through contact.',
+    todaysFocus: 'Contact point in front. Swing low-to-high. Eyes on the ball through contact.',
     steps: [
       'Coach feeds mid-court ball — player approaches down the line',
       'Drill: 3 approach shots + hold position',
       'Progress to cross-court approach',
     ],
-    watchFors: [
-      'Early preparation on the approach',
-      'Closing step before contact',
-      'Recovery after the approach — do not stand and watch',
-    ],
   },
   {
     id: 'b3',
-    type: 'Technical',
+    type: 'technical',
+    displayType: 'Technical',
     title: 'First Volley Pattern',
     durationMin: 20,
     todaysFocus: 'Block the volley — do not swing. Firm wrist, short backswing, punch forward.',
@@ -54,15 +57,11 @@ const BLOCKS = [
       'Walk-in and volley — 3-step approach',
       'Combo: approach + 2 volleys + overhead',
     ],
-    watchFors: [
-      'Grip — continental for all volleys',
-      'Contact point — in front of body',
-      'Split step before incoming ball',
-    ],
   },
   {
     id: 'b4',
-    type: 'Tactical',
+    type: 'tactical',
+    displayType: 'Tactical',
     title: 'Approach + Volley Scenarios',
     durationMin: 15,
     todaysFocus: 'Decision-making under pressure. When to approach, when to stay back.',
@@ -74,7 +73,8 @@ const BLOCKS = [
   },
   {
     id: 'b5',
-    type: 'Cool-Down',
+    type: 'cool_down',
+    displayType: 'Cool-Down',
     title: 'Cool-Down + Debrief',
     durationMin: 10,
     todaysFocus: 'One win per player — what improved today? Set the intention for next session.',
@@ -87,19 +87,33 @@ const BLOCKS = [
 ]
 
 const PLAYER_NOTES = [
-  { name: 'Carlos M.', note: 'Working on patience at net — tends to rush the volley. Keep reminding: block, do not swing.' },
-  { name: 'Aisha R.', note: 'Strong approach but struggles with the split-step timing before the first volley.' },
+  { name: 'Carlos M.', note: 'Working on patience at net — tends to rush the volley. Remind: block, do not swing.' },
+  { name: 'Aisha R.', note: 'Strong approach but struggles with split-step timing before the first volley.' },
   { name: 'Tommy L.', note: 'New to net play — give extra encouragement. Move him closer to the net for early reps.' },
 ]
 
 const BLOCK_TYPE_COLOR: Record<string, string> = {
-  'Warm-Up': 'text-status-blue border-status-blue/30 bg-status-blue/8',
-  'Technical': 'text-lime border-lime/30 bg-lime/8',
-  'Tactical': 'text-status-orange border-status-orange/30 bg-status-orange/8',
-  'Cool-Down': 'text-text-secondary border-border bg-surface-raised',
+  warm_up: 'text-status-blue border-status-blue/30 bg-status-blue/8',
+  technical: 'text-lime border-lime/30 bg-lime/8',
+  tactical: 'text-status-orange border-status-orange/30 bg-status-orange/8',
+  physical: 'text-status-purple border-status-purple/30 bg-status-purple/8',
+  match_play: 'text-status-red border-status-red/30 bg-status-red/8',
+  cool_down: 'text-text-secondary border-border bg-surface-raised',
 }
 
-export default function TemplateCoachPreviewPage() {
+export default async function TemplateCoachPreviewPage({ searchParams }: PageProps) {
+  const params = await searchParams
+  const levelParam = params.level ?? DEFAULT_TEMPLATE.level
+  const goalParam = params.goal ?? DEFAULT_TEMPLATE.goal
+  const typeParam = params.type ?? 'class'
+
+  const preview = getCurriculumLevelPreview(levelParam)
+  const stage = getCurriculumStage(levelParam)
+
+  const templateName = goalParam
+    ? `${goalParam} — ${levelParam}`
+    : DEFAULT_TEMPLATE.name
+
   return (
     <div className="flex gap-4 lg:gap-6 p-4 lg:p-6 min-h-screen items-start">
 
@@ -121,10 +135,13 @@ export default function TemplateCoachPreviewPage() {
             <h1 className="page-title">Coach Preview</h1>
             <p className="page-subtitle">This is what your coaches will see during the session. Low friction, clear, and actionable.</p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-lime/20 bg-lime/5 text-xs font-medium text-lime">
               <Eye className="w-3.5 h-3.5" />
               Director Preview Mode
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border text-xs text-text-muted">
+              {typeParam === 'fitness' ? 'Fitness Template' : 'Class Template'}
             </div>
           </div>
         </div>
@@ -132,8 +149,22 @@ export default function TemplateCoachPreviewPage() {
         {/* Demo notice */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          <span>Demo view — sample template. Backend wiring coming in a future sprint.</span>
+          <span>Demo view — sample template. Curriculum level and goal carried from create flow via URL params. No backend writes.</span>
         </div>
+
+        {/* Curriculum source banner */}
+        {preview && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-lime/15 bg-lime/4">
+            <GraduationCap className="w-4 h-4 text-lime shrink-0" />
+            <div>
+              <span className="text-[10px] uppercase tracking-widest text-text-muted">Curriculum Source — </span>
+              <span className="text-sm font-semibold text-lime">{levelParam}</span>
+              {goalParam && (
+                <span className="ml-2 text-xs text-text-secondary">· Goal: {goalParam}</span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Session brief card */}
         <div className="rounded-2xl border border-lime/20 bg-lime/4 p-5 space-y-4">
@@ -144,38 +175,40 @@ export default function TemplateCoachPreviewPage() {
           </div>
 
           <div>
-            <h2 className="text-lg font-bold text-text-primary">{DEMO_TEMPLATE.name}</h2>
-            <p className="text-sm text-text-secondary mt-1 leading-relaxed">{DEMO_TEMPLATE.goal}</p>
+            <h2 className="text-lg font-bold text-text-primary">{templateName}</h2>
+            {preview && (
+              <p className="text-xs text-text-secondary mt-1 leading-relaxed">{preview.skillPathwayFocus}</p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-1.5 text-xs text-text-muted">
               <Clock className="w-3.5 h-3.5" />
-              <span>{DEMO_TEMPLATE.durationMin}min</span>
+              <span>{DEMO_BLOCKS.reduce((s, b) => s + b.durationMin, 0)}min</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-text-muted">
               <Users className="w-3.5 h-3.5" />
-              <span>{DEMO_TEMPLATE.groupSize} players</span>
+              <span>{DEFAULT_TEMPLATE.groupSize} players</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-text-muted">
               <Target className="w-3.5 h-3.5" />
-              <span>{DEMO_TEMPLATE.level}</span>
+              <span>{levelParam}</span>
             </div>
           </div>
 
           {/* Block timeline */}
           <div className="flex items-center gap-1 overflow-x-auto pb-1">
-            {BLOCKS.map((block, i) => {
-              const total = BLOCKS.reduce((s, b) => s + b.durationMin, 0)
+            {DEMO_BLOCKS.map((block, i) => {
+              const total = DEMO_BLOCKS.reduce((s, b) => s + b.durationMin, 0)
               const widthPct = Math.round((block.durationMin / total) * 100)
               const color = BLOCK_TYPE_COLOR[block.type] ?? ''
               return (
                 <div key={block.id} className="flex items-center gap-1 shrink-0" style={{ flexBasis: `${widthPct}%`, minWidth: '60px' }}>
                   <div className={`flex-1 px-2 py-1.5 rounded-lg border text-center ${color}`}>
-                    <p className="text-[9px] font-bold truncate">{block.type}</p>
+                    <p className="text-[9px] font-bold truncate">{block.displayType}</p>
                     <p className="text-[9px] text-text-muted">{block.durationMin}m</p>
                   </div>
-                  {i < BLOCKS.length - 1 && <ChevronRight className="w-3 h-3 text-text-muted/30 shrink-0" />}
+                  {i < DEMO_BLOCKS.length - 1 && <ChevronRight className="w-3 h-3 text-text-muted/30 shrink-0" />}
                 </div>
               )
             })}
@@ -184,13 +217,15 @@ export default function TemplateCoachPreviewPage() {
 
         {/* Block cards */}
         <div className="space-y-3">
-          {BLOCKS.map((block, i) => {
+          {DEMO_BLOCKS.map((block, i) => {
             const color = BLOCK_TYPE_COLOR[block.type] ?? ''
+            const watchFors = stage ? getWatchForsForBlock(stage, block.type) : []
+            const curriculumDrills = stage ? getCurriculumDrillsForBlock(stage, block.type) : []
             return (
               <div key={block.id} className="rounded-2xl border border-border bg-surface p-5 space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-mono text-text-muted w-5 shrink-0">{i + 1}</span>
-                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border ${color}`}>{block.type}</span>
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border ${color}`}>{block.displayType}</span>
                   <span className="text-sm font-bold text-text-primary">{block.title}</span>
                   <span className="ml-auto flex items-center gap-1 text-[11px] text-text-muted">
                     <Clock className="w-3 h-3" />
@@ -204,22 +239,38 @@ export default function TemplateCoachPreviewPage() {
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1.5">Steps</p>
                     <div className="space-y-1.5">
-                      {block.steps.map(step => (
-                        <div key={step} className="flex items-start gap-2">
+                      {block.steps.map(s => (
+                        <div key={s} className="flex items-start gap-2">
                           <div className="w-4 h-4 rounded-full border border-border flex items-center justify-center shrink-0 mt-0.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-text-muted/30" />
                           </div>
-                          <span className="text-xs text-text-secondary leading-relaxed">{step}</span>
+                          <span className="text-xs text-text-secondary leading-relaxed">{s}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {block.watchFors && (
+                  {/* Curriculum drills */}
+                  {curriculumDrills.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-lime/70 mb-1.5 flex items-center gap-1.5">
+                        <BookOpen className="w-3 h-3" />
+                        Drills — {levelParam} curriculum
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {curriculumDrills.slice(0, 3).map(d => (
+                          <span key={d} className="px-2 py-0.5 rounded-lg border border-lime/15 bg-lime/5 text-[10px] text-lime/80">{d}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Watch-fors from curriculum */}
+                  {watchFors.length > 0 && (
                     <div>
                       <p className="text-[10px] uppercase tracking-widest text-lime mb-1.5">Watch for</p>
                       <div className="space-y-1.5">
-                        {block.watchFors.map(w => (
+                        {watchFors.map(w => (
                           <div key={w} className="flex items-start gap-2">
                             <CheckCircle2 className="w-3.5 h-3.5 text-lime/60 shrink-0 mt-0.5" />
                             <span className="text-xs text-text-secondary leading-relaxed">{w}</span>
@@ -255,7 +306,7 @@ export default function TemplateCoachPreviewPage() {
           </div>
         </div>
 
-        {/* DONNA wrap-up prompt */}
+        {/* Wrap-up prompt — curriculum-tied */}
         <div className="rounded-2xl border border-lime/15 bg-lime/4 p-5 space-y-3">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-lime" />
@@ -263,6 +314,7 @@ export default function TemplateCoachPreviewPage() {
           </div>
           <p className="text-xs text-text-secondary leading-relaxed">
             After the session, coaches can submit a wrap-up. DONNA will structure it and send to the Review Queue.
+            {preview && <span className="ml-1 text-lime/70">Wrap-up prompt reflects {levelParam} curriculum goals.</span>}
           </p>
           <div className="flex flex-wrap gap-2">
             {[
@@ -281,7 +333,7 @@ export default function TemplateCoachPreviewPage() {
               </button>
             ))}
           </div>
-          <p className="text-[10px] text-text-muted">These are coach-facing DONNA quick actions — directors do not see them in real-time.</p>
+          <p className="text-[10px] text-text-muted">Coach-facing DONNA quick actions — director review required before any changes apply.</p>
         </div>
 
         {/* Director nav */}
