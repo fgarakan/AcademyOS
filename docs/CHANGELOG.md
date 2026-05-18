@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 923: Class Templates Library V1
+
+**Files created:**
+- `src/lib/templates/templateMockData.ts` — Shared mock/demo data for all template pages. Types and data for class templates (6), fitness templates (5), template blocks (5), and DONNA suggestions (4). Clearly labeled demo-only / not saved.
+- `src/app/director/templates/class/page.tsx` — Class Templates Library page. Breadcrumb, header, demo notice, stats strip (total/ready/draft/review/linked), visual-only filter buttons by level, 2-column grid of template cards. Each card shows level badge, status chip, name, goal, curriculum connection row, and meta (blocks/drills/duration). Links to detail page.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 922: Template DONNA Panel Shell V1
 
 **Files created:**
