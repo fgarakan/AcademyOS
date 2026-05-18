@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-18 — Sprint 980: Class Template Create Save Wiring V1
+
+**Files modified:**
+- `src/lib/actions/templateDraftAction.ts` -- Added `saveClassTemplateDraftFromWizardAction` wizard-specific server action that resolves `academyId` from session (no client-supplied academyId).
+- `src/app/director/templates/class/create/page.tsx` -- Wired Save Draft button to real server action; added `saveStatus`/`saveError` state; removed demo-only language; added status-specific feedback UI (success/schema_missing/error).
+
+**Docs created:**
+- `docs/TEMPLATE_CLASS_CREATE_SAVE_WIRING_980.md`
+
+**Save flow:**
+- Client calls `saveClassTemplateDraftFromWizardAction({ curriculumLevel, templateGoal, blocks })`.
+- Server resolves `userId` and `academyId` from Supabase session — client supplies no academy context.
+- INSERTs into `template_review_requests` with `status='pending'`, `request_type='create_template'`.
+- Returns `{ success, reviewRequestId, isSchemaMissing }`.
+
+**Feedback states:**
+- `success` — "Draft submitted for director review"
+- `schema_missing` — "Backend not yet available" (non-blocking; graceful fallback)
+- `error` — shows server error message
+
+**Safety:**
+- No auto-approval. Draft always lands pending for director review.
+- No curriculum mutation. No parent sends. No external sends.
+- Schema-missing handled gracefully — user sees informative message, no throw.
+- Director or head_coach only. Coach role blocked server-side.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 979: Template Approval Application V1
 
 **Files created:**

@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, LayoutTemplate, BookOpen, CheckCircle2, AlertCircle, Plus, X, Info, Eye } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, LayoutTemplate, BookOpen, CheckCircle2, AlertCircle, Plus, X, Info, Eye, Loader2 } from 'lucide-react'
+import { saveClassTemplateDraftFromWizardAction } from '@/lib/actions/templateDraftAction'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import {
   CURRICULUM_LEVEL_PREVIEWS,
@@ -17,8 +18,6 @@ import {
   getPlayerMissionsForStage,
 } from '@/lib/templates/templateCurriculumPreview'
 import { getRecommendedBlocksForStage } from '@/lib/templates/curriculumBlockRecommendations'
-
-// demo-only — no writes — no saves — local state only
 
 type Step = 1 | 2 | 3 | 4 | 5
 
@@ -77,7 +76,8 @@ export default function CreateClassTemplatePage() {
   const [selectedGoal, setSelectedGoal] = useState<string>('')
   const [blocks, setBlocks] = useState<Block[]>([])
   const [selectedDrills, setSelectedDrills] = useState<Record<string, string[]>>({})
-  const [draftSaved, setDraftSaved] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error' | 'schema_missing'>('idle')
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const preview = getCurriculumLevelPreview(selectedLevel)
   const stage = getCurriculumStage(selectedLevel)
@@ -133,6 +133,29 @@ export default function CreateClassTemplatePage() {
     })
   }
 
+  async function handleSaveDraft() {
+    setSaveStatus('saving')
+    setSaveError(null)
+    const result = await saveClassTemplateDraftFromWizardAction({
+      curriculumLevel: selectedLevel,
+      templateGoal: selectedGoal,
+      blocks: blocks.map(b => ({
+        type: b.type,
+        title: b.title,
+        durationMin: b.durationMin,
+        drills: selectedDrills[b.id] ?? [],
+      })),
+    })
+    if (result.success) {
+      setSaveStatus('success')
+    } else if (result.isSchemaMissing) {
+      setSaveStatus('schema_missing')
+    } else {
+      setSaveStatus('error')
+      setSaveError(result.error ?? 'Failed to save draft.')
+    }
+  }
+
   const totalDuration = blocks.reduce((sum, b) => sum + b.durationMin, 0)
 
   return (
@@ -158,10 +181,10 @@ export default function CreateClassTemplatePage() {
           <p className="page-subtitle">Build a reusable session structure step by step.</p>
         </div>
 
-        {/* Demo notice */}
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          <span>Demo flow — no data is saved. Backend wiring coming in a future sprint.</span>
+        {/* Review notice */}
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-border bg-surface-raised text-[11px] text-text-secondary">
+          <Info className="w-3.5 h-3.5 shrink-0" />
+          <span>Template drafts are submitted for director review — nothing goes live until a director approves.</span>
         </div>
 
         {/* Step progress */}
@@ -674,36 +697,56 @@ export default function CreateClassTemplatePage() {
                   </p>
                   <p>This is a curriculum-derived class template draft. All drills, blocks, and player missions are coaching guidance — not a finalized session plan.</p>
                   <p>This draft does not assign to any player, session, or coach until explicitly approved by a Director or Head Coach.</p>
-                  <p className="text-status-orange/70">Demo mode — Save Draft does not persist anything. Backend wiring coming in a future sprint.</p>
                 </div>
-                {draftSaved && (
+                {saveStatus === 'success' && (
                   <div className="rounded-xl border border-status-green/20 bg-status-green/5 p-4 mb-3 space-y-2">
                     <p className="text-sm font-semibold text-status-green flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 shrink-0" />
-                      Draft saved (demo mode — not persisted)
+                      Draft submitted for director review
                     </p>
-                    <p className="text-[11px] text-text-secondary font-semibold">What happens next in the real flow:</p>
+                    <p className="text-[11px] text-text-secondary">Your template draft has been saved. A director must approve it before it becomes available for coaching sessions.</p>
                     <ol className="space-y-1 pl-4 list-decimal text-[11px] text-text-muted">
-                      <li>Template enters the Draft queue for Director review</li>
-                      <li>Director reviews and approves → status moves to Ready</li>
-                      <li>Coaches see the template in their session builder</li>
-                      <li>Director can track template usage in the Template Hub</li>
+                      <li>Director reviews the draft in the Review Queue</li>
+                      <li>Once approved, template status moves to Ready</li>
+                      <li>Coaches can then use it in their session builder</li>
                     </ol>
-                    <button
-                      onClick={() => setDraftSaved(false)}
-                      className="text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-100"
-                    >
-                      Dismiss
-                    </button>
+                  </div>
+                )}
+                {saveStatus === 'schema_missing' && (
+                  <div className="rounded-xl border border-status-orange/20 bg-status-orange/5 p-4 mb-3 space-y-1">
+                    <p className="text-sm font-semibold text-status-orange flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      Backend not yet available
+                    </p>
+                    <p className="text-[11px] text-text-muted">The template database is not connected yet. Your draft is ready but cannot be saved until the backend migration is applied.</p>
+                  </div>
+                )}
+                {saveStatus === 'error' && (
+                  <div className="rounded-xl border border-status-red/20 bg-status-red/5 p-4 mb-3 space-y-1">
+                    <p className="text-sm font-semibold text-status-red flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      Failed to save draft
+                    </p>
+                    <p className="text-[11px] text-text-muted">{saveError}</p>
                   </div>
                 )}
                 <div className="flex items-center gap-3 flex-wrap">
                   <button
-                    onClick={() => setDraftSaved(true)}
-                    className="btn-lime inline-flex items-center gap-2"
+                    onClick={handleSaveDraft}
+                    disabled={saveStatus === 'saving' || saveStatus === 'success'}
+                    className="btn-lime inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
-                    Save as Draft
+                    {saveStatus === 'saving' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        Save as Draft
+                      </>
+                    )}
                   </button>
                   {selectedLevel && (
                     <Link
