@@ -72,6 +72,7 @@ import { PlayerCoachNotesBlock } from './_components/PlayerCoachNotesBlock'
 import { PlayerParentSummaryBlock } from './_components/PlayerParentSummaryBlock'
 import { PlayerKpiDrilldownCard } from './_components/PlayerKpiDrilldownCard'
 import { PlayerSkillPathCurriculumPreview } from '@/components/player/PlayerSkillPathCurriculumPreview'
+import { PlayerCompetitionPathCurriculumPreview, type CompetitionPathPreviewData } from '@/components/player/PlayerCompetitionPathCurriculumPreview'
 
 interface PageProps {
   params: { playerId: string }
@@ -204,6 +205,18 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         .single()
       competitionTrackLevelName = ctLevel?.display_name ?? null
     }
+  }
+
+  // Sprint 918: Competition Path curriculum preview — read-only, no migration needed.
+  // Fetches the curriculum_competition_track row for the player's current curriculum level.
+  let competitionPathPreview: CompetitionPathPreviewData | null = null
+  if (curriculumSummary?.current_level_id) {
+    const { data: ctRow } = await rawDb
+      .from('curriculum_competition_track')
+      .select('match_format, scoring_system, opponent_pool, tournament_cadence, win_loss_target, transition_signal')
+      .eq('level_id', curriculumSummary.current_level_id)
+      .maybeSingle()
+    competitionPathPreview = ctRow ?? null
   }
 
   // Curriculum gates for current level: "Requirements to advance" (Sprint 197).
@@ -984,12 +997,20 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   // ─── Tab 2: Skill Path ────────────────────────────────────────────────────
   // ─── Tab 3: Competition ───────────────────────────────────────────────────
   const competitionSlot = (
-    <PlayerCompetitionTab
-      utrProfile={utrProfile}
-      utrHistory={utrHistory}
-      utrMatches={utrMatches}
-      utrInsights={utrInsights}
-    />
+    <div className="space-y-6">
+      {/* Sprint 918: Curriculum-derived competition path preview */}
+      <PlayerCompetitionPathCurriculumPreview
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        data={competitionPathPreview}
+        hasCurriculumState={hasCurriculum}
+      />
+      <PlayerCompetitionTab
+        utrProfile={utrProfile}
+        utrHistory={utrHistory}
+        utrMatches={utrMatches}
+        utrInsights={utrInsights}
+      />
+    </div>
   )
 
   // ─── Tab 4: Fitness / Load ────────────────────────────────────────────────

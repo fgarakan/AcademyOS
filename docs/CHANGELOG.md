@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-18 — Sprint 918: Competition Path Curriculum Connection V1
+
+**Files created:**
+- `src/components/player/PlayerCompetitionPathCurriculumPreview.tsx` — Read-only component. Shows match_format, scoring_system, opponent_pool, tournament_cadence, win_loss_target, and transition_signal from `curriculum_competition_track` for the player's current level. Labeled "Curriculum preview" with teal accent badge. Returns null when player has no curriculum state. Handles missing row with honest empty state.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Imports `PlayerCompetitionPathCurriculumPreview`. Adds read-only query for `curriculum_competition_track` filtered by `curriculumSummary.current_level_id` (uses `rawDb`, `maybeSingle()`). Wraps `competitionSlot` in `<div className="space-y-6">` to render curriculum preview above `PlayerCompetitionTab`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 917: Skill Path Curriculum Connection V1
 
 **Files created:**
