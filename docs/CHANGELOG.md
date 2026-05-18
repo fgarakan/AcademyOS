@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-18 — Sprint 1038: Director DONNA Page Wiring V1
+
+**Files created:**
+- `src/app/director/donna/DonnaDirectorShellClient.tsx` — thin client wrapper receiving server-loaded `DirectorDonnaContext` and rendering `DonnaVoiceReadyShell`. Keeps page as Server Component.
+- `docs/DIRECTOR_DONNA_PAGE_WIRING_1038.md` — wiring audit document.
+
+**Files modified:**
+- `src/app/director/donna/page.tsx` — full rewrite: loads `loadDirectorDonnaContext`, 2-column layout (context panels left, DONNA chat shell right), Today at a Glance KPI tiles, Attention Needed, Academy Risks, Next Best Actions, Quick Navigation, data status indicator, safety notice.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1037: DONNA Final Form Completion Audit V1
 
 **Files created:**
