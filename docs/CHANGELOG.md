@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1020: DONNA Action Classification V1
+
+**Files created:**
+- `src/lib/donna/donnaActionTypes.ts` — Full DONNA action taxonomy: 13 actions across 7 domains. DonnaActionDefinition shape with safetyClass, riskLevel, allowedRoles, blockedRoles, proposedActionModule, safetyNote. Registry (DONNA_ACTIONS), lookups (getDonnaAction, by domain/role/safetyClass), classifyAction(actionId, role).
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1019: DONNA Context QA V1
 
 **Files created:**
