@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1023: DONNA Requires Approval Actions V1
+
+**Files created:**
+- `src/lib/donna/donnaApprovalActions.ts` — Approval-required action proposals: level movement (buildLevelMovementApproval), parent messages (buildParentMessageApproval), roster changes (buildRosterChangeApproval). Each includes DirectorReviewContext (headline, whatChanges, whatDoesNotChange, reversibility). All set requiresDirectorApproval=true, autoExecute=false.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1022: DONNA Draft Only Actions V1
 
 **Files created:**
