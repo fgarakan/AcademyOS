@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-18 — Sprint 978: Template Review Queue Handoff V1
+
+**Files created:**
+- `src/lib/templates/templateReviewQueueAdapter.ts` -- Typed adapter between template_review_requests and review queue UI.
+- `docs/TEMPLATE_REVIEW_QUEUE_HANDOFF_978.md` -- Handoff doc.
+
+**Key:**
+- `loadPendingTemplateReviewItems` + `loadTemplateReviewHistoryItems` query helpers.
+- `TemplateReviewQueueItem` enriches raw rows with JSONB-derived display fields.
+- Request type labels: create_template/update_template/archive_template/duplicate_template.
+- No UI wiring to review queue page yet (deferred — requires approval action + card component).
+- isSchemaMissing passed through from repository layer.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 977: Template Save Draft Server Action V1
 
 **Files created:**
