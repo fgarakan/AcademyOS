@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 1005: Director DONNA Daily Brief V1
+
+**Files created:**
+- `src/components/donna/DirectorDonnaDailyBrief.tsx` — Structured director daily brief panel: sessions today, missing wrap-ups (red badge), attendance exceptions, draft counts, academy risks, recommended actions, live/demo indicator, safety footer.
+- `docs/DIRECTOR_DONNA_DAILY_BRIEF_1005.md` — Component spec.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1004: Director DONNA Command Center V1
 
 **Files created:**
