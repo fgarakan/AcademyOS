@@ -269,14 +269,44 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
             </button>
           </div>
           {!fitness ? (
-            <div className="rounded-xl border border-border border-dashed p-6 text-center">
+            <div className="rounded-xl border border-border border-dashed p-6 text-center space-y-2">
+              <Dumbbell className="w-5 h-5 text-text-muted mx-auto" />
               <p className="text-[12px] text-text-secondary">No fitness guidance at this level yet.</p>
+              <p className="text-[11px] text-text-muted">Ask DONNA to draft fitness content that fits this level's energy demands.</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-2">
-              <p className="text-[12px] font-semibold text-text-primary">{fitness.fitness_phase}</p>
-              {fitness.primary_energy_system && <p className="text-[11px] text-text-secondary">{fitness.primary_energy_system}</p>}
-              {fitness.coaching_notes && <p className="text-[11px] text-text-muted">{fitness.coaching_notes}</p>}
+            <div className="space-y-2">
+              <div className="rounded-xl border border-border bg-surface-raised px-4 py-3">
+                <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">Fitness Phase</p>
+                <p className="text-[12px] font-semibold text-text-primary">{fitness.fitness_phase}</p>
+              </div>
+              {fitness.primary_energy_system && (
+                <div className="rounded-xl border border-border bg-surface-raised px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">Primary Energy System</p>
+                  <p className="text-[12px] text-text-primary">{fitness.primary_energy_system}</p>
+                </div>
+              )}
+              {fitness.strength_band && (
+                <div className="rounded-xl border border-border bg-surface-raised px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">Strength Band</p>
+                  <p className="text-[12px] text-text-primary">{fitness.strength_band}</p>
+                </div>
+              )}
+              {(fitness.off_court_sessions_per_week_min != null || fitness.off_court_sessions_per_week_max != null) && (
+                <div className="rounded-xl border border-border bg-surface-raised px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">Off-Court Sessions / Week</p>
+                  <p className="text-[12px] text-text-primary">
+                    <span className="font-mono text-lime">{fitness.off_court_sessions_per_week_min ?? '?'}</span>
+                    {fitness.off_court_sessions_per_week_max != null && <span className="text-text-muted"> – <span className="font-mono text-lime">{fitness.off_court_sessions_per_week_max}</span></span>}
+                  </p>
+                </div>
+              )}
+              {fitness.coaching_notes && (
+                <div className="rounded-xl border border-border bg-surface-raised px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">Coaching Notes</p>
+                  <p className="text-[12px] text-text-secondary leading-relaxed">{fitness.coaching_notes}</p>
+                </div>
+              )}
             </div>
           )}
           {fitnessDraftOpen && (
