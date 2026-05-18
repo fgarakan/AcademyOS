@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 960: Template DONNA Class Template Suggestions V1
+
+**Files modified:**
+- `src/components/templates/TemplateDonnaPanel.tsx` — Added `AlertCircle` icon import. Added `CLASS_INSIGHTS` (top 2 class-type items from `DEMO_DONNA_SUGGESTIONS`). Added `LEVEL_CHIP` and `USEFULNESS_CHIP` color maps. Added "Curriculum Gaps" panel section visible when `mode === 'class_library'` or `mode === 'class_create'`: shows level badge, usefulness badge, title, and reason teaser (line-clamp-2) for each class gap suggestion, plus "See all" link to donna-suggestions page. Section renders between the prompt bubble and Quick Actions.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 959: Template DONNA Context Awareness V1
 
 **Files modified:**
