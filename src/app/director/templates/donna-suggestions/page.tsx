@@ -4,10 +4,24 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight, Sparkles, AlertCircle, LayoutTemplate, Dumbbell, Users, BookOpen, Zap, X, Plus, ChevronDown } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
-import { DEMO_DONNA_SUGGESTIONS } from '@/lib/templates/templateMockData'
+import { DEMO_DONNA_SUGGESTIONS, DEMO_CLASS_TEMPLATES, DEMO_FITNESS_TEMPLATES } from '@/lib/templates/templateMockData'
 import type { MockDonnaSuggestion } from '@/lib/templates/templateMockData'
 
 // demo-only — not saved — not applied — local-only
+
+const LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Elite'] as const
+type CoverageLevel = typeof LEVELS[number]
+
+const CLASS_LEVELS = new Set(DEMO_CLASS_TEMPLATES.map(t => t.level))
+const FITNESS_LEVELS = new Set(DEMO_FITNESS_TEMPLATES.map(t => t.level))
+
+const COVERAGE_MAP: { level: CoverageLevel; hasClass: boolean; hasFitness: boolean }[] = LEVELS.map(level => ({
+  level,
+  hasClass: CLASS_LEVELS.has(level),
+  hasFitness: FITNESS_LEVELS.has(level),
+}))
+
+const GAP_COUNT = COVERAGE_MAP.filter(r => !r.hasClass || !r.hasFitness).length
 // Create Draft and Dismiss are local-only state changes
 
 const USEFULNESS_COLOR: Record<string, string> = {
@@ -231,6 +245,57 @@ export default function DonnaSuggestionsPage() {
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           <span>Demo suggestions — rule-based recommendations. Backend wiring and real signal data coming in a future sprint.</span>
+        </div>
+
+        {/* Coverage map */}
+        <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-text-primary flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-lime" />
+              Curriculum Coverage Map
+            </h2>
+            {GAP_COUNT > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold border border-status-red/30 bg-status-red/8 text-status-red">
+                {GAP_COUNT} gap{GAP_COUNT > 1 ? 's' : ''} detected
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-text-muted">Which curriculum levels have class and fitness template coverage. Red = missing.</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-widest text-text-muted">
+                  <th className="text-left pb-2 font-medium">Level</th>
+                  <th className="text-center pb-2 font-medium">
+                    <span className="flex items-center justify-center gap-1"><LayoutTemplate className="w-3 h-3" /> Class</span>
+                  </th>
+                  <th className="text-center pb-2 font-medium">
+                    <span className="flex items-center justify-center gap-1"><Dumbbell className="w-3 h-3" /> Fitness</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {COVERAGE_MAP.map(row => (
+                  <tr key={row.level}>
+                    <td className="py-2 font-medium text-text-secondary">{row.level}</td>
+                    <td className="py-2 text-center">
+                      {row.hasClass
+                        ? <span className="inline-flex items-center gap-1 text-status-green"><BookOpen className="w-3 h-3" /> Covered</span>
+                        : <span className="inline-flex items-center gap-1 text-status-red"><AlertCircle className="w-3 h-3" /> Missing</span>
+                      }
+                    </td>
+                    <td className="py-2 text-center">
+                      {row.hasFitness
+                        ? <span className="inline-flex items-center gap-1 text-status-green"><BookOpen className="w-3 h-3" /> Covered</span>
+                        : <span className="inline-flex items-center gap-1 text-status-red"><AlertCircle className="w-3 h-3" /> Missing</span>
+                      }
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[10px] text-text-muted">Demo-only — derived from mock template data. Real gap detection requires live DB queries in a future sprint.</p>
         </div>
 
         {/* Stats strip */}

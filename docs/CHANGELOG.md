@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 964: Template DONNA Missing Template Gap Detection V1
+
+**Files modified:**
+- `src/app/director/templates/donna-suggestions/page.tsx` — Added imports for `DEMO_CLASS_TEMPLATES` and `DEMO_FITNESS_TEMPLATES`. Computed `COVERAGE_MAP` (4 levels x class/fitness coverage derived from mock data) and `GAP_COUNT` at module level. Added "Curriculum Coverage Map" card between demo notice and stats strip: table showing Beginner/Intermediate/Advanced/Elite vs. Class/Fitness coverage (green "Covered" or red "Missing"), with a gap count badge when gaps exist. Demo disclaimer included.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 963: Template DONNA Duration Adjustment Actions V1
 
 **Files modified:**
