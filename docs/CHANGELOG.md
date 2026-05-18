@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 955: Template Edit Controls Polish V1
+
+**Files modified:**
+- `src/app/director/templates/class/[templateId]/page.tsx` — "Edit" button replaced with a two-button action group: "Preview" (links to coach-preview with level/goal/type params) + "Edit Draft" (links to class create flow). Server Component — no onClick.
+- `src/app/director/templates/fitness/[templateId]/page.tsx` — Same pattern: "Preview" link to coach-preview with fitness params, "Edit Draft" link to fitness create flow.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 954: Template Draft Safety Language Pass V1
 
 **Files modified:**

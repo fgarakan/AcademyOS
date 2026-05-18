@@ -112,10 +112,22 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
               </div>
               <h1 className="text-xl font-bold text-text-primary leading-tight mb-2">{template.name}</h1>
             </div>
-            <button className="btn-ghost inline-flex items-center gap-2 shrink-0 text-sm">
-              <Edit3 className="w-4 h-4" />
-              Edit
-            </button>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+              <Link
+                href={`/director/templates/coach-preview?level=${encodeURIComponent(template.level)}&goal=${encodeURIComponent(template.fitnessGoal)}&type=fitness`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border text-xs font-medium text-text-secondary hover:border-status-purple/20 hover:text-text-primary transition-all duration-100"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                Preview
+              </Link>
+              <Link
+                href={`/director/templates/fitness/create`}
+                className="btn-ghost inline-flex items-center gap-1.5 text-sm"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Draft
+              </Link>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-5 pt-2 border-t border-border">

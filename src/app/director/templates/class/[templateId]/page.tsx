@@ -72,10 +72,22 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
               <h1 className="text-xl font-bold text-text-primary leading-tight mb-2">{template.name}</h1>
               <p className="text-sm text-text-secondary leading-relaxed">{template.goal}</p>
             </div>
-            <button className="btn-ghost inline-flex items-center gap-2 shrink-0 text-sm">
-              <Edit3 className="w-4 h-4" />
-              Edit
-            </button>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+              <Link
+                href={`/director/templates/coach-preview?level=${encodeURIComponent(template.level)}&goal=${encodeURIComponent(template.goal)}&type=class`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border text-xs font-medium text-text-secondary hover:border-lime/20 hover:text-text-primary transition-all duration-100"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                Preview
+              </Link>
+              <Link
+                href={`/director/templates/class/create`}
+                className="btn-ghost inline-flex items-center gap-1.5 text-sm"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Draft
+              </Link>
+            </div>
           </div>
 
           {/* Stats row */}
