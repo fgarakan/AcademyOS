@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 961: Template DONNA Fitness Template Suggestions V1
+
+**Files modified:**
+- `src/components/templates/TemplateDonnaPanel.tsx` — Added `FITNESS_INSIGHTS` (top 2 fitness-type items from `DEMO_DONNA_SUGGESTIONS`). Added "Fitness Gaps" panel section visible when `mode === 'fitness_library'` or `mode === 'fitness_create'`: purple-accented cards showing level badge, usefulness badge, title, and reason teaser (line-clamp-2) with "See all" link to donna-suggestions. Section renders between prompt bubble and Quick Actions, parallel to class gaps section.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 960: Template DONNA Class Template Suggestions V1
 
 **Files modified:**

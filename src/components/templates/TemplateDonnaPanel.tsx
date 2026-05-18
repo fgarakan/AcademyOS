@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { DEMO_DONNA_SUGGESTIONS } from '@/lib/templates/templateMockData'
 
 const CLASS_INSIGHTS = DEMO_DONNA_SUGGESTIONS.filter(s => s.type === 'class').slice(0, 2)
+const FITNESS_INSIGHTS = DEMO_DONNA_SUGGESTIONS.filter(s => s.type === 'fitness').slice(0, 2)
 
 const LEVEL_CHIP: Record<string, string> = {
   Beginner:     'text-status-blue border-status-blue/25 bg-status-blue/8',
@@ -229,6 +230,45 @@ export function TemplateDonnaPanel({ mode, context }: Props) {
               <p className="text-sm text-text-primary leading-relaxed">{prompt}</p>
             </div>
           </div>
+
+          {/* Fitness Gaps — fitness modes only */}
+          {(mode === 'fitness_library' || mode === 'fitness_create') && FITNESS_INSIGHTS.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2 px-0.5">
+                <div className="flex items-center gap-1.5">
+                  <AlertCircle className="w-3 h-3 text-status-purple" />
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+                    Fitness Gaps
+                  </span>
+                </div>
+                <Link
+                  href="/director/templates/donna-suggestions"
+                  className="text-[10px] text-lime hover:text-lime/80 transition-colors duration-100"
+                >
+                  See all
+                </Link>
+              </div>
+              <div className="space-y-2">
+                {FITNESS_INSIGHTS.map(insight => (
+                  <div
+                    key={insight.id}
+                    className="rounded-xl border border-status-purple/15 bg-status-purple/4 px-3 py-2.5 space-y-1.5"
+                  >
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-semibold border ${LEVEL_CHIP[insight.level] ?? 'text-text-muted border-border'}`}>
+                        {insight.level}
+                      </span>
+                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-semibold border ${USEFULNESS_CHIP[insight.estimatedUsefulness] ?? ''}`}>
+                        {insight.estimatedUsefulness}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-text-primary leading-snug">{insight.title}</p>
+                    <p className="text-[11px] text-text-muted leading-relaxed line-clamp-2">{insight.reason}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Curriculum Gaps — class modes only */}
           {(mode === 'class_library' || mode === 'class_create') && CLASS_INSIGHTS.length > 0 && (
