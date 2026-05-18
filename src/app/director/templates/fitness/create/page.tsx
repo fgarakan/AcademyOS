@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Info, LayoutTemplate } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Info, LayoutTemplate, Zap } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumStage, getFitnessCurriculumPreview } from '@/lib/templates/templateCurriculumPreview'
 import { FitnessBlockType, FITNESS_BLOCK_TYPES, getFitnessBlockLabel, getFitnessBlockIntent, getFitnessBlockAccent, getFitnessBlockBorderAccent, getDefaultBlockDuration } from '@/lib/fitness/fitnessBlockTypes'
@@ -95,6 +95,18 @@ export default function CreateFitnessTemplatePage() {
     : []
 
   const blockTotalMin = fitnessBlocks.reduce((sum, b) => sum + b.durationMin, 0)
+
+  const allTennisTransfers: string[] = (() => {
+    if (!fitnessStage) return []
+    const transfers = new Set<string>()
+    for (const blk of fitnessBlocks) {
+      const suggestions = getExercisesForBlock(blk.type, fitnessStage)
+      for (const ex of suggestions) {
+        if (blk.exercises.includes(ex.name)) transfers.add(ex.tennisTransfer)
+      }
+    }
+    return Array.from(transfers)
+  })()
 
   return (
     <div className="flex gap-4 lg:gap-6 p-4 lg:p-6 min-h-screen items-start">
@@ -480,11 +492,14 @@ export default function CreateFitnessTemplatePage() {
                                             <p className="text-xs font-medium text-text-primary">{ex.name}</p>
                                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                               <span className="text-[10px] text-text-muted">{ex.sets} sets · {ex.reps}</span>
-                                              <span className="text-[10px] text-status-purple">{ex.tennisTransfer}</span>
-                                              {ex.loadNote && (
-                                                <span className="text-[10px] text-status-orange">{ex.loadNote}</span>
-                                              )}
                                             </div>
+                                            <div className="flex items-center gap-1 mt-1">
+                                              <Zap className="w-2.5 h-2.5 text-lime shrink-0" />
+                                              <span className="text-[10px] font-medium text-lime">{ex.tennisTransfer}</span>
+                                            </div>
+                                            {ex.loadNote && (
+                                              <p className="text-[10px] text-status-orange mt-0.5">{ex.loadNote}</p>
+                                            )}
                                           </div>
                                           <button
                                             onClick={() => isAdded ? removeExerciseFromBlock(blk.id, ex.name) : addExerciseToBlock(blk.id, ex.name)}
@@ -597,6 +612,21 @@ export default function CreateFitnessTemplatePage() {
                   <div className="p-3 rounded-xl bg-surface-raised border border-border">
                     <p className="text-[10px] text-text-muted uppercase tracking-widest mb-2">Curriculum Source</p>
                     <p className="text-xs text-text-secondary">{fitnessCurriculumPreview.tennisTechnicalTransfer}</p>
+                  </div>
+                )}
+                {allTennisTransfers.length > 0 && (
+                  <div className="p-3 rounded-xl bg-surface-raised border border-border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Zap className="w-3.5 h-3.5 text-lime shrink-0" />
+                      <p className="text-[10px] text-text-muted uppercase tracking-widest">Tennis Transfer Connections</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {allTennisTransfers.map(t => (
+                        <span key={t} className="px-2 py-0.5 rounded-full text-[10px] font-medium border border-lime/20 bg-lime/5 text-lime">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

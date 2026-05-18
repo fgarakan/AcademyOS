@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 950: Fitness Template Tennis Transfer Labels V1
+
+**Files modified:**
+- `src/app/director/templates/fitness/create/page.tsx` — Tennis transfer labels upgraded to prominent display: added `Zap` icon + lime color in exercise rows (was plain purple text). Added `allTennisTransfers` derived set — collects unique `tennisTransfer` values from all selected exercises across all blocks. Step 5 review now shows a "Tennis Transfer Connections" card with lime pills for all unique transfer labels when exercises have been selected.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 949: Fitness Exercise Progression Regression Suggestions V1
 
 **Files modified:**
