@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1017: DONNA Answer Source Labels V1
+
+**Files created:**
+- `src/lib/donna/donnaSourceLabels.ts` — Source label vocabulary for all DONNA answers: DonnaSourceDomain (11 domains), DonnaSourceLabel shape, buildSourceLabel builder, SOURCE_LABELS pre-built constants for all common data points. Helpers: getSourceLabelText, getSourceConfidenceText, getSourceStatusColor, buildMultiSourceLabel.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1016: Academy Health Signal Context V1
 
 **Files created:**
