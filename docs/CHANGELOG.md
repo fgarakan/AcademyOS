@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 930: Template Impact Preview V1
+
+**Files created:**
+- `src/app/director/templates/impact-preview/page.tsx` — Template Impact Preview page. Read-only. Safety banner ("Nothing changes until you review and approve"), 4 impact cards (sessions/players/coaches/curriculum), future sessions list, coach briefings preview, curriculum connection map (primary/supporting/adjacent), player requirements (met/partial status), assessment opportunities, parent/player summary samples, fitness pathway cross-link, review queue link, scope actions (each warns demo-only). Right TemplateDonnaPanel mode=impact.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 929: Template Coach Preview V1
 
 **Files created:**
