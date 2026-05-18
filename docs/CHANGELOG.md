@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 1007: Coach DONNA Session Assistant V1
+
+**Files created:**
+- `src/components/donna/CoachDonnaSessionPanel.tsx` — Coach-facing DONNA panel for session detail: level/template context, curriculum focus, watch-fors (expandable), 4 quick actions (start/capture/flag/wrap-up). No DB writes.
+- `docs/COACH_DONNA_SESSION_ASSISTANT_1007.md` — Component spec.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1006: Director DONNA Review Queue Integration V1
 
 **Files created:**
