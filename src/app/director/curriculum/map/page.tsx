@@ -78,7 +78,7 @@ export default async function CurriculumMapPage() {
     : 'All levels at a glance. Click any level to explore its drills, gates, and coaching language.'
 
   return (
-    <div className="animate-fade-in flex gap-6 p-6 items-start">
+    <div className="animate-fade-in flex gap-6 p-4 sm:p-6 items-start overflow-x-hidden max-w-[1440px]">
 
       {/* ── Main content ──────────────────────────────────────────────────── */}
       <div className="flex-1 min-w-0 space-y-6">

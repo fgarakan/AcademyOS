@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-18 — Sprint 911: Curriculum Builder Desktop Screenshot Match V1
+
+**Files modified:**
+- `src/app/director/curriculum/map/page.tsx` — Root wrapper: added `p-4 sm:p-6`, `overflow-x-hidden`, `max-w-[1440px]`.
+- `src/components/curriculum/builder/CurriculumGuidedReviewExperience.tsx` — Root wrapper: added `max-w-[1440px]`.
+- `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx` — Root wrapper: added `max-w-[1440px]`.
+- `src/components/curriculum/builder/CurriculumAddDrillExperience.tsx` — Root wrapper: added `max-w-[1440px]`.
+- `src/components/curriculum/builder/CurriculumAddFitnessExperience.tsx` — Root wrapper: added `max-w-[1440px]`.
+- `src/components/curriculum/builder/CurriculumImpactPreviewExperience.tsx` — Root wrapper: added `max-w-[1440px]`.
+
+**Desktop consistency:** All 6 target pages now share identical root layout class: `animate-fade-in flex gap-6 p-4 sm:p-6 items-start overflow-x-hidden max-w-[1440px]`. DONNA panel `w-72 shrink-0 sticky top-6` consistent on all. `page-eyebrow` + `page-title` header pattern consistent. `space-y-6` vertical rhythm consistent.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 910: Curriculum Builder Mobile Screenshot Match V1
 
 **Files modified:**
