@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 992: Attendance Exception Review Draft V1
+
+**Files created:**
+- `src/components/coach/CoachAttendanceExceptionSummary.tsx` — Coach-facing exception status view: type label, status pill (pending/approved/rejected/applied), director notes, unrostered guardrail copy. Pending count banner at top.
+
+**Docs created:**
+- `docs/ATTENDANCE_EXCEPTION_REVIEW_DRAFT_992.md`
+
+---
+
 ## 2026-05-18 — Sprint 991: Coach Attendance Quick Capture V1
 
 **Files created:**
