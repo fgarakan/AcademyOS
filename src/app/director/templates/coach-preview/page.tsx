@@ -1,12 +1,12 @@
 import Link from 'next/link'
-import { ChevronRight, Clock, Users, Target, CheckCircle2, AlertCircle, Eye, LayoutTemplate, Sparkles, MessageSquare, ChevronDown, GraduationCap, BookOpen } from 'lucide-react'
+import { ChevronRight, Clock, Users, Target, CheckCircle2, AlertCircle, Eye, LayoutTemplate, Sparkles, MessageSquare, ChevronDown, GraduationCap, BookOpen, Database } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { getCurriculumLevelPreview, getCurriculumStage, getWatchForsForBlock, getCurriculumDrillsForBlock, getFitnessCurriculumPreview } from '@/lib/templates/templateCurriculumPreview'
-
-// demo-only — not saved — not applied — local-only
+import { getSupabaseServer } from '@/lib/supabase/server'
+import { getTemplateById, getTemplateBlocks } from '@/lib/templates/templateRepository'
 
 interface PageProps {
-  searchParams: Promise<{ level?: string; goal?: string; type?: string }>
+  searchParams: Promise<{ level?: string; goal?: string; type?: string; templateId?: string }>
 }
 
 const DEFAULT_TEMPLATE = {
@@ -99,6 +99,41 @@ const BLOCK_TYPE_COLOR: Record<string, string> = {
   physical: 'text-status-purple border-status-purple/30 bg-status-purple/8',
   match_play: 'text-status-red border-status-red/30 bg-status-red/8',
   cool_down: 'text-text-secondary border-border bg-surface-raised',
+  movement: 'text-status-blue border-status-blue/30 bg-status-blue/8',
+  speed: 'text-lime border-lime/30 bg-lime/8',
+  agility: 'text-status-orange border-status-orange/30 bg-status-orange/8',
+  strength: 'text-status-purple border-status-purple/30 bg-status-purple/8',
+  plyometrics: 'text-status-red border-status-red/30 bg-status-red/8',
+  coordination: 'text-status-blue border-status-blue/30 bg-status-blue/8',
+  mobility: 'text-text-secondary border-border bg-surface-raised',
+  recovery_cool_down: 'text-text-secondary border-border bg-surface-raised',
+}
+
+const BLOCK_TYPE_DISPLAY: Record<string, string> = {
+  warm_up: 'Warm-Up',
+  technical: 'Technical',
+  tactical: 'Tactical',
+  physical: 'Physical',
+  match_play: 'Match Play',
+  cool_down: 'Cool-Down',
+  movement: 'Movement',
+  speed: 'Speed',
+  agility: 'Agility',
+  strength: 'Strength',
+  plyometrics: 'Plyometrics',
+  coordination: 'Coordination',
+  mobility: 'Mobility',
+  recovery_cool_down: 'Recovery',
+}
+
+interface DisplayBlock {
+  id: string
+  type: string
+  displayType: string
+  title: string
+  durationMin: number
+  todaysFocus: string
+  steps: string[]
 }
 
 export default async function TemplateCoachPreviewPage({ searchParams }: PageProps) {
@@ -114,6 +149,53 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
   const templateName = goalParam
     ? `${goalParam} — ${levelParam}`
     : DEFAULT_TEMPLATE.name
+
+  const templateIdParam = params.templateId ?? null
+  let liveTemplateName: string | null = null
+  let liveLevel: string | null = null
+  let displayBlocks: DisplayBlock[] = DEMO_BLOCKS
+  let dataSource: 'live' | 'demo' = 'demo'
+
+  if (templateIdParam) {
+    try {
+      const db = await getSupabaseServer()
+      const { data: { user } } = await db.auth.getUser()
+      if (user) {
+        const rawDb = db as any
+        const { data: profile } = await rawDb
+          .from('profiles')
+          .select('academy_id')
+          .eq('id', user.id)
+          .single()
+        if (profile?.academy_id) {
+          const tResult = await getTemplateById(db, templateIdParam, profile.academy_id)
+          if (tResult.data && !tResult.isSchemaMissing) {
+            liveTemplateName = tResult.data.name
+            liveLevel = (tResult.data as any).curriculum_level_key ?? null
+            const bResult = await getTemplateBlocks(db, templateIdParam)
+            if (!bResult.isSchemaMissing && bResult.data.length > 0) {
+              displayBlocks = bResult.data
+                .slice()
+                .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+                .map(b => ({
+                  id: b.id,
+                  type: b.type,
+                  displayType: BLOCK_TYPE_DISPLAY[b.type] ?? b.type,
+                  title: b.name,
+                  durationMin: b.duration_min,
+                  todaysFocus: b.notes ?? '',
+                  steps: [] as string[],
+                }))
+            }
+            dataSource = 'live'
+          }
+        }
+      }
+    } catch { /* fall through to demo */ }
+  }
+
+  const effectiveLevel = liveLevel ?? levelParam
+  const effectiveName = liveTemplateName ?? templateName
 
   return (
     <div className="flex gap-4 lg:gap-6 p-4 lg:p-6 min-h-screen items-start">
@@ -147,11 +229,18 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
           </div>
         </div>
 
-        {/* Demo notice */}
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          <span>Demo view — sample template. Curriculum level and goal carried from create flow via URL params. No backend writes.</span>
-        </div>
+        {/* Source banner */}
+        {dataSource === 'live' ? (
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-green/20 bg-status-green/5 text-[11px] text-status-green">
+            <Database className="w-3.5 h-3.5 shrink-0" />
+            <span>Showing live template data from your academy. Curriculum enrichment derived from {effectiveLevel}.</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <span>Demo view — sample template. Curriculum level and goal carried from create flow via URL params.</span>
+          </div>
+        )}
 
         {/* Curriculum source banner */}
         {preview && (
@@ -159,7 +248,7 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
             <GraduationCap className="w-4 h-4 text-lime shrink-0" />
             <div>
               <span className="text-[10px] uppercase tracking-widest text-text-muted">Curriculum Source — </span>
-              <span className="text-sm font-semibold text-lime">{levelParam}</span>
+              <span className="text-sm font-semibold text-lime">{effectiveLevel}</span>
               {goalParam && (
                 <span className="ml-2 text-xs text-text-secondary">· Goal: {goalParam}</span>
               )}
@@ -208,7 +297,7 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
           </div>
 
           <div>
-            <h2 className="text-lg font-bold text-text-primary">{templateName}</h2>
+            <h2 className="text-lg font-bold text-text-primary">{effectiveName}</h2>
             {preview && (
               <p className="text-xs text-text-secondary mt-1 leading-relaxed">{preview.skillPathwayFocus}</p>
             )}
@@ -217,7 +306,7 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-1.5 text-xs text-text-muted">
               <Clock className="w-3.5 h-3.5" />
-              <span>{DEMO_BLOCKS.reduce((s, b) => s + b.durationMin, 0)}min</span>
+              <span>{displayBlocks.reduce((s, b) => s + b.durationMin, 0)}min</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-text-muted">
               <Users className="w-3.5 h-3.5" />
@@ -225,14 +314,14 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
             </div>
             <div className="flex items-center gap-1.5 text-xs text-text-muted">
               <Target className="w-3.5 h-3.5" />
-              <span>{levelParam}</span>
+              <span>{effectiveLevel}</span>
             </div>
           </div>
 
           {/* Block timeline */}
           <div className="flex items-center gap-1 overflow-x-auto pb-1">
-            {DEMO_BLOCKS.map((block, i) => {
-              const total = DEMO_BLOCKS.reduce((s, b) => s + b.durationMin, 0)
+            {displayBlocks.map((block, i) => {
+              const total = displayBlocks.reduce((s, b) => s + b.durationMin, 0)
               const widthPct = Math.round((block.durationMin / total) * 100)
               const color = BLOCK_TYPE_COLOR[block.type] ?? ''
               return (
@@ -241,7 +330,7 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
                     <p className="text-[9px] font-bold truncate">{block.displayType}</p>
                     <p className="text-[9px] text-text-muted">{block.durationMin}m</p>
                   </div>
-                  {i < DEMO_BLOCKS.length - 1 && <ChevronRight className="w-3 h-3 text-text-muted/30 shrink-0" />}
+                  {i < displayBlocks.length - 1 && <ChevronRight className="w-3 h-3 text-text-muted/30 shrink-0" />}
                 </div>
               )
             })}
@@ -250,7 +339,7 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
 
         {/* Block cards */}
         <div className="space-y-3">
-          {DEMO_BLOCKS.map((block, i) => {
+          {displayBlocks.map((block, i) => {
             const color = BLOCK_TYPE_COLOR[block.type] ?? ''
             const watchFors = stage ? getWatchForsForBlock(stage, block.type) : []
             const curriculumDrills = stage ? getCurriculumDrillsForBlock(stage, block.type) : []
@@ -267,28 +356,32 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
                 </div>
 
                 <div className="pl-8 space-y-3">
-                  <p className="text-sm text-text-primary font-medium leading-relaxed">{block.todaysFocus}</p>
+                  {block.todaysFocus && (
+                    <p className="text-sm text-text-primary font-medium leading-relaxed">{block.todaysFocus}</p>
+                  )}
 
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1.5">Steps</p>
-                    <div className="space-y-1.5">
-                      {block.steps.map(s => (
-                        <div key={s} className="flex items-start gap-2">
-                          <div className="w-4 h-4 rounded-full border border-border flex items-center justify-center shrink-0 mt-0.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-text-muted/30" />
+                  {block.steps.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1.5">Steps</p>
+                      <div className="space-y-1.5">
+                        {block.steps.map(s => (
+                          <div key={s} className="flex items-start gap-2">
+                            <div className="w-4 h-4 rounded-full border border-border flex items-center justify-center shrink-0 mt-0.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-text-muted/30" />
+                            </div>
+                            <span className="text-xs text-text-secondary leading-relaxed">{s}</span>
                           </div>
-                          <span className="text-xs text-text-secondary leading-relaxed">{s}</span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Curriculum drills */}
                   {curriculumDrills.length > 0 && (
                     <div>
                       <p className="text-[10px] uppercase tracking-widest text-lime/70 mb-1.5 flex items-center gap-1.5">
                         <BookOpen className="w-3 h-3" />
-                        Drills — {levelParam} curriculum
+                        Drills — {effectiveLevel} curriculum
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {curriculumDrills.slice(0, 3).map(d => (

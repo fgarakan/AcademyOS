@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-18 — Sprint 982: Coach Preview Live Template Wiring V1
+
+**Files modified:**
+- `src/app/director/templates/coach-preview/page.tsx` -- Accepts `templateId` search param; fetches live template + blocks from repository; shows live data with curriculum enrichment; source banner switches between live (green) and demo (orange).
+- `src/app/director/templates/class/[templateId]/page.tsx` -- "Preview for Coach" link now includes `&templateId=` param.
+- `src/app/director/templates/fitness/[templateId]/page.tsx` -- Same.
+
+**Docs created:**
+- `docs/TEMPLATE_COACH_PREVIEW_LIVE_WIRING_982.md`
+
+**Live data flow:**
+- If `templateId` in URL: fetch `getTemplateById` + `getTemplateBlocks` via auth → profile → academy_id.
+- Blocks sorted by `order_index`, mapped to `DisplayBlock` with `displayType` derived from `BLOCK_TYPE_DISPLAY`.
+- `todaysFocus` from `block.notes`; steps rendered only if non-empty (live blocks have no step list).
+- Curriculum watch-fors and drills always shown (derived from `stage` of the level param).
+- Falls through to `DEMO_BLOCKS` if no `templateId`, if template not found, or on any error.
+
+**Safety:**
+- Read-only. No writes, no mutations.
+- academyId always resolved from session — never from URL params.
+- Schema-missing handled gracefully — falls through to demo.
+
+**TypeScript:** CLEAN (fixed `order_num` → `order_index` to match `template_blocks` Row type)
+
+---
+
 ## 2026-05-18 — Sprint 981: Fitness Template Create Save Wiring V1
 
 **Files modified:**

@@ -153,7 +153,7 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
               <Link
-                href={`/director/templates/coach-preview?level=${encodeURIComponent(displayLevel)}&goal=${encodeURIComponent(displayDescription ?? '')}&type=class`}
+                href={`/director/templates/coach-preview?level=${encodeURIComponent(displayLevel)}&goal=${encodeURIComponent(displayDescription ?? '')}&type=class&templateId=${encodeURIComponent(templateId)}`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border text-xs font-medium text-text-secondary hover:border-lime/20 hover:text-text-primary transition-all duration-100"
               >
                 <Eye className="w-3.5 h-3.5" />

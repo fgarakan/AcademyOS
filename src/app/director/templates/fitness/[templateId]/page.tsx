@@ -196,7 +196,7 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
               <Link
-                href={`/director/templates/coach-preview?level=${encodeURIComponent(displayLevel)}&goal=${encodeURIComponent(displayFitnessGoal ?? '')}&type=fitness`}
+                href={`/director/templates/coach-preview?level=${encodeURIComponent(displayLevel)}&goal=${encodeURIComponent(displayFitnessGoal ?? '')}&type=fitness&templateId=${encodeURIComponent(templateId)}`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border text-xs font-medium text-text-secondary hover:border-status-purple/20 hover:text-text-primary transition-all duration-100"
               >
                 <Eye className="w-3.5 h-3.5" />
