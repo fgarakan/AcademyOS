@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-18 — Sprint 1039: Coach DONNA Page Wiring V1
+
+**Files created:**
+- `src/app/coach/donna/CoachDonnaShellClient.tsx` — thin client wrapper receiving `CoachDonnaContext` and rendering `DonnaVoiceReadyShell` with coach role.
+- `src/app/coach/donna/page.tsx` — full coach DONNA page: loads `loadCoachDonnaContext`, 2-column layout, session brief KPIs, today's sessions list, recommended actions, quick actions, safety notice.
+- `docs/COACH_DONNA_PAGE_WIRING_1039.md` — wiring audit document.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1038: Director DONNA Page Wiring V1
 
 **Files created:**
