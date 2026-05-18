@@ -6,6 +6,7 @@ import type { CurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
 import { CurriculumLevelDetailPanel } from '@/components/curriculum/CurriculumLevelDetailPanel'
 import { CurriculumProgressRail } from './CurriculumProgressRail'
 import { CurriculumJumpToLevelModal } from './CurriculumJumpToLevelModal'
+import { DonnaSafetyDisclosure } from './DonnaSafetyDisclosure'
 
 interface Props {
   data: CurriculumExplorerData
@@ -123,6 +124,18 @@ export function CurriculumGuidedReviewShell({ data }: Props) {
           </button>
         </div>
       </div>
+
+      <DonnaSafetyDisclosure context="curriculum_builder" />
+
+      {isLast && reviewed.has(currentIndex) && (
+        <div className="rounded-2xl border border-status-green/20 bg-status-green/[0.04] p-5 text-center space-y-2">
+          <p className="text-[13px] font-semibold text-status-green">All {levels.length} levels reviewed</p>
+          <p className="text-[11px] text-text-muted">
+            Your notes and observations help DONNA draft better curriculum changes.
+            Use the builder to request edits — they go to the Review Queue for approval.
+          </p>
+        </div>
+      )}
 
       {jumpOpen && (
         <CurriculumJumpToLevelModal
