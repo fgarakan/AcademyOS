@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 927: Create Fitness Template Guided Flow V1
+
+**Files created:**
+- `src/app/director/templates/fitness/create/page.tsx` — Client component fitness template creation flow. 5 steps: Choose Level/Group, Choose Fitness Goal, Set Load + Duration, Add Exercises, Review. Load picker (Light/Moderate/High with color dots), duration stepper (5min increments), exercise picker with tennis transfer labels, review summary. Purple accent throughout. DONNA tip per step. Demo-only — no writes. Right TemplateDonnaPanel mode=fitness_create.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 926: Class Template Detail Editor V1
 
 **Files created:**
