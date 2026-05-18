@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 988: Coach Session Plan Live Data V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Template fetch now includes `curriculum_level_key` and `template_goal` (migration 067 fields, rawDb cast, null-safe); session header shows template chip, curriculum level chip (lime accent), and goal text.
+
+**Docs created:**
+- `docs/COACH_SESSION_PLAN_LIVE_DATA_988.md`
+
+---
+
 ## 2026-05-18 — Sprint 987: Coach Today Dashboard Enhancement V1
 
 **Files modified:**

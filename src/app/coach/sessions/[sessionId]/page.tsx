@@ -82,15 +82,20 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
 
   if (sessionError || !session) notFound()
 
-  // 2. Template name for context
+  // 2. Template name + curriculum context (curriculum_level_key and template_goal are migration 067 fields)
   let templateName: string | null = null
+  let templateCurriculumLevel: string | null = null
+  let templateGoal: string | null = null
   if (session.template_id) {
-    const { data: template } = await supabase
+    const rawTplDb = supabase as any
+    const { data: template } = await rawTplDb
       .from('templates')
-      .select('name')
+      .select('name, curriculum_level_key, template_goal')
       .eq('id', session.template_id)
       .single()
     templateName = template?.name ?? null
+    templateCurriculumLevel = (template?.curriculum_level_key as string | null | undefined) ?? null
+    templateGoal = (template?.template_goal as string | null | undefined) ?? null
   }
 
   // 3. Session blocks ordered
@@ -263,8 +268,24 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           {session.scheduled_time && ` · ${session.scheduled_time.slice(0, 5)}`}
           {session.duration_min && ` · ${session.duration_min} min`}
         </p>
-        {templateName && (
-          <p className="text-xs text-text-muted mt-0.5">From template: {templateName}</p>
+        {(templateName || templateCurriculumLevel || templateGoal) && (
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            {templateName && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-text-muted bg-surface-raised border border-border rounded-full px-2 py-0.5">
+                Template: {templateName}
+              </span>
+            )}
+            {templateCurriculumLevel && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-lime bg-lime/5 border border-lime/20 rounded-full px-2 py-0.5">
+                {templateCurriculumLevel}
+              </span>
+            )}
+          </div>
+        )}
+        {templateGoal && (
+          <p className="text-xs text-text-secondary mt-1.5 leading-snug">
+            <span className="text-text-muted">Goal: </span>{templateGoal}
+          </p>
         )}
 
         {/* Block progress rail */}
