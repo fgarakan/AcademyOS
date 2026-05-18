@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1018: DONNA Confidence Unknown State Logic V1
+
+**Files created:**
+- `src/lib/donna/donnaConfidence.ts` — Confidence derivation and unknown-state handling: ConfidenceResult shape, deriveConfidenceFromStatuses (from COOFieldStatus[]), getUnknownStateMessage (headline/detail/action per reason), getConfidencePrefix for answer language, mergeConfidence for combining sources. Centralizes all confidence logic.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1017: DONNA Answer Source Labels V1
 
 **Files created:**
