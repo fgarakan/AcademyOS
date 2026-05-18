@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 966: Class Template End-to-End Browser QA V1
+
+**Files created:**
+- `docs/CLASS_TEMPLATE_E2E_QA_966.md` — Full end-to-end QA checklist for the class template system: 5 flows (Templates Home → Class Library, Class Template Detail, Class Template Create, Coach Preview, Impact Preview). Each flow documents URL, expected behavior, and PASS status. Regression checks section covers TypeScript, no DB writes, no external sends, demo notices, DONNA guardrail, and breadcrumb accuracy.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-18 — Sprint 965: Template DONNA Review Before Apply Guardrails V1
 
 **Files modified:**
