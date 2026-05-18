@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 947: Fitness Exercise Auto-Population Engine V1
+
+**Files created:**
+- `src/lib/templates/fitnessExerciseAutoPopulate.ts` — New curriculum-derived exercise bank. `FitnessExerciseSuggestion` interface with `name`, `sets`, `reps`, `tennisTransfer`, `loadNote?`. `FITNESS_EXERCISE_BANK` keyed by `[FitnessBlockType][BallStage]` — 8 block types x 5 stages = 40 curated exercise sets. `getExercisesForBlock(blockType, stage)` export. No DB reads. No writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 946: Fitness Template Block Type Builder V1
 
 **Files modified:**
