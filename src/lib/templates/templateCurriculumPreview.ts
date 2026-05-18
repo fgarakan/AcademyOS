@@ -276,6 +276,46 @@ export function getWatchForsForBlock(stage: BallStage, blockType: string): strin
   return CURRICULUM_WATCH_FORS_BY_STAGE[stage]?.[blockType] ?? []
 }
 
+// Assessment gates supported by templates at each stage
+export interface SupportedGate {
+  gateLabel: string
+  description: string
+  blockHint: string
+}
+
+export const SUPPORTED_GATES_BY_STAGE: Record<BallStage, SupportedGate[]> = {
+  'Red Ball': [
+    { gateLabel: 'Cooperative rally — 5 in a row', description: 'Player maintains 5 cooperative rallies on mini court', blockHint: 'technical or match_play block' },
+    { gateLabel: 'Grip check — two-handed forehand grip', description: 'Correct grip observed by coach in 3+ reps', blockHint: 'technical block' },
+    { gateLabel: 'Ready position — returns to neutral', description: 'Player recovers to ready position after every shot', blockHint: 'warm_up or technical block' },
+  ],
+  'Orange Ball': [
+    { gateLabel: 'Cross-court consistency — 6 in a row', description: 'Six controlled cross-court rallies in succession', blockHint: 'technical block' },
+    { gateLabel: 'Serve placement — lands in box', description: 'Serve lands in correct service box 4 of 5 attempts', blockHint: 'match_play block' },
+    { gateLabel: 'Split-step before incoming ball', description: 'Split-step observed on 7 of 10 incoming balls', blockHint: 'warm_up or technical block' },
+    { gateLabel: 'Wide-ball recovery into crosscourt rally', description: 'Player recovers and redirects crosscourt after wide ball', blockHint: 'tactical block' },
+  ],
+  'Green Ball': [
+    { gateLabel: 'Approach shot down the line', description: 'Approach shot hits within 1 metre of the sideline', blockHint: 'technical block' },
+    { gateLabel: 'Serve-plus-one pattern executed', description: 'Player executes a planned serve-plus-one 3 of 5 attempts', blockHint: 'tactical or match_play block' },
+    { gateLabel: 'Pressure tiebreak — manages score', description: 'Player maintains composure in a 7-point pressure tiebreak', blockHint: 'match_play block' },
+  ],
+  'Yellow Ball': [
+    { gateLabel: 'Inside-out forehand — hits target', description: 'Inside-out forehand hits the target cone 4 of 6 attempts', blockHint: 'technical block' },
+    { gateLabel: 'Second serve — kick lands in box', description: 'Kick serve lands in correct box 5 of 7 attempts', blockHint: 'technical block' },
+    { gateLabel: 'Match-play decision under pressure', description: 'Correct tactical decision made in 0-30 pressure scenario', blockHint: 'match_play block' },
+  ],
+  'High Performance': [
+    { gateLabel: 'Serve weapon — 3 consecutive placement targets', description: 'Serve hits T, body, wide targets consecutively at match pace', blockHint: 'technical or match_play block' },
+    { gateLabel: 'Match-play: executes game plan', description: 'Director observes consistent game plan execution over 6 games', blockHint: 'match_play block' },
+    { gateLabel: 'Adversity response — resets within one game', description: 'Player applies reset protocol and wins next game after losing a set', blockHint: 'match_play block' },
+  ],
+}
+
+export function getSupportedGatesForStage(stage: BallStage): SupportedGate[] {
+  return SUPPORTED_GATES_BY_STAGE[stage] ?? []
+}
+
 export const GOALS_BY_STAGE: Record<BallStage, string[]> = {
   'Red Ball': [
     'Cooperative rally — 5 consecutive on mini court',

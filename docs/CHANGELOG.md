@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 940: Class Template Assessment Gate Connection V1
+
+**Files modified:**
+- `src/lib/templates/templateCurriculumPreview.ts` — Added `SupportedGate` interface, `SUPPORTED_GATES_BY_STAGE` (3-4 gates per stage), `getSupportedGatesForStage()` helper.
+- `src/app/director/templates/class/create/page.tsx` — Step 1 preview card now shows "Gates This Template Can Support" section with gate label, block hint, and read-only disclaimer. No assessment writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 939: Class Template Coach Watch-Fors From Curriculum V1
 
 **Files modified:**

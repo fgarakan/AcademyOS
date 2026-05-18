@@ -13,6 +13,7 @@ import {
   GOALS_BY_STAGE,
   getCurriculumDrillsForBlock,
   getWatchForsForBlock,
+  getSupportedGatesForStage,
 } from '@/lib/templates/templateCurriculumPreview'
 import { getRecommendedBlocksForStage } from '@/lib/templates/curriculumBlockRecommendations'
 
@@ -79,6 +80,7 @@ export default function CreateClassTemplatePage() {
   const preview = getCurriculumLevelPreview(selectedLevel)
   const stage = getCurriculumStage(selectedLevel)
   const goalsForLevel = stage ? GOALS_BY_STAGE[stage] : []
+  const supportedGates = stage ? getSupportedGatesForStage(stage) : []
   const recommendedBlocks = stage
     ? getRecommendedBlocksForStage(toBlockStageKey(stage), 75)
     : null
@@ -282,6 +284,25 @@ export default function CreateClassTemplatePage() {
                         ))}
                       </div>
                       <p className="text-[10px] text-text-muted mt-1.5 italic">{recommendedBlocks.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Supported assessment gates */}
+                  {supportedGates.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Gates This Template Can Support</p>
+                      <div className="space-y-1.5">
+                        {supportedGates.map(gate => (
+                          <div key={gate.gateLabel} className="flex items-start gap-2 p-2.5 rounded-lg border border-lime/10 bg-lime/4">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-lime/60 shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium text-text-primary leading-snug">{gate.gateLabel}</p>
+                              <p className="text-[10px] text-text-muted mt-0.5">{gate.blockHint}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-text-muted mt-1.5">Curriculum-derived — read only — no official assessment updates</p>
                     </div>
                   )}
                 </div>
