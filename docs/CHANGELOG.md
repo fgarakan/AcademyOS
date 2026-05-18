@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 931: DONNA Template Suggestions V1
+
+**Files created:**
+- `src/app/director/templates/donna-suggestions/page.tsx` — Client component. DONNA suggested templates page. Intro card with DONNA voice, stats strip (total/high-priority/drafted/dismissed/remaining), suggestion cards per suggestion. Each card: type badge, level badge, usefulness badge, why-suggested panel, expandable details (curriculum connection, players/groups affected, suggested goal), Create Draft (local-only) and Dismiss (local-only). Empty state when all reviewed. Right TemplateDonnaPanel mode=suggestions.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 930: Template Impact Preview V1
 
 **Files created:**
