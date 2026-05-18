@@ -1,5 +1,10 @@
-import { Sparkles, Shield, Clock, Layers } from 'lucide-react'
+'use client'
+
+import { useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { Sparkles, Shield, Clock, Layers, CheckCircle, XCircle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
+import { updateStructuredDraftDecisionAction } from './actions'
 
 export interface CurriculumBuilderDraftPayload {
   source: 'curriculum_builder'
@@ -29,6 +34,15 @@ const CHANGE_LABELS: Record<CurriculumBuilderDraftPayload['change_type'], string
 
 export function CurriculumBuilderDraftCard({ draft }: { draft: CurriculumBuilderDraftItem }) {
   const { payload } = draft
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
+  function decide(decision: 'approved' | 'rejected') {
+    startTransition(async () => {
+      const res = await updateStructuredDraftDecisionAction(draft.id, decision)
+      if (res.ok) router.refresh()
+    })
+  }
 
   const statusLabel =
     draft.status === 'approved'       ? 'Approved — ready to apply' :
@@ -100,13 +114,23 @@ export function CurriculumBuilderDraftCard({ draft }: { draft: CurriculumBuilder
           </div>
         )}
 
-        {/* Decision controls placeholder — wired when review queue supports curriculum_builder target_module */}
+        {/* Decision controls */}
         {draft.status === 'pending_review' && (
           <div className="flex flex-wrap gap-2 pt-1">
-            <button className="btn-lime text-[12px] px-4 py-2" disabled>
-              Approve (coming soon)
+            <button
+              onClick={() => decide('approved')}
+              disabled={isPending}
+              className="flex items-center gap-1.5 btn-lime text-[12px] px-4 py-2 disabled:opacity-50"
+            >
+              <CheckCircle className="w-3.5 h-3.5" />
+              {isPending ? 'Saving…' : 'Approve'}
             </button>
-            <button className="btn-ghost text-[12px] px-4 py-2" disabled>
+            <button
+              onClick={() => decide('rejected')}
+              disabled={isPending}
+              className="flex items-center gap-1.5 btn-ghost text-[12px] px-4 py-2 disabled:opacity-50"
+            >
+              <XCircle className="w-3.5 h-3.5" />
               Reject
             </button>
           </div>
