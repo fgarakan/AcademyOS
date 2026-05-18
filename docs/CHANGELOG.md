@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 946: Fitness Template Block Type Builder V1
+
+**Files modified:**
+- `src/app/director/templates/fitness/create/page.tsx` — Step 4 replaced: flat exercise list removed, replaced with block type builder backed by `fitnessBlockTypes.ts`. Director adds blocks by type (`FitnessBlockType`). Curriculum-suggested block types shown as quick-add pills with `Suggested` badges. All 8 block types available. Each block shows intent description and default duration. Added block sequence summary with total duration. Step 5 review updated to show block structure pills. `EXERCISES_BY_GOAL` const removed. Imports updated to `getFitnessBlockLabel`, `getFitnessBlockIntent`, `getFitnessBlockAccent`, `getFitnessBlockBorderAccent`, `getDefaultBlockDuration`, `FITNESS_BLOCK_TYPES`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 945: Fitness Template Curriculum Pull Preview V1
 
 **Files modified:**

@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Zap, Clock, Info } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Info, LayoutTemplate } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumStage, getFitnessCurriculumPreview } from '@/lib/templates/templateCurriculumPreview'
+import { FitnessBlockType, FITNESS_BLOCK_TYPES, getFitnessBlockLabel, getFitnessBlockIntent, getFitnessBlockAccent, getFitnessBlockBorderAccent, getDefaultBlockDuration } from '@/lib/fitness/fitnessBlockTypes'
 
 // demo-only — no writes — no saves — local state only
 
@@ -14,11 +15,10 @@ const STEPS = [
   { id: 1, label: 'Curriculum Level', icon: GraduationCap },
   { id: 2, label: 'Fitness Goal', icon: Target },
   { id: 3, label: 'Load + Duration', icon: Dumbbell },
-  { id: 4, label: 'Add Exercises', icon: Zap },
+  { id: 4, label: 'Build Blocks', icon: LayoutTemplate },
   { id: 5, label: 'Review', icon: CheckCircle2 },
 ]
 
-// 15 curriculum levels — replaces generic Beginner/Intermediate/Advanced/Elite
 const CURRICULUM_LEVELS = CURRICULUM_LEVEL_PREVIEWS.map(p => p.level)
 
 const LOAD_LEVELS = ['Light', 'Moderate', 'High'] as const
@@ -31,43 +31,22 @@ const FITNESS_GOALS = [
   { id: 'coordination', label: 'Coordination', description: 'Hand-eye coordination, ball tracking, footwork patterns' },
 ]
 
-const EXERCISES_BY_GOAL: Record<string, { name: string; sets: string; reps: string; tennisTransfer: string }[]> = {
-  speed_agility: [
-    { name: 'Ladder Footwork — 2-in/2-out', sets: '3', reps: '4 passes', tennisTransfer: 'Court coverage' },
-    { name: 'Lateral Cone Sprint', sets: '4', reps: '6 reps each side', tennisTransfer: 'Split-step reaction' },
-    { name: 'T-Pattern Drill', sets: '3', reps: '5 reps', tennisTransfer: 'First step acceleration' },
-    { name: 'Pro Agility Shuttle', sets: '4', reps: '4 reps', tennisTransfer: 'Change of direction' },
-  ],
-  strength_power: [
-    { name: 'Medicine Ball Rotational Throw', sets: '3', reps: '8 each side', tennisTransfer: 'Forehand/backhand power' },
-    { name: 'Single-Leg Squat', sets: '3', reps: '8 each leg', tennisTransfer: 'Low ball stability' },
-    { name: 'Band Shoulder External Rotation', sets: '3', reps: '15 reps', tennisTransfer: 'Serve shoulder health' },
-    { name: 'Explosive Broad Jump', sets: '3', reps: '5 reps', tennisTransfer: 'Net approach drive' },
-  ],
-  mobility_flexibility: [
-    { name: 'Hip 90/90 Stretch', sets: '2', reps: '60s each side', tennisTransfer: 'Low ball reach' },
-    { name: 'Thoracic Rotation with Reach', sets: '2', reps: '10 each side', tennisTransfer: 'Shoulder turn for serve' },
-    { name: 'Ankle Circles + Calf Raise', sets: '2', reps: '15 reps', tennisTransfer: 'Split-step landing' },
-    { name: 'World Greatest Stretch', sets: '2', reps: '8 each side', tennisTransfer: 'Full body mobility' },
-  ],
-  endurance: [
-    { name: 'Interval Baseline Sprints', sets: '5', reps: '30s on / 15s rest', tennisTransfer: 'Point recovery' },
-    { name: 'Aerobic Shadow Footwork', sets: '4', reps: '60s continuous', tennisTransfer: 'Match endurance' },
-    { name: 'Suicide Runs', sets: '3', reps: '4 reps', tennisTransfer: 'Court coverage stamina' },
-  ],
-  coordination: [
-    { name: 'Ball Drop Reaction', sets: '3', reps: '10 drops', tennisTransfer: 'Hand-eye coordination' },
-    { name: 'Two-Ball Juggling', sets: '3', reps: '30s', tennisTransfer: 'Ball tracking' },
-    { name: 'Footwork Ladder — Ickey Shuffle', sets: '3', reps: '4 passes', tennisTransfer: 'Rhythm and timing' },
-  ],
+// Maps human-readable suggestedBlockTypes labels to FitnessBlockType
+const SUGGESTED_LABEL_TO_TYPE: Record<string, FitnessBlockType> = {
+  'Coordination':  'coordination',
+  'Mobility':      'mobility',
+  'Warm-Up':       'movement',
+  'Speed':         'speed',
+  'Agility':       'agility',
+  'Strength':      'strength',
+  'Plyometrics':   'plyometrics',
+  'Recovery':      'recovery_cool_down',
 }
 
-interface Exercise {
+interface FitnessBlock {
   id: string
-  name: string
-  sets: string
-  reps: string
-  tennisTransfer: string
+  type: FitnessBlockType
+  durationMin: number
 }
 
 export default function CreateFitnessTemplatePage() {
@@ -76,21 +55,28 @@ export default function CreateFitnessTemplatePage() {
   const [selectedGoal, setSelectedGoal] = useState<string>('')
   const [load, setLoad] = useState<string>('Moderate')
   const [durationMin, setDurationMin] = useState<number>(30)
-  const [exercises, setExercises] = useState<Exercise[]>([])
+  const [fitnessBlocks, setFitnessBlocks] = useState<FitnessBlock[]>([])
 
-  function addExercise(ex: { name: string; sets: string; reps: string; tennisTransfer: string }) {
-    if (exercises.find(e => e.name === ex.name)) return
-    setExercises(prev => [...prev, { id: `ex-${Date.now()}`, ...ex }])
+  function addBlock(type: FitnessBlockType) {
+    if (fitnessBlocks.find(b => b.type === type)) return
+    setFitnessBlocks(prev => [...prev, { id: `blk-${Date.now()}`, type, durationMin: getDefaultBlockDuration(type) }])
   }
 
-  function removeExercise(id: string) {
-    setExercises(prev => prev.filter(e => e.id !== id))
+  function removeBlock(id: string) {
+    setFitnessBlocks(prev => prev.filter(b => b.id !== id))
   }
 
   const goalInfo = FITNESS_GOALS.find(g => g.id === selectedGoal)
-  const exerciseSuggestions = EXERCISES_BY_GOAL[selectedGoal] ?? []
   const fitnessStage = getCurriculumStage(selectedLevel)
   const fitnessCurriculumPreview = fitnessStage ? getFitnessCurriculumPreview(fitnessStage) : null
+
+  const suggestedTypes: FitnessBlockType[] = fitnessCurriculumPreview
+    ? fitnessCurriculumPreview.suggestedBlockTypes
+        .map(label => SUGGESTED_LABEL_TO_TYPE[label])
+        .filter((t): t is FitnessBlockType => t !== undefined)
+    : []
+
+  const blockTotalMin = fitnessBlocks.reduce((sum, b) => sum + b.durationMin, 0)
 
   return (
     <div className="flex gap-4 lg:gap-6 p-4 lg:p-6 min-h-screen items-start">
@@ -182,7 +168,7 @@ export default function CreateFitnessTemplatePage() {
                 ))}
               </div>
 
-              {/* Fitness curriculum preview — derived from curriculum stage */}
+              {/* Fitness curriculum preview */}
               {fitnessCurriculumPreview && (
                 <div className="rounded-xl border border-status-purple/15 bg-status-purple/4 p-5 space-y-4">
                   <div className="flex items-center gap-2">
@@ -323,69 +309,125 @@ export default function CreateFitnessTemplatePage() {
                   <span className="text-xs text-text-muted ml-2">5-minute increments · 10–90min</span>
                 </div>
               </div>
+
+              {/* Load guidance from curriculum */}
+              {fitnessCurriculumPreview && (
+                <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border border-border bg-surface-raised">
+                  <Info className="w-3.5 h-3.5 text-text-muted shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Curriculum Load Guidance for {selectedLevel}</p>
+                    <p className="text-xs text-text-secondary">{fitnessCurriculumPreview.loadGuidance}</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Step 4 — Exercises */}
+          {/* Step 4 — Build Blocks */}
           {step === 4 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-base font-bold text-text-primary mb-1">Add Exercises</h2>
+                <h2 className="text-base font-bold text-text-primary mb-1">Build Blocks</h2>
                 <p className="text-sm text-text-secondary">
-                  Select exercises for{' '}
-                  <span className="font-semibold text-text-primary">{goalInfo?.label}</span>.
+                  Add block types to structure this fitness template.
+                  {fitnessCurriculumPreview && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-status-purple/20 bg-status-purple/8 text-status-purple">
+                      {fitnessCurriculumPreview.recommendedFitnessFocus}
+                    </span>
+                  )}
                 </p>
               </div>
 
-              {/* Suggestions */}
-              {exerciseSuggestions.length > 0 && (
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Suggested Exercises</p>
-                  <div className="space-y-2">
-                    {exerciseSuggestions.map(ex => {
-                      const isAdded = exercises.some(e => e.name === ex.name)
+              {/* Curriculum suggestions */}
+              {suggestedTypes.length > 0 && (
+                <div className="rounded-xl border border-status-purple/15 bg-status-purple/4 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-status-purple shrink-0" />
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted">Curriculum-Suggested for {selectedLevel}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestedTypes.map(type => {
+                      const isAdded = fitnessBlocks.some(b => b.type === type)
                       return (
-                        <div key={ex.name} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface-raised">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-text-primary">{ex.name}</p>
-                            <div className="flex items-center gap-3 mt-0.5">
-                              <span className="text-[10px] text-text-muted">{ex.sets} sets · {ex.reps}</span>
-                              <span className="text-[10px] text-status-purple">{ex.tennisTransfer}</span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => isAdded ? removeExercise(exercises.find(e => e.name === ex.name)!.id) : addExercise(ex)}
-                            className={[
-                              'w-8 h-8 rounded-xl border flex items-center justify-center transition-all duration-100 shrink-0',
-                              isAdded
-                                ? 'border-status-green/30 bg-status-green/10 text-status-green'
-                                : 'border-border bg-surface text-text-muted hover:border-status-purple/20 hover:text-status-purple',
-                            ].join(' ')}
-                          >
-                            {isAdded ? <CheckCircle2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                          </button>
-                        </div>
+                        <button
+                          key={type}
+                          onClick={() => isAdded ? removeBlock(fitnessBlocks.find(b => b.type === type)!.id) : addBlock(type)}
+                          className={[
+                            'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all duration-150',
+                            isAdded
+                              ? 'border-status-green/25 bg-status-green/8 text-status-green'
+                              : 'border-status-purple/20 bg-status-purple/8 text-status-purple hover:bg-status-purple/12',
+                          ].join(' ')}
+                        >
+                          {isAdded ? <CheckCircle2 className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                          {getFitnessBlockLabel(type)}
+                        </button>
                       )
                     })}
                   </div>
                 </div>
               )}
 
-              {/* Added exercises */}
-              {exercises.length > 0 && (
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">
-                    Added — {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
-                  </p>
-                  <div className="space-y-2">
-                    {exercises.map(ex => (
-                      <div key={ex.id} className="flex items-center gap-3 p-3 rounded-xl border border-status-purple/15 bg-status-purple/5">
+              {/* All block types */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">All Block Types</p>
+                <div className="space-y-2">
+                  {FITNESS_BLOCK_TYPES.map(type => {
+                    const isAdded = fitnessBlocks.some(b => b.type === type)
+                    const isSuggested = suggestedTypes.includes(type)
+                    return (
+                      <div
+                        key={type}
+                        className={[
+                          'flex items-center gap-3 p-3 rounded-xl border transition-all duration-150',
+                          isAdded ? 'border-status-green/20 bg-status-green/5' : 'border-border bg-surface-raised',
+                        ].join(' ')}
+                      >
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-text-primary">{ex.name}</p>
-                          <span className="text-[10px] text-text-muted">{ex.sets} sets · {ex.reps}</span>
+                          <div className="flex items-center gap-2">
+                            <p className={`text-sm font-semibold ${getFitnessBlockAccent(type)}`}>{getFitnessBlockLabel(type)}</p>
+                            {isSuggested && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wide border border-status-purple/20 bg-status-purple/8 text-status-purple">
+                                Suggested
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-text-muted mt-0.5">{getFitnessBlockIntent(type)}</p>
+                          <p className="text-[10px] text-text-muted/60 mt-0.5">Default: {getDefaultBlockDuration(type)} min</p>
                         </div>
                         <button
-                          onClick={() => removeExercise(ex.id)}
+                          onClick={() => isAdded ? removeBlock(fitnessBlocks.find(b => b.type === type)!.id) : addBlock(type)}
+                          className={[
+                            'w-8 h-8 rounded-xl border flex items-center justify-center transition-all duration-100 shrink-0',
+                            isAdded
+                              ? 'border-status-green/30 bg-status-green/10 text-status-green'
+                              : 'border-border bg-surface text-text-muted hover:border-status-purple/20 hover:text-status-purple',
+                          ].join(' ')}
+                        >
+                          {isAdded ? <CheckCircle2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Added blocks summary */}
+              {fitnessBlocks.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">
+                    Block Sequence — {fitnessBlocks.length} block{fitnessBlocks.length !== 1 ? 's' : ''} · {blockTotalMin} min total
+                  </p>
+                  <div className="space-y-1.5">
+                    {fitnessBlocks.map((blk, i) => (
+                      <div key={blk.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface-raised">
+                        <span className="text-[10px] font-mono text-text-muted w-4 shrink-0">{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <span className={`text-sm font-semibold ${getFitnessBlockAccent(blk.type)}`}>{getFitnessBlockLabel(blk.type)}</span>
+                          <span className="text-[10px] text-text-muted ml-2">{blk.durationMin} min</span>
+                        </div>
+                        <button
+                          onClick={() => removeBlock(blk.id)}
                           className="w-7 h-7 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-status-red transition-colors duration-100 shrink-0"
                         >
                           <X className="w-3 h-3" />
@@ -396,10 +438,10 @@ export default function CreateFitnessTemplatePage() {
                 </div>
               )}
 
-              {exercises.length === 0 && (
+              {fitnessBlocks.length === 0 && (
                 <div className="flex flex-col items-center gap-3 py-8 text-center">
-                  <Dumbbell className="w-8 h-8 text-text-muted/30" />
-                  <p className="text-sm text-text-muted">No exercises added yet. Select from the suggestions above.</p>
+                  <LayoutTemplate className="w-8 h-8 text-text-muted/30" />
+                  <p className="text-sm text-text-muted">No blocks added yet. Select from the curriculum suggestions or all block types above.</p>
                 </div>
               )}
             </div>
@@ -417,8 +459,11 @@ export default function CreateFitnessTemplatePage() {
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
                   <GraduationCap className="w-4 h-4 text-status-purple shrink-0" />
                   <div>
-                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Level</p>
+                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Curriculum Level</p>
                     <p className="text-sm font-semibold text-text-primary">{selectedLevel || 'Not selected'}</p>
+                    {fitnessCurriculumPreview && (
+                      <p className="text-[10px] text-text-muted mt-0.5">{fitnessCurriculumPreview.recommendedFitnessFocus}</p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
@@ -435,13 +480,32 @@ export default function CreateFitnessTemplatePage() {
                     <p className="text-sm font-semibold text-text-primary">{load} load — {durationMin}min</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
-                  <Clock className="w-4 h-4 text-status-purple shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Exercises</p>
-                    <p className="text-sm font-semibold text-text-primary">{exercises.length} exercise{exercises.length !== 1 ? 's' : ''}</p>
+                <div className="p-3 rounded-xl bg-surface-raised border border-border">
+                  <div className="flex items-center gap-3 mb-3">
+                    <LayoutTemplate className="w-4 h-4 text-status-purple shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-text-muted uppercase tracking-widest">Block Structure</p>
+                      <p className="text-sm font-semibold text-text-primary">
+                        {fitnessBlocks.length} block{fitnessBlocks.length !== 1 ? 's' : ''} — {blockTotalMin} min
+                      </p>
+                    </div>
                   </div>
+                  {fitnessBlocks.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pl-7">
+                      {fitnessBlocks.map(blk => (
+                        <span key={blk.id} className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getFitnessBlockBorderAccent(blk.type)} bg-surface ${getFitnessBlockAccent(blk.type)}`}>
+                          {getFitnessBlockLabel(blk.type)} · {blk.durationMin}min
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
+                {fitnessCurriculumPreview && (
+                  <div className="p-3 rounded-xl bg-surface-raised border border-border">
+                    <p className="text-[10px] text-text-muted uppercase tracking-widest mb-2">Curriculum Source</p>
+                    <p className="text-xs text-text-secondary">{fitnessCurriculumPreview.tennisTechnicalTransfer}</p>
+                  </div>
+                )}
               </div>
 
               <div className="pt-2">
@@ -497,10 +561,10 @@ export default function CreateFitnessTemplatePage() {
           <Sparkles className="w-4 h-4 text-status-purple shrink-0 mt-0.5" />
           <p className="text-xs text-text-secondary leading-relaxed">
             <span className="font-semibold text-text-primary">DONNA tip: </span>
-            {step === 1 && 'Match the load expectations to the player group. Beginners need lighter loads and more coordination work. Elite players need high-intensity conditioning.'}
+            {step === 1 && 'The curriculum level determines the physical development priority. Red Ball needs coordination and fun; High Performance needs periodized load management.'}
             {step === 2 && 'Choose the fitness goal that best supports your curriculum focus this training block. Speed and agility templates are most commonly missing for Intermediate groups.'}
             {step === 3 && 'A 20–30min block works well at the start of a session. A 30–45min block works as a standalone fitness session. Keep High load for advanced groups only.'}
-            {step === 4 && 'Aim for 4–6 exercises per block. Include at least one tennis-specific transfer drill to keep the training sport-relevant.'}
+            {step === 4 && 'Start with curriculum-suggested block types. Each block type has a default duration — total time auto-calculates. You can always add more blocks for a longer session.'}
             {step === 5 && 'Review before saving. Once saved as a draft, you can add pathway connections and notes from the detail view.'}
           </p>
         </div>
