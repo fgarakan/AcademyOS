@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-18 — Sprint 975: Template Library Live Data Wiring V1
+
+**Files modified:**
+- `src/app/director/templates/class/page.tsx` -- Converted to async Server Component with repository read + demo fallback.
+- `src/app/director/templates/fitness/page.tsx` -- Same pattern.
+
+**Files created:**
+- `docs/TEMPLATE_LIBRARY_LIVE_DATA_WIRING_975.md` -- Wiring doc.
+
+**Key changes:**
+- Both library pages now call `listTemplatesForAcademy` before rendering.
+- Live data shown with green "Showing saved templates from your academy." banner.
+- Demo fallback shown with orange banner when no live data, schema missing, or auth unavailable.
+- `DemoTemplateCard` / `LiveTemplateCard` components split per source.
+- `templateExt()` helper casts TemplateRow through unknown for draft-migration column access.
+- No type filter applied (avoids schema-missing on draft template_type column).
+- No writes, no server actions, no migrations.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 974: Template Repository Read Layer V1
 
 **Files created:**
