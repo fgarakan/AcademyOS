@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 962: Template DONNA Modify Difficulty Actions V1
+
+**Files modified:**
+- `src/components/templates/TemplateDonnaPanel.tsx` — Added `TrendingUp`, `TrendingDown`, `CheckCircle2` icon imports. Added `difficultyNudge: 'easier' | 'harder' | null` state. Added `showDifficulty` flag (true for `class_detail` and `fitness_detail` modes). Added "Difficulty" section above Quick Actions: two buttons ("Easier" / "Harder") that set local `difficultyNudge` state; confirmed state shows a green acknowledgement with "no data saved" note and a clear button. All state is client-local — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 961: Template DONNA Fitness Template Suggestions V1
 
 **Files modified:**

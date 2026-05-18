@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, ChevronRight, Send, Zap, AlertCircle } from 'lucide-react'
+import { Sparkles, ChevronRight, Send, Zap, AlertCircle, TrendingUp, TrendingDown, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { DEMO_DONNA_SUGGESTIONS } from '@/lib/templates/templateMockData'
 
@@ -180,9 +180,11 @@ function getContextualActions(mode: DonnaPanelMode, baseActions: QuickAction[], 
 
 export function TemplateDonnaPanel({ mode, context }: Props) {
   const [input, setInput] = useState('')
+  const [difficultyNudge, setDifficultyNudge] = useState<'easier' | 'harder' | null>(null)
   const config = PANEL_CONFIGS[mode]
   const prompt = getContextualPrompt(mode, config.prompt, context)
   const actions = getContextualActions(mode, config.actions, context)
+  const showDifficulty = mode === 'class_detail' || mode === 'fitness_detail'
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter' && input.trim()) {
@@ -306,6 +308,55 @@ export function TemplateDonnaPanel({ mode, context }: Props) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Difficulty Actions — detail modes only */}
+          {showDifficulty && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-2 px-0.5">
+                <TrendingUp className="w-3 h-3 text-lime" />
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+                  Difficulty
+                </span>
+              </div>
+              {difficultyNudge ? (
+                <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-status-green/20 bg-status-green/5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-status-green shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-status-green">
+                      Flagged: Make {difficultyNudge === 'easier' ? 'Easier' : 'Harder'}
+                    </p>
+                    <p className="text-[10px] text-text-muted mt-0.5">Demo only — no data saved. Review queue wiring in a future sprint.</p>
+                    <button
+                      type="button"
+                      onClick={() => setDifficultyNudge(null)}
+                      className="text-[10px] text-lime hover:text-lime/80 transition-colors duration-100 mt-1"
+                    >
+                      Clear suggestion
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDifficultyNudge('easier')}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl border border-status-blue/20 bg-status-blue/5 text-status-blue text-[11px] font-semibold hover:bg-status-blue/10 transition-all duration-100"
+                  >
+                    <TrendingDown className="w-3 h-3" />
+                    Easier
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDifficultyNudge('harder')}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl border border-status-orange/20 bg-status-orange/5 text-status-orange text-[11px] font-semibold hover:bg-status-orange/10 transition-all duration-100"
+                  >
+                    <TrendingUp className="w-3 h-3" />
+                    Harder
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
