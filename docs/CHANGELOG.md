@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1028: DONNA Action Audit Trail V1
+
+**Files created:**
+- `src/lib/donna/donnaAuditTrail.ts` — Audit trail payload builders for DONNA actions: buildDraftSubmitAuditEntry, buildDraftDecisionAuditEntry, buildApprovalSubmitAuditEntry, buildApprovalDecisionAuditEntry, buildActionBlockedAuditEntry. DonnaAuditEntry shape matches audit_logs table. No DB writes — callers pass to audit log server action.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1027: DONNA Action Preview Before Submit V1
 
 **Files created:**
