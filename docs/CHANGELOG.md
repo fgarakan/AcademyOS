@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-18 — Sprint 977: Template Save Draft Server Action V1
+
+**Files created:**
+- `src/lib/actions/templateDraftAction.ts` -- Server actions for template draft submission.
+- `docs/TEMPLATE_SAVE_DRAFT_ACTION_977.md` -- Action doc.
+
+**Actions created:**
+- `saveTemplateDraftAction(input)` -- Inserts template_review_request with request_type='create_template'.
+- `updateTemplateDraftAction(input)` -- Inserts template_review_request with request_type='update_template'.
+
+**Safety:**
+- Director/head_coach role guard via profiles table read.
+- Schema-missing detection on 42P01/42703 — returns isSchemaMissing:true instead of throwing.
+- No auto-approval. No curriculum mutation. No parent sends. No external sends.
+- template_draft JSONB snapshot includes full payload for director review.
+
+**Migration status:** No migration created. Migrations 067/068 unchanged.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 976: Template Detail Live Data Wiring V1
 
 **Files modified:**
