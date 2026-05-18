@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import { ChevronRight, Dumbbell, GraduationCap, Clock, CheckCircle2, AlertCircle, FileEdit, Edit3, Eye, Sparkles, ArrowRight, Zap, Activity, BookOpen } from 'lucide-react'
+import { ChevronRight, Dumbbell, GraduationCap, Clock, CheckCircle2, AlertCircle, FileEdit, Edit3, Eye, Sparkles, ArrowRight, Zap, Activity, BookOpen, Database } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { DEMO_FITNESS_TEMPLATES } from '@/lib/templates/templateMockData'
 import type { TemplateStatus } from '@/lib/templates/templateMockData'
-
-// demo-only — not saved — not connected to live data
+import { getSupabaseServer } from '@/lib/supabase/server'
+import { getTemplateById, getTemplateBlocks, getTemplateBlockExercises } from '@/lib/templates/templateRepository'
+import type { TemplateRow, TemplateBlockExerciseRow } from '@/lib/templates/templateRepository'
 
 type Params = { templateId: string }
 
@@ -34,7 +35,6 @@ const LEVEL_TO_CURRICULUM_STAGE: Record<string, string> = {
   Elite:        'High Performance',
 }
 
-// Demo exercise data per fitness template
 const DEMO_EXERCISES: Record<string, { name: string; sets: string; reps: string; notes?: string }[]> = {
   'ft-001': [
     { name: 'Lateral Cone Sprint', sets: '4', reps: '6 each side', notes: 'Focus on outside foot plant' },
@@ -58,17 +58,92 @@ const DEMO_EXERCISES: Record<string, { name: string; sets: string; reps: string;
   ],
 }
 
+function liveExt(t: TemplateRow | null, key: string): unknown {
+  if (!t) return undefined
+  return (t as unknown as Record<string, unknown>)[key]
+}
+
+function exerciseExt(e: TemplateBlockExerciseRow, key: string): unknown {
+  return (e as unknown as Record<string, unknown>)[key]
+}
+
+function resolveStatus(live: TemplateRow | null, fallback: TemplateStatus): TemplateStatus {
+  const s = liveExt(live, 'status') as string | undefined
+  if (s === 'ready' || s === 'draft' || s === 'needs_review') return s
+  if (live) return live.is_active ? 'ready' : 'draft'
+  return fallback
+}
+
 export default async function FitnessTemplateDetailPage({ params }: { params: Promise<Params> }) {
   const { templateId } = await params
 
-  const template =
+  // ── Repository fetch ──────────────────────────────────────────────────────
+  let liveTemplate: TemplateRow | null = null
+  let liveExercises: TemplateBlockExerciseRow[] = []
+  let dataSource: 'live' | 'demo' = 'demo'
+
+  try {
+    const db = await getSupabaseServer()
+    const { data: { user } } = await db.auth.getUser()
+    if (user) {
+      const { data: profile } = await db
+        .from('profiles')
+        .select('academy_id')
+        .eq('id', user.id)
+        .single()
+      if (profile?.academy_id) {
+        const tResult = await getTemplateById(db, templateId, profile.academy_id)
+        if (tResult.data && !tResult.isSchemaMissing) {
+          liveTemplate = tResult.data
+          const exResult = await getTemplateBlockExercises(db, templateId)
+          if (!exResult.isSchemaMissing) liveExercises = exResult.data
+          dataSource = 'live'
+        }
+      }
+    }
+  } catch {
+    // fall through to demo
+  }
+
+  // ── Demo fallback ─────────────────────────────────────────────────────────
+  const demoTemplate =
     DEMO_FITNESS_TEMPLATES.find(t => t.id === templateId) ?? DEMO_FITNESS_TEMPLATES[0]
 
-  const statusCfg = STATUS_CONFIG[template.status]
+  // ── Unified display values ────────────────────────────────────────────────
+  const displayName = liveTemplate?.name ?? demoTemplate.name
+  const displayStatus = resolveStatus(liveTemplate, demoTemplate.status)
+  const displayLevel = (liveExt(liveTemplate, 'curriculum_level_key') as string | undefined) ?? demoTemplate.level
+  const displayFitnessGoal = (liveExt(liveTemplate, 'template_goal') as string | undefined) ?? liveTemplate?.description ?? demoTemplate.fitnessGoal
+  const displayDurationMin = liveTemplate?.total_duration_min ?? demoTemplate.durationMin
+  const displayLoad = demoTemplate.load // always demo — no live equivalent in base schema
+  const displayUpdated = liveTemplate ? (liveTemplate.updated_at?.slice(0, 10) ?? '') : demoTemplate.lastUpdated
+  const displayCurriculumStage = LEVEL_TO_CURRICULUM_STAGE[displayLevel]
+
+  // Tennis transfer: use live template tags as proxy if available
+  const liveTags = liveTemplate?.tags ?? []
+  const displayTennisTransfer = liveTags.length > 0 ? liveTags : demoTemplate.tennisTransfer
+
+  // Exercises: use live if found, else demo
+  type DisplayExercise = { key: string; name: string; sets: string; reps: string; notes?: string }
+  const displayExercises: DisplayExercise[] = liveExercises.length > 0
+    ? liveExercises.map((e, i) => ({
+        key: e.id,
+        name: (exerciseExt(e, 'exercise_label') as string | undefined) ?? `Exercise ${i + 1}`,
+        sets: (exerciseExt(e, 'sets_reps_duration') as string | undefined) ?? '—',
+        reps: '',
+        notes: e.notes ?? undefined,
+      }))
+    : (DEMO_EXERCISES[templateId] ?? DEMO_EXERCISES['ft-001']).map((ex, i) => ({
+        key: `${templateId}-ex-${i}`,
+        ...ex,
+      }))
+
+  const displayExerciseCount = liveExercises.length > 0 ? liveExercises.length : demoTemplate.exerciseCount
+
+  const statusCfg = STATUS_CONFIG[displayStatus]
   const StatusIcon = statusCfg.icon
-  const levelCls = LEVEL_CLASSES[template.level] ?? 'text-text-muted border-border'
-  const loadColor = LOAD_COLOR[template.load] ?? 'text-text-secondary'
-  const exercises = DEMO_EXERCISES[template.id] ?? DEMO_EXERCISES['ft-001']
+  const levelCls = LEVEL_CLASSES[displayLevel] ?? 'text-text-muted border-border'
+  const loadColor = LOAD_COLOR[displayLoad] ?? 'text-text-secondary'
 
   return (
     <div className="flex gap-4 lg:gap-6 p-4 lg:p-6 min-h-screen items-start">
@@ -83,14 +158,21 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
           <ChevronRight className="w-3 h-3 text-text-muted/40" />
           <Link href="/director/templates/fitness" className="hover:text-text-secondary transition-colors duration-100">Fitness Templates</Link>
           <ChevronRight className="w-3 h-3 text-text-muted/40" />
-          <span className="text-text-secondary font-medium truncate max-w-[200px]">{template.name}</span>
+          <span className="text-text-secondary font-medium truncate max-w-[200px]">{displayName}</span>
         </nav>
 
-        {/* Demo notice */}
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          <span>Demo view — sample template. Backend wiring coming in a future sprint.</span>
-        </div>
+        {/* Source banner */}
+        {dataSource === 'live' ? (
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-green/20 bg-status-green/5 text-[11px] text-status-green">
+            <Database className="w-3.5 h-3.5 shrink-0" />
+            <span>Live saved template.</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <span>Demo template preview.</span>
+          </div>
+        )}
 
         {/* Template overview */}
         <div className="rounded-2xl border border-border bg-surface p-6 space-y-4">
@@ -103,18 +185,18 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
                 </span>
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${levelCls}`}>
                   <GraduationCap className="w-2.5 h-2.5" />
-                  {template.level}
+                  {displayLevel}
                 </span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-status-purple/20 bg-status-purple/8 text-status-purple">
                   <Zap className="w-2.5 h-2.5" />
-                  {template.fitnessGoal}
+                  {displayFitnessGoal}
                 </span>
               </div>
-              <h1 className="text-xl font-bold text-text-primary leading-tight mb-2">{template.name}</h1>
+              <h1 className="text-xl font-bold text-text-primary leading-tight mb-2">{displayName}</h1>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
               <Link
-                href={`/director/templates/coach-preview?level=${encodeURIComponent(template.level)}&goal=${encodeURIComponent(template.fitnessGoal)}&type=fitness`}
+                href={`/director/templates/coach-preview?level=${encodeURIComponent(displayLevel)}&goal=${encodeURIComponent(displayFitnessGoal ?? '')}&type=fitness`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border text-xs font-medium text-text-secondary hover:border-status-purple/20 hover:text-text-primary transition-all duration-100"
               >
                 <Eye className="w-3.5 h-3.5" />
@@ -133,19 +215,19 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
           <div className="flex flex-wrap gap-5 pt-2 border-t border-border">
             <div>
               <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Exercises</p>
-              <p className="text-base font-mono font-bold text-status-purple">{template.exerciseCount}</p>
+              <p className="text-base font-mono font-bold text-status-purple">{displayExerciseCount}</p>
             </div>
             <div>
               <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Duration</p>
-              <p className="text-base font-mono font-bold text-status-purple">{template.durationMin}min</p>
+              <p className="text-base font-mono font-bold text-status-purple">{displayDurationMin}min</p>
             </div>
             <div>
               <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Load</p>
-              <p className={`text-base font-mono font-bold ${loadColor}`}>{template.load}</p>
+              <p className={`text-base font-mono font-bold ${loadColor}`}>{displayLoad}</p>
             </div>
             <div>
               <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Last Updated</p>
-              <p className="text-sm font-medium text-text-secondary">{template.lastUpdated}</p>
+              <p className="text-sm font-medium text-text-secondary">{displayUpdated}</p>
             </div>
           </div>
         </div>
@@ -156,12 +238,12 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
             <BookOpen className="w-4 h-4 text-lime" />
             Curriculum Connection
           </h2>
-          {LEVEL_TO_CURRICULUM_STAGE[template.level] ? (
+          {displayCurriculumStage ? (
             <div className="flex items-center gap-3 p-3 rounded-xl border border-lime/15 bg-lime/5">
               <GraduationCap className="w-4 h-4 text-lime shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-lime">{LEVEL_TO_CURRICULUM_STAGE[template.level]}</p>
-                <p className="text-[11px] text-text-muted mt-0.5">This template targets the physical development needs of the {LEVEL_TO_CURRICULUM_STAGE[template.level]} curriculum stage.</p>
+                <p className="text-sm font-semibold text-lime">{displayCurriculumStage}</p>
+                <p className="text-[11px] text-text-muted mt-0.5">This template targets the physical development needs of the {displayCurriculumStage} curriculum stage.</p>
               </div>
             </div>
           ) : (
@@ -187,13 +269,15 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
             </button>
           </div>
           <div className="space-y-3">
-            {exercises.map((ex, i) => (
-              <div key={ex.name} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-surface-raised">
+            {displayExercises.map((ex, i) => (
+              <div key={ex.key} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-surface-raised">
                 <span className="text-[10px] font-mono text-text-muted w-5 shrink-0 mt-0.5">{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-text-primary">{ex.name}</p>
                   <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-[11px] text-text-muted">{ex.sets} sets · {ex.reps}</span>
+                    <span className="text-[11px] text-text-muted">
+                      {ex.reps ? `${ex.sets} sets · ${ex.reps}` : ex.sets}
+                    </span>
                   </div>
                   {ex.notes && (
                     <p className="text-[11px] text-text-secondary mt-1 leading-relaxed">{ex.notes}</p>
@@ -214,7 +298,7 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
             Tennis Transfer
           </h2>
           <div className="flex flex-wrap gap-2">
-            {template.tennisTransfer.map(transfer => (
+            {displayTennisTransfer.map(transfer => (
               <span
                 key={transfer}
                 className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-medium border border-status-purple/20 bg-status-purple/8 text-status-purple"
@@ -249,14 +333,14 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
           </div>
         </div>
 
-        {/* Coach notes */}
-        {template.coachNotes && (
+        {/* Coach notes (demo only) */}
+        {dataSource === 'demo' && demoTemplate.coachNotes && (
           <div className="rounded-2xl border border-border bg-surface p-5 space-y-3">
             <h2 className="text-sm font-bold text-text-primary flex items-center gap-2">
               <Clock className="w-4 h-4 text-status-purple" />
               Coach Notes
             </h2>
-            <p className="text-sm text-text-secondary leading-relaxed">{template.coachNotes}</p>
+            <p className="text-sm text-text-secondary leading-relaxed">{demoTemplate.coachNotes}</p>
           </div>
         )}
 
@@ -272,7 +356,7 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
           <div className="space-y-2">
             {[
               { step: '1', label: 'Submit for Review', desc: 'Template locked — exercises and load reviewed', color: 'text-status-purple border-status-purple/20 bg-status-purple/5' },
-              { step: '2', label: 'Director Reviews', desc: `${template.name} · ${template.load} load · ${template.durationMin}min`, color: 'text-status-orange border-status-orange/20 bg-status-orange/5' },
+              { step: '2', label: 'Director Reviews', desc: `${displayName} · ${displayLoad} load · ${displayDurationMin}min`, color: 'text-status-orange border-status-orange/20 bg-status-orange/5' },
               { step: '3', label: 'Approved → Ready', desc: 'Template available in coach session builder', color: 'text-status-green border-status-green/20 bg-status-green/5' },
             ].map(item => (
               <div key={item.step} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-surface-raised">
@@ -286,7 +370,7 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-text-muted">Demo preview — review queue wiring coming in a future sprint. All mutations go through `proposed_actions` in production.</p>
+          <p className="text-[10px] text-text-muted">Review queue backend wiring coming in Sprint 978.</p>
         </div>
 
         {/* Draft safety panel */}
@@ -297,9 +381,9 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
           </div>
           <p className="text-xs text-text-secondary leading-relaxed">
             This template is <strong className="text-text-primary">{statusCfg.label}</strong>.
-            {template.status === 'draft' && ' Coaches cannot use this template until it is marked Ready.'}
-            {template.status === 'needs_review' && ' Director approval required before coaches can use this template.'}
-            {template.status === 'ready' && ' Coaches can include this template in their session plans.'}
+            {displayStatus === 'draft' && ' Coaches cannot use this template until it is marked Ready.'}
+            {displayStatus === 'needs_review' && ' Director approval required before coaches can use this template.'}
+            {displayStatus === 'ready' && ' Coaches can include this template in their session plans.'}
           </p>
           <div className="flex items-center gap-3">
             <Link href="/director/templates/coach-preview" className="btn-ghost inline-flex items-center gap-2 text-sm">
@@ -307,7 +391,7 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
               Coach Preview
             </Link>
             <Link
-              href={`/director/templates/impact-preview?name=${encodeURIComponent(template.name)}&level=${encodeURIComponent(template.level)}&type=fitness`}
+              href={`/director/templates/impact-preview?name=${encodeURIComponent(displayName)}&level=${encodeURIComponent(displayLevel)}&type=fitness`}
               className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-xl border border-status-purple/20 bg-status-purple/5 text-status-purple hover:bg-status-purple/10 transition-all duration-100"
             >
               Impact Preview
@@ -321,11 +405,11 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
       <TemplateDonnaPanel
         mode="fitness_detail"
         context={{
-          templateName: template.name,
-          templateLevel: template.level,
+          templateName: displayName,
+          templateLevel: displayLevel,
           templateType: 'fitness',
-          durationMin: template.durationMin,
-          status: template.status,
+          durationMin: displayDurationMin,
+          status: displayStatus,
         }}
       />
     </div>

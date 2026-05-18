@@ -1,13 +1,15 @@
 import Link from 'next/link'
-import { ChevronRight, LayoutTemplate, BookOpen, GraduationCap, Clock, Users, CheckCircle2, AlertCircle, FileEdit, Edit3, Eye, Sparkles, ArrowRight } from 'lucide-react'
+import { ChevronRight, LayoutTemplate, BookOpen, GraduationCap, Clock, Users, CheckCircle2, AlertCircle, FileEdit, Edit3, Eye, Sparkles, ArrowRight, Database } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { DEMO_CLASS_TEMPLATES, DEMO_CLASS_TEMPLATE_BLOCKS } from '@/lib/templates/templateMockData'
-
-// demo-only — not saved — not connected to live data
+import type { TemplateStatus } from '@/lib/templates/templateMockData'
+import { getSupabaseServer } from '@/lib/supabase/server'
+import { getTemplateById, getTemplateBlocks } from '@/lib/templates/templateRepository'
+import type { TemplateRow, TemplateBlockRow } from '@/lib/templates/templateRepository'
 
 type Params = { templateId: string }
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<TemplateStatus, { label: string; icon: typeof CheckCircle2; classes: string }> = {
   ready: { label: 'Ready', icon: CheckCircle2, classes: 'text-status-green border-status-green/40 bg-status-green/8' },
   draft: { label: 'Draft', icon: FileEdit, classes: 'text-status-orange border-status-orange/40 bg-status-orange/8' },
   needs_review: { label: 'Needs Review', icon: AlertCircle, classes: 'text-status-red border-status-red/40 bg-status-red/8' },
@@ -22,14 +24,84 @@ const BLOCK_TYPE_CONFIG: Record<string, { label: string; color: string }> = {
   cool_down: { label: 'Cool-Down', color: 'text-text-secondary border-border bg-surface-raised' },
 }
 
+function liveExt(t: TemplateRow | null, key: string): unknown {
+  if (!t) return undefined
+  return (t as unknown as Record<string, unknown>)[key]
+}
+
+function blockExt(b: TemplateBlockRow, key: string): unknown {
+  return (b as unknown as Record<string, unknown>)[key]
+}
+
+function resolveStatus(live: TemplateRow | null, fallback: TemplateStatus): TemplateStatus {
+  const s = liveExt(live, 'status') as string | undefined
+  if (s === 'ready' || s === 'draft' || s === 'needs_review') return s
+  if (live) return live.is_active ? 'ready' : 'draft'
+  return fallback
+}
+
 export default async function ClassTemplateDetailPage({ params }: { params: Promise<Params> }) {
   const { templateId } = await params
 
-  // demo-only: find template from mock data, fall back to first
-  const template =
+  // ── Repository fetch ──────────────────────────────────────────────────────
+  let liveTemplate: TemplateRow | null = null
+  let liveBlocks: TemplateBlockRow[] = []
+  let dataSource: 'live' | 'demo' = 'demo'
+
+  try {
+    const db = await getSupabaseServer()
+    const { data: { user } } = await db.auth.getUser()
+    if (user) {
+      const { data: profile } = await db
+        .from('profiles')
+        .select('academy_id')
+        .eq('id', user.id)
+        .single()
+      if (profile?.academy_id) {
+        const tResult = await getTemplateById(db, templateId, profile.academy_id)
+        if (tResult.data && !tResult.isSchemaMissing) {
+          liveTemplate = tResult.data
+          const bResult = await getTemplateBlocks(db, templateId)
+          if (!bResult.isSchemaMissing) liveBlocks = bResult.data
+          dataSource = 'live'
+        }
+      }
+    }
+  } catch {
+    // fall through to demo
+  }
+
+  // ── Demo fallback ─────────────────────────────────────────────────────────
+  const demoTemplate =
     DEMO_CLASS_TEMPLATES.find(t => t.id === templateId) ?? DEMO_CLASS_TEMPLATES[0]
 
-  const statusCfg = STATUS_CONFIG[template.status]
+  // ── Unified display values ────────────────────────────────────────────────
+  const displayName = liveTemplate?.name ?? demoTemplate.name
+  const displayStatus = resolveStatus(liveTemplate, demoTemplate.status)
+  const displayLevel = (liveExt(liveTemplate, 'curriculum_level_key') as string | undefined) ?? demoTemplate.level
+  const displayDescription = liveTemplate?.description ?? demoTemplate.goal
+  const displayDurationMin = liveTemplate?.total_duration_min ?? demoTemplate.durationMin
+  const displayCurriculumLabel = (liveExt(liveTemplate, 'curriculum_source_label') as string | undefined) ?? demoTemplate.curriculumConnection
+  const displayBlockCount = liveBlocks.length > 0 ? liveBlocks.length : demoTemplate.blockCount
+  const displayUpdated = liveTemplate
+    ? (liveTemplate.updated_at?.slice(0, 10) ?? '')
+    : demoTemplate.lastUpdated
+  const displayTrack = (liveTemplate?.track as string | null) ?? demoTemplate.track
+
+  // Blocks: use live blocks if any, else demo
+  type DisplayBlock = { id: string; title: string; type: string; durationMin: number; drills: string[]; coachingFocus: string }
+  const displayBlocks: DisplayBlock[] = liveBlocks.length > 0
+    ? liveBlocks.map(b => ({
+        id: b.id,
+        title: b.name,
+        type: b.type,
+        durationMin: b.duration_min,
+        drills: [],
+        coachingFocus: (blockExt(b, 'curriculum_connection') as string | undefined) ?? b.notes ?? '',
+      }))
+    : DEMO_CLASS_TEMPLATE_BLOCKS
+
+  const statusCfg = STATUS_CONFIG[displayStatus]
   const StatusIcon = statusCfg.icon
 
   return (
@@ -45,14 +117,21 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
           <ChevronRight className="w-3 h-3 text-text-muted/40" />
           <Link href="/director/templates/class" className="hover:text-text-secondary transition-colors duration-100">Class Templates</Link>
           <ChevronRight className="w-3 h-3 text-text-muted/40" />
-          <span className="text-text-secondary font-medium truncate max-w-[200px]">{template.name}</span>
+          <span className="text-text-secondary font-medium truncate max-w-[200px]">{displayName}</span>
         </nav>
 
-        {/* Demo notice */}
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          <span>Demo view — sample template. Backend wiring coming in a future sprint.</span>
-        </div>
+        {/* Source banner */}
+        {dataSource === 'live' ? (
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-green/20 bg-status-green/5 text-[11px] text-status-green">
+            <Database className="w-3.5 h-3.5 shrink-0" />
+            <span>Live saved template.</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <span>Demo template preview.</span>
+          </div>
+        )}
 
         {/* Template overview card */}
         <div className="rounded-2xl border border-border bg-surface p-6 space-y-4">
@@ -65,16 +144,16 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
                 </span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-lime/20 bg-lime/8 text-lime">
                   <GraduationCap className="w-2.5 h-2.5" />
-                  {template.level}
+                  {displayLevel}
                 </span>
-                <span className="text-[10px] uppercase tracking-widest text-text-muted">{template.track}</span>
+                <span className="text-[10px] uppercase tracking-widest text-text-muted">{displayTrack}</span>
               </div>
-              <h1 className="text-xl font-bold text-text-primary leading-tight mb-2">{template.name}</h1>
-              <p className="text-sm text-text-secondary leading-relaxed">{template.goal}</p>
+              <h1 className="text-xl font-bold text-text-primary leading-tight mb-2">{displayName}</h1>
+              <p className="text-sm text-text-secondary leading-relaxed">{displayDescription}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
               <Link
-                href={`/director/templates/coach-preview?level=${encodeURIComponent(template.level)}&goal=${encodeURIComponent(template.goal)}&type=class`}
+                href={`/director/templates/coach-preview?level=${encodeURIComponent(displayLevel)}&goal=${encodeURIComponent(displayDescription ?? '')}&type=class`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border text-xs font-medium text-text-secondary hover:border-lime/20 hover:text-text-primary transition-all duration-100"
               >
                 <Eye className="w-3.5 h-3.5" />
@@ -94,21 +173,21 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
           <div className="flex flex-wrap gap-5 pt-2 border-t border-border">
             <div>
               <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Blocks</p>
-              <p className="text-base font-mono font-bold text-lime">{template.blockCount}</p>
+              <p className="text-base font-mono font-bold text-lime">{displayBlockCount}</p>
             </div>
             <div>
               <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Drills</p>
-              <p className="text-base font-mono font-bold text-lime">{template.drillCount}</p>
+              <p className="text-base font-mono font-bold text-lime">
+                {dataSource === 'live' ? '—' : demoTemplate.drillCount}
+              </p>
             </div>
-            <div className="flex items-end gap-1">
-              <div>
-                <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Duration</p>
-                <p className="text-base font-mono font-bold text-lime">{template.durationMin}min</p>
-              </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Duration</p>
+              <p className="text-base font-mono font-bold text-lime">{displayDurationMin}min</p>
             </div>
             <div>
               <p className="text-[9px] uppercase tracking-widest text-text-muted mb-1">Last Updated</p>
-              <p className="text-sm font-medium text-text-secondary">{template.lastUpdated}</p>
+              <p className="text-sm font-medium text-text-secondary">{displayUpdated}</p>
             </div>
           </div>
         </div>
@@ -125,11 +204,11 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
             </button>
           </div>
 
-          {template.curriculumConnection ? (
+          {displayCurriculumLabel ? (
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-lime/5 border border-lime/15">
               <GraduationCap className="w-4 h-4 text-lime shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-text-primary">{template.curriculumConnection}</p>
+                <p className="text-sm font-semibold text-text-primary">{displayCurriculumLabel}</p>
                 <p className="text-[11px] text-text-muted mt-0.5">This template is linked to curriculum goals and gates at this level.</p>
               </div>
               <CheckCircle2 className="w-4 h-4 text-status-green ml-auto shrink-0" />
@@ -155,7 +234,7 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
             </h2>
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-text-muted">
-                {DEMO_CLASS_TEMPLATE_BLOCKS.reduce((s, b) => s + b.durationMin, 0)}min total
+                {displayBlocks.reduce((s, b) => s + b.durationMin, 0)}min total
               </span>
               <button className="text-[11px] text-lime hover:text-lime/80 transition-colors duration-100">
                 + Add Block
@@ -164,7 +243,7 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
           </div>
 
           <div className="space-y-3">
-            {DEMO_CLASS_TEMPLATE_BLOCKS.map((block, i) => {
+            {displayBlocks.map((block, i) => {
               const typeCfg = BLOCK_TYPE_CONFIG[block.type] ?? BLOCK_TYPE_CONFIG.technical
               return (
                 <div key={block.id} className="rounded-xl border border-border bg-surface-raised p-4 space-y-3">
@@ -182,17 +261,21 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <p className="text-xs text-text-secondary pl-8 leading-relaxed">{block.coachingFocus}</p>
-                  <div className="flex flex-wrap gap-1.5 pl-8">
-                    {block.drills.map(drill => (
-                      <span
-                        key={drill}
-                        className="px-2 py-0.5 rounded-lg text-[10px] border border-border bg-surface text-text-secondary"
-                      >
-                        {drill}
-                      </span>
-                    ))}
-                  </div>
+                  {block.coachingFocus && (
+                    <p className="text-xs text-text-secondary pl-8 leading-relaxed">{block.coachingFocus}</p>
+                  )}
+                  {block.drills.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pl-8">
+                      {block.drills.map(drill => (
+                        <span
+                          key={drill}
+                          className="px-2 py-0.5 rounded-lg text-[10px] border border-border bg-surface text-text-secondary"
+                        >
+                          {drill}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -200,13 +283,13 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
         </div>
 
         {/* Coach briefing */}
-        {template.coachNotes && (
+        {dataSource === 'demo' && demoTemplate.coachNotes && (
           <div className="rounded-2xl border border-border bg-surface p-5 space-y-3">
             <h2 className="text-sm font-bold text-text-primary flex items-center gap-2">
               <Users className="w-4 h-4 text-lime" />
               Coach Briefing Notes
             </h2>
-            <p className="text-sm text-text-secondary leading-relaxed">{template.coachNotes}</p>
+            <p className="text-sm text-text-secondary leading-relaxed">{demoTemplate.coachNotes}</p>
           </div>
         )}
 
@@ -222,7 +305,7 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
           <div className="space-y-2">
             {[
               { step: '1', label: 'Submit for Review', desc: 'Template is locked — no edits during review', color: 'text-lime border-lime/20 bg-lime/5' },
-              { step: '2', label: 'Director Reviews', desc: `${template.name} · ${template.level} · ${template.durationMin}min`, color: 'text-status-orange border-status-orange/20 bg-status-orange/5' },
+              { step: '2', label: 'Director Reviews', desc: `${displayName} · ${displayLevel} · ${displayDurationMin}min`, color: 'text-status-orange border-status-orange/20 bg-status-orange/5' },
               { step: '3', label: 'Approved → Ready', desc: 'Template unlocked for session creation', color: 'text-status-green border-status-green/20 bg-status-green/5' },
             ].map(item => (
               <div key={item.step} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-surface-raised">
@@ -236,7 +319,7 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-text-muted">Demo preview — review queue wiring coming in a future sprint. All mutations go through `proposed_actions` in production.</p>
+          <p className="text-[10px] text-text-muted">Review queue backend wiring coming in Sprint 978.</p>
         </div>
 
         {/* Draft safety panel */}
@@ -247,9 +330,9 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
           </div>
           <p className="text-xs text-text-secondary leading-relaxed">
             This template is in <strong className="text-text-primary">{statusCfg.label}</strong> state.
-            {template.status === 'draft' && ' No sessions can be created from it until it is marked Ready.'}
-            {template.status === 'needs_review' && ' A director review is required before sessions can be created.'}
-            {template.status === 'ready' && ' Coaches can use this template to create sessions.'}
+            {displayStatus === 'draft' && ' No sessions can be created from it until it is marked Ready.'}
+            {displayStatus === 'needs_review' && ' A director review is required before sessions can be created.'}
+            {displayStatus === 'ready' && ' Coaches can use this template to create sessions.'}
           </p>
           <div className="flex items-center gap-3">
             <Link
@@ -260,7 +343,7 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
               Coach Preview
             </Link>
             <Link
-              href={`/director/templates/impact-preview?name=${encodeURIComponent(template.name)}&level=${encodeURIComponent(template.level)}&type=class`}
+              href={`/director/templates/impact-preview?name=${encodeURIComponent(displayName)}&level=${encodeURIComponent(displayLevel)}&type=class`}
               className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-xl border border-lime/20 bg-lime/5 text-lime hover:bg-lime/10 transition-all duration-100"
             >
               Impact Preview
@@ -274,12 +357,12 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
       <TemplateDonnaPanel
         mode="class_detail"
         context={{
-          templateName: template.name,
-          templateLevel: template.level,
+          templateName: displayName,
+          templateLevel: displayLevel,
           templateType: 'class',
-          blockCount: template.blockCount,
-          durationMin: template.durationMin,
-          status: template.status,
+          blockCount: displayBlockCount,
+          durationMin: displayDurationMin,
+          status: displayStatus,
         }}
       />
     </div>

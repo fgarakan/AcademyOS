@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-18 — Sprint 976: Template Detail Live Data Wiring V1
+
+**Files modified:**
+- `src/app/director/templates/class/[templateId]/page.tsx`
+- `src/app/director/templates/fitness/[templateId]/page.tsx`
+
+**Files created:**
+- `docs/TEMPLATE_DETAIL_LIVE_DATA_WIRING_976.md`
+
+**Key changes:**
+- Both detail pages fetch live template + blocks/exercises before rendering.
+- `display*` variables merge live (preferred) with demo fallback per field.
+- `liveExt()` / `blockExt()` / `exerciseExt()` helpers cast through unknown for draft-migration column access.
+- Source banner: green "Live saved template." or orange "Demo template preview."
+- DONNA context always uses live-preferred values.
+- No writes, no server actions, no migrations.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 975: Template Library Live Data Wiring V1
 
 **Files modified:**
