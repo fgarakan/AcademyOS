@@ -6,6 +6,7 @@ import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, C
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumStage, getFitnessCurriculumPreview } from '@/lib/templates/templateCurriculumPreview'
 import { FitnessBlockType, FITNESS_BLOCK_TYPES, getFitnessBlockLabel, getFitnessBlockIntent, getFitnessBlockAccent, getFitnessBlockBorderAccent, getDefaultBlockDuration } from '@/lib/fitness/fitnessBlockTypes'
+import { getExercisesForBlock } from '@/lib/templates/fitnessExerciseAutoPopulate'
 
 // demo-only — no writes — no saves — local state only
 
@@ -47,6 +48,7 @@ interface FitnessBlock {
   id: string
   type: FitnessBlockType
   durationMin: number
+  exercises: string[]
 }
 
 export default function CreateFitnessTemplatePage() {
@@ -56,14 +58,30 @@ export default function CreateFitnessTemplatePage() {
   const [load, setLoad] = useState<string>('Moderate')
   const [durationMin, setDurationMin] = useState<number>(30)
   const [fitnessBlocks, setFitnessBlocks] = useState<FitnessBlock[]>([])
+  const [expandedBlockId, setExpandedBlockId] = useState<string | null>(null)
 
   function addBlock(type: FitnessBlockType) {
     if (fitnessBlocks.find(b => b.type === type)) return
-    setFitnessBlocks(prev => [...prev, { id: `blk-${Date.now()}`, type, durationMin: getDefaultBlockDuration(type) }])
+    setFitnessBlocks(prev => [...prev, { id: `blk-${Date.now()}`, type, durationMin: getDefaultBlockDuration(type), exercises: [] }])
   }
 
   function removeBlock(id: string) {
+    if (expandedBlockId === id) setExpandedBlockId(null)
     setFitnessBlocks(prev => prev.filter(b => b.id !== id))
+  }
+
+  function addExerciseToBlock(blockId: string, name: string) {
+    setFitnessBlocks(prev => prev.map(b =>
+      b.id === blockId && !b.exercises.includes(name)
+        ? { ...b, exercises: [...b.exercises, name] }
+        : b
+    ))
+  }
+
+  function removeExerciseFromBlock(blockId: string, name: string) {
+    setFitnessBlocks(prev => prev.map(b =>
+      b.id === blockId ? { ...b, exercises: b.exercises.filter(e => e !== name) } : b
+    ))
   }
 
   const goalInfo = FITNESS_GOALS.find(g => g.id === selectedGoal)
@@ -412,28 +430,83 @@ export default function CreateFitnessTemplatePage() {
                 </div>
               </div>
 
-              {/* Added blocks summary */}
+              {/* Added blocks with exercises per block */}
               {fitnessBlocks.length > 0 && (
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">
                     Block Sequence — {fitnessBlocks.length} block{fitnessBlocks.length !== 1 ? 's' : ''} · {blockTotalMin} min total
                   </p>
-                  <div className="space-y-1.5">
-                    {fitnessBlocks.map((blk, i) => (
-                      <div key={blk.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface-raised">
-                        <span className="text-[10px] font-mono text-text-muted w-4 shrink-0">{i + 1}</span>
-                        <div className="flex-1 min-w-0">
-                          <span className={`text-sm font-semibold ${getFitnessBlockAccent(blk.type)}`}>{getFitnessBlockLabel(blk.type)}</span>
-                          <span className="text-[10px] text-text-muted ml-2">{blk.durationMin} min</span>
+                  <div className="space-y-2">
+                    {fitnessBlocks.map((blk, i) => {
+                      const isExpanded = expandedBlockId === blk.id
+                      const exerciseSuggestions = fitnessStage ? getExercisesForBlock(blk.type, fitnessStage) : []
+                      return (
+                        <div key={blk.id} className="rounded-xl border border-border bg-surface-raised overflow-hidden">
+                          <div className="flex items-center gap-3 p-3">
+                            <span className="text-[10px] font-mono text-text-muted w-4 shrink-0">{i + 1}</span>
+                            <button
+                              onClick={() => setExpandedBlockId(isExpanded ? null : blk.id)}
+                              className="flex-1 flex items-center gap-2 text-left min-w-0"
+                            >
+                              <span className={`text-sm font-semibold ${getFitnessBlockAccent(blk.type)}`}>{getFitnessBlockLabel(blk.type)}</span>
+                              <span className="text-[10px] text-text-muted">{blk.durationMin} min</span>
+                              {blk.exercises.length > 0 && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] border border-status-green/20 bg-status-green/8 text-status-green">
+                                  {blk.exercises.length} ex
+                                </span>
+                              )}
+                              <span className="text-[10px] text-text-muted ml-auto">{isExpanded ? '▲' : '▼'}</span>
+                            </button>
+                            <button
+                              onClick={() => removeBlock(blk.id)}
+                              className="w-7 h-7 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-status-red transition-colors duration-100 shrink-0"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {isExpanded && (
+                            <div className="border-t border-border p-3 space-y-2 bg-surface">
+                              {exerciseSuggestions.length > 0 ? (
+                                <>
+                                  <p className="text-[10px] uppercase tracking-widest text-text-muted">Curriculum exercises for {selectedLevel}</p>
+                                  {exerciseSuggestions.map(ex => {
+                                    const isAdded = blk.exercises.includes(ex.name)
+                                    return (
+                                      <div key={ex.name} className="flex items-center gap-3 p-2.5 rounded-lg border border-border bg-surface-raised">
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-xs font-medium text-text-primary">{ex.name}</p>
+                                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                            <span className="text-[10px] text-text-muted">{ex.sets} sets · {ex.reps}</span>
+                                            <span className="text-[10px] text-status-purple">{ex.tennisTransfer}</span>
+                                            {ex.loadNote && (
+                                              <span className="text-[10px] text-status-orange">{ex.loadNote}</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <button
+                                          onClick={() => isAdded ? removeExerciseFromBlock(blk.id, ex.name) : addExerciseToBlock(blk.id, ex.name)}
+                                          className={[
+                                            'w-7 h-7 rounded-lg border flex items-center justify-center transition-all duration-100 shrink-0',
+                                            isAdded
+                                              ? 'border-status-green/30 bg-status-green/10 text-status-green'
+                                              : 'border-border bg-surface text-text-muted hover:border-status-purple/20 hover:text-status-purple',
+                                          ].join(' ')}
+                                        >
+                                          {isAdded ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                                        </button>
+                                      </div>
+                                    )
+                                  })}
+                                </>
+                              ) : (
+                                <p className="text-xs text-text-muted py-2">No exercise suggestions for this block type at the selected level.</p>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <button
-                          onClick={() => removeBlock(blk.id)}
-                          className="w-7 h-7 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-status-red transition-colors duration-100 shrink-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -491,11 +564,16 @@ export default function CreateFitnessTemplatePage() {
                     </div>
                   </div>
                   {fitnessBlocks.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pl-7">
+                    <div className="space-y-1.5 pl-7">
                       {fitnessBlocks.map(blk => (
-                        <span key={blk.id} className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getFitnessBlockBorderAccent(blk.type)} bg-surface ${getFitnessBlockAccent(blk.type)}`}>
-                          {getFitnessBlockLabel(blk.type)} · {blk.durationMin}min
-                        </span>
+                        <div key={blk.id} className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getFitnessBlockBorderAccent(blk.type)} bg-surface ${getFitnessBlockAccent(blk.type)}`}>
+                            {getFitnessBlockLabel(blk.type)} · {blk.durationMin}min
+                          </span>
+                          {blk.exercises.length > 0 && (
+                            <span className="text-[10px] text-text-muted">{blk.exercises.length} exercise{blk.exercises.length !== 1 ? 's' : ''}</span>
+                          )}
+                        </div>
                       ))}
                     </div>
                   )}

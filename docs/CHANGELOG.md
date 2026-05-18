@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 948: Fitness Duplicate Exercise Prevention V1
+
+**Files modified:**
+- `src/app/director/templates/fitness/create/page.tsx` — Wired `getExercisesForBlock` into block builder. `FitnessBlock` interface gains `exercises: string[]`. `addBlock` now initialises with empty exercises array. Added `expandedBlockId` state. Each added block is expandable — shows curriculum exercise suggestions via `getExercisesForBlock(type, stage)`. `addExerciseToBlock` checks `exercises.includes(name)` before adding (duplicate prevention). `removeExerciseFromBlock` added. Step 5 review shows per-block exercise count.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 947: Fitness Exercise Auto-Population Engine V1
 
 **Files created:**
