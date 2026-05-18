@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-18 — Sprint 896: Level Builder Screenshot Match V1
+
+**Files created:**
+- `src/components/curriculum/builder/CurriculumLevelBuilderGrid.tsx` — Client component; 5 section cards (Skill Path, Competition Path, Fitness Support, Assessment Gates, Player Missions) in a 2-column grid; each card has a top color bar, status chip, count, 2-3 content preview lines, "Ask DONNA" (teal) + "+ Add" action buttons; inline Donna draft panels toggled by state.
+
+**Files modified:**
+- `src/app/director/curriculum/level/[levelId]/page.tsx` — Restructured to 2-column flex layout with sticky right DONNA panel; new header (eyebrow, title, "Level Builder · [goal]" subtitle, "Preview Impact" + "Back to Review" top buttons); draft mode banner retained; 3-card horizontal summary row (Level Goal, Development Intent, Evidence for Level-Up); `CurriculumLevelBuilderGrid` for the 5-card section view; existing `CurriculumLevelBuilderShell` preserved in collapsible "Advanced Editor" section.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 895: Curriculum Map Level Cards Rebuild V1
 
 **Files created:**
