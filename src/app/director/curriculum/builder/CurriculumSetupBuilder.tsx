@@ -1,11 +1,23 @@
 'use client'
 
-import { Sparkles, Shield, CheckCircle2, ChevronRight, BookOpen, Pencil } from 'lucide-react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Sparkles, Shield, CheckCircle2, ChevronRight, BookOpen, Pencil, X, Settings } from 'lucide-react'
 import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes'
+import type { CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 
 interface Props {
   initialState: CurriculumSetupState
   origin: 'onboarding' | 'builder'
+  levels?: CurriculumLevel[]
+}
+
+const STAGE_COLOR: Record<string, string> = {
+  red_foundation:     '#ef4444',
+  orange_development: '#f97316',
+  green_performance:  '#22c55e',
+  yellow_competitive: '#eab308',
+  high_performance:   '#11d9df',
 }
 
 const PATHWAYS = [
@@ -67,7 +79,15 @@ const HOW_IT_WORKS = [
   },
 ]
 
-export function CurriculumSetupBuilder(_props: Props) {
+export function CurriculumSetupBuilder({ levels = [] }: Props) {
+  const router = useRouter()
+  const [jumpOpen, setJumpOpen] = useState(false)
+
+  function handleJump(levelId: string) {
+    setJumpOpen(false)
+    router.push(`/director/curriculum/level/${levelId}`)
+  }
+
   return (
     <div className="min-h-screen" style={{ background: '#050b09' }}>
       <div className="max-w-[1180px] mx-auto px-6 pt-10 pb-20">
@@ -154,7 +174,8 @@ export function CurriculumSetupBuilder(_props: Props) {
             <div className="flex flex-wrap gap-3 mb-3">
               <button
                 type="button"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-88"
+                onClick={() => router.push('/director/curriculum/guided')}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-80"
                 style={{ background: '#11d9df', color: '#03100d' }}
               >
                 <Sparkles className="w-4 h-4" />
@@ -162,7 +183,8 @@ export function CurriculumSetupBuilder(_props: Props) {
               </button>
               <button
                 type="button"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                onClick={() => router.push('/director/curriculum/map')}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
                 style={{
                   background: 'rgba(17,217,223,0.05)',
                   border: '1px solid rgba(17,217,223,0.15)',
@@ -173,7 +195,8 @@ export function CurriculumSetupBuilder(_props: Props) {
               </button>
               <button
                 type="button"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                onClick={() => setJumpOpen(true)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
                 style={{
                   background: 'rgba(17,217,223,0.05)',
                   border: '1px solid rgba(17,217,223,0.15)',
@@ -185,10 +208,11 @@ export function CurriculumSetupBuilder(_props: Props) {
             </div>
 
             {/* Buttons — row 2 */}
-            <div>
+            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                onClick={() => router.push('/director/curriculum/map')}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
                 style={{
                   background: 'rgba(17,217,223,0.04)',
                   border: '1px solid rgba(17,217,223,0.12)',
@@ -197,6 +221,19 @@ export function CurriculumSetupBuilder(_props: Props) {
               >
                 <Sparkles className="w-3.5 h-3.5 text-lime" />
                 Ask DONNA to Suggest Priorities
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/director/curriculum')}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
+                style={{
+                  background: 'rgba(17,217,223,0.02)',
+                  border: '1px solid rgba(17,217,223,0.08)',
+                  color: '#555',
+                }}
+              >
+                <Settings className="w-3.5 h-3.5" />
+                Advanced Settings
               </button>
             </div>
 
@@ -254,6 +291,7 @@ export function CurriculumSetupBuilder(_props: Props) {
             <p className="text-sm font-semibold text-text-primary">Master Curriculum Overview</p>
             <button
               type="button"
+              onClick={() => router.push('/director/curriculum/map')}
               className="flex items-center gap-1 text-xs text-lime hover:opacity-75 transition-opacity"
             >
               View full map
@@ -298,6 +336,43 @@ export function CurriculumSetupBuilder(_props: Props) {
         </div>
 
       </div>
+
+      {/* ── Jump to Level Modal ─────────────────────── */}
+      {jumpOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#060f0d', border: '1px solid rgba(17,217,223,0.18)' }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(17,217,223,0.12)' }}>
+              <p className="text-[13px] font-semibold text-text-primary">Jump to level</p>
+              <button onClick={() => setJumpOpen(false)} className="text-text-muted hover:text-lime transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {levels.length === 0 ? (
+              <div className="px-5 py-8 text-center">
+                <p className="text-xs text-text-muted">Curriculum data not yet loaded.</p>
+              </div>
+            ) : (
+              <div className="overflow-y-auto max-h-80">
+                {levels.map((level) => (
+                  <button
+                    key={level.id}
+                    onClick={() => handleJump(level.id)}
+                    className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors border-b last:border-b-0 hover:bg-white/[0.03]"
+                    style={{ borderColor: 'rgba(17,217,223,0.07)' }}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ background: STAGE_COLOR[level.stage ?? ''] ?? '#555' }}
+                    />
+                    <span className="flex-1 text-[12px] text-text-primary">{level.display_name}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

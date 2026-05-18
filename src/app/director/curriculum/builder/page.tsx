@@ -2,6 +2,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { CurriculumSetupBuilder } from './CurriculumSetupBuilder'
 import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes'
 import { DEFAULT_CURRICULUM_SETUP_STATE } from '@/lib/curriculum/curriculumSetupTypes'
+import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
 
 export default async function CurriculumBuilderPage() {
   const supabase = await getSupabaseServer()
@@ -65,7 +66,9 @@ export default async function CurriculumBuilderPage() {
     ...rawV2,
   }
 
+  const explorerData = await getCurriculumExplorerData(supabase)
+
   return (
-    <CurriculumSetupBuilder initialState={initialState} origin="builder" />
+    <CurriculumSetupBuilder initialState={initialState} origin="builder" levels={explorerData.levels} />
   )
 }
