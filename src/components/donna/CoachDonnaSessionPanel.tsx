@@ -31,27 +31,40 @@ export interface CoachDonnaSessionPanelProps {
 
 // ── Quick action definitions ──────────────────────────────────────────────────
 
-function buildQuickActions(wrapUpHref: string, executeHref: string, onCaptureNote?: () => void) {
+type ActionKind = 'safe_read' | 'draft_only' | 'requires_approval'
+
+interface QuickAction {
+  id: string
+  label: string
+  icon: React.ReactNode
+  kind: ActionKind
+  href?: string
+  onClick?: () => void
+  note?: string
+  highlight?: boolean
+}
+
+function buildQuickActions(wrapUpHref: string, executeHref: string, onCaptureNote?: () => void): QuickAction[] {
   return [
     {
       id: 'start_session',
       label: 'Start session',
       icon: <Play className="w-3.5 h-3.5" />,
       href: executeHref,
-      kind: 'safe_read' as const,
+      kind: 'safe_read',
     },
     {
       id: 'capture_note',
       label: 'Capture a note',
       icon: <MessageSquare className="w-3.5 h-3.5" />,
       onClick: onCaptureNote,
-      kind: 'draft_only' as const,
+      kind: 'draft_only',
     },
     {
       id: 'flag_concern',
       label: 'Flag a player concern',
       icon: <Flag className="w-3.5 h-3.5" />,
-      kind: 'draft_only' as const,
+      kind: 'draft_only',
       note: 'Creates a draft — requires director review',
     },
     {
@@ -59,7 +72,7 @@ function buildQuickActions(wrapUpHref: string, executeHref: string, onCaptureNot
       label: 'Start wrap-up',
       icon: <ArrowRight className="w-3.5 h-3.5" />,
       href: wrapUpHref,
-      kind: 'safe_read' as const,
+      kind: 'safe_read',
       highlight: true,
     },
   ]

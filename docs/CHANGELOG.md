@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1007: Coach DONNA Session Assistant V1 (patch)
+
+**Files modified:**
+- `src/components/donna/CoachDonnaSessionPanel.tsx` — Added explicit `QuickAction` interface and `ActionKind` type to fix TS2339 errors on discriminated union inference.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1007: Coach DONNA Session Assistant V1
 
 **Files created:**
