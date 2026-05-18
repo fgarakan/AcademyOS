@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1034: DONNA Multi Source Answer Formatting V1
+
+**Files created:**
+- `src/lib/donna/donnaAnswerFormatter.ts` — Answer formatting: DonnaAnswerComponent shape (short/paragraph/bullets/count/status/unavailable formats), formatDonnaAnswer, combineAnswerComponents (lowest confidence, all sources). buildChatMessageFromFormatted, buildCountAnswer, buildBulletAnswer, buildUnavailableAnswer helpers.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1033: DONNA Ask Anything Role Boundaries V1
 
 **Files created:**
