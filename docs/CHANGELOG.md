@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-18 — Sprint 912: Curriculum Draft Review Queue Flow QA V1
+
+**Files created:**
+- `docs/CURRICULUM_BUILDER_DRAFT_FLOW_QA_912.md` — Full QA document classifying every draft-flow element as: real, local-only simulation, shell (component exists, disconnected), or blocked. Covers Add Drill, Add Fitness, Impact Preview, Level Builder DONNA actions, and review queue integration status.
+
+**QA findings summary:**
+- All "Generate draft" / "Save Draft" buttons are **local-only** — no backend writes.
+- All "Apply scope" buttons in Impact Preview are **disabled shells** with "Goes to Review Queue" copy.
+- `CurriculumBuilderDraftCard` at `/director/review` is **ready** to receive real drafts once write path is implemented.
+- Blocked by sprint rules: `proposed_actions` write requires explicit sprint approval.
+- No new mutation. TypeScript unchanged.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-18 — Sprint 911: Curriculum Builder Desktop Screenshot Match V1
 
 **Files modified:**
