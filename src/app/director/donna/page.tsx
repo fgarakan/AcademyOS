@@ -8,10 +8,12 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { loadDirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { DonnaDirectorShellClient } from './DonnaDirectorShellClient'
+import { DonnaContextSummaryCard } from '@/components/donna/DonnaContextSummaryCard'
+import type { ContextSummaryItem, ContextSourceLabel } from '@/components/donna/DonnaContextSummaryCard'
 
-// ── Director DONNA command center — Sprint 1038 wiring ────────────────────────
+// ── Director DONNA command center — Sprint 1038/1040 wiring ──────────────────
 // Full page wiring: loads DirectorDonnaContext, renders attention items, risks,
-// recommended actions, and the DonnaVoiceReadyShell chat thread.
+// recommended actions, context summary card, and the DonnaVoiceReadyShell thread.
 // No DB writes. No approvals on this page.
 
 const URGENCY_COLOR: Record<string, string> = {
@@ -64,6 +66,23 @@ export default async function DirectorDonnaPage() {
   const attentionItems    = ctx?.attentionItems    ?? []
   const academyRisks      = ctx?.academyRisks      ?? []
   const recommendedActions = ctx?.recommendedActions ?? []
+
+  // Build context summary items for DonnaContextSummaryCard
+  const contextSummaryItems: ContextSummaryItem[] = ctx ? [
+    { label: 'Sessions today', value: ctx.todaySessions },
+    { label: 'Pending reviews', value: ctx.pendingReviews },
+    { label: 'Missing wrap-ups', value: ctx.missingWrapUps },
+    { label: 'Attention flags', value: ctx.attentionItems.length },
+  ] : [
+    { label: 'Sessions today', value: 5, note: 'demo' },
+    { label: 'Pending reviews', value: 3, note: 'demo' },
+  ]
+
+  const contextSourceLabels: ContextSourceLabel[] = (ctx?.sourceLabels ?? []).map(s => ({
+    field: s.field,
+    status: s.status as ContextSourceLabel['status'],
+    label: s.label,
+  }))
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
@@ -251,7 +270,15 @@ export default async function DirectorDonnaPage() {
 
         {/* ── Right column: DONNA chat shell ──────────────────────── */}
         <div className="flex flex-col gap-4">
-          <div className="rounded-2xl border border-border bg-surface overflow-hidden flex flex-col" style={{ height: '620px' }}>
+          {/* Context summary — what DONNA can see */}
+          <DonnaContextSummaryCard
+            role="director"
+            contextItems={contextSummaryItems}
+            sourceLabels={contextSourceLabels}
+            confidence={ctx?.confidence}
+            isLive={isLive}
+          />
+          <div className="rounded-2xl border border-border bg-surface overflow-hidden flex flex-col" style={{ height: '560px' }}>
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-surface-raised">
               <div className="w-7 h-7 rounded-xl bg-lime/15 border border-lime/25 flex items-center justify-center">
                 <Sparkles className="w-3.5 h-3.5 text-lime" />

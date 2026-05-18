@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-18 — Sprint 1040: DONNA Chat Thread Page Integration V1
+
+**Files created:**
+- `src/components/donna/DonnaContextSummaryCard.tsx` — new component showing DONNA's context frame: context item chips, data source labels with status dots, confidence badge, demo indicator. Supports `confidence: 'high' | 'partial' | 'insufficient' | 'blocked'`.
+- `docs/DONNA_CHAT_THREAD_PAGE_INTEGRATION_1040.md` — integration audit document.
+
+**Files modified:**
+- `src/app/director/donna/page.tsx` — added `DonnaContextSummaryCard` above the chat shell with director context items and source labels.
+- `src/app/coach/donna/page.tsx` — added `DonnaContextSummaryCard` above the chat shell with coach context items and source labels.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1039: Coach DONNA Page Wiring V1
 
 **Files created:**

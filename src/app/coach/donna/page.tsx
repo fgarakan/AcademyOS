@@ -7,8 +7,10 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { loadCoachDonnaContext } from '@/lib/donna/coachDonnaContext'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { CoachDonnaShellClient } from './CoachDonnaShellClient'
+import { DonnaContextSummaryCard } from '@/components/donna/DonnaContextSummaryCard'
+import type { ContextSummaryItem, ContextSourceLabel } from '@/components/donna/DonnaContextSummaryCard'
 
-// ── Coach DONNA page — Sprint 1039 wiring ─────────────────────────────────────
+// ── Coach DONNA page — Sprint 1039/1040 wiring ────────────────────────────────
 // Wires the existing Coach DONNA infrastructure into a dedicated coach page.
 // Loads CoachDonnaContext, shows session status, quick actions, DONNA chat shell.
 // No DB writes. No parent sends. Review-first everywhere.
@@ -39,6 +41,22 @@ export default async function CoachDonnaPage() {
   const sessionSummaries  = ctx?.sessionSummaries ?? []
   const contextItems      = ctx?.contextItems ?? []
   const recommendedActions = ctx?.recommendedActions ?? []
+
+  const contextSummaryItems: ContextSummaryItem[] = ctx ? [
+    { label: 'Sessions today', value: ctx.todaySessions },
+    { label: 'Players on court', value: ctx.totalPlayersToday },
+    { label: 'Wrap-ups due', value: ctx.missingWrapUps },
+    { label: 'In review', value: ctx.pendingSubmissions },
+  ] : [
+    { label: 'Sessions today', value: 2, note: 'demo' },
+    { label: 'Wrap-ups due', value: 1, note: 'demo' },
+  ]
+
+  const contextSourceLabels: ContextSourceLabel[] = (ctx?.sourceLabels ?? []).map(s => ({
+    field: s.field,
+    status: s.status as ContextSourceLabel['status'],
+    label: s.label,
+  }))
 
   const QUICK_ACTIONS = [
     {
@@ -252,8 +270,15 @@ export default async function CoachDonnaPage() {
         </div>
 
         {/* ── Right: DONNA chat shell ──────────────────────────── */}
-        <div className="flex flex-col">
-          <div className="rounded-2xl border border-border bg-surface overflow-hidden flex flex-col" style={{ height: '600px' }}>
+        <div className="flex flex-col gap-4">
+          <DonnaContextSummaryCard
+            role="coach"
+            contextItems={contextSummaryItems}
+            sourceLabels={contextSourceLabels}
+            confidence={ctx?.confidence}
+            isLive={isLive}
+          />
+          <div className="rounded-2xl border border-border bg-surface overflow-hidden flex flex-col" style={{ height: '540px' }}>
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-surface-raised">
               <div className="w-7 h-7 rounded-xl bg-status-blue/15 border border-status-blue/25 flex items-center justify-center">
                 <Sparkles className="w-3.5 h-3.5 text-status-blue" />
