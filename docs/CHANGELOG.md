@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 924: Fitness Templates Library V1
+
+**Files created:**
+- `src/app/director/templates/fitness/page.tsx` — Fitness Templates Library page. Stats strip (total/ready/draft/review), visual-only filter bar by fitness goal, 2-column card grid. Each card shows level badge, status chip, fitness goal, tennis transfer tags, exercise count, duration, and load indicator (color-coded dot). Cross-link to Class Templates. Right TemplateDonnaPanel mode=fitness_library.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 923: Class Templates Library V1
 
 **Files created:**
