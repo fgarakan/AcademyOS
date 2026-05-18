@@ -111,7 +111,16 @@ const SCOPE_ACTIONS = [
   { label: 'Schedule as a 4-week unit', risk: 'medium' },
 ]
 
-export default function TemplateImpactPreviewPage() {
+interface PageProps {
+  searchParams: Promise<{ name?: string; level?: string; type?: string }>
+}
+
+export default async function TemplateImpactPreviewPage({ searchParams }: PageProps) {
+  const params = await searchParams
+  const templateName = params.name ?? DEMO_TEMPLATE.name
+  const templateLevel = params.level ?? DEMO_TEMPLATE.level
+  const templateType = params.type ?? DEMO_TEMPLATE.type
+
   return (
     <div className="flex gap-4 lg:gap-6 p-4 lg:p-6 min-h-screen items-start">
 
@@ -160,11 +169,11 @@ export default function TemplateImpactPreviewPage() {
           <LayoutTemplate className="w-4 h-4 text-lime shrink-0" />
           <div>
             <p className="text-[10px] uppercase tracking-widest text-text-muted">Previewing Template</p>
-            <p className="text-sm font-semibold text-text-primary">{DEMO_TEMPLATE.name}</p>
+            <p className="text-sm font-semibold text-text-primary">{templateName}</p>
           </div>
           <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-lime/20 bg-lime/8 text-lime">
             <GraduationCap className="w-2.5 h-2.5" />
-            {DEMO_TEMPLATE.level}
+            {templateLevel}
           </span>
         </div>
 

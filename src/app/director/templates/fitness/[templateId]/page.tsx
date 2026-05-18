@@ -307,7 +307,7 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
               Coach Preview
             </Link>
             <Link
-              href="/director/templates/impact-preview"
+              href={`/director/templates/impact-preview?name=${encodeURIComponent(template.name)}&level=${encodeURIComponent(template.level)}&type=fitness`}
               className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-xl border border-status-purple/20 bg-status-purple/5 text-status-purple hover:bg-status-purple/10 transition-all duration-100"
             >
               Impact Preview

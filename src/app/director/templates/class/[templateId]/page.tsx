@@ -260,7 +260,7 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
               Coach Preview
             </Link>
             <Link
-              href="/director/templates/impact-preview"
+              href={`/director/templates/impact-preview?name=${encodeURIComponent(template.name)}&level=${encodeURIComponent(template.level)}&type=class`}
               className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-xl border border-lime/20 bg-lime/5 text-lime hover:bg-lime/10 transition-all duration-100"
             >
               Impact Preview

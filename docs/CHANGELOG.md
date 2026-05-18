@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-18 — Sprint 958: Template Impact Preview Integration V1
+
+**Files modified:**
+- `src/app/director/templates/impact-preview/page.tsx` — Converted to async Server Component with `searchParams: Promise<{ name?, level?, type? }>`. Template name and level now read from URL params (fallback to demo defaults). `templateName`, `templateLevel`, `templateType` derived from params.
+- `src/app/director/templates/class/[templateId]/page.tsx` — "Impact Preview" link now includes `name`, `level`, `type=class` as URL params.
+- `src/app/director/templates/fitness/[templateId]/page.tsx` — "Impact Preview" link now includes `name`, `level`, `type=fitness` as URL params.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 957: Template Review Queue Handoff Preview V1
 
 **Files modified:**
