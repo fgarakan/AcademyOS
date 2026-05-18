@@ -15,7 +15,7 @@ export default async function CurriculumMapPage() {
   return (
     <div className="animate-fade-in p-6 space-y-8">
       <div className="flex items-center gap-3">
-        <Link href="/director/curriculum" className="text-text-muted hover:text-lime transition-colors">
+        <Link href="/director/curriculum/builder" className="text-text-muted hover:text-lime transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
