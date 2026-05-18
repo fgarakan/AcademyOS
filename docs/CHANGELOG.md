@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 985: Template Backend Completion Audit V1
+
+**Docs created:**
+- `docs/TEMPLATE_BACKEND_COMPLETION_AUDIT_985.md` — Full completion audit for Template Backend Phase 1 (Sprints 971–984). Covers: what is live in code, what is migration-draft-only, pre/post-migration behavior, security guardrails, readiness scores, known limitations, and recommended Sprint 986 Coach Portal Architecture Audit.
+
+**No code changes.** Audit/documentation only.
+
+---
+
 ## 2026-05-18 — Sprint 984: Template Backend QA V1
 
 **Files modified:**
