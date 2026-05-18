@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 1003: DONNA Shared Assistant Shell V1
+
+**Files created:**
+- `src/components/donna/DonnaAssistantShell.tsx` — Presentational DONNA layout shell with role badge, context chips, quick actions, safety footer, and children slot. No state — pure layout wrapper for new director/coach DONNA surfaces.
+- `docs/DONNA_SHARED_ASSISTANT_SHELL_1003.md` — Component spec, props table, design notes, relation to existing DonnaPanelShell/DonnaAssistantButton.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1002: DONNA Role Architecture Audit V1
 
 **Files created:**
