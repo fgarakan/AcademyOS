@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 925: Create Class Template Guided Flow V1
+
+**Files created:**
+- `src/app/director/templates/class/create/page.tsx` — Client component guided creation flow. 5 steps: Choose Level, Choose Goal, Build Blocks, Add Drills, Review. Interactive step progress rail, block builder (add/remove/adjust duration), drill picker per block, review summary. DONNA tip at bottom of each step. Demo-only — no writes. Right TemplateDonnaPanel mode=class_create.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 924: Fitness Templates Library V1
 
 **Files created:**
