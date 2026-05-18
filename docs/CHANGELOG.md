@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1022: DONNA Draft Only Actions V1
+
+**Files created:**
+- `src/lib/donna/donnaDraftOnlyActions.ts` — Draft payload builders and validators: observation drafts (buildObservationDraftPayload, validateObservationDraft), wrap-up drafts (buildWrapUpDraftPayload, validateWrapUpDraft), session modification drafts. All drafts set requiresDirectorReview=true. Role gate (isDraftActionAllowedForRole). No DB writes.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1021: DONNA Safe Read Actions V1
 
 **Files created:**
