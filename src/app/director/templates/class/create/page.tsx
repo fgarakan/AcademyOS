@@ -8,8 +8,11 @@ import {
   CURRICULUM_LEVEL_PREVIEWS,
   getCurriculumLevelPreview,
   getCurriculumStage,
+  toBlockStageKey,
+  SESSION_DURATION_BY_STAGE,
   GOALS_BY_STAGE,
 } from '@/lib/templates/templateCurriculumPreview'
+import { getRecommendedBlocksForStage } from '@/lib/templates/curriculumBlockRecommendations'
 
 // demo-only — no writes — no saves — local state only
 
@@ -61,6 +64,10 @@ export default function CreateClassTemplatePage() {
   const preview = getCurriculumLevelPreview(selectedLevel)
   const stage = getCurriculumStage(selectedLevel)
   const goalsForLevel = stage ? GOALS_BY_STAGE[stage] : []
+  const recommendedBlocks = stage
+    ? getRecommendedBlocksForStage(toBlockStageKey(stage), 75)
+    : null
+  const sessionDuration = stage ? SESSION_DURATION_BY_STAGE[stage] : null
 
   function addBlock(typeId: string) {
     const typeInfo = BLOCK_TYPES.find(b => b.id === typeId)
@@ -225,11 +232,27 @@ export default function CreateClassTemplatePage() {
                         <p className="text-xs font-mono text-lime">{preview.assessmentGatesCount} gates</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Recommended Template Type</p>
-                        <p className="text-xs text-text-secondary">{preview.recommendedTemplateType}</p>
+                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Session Duration</p>
+                        <p className="text-xs font-mono text-lime">{sessionDuration ?? preview.recommendedTemplateType}</p>
                       </div>
                     </div>
                   </div>
+
+                  {/* Recommended block structure */}
+                  {recommendedBlocks && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-2">Recommended Block Structure</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {recommendedBlocks.blocks.map((b, i) => (
+                          <div key={i} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-lime/15 bg-lime/5">
+                            <span className="text-[10px] font-mono text-lime">{b.suggestedDurationMin}m</span>
+                            <span className="text-[10px] text-text-secondary">{b.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-text-muted mt-1.5 italic">{recommendedBlocks.notes}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

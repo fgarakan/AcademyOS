@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 936: Class Template Curriculum Pull Preview V1
+
+**Files modified:**
+- `src/lib/templates/templateCurriculumPreview.ts` — Renamed `CurriculumStage` → `BallStage` to avoid naming collision with `curriculumBlockRecommendations.ts`. Added `BlockStageKey` type, `toBlockStageKey()` bridge, `SESSION_DURATION_BY_STAGE` map.
+- `src/app/director/templates/class/create/page.tsx` — Imports `getRecommendedBlocksForStage` + bridge. Preview card now shows session duration guidance (e.g. "60 – 75 min") and a recommended block structure pill list derived from `curriculumBlockRecommendations.ts` with stage notes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 935: Class Template Curriculum Level Selector V1
 
 **Files created:**

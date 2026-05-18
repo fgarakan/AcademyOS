@@ -140,10 +140,18 @@ export function getCurriculumLevelPreview(level: string): CurriculumLevelPreview
   return PREVIEW_MAP.get(level) ?? null
 }
 
-// Groups used to derive session goals by ball-color stage
-export type CurriculumStage = 'Red Ball' | 'Orange Ball' | 'Green Ball' | 'Yellow Ball' | 'High Performance'
+// Stage groups used to derive session goals and block structure
+export type BallStage = 'Red Ball' | 'Orange Ball' | 'Green Ball' | 'Yellow Ball' | 'High Performance'
 
-export function getCurriculumStage(level: string): CurriculumStage | null {
+// Key type that maps to curriculumBlockRecommendations.CurriculumStage
+export type BlockStageKey =
+  | 'red_foundation'
+  | 'orange_development'
+  | 'green_performance'
+  | 'yellow_competitive'
+  | 'high_performance'
+
+export function getCurriculumStage(level: string): BallStage | null {
   if (level.startsWith('Red Ball')) return 'Red Ball'
   if (level.startsWith('Orange Ball')) return 'Orange Ball'
   if (level.startsWith('Green Ball')) return 'Green Ball'
@@ -152,7 +160,27 @@ export function getCurriculumStage(level: string): CurriculumStage | null {
   return null
 }
 
-export const GOALS_BY_STAGE: Record<CurriculumStage, string[]> = {
+export function toBlockStageKey(stage: BallStage): BlockStageKey {
+  const map: Record<BallStage, BlockStageKey> = {
+    'Red Ball': 'red_foundation',
+    'Orange Ball': 'orange_development',
+    'Green Ball': 'green_performance',
+    'Yellow Ball': 'yellow_competitive',
+    'High Performance': 'high_performance',
+  }
+  return map[stage]
+}
+
+// Session duration guidance per stage
+export const SESSION_DURATION_BY_STAGE: Record<BallStage, string> = {
+  'Red Ball': '45 – 60 min',
+  'Orange Ball': '60 – 75 min',
+  'Green Ball': '75 – 90 min',
+  'Yellow Ball': '90 – 120 min',
+  'High Performance': '120 – 150 min',
+}
+
+export const GOALS_BY_STAGE: Record<BallStage, string[]> = {
   'Red Ball': [
     'Cooperative rally — 5 consecutive on mini court',
     'Grip and swing path fundamentals',
