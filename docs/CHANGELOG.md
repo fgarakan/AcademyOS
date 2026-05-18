@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 996: Session Actual Draft V1
+
+**Files created:**
+- `src/components/coach/CoachSessionActualDraftCard.tsx` — Session actual draft card: DraftStatusPill (draft/pending_review/approved/applied), planned-vs-actual block completion counts (Done/Modified/Skipped chips), block list showing issues by default (`showFullBlocks` prop for all), overall note, next focus box (lime), attendance summary, orange warning when issues + pending_review, draft disclaimer footer.
+
+**Docs created:**
+- `docs/SESSION_ACTUAL_DRAFT_996.md`
+
+---
+
 ## 2026-05-18 — Sprint 995: Coach Observation Draft Structuring V1
 
 **Files created:**
