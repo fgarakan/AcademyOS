@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 969: Curriculum-Aware Template System Regression V1
+
+**Files created:**
+- `docs/CURRICULUM_AWARE_TEMPLATE_REGRESSION_969.md` — Comprehensive regression document covering: (1) Curriculum source-of-truth integrity — all curriculum constants are read-only, never mutated; (2) Template-to-curriculum mapping consistency across all files; (3) Cross-page curriculum data rendering table; (4) DONNA panel cross-mode regression matrix (all 10 modes); (5) TypeScript type safety checks; (6) No unauthorized side effects (no DB writes, no external sends); (7) URL param chain integrity from detail → coach-preview → impact-preview.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-18 — Sprint 968: Template Coach Preview Browser QA V1
 
 **Files created:**
