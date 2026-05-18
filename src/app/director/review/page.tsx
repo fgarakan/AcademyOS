@@ -38,6 +38,8 @@ import type { EnrichedRecommendationDraftItem, PlacementRecommendationDraftPaylo
 import { VoiceIntakeBatchPanel } from './VoiceIntakeBatchPanel'
 import { CapturesBatchPanel } from './CapturesBatchPanel'
 import { DonnaDraftCard } from './DonnaDraftCard'
+import { CoachCurriculumSuggestionCard } from './CoachCurriculumSuggestionCard'
+import type { CoachCurriculumSuggestionItem } from './CoachCurriculumSuggestionCard'
 import type { DonnaDraftItem } from './DonnaDraftCard'
 import { loadWrapUpReviewSurface } from '@/lib/donna/wrapUpReviewSurfaceLoader'
 import { WrapUpCoveragePanel } from './WrapUpCoveragePanel'
@@ -463,6 +465,43 @@ export default async function DirectorReviewQueuePage({
   const approvedCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'approved')
   const clarificationNeededCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'clarification_needed')
   const rejectedCurriculumOverrideDrafts = enrichedCurriculumOverrideDrafts.filter(d => d.status === 'rejected')
+
+  // ─── Coach curriculum suggestions ─────────────────────────────
+
+  const { data: coachSuggestionRows } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, proposed_payload, created_at, proposed_by_id')
+    .eq('academy_id', academyId)
+    .eq('target_module', 'curriculum_builder')
+    .in('status', ['pending_review', 'approved', 'rejected'])
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  const filteredCoachSuggestions = ((coachSuggestionRows ?? []) as Array<{
+    id: string; status: string; proposed_payload: Record<string, unknown>; created_at: string; proposed_by_id: string
+  }>).filter(d => d.proposed_payload?.source === 'coach_curriculum_suggestion')
+
+  const coachSuggestionProposerIds = Array.from(new Set(filteredCoachSuggestions.map(d => d.proposed_by_id)))
+  const coachSuggestionProposerMap = new Map<string, string>()
+  if (coachSuggestionProposerIds.length > 0) {
+    const { data: csp } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', coachSuggestionProposerIds)
+    for (const p of (csp ?? [])) {
+      coachSuggestionProposerMap.set(p.id, p.display_name)
+    }
+  }
+
+  const enrichedCoachSuggestions = filteredCoachSuggestions.map(d => ({
+    id: d.id,
+    status: d.status,
+    createdAt: d.created_at,
+    proposerName: coachSuggestionProposerMap.get(d.proposed_by_id) ?? null,
+    payload: d.proposed_payload as unknown as import('./CoachCurriculumSuggestionCard').CoachCurriculumSuggestionPayload,
+  }))
+
+  const pendingCoachSuggestions = enrichedCoachSuggestions.filter(d => d.status === 'pending_review')
 
   // ─── Voice intake drafts ───────────────────────────────────────
 
@@ -1121,7 +1160,7 @@ export default async function DirectorReviewQueuePage({
     approvedEvidenceDrafts.length
 
   // Curriculum / Session Changes
-  const curriculumSessionPending = pendingDrafts.length + pendingCurriculumOverrideDrafts.length
+  const curriculumSessionPending = pendingDrafts.length + pendingCurriculumOverrideDrafts.length + pendingCoachSuggestions.length
   const curriculumSessionReady = approvedDrafts.length + approvedCurriculumOverrideDrafts.length
 
   // Completed: resolved items (sent back for clarification, rejected)
@@ -1848,6 +1887,24 @@ export default async function DirectorReviewQueuePage({
                   </div>
                 </section>
               )}
+            </div>
+          )}
+
+          {/* Coach Curriculum Suggestions */}
+          {pendingCoachSuggestions.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-1 border-b border-border">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Coach Curriculum Suggestions</h3>
+                <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-blue/15 text-status-blue border border-status-blue/20 leading-none">
+                  {pendingCoachSuggestions.length} unread
+                </span>
+              </div>
+              <p className="text-[10px] text-text-muted">Coaches submitted these curriculum suggestions. No curriculum data has changed — use these as input when drafting changes in the Curriculum Builder.</p>
+              <div className="space-y-4">
+                {pendingCoachSuggestions.map(item => (
+                  <CoachCurriculumSuggestionCard key={item.id} item={item as CoachCurriculumSuggestionItem} />
+                ))}
+              </div>
             </div>
           )}
 
