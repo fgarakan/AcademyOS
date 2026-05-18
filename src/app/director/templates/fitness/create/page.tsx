@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Info, LayoutTemplate, Zap } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Info, LayoutTemplate, Zap, Eye } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumStage, getFitnessCurriculumPreview, getCurriculumLevelPreview } from '@/lib/templates/templateCurriculumPreview'
 import { FitnessBlockType, FITNESS_BLOCK_TYPES, getFitnessBlockLabel, getFitnessBlockIntent, getFitnessBlockAccent, getFitnessBlockBorderAccent, getDefaultBlockDuration } from '@/lib/fitness/fitnessBlockTypes'
@@ -670,7 +670,7 @@ export default function CreateFitnessTemplatePage() {
                   <p>Individual player load management should be reviewed by qualified coaching staff before delivery.</p>
                   <p className="text-status-orange/70">Demo mode — Save Draft does not persist anything. Backend wiring coming in a future sprint.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <button
                     onClick={() => alert('Demo only — no data saved.')}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-status-purple border border-status-purple/30 bg-status-purple/10 hover:bg-status-purple/15 active:scale-95 transition-all duration-100"
@@ -678,6 +678,15 @@ export default function CreateFitnessTemplatePage() {
                     <CheckCircle2 className="w-4 h-4" />
                     Save as Draft
                   </button>
+                  {selectedLevel && (
+                    <Link
+                      href={`/director/templates/coach-preview?level=${encodeURIComponent(selectedLevel)}&goal=${encodeURIComponent(goalInfo?.label ?? '')}&type=fitness`}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-text-secondary border border-border bg-surface-raised hover:border-status-purple/20 hover:text-text-primary transition-all duration-100"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Preview for Coach
+                    </Link>
+                  )}
                   <Link href="/director/templates/fitness" className="btn-ghost inline-flex items-center gap-2">
                     Cancel
                   </Link>

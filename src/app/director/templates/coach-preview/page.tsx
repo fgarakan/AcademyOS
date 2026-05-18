@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ChevronRight, Clock, Users, Target, CheckCircle2, AlertCircle, Eye, LayoutTemplate, Sparkles, MessageSquare, ChevronDown, GraduationCap, BookOpen } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
-import { getCurriculumLevelPreview, getCurriculumStage, getWatchForsForBlock, getCurriculumDrillsForBlock } from '@/lib/templates/templateCurriculumPreview'
+import { getCurriculumLevelPreview, getCurriculumStage, getWatchForsForBlock, getCurriculumDrillsForBlock, getFitnessCurriculumPreview } from '@/lib/templates/templateCurriculumPreview'
 
 // demo-only — not saved — not applied — local-only
 
@@ -109,6 +109,7 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
 
   const preview = getCurriculumLevelPreview(levelParam)
   const stage = getCurriculumStage(levelParam)
+  const fitnessPreview = typeParam === 'fitness' && stage ? getFitnessCurriculumPreview(stage) : null
 
   const templateName = goalParam
     ? `${goalParam} — ${levelParam}`
@@ -162,6 +163,38 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
               {goalParam && (
                 <span className="ml-2 text-xs text-text-secondary">· Goal: {goalParam}</span>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Fitness curriculum context — shown when type=fitness */}
+        {fitnessPreview && (
+          <div className="rounded-2xl border border-status-purple/15 bg-status-purple/4 p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-status-purple" />
+              <span className="text-sm font-bold text-text-primary">Fitness Curriculum Context</span>
+              <span className="ml-auto text-[10px] text-text-muted">curriculum-derived — not saved</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Physical Development Need</p>
+                <p className="text-xs text-text-secondary leading-relaxed">{fitnessPreview.physicalDevelopmentNeed}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Tennis Technical Transfer</p>
+                <p className="text-xs text-text-secondary leading-relaxed">{fitnessPreview.tennisTechnicalTransfer}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Recommended Focus</p>
+                <p className="text-xs font-semibold text-status-purple">{fitnessPreview.recommendedFitnessFocus}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Load Guidance</p>
+                <p className="text-xs text-text-secondary">{fitnessPreview.loadGuidance}</p>
+              </div>
+            </div>
+            <div className="pt-1 border-t border-border">
+              <p className="text-[10px] text-text-muted">{fitnessPreview.ageFitNote}</p>
             </div>
           </div>
         )}

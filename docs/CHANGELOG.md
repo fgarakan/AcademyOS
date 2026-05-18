@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 952: Fitness Template Coach Preview Connection V1
+
+**Files modified:**
+- `src/app/director/templates/fitness/create/page.tsx` — Added `Eye` icon import. Step 5 review now shows "Preview for Coach" link (visible when `selectedLevel` is set) that routes to `/director/templates/coach-preview?level=...&goal=...&type=fitness`.
+- `src/app/director/templates/coach-preview/page.tsx` — Imported `getFitnessCurriculumPreview`. Derived `fitnessPreview = typeParam === 'fitness' && stage ? getFitnessCurriculumPreview(stage) : null`. Added fitness curriculum context card (shown when `fitnessPreview` exists): physical development need, tennis technical transfer, recommended focus, load guidance, age fit note.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 951: Fitness Template Review Step Curriculum Summary V1
 
 **Files modified:**
