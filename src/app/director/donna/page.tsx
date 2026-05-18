@@ -10,6 +10,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui'
 import { DonnaDirectorShellClient } from './DonnaDirectorShellClient'
 import { DonnaContextSummaryCard } from '@/components/donna/DonnaContextSummaryCard'
 import type { ContextSummaryItem, ContextSourceLabel } from '@/components/donna/DonnaContextSummaryCard'
+import { DonnaReviewQueueSurface } from '@/components/donna/DonnaReviewQueueSurface'
 
 // ── Director DONNA command center — Sprint 1038/1040 wiring ──────────────────
 // Full page wiring: loads DirectorDonnaContext, renders attention items, risks,
@@ -312,6 +313,16 @@ export default async function DirectorDonnaPage() {
         </div>
 
       </div>
+
+      {/* Review Queue Surface */}
+      <DonnaReviewQueueSurface
+        pendingReviews={pendingReviews}
+        missingWrapUps={missingWrapUps}
+        templateDrafts={ctx?.templateDrafts ?? 0}
+        attendanceExceptions={ctx?.attendanceExceptions ?? 0}
+        evidenceDrafts={ctx?.evidenceDrafts ?? 0}
+        isDemo={!isLive}
+      />
 
       {/* Safety notice */}
       <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-lime/15 bg-lime/4">

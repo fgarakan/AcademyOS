@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-18 — Sprint 1041: DONNA Director Review Queue Surface Wiring V1
+
+**Files created:**
+- `src/components/donna/DonnaReviewQueueSurface.tsx` — categorized review queue surface: 6 category rows with urgency dots, item counts, Review/Ask CTA buttons, footer safety notice. No mutations — all CTAs navigate to review surfaces.
+- `docs/DONNA_DIRECTOR_REVIEW_QUEUE_SURFACE_1041.md` — surface audit document.
+
+**Files modified:**
+- `src/app/director/donna/page.tsx` — integrated `DonnaReviewQueueSurface` below the 2-column grid, passing live context counts (pendingReviews, missingWrapUps, templateDrafts, attendanceExceptions, evidenceDrafts, isDemo).
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1040: DONNA Chat Thread Page Integration V1
 
 **Files created:**
