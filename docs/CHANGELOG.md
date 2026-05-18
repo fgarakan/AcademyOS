@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-18 — Sprint 974: Template Repository Read Layer V1
+
+**Files created:**
+- `src/lib/templates/templateRepository.ts` -- Read-only server-side query functions for the templates subsystem.
+- `docs/TEMPLATE_REPOSITORY_READ_LAYER_974.md` -- Repository audit doc: functions, fallback behavior, schema dependency, sprint roadmap.
+
+**Functions created:**
+- `listTemplatesForAcademy(db, academyId, options)` -- List templates, optional type/status filters, limit.
+- `getTemplateById(db, templateId, academyId)` -- Single template by ID scoped to academy.
+- `getTemplateBlocks(db, templateId)` -- Blocks ordered by order_index.
+- `getTemplateBlockExercises(db, templateId)` -- Exercises across all blocks (two sequential queries).
+- `getTemplateReviewRequests(db, academyId, options)` -- Review requests; isSchemaMissing if migration 067 not applied.
+- `getTemplateVersionHistory(db, templateId, academyId)` -- Version history; isSchemaMissing if migration 067 not applied.
+
+**Key design:**
+- All functions return RepoListResult<T> / RepoSingleResult<T> with data, error, isSchemaMissing.
+- PostgreSQL error codes 42P01 (table missing) and 42703 (column missing) detected and returned as isSchemaMissing: true rather than throwing.
+- rawDb cast used for all queries -- matches established pattern in src/lib/backend/director.ts.
+- No inserts, updates, or deletes. Read-only by design.
+- Extended types (TemplateRow, TemplateBlockRow, TemplateBlockExerciseRow) add draft-migration 067 columns as optional fields.
+- listTemplatesForAcademy and getTemplateById return base data even before migration 067 if called without type/status filters.
+
+**Migration status: No migration created. Migrations 067 and 068 remain DRAFT ONLY and unchanged.**
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 973: Template RLS Policy Draft V1
 
 **Files created:**
