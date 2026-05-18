@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1015: Review Queue Context Packaging V1
+
+**Files created:**
+- `src/lib/donna/reviewQueueContextPackage.ts` — Packages DonnaReviewQueueSummary into a DONNA-ready bundle: ReviewQueueHealthSignal (clear/pending/overdue/backlog), category groups (coach_notes, parent_updates, level_readiness, curriculum, sessions), topItems (top 5 by priority), summaryText for DONNA answers. Pure transformation — no DB calls.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1014: Player Session Template Context Packaging V1
 
 **Files created:**
