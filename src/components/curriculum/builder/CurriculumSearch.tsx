@@ -10,7 +10,7 @@ interface Props {
 }
 
 interface SearchResult {
-  type: 'level' | 'drill' | 'gate'
+  type: 'level' | 'drill' | 'gate' | 'fitness'
   id: string
   label: string
   sublabel: string
@@ -27,13 +27,17 @@ export function CurriculumSearch({ data }: Props) {
       .filter(l => l.display_name.toLowerCase().includes(q) || (l.stage ?? '').toLowerCase().includes(q))
       .map(l => ({ type: 'level' as const, id: l.id, label: l.display_name, sublabel: (l.stage ?? '').replace(/_/g, ' ') })),
     ...data.drills
-      .filter(d => d.name.toLowerCase().includes(q) || (d.domain ?? '').toLowerCase().includes(q))
-      .slice(0, 5)
+      .filter(d => d.name.toLowerCase().includes(q) || (d.domain ?? '').toLowerCase().includes(q) || (d.objective ?? '').toLowerCase().includes(q))
+      .slice(0, 6)
       .map(d => ({ type: 'drill' as const, id: d.id, label: d.name, sublabel: `${d.domain ?? ''} · ${d.session_block ?? ''}`, levelId: d.level_min_id ?? undefined })),
     ...data.gates
-      .filter(g => g.criterion.toLowerCase().includes(q) || g.domain.toLowerCase().includes(q))
-      .slice(0, 5)
+      .filter(g => g.criterion.toLowerCase().includes(q) || g.domain.toLowerCase().includes(q) || g.gate_type.toLowerCase().includes(q))
+      .slice(0, 6)
       .map(g => ({ type: 'gate' as const, id: g.id, label: g.criterion, sublabel: `Gate · ${g.domain}`, levelId: g.from_level_id })),
+    ...data.fitnessGuidance
+      .filter(f => f.fitness_phase.toLowerCase().includes(q) || (f.primary_energy_system ?? '').toLowerCase().includes(q) || (f.coaching_notes ?? '').toLowerCase().includes(q))
+      .slice(0, 3)
+      .map(f => ({ type: 'fitness' as const, id: f.id, label: f.fitness_phase, sublabel: `Fitness · ${f.primary_energy_system ?? ''}`, levelId: f.level_id })),
   ]
 
   return (
@@ -43,7 +47,7 @@ export function CurriculumSearch({ data }: Props) {
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search levels, drills, gates..."
+          placeholder="Search levels, drills, gates, fitness..."
           className="flex-1 bg-transparent text-[12px] text-text-primary placeholder:text-text-muted focus:outline-none"
         />
         {query && (
@@ -58,14 +62,15 @@ export function CurriculumSearch({ data }: Props) {
           {results.map(r => (
             <Link
               key={`${r.type}-${r.id}`}
-              href={r.type === 'level' ? `/director/curriculum/level/${r.id}` : `/director/curriculum/level/${r.levelId}`}
+              href={r.type === 'level' ? `/director/curriculum/level/${r.id}` : (r.levelId ? `/director/curriculum/level/${r.levelId}` : `/director/curriculum/map`)}
               onClick={() => setQuery('')}
               className="flex items-start gap-3 px-4 py-2.5 hover:bg-surface-raised transition-colors border-b border-border last:border-0"
             >
               <span className={`text-[9px] font-semibold uppercase tracking-wide rounded px-1.5 py-0.5 mt-0.5 ${
-                r.type === 'level' ? 'bg-lime/10 text-lime' :
-                r.type === 'drill' ? 'bg-status-blue/10 text-status-blue' :
-                                     'bg-status-orange/10 text-status-orange'
+                r.type === 'level'   ? 'bg-lime/10 text-lime' :
+                r.type === 'drill'   ? 'bg-status-blue/10 text-status-blue' :
+                r.type === 'fitness' ? 'bg-violet-400/10 text-violet-400' :
+                                       'bg-status-orange/10 text-status-orange'
               }`}>{r.type}</span>
               <div>
                 <p className="text-[12px] text-text-primary">{r.label}</p>

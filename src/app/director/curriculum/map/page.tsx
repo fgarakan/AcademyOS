@@ -4,6 +4,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
 import { CurriculumLevelMap } from '@/components/curriculum/builder/CurriculumLevelMap'
 import { CurriculumRelationshipMap } from '@/components/curriculum/builder/CurriculumRelationshipMap'
+import { CurriculumSearch } from '@/components/curriculum/builder/CurriculumSearch'
 
 export default async function CurriculumMapPage() {
   const supabase = await getSupabaseServer()
@@ -43,6 +44,11 @@ export default async function CurriculumMapPage() {
         All levels at a glance. Click any level to explore its drills, gates, and coaching language.
         Coloured dots show sufficiency: green = ready, orange = low, red = missing content.
       </p>
+
+      {/* Jump-to search */}
+      {tablesAvailable && levels.length > 0 && (
+        <CurriculumSearch data={explorerData} />
+      )}
 
       {/* Data provenance label */}
       {dataLabel && (
