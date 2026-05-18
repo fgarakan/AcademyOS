@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-18 — Sprint 984: Template Backend QA V1
+
+**Files modified:**
+- `src/app/director/templates/class/[templateId]/page.tsx` — Fixed stale note: replaced "Review queue backend wiring coming in Sprint 978." with accurate copy.
+- `src/app/director/templates/fitness/[templateId]/page.tsx` — Same stale note fix.
+
+**Docs created:**
+- `docs/TEMPLATE_BACKEND_QA_984.md` — Full QA audit report for Sprints 974–983.
+
+**QA results:** TypeScript clean. Write safety confirmed on all page files. Schema-missing handling verified. academyId security confirmed (never client-supplied). No prohibited language. No unintended files staged.
+
+---
+
 ## 2026-05-18 — Sprint 983: Template Version History V1
 
 **Files modified:**

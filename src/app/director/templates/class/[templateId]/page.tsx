@@ -334,7 +334,7 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-text-muted">Review queue backend wiring coming in Sprint 978.</p>
+          <p className="text-[10px] text-text-muted">Template draft submissions enter the director review queue for approval before templates go live.</p>
         </div>
 
         {/* Version History */}
