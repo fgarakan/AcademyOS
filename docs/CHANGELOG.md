@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 986: Coach Portal Architecture Audit V1
+
+**Docs created:**
+- `docs/COACH_PORTAL_ARCHITECTURE_AUDIT_986.md` — Full audit of existing coach portal state. Found substantially more built than sprint plan assumed: CoachWrapUpDrawer (7-question flow), all 3 wrap-up server actions, 6 coach library files, director review cards for all coach-originated drafts. Identified 9 specific gaps (no dedicated execute route, no player watch list, no curriculum evidence links, no parent-safe summary, no wrap-up review page). Refined sprint plan for 987–1000 accordingly.
+
+**No code changes.** Audit/documentation only.
+
+---
+
 ## 2026-05-18 — Sprint 985: Template Backend Completion Audit V1
 
 **Docs created:**
