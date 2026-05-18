@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1031: DONNA Suggested Follow Up Questions V1
+
+**Files created:**
+- `src/lib/donna/donnaSuggestedQuestions.ts` — Context-aware suggested questions for DONNA chat: DonnaSuggestedQuestion shape, 8 director questions, 7 coach questions, priority-boosted by live context (pending reviews, missing wrap-ups, at-risk players). getSuggestedQuestionsForRole dispatcher. Follow-up question bank per answered action.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1030: DONNA Chat Thread UI V1
 
 **Files created:**
