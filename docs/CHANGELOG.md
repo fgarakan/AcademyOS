@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 939: Class Template Coach Watch-Fors From Curriculum V1
+
+**Files modified:**
+- `src/lib/templates/templateCurriculumPreview.ts` — Added `CURRICULUM_WATCH_FORS_BY_STAGE`: coach watch-fors keyed by `[BallStage][block_type]` (5 stages x 6 block types). Added `getWatchForsForBlock(stage, blockType)` helper.
+- `src/app/director/templates/class/create/page.tsx` — Step 4 now shows curriculum watch-fors below each block's drill list. Styled with lime "Watch for" label and check icons. Only shown when stage + block type data exists.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 938: Class Template Recommended Drills From Curriculum V1
 
 **Files modified:**

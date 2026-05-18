@@ -12,6 +12,7 @@ import {
   SESSION_DURATION_BY_STAGE,
   GOALS_BY_STAGE,
   getCurriculumDrillsForBlock,
+  getWatchForsForBlock,
 } from '@/lib/templates/templateCurriculumPreview'
 import { getRecommendedBlocksForStage } from '@/lib/templates/curriculumBlockRecommendations'
 
@@ -448,6 +449,7 @@ export default function CreateClassTemplatePage() {
                     const fallbackDrills = DRILL_SUGGESTIONS[block.type] ?? []
                     const suggestions = curriculumDrills.length > 0 ? curriculumDrills : fallbackDrills
                     const fromCurriculum = curriculumDrills.length > 0
+                    const watchFors = stage ? getWatchForsForBlock(stage, block.type) : []
                     const blockDrills = selectedDrills[block.id] ?? []
                     return (
                       <div key={block.id} className="rounded-xl border border-border p-4 space-y-3">
@@ -482,6 +484,17 @@ export default function CreateClassTemplatePage() {
                             </button>
                           ))}
                         </div>
+                        {watchFors.length > 0 && (
+                          <div className="pt-1 border-t border-border/50 space-y-1">
+                            <p className="text-[10px] uppercase tracking-widest text-lime/70">Watch for</p>
+                            {watchFors.map(w => (
+                              <div key={w} className="flex items-start gap-2">
+                                <CheckCircle2 className="w-3 h-3 text-lime/50 shrink-0 mt-0.5" />
+                                <span className="text-[11px] text-text-secondary leading-relaxed">{w}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )
                   })}

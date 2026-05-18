@@ -228,6 +228,54 @@ export function getCurriculumDrillsForBlock(stage: BallStage, blockType: string)
   return CURRICULUM_DRILLS_BY_STAGE[stage]?.[blockType] ?? []
 }
 
+// Coach watch-fors keyed by [stage][block_type]
+export const CURRICULUM_WATCH_FORS_BY_STAGE: Record<BallStage, Record<string, string[]>> = {
+  'Red Ball': {
+    warm_up: ['Players grip loosely — correct before drill begins', 'Watch for anxiety; keep energy light and playful'],
+    technical: ['Contact point must be in front of body', 'Racket face angle — flat or slight topspin only at this stage'],
+    tactical: ['Celebrate directional intent, not just success'],
+    physical: ['No overloading — keep circuits short and fun'],
+    match_play: ['Enforce cooperative scoring before competitive scoring'],
+    cool_down: ['Every player leaves with one success moment named aloud'],
+  },
+  'Orange Ball': {
+    warm_up: ['Split-step landing — both feet, not one', 'Recovery to neutral position after every shadow swing'],
+    technical: ['Unit turn before contact — not just arm swing', 'Open stance forehand: hip rotation drives the shot'],
+    tactical: ['Cross-court rally: contact point must stay in front', 'Decision point: direction chose before ball crosses net'],
+    physical: ['Short-burst intervals only — no extended sprints at this stage'],
+    match_play: ['Point play: emphasize process over outcome', 'Serve: toss height and placement before power'],
+    cool_down: ['Each player states one specific improvement — not "it was good"'],
+  },
+  'Green Ball': {
+    warm_up: ['Serve warm-up: shoulder turn, trophy position, pronation', 'Split-step must happen before every incoming ball'],
+    technical: ['Approach shot: low-to-high, close to the line', 'First volley: firm wrist, block not swing'],
+    tactical: ['Pattern play: identify the play before starting the point', 'Transition: does player split-step at the service line?'],
+    physical: ['Court sprint: decelerate and reset — not just sprint and stop'],
+    match_play: ['Pressure tiebreak: pre-point routine matters — watch for it', 'Sets play: is player adjusting tactics between games?'],
+    cool_down: ['Debrief: one tactical decision they made well, one to improve'],
+  },
+  'Yellow Ball': {
+    warm_up: ['Pre-match routine: is it the same every session? Build the habit.', 'Serve warm-up: target placement, not just warm-up rallying'],
+    technical: ['Inside-out forehand: hip opens before contact', 'Kick serve: toss position over left shoulder (right-hander)'],
+    tactical: ['Serve-plus-one: is the pattern being executed, not improvised?', 'Pressure points: does the player tighten or open up?'],
+    physical: ['Load management: note if player looks fatigued early — flag for debrief'],
+    match_play: ['Self-coaching under pressure: are they adjusting or panicking?', 'Consequence scoring: mental response to adversity'],
+    cool_down: ['RPE score + one tactical note for next session'],
+  },
+  'High Performance': {
+    warm_up: ['Activation protocol: individual, not group — any deviation?', 'Serve warm-up timing and pace — consistent with match cadence?'],
+    technical: ['Weapon drill: is the margin of error improving session-over-session?', 'Multi-ball: is decision-making happening before ball arrives?'],
+    tactical: ['Game plan execution: is player running their plan, not opponent\'s?', 'Situational: response to adversity — process or emotional?'],
+    physical: ['Load note: rating and any flags for conditioning staff'],
+    match_play: ['Match pace: is practice pace matching competition pace?', 'Consequence scoring: real competition mindset, not training mindset'],
+    cool_down: ['Individual debrief: one weapon sharpened, one area targeted for next session'],
+  },
+}
+
+export function getWatchForsForBlock(stage: BallStage, blockType: string): string[] {
+  return CURRICULUM_WATCH_FORS_BY_STAGE[stage]?.[blockType] ?? []
+}
+
 export const GOALS_BY_STAGE: Record<BallStage, string[]> = {
   'Red Ball': [
     'Cooperative rally — 5 consecutive on mini court',
