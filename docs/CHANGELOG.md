@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1012: Director Context Aggregator V1
+
+**Files created:**
+- `src/lib/donna/directorDonnaContext.ts` — Aggregates all director-visible DONNA context: pendingReviews, missingWrapUps, templateDrafts, attendanceExceptions, evidenceDrafts, todaySessions, attentionItems (observations + absences), curriculumGaps (blocked_by_schema), academyRisks, recommendedActions, sourceLabels, confidence. Demo fallback when no live data. RLS-scoped, no DB writes.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1011: DONNA Context Map V1
 
 **Files created:**
