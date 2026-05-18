@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 900: Guided Review Progress Rail Polish V1
+
+**Files modified:**
+- `src/components/curriculum/builder/CurriculumProgressRail.tsx` — Replaced dot rail with compact pill rail (R1, R2, O1, HP1 etc.). `compactLabel()` extracts stage prefix + trailing number from display_name. Current level highlighted teal with glow; reviewed = green; skipped = orange; future = muted stage color. Horizontal scroll on mobile via `overflow-x-auto` wrapper. Progress bar updated to lime. Legend shows Kept/Skipped states on sm+. Overall container now matches dark card style.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 899: Guided Review Screenshot Match V1
 
 **Files created:**
