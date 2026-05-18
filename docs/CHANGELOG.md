@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-18 — Sprint 983: Template Version History V1
+
+**Files modified:**
+- `src/app/director/templates/class/[templateId]/page.tsx` -- Fetches version history via `getTemplateVersionHistory`; renders small panel showing latest 3 versions (version number, change type, date). Schema-missing and empty-history states both handled gracefully.
+- `src/app/director/templates/fitness/[templateId]/page.tsx` -- Same.
+
+**Docs created:**
+- `docs/TEMPLATE_VERSION_HISTORY_983.md`
+
+**Version history fetch:**
+- Called after `dataSource = 'live'` inside the existing try/catch block.
+- Uses `profile.academy_id` already resolved in scope — no additional auth call.
+- `isSchemaMissing: true` → shows "Version history unavailable until backend migration is applied."
+- Empty data → shows "No version history yet."
+- Demo page → shows "Version history appears for saved templates."
+
+**Panel design:**
+- Small, muted, low-noise. `History` icon + "Version History" heading.
+- Each row: `v{n}` (lime mono) · change type label · date (mono).
+- Shows latest 3 records (sorted descending by `version_number` in the repo query).
+
+**Safety:**
+- Read-only. No writes, no server actions, no mutations.
+- No parent sends. No external sends. No curriculum mutation.
+- Migrations 067/068 still draft-only — schema-missing handled at the UI level.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 982: Coach Preview Live Template Wiring V1
 
 **Files modified:**

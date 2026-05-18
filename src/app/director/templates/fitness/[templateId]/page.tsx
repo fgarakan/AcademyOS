@@ -1,13 +1,20 @@
 import Link from 'next/link'
-import { ChevronRight, Dumbbell, GraduationCap, Clock, CheckCircle2, AlertCircle, FileEdit, Edit3, Eye, Sparkles, ArrowRight, Zap, Activity, BookOpen, Database } from 'lucide-react'
+import { ChevronRight, Dumbbell, GraduationCap, Clock, CheckCircle2, AlertCircle, FileEdit, Edit3, Eye, Sparkles, ArrowRight, Zap, Activity, BookOpen, Database, History } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { DEMO_FITNESS_TEMPLATES } from '@/lib/templates/templateMockData'
 import type { TemplateStatus } from '@/lib/templates/templateMockData'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { getTemplateById, getTemplateBlocks, getTemplateBlockExercises } from '@/lib/templates/templateRepository'
-import type { TemplateRow, TemplateBlockExerciseRow } from '@/lib/templates/templateRepository'
+import { getTemplateById, getTemplateBlocks, getTemplateBlockExercises, getTemplateVersionHistory } from '@/lib/templates/templateRepository'
+import type { TemplateRow, TemplateBlockExerciseRow, TemplateVersionHistoryRow } from '@/lib/templates/templateRepository'
 
 type Params = { templateId: string }
+
+const CHANGE_TYPE_LABEL: Record<string, string> = {
+  create_template: 'Created',
+  update_template: 'Updated',
+  archive_template: 'Archived',
+  duplicate_template: 'Duplicated',
+}
 
 const STATUS_CONFIG: Record<TemplateStatus, { label: string; icon: typeof CheckCircle2; classes: string }> = {
   ready: { label: 'Ready', icon: CheckCircle2, classes: 'text-status-green border-status-green/40 bg-status-green/8' },
@@ -81,6 +88,8 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
   let liveTemplate: TemplateRow | null = null
   let liveExercises: TemplateBlockExerciseRow[] = []
   let dataSource: 'live' | 'demo' = 'demo'
+  let versionHistory: TemplateVersionHistoryRow[] = []
+  let versionHistorySchemaMissing = false
 
   try {
     const db = await getSupabaseServer()
@@ -98,6 +107,12 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
           const exResult = await getTemplateBlockExercises(db, templateId)
           if (!exResult.isSchemaMissing) liveExercises = exResult.data
           dataSource = 'live'
+          const vResult = await getTemplateVersionHistory(db, templateId, profile.academy_id)
+          if (vResult.isSchemaMissing) {
+            versionHistorySchemaMissing = true
+          } else {
+            versionHistory = vResult.data
+          }
         }
       }
     }
@@ -372,6 +387,38 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
           </div>
           <p className="text-[10px] text-text-muted">Review queue backend wiring coming in Sprint 978.</p>
         </div>
+
+        {/* Version History */}
+        {dataSource === 'live' ? (
+          <div className="rounded-2xl border border-border bg-surface p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <History className="w-4 h-4 text-text-muted" />
+              <h2 className="text-sm font-bold text-text-primary">Version History</h2>
+              {versionHistory.length > 0 && (
+                <span className="ml-auto text-[10px] text-text-muted">{versionHistory.length} record{versionHistory.length !== 1 ? 's' : ''}</span>
+              )}
+            </div>
+            {versionHistorySchemaMissing ? (
+              <p className="text-[11px] text-text-muted">Version history unavailable until backend migration is applied.</p>
+            ) : versionHistory.length === 0 ? (
+              <p className="text-[11px] text-text-muted">No version history yet.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {versionHistory.slice(0, 3).map(v => (
+                  <div key={v.id} className="flex items-center gap-3 p-2.5 rounded-xl border border-border bg-surface-raised">
+                    <span className="text-[10px] font-mono text-lime w-6 shrink-0">v{v.version_number}</span>
+                    <span className="text-[10px] text-text-secondary flex-1 min-w-0 truncate">{CHANGE_TYPE_LABEL[v.change_type] ?? v.change_type}</span>
+                    <span className="text-[10px] text-text-muted font-mono shrink-0">{v.created_at.slice(0, 10)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="px-4 py-3 rounded-xl border border-border bg-surface-raised">
+            <p className="text-[11px] text-text-muted">Version history appears for saved templates.</p>
+          </div>
+        )}
 
         {/* Draft safety panel */}
         <div className="rounded-2xl border border-status-purple/15 bg-status-purple/4 p-5 space-y-3">
