@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-18 — Sprint 895: Curriculum Map Level Cards Rebuild V1
+
+**Files created:**
+- `src/components/curriculum/builder/CurriculumMapLevelCard.tsx` — Large spacious level card with readiness progress bar, readiness % + label badge, stage intent text, skill-domain/drill/gate counts, missing-items list with red AlertCircle icons, "Added [date]" footer, and "Open →" ArrowRight affordance; wraps in a `<Link>` to `/director/curriculum/level/[id]`; `use client`.
+
+**Files modified:**
+- `src/components/curriculum/builder/CurriculumLevelMap.tsx` — Replaced compact click-to-expand button cards with `CurriculumMapLevelCard`; changed grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4` to `grid-cols-1 sm:grid-cols-2 xl:grid-cols-3`; removed `selectedId` state, `CurriculumLevelDetailPanel` import, and inline expanded-detail section; passes `levelDrills` filtered per level, `stageDot`, `stageBorder` from STAGE_CONFIG.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 894: Curriculum Right DONNA Panel Shell V1
 
 **Files created:**

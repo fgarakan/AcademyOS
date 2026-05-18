@@ -1,10 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { ChevronRight, Sparkles } from 'lucide-react'
 import type { CurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
-import { CurriculumLevelDetailPanel } from '@/components/curriculum/CurriculumLevelDetailPanel'
+import { CurriculumMapLevelCard } from '@/components/curriculum/builder/CurriculumMapLevelCard'
 
 type Stage = 'red_foundation' | 'orange_development' | 'green_performance' | 'yellow_competitive' | 'high_performance'
 
@@ -33,8 +30,6 @@ interface Props {
 }
 
 export function CurriculumLevelMap({ data }: Props) {
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-
   const { levels, gates, drills } = data
 
   if (!data.tablesAvailable || levels.length === 0) {
@@ -57,7 +52,6 @@ export function CurriculumLevelMap({ data }: Props) {
   }, {})
 
   const stages = Object.keys(STAGE_CONFIG) as Stage[]
-  const selectedLevel = selectedId ? levels.find(l => l.id === selectedId) ?? null : null
 
   return (
     <div className="space-y-5">
@@ -84,100 +78,28 @@ export function CurriculumLevelMap({ data }: Props) {
             </div>
 
             {/* Level cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 p-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 p-3">
               {stageLevels.map(level => {
                 const gateCount = gatesByLevel[level.id] ?? 0
                 const drillCount = drillsByLevel[level.id] ?? 0
-                const isSelected = selectedId === level.id
-                const isMissing = gateCount === 0 && drillCount === 0
-                const isLow = !isMissing && (gateCount < 2 || drillCount < 3)
-                const statusDot = isMissing ? '#FF3B30' : isLow ? '#FF9500' : '#30D158'
-                const statusLabel = isMissing ? 'Missing content' : isLow ? 'Low content' : 'Ready'
+                const levelDrills = drills.filter(d => d.level_min_id === level.id)
 
                 return (
-                  <button
+                  <CurriculumMapLevelCard
                     key={level.id}
-                    onClick={() => setSelectedId(isSelected ? null : level.id)}
-                    className="group text-left rounded-xl border p-3 transition-all"
-                    style={{
-                      background: isSelected ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.20)',
-                      borderColor: isSelected ? cfg.dot : 'rgba(255,255,255,0.07)',
-                    }}
-                  >
-                    {/* Status dot + name */}
-                    <div className="flex items-start gap-2 mb-2">
-                      <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: statusDot }} />
-                      <p className="text-[12px] font-semibold text-text-primary leading-snug flex-1">
-                        {level.display_name}
-                      </p>
-                    </div>
-
-                    {/* Counts */}
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2.5">
-                      <span className="text-[10px] text-text-muted">
-                        <span className="font-mono text-text-secondary">{gateCount}</span> gates
-                      </span>
-                      <span className="text-[10px] text-text-muted">
-                        <span className="font-mono text-text-secondary">{drillCount}</span> drills
-                      </span>
-                    </div>
-
-                    {/* Status chip */}
-                    <div className="flex items-center justify-between">
-                      <span
-                        className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
-                        style={{
-                          background: isMissing ? 'rgba(255,59,48,0.12)' : isLow ? 'rgba(255,149,0,0.12)' : 'rgba(48,209,88,0.12)',
-                          color: statusDot,
-                        }}
-                      >
-                        {statusLabel}
-                      </span>
-                      <ChevronRight className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </button>
+                    level={level}
+                    gateCount={gateCount}
+                    drillCount={drillCount}
+                    levelDrills={levelDrills}
+                    stageDot={cfg.dot}
+                    stageBorder={cfg.laneBorder}
+                  />
                 )
               })}
             </div>
           </div>
         )
       })}
-
-      {/* Expanded level detail */}
-      {selectedLevel && (
-        <div className="rounded-2xl border border-border bg-surface overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-            <p className="text-[12px] font-semibold text-text-primary">{selectedLevel.display_name}</p>
-            <div className="flex items-center gap-3">
-              <Link
-                href={`/director/curriculum/level/${selectedLevel.id}`}
-                className="flex items-center gap-1 text-[11px] text-lime hover:text-lime/80 transition-colors"
-              >
-                <Sparkles className="w-3 h-3" />
-                Open builder
-              </Link>
-              <button
-                onClick={() => setSelectedId(null)}
-                className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-          <div className="p-4">
-            <CurriculumLevelDetailPanel
-              level={selectedLevel}
-              gates={gates.filter(g => g.from_level_id === selectedLevel.id)}
-              drills={drills.filter(d => d.level_min_id === selectedLevel.id)}
-              coachLanguage={data.coachLanguage.filter(cl => cl.level_id === selectedLevel.id)}
-              competition={data.competitionTrack.find(ct => ct.level_id === selectedLevel.id) ?? null}
-              fitness={data.fitnessGuidance.find(fg => fg.level_id === selectedLevel.id) ?? null}
-              volume={data.volumeGuidance.find(vg => vg.level_id === selectedLevel.id) ?? null}
-              tablesAvailable={data.tablesAvailable}
-            />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
