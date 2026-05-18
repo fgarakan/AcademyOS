@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1016: Academy Health Signal Context V1
+
+**Files created:**
+- `src/lib/donna/academyHealthContextPackage.ts` — Aggregates academy health into a DONNA context package: today's sessions, pending reviews, coaches with no wrap-ups, groups with no recent sessions, top curriculum concerns (tagged observations). AcademyHealthSignal array, KPI availability summary, overallStatus (healthy/warning/at_risk/no_data), summaryText. Demo fallback. RLS-scoped.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1015: Review Queue Context Packaging V1
 
 **Files created:**
