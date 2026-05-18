@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 922: Template DONNA Panel Shell V1
+
+**Files created:**
+- `src/components/templates/TemplateDonnaPanel.tsx` — Reusable DONNA panel for all template pages. Client component. Accepts `mode` prop (10 modes: home, class_library, fitness_library, class_create, fitness_create, class_detail, fitness_detail, coach_preview, impact, suggestions). Each mode has a context-aware prompt message and 3–4 quick action links. Sticky right panel (hidden below lg breakpoint). Active badge, quick actions list, and controlled text input.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 921: Templates Home Screenshot Match V1
 
 **Files modified:**
