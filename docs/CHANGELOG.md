@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-18 — Sprint 972: Template Schema Migration Draft V1
+
+**Files created:**
+- `supabase/migrations/067_template_schema_extension.sql` — Full schema extension for the Curriculum-Aware Template System.
+
+**Tables extended (ADD COLUMN IF NOT EXISTS throughout):**
+- `templates` -- 10 new columns: `template_type` (TEXT, CHECK class_template/fitness_template), `status` (TEXT NOT NULL DEFAULT 'draft', CHECK draft/needs_review/ready/archived), `curriculum_stage_key`, `curriculum_level_key`, `curriculum_source_label`, `template_goal`, `pathway_focus`, `approved_by` (UUID FK -> profiles), `approved_at`, `archived_at`. Two new indexes: `idx_templates_type_status`, `idx_templates_curriculum_stage`.
+- `template_blocks` -- 6 new columns: `curriculum_connection`, `coach_watch_for`, `fitness_block_type`, `intensity_level`, `load_level`, `source_snapshot` (JSONB DEFAULT '{}'). Note: `order_index` already existed -- not re-added. Note: existing `type` column (block_type enum) is preserved; `fitness_block_type` TEXT is separate.
+- `template_block_exercises` -- 10 new columns: `exercise_label`, `category`, `sets_reps_duration`, `load_level`, `tennis_transfer`, `progression`, `regression`, `equipment`, `coaching_cue`, `source_snapshot` (JSONB DEFAULT '{}').
+- `curriculum_class_template_blocks` -- 5 new columns: `curriculum_level_key`, `assessment_gate_label`, `player_mission_label`, `coach_watch_for`, `source_snapshot` (JSONB DEFAULT '{}').
+
+**Tables created:**
+- `template_review_requests` -- UI-originated template lifecycle table (separate from voice-command `proposed_actions`). Fields: id, academy_id, template_id, template_draft (JSONB), request_type (create/update/archive/duplicate), status (pending/approved/rejected/cancelled), requested_by, reviewed_by, reviewed_at, review_notes, proposed_action_id (nullable back-link), created_at, updated_at. 5 indexes. `update_updated_at()` trigger. RLS enabled with 3 policies: directors/head_coaches SELECT, directors/head_coaches INSERT, directors-only UPDATE.
+- `template_version_history` -- append-only audit trail. Fields: id, academy_id, template_id, version_number, change_type, snapshot (JSONB), changed_by, created_at. UNIQUE (template_id, version_number). 2 indexes. RLS enabled with SELECT (directors/head_coaches) and INSERT (directors only). No UPDATE/DELETE policies (append-only enforcement).
+
+**RLS policies added:** 5 total across 2 new tables. No existing policies touched.
+
+**Migration status: DRAFT ONLY -- not applied to any database.**
+**This migration requires explicit approval and `supabase db push` or SQL Editor apply before it takes effect.**
+
+**TypeScript:** CLEAN (no app code changes)
+
+---
+
 ## 2026-05-18 — Sprint 971: Template Backend Wiring Architecture Audit V1
 
 **Files created:**
