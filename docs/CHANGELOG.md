@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 929: Template Coach Preview V1
+
+**Files created:**
+- `src/app/director/templates/coach-preview/page.tsx` — Coach-facing template preview page. "Director Preview Mode" badge. Session brief card (name, goal, duration, group size, level, block timeline), per-block cards (type chip, today's focus, numbered steps, watch-fors in lime), player notes section, DONNA coach quick actions panel. Low cognitive load — no admin complexity. Right TemplateDonnaPanel mode=coach_preview.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 928: Fitness Template Detail Editor V1
 
 **Files created:**
