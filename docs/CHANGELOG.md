@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1011: DONNA Context Map V1
+
+**Files created:**
+- `docs/DONNA_CONTEXT_MAP_1011.md` — Full context source inventory for DONNA: Sessions, Templates, Review Queue, Coach Wrap-Ups, Player Profiles, Curriculum, Evidence Drafts, Attendance Drafts, Parent-Safe Drafts. Each signal mapped to source, availability, role visibility, confidence, and risk. Future backend needs table. Existing context infrastructure inventory.
+
+**TypeScript:** Clean (no code files changed).
+
+---
+
 ## 2026-05-18 — Sprint 1010: DONNA Empty Error Safety States V1
 
 **Files created:**
