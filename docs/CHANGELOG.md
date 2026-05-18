@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1032: DONNA Conversational Session Memory V1
+
+**Files created:**
+- `src/lib/donna/donnaChatSessionMemory.ts` — In-session chat thread memory: DonnaChatSessionState (turns, topicsDiscussed, actionsDispatched), recordTurn, getConversationContextSummary, syncChatMessages (from ChatMessage[]), getContextualPrefix for follow-up answers, hasCoveredTopic / hasDispatchedAction guards. Pure in-memory — no DB.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1031: DONNA Suggested Follow Up Questions V1
 
 **Files created:**
