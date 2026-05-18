@@ -43,6 +43,19 @@ interface Block {
   type: string
   title: string
   durationMin: number
+  autoSuggested?: boolean
+}
+
+// Map block recommendation types to the supported class block type IDs
+const REC_TYPE_TO_BLOCK_TYPE: Record<string, string> = {
+  warm_up: 'warm_up',
+  technical: 'technical',
+  tactical: 'tactical',
+  fitness: 'physical',
+  competition: 'match_play',
+  mental: 'tactical',
+  movement: 'warm_up',
+  cool_down: 'cool_down',
 }
 
 const DRILL_SUGGESTIONS: Record<string, string[]> = {
@@ -68,6 +81,22 @@ export default function CreateClassTemplatePage() {
     ? getRecommendedBlocksForStage(toBlockStageKey(stage), 75)
     : null
   const sessionDuration = stage ? SESSION_DURATION_BY_STAGE[stage] : null
+
+  function autoPopulateFromCurriculum() {
+    if (!recommendedBlocks) return
+    const autoBlocks: Block[] = recommendedBlocks.blocks.map((b, i) => {
+      const mappedType = REC_TYPE_TO_BLOCK_TYPE[b.type] ?? 'technical'
+      const typeInfo = BLOCK_TYPES.find(bt => bt.id === mappedType)
+      return {
+        id: `auto-${i}-${Date.now()}`,
+        type: mappedType,
+        title: b.name,
+        durationMin: b.suggestedDurationMin,
+        autoSuggested: true,
+      }
+    })
+    setBlocks(autoBlocks)
+  }
 
   function addBlock(typeId: string) {
     const typeInfo = BLOCK_TYPES.find(b => b.id === typeId)
@@ -295,8 +324,31 @@ export default function CreateClassTemplatePage() {
             <div className="space-y-5">
               <div>
                 <h2 className="text-base font-bold text-text-primary mb-1">Build Session Blocks</h2>
-                <p className="text-sm text-text-secondary">Add blocks to define the structure of this template.</p>
+                <p className="text-sm text-text-secondary">
+                  Add blocks to define the structure of this template.
+                  {selectedLevel && <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-lime/20 bg-lime/8 text-lime">{selectedLevel}</span>}
+                </p>
               </div>
+
+              {/* Auto-populate from curriculum */}
+              {recommendedBlocks && blocks.length === 0 && (
+                <div className="flex items-start gap-3 p-4 rounded-xl border border-lime/20 bg-lime/5">
+                  <Sparkles className="w-4 h-4 text-lime shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-text-primary mb-0.5">Curriculum-suggested structure available</p>
+                    <p className="text-xs text-text-secondary leading-relaxed mb-3">
+                      Based on <span className="text-lime font-medium">{selectedLevel}</span>, DONNA suggests {recommendedBlocks.blocks.length} blocks ({recommendedBlocks.totalSessionMin}min). You can use these as a starting point and edit freely.
+                    </p>
+                    <button
+                      onClick={autoPopulateFromCurriculum}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-lime/25 bg-lime/10 text-xs font-medium text-lime hover:bg-lime/15 transition-all duration-100"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Auto-suggest blocks from curriculum
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Block types to add */}
               <div>
@@ -334,6 +386,11 @@ export default function CreateClassTemplatePage() {
                         <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border shrink-0 ${typeInfo?.color ?? ''}`}>
                           {block.title}
                         </span>
+                        {block.autoSuggested && (
+                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-medium border border-lime/15 bg-lime/6 text-lime/70">
+                            curriculum
+                          </span>
+                        )}
                         <div className="flex items-center gap-1 ml-auto shrink-0">
                           <button
                             onClick={() => setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, durationMin: Math.max(5, b.durationMin - 5) } : b))}

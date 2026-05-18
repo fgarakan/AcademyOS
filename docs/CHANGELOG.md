@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 937: Class Template Auto-Populated Blocks V1
+
+**Files modified:**
+- `src/app/director/templates/class/create/page.tsx` — Added `autoSuggested` flag to `Block` type. `REC_TYPE_TO_BLOCK_TYPE` maps `curriculumBlockRecommendations` block types to supported class block IDs. `autoPopulateFromCurriculum()` pre-fills Step 3 blocks from curriculum stage data. Step 3 shows a DONNA-branded "Auto-suggest blocks from curriculum" card when no blocks added; auto-suggested blocks display a "curriculum" badge.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 936: Class Template Curriculum Pull Preview V1
 
 **Files modified:**
