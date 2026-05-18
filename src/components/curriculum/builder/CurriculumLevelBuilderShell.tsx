@@ -236,16 +236,38 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
             </button>
           </div>
           {levelGates.length === 0 ? (
-            <div className="rounded-xl border border-border border-dashed p-6 text-center">
-              <p className="text-[12px] text-text-secondary">No gates at this level yet.</p>
+            <div className="rounded-xl border border-border border-dashed p-6 text-center space-y-2">
+              <Shield className="w-5 h-5 text-text-muted mx-auto" />
+              <p className="text-[12px] text-text-secondary">No assessment gates at this level yet.</p>
+              <p className="text-[11px] text-text-muted">Gates define measurable pass criteria before a player can advance. Ask DONNA to draft the first gate.</p>
             </div>
           ) : (
             <div className="space-y-2">
               {levelGates.map(gate => (
-                <div key={gate.id} className="rounded-xl border border-border bg-surface-raised px-4 py-3">
-                  <p className="text-[12px] font-semibold text-text-primary">{gate.criterion}</p>
-                  <p className="text-[11px] text-text-muted mt-0.5">{gate.domain} · {gate.gate_type}</p>
-                  <p className="text-[11px] text-text-secondary mt-1">{gate.threshold}</p>
+                <div key={gate.id} className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold text-text-primary">{gate.criterion}</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border text-text-muted border-border">{gate.domain}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border text-text-muted border-border">{gate.gate_type}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border text-text-muted border-border">{gate.evaluator}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-[10px] text-text-muted font-medium">Threshold</p>
+                      <p className="text-[11px] text-text-secondary">{gate.threshold}</p>
+                    </div>
+                    {gate.recording_method && (
+                      <div>
+                        <p className="text-[10px] text-text-muted font-medium">Recording</p>
+                        <p className="text-[11px] text-text-secondary">{gate.recording_method}</p>
+                      </div>
+                    )}
+                  </div>
+                  {gate.notes && <p className="text-[10px] text-text-muted italic">{gate.notes}</p>}
                 </div>
               ))}
             </div>
