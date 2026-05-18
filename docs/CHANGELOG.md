@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 842: Curriculum Sidebar Builder Route Fix V1
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — Changed Curriculum nav item href from `/director/curriculum` to `/director/curriculum/builder`. Old `/director/curriculum` page remains available and already contains a prominent "Open Curriculum Builder" link.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 841: Curriculum Builder Screenshot Match Polish V1
 
 **Files modified:**
