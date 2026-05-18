@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 998: Parent-Safe Draft Summary V1
+
+**Files created:**
+- `src/components/coach/CoachParentSafeDraftCard.tsx` — Parent-safe session summary draft card: status pill (draft/pending_approval/approved/rejected/sent), internal-only lock notice when not yet approved, sections list (parent-facing text only), coach note (internal/italic/never sent), director feedback box on rejection or approval, safety notice ("Nothing is sent to parents automatically"), generated timestamp footer. List component with pending-count banner.
+
+**Docs created:**
+- `docs/PARENT_SAFE_DRAFT_998.md`
+
+---
+
 ## 2026-05-18 — Sprint 997: Curriculum Evidence Draft Links V1
 
 **Files created:**
