@@ -449,14 +449,13 @@ export default async function TemplateCoachPreviewPage({ searchParams }: PagePro
               'Flag a player concern',
               'Note a highlight',
             ].map(action => (
-              <button
+              <span
                 key={action}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-lime/20 bg-lime/5 text-xs text-lime hover:bg-lime/10 transition-all duration-100"
-                onClick={() => {}}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-lime/20 bg-lime/5 text-xs text-lime"
               >
                 <LayoutTemplate className="w-3 h-3" />
                 {action}
-              </button>
+              </span>
             ))}
           </div>
           <p className="text-[10px] text-text-muted">Coach-facing DONNA quick actions — director review required before any changes apply.</p>

@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-18 — Sprint 1001: Coach Portal Gap Audit and Runtime Fix V1
+
+**Files created:**
+- `docs/COACH_PORTAL_GAP_AUDIT_1001.md` — Six-part audit: gap extraction from Sprint 1000, runtime error root cause and fix, prototype workflow audit (zip not found — based on sprint prompt screen names), UI coverage table for all coach routes/components, explicit defer list, and recommended Sprint 1002-1015 block.
+
+**Files modified:**
+- `src/app/director/templates/coach-preview/page.tsx` — Removed `onClick={() => {}}` from four demo DONNA quick-action chip buttons. Converted `<button>` to `<span>` elements. Fixes the "Event handlers cannot be passed to Client Component props" runtime error on all coach-preview routes.
+
+**TypeScript:** Clean — no errors.
+
+---
+
 ## 2026-05-18 — Sprint 1000: Coach Evidence Loop Completion Audit V1
 
 **Docs created:**
