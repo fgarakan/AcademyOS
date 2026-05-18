@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 1009: DONNA Permission-Aware Quick Actions V1
+
+**Files created:**
+- `src/lib/donna/donnaQuickActions.ts` — Role-scoped quick action definitions: 7 director actions (all safe_read), 7 coach actions (5 safe/draft, 2 explicitly blocked with explanations). Helpers: getQuickActionsForRole, isQuickActionAllowed, getSafeQuickActions.
+- `docs/DONNA_PERMISSION_AWARE_QUICK_ACTIONS_1009.md` — Action category table and helper docs.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1008: Coach DONNA Wrap-Up Final Form V1
 
 **Files created:**
