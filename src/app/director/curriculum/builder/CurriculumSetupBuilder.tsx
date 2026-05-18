@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Sparkles, Shield, CheckCircle2, ChevronRight, BookOpen, Pencil, X, Settings } from 'lucide-react'
 import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes'
 import type { CurriculumLevel } from '@/lib/backend/curriculumExplorer'
+import { CurriculumKeyboardHintBar } from '@/components/curriculum/builder/CurriculumKeyboardHintBar'
 
 interface Props {
   initialState: CurriculumSetupState
@@ -319,6 +320,11 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── Keyboard shortcuts (desktop only) ─────────── */}
+        <div className="mb-6">
+          <CurriculumKeyboardHintBar onJumpToLevel={() => setJumpOpen(true)} />
         </div>
 
         {/* ── Safety Footer ─────────────────────────────── */}
