@@ -1,19 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, BookOpen, Target, Dumbbell, MessageSquare } from 'lucide-react'
+import { Sparkles, BookOpen, Target, Shield, Dumbbell, MessageSquare } from 'lucide-react'
 import type { CurriculumExplorerData, CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 import { CurriculumLevelDetailPanel } from '@/components/curriculum/CurriculumLevelDetailPanel'
 import { DonnaAddDrillDraft } from './DonnaAddDrillDraft'
 import { DonnaAddAssessmentGateDraft } from './DonnaAddAssessmentGateDraft'
 import { DonnaAddFitnessExerciseDraft } from './DonnaAddFitnessExerciseDraft'
+import { DonnaCurriculumContextPanel } from './DonnaCurriculumContextPanel'
+import { DonnaSafetyDisclosure } from './DonnaSafetyDisclosure'
 
 type Tab = 'overview' | 'drills' | 'gates' | 'fitness' | 'language'
 
 const TABS: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'overview',  label: 'Overview',  Icon: BookOpen },
   { id: 'drills',    label: 'Drills',    Icon: Target },
-  { id: 'gates',     label: 'Gates',     Icon: Target },
+  { id: 'gates',     label: 'Gates',     Icon: Shield },
   { id: 'fitness',   label: 'Fitness',   Icon: Dumbbell },
   { id: 'language',  label: 'Language',  Icon: MessageSquare },
 ]
@@ -59,16 +61,24 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
 
       {/* Tab content */}
       {tab === 'overview' && (
-        <CurriculumLevelDetailPanel
-          level={level}
-          gates={levelGates}
-          drills={levelDrills}
-          coachLanguage={levelLanguage}
-          competition={competition}
-          fitness={fitness}
-          volume={volume}
-          tablesAvailable={data.tablesAvailable}
-        />
+        <div className="space-y-4">
+          <CurriculumLevelDetailPanel
+            level={level}
+            gates={levelGates}
+            drills={levelDrills}
+            coachLanguage={levelLanguage}
+            competition={competition}
+            fitness={fitness}
+            volume={volume}
+            tablesAvailable={data.tablesAvailable}
+          />
+          <DonnaCurriculumContextPanel
+            level={level}
+            drillCount={levelDrills.length}
+            gateCount={levelGates.length}
+          />
+          <DonnaSafetyDisclosure context="level_edit" />
+        </div>
       )}
 
       {tab === 'drills' && (
