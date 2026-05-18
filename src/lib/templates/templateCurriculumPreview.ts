@@ -180,6 +180,54 @@ export const SESSION_DURATION_BY_STAGE: Record<BallStage, string> = {
   'High Performance': '120 – 150 min',
 }
 
+// Curriculum drill suggestions keyed by [stage][block_type]
+export const CURRICULUM_DRILLS_BY_STAGE: Record<BallStage, Record<string, string[]>> = {
+  'Red Ball': {
+    warm_up: ['Mini footwork ladder', 'Skip and hop relay', 'Cooperative toss and catch'],
+    technical: ['Feed-and-catch rally', 'Grip check drill', 'Contact point shadow swing'],
+    tactical: ['Target cone game', 'Directional mini-court game'],
+    physical: ['Animal walks circuit', 'Reaction game with cones'],
+    match_play: ['First-to-3 mini-court game', 'Cooperative rally challenge'],
+    cool_down: ['Gentle shake-out stretch', 'Circle team huddle'],
+  },
+  'Orange Ball': {
+    warm_up: ['Split-step ladder', 'Shadow footwork drill', 'Mini cooperative rally 5-in-a-row'],
+    technical: ['Cross-court consistency feed', 'Down-the-line rally target', 'Contact zone cones'],
+    tactical: ['Open court game', 'Cross-court vs down-the-line decision'],
+    physical: ['Bodyweight strength circuit', 'Court sprint 4-point drill'],
+    match_play: ['First-to-5 points short-court', 'Serve-and-return game'],
+    cool_down: ['Static partner stretch', 'Team debrief one-word win'],
+  },
+  'Green Ball': {
+    warm_up: ['Dynamic stretch + split-step', 'Baseline shadow movement', 'Light rally warm-up'],
+    technical: ['Serve placement — T, body, wide', 'Return-plus-one pattern', 'Approach + first volley'],
+    tactical: ['Serve-plus-one pattern play', 'Pass-or-lob decision drill', 'Pattern game: open court or down the line'],
+    physical: ['Court sprint + change of direction', 'Agility ladder tennis footwork'],
+    match_play: ['Pressure tiebreak 7-point', 'Sets play with score management'],
+    cool_down: ['Active recovery rally', 'Session debrief: what improved'],
+  },
+  'Yellow Ball': {
+    warm_up: ['Serve warm-up routine', 'Court positioning + shadow', 'Light rally building pace'],
+    technical: ['Inside-out forehand pattern', 'Kick serve target drill', 'Slice approach + volley'],
+    tactical: ['Serve-plus-one dominance drill', 'Second serve tactics game', 'Match-play scenario: 0-30 down'],
+    physical: ['Periodized sprint interval', 'Agility + strength circuit'],
+    match_play: ['Full set play', 'Pressure scoring: only winner wins point'],
+    cool_down: ['Structured cool-down', 'RPE + one-sentence session feedback'],
+  },
+  'High Performance': {
+    warm_up: ['Individualized activation protocol', 'Serve + return warm-up', 'Movement priming sequence'],
+    technical: ['Weapon sharpening drill: high-margin execution', 'Multi-ball precision feeding', 'Pattern refinement under pace'],
+    tactical: ['Opponent-specific game plan drill', 'Situational tiebreak scenarios', 'Elite serve plus one at pace'],
+    physical: ['Periodized sprint mechanics', 'Injury prevention circuit', 'Load tracking + strength work'],
+    match_play: ['Consequence scoring match', 'Full set with coach debrief after each game', 'Pressure tiebreaks at match pace'],
+    cool_down: ['Recovery protocol', 'RPE + session feedback + load note'],
+  },
+}
+
+export function getCurriculumDrillsForBlock(stage: BallStage, blockType: string): string[] {
+  return CURRICULUM_DRILLS_BY_STAGE[stage]?.[blockType] ?? []
+}
+
 export const GOALS_BY_STAGE: Record<BallStage, string[]> = {
   'Red Ball': [
     'Cooperative rally — 5 consecutive on mini court',

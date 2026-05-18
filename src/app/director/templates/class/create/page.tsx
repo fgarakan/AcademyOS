@@ -11,6 +11,7 @@ import {
   toBlockStageKey,
   SESSION_DURATION_BY_STAGE,
   GOALS_BY_STAGE,
+  getCurriculumDrillsForBlock,
 } from '@/lib/templates/templateCurriculumPreview'
 import { getRecommendedBlocksForStage } from '@/lib/templates/curriculumBlockRecommendations'
 
@@ -425,7 +426,14 @@ export default function CreateClassTemplatePage() {
             <div className="space-y-5">
               <div>
                 <h2 className="text-base font-bold text-text-primary mb-1">Add Drills to Each Block</h2>
-                <p className="text-sm text-text-secondary">Select drills from the suggestions below or add custom ones later.</p>
+                <p className="text-sm text-text-secondary">
+                  Select drills from the suggestions below or add custom ones later.
+                  {selectedLevel && stage && (
+                    <span className="ml-2 text-[11px] text-lime/70 font-medium">
+                      Showing drills from {selectedLevel} curriculum
+                    </span>
+                  )}
+                </p>
               </div>
 
               {blocks.length === 0 ? (
@@ -436,15 +444,23 @@ export default function CreateClassTemplatePage() {
                 <div className="space-y-4">
                   {blocks.map(block => {
                     const typeInfo = BLOCK_TYPES.find(b => b.id === block.type)
-                    const suggestions = DRILL_SUGGESTIONS[block.type] ?? []
+                    const curriculumDrills = stage ? getCurriculumDrillsForBlock(stage, block.type) : []
+                    const fallbackDrills = DRILL_SUGGESTIONS[block.type] ?? []
+                    const suggestions = curriculumDrills.length > 0 ? curriculumDrills : fallbackDrills
+                    const fromCurriculum = curriculumDrills.length > 0
                     const blockDrills = selectedDrills[block.id] ?? []
                     return (
                       <div key={block.id} className="rounded-xl border border-border p-4 space-y-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium border ${typeInfo?.color ?? ''}`}>
                             {block.title}
                           </span>
                           <span className="text-[11px] text-text-muted">{block.durationMin}min</span>
+                          {fromCurriculum && (
+                            <span className="text-[10px] text-lime/70 border border-lime/15 bg-lime/5 px-1.5 py-0.5 rounded-md">
+                              Recommended from {selectedLevel} curriculum
+                            </span>
+                          )}
                           {blockDrills.length > 0 && (
                             <span className="ml-auto text-[10px] text-status-green">{blockDrills.length} selected</span>
                           )}

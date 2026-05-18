@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 938: Class Template Recommended Drills From Curriculum V1
+
+**Files modified:**
+- `src/lib/templates/templateCurriculumPreview.ts` — Added `CURRICULUM_DRILLS_BY_STAGE`: drill suggestions keyed by `[BallStage][block_type]` for all 5 stages and 6 block types. Added `getCurriculumDrillsForBlock(stage, blockType)` helper.
+- `src/app/director/templates/class/create/page.tsx` — Step 4 now uses `getCurriculumDrillsForBlock` to fetch level-specific drills per block. Falls back to generic `DRILL_SUGGESTIONS` when no curriculum drills exist. Shows "Recommended from Orange Ball 2 curriculum" label on each block when curriculum drills are active.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 937: Class Template Auto-Populated Blocks V1
 
 **Files modified:**
