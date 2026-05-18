@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-18 — Sprint 1046: DONNA Review Brief Panel V1
+
+**Files created:**
+- `src/app/director/review/DonnaReviewBriefPanel.tsx` — DONNA-guided summary panel for the Director Review Queue. Shows total pending count, urgency, per-section breakdown chips, and a recommended "Start here" action. Urgency logic: stale (7+ days) > wrap-ups > attendance > parent comms > player updates > curriculum/session. Safety notice: "Nothing is applied automatically."
+- `docs/DONNA_REVIEW_BRIEF_PANEL_1046.md` — sprint doc.
+
+**Files modified:**
+- `src/app/director/review/page.tsx` — imported `DonnaReviewBriefPanel`, computed `staleDaysMaxValue` (max of oldest-pending-days across all sections), inserted panel between page header and section summary cards.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1045: DONNA Final Connected UX Audit V1
 
 **Files created:**

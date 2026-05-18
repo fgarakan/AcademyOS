@@ -43,6 +43,7 @@ import type { CoachCurriculumSuggestionItem } from './CoachCurriculumSuggestionC
 import type { DonnaDraftItem } from './DonnaDraftCard'
 import { loadWrapUpReviewSurface } from '@/lib/donna/wrapUpReviewSurfaceLoader'
 import { WrapUpCoveragePanel } from './WrapUpCoveragePanel'
+import { DonnaReviewBriefPanel } from './DonnaReviewBriefPanel'
 
 const VALID_TAB_PARAMS: Record<string, string> = {
   // Director-facing section names (Sprint 247)
@@ -1219,6 +1220,12 @@ export default async function DirectorReviewQueuePage({
     ...pendingCurriculumOverrideDrafts,
   ])
 
+  // Stale max — oldest pending item across all sections
+  const staleDaysMax = [needsApprovalOldestDays, playerUpdatesOldestDays, curriculumSessionOldestDays]
+    .filter((d): d is number => d !== null)
+    .reduce((max, d) => Math.max(max, d), -1)
+  const staleDaysMaxValue = staleDaysMax >= 0 ? staleDaysMax : null
+
   // Default tab — first section with pending items, fallback to needs_approval
   const defaultTab = [
     { value: 'needs_approval', pending: needsApprovalPending },
@@ -1256,6 +1263,19 @@ export default async function DirectorReviewQueuePage({
           Nothing parent-facing or player-level-changing is applied without your approval.
         </p>
       </div>
+
+      {/* DONNA review brief panel — Sprint 1046 */}
+      <DonnaReviewBriefPanel
+        totalPending={needsApprovalPending + playerUpdatesPending + curriculumSessionPending}
+        needsApprovalCount={needsApprovalPending}
+        playerUpdatesCount={playerUpdatesPending}
+        curriculumSessionCount={curriculumSessionPending}
+        readyToApplyCount={needsApprovalReady + playerUpdatesReady + curriculumSessionReady}
+        staleDaysMax={staleDaysMaxValue}
+        wrapUpsPending={pendingWrapUpDrafts.length}
+        attendanceCount={pendingAttendanceDrafts.length}
+        parentCommCount={parentCommDrafts.length}
+      />
 
       {/* Section summary cards — Sprint 662: now clickable links to respective tabs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
