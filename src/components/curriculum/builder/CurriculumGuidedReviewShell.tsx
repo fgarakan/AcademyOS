@@ -8,12 +8,29 @@ import { CurriculumProgressRail } from './CurriculumProgressRail'
 import { CurriculumJumpToLevelModal } from './CurriculumJumpToLevelModal'
 import { DonnaSafetyDisclosure } from './DonnaSafetyDisclosure'
 
-const DONNA_STAGE_TIPS: Record<string, string> = {
-  red_foundation:     "Red Ball is where players build fundamental movement and spatial awareness. Check that gates test ABC footwork and bounce-turn mechanics. Drills should be short, playful, and repetitive.",
-  orange_development: "Orange Ball players are learning real tennis patterns. Gates should include forehand and backhand groundstrokes from center court. Drills should introduce directional consistency.",
-  green_performance:  "Green Ball is where tactical thinking begins. Look for gates that test rally depth and serve introduction. Drills should include crosscourt patterns and first-ball offense.",
-  yellow_competitive: "Yellow Ball players are competing. Gates should cover serve, return, net approach, and match-play situations. Drills should simulate real match scenarios.",
-  high_performance:   "High Performance is elite development. Gates should be rigorous — UTR-referenced, measurable, and objective. Drills should address competitive pressure and technical refinement.",
+type DonnaTip = { question: string; why: string }
+
+const DONNA_STAGE_TIPS: Record<string, DonnaTip> = {
+  red_foundation: {
+    question: "Does this level have enough short, playful drills and at least one footwork gate?",
+    why: "Red Ball players need repetition and fun to build spatial awareness. Without a footwork gate, coaches have no objective benchmark to advance players.",
+  },
+  orange_development: {
+    question: "Do the gates measure forehand and backhand groundstroke consistency from center court?",
+    why: "Orange Ball is the first stage with real tennis patterns. If gates don't measure groundstrokes, coaches can't confirm technical readiness before advancing players.",
+  },
+  green_performance: {
+    question: "Is there at least one gate for rally depth and one for serve introduction?",
+    why: "Green Ball is where tactical thinking begins. Serve and depth gates are the minimum needed to confirm a player is ready for full-court yellow ball play.",
+  },
+  yellow_competitive: {
+    question: "Do the drills simulate real match situations — serve, return, net approach?",
+    why: "Yellow Ball players are competing in tournaments. Practice that doesn't mirror match reality doesn't prepare them for those moments.",
+  },
+  high_performance: {
+    question: "Are the gates rigorous, measurable, and objective — not just coach feel?",
+    why: "High Performance decisions affect player trajectories. Gates need to be defensible to players, parents, and external evaluators.",
+  },
 }
 
 interface Props {
@@ -109,21 +126,30 @@ export function CurriculumGuidedReviewShell({ data }: Props) {
         </div>
 
         {/* DONNA guidance for this level */}
-        {!donnaDismissed.has(currentIndex) && DONNA_STAGE_TIPS[level.stage ?? ''] && (
-          <div className="mx-5 mt-4 rounded-xl p-4 flex items-start gap-3" style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.14)' }}>
-            <Sparkles className="w-4 h-4 text-lime shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold text-lime mb-1">DONNA — What to look for</p>
-              <p className="text-[11px] text-text-secondary leading-relaxed">{DONNA_STAGE_TIPS[level.stage ?? '']}</p>
+        {!donnaDismissed.has(currentIndex) && DONNA_STAGE_TIPS[level.stage ?? ''] && (() => {
+          const tip = DONNA_STAGE_TIPS[level.stage ?? '']!
+          return (
+            <div className="mx-5 mt-4 rounded-xl p-4" style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.14)' }}>
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+                  <p className="text-[11px] font-semibold text-lime">DONNA asks</p>
+                </div>
+                <button
+                  onClick={() => setDonnaDismissed(prev => new Set(Array.from(prev).concat(currentIndex)))}
+                  className="text-text-muted hover:text-text-secondary transition-colors shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <p className="text-[12px] font-medium text-text-primary mb-2">{tip.question}</p>
+              <p className="text-[11px] text-text-muted leading-relaxed">
+                <span className="text-text-secondary font-medium">Why this matters: </span>
+                {tip.why}
+              </p>
             </div>
-            <button
-              onClick={() => setDonnaDismissed(prev => new Set(Array.from(prev).concat(currentIndex)))}
-              className="text-text-muted hover:text-text-secondary transition-colors shrink-0"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
+          )
+        })()}
 
         <div className="p-5">
           <CurriculumLevelDetailPanel
