@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1021: DONNA Safe Read Actions V1
+
+**Files created:**
+- `src/lib/donna/donnaSafeReadActions.ts` — Executable safe-read handlers for DONNA: answerSummarizeToday, answerShowPendingReviews, answerAcademyRisks (director), answerCoachSessionStatus, answerCoachWrapUpStatus (coach). All return DonnaSafeReadAnswer with text, confidence, sourceNote, followUp, href. Role-aware dispatchSafeReadAction dispatcher.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1020: DONNA Action Classification V1
 
 **Files created:**
