@@ -260,6 +260,35 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
           </div>
         )}
 
+        {/* Review queue handoff preview */}
+        <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
+          <h2 className="text-sm font-bold text-text-primary flex items-center gap-2">
+            <Dumbbell className="w-4 h-4 text-status-purple" />
+            Review Queue Handoff
+          </h2>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            When submitted for review, this fitness template enters the Director Review Queue. Load management and tennis transfer alignment are verified before approval.
+          </p>
+          <div className="space-y-2">
+            {[
+              { step: '1', label: 'Submit for Review', desc: 'Template locked — exercises and load reviewed', color: 'text-status-purple border-status-purple/20 bg-status-purple/5' },
+              { step: '2', label: 'Director Reviews', desc: `${template.name} · ${template.load} load · ${template.durationMin}min`, color: 'text-status-orange border-status-orange/20 bg-status-orange/5' },
+              { step: '3', label: 'Approved → Ready', desc: 'Template available in coach session builder', color: 'text-status-green border-status-green/20 bg-status-green/5' },
+            ].map(item => (
+              <div key={item.step} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-surface-raised">
+                <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5 ${item.color}`}>
+                  {item.step}
+                </span>
+                <div>
+                  <p className="text-xs font-semibold text-text-primary">{item.label}</p>
+                  <p className="text-[11px] text-text-muted">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-text-muted">Demo preview — review queue wiring coming in a future sprint. All mutations go through `proposed_actions` in production.</p>
+        </div>
+
         {/* Draft safety panel */}
         <div className="rounded-2xl border border-status-purple/15 bg-status-purple/4 p-5 space-y-3">
           <div className="flex items-center gap-2">

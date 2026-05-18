@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 957: Template Review Queue Handoff Preview V1
+
+**Files modified:**
+- `src/app/director/templates/class/[templateId]/page.tsx` — Added "Review Queue Handoff" card (3-step flow: Submit → Director Reviews with template name/level/duration → Approved/Ready). Shows `proposed_actions` disclaimer. Inserted before the Draft Safety panel.
+- `src/app/director/templates/fitness/[templateId]/page.tsx` — Same pattern with fitness-specific step descriptions (load management review, tennis transfer alignment, session builder availability).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 956: Template Save Draft Placeholder Flow V1
 
 **Files modified:**

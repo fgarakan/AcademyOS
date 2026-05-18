@@ -210,6 +210,35 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
           </div>
         )}
 
+        {/* Review queue handoff preview */}
+        <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
+          <h2 className="text-sm font-bold text-text-primary flex items-center gap-2">
+            <LayoutTemplate className="w-4 h-4 text-lime" />
+            Review Queue Handoff
+          </h2>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            When submitted for review, this template enters the Director Review Queue as a proposed action. No sessions can be created until approved.
+          </p>
+          <div className="space-y-2">
+            {[
+              { step: '1', label: 'Submit for Review', desc: 'Template is locked — no edits during review', color: 'text-lime border-lime/20 bg-lime/5' },
+              { step: '2', label: 'Director Reviews', desc: `${template.name} · ${template.level} · ${template.durationMin}min`, color: 'text-status-orange border-status-orange/20 bg-status-orange/5' },
+              { step: '3', label: 'Approved → Ready', desc: 'Template unlocked for session creation', color: 'text-status-green border-status-green/20 bg-status-green/5' },
+            ].map(item => (
+              <div key={item.step} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-surface-raised">
+                <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5 ${item.color}`}>
+                  {item.step}
+                </span>
+                <div>
+                  <p className="text-xs font-semibold text-text-primary">{item.label}</p>
+                  <p className="text-[11px] text-text-muted">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-text-muted">Demo preview — review queue wiring coming in a future sprint. All mutations go through `proposed_actions` in production.</p>
+        </div>
+
         {/* Draft safety panel */}
         <div className="rounded-2xl border border-lime/15 bg-lime/4 p-5 space-y-3">
           <div className="flex items-center gap-2">
