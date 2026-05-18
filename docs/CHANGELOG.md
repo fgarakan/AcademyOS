@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-18 — Sprint 1043: DONNA Navigation Entry Points V1
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — added DONNA (Sparkles icon) to `ACADEMY_ITEMS` at position 2 (after Dashboard), linking to `/director/donna`.
+- `src/app/coach/page.tsx` — DONNA block upgraded to tappable card with Coach role badge + ChevronRight (→ `/coach/donna`); "Ask DONNA" tile added to Quick Actions grid spanning full width.
+
+**Files created:**
+- `docs/DONNA_NAVIGATION_ENTRY_POINTS_1043.md` — navigation audit document.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1042: DONNA Coach Wrap-Up Integration Polish V1
 
 **Files modified:**

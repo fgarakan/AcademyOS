@@ -4,13 +4,14 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, BookOpen, Calendar, Sun,
-  LogOut, ClipboardList,
+  LogOut, ClipboardList, Sparkles,
   LayoutTemplate, Terminal, Activity, Settings, Rocket, BarChart2, UserCog,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
 const ACADEMY_ITEMS = [
   { label: 'Dashboard',    href: '/director',                 icon: LayoutDashboard },
+  { label: 'DONNA',        href: '/director/donna',           icon: Sparkles },
   { label: "Today's Academy", href: '/director/today',        icon: Sun },
   { label: 'Players',      href: '/director/players',         icon: Users },
   { label: 'Coaches',      href: '/director/coaches',         icon: UserCog },

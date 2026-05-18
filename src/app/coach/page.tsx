@@ -369,24 +369,28 @@ export default async function CoachHome() {
       </div>
 
       {/* ── DONNA Coach Assistant ─────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-surface p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
-            <Sparkles className="w-3.5 h-3.5 text-lime" />
+      <Link href="/coach/donna" className="group block rounded-2xl border border-status-blue/20 bg-surface hover:border-status-blue/40 hover:bg-surface-raised transition-all p-4 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-status-blue/10 border border-status-blue/20 flex items-center justify-center shrink-0 group-hover:bg-status-blue/20 transition-colors">
+              <Sparkles className="w-3.5 h-3.5 text-status-blue" />
+            </div>
+            <p className="text-sm font-semibold text-text-primary">DONNA</p>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold border bg-status-blue/10 text-status-blue border-status-blue/20">Coach</span>
           </div>
-          <p className="text-sm font-semibold text-text-primary">DONNA</p>
+          <ChevronRight className="w-4 h-4 text-status-blue/40 group-hover:text-status-blue transition-colors" />
         </div>
         <p className="text-xs text-text-secondary leading-relaxed">
           {todaySessions.length > 0
-            ? `You have ${todaySessions.length} session${todaySessions.length !== 1 ? 's' : ''} today. Open a session to run it, capture notes, or wrap up after class.`
-            : 'No sessions scheduled yet today. Your wrap-ups, observations, and notes all enter the director review queue — nothing is sent to parents without approval.'}
+            ? `You have ${todaySessions.length} session${todaySessions.length !== 1 ? 's' : ''} today. Ask DONNA about your sessions, players, or submit your wrap-up.`
+            : 'Ask DONNA about your sessions, players, or wrap-up flow. All notes enter the director review queue.'}
         </p>
         {pendingWrapUpCount > 0 && (
           <p className="text-xs text-status-orange font-medium">
             {pendingWrapUpCount} session{pendingWrapUpCount !== 1 ? 's' : ''} still need{pendingWrapUpCount === 1 ? 's' : ''} a wrap-up.
           </p>
         )}
-      </div>
+      </Link>
 
       {/* ── Quick Actions ─────────────────────────────────────── */}
       <div>
@@ -408,6 +412,18 @@ export default async function CoachHome() {
               </div>
               <span className="text-xs font-medium text-text-secondary text-center leading-tight">My Players</span>
               <ChevronRight className="w-3 h-3 text-text-muted group-hover:text-lime group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </Link>
+          <Link href="/coach/donna" className="block group col-span-2">
+            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-surface border border-status-blue/15 hover:border-status-blue/35 hover:bg-surface-raised transition-all">
+              <div className="w-8 h-8 rounded-xl bg-status-blue/10 border border-status-blue/20 flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4 text-status-blue" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-medium text-text-secondary group-hover:text-text-primary transition-colors">Ask DONNA</span>
+                <p className="text-[10px] text-text-muted">Sessions, players, wrap-up, player watch-fors</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-status-blue/40 group-hover:text-status-blue transition-colors shrink-0" />
             </div>
           </Link>
         </div>
