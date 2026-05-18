@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 967: Fitness Template End-to-End Browser QA V1
+
+**Files created:**
+- `docs/FITNESS_TEMPLATE_E2E_QA_967.md` — Full end-to-end QA checklist for the fitness template system: 5 flows (Templates Home → Fitness Library, Fitness Template Detail, Fitness Template Create, Coach Preview, Impact Preview). Documents DONNA fitness_create panel with Fitness Gaps section, curriculum stage chip on cards, duration/difficulty controls on detail page, review guardrail, and all impact/coach preview URL params.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-18 — Sprint 966: Class Template End-to-End Browser QA V1
 
 **Files created:**
