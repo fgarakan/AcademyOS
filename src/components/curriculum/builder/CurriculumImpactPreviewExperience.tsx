@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Zap, CheckCircle, AlertCircle, Clock, Minus } from 'lucide-react'
+import { ArrowLeft, Zap, CheckCircle, AlertCircle, Clock, Minus, Shield } from 'lucide-react'
 import { CurriculumDonnaPanel } from './CurriculumDonnaPanel'
 
 // ─── Impact card status types ─────────────────────────────────────────────────
@@ -121,6 +122,8 @@ export function CurriculumImpactPreviewExperience() {
   const notAffected  = IMPACT_ITEMS.filter(i => i.status === 'not_affected').length
   const future       = IMPACT_ITEMS.filter(i => i.status === 'future').length
 
+  const [draftSaved, setDraftSaved] = useState(false)
+
   return (
     <div className="animate-fade-in flex gap-6 p-6 items-start">
 
@@ -195,6 +198,76 @@ export function CurriculumImpactPreviewExperience() {
             <span className="text-lime font-semibold">Nothing is applied yet — </span>
             This is a preview only. Use the scope controls below to choose what changes, then approve in the Review Queue.
           </p>
+        </div>
+
+        {/* Scope actions */}
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{ background: 'rgba(0,0,0,0.30)', border: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <div
+            className="px-5 py-3 border-b"
+            style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.15)' }}
+          >
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-text-muted">Apply scope</p>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <p className="text-[11px] text-text-muted leading-relaxed">
+              Choose how broadly this change applies. All apply actions create a proposal in the Review Queue — nothing is committed until a director approves it there.
+            </p>
+
+            {/* Scope buttons */}
+            <div className="space-y-2">
+              {[
+                { label: 'Apply to this level only',           sublabel: 'Scoped to Orange Ball 2 curriculum only' },
+                { label: 'Apply to all Orange Ball 2 groups',  sublabel: 'Affects all coach groups at this level' },
+                { label: 'Apply academy-wide',                 sublabel: 'Curriculum change applies to all levels where eligible' },
+              ].map(({ label, sublabel }) => (
+                <button
+                  key={label}
+                  disabled
+                  className="w-full flex items-start justify-between gap-3 px-4 py-3 rounded-xl text-left transition-opacity cursor-not-allowed opacity-50"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                >
+                  <div>
+                    <p className="text-[12px] font-medium text-text-primary">{label}</p>
+                    <p className="text-[10px] text-text-muted mt-0.5">{sublabel}</p>
+                  </div>
+                  <span
+                    className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap mt-0.5"
+                    style={{ background: 'rgba(255,255,255,0.06)', color: '#555', border: '1px solid rgba(255,255,255,0.10)' }}
+                  >
+                    Goes to Review Queue
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Save draft + cancel */}
+            <div className="flex items-center gap-3 pt-2 border-t border-white/[0.05]">
+              {draftSaved ? (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-3.5 h-3.5 text-status-green shrink-0" />
+                  <p className="text-[11px] text-status-green font-medium">Draft saved — visible in Review Queue</p>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setDraftSaved(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold transition-opacity hover:opacity-80"
+                  style={{ background: '#C8FF00', color: '#0A0A0A' }}
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  Save as Draft
+                </button>
+              )}
+              <Link
+                href="/director/curriculum/builder/add-drill"
+                className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+              >
+                Cancel
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
 

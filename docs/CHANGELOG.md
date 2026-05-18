@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 907: Impact Preview Scope Actions V1
+
+**Files modified:**
+- `src/components/curriculum/builder/CurriculumImpactPreviewExperience.tsx` — Added scope actions section. Three apply-scope buttons (this level only / all Orange Ball 2 groups / academy-wide) rendered as disabled with "Goes to Review Queue" badge — clear guardrail copy, no mutation possible. "Save as Draft" button (lime) toggles local `draftSaved` state showing a CheckCircle confirmation. Cancel link returns to add-drill. No curriculum mutation.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 906: Impact Preview Screenshot Match V1
 
 **Files created:**
