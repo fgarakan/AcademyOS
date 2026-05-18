@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 942: Class Template Review Step Curriculum Summary V1
+
+**Files modified:**
+- `src/app/director/templates/class/create/page.tsx` — Step 5 review replaced with full 8-item curriculum summary: (1) Curriculum Source, (2) Level Goal, (3) Template Goal, (4) Blocks with type pills, (5) Drills count + level attribution, (6) Coach Watch-Fors count, (7) Gates Supported summary, (8) Player Missions count. Draft safety note at bottom.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 941: Class Template Player Mission Connection V1
 
 **Files modified:**

@@ -531,12 +531,13 @@ export default function CreateClassTemplatePage() {
             <div className="space-y-5">
               <div>
                 <h2 className="text-base font-bold text-text-primary mb-1">Review Template</h2>
-                <p className="text-sm text-text-secondary">Check everything before saving as a draft.</p>
+                <p className="text-sm text-text-secondary">Check everything before saving as a draft. Nothing changes until you approve.</p>
               </div>
 
-              {/* Summary */}
-              <div className="space-y-3">
-                {/* Curriculum Source — prominent row */}
+              {/* 8-item curriculum summary */}
+              <div className="space-y-2">
+
+                {/* 1. Curriculum Source */}
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-lime/6 border border-lime/20">
                   <GraduationCap className="w-4 h-4 text-lime shrink-0" />
                   <div>
@@ -545,45 +546,104 @@ export default function CreateClassTemplatePage() {
                   </div>
                 </div>
 
+                {/* 2. Level Goal */}
+                {preview && (
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-surface-raised border border-border">
+                    <BookOpen className="w-4 h-4 text-lime shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[10px] text-text-muted uppercase tracking-widest">Level Goal</p>
+                      <p className="text-xs text-text-secondary leading-relaxed">{preview.levelGoal}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Template Goal */}
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
                   <Target className="w-4 h-4 text-lime shrink-0" />
                   <div>
-                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Session Goal</p>
+                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Template Goal</p>
                     <p className="text-sm font-semibold text-text-primary">{selectedGoal || 'Not selected'}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
-                  <LayoutTemplate className="w-4 h-4 text-lime shrink-0" />
-                  <div>
+                {/* 4. Blocks */}
+                <div className="p-3 rounded-xl bg-surface-raised border border-border space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <LayoutTemplate className="w-4 h-4 text-lime shrink-0" />
                     <p className="text-[10px] text-text-muted uppercase tracking-widest">Blocks</p>
+                    <span className="ml-auto text-xs font-mono text-lime">{blocks.length} blocks — {totalDuration}min</span>
+                  </div>
+                  {blocks.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pl-6">
+                      {blocks.map(b => {
+                        const t = BLOCK_TYPES.find(bt => bt.id === b.type)
+                        return (
+                          <span key={b.id} className={`px-2 py-0.5 rounded-md text-[10px] border ${t?.color ?? ''}`}>
+                            {b.title} {b.durationMin}m
+                          </span>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* 5. Drills */}
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
+                  <BookOpen className="w-4 h-4 text-lime shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Drills</p>
                     <p className="text-sm font-semibold text-text-primary">
-                      {blocks.length} blocks — {totalDuration}min total
+                      {Object.values(selectedDrills).flat().length} drill{Object.values(selectedDrills).flat().length !== 1 ? 's' : ''} selected
+                      {stage && <span className="ml-2 text-[10px] text-lime/70 font-normal">from {selectedLevel} curriculum</span>}
                     </p>
                   </div>
                 </div>
 
-                {/* Curriculum preview summary in review */}
-                {preview && (
-                  <div className="p-3 rounded-xl border border-border bg-surface-raised space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Info className="w-3 h-3 text-text-muted shrink-0" />
-                      <span className="text-[10px] uppercase tracking-widest text-text-muted">
-                        Curriculum-derived demo preview — Not saved — Not applied
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <div>
-                        <p className="text-[10px] text-text-muted mb-0.5">Assessment Gates</p>
-                        <p className="text-xs font-mono text-lime">{preview.assessmentGatesCount} gates</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-text-muted mb-0.5">Recommended Type</p>
-                        <p className="text-xs text-text-secondary">{preview.recommendedTemplateType}</p>
-                      </div>
-                    </div>
+                {/* 6. Coach Watch-Fors */}
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
+                  <CheckCircle2 className="w-4 h-4 text-lime shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Coach Watch-Fors</p>
+                    <p className="text-sm text-text-primary">
+                      {stage
+                        ? `${blocks.reduce((sum, b) => sum + getWatchForsForBlock(stage, b.type).length, 0)} watch-fors across ${blocks.length} blocks`
+                        : 'Select a level to see watch-fors'}
+                    </p>
                   </div>
-                )}
+                </div>
+
+                {/* 7. Gates Supported */}
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
+                  <Info className="w-4 h-4 text-lime shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Gates Supported</p>
+                    <p className="text-sm text-text-primary">
+                      {supportedGates.length > 0
+                        ? `${supportedGates.length} gates — ${supportedGates[0].gateLabel}${supportedGates.length > 1 ? ` +${supportedGates.length - 1} more` : ''}`
+                        : 'Select a level to see gates'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 8. Player Missions */}
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
+                  <Target className="w-4 h-4 text-status-blue shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Player Missions Suggested</p>
+                    <p className="text-sm text-text-primary">
+                      {playerMissions.length > 0
+                        ? `${playerMissions.length} suggested — draft only — not assigned`
+                        : 'Select a level to see missions'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Draft safety */}
+                <div className="flex items-center gap-2 p-3 rounded-xl border border-text-muted/10 bg-surface-raised">
+                  <Info className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                  <p className="text-[11px] text-text-muted">Draft only — nothing changes until review — does not change master curriculum — director approval required</p>
+                </div>
+
               </div>
 
               {/* Player missions */}
