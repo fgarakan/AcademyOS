@@ -1,0 +1,93 @@
+// Sprint 843–892 Curriculum Builder Block — Completion Audit
+// This file is a read-only reference for what was built in the 50-sprint block.
+
+export interface BlockAuditEntry {
+  sprint: number
+  title: string
+  deliverable: string
+  category: 'routing' | 'display' | 'drafting' | 'safety' | 'search' | 'coach' | 'ux' | 'review' | 'utility'
+}
+
+export const BLOCK_COMPLETION_AUDIT: BlockAuditEntry[] = [
+  { sprint: 843, title: 'Curriculum Builder Button Routing V1',          deliverable: 'CurriculumSetupBuilder: all 5 buttons wired to correct routes',                                   category: 'routing' },
+  { sprint: 844, title: 'Curriculum Builder Route Alignment V1',         deliverable: 'Back-links corrected: guided/map pages link back to builder',                                      category: 'routing' },
+  { sprint: 845, title: 'Curriculum Builder Full Map Polish V1',         deliverable: 'CurriculumLevelMap: lane-style stage headers, status chips, open-builder link',                    category: 'display' },
+  { sprint: 846, title: 'Curriculum Builder Map Data Labels V1',         deliverable: 'Curriculum map page: data provenance label (Seed/Mixed/Live/Unavailable)',                         category: 'display' },
+  { sprint: 847, title: 'Curriculum Builder Level Card 10/10 Polish V1', deliverable: 'Level cards: stage dot, domain badges, duration, success criteria',                               category: 'display' },
+  { sprint: 848, title: 'Curriculum Builder Jump to Level Modal V1',     deliverable: 'CurriculumSetupBuilder: Jump modal with stage-colored dots, router.push on select',               category: 'routing' },
+  { sprint: 849, title: 'Curriculum Builder Guided Review Entry V1',     deliverable: 'CurriculumGuidedReviewShell: DONNA guidance card, skip logic, action row',                        category: 'ux' },
+  { sprint: 850, title: 'Guided Review Sequential Flow V1',              deliverable: 'Sequential level navigation: Next/Prev, reviewed set, progress tracking',                         category: 'ux' },
+  { sprint: 851, title: 'Guided Review Progress Rail Polish V1',         deliverable: 'CurriculumProgressRail: stage-colored dots, skipped=orange, current=scaled 1.4x',                category: 'display' },
+  { sprint: 852, title: 'Guided Review Skip/Return Logic V1',            deliverable: 'Skip marks level skipped; skipped panel shows at end with return buttons',                         category: 'ux' },
+  { sprint: 853, title: 'Guided Review DONNA Question Copy V1',          deliverable: 'DONNA_STAGE_TIPS: per-stage question + "Why this matters" text',                                   category: 'display' },
+  { sprint: 854, title: 'Level Detail Page 10/10 Shell V1',              deliverable: 'Level page: stage intent card, advancement requirements, shield badge on draft mode',              category: 'display' },
+  { sprint: 855, title: 'Level Detail Skill Path Editing UX V1',         deliverable: 'Skills tab: domain-grouped drills with badges and counts',                                         category: 'display' },
+  { sprint: 856, title: 'Level Detail Competition Path Editing UX V1',   deliverable: 'Competition tab: full detail cards, Ask DONNA to refine button',                                  category: 'display' },
+  { sprint: 857, title: 'Level Detail Fitness Support Editing UX V1',    deliverable: 'Fitness tab: individual cards per field (fitness_phase, energy_system, strength_band, off_court)', category: 'display' },
+  { sprint: 858, title: 'Level Detail Assessment Gate Editing UX V1',    deliverable: 'Gates tab: domain/type/evaluator badges, threshold grid, notes',                                  category: 'display' },
+  { sprint: 859, title: 'Level Detail Player Mission Editing UX V1',     deliverable: 'Missions tab: beautiful empty state, Ask DONNA CTA',                                              category: 'display' },
+  { sprint: 860, title: 'Level Detail Drill Editing UX V1',              deliverable: 'Drills tab: rich cards with badges, duration, success_criteria',                                  category: 'display' },
+  { sprint: 861, title: 'DONNA Curriculum Context Panel 10/10 V1',       deliverable: 'DonnaCurriculumContextPanel: collapsible, gaps array, stats grid, quick action buttons',          category: 'drafting' },
+  { sprint: 862, title: 'DONNA Add Drill Guided Flow V1',                deliverable: 'DonnaAddDrillDraft: step label, draft preview card, Shield safety note',                          category: 'drafting' },
+  { sprint: 863, title: 'DONNA Add Fitness Guided Flow V1',              deliverable: 'DonnaAddFitnessExerciseDraft: same pattern as drill',                                             category: 'drafting' },
+  { sprint: 864, title: 'DONNA Add Assessment Gate Guided Flow V1',      deliverable: 'DonnaAddAssessmentGateDraft: criterion/threshold/evidence/evaluator structure',                   category: 'drafting' },
+  { sprint: 865, title: 'DONNA Add Player Mission Guided Flow V1',       deliverable: 'DonnaAddPlayerMissionDraft: mission-specific guided flow with Shield note',                       category: 'drafting' },
+  { sprint: 866, title: 'DONNA Rewrite Level Guided Flow V1',            deliverable: 'DonnaRewriteLevelDraft: prompt chips, before/after preview, Shield note',                         category: 'drafting' },
+  { sprint: 867, title: 'Curriculum Draft Summary Panel V1',             deliverable: 'CurriculumDraftSummaryPanel: change type, level, source, confidence, actions',                   category: 'drafting' },
+  { sprint: 868, title: 'Curriculum Draft Correction UX V1',             deliverable: 'CurriculumDraftCorrectionPanel: edit text, level selector, domain chips, save',                  category: 'drafting' },
+  { sprint: 869, title: 'Curriculum Draft Save to Proposed Actions V1',  deliverable: 'saveCurriculumDraftAction: voice_commands + proposed_actions insert, role check',                 category: 'safety' },
+  { sprint: 870, title: 'Curriculum Draft Review Queue Adapter V1',      deliverable: 'CurriculumBuilderDraftCard in review page: shows curriculum_builder target_module drafts',        category: 'review' },
+  { sprint: 871, title: 'Curriculum Change Queue Live View V1',          deliverable: 'CurriculumBuilderChangeQueue server component: last 10 proposed_actions for builder',             category: 'review' },
+  { sprint: 872, title: 'Curriculum Impact Preview 10/10 V1',            deliverable: 'CurriculumImpactPreviewPanel: IMPACT_AREAS per changeType, "What this affects" section',         category: 'display' },
+  { sprint: 873, title: 'Curriculum Impact Estimate Helper V1',          deliverable: 'buildImpactEstimate() in impactEstimateHelper.ts: read-only, no DB calls',                        category: 'utility' },
+  { sprint: 874, title: 'Curriculum Impact Scope Controls V1',           deliverable: 'CurriculumImpactScopeControls: 3-option scope selector, save-as-draft/cancel actions',           category: 'ux' },
+  { sprint: 875, title: 'Curriculum Approval Language Polish V1',        deliverable: 'approvalCopy.ts: canonical status labels; DonnaSafetyDisclosure: nextStep hint',                 category: 'safety' },
+  { sprint: 876, title: 'Curriculum Edit Permissions V1',                deliverable: 'CurriculumEditPermissionGuard: role-based boundary, coach redirect hint',                         category: 'safety' },
+  { sprint: 877, title: 'Coach Curriculum Suggestion Flow V1',           deliverable: 'CoachCurriculumSuggestionPanel + submitCoachCurriculumSuggestion server action',                 category: 'coach' },
+  { sprint: 878, title: 'Coach Suggestion Review Queue Adapter V1',      deliverable: 'CoachCurriculumSuggestionCard + wired into review page curriculum_session tab',                  category: 'review' },
+  { sprint: 879, title: 'Curriculum Audit Trail UX V1',                  deliverable: 'CurriculumAuditTrailPanel: vertical timeline, relative dates, colored outcome icons',             category: 'display' },
+  { sprint: 880, title: 'Curriculum Version History UX V1',              deliverable: 'CurriculumVersionHistoryPanel: active version highlight, archived list, changeCount',            category: 'display' },
+  { sprint: 881, title: 'Curriculum Relationship Map 10/10 V1',          deliverable: 'CurriculumRelationshipMap: clickable levels, gate/drill counts, stage configs',                  category: 'display' },
+  { sprint: 882, title: 'Relationship Map Click Actions V1',             deliverable: 'CurriculumRelationshipMapNav: client wrapper with useRouter navigation',                          category: 'routing' },
+  { sprint: 883, title: 'Curriculum Search 10/10 V1',                    deliverable: 'CurriculumSearch: keyboard nav, click-outside, match highlighting, coach-cue search',           category: 'search' },
+  { sprint: 884, title: 'Curriculum Filters V1',                         deliverable: 'CurriculumFilters: multi-select domain/stage/type with toggle bar + applyFilters()',             category: 'search' },
+  { sprint: 885, title: 'Curriculum Builder Mobile UX V1',               deliverable: 'LevelBuilderShell: scrollable tab bar, responsive summary card, 44px touch targets',            category: 'ux' },
+  { sprint: 886, title: 'Curriculum Builder Desktop Command UX V1',      deliverable: 'CurriculumKeyboardHintBar: G/M/J// shortcuts, hidden on mobile, wired into builder',            category: 'ux' },
+  { sprint: 887, title: 'Curriculum Builder Empty States V1',            deliverable: 'CurriculumLevelEmptyState: 8 tabs covered, icon + CTA + safety note pattern',                  category: 'display' },
+  { sprint: 888, title: 'Curriculum Builder Error/Blocked States V1',    deliverable: 'CurriculumBlockedState: 6 reason types, detail, help hint, retry button',                       category: 'safety' },
+  { sprint: 889, title: 'Curriculum Builder Source/Confidence Labels V1',deliverable: 'CurriculumSourceLabel + CurriculumConfidenceLabel + CurriculumSourceConfidenceRow',             category: 'display' },
+  { sprint: 890, title: 'Curriculum Builder Full Flow QA V1',            deliverable: 'CurriculumFlowQAChecklist: 25 checks across navigation, drafting, safety, review, display',     category: 'utility' },
+  { sprint: 891, title: 'Curriculum Builder 10/10 Polish Pass V1',       deliverable: 'CurriculumBuilderDraftCard: approve/reject wired via updateStructuredDraftDecisionAction',       category: 'review' },
+  { sprint: 892, title: 'Curriculum Builder 50-Sprint Completion Audit', deliverable: 'This file — read-only inventory of all 50 sprint deliverables',                                  category: 'utility' },
+]
+
+export const BLOCK_SUMMARY = {
+  sprintRange: '843–892',
+  totalSprints: 50,
+  categories: {
+    routing:  BLOCK_COMPLETION_AUDIT.filter(e => e.category === 'routing').length,
+    display:  BLOCK_COMPLETION_AUDIT.filter(e => e.category === 'display').length,
+    drafting: BLOCK_COMPLETION_AUDIT.filter(e => e.category === 'drafting').length,
+    safety:   BLOCK_COMPLETION_AUDIT.filter(e => e.category === 'safety').length,
+    search:   BLOCK_COMPLETION_AUDIT.filter(e => e.category === 'search').length,
+    coach:    BLOCK_COMPLETION_AUDIT.filter(e => e.category === 'coach').length,
+    ux:       BLOCK_COMPLETION_AUDIT.filter(e => e.category === 'ux').length,
+    review:   BLOCK_COMPLETION_AUDIT.filter(e => e.category === 'review').length,
+    utility:  BLOCK_COMPLETION_AUDIT.filter(e => e.category === 'utility').length,
+  },
+  keyFiles: [
+    'src/app/director/curriculum/builder/page.tsx',
+    'src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx',
+    'src/app/director/curriculum/guided/page.tsx',
+    'src/app/director/curriculum/map/page.tsx',
+    'src/app/director/curriculum/level/[levelId]/page.tsx',
+    'src/components/curriculum/builder/CurriculumLevelBuilderShell.tsx',
+    'src/components/curriculum/builder/DonnaCurriculumContextPanel.tsx',
+    'src/lib/actions/curriculumDraft.ts',
+    'src/lib/actions/coachCurriculumSuggestion.ts',
+    'src/lib/curriculum/impactEstimateHelper.ts',
+    'src/lib/curriculum/approvalCopy.ts',
+    'src/app/director/review/CurriculumBuilderDraftCard.tsx',
+    'src/app/director/review/CoachCurriculumSuggestionCard.tsx',
+  ],
+}
