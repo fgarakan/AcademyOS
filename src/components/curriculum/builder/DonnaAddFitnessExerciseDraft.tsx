@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, X } from 'lucide-react'
+import { Sparkles, X, Shield } from 'lucide-react'
 import type { CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 
 interface Props {
@@ -35,9 +35,12 @@ export function DonnaAddFitnessExerciseDraft({ level, onClose }: Props) {
 
       {!submitted ? (
         <>
-          <p className="text-[11px] text-text-secondary leading-relaxed">
-            Describe the fitness exercise or off-court activity you want to add. DONNA will create a draft — nothing changes until you approve it.
-          </p>
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold text-text-secondary">Step 1 of 1 — Describe the fitness support</p>
+            <p className="text-[11px] text-text-muted leading-relaxed">
+              Tell DONNA what body capacity you want to target — speed, strength, endurance, mobility. She will structure the fitness draft with energy system, tennis transfer, and when to use it.
+            </p>
+          </div>
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
@@ -63,14 +66,21 @@ export function DonnaAddFitnessExerciseDraft({ level, onClose }: Props) {
           </div>
         </>
       ) : (
-        <div className="space-y-2">
-          <p className="text-[12px] text-status-green font-semibold">Fitness draft created — check Review Queue</p>
-          <p className="text-[11px] text-text-secondary">
-            DONNA has queued a fitness exercise draft for {level.display_name}. Nothing is added until you review and approve it.
-          </p>
-          <button onClick={onClose} className="text-[11px] text-lime hover:text-lime/80 transition-colors">
-            Close
-          </button>
+        <div className="space-y-3">
+          <p className="text-[12px] font-semibold text-status-green">Fitness draft queued for review</p>
+          <div className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-status-orange/10 text-status-orange border border-status-orange/20">Draft</span>
+              <p className="text-[11px] font-semibold text-text-primary">Fitness Support — {level.display_name}</p>
+            </div>
+            <p className="text-[11px] text-text-secondary leading-relaxed">{text.trim().slice(0, 200)}{text.trim().length > 200 ? '...' : ''}</p>
+            <p className="text-[10px] text-text-muted">DONNA will structure this into exercise · body capacity · tennis transfer · when to use</p>
+          </div>
+          <div className="flex items-start gap-2 rounded-xl border border-lime/10 bg-lime/[0.02] px-3 py-2">
+            <Shield className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
+            <p className="text-[10px] text-text-muted">Nothing changes until you approve this in the Review Queue.</p>
+          </div>
+          <button onClick={onClose} className="text-[11px] text-lime hover:text-lime/80 transition-colors">Done</button>
         </div>
       )}
     </div>
