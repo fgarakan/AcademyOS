@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ChevronRight, Dumbbell, GraduationCap, Clock, CheckCircle2, AlertCircle, FileEdit, Edit3, Eye, Sparkles, ArrowRight, Zap, Activity } from 'lucide-react'
+import { ChevronRight, Dumbbell, GraduationCap, Clock, CheckCircle2, AlertCircle, FileEdit, Edit3, Eye, Sparkles, ArrowRight, Zap, Activity, BookOpen } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { DEMO_FITNESS_TEMPLATES } from '@/lib/templates/templateMockData'
 import type { TemplateStatus } from '@/lib/templates/templateMockData'
@@ -25,6 +25,13 @@ const LEVEL_CLASSES: Record<string, string> = {
   Intermediate: 'text-lime border-lime/30 bg-lime/8',
   Advanced: 'text-status-orange border-status-orange/30 bg-status-orange/8',
   Elite: 'text-status-purple border-status-purple/30 bg-status-purple/8',
+}
+
+const LEVEL_TO_CURRICULUM_STAGE: Record<string, string> = {
+  Beginner:     'Red Ball / Orange Ball',
+  Intermediate: 'Green Ball',
+  Advanced:     'Yellow Ball',
+  Elite:        'High Performance',
 }
 
 // Demo exercise data per fitness template
@@ -129,6 +136,31 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
               <p className="text-sm font-medium text-text-secondary">{template.lastUpdated}</p>
             </div>
           </div>
+        </div>
+
+        {/* Curriculum connection */}
+        <div className="rounded-2xl border border-border bg-surface p-5 space-y-3">
+          <h2 className="text-sm font-bold text-text-primary flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-lime" />
+            Curriculum Connection
+          </h2>
+          {LEVEL_TO_CURRICULUM_STAGE[template.level] ? (
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-lime/15 bg-lime/5">
+              <GraduationCap className="w-4 h-4 text-lime shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-lime">{LEVEL_TO_CURRICULUM_STAGE[template.level]}</p>
+                <p className="text-[11px] text-text-muted mt-0.5">This template targets the physical development needs of the {LEVEL_TO_CURRICULUM_STAGE[template.level]} curriculum stage.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-3 p-3 rounded-xl border border-border bg-surface-raised">
+              <BookOpen className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-text-secondary">No curriculum stage connected yet.</p>
+                <p className="text-[11px] text-text-muted mt-0.5">Connect to a curriculum level to unlock stage-specific physical development alignment.</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Exercises list */}

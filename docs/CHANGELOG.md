@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 953: Template Curriculum Source Labels V1
+
+**Files modified:**
+- `src/app/director/templates/fitness/page.tsx` — Added `BookOpen` import. Added `LEVEL_TO_CURRICULUM_STAGE` map (Beginner → Red Ball / Orange Ball, Intermediate → Green Ball, Advanced → Yellow Ball, Elite → High Performance). Fitness template card now shows a lime "Curriculum Stage" chip (or "No curriculum stage connected" fallback) below the tennis transfer tags.
+- `src/app/director/templates/fitness/[templateId]/page.tsx` — Added `BookOpen` import. Added `LEVEL_TO_CURRICULUM_STAGE` map. Added "Curriculum Connection" card between the template overview and the exercises list. Shows lime curriculum stage label with descriptive text, or a "not connected" fallback.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 952: Fitness Template Coach Preview Connection V1
 
 **Files modified:**

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ChevronRight, Dumbbell, Plus, Clock, Zap, GraduationCap, AlertCircle, CheckCircle2, FileEdit, Filter, ArrowRight } from 'lucide-react'
+import { ChevronRight, Dumbbell, Plus, Clock, Zap, GraduationCap, AlertCircle, CheckCircle2, FileEdit, Filter, ArrowRight, BookOpen } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import { DEMO_FITNESS_TEMPLATES } from '@/lib/templates/templateMockData'
 import type { MockFitnessTemplate, TemplateStatus, LoadLevel } from '@/lib/templates/templateMockData'
@@ -23,6 +23,13 @@ const LEVEL_CLASSES: Record<string, string> = {
   Intermediate: 'text-lime border-lime/30 bg-lime/8',
   Advanced: 'text-status-orange border-status-orange/30 bg-status-orange/8',
   Elite: 'text-status-purple border-status-purple/30 bg-status-purple/8',
+}
+
+const LEVEL_TO_CURRICULUM_STAGE: Record<string, string> = {
+  Beginner:     'Red Ball / Orange Ball',
+  Intermediate: 'Green Ball',
+  Advanced:     'Yellow Ball',
+  Elite:        'High Performance',
 }
 
 function FitnessTemplateCard({ template }: { template: MockFitnessTemplate }) {
@@ -69,6 +76,19 @@ function FitnessTemplateCard({ template }: { template: MockFitnessTemplate }) {
             </span>
           ))}
         </div>
+
+        {/* Curriculum stage label */}
+        {LEVEL_TO_CURRICULUM_STAGE[template.level] ? (
+          <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-lime/5 border border-lime/15">
+            <BookOpen className="w-3 h-3 text-lime shrink-0" />
+            <span className="text-[11px] text-lime">Curriculum Stage: {LEVEL_TO_CURRICULUM_STAGE[template.level]}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-raised border border-border">
+            <BookOpen className="w-3 h-3 text-text-muted shrink-0" />
+            <span className="text-[11px] text-text-muted">No curriculum stage connected</span>
+          </div>
+        )}
 
         {/* Meta row */}
         <div className="flex items-center gap-4 text-[11px] text-text-muted">
