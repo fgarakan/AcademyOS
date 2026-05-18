@@ -14,6 +14,7 @@ import {
   getCurriculumDrillsForBlock,
   getWatchForsForBlock,
   getSupportedGatesForStage,
+  getPlayerMissionsForStage,
 } from '@/lib/templates/templateCurriculumPreview'
 import { getRecommendedBlocksForStage } from '@/lib/templates/curriculumBlockRecommendations'
 
@@ -81,6 +82,7 @@ export default function CreateClassTemplatePage() {
   const stage = getCurriculumStage(selectedLevel)
   const goalsForLevel = stage ? GOALS_BY_STAGE[stage] : []
   const supportedGates = stage ? getSupportedGatesForStage(stage) : []
+  const playerMissions = stage ? getPlayerMissionsForStage(stage) : []
   const recommendedBlocks = stage
     ? getRecommendedBlocksForStage(toBlockStageKey(stage), 75)
     : null
@@ -583,6 +585,24 @@ export default function CreateClassTemplatePage() {
                   </div>
                 )}
               </div>
+
+              {/* Player missions */}
+              {playerMissions.length > 0 && (
+                <div className="rounded-xl border border-border bg-surface-raised p-4 space-y-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Info className="w-3.5 h-3.5 text-text-muted" />
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted">Player Missions Suggested</p>
+                    <span className="ml-auto text-[10px] text-text-muted">suggested / draft only — not assigned</span>
+                  </div>
+                  {playerMissions.map(m => (
+                    <div key={m.missionLabel} className="p-2.5 rounded-lg border border-border space-y-0.5">
+                      <p className="text-xs font-semibold text-text-primary">{m.missionLabel}</p>
+                      <p className="text-[11px] text-status-blue leading-snug">{m.playerSafeWording}</p>
+                      <p className="text-[10px] text-text-muted">Linked goal: {m.linkedGoal}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Demo save button */}
               <div className="pt-2">

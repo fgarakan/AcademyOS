@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 941: Class Template Player Mission Connection V1
+
+**Files modified:**
+- `src/lib/templates/templateCurriculumPreview.ts` — Added `PlayerMission` interface, `PLAYER_MISSIONS_BY_STAGE` (2-3 missions per stage, player-safe wording), `getPlayerMissionsForStage()` helper.
+- `src/app/director/templates/class/create/page.tsx` — Step 5 (review) now shows "Player Missions Suggested" section with mission label, player-safe wording, and linked goal. Labeled "suggested / draft only — not assigned". No player assignment writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 940: Class Template Assessment Gate Connection V1
 
 **Files modified:**

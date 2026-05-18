@@ -316,6 +316,41 @@ export function getSupportedGatesForStage(stage: BallStage): SupportedGate[] {
   return SUPPORTED_GATES_BY_STAGE[stage] ?? []
 }
 
+// Player mission suggestions (player-safe wording) per stage
+export interface PlayerMission {
+  missionLabel: string
+  playerSafeWording: string
+  linkedGoal: string
+}
+
+export const PLAYER_MISSIONS_BY_STAGE: Record<BallStage, PlayerMission[]> = {
+  'Red Ball': [
+    { missionLabel: 'Rally 5 in a row', playerSafeWording: 'Try to keep the rally going for 5 shots without stopping', linkedGoal: 'Cooperative rally consistency' },
+    { missionLabel: 'Hit the target zone', playerSafeWording: 'Aim your shot inside the orange cone triangle', linkedGoal: 'Directional intent introduction' },
+  ],
+  'Orange Ball': [
+    { missionLabel: 'Cross-court 6 in a row', playerSafeWording: 'Keep the ball going cross-court 6 times with your partner', linkedGoal: 'Cross-court consistency' },
+    { missionLabel: 'Split-step before every ball', playerSafeWording: 'Do your little jump every time before hitting — your coach will watch', linkedGoal: 'Movement foundation' },
+    { missionLabel: 'Serve into the box 4 of 5', playerSafeWording: 'Land your serve inside the lines 4 times out of 5 tries', linkedGoal: 'Serve reliability' },
+  ],
+  'Green Ball': [
+    { missionLabel: 'Approach down the line + finish', playerSafeWording: 'When the ball is short, go forward and finish the point at the net', linkedGoal: 'Approach shot pattern' },
+    { missionLabel: 'Run your serve-plus-one plan', playerSafeWording: 'Before each point, decide: where do you serve and where does the next ball go?', linkedGoal: 'Tactical planning' },
+  ],
+  'Yellow Ball': [
+    { missionLabel: 'Execute your inside-out pattern', playerSafeWording: 'Set up and hit your inside-out forehand 4 out of 6 attempts', linkedGoal: 'Signature shot development' },
+    { missionLabel: 'Stay in your process under pressure', playerSafeWording: 'When you are 0-30, follow your pre-point routine and do not rush', linkedGoal: 'Mental resilience' },
+  ],
+  'High Performance': [
+    { missionLabel: 'Run your game plan for 3 sets', playerSafeWording: 'Play your game plan for the full session — ask your coach to track your decisions', linkedGoal: 'Tactical identity execution' },
+    { missionLabel: 'Reset after every lost game', playerSafeWording: 'After you lose a game, use your reset routine and win the next one', linkedGoal: 'Adversity management' },
+  ],
+}
+
+export function getPlayerMissionsForStage(stage: BallStage): PlayerMission[] {
+  return PLAYER_MISSIONS_BY_STAGE[stage] ?? []
+}
+
 export const GOALS_BY_STAGE: Record<BallStage, string[]> = {
   'Red Ball': [
     'Cooperative rally — 5 consecutive on mini court',
