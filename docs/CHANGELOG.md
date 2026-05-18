@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 965: Template DONNA Review Before Apply Guardrails V1
+
+**Files modified:**
+- `src/components/templates/TemplateDonnaPanel.tsx` — Added `ShieldCheck` icon import. Added "Review Guardrail" banner (lime-accented, `ShieldCheck` icon) at the bottom of the body section for `class_detail` and `fitness_detail` modes. Banner text: "DONNA proposes — you approve. No suggestion, difficulty change, or duration flag takes effect until a director reviews it in the Review Queue." Enforces the core product operating model visually in the AI assistant panel.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 964: Template DONNA Missing Template Gap Detection V1
 
 **Files modified:**

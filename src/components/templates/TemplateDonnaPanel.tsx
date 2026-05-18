@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, ChevronRight, Send, Zap, AlertCircle, TrendingUp, TrendingDown, CheckCircle2, Clock, Plus, Minus } from 'lucide-react'
+import { Sparkles, ChevronRight, Send, Zap, AlertCircle, TrendingUp, TrendingDown, CheckCircle2, Clock, Plus, Minus, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { DEMO_DONNA_SUGGESTIONS } from '@/lib/templates/templateMockData'
 
@@ -453,6 +453,19 @@ export function TemplateDonnaPanel({ mode, context }: Props) {
               ))}
             </div>
           </div>
+
+          {/* Review Guardrail — detail modes only */}
+          {(mode === 'class_detail' || mode === 'fitness_detail') && (
+            <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl border border-lime/15 bg-lime/4">
+              <ShieldCheck className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[10px] font-semibold text-lime mb-0.5 uppercase tracking-wider">Review Before Apply</p>
+                <p className="text-[10px] text-text-muted leading-relaxed">
+                  DONNA proposes — you approve. No suggestion, difficulty change, or duration flag takes effect until a director reviews it in the Review Queue.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Input */}
