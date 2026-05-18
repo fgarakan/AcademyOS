@@ -114,9 +114,16 @@ function ImpactRow({ item }: { item: ImpactItem }) {
   )
 }
 
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+interface Props {
+  levelName?: string
+  backHref?: string
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function CurriculumImpactPreviewExperience() {
+export function CurriculumImpactPreviewExperience({ levelName, backHref = '/director/curriculum/builder/add-drill' }: Props) {
   const willUpdate   = IMPACT_ITEMS.filter(i => i.status === 'will_update').length
   const needsReview  = IMPACT_ITEMS.filter(i => i.status === 'needs_review').length
   const notAffected  = IMPACT_ITEMS.filter(i => i.status === 'not_affected').length
@@ -133,13 +140,13 @@ export function CurriculumImpactPreviewExperience() {
         {/* Header */}
         <div className="flex items-start gap-3">
           <Link
-            href="/director/curriculum/builder/add-drill"
+            href={backHref}
             className="text-text-muted hover:text-lime transition-colors mt-1 shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <p className="page-eyebrow">Curriculum Builder</p>
+            <p className="page-eyebrow">Curriculum Builder{levelName ? ` · ${levelName}` : ''}</p>
             <h1 className="page-title">Impact Preview</h1>
             <p className="text-[12px] text-text-secondary mt-1">
               Review what will change before anything is applied
@@ -261,7 +268,7 @@ export function CurriculumImpactPreviewExperience() {
                 </button>
               )}
               <Link
-                href="/director/curriculum/builder/add-drill"
+                href={backHref}
                 className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
               >
                 Cancel

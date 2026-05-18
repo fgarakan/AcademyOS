@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-18 — Sprint 909: Curriculum Route Standardization V1
+
+**Files created:**
+- `src/app/director/curriculum/level/[levelId]/impact/page.tsx` — Level-specific impact preview route. Loads level data from `getCurriculumExplorerData`, passes `levelName` and `backHref` to `CurriculumImpactPreviewExperience`. Fixes 404 from Level Builder "Preview Impact" button.
+
+**Files modified:**
+- `src/components/curriculum/builder/CurriculumImpactPreviewExperience.tsx` — Added `levelName?` and `backHref?` props. Back arrow and Cancel link now use `backHref` (defaults to `/director/curriculum/builder/add-drill`). Eyebrow shows level name when provided for level-specific context.
+
+**Route inventory verified:**
+- `/director/curriculum/builder` → sidebar entry point, welcome chips link to map/guided
+- `/director/curriculum/map` → back links exist on level builder and guided pages
+- `/director/curriculum/guided` → linked from map DONNA panel and builder welcome
+- `/director/curriculum/level/[levelId]` → linked from map cards and guided "Modify this level"
+- `/director/curriculum/level/[levelId]/impact` → now exists, linked from level builder "Preview Impact"
+- `/director/curriculum/builder/add-drill` → linked from builder
+- `/director/curriculum/builder/add-fitness` → linked from builder
+- `/director/curriculum/builder/impact-preview` → standalone, linked from add-drill draft card
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 908: Curriculum DONNA Panel Across All Pages V1
 
 **Audit result:** All 6 target pages confirmed with correct CurriculumDonnaPanel config:
