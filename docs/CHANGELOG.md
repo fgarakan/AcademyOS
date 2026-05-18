@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-18 — Sprint 899: Guided Review Screenshot Match V1
+
+**Files created:**
+- `src/components/curriculum/builder/CurriculumGuidedReviewExperience.tsx` — Client component owning guided review state (currentIndex, reviewed, skipped, jumpOpen, donnaPanelActive, donnaDismissed). 2-column layout: main content (progress rail, review card with 5 section rows, action buttons, nav) + right sticky DONNA panel. Wires `activeAction` to DONNA panel when "Ask DONNA to improve it" is toggled. Preserves DONNA stage tips inline. Skipped-levels return banner and all-reviewed completion banner.
+
+**Files modified:**
+- `src/app/director/curriculum/guided/page.tsx` — Stripped to auth + `getCurriculumExplorerData` + `<CurriculumGuidedReviewExperience explorerData={explorerData} />`. All layout and state moved to experience component.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 898: Level Builder DONNA Panel Context Wiring V1
 
 **Files created:**
