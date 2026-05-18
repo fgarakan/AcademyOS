@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 902: Add Drill Page Screenshot Match V1
+
+**Files created:**
+- `src/components/curriculum/builder/CurriculumAddDrillExperience.tsx` — Client component for the Add Drill page. 2-column layout with main input card + right sticky DONNA panel. Features: safety banner, textarea with live char count, clickable example prompt ("Add a drill for forehand recovery after wide balls"), Generate Draft button (teal, disabled until 20 chars). Submitted state shows basic draft queued card (full draft card in Sprint 903). No backend writes.
+- `src/app/director/curriculum/builder/add-drill/page.tsx` — Server page with auth check. Renders `CurriculumAddDrillExperience`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 901: Guided Review Decision State Polish V1
 
 **Files modified:**
