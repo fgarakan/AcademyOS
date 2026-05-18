@@ -101,7 +101,7 @@ const BLOCK_TYPE_COLOR: Record<string, string> = {
 
 export default function TemplateCoachPreviewPage() {
   return (
-    <div className="flex gap-6 p-6 min-h-screen items-start">
+    <div className="flex gap-4 lg:gap-6 p-4 lg:p-6 min-h-screen items-start">
 
       <div className="flex-1 min-w-0 space-y-6">
 

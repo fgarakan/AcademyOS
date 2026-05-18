@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-18 — Sprint 933: Templates Mobile Desktop Polish V1
+
+**Files modified:**
+- All 10 `/director/templates/**` route pages — Outer container class updated from `p-6 gap-6` to `p-4 lg:p-6 gap-4 lg:gap-6` for consistent responsive padding. Reduces horizontal crowding on smaller desktop screens. DONNA panel already hidden below `lg` breakpoint (hidden lg:block). No layout logic changed.
+
+**Unchanged:** filter bars already use `flex-wrap`, library grids already use `xl:grid-cols-2` and `xl:grid-cols-4`, step progress bars already use `overflow-x-auto`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 932: Templates Route Navigation QA V1
 
 **Files created:**
