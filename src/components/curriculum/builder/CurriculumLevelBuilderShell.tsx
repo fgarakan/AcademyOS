@@ -57,9 +57,9 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
   return (
     <div className="space-y-4">
 
-      {/* Level summary card */}
-      <div className="rounded-xl border border-border bg-surface-raised px-5 py-4">
-        <div className="flex items-start justify-between gap-4">
+      {/* Level summary card — responsive: stacks on mobile */}
+      <div className="rounded-xl border border-border bg-surface-raised px-4 sm:px-5 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span
@@ -87,32 +87,35 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
               </span>
             </div>
           </div>
+          {/* Touch-friendly DONNA button — min 44px tall */}
           <button
             onClick={() => setDrillDraftOpen(true)}
-            className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-lime/30 text-lime hover:bg-lime/10 transition-colors shrink-0"
+            className="flex items-center justify-center gap-1.5 text-[11px] min-h-[44px] px-4 py-2 rounded-lg border border-lime/30 text-lime hover:bg-lime/10 active:bg-lime/15 transition-colors shrink-0 self-start sm:self-auto"
           >
-            <Sparkles className="w-3 h-3" />
+            <Sparkles className="w-3.5 h-3.5" />
             Ask DONNA
           </button>
         </div>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex items-center gap-1 flex-wrap">
-        {TABS.map(({ id, label, Icon }) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
-              tab === id
-                ? 'bg-lime/15 text-lime border border-lime/30'
-                : 'text-text-muted hover:text-text-secondary border border-transparent hover:border-border'
-            }`}
-          >
-            <Icon className="w-3 h-3" />
-            {label}
-          </button>
-        ))}
+      {/* Tab bar — scrollable on mobile, wraps on desktop */}
+      <div className="overflow-x-auto -mx-1 px-1">
+        <div className="flex items-center gap-1 min-w-max sm:min-w-0 sm:flex-wrap">
+          {TABS.map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`flex items-center gap-1.5 px-3 min-h-[36px] rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap ${
+                tab === id
+                  ? 'bg-lime/15 text-lime border border-lime/30'
+                  : 'text-text-muted hover:text-text-secondary border border-transparent hover:border-border'
+              }`}
+            >
+              <Icon className="w-3 h-3 shrink-0" />
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab content */}
