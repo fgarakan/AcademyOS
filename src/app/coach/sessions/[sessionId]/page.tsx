@@ -288,21 +288,29 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           </p>
         )}
 
-        {/* Block progress rail */}
+        {/* Block progress rail + execute link */}
         {blockList.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {blockList.map((block, i) => (
-              <span
-                key={block.id}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-raised border border-border text-[10px] text-text-secondary"
-              >
-                <span className="font-mono text-[9px] text-lime">{i + 1}</span>
-                {block.name}
-                {block.duration_min != null && (
-                  <span className="text-[9px] text-text-muted">{block.duration_min}m</span>
-                )}
-              </span>
-            ))}
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap gap-1.5">
+              {blockList.map((block, i) => (
+                <span
+                  key={block.id}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-raised border border-border text-[10px] text-text-secondary"
+                >
+                  <span className="font-mono text-[9px] text-lime">{i + 1}</span>
+                  {block.name}
+                  {block.duration_min != null && (
+                    <span className="text-[9px] text-text-muted">{block.duration_min}m</span>
+                  )}
+                </span>
+              ))}
+            </div>
+            <Link
+              href={`/coach/sessions/${params.sessionId}/execute`}
+              className="inline-flex items-center gap-1.5 text-xs text-lime font-medium hover:opacity-80 transition-opacity"
+            >
+              Open focused execute view →
+            </Link>
           </div>
         )}
       </div>

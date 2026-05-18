@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-18 — Sprint 989: Coach Template Execution View V1
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/execute/page.tsx` — Server Component; fetches session and blocks; renders ExecuteClient.
+- `src/app/coach/sessions/[sessionId]/execute/ExecuteClient.tsx` — Mobile-first, one-block-at-a-time client view with block progress rail, watch-for notes, difficulty toggle, quick note input, prev/next nav, and Wrap Up CTA.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Added "Open focused execute view →" link below block progress rail.
+
+**Docs created:**
+- `docs/COACH_TEMPLATE_EXECUTION_VIEW_989.md`
+
+---
+
 ## 2026-05-18 — Sprint 988: Coach Session Plan Live Data V1
 
 **Files modified:**
