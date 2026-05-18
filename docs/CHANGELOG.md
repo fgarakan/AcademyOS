@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1035: DONNA Voice Ready Interaction Shell V1
+
+**Files created:**
+- `src/components/donna/DonnaVoiceReadyShell.tsx` — Voice-ready shell wrapping DonnaChatThread: connects useVoiceDictation → transcript → handleSend. detectActionIdFromText maps natural language to actionIds. Boundary checking via donnaBoundaryResponses. Safe-read dispatch via donnaSafeReadActions. Session memory recording. Voice status indicator.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1034: DONNA Multi Source Answer Formatting V1
 
 **Files created:**
