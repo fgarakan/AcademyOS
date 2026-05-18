@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, BookOpen, Target, Shield, Dumbbell, MessageSquare } from 'lucide-react'
+import { Sparkles, BookOpen, Target, Shield, Dumbbell, MessageSquare, AlertTriangle } from 'lucide-react'
 import type { CurriculumExplorerData, CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 import { CurriculumLevelDetailPanel } from '@/components/curriculum/CurriculumLevelDetailPanel'
 import { DonnaAddDrillDraft } from './DonnaAddDrillDraft'
@@ -38,8 +38,59 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
   const fitness = data.fitnessGuidance.find(fg => fg.level_id === level.id) ?? null
   const volume = data.volumeGuidance.find(vg => vg.level_id === level.id) ?? null
 
+  const isMissing = levelGates.length === 0 && levelDrills.length === 0
+  const isLow = !isMissing && (levelGates.length < 2 || levelDrills.length < 3)
+  const gaps: string[] = []
+  if (levelGates.length === 0) gaps.push('no assessment gates')
+  else if (levelGates.length < 2) gaps.push('low gate count')
+  if (levelDrills.length === 0) gaps.push('no drills')
+  else if (levelDrills.length < 3) gaps.push('low drill count')
+
+  const statusColor = isMissing ? '#FF3B30' : isLow ? '#FF9500' : '#30D158'
+  const statusLabel = isMissing ? 'Missing content' : isLow ? 'Low content' : 'Complete'
+
   return (
     <div className="space-y-4">
+
+      {/* Level summary card */}
+      <div className="rounded-xl border border-border bg-surface-raised px-5 py-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: `${statusColor}18`, color: statusColor }}
+              >
+                {statusLabel}
+              </span>
+              {gaps.length > 0 && (
+                <span className="flex items-center gap-1 text-[10px] text-status-orange">
+                  <AlertTriangle className="w-3 h-3" />
+                  {gaps.join(' · ')}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-4 flex-wrap">
+              <span className="text-[11px] text-text-muted">
+                <span className="font-mono text-text-secondary">{levelGates.length}</span> gates
+              </span>
+              <span className="text-[11px] text-text-muted">
+                <span className="font-mono text-text-secondary">{levelDrills.length}</span> drills
+              </span>
+              <span className="text-[11px] text-text-muted">
+                <span className="font-mono text-text-secondary">{levelLanguage.length}</span> language entries
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => setDrillDraftOpen(true)}
+            className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-lime/30 text-lime hover:bg-lime/10 transition-colors shrink-0"
+          >
+            <Sparkles className="w-3 h-3" />
+            Ask DONNA
+          </button>
+        </div>
+      </div>
 
       {/* Tab bar */}
       <div className="flex items-center gap-1 flex-wrap">
