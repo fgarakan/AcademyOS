@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1030: DONNA Chat Thread UI V1
+
+**Files created:**
+- `src/components/donna/DonnaChatThread.tsx` — ChatGPT-style DONNA chat interface: message thread with user/donna/system bubbles, confidence dots, source notes, follow-up CTAs. Quick action chips. Textarea input with Enter-to-send, auto-resize, voice toggle. Typing indicator. buildChatMessageFromAnswer and buildUserChatMessage helpers.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1029: DONNA Action QA V1
 
 **Files created:**
