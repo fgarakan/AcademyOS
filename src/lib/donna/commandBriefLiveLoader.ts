@@ -10,7 +10,7 @@ import type {
   CommandBriefAttentionFlag,
   CommandBriefSessionSummary,
 } from '@/components/assistant/DonnaCommandBriefIntegration'
-import { buildDonnaCommandBriefPrompt } from '@/components/assistant/DonnaCommandBriefIntegration'
+import { buildDonnaCommandBriefPrompt } from '@/lib/donna/commandBriefPrompt'
 import { deriveOverallStatus } from '@/lib/donna/cooDataStatus'
 
 // ── Status types (re-exported for backward compatibility) ─────────────────────

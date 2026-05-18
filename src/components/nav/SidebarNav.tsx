@@ -19,7 +19,7 @@ const ACADEMY_ITEMS = [
   { label: 'Signals',      href: '/director/signals',         icon: Activity },
   { label: 'KPI',          href: '/director/kpi',             icon: BarChart2 },
   { label: 'Curriculum',   href: '/director/curriculum/builder', icon: BookOpen },
-  { label: 'Templates',    href: '/director/class-templates', icon: LayoutTemplate },
+  { label: 'Templates',    href: '/director/templates',       icon: LayoutTemplate },
 ]
 
 const SYSTEM_ITEMS = [

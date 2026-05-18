@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-18 — Sprint 920: Templates Landing Page V1
+
+**Files created:**
+- `src/app/director/templates/page.tsx` — Server Component. Templates hub with breadcrumb, page header, DONNA hero card (teal gradient + ambient glow), 4 primary action cards, 4 stat cards (class / fitness / needs review / recently updated), and 2 large category cards (Class Templates teal, Fitness Templates purple). Fully clickable. No DB calls — prototype-ready static layout.
+- `src/app/director/templates/TemplatesDonnaPanel.tsx` — Client Component. Sticky right-side DONNA assistant panel with active badge, prompt bubble ("What are you trying to build?"), 5 Quick Action links, and a controlled text input field.
+
+**Files modified:**
+- `src/components/nav/SidebarNav.tsx` — Templates sidebar link updated from `/director/class-templates` to `/director/templates` so the hub is the entry point.
+
+**Design:** AcademyOS dark premium aesthetic. Teal (lime) for Class Templates, purple for Fitness Templates. Ambient glow blobs, shadow-cyan hover effects, metric-number typography. DONNA panel sticky at top-6.
+
+**TypeScript:** CLEAN
+
+---
+
+## 2026-05-18 — Sprint 919: Director Today DONNA Command Brief Runtime Fix V1
+
+**Root cause:** `buildDonnaCommandBriefPrompt` was defined in `DonnaCommandBriefIntegration.tsx` which carries a `'use client'` directive. `commandBriefLiveLoader.ts` (a server-side module) imported it from that file, causing the export to resolve to `undefined` at runtime in Next.js App Router — "is not a function".
+
+**Files created:**
+- `src/lib/donna/commandBriefPrompt.ts` — Pure server-safe helper. Contains `buildDonnaCommandBriefPrompt` with inline types. No `'use client'`, no React, no external deps.
+
+**Files modified:**
+- `src/lib/donna/commandBriefLiveLoader.ts` — Import changed from `@/components/assistant/DonnaCommandBriefIntegration` to `@/lib/donna/commandBriefPrompt`. One line change.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 918: Competition Path Curriculum Connection V1
 
 **Files created:**
