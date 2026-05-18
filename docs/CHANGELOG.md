@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 963: Template DONNA Duration Adjustment Actions V1
+
+**Files modified:**
+- `src/components/templates/TemplateDonnaPanel.tsx` — Added `Clock`, `Plus`, `Minus` icon imports. Added `durationDelta` (number, default 0) and `durationConfirmed` (boolean) state. Added `showDuration` flag (true for `class_detail` and `fitness_detail` modes). Added "Duration" section above Quick Actions: shows current duration from `context.durationMin` (fallback 60min), `-/+` buttons in 15min increments (clamped ±30min), "Flag for review" button when delta != 0. On confirm, shows green acknowledgement with "no data saved" note and reset link. All state is client-local — no DB writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 962: Template DONNA Modify Difficulty Actions V1
 
 **Files modified:**

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, ChevronRight, Send, Zap, AlertCircle, TrendingUp, TrendingDown, CheckCircle2 } from 'lucide-react'
+import { Sparkles, ChevronRight, Send, Zap, AlertCircle, TrendingUp, TrendingDown, CheckCircle2, Clock, Plus, Minus } from 'lucide-react'
 import Link from 'next/link'
 import { DEMO_DONNA_SUGGESTIONS } from '@/lib/templates/templateMockData'
 
@@ -181,10 +181,15 @@ function getContextualActions(mode: DonnaPanelMode, baseActions: QuickAction[], 
 export function TemplateDonnaPanel({ mode, context }: Props) {
   const [input, setInput] = useState('')
   const [difficultyNudge, setDifficultyNudge] = useState<'easier' | 'harder' | null>(null)
+  const [durationDelta, setDurationDelta] = useState<number>(0)
+  const [durationConfirmed, setDurationConfirmed] = useState(false)
   const config = PANEL_CONFIGS[mode]
   const prompt = getContextualPrompt(mode, config.prompt, context)
   const actions = getContextualActions(mode, config.actions, context)
   const showDifficulty = mode === 'class_detail' || mode === 'fitness_detail'
+  const showDuration = mode === 'class_detail' || mode === 'fitness_detail'
+  const baseDuration = context?.durationMin ?? 60
+  const adjustedDuration = baseDuration + durationDelta
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter' && input.trim()) {
@@ -355,6 +360,71 @@ export function TemplateDonnaPanel({ mode, context }: Props) {
                     <TrendingUp className="w-3 h-3" />
                     Harder
                   </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Duration Adjustment — detail modes only */}
+          {showDuration && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-2 px-0.5">
+                <Clock className="w-3 h-3 text-lime" />
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+                  Duration
+                </span>
+              </div>
+              {durationConfirmed ? (
+                <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-status-green/20 bg-status-green/5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-status-green shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-status-green">
+                      Flagged: {adjustedDuration}min
+                    </p>
+                    <p className="text-[10px] text-text-muted mt-0.5">Demo only — no data saved. Review queue wiring in a future sprint.</p>
+                    <button
+                      type="button"
+                      onClick={() => { setDurationDelta(0); setDurationConfirmed(false) }}
+                      className="text-[10px] text-lime hover:text-lime/80 transition-colors duration-100 mt-1"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface-raised">
+                    <button
+                      type="button"
+                      onClick={() => setDurationDelta(d => Math.max(d - 15, -30))}
+                      disabled={durationDelta <= -30}
+                      className="w-6 h-6 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-lime hover:border-lime/25 transition-all duration-100 shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                      aria-label="Decrease duration"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <span className="flex-1 text-center text-sm font-mono font-bold text-lime">
+                      {adjustedDuration}min
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDurationDelta(d => Math.min(d + 15, 30))}
+                      disabled={durationDelta >= 30}
+                      className="w-6 h-6 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-lime hover:border-lime/25 transition-all duration-100 shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                      aria-label="Increase duration"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                  {durationDelta !== 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setDurationConfirmed(true)}
+                      className="w-full text-[11px] font-semibold px-3 py-2 rounded-xl border border-lime/20 bg-lime/5 text-lime hover:bg-lime/10 transition-all duration-100"
+                    >
+                      Flag for review ({durationDelta > 0 ? '+' : ''}{durationDelta}min)
+                    </button>
+                  )}
                 </div>
               )}
             </div>
