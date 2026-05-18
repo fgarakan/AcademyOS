@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 997: Curriculum Evidence Draft Links V1
+
+**Files created:**
+- `src/components/coach/CoachCurriculumEvidenceDraftCard.tsx` — Curriculum gate evidence draft card: status pill (suggested/pending_review/accepted/rejected), gate criterion box with collapsible full criteria, evidence excerpt with source question, confidence indicator (high/medium/low) with low-confidence advisory, safety notice requiring director review before any gate link or level movement. List component with pending-count banner and pagination.
+
+**Docs created:**
+- `docs/CURRICULUM_EVIDENCE_DRAFT_997.md`
+
+---
+
 ## 2026-05-18 — Sprint 996: Session Actual Draft V1
 
 **Files created:**
