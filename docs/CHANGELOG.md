@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1026: Coach Submit For Review Flow V1
+
+**Files created:**
+- `src/components/donna/CoachSubmitForReviewFlow.tsx` — Coach-facing UI for submitting a DONNA draft to the director review queue: shows draft label, what-happens breakdown, safety notes, submit button. Transitions to confirmation state after submission. Callback: onSubmit(draft). No DB writes directly.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1025: Director Approval Action Flow V1
 
 **Files created:**
