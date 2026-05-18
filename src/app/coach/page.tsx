@@ -1,4 +1,4 @@
-import { Calendar, Users, FileText, ChevronRight, ClipboardList } from 'lucide-react'
+import { Calendar, Users, FileText, ChevronRight, ClipboardList, Sparkles, Clock, PlayCircle } from 'lucide-react'
 import Link from 'next/link'
 import {
   Card,
@@ -102,6 +102,47 @@ export default async function CoachHome() {
           <ChevronRight className="w-4 h-4 text-status-orange/60 shrink-0 group-hover:text-status-orange transition-colors" />
         </Link>
       )}
+
+      {/* ── Next Session card ────────────────────────────────────── */}
+      {todaySessions.length > 0 && (() => {
+        const next = todaySessions.find(s => s.status !== 'completed' && s.status !== 'cancelled') ?? todaySessions[0]
+        return (
+          <Link href={`/coach/sessions/${next.id}`} className="block group">
+            <div className="rounded-2xl border border-lime/20 bg-surface p-4 space-y-3 hover:border-lime/40 hover:bg-surface-raised transition-all">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <PlayCircle className="w-4 h-4 text-lime shrink-0" />
+                  <p className="text-[10px] uppercase tracking-widest text-lime font-semibold">Next Session</p>
+                </div>
+                {next.scheduled_time && (
+                  <div className="flex items-center gap-1 text-[11px] text-text-muted">
+                    <Clock className="w-3 h-3" />
+                    <span className="font-mono">{next.scheduled_time.slice(0, 5)}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-text-primary group-hover:text-lime transition-colors">
+                  {next.name ?? 'Session'}
+                </p>
+                {next.duration_min && (
+                  <p className="text-xs text-text-muted mt-0.5">{next.duration_min} min</p>
+                )}
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                  next.status === 'in_progress'
+                    ? 'bg-lime/10 text-lime border-lime/30'
+                    : 'bg-surface-raised text-text-muted border-border'
+                }`}>
+                  {next.status.replace('_', ' ')}
+                </span>
+                <span className="text-xs text-lime font-medium group-hover:opacity-80">Open →</span>
+              </div>
+            </div>
+          </Link>
+        )
+      })()}
 
       {/* ── Quick stats ────────────────────────────────────────── */}
       <div className="flex gap-4">
@@ -325,6 +366,26 @@ export default async function CoachHome() {
           </Card>
 
         </div>
+      </div>
+
+      {/* ── DONNA Coach Assistant ─────────────────────────────── */}
+      <div className="rounded-2xl border border-border bg-surface p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
+            <Sparkles className="w-3.5 h-3.5 text-lime" />
+          </div>
+          <p className="text-sm font-semibold text-text-primary">DONNA</p>
+        </div>
+        <p className="text-xs text-text-secondary leading-relaxed">
+          {todaySessions.length > 0
+            ? `You have ${todaySessions.length} session${todaySessions.length !== 1 ? 's' : ''} today. Open a session to run it, capture notes, or wrap up after class.`
+            : 'No sessions scheduled yet today. Your wrap-ups, observations, and notes all enter the director review queue — nothing is sent to parents without approval.'}
+        </p>
+        {pendingWrapUpCount > 0 && (
+          <p className="text-xs text-status-orange font-medium">
+            {pendingWrapUpCount} session{pendingWrapUpCount !== 1 ? 's' : ''} still need{pendingWrapUpCount === 1 ? 's' : ''} a wrap-up.
+          </p>
+        )}
       </div>
 
       {/* ── Quick Actions ─────────────────────────────────────── */}

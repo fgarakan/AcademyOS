@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 987: Coach Today Dashboard Enhancement V1
+
+**Files modified:**
+- `src/app/coach/page.tsx` — Added Next Session focus card (first non-completed session of the day, links to session detail, lime accent) and DONNA coach assistant card (context-aware copy: session count, pending wrap-ups). No new routes.
+
+**Docs created:**
+- `docs/COACH_TODAY_DASHBOARD_987.md`
+
+---
+
 ## 2026-05-18 — Sprint 986: Coach Portal Architecture Audit V1
 
 **Docs created:**
