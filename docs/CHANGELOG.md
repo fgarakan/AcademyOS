@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1033: DONNA Ask Anything Role Boundaries V1
+
+**Files created:**
+- `src/lib/donna/donnaBoundaryResponses.ts` — Boundary response vocabulary: builders for role restriction, schema gap, no data yet, not built, out of scope, ambiguous, approval required, parent send not built. checkQuestionBoundary() detects blocked coach topics and schema gaps from question text. buildBoundaryMessage() for chat thread.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1032: DONNA Conversational Session Memory V1
 
 **Files created:**
