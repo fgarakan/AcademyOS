@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 1004: Director DONNA Command Center V1
+
+**Files created:**
+- `src/app/director/donna/page.tsx` — Director DONNA entry point at /director/donna. Live pending-review count + today's session count, DONNA greeting, six quick-link cards, eight suggested-question chips (→ COO demo), review-first safety notice. Falls back gracefully to demo when academy not resolved.
+- `docs/DIRECTOR_DONNA_COMMAND_CENTER_1004.md` — Route spec and gap notes.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1003: DONNA Shared Assistant Shell V1
 
 **Files created:**
