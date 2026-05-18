@@ -12,9 +12,10 @@ interface Props {
 export function DonnaAddDrillDraft({ level, onClose }: Props) {
   const [text, setText] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const MIN_CHARS = 20
 
   function handleSubmit() {
-    if (!text.trim()) return
+    if (text.trim().length < MIN_CHARS) return
     setSubmitted(true)
   }
 
@@ -45,13 +46,15 @@ export function DonnaAddDrillDraft({ level, onClose }: Props) {
           />
           <div className="flex items-center justify-between">
             <p className="text-[10px] text-text-muted">
-              Draft only — goes to review queue, not applied automatically.
+              {text.trim().length < MIN_CHARS && text.trim().length > 0
+                ? `${MIN_CHARS - text.trim().length} more characters needed`
+                : 'Draft only — goes to review queue, not applied automatically.'}
             </p>
             <div className="flex gap-2">
               <button onClick={onClose} className="btn-ghost text-[12px] px-3 py-1.5">Cancel</button>
               <button
                 onClick={handleSubmit}
-                disabled={!text.trim()}
+                disabled={text.trim().length < MIN_CHARS}
                 className="btn-lime text-[12px] px-3 py-1.5 disabled:opacity-50"
               >
                 Create draft
