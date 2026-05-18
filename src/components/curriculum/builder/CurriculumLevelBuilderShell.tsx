@@ -377,7 +377,7 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
         </div>
       )}
 
-      {/* Sprint 859 — Player Missions */}
+      {/* Sprint 859 — Player Mission Editing UX */}
       {tab === 'missions' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -390,13 +390,25 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
               Ask DONNA to draft a mission
             </button>
           </div>
-          <div className="rounded-xl border border-border border-dashed p-6 text-center space-y-2">
-            <Sparkles className="w-5 h-5 text-text-muted mx-auto" />
-            <p className="text-[12px] text-text-secondary">Player missions not yet defined for this level.</p>
-            <p className="text-[11px] text-text-muted">Missions are player-facing challenges that connect practice to progress. Ask DONNA to draft the first mission for this level.</p>
+          <div className="rounded-xl border border-border border-dashed p-8 text-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-lime/10 flex items-center justify-center mx-auto">
+              <Sparkles className="w-5 h-5 text-lime" />
+            </div>
+            <div>
+              <p className="text-[12px] font-semibold text-text-primary mb-1">No missions yet for {level.display_name}</p>
+              <p className="text-[11px] text-text-muted max-w-xs mx-auto">Player missions are player-facing challenges that make development feel like a journey, not just practice.</p>
+            </div>
+            <button
+              onClick={() => setDrillDraftOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-semibold border border-lime/30 text-lime hover:bg-lime/10 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Ask DONNA to draft the first mission
+            </button>
           </div>
-          <div className="rounded-xl border border-lime/10 bg-lime/[0.02] px-4 py-3">
-            <p className="text-[11px] text-text-muted">Mission drafts are saved to the Review Queue. Players only see approved missions.</p>
+          <div className="flex items-start gap-2 rounded-xl border border-lime/10 bg-lime/[0.02] px-4 py-3">
+            <Shield className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
+            <p className="text-[11px] text-text-muted">Mission drafts go to the Review Queue. Players only see approved missions.</p>
           </div>
         </div>
       )}
