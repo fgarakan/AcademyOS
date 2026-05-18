@@ -10,14 +10,17 @@ import { DonnaAddFitnessExerciseDraft } from './DonnaAddFitnessExerciseDraft'
 import { DonnaCurriculumContextPanel } from './DonnaCurriculumContextPanel'
 import { DonnaSafetyDisclosure } from './DonnaSafetyDisclosure'
 
-type Tab = 'overview' | 'drills' | 'gates' | 'fitness' | 'language'
+type Tab = 'overview' | 'skills' | 'drills' | 'competition' | 'fitness' | 'gates' | 'missions' | 'language'
 
 const TABS: { id: Tab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: 'overview',  label: 'Overview',  Icon: BookOpen },
-  { id: 'drills',    label: 'Drills',    Icon: Target },
-  { id: 'gates',     label: 'Gates',     Icon: Shield },
-  { id: 'fitness',   label: 'Fitness',   Icon: Dumbbell },
-  { id: 'language',  label: 'Language',  Icon: MessageSquare },
+  { id: 'overview',    label: 'Overview',    Icon: BookOpen },
+  { id: 'skills',      label: 'Skill Path',  Icon: Target },
+  { id: 'drills',      label: 'Drills',      Icon: Target },
+  { id: 'competition', label: 'Competition', Icon: Shield },
+  { id: 'fitness',     label: 'Fitness',     Icon: Dumbbell },
+  { id: 'gates',       label: 'Gates',       Icon: Shield },
+  { id: 'missions',    label: 'Missions',    Icon: Sparkles },
+  { id: 'language',    label: 'Language',    Icon: MessageSquare },
 ]
 
 interface Props {
@@ -132,6 +135,56 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
         </div>
       )}
 
+      {/* Sprint 855 — Skill Path: domain-grouped drill view */}
+      {tab === 'skills' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] uppercase tracking-widest text-text-muted font-semibold">Skill Path — by domain</p>
+            <button
+              onClick={() => setDrillDraftOpen(true)}
+              className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-lime/30 text-lime hover:bg-lime/10 transition-colors"
+            >
+              <Sparkles className="w-3 h-3" />
+              Ask DONNA to add a skill drill
+            </button>
+          </div>
+          <p className="text-[11px] text-text-muted">Drills organized by skill domain. All edits are draft-only.</p>
+          {levelDrills.length === 0 ? (
+            <div className="rounded-xl border border-border border-dashed p-6 text-center">
+              <p className="text-[12px] text-text-secondary">No drills linked to this level yet.</p>
+              <p className="text-[11px] text-text-muted mt-1">Ask DONNA to draft skill-focused drills for this level.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(
+                levelDrills.reduce<Record<string, typeof levelDrills>>((acc, d) => {
+                  const domain = d.domain || 'General'
+                  if (!acc[domain]) acc[domain] = []
+                  acc[domain].push(d)
+                  return acc
+                }, {})
+              ).map(([domain, drills]) => (
+                <div key={domain}>
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-2">{domain}</p>
+                  <div className="space-y-2">
+                    {drills.map(drill => (
+                      <div key={drill.id} className="rounded-xl border border-border bg-surface-raised px-4 py-3">
+                        <p className="text-[12px] font-semibold text-text-primary">{drill.name}</p>
+                        {drill.objective && <p className="text-[11px] text-text-secondary mt-1">{drill.objective}</p>}
+                        {drill.success_criteria && <p className="text-[10px] text-text-muted mt-1">Success: {drill.success_criteria}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {drillDraftOpen && (
+            <DonnaAddDrillDraft level={level} onClose={() => setDrillDraftOpen(false)} />
+          )}
+        </div>
+      )}
+
       {tab === 'drills' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -229,6 +282,61 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
           {fitnessDraftOpen && (
             <DonnaAddFitnessExerciseDraft level={level} onClose={() => setFitnessDraftOpen(false)} />
           )}
+        </div>
+      )}
+
+      {/* Sprint 856 — Competition Path */}
+      {tab === 'competition' && (
+        <div className="space-y-3">
+          <p className="text-[11px] uppercase tracking-widest text-text-muted font-semibold">Competition Path</p>
+          {!competition ? (
+            <div className="rounded-xl border border-border border-dashed p-6 text-center">
+              <p className="text-[12px] text-text-secondary">No competition track data at this level yet.</p>
+              <p className="text-[11px] text-text-muted mt-1">Competition path data is defined in the master curriculum spine.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {competition.match_format && (
+                <div className="rounded-xl border border-border bg-surface-raised px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">Match Format</p>
+                  <p className="text-[12px] text-text-primary">{competition.match_format}</p>
+                </div>
+              )}
+              {competition.scoring_system && (
+                <div className="rounded-xl border border-border bg-surface-raised px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">Scoring System</p>
+                  <p className="text-[12px] text-text-primary">{competition.scoring_system}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="rounded-xl border border-lime/10 bg-lime/[0.02] px-4 py-3">
+            <p className="text-[11px] text-text-muted">Competition path edits are draft-only. Changes go to the Review Queue.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Sprint 859 — Player Missions */}
+      {tab === 'missions' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] uppercase tracking-widest text-text-muted font-semibold">Player Missions</p>
+            <button
+              onClick={() => setDrillDraftOpen(true)}
+              className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-lime/30 text-lime hover:bg-lime/10 transition-colors"
+            >
+              <Sparkles className="w-3 h-3" />
+              Ask DONNA to draft a mission
+            </button>
+          </div>
+          <div className="rounded-xl border border-border border-dashed p-6 text-center space-y-2">
+            <Sparkles className="w-5 h-5 text-text-muted mx-auto" />
+            <p className="text-[12px] text-text-secondary">Player missions not yet defined for this level.</p>
+            <p className="text-[11px] text-text-muted">Missions are player-facing challenges that connect practice to progress. Ask DONNA to draft the first mission for this level.</p>
+          </div>
+          <div className="rounded-xl border border-lime/10 bg-lime/[0.02] px-4 py-3">
+            <p className="text-[11px] text-text-muted">Mission drafts are saved to the Review Queue. Players only see approved missions.</p>
+          </div>
         </div>
       )}
 
