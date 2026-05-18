@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-18 — Sprint 971: Template Backend Wiring Architecture Audit V1
+
+**Files created:**
+- `docs/TEMPLATE_BACKEND_WIRING_ARCHITECTURE_AUDIT_971.md` — Full architecture audit for template backend wiring (Sprints 972-985). Covers: (1) existing UI routes and their backend needs; (2) all relevant existing DB tables (templates, template_blocks, template_block_exercises, curriculum_class_template_blocks, proposed_actions, sessions, curriculum_stages); (3) decision to extend `templates` rather than split into class/fitness tables — 7 new columns proposed; (4) `template_blocks` 4 new columns; `template_block_exercises` 7 new columns; `curriculum_class_template_blocks` 3 new columns; (5) new `template_review_requests` table — UI-originated lifecycle, separate from voice-command `proposed_actions`; (6) new `template_version_history` table — append-only JSONB snapshots; (7) status-aware RLS model — director-only approve, draft visibility scoped to creator/director; (8) 8 named risks with explicit decisions (snapshot labels vs. FKs, no template_usage table, no forced class/fitness abstraction, proposed_actions separation, version granularity, curriculum immutability); (9) 14-sprint migration plan (Sprints 972-985).
+
+**No migrations created. No schema changes. No DB writes. Audit-only.**
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-18 — Sprint 970: Curriculum-Aware Templates Completion Audit V1
 
 **Files created:**
