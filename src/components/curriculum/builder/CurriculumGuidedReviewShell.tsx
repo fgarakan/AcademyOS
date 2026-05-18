@@ -45,6 +45,11 @@ export function CurriculumGuidedReviewShell({ data }: Props) {
     setReviewed(prev => new Set(Array.from(prev).concat(idx)))
   }
 
+  function keepAsIs() {
+    markReviewed(currentIndex)
+    if (!isLast) setCurrentIndex(i => i + 1)
+  }
+
   function goNext() {
     markReviewed(currentIndex)
     if (!isLast) setCurrentIndex(i => i + 1)
@@ -130,24 +135,53 @@ export function CurriculumGuidedReviewShell({ data }: Props) {
           />
         </div>
 
-        <div className="flex items-center justify-between px-5 py-3 border-t border-border bg-surface-raised">
-          <button
-            onClick={goPrev}
-            disabled={isFirst}
-            className="flex items-center gap-1.5 text-[12px] text-text-muted hover:text-lime transition-colors disabled:opacity-40"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            Previous
-          </button>
+        {/* Action row */}
+        <div className="px-5 py-4 border-t border-border bg-surface-raised space-y-3">
+          {/* Primary actions */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={keepAsIs}
+              disabled={isLast && reviewed.has(currentIndex)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-40"
+              style={{ background: '#C8FF00', color: '#0A0A0A' }}
+            >
+              Keep as-is
+              {!isLast && <ChevronRight className="w-3.5 h-3.5" />}
+            </button>
+            <a
+              href={`/director/curriculum/level/${level.id}`}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-medium border border-lime/30 text-lime hover:bg-lime/10 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Modify this level
+            </a>
+            <button
+              onClick={skip}
+              disabled={isLast}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-medium border border-border text-text-muted hover:text-text-secondary hover:border-border/80 transition-colors disabled:opacity-40"
+            >
+              <SkipForward className="w-3.5 h-3.5" />
+              Skip
+            </button>
+          </div>
 
-          <button
-            onClick={goNext}
-            disabled={isLast}
-            className="flex items-center gap-1.5 text-[12px] text-lime hover:text-lime/80 transition-colors font-semibold disabled:opacity-40"
-          >
-            {isLast ? 'All levels reviewed' : 'Next level'}
-            {!isLast && <ChevronRight className="w-3.5 h-3.5" />}
-          </button>
+          {/* Secondary nav */}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              onClick={goPrev}
+              disabled={isFirst}
+              className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-secondary transition-colors disabled:opacity-40"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              Previous level
+            </button>
+            <button
+              onClick={() => setJumpOpen(true)}
+              className="text-[11px] text-text-muted hover:text-lime transition-colors"
+            >
+              Jump to another level
+            </button>
+          </div>
         </div>
       </div>
 
