@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-18 — Sprint 908: Curriculum DONNA Panel Across All Pages V1
+
+**Audit result:** All 6 target pages confirmed with correct CurriculumDonnaPanel config:
+| Page | Mode | Mobile hidden | activeAction | Notes |
+|---|---|---|---|---|
+| Curriculum Map | map | hidden lg:block | — | healthItems wired |
+| Guided Review | guided_review | hidden lg:block | donnaPanelActive toggle | "Ask DONNA to improve it" |
+| Level Builder | level | hidden lg:block | panelToAction(activePanel) | full wiring |
+| Add Drill | add_drill | hidden lg:block | — | |
+| Add Fitness | add_fitness | hidden lg:block | — | |
+| Impact Preview | impact | hidden lg:block | — | |
+
+No DANA references found in any curriculum component or page.
+No code changes needed — all panels were already correctly implemented.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — Sprint 908 audit entry only.
+
+**TypeScript:** CLEAN (unchanged)
+
+---
+
 ## 2026-05-18 — Sprint 907: Impact Preview Scope Actions V1
 
 **Files modified:**
