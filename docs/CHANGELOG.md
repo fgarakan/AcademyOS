@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 994: DONNA Wrap-Up Question Flow Enhancement V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/wrap-up/WrapUpPageClient.tsx` — Added running structured summary panel (DONNA Summary Draft): builds section-by-section as answers are entered; draft disclaimer always visible; answer counter always shown.
+
+**Docs created:**
+- `docs/DONNA_WRAP_UP_QUESTION_FLOW_994.md`
+
+---
+
 ## 2026-05-18 — Sprint 993: DONNA Coach Wrap-Up Shell V1
 
 **Files created:**

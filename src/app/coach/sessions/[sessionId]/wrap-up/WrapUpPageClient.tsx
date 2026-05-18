@@ -203,28 +203,58 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
         />
 
         {/* Running answer summary */}
-        {answered > 0 && (
-          <div className="space-y-1">
-            <p className="text-[9px] uppercase tracking-widest text-text-muted">{answered} of {QUESTIONS.length} answered</p>
-            <div className="flex flex-wrap gap-1">
-              {QUESTIONS.map((q, i) => (
-                <span
-                  key={q.key}
-                  className={`text-[10px] px-1.5 py-0.5 rounded border ${
-                    answers[q.key]?.trim()
-                      ? 'border-status-green/30 bg-status-green/10 text-status-green'
-                      : i === stepIndex
-                      ? 'border-lime/30 bg-lime/5 text-lime'
-                      : 'border-border text-text-muted'
-                  }`}
-                >
-                  {i + 1}
-                </span>
-              ))}
-            </div>
+        <div className="space-y-1">
+          <p className="text-[9px] uppercase tracking-widest text-text-muted">{answered} of {QUESTIONS.length} answered</p>
+          <div className="flex flex-wrap gap-1">
+            {QUESTIONS.map((q, i) => (
+              <span
+                key={q.key}
+                className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                  answers[q.key]?.trim()
+                    ? 'border-status-green/30 bg-status-green/10 text-status-green'
+                    : i === stepIndex
+                    ? 'border-lime/30 bg-lime/5 text-lime'
+                    : 'border-border text-text-muted'
+                }`}
+              >
+                {i + 1}
+              </span>
+            ))}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Running structured summary */}
+      {answered > 0 && (
+        <div className="mt-4 rounded-2xl border border-border bg-surface p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+            <p className="text-[10px] uppercase tracking-widest text-text-muted">DONNA Summary Draft</p>
+          </div>
+          <div className="space-y-2">
+            {QUESTIONS.map(q => {
+              const val = answers[q.key]?.trim()
+              if (!val) return null
+              return (
+                <div key={q.key}>
+                  <p className="text-[9px] uppercase tracking-widest text-text-muted mb-0.5">
+                    {q.key === 'overall' ? 'Session Overview' :
+                     q.key === 'attendance' ? 'Attendance' :
+                     q.key === 'standouts' ? 'Positive Standouts' :
+                     q.key === 'attention' ? 'Needs Extra Attention' :
+                     q.key === 'adjust' ? 'Next Session Adjustments' :
+                     'Follow-Up Items'}
+                  </p>
+                  <p className="text-xs text-text-secondary leading-snug line-clamp-2">{val}</p>
+                </div>
+              )
+            })}
+          </div>
+          <p className="text-[9px] text-text-muted leading-snug">
+            Draft only — submitted for director review. Nothing sent to parents or applied to player profiles.
+          </p>
+        </div>
+      )}
 
       {/* Error */}
       {saveError && (
