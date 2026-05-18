@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-18 — Sprint 935: Class Template Curriculum Level Selector V1
+
+**Files created:**
+- `src/lib/templates/templateCurriculumPreview.ts` — Static curriculum level preview helper. 15 levels (Red Ball 1–3, Orange Ball 1–3, Green Ball 1–3, Yellow Ball 1–3, High Performance 1–3). Each entry: levelGoal, skillPathwayFocus, competitionPathwayFocus, assessmentGatesCount, recommendedTemplateType. Labeled: curriculum-derived demo preview — not saved — not applied. Includes `getCurriculumLevelPreview()`, `getCurriculumStage()`, and `GOALS_BY_STAGE` keyed by ball-color stage.
+
+**Files modified:**
+- `src/app/director/templates/class/create/page.tsx` — Step 1 replaced: 4 generic levels → 15 curriculum levels in a 3-column grid. Selecting a level shows an inline preview card with all 5 fields + demo label. Step 2 goals now derived from `GOALS_BY_STAGE` by ball-color stage. Review step adds "Curriculum Source" row (lime) showing selected level. DONNA tips updated to reflect curriculum-as-source-of-truth messaging.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 934: Templates V1 Completion Audit V1
 
 **Files created:**

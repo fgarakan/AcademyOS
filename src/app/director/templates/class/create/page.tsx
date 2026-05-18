@@ -2,8 +2,14 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, LayoutTemplate, BookOpen, CheckCircle2, AlertCircle, Plus, X } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, LayoutTemplate, BookOpen, CheckCircle2, AlertCircle, Plus, X, Info } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
+import {
+  CURRICULUM_LEVEL_PREVIEWS,
+  getCurriculumLevelPreview,
+  getCurriculumStage,
+  GOALS_BY_STAGE,
+} from '@/lib/templates/templateCurriculumPreview'
 
 // demo-only — no writes — no saves — local state only
 
@@ -17,44 +23,8 @@ const STEPS = [
   { id: 5, label: 'Review', icon: CheckCircle2 },
 ]
 
-const LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Elite'] as const
-const LEVEL_DESCRIPTIONS: Record<string, string> = {
-  Beginner: 'Level 1 — Foundational skills, rally consistency, introduction to match play',
-  Intermediate: 'Level 2 — Pattern play, serve-and-return, tactical foundations',
-  Advanced: 'Level 3 — Advanced patterns, match tactics, point construction',
-  Elite: 'Level 4 — Competition preparation, high-performance training',
-}
-
-const GOALS_BY_LEVEL: Record<string, string[]> = {
-  Beginner: [
-    'Baseline consistency from both sides',
-    'Serve mechanics and grip',
-    'Introduction to net play',
-    'Rally cooperative — 5 in a row',
-    'Point play introduction',
-  ],
-  Intermediate: [
-    'Net approach and first volley',
-    'Serve-and-return patterns',
-    'Down-the-line forehand pattern',
-    'Match tactics: open court strategy',
-    'Transition from defense to offense',
-  ],
-  Advanced: [
-    'Inside-out forehand pattern',
-    'Second serve tactics',
-    'Approach + passing shot combination',
-    'Pressure patterns from baseline',
-    'Point construction off the serve',
-  ],
-  Elite: [
-    'Tournament pressure points',
-    'Serve-plus-one patterns',
-    'Return-of-serve dominance',
-    'Match-play decision making',
-    'Mental resilience under fatigue',
-  ],
-}
+// 15 curriculum levels grouped by ball stage
+const CURRICULUM_LEVELS = CURRICULUM_LEVEL_PREVIEWS.map(p => p.level)
 
 const BLOCK_TYPES = [
   { id: 'warm_up', label: 'Warm-Up', color: 'text-status-blue border-status-blue/30 bg-status-blue/8' },
@@ -87,6 +57,10 @@ export default function CreateClassTemplatePage() {
   const [selectedGoal, setSelectedGoal] = useState<string>('')
   const [blocks, setBlocks] = useState<Block[]>([])
   const [selectedDrills, setSelectedDrills] = useState<Record<string, string[]>>({})
+
+  const preview = getCurriculumLevelPreview(selectedLevel)
+  const stage = getCurriculumStage(selectedLevel)
+  const goalsForLevel = stage ? GOALS_BY_STAGE[stage] : []
 
   function addBlock(typeId: string) {
     const typeInfo = BLOCK_TYPES.find(b => b.id === typeId)
@@ -188,35 +162,76 @@ export default function CreateClassTemplatePage() {
         {/* Step content */}
         <div className="rounded-2xl border border-border bg-surface p-6">
 
-          {/* Step 1 — Level */}
+          {/* Step 1 — Curriculum Level */}
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-base font-bold text-text-primary mb-1">Choose a Curriculum Level</h2>
-                <p className="text-sm text-text-secondary">The level determines which curriculum goals, gates, and drills apply to this template.</p>
+                <h2 className="text-base font-bold text-text-primary mb-1">Choose Curriculum Level</h2>
+                <p className="text-sm text-text-secondary">The curriculum level is the source of truth. It determines which goals, drills, and assessment gates apply to this template.</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {LEVELS.map(level => (
+
+              {/* Level grid — 15 levels */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {CURRICULUM_LEVELS.map(level => (
                   <button
                     key={level}
                     onClick={() => setSelectedLevel(level)}
                     className={[
-                      'flex flex-col gap-2 p-4 rounded-2xl border text-left transition-all duration-150',
+                      'flex items-center justify-between gap-2 px-4 py-3 rounded-xl border text-left transition-all duration-150',
                       selectedLevel === level
                         ? 'border-lime/30 bg-lime/8 shadow-[0_0_20px_rgba(200,255,0,0.08)]'
                         : 'border-border bg-surface-raised hover:border-lime/20 hover:bg-surface-raised',
                     ].join(' ')}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-text-primary">{level}</span>
-                      {selectedLevel === level && <CheckCircle2 className="w-4 h-4 text-lime" />}
-                    </div>
-                    <p className="text-xs text-text-secondary leading-relaxed">
-                      {LEVEL_DESCRIPTIONS[level]}
-                    </p>
+                    <span className="text-sm font-semibold text-text-primary">{level}</span>
+                    {selectedLevel === level && <CheckCircle2 className="w-4 h-4 text-lime shrink-0" />}
                   </button>
                 ))}
               </div>
+
+              {/* Curriculum preview card */}
+              {preview && (
+                <div className="rounded-xl border border-lime/15 bg-lime/4 p-5 space-y-4">
+                  {/* Preview label */}
+                  <div className="flex items-center gap-2">
+                    <Info className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                    <span className="text-[10px] uppercase tracking-widest text-text-muted">
+                      Curriculum-derived demo preview — Not saved — Not applied
+                    </span>
+                  </div>
+
+                  {/* Level name */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Selected Level</p>
+                    <p className="text-base font-bold text-lime">{preview.level}</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Level Goal</p>
+                      <p className="text-xs text-text-secondary leading-relaxed">{preview.levelGoal}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Skill Pathway Focus</p>
+                      <p className="text-xs text-text-secondary leading-relaxed">{preview.skillPathwayFocus}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Competition Pathway Focus</p>
+                      <p className="text-xs text-text-secondary leading-relaxed">{preview.competitionPathwayFocus}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Assessment Gates</p>
+                        <p className="text-xs font-mono text-lime">{preview.assessmentGatesCount} gates</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Recommended Template Type</p>
+                        <p className="text-xs text-text-secondary">{preview.recommendedTemplateType}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -231,7 +246,7 @@ export default function CreateClassTemplatePage() {
                 </p>
               </div>
               <div className="space-y-2">
-                {(GOALS_BY_LEVEL[selectedLevel] ?? []).map(goal => (
+                {goalsForLevel.map(goal => (
                   <button
                     key={goal}
                     onClick={() => setSelectedGoal(goal)}
@@ -389,20 +404,23 @@ export default function CreateClassTemplatePage() {
 
               {/* Summary */}
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
+                {/* Curriculum Source — prominent row */}
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-lime/6 border border-lime/20">
                   <GraduationCap className="w-4 h-4 text-lime shrink-0" />
                   <div>
-                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Level</p>
-                    <p className="text-sm font-semibold text-text-primary">{selectedLevel || 'Not selected'}</p>
+                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Curriculum Source</p>
+                    <p className="text-sm font-semibold text-lime">{selectedLevel || 'Not selected'}</p>
                   </div>
                 </div>
+
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
                   <Target className="w-4 h-4 text-lime shrink-0" />
                   <div>
-                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Goal</p>
+                    <p className="text-[10px] text-text-muted uppercase tracking-widest">Session Goal</p>
                     <p className="text-sm font-semibold text-text-primary">{selectedGoal || 'Not selected'}</p>
                   </div>
                 </div>
+
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-raised border border-border">
                   <LayoutTemplate className="w-4 h-4 text-lime shrink-0" />
                   <div>
@@ -412,6 +430,28 @@ export default function CreateClassTemplatePage() {
                     </p>
                   </div>
                 </div>
+
+                {/* Curriculum preview summary in review */}
+                {preview && (
+                  <div className="p-3 rounded-xl border border-border bg-surface-raised space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Info className="w-3 h-3 text-text-muted shrink-0" />
+                      <span className="text-[10px] uppercase tracking-widest text-text-muted">
+                        Curriculum-derived demo preview — Not saved — Not applied
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div>
+                        <p className="text-[10px] text-text-muted mb-0.5">Assessment Gates</p>
+                        <p className="text-xs font-mono text-lime">{preview.assessmentGatesCount} gates</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-text-muted mb-0.5">Recommended Type</p>
+                        <p className="text-xs text-text-secondary">{preview.recommendedTemplateType}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Demo save button */}
@@ -470,11 +510,11 @@ export default function CreateClassTemplatePage() {
           <Sparkles className="w-4 h-4 text-lime shrink-0 mt-0.5" />
           <p className="text-xs text-text-secondary leading-relaxed">
             <span className="font-semibold text-text-primary">DONNA tip: </span>
-            {step === 1 && 'Choose the curriculum level that matches the players this template is designed for. Each level maps to specific goals and drills.'}
-            {step === 2 && 'The session goal is the primary outcome. Be specific — it will guide DONNA when generating drill suggestions.'}
+            {step === 1 && 'The curriculum level is the source of truth. Choose the level that matches the players this template is designed for — it determines which goals, gates, and drills apply.'}
+            {step === 2 && 'The session goal is the primary outcome. Be specific — it will guide DONNA when generating drill suggestions for this curriculum level.'}
             {step === 3 && 'A well-structured class template has 4–6 blocks: warm-up, 2–3 skill blocks, a match-play block, and a cool-down.'}
             {step === 4 && 'Select 2–3 drills per block. You can always add custom drills or modify these once the template is saved.'}
-            {step === 5 && 'Review before saving. Once saved as a draft, you can add curriculum connections and coach notes from the detail view.'}
+            {step === 5 && 'Review before saving. The curriculum source will be shown on all views of this template so coaches always know which level it targets.'}
           </p>
         </div>
 
