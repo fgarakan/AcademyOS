@@ -77,6 +77,7 @@ export default function CreateClassTemplatePage() {
   const [selectedGoal, setSelectedGoal] = useState<string>('')
   const [blocks, setBlocks] = useState<Block[]>([])
   const [selectedDrills, setSelectedDrills] = useState<Record<string, string[]>>({})
+  const [draftSaved, setDraftSaved] = useState(false)
 
   const preview = getCurriculumLevelPreview(selectedLevel)
   const stage = getCurriculumStage(selectedLevel)
@@ -675,9 +676,30 @@ export default function CreateClassTemplatePage() {
                   <p>This draft does not assign to any player, session, or coach until explicitly approved by a Director or Head Coach.</p>
                   <p className="text-status-orange/70">Demo mode — Save Draft does not persist anything. Backend wiring coming in a future sprint.</p>
                 </div>
+                {draftSaved && (
+                  <div className="rounded-xl border border-status-green/20 bg-status-green/5 p-4 mb-3 space-y-2">
+                    <p className="text-sm font-semibold text-status-green flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      Draft saved (demo mode — not persisted)
+                    </p>
+                    <p className="text-[11px] text-text-secondary font-semibold">What happens next in the real flow:</p>
+                    <ol className="space-y-1 pl-4 list-decimal text-[11px] text-text-muted">
+                      <li>Template enters the Draft queue for Director review</li>
+                      <li>Director reviews and approves → status moves to Ready</li>
+                      <li>Coaches see the template in their session builder</li>
+                      <li>Director can track template usage in the Template Hub</li>
+                    </ol>
+                    <button
+                      onClick={() => setDraftSaved(false)}
+                      className="text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-100"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
                 <div className="flex items-center gap-3 flex-wrap">
                   <button
-                    onClick={() => alert('Demo only — no data saved.')}
+                    onClick={() => setDraftSaved(true)}
                     className="btn-lime inline-flex items-center gap-2"
                   >
                     <CheckCircle2 className="w-4 h-4" />

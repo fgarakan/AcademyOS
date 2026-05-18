@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 956: Template Save Draft Placeholder Flow V1
+
+**Files modified:**
+- `src/app/director/templates/class/create/page.tsx` — Added `draftSaved` state. "Save as Draft" now sets `draftSaved = true` (replaces `alert()`). When true, shows a green confirmation card: "Draft saved (demo)" + 4-step "what happens next" list. Includes "Dismiss" button.
+- `src/app/director/templates/fitness/create/page.tsx` — Same pattern: `draftSaved` state, green confirmation card with fitness-specific "what happens next" steps (load tracking, coach session builder).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 955: Template Edit Controls Polish V1
 
 **Files modified:**

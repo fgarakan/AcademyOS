@@ -59,6 +59,7 @@ export default function CreateFitnessTemplatePage() {
   const [durationMin, setDurationMin] = useState<number>(30)
   const [fitnessBlocks, setFitnessBlocks] = useState<FitnessBlock[]>([])
   const [expandedBlockId, setExpandedBlockId] = useState<string | null>(null)
+  const [draftSaved, setDraftSaved] = useState(false)
 
   function addBlock(type: FitnessBlockType) {
     if (fitnessBlocks.find(b => b.type === type)) return
@@ -670,9 +671,30 @@ export default function CreateFitnessTemplatePage() {
                   <p>Individual player load management should be reviewed by qualified coaching staff before delivery.</p>
                   <p className="text-status-orange/70">Demo mode — Save Draft does not persist anything. Backend wiring coming in a future sprint.</p>
                 </div>
+                {draftSaved && (
+                  <div className="rounded-xl border border-status-green/20 bg-status-green/5 p-4 mb-3 space-y-2">
+                    <p className="text-sm font-semibold text-status-green flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      Draft saved (demo mode — not persisted)
+                    </p>
+                    <p className="text-[11px] text-text-secondary font-semibold">What happens next in the real flow:</p>
+                    <ol className="space-y-1 pl-4 list-decimal text-[11px] text-text-muted">
+                      <li>Fitness template enters the Draft queue for Director review</li>
+                      <li>Director reviews load, exercises, and tennis transfers — approves or requests changes</li>
+                      <li>Approved template appears in coach session builder and fitness calendar</li>
+                      <li>Load data feeds into player load tracking system over time</li>
+                    </ol>
+                    <button
+                      onClick={() => setDraftSaved(false)}
+                      className="text-[11px] text-text-muted hover:text-text-secondary transition-colors duration-100"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
                 <div className="flex items-center gap-3 flex-wrap">
                   <button
-                    onClick={() => alert('Demo only — no data saved.')}
+                    onClick={() => setDraftSaved(true)}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-status-purple border border-status-purple/30 bg-status-purple/10 hover:bg-status-purple/15 active:scale-95 transition-all duration-100"
                   >
                     <CheckCircle2 className="w-4 h-4" />
