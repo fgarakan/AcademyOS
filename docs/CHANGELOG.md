@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1036: DONNA Director Coach Cross Portal QA V1
+
+**Files created:**
+- `docs/DONNA_CROSS_PORTAL_QA_1036.md` — Cross-portal QA audit for Sprints 1001-1035: director portal route checks, coach portal route checks, component integration status (all Phase 4 components built but not yet wired to page routes), role isolation verification (all 7 checks pass), integration roadmap (5 wiring tasks to complete Phase 4).
+
+**TypeScript:** No code changes — doc only.
+
+---
+
 ## 2026-05-18 — Sprint 1035: DONNA Voice Ready Interaction Shell V1
 
 **Files created:**
