@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-18 — Sprint 1042: DONNA Coach Wrap-Up Integration Polish V1
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/wrap-up/WrapUpPageClient.tsx` — polished to DONNA final form: DONNA + Coach role badge in header, contextual DONNA prompt above each question, "Submit for Review" button label, submitted state shows DONNA branding + ShieldCheck safety notice + "Ask DONNA" link, no new mutations.
+
+**Files created:**
+- `docs/DONNA_COACH_WRAP_UP_INTEGRATION_POLISH_1042.md` — polish audit document.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1041: DONNA Director Review Queue Surface Wiring V1
 
 **Files created:**

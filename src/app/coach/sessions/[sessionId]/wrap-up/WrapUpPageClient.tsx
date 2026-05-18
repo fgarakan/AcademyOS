@@ -1,7 +1,15 @@
 'use client'
 
+// Sprint 1042 — DONNA Coach Wrap-Up Integration Polish V1
+// Wrap-up flow polished to feel like DONNA final form:
+// - DONNA header with role badge
+// - One question at a time (preserved)
+// - Running structured summary with DONNA branding
+// - Clearer submit-for-review language
+// - Nothing sent/applied until director review
+
 import { useState, useTransition } from 'react'
-import { ChevronLeft, ChevronRight, Check, Loader2, Sparkles, SkipForward } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, Loader2, Sparkles, SkipForward, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { saveWrapUpDraftAction, type BlockCompletionDraft } from '../saveWrapUpDraftAction'
 
@@ -120,13 +128,27 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
   if (phase === 'saved') {
     return (
       <div className="min-h-screen bg-base flex flex-col items-center justify-center px-4 text-center space-y-5">
+        {/* DONNA submitted state */}
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-7 h-7 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-lime" />
+          </div>
+          <span className="text-sm font-semibold text-lime">DONNA</span>
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold border bg-status-blue/10 text-status-blue border-status-blue/20">Coach</span>
+        </div>
         <div className="w-14 h-14 rounded-full bg-status-green/10 border border-status-green/30 flex items-center justify-center">
           <Check className="w-7 h-7 text-status-green" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-text-primary">Wrap-up saved</h2>
+          <h2 className="text-xl font-bold text-text-primary">Wrap-up submitted for review</h2>
           <p className="text-sm text-text-secondary mt-1 leading-relaxed max-w-xs mx-auto">
-            Your notes have been submitted for director review. Nothing has been sent to parents or applied to player profiles yet.
+            Your wrap-up draft is in the director review queue. Nothing has been sent to parents or applied to player profiles.
+          </p>
+        </div>
+        <div className="flex items-start gap-2 max-w-xs px-3 py-2.5 rounded-xl border border-lime/15 bg-lime/4 text-left">
+          <ShieldCheck className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
+          <p className="text-[10px] text-text-secondary leading-relaxed">
+            The director will review and approve before any information reaches parents or becomes part of the official player record.
           </p>
         </div>
         <div className="flex flex-col gap-2 w-full max-w-xs">
@@ -142,6 +164,13 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
           >
             Back to Session
           </Link>
+          <Link
+            href="/coach/donna"
+            className="px-5 py-3 rounded-xl text-sm text-text-muted hover:text-text-secondary transition-all text-center flex items-center justify-center gap-1.5"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Ask DONNA
+          </Link>
         </div>
       </div>
     )
@@ -150,8 +179,8 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
   return (
     <div className="min-h-screen bg-base flex flex-col max-w-lg mx-auto px-4 py-6">
 
-      {/* Top nav */}
-      <div className="flex items-center justify-between mb-6">
+      {/* DONNA header */}
+      <div className="flex items-center justify-between mb-4">
         <Link
           href={returnHref}
           className="flex items-center gap-1 text-text-muted text-xs hover:text-text-secondary"
@@ -159,13 +188,18 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
           <ChevronLeft className="w-4 h-4" />
           {sessionName}
         </Link>
-        <p className="text-[10px] font-mono text-text-muted">
-          {stepIndex + 1} / {QUESTIONS.length}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded-lg bg-lime/10 border border-lime/20 flex items-center justify-center">
+            <Sparkles className="w-2.5 h-2.5 text-lime" />
+          </div>
+          <span className="text-[11px] font-semibold text-lime">DONNA</span>
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold border bg-status-blue/10 text-status-blue border-status-blue/20">Coach</span>
+          <span className="text-[10px] text-text-muted ml-1">{stepIndex + 1}/{QUESTIONS.length}</span>
+        </div>
       </div>
 
       {/* Progress rail */}
-      <div className="flex gap-1 mb-6">
+      <div className="flex gap-1 mb-5">
         {QUESTIONS.map((_, i) => (
           <button
             key={i}
@@ -180,15 +214,17 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
         ))}
       </div>
 
-      {/* DONNA intro chip */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-6 h-6 rounded-full bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
+      {/* DONNA prompt */}
+      <div className="flex items-start gap-2.5 mb-4 px-3 py-2.5 rounded-xl border border-border bg-surface">
+        <div className="w-6 h-6 rounded-full bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0 mt-0.5">
           <Sparkles className="w-3 h-3 text-lime" />
         </div>
-        <p className="text-xs text-text-muted">
+        <p className="text-xs text-text-secondary leading-relaxed">
           {stepIndex === 0
-            ? "Let's wrap this up quickly. I'll turn your answers into drafts for review."
-            : "Keep going — almost done."}
+            ? "Let's wrap this up. Quick answers — I'll build the draft as you go. Nothing is sent until the director reviews it."
+            : answered >= QUESTIONS.length - 2
+            ? "Almost done — just a couple more questions."
+            : "Keep going — your draft is building in real time below."}
         </p>
       </div>
 
@@ -295,7 +331,7 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
             className="flex items-center gap-2 px-5 py-3 rounded-xl bg-lime text-base font-bold text-black hover:bg-lime/90 disabled:opacity-60 transition-all"
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            Save Wrap-Up
+            Submit for Review
           </button>
         ) : (
           <button
