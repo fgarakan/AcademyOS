@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 905: Add Fitness Draft Card Screenshot Match V1
+
+**Files modified:**
+- `src/components/curriculum/builder/CurriculumAddFitnessExperience.tsx` — Replaced placeholder submitted state with full `FitnessDraftCard`. Card shows: title "Low Contact Mobility Prep", pathway, tennis transfer, recommended levels, use before, curriculum connection chain. Action buttons: Save Draft (lime), Edit Draft (muted), Add to Another Level (teal), Cancel. Impact warning with Zap icon. Safety disclosure at bottom. All display-only.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 904: Add Fitness Page Screenshot Match V1
 
 **Files created:**
