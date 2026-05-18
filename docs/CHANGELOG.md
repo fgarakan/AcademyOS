@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 906: Impact Preview Screenshot Match V1
+
+**Files created:**
+- `src/components/curriculum/builder/CurriculumImpactPreviewExperience.tsx` — Impact Preview full-page experience. Change summary card (Wide Ball Recovery Builder, Draft badge). 4 counter cards (Will Update/Needs Review/Not Affected/Future) with icons and counts. 9 impact item rows (Orange Ball 2 Curriculum, Session Templates, Lesson Plans, Coach Session Context, Player Profile Requirements, Assessment Gates, Player Missions, Parent/Player Summaries, Orange Ball 3 Curriculum) — each with status pill and detail. Safety note at bottom. Right DONNA panel mode="impact". All display-only.
+- `src/app/director/curriculum/builder/impact-preview/page.tsx` — Server page with auth check.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 905: Add Fitness Draft Card Screenshot Match V1
 
 **Files modified:**
