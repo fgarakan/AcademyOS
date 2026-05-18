@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 904: Add Fitness Page Screenshot Match V1
+
+**Files created:**
+- `src/components/curriculum/builder/CurriculumAddFitnessExperience.tsx` — Client component for the Add Fitness Exercise page. 2-column layout with main form card + right sticky DONNA panel (mode="add_fitness"). Features: safety banner, textarea with live char count, clickable example prompt, Generate draft button (teal). Simple submitted state (full draft card in Sprint 905). No backend writes.
+- `src/app/director/curriculum/builder/add-fitness/page.tsx` — Server page with auth check. Renders `CurriculumAddFitnessExperience`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 903: Add Drill Draft Card Screenshot Match V1
 
 **Files modified:**
