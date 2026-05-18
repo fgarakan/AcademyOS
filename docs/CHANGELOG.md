@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 995: Coach Observation Draft Structuring V1
+
+**Files created:**
+- `src/components/coach/CoachObservationDraftCard.tsx` — Rich observation draft display: type chip (strength/growth_area/concern/context), pathway tag, urgency, parent-safe flag, director review flag, confidence label, suggested next focus, edit/delete callbacks, draft disclaimer. Includes `CoachObservationDraftList` with "Show N more" pagination.
+
+**Docs created:**
+- `docs/COACH_OBSERVATION_DRAFT_STRUCTURING_995.md`
+
+---
+
 ## 2026-05-18 — Sprint 994: DONNA Wrap-Up Question Flow Enhancement V1
 
 **Files modified:**
