@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-18 — Sprint 894: Curriculum Right DONNA Panel Shell V1
+
+**Files created:**
+- `src/components/curriculum/builder/CurriculumDonnaPanel.tsx` — Reusable right-side DONNA curriculum assistant panel; 6 built-in mode variants (map/level/impact/add_drill/add_fitness/guided_review); teal top-border accent, "D" avatar, Active badge, contextual prompt card, action chips with href or callback, optional Curriculum Health breakdown, bottom text input with Send icon; `use client`.
+
+**Files modified:**
+- `src/app/director/curriculum/map/page.tsx` — Restructured to 2-column flex layout (main content left, CurriculumDonnaPanel right at lg:block w-72 sticky). Added dynamic subtitle with level/pathway/attention counts. Added top action buttons (Start Guided Review, Jump to Level). Computes health stats from explorerData (readyCount, needsReviewCount, incompleteCount, customCount) and passes as healthItems to panel.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 893: Curriculum Builder Prototype Page Match Audit V1
 
 **Files created:**
