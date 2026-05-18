@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 926: Class Template Detail Editor V1
+
+**Files created:**
+- `src/app/director/templates/class/[templateId]/page.tsx` — Class Template detail page. Server component. Demo-only: finds template from mock data by ID (falls back to first). Shows: template overview card (status/level/track badges, stats row), curriculum connection panel (linked or empty with connect CTA), session blocks list (type chip, coaching focus, drill tags), coach briefing notes, and draft safety panel with links to coach preview and impact preview. Right TemplateDonnaPanel mode=class_detail.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 925: Create Class Template Guided Flow V1
 
 **Files created:**
