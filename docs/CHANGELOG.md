@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-18 — Sprint 913: Curriculum Screenshot Match Full Regression V1
+
+**Regression audit — all target pages:**
+
+| Page | DONNA Panel | Safety Language | No DANA | No Unsafe Copy | Overflow Safe | TS Clean |
+|---|---|---|---|---|---|---|
+| Curriculum Builder | — (welcome page) | — | ✓ | ✓ | ✓ | ✓ |
+| Curriculum Map | mode=map ✓ | — | ✓ | ✓ | ✓ | ✓ |
+| Guided Review | mode=guided_review ✓ | "nothing is applied" ✓ | ✓ | ✓ | ✓ | ✓ |
+| Level Builder | mode=level ✓ | "Draft mode" banner ✓ | ✓ | ✓ | ✓ | ✓ |
+| Add Drill | mode=add_drill ✓ | "Draft only" banner ✓ | ✓ | ✓ | ✓ | ✓ |
+| Add Fitness | mode=add_fitness ✓ | "Draft only" banner ✓ | ✓ | ✓ | ✓ | ✓ |
+| Impact Preview | mode=impact ✓ | "Nothing is applied yet" ✓ | ✓ | ✓ | ✓ | ✓ |
+| Advanced Curriculum | — (admin/read-only) | bypass note intentional ✓ | ✓ | ✓ | ✓ | ✓ |
+
+**Findings:** No DANA references. No unsafe copy. No broken imports. No horizontal overflow risks. `CurriculumAdvancedAdminLink.tsx` "bypass" language is intentional warning copy for admin-only route — not a product safety issue.
+
+**Files modified:** `docs/CHANGELOG.md` only.
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-18 — Sprint 912: Curriculum Draft Review Queue Flow QA V1
 
 **Files created:**
