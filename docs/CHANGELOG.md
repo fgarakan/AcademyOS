@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 928: Fitness Template Detail Editor V1
+
+**Files created:**
+- `src/app/director/templates/fitness/[templateId]/page.tsx` — Fitness Template detail page. Server component. Shows: template overview (status/level/fitness-goal/load badges, stats strip), exercises list (name, sets, reps, notes), tennis transfer tags, curriculum pathway connection panel, coach notes, draft safety panel. Links to coach preview and impact preview. Right TemplateDonnaPanel mode=fitness_detail.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 927: Create Fitness Template Guided Flow V1
 
 **Files created:**
