@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 897: Level Builder Section Cards Interaction Polish V1
+
+**Files modified:**
+- `src/components/curriculum/builder/CurriculumLevelBuilderGrid.tsx` — Six targeted improvements: (1) single `ActivePanel` discriminated union replaces 3 booleans — only one panel can be open at a time; (2) `SectionCard` gains a `description` prop with per-card explanatory copy; (3) empty states upgraded to dashed containers with exact spec copy ("No drills connected yet", "No assessment gates yet", "No fitness support connected yet", "No competition focus connected yet", "No missions connected yet") each with an "Ask DONNA to draft one" CTA; (4) `isActive` prop highlights the active card with teal border; (5) "Draft only · director approval required" safety note below each card's action buttons; (6) Competition Path and Player Missions each have their own `ActivePanel` variant so highlight and panel routing are precise.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 896: Level Builder Screenshot Match V1
 
 **Files created:**
