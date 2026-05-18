@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-18 — Sprint 920 (amendment): Templates Prototype Port Audit V1
+
+**Files created:**
+- `docs/TEMPLATES_PROTOTYPE_PORT_AUDIT_920.md` — Port audit for Templates UI Port Block. Notes prototype zip was empty (0 bytes); documents existing template routes, new routes to build (921–931), reusable components, build priority, mock data strategy, and risks of copying Manus code directly. Sprint plan 921–934 included.
+
+**No code changes.** Docs only.
+
+**TypeScript:** CLEAN (no changes)
+
+---
+
 ## 2026-05-18 — Sprint 920: Templates Landing Page V1
 
 **Files created:**
