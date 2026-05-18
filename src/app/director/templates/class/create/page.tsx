@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, LayoutTemplate, BookOpen, CheckCircle2, AlertCircle, Plus, X, Info } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, LayoutTemplate, BookOpen, CheckCircle2, AlertCircle, Plus, X, Info, Eye } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
 import {
   CURRICULUM_LEVEL_PREVIEWS,
@@ -664,13 +664,18 @@ export default function CreateClassTemplatePage() {
                 </div>
               )}
 
-              {/* Demo save button */}
+              {/* Draft safety + save */}
               <div className="pt-2">
-                <div className="p-4 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange mb-4">
-                  <AlertCircle className="w-3.5 h-3.5 inline mr-1.5" />
-                  Demo mode — clicking Save Draft does not persist anything. Backend wiring coming in a future sprint.
+                <div className="p-4 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange mb-3 space-y-1.5">
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    Draft Safety
+                  </p>
+                  <p>This is a curriculum-derived class template draft. All drills, blocks, and player missions are coaching guidance — not a finalized session plan.</p>
+                  <p>This draft does not assign to any player, session, or coach until explicitly approved by a Director or Head Coach.</p>
+                  <p className="text-status-orange/70">Demo mode — Save Draft does not persist anything. Backend wiring coming in a future sprint.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <button
                     onClick={() => alert('Demo only — no data saved.')}
                     className="btn-lime inline-flex items-center gap-2"
@@ -678,6 +683,15 @@ export default function CreateClassTemplatePage() {
                     <CheckCircle2 className="w-4 h-4" />
                     Save as Draft
                   </button>
+                  {selectedLevel && (
+                    <Link
+                      href={`/director/templates/coach-preview?level=${encodeURIComponent(selectedLevel)}&goal=${encodeURIComponent(selectedGoal)}&type=class`}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-text-secondary border border-border bg-surface-raised hover:border-lime/20 hover:text-text-primary transition-all duration-100"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Preview for Coach
+                    </Link>
+                  )}
                   <Link href="/director/templates/class" className="btn-ghost inline-flex items-center gap-2">
                     Cancel
                   </Link>

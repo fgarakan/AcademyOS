@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 954: Template Draft Safety Language Pass V1
+
+**Files modified:**
+- `src/app/director/templates/class/create/page.tsx` — Step 5 draft safety upgraded from a single-line demo banner to a multi-line draft safety statement: curriculum-derived guidance language, no-assignment-without-approval note, demo persistence disclaimer. Added `Eye` import. Added "Preview for Coach" link to Step 5 alongside Save Draft button (mirrors fitness create pattern).
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 953: Template Curriculum Source Labels V1
 
 **Files modified:**
