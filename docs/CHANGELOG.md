@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 951: Fitness Template Review Step Curriculum Summary V1
+
+**Files modified:**
+- `src/app/director/templates/fitness/create/page.tsx` — Step 5 curriculum summary upgraded: "Curriculum Source" card replaced with full 5-field curriculum summary card (physical development need, tennis technical transfer, load guidance, age fit note, level goal from `getCurriculumLevelPreview`). Draft safety section expanded from a single-line demo banner to a multi-line draft safety statement covering coaching-guidance-only language and individual load review requirement.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 950: Fitness Template Tennis Transfer Labels V1
 
 **Files modified:**

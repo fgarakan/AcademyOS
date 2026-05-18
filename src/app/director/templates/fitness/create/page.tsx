@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Info, LayoutTemplate, Zap } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
-import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumStage, getFitnessCurriculumPreview } from '@/lib/templates/templateCurriculumPreview'
+import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumStage, getFitnessCurriculumPreview, getCurriculumLevelPreview } from '@/lib/templates/templateCurriculumPreview'
 import { FitnessBlockType, FITNESS_BLOCK_TYPES, getFitnessBlockLabel, getFitnessBlockIntent, getFitnessBlockAccent, getFitnessBlockBorderAccent, getDefaultBlockDuration } from '@/lib/fitness/fitnessBlockTypes'
 import { getExercisesForBlock, getExerciseProgressionRegression } from '@/lib/templates/fitnessExerciseAutoPopulate'
 
@@ -609,9 +609,38 @@ export default function CreateFitnessTemplatePage() {
                   )}
                 </div>
                 {fitnessCurriculumPreview && (
-                  <div className="p-3 rounded-xl bg-surface-raised border border-border">
-                    <p className="text-[10px] text-text-muted uppercase tracking-widest mb-2">Curriculum Source</p>
-                    <p className="text-xs text-text-secondary">{fitnessCurriculumPreview.tennisTechnicalTransfer}</p>
+                  <div className="p-4 rounded-xl bg-surface-raised border border-status-purple/15 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Info className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted">Curriculum Summary — {selectedLevel}</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Physical Development Need</p>
+                        <p className="text-xs text-text-secondary leading-relaxed">{fitnessCurriculumPreview.physicalDevelopmentNeed}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Tennis Technical Transfer</p>
+                        <p className="text-xs text-text-secondary leading-relaxed">{fitnessCurriculumPreview.tennisTechnicalTransfer}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Load Guidance</p>
+                        <p className="text-xs text-text-secondary">{fitnessCurriculumPreview.loadGuidance}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Age Fit Note</p>
+                        <p className="text-xs text-text-secondary">{fitnessCurriculumPreview.ageFitNote}</p>
+                      </div>
+                    </div>
+                    {(() => {
+                      const levelPreview = getCurriculumLevelPreview(selectedLevel)
+                      return levelPreview ? (
+                        <div className="pt-2 border-t border-border">
+                          <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Level Goal</p>
+                          <p className="text-xs text-text-secondary">{levelPreview.levelGoal}</p>
+                        </div>
+                      ) : null
+                    })()}
                   </div>
                 )}
                 {allTennisTransfers.length > 0 && (
@@ -632,9 +661,14 @@ export default function CreateFitnessTemplatePage() {
               </div>
 
               <div className="pt-2">
-                <div className="p-4 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange mb-4">
-                  <AlertCircle className="w-3.5 h-3.5 inline mr-1.5" />
-                  Demo mode — clicking Save Draft does not persist anything. Backend wiring coming in a future sprint.
+                <div className="p-4 rounded-xl border border-status-orange/20 bg-status-orange/5 text-[11px] text-status-orange mb-3 space-y-1.5">
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    Draft Safety
+                  </p>
+                  <p>This is a curriculum-derived fitness template draft. All exercises, loads, and block structures are coaching guidance — not a medical fitness plan.</p>
+                  <p>Individual player load management should be reviewed by qualified coaching staff before delivery.</p>
+                  <p className="text-status-orange/70">Demo mode — Save Draft does not persist anything. Backend wiring coming in a future sprint.</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <button
