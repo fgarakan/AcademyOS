@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1025: Director Approval Action Flow V1
+
+**Files created:**
+- `src/components/donna/DirectorApprovalActionFlow.tsx` — Director review UI for DONNA approval-required actions: shows headline, risk badge, ReviewContextPanel (what changes/stays same, reversibility), safety notes, director notes textarea, approve/reject flow with confirmation. Callbacks: onApprove, onReject. No direct DB writes.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1024: DONNA Blocked Actions by Role V1
 
 **Files created:**
