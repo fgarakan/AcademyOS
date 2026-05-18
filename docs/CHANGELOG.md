@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-18 — Sprint 914: Curriculum Builder Browser QA V1
+
+**Files created:**
+- `docs/CURRICULUM_BUILDER_BROWSER_QA_914.md` — Full browser QA document. Route inventory (11 routes verified). Primary button QA across all 6 target pages (30+ buttons). TypeScript status. Known runtime limitations (animated transitions, auth redirects, touch gestures — require live browser). All code-verifiable items ✓.
+
+**Key findings:** All routes exist. All navigation hrefs are correct. All draft buttons are local-only with no unsafe mutations. TypeScript CLEAN.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-18 — Sprint 913: Curriculum Screenshot Match Full Regression V1
 
 **Regression audit — all target pages:**
