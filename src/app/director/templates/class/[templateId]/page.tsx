@@ -271,7 +271,17 @@ export default async function ClassTemplateDetailPage({ params }: { params: Prom
 
       </div>
 
-      <TemplateDonnaPanel mode="class_detail" />
+      <TemplateDonnaPanel
+        mode="class_detail"
+        context={{
+          templateName: template.name,
+          templateLevel: template.level,
+          templateType: 'class',
+          blockCount: template.blockCount,
+          durationMin: template.durationMin,
+          status: template.status,
+        }}
+      />
     </div>
   )
 }

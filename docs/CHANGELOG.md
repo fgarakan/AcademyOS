@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-18 — Sprint 959: Template DONNA Context Awareness V1
+
+**Files modified:**
+- `src/components/templates/TemplateDonnaPanel.tsx` — Exported `DonnaContext` interface (`templateName`, `templateLevel`, `templateType`, `blockCount`, `durationMin`, `status`). Added `getContextualPrompt()` — enriches DONNA prompt with template name/level for `class_detail`, `fitness_detail`, `impact`, `coach_preview` modes. Added `getContextualActions()` — rewrites coach-preview and impact-preview hrefs to include template params when context is present. Updated `Props` to `context?: DonnaContext`. Render uses computed `prompt` and `actions`.
+- `src/app/director/templates/class/[templateId]/page.tsx` — Passes `context` object to `TemplateDonnaPanel` with `templateName`, `templateLevel`, `templateType: 'class'`, `blockCount`, `durationMin`, `status`.
+- `src/app/director/templates/fitness/[templateId]/page.tsx` — Passes `context` object with `templateName`, `templateLevel`, `templateType: 'fitness'`, `durationMin`, `status`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 958: Template Impact Preview Integration V1
 
 **Files modified:**

@@ -16,6 +16,15 @@ export type DonnaPanelMode =
   | 'impact'
   | 'suggestions'
 
+export interface DonnaContext {
+  templateName?: string
+  templateLevel?: string
+  templateType?: 'class' | 'fitness'
+  blockCount?: number
+  durationMin?: number
+  status?: string
+}
+
 interface QuickAction {
   label: string
   href: string
@@ -116,12 +125,47 @@ const PANEL_CONFIGS: Record<DonnaPanelMode, PanelConfig> = {
 
 interface Props {
   mode: DonnaPanelMode
-  context?: string
+  context?: DonnaContext
 }
 
-export function TemplateDonnaPanel({ mode }: Props) {
+function getContextualPrompt(mode: DonnaPanelMode, basePrompt: string, ctx?: DonnaContext): string {
+  if (!ctx?.templateName) return basePrompt
+  if (mode === 'class_detail') {
+    return `Reviewing "${ctx.templateName}" — ${ctx.templateLevel ?? ''} class template. Want me to check the curriculum connections and block structure?`
+  }
+  if (mode === 'fitness_detail') {
+    return `Reviewing "${ctx.templateName}" — ${ctx.templateLevel ?? ''} fitness template. Want me to review the exercise selection and tennis transfer?`
+  }
+  if (mode === 'impact') {
+    return `Showing projected impact for "${ctx.templateName}". Nothing changes until you review and approve.`
+  }
+  if (mode === 'coach_preview') {
+    return `Previewing "${ctx.templateName}" as your coaches will see it. Clear and low-friction is the goal — does this feel right?`
+  }
+  return basePrompt
+}
+
+function getContextualActions(mode: DonnaPanelMode, baseActions: QuickAction[], ctx?: DonnaContext): QuickAction[] {
+  if (!ctx?.templateName) return baseActions
+  const level = ctx.templateLevel ? encodeURIComponent(ctx.templateLevel) : ''
+  const name = ctx.templateName ? encodeURIComponent(ctx.templateName) : ''
+  const type = ctx.templateType ?? 'class'
+  return baseActions.map(action => {
+    if (action.href.startsWith('/director/templates/coach-preview') && level) {
+      return { ...action, href: `/director/templates/coach-preview?level=${level}&type=${type}` }
+    }
+    if (action.href.startsWith('/director/templates/impact-preview') && name) {
+      return { ...action, href: `/director/templates/impact-preview?name=${name}&level=${level}&type=${type}` }
+    }
+    return action
+  })
+}
+
+export function TemplateDonnaPanel({ mode, context }: Props) {
   const [input, setInput] = useState('')
   const config = PANEL_CONFIGS[mode]
+  const prompt = getContextualPrompt(mode, config.prompt, context)
+  const actions = getContextualActions(mode, config.actions, context)
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter' && input.trim()) {
@@ -166,7 +210,7 @@ export function TemplateDonnaPanel({ mode }: Props) {
               className="flex-1 rounded-xl rounded-tl-sm px-3.5 py-2.5 border"
               style={{ background: 'var(--bg-card-soft)', borderColor: 'var(--border-subtle)' }}
             >
-              <p className="text-sm text-text-primary leading-relaxed">{config.prompt}</p>
+              <p className="text-sm text-text-primary leading-relaxed">{prompt}</p>
             </div>
           </div>
 
@@ -179,7 +223,7 @@ export function TemplateDonnaPanel({ mode }: Props) {
               </span>
             </div>
             <div className="space-y-0.5">
-              {config.actions.map((action) => (
+              {actions.map((action) => (
                 <Link
                   key={action.label}
                   href={action.href}

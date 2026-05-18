@@ -318,7 +318,16 @@ export default async function FitnessTemplateDetailPage({ params }: { params: Pr
 
       </div>
 
-      <TemplateDonnaPanel mode="fitness_detail" />
+      <TemplateDonnaPanel
+        mode="fitness_detail"
+        context={{
+          templateName: template.name,
+          templateLevel: template.level,
+          templateType: 'fitness',
+          durationMin: template.durationMin,
+          status: template.status,
+        }}
+      />
     </div>
   )
 }
