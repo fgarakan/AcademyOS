@@ -2,22 +2,25 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Zap, Clock } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Zap, Clock, Info } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
+import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumLevelPreview, getCurriculumStage } from '@/lib/templates/templateCurriculumPreview'
 
 // demo-only — no writes — no saves — local state only
 
 type Step = 1 | 2 | 3 | 4 | 5
 
 const STEPS = [
-  { id: 1, label: 'Level / Group', icon: GraduationCap },
+  { id: 1, label: 'Curriculum Level', icon: GraduationCap },
   { id: 2, label: 'Fitness Goal', icon: Target },
   { id: 3, label: 'Load + Duration', icon: Dumbbell },
   { id: 4, label: 'Add Exercises', icon: Zap },
   { id: 5, label: 'Review', icon: CheckCircle2 },
 ]
 
-const LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Elite'] as const
+// 15 curriculum levels — replaces generic Beginner/Intermediate/Advanced/Elite
+const CURRICULUM_LEVELS = CURRICULUM_LEVEL_PREVIEWS.map(p => p.level)
+
 const LOAD_LEVELS = ['Light', 'Moderate', 'High'] as const
 
 const FITNESS_GOALS = [
@@ -86,6 +89,8 @@ export default function CreateFitnessTemplatePage() {
 
   const goalInfo = FITNESS_GOALS.find(g => g.id === selectedGoal)
   const exerciseSuggestions = EXERCISES_BY_GOAL[selectedGoal] ?? []
+  const fitnessPreview = getCurriculumLevelPreview(selectedLevel)
+  const fitnessStage = getCurriculumStage(selectedLevel)
 
   return (
     <div className="flex gap-4 lg:gap-6 p-4 lg:p-6 min-h-screen items-start">
@@ -150,38 +155,58 @@ export default function CreateFitnessTemplatePage() {
         {/* Step content */}
         <div className="rounded-2xl border border-border bg-surface p-6">
 
-          {/* Step 1 — Level */}
+          {/* Step 1 — Curriculum Level */}
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-base font-bold text-text-primary mb-1">Choose Level / Player Group</h2>
-                <p className="text-sm text-text-secondary">Match the physical demands to the right player group.</p>
+                <h2 className="text-base font-bold text-text-primary mb-1">Choose Curriculum Level</h2>
+                <p className="text-sm text-text-secondary">The curriculum level is the source of truth. It determines the physical development needs, load guidance, and tennis transfer priorities for this template.</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {LEVELS.map(level => (
+
+              {/* Level grid — 15 curriculum levels */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {CURRICULUM_LEVELS.map(level => (
                   <button
                     key={level}
                     onClick={() => setSelectedLevel(level)}
                     className={[
-                      'flex flex-col gap-2 p-4 rounded-2xl border text-left transition-all duration-150',
+                      'flex items-center justify-between gap-2 px-4 py-3 rounded-xl border text-left transition-all duration-150',
                       selectedLevel === level
-                        ? 'border-status-purple/30 bg-status-purple/8'
+                        ? 'border-status-purple/30 bg-status-purple/8 shadow-[0_0_16px_rgba(161,0,255,0.06)]'
                         : 'border-border bg-surface-raised hover:border-status-purple/20',
                     ].join(' ')}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-text-primary">{level}</span>
-                      {selectedLevel === level && <CheckCircle2 className="w-4 h-4 text-status-purple" />}
-                    </div>
-                    <p className="text-xs text-text-secondary">
-                      {level === 'Beginner' && 'Light load, coordination focus, injury prevention priority'}
-                      {level === 'Intermediate' && 'Moderate load, speed and agility development'}
-                      {level === 'Advanced' && 'Higher load, power and match-specific conditioning'}
-                      {level === 'Elite' && 'High-performance training, tournament prep load'}
-                    </p>
+                    <span className="text-sm font-semibold text-text-primary">{level}</span>
+                    {selectedLevel === level && <CheckCircle2 className="w-4 h-4 text-status-purple shrink-0" />}
                   </button>
                 ))}
               </div>
+
+              {/* Curriculum preview for fitness */}
+              {fitnessPreview && (
+                <div className="rounded-xl border border-status-purple/15 bg-status-purple/4 p-5 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Info className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                    <span className="text-[10px] uppercase tracking-widest text-text-muted">
+                      Curriculum-derived demo preview — Not saved — Not applied
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Selected Level</p>
+                    <p className="text-base font-bold text-status-purple">{fitnessPreview.level}</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Physical Development Need</p>
+                      <p className="text-xs text-text-secondary leading-relaxed">{fitnessPreview.levelGoal}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Recommended Template Type</p>
+                      <p className="text-xs text-text-secondary">{fitnessPreview.recommendedTemplateType}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -191,7 +216,7 @@ export default function CreateFitnessTemplatePage() {
               <div>
                 <h2 className="text-base font-bold text-text-primary mb-1">Choose Fitness Goal</h2>
                 <p className="text-sm text-text-secondary">
-                  What physical outcome are you training for?
+                  What physical outcome are you training for this level?
                   <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-status-purple/20 bg-status-purple/8 text-status-purple">{selectedLevel}</span>
                 </p>
               </div>

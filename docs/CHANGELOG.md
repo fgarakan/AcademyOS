@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 944: Fitness Template Curriculum Level Selector V1
+
+**Files modified:**
+- `src/app/director/templates/fitness/create/page.tsx` — Step 1 replaced: 4 generic levels (Beginner/Intermediate/Advanced/Elite) → 15 curriculum levels in a 3-column grid. Step label renamed to "Curriculum Level". Adds curriculum preview card (physical development need, recommended template type) using `getCurriculumLevelPreview`. `fitnessPreview` and `fitnessStage` derived from selection.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 943: Class Template Coach Preview Connection V1
 
 **Files modified:**
