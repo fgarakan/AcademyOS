@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 932: Templates Route Navigation QA V1
+
+**Files created:**
+- `docs/TEMPLATES_ROUTE_QA_932.md` — Full route QA document. Confirms all 10 routes created. Audits all navigation links from the home page, DONNA panel quick actions (all 10 modes), and cross-page navigation. Documents known limitations (mock data, no-write, local-only state). Notes old routes remain active with real backend connectivity.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 931: DONNA Template Suggestions V1
 
 **Files created:**
