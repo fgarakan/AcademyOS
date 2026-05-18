@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1027: DONNA Action Preview Before Submit V1
+
+**Files created:**
+- `src/components/donna/DonnaActionPreviewCard.tsx` — Preview card for DONNA actions before submission: shows action label, safety class badge (5 classes with color), risk level, summary, what changes list, source confidence indicator, safety notes. Pure display — no state mutations.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1026: Coach Submit For Review Flow V1
 
 **Files created:**
