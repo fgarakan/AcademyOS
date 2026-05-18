@@ -200,17 +200,47 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
             </button>
           </div>
           {levelDrills.length === 0 ? (
-            <div className="rounded-xl border border-border border-dashed p-6 text-center">
-              <p className="text-[12px] text-text-secondary">No drills at this level yet.</p>
-              <p className="text-[11px] text-text-muted mt-1">Ask DONNA to draft one, or add via advanced tools.</p>
+            <div className="rounded-xl border border-border border-dashed p-8 text-center space-y-3">
+              <div className="w-10 h-10 rounded-full bg-lime/10 flex items-center justify-center mx-auto">
+                <Target className="w-5 h-5 text-lime" />
+              </div>
+              <div>
+                <p className="text-[12px] font-semibold text-text-primary mb-1">No drills yet</p>
+                <p className="text-[11px] text-text-muted">Ask DONNA to draft the first drill for this level.</p>
+              </div>
+              <button
+                onClick={() => setDrillDraftOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-semibold border border-lime/30 text-lime hover:bg-lime/10 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Ask DONNA to draft a drill
+              </button>
             </div>
           ) : (
             <div className="space-y-2">
               {levelDrills.map(drill => (
-                <div key={drill.id} className="rounded-xl border border-border bg-surface-raised px-4 py-3">
-                  <p className="text-[12px] font-semibold text-text-primary">{drill.name}</p>
-                  <p className="text-[11px] text-text-muted mt-0.5">{drill.domain} · {drill.session_block}</p>
-                  {drill.objective && <p className="text-[11px] text-text-secondary mt-1">{drill.objective}</p>}
+                <div key={drill.id} className="rounded-xl border border-border bg-surface-raised px-4 py-4 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold text-text-primary">{drill.name}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border text-text-muted border-border">{drill.domain}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border text-text-muted border-border">{drill.session_block}</span>
+                        {drill.source_type && drill.source_type !== 'academy' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded border text-status-blue/70 border-status-blue/20">{drill.source_type}</span>
+                        )}
+                      </div>
+                    </div>
+                    {drill.duration_minutes && (
+                      <span className="text-[10px] font-mono text-text-muted shrink-0">{drill.duration_minutes}m</span>
+                    )}
+                  </div>
+                  {drill.objective && <p className="text-[11px] text-text-secondary leading-relaxed">{drill.objective}</p>}
+                  {drill.success_criteria && (
+                    <p className="text-[10px] text-text-muted">
+                      <span className="font-medium">Success: </span>{drill.success_criteria}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
