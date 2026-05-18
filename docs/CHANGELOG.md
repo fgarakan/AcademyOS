@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 968: Template Coach Preview Browser QA V1
+
+**Files created:**
+- `docs/TEMPLATE_COACH_PREVIEW_QA_968.md` — QA checklist for the coach preview page: 4 flows (Default/No Params, Class Template Preview via URL, Fitness Template Preview via URL, Direct Access). Documents async searchParams handling, conditional fitness curriculum context card, class vs fitness rendering, DONNA sidebar behavior, and regression checks for fallbacks and no DB writes.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-18 — Sprint 967: Fitness Template End-to-End Browser QA V1
 
 **Files created:**
