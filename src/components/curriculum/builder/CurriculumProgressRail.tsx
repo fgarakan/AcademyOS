@@ -6,6 +6,7 @@ interface Props {
   levels: CurriculumLevel[]
   currentIndex: number
   reviewed: Set<number>
+  skipped?: Set<number>
   onJump: () => void
 }
 
@@ -17,7 +18,7 @@ const STAGE_DOT: Record<string, string> = {
   high_performance:   '#a78bfa',
 }
 
-export function CurriculumProgressRail({ levels, currentIndex, reviewed, onJump }: Props) {
+export function CurriculumProgressRail({ levels, currentIndex, reviewed, skipped = new Set(), onJump }: Props) {
   const reviewedCount = reviewed.size
   const total = levels.length
   const pct = total > 0 ? Math.round((reviewedCount / total) * 100) : 0
@@ -63,15 +64,17 @@ export function CurriculumProgressRail({ levels, currentIndex, reviewed, onJump 
       <div className="flex items-center gap-1 flex-wrap">
         {levels.map((level, i) => {
           const isReviewed = reviewed.has(i)
+          const isSkipped = skipped.has(i)
           const isCurrent = i === currentIndex
           const dot = STAGE_DOT[level.stage ?? ''] ?? '#555'
+          const bg = isReviewed ? '#30D158' : isSkipped ? '#FF9500' : isCurrent ? dot : dot + '44'
           return (
             <div
               key={level.id}
-              title={level.display_name}
+              title={`${level.display_name}${isSkipped ? ' (skipped)' : isReviewed ? ' (reviewed)' : ''}`}
               className="w-2.5 h-2.5 rounded-full transition-all"
               style={{
-                background: isReviewed ? '#30D158' : isCurrent ? dot : dot + '44',
+                background: bg,
                 outline: isCurrent ? `2px solid ${dot}` : 'none',
                 outlineOffset: '1px',
                 transform: isCurrent ? 'scale(1.4)' : 'scale(1)',

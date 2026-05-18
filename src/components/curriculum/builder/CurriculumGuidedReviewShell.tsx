@@ -24,6 +24,7 @@ export function CurriculumGuidedReviewShell({ data }: Props) {
   const { levels, gates, drills, coachLanguage, competitionTrack, fitnessGuidance, volumeGuidance, tablesAvailable } = data
   const [currentIndex, setCurrentIndex] = useState(0)
   const [reviewed, setReviewed] = useState<Set<number>>(new Set())
+  const [skipped, setSkipped] = useState<Set<number>>(new Set())
   const [jumpOpen, setJumpOpen] = useState(false)
   const [donnaDismissed, setDonnaDismissed] = useState<Set<number>>(new Set())
 
@@ -60,6 +61,7 @@ export function CurriculumGuidedReviewShell({ data }: Props) {
   }
 
   function skip() {
+    setSkipped(prev => new Set(Array.from(prev).concat(currentIndex)))
     if (!isLast) setCurrentIndex(i => i + 1)
   }
 
@@ -75,6 +77,7 @@ export function CurriculumGuidedReviewShell({ data }: Props) {
         levels={levels}
         currentIndex={currentIndex}
         reviewed={reviewed}
+        skipped={skipped}
         onJump={() => setJumpOpen(true)}
       />
 
@@ -186,6 +189,24 @@ export function CurriculumGuidedReviewShell({ data }: Props) {
       </div>
 
       <DonnaSafetyDisclosure context="curriculum_builder" />
+
+      {/* Skipped levels return panel */}
+      {skipped.size > 0 && (
+        <div className="rounded-xl border border-status-orange/20 bg-status-orange/[0.04] px-5 py-4 space-y-2">
+          <p className="text-[12px] font-semibold text-status-orange">{skipped.size} level{skipped.size !== 1 ? 's' : ''} skipped — return when ready</p>
+          <div className="flex flex-wrap gap-2">
+            {Array.from(skipped).map(idx => (
+              <button
+                key={idx}
+                onClick={() => { setCurrentIndex(idx); setSkipped(prev => { const s = new Set(Array.from(prev)); s.delete(idx); return s }) }}
+                className="text-[11px] px-3 py-1.5 rounded-lg border border-status-orange/30 text-status-orange hover:bg-status-orange/10 transition-colors"
+              >
+                {levels[idx]?.display_name ?? `Level ${idx + 1}`}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {isLast && reviewed.has(currentIndex) && (
         <div className="rounded-2xl border border-status-green/20 bg-status-green/[0.04] p-5 text-center space-y-2">
