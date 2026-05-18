@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 921: Templates Home Screenshot Match V1
+
+**Files modified:**
+- `src/app/director/templates/page.tsx` — Updated all route links from old `/director/class-templates` and `/director/fitness/templates` hierarchy to new unified `/director/templates/class` and `/director/templates/fitness` hierarchy. "Ask DONNA to Suggest" now links to `/director/templates/donna-suggestions` instead of `#donna`.
+- `src/app/director/templates/TemplatesDonnaPanel.tsx` — Updated all quick action links to use new `/director/templates/` route hierarchy.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 920 (amendment): Templates Prototype Port Audit V1
 
 **Files created:**

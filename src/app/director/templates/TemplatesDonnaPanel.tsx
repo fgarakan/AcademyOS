@@ -5,11 +5,11 @@ import { Sparkles, ChevronRight, Send, Zap } from 'lucide-react'
 import Link from 'next/link'
 
 const QUICK_ACTIONS = [
-  { label: 'Build a class template from curriculum', href: '/director/class-templates/new' },
-  { label: 'Build a fitness template', href: '/director/fitness/templates/new' },
-  { label: 'Improve an existing template', href: '/director/class-templates' },
-  { label: 'Find missing templates', href: '/director/class-templates' },
-  { label: 'Create templates for a level', href: '/director/class-templates/new' },
+  { label: 'Build a class template from curriculum', href: '/director/templates/class/create' },
+  { label: 'Build a fitness template', href: '/director/templates/fitness/create' },
+  { label: 'Improve an existing template', href: '/director/templates/class' },
+  { label: 'Find missing templates', href: '/director/templates/donna-suggestions' },
+  { label: 'Create templates for a level', href: '/director/templates/class/create' },
 ]
 
 export function TemplatesDonnaPanel() {

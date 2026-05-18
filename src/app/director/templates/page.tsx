@@ -14,7 +14,7 @@ const ACTIONS = [
     label: 'Create Class Template',
     description: 'Build from curriculum, drills, and level goals',
     icon: Plus,
-    href: '/director/class-templates/new',
+    href: '/director/templates/class/create',
     variant: 'primary' as const,
   },
   {
@@ -22,7 +22,7 @@ const ACTIONS = [
     label: 'Create Fitness Template',
     description: 'Design physical training blocks',
     icon: Dumbbell,
-    href: '/director/fitness/templates/new',
+    href: '/director/templates/fitness/create',
     variant: 'default' as const,
   },
   {
@@ -30,7 +30,7 @@ const ACTIONS = [
     label: 'Review Existing Templates',
     description: 'Browse and manage your template library',
     icon: ClipboardList,
-    href: '/director/class-templates',
+    href: '/director/templates/class',
     variant: 'default' as const,
   },
   {
@@ -38,7 +38,7 @@ const ACTIONS = [
     label: 'Ask DONNA to Suggest',
     description: 'Let AI identify what templates you need',
     icon: Sparkles,
-    href: '#donna',
+    href: '/director/templates/donna-suggestions',
     variant: 'donna' as const,
   },
 ]
@@ -250,7 +250,7 @@ export default function TemplatesPage() {
             </div>
 
             <Link
-              href="/director/class-templates"
+              href="/director/templates/class"
               className="relative btn-lime inline-flex items-center gap-2 w-fit"
             >
               Open Class Templates
@@ -286,7 +286,7 @@ export default function TemplatesPage() {
             </div>
 
             <Link
-              href="/director/fitness/templates"
+              href="/director/templates/fitness"
               className="relative inline-flex items-center gap-2 w-fit px-4 py-2 rounded-xl text-sm font-semibold text-status-purple border border-status-purple/30 bg-status-purple/10 hover:bg-status-purple/15 active:scale-95 transition-all duration-100 shadow-[0_0_16px_rgba(181,108,255,0.10)]"
             >
               Open Fitness Templates
