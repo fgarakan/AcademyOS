@@ -9,6 +9,7 @@ import { DonnaAddAssessmentGateDraft } from './DonnaAddAssessmentGateDraft'
 import { DonnaAddFitnessExerciseDraft } from './DonnaAddFitnessExerciseDraft'
 import { DonnaCurriculumContextPanel } from './DonnaCurriculumContextPanel'
 import { DonnaSafetyDisclosure } from './DonnaSafetyDisclosure'
+import { DonnaRewriteLevelDraft } from './DonnaRewriteLevelDraft'
 
 type Tab = 'overview' | 'skills' | 'drills' | 'competition' | 'fitness' | 'gates' | 'missions' | 'language'
 
@@ -33,6 +34,7 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
   const [drillDraftOpen, setDrillDraftOpen] = useState(false)
   const [gateDraftOpen, setGateDraftOpen] = useState(false)
   const [fitnessDraftOpen, setFitnessDraftOpen] = useState(false)
+  const [rewriteDraftOpen, setRewriteDraftOpen] = useState(false)
 
   const levelGates = data.gates.filter(g => g.from_level_id === level.id)
   const levelDrills = data.drills.filter(d => d.level_min_id === level.id)
@@ -135,6 +137,18 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
             onAddFitness={() => { setFitnessDraftOpen(true); setTab('fitness') }}
           />
           <DonnaSafetyDisclosure context="level_edit" />
+          {rewriteDraftOpen && (
+            <DonnaRewriteLevelDraft level={level} onClose={() => setRewriteDraftOpen(false)} />
+          )}
+          {!rewriteDraftOpen && (
+            <button
+              onClick={() => setRewriteDraftOpen(true)}
+              className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-lime/20 text-lime hover:bg-lime/10 transition-colors"
+            >
+              <Sparkles className="w-3 h-3" />
+              Ask DONNA to rewrite this level
+            </button>
+          )}
         </div>
       )}
 
