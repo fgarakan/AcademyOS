@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 1010: DONNA Empty Error Safety States V1
+
+**Files created:**
+- `src/components/donna/DonnaStateMessage.tsx` — Inline DONNA state message: 12 state kinds (no_data_yet, backend_unavailable, schema_missing, no_pending_reviews, demo_fallback, requires_approval, future_capability, etc.) with per-state color/icon. Three convenience wrappers: DonnaDemoNotice, DonnaApprovalRequired, DonnaBackendUnavailable.
+- `docs/DONNA_EMPTY_ERROR_SAFETY_STATES_1010.md` — State table and comparison with DONNAEmptyStateSurface.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1009: DONNA Permission-Aware Quick Actions V1
 
 **Files created:**
