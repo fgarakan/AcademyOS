@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 1006: Director DONNA Review Queue Integration V1
+
+**Files created:**
+- `src/components/donna/DirectorDonnaReviewPanel.tsx` — Full-width review queue panel with 6 draft categories, risk badges, Review CTAs, clear-category pills, demo builder, and safety notice. No automatic approval.
+- `docs/DIRECTOR_DONNA_REVIEW_QUEUE_INTEGRATION_1006.md` — Component spec.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1005: Director DONNA Daily Brief V1
 
 **Files created:**
