@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 903: Add Drill Draft Card Screenshot Match V1
+
+**Files modified:**
+- `src/components/curriculum/builder/CurriculumAddDrillExperience.tsx` — Replaced placeholder submitted state with full `DraftCard` component. Card shows: title "Wide Ball Recovery Builder", development intent, recommended level, pathways, duration, connected skills, assessment evidence, impact warning (teal). Action buttons: Save Draft (lime), Edit Draft (muted), Preview Impact (teal → /impact-preview), Cancel. `DetailRow` sub-component for structured label/value pairs. Safety disclosure at bottom. All display-only — no backend writes.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 902: Add Drill Page Screenshot Match V1
 
 **Files created:**

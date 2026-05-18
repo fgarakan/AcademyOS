@@ -2,10 +2,155 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Sparkles, Shield } from 'lucide-react'
+import { ArrowLeft, Sparkles, Shield, Zap, ChevronRight, Edit3 } from 'lucide-react'
 import { CurriculumDonnaPanel } from './CurriculumDonnaPanel'
 
 const EXAMPLE_PROMPT = 'Add a drill for forehand recovery after wide balls — player hit from deuce side, wide ball fed, recovers to center, 3 sets of 10.'
+
+// ─── Drill detail row ─────────────────────────────────────────────────────────
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-3 py-2.5 border-b border-white/[0.05] last:border-b-0">
+      <p className="text-[10px] uppercase tracking-widest font-semibold text-text-muted w-32 shrink-0 mt-0.5">{label}</p>
+      <p className="text-[11px] text-text-secondary leading-relaxed flex-1">{value}</p>
+    </div>
+  )
+}
+
+// ─── Draft card ───────────────────────────────────────────────────────────────
+
+function DraftCard({ prompt, onReset }: { prompt: string; onReset: () => void }) {
+  return (
+    <div className="space-y-4">
+      {/* Draft header */}
+      <div className="flex items-center gap-3">
+        <span
+          className="text-[9px] font-semibold px-2 py-0.5 rounded-full"
+          style={{ background: 'rgba(255,149,0,0.12)', color: '#FF9500', border: '1px solid rgba(255,149,0,0.25)' }}
+        >
+          Draft
+        </span>
+        <p className="text-[11px] text-text-muted">Pending director approval · not applied to curriculum</p>
+      </div>
+
+      {/* Main draft card */}
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ background: 'rgba(0,0,0,0.30)', border: '1px solid rgba(255,255,255,0.09)' }}
+      >
+        {/* Top accent */}
+        <div className="h-0.5 w-full" style={{ background: 'rgba(17,217,223,0.55)' }} />
+
+        {/* Card header */}
+        <div className="px-5 py-4 border-b border-white/[0.06]">
+          <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">DONNA Draft — Drill</p>
+          <h2 className="text-[17px] font-bold text-text-primary">Wide Ball Recovery Builder</h2>
+          <p className="text-[11px] text-text-secondary mt-1">
+            New drill · Orange Ball 2
+          </p>
+        </div>
+
+        {/* Detail rows */}
+        <div className="px-5 py-2">
+          <DetailRow
+            label="Development Intent"
+            value="Train the player to recover court position after a defensive wide-ball forehand, building the habit of centering before the next ball arrives."
+          />
+          <DetailRow
+            label="Recommended Level"
+            value="Orange Ball 2 and above — assumes player can sustain 6+ ball rally and has directional forehand control."
+          />
+          <DetailRow
+            label="Pathways"
+            value="Forehand Groundstroke · Court Positioning · Recovery Movement"
+          />
+          <DetailRow
+            label="Duration"
+            value="15–20 min · 3 sets of 10 balls · rest 45 s between sets"
+          />
+          <DetailRow
+            label="Connected Skills"
+            value="Wide-ball recovery footwork, split-step timing, forehand under pressure, center-court recovery line."
+          />
+          <DetailRow
+            label="Assessment Evidence"
+            value="Player successfully recovers to within 1 meter of center baseline in 7 of 10 repetitions before the next feed."
+          />
+        </div>
+
+        {/* Request preview */}
+        <div
+          className="mx-5 mb-4 rounded-xl px-4 py-3"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <p className="text-[9px] uppercase tracking-widest text-text-muted font-semibold mb-1">Your request</p>
+          <p className="text-[11px] text-text-secondary leading-relaxed line-clamp-2">{prompt.trim()}</p>
+        </div>
+
+        {/* Impact warning */}
+        <div
+          className="mx-5 mb-5 flex items-start gap-2 rounded-xl px-4 py-3"
+          style={{ background: 'rgba(17,217,223,0.04)', border: '1px solid rgba(17,217,223,0.14)' }}
+        >
+          <Zap className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#11d9df' }} />
+          <div>
+            <p className="text-[11px] font-semibold" style={{ color: '#11d9df' }}>Before applying — review impact</p>
+            <p className="text-[10px] text-text-muted mt-0.5 leading-relaxed">
+              This drill may affect skill path coverage, player mission eligibility, and assessment gate scoring for connected levels. Preview the full impact before saving.
+            </p>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div
+          className="flex flex-wrap items-center gap-2 px-5 py-4 border-t"
+          style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.15)' }}
+        >
+          <button
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold transition-opacity hover:opacity-80"
+            style={{ background: '#C8FF00', color: '#0A0A0A' }}
+          >
+            Save Draft
+          </button>
+          <button
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-medium transition-colors"
+            style={{ border: '1px solid rgba(255,255,255,0.12)', color: '#aaa' }}
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            Edit Draft
+          </button>
+          <Link
+            href="/director/curriculum/builder/impact-preview"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-medium transition-colors"
+            style={{ border: '1px solid rgba(17,217,223,0.25)', color: '#11d9df', background: 'rgba(17,217,223,0.05)' }}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            Preview Impact
+            <ChevronRight className="w-3 h-3" />
+          </Link>
+          <button
+            onClick={onReset}
+            className="px-4 py-2 rounded-xl text-[12px] text-text-muted hover:text-text-secondary transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      {/* Safety disclosure */}
+      <div className="flex items-center gap-2 rounded-xl border border-lime/10 bg-lime/[0.02] px-4 py-3">
+        <Shield className="w-3.5 h-3.5 text-lime shrink-0" />
+        <p className="text-[10px] text-text-muted leading-relaxed">
+          <span className="text-lime font-semibold">Draft only — </span>
+          This drill is not added to the curriculum until a director approves it in the Review Queue. Saving the draft does not apply any changes.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
   submitted?: boolean
@@ -131,42 +276,8 @@ export function CurriculumAddDrillExperience({ submitted: initialSubmitted = fal
             </div>
           </div>
         ) : (
-          /* Submitted placeholder — Sprint 903 adds full draft card */
-          <div
-            className="rounded-2xl p-5 space-y-3"
-            style={{ background: 'rgba(0,0,0,0.30)', border: '1px solid rgba(255,255,255,0.07)' }}
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 shrink-0" style={{ color: '#11d9df' }} />
-              <p className="text-[13px] font-semibold text-text-primary">Draft queued for review</p>
-            </div>
-            <div
-              className="rounded-xl px-4 py-3 space-y-1"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
-                  style={{ background: 'rgba(255,149,0,0.12)', color: '#FF9500', border: '1px solid rgba(255,149,0,0.25)' }}
-                >
-                  Draft
-                </span>
-                <p className="text-[11px] font-semibold text-text-primary">New drill</p>
-              </div>
-              <p className="text-[11px] text-text-secondary leading-relaxed line-clamp-3">{prompt.trim()}</p>
-            </div>
-            <div className="flex items-center gap-2 rounded-xl border border-lime/10 bg-lime/[0.02] px-3 py-2">
-              <Shield className="w-3.5 h-3.5 text-lime shrink-0" />
-              <p className="text-[10px] text-text-muted">Pending approval — nothing is added until you approve it in the Review Queue.</p>
-            </div>
-            <button
-              onClick={() => { setPrompt(''); setSubmitted(false) }}
-              className="text-[11px] transition-colors"
-              style={{ color: '#11d9df' }}
-            >
-              Add another drill
-            </button>
-          </div>
+          /* Draft card */
+          <DraftCard prompt={prompt} onReset={() => { setPrompt(''); setSubmitted(false) }} />
         )}
       </div>
 
