@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 991: Coach Attendance Quick Capture V1
+
+**Files created:**
+- `src/components/coach/CoachAttendanceQuickCapture.tsx` — Client component: Everyone Here quick button, per-player status (Here/Absent/Late/Left Early), unrostered attendee section with director-review guardrail copy. `onCapture` callback for parent integration.
+
+**Docs created:**
+- `docs/COACH_ATTENDANCE_QUICK_CAPTURE_991.md`
+
+---
+
 ## 2026-05-18 — Sprint 990: Coach Player Watch List V1
 
 **Files created:**
