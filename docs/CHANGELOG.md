@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 916: Curriculum Pathway Data Model Audit V1
+
+**Files created:**
+- `docs/CURRICULUM_PATHWAY_DATA_MODEL_AUDIT_916.md` — Full schema audit. Documents all curriculum tables, player-curriculum connection tables (`player_curriculum_states`, `player_requirement_progress`). Identifies 7 read-only connections possible without migrations (player level → skills, gates, competition, fitness, volume, coach language, track requirements). Documents what requires schema additions (missions, gate history, drill completion, DONNA write path). Query pattern for `player_curriculum_states → current_level_id → curriculum filters` confirmed safe and no-migration.
+
+**TypeScript:** CLEAN (no code changes)
+
+---
+
 ## 2026-05-18 — Sprint 915: Curriculum Builder V1 Completion Audit V1
 
 **Files created:**
