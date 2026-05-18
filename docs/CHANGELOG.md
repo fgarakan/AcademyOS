@@ -2,6 +2,44 @@
 
 ---
 
+## 2026-05-18 — Sprint 973: Template RLS Policy Draft V1
+
+**Files created:**
+- `supabase/migrations/068_template_rls_policies.sql` — Status-aware, role-differentiated RLS policy replacements for the Curriculum-Aware Template System.
+
+**Policies dropped (overly broad originals from migrations 006 and 058):**
+- `templates`: "Staff see templates", "Staff manage templates"
+- `template_blocks`: "Staff manage template blocks"
+- `template_block_exercises`: "Staff insert template block exercises", "Staff update template block exercises", "Staff delete template block exercises"
+
+**Policies created:**
+- `templates SELECT "Directors see all templates"` -- director/head_coach: all statuses in their academy
+- `templates SELECT "Coaches see ready templates"` -- coach role: status='ready' only
+- `templates SELECT "Creators see own templates"` -- any staff: own created_by rows, any status
+- `templates INSERT "Directors insert templates"` -- director/head_coach
+- `templates UPDATE "Directors update templates"` -- director/head_coach with WITH CHECK enforcing status='ready' is director-only
+- `templates DELETE "Directors delete templates"` -- academy_director only
+- `template_blocks ALL "Directors manage template blocks"` -- director/head_coach, scoped via templates JOIN
+- `template_block_exercises INSERT/UPDATE/DELETE "Directors * template block exercises"` -- director/head_coach, scoped via template_blocks->templates JOIN chain
+
+**Tables requiring no changes (documented for completeness):**
+- `curriculum_class_template_blocks` -- existing policies from migration 062 already correctly scoped
+- `template_review_requests` -- existing policies from migration 067 already correctly scoped
+- `template_version_history` -- existing policies from migration 067 already correctly scoped (append-only)
+
+**Key design decisions:**
+- Status cascading: template_blocks and template_block_exercises SELECT policies left unchanged -- templates RLS automatically filters child-table JOINs, so coaches implicitly see only blocks for ready templates.
+- Approval gate: WITH CHECK on templates UPDATE uses `status != 'ready' OR auth_has_role('academy_director')` -- head_coaches can edit content but cannot promote to ready.
+- SECURITY DEFINER note: `execute_approved_action()` bypasses RLS, so voice-command-created templates still work under the stricter INSERT policy.
+
+**Migration status: DRAFT ONLY -- not applied to any database.**
+**This migration requires explicit approval and `supabase db push` or SQL Editor apply before it takes effect.**
+**Depends on migration 067 being applied first (templates.status column required).**
+
+**TypeScript:** CLEAN (no app code changes)
+
+---
+
 ## 2026-05-18 — Sprint 972: Template Schema Migration Draft V1
 
 **Files created:**
