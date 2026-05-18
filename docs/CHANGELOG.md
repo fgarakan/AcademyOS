@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-18 — Sprint 993: DONNA Coach Wrap-Up Shell V1
+
+**Files created:**
+- `src/app/coach/sessions/[sessionId]/wrap-up/page.tsx` — Server Component; fetches session + blocks for wrap-up.
+- `src/app/coach/sessions/[sessionId]/wrap-up/WrapUpPageClient.tsx` — 6-question DONNA-led wrap-up: progress rail, one question at a time, skip, answer summary chips, saves via `saveWrapUpDraftAction`, success state with "Nothing sent to parents" copy.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Added "Start Wrap-Up →" lime CTA linking to dedicated wrap-up route.
+
+**Docs created:**
+- `docs/DONNA_COACH_WRAP_UP_SHELL_993.md`
+
+---
+
 ## 2026-05-18 — Sprint 992: Attendance Exception Review Draft V1
 
 **Files created:**

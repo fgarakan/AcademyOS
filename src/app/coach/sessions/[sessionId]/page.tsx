@@ -398,10 +398,19 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
       {/* ── After Session ── primary: Wrap-Up Session ── */}
       <section>
         <p className="label-xs mb-1">After Session</p>
-        <p className="text-[11px] text-text-muted mb-3">
+        <p className="text-[11px] text-text-muted mb-2">
           Use <span className="text-text-secondary font-medium">Wrap-Up Session</span> for your structured end-of-session recap.
           Player observations go directly to the director review queue.
         </p>
+        {!existingWrapUpStatus && (
+          <Link
+            href={`/coach/sessions/${params.sessionId}/wrap-up`}
+            className="flex items-center justify-between gap-2 mb-3 px-4 py-3 rounded-xl border border-lime/30 bg-lime/5 hover:bg-lime/10 transition-all group"
+          >
+            <p className="text-sm font-semibold text-lime">Start Wrap-Up →</p>
+            <p className="text-[10px] text-text-muted">6 quick questions</p>
+          </Link>
+        )}
         {/* DONNA entry when no wrap-up submitted yet */}
         {!existingWrapUpStatus && (
           <div
