@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1008: Coach DONNA Wrap-Up Final Form V1
+
+**Files created:**
+- `docs/COACH_DONNA_WRAP_UP_FINAL_FORM_1008.md` — Verified final-form checklist for WrapUpPageClient (16 requirements), 6 question list, remaining polish notes (voice input, block status, inline observation). No code changes — wrap-up page is clean and functional.
+
+**TypeScript:** Clean (no files changed).
+
+---
+
 ## 2026-05-18 — Sprint 1007: Coach DONNA Session Assistant V1 (patch)
 
 **Files modified:**
