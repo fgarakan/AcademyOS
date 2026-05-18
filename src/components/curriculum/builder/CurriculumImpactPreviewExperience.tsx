@@ -132,7 +132,7 @@ export function CurriculumImpactPreviewExperience({ levelName, backHref = '/dire
   const [draftSaved, setDraftSaved] = useState(false)
 
   return (
-    <div className="animate-fade-in flex gap-6 p-6 items-start">
+    <div className="animate-fade-in flex gap-6 p-4 sm:p-6 items-start overflow-x-hidden">
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
       <div className="flex-1 min-w-0 space-y-6">

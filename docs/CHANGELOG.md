@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-18 — Sprint 910: Curriculum Builder Mobile Screenshot Match V1
+
+**Files modified:**
+- `src/components/curriculum/builder/CurriculumGuidedReviewExperience.tsx` — Root wrapper: `p-4 sm:p-6 overflow-x-hidden`. Added mobile DONNA section comment.
+- `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx` — Root wrapper: `p-4 sm:p-6 overflow-x-hidden`.
+- `src/components/curriculum/builder/CurriculumAddDrillExperience.tsx` — Root wrapper: `p-4 sm:p-6 overflow-x-hidden`.
+- `src/components/curriculum/builder/CurriculumAddFitnessExperience.tsx` — Root wrapper: `p-4 sm:p-6 overflow-x-hidden`.
+- `src/components/curriculum/builder/CurriculumImpactPreviewExperience.tsx` — Root wrapper: `p-4 sm:p-6 overflow-x-hidden`.
+
+**Mobile status:** DONNA panel `hidden lg:block` on all 6 pages. Action buttons `flex-wrap` on all key screens. Progress rail `overflow-x-auto` with horizontal scroll. All grids use `grid-cols-1 sm:grid-cols-2` responsive patterns. Touch targets ≥40px height on all action buttons.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 909: Curriculum Route Standardization V1
 
 **Files created:**
