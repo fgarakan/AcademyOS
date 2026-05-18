@@ -285,10 +285,19 @@ export function CurriculumLevelBuilderShell({ level, data }: Props) {
         </div>
       )}
 
-      {/* Sprint 856 — Competition Path */}
+      {/* Sprint 856 — Competition Path Editing UX */}
       {tab === 'competition' && (
         <div className="space-y-3">
-          <p className="text-[11px] uppercase tracking-widest text-text-muted font-semibold">Competition Path</p>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] uppercase tracking-widest text-text-muted font-semibold">Competition Path</p>
+            <button
+              onClick={() => setGateDraftOpen(true)}
+              className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-lime/30 text-lime hover:bg-lime/10 transition-colors"
+            >
+              <Sparkles className="w-3 h-3" />
+              Ask DONNA to refine
+            </button>
+          </div>
           {!competition ? (
             <div className="rounded-xl border border-border border-dashed p-6 text-center">
               <p className="text-[12px] text-text-secondary">No competition track data at this level yet.</p>
