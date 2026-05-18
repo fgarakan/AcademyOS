@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 901: Guided Review Decision State Polish V1
+
+**Files modified:**
+- `src/components/curriculum/builder/CurriculumGuidedReviewExperience.tsx` — Added `modified: Set<number>` state to track levels sent to the builder. "Modify this level" link records the level index on click and changes label to "Open builder" + strengthens teal border on return. Status summary bar shows kept / sent to builder / skipped / remaining counts at a glance. "Jump to another level" nav preserved. No persistence — all local only.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 900: Guided Review Progress Rail Polish V1
 
 **Files modified:**

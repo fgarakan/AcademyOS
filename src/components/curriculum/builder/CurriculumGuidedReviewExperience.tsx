@@ -93,6 +93,7 @@ export function CurriculumGuidedReviewExperience({ explorerData }: Props) {
   const [currentIndex, setCurrentIndex]         = useState(0)
   const [reviewed, setReviewed]                 = useState<Set<number>>(new Set())
   const [skipped, setSkipped]                   = useState<Set<number>>(new Set())
+  const [modified, setModified]                 = useState<Set<number>>(new Set())
   const [jumpOpen, setJumpOpen]                 = useState(false)
   const [donnaPanelActive, setDonnaPanelActive] = useState(false)
   const [donnaDismissed, setDonnaDismissed]     = useState<Set<number>>(new Set())
@@ -120,6 +121,17 @@ export function CurriculumGuidedReviewExperience({ explorerData }: Props) {
 
   const stageTip     = DONNA_STAGE_TIPS[level.stage ?? ''] ?? null
   const activeAction = donnaPanelActive ? 'Ask DONNA to improve it' : undefined
+
+  const keptCount     = reviewed.size
+  const skippedCount  = skipped.size
+  const modifiedCount = modified.size
+  const decidedSet    = new Set([
+    ...Array.from(reviewed),
+    ...Array.from(skipped),
+    ...Array.from(modified),
+  ])
+  const decidedCount  = decidedSet.size
+  const remaining     = levels.length - decidedCount
 
   function markReviewed(idx: number) {
     setReviewed(prev => new Set(Array.from(prev).concat(idx)))
@@ -308,14 +320,19 @@ export function CurriculumGuidedReviewExperience({ explorerData }: Props) {
               </button>
               <Link
                 href={`/director/curriculum/level/${level.id}`}
+                onClick={() => setModified(prev => new Set(Array.from(prev).concat(currentIndex)))}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-medium transition-colors"
                 style={{
-                  border: '1px solid rgba(17,217,223,0.25)',
+                  border: modified.has(currentIndex)
+                    ? '1px solid rgba(17,217,223,0.45)'
+                    : '1px solid rgba(17,217,223,0.25)',
                   color: '#11d9df',
-                  background: 'rgba(17,217,223,0.05)',
+                  background: modified.has(currentIndex)
+                    ? 'rgba(17,217,223,0.10)'
+                    : 'rgba(17,217,223,0.05)',
                 }}
               >
-                Modify this level
+                {modified.has(currentIndex) ? 'Open builder' : 'Modify this level'}
               </Link>
               <button
                 onClick={skip}
@@ -339,8 +356,31 @@ export function CurriculumGuidedReviewExperience({ explorerData }: Props) {
               </button>
             </div>
 
+            {/* Status summary */}
+            <div
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-[10px]"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
+            >
+              <span style={{ color: '#30D158' }}>
+                <span className="font-mono font-semibold">{keptCount}</span> kept
+              </span>
+              {modifiedCount > 0 && (
+                <span style={{ color: '#11d9df' }}>
+                  <span className="font-mono font-semibold">{modifiedCount}</span> sent to builder
+                </span>
+              )}
+              {skippedCount > 0 && (
+                <span style={{ color: '#FF9500' }}>
+                  <span className="font-mono font-semibold">{skippedCount}</span> skipped
+                </span>
+              )}
+              <span className="ml-auto text-text-muted">
+                <span className="font-mono">{remaining}</span> remaining
+              </span>
+            </div>
+
             {/* Bottom nav */}
-            <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center justify-between pt-0.5">
               <button
                 onClick={goPrev}
                 disabled={isFirst}
