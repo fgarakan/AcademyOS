@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-18 — Sprint 898: Level Builder DONNA Panel Context Wiring V1
+
+**Files created:**
+- `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx` — Client wrapper component that owns `activePanel` state and bridges grid + DONNA panel. Contains STAGE_INFO config, full 2-column layout (header, draft banner, summary row, grid, advanced editor, sticky right DONNA panel). Derives `activeAction` via `panelToAction()` and passes it to `CurriculumDonnaPanel`. Receives only `level` and `explorerData` from the server page.
+
+**Files modified:**
+- `src/components/curriculum/builder/CurriculumLevelBuilderGrid.tsx` — `ActivePanel` type is now exported. Added optional `activePanel?: ActivePanel` and `onActivePanelChange?` props for controlled mode. Controlled/uncontrolled pattern: falls back to internal state when props are absent.
+- `src/app/director/curriculum/level/[levelId]/page.tsx` — Stripped to auth + `getCurriculumExplorerData` + `notFound` check + `return <CurriculumLevelBuilderExperience level={level} explorerData={explorerData} />`. All layout, copy, and state moved to the experience component.
+
+**Architecture:** Server page (data only) → Client experience wrapper (state + layout) → Grid (controlled) + DONNA panel (activeAction prop).
+**Panel-to-action map:** skillDrill → "Add a drill" · competition → "Rewrite this level" · fitness → "Add a fitness exercise" · gate → "Add an assessment gate" · missions → "Add a player mission".
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 897: Level Builder Section Cards Interaction Polish V1
 
 **Files modified:**

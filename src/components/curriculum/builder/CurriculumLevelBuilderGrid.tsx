@@ -15,7 +15,7 @@ import { DonnaAddFitnessExerciseDraft } from './DonnaAddFitnessExerciseDraft'
 
 // ─── Active panel state ───────────────────────────────────────────────────────
 
-type ActivePanel = null | 'skillDrill' | 'competition' | 'fitness' | 'gate' | 'missions'
+export type ActivePanel = null | 'skillDrill' | 'competition' | 'fitness' | 'gate' | 'missions'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +25,9 @@ interface Props {
   levelDrills: CurriculumDrill[]
   competition: CurriculumCompetitionTrack | null
   fitness: CurriculumFitnessGuidance | null
+  // Optional controlled mode — parent manages activePanel state
+  activePanel?: ActivePanel
+  onActivePanelChange?: (panel: ActivePanel) => void
 }
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
@@ -163,13 +166,23 @@ export function CurriculumLevelBuilderGrid({
   levelDrills,
   competition,
   fitness,
+  activePanel: controlledPanel,
+  onActivePanelChange,
 }: Props) {
-  const [activePanel, setActivePanel] = useState<ActivePanel>(null)
+  const [internalPanel, setInternalPanel] = useState<ActivePanel>(null)
+
+  // Controlled mode when parent passes activePanel; otherwise use internal state
+  const activePanel = controlledPanel !== undefined ? controlledPanel : internalPanel
 
   function open(panel: ActivePanel) {
-    setActivePanel(prev => (prev === panel ? null : panel))
+    const next = activePanel === panel ? null : panel
+    if (onActivePanelChange) onActivePanelChange(next)
+    else setInternalPanel(next)
   }
-  function close() { setActivePanel(null) }
+  function close() {
+    if (onActivePanelChange) onActivePanelChange(null)
+    else setInternalPanel(null)
+  }
 
   const skillStatus = countStatus(levelDrills.length, 3)
   const gateStatus  = countStatus(levelGates.length, 2)
