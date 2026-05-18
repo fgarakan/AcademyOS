@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight, ChevronLeft, Sparkles, GraduationCap, Target, Dumbbell, CheckCircle2, AlertCircle, Plus, X, Zap, Clock, Info } from 'lucide-react'
 import { TemplateDonnaPanel } from '@/components/templates/TemplateDonnaPanel'
-import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumLevelPreview, getCurriculumStage } from '@/lib/templates/templateCurriculumPreview'
+import { CURRICULUM_LEVEL_PREVIEWS, getCurriculumStage, getFitnessCurriculumPreview } from '@/lib/templates/templateCurriculumPreview'
 
 // demo-only — no writes — no saves — local state only
 
@@ -89,8 +89,8 @@ export default function CreateFitnessTemplatePage() {
 
   const goalInfo = FITNESS_GOALS.find(g => g.id === selectedGoal)
   const exerciseSuggestions = EXERCISES_BY_GOAL[selectedGoal] ?? []
-  const fitnessPreview = getCurriculumLevelPreview(selectedLevel)
   const fitnessStage = getCurriculumStage(selectedLevel)
+  const fitnessCurriculumPreview = fitnessStage ? getFitnessCurriculumPreview(fitnessStage) : null
 
   return (
     <div className="flex gap-4 lg:gap-6 p-4 lg:p-6 min-h-screen items-start">
@@ -182,28 +182,49 @@ export default function CreateFitnessTemplatePage() {
                 ))}
               </div>
 
-              {/* Curriculum preview for fitness */}
-              {fitnessPreview && (
+              {/* Fitness curriculum preview — derived from curriculum stage */}
+              {fitnessCurriculumPreview && (
                 <div className="rounded-xl border border-status-purple/15 bg-status-purple/4 p-5 space-y-4">
                   <div className="flex items-center gap-2">
                     <Info className="w-3.5 h-3.5 text-text-muted shrink-0" />
                     <span className="text-[10px] uppercase tracking-widest text-text-muted">
-                      Curriculum-derived demo preview — Not saved — Not applied
+                      Curriculum-derived fitness preview — Not saved — Not applied
                     </span>
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Selected Level</p>
-                    <p className="text-base font-bold text-status-purple">{fitnessPreview.level}</p>
+                    <p className="text-base font-bold text-status-purple">{selectedLevel}</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Physical Development Need</p>
-                      <p className="text-xs text-text-secondary leading-relaxed">{fitnessPreview.levelGoal}</p>
+                      <p className="text-xs text-text-secondary leading-relaxed">{fitnessCurriculumPreview.physicalDevelopmentNeed}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Recommended Template Type</p>
-                      <p className="text-xs text-text-secondary">{fitnessPreview.recommendedTemplateType}</p>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Tennis Technical Transfer</p>
+                      <p className="text-xs text-text-secondary leading-relaxed">{fitnessCurriculumPreview.tennisTechnicalTransfer}</p>
                     </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Recommended Fitness Focus</p>
+                      <p className="text-xs font-semibold text-status-purple">{fitnessCurriculumPreview.recommendedFitnessFocus}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Load Guidance</p>
+                      <p className="text-xs text-text-secondary leading-relaxed">{fitnessCurriculumPreview.loadGuidance}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1.5">Suggested Block Types</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {fitnessCurriculumPreview.suggestedBlockTypes.map(bt => (
+                        <span key={bt} className="px-2 py-0.5 rounded-full text-[10px] font-medium border border-status-purple/20 bg-status-purple/8 text-status-purple">
+                          {bt}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="pt-1 border-t border-border">
+                    <p className="text-[10px] text-text-muted">{fitnessCurriculumPreview.ageFitNote}</p>
                   </div>
                 </div>
               )}

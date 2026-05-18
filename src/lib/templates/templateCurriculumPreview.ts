@@ -351,6 +351,69 @@ export function getPlayerMissionsForStage(stage: BallStage): PlayerMission[] {
   return PLAYER_MISSIONS_BY_STAGE[stage] ?? []
 }
 
+// Fitness-specific curriculum preview per stage
+export interface FitnessCurriculumPreview {
+  stage: BallStage
+  physicalDevelopmentNeed: string
+  tennisTechnicalTransfer: string
+  recommendedFitnessFocus: string
+  loadGuidance: string
+  ageFitNote: string
+  suggestedBlockTypes: string[]
+}
+
+export const FITNESS_CURRICULUM_PREVIEW_BY_STAGE: Record<BallStage, FitnessCurriculumPreview> = {
+  'Red Ball': {
+    stage: 'Red Ball',
+    physicalDevelopmentNeed: 'Motor pattern variety, balance, body awareness, general coordination',
+    tennisTechnicalTransfer: 'Hand-eye coordination, rhythm, basic footwork, spatial awareness',
+    recommendedFitnessFocus: 'Coordination + Mobility',
+    loadGuidance: 'Light — 15 to 25 min max; game-based activities only; no periodized load',
+    ageFitNote: 'Typically ages 5–8. Fun and variety are the primary training tools.',
+    suggestedBlockTypes: ['Coordination', 'Mobility', 'Warm-Up'],
+  },
+  'Orange Ball': {
+    stage: 'Orange Ball',
+    physicalDevelopmentNeed: 'Athletic coordination, first-step quickness, dynamic balance',
+    tennisTechnicalTransfer: 'Split-step timing, recovery sprint, lateral footwork patterns',
+    recommendedFitnessFocus: 'Coordination + Speed',
+    loadGuidance: 'Light to Moderate — 20 to 30 min; bodyweight circuits; short sprint intervals',
+    ageFitNote: 'Typically ages 7–10. Athletic development foundation; avoid overloading joints.',
+    suggestedBlockTypes: ['Coordination', 'Speed', 'Agility', 'Warm-Up'],
+  },
+  'Green Ball': {
+    stage: 'Green Ball',
+    physicalDevelopmentNeed: 'Agility, change-of-direction, court-coverage endurance',
+    tennisTechnicalTransfer: 'Court sprint + decelerate, split-step reaction, recovery after wide balls',
+    recommendedFitnessFocus: 'Agility + Speed',
+    loadGuidance: 'Moderate — 25 to 35 min; introduce tennis-specific sprint intervals',
+    ageFitNote: 'Typically ages 9–12. Tennis-specific conditioning begins in earnest.',
+    suggestedBlockTypes: ['Agility', 'Speed', 'Coordination', 'Mobility'],
+  },
+  'Yellow Ball': {
+    stage: 'Yellow Ball',
+    physicalDevelopmentNeed: 'Strength foundation, rotational power, match-endurance capacity',
+    tennisTechnicalTransfer: 'Forehand/backhand drive power, serve power, 3-set stamina',
+    recommendedFitnessFocus: 'Strength + Agility',
+    loadGuidance: 'Moderate to High — 30 to 45 min; introduce strength training with supervision',
+    ageFitNote: 'Typically ages 11–15. Strength training begins with bodyweight progressing to loaded.',
+    suggestedBlockTypes: ['Strength', 'Agility', 'Speed', 'Mobility'],
+  },
+  'High Performance': {
+    stage: 'High Performance',
+    physicalDevelopmentNeed: 'Elite conditioning, periodized load management, injury prevention protocols',
+    tennisTechnicalTransfer: 'Serve mechanics and power, explosive groundstroke drive, full-match recovery',
+    recommendedFitnessFocus: 'Strength + Plyometrics + Recovery',
+    loadGuidance: 'High — 40 to 60 min; periodized training aligned to tournament calendar; recovery mandatory',
+    ageFitNote: 'Typically ages 14+. Individual load management required. All sessions tracked.',
+    suggestedBlockTypes: ['Strength', 'Speed', 'Plyometrics', 'Agility', 'Recovery'],
+  },
+}
+
+export function getFitnessCurriculumPreview(stage: BallStage): FitnessCurriculumPreview {
+  return FITNESS_CURRICULUM_PREVIEW_BY_STAGE[stage]
+}
+
 export const GOALS_BY_STAGE: Record<BallStage, string[]> = {
   'Red Ball': [
     'Cooperative rally — 5 consecutive on mini court',

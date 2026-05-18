@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-18 — Sprint 945: Fitness Template Curriculum Pull Preview V1
+
+**Files modified:**
+- `src/lib/templates/templateCurriculumPreview.ts` — Added `FitnessCurriculumPreview` interface, `FITNESS_CURRICULUM_PREVIEW_BY_STAGE` (5 stages), and `getFitnessCurriculumPreview(stage)` function. Fitness-specific fields: `physicalDevelopmentNeed`, `tennisTechnicalTransfer`, `recommendedFitnessFocus`, `loadGuidance`, `ageFitNote`, `suggestedBlockTypes`.
+- `src/app/director/templates/fitness/create/page.tsx` — Step 1 preview card upgraded: uses `getFitnessCurriculumPreview(fitnessStage)` instead of generic `getCurriculumLevelPreview`. Shows 6 fitness-specific fields (physical development need, tennis technical transfer, recommended fitness focus, load guidance, suggested block type pills, age fit note). `getCurriculumLevelPreview` import removed.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 944: Fitness Template Curriculum Level Selector V1
 
 **Files modified:**
