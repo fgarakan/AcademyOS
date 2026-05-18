@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-18 — Sprint 990: Coach Player Watch List V1
+
+**Files created:**
+- `src/components/coach/CoachPlayerWatchList.tsx` — Reusable watch list with player cards (initials, curriculum level, priority, pathway tag, watch-for, last safe note, attention flag). Sort: concerns → watches → others.
+
+**Files modified:**
+- `src/app/coach/sessions/[sessionId]/page.tsx` — Renders CoachPlayerWatchList from roster data above "Today's Plan" section. Priority/pathway/watch-for fields are null in this sprint (graceful empty state).
+
+**Docs created:**
+- `docs/COACH_PLAYER_WATCH_LIST_990.md`
+
+---
+
 ## 2026-05-18 — Sprint 989: Coach Template Execution View V1
 
 **Files created:**

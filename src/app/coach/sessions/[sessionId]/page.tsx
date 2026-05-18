@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Info, AlertTriangle, Sparkles } from 'lucide-react'
+import { ArrowLeft, Info, AlertTriangle, Sparkles, Users } from 'lucide-react'
+import { CoachPlayerWatchList, type WatchListPlayer } from '@/components/coach/CoachPlayerWatchList'
 import { DonnaOpenChip } from '@/components/assistant/DonnaOpenChip'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
@@ -253,6 +254,18 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
     rosterNames[p.playerId] = p.fullName
   }
 
+  // Build player watch list from roster data
+  const watchListPlayers: WatchListPlayer[] = roster.map(p => ({
+    playerId: p.playerId,
+    fullName: p.fullName,
+    currentPriority: null,
+    pathwayTag: null,
+    coachWatchFor: null,
+    lastSafeNote: null,
+    attentionFlag: null,
+    curriculumLevel: p.curriculumLevelName,
+  }))
+
   return (
     <div className="space-y-6 pb-10">
       <BackLink />
@@ -314,6 +327,17 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
           </div>
         )}
       </div>
+
+      {/* ── Player Watch List ──────────────────────────────────── */}
+      {watchListPlayers.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Users className="w-3.5 h-3.5 text-text-muted" />
+            <p className="label-xs">Players in This Session</p>
+          </div>
+          <CoachPlayerWatchList players={watchListPlayers} sessionId={params.sessionId} />
+        </section>
+      )}
 
       {/* ── Today's Plan ── what to coach today */}
       {session.template_id && (
