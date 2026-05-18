@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1014: Player Session Template Context Packaging V1
+
+**Files created:**
+- `src/lib/donna/contextPackages.ts` — Typed context packages for DONNA: PlayerContextPackage, SessionContextPackage, TemplateContextPackage, SessionWithTemplatePackage, PlayerWithSessionsPackage. Package builders (buildSessionWithTemplate, buildPlayerWithSessions) derive cross-signal notes. Label helpers for display. Pure data shapes — no DB calls.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1013: Coach Context Aggregator V1
 
 **Files created:**
