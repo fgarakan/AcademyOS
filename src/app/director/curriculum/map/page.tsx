@@ -3,7 +3,7 @@ import { ArrowLeft, Database, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
 import { CurriculumLevelMap } from '@/components/curriculum/builder/CurriculumLevelMap'
-import { CurriculumRelationshipMap } from '@/components/curriculum/builder/CurriculumRelationshipMap'
+import { CurriculumRelationshipMapNav } from '@/components/curriculum/builder/CurriculumRelationshipMapNav'
 import { CurriculumSearch } from '@/components/curriculum/builder/CurriculumSearch'
 
 export default async function CurriculumMapPage() {
@@ -61,7 +61,7 @@ export default async function CurriculumMapPage() {
         </div>
       )}
 
-      <CurriculumRelationshipMap levels={explorerData.levels} />
+      <CurriculumRelationshipMapNav levels={explorerData.levels} gates={explorerData.gates} drills={explorerData.drills} />
 
       <div className="border-t border-border pt-6">
         <CurriculumLevelMap data={explorerData} />
