@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1024: DONNA Blocked Actions by Role V1
+
+**Files created:**
+- `src/lib/donna/donnaRoleBlocks.ts` — Comprehensive blocked action definitions: 9 blocked action types across role boundaries. Each includes: reason, directorCopy, alternativeForCoach, alternativeHref. Helpers: isActionBlockedForRole, buildBlockedActionResponse (headline/explanation/alternative), getBlockedActionShortCopy.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1023: DONNA Requires Approval Actions V1
 
 **Files created:**
