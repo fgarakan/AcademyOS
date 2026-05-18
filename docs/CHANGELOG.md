@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-18 — Sprint 917: Skill Path Curriculum Connection V1
+
+**Files created:**
+- `src/components/player/PlayerSkillPathCurriculumPreview.tsx` — Read-only component. Shows player's curriculum-level drills grouped by domain and advancement gates. Labeled "Curriculum preview" with teal accent badge. Uses `QaDrillRow` from `playerProgressQa.ts`. No new DB queries — reuses `qaTopDrills` and `levelGates` already fetched in `page.tsx`. Returns null when player has no curriculum state.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — Import `PlayerSkillPathCurriculumPreview`. Render in `skillPathSlot` after `PlayerCurriculumAssignmentCard` and before `GapGuidanceSummaryCard`. Passes `currentLevelName`, `drills={qaTopDrills}`, `gates` (mapped from `levelGates`), `hasCurriculumState`.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-18 — Sprint 916: Curriculum Pathway Data Model Audit V1
 
 **Files created:**

@@ -71,6 +71,7 @@ import { PlayerCurriculumConnectionBlock } from './_components/PlayerCurriculumC
 import { PlayerCoachNotesBlock } from './_components/PlayerCoachNotesBlock'
 import { PlayerParentSummaryBlock } from './_components/PlayerParentSummaryBlock'
 import { PlayerKpiDrilldownCard } from './_components/PlayerKpiDrilldownCard'
+import { PlayerSkillPathCurriculumPreview } from '@/components/player/PlayerSkillPathCurriculumPreview'
 
 interface PageProps {
   params: { playerId: string }
@@ -1194,6 +1195,14 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         levelName={academyCurriculumCtx.levelName ?? curriculumSummary?.current_level_name ?? null}
         applicableOverrides={academyCurriculumCtx.applicableOverrides}
         warnings={academyCurriculumCtx.warnings}
+      />
+
+      {/* Sprint 917: Skill Path Curriculum Preview — read-only, curriculum-derived */}
+      <PlayerSkillPathCurriculumPreview
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        drills={qaTopDrills}
+        gates={levelGates.map(g => ({ id: g.id, domain: g.domain, criterion: g.criterion, threshold: g.threshold }))}
+        hasCurriculumState={hasCurriculum}
       />
 
       {/* Gap Guidance — director internal, not visible to player or parent */}
