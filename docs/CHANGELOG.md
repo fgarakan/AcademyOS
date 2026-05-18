@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 1013: Coach Context Aggregator V1
+
+**Files created:**
+- `src/lib/donna/coachDonnaContext.ts` — Coach-scoped DONNA context aggregator: today's sessions, player counts, block counts, template names, wrap-up submission status, pending submissions, observation drafts. Builds sessionSummaries, contextItems, recommendedActions, sourceLabels, confidence. Scoped to coachUserId. Demo fallback when no live data.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1012: Director Context Aggregator V1
 
 **Files created:**
