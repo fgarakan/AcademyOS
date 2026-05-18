@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import type { CurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
 import { CurriculumLevelDetailPanel } from '@/components/curriculum/CurriculumLevelDetailPanel'
 
@@ -84,10 +85,12 @@ export function CurriculumLevelMap({ data }: Props) {
                       {level.display_name}
                     </p>
                     <div className="flex gap-3">
-                      <span className="text-[10px] text-text-muted">
+                      <span className="text-[10px] text-text-muted flex items-center gap-1">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${gateCount === 0 ? 'bg-status-red' : gateCount < 2 ? 'bg-status-orange' : 'bg-status-green'}`} />
                         <span className="font-mono text-text-secondary">{gateCount}</span> gates
                       </span>
-                      <span className="text-[10px] text-text-muted">
+                      <span className="text-[10px] text-text-muted flex items-center gap-1">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${drillCount === 0 ? 'bg-status-red' : drillCount < 3 ? 'bg-status-orange' : 'bg-status-green'}`} />
                         <span className="font-mono text-text-secondary">{drillCount}</span> drills
                       </span>
                     </div>
@@ -103,12 +106,20 @@ export function CurriculumLevelMap({ data }: Props) {
         <div className="rounded-2xl border border-border bg-surface overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border">
             <p className="text-[12px] font-semibold text-text-primary">{selectedLevel.display_name}</p>
-            <button
-              onClick={() => setSelectedId(null)}
-              className="text-[11px] text-text-muted hover:text-lime transition-colors"
-            >
-              Close
-            </button>
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/director/curriculum/level/${selectedLevel.id}`}
+                className="text-[11px] text-lime hover:text-lime/80 transition-colors"
+              >
+                Open builder →
+              </Link>
+              <button
+                onClick={() => setSelectedId(null)}
+                className="text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
           <div className="p-4">
             <CurriculumLevelDetailPanel
