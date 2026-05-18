@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-18 — Sprint 841: Curriculum Builder Screenshot Match Polish V1
+
+**Files modified:**
+- `src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx` — Full visual replacement: DONNA hero card with radial teal glow, AI-Powered badge, guided action buttons (Start Guided Review, Review Incomplete Levels, Jump to a Level, Ask DONNA to Suggest Priorities), How It Works 3-card row, Master Curriculum Overview with 5 pathway cards (Red/Orange/Green/Yellow/High Performance, 3 levels each with colored dot), safety footer with Shield icon. Dark #050b09 background, teal (#11d9df) accent throughout, centered max-w-[1180px] column, responsive stacking on mobile. Visual-only sprint — no backend wiring.
+
+**TypeScript:** CLEAN
+
+---
+
 ## 2026-05-17 — Sprint 760: Curriculum Builder Low Cognitive Load Entry V1
 
 **Files created/modified:**
