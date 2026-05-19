@@ -1,4 +1,4 @@
-import { MessageSquare, Calendar, Heart, Bell, BookOpen, ShieldCheck, TrendingUp, ArrowRight } from 'lucide-react'
+import { MessageSquare, Calendar, Heart, Bell, BookOpen, ShieldCheck, TrendingUp, ArrowRight, ChevronRight } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { ParentSafeProgressPreview } from '@/components/player/ParentSafeProgressPreview'
 import { PrivateLessonRequestCard } from './PrivateLessonRequestCard'
@@ -8,6 +8,7 @@ import type { IdpParentView } from '@/lib/player/individualDevelopmentPlan'
 import { sanitizeParentFacingText } from '@/lib/communications/parentSafeResponseRules'
 import { buildParentSupportGuide } from '@/lib/parent/parentSupportGuide'
 import type { ParentSupportGuide } from '@/lib/parent/parentSupportGuide'
+import Link from 'next/link'
 
 export default async function ParentHome() {
   const supabase = await getSupabaseServer()
@@ -291,6 +292,28 @@ export default async function ParentHome() {
           <p className="text-xs text-text-secondary leading-relaxed">
             {parentView.approved_data_note}
           </p>
+        </div>
+      )}
+
+      {/* ── Quick navigation ─────────────────────────────────────── */}
+      {parentView && (
+        <div className="grid grid-cols-2 gap-2.5">
+          {[
+            { href: '/parent/development', icon: BookOpen,     label: 'Development Focus', sub: 'Current mission',       accent: 'text-lime',          bg: 'bg-lime/10',           border: 'border-lime/20' },
+            { href: '/parent/progress',    icon: TrendingUp,   label: 'Progress',          sub: 'Level & advancement',   accent: 'text-status-blue',   bg: 'bg-status-blue/10',    border: 'border-status-blue/20' },
+            { href: '/parent/ask-donna',   icon: MessageSquare, label: 'Ask DONNA',        sub: 'Support guidance',      accent: 'text-status-orange', bg: 'bg-status-orange/10',  border: 'border-status-orange/20' },
+            { href: '/parent/wins',        icon: Heart,        label: 'Wins',              sub: 'Highlights',            accent: 'text-status-green',  bg: 'bg-status-green/10',   border: 'border-status-green/20' },
+          ].map(({ href, icon: Icon, label, sub, accent, bg, border }) => (
+            <Link key={href} href={href}>
+              <div className="rounded-xl bg-surface border border-border hover:border-lime/20 transition-colors px-3 py-3">
+                <div className={`w-7 h-7 rounded-lg ${bg} border ${border} flex items-center justify-center mb-2`}>
+                  <Icon className={`w-3.5 h-3.5 ${accent}`} />
+                </div>
+                <p className="text-xs font-semibold text-text-primary">{label}</p>
+                <p className="text-[10px] text-text-muted">{sub}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
 

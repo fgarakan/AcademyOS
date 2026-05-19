@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1085: Parent Home Quick Navigation Enhancement
+
+**Files modified:** `src/app/parent/page.tsx` — added Link import, ChevronRight, and 2x2 quick navigation grid (Development Focus, Progress, Ask DONNA, Wins) after the approved data banner; only rendered when parentView is available.
+**Files created:** `docs/PARENT_HOME_NAV_1085.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1084: Parent Development Context V1
 
 **Files created:** `src/app/parent/development/page.tsx` — active mission card, why it matters (IDP), support guide (praise/at-home/avoid), after-practice conversation starter, links to progress + DONNA. `docs/PARENT_DEVELOPMENT_1084.md`
