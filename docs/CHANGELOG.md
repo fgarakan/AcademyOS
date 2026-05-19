@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1061: Player Level Readiness Draft View V1
+
+**Files created:**
+- `src/components/player/PlayerLevelReadinessDraftView.tsx` — dismissible readiness draft. Shows current->next level, confidence score (gate ratio + evidence count), supporting/missing gate evidence, DONNA deterministic draft (toggled by "Ask DONNA" CTA). "Create Review Draft" and "Not now" CTAs are visual-only. Client component. No mutations.
+- `docs/PLAYER_LEVEL_READINESS_DRAFT_VIEW_1061.md` — sprint doc.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — imports and renders above Gate Evidence Panel.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1060: Player Curriculum Gate Evidence Panel V1
 
 **Files created:**

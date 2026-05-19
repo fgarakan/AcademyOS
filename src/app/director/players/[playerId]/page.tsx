@@ -45,6 +45,7 @@ import { PlayerEvidenceHubHeader } from '@/components/player/PlayerEvidenceHubHe
 import { PlayerPathwayEvidenceCards } from '@/components/player/PlayerPathwayEvidenceCards'
 import { PlayerPriorityEvidenceConnection } from '@/components/player/PlayerPriorityEvidenceConnection'
 import { PlayerCurriculumGateEvidencePanel } from '@/components/player/PlayerCurriculumGateEvidencePanel'
+import { PlayerLevelReadinessDraftView } from '@/components/player/PlayerLevelReadinessDraftView'
 import { getPlayerEvidenceTimeline, getPlayerEvidenceSummary, getPlayerPathwayEvidence } from '@/lib/players/playerEvidenceRepository'
 import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
 import { ParentGuidancePreviewPanel } from './ParentGuidancePreviewPanel'
@@ -1488,6 +1489,16 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Evidence Hub Header — Sprint 1057: aggregate summary, director-only */}
       <PlayerEvidenceHubHeader summary={evidenceSummary} isSchemaMissing={evidenceSummaryIsSchemaMissing} />
+
+      {/* Level Readiness Draft View — Sprint 1061: advancement readiness + DONNA draft */}
+      <PlayerLevelReadinessDraftView
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        nextLevelName={nextCurriculumLevel?.display_name ?? null}
+        evidenceSummary={evidenceSummary}
+        gates={levelGates}
+        gateStatuses={playerGateStatuses}
+        playerFirstName={player.first_name ?? null}
+      />
 
       {/* Curriculum Gate Evidence Panel — Sprint 1060: per-gate status + evidence signal */}
       <PlayerCurriculumGateEvidencePanel
