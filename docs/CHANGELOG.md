@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1049: Approve and Apply Combined Action V1
+
+**Files created:**
+- `src/app/director/review/approveAndApplyWrapUpAction.ts` — combined server action. Auth + role + academy check. Only valid for `status=pending_review` + `target_module=session_wrap_up_v1`. Steps: approve → write session notes → mark completed (if safe) → set `status=executed` → audit log `session_wrap_up.approved_and_applied`. Fails safely if session update fails. No parent records, no player profiles, no curriculum, no external sends.
+- `docs/APPROVE_AND_APPLY_COMBINED_1049.md` — sprint doc.
+
+**Files modified:**
+- `src/app/director/review/WrapUpDraftDecisionControls.tsx` — added "Approve & Apply" as primary full-width lime button above existing two-step controls. Divider "or review separately" separates the combined action from approve-only/reject/clarification. Existing two-step flow fully preserved. Success state shows different message based on which action was taken.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1048: DONNA Review Context Panel V1
 
 **Files created:**
