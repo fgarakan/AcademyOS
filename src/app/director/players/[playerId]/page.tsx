@@ -1493,6 +1493,12 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         </CardContent>
       </Card>
 
+      {/* ── Evidence Hub — Phase 7A (Sprints 1057–1062) ───────────────────────── */}
+      {/* Director-only. No parent/player exposure. No writes. No automatic level movement. */}
+      <div className="mt-2 pt-2 border-t border-border">
+        <p className="label-xs text-text-muted mb-3">Evidence Hub</p>
+      </div>
+
       {/* Evidence Hub Header — Sprint 1057: aggregate summary, director-only */}
       <PlayerEvidenceHubHeader summary={evidenceSummary} isSchemaMissing={evidenceSummaryIsSchemaMissing} />
 

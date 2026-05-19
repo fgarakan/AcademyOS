@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-19 — Sprint 1063: Player Profile Evidence Hub Page Wiring V1
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — added "Evidence Hub" section label + border divider above hub components. Established canonical component order: Header → Readiness Draft → Gate Panel → Priority Connection → Pathway Cards → Timeline → Parent Guidance Preview → Parent-Safe Summary Preview. No new DB queries.
+
+**Files created:**
+- `docs/PLAYER_PROFILE_EVIDENCE_HUB_PAGE_WIRING_1063.md` — sprint doc.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1062: Player Parent-Safe Summary Preview V1
 
 **Files created:**
