@@ -9,6 +9,8 @@ import { Card, CardHeader, CardContent } from '@/components/ui'
 import { CoachDonnaShellClient } from './CoachDonnaShellClient'
 import { DonnaContextSummaryCard } from '@/components/donna/DonnaContextSummaryCard'
 import type { ContextSummaryItem, ContextSourceLabel } from '@/components/donna/DonnaContextSummaryCard'
+import { DONNAWrapUpCoverageTracker } from '@/components/donna/DONNAWrapUpCoverageTracker'
+import type { SessionWrapUpItem } from '@/components/donna/DONNAWrapUpCoverageTracker'
 
 // ── Coach DONNA page — Sprint 1039/1040 wiring ────────────────────────────────
 // Wires the existing Coach DONNA infrastructure into a dedicated coach page.
@@ -211,6 +213,20 @@ export default async function CoachDonnaPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Wrap-up coverage tracker — shown when sessions exist */}
+          {sessionSummaries.length > 0 && (() => {
+            const today = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+            const wrapItems: SessionWrapUpItem[] = sessionSummaries.map(s => ({
+              sessionId: s.sessionId,
+              sessionLabel: s.sessionName,
+              coachName: null,
+              scheduledAt: 'Today',
+              status: s.wrapUpSubmitted ? 'complete' : 'pending',
+              sessionHref: `/coach/sessions/${s.sessionId}`,
+            }))
+            return <DONNAWrapUpCoverageTracker sessions={wrapItems} dateLabel={today} />
+          })()}
 
           {/* Session prep guidance — shown when no sessions today */}
           {sessionSummaries.length === 0 && (

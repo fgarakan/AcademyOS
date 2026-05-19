@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1099: Coach DONNA Wrap-Up Coverage Tracker V1
+
+**Files modified:** `src/app/coach/donna/page.tsx` — imported `DONNAWrapUpCoverageTracker` and `SessionWrapUpItem`; added tracker between "Today's Sessions" card and session prep guidance (only shown when sessions exist); maps `sessionSummaries` to `SessionWrapUpItem[]`.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1098: Director DONNA Academy Pulse Card V1
 
 **Files modified:** `src/app/director/donna/page.tsx` — imported `DONNAAcademyPulseCard` and `PulseTrend`; added pulse card between "Today at a Glance" stats and "Attention Needed" in left column; derived `healthScore`, `pulseTrend`, and `atRiskPlayers` from context data.
