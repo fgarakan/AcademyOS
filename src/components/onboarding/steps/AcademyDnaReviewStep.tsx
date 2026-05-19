@@ -4,6 +4,7 @@ import { ArrowRight, ArrowLeft, Sparkles, CheckCircle2 } from 'lucide-react'
 import type { OnboardingDraft } from '../OnboardingShell'
 import { OnboardingStepHeader } from '../OnboardingStepHeader'
 import { AcademyDnaSummaryCard } from '../AcademyDnaSummaryCard'
+import { DonnaAdjustmentDraftPanel } from '../DonnaAdjustmentDraftPanel'
 
 const COACHING_STYLE_LABELS: Record<string, string> = {
   'fundamentals-first': 'Fundamentals First',
@@ -99,7 +100,7 @@ interface Props {
   onEditStep: (stepIndex: number) => void
 }
 
-export function AcademyDnaReviewStep({ draft, onNext, onPrev, onEditStep }: Props) {
+export function AcademyDnaReviewStep({ draft, updateDraft, onNext, onPrev, onEditStep }: Props) {
   const hasAnyContent = !!(
     draft.academyName.trim() ||
     draft.ageGroups.length ||
@@ -267,6 +268,11 @@ export function AcademyDnaReviewStep({ draft, onNext, onPrev, onEditStep }: Prop
           />
 
         </div>
+      </div>
+
+      {/* DONNA adjustment panel */}
+      <div className="mb-6">
+        <DonnaAdjustmentDraftPanel draft={draft} updateDraft={updateDraft} />
       </div>
 
       {/* DONNA summary */}

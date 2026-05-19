@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-9: DONNA Adjustment Draft Panel V1
+
+**Files created:** `src/components/onboarding/DonnaAdjustmentDraftPanel.tsx` (collapsible chat panel with 6 quick-apply draft adjustments, free-text input, applied-state tracking), `docs/DONNA_ONBOARDING_ADJUSTMENT_DRAFT_PANEL.md`. **Files modified:** `src/components/onboarding/steps/AcademyDnaReviewStep.tsx` (embedded adjustment panel between DNA table and DONNA summary). TypeScript clean.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-8: Academy DNA Review V1
 
 **Files created:** `src/components/onboarding/steps/AcademyDnaReviewStep.tsx` (Step 6 — full DNA review table, readiness card, edit links, DONNA summary, Proceed to Activation CTA), `src/components/onboarding/AcademyDnaSummaryCard.tsx` (reusable readiness + section summary card), `docs/DONNA_ONBOARDING_ACADEMY_DNA_REVIEW.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired AcademyDnaReviewStep + goToStep handler). TypeScript clean.
