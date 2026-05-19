@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Connected Onboarding Sprint OF-1: Flow Zip Audit V1
+
+**Files created:** `docs/CONNECTED_ONBOARDING_FLOW_ZIP_AUDIT.md` — full audit of `academyos-donna-onboarding.zip` prototype (10 screens), screen-by-screen keep/adapt/defer table, new 11-step flow definition, class and fitness template architecture requirements, new steps for Player Upload / Add Coaches / Portal Preview, what cannot be copied from zip, OnboardingDraft new fields required, storage key migration plan, backend/RLS sessions issue logged separately.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-12: 10/10 QA Final Audit V1
 
 **Files created:** `docs/DONNA_ONBOARDING_10_10_QA_FINAL_AUDIT.md` — full audit across 11 sprints, all safety rules verified, TypeScript check history, scoring 9.5/10, known limitations documented. Verdict: ready to push.
