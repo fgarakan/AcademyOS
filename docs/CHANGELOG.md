@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1050: Wrap-Up Coverage Panel Polish V1
+
+**Files modified:**
+- `src/lib/donna/wrapUpReviewSurfaceLoader.ts` — added `coachName: string | null` to `WrapUpSessionStatus`; batch-fetches coach display names from `profiles` after session rows load.
+- `src/app/director/review/WrapUpCoveragePanel.tsx` — added "Missing wrap-ups" callout with coach name + "View" link to session; all session names now link to `/director/sessions/[id]`; coach name shown with User icon below session name in per-session rows.
+
+**Files created:**
+- `docs/WRAP_UP_COVERAGE_PANEL_POLISH_1050.md` — sprint doc.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1049: Approve and Apply Combined Action V1
 
 **Files created:**

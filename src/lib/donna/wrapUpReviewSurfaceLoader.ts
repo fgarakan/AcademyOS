@@ -12,6 +12,7 @@ export interface WrapUpSessionStatus {
   sessionName: string
   scheduledDate: string
   coachId: string
+  coachName: string | null
   wrapUpSubmitted: boolean
   wrapUpStatus: string | null
 }
@@ -52,6 +53,19 @@ export async function loadWrapUpReviewSurface(
 
   const sessionIds = sessions.map(s => s.id)
 
+  // Batch-fetch coach display names
+  const coachIds = Array.from(new Set(sessions.map(s => s.coach_id).filter((id): id is string => !!id)))
+  const coachNameMap = new Map<string, string>()
+  if (coachIds.length > 0) {
+    const { data: coachProfiles } = await db
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', coachIds)
+    for (const p of coachProfiles ?? []) {
+      coachNameMap.set(p.id, p.display_name)
+    }
+  }
+
   // 2 — voice_notes as wrap-up proxy (session_id present = wrap-up submitted)
   const { data: vnRows } = await db
     .from('voice_notes')
@@ -85,6 +99,7 @@ export async function loadWrapUpReviewSurface(
     sessionName: s.name ?? 'Session',
     scheduledDate: s.scheduled_date,
     coachId: s.coach_id,
+    coachName: s.coach_id ? (coachNameMap.get(s.coach_id) ?? null) : null,
     wrapUpSubmitted: submittedSet.has(s.id) || paStatusMap.has(s.id),
     wrapUpStatus: paStatusMap.get(s.id) ?? (submittedSet.has(s.id) ? 'submitted' : null),
   }))
