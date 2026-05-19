@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1091: Coach DONNA Tab Entry V1
+
+**Files modified:** `src/app/coach/layout.tsx` — added DONNA as 4th tab in coach `BottomTabBar` (href `/coach/donna`, iconKey `donna`).
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1090: DONNA Phase 8 Audit V1
 
 **Files created:** `docs/DONNA_PHASE8_AUDIT_1090.md` — full inventory of all 4 DONNA role surfaces, gap analysis, and Phase 8 sprint plan (1091–1101).
