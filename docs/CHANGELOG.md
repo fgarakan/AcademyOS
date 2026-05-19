@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1081: Parent Wins Page V1
+
+**Files modified:** `src/app/parent/wins/page.tsx` — replaced stub; positive highlight count card, session consistency grid (attended/recorded/streak), gate achievement count, encouragement note.
+**Files created:** `docs/PARENT_WINS_1081.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1080: Parent Progress Page V1
 
 **Files modified:** `src/app/parent/progress/page.tsx` — replaced stub; level journey card, gate progress bar, current focus badge, 5 domain observation count blocks, encouragement + safety note.
