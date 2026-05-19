@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1084: Parent Development Context V1
+
+**Files created:** `src/app/parent/development/page.tsx` — active mission card, why it matters (IDP), support guide (praise/at-home/avoid), after-practice conversation starter, links to progress + DONNA. `docs/PARENT_DEVELOPMENT_1084.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1083: Parent Ask DONNA V1 + Tab Update
 
 **Files modified:** `src/app/parent/ask-donna/page.tsx` — replaced stub with full guardrailed DONNA page; 5 context-aware chips built from child mission/level/coach-language data; `src/app/parent/layout.tsx` — added DONNA as 5th tab.
