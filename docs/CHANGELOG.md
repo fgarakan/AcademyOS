@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1088: Parent Portal QA V1
+
+**Files created:** `docs/PARENT_PORTAL_QA_1088.md` — full Phase 7C safety, navigation, and data query audit. All pages pass.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1087: Parent Home Mission Context Card
 
 **Files modified:** `src/app/parent/page.tsx` — hoisted active mission title/category from priorities; added mission context card (links to /parent/development) between quick nav grid and level card.
