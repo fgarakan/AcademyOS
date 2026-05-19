@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Sprint 385 Director Fitness Template Builder V1
+
+**Files created:** `src/app/director/fitness/createFitnessTemplateWithBlocksAction.ts` (atomic template + 11 fitness blocks creation; tags: `fitness_template:true, template_type:X, source:builder_v1, status:draft`; `track: 'fitness'`; notes JSON: `coach_cue + tennis_transfer_note`), `docs/SPRINT_385_DIRECTOR_FITNESS_TEMPLATE_BUILDER.md`. **Files modified:** `src/app/director/fitness/templates/new/page.tsx` (async; DNA dev priorities read; new header), `src/app/director/fitness/templates/new/NewFitnessTemplateForm.tsx` (full rewrite: DONNA card with DNA dev priority pills; template type chips; 11-block fitness catalog with intent descriptions; duration indicator; expand/collapse coach cue + tennis transfer note; coach preview; draft safety notice; "Save Draft Fitness Template" button). Standard structure suggestions deterministic by template type. No migrations. No schema changes. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Sprint 384 Director Class Template Builder V1
 
 **Files created:** `src/app/director/class-templates/createClassTemplateWithBlocksAction.ts` (new server action: auth + role check → insert `templates` → insert `template_blocks` for each selected block → `revalidatePath`; block notes stored as JSON with `coach_cue`; tags: `source:builder_v1, status:draft`; modeled on `saveAssistantTemplateDraftAction`), `docs/SPRINT_384_DIRECTOR_CLASS_TEMPLATE_BUILDER.md`. **Files modified:** `src/app/director/class-templates/new/page.tsx` (now `async`; reads `settings.academy_dna.session_design.session_blocks` + `player_development.development_priorities` server-side; best-effort try/catch; updated header with "Create Class Template" title + draft pill), `src/app/director/class-templates/new/NewClassTemplateForm.tsx` (full rewrite: DONNA guidance card showing DNA approach pills + deterministic "Apply standard structure"; template basics section; 9-block catalog builder with duration inputs, expand/collapse for coach cue, add/remove; total minutes indicator + over-budget warning; live coach preview rendering blocks in coach-view format; draft safety notice; "Save Draft Template" submit button). No migrations. No schema changes. TypeScript clean.
