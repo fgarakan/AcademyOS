@@ -47,8 +47,9 @@ the existing folder convention for director-route-scoped components.
 Props:
 - `savedAt?: string | null` — ISO timestamp; formatted as `d MMM yyyy` (en-GB)
 
-Renders a `rounded-xl bg-lime/5 border border-lime/20` card with:
-- CheckCircle2 icon in a lime-tinted circle
+Renders an AcademyOS-native status card using existing accent tokens (`lime/cyan`),
+consistent with `OnboardingProgressCard` and `SetupProgressChecklist`:
+- CheckCircle2 icon in an accent-tinted circle
 - "Academy DNA on file" heading + "Saved" pill + optional date
 - DONNA attribution line (Sparkles icon): "DONNA has your academy foundation. Saved to academy settings."
 - "Next: curriculum, templates, players, coaches."

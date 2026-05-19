@@ -20,6 +20,12 @@ interface TaskCard {
   isFirst: boolean
 }
 
+interface Props {
+  playersExist?: boolean
+  classTemplatesExist?: boolean
+  fitnessTemplatesExist?: boolean
+}
+
 const TASKS: TaskCard[] = [
   {
     id: 'curriculum',
@@ -96,7 +102,11 @@ function extractDnaInput(draft: Record<string, unknown>): AcademyDnaInput | null
   }
 }
 
-export function DirectorContinueSetupPanel() {
+export function DirectorContinueSetupPanel({
+  playersExist = false,
+  classTemplatesExist = false,
+  fitnessTemplatesExist = false,
+}: Props) {
   const [visible, setVisible]       = useState(false)
   const [academyName, setAcademyName] = useState('')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
@@ -249,7 +259,12 @@ export function DirectorContinueSetupPanel() {
           Next setup tasks
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          {TASKS.map(task => (
+          {TASKS.map(task => {
+            const started =
+              (task.id === 'players' && playersExist) ||
+              (task.id === 'class-template' && classTemplatesExist) ||
+              (task.id === 'fitness' && fitnessTemplatesExist)
+            return (
             <Link
               key={task.id}
               href={task.href}
@@ -267,9 +282,14 @@ export function DirectorContinueSetupPanel() {
                 ].join(' ')}>
                   {task.label}
                 </p>
-                {task.isFirst && (
+                {task.isFirst && !started && (
                   <span className="shrink-0 text-[8px] font-bold uppercase tracking-wide text-lime bg-lime/10 border border-lime/25 rounded px-1.5 py-0.5 whitespace-nowrap">
                     Ready next
+                  </span>
+                )}
+                {started && (
+                  <span className="shrink-0 text-[8px] font-bold uppercase tracking-wide text-status-green bg-status-green/10 border border-status-green/25 rounded px-1.5 py-0.5 whitespace-nowrap">
+                    Started
                   </span>
                 )}
               </div>
@@ -282,11 +302,12 @@ export function DirectorContinueSetupPanel() {
                   ? 'text-lime group-hover:text-lime/80'
                   : 'text-text-muted group-hover:text-text-secondary',
               ].join(' ')}>
-                Open
+                {started ? 'Continue' : 'Open'}
                 <ArrowRight className="w-2.5 h-2.5" />
               </span>
             </Link>
-          ))}
+            )
+          })}
         </div>
       </div>
 

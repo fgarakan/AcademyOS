@@ -2,9 +2,15 @@
 
 ---
 
+## 2026-05-19 — Sprint 383 Director Setup Status Unification + Token Correction V1
+
+**Part A — Token correction:** Removed "lime-accented" and "lime-tinted" wording from `docs/SPRINT_382_DIRECTOR_DNA_STATUS_BADGE.md` and the Sprint 382 changelog entry. The `lime` token = `#11d9df` (cyan) — existing AcademyOS primary accent. Existing CSS classes in DirectorDnaStatusBadge are native and match OnboardingProgressCard and SetupProgressChecklist patterns; no visual changes required. **Part B — Setup coherence:** Academy Setup section narrative confirmed coherent post-DNA: DNA badge (server) + conditional subtitle copy + OnboardingProgressCard (7 admin steps) + SetupProgressChecklist (operational) + DirectorContinueSetupPanel (6 post-DNA task cards, localStorage). **Part C — Task status map:** `DirectorContinueSetupPanel` now accepts `playersExist`, `classTemplatesExist`, `fitnessTemplatesExist` optional props from page.tsx. `fitnessTemplateCount` derived from existing `templateCheckData` (no new query). Task cards show green "Started" chip and "Continue" CTA when data confirms activity. Tasks without coverage (curriculum, coaches, portals) unchanged. No migrations. No schema changes. No DB writes. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Sprint 382 Director DNA Status Badge V1
 
-**Files created:** `src/app/director/_components/DirectorDnaStatusBadge.tsx` (server component; accepts `savedAt?: string | null`; renders lime-accented "Academy DNA on file" card with Saved pill, optional date, DONNA attribution, next-steps line, link to `/director/onboarding`), `docs/SPRINT_382_DIRECTOR_DNA_STATUS_BADGE.md`. **Files modified:** `src/app/director/page.tsx` (import DirectorDnaStatusBadge; derive `hasAcademyDna` and `dnaSavedAt` from existing `onboardingSettings`; render badge conditionally inside `!isAcademyLive` branch above OnboardingProgressCard; subtitle copy adjusts when DNA is saved). No extra DB queries — reuses existing `academies.settings` read. No migrations. No schema changes. No DB writes. TypeScript clean.
+**Files created:** `src/app/director/_components/DirectorDnaStatusBadge.tsx` (server component; accepts `savedAt?: string | null`; renders AcademyOS-native "Academy DNA on file" status card using existing accent tokens, consistent with OnboardingProgressCard; Saved pill, optional date, DONNA attribution, next-steps line, link to `/director/onboarding`), `docs/SPRINT_382_DIRECTOR_DNA_STATUS_BADGE.md`. **Files modified:** `src/app/director/page.tsx` (import DirectorDnaStatusBadge; derive `hasAcademyDna` and `dnaSavedAt` from existing `onboardingSettings`; render badge conditionally inside `!isAcademyLive` branch above OnboardingProgressCard; subtitle copy adjusts when DNA is saved). No extra DB queries — reuses existing `academies.settings` read. No migrations. No schema changes. No DB writes. TypeScript clean.
 
 ---
 

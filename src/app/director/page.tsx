@@ -294,6 +294,9 @@ export default async function DirectorDashboard() {
     })
   }
 
+  const fitnessTemplateCount = ((templateCheckData ?? []) as Array<{ id: string; tags: string[] | null }>)
+    .filter((t) => (t.tags ?? []).includes('fitness_template:true')).length
+
   // Academy live state — all 4 setup steps complete
   const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
 
@@ -389,7 +392,11 @@ export default async function DirectorDashboard() {
       </div>
 
       {/* ── Post-DNA Continue Setup Panel (client — localStorage driven) ── */}
-      <DirectorContinueSetupPanel />
+      <DirectorContinueSetupPanel
+        playersExist={players.length > 0}
+        classTemplatesExist={classTemplateCount > 0}
+        fitnessTemplatesExist={fitnessTemplateCount > 0}
+      />
 
       {/* ── DONNA Executive Attention Card ─────────────────── */}
       <DonnaExecutiveCard items={donnaItems} directorName={directorDisplayName} />
