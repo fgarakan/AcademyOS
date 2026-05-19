@@ -265,6 +265,7 @@ function TemplateRow({
 }) {
   const importBatchTag = template.tags?.find(t => t.startsWith('import_batch:'))
   const airtableIdTag = template.tags?.find(t => t.startsWith('airtable_id:'))
+  const isDraft = (template.tags ?? []).includes('status:draft')
 
   return (
     <Link href={`/director/class-templates/${template.id}`} className="block">
@@ -315,14 +316,20 @@ function TemplateRow({
                   {template.total_duration_min}min
                 </div>
               )}
-              <span className={[
-                'text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border',
-                template.is_active
-                  ? 'border-status-green/50 text-status-green'
-                  : 'border-border text-text-muted',
-              ].join(' ')}>
-                {template.is_active ? 'Active' : 'Inactive'}
-              </span>
+              {isDraft ? (
+                <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border border-border text-text-secondary">
+                  Draft
+                </span>
+              ) : (
+                <span className={[
+                  'text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border',
+                  template.is_active
+                    ? 'border-status-green/50 text-status-green'
+                    : 'border-border text-text-muted',
+                ].join(' ')}>
+                  {template.is_active ? 'Active' : 'Inactive'}
+                </span>
+              )}
             </div>
           </div>
         </CardContent>

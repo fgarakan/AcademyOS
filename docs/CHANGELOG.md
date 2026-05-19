@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Sprint 386 Template List Draft Status Polish V1
+
+**Files modified:** `src/app/director/class-templates/page.tsx` (`TemplateRow`: derived `isDraft` from `tags.includes('status:draft')`; badge renders "Draft" in neutral style instead of Active/Inactive when draft tag present), `src/app/director/fitness/templates/page.tsx` (`FitnessTemplateCard`: same `isDraft` derivation and badge replacement). Templates created by Sprint 384/385 builders now correctly show "Draft" in lists rather than "Active". Badge style: `border-border text-text-secondary` — neutral, no accent/warning color. No migrations. No schema changes. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Sprint 385 Director Fitness Template Builder V1
 
 **Files created:** `src/app/director/fitness/createFitnessTemplateWithBlocksAction.ts` (atomic template + 11 fitness blocks creation; tags: `fitness_template:true, template_type:X, source:builder_v1, status:draft`; `track: 'fitness'`; notes JSON: `coach_cue + tennis_transfer_note`), `docs/SPRINT_385_DIRECTOR_FITNESS_TEMPLATE_BUILDER.md`. **Files modified:** `src/app/director/fitness/templates/new/page.tsx` (async; DNA dev priorities read; new header), `src/app/director/fitness/templates/new/NewFitnessTemplateForm.tsx` (full rewrite: DONNA card with DNA dev priority pills; template type chips; 11-block fitness catalog with intent descriptions; duration indicator; expand/collapse coach cue + tennis transfer note; coach preview; draft safety notice; "Save Draft Fitness Template" button). Standard structure suggestions deterministic by template type. No migrations. No schema changes. TypeScript clean.

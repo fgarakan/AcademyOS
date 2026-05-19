@@ -233,6 +233,7 @@ function FitnessTemplateCard({
 }) {
   const tags = template.tags ?? []
   const typeLabel = getTemplateTypeLabel(tags)
+  const isDraft = tags.includes('status:draft')
 
   return (
     <Link href={`/director/fitness/templates/${template.id}`} className="block group">
@@ -266,14 +267,20 @@ function FitnessTemplateCard({
                   {template.total_duration_min}min
                 </div>
               )}
-              <span className={[
-                'text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border',
-                template.is_active
-                  ? 'border-status-green/50 text-status-green'
-                  : 'border-border text-text-muted',
-              ].join(' ')}>
-                {template.is_active ? 'Active' : 'Inactive'}
-              </span>
+              {isDraft ? (
+                <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border border-border text-text-secondary">
+                  Draft
+                </span>
+              ) : (
+                <span className={[
+                  'text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border',
+                  template.is_active
+                    ? 'border-status-green/50 text-status-green'
+                    : 'border-border text-text-muted',
+                ].join(' ')}>
+                  {template.is_active ? 'Active' : 'Inactive'}
+                </span>
+              )}
             </div>
           </div>
         </CardContent>
