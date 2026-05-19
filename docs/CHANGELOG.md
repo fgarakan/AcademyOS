@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1098: Director DONNA Academy Pulse Card V1
+
+**Files modified:** `src/app/director/donna/page.tsx` — imported `DONNAAcademyPulseCard` and `PulseTrend`; added pulse card between "Today at a Glance" stats and "Attention Needed" in left column; derived `healthScore`, `pulseTrend`, and `atRiskPlayers` from context data.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1097: DONNA Guardrail Consistency Pass V1
 
 **Files created:** `docs/DONNA_GUARDRAIL_AUDIT_1097.md` — full guardrail notice inventory across all 4 DONNA pages, consistency check, and safety audit. All pages pass.

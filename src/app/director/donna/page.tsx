@@ -13,6 +13,8 @@ import type { ContextSummaryItem, ContextSourceLabel } from '@/components/donna/
 import { DonnaReviewQueueSurface } from '@/components/donna/DonnaReviewQueueSurface'
 import { DirectorDonnaDailyBrief } from '@/components/donna/DirectorDonnaDailyBrief'
 import type { BriefItem } from '@/components/donna/DirectorDonnaDailyBrief'
+import { DONNAAcademyPulseCard } from '@/components/donna/DONNAAcademyPulseCard'
+import type { PulseTrend } from '@/components/donna/DONNAAcademyPulseCard'
 
 // ── Director DONNA command center — Sprint 1038/1040 wiring ──────────────────
 // Full page wiring: loads DirectorDonnaContext, renders attention items, risks,
@@ -155,6 +157,28 @@ export default async function DirectorDonnaPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Academy Pulse Card */}
+          {(() => {
+            const highRisk = attentionItems.filter(i => i.risk === 'high').length
+            const medRisk  = attentionItems.filter(i => i.risk === 'medium').length
+            const rawScore = isLive ? Math.max(0, 100 - highRisk * 15 - medRisk * 5 - missingWrapUps * 3) : null
+            const healthScore = rawScore !== null ? Math.round(rawScore) : null
+            const hasHighRisk = (academyRisks ?? []).some((r: { urgency: string }) => r.urgency === 'high')
+            const pulseTrend: PulseTrend = !isLive ? 'unknown' : hasHighRisk ? 'down' : attentionItems.length === 0 ? 'up' : 'stable'
+            const trendNote = (academyRisks?.[0] as { signal?: string } | undefined)?.signal ?? null
+            return (
+              <DONNAAcademyPulseCard
+                healthScore={healthScore}
+                trend={pulseTrend}
+                trendNote={trendNote}
+                urgentItems={pendingReviews}
+                atRiskPlayers={highRisk}
+                isLive={isLive}
+                lastUpdatedLabel={isLive ? 'Just now' : null}
+              />
+            )
+          })()}
 
           {/* Attention Items */}
           {attentionItems.length > 0 && (
