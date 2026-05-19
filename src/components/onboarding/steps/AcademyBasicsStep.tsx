@@ -50,7 +50,7 @@ export function AcademyBasicsStep({ draft, updateDraft, onNext, onPrev }: Props)
     <div>
       <OnboardingStepHeader
         stepNumber={2}
-        totalSteps={7}
+        totalSteps={11}
         title="Tell me about your academy."
         subtitle="This shapes your curriculum levels, templates, and coach views."
       />

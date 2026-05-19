@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Save, RotateCcw } from 'lucide-react'
 import type { OnboardingDraft } from './OnboardingShell'
 
-const STORAGE_KEY = 'academyos_onboarding_draft_v1'
+const STORAGE_KEY = 'academyos_onboarding_draft_v2'
 
 export function useOnboardingDraftPersistence(
   draft: OnboardingDraft,

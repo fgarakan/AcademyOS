@@ -3,13 +3,17 @@
 import { CheckCircle2 } from 'lucide-react'
 
 const STEPS = [
-  { id: 'welcome',         label: 'Welcome' },
-  { id: 'academy-basics',  label: 'Academy Basics' },
-  { id: 'coaching-dna',    label: 'Coaching DNA' },
-  { id: 'session-defaults', label: 'Session Defaults' },
-  { id: 'parent-player',   label: 'Parent + Player' },
-  { id: 'review-dna',      label: 'Review DNA' },
-  { id: 'activate',        label: 'Activate' },
+  { id: 'welcome',             label: 'Welcome' },
+  { id: 'academy-basics',      label: 'Academy' },
+  { id: 'coaching-dna',        label: 'Coaching DNA' },
+  { id: 'curriculum',          label: 'Curriculum' },
+  { id: 'class-template',      label: 'Class Template' },
+  { id: 'fitness-template',    label: 'Fitness Template' },
+  { id: 'players',             label: 'Players' },
+  { id: 'coaches',             label: 'Coaches' },
+  { id: 'portal-preview',      label: 'Portals' },
+  { id: 'review-dna',          label: 'Review DNA' },
+  { id: 'activate',            label: 'Activate' },
 ]
 
 interface Props {
@@ -18,7 +22,7 @@ interface Props {
 
 export function OnboardingProgressRail({ currentStep }: Props) {
   return (
-    <div className="flex items-center gap-0 px-6 py-3 border-b border-border bg-surface overflow-x-auto">
+    <div className="flex items-center gap-0 px-4 py-3 border-b border-border bg-surface overflow-x-auto">
       {STEPS.map((step, i) => {
         const isComplete = i < currentStep
         const isActive   = i === currentStep
@@ -51,7 +55,7 @@ export function OnboardingProgressRail({ currentStep }: Props) {
               </div>
               <span
                 className={[
-                  'text-[9px] font-medium whitespace-nowrap uppercase tracking-wide leading-none hidden md:block',
+                  'text-[8px] font-medium whitespace-nowrap uppercase tracking-wide leading-none hidden lg:block',
                   isActive ? 'text-lime' : isComplete ? 'text-text-muted' : 'text-text-muted/50',
                 ].join(' ')}
               >
@@ -62,7 +66,7 @@ export function OnboardingProgressRail({ currentStep }: Props) {
             {i < STEPS.length - 1 && (
               <div
                 className={[
-                  'h-px w-8 mx-1 shrink-0 transition-all',
+                  'h-px w-5 mx-0.5 shrink-0 transition-all',
                   i < currentStep ? 'bg-lime/40' : 'bg-border',
                 ].join(' ')}
               />

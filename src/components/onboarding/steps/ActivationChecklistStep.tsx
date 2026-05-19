@@ -106,8 +106,8 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
   return (
     <div>
       <OnboardingStepHeader
-        stepNumber={7}
-        totalSteps={7}
+        stepNumber={11}
+        totalSteps={11}
         title="Activation Checklist"
         subtitle="Complete these steps to launch your starting operating system."
       />

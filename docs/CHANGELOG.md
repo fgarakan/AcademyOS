@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Connected Onboarding Sprint OF-2: Step Model Refactor V1
+
+**Files created:** `docs/CONNECTED_ONBOARDING_STEP_MODEL_REFACTOR.md`. **Files modified:** `OnboardingShell.tsx` (11-step draft model, new types, placeholder steps 4-9), `OnboardingProgressRail.tsx` (11 nodes), `OnboardingDonnaPanel.tsx` (11 step messages + live DNA update), `OnboardingSaveStatus.tsx` (storage key v2), `AcademyDnaReviewStep.tsx` (step 10/11), `ActivationChecklistStep.tsx` (step 11/11), `AcademyBasicsStep.tsx` + `CoachingDnaStep.tsx` (totalSteps 11). TypeScript clean.
+
+---
+
 ## 2026-05-19 — Connected Onboarding Sprint OF-1: Flow Zip Audit V1
 
 **Files created:** `docs/CONNECTED_ONBOARDING_FLOW_ZIP_AUDIT.md` — full audit of `academyos-donna-onboarding.zip` prototype (10 screens), screen-by-screen keep/adapt/defer table, new 11-step flow definition, class and fitness template architecture requirements, new steps for Player Upload / Add Coaches / Portal Preview, what cannot be copied from zip, OnboardingDraft new fields required, storage key migration plan, backend/RLS sessions issue logged separately.

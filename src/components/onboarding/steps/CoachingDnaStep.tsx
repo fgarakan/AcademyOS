@@ -109,7 +109,7 @@ export function CoachingDnaStep({ draft, updateDraft, onNext, onPrev }: Props) {
     <div>
       <OnboardingStepHeader
         stepNumber={3}
-        totalSteps={7}
+        totalSteps={11}
         title="How do you want players to learn?"
         subtitle="Select up to 3 primary coaching styles and your communication voice."
       />

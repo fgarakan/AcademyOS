@@ -137,8 +137,8 @@ export function AcademyDnaReviewStep({ draft, updateDraft, onNext, onPrev, onEdi
   return (
     <div>
       <OnboardingStepHeader
-        stepNumber={6}
-        totalSteps={7}
+        stepNumber={10}
+        totalSteps={11}
         title="Review your Academy DNA"
         subtitle="Everything DONNA will use to build your starting operating system."
       />
