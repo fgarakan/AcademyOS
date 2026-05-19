@@ -6,6 +6,7 @@ import { OnboardingProgressRail } from './OnboardingProgressRail'
 import { OnboardingDonnaPanel } from './OnboardingDonnaPanel'
 import { AcademyBasicsStep } from './steps/AcademyBasicsStep'
 import { CoachingDnaStep } from './steps/CoachingDnaStep'
+import { CurriculumBuilderStep } from './steps/CurriculumBuilderStep'
 import { AcademyDnaReviewStep } from './steps/AcademyDnaReviewStep'
 import { ActivationChecklistStep } from './steps/ActivationChecklistStep'
 import { useOnboardingDraftPersistence, OnboardingSaveStatus, DraftResumeBanner } from './OnboardingSaveStatus'
@@ -195,7 +196,7 @@ export function OnboardingShell() {
               <CoachingDnaStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 3 && (
-              <CurriculumBuilderPlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={4} totalSteps={TOTAL_STEPS} />
+              <CurriculumBuilderStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 4 && (
               <FirstClassTemplatePlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={5} totalSteps={TOTAL_STEPS} />
@@ -447,10 +448,6 @@ function StepPlaceholder({
       </div>
     </div>
   )
-}
-
-function CurriculumBuilderPlaceholder(p: PlaceholderProps) {
-  return <StepPlaceholder title="Curriculum Builder" subtitle="Choose your curriculum starting point and session structure defaults." skippable={true} onNext={p.onNext} onPrev={p.onPrev} stepNum={p.stepNum} totalSteps={p.totalSteps} />
 }
 
 function FirstClassTemplatePlaceholder(p: PlaceholderProps) {

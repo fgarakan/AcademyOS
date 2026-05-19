@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Connected Onboarding Sprint OF-3: Curriculum Builder Step V1
+
+**Files created:** `src/components/onboarding/steps/CurriculumBuilderStep.tsx` (step 4/11 — curriculum starting point selector, focus levels, session block selector with live timeline preview, ranked development priorities, DONNA confirmation messages, skip option), `docs/CONNECTED_ONBOARDING_CURRICULUM_BUILDER_STEP.md`. **Files modified:** `OnboardingShell.tsx` (wired CurriculumBuilderStep at step index 3, removed CurriculumBuilderPlaceholder). TypeScript clean.
+
+---
+
 ## 2026-05-19 — Connected Onboarding Sprint OF-2: Step Model Refactor V1
 
 **Files created:** `docs/CONNECTED_ONBOARDING_STEP_MODEL_REFACTOR.md`. **Files modified:** `OnboardingShell.tsx` (11-step draft model, new types, placeholder steps 4-9), `OnboardingProgressRail.tsx` (11 nodes), `OnboardingDonnaPanel.tsx` (11 step messages + live DNA update), `OnboardingSaveStatus.tsx` (storage key v2), `AcademyDnaReviewStep.tsx` (step 10/11), `ActivationChecklistStep.tsx` (step 11/11), `AcademyBasicsStep.tsx` + `CoachingDnaStep.tsx` (totalSteps 11). TypeScript clean.
