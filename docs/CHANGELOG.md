@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Connected Onboarding Sprint OF-AUDIT: Prototype Match Audit V1
+
+**Files created:** `docs/CONNECTED_ONBOARDING_PROTOTYPE_MATCH_AUDIT.md` — full audit of current onboarding vs `academyos-donna-onboarding.zip` prototype. Executive summary, 13-screen comparison table, flow comparison (10-screen prototype vs 11-step AcademyOS), UI/UX comparison, template architecture check, DONNA panel comparison, what to keep/restore/delete, 10-sprint repair plan (OF-FIX-1 through OF-FIX-10). Overall match score: 4.5/10. Recommendation: do not continue OF-5. Run OF-FIX-1 first. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Connected Onboarding Sprint OF-4: First Class Template Step V1
 
 **Files created:** `src/components/onboarding/templates/ClassTemplateBlockSelector.tsx` (9-block class template model, selectable block cards with duration control / coach cue / watch-for / evidence / video placeholder), `src/components/onboarding/templates/ClassTemplateDraftPreview.tsx` (proportional timeline + numbered list, coach preview label, draft-only footer), `src/components/onboarding/steps/FirstClassTemplateStep.tsx` (step 5/11 — DONNA suggestion from Academy DNA + Curriculum Builder, apply/customize blocks, skip option), `docs/CONNECTED_ONBOARDING_FIRST_CLASS_TEMPLATE_STEP.md`. **Files modified:** `OnboardingShell.tsx` (added blockDurations to ClassTemplateDraftData, wired FirstClassTemplateStep at step index 4, removed FirstClassTemplatePlaceholder). TypeScript clean.
