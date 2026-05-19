@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1059: Player Current Priorities Evidence Connection V1
+
+**Files created:**
+- `src/components/player/PlayerPriorityEvidenceConnection.tsx` — per-priority cards linking active priorities to supporting coach observations. Shows why priority exists, latest linked observation, confidence (partial/insufficient), next coach watch-for, next session focus suggestion. Category->observation-type mapping. Empty state if no priorities.
+- `docs/PLAYER_CURRENT_PRIORITIES_EVIDENCE_CONNECTION_1059.md` — sprint doc.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — imports and renders between Hub Header and Pathway Cards; passes `activePriorities` and flattened pathway observations.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1058: Player Pathway Evidence Cards V1
 
 **Files created:**

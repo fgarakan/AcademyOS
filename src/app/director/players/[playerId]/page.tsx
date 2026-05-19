@@ -43,6 +43,7 @@ import { CoachPlayerSnapshot } from '@/components/player/CoachPlayerSnapshot'
 import { PlayerEvidenceTimeline } from '@/components/player/PlayerEvidenceTimeline'
 import { PlayerEvidenceHubHeader } from '@/components/player/PlayerEvidenceHubHeader'
 import { PlayerPathwayEvidenceCards } from '@/components/player/PlayerPathwayEvidenceCards'
+import { PlayerPriorityEvidenceConnection } from '@/components/player/PlayerPriorityEvidenceConnection'
 import { getPlayerEvidenceTimeline, getPlayerEvidenceSummary, getPlayerPathwayEvidence } from '@/lib/players/playerEvidenceRepository'
 import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
 import { ParentGuidancePreviewPanel } from './ParentGuidancePreviewPanel'
@@ -1486,6 +1487,16 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Evidence Hub Header — Sprint 1057: aggregate summary, director-only */}
       <PlayerEvidenceHubHeader summary={evidenceSummary} isSchemaMissing={evidenceSummaryIsSchemaMissing} />
+
+      {/* Priority Evidence Connection — Sprint 1059: priorities linked to supporting observations */}
+      <PlayerPriorityEvidenceConnection
+        priorities={activePriorities}
+        observations={[
+          ...(pathwayEvidence?.skillEvidence ?? []),
+          ...(pathwayEvidence?.competitionEvidence ?? []),
+          ...(pathwayEvidence?.fitnessEvidence ?? []),
+        ]}
+      />
 
       {/* Pathway Evidence Cards — Sprint 1058: skill / competition / fitness breakdown */}
       <PlayerPathwayEvidenceCards
