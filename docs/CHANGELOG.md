@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Sprint 382 Director DNA Status Badge V1
+
+**Files created:** `src/app/director/_components/DirectorDnaStatusBadge.tsx` (server component; accepts `savedAt?: string | null`; renders lime-accented "Academy DNA on file" card with Saved pill, optional date, DONNA attribution, next-steps line, link to `/director/onboarding`), `docs/SPRINT_382_DIRECTOR_DNA_STATUS_BADGE.md`. **Files modified:** `src/app/director/page.tsx` (import DirectorDnaStatusBadge; derive `hasAcademyDna` and `dnaSavedAt` from existing `onboardingSettings`; render badge conditionally inside `!isAcademyLive` branch above OnboardingProgressCard; subtitle copy adjusts when DNA is saved). No extra DB queries — reuses existing `academies.settings` read. No migrations. No schema changes. No DB writes. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Sprint 381 Director DNA Settings Write Back V1
 
 **Files created:** `src/app/director/actions.ts` (`saveAcademyDnaSettings` server action — auth via getSupabaseServer + profiles.academy_id + academy_memberships role gate; reads existing academies.settings, merges { ...existing, academy_dna: sanitizedPayload }; writes settings only; revalidatePath '/director'; pattern mirrors updateAcademySettingsAction.ts), `docs/SPRINT_381_DIRECTOR_DNA_SETTINGS_WRITE_BACK.md`. **Files modified:** `src/components/director/DirectorContinueSetupPanel.tsx` (added SaveStatus state, extractDnaInput helper, handleSave calling server action, save strip UI with idle/saving/saved/error states, WRITEBACK_KEY localStorage flag; no auto-save loop). academies.settings confirmed as JSONB (Json type in database.types.ts). Existing settings keys preserved via spread-merge. No migrations. No schema changes. TypeScript clean.

@@ -21,6 +21,7 @@ import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
 import { DonnaExecutiveCard, type DonnaExecutivePriorityItem } from './_components/DonnaExecutiveCard'
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
+import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -138,6 +139,10 @@ export default async function DirectorDashboard() {
     .eq('id', academyId)
     .single()
   const onboardingSettings = (academyWithSettings?.settings as Record<string, unknown>) ?? {}
+  const hasAcademyDna = typeof onboardingSettings.academy_dna === 'object' && onboardingSettings.academy_dna !== null
+  const dnaSavedAt = typeof onboardingSettings.academy_dna_completed_at === 'string'
+    ? onboardingSettings.academy_dna_completed_at
+    : null
 
   // Private lesson requests
   const { data: plrData } = await rawDb
@@ -418,8 +423,13 @@ export default async function DirectorDashboard() {
         <div className="space-y-3">
           <div>
             <p className="label-xs">Academy Setup</p>
-            <p className="text-xs text-text-muted mt-1">Complete these steps first. Academy OS uses this information to guide curriculum, placement, sessions, and coach workflows.</p>
+            <p className="text-xs text-text-muted mt-1">
+              {hasAcademyDna
+                ? 'Academy DNA is saved. Complete the remaining setup steps to go live.'
+                : 'Complete these steps first. Academy OS uses this information to guide curriculum, placement, sessions, and coach workflows.'}
+            </p>
           </div>
+          {hasAcademyDna && <DirectorDnaStatusBadge savedAt={dnaSavedAt} />}
           <OnboardingProgressCard settings={onboardingSettings} />
           <SetupProgressChecklist
             playersExist={players.length > 0}
