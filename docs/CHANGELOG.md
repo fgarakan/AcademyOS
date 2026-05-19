@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-19 — Sprint 1055: Player Evidence Repository Read Layer V1
+
+**Files created:**
+- `src/lib/players/playerEvidenceRepository.ts` — read-only evidence aggregation layer. 6 functions: `getPlayerEvidenceSummary`, `getPlayerCoachObservations`, `getPlayerCurriculumEvidence`, `getPlayerPathwayEvidence`, `getPlayerParentSafeSummaries`, `getPlayerEvidenceTimeline`. All academy-scoped, all return `EvidenceResult<T>` with `data`, `error`, `isSchemaMissing`. Raw coach observation content hard-typed as `isParentSafe: false`. Visibility flags (`is_parent_safe`, `is_parent_visible`, `is_player_visible`, `show_to_parent`, `show_to_student`) preserved. No mutations, no migrations.
+- `docs/PLAYER_EVIDENCE_REPOSITORY_READ_LAYER_1055.md` — sprint doc with evidence sources, safety handling, fallback behavior, known limitations, and Sprint 1056 spec.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1054: Player Evidence Hub Architecture Audit V1
 
 **Files created:**
