@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
-  Sparkles, ChevronLeft, Calendar, ClipboardList, CheckCircle2,
-  AlertCircle, ShieldCheck, Users, PlayCircle, FileText,
+  Sparkles, ChevronLeft, ChevronRight, Calendar, ClipboardList, CheckCircle2,
+  AlertCircle, ShieldCheck, Users, PlayCircle, FileText, BookOpen,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { loadCoachDonnaContext } from '@/lib/donna/coachDonnaContext'
@@ -134,7 +134,7 @@ export default async function CoachDonnaPage() {
               {activeSessionName ?? 'Session'} — tap to submit your wrap-up.
             </p>
           </div>
-          <ChevronLeft className="w-4 h-4 text-status-orange/60 shrink-0 rotate-180 group-hover:text-status-orange transition-colors" />
+          <ChevronRight className="w-4 h-4 text-status-orange/60 shrink-0 group-hover:text-status-orange transition-colors" />
         </Link>
       )}
 
@@ -208,6 +208,42 @@ export default async function CoachDonnaPage() {
                     </Link>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Session prep guidance — shown when no sessions today */}
+          {sessionSummaries.length === 0 && (
+            <Card>
+              <CardHeader>
+                <h2 className="text-xs font-bold text-text-primary uppercase tracking-widest flex items-center gap-2">
+                  <BookOpen className="w-3.5 h-3.5 text-lime" />
+                  Session Prep
+                </h2>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Review players', desc: 'Check your player list before each session' },
+                    { label: 'Submit wrap-ups', desc: 'Keep your wrap-up queue clear after each session' },
+                    { label: 'Capture observations', desc: 'Quick notes help the director track development' },
+                  ].map(tip => (
+                    <div key={tip.label} className="flex items-start gap-2.5 px-3 py-2 rounded-xl bg-surface-raised border border-border">
+                      <span className="w-1 h-1 rounded-full bg-lime mt-1.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] font-medium text-text-secondary">{tip.label}</p>
+                        <p className="text-[10px] text-text-muted leading-snug">{tip.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  href="/coach/sessions"
+                  className="mt-3 flex items-center justify-between px-3 py-2 rounded-xl border border-lime/20 bg-lime/5 hover:border-lime/40 transition-colors group"
+                >
+                  <span className="text-xs font-medium text-lime">View all sessions</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-lime/60 group-hover:text-lime transition-colors" />
+                </Link>
               </CardContent>
             </Card>
           )}

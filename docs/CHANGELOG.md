@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1092: Coach DONNA Session Brief Polish V1
+
+**Files modified:** `src/app/coach/donna/page.tsx` — added `ChevronRight` and `BookOpen` imports; replaced `ChevronLeft rotate-180` hack with `ChevronRight` on wrap-up alert; added session prep guidance card (shown when no sessions today) with three prep tips and link to sessions list.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1091: Coach DONNA Tab Entry V1
 
 **Files modified:** `src/app/coach/layout.tsx` — added DONNA as 4th tab in coach `BottomTabBar` (href `/coach/donna`, iconKey `donna`).
