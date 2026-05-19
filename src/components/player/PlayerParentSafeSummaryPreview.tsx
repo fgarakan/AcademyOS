@@ -162,11 +162,11 @@ export function PlayerParentSafeSummaryPreview({
           <p className="text-[10px] uppercase tracking-widest text-text-muted flex items-center gap-1.5">
             <Lock className="w-3 h-3" /> Intentionally hidden from parents
           </p>
-          <div className="rounded-xl bg-surface-raised border border-border px-3 py-2.5 space-y-1.5">
+          <div className="rounded-xl bg-surface-raised border border-border px-3 py-2.5 space-y-2">
             {HIDDEN_ITEMS.map((item, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <Lock className="w-2.5 h-2.5 text-text-muted shrink-0" />
-                <p className="text-xs text-text-muted">{item}</p>
+              <div key={i} className="flex items-start gap-2">
+                <Lock className="w-2.5 h-2.5 text-text-muted shrink-0 mt-0.5" />
+                <p className="text-xs text-text-muted leading-snug">{item}</p>
               </div>
             ))}
           </div>

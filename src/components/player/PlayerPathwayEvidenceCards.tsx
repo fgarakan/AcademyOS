@@ -106,7 +106,7 @@ export function PlayerPathwayEvidenceCards({
 }: Props) {
   if (isSchemaMissing || !pathwayEvidence) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {['Skill', 'Competition', 'Fitness'].map(label => (
           <Card key={label}>
             <CardHeader>
@@ -122,7 +122,7 @@ export function PlayerPathwayEvidenceCards({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <PathwayCard
         icon={<Zap className="w-4 h-4 text-lime" />}
         label="Skill Path"

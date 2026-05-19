@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-19 — Sprint 1064: Player Evidence Hub Mobile Polish V1
+
+**Files modified:**
+- `PlayerEvidenceHubHeader.tsx` — tighter gap on mobile stat row; breakdown grid 2-col mobile / 4-col desktop
+- `PlayerPathwayEvidenceCards.tsx` — both grids 1-col mobile / 3-col desktop
+- `PlayerCurriculumGateEvidencePanel.tsx` — overview strip grid-cols-3; per-gate detail gap-2
+- `PlayerParentSafeSummaryPreview.tsx` — hidden items list icon alignment fixed for multi-line
+
+**Files created:**
+- `docs/PLAYER_EVIDENCE_HUB_MOBILE_POLISH_1064.md` — sprint doc.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1063: Player Profile Evidence Hub Page Wiring V1
 
 **Files modified:**

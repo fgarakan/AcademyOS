@@ -133,18 +133,18 @@ export function PlayerCurriculumGateEvidencePanel({
 
       <CardContent className="space-y-3">
         {/* Progress overview */}
-        <div className="flex items-center gap-4 px-3 py-2.5 rounded-xl bg-surface-raised border border-border">
-          <div className="text-center flex-1">
+        <div className="grid grid-cols-3 gap-2 px-3 py-2.5 rounded-xl bg-surface-raised border border-border">
+          <div className="text-center">
             <p className="text-base font-mono font-bold text-lime">{passedCount}</p>
-            <p className="text-[10px] uppercase tracking-widest text-text-muted">Passed</p>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted leading-tight">Passed</p>
           </div>
-          <div className="text-center flex-1">
+          <div className="text-center">
             <p className="text-base font-mono font-bold text-status-blue">{withEvidenceCount}</p>
-            <p className="text-[10px] uppercase tracking-widest text-text-muted">With Evidence</p>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted leading-tight">With Evidence</p>
           </div>
-          <div className="text-center flex-1">
+          <div className="text-center">
             <p className="text-base font-mono font-bold text-text-muted">{totalGates - withEvidenceCount}</p>
-            <p className="text-[10px] uppercase tracking-widest text-text-muted">No Evidence</p>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted leading-tight">No Evidence</p>
           </div>
         </div>
 
@@ -171,7 +171,7 @@ export function PlayerCurriculumGateEvidencePanel({
                       <p className="text-xs font-medium text-text-primary leading-snug">{gate.criterion}</p>
                       <span className={`text-[10px] font-semibold shrink-0 ${color}`}>{label}</span>
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span className="text-[10px] text-text-muted">{domainLabel}</span>
                       <span className="text-[10px] text-text-muted">{gate.gate_type.replace(/_/g, ' ')}</span>
                       <span className="text-[10px] text-text-muted">Threshold: {gate.threshold}</span>

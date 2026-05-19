@@ -74,7 +74,7 @@ export function PlayerEvidenceHubHeader({ summary, isSchemaMissing }: Props) {
 
       <CardContent className="space-y-4">
         {/* Primary counts */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
           <StatCell label="Total Evidence" value={summary.totalObservations + summary.requirementEvidenceCount} />
           <StatCell label="Last 30 Days" value={summary.recentObservationCount} />
           <StatCell label="Active Priorities" value={summary.activePriorityCount} dim />
@@ -83,7 +83,7 @@ export function PlayerEvidenceHubHeader({ summary, isSchemaMissing }: Props) {
         <div className="h-px bg-border" />
 
         {/* Breakdown row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl bg-surface-raised border border-border px-3 py-2.5">
             <p className="text-base font-mono font-bold text-text-primary">{summary.totalObservations}</p>
             <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Coach Observations</p>
