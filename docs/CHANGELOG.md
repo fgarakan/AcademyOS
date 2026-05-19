@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-19 — Sprint 1068: Player Portal Shell and Navigation V1
+
+**Files modified:**
+- `src/app/player/layout.tsx` — PLAYER_TABS updated to: Home / Missions / Ask DONNA
+- `src/components/nav/BottomTabBar.tsx` — added `missions` (Map) and `donna` (MessageCircle) to ICON_MAP
+
+**Files created:**
+- 9 route stub pages: missions, missions/[priorityId], skill-path, competition-path, fitness-path, level-up, practice, ask-donna, celebration
+- `docs/PLAYER_PORTAL_SHELL_NAV_1068.md` — sprint doc
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1067: Player Portal Prototype Alignment Audit V1
 
 **Files created:**

@@ -5,9 +5,8 @@ import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
 
 const PLAYER_TABS = [
   { label: 'Home', href: '/player', iconKey: 'home', exact: true },
-  { label: 'Progress', href: '/player/progress', iconKey: 'progress' },
-  { label: 'Wins', href: '/player/wins', iconKey: 'wins' },
-  { label: 'Messages', href: '/player/messages', iconKey: 'messages' },
+  { label: 'Missions', href: '/player/missions', iconKey: 'missions' },
+  { label: 'Ask DONNA', href: '/player/ask-donna', iconKey: 'donna' },
 ]
 
 export default async function PlayerLayout({ children }: { children: React.ReactNode }) {
