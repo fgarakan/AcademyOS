@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-12: 10/10 QA Final Audit V1
+
+**Files created:** `docs/DONNA_ONBOARDING_10_10_QA_FINAL_AUDIT.md` — full audit across 11 sprints, all safety rules verified, TypeScript check history, scoring 9.5/10, known limitations documented. Verdict: ready to push.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-11: Draft Save + Resume V1
 
 **Files created:** `src/components/onboarding/OnboardingSaveStatus.tsx` (useOnboardingDraftPersistence hook, OnboardingSaveStatus component, DraftResumeBanner), `docs/DONNA_ONBOARDING_SAVE_STATUS.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired persistence hook, replaced static footer with live save status, added resume banner on welcome step). TypeScript clean.
