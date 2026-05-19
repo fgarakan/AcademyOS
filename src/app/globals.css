@@ -112,9 +112,12 @@ body {
            hover:bg-surface-raised transition-all duration-100;
   }
   .btn-danger {
-    @apply text-status-red font-semibold rounded-xl px-4 py-2 text-sm
-           border border-status-red/30 bg-status-red/8
-           hover:bg-status-red/15 active:scale-95 transition-all duration-100;
+    @apply text-status-red font-semibold rounded-xl px-4 py-2 text-sm active:scale-95 transition-all duration-100;
+    border: 1px solid rgba(255, 93, 93, 0.3);
+    background: rgba(255, 93, 93, 0.08);
+  }
+  .btn-danger:hover {
+    background: rgba(255, 93, 93, 0.15);
   }
 
   /* Typography */
