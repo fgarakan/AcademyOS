@@ -5,7 +5,8 @@
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
-import { Star, CheckCircle2, Calendar, AlertCircle } from 'lucide-react'
+import { Star, CheckCircle2, Calendar, AlertCircle, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function ParentWinsPage() {
   const supabase = await getSupabaseServer()
@@ -245,6 +246,17 @@ export default async function ParentWinsPage() {
               {name} is building something real — one session at a time.
             </p>
           </div>
+
+          {/* Progress link */}
+          <Link href="/parent/progress">
+            <div className="rounded-xl border border-border bg-surface-raised px-4 py-3 flex items-center justify-between hover:border-lime/20 transition-colors">
+              <div>
+                <p className="text-sm font-medium text-text-primary">Progress Overview</p>
+                <p className="text-xs text-text-muted">Development areas and level advancement</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-text-muted shrink-0" />
+            </div>
+          </Link>
 
           {/* Footer */}
           <p className="text-[10px] text-text-muted text-center px-4">

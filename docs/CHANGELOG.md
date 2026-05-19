@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1086: Parent Portal Cross-Links
+
+**Files modified:** `src/app/parent/progress/page.tsx` — added "Development Focus" link card at bottom. `src/app/parent/wins/page.tsx` — added "Progress Overview" link card at bottom.
+**Files created:** `docs/PARENT_CROSS_LINKS_1086.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1085: Parent Home Quick Navigation Enhancement
 
 **Files modified:** `src/app/parent/page.tsx` — added Link import, ChevronRight, and 2x2 quick navigation grid (Development Focus, Progress, Ask DONNA, Wins) after the approved data banner; only rendered when parentView is available.
