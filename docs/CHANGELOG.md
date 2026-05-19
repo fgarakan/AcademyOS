@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Sprint 384 Director Class Template Builder V1
+
+**Files created:** `src/app/director/class-templates/createClassTemplateWithBlocksAction.ts` (new server action: auth + role check → insert `templates` → insert `template_blocks` for each selected block → `revalidatePath`; block notes stored as JSON with `coach_cue`; tags: `source:builder_v1, status:draft`; modeled on `saveAssistantTemplateDraftAction`), `docs/SPRINT_384_DIRECTOR_CLASS_TEMPLATE_BUILDER.md`. **Files modified:** `src/app/director/class-templates/new/page.tsx` (now `async`; reads `settings.academy_dna.session_design.session_blocks` + `player_development.development_priorities` server-side; best-effort try/catch; updated header with "Create Class Template" title + draft pill), `src/app/director/class-templates/new/NewClassTemplateForm.tsx` (full rewrite: DONNA guidance card showing DNA approach pills + deterministic "Apply standard structure"; template basics section; 9-block catalog builder with duration inputs, expand/collapse for coach cue, add/remove; total minutes indicator + over-budget warning; live coach preview rendering blocks in coach-view format; draft safety notice; "Save Draft Template" submit button). No migrations. No schema changes. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Sprint 383 Director Setup Status Unification + Token Correction V1
 
 **Part A — Token correction:** Removed "lime-accented" and "lime-tinted" wording from `docs/SPRINT_382_DIRECTOR_DNA_STATUS_BADGE.md` and the Sprint 382 changelog entry. The `lime` token = `#11d9df` (cyan) — existing AcademyOS primary accent. Existing CSS classes in DirectorDnaStatusBadge are native and match OnboardingProgressCard and SetupProgressChecklist patterns; no visual changes required. **Part B — Setup coherence:** Academy Setup section narrative confirmed coherent post-DNA: DNA badge (server) + conditional subtitle copy + OnboardingProgressCard (7 admin steps) + SetupProgressChecklist (operational) + DirectorContinueSetupPanel (6 post-DNA task cards, localStorage). **Part C — Task status map:** `DirectorContinueSetupPanel` now accepts `playersExist`, `classTemplatesExist`, `fitnessTemplatesExist` optional props from page.tsx. `fitnessTemplateCount` derived from existing `templateCheckData` (no new query). Task cards show green "Started" chip and "Continue" CTA when data confirms activity. Tasks without coverage (curriculum, coaches, portals) unchanged. No migrations. No schema changes. No DB writes. TypeScript clean.
