@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-19 — Sprint 1065: Player Evidence Hub QA and Safety Audit V1
+
+**Files created:**
+- `docs/PLAYER_EVIDENCE_HUB_QA_1065.md` — QA and safety audit doc covering all 8 hub components.
+
+**Audit results:** Role exposure clean (director-only), no raw coach notes in parent/player routes, unsafe language in HIDDEN_ITEMS only, no automatic level movement, no mutations, correct client/server split, schema graceful degradation verified.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1064: Player Evidence Hub Mobile Polish V1
 
 **Files modified:**
