@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1093: Director DONNA Daily Brief Integration V1
+
+**Files modified:** `src/app/director/donna/page.tsx` — imported `DirectorDonnaDailyBrief` and `BriefItem`; wired full-width daily brief between main layout and review queue surface, mapping ctx risks/actions to component props.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1092: Coach DONNA Session Brief Polish V1
 
 **Files modified:** `src/app/coach/donna/page.tsx` — added `ChevronRight` and `BookOpen` imports; replaced `ChevronLeft rotate-180` hack with `ChevronRight` on wrap-up alert; added session prep guidance card (shown when no sessions today) with three prep tips and link to sessions list.

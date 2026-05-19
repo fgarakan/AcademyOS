@@ -11,6 +11,8 @@ import { DonnaDirectorShellClient } from './DonnaDirectorShellClient'
 import { DonnaContextSummaryCard } from '@/components/donna/DonnaContextSummaryCard'
 import type { ContextSummaryItem, ContextSourceLabel } from '@/components/donna/DonnaContextSummaryCard'
 import { DonnaReviewQueueSurface } from '@/components/donna/DonnaReviewQueueSurface'
+import { DirectorDonnaDailyBrief } from '@/components/donna/DirectorDonnaDailyBrief'
+import type { BriefItem } from '@/components/donna/DirectorDonnaDailyBrief'
 
 // ── Director DONNA command center — Sprint 1038/1040 wiring ──────────────────
 // Full page wiring: loads DirectorDonnaContext, renders attention items, risks,
@@ -313,6 +315,32 @@ export default async function DirectorDonnaPage() {
         </div>
 
       </div>
+
+      {/* Daily Brief — full-width structured overview */}
+      {(() => {
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+        const briefActions: BriefItem[] = (ctx?.recommendedActions ?? []).slice(0, 3).map(a => ({
+          text: a.label,
+          href: a.href,
+        }))
+        const briefRisks: string[] = (ctx?.academyRisks ?? []).map(r => r.signal)
+        return (
+          <DirectorDonnaDailyBrief
+            date={today}
+            todaySessions={todaySessions}
+            missingWrapUps={missingWrapUps}
+            attendanceExceptions={ctx?.attendanceExceptions ?? 0}
+            unrosteredPlayers={0}
+            observationDrafts={pendingReviews}
+            parentSafeDrafts={0}
+            templateDrafts={ctx?.templateDrafts ?? 0}
+            evidenceDrafts={ctx?.evidenceDrafts ?? 0}
+            academyRisks={briefRisks}
+            recommendedActions={briefActions}
+            isLive={isLive}
+          />
+        )
+      })()}
 
       {/* Review Queue Surface */}
       <DonnaReviewQueueSurface
