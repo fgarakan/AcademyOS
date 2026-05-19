@@ -9,6 +9,7 @@ import { AcademyBasicsStep } from './steps/AcademyBasicsStep'
 import { CoachingDnaStep } from './steps/CoachingDnaStep'
 import { SessionCurriculumDefaultsStep } from './steps/SessionCurriculumDefaultsStep'
 import { ParentPlayerExperienceStep } from './steps/ParentPlayerExperienceStep'
+import { AcademyDnaReviewStep } from './steps/AcademyDnaReviewStep'
 
 export interface OnboardingDraft {
   setupMode: string
@@ -100,6 +101,10 @@ export function OnboardingShell() {
     setCurrentStep(s => Math.max(s - 1, 0))
   }, [])
 
+  const goToStep = useCallback((stepIndex: number) => {
+    setCurrentStep(Math.max(0, Math.min(stepIndex, TOTAL_STEPS - 1)))
+  }, [])
+
   return (
     <div className="flex flex-col min-h-screen bg-base">
 
@@ -153,7 +158,16 @@ export function OnboardingShell() {
                 onPrev={goPrev}
               />
             )}
-            {currentStep > 4 && currentStep < TOTAL_STEPS - 1 && (
+            {currentStep === 5 && (
+              <AcademyDnaReviewStep
+                draft={draft}
+                updateDraft={updateDraft}
+                onNext={goNext}
+                onPrev={goPrev}
+                onEditStep={goToStep}
+              />
+            )}
+            {currentStep > 5 && currentStep < TOTAL_STEPS - 1 && (
               <PlaceholderStep
                 stepNumber={currentStep + 1}
                 title={STEP_NAMES[currentStep]}

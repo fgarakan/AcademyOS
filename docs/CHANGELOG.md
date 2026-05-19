@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-8: Academy DNA Review V1
+
+**Files created:** `src/components/onboarding/steps/AcademyDnaReviewStep.tsx` (Step 6 — full DNA review table, readiness card, edit links, DONNA summary, Proceed to Activation CTA), `src/components/onboarding/AcademyDnaSummaryCard.tsx` (reusable readiness + section summary card), `docs/DONNA_ONBOARDING_ACADEMY_DNA_REVIEW.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired AcademyDnaReviewStep + goToStep handler). TypeScript clean.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-7: Parent + Player Experience V1
 
 **Files created:** `src/components/onboarding/steps/ParentPlayerExperienceStep.tsx` (Step 5 — 7 parent communication style cards, 5 privacy toggle rules with safe defaults, 7 player mission style cards), `docs/DONNA_ONBOARDING_PARENT_PLAYER_EXPERIENCE.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired ParentPlayerExperienceStep for step 4). TypeScript clean.
