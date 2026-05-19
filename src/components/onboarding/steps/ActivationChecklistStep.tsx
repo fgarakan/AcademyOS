@@ -2,7 +2,6 @@
 
 import { ArrowLeft, Sparkles, CheckCircle2, Circle, ExternalLink, Zap } from 'lucide-react'
 import type { OnboardingDraft } from '../OnboardingShell'
-import { OnboardingStepHeader } from '../OnboardingStepHeader'
 import { AcademyDnaSummaryCard } from '../AcademyDnaSummaryCard'
 
 interface ChecklistItem {
@@ -103,14 +102,63 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
   const totalReady     = items.filter(i => i.ready).length
   const canActivate    = requiredReady === requiredTotal
 
+  // Build DNA pill values from draft
+  const dnaPills: string[] = [
+    ...draft.coachingStyles,
+    ...draft.sessionBlocks,
+    ...draft.developmentPriorities,
+  ].slice(0, 6)
+
   return (
     <div>
-      <OnboardingStepHeader
-        stepNumber={11}
-        totalSteps={11}
-        title="Activation Checklist"
-        subtitle="Complete these steps to launch your starting operating system."
-      />
+      {/* Celebration header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 rounded-full bg-lime/10 border border-lime/30 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-5 h-5 text-lime" />
+          </div>
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-lime/70 mb-0.5">
+              Step 11 of 11 — Activate
+            </p>
+            <h2 className="text-lg font-bold text-text-primary leading-tight">
+              Your academy foundation is ready.
+            </h2>
+          </div>
+        </div>
+        <p className="text-[13px] text-text-secondary leading-relaxed">
+          Complete these steps to launch your starting operating system.
+        </p>
+      </div>
+
+      {/* DONNA message bubble */}
+      <div className="mb-6 rounded-xl bg-lime/5 border border-lime/15 px-4 py-3 flex items-start gap-3">
+        <div className="w-7 h-7 rounded-full bg-lime/10 border border-lime/25 flex items-center justify-center shrink-0 mt-0.5">
+          <span className="font-bold text-lime text-[13px] leading-none select-none">D</span>
+        </div>
+        <p className="text-[12px] text-text-secondary leading-relaxed">
+          Your Academy DNA is drafted. Review the checklist below — required items unlock activation. Optional items can be completed after launch.
+        </p>
+      </div>
+
+      {/* DNA pill strip */}
+      {dnaPills.length > 0 && (
+        <div className="mb-6">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted mb-2">
+            Academy DNA captured
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {dnaPills.map(pill => (
+              <span
+                key={pill}
+                className="inline-flex items-center px-2 py-1 rounded-md bg-surface-raised border border-border text-[10px] text-text-secondary capitalize"
+              >
+                {pill.replace(/-/g, ' ')}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Readiness summary */}
       <div className="mb-6">
@@ -121,7 +169,7 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
-            Launch Checklist
+            Continue Setup
           </p>
           <span className="text-[11px] font-mono text-text-muted">
             <span className={totalReady > 0 ? 'text-lime' : ''}>{totalReady}</span>/{items.length} complete

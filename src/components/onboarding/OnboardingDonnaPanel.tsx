@@ -3,19 +3,22 @@
 import { Sparkles, CheckCircle2, Circle, ChevronRight } from 'lucide-react'
 import type { OnboardingDraft } from './OnboardingShell'
 
-const STEPS = [
-  { id: 'welcome',          label: 'Welcome' },
-  { id: 'academy-basics',   label: 'Academy Basics' },
-  { id: 'coaching-dna',     label: 'Coaching DNA' },
-  { id: 'curriculum',       label: 'Curriculum Builder' },
-  { id: 'class-template',   label: 'First Class Template' },
-  { id: 'fitness-template', label: 'First Fitness Template' },
-  { id: 'players',          label: 'Player Upload' },
-  { id: 'coaches',          label: 'Add Coaches' },
-  { id: 'portal-preview',   label: 'Portal Preview' },
-  { id: 'review-dna',       label: 'Review DNA' },
-  { id: 'activate',         label: 'Activate' },
+// 7 grouped milestones — each covers one or more actual steps
+const MILESTONES = [
+  { label: 'Academy Basics', minStep: 1, maxStep: 1 },
+  { label: 'Coaching DNA',   minStep: 2, maxStep: 2 },
+  { label: 'Curriculum',     minStep: 3, maxStep: 3 },
+  { label: 'Templates',      minStep: 4, maxStep: 5 },
+  { label: 'People',         minStep: 6, maxStep: 7 },
+  { label: 'Review',         minStep: 8, maxStep: 9 },
+  { label: 'Activate',       minStep: 10, maxStep: 10 },
 ]
+
+function getMilestoneStatus(milestone: typeof MILESTONES[number], currentStep: number): 'complete' | 'active' | 'upcoming' {
+  if (currentStep > milestone.maxStep) return 'complete'
+  if (currentStep >= milestone.minStep) return 'active'
+  return 'upcoming'
+}
 
 const DONNA_MESSAGES: Record<number, { message: string; why: string; next: string }> = {
   0: {
@@ -104,9 +107,14 @@ export function OnboardingDonnaPanel({ currentStep, draft }: Props) {
         <div className="flex items-center gap-3">
           <div className="relative shrink-0">
             <div className="w-9 h-9 rounded-full bg-lime/10 border border-lime/30 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-lime" />
+              <span className="font-bold text-lime select-none" style={{ fontSize: '16px', lineHeight: 1 }}>D</span>
             </div>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-lime border-2 border-surface" />
+            <span className="absolute bottom-0 right-0">
+              <span className="relative flex w-2.5 h-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime opacity-40" />
+                <span className="relative inline-flex rounded-full w-2.5 h-2.5 bg-lime border-2 border-surface" />
+              </span>
+            </span>
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
@@ -129,19 +137,20 @@ export function OnboardingDonnaPanel({ currentStep, draft }: Props) {
         </div>
       </div>
 
-      {/* Step Progress */}
+      {/* Milestone Progress */}
       {!isWelcome && (
         <div className="p-4 border-b border-border">
           <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted mb-3">
             Setup Progress
           </p>
           <div className="flex flex-col gap-0.5">
-            {STEPS.map((step, i) => {
-              const isComplete = i < currentStep
-              const isActive   = i === currentStep
+            {MILESTONES.map((milestone) => {
+              const status = getMilestoneStatus(milestone, currentStep)
+              const isComplete = status === 'complete'
+              const isActive   = status === 'active'
               return (
                 <div
-                  key={step.id}
+                  key={milestone.label}
                   className={[
                     'flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all',
                     isActive ? 'bg-lime/8' : '',
@@ -162,7 +171,7 @@ export function OnboardingDonnaPanel({ currentStep, draft }: Props) {
                       isActive ? 'text-lime' : isComplete ? 'text-text-muted' : 'text-text-muted/50',
                     ].join(' ')}
                   >
-                    {step.label}
+                    {milestone.label}
                   </span>
                   {isActive && <ChevronRight className="w-3 h-3 text-lime shrink-0" />}
                 </div>
@@ -212,6 +221,21 @@ export function OnboardingDonnaPanel({ currentStep, draft }: Props) {
           </p>
         </div>
       </div>
+
+      {/* Building pulse — shown during active setup, hidden on welcome and final step */}
+      {!isWelcome && currentStep < 10 && (
+        <div className="px-4 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="relative flex w-2 h-2 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime opacity-30" />
+              <span className="relative inline-flex rounded-full w-2 h-2 bg-lime/60" />
+            </span>
+            <p className="text-[10px] text-text-muted/60 leading-tight">
+              Building academy defaults...
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Bottom principle */}
       <div className="mt-auto p-4 border-t border-border">

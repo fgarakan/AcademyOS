@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Connected Onboarding Sprint OF-FIX-1: Restore Prototype-Matched Flow Shell V1
+
+**Files modified:** `OnboardingShell.tsx` (WelcomeStep — non-blocking welcome with 5-step pill row, ambient accent glow, setup mode made optional, "Start with DONNA" CTA always active), `OnboardingDonnaPanel.tsx` (7-milestone grouped progress replacing 11-step list, "D" initial avatar + animate-ping status dot, pulsing "Building academy defaults..." indicator for active setup steps), `ActivationChecklistStep.tsx` (celebration header with CheckCircle2 accent icon, DONNA message bubble, DNA pill strip from coachingStyles/sessionBlocks/developmentPriorities, "Launch Checklist" renamed to "Continue Setup", all readyCheck/canActivate logic unchanged). TypeScript clean.
+
+---
+
 ## 2026-05-19 — Connected Onboarding Sprint OF-AUDIT: Prototype Match Audit V1
 
 **Files created:** `docs/CONNECTED_ONBOARDING_PROTOTYPE_MATCH_AUDIT.md` — full audit of current onboarding vs `academyos-donna-onboarding.zip` prototype. Executive summary, 13-screen comparison table, flow comparison (10-screen prototype vs 11-step AcademyOS), UI/UX comparison, template architecture check, DONNA panel comparison, what to keep/restore/delete, 10-sprint repair plan (OF-FIX-1 through OF-FIX-10). Overall match score: 4.5/10. Recommendation: do not continue OF-5. Run OF-FIX-1 first. TypeScript clean.

@@ -286,96 +286,129 @@ function WelcomeStep({
   updateDraft: (p: Partial<OnboardingDraft>) => void
   onNext: () => void
 }) {
+  const FLOW_STEPS = [
+    'Academy Basics',
+    'Coaching DNA',
+    'Curriculum',
+    'Templates',
+    'Review & Activate',
+  ]
+
   return (
-    <div>
-      <div className="inline-flex items-center gap-1.5 bg-lime/8 border border-lime/20 rounded-full px-3 py-1 mb-6">
-        <Sparkles className="w-3 h-3 text-lime" />
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-lime">
-          AcademyOS — Director Onboarding
-        </span>
-      </div>
+    <div className="relative overflow-hidden">
+      {/* Ambient glow — accent radial behind the header */}
+      <div
+        className="absolute top-0 left-0 right-0 h-72 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 80% 50% at 20% 0%, rgba(17,217,223,0.07) 0%, transparent 100%)' }}
+        aria-hidden="true"
+      />
 
-      <h1 className="text-3xl font-bold text-text-primary leading-tight mb-2">
-        Tell DONNA how your academy works.
-      </h1>
-      <p className="text-base font-medium text-lime mb-1">
-        DONNA builds your starting operating system.
-      </p>
-      <p className="text-sm text-text-secondary leading-relaxed mb-8 max-w-xl">
-        DONNA learns how your academy thinks, coaches, and communicates — then prepares your curriculum defaults, session templates, and communication system.
-      </p>
-
-      <div className="mb-8">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3">
-          Choose a setup mode
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {SETUP_MODES.map(mode => {
-            const isSelected = draft.setupMode === mode.id
-            return (
-              <button
-                key={mode.id}
-                onClick={() => updateDraft({ setupMode: mode.id })}
-                className={[
-                  'text-left rounded-xl border px-4 py-3.5 transition-all',
-                  isSelected
-                    ? 'bg-lime/8 border-lime/40 shadow-lime'
-                    : 'bg-surface border-border hover:border-border-strong hover:bg-surface-raised',
-                ].join(' ')}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className={[
-                    'text-sm font-semibold leading-tight',
-                    isSelected ? 'text-text-primary' : 'text-text-secondary',
-                  ].join(' ')}>
-                    {mode.label}
-                  </span>
-                  <span className={[
-                    'text-[10px] font-mono shrink-0 ml-2',
-                    isSelected ? 'text-lime' : 'text-text-muted',
-                  ].join(' ')}>
-                    {mode.time}
-                  </span>
-                </div>
-                <p className={[
-                  'text-[11px] leading-relaxed',
-                  isSelected ? 'text-text-secondary' : 'text-text-muted',
-                ].join(' ')}>
-                  {mode.desc}
-                </p>
-              </button>
-            )
-          })}
+      <div className="relative">
+        <div className="inline-flex items-center gap-1.5 bg-lime/8 border border-lime/20 rounded-full px-3 py-1 mb-6">
+          <Sparkles className="w-3 h-3 text-lime" />
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-lime">
+            AcademyOS — Director Onboarding
+          </span>
         </div>
-      </div>
 
-      <div className="mb-6 rounded-xl bg-surface border border-border px-4 py-3">
-        <p className="text-[11px] text-text-muted leading-relaxed">
-          All selections are saved as a draft. Nothing is applied until you reach the Activation Checklist and confirm.
+        <h1 className="text-3xl font-bold text-text-primary leading-tight mb-2">
+          Tell DONNA how your academy works.
+        </h1>
+        <p className="text-base font-medium text-lime mb-1">
+          DONNA builds your starting operating system.
         </p>
-      </div>
+        <p className="text-sm text-text-secondary leading-relaxed mb-6 max-w-xl">
+          DONNA learns how your academy thinks, coaches, and communicates — then prepares your curriculum defaults, session templates, and communication system.
+        </p>
 
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onNext}
-          className={[
-            'inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all',
-            draft.setupMode
-              ? 'bg-lime text-base hover:brightness-110 shadow-lime'
-              : 'bg-lime/20 text-lime/50 cursor-not-allowed',
-          ].join(' ')}
-          disabled={!draft.setupMode}
-        >
-          <Zap className="w-4 h-4" />
-          Start with DONNA
-          <ArrowRight className="w-4 h-4" />
-        </button>
-        <button
-          onClick={onNext}
-          className="text-sm text-text-muted hover:text-text-secondary transition-colors"
-        >
-          Use recommended defaults
-        </button>
+        {/* 5-step flow preview */}
+        <div className="mb-8">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted mb-3">
+            5 steps — takes about 4 minutes
+          </p>
+          <div className="flex flex-wrap items-center gap-0">
+            {FLOW_STEPS.map((step, i) => (
+              <div key={step} className="flex items-center">
+                <div className="flex items-center gap-1.5 bg-surface-raised border border-border rounded-lg px-2.5 py-1.5">
+                  <span className="w-4 h-4 rounded-full bg-lime/10 border border-lime/20 flex items-center justify-center text-[9px] font-bold text-lime shrink-0">
+                    {i + 1}
+                  </span>
+                  <span className="text-[11px] text-text-secondary whitespace-nowrap">{step}</span>
+                </div>
+                {i < FLOW_STEPS.length - 1 && (
+                  <div className="w-3 h-px bg-border shrink-0" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3">
+            Setup mode <span className="font-normal normal-case tracking-normal text-text-muted/60">(optional)</span>
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {SETUP_MODES.map(mode => {
+              const isSelected = draft.setupMode === mode.id
+              return (
+                <button
+                  key={mode.id}
+                  onClick={() => updateDraft({ setupMode: mode.id })}
+                  className={[
+                    'text-left rounded-xl border px-4 py-3.5 transition-all',
+                    isSelected
+                      ? 'bg-lime/8 border-lime/40 shadow-lime'
+                      : 'bg-surface border-border hover:border-border-strong hover:bg-surface-raised',
+                  ].join(' ')}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={[
+                      'text-sm font-semibold leading-tight',
+                      isSelected ? 'text-text-primary' : 'text-text-secondary',
+                    ].join(' ')}>
+                      {mode.label}
+                    </span>
+                    <span className={[
+                      'text-[10px] font-mono shrink-0 ml-2',
+                      isSelected ? 'text-lime' : 'text-text-muted',
+                    ].join(' ')}>
+                      {mode.time}
+                    </span>
+                  </div>
+                  <p className={[
+                    'text-[11px] leading-relaxed',
+                    isSelected ? 'text-text-secondary' : 'text-text-muted',
+                  ].join(' ')}>
+                    {mode.desc}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="mb-6 rounded-xl bg-surface border border-border px-4 py-3">
+          <p className="text-[11px] text-text-muted leading-relaxed">
+            All selections are saved as a draft. Nothing is applied until you reach the Activation step and confirm.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onNext}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-lime text-base hover:brightness-110 shadow-lime transition-all"
+          >
+            <Zap className="w-4 h-4" />
+            Start with DONNA
+            <ArrowRight className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onNext}
+            className="text-sm text-text-muted hover:text-text-secondary transition-colors"
+          >
+            Use recommended defaults
+          </button>
+        </div>
       </div>
     </div>
   )
