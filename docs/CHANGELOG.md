@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Sprint 381 Director DNA Settings Write Back V1
+
+**Files created:** `src/app/director/actions.ts` (`saveAcademyDnaSettings` server action — auth via getSupabaseServer + profiles.academy_id + academy_memberships role gate; reads existing academies.settings, merges { ...existing, academy_dna: sanitizedPayload }; writes settings only; revalidatePath '/director'; pattern mirrors updateAcademySettingsAction.ts), `docs/SPRINT_381_DIRECTOR_DNA_SETTINGS_WRITE_BACK.md`. **Files modified:** `src/components/director/DirectorContinueSetupPanel.tsx` (added SaveStatus state, extractDnaInput helper, handleSave calling server action, save strip UI with idle/saving/saved/error states, WRITEBACK_KEY localStorage flag; no auto-save loop). academies.settings confirmed as JSONB (Json type in database.types.ts). Existing settings keys preserved via spread-merge. No migrations. No schema changes. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Sprint 380 Director Post-DNA Continue Setup V1
 
 **Files created:** `src/components/director/DirectorContinueSetupPanel.tsx` (client component; reads `academyos_onboarding_draft_v2` from localStorage; shows "Continue Setup" panel with "Academy DNA Ready" badge, DONNA message, and 6 post-DNA task cards when draft academyName is set; dismiss stored in `academyos_continue_setup_dismissed`), `docs/SPRINT_380_DIRECTOR_POST_DNA_CONTINUE_SETUP.md`. **Files modified:** `src/app/director/page.tsx` (import + panel inserted between Hero Header and DONNA Executive Attention Card). All 6 task routes verified as live: `/director/curriculum`, `/director/class-templates/new`, `/director/fitness/templates/new`, `/director/players`, `/director/coaches`, `/director` (portals fallback). No migrations. No schema changes. No DB writes. TypeScript clean.

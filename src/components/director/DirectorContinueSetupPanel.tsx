@@ -2,10 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Sparkles, CheckCircle2, X, ArrowRight } from 'lucide-react'
+import { Sparkles, CheckCircle2, X, ArrowRight, Save, AlertCircle } from 'lucide-react'
+import { saveAcademyDnaSettings } from '@/app/director/actions'
+import type { AcademyDnaInput } from '@/app/director/actions'
 
 const DRAFT_KEY    = 'academyos_onboarding_draft_v2'
 const DISMISS_KEY  = 'academyos_continue_setup_dismissed'
+const WRITEBACK_KEY = 'academyos_dna_writeback_complete'
+
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 interface TaskCard {
   id: string
@@ -60,29 +65,87 @@ const TASKS: TaskCard[] = [
   },
 ]
 
+function extractDnaInput(draft: Record<string, unknown>): AcademyDnaInput | null {
+  const str  = (v: unknown) => typeof v === 'string' ? v : ''
+  const arr  = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+  const num  = (v: unknown) => typeof v === 'number' ? v : 1
+  const bool = (v: unknown) => v === true
+
+  const name = str(draft.academyName).trim()
+  if (!name) return null
+
+  const rules = (draft.parentVisibilityRules ?? {}) as Record<string, unknown>
+
+  return {
+    academyName:              name,
+    academyModel:             str(draft.academyModel),
+    locationCount:            num(draft.locationCount),
+    ageGroups:                arr(draft.ageGroups),
+    coachingStyles:           arr(draft.coachingStyles),
+    primaryCommunication:     str(draft.primaryCommunication),
+    secondaryCommunication:   str(draft.secondaryCommunication),
+    sessionBlocks:            arr(draft.sessionBlocks),
+    developmentPriorities:    arr(draft.developmentPriorities),
+    parentStyles:             arr(draft.parentStyles),
+    hideRawCoachNotes:        bool(rules.hideRawCoachNotes),
+    hideInternalDirectorNotes: bool(rules.hideInternalDirectorNotes),
+    hideRankings:             bool(rules.hideRankings),
+    hideComparisons:          bool(rules.hideComparisons),
+    hideUnapprovedAI:         bool(rules.hideUnapprovedAI),
+  }
+}
+
 export function DirectorContinueSetupPanel() {
-  const [visible, setVisible]     = useState(false)
+  const [visible, setVisible]       = useState(false)
   const [academyName, setAcademyName] = useState('')
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const [alreadySaved, setAlreadySaved] = useState(false)
+  const [dnaInput, setDnaInput]     = useState<AcademyDnaInput | null>(null)
 
   useEffect(() => {
     try {
       if (localStorage.getItem(DISMISS_KEY) === 'true') return
+
       const stored = localStorage.getItem(DRAFT_KEY)
       if (!stored) return
+
       const draft = JSON.parse(stored) as Record<string, unknown>
-      const name = typeof draft?.academyName === 'string' ? draft.academyName.trim() : ''
-      if (name) {
-        setAcademyName(name)
-        setVisible(true)
+      const input = extractDnaInput(draft)
+      if (!input) return
+
+      setAcademyName(input.academyName)
+      setDnaInput(input)
+      setVisible(true)
+
+      if (localStorage.getItem(WRITEBACK_KEY) === 'true') {
+        setAlreadySaved(true)
+        setSaveStatus('saved')
       }
     } catch {
-      // localStorage unavailable or draft corrupted — fail silently
+      // localStorage unavailable or corrupted — fail silently
     }
   }, [])
 
   const dismiss = () => {
     try { localStorage.setItem(DISMISS_KEY, 'true') } catch { /* ignore */ }
     setVisible(false)
+  }
+
+  const handleSave = async () => {
+    if (!dnaInput || saveStatus === 'saving' || saveStatus === 'saved') return
+    setSaveStatus('saving')
+    try {
+      const result = await saveAcademyDnaSettings(dnaInput)
+      if (result.ok) {
+        setSaveStatus('saved')
+        try { localStorage.setItem(WRITEBACK_KEY, 'true') } catch { /* ignore */ }
+      } else {
+        setSaveStatus('error')
+      }
+    } catch {
+      setSaveStatus('error')
+    }
   }
 
   if (!visible) return null
@@ -131,6 +194,53 @@ export function DirectorContinueSetupPanel() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Save DNA strip */}
+      <div className="px-5 py-3 border-b border-border flex items-center gap-3 flex-wrap">
+        {saveStatus === 'saved' || alreadySaved ? (
+          <div className="flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-status-green shrink-0" />
+            <span className="text-[11px] font-medium text-status-green">
+              Academy DNA saved to academy settings
+            </span>
+          </div>
+        ) : saveStatus === 'saving' ? (
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex w-2 h-2 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime opacity-40" />
+              <span className="relative inline-flex rounded-full w-2 h-2 bg-lime/60" />
+            </span>
+            <span className="text-[11px] text-text-muted">Saving DNA...</span>
+          </div>
+        ) : saveStatus === 'error' ? (
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5 text-status-orange shrink-0" />
+              <span className="text-[11px] text-text-muted">Draft still safe in this browser</span>
+            </div>
+            <button
+              onClick={handleSave}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-raised border border-border text-[11px] font-medium text-text-secondary hover:text-text-primary hover:border-border-strong transition-all"
+            >
+              <Save className="w-3 h-3" />
+              Retry
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 flex-wrap">
+            <p className="text-[11px] text-text-muted">
+              Review before continuing setup. Save to persist your Academy DNA to account settings.
+            </p>
+            <button
+              onClick={handleSave}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-lime text-base text-[11px] font-semibold hover:brightness-110 transition-all shrink-0"
+            >
+              <Save className="w-3 h-3" />
+              Save Academy DNA
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Task cards */}
