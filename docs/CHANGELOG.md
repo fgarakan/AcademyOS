@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-7: Parent + Player Experience V1
+
+**Files created:** `src/components/onboarding/steps/ParentPlayerExperienceStep.tsx` (Step 5 — 7 parent communication style cards, 5 privacy toggle rules with safe defaults, 7 player mission style cards), `docs/DONNA_ONBOARDING_PARENT_PLAYER_EXPERIENCE.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired ParentPlayerExperienceStep for step 4). TypeScript clean.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-6: Session Curriculum Defaults V1
 
 **Files created:** `src/components/onboarding/steps/SessionCurriculumDefaultsStep.tsx` (Step 4 — 7 session block selectors, live proportional timeline preview, 10 development priority pills with rank display), `docs/DONNA_ONBOARDING_SESSION_CURRICULUM_DEFAULTS.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired SessionCurriculumDefaultsStep for step 3). TypeScript clean.

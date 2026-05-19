@@ -8,6 +8,7 @@ import { OnboardingStepHeader } from './OnboardingStepHeader'
 import { AcademyBasicsStep } from './steps/AcademyBasicsStep'
 import { CoachingDnaStep } from './steps/CoachingDnaStep'
 import { SessionCurriculumDefaultsStep } from './steps/SessionCurriculumDefaultsStep'
+import { ParentPlayerExperienceStep } from './steps/ParentPlayerExperienceStep'
 
 export interface OnboardingDraft {
   setupMode: string
@@ -144,7 +145,15 @@ export function OnboardingShell() {
                 onPrev={goPrev}
               />
             )}
-            {currentStep > 3 && currentStep < TOTAL_STEPS - 1 && (
+            {currentStep === 4 && (
+              <ParentPlayerExperienceStep
+                draft={draft}
+                updateDraft={updateDraft}
+                onNext={goNext}
+                onPrev={goPrev}
+              />
+            )}
+            {currentStep > 4 && currentStep < TOTAL_STEPS - 1 && (
               <PlaceholderStep
                 stepNumber={currentStep + 1}
                 title={STEP_NAMES[currentStep]}
