@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-19 — Sprint 1074: Player Fitness Path V1
+
+**Files modified:** `src/app/player/fitness-path/page.tsx` — 7 fitness areas, body focus from active priority, fitness observation count.
+**Files created:** `docs/PLAYER_FITNESS_PATH_1074.md`
+**TypeScript:** Clean.
+
+---
+
+## 2026-05-19 — Sprint 1073: Player Competition Path V1
+
+**Files modified:** `src/app/player/competition-path/page.tsx` — 6 competition skill cards, current focus from competition/tactical priority, DONNA CTA.
+**Files created:** `docs/PLAYER_COMPETITION_PATH_1073.md`
+**TypeScript:** Clean.
+
+---
+
+## 2026-05-19 — Sprint 1072: Player Skill Path V1
+
+**Files modified:** `src/app/player/skill-path/page.tsx` — 6 skill area cards, status from observation count + priority category, "Work on active mission" CTA.
+**Files created:** `docs/PLAYER_SKILL_PATH_1072.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1071: Player Mission Detail V1
 
 **Files modified:**
