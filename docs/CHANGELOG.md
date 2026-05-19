@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1075: Player Level-Up / Next Unlock V1
+
+**Files modified:** `src/app/player/level-up/page.tsx` — level comparison hero (current → next with lock icon), gate requirements list (passed/not-done state), progress bar (count-based), encouragement copy, director confirmation note.
+**Files created:** `docs/PLAYER_LEVEL_UP_1075.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1074: Player Fitness Path V1
 
 **Files modified:** `src/app/player/fitness-path/page.tsx` — 7 fitness areas, body focus from active priority, fitness observation count.
