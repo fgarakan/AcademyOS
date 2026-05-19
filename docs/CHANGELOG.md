@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1069: Player Home My Training Path V1
+
+**Files created:**
+- `src/components/player/PlayerHomeHeroCard.tsx` — mission hero with level progression and "See My Missions" CTA. Data from director-approved IDP only.
+- `docs/PLAYER_HOME_MY_TRAINING_PATH_1069.md` — sprint doc
+
+**Files modified:**
+- `src/app/player/page.tsx` — added PlayerHomeHeroCard, 4 path entry cards (Skill/Competition/Fitness/Missions grid), DONNA quick panel with 4 safe question chips. `Map` import aliased as `MapIcon` to avoid shadowing native Map class.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1068: Player Portal Shell and Navigation V1
 
 **Files modified:**

@@ -1,6 +1,8 @@
-import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight, HelpCircle, Sparkles, CheckCircle } from 'lucide-react'
+import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight, HelpCircle, Sparkles, CheckCircle, Zap, Activity, Map as MapIcon, Shield, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { PlayerMissionPreview } from '@/components/player/PlayerMissionPreview'
+import { PlayerHomeHeroCard } from '@/components/player/PlayerHomeHeroCard'
 import { AttendanceSparkline } from '@/components/player/AttendanceSparkline'
 import { LevelProgressRing } from '@/components/player/LevelProgressRing'
 import { getSupabaseServer } from '@/lib/supabase/server'
@@ -323,6 +325,58 @@ export default async function PlayerHome() {
           {playerFirstName ? `${playerFirstName}'s Development` : 'Player Home'}
         </h1>
         <p className="page-subtitle">Show up. Level up. Every day.</p>
+      </div>
+
+      {/* ── Mission Hero ─────────────────────────────────────── */}
+      <PlayerHomeHeroCard
+        playerFirstName={playerFirstName}
+        missionText={idpView?.recommended_next_mission ?? null}
+        currentLevelName={idpView?.current_level ?? null}
+        nextLevelName={nextLevelDisplayName}
+      />
+
+      {/* ── Path Entry Cards ──────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { href: '/player/skill-path',       icon: Zap,      label: 'Skill Path',    sub: 'Technical',  accent: 'text-lime',          bg: 'bg-lime/10',           border: 'border-lime/20' },
+          { href: '/player/competition-path', icon: Trophy,   label: 'Competition',   sub: 'Match skills', accent: 'text-status-orange', bg: 'bg-status-orange/10', border: 'border-status-orange/20' },
+          { href: '/player/fitness-path',     icon: Activity, label: 'Fitness',       sub: 'Body work',  accent: 'text-status-blue',   bg: 'bg-status-blue/10',    border: 'border-status-blue/20' },
+          { href: '/player/missions',         icon: MapIcon,  label: 'My Missions',   sub: 'Journey',    accent: 'text-text-muted',    bg: 'bg-surface-raised',    border: 'border-border' },
+        ].map(({ href, icon: Icon, label, sub, accent, bg, border }) => (
+          <Link key={href} href={href}>
+            <div className="rounded-xl bg-surface border border-border hover:border-lime/20 transition-colors px-3 py-3 h-full">
+              <div className={`w-7 h-7 rounded-lg ${bg} border ${border} flex items-center justify-center mb-2`}>
+                <Icon className={`w-3.5 h-3.5 ${accent}`} />
+              </div>
+              <p className="text-xs font-semibold text-text-primary">{label}</p>
+              <p className="text-[10px] text-text-muted">{sub}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* ── Ask DONNA ────────────────────────────────────────── */}
+      <div className="rounded-xl bg-surface border border-border px-4 py-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Shield className="w-3.5 h-3.5 text-status-blue shrink-0" />
+          <p className="text-[10px] text-text-muted">Coach-approved answers only — no rankings, no pressure</p>
+        </div>
+        <p className="text-xs font-semibold text-text-primary">Ask DONNA</p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            'What should I practice?',
+            'What does my mission mean?',
+            'How do I get to the next level?',
+            'How do I prepare for a match?',
+          ].map(q => (
+            <Link key={q} href="/player/ask-donna">
+              <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg bg-status-blue/5 border border-status-blue/15 text-status-blue hover:bg-status-blue/10 transition-colors">
+                <ChevronRight className="w-2.5 h-2.5" />
+                {q}
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* ── Today's Mission ───────────────────────────────────── */}
