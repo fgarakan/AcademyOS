@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1097: DONNA Guardrail Consistency Pass V1
+
+**Files created:** `docs/DONNA_GUARDRAIL_AUDIT_1097.md` — full guardrail notice inventory across all 4 DONNA pages, consistency check, and safety audit. All pages pass.
+**TypeScript:** Clean — no code changes.
+
+---
+
 ## 2026-05-19 — Sprint 1096: Parent DONNA Chip Expansion V1
 
 **Files modified:** `src/app/parent/ask-donna/page.tsx` — added 3 new chips: "What happens in their practices?", "When should I talk to the coach?", "How do I celebrate their wins?". Parent DONNA now has 8 chips.
