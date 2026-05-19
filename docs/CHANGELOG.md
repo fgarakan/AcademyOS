@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1096: Parent DONNA Chip Expansion V1
+
+**Files modified:** `src/app/parent/ask-donna/page.tsx` — added 3 new chips: "What happens in their practices?", "When should I talk to the coach?", "How do I celebrate their wins?". Parent DONNA now has 8 chips.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1095: Player DONNA Chip Expansion V1
 
 **Files modified:** `src/app/player/ask-donna/page.tsx` — added 3 new chips: "How should I prepare before a match?", "I had a tough loss — what now?", "How do I stay focused during practice?". Player DONNA now has 8 chips.

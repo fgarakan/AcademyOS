@@ -75,6 +75,21 @@ function buildChips(
       label: 'How do I help with motivation?',
       response: `The biggest motivators for young players are: feeling competent, having fun, and feeling connected to their team. Avoid tying results to praise — instead celebrate effort, attitude, and small wins. If ${name} expresses doubt, acknowledge it without fixing it: "That sounds hard. What do you want to do?"`,
     },
+    {
+      id: 'about-practices',
+      label: 'What happens in their practices?',
+      response: `Practices typically include warm-up, technical skill work, tactical drills, and match-play or game situations. The coaching team structures each session around the academy curriculum. You can check the Updates tab for any director-approved summaries about what ${name} is working on right now.`,
+    },
+    {
+      id: 'when-talk-to-coach',
+      label: 'When should I talk to the coach?',
+      response: `The best time to reach out is when: (1) you have a factual question about scheduling or logistics, (2) something at home might be affecting ${name}'s focus or energy (injury, big life event), or (3) ${name} has expressed something specific they're struggling with that they want help communicating. Avoid requesting technical feedback immediately after sessions — that's when coaches are still processing.`,
+    },
+    {
+      id: 'celebrate-wins',
+      label: 'How do I celebrate their wins?',
+      response: `Keep it proportionate and specific: "You stayed calm in that third set" lands better than "You were amazing." For big milestone wins, let ${name} lead — ask what they want to do to celebrate. Avoid immediately moving the goalposts ("Now let's work on your serve") right after a success. Let the moment breathe.`,
+    },
   ]
 }
 
