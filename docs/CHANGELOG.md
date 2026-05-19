@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1076: Player Practice At Home V1
+
+**Files modified:** `src/app/player/practice/page.tsx` — replaced stub; category-keyed drill sets, active mission focus card, ~X min timer, footer safety note.
+**Files created:** `src/components/player/PracticeChecklist.tsx` — client component with local checkbox state (no DB writes). `docs/PLAYER_PRACTICE_1076.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1075: Player Level-Up / Next Unlock V1
 
 **Files modified:** `src/app/player/level-up/page.tsx` — level comparison hero (current → next with lock icon), gate requirements list (passed/not-done state), progress bar (count-based), encouragement copy, director confirmation note.
