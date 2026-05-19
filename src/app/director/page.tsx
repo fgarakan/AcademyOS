@@ -20,6 +20,7 @@ import { OnboardingProgressCard } from './OnboardingProgressCard'
 import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
 import { DonnaExecutiveCard, type DonnaExecutivePriorityItem } from './_components/DonnaExecutiveCard'
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
+import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -381,6 +382,9 @@ export default async function DirectorDashboard() {
           advancementReadyCount={advancementReadyCount}
         />
       </div>
+
+      {/* ── Post-DNA Continue Setup Panel (client — localStorage driven) ── */}
+      <DirectorContinueSetupPanel />
 
       {/* ── DONNA Executive Attention Card ─────────────────── */}
       <DonnaExecutiveCard items={donnaItems} directorName={directorDisplayName} />

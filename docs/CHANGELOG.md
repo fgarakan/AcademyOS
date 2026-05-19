@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Sprint 380 Director Post-DNA Continue Setup V1
+
+**Files created:** `src/components/director/DirectorContinueSetupPanel.tsx` (client component; reads `academyos_onboarding_draft_v2` from localStorage; shows "Continue Setup" panel with "Academy DNA Ready" badge, DONNA message, and 6 post-DNA task cards when draft academyName is set; dismiss stored in `academyos_continue_setup_dismissed`), `docs/SPRINT_380_DIRECTOR_POST_DNA_CONTINUE_SETUP.md`. **Files modified:** `src/app/director/page.tsx` (import + panel inserted between Hero Header and DONNA Executive Attention Card). All 6 task routes verified as live: `/director/curriculum`, `/director/class-templates/new`, `/director/fitness/templates/new`, `/director/players`, `/director/coaches`, `/director` (portals fallback). No migrations. No schema changes. No DB writes. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Sprint 379 Academy DNA Setup Scope Repair V1
 
 **Files created:** `steps/SessionDesignStep.tsx` (7 session block options, multi-select, live timeline preview, step 5 of 10), `steps/PlayerDevelopmentStep.tsx` (10 dev priorities, max 5 ranked with reorder controls, step 6 of 10), `steps/ParentCommunicationStep.tsx` (always-on privacy rules + 7 parent communication styles, step 7 of 10), `steps/DonnaAdjustmentStep.tsx` (wraps DonnaAdjustmentDraftPanel, step 9 of 10), `docs/SPRINT_379_ACADEMY_DNA_SETUP_SCOPE_REPAIR.md`. **Files modified:** `OnboardingShell.tsx` (TOTAL_STEPS 12→10, STEP_NAMES/STEP_SUBTITLES updated, steps 4-9 rewired, CurriculumBuilderStep/FirstClassTemplateStep removed, placeholder functions removed), `OnboardingProgressRail.tsx` (12→10 DNA steps), `OnboardingDonnaPanel.tsx` (5 DNA milestones, messages 0-9, dnaLines updated, pulse guard < 11→< 9), `AcademyDnaReviewStep.tsx` (stepNumber 11→8, totalSteps 12→10, edit indices fixed, DonnaAdjustmentDraftPanel removed, CTA changed), `ActivationChecklistStep.tsx` (DNA-ready header, simplified checklist, post-DNA task grid, "Go to Director Dashboard" link), `AcademyBasicsStep.tsx` / `CoachingDnaStep.tsx` / `CoachCommunicationStep.tsx` (totalSteps 12→10). TypeScript clean.
