@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1051: Observation Apply Flow Polish V1
+
+**Files modified:**
+- `src/app/director/review/WrapUpObservationDraftCard.tsx` — added DONNA-style brief line (coach · session · date); clarified internal-only badge text to "not visible to parent or player".
+- `src/app/director/review/ApplyWrapUpObservationDraftControls.tsx` — replaced generic Info note with structured "What changes when applied" box: will-change bullets (observation created, draft marked applied) + will-not-change bullets (private, no level movement, no parent sends, no curriculum change).
+
+**Files created:**
+- `docs/OBSERVATION_APPLY_FLOW_POLISH_1051.md` — sprint doc.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1050: Wrap-Up Coverage Panel Polish V1
 
 **Files modified:**

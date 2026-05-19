@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { PlayCircle, CheckCircle, AlertCircle, Info } from 'lucide-react'
+import { PlayCircle, CheckCircle, AlertCircle, ShieldCheck, XCircle } from 'lucide-react'
 import { applyApprovedObservationDraftAction } from './actions'
 
 interface Props {
@@ -35,11 +35,38 @@ export function ApplyWrapUpObservationDraftControls({ proposedActionId }: Props)
 
   return (
     <div className="space-y-3 pt-3 border-t border-border">
-      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border text-[11px] text-text-muted">
-        <Info className="w-3 h-3 shrink-0 mt-0.5 text-status-blue" />
-        <span>
-          Apply creates one internal coach observation on this player's profile. This observation is private — not visible to parents or players. No player level, curriculum, or parent communication is changed.
-        </span>
+
+      {/* What changes when applied */}
+      <div className="space-y-1.5 px-3 py-2.5 rounded-lg bg-surface-raised border border-border">
+        <p className="text-[10px] uppercase tracking-widest font-semibold text-text-muted">What changes when applied</p>
+        <div className="space-y-1 mt-1">
+          <div className="flex items-start gap-2 text-[11px] text-text-secondary">
+            <CheckCircle className="w-3 h-3 text-status-green shrink-0 mt-0.5" />
+            <span>One internal coach observation is created on the player profile</span>
+          </div>
+          <div className="flex items-start gap-2 text-[11px] text-text-secondary">
+            <CheckCircle className="w-3 h-3 text-status-green shrink-0 mt-0.5" />
+            <span>Draft is marked as applied</span>
+          </div>
+        </div>
+        <div className="space-y-1 mt-2 pt-2 border-t border-border">
+          <div className="flex items-start gap-2 text-[11px] text-text-muted">
+            <ShieldCheck className="w-3 h-3 shrink-0 mt-0.5" />
+            <span>Observation is private — not visible to parents or players</span>
+          </div>
+          <div className="flex items-start gap-2 text-[11px] text-text-muted">
+            <XCircle className="w-3 h-3 text-text-muted shrink-0 mt-0.5" />
+            <span>Does not move the player to a new curriculum level</span>
+          </div>
+          <div className="flex items-start gap-2 text-[11px] text-text-muted">
+            <XCircle className="w-3 h-3 text-text-muted shrink-0 mt-0.5" />
+            <span>Does not send any parent or player communication</span>
+          </div>
+          <div className="flex items-start gap-2 text-[11px] text-text-muted">
+            <XCircle className="w-3 h-3 text-text-muted shrink-0 mt-0.5" />
+            <span>Does not change the session template or curriculum</span>
+          </div>
+        </div>
       </div>
 
       <button

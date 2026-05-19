@@ -40,6 +40,13 @@ function ObservationTypeBadge({ type }: { type: CoachObservationDraftPayload['ob
 export function WrapUpObservationDraftCard({ draft }: { draft: EnrichedObservationDraftItem }) {
   const { payload } = draft
 
+  // DONNA-style brief line: who observed what and when
+  const observerLine = [
+    draft.proposerName ?? 'A coach',
+    payload.session_title ? `noted in ${payload.session_title}` : null,
+    new Date(draft.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+  ].filter(Boolean).join(' · ')
+
   return (
     <Card>
       <CardContent className="py-4 space-y-4">
@@ -86,13 +93,16 @@ export function WrapUpObservationDraftCard({ draft }: { draft: EnrichedObservati
           )}
         </div>
 
+        {/* DONNA brief line */}
+        <p className="text-[11px] text-text-muted leading-snug">{observerLine}</p>
+
         {/* Observation type badge + content */}
         <div className="space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
             <ObservationTypeBadge type={payload.observation_type} />
             <span className="flex items-center gap-1 text-[10px] text-text-muted">
               <Lock className="w-2.5 h-2.5" />
-              Internal only
+              Internal only — not visible to parent or player
             </span>
           </div>
           <div className="px-3 py-2.5 rounded-xl bg-surface-raised border border-border">
