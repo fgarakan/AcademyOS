@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1087: Parent Home Mission Context Card
+
+**Files modified:** `src/app/parent/page.tsx` — hoisted active mission title/category from priorities; added mission context card (links to /parent/development) between quick nav grid and level card.
+**Files created:** `docs/PARENT_MISSION_CARD_1087.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1086: Parent Portal Cross-Links
 
 **Files modified:** `src/app/parent/progress/page.tsx` — added "Development Focus" link card at bottom. `src/app/parent/wins/page.tsx` — added "Progress Overview" link card at bottom.

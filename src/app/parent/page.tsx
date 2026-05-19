@@ -21,6 +21,8 @@ export default async function ParentHome() {
   let parentNextLevelName: string | null = null
   let parentSafeDoingWell: string | null = null
   let parentSupportGuide: ParentSupportGuide | null = null
+  let parentActiveMissionTitle: string | null = null
+  let parentActiveMissionCategory: string | null = null
   interface AttendanceStat {
     totalRecorded: number
     presentCount: number
@@ -163,6 +165,10 @@ export default async function ParentHome() {
             parentCurrentLevelName = currentLevelName
             parentNextLevelName = nextLevelName
             parentSafeDoingWell = coachLangDoingWell
+            if (activePriorities.length > 0) {
+              parentActiveMissionTitle = activePriorities[0].title ?? null
+              parentActiveMissionCategory = activePriorities[0].category ?? null
+            }
             parentSupportGuide = buildParentSupportGuide({
               domain: coachLangDomain,
               levelStage: currentStage,
@@ -315,6 +321,22 @@ export default async function ParentHome() {
             </Link>
           ))}
         </div>
+      )}
+
+      {/* ── Active mission context ────────────────────────────────── */}
+      {parentActiveMissionTitle && (
+        <Link href="/parent/development">
+          <div className="rounded-2xl bg-lime/5 border border-lime/20 px-4 py-4 flex items-start justify-between gap-3 hover:bg-lime/8 transition-colors">
+            <div className="flex-1 min-w-0">
+              <p className="label-xs text-lime mb-1">Currently Working On</p>
+              <p className="text-sm font-semibold text-text-primary leading-snug">{parentActiveMissionTitle}</p>
+              {parentActiveMissionCategory && (
+                <p className="text-xs text-text-muted mt-0.5 capitalize">{parentActiveMissionCategory} focus</p>
+              )}
+            </div>
+            <ChevronRight className="w-4 h-4 text-lime/60 shrink-0 mt-1" />
+          </div>
+        </Link>
       )}
 
       {/* ── Level Card ───────────────────────────────────────────── */}
