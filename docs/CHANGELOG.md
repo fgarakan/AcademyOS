@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-2: Information Architecture V1
+
+**Files created:** `docs/DONNA_ONBOARDING_INFORMATION_ARCHITECTURE.md` — final 7-step IA, setup mode definitions, full data model for each step, DONNA panel behavior per step, route plan, language rules, activation checklist with real route links. TypeScript clean.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-1: Prototype and Current Flow Audit V1
 
 **Files created:** `docs/DONNA_ONBOARDING_PROTOTYPE_CURRENT_FLOW_AUDIT.md` — full prototype screen-by-screen IA extraction (10 screens), current AcademyOS onboarding route/component inventory, prototype UI/flow rating (6.5/10), current AcademyOS onboarding rating (5/10), keep/replace/delete table, build risks, recommended 7-step IA. TypeScript clean.
