@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1103: Director Portal Demo Polish V1
+
+**Files modified:** `src/app/director/page.tsx` — added "DONNA" quick link in the director home header (alongside "Today's Academy" and "Review Queue"), making DONNA discoverable directly from the main dashboard.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1102: Cross-Portal Navigation Audit V1
 
 **Files created:** `docs/CROSS_PORTAL_NAV_AUDIT_1102.md` — full navigation audit across all 4 role portals (director, coach, player, parent): tab bars, cross-links, back-navigation. No critical gaps found.

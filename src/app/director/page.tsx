@@ -352,6 +352,14 @@ export default async function DirectorDashboard() {
                 </span>
               )}
             </Link>
+            <Link
+              href="/director/donna"
+              className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-lime transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              DONNA
+              <ChevronRight className="w-3 h-3" />
+            </Link>
           </div>
         </div>
         {/* Academy Health Badge */}
