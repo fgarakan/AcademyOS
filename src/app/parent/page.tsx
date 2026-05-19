@@ -1,4 +1,4 @@
-import { MessageSquare, Calendar, Heart, Bell, BookOpen, ShieldCheck, TrendingUp, ArrowRight, ChevronRight } from 'lucide-react'
+import { MessageSquare, Calendar, Heart, Bell, BookOpen, ShieldCheck, TrendingUp, ArrowRight, ChevronRight, Sparkles } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { ParentSafeProgressPreview } from '@/components/player/ParentSafeProgressPreview'
 import { PrivateLessonRequestCard } from './PrivateLessonRequestCard'
@@ -378,17 +378,33 @@ export default async function ParentHome() {
 
       {/* ── No mapping state ──────────────────────────────────────── */}
       {!parentView && noMappingReason && (
-        <Card>
-          <CardContent className="py-6 space-y-2">
-            <p className="text-text-primary text-sm font-medium text-center">Your academy is preparing your child's development view</p>
-            <p className="text-text-secondary text-xs leading-relaxed text-center max-w-xs mx-auto">
-              Once connected, you'll see their level, current focus, and how best to support them at home.
-            </p>
-            <p className="text-text-muted text-xs text-center">
-              Ask the academy director to link your parent account to your child's profile.
-            </p>
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardContent className="py-6 space-y-2">
+              <p className="text-text-primary text-sm font-medium text-center">Your academy is preparing your child's development view</p>
+              <p className="text-text-secondary text-xs leading-relaxed text-center max-w-xs mx-auto">
+                Once connected, you'll see their level, current focus, and how best to support them at home.
+              </p>
+              <p className="text-text-muted text-xs text-center">
+                Ask the academy director to link your parent account to your child's profile.
+              </p>
+            </CardContent>
+          </Card>
+          <Link href="/parent/ask-donna">
+            <div className="rounded-2xl bg-status-blue/5 border border-status-blue/20 px-4 py-4 flex items-center justify-between gap-3 hover:bg-status-blue/8 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-status-blue/15 border border-status-blue/20 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4 text-status-blue" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">While you wait — Ask DONNA</p>
+                  <p className="text-xs text-text-muted">Get parent guidance on supporting your child right now</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-status-blue/40 shrink-0" />
+            </div>
+          </Link>
+        </>
       )}
 
       {/* ── Live parent IDP sections ──────────────────────────────── */}

@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1105: Parent Portal Demo Polish V1
+
+**Files modified:** `src/app/parent/page.tsx` — added `Sparkles` to imports; enhanced no-mapping empty state with a "While you wait — Ask DONNA" CTA link card (status-blue, links to `/parent/ask-donna`) shown when guardian isn't connected yet.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1104: Player Portal Demo Polish V1
 
 **Files modified:** `src/app/player/page.tsx` — replaced always-empty "Messages" Card with a compact "Ask DONNA" CTA link card (status-blue accent, links to `/player/ask-donna`).
