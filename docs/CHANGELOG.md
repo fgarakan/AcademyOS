@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1060: Player Curriculum Gate Evidence Panel V1
+
+**Files created:**
+- `src/components/player/PlayerCurriculumGateEvidencePanel.tsx` — per-gate advancement status. Shows current->next level, passed/with-evidence/no-evidence counts, per-gate rows with criterion, domain, threshold, evidence count, last date, and derived status (no_evidence/partial/strong/director_passed/director_blocked). Zero additional DB calls (reuses `levelGates` + `playerGateStatuses`).
+- `docs/PLAYER_CURRICULUM_GATE_EVIDENCE_PANEL_1060.md` — sprint doc.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — imports and renders between Hub Header and Priority Connection.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1059: Player Current Priorities Evidence Connection V1
 
 **Files created:**

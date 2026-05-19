@@ -44,6 +44,7 @@ import { PlayerEvidenceTimeline } from '@/components/player/PlayerEvidenceTimeli
 import { PlayerEvidenceHubHeader } from '@/components/player/PlayerEvidenceHubHeader'
 import { PlayerPathwayEvidenceCards } from '@/components/player/PlayerPathwayEvidenceCards'
 import { PlayerPriorityEvidenceConnection } from '@/components/player/PlayerPriorityEvidenceConnection'
+import { PlayerCurriculumGateEvidencePanel } from '@/components/player/PlayerCurriculumGateEvidencePanel'
 import { getPlayerEvidenceTimeline, getPlayerEvidenceSummary, getPlayerPathwayEvidence } from '@/lib/players/playerEvidenceRepository'
 import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
 import { ParentGuidancePreviewPanel } from './ParentGuidancePreviewPanel'
@@ -1487,6 +1488,14 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Evidence Hub Header — Sprint 1057: aggregate summary, director-only */}
       <PlayerEvidenceHubHeader summary={evidenceSummary} isSchemaMissing={evidenceSummaryIsSchemaMissing} />
+
+      {/* Curriculum Gate Evidence Panel — Sprint 1060: per-gate status + evidence signal */}
+      <PlayerCurriculumGateEvidencePanel
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        nextLevelName={nextCurriculumLevel?.display_name ?? null}
+        gates={levelGates}
+        gateStatuses={playerGateStatuses}
+      />
 
       {/* Priority Evidence Connection — Sprint 1059: priorities linked to supporting observations */}
       <PlayerPriorityEvidenceConnection
