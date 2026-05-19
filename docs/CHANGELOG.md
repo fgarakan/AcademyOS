@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1104: Player Portal Demo Polish V1
+
+**Files modified:** `src/app/player/page.tsx` — replaced always-empty "Messages" Card with a compact "Ask DONNA" CTA link card (status-blue accent, links to `/player/ask-donna`).
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1103: Director Portal Demo Polish V1
 
 **Files modified:** `src/app/director/page.tsx` — added "DONNA" quick link in the director home header (alongside "Today's Academy" and "Review Queue"), making DONNA discoverable directly from the main dashboard.

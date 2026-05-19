@@ -734,28 +734,21 @@ export default async function PlayerHome() {
         </CardContent>
       </Card>
 
-      {/* ── Messages ──────────────────────────────────────────── */}
-      <Card>
-        <CardHeader>
+      {/* ── Ask DONNA CTA ─────────────────────────────────────── */}
+      <Link href="/player/ask-donna">
+        <div className="rounded-2xl bg-status-blue/5 border border-status-blue/20 px-4 py-4 flex items-center justify-between gap-3 hover:bg-status-blue/8 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
-              <MessageCircle className="w-4 h-4 text-text-muted" />
+            <div className="w-8 h-8 rounded-xl bg-status-blue/15 border border-status-blue/20 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 text-status-blue" />
             </div>
             <div>
-              <p className="font-semibold text-text-primary text-sm">Messages</p>
-              <p className="text-text-muted text-xs">From your coach and academy</p>
+              <p className="text-sm font-semibold text-text-primary">Ask DONNA</p>
+              <p className="text-xs text-text-muted">Training guide, match prep, mission help</p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <EmptyState
-            icon={<MessageCircle className="w-5 h-5" />}
-            title="No messages yet"
-            description="Messages from your coach and academy will show up here when they have something to share."
-            className="py-8"
-          />
-        </CardContent>
-      </Card>
+          <ChevronRight className="w-4 h-4 text-status-blue/40 shrink-0" />
+        </div>
+      </Link>
 
 
     </div>
