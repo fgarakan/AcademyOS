@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-3: Native Shell V1
+
+**Files created:** `src/app/onboarding/page.tsx` (route), `src/components/onboarding/OnboardingShell.tsx` (7-step shell, welcome step functional, steps 2–7 placeholder), `src/components/onboarding/OnboardingDonnaPanel.tsx` (DONNA panel with step progress + live DNA preview), `src/components/onboarding/OnboardingProgressRail.tsx` (7-step horizontal rail), `src/components/onboarding/OnboardingStepHeader.tsx` (reusable step header), `docs/DONNA_ONBOARDING_NATIVE_SHELL.md`. TypeScript clean.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-2: Information Architecture V1
 
 **Files created:** `docs/DONNA_ONBOARDING_INFORMATION_ARCHITECTURE.md` — final 7-step IA, setup mode definitions, full data model for each step, DONNA panel behavior per step, route plan, language rules, activation checklist with real route links. TypeScript clean.
