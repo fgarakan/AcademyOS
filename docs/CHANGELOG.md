@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1082: Parent Updates Page V1
+
+**Files modified:** `src/app/parent/updates/page.tsx` — replaced stub; fetches `player_development_summary` where `show_to_parent=true`, displays `parent_summary` with date and focus; empty states for summary and announcements; director approval notice.
+**Files created:** `docs/PARENT_UPDATES_1082.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1081: Parent Wins Page V1
 
 **Files modified:** `src/app/parent/wins/page.tsx` — replaced stub; positive highlight count card, session consistency grid (attended/recorded/streak), gate achievement count, encouragement note.
