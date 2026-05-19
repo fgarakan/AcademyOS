@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1094: Director DONNA Recommended Actions Polish V1
+
+**Files modified:** `src/app/director/donna/page.tsx` — added "Review queue" link in Next Best Actions card header; added `ChevronRight` chevron per action row; wrapped action label/reason in `flex-1` for alignment.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1093: Director DONNA Daily Brief Integration V1
 
 **Files modified:** `src/app/director/donna/page.tsx` — imported `DirectorDonnaDailyBrief` and `BriefItem`; wired full-width daily brief between main layout and review queue surface, mapping ctx risks/actions to component props.

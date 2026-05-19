@@ -220,10 +220,15 @@ export default async function DirectorDonnaPage() {
           {recommendedActions.length > 0 && (
             <Card>
               <CardHeader>
-                <h2 className="text-xs font-bold text-text-primary flex items-center gap-2 uppercase tracking-widest">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-lime" />
-                  Next Best Actions
-                </h2>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-xs font-bold text-text-primary flex items-center gap-2 uppercase tracking-widest">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-lime" />
+                    Next Best Actions
+                  </h2>
+                  <Link href="/director/review" className="text-[10px] text-lime/70 hover:text-lime transition-colors">
+                    Review queue
+                  </Link>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-1.5">
@@ -236,10 +241,11 @@ export default async function DirectorDonnaPage() {
                       <span className="text-text-muted group-hover:text-lime transition-colors shrink-0 mt-0.5">
                         {CATEGORY_ICON[action.category] ?? <ArrowRight className="w-3.5 h-3.5" />}
                       </span>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-text-secondary group-hover:text-text-primary transition-colors">{action.label}</p>
                         <p className="text-[10px] text-text-muted leading-snug">{action.reason}</p>
                       </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-text-muted/30 group-hover:text-lime/50 shrink-0 mt-0.5 transition-colors" />
                     </Link>
                   ))}
                 </div>
