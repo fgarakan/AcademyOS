@@ -246,6 +246,19 @@ export default async function PlayerMissionsPage() {
         </section>
       )}
 
+      {/* Level Up discovery */}
+      {total > 0 && (
+        <Link href="/player/level-up">
+          <div className="rounded-xl border border-border bg-surface-raised px-4 py-3 flex items-center justify-between hover:border-lime/20 transition-colors">
+            <div>
+              <p className="text-sm font-medium text-text-primary">Level Up Requirements</p>
+              <p className="text-xs text-text-muted">See what you need to advance</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-text-muted shrink-0" />
+          </div>
+        </Link>
+      )}
+
       {/* Footer note */}
       {total > 0 && (
         <p className="text-[10px] text-text-muted text-center px-4">

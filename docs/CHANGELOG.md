@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1078: Player Portal QA + Fun Polish V1
+
+**Files modified:** `src/app/player/missions/page.tsx` — added Level Up discovery card (navigation gap fix).
+**Files created:** `docs/PLAYER_PORTAL_PHASE_7B_QA_1078.md` — full Phase 7B safety, navigation, and design audit.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1077: Player Ask DONNA V1
 
 **Files modified:** `src/app/player/ask-donna/page.tsx` — guardrailed DONNA interface; 5 context-aware chips built from live mission/level data; static template responses; disabled custom input; guardrails shield notice; helpful pages links.
