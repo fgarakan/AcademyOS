@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1100: DONNA Demo Flow V1
+
+**Files created:** `docs/DONNA_DEMO_FLOW_1100.md` — narrative demo script covering all 4 DONNA role surfaces (director, coach, player, parent), DONNA safety Q&A, navigation map, and Phase 8 completion status.
+**TypeScript:** Clean — no code changes.
+
+---
+
 ## 2026-05-19 — Sprint 1099: Coach DONNA Wrap-Up Coverage Tracker V1
 
 **Files modified:** `src/app/coach/donna/page.tsx` — imported `DONNAWrapUpCoverageTracker` and `SessionWrapUpItem`; added tracker between "Today's Sessions" card and session prep guidance (only shown when sessions exist); maps `sessionSummaries` to `SessionWrapUpItem[]`.
