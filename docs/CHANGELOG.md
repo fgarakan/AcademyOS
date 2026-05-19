@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-19 — Sprint 1070: Player Mission Map V1
+
+**Files modified:**
+- `src/app/player/missions/page.tsx` — full mission map with real priority data (Active / Next Up / Future sections). Auth via profile_id. Director-set priority data only.
+
+**Files created:**
+- `docs/PLAYER_MISSION_MAP_1070.md` — sprint doc
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1069: Player Home My Training Path V1
 
 **Files created:**
