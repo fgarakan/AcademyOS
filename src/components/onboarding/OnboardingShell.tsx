@@ -5,6 +5,7 @@ import { ArrowRight, ArrowLeft, Sparkles, Zap } from 'lucide-react'
 import { OnboardingProgressRail } from './OnboardingProgressRail'
 import { OnboardingDonnaPanel } from './OnboardingDonnaPanel'
 import { OnboardingStepHeader } from './OnboardingStepHeader'
+import { AcademyBasicsStep } from './steps/AcademyBasicsStep'
 
 export interface OnboardingDraft {
   setupMode: string
@@ -117,7 +118,15 @@ export function OnboardingShell() {
                 onNext={goNext}
               />
             )}
-            {currentStep > 0 && currentStep < TOTAL_STEPS - 1 && (
+            {currentStep === 1 && (
+              <AcademyBasicsStep
+                draft={draft}
+                updateDraft={updateDraft}
+                onNext={goNext}
+                onPrev={goPrev}
+              />
+            )}
+            {currentStep > 1 && currentStep < TOTAL_STEPS - 1 && (
               <PlaceholderStep
                 stepNumber={currentStep + 1}
                 title={STEP_NAMES[currentStep]}

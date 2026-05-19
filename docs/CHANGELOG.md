@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-4: Academy Basics Guided Setup V1
+
+**Files created:** `src/components/onboarding/steps/AcademyBasicsStep.tsx` (Step 2 — academy name, age group pills, academy model cards, primary goals), `docs/DONNA_ONBOARDING_ACADEMY_BASICS.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired AcademyBasicsStep for step 1). TypeScript clean.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-3: Native Shell V1
 
 **Files created:** `src/app/onboarding/page.tsx` (route), `src/components/onboarding/OnboardingShell.tsx` (7-step shell, welcome step functional, steps 2–7 placeholder), `src/components/onboarding/OnboardingDonnaPanel.tsx` (DONNA panel with step progress + live DNA preview), `src/components/onboarding/OnboardingProgressRail.tsx` (7-step horizontal rail), `src/components/onboarding/OnboardingStepHeader.tsx` (reusable step header), `docs/DONNA_ONBOARDING_NATIVE_SHELL.md`. TypeScript clean.
