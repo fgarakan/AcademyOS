@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1058: Player Pathway Evidence Cards V1
+
+**Files created:**
+- `src/components/player/PlayerPathwayEvidenceCards.tsx` — three-column grid (Skill/Competition/Fitness). Each card: observation count, latest evidence snippet + coach name + date, missing-evidence alert, current focus label, source/director-review footer. Schema/null fallback to placeholder cards.
+- `docs/PLAYER_PATHWAY_EVIDENCE_CARDS_1058.md` — sprint doc.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — imports `PlayerPathwayEvidenceCards` and `getPlayerPathwayEvidence`; fetches pathway data in Tab 5 section; renders cards between Evidence Hub Header and Evidence Timeline.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1057: Player Evidence Hub Header Card V1
 
 **Files created:**

@@ -42,7 +42,8 @@ import { LevelProgressCard } from '@/components/player/LevelProgressCard'
 import { CoachPlayerSnapshot } from '@/components/player/CoachPlayerSnapshot'
 import { PlayerEvidenceTimeline } from '@/components/player/PlayerEvidenceTimeline'
 import { PlayerEvidenceHubHeader } from '@/components/player/PlayerEvidenceHubHeader'
-import { getPlayerEvidenceTimeline, getPlayerEvidenceSummary } from '@/lib/players/playerEvidenceRepository'
+import { PlayerPathwayEvidenceCards } from '@/components/player/PlayerPathwayEvidenceCards'
+import { getPlayerEvidenceTimeline, getPlayerEvidenceSummary, getPlayerPathwayEvidence } from '@/lib/players/playerEvidenceRepository'
 import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
 import { ParentGuidancePreviewPanel } from './ParentGuidancePreviewPanel'
 import type { QaDrillRow, QaCoachLanguageRow, QaLearningModuleHint } from '@/lib/player/playerProgressQa'
@@ -1078,6 +1079,11 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const evidenceSummary = evidenceSummaryResult.data
   const evidenceSummaryIsSchemaMissing = evidenceSummaryResult.isSchemaMissing
 
+  // Pathway evidence — skill / competition / fitness breakdown (Sprint 1058).
+  const pathwayEvidenceResult = await getPlayerPathwayEvidence(supabase, params.playerId, academyId)
+  const pathwayEvidence = pathwayEvidenceResult.data
+  const pathwayEvidenceIsSchemaMissing = pathwayEvidenceResult.isSchemaMissing
+
   // Requirement progress: read from v_player_requirement_progress_detail.
   // New view not yet in database.types.ts — rawDb cast + local interface used.
   const { data: rawRequirementProgress } = await rawDb
@@ -1480,6 +1486,15 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Evidence Hub Header — Sprint 1057: aggregate summary, director-only */}
       <PlayerEvidenceHubHeader summary={evidenceSummary} isSchemaMissing={evidenceSummaryIsSchemaMissing} />
+
+      {/* Pathway Evidence Cards — Sprint 1058: skill / competition / fitness breakdown */}
+      <PlayerPathwayEvidenceCards
+        pathwayEvidence={pathwayEvidence}
+        isSchemaMissing={pathwayEvidenceIsSchemaMissing}
+        currentFocusSkill={qaCoachLanguage[0]?.current_focus ?? null}
+        currentFocusCompetition={competitionTrackLevelName ?? null}
+        currentFocusFitness={fitnessPathPhase ?? null}
+      />
 
       {/* Evidence Timeline — Phase 7A: multi-source, typed, director-only */}
       <PlayerEvidenceTimeline items={timelineItems} isSchemaMissing={timelineIsSchemaMissing} />
