@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-19 — Sprint 1047: Per-Item Review Detail Route V1
+
+**Files created:**
+- `src/app/director/review/[actionId]/page.tsx` — Server Component at `/director/review/[actionId]`. Auth + academy + role guard. Loads single proposed_action by ID, verifies academy_id match, resolves session/player entity by module, renders appropriate card. Supported: wrap_up, attendance_exception, observation, priority_recommendation, evidence_link, development_summary, session_recap, curriculum_override. Fallback for unsupported types.
+- `src/app/director/review/[actionId]/ReviewItemRouter.tsx` — routes `target_module` to the correct card component via `ReviewItemData` discriminated union type.
+- `docs/REVIEW_ITEM_DETAIL_ROUTE_1047.md` — sprint doc.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-18 — Sprint 1046: DONNA Review Brief Panel V1
 
 **Files created:**
