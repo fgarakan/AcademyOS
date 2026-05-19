@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1048: DONNA Review Context Panel V1
+
+**Files created:**
+- `src/app/director/review/[actionId]/DonnaReviewContextPanel.tsx` — DONNA context sidebar for per-item review. Sections: DONNA brief (keyword-based per module), submission details (proposer, timestamp, risk, entity links), what-changes-when-applied (will/will-not per module for 8 types), clarification note (if set), safety footer. No DB writes.
+- `docs/DONNA_REVIEW_CONTEXT_PANEL_1048.md` — sprint doc.
+
+**Files modified:**
+- `src/app/director/review/[actionId]/page.tsx` — imported `DonnaReviewContextPanel`, replaced single card render with `lg:grid-cols-3` 2-column layout. Item card: 2/3 width. DONNA panel: 1/3 width. Stacked on mobile.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1047: Per-Item Review Detail Route V1
 
 **Files created:**

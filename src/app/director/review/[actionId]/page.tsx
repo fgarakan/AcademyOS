@@ -5,6 +5,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
 import { ReviewItemRouter } from './ReviewItemRouter'
 import type { ReviewItemData } from './ReviewItemRouter'
+import { DonnaReviewContextPanel } from './DonnaReviewContextPanel'
 import type { SessionActualDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpDraftAction'
 import type { AttendanceExceptionPayload } from '@/app/director/sessions/[sessionId]/attendanceExceptionDraftAction'
 import type { CoachObservationDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpObservationsAction'
@@ -293,8 +294,27 @@ export default async function ReviewItemDetailPage({
         </span>
       </div>
 
-      {/* Item card */}
-      <ReviewItemRouter data={itemData} />
+      {/* 2-column layout: item card left, DONNA context right */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="lg:col-span-2">
+          <ReviewItemRouter data={itemData} />
+        </div>
+        <div className="lg:col-span-1">
+          <DonnaReviewContextPanel
+            targetModule={targetModule}
+            moduleLabel={moduleLabel}
+            status={action.status}
+            proposerName={proposerName}
+            createdAt={action.created_at}
+            sessionId={action.target_object_id ?? null}
+            sessionName={sessionName}
+            playerId={playerId}
+            playerName={playerName}
+            riskLevel={action.risk_level ?? null}
+            reviewerNotes={action.reviewer_notes ?? null}
+          />
+        </div>
+      </div>
 
     </div>
   )
