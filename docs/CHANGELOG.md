@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1090: DONNA Phase 8 Audit V1
+
+**Files created:** `docs/DONNA_PHASE8_AUDIT_1090.md` — full inventory of all 4 DONNA role surfaces, gap analysis, and Phase 8 sprint plan (1091–1101).
+**TypeScript:** Clean — no code changes.
+
+---
+
 ## 2026-05-19 — Sprint 1089: Parent Portal Polish V1
 
 **Files modified:** `src/app/parent/page.tsx` — replaced "Latest Coach Update" empty state with compact "Coach Updates" CTA link card; removed redundant "Messages & Updates" empty state (covered by Updates tab).
