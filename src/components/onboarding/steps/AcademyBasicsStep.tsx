@@ -5,12 +5,12 @@ import type { OnboardingDraft } from '../OnboardingShell'
 import { OnboardingStepHeader } from '../OnboardingStepHeader'
 
 const AGE_GROUPS = [
-  { id: 'red-ball',         label: 'Red Ball',         sub: 'Ages 5–8',      color: 'bg-status-red/20 border-status-red/40 text-status-red' },
-  { id: 'orange-ball',      label: 'Orange Ball',      sub: 'Ages 8–10',     color: 'bg-status-orange/20 border-status-orange/40 text-status-orange' },
-  { id: 'green-ball',       label: 'Green Ball',       sub: 'Ages 9–11',     color: 'bg-status-green/20 border-status-green/40 text-status-green' },
-  { id: 'yellow-ball',      label: 'Yellow Ball',      sub: 'Ages 10+',      color: 'bg-lime/20 border-lime/40 text-lime' },
-  { id: 'high-performance', label: 'High Performance', sub: 'Elite juniors', color: 'bg-status-purple/20 border-status-purple/40 text-status-purple' },
-  { id: 'adult',            label: 'Adult',            sub: 'All levels',    color: 'bg-surface-raised border-border-strong text-text-secondary' },
+  { id: 'red-ball',         label: 'Red Ball',         sub: 'Ages 5–8',      dot: 'bg-status-red',    selectedColor: 'bg-status-red/10 border-status-red/40 text-status-red' },
+  { id: 'orange-ball',      label: 'Orange Ball',      sub: 'Ages 8–10',     dot: 'bg-status-orange', selectedColor: 'bg-status-orange/10 border-status-orange/40 text-status-orange' },
+  { id: 'green-ball',       label: 'Green Ball',       sub: 'Ages 9–11',     dot: 'bg-status-green',  selectedColor: 'bg-status-green/10 border-status-green/40 text-status-green' },
+  { id: 'yellow-ball',      label: 'Yellow Ball',      sub: 'Ages 10+',      dot: 'bg-yellow-400',    selectedColor: 'bg-yellow-400/10 border-yellow-400/40 text-yellow-400' },
+  { id: 'high-performance', label: 'High Performance', sub: 'Elite juniors', dot: 'bg-status-blue',   selectedColor: 'bg-status-blue/10 border-status-blue/40 text-status-blue' },
+  { id: 'adult',            label: 'Adult',            sub: 'All levels',    dot: 'bg-text-muted',    selectedColor: 'bg-surface-raised border-border-strong text-text-secondary' },
 ]
 
 const ACADEMY_MODELS = [
@@ -20,16 +20,6 @@ const ACADEMY_MODELS = [
   { id: 'private-coaching',   label: 'Private Coaching',         desc: 'Private lessons and small group coaching' },
   { id: 'multi-location',     label: 'Multi-Location Academy',   desc: 'Multiple sites and coaching groups' },
   { id: 'consultant-setup',   label: 'Consultant Setup',         desc: 'Setting up for a client academy' },
-]
-
-const PRIMARY_GOALS = [
-  'Long-Term Athlete Development',
-  'Competition Pathway',
-  'Fun and Retention',
-  'Physical Fitness',
-  'College Pathway',
-  'Professional Development',
-  'Club and Social Tennis',
 ]
 
 interface Props {
@@ -84,10 +74,11 @@ export function AcademyBasicsStep({ draft, updateDraft, onNext, onPrev }: Props)
                 className={[
                   'flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition-all',
                   isSelected
-                    ? group.color
+                    ? group.selectedColor
                     : 'bg-surface border-border text-text-secondary hover:border-border-strong hover:bg-surface-raised',
                 ].join(' ')}
               >
+                <span className={['w-2.5 h-2.5 rounded-full shrink-0', group.dot].join(' ')} />
                 <span className="font-semibold">{group.label}</span>
                 <span className="text-[10px] opacity-70">{group.sub}</span>
               </button>
@@ -127,32 +118,6 @@ export function AcademyBasicsStep({ draft, updateDraft, onNext, onPrev }: Props)
                 ].join(' ')}>
                   {model.desc}
                 </p>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Primary Goals */}
-      <div className="mb-6">
-        <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3">
-          Primary Goals <span className="text-text-muted/50 normal-case tracking-normal font-normal">(optional)</span>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {PRIMARY_GOALS.map(goal => {
-            const isSelected = draft.primaryGoals.includes(goal)
-            return (
-              <button
-                key={goal}
-                onClick={() => updateDraft({ primaryGoals: toggleItem(draft.primaryGoals, goal) })}
-                className={[
-                  'px-3 py-1.5 rounded-lg border text-xs font-medium transition-all',
-                  isSelected
-                    ? 'bg-lime/8 border-lime/40 text-lime'
-                    : 'bg-surface border-border text-text-muted hover:border-border-strong hover:text-text-secondary',
-                ].join(' ')}
-              >
-                {goal}
               </button>
             )
           })}

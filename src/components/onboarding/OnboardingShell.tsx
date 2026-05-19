@@ -343,6 +343,33 @@ function WelcomeStep({
           </div>
         </div>
 
+        {/* Feature cards strip */}
+        <div className="mb-8">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted mb-3">
+            What DONNA builds for you
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { title: 'Curriculum Builder',  desc: 'Level structure, progression gates, and session plans' },
+              { title: 'Player Pathways',      desc: 'Individual development plans for every player' },
+              { title: 'Analytics',            desc: 'Session data, attendance, and performance insights' },
+              { title: 'Parent Reports',       desc: 'Privacy-safe communications, auto-drafted by DONNA' },
+            ].map(card => (
+              <div
+                key={card.title}
+                className="rounded-xl bg-surface-raised border border-border px-3.5 py-3"
+              >
+                <p className="text-[11px] font-semibold text-text-secondary leading-tight mb-1">
+                  {card.title}
+                </p>
+                <p className="text-[10px] text-text-muted leading-relaxed">
+                  {card.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="mb-8">
           <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3">
             Setup mode <span className="font-normal normal-case tracking-normal text-text-muted/60">(optional)</span>

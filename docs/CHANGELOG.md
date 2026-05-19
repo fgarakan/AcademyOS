@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Connected Onboarding Sprint OF-FIX-2: Welcome + Academy Basics Repair V1
+
+**Files modified:** `OnboardingShell.tsx` (WelcomeStep — added 4-card "What DONNA builds for you" feature strip: Curriculum Builder, Player Pathways, Analytics, Parent Reports; ambient glow and 5-step pills from OF-FIX-1 preserved), `AcademyBasicsStep.tsx` (Primary Goals section removed from UI; `primaryGoals` kept in draft type for compatibility; age group buttons now show always-visible colored ball dot using existing status tokens and Tailwind built-ins; `status-purple` replaced with `status-blue`). **Files created:** `docs/CONNECTED_ONBOARDING_OF_FIX_2.md`. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Connected Onboarding Sprint OF-FIX-1: Restore Prototype-Matched Flow Shell V1
 
 **Files modified:** `OnboardingShell.tsx` (WelcomeStep — non-blocking welcome with 5-step pill row, ambient accent glow, setup mode made optional, "Start with DONNA" CTA always active), `OnboardingDonnaPanel.tsx` (7-milestone grouped progress replacing 11-step list, "D" initial avatar + animate-ping status dot, pulsing "Building academy defaults..." indicator for active setup steps), `ActivationChecklistStep.tsx` (celebration header with CheckCircle2 accent icon, DONNA message bubble, DNA pill strip from coachingStyles/sessionBlocks/developmentPriorities, "Launch Checklist" renamed to "Continue Setup", all readyCheck/canActivate logic unchanged). TypeScript clean.
