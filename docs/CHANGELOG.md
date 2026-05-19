@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1062: Player Parent-Safe Summary Preview V1
+
+**Files created:**
+- `src/components/player/PlayerParentSafeSummaryPreview.tsx` — director preview of parent-visible content. Approval banner on every render. "What parents could see": devFocus, approved strengths, next focus, support tip, next step, parent-visible requirements. "Intentionally hidden": 6 hard-coded categories (raw coach notes, internal flags, assessment scores, sensitive flags, unapproved AI, rankings). Preview only — no sending, no publishing.
+- `docs/PLAYER_PARENT_SAFE_SUMMARY_PREVIEW_1062.md` — sprint doc.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — imports component and `getPlayerParentSafeSummaries`; fetches parent-safe data; renders after `ParentGuidancePreviewPanel`.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1061: Player Level Readiness Draft View V1
 
 **Files created:**

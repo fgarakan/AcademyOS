@@ -46,7 +46,8 @@ import { PlayerPathwayEvidenceCards } from '@/components/player/PlayerPathwayEvi
 import { PlayerPriorityEvidenceConnection } from '@/components/player/PlayerPriorityEvidenceConnection'
 import { PlayerCurriculumGateEvidencePanel } from '@/components/player/PlayerCurriculumGateEvidencePanel'
 import { PlayerLevelReadinessDraftView } from '@/components/player/PlayerLevelReadinessDraftView'
-import { getPlayerEvidenceTimeline, getPlayerEvidenceSummary, getPlayerPathwayEvidence } from '@/lib/players/playerEvidenceRepository'
+import { PlayerParentSafeSummaryPreview } from '@/components/player/PlayerParentSafeSummaryPreview'
+import { getPlayerEvidenceTimeline, getPlayerEvidenceSummary, getPlayerPathwayEvidence, getPlayerParentSafeSummaries } from '@/lib/players/playerEvidenceRepository'
 import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
 import { ParentGuidancePreviewPanel } from './ParentGuidancePreviewPanel'
 import type { QaDrillRow, QaCoachLanguageRow, QaLearningModuleHint } from '@/lib/player/playerProgressQa'
@@ -1087,6 +1088,11 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const pathwayEvidence = pathwayEvidenceResult.data
   const pathwayEvidenceIsSchemaMissing = pathwayEvidenceResult.isSchemaMissing
 
+  // Parent-safe summary data — preview for director (Sprint 1062).
+  const parentSafeDataResult = await getPlayerParentSafeSummaries(supabase, params.playerId, academyId)
+  const parentSafeData = parentSafeDataResult.data
+  const parentSafeIsSchemaMissing = parentSafeDataResult.isSchemaMissing
+
   // Requirement progress: read from v_player_requirement_progress_detail.
   // New view not yet in database.types.ts — rawDb cast + local interface used.
   const { data: rawRequirementProgress } = await rawDb
@@ -1536,6 +1542,16 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         currentLevelName={curriculumSummary?.current_level_name ?? null}
         nextLevelName={nextCurriculumLevel?.display_name ?? null}
         currentFocus={qaCoachLanguage[0]?.current_focus ?? null}
+        parentSupportTip={null}
+      />
+
+      {/* Parent-Safe Summary Preview — Sprint 1062: director sees what parents/players would see */}
+      <PlayerParentSafeSummaryPreview
+        parentSafeData={parentSafeData}
+        isSchemaMissing={parentSafeIsSchemaMissing}
+        playerFirstName={player.first_name ?? null}
+        currentFocus={qaCoachLanguage[0]?.current_focus ?? null}
+        nextStep={qaCoachLanguage[0]?.next_step ?? null}
         parentSupportTip={null}
       />
 
