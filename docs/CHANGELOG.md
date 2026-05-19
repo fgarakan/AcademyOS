@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1089: Parent Portal Polish V1
+
+**Files modified:** `src/app/parent/page.tsx` — replaced "Latest Coach Update" empty state with compact "Coach Updates" CTA link card; removed redundant "Messages & Updates" empty state (covered by Updates tab).
+**Files created:** `docs/PARENT_PORTAL_POLISH_1089.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1088: Parent Portal QA V1
 
 **Files created:** `docs/PARENT_PORTAL_QA_1088.md` — full Phase 7C safety, navigation, and data query audit. All pages pass.

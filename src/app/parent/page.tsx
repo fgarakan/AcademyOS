@@ -519,28 +519,21 @@ export default async function ParentHome() {
         </Card>
       )}
 
-      {/* ── Latest Coach Update ───────────────────────────────────── */}
-      <Card>
-        <CardHeader>
+      {/* ── Coach Updates CTA ────────────────────────────────────── */}
+      <Link href="/parent/updates">
+        <div className="rounded-xl border border-border bg-surface-raised px-4 py-3.5 flex items-center justify-between hover:border-lime/20 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-surface border border-border flex items-center justify-center shrink-0">
               <MessageSquare className="w-4 h-4 text-text-muted" />
             </div>
             <div>
-              <p className="font-semibold text-text-primary text-sm">Latest Coach Update</p>
-              <p className="text-text-muted text-xs">Parent-ready summaries from your coaching team</p>
+              <p className="text-sm font-semibold text-text-primary">Coach Updates</p>
+              <p className="text-xs text-text-muted">Director-approved summaries and announcements</p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <EmptyState
-            icon={<MessageSquare className="w-5 h-5" />}
-            title="Your first update is on its way"
-            description="When your coach wraps up a session, a parent-ready summary will appear here."
-            className="py-8"
-          />
-        </CardContent>
-      </Card>
+          <ChevronRight className="w-4 h-4 text-text-muted shrink-0" />
+        </div>
+      </Link>
 
       {/* ── Session Consistency ───────────────────────────────────── */}
       <Card>
@@ -635,28 +628,7 @@ export default async function ParentHome() {
         </CardContent>
       </Card>
 
-      {/* ── Messages & Updates ────────────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
-              <Bell className="w-4 h-4 text-text-muted" />
-            </div>
-            <div>
-              <p className="font-semibold text-text-primary text-sm">Messages & Updates</p>
-              <p className="text-text-muted text-xs">Communications from your academy</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <EmptyState
-            icon={<Bell className="w-5 h-5" />}
-            title="No messages yet"
-            description="Messages and announcements from your academy will appear here."
-            className="py-8"
-          />
-        </CardContent>
-      </Card>
+      {/* Messages & Updates removed — covered by Updates tab (/parent/updates) */}
 
       {/* ── Private Lesson Request + Status ─────────────────────── */}
       {parentView && linkedPlayerFirstName && (
