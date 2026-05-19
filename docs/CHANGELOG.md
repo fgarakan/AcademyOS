@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Connected Onboarding Sprint OF-4: First Class Template Step V1
+
+**Files created:** `src/components/onboarding/templates/ClassTemplateBlockSelector.tsx` (9-block class template model, selectable block cards with duration control / coach cue / watch-for / evidence / video placeholder), `src/components/onboarding/templates/ClassTemplateDraftPreview.tsx` (proportional timeline + numbered list, coach preview label, draft-only footer), `src/components/onboarding/steps/FirstClassTemplateStep.tsx` (step 5/11 — DONNA suggestion from Academy DNA + Curriculum Builder, apply/customize blocks, skip option), `docs/CONNECTED_ONBOARDING_FIRST_CLASS_TEMPLATE_STEP.md`. **Files modified:** `OnboardingShell.tsx` (added blockDurations to ClassTemplateDraftData, wired FirstClassTemplateStep at step index 4, removed FirstClassTemplatePlaceholder). TypeScript clean.
+
+---
+
 ## 2026-05-19 — Connected Onboarding Sprint OF-3: Curriculum Builder Step V1
 
 **Files created:** `src/components/onboarding/steps/CurriculumBuilderStep.tsx` (step 4/11 — curriculum starting point selector, focus levels, session block selector with live timeline preview, ranked development priorities, DONNA confirmation messages, skip option), `docs/CONNECTED_ONBOARDING_CURRICULUM_BUILDER_STEP.md`. **Files modified:** `OnboardingShell.tsx` (wired CurriculumBuilderStep at step index 3, removed CurriculumBuilderPlaceholder). TypeScript clean.

@@ -7,6 +7,7 @@ import { OnboardingDonnaPanel } from './OnboardingDonnaPanel'
 import { AcademyBasicsStep } from './steps/AcademyBasicsStep'
 import { CoachingDnaStep } from './steps/CoachingDnaStep'
 import { CurriculumBuilderStep } from './steps/CurriculumBuilderStep'
+import { FirstClassTemplateStep } from './steps/FirstClassTemplateStep'
 import { AcademyDnaReviewStep } from './steps/AcademyDnaReviewStep'
 import { ActivationChecklistStep } from './steps/ActivationChecklistStep'
 import { useOnboardingDraftPersistence, OnboardingSaveStatus, DraftResumeBanner } from './OnboardingSaveStatus'
@@ -20,6 +21,7 @@ export interface LocalCoachDraft {
 export interface ClassTemplateDraftData {
   skipped: boolean
   selectedBlocks: string[]
+  blockDurations: Record<string, number>
 }
 
 export interface FitnessTemplateDraftData {
@@ -83,7 +85,7 @@ const defaultDraft: OnboardingDraft = {
   curriculumFocusLevels: [],
   sessionBlocks: [],
   developmentPriorities: [],
-  classTemplateDraft: { skipped: false, selectedBlocks: [] },
+  classTemplateDraft: { skipped: false, selectedBlocks: [], blockDurations: {} },
   fitnessTemplateDraft: { skipped: false, selectedBlocks: [] },
   playerUploadDraft: { skipped: false, playerCount: 0 },
   coachesDraft: { skipped: false, coaches: [] },
@@ -199,7 +201,7 @@ export function OnboardingShell() {
               <CurriculumBuilderStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 4 && (
-              <FirstClassTemplatePlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={5} totalSteps={TOTAL_STEPS} />
+              <FirstClassTemplateStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 5 && (
               <FirstFitnessTemplatePlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={6} totalSteps={TOTAL_STEPS} />
@@ -448,10 +450,6 @@ function StepPlaceholder({
       </div>
     </div>
   )
-}
-
-function FirstClassTemplatePlaceholder(p: PlaceholderProps) {
-  return <StepPlaceholder title="First Class Template" subtitle="Draft your first class template using the AcademyOS block model." skippable={true} onNext={p.onNext} onPrev={p.onPrev} stepNum={p.stepNum} totalSteps={p.totalSteps} />
 }
 
 function FirstFitnessTemplatePlaceholder(p: PlaceholderProps) {
