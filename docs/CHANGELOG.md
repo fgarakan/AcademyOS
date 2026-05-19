@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1077: Player Ask DONNA V1
+
+**Files modified:** `src/app/player/ask-donna/page.tsx` — guardrailed DONNA interface; 5 context-aware chips built from live mission/level data; static template responses; disabled custom input; guardrails shield notice; helpful pages links.
+**Files created:** `src/components/player/DonnaChat.tsx` — client component for chip interaction. `docs/PLAYER_ASK_DONNA_1077.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1076: Player Practice At Home V1
 
 **Files modified:** `src/app/player/practice/page.tsx` — replaced stub; category-keyed drill sets, active mission focus card, ~X min timer, footer safety note.
