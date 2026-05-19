@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1056: Player Evidence Timeline V1
+
+**Files created:**
+- `src/components/player/PlayerEvidenceTimeline.tsx` — multi-source evidence timeline component. Accepts `EvidenceTimelineItem[]` (typed from Phase 7A repository). Type icons: MessageSquare (coach_observation), Link2 (requirement_evidence), Shield (gate_update), BarChart2 (assessment). Visibility pills: "Internal" (lock, text-text-muted) for `isInternalOnly`, "Parent-safe" (eye, status-blue) for `isParentSafe`. Flat list when <10 items; groups by ISO week when ≥10. EmptyState when empty. Director-only. No `as any` casts.
+- `docs/PLAYER_EVIDENCE_TIMELINE_1056.md` — sprint doc.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — added `getPlayerEvidenceTimeline()` call in Tab 5 Notes data section; replaced `ProgressEvidenceTimeline` (which used `enrichedObservations as any`) with `PlayerEvidenceTimeline` using typed `EvidenceTimelineItem[]`; removed now-unused `ProgressEvidenceTimeline` import.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1055: Player Evidence Repository Read Layer V1
 
 **Files created:**

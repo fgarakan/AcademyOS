@@ -40,7 +40,8 @@ import { FitnessHomeworkRecommendationButton } from './FitnessHomeworkRecommenda
 import { DevelopmentProfileSummaryCard } from '@/components/player/DevelopmentProfileSummaryCard'
 import { LevelProgressCard } from '@/components/player/LevelProgressCard'
 import { CoachPlayerSnapshot } from '@/components/player/CoachPlayerSnapshot'
-import { ProgressEvidenceTimeline } from '@/components/player/ProgressEvidenceTimeline'
+import { PlayerEvidenceTimeline } from '@/components/player/PlayerEvidenceTimeline'
+import { getPlayerEvidenceTimeline } from '@/lib/players/playerEvidenceRepository'
 import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
 import { ParentGuidancePreviewPanel } from './ParentGuidancePreviewPanel'
 import type { QaDrillRow, QaCoachLanguageRow, QaLearningModuleHint } from '@/lib/player/playerProgressQa'
@@ -1065,6 +1066,12 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     .limit(5)
   const evidenceLinkDrafts: EvidenceRequirementDraftRow[] = rawEvidenceDrafts ?? []
 
+  // Evidence timeline — multi-source: observations, requirement links, gate updates, assessments.
+  // Uses Phase 7A repository. Errors degrade gracefully via isSchemaMissing flag.
+  const timelineResult = await getPlayerEvidenceTimeline(supabase, params.playerId, academyId)
+  const timelineItems = timelineResult.data ?? []
+  const timelineIsSchemaMissing = timelineResult.isSchemaMissing
+
   // Requirement progress: read from v_player_requirement_progress_detail.
   // New view not yet in database.types.ts — rawDb cast + local interface used.
   const { data: rawRequirementProgress } = await rawDb
@@ -1465,8 +1472,8 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      {/* Progress Evidence Timeline */}
-      <ProgressEvidenceTimeline items={enrichedObservations as any} />
+      {/* Evidence Timeline — Phase 7A: multi-source, typed, director-only */}
+      <PlayerEvidenceTimeline items={timelineItems} isSchemaMissing={timelineIsSchemaMissing} />
 
       {/* Parent Guidance Preview — director-only, read-only, not sent */}
       <ParentGuidancePreviewPanel
