@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1083: Parent Ask DONNA V1 + Tab Update
+
+**Files modified:** `src/app/parent/ask-donna/page.tsx` — replaced stub with full guardrailed DONNA page; 5 context-aware chips built from child mission/level/coach-language data; `src/app/parent/layout.tsx` — added DONNA as 5th tab.
+**Files created:** `src/components/player/ParentDonnaChat.tsx` — client chip interaction component. `docs/PARENT_ASK_DONNA_1083.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1082: Parent Updates Page V1
 
 **Files modified:** `src/app/parent/updates/page.tsx` — replaced stub; fetches `player_development_summary` where `show_to_parent=true`, displays `parent_summary` with date and focus; empty states for summary and announcements; director approval notice.

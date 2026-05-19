@@ -8,6 +8,7 @@ const PARENT_TABS = [
   { label: 'Progress', href: '/parent/progress', iconKey: 'progress' },
   { label: 'Wins', href: '/parent/wins', iconKey: 'wins' },
   { label: 'Updates', href: '/parent/updates', iconKey: 'updates' },
+  { label: 'DONNA', href: '/parent/ask-donna', iconKey: 'donna' },
 ]
 
 export default async function ParentLayout({ children }: { children: React.ReactNode }) {
