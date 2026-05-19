@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-19 — Sprint 1071: Player Mission Detail V1
+
+**Files modified:**
+- `src/app/player/missions/[priorityId]/page.tsx` — full mission detail (6 section cards). Player ownership verified before display. Director-set priority data only. Category-keyed template copy for What To Do / How To Know.
+
+**Files created:**
+- `docs/PLAYER_MISSION_DETAIL_1071.md` — sprint doc
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1070: Player Mission Map V1
 
 **Files modified:**
