@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1079: Parent Portal Alignment Audit V1
+
+**Files modified:** none.
+**Files created:** `src/app/parent/progress/page.tsx`, `src/app/parent/wins/page.tsx`, `src/app/parent/updates/page.tsx`, `src/app/parent/ask-donna/page.tsx` (stubs). `docs/PARENT_PORTAL_AUDIT_1079.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1078: Player Portal QA + Fun Polish V1
 
 **Files modified:** `src/app/player/missions/page.tsx` — added Level Up discovery card (navigation gap fix).
