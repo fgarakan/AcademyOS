@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-19 — Sprint 1057: Player Evidence Hub Header Card V1
+
+**Files created:**
+- `src/components/player/PlayerEvidenceHubHeader.tsx` — compact aggregate summary card. Shows total evidence, recent 30-day count, coach observations, requirement evidence, parent-safe count, internal-only count, gates with evidence, last evidence date. Schema-missing state renders warning banner. Director-only. No mutations.
+- `docs/PLAYER_EVIDENCE_HUB_HEADER_1057.md` — sprint doc.
+
+**Files modified:**
+- `src/app/director/players/[playerId]/page.tsx` — imports `PlayerEvidenceHubHeader` and `getPlayerEvidenceSummary`; fetches summary alongside timeline in Tab 5 data section; renders header above `PlayerEvidenceTimeline`.
+
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1056: Player Evidence Timeline V1
 
 **Files created:**

@@ -41,7 +41,8 @@ import { DevelopmentProfileSummaryCard } from '@/components/player/DevelopmentPr
 import { LevelProgressCard } from '@/components/player/LevelProgressCard'
 import { CoachPlayerSnapshot } from '@/components/player/CoachPlayerSnapshot'
 import { PlayerEvidenceTimeline } from '@/components/player/PlayerEvidenceTimeline'
-import { getPlayerEvidenceTimeline } from '@/lib/players/playerEvidenceRepository'
+import { PlayerEvidenceHubHeader } from '@/components/player/PlayerEvidenceHubHeader'
+import { getPlayerEvidenceTimeline, getPlayerEvidenceSummary } from '@/lib/players/playerEvidenceRepository'
 import { PlayerQaPreviewPanel } from './PlayerQaPreviewPanel'
 import { ParentGuidancePreviewPanel } from './ParentGuidancePreviewPanel'
 import type { QaDrillRow, QaCoachLanguageRow, QaLearningModuleHint } from '@/lib/player/playerProgressQa'
@@ -1072,6 +1073,11 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   const timelineItems = timelineResult.data ?? []
   const timelineIsSchemaMissing = timelineResult.isSchemaMissing
 
+  // Evidence summary — aggregate counts for hub header (Sprint 1057).
+  const evidenceSummaryResult = await getPlayerEvidenceSummary(supabase, params.playerId, academyId)
+  const evidenceSummary = evidenceSummaryResult.data
+  const evidenceSummaryIsSchemaMissing = evidenceSummaryResult.isSchemaMissing
+
   // Requirement progress: read from v_player_requirement_progress_detail.
   // New view not yet in database.types.ts — rawDb cast + local interface used.
   const { data: rawRequirementProgress } = await rawDb
@@ -1471,6 +1477,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           <PriorityRecommendationDraftButton onCreateDraft={createDraftAction} />
         </CardContent>
       </Card>
+
+      {/* Evidence Hub Header — Sprint 1057: aggregate summary, director-only */}
+      <PlayerEvidenceHubHeader summary={evidenceSummary} isSchemaMissing={evidenceSummaryIsSchemaMissing} />
 
       {/* Evidence Timeline — Phase 7A: multi-source, typed, director-only */}
       <PlayerEvidenceTimeline items={timelineItems} isSchemaMissing={timelineIsSchemaMissing} />
