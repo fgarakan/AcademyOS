@@ -4,7 +4,6 @@ import { ArrowRight, ArrowLeft, Sparkles, CheckCircle2 } from 'lucide-react'
 import type { OnboardingDraft } from '../OnboardingShell'
 import { OnboardingStepHeader } from '../OnboardingStepHeader'
 import { AcademyDnaSummaryCard } from '../AcademyDnaSummaryCard'
-import { DonnaAdjustmentDraftPanel } from '../DonnaAdjustmentDraftPanel'
 
 const COACHING_STYLE_LABELS: Record<string, string> = {
   'fundamentals-first': 'Fundamentals First',
@@ -137,8 +136,8 @@ export function AcademyDnaReviewStep({ draft, updateDraft, onNext, onPrev, onEdi
   return (
     <div>
       <OnboardingStepHeader
-        stepNumber={11}
-        totalSteps={12}
+        stepNumber={8}
+        totalSteps={10}
         title="Review your Academy DNA"
         subtitle="Everything DONNA will use to build your starting operating system."
       />
@@ -222,7 +221,7 @@ export function AcademyDnaReviewStep({ draft, updateDraft, onNext, onPrev, onEdi
                 </div>
               ) : <span className="text-text-muted/50 italic">Not set</span>
             }
-            onEdit={() => onEditStep(2)}
+            onEdit={() => onEditStep(3)}
           />
 
           {/* Session Structure */}
@@ -233,12 +232,12 @@ export function AcademyDnaReviewStep({ draft, updateDraft, onNext, onPrev, onEdi
           <DnaRow
             label="Session Blocks"
             value={pillList(draft.sessionBlocks, SESSION_BLOCK_LABELS)}
-            onEdit={() => onEditStep(3)}
+            onEdit={() => onEditStep(4)}
           />
           <DnaRow
             label="Development Priorities"
             value={pillList(draft.developmentPriorities, DEV_PRIORITY_LABELS)}
-            onEdit={() => onEditStep(3)}
+            onEdit={() => onEditStep(5)}
           />
 
           {/* Parent + Player */}
@@ -249,7 +248,7 @@ export function AcademyDnaReviewStep({ draft, updateDraft, onNext, onPrev, onEdi
           <DnaRow
             label="Parent Communication"
             value={pillList(draft.parentStyles, PARENT_STYLE_LABELS)}
-            onEdit={() => onEditStep(4)}
+            onEdit={() => onEditStep(6)}
           />
           <DnaRow
             label="Privacy Rules"
@@ -259,20 +258,10 @@ export function AcademyDnaReviewStep({ draft, updateDraft, onNext, onPrev, onEdi
                 <span className="text-text-muted font-normal ml-1">— parent portal protected</span>
               </span>
             }
-            onEdit={() => onEditStep(4)}
-          />
-          <DnaRow
-            label="Player Mission Style"
-            value={singleValue(draft.playerMissionStyle, PLAYER_MISSION_LABELS)}
-            onEdit={() => onEditStep(4)}
+            onEdit={() => onEditStep(6)}
           />
 
         </div>
-      </div>
-
-      {/* DONNA adjustment panel */}
-      <div className="mb-6">
-        <DonnaAdjustmentDraftPanel draft={draft} updateDraft={updateDraft} />
       </div>
 
       {/* DONNA summary */}
@@ -325,7 +314,7 @@ export function AcademyDnaReviewStep({ draft, updateDraft, onNext, onPrev, onEdi
           ].join(' ')}
         >
           <Sparkles className="w-4 h-4" />
-          Proceed to Activation
+          Continue to DONNA Review
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

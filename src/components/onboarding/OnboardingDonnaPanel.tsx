@@ -3,15 +3,13 @@
 import { Sparkles, CheckCircle2, Circle, ChevronRight } from 'lucide-react'
 import type { OnboardingDraft } from './OnboardingShell'
 
-// 7 grouped milestones — each covers one or more actual steps
+// 5 grouped milestones — each covers one or more actual steps
 const MILESTONES = [
-  { label: 'Academy Basics', minStep: 1,  maxStep: 1  },
-  { label: 'Coaching DNA',   minStep: 2,  maxStep: 3  },
-  { label: 'Curriculum',     minStep: 4,  maxStep: 4  },
-  { label: 'Templates',      minStep: 5,  maxStep: 6  },
-  { label: 'People',         minStep: 7,  maxStep: 8  },
-  { label: 'Review',         minStep: 9,  maxStep: 10 },
-  { label: 'Activate',       minStep: 11, maxStep: 11 },
+  { label: 'Academy Basics',    minStep: 1, maxStep: 1 },
+  { label: 'Coaching DNA',      minStep: 2, maxStep: 3 },
+  { label: 'Session + Players', minStep: 4, maxStep: 6 },
+  { label: 'DNA Review',        minStep: 7, maxStep: 8 },
+  { label: 'Activate',          minStep: 9, maxStep: 9 },
 ]
 
 function getMilestoneStatus(milestone: typeof MILESTONES[number], currentStep: number): 'complete' | 'active' | 'upcoming' {
@@ -42,44 +40,34 @@ const DONNA_MESSAGES: Record<number, { message: string; why: string; next: strin
     next: 'Choose a primary communication voice.',
   },
   4: {
-    message: "The curriculum starting point tells me which level structure to use and how your sessions are built. I'll use this to suggest your first class and fitness templates.",
-    why: 'Curriculum structure determines level gates, skill paths, and session planning across all groups.',
-    next: 'Choose a curriculum starting point.',
+    message: "How should a normal session feel? The blocks you choose here become the default structure DONNA uses when building class templates and session plans.",
+    why: 'Session structure preferences shape coach planning defaults, wrap-up question prompts, and DONNA template suggestions.',
+    next: 'Select the session blocks that best describe your typical on-court time.',
   },
   5: {
-    message: "Let's draft your first class template using the real AcademyOS block model. I'll suggest blocks based on your coaching DNA.",
-    why: 'A first class template gives coaches a structured starting plan. Warm-Up and Reflection are always included.',
-    next: 'Select class blocks to build your template draft.',
+    message: "What does great player development look like at your academy? Rank your top priorities — DONNA will weight missions, session prompts, and skill path labels around them.",
+    why: 'Development priorities determine what players focus on in their portal, what coaches look for in sessions, and how DONNA frames progress.',
+    next: 'Select and rank up to 5 development priorities.',
   },
   6: {
-    message: "Now let's draft a first fitness template. I'll auto-populate exercises for each block you select.",
-    why: 'Fitness templates give coaches a structured physical preparation plan tied directly to tennis development.',
-    next: 'Select fitness blocks to auto-populate exercises.',
+    message: "How should parents experience your academy? This shapes the language, detail level, and tone of everything parents see in their portal.",
+    why: 'Parent communication style determines how DONNA writes progress updates, next-steps guidance, and milestone summaries for parents.',
+    next: 'Choose a parent communication style. Privacy rules are always on.',
   },
   7: {
-    message: 'Upload or fast-fill your player roster. This is a draft only — no player data is saved until activation.',
-    why: 'Starting with players lets DONNA begin organizing groups, levels, and curriculum assignments.',
-    next: 'Upload a CSV or fast-fill player names.',
+    message: "This is your Academy DNA draft. Review every section before continuing. Each row links back to the step where you can make changes.",
+    why: 'Reviewing your DNA before the DONNA adjustment step ensures the starting system reflects your academy accurately.',
+    next: 'Review all sections and use the Edit links to fix anything that needs changing.',
   },
   8: {
-    message: 'Add your coaching staff locally. Coach roles and level assignments shape what DONNA prepares for each group.',
-    why: 'Coach assignments determine session visibility, wrap-up flows, and parent communication routing.',
-    next: 'Add coach names and assign roles.',
+    message: "Use the quick suggestions or describe what you'd like to change. I'll apply adjustments to your draft. Nothing is saved until you activate.",
+    why: 'Fine-tuning here is faster than going back through each step. All changes stay local until the Final Activation step.',
+    next: 'Apply any final adjustments, then continue to activation.',
   },
   9: {
-    message: "Preview how each portal will look — director, coach, player, and parent. Configure parent and player experience here.",
-    why: 'Seeing the portals before activation helps you confirm the experience matches your academy culture.',
-    next: 'Review each portal view and set parent/player preferences.',
-  },
-  10: {
-    message: "This is your Academy DNA draft. Review it carefully — DONNA will use this to prepare your starting system.",
-    why: 'Reviewing your DNA before activation ensures your starting system reflects your academy accurately.',
-    next: 'Review all sections and check for any gaps.',
-  },
-  11: {
-    message: 'Your starting system is ready to prepare. Complete these steps to launch your academy.',
-    why: 'Each checklist item builds on the next. Start with curriculum, then templates, then people.',
-    next: 'Start with reviewing the curriculum spine.',
+    message: "Your Academy DNA is complete. Head to the Director Dashboard to continue setup — curriculum, templates, players, and coaches are next.",
+    why: 'DNA setup is the foundation. Everything else in AcademyOS builds on the identity, philosophy, and preferences you just set.',
+    next: 'Go to the Director Dashboard to start the next phase of setup.',
   },
 }
 
@@ -93,16 +81,14 @@ export function OnboardingDonnaPanel({ currentStep, draft }: Props) {
   const isWelcome = currentStep === 0
 
   const dnaLines: { label: string; value: string }[] = []
-  if (draft.academyName)        dnaLines.push({ label: 'Academy',      value: draft.academyName })
-  if (draft.academyModel)       dnaLines.push({ label: 'Model',        value: draft.academyModel.replace(/-/g, ' ') })
-  if (draft.ageGroups.length)   dnaLines.push({ label: 'Age Groups',   value: draft.ageGroups.join(', ') })
-  if (draft.coachingStyles.length) dnaLines.push({ label: 'Coaching',  value: draft.coachingStyles.join(' + ') })
-  if (draft.primaryCommunication) dnaLines.push({ label: 'Coach Voice', value: draft.primaryCommunication.replace(/-/g, ' ') })
-  if (draft.curriculumStartingPoint) dnaLines.push({ label: 'Curriculum', value: draft.curriculumStartingPoint.replace(/-/g, ' ') })
-  if (draft.sessionBlocks.length) dnaLines.push({ label: 'Sessions',   value: `${draft.sessionBlocks.length} blocks` })
-  if (draft.classTemplateDraft.selectedBlocks.length) dnaLines.push({ label: 'Class Template', value: `${draft.classTemplateDraft.selectedBlocks.length} blocks drafted` })
-  if (draft.fitnessTemplateDraft.selectedBlocks.length) dnaLines.push({ label: 'Fitness Template', value: `${draft.fitnessTemplateDraft.selectedBlocks.length} blocks drafted` })
-  if (draft.parentStyles.length)  dnaLines.push({ label: 'Parents',    value: draft.parentStyles.join(', ') })
+  if (draft.academyName)               dnaLines.push({ label: 'Academy',      value: draft.academyName })
+  if (draft.academyModel)              dnaLines.push({ label: 'Model',        value: draft.academyModel.replace(/-/g, ' ') })
+  if (draft.ageGroups.length)          dnaLines.push({ label: 'Age Groups',   value: draft.ageGroups.join(', ') })
+  if (draft.coachingStyles.length)     dnaLines.push({ label: 'Coaching',     value: draft.coachingStyles.join(' + ') })
+  if (draft.primaryCommunication)      dnaLines.push({ label: 'Coach Voice',  value: draft.primaryCommunication.replace(/-/g, ' ') })
+  if (draft.sessionBlocks.length)      dnaLines.push({ label: 'Sessions',     value: `${draft.sessionBlocks.length} blocks` })
+  if (draft.developmentPriorities.length) dnaLines.push({ label: 'Dev Priorities', value: `${draft.developmentPriorities.length} ranked` })
+  if (draft.parentStyles.length)       dnaLines.push({ label: 'Parents',      value: draft.parentStyles.join(', ') })
 
   return (
     <aside className="w-80 shrink-0 bg-surface border-l border-border flex flex-col overflow-y-auto">
@@ -228,7 +214,7 @@ export function OnboardingDonnaPanel({ currentStep, draft }: Props) {
       </div>
 
       {/* Building pulse — shown during active setup, hidden on welcome and final step */}
-      {!isWelcome && currentStep < 11 && (
+      {!isWelcome && currentStep < 9 && (
         <div className="px-4 pb-4">
           <div className="flex items-center gap-2">
             <span className="relative flex w-2 h-2 shrink-0">

@@ -5,15 +5,13 @@ import { CheckCircle2 } from 'lucide-react'
 const STEPS = [
   { id: 'welcome',             label: 'Welcome' },
   { id: 'academy-basics',      label: 'Academy' },
-  { id: 'coaching-dna',        label: 'Philosophy' },
+  { id: 'coaching-philosophy', label: 'Philosophy' },
   { id: 'coach-comm',          label: 'Comm Voice' },
-  { id: 'curriculum',          label: 'Curriculum' },
-  { id: 'class-template',      label: 'Class Tmpl' },
-  { id: 'fitness-template',    label: 'Fitness Tmpl' },
-  { id: 'players',             label: 'Players' },
-  { id: 'coaches',             label: 'Coaches' },
-  { id: 'portal-preview',      label: 'Portals' },
-  { id: 'review-dna',          label: 'Review DNA' },
+  { id: 'session-design',      label: 'Session' },
+  { id: 'player-development',  label: 'Player Dev' },
+  { id: 'parent-comms',        label: 'Parent Comms' },
+  { id: 'dna-summary',         label: 'DNA Summary' },
+  { id: 'donna-adjustment',    label: 'DONNA Adj' },
   { id: 'activate',            label: 'Activate' },
 ]
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Sparkles, CheckCircle2, Circle, ExternalLink, Zap } from 'lucide-react'
+import { ArrowLeft, Sparkles, CheckCircle2, Circle, ArrowRight } from 'lucide-react'
 import type { OnboardingDraft } from '../OnboardingShell'
 import { AcademyDnaSummaryCard } from '../AcademyDnaSummaryCard'
 
@@ -46,8 +46,8 @@ const CHECKLIST: ChecklistItem[] = [
     id: 'parent-experience',
     label: 'Parent experience configured',
     desc: 'Parent communication style and privacy rules are set.',
-    route: '/parent',
-    routeLabel: 'Parent Portal',
+    route: '/director',
+    routeLabel: 'Director Dashboard',
     required: false,
     readyCheck: (d) => !!(d.parentStyles.length),
   },
@@ -60,33 +60,15 @@ const CHECKLIST: ChecklistItem[] = [
     required: true,
     readyCheck: (d) => Object.values(d.parentVisibilityRules).filter(Boolean).length >= 3,
   },
-  {
-    id: 'player-mission',
-    label: 'Player mission style set',
-    desc: 'Default player portal framing is configured.',
-    route: '/player',
-    routeLabel: 'Player Portal',
-    required: false,
-    readyCheck: (d) => !!d.playerMissionStyle,
-  },
-  {
-    id: 'first-player',
-    label: 'Add your first player',
-    desc: 'Import or manually add at least one player to start tracking development.',
-    route: '/director/players',
-    routeLabel: 'Players',
-    required: false,
-    readyCheck: () => false,
-  },
-  {
-    id: 'first-session',
-    label: 'Schedule your first session',
-    desc: 'Create a session using your new default template.',
-    route: '/director/sessions',
-    routeLabel: 'Sessions',
-    required: false,
-    readyCheck: () => false,
-  },
+]
+
+const POST_DNA_TASKS = [
+  { label: 'Review Curriculum',          desc: 'Review level structure and skill paths.',         href: '/director/curriculum' },
+  { label: 'Create First Class Template', desc: 'Build a default on-court session template.',     href: '/director/class-templates/new' },
+  { label: 'Create Fitness Template',     desc: 'Add a physical prep session template.',           href: '/director/fitness/templates/new' },
+  { label: 'Upload Players',              desc: 'Import your player roster to start tracking.',   href: '/director/players' },
+  { label: 'Add Coaches',                 desc: 'Add coaching staff and assign roles.',            href: '/director/coaches' },
+  { label: 'Preview Portals',             desc: 'See how coach, player, and parent portals look.', href: '/director' },
 ]
 
 interface Props {
@@ -119,15 +101,15 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
           </div>
           <div>
             <p className="text-[9px] font-bold uppercase tracking-widest text-lime/70 mb-0.5">
-              Step 12 of 12 — Activate
+              Step 10 of 10 — DNA Ready
             </p>
             <h2 className="text-lg font-bold text-text-primary leading-tight">
-              Your academy foundation is ready.
+              Your Academy DNA is ready.
             </h2>
           </div>
         </div>
         <p className="text-[13px] text-text-secondary leading-relaxed">
-          Complete these steps to launch your starting operating system.
+          Your foundation is set. Head to the Director Dashboard to continue setup.
         </p>
       </div>
 
@@ -137,7 +119,7 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
           <span className="font-bold text-lime text-[13px] leading-none select-none">D</span>
         </div>
         <p className="text-[12px] text-text-secondary leading-relaxed">
-          Your Academy DNA is drafted. Review the checklist below — required items unlock activation. Optional items can be completed after launch.
+          Academy DNA is locked in. Required items below confirm your foundation is complete. The tasks in the next section are ready for you in the Director Dashboard.
         </p>
       </div>
 
@@ -165,11 +147,11 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
         <AcademyDnaSummaryCard draft={draft} onEditStep={onEditStep} compact />
       </div>
 
-      {/* Checklist */}
+      {/* DNA Readiness checklist */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
-            Continue Setup
+            DNA Foundation Check
           </p>
           <span className="text-[11px] font-mono text-text-muted">
             <span className={totalReady > 0 ? 'text-lime' : ''}>{totalReady}</span>/{items.length} complete
@@ -212,19 +194,33 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
                   {item.desc}
                 </p>
               </div>
-              <a
-                href={item.route}
-                className="shrink-0 inline-flex items-center gap-1 text-[10px] font-medium text-text-muted hover:text-lime transition-colors px-2 py-1 rounded-lg hover:bg-lime/8 border border-transparent hover:border-lime/20 mt-0.5"
-              >
-                {item.routeLabel}
-                <ExternalLink className="w-2.5 h-2.5" />
-              </a>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Activation status */}
+      {/* Post-DNA Setup Task Grid */}
+      <div className="mb-6">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3">
+          Next Setup Tasks
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {POST_DNA_TASKS.map(task => (
+            <a
+              key={task.label}
+              href={task.href}
+              className="rounded-xl border border-border bg-surface hover:border-border-strong hover:bg-surface-raised px-4 py-3 transition-all group"
+            >
+              <p className="text-xs font-semibold text-text-secondary group-hover:text-text-primary mb-0.5 transition-colors">
+                {task.label}
+              </p>
+              <p className="text-[10px] text-text-muted leading-snug">{task.desc}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* DNA status banner */}
       <div className={[
         'mb-8 rounded-2xl border px-5 py-4',
         canActivate
@@ -240,10 +236,10 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
             {canActivate ? (
               <>
                 <p className="text-sm font-semibold text-text-primary mb-1">
-                  Ready to activate your starting system.
+                  Academy DNA is complete.
                 </p>
                 <p className="text-[12px] text-text-secondary leading-relaxed">
-                  All required fields are complete. DONNA will prepare your curriculum defaults, session templates, coach cue library, and portal defaults when you activate.
+                  All required DNA fields are set. Head to the Director Dashboard to continue with curriculum, templates, players, and coaches.
                 </p>
               </>
             ) : (
@@ -252,7 +248,7 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
                   {requiredTotal - requiredReady} required item{requiredTotal - requiredReady > 1 ? 's' : ''} remaining
                 </p>
                 <p className="text-[12px] text-text-muted leading-relaxed">
-                  Complete the required checklist items above to unlock activation. Go back to any step to fill in missing details.
+                  Complete the required DNA fields above. Go back to any step to fill in missing details.
                 </p>
               </>
             )}
@@ -269,28 +265,17 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
-        <button
-          disabled={!canActivate}
-          className={[
-            'inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm transition-all',
-            canActivate
-              ? 'bg-lime text-base hover:brightness-110 shadow-lime cursor-pointer'
-              : 'bg-surface border border-border text-text-muted cursor-not-allowed',
-          ].join(' ')}
+        <a
+          href="/director"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-lime text-base font-semibold text-sm hover:brightness-110 shadow-lime transition-all"
         >
-          <Zap className="w-4 h-4" />
-          Activate Starting System
-        </button>
-        {!canActivate && (
-          <span className="text-[10px] text-text-muted">
-            Complete required items first
-          </span>
-        )}
+          Go to Director Dashboard
+          <ArrowRight className="w-4 h-4" />
+        </a>
       </div>
 
       <p className="mt-4 text-[10px] text-text-muted/40 text-center">
-        Activation will apply your Academy DNA settings to your AcademyOS account.
-        Nothing has been saved or applied yet.
+        Your Academy DNA is saved to your draft. Settings are applied when you complete setup in the Director Dashboard.
       </p>
     </div>
   )

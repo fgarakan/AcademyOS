@@ -6,10 +6,12 @@ import { OnboardingProgressRail } from './OnboardingProgressRail'
 import { OnboardingDonnaPanel } from './OnboardingDonnaPanel'
 import { AcademyBasicsStep } from './steps/AcademyBasicsStep'
 import { CoachingDnaStep } from './steps/CoachingDnaStep'
-import { CurriculumBuilderStep } from './steps/CurriculumBuilderStep'
-import { FirstClassTemplateStep } from './steps/FirstClassTemplateStep'
 import { CoachCommunicationStep } from './steps/CoachCommunicationStep'
+import { SessionDesignStep } from './steps/SessionDesignStep'
+import { PlayerDevelopmentStep } from './steps/PlayerDevelopmentStep'
+import { ParentCommunicationStep } from './steps/ParentCommunicationStep'
 import { AcademyDnaReviewStep } from './steps/AcademyDnaReviewStep'
+import { DonnaAdjustmentStep } from './steps/DonnaAdjustmentStep'
 import { ActivationChecklistStep } from './steps/ActivationChecklistStep'
 import { useOnboardingDraftPersistence, OnboardingSaveStatus, DraftResumeBanner } from './OnboardingSaveStatus'
 
@@ -111,21 +113,19 @@ const SETUP_MODES = [
   { id: 'multi-location',  label: 'Multi-Location Academy',  time: '~30 min',    desc: 'Multiple courts, locations, or coaching groups.' },
 ]
 
-export const TOTAL_STEPS = 12
+export const TOTAL_STEPS = 10
 
 const STEP_NAMES = [
   'Welcome',
   'Academy Basics',
   'Coaching Philosophy',
   'Coach Communication',
-  'Curriculum Builder',
-  'First Class Template',
-  'First Fitness Template',
-  'Player Upload',
-  'Add Coaches',
-  'Portal Preview',
-  'Review Academy DNA',
-  'Activate Starting System',
+  'Session Design',
+  'Player Development',
+  'Parent Communication',
+  'DNA Summary',
+  'DONNA Adjustment',
+  'Final Activation',
 ]
 
 const STEP_SUBTITLES = [
@@ -133,14 +133,12 @@ const STEP_SUBTITLES = [
   'Your academy identity and structure.',
   'How your coaches teach and develop players.',
   'How your coaches communicate on court and in reports.',
-  'Curriculum starting point and session structure.',
-  'Draft your first class template.',
-  'Draft your first fitness template.',
-  'Upload or fast-fill your player roster.',
-  'Add coaches and assign roles.',
-  'Preview portals and configure parent + player experience.',
+  'How a typical session at your academy should feel.',
+  'What great player development looks like here.',
+  'How parents experience your academy.',
   'Review your Academy DNA draft.',
-  'Complete these steps to launch your academy.',
+  'Fine-tune your Academy DNA with DONNA.',
+  'Your Academy DNA is ready. See what comes next.',
 ]
 
 export function OnboardingShell() {
@@ -204,24 +202,15 @@ export function OnboardingShell() {
               <CoachCommunicationStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 4 && (
-              <CurriculumBuilderStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
+              <SessionDesignStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 5 && (
-              <FirstClassTemplateStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
+              <PlayerDevelopmentStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 6 && (
-              <FirstFitnessTemplatePlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={7} totalSteps={TOTAL_STEPS} />
+              <ParentCommunicationStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 7 && (
-              <PlayerUploadPlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={8} totalSteps={TOTAL_STEPS} />
-            )}
-            {currentStep === 8 && (
-              <AddCoachesPlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={9} totalSteps={TOTAL_STEPS} />
-            )}
-            {currentStep === 9 && (
-              <PortalPreviewPlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={10} totalSteps={TOTAL_STEPS} />
-            )}
-            {currentStep === 10 && (
               <AcademyDnaReviewStep
                 draft={draft}
                 updateDraft={updateDraft}
@@ -229,6 +218,9 @@ export function OnboardingShell() {
                 onPrev={goPrev}
                 onEditStep={goToStep}
               />
+            )}
+            {currentStep === 8 && (
+              <DonnaAdjustmentStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === TOTAL_STEPS - 1 && (
               <ActivationChecklistStep draft={draft} onPrev={goPrev} onEditStep={goToStep} />
@@ -295,8 +287,9 @@ function WelcomeStep({
   const FLOW_STEPS = [
     'Academy Basics',
     'Coaching DNA',
-    'Curriculum',
-    'Templates',
+    'Session Design',
+    'Player Priorities',
+    'Parent Comms',
     'Review & Activate',
   ]
 
@@ -447,90 +440,4 @@ function WelcomeStep({
   )
 }
 
-// ── Placeholder steps (replaced in OF-3 through OF-9) ─────────
-
-interface PlaceholderProps {
-  draft: OnboardingDraft
-  updateDraft: (p: Partial<OnboardingDraft>) => void
-  onNext: () => void
-  onPrev: () => void
-  stepNum: number
-  totalSteps: number
-}
-
-function StepPlaceholder({
-  title,
-  subtitle,
-  skippable,
-  onNext,
-  onPrev,
-  stepNum,
-  totalSteps,
-}: {
-  title: string
-  subtitle: string
-  skippable: boolean
-  onNext: () => void
-  onPrev: () => void
-  stepNum: number
-  totalSteps: number
-}) {
-  return (
-    <div>
-      <div className="mb-6">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-lime mb-2">
-          Step {stepNum} of {totalSteps}
-        </p>
-        <h2 className="text-2xl font-bold text-text-primary mb-1">{title}</h2>
-        <p className="text-sm text-text-muted leading-relaxed">{subtitle}</p>
-      </div>
-
-      <div className="rounded-2xl bg-surface border border-border px-5 py-6 mb-8">
-        <div className="flex items-start gap-3">
-          <Sparkles className="w-4 h-4 text-lime shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-text-secondary mb-1">
-              Draft step — coming next in sprint {stepNum === 4 ? 'OF-3' : stepNum === 5 ? 'OF-4' : stepNum === 6 ? 'OF-5' : stepNum === 7 ? 'OF-7' : stepNum === 8 ? 'OF-8' : 'OF-9'}.
-            </p>
-            <p className="text-[12px] text-text-muted leading-relaxed">
-              This step will be built out in the connected onboarding sprint sequence. You can continue to the next step or skip this section now.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onPrev}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-surface text-sm font-medium text-text-secondary hover:text-text-primary hover:border-border-strong transition-all"
-        >
-          Back
-        </button>
-        <button
-          onClick={onNext}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lime text-base font-semibold text-sm hover:brightness-110 transition-all shadow-lime"
-        >
-          {skippable ? 'Skip for now' : 'Continue'}
-          <ArrowRight className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function FirstFitnessTemplatePlaceholder(p: PlaceholderProps) {
-  return <StepPlaceholder title="First Fitness Template" subtitle="Draft your first fitness template with auto-populated exercises." skippable={true} onNext={p.onNext} onPrev={p.onPrev} stepNum={p.stepNum} totalSteps={p.totalSteps} />
-}
-
-function PlayerUploadPlaceholder(p: PlaceholderProps) {
-  return <StepPlaceholder title="Player Upload" subtitle="Upload or fast-fill your player roster to get started." skippable={true} onNext={p.onNext} onPrev={p.onPrev} stepNum={p.stepNum} totalSteps={p.totalSteps} />
-}
-
-function AddCoachesPlaceholder(p: PlaceholderProps) {
-  return <StepPlaceholder title="Add Coaches" subtitle="Add your coaching staff and assign roles and levels." skippable={true} onNext={p.onNext} onPrev={p.onPrev} stepNum={p.stepNum} totalSteps={p.totalSteps} />
-}
-
-function PortalPreviewPlaceholder(p: PlaceholderProps) {
-  return <StepPlaceholder title="Portal Preview" subtitle="Preview the director, coach, player, and parent portals." skippable={true} onNext={p.onNext} onPrev={p.onPrev} stepNum={p.stepNum} totalSteps={p.totalSteps} />
-}
 

@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Sprint 379 Academy DNA Setup Scope Repair V1
+
+**Files created:** `steps/SessionDesignStep.tsx` (7 session block options, multi-select, live timeline preview, step 5 of 10), `steps/PlayerDevelopmentStep.tsx` (10 dev priorities, max 5 ranked with reorder controls, step 6 of 10), `steps/ParentCommunicationStep.tsx` (always-on privacy rules + 7 parent communication styles, step 7 of 10), `steps/DonnaAdjustmentStep.tsx` (wraps DonnaAdjustmentDraftPanel, step 9 of 10), `docs/SPRINT_379_ACADEMY_DNA_SETUP_SCOPE_REPAIR.md`. **Files modified:** `OnboardingShell.tsx` (TOTAL_STEPS 12→10, STEP_NAMES/STEP_SUBTITLES updated, steps 4-9 rewired, CurriculumBuilderStep/FirstClassTemplateStep removed, placeholder functions removed), `OnboardingProgressRail.tsx` (12→10 DNA steps), `OnboardingDonnaPanel.tsx` (5 DNA milestones, messages 0-9, dnaLines updated, pulse guard < 11→< 9), `AcademyDnaReviewStep.tsx` (stepNumber 11→8, totalSteps 12→10, edit indices fixed, DonnaAdjustmentDraftPanel removed, CTA changed), `ActivationChecklistStep.tsx` (DNA-ready header, simplified checklist, post-DNA task grid, "Go to Director Dashboard" link), `AcademyBasicsStep.tsx` / `CoachingDnaStep.tsx` / `CoachCommunicationStep.tsx` (totalSteps 12→10). TypeScript clean.
+
+---
+
 ## 2026-05-19 — Full Prototype Current System Fit Audit V1
 
 **Files created:** `docs/FULL_PROTOTYPE_TO_CURRENT_SYSTEM_FIT_AUDIT.md` — comprehensive audit of all six prototype zips (`academyos-donna-onboarding.zip`, `academy-curriculum-builder.zip`, `academyos-templates-prototype.zip`, `academyos-coach-portal.zip`, `academyos-player-portal.zip`, `academyos-parent-portal.zip`) against the current AcademyOS system. Sections: executive summary (prototype fit 5/10, current system fit 7/10), full prototype inventory table (58 screens/components), current system inventory (30 routes), unified product map, what works and what does not work from prototypes, recommended final structure, Academy DNA setup decision, module-by-module recommendations, 42-sprint build sequence (379-422), final recommendation. Decision: pivot to Sprint 379 Academy DNA Setup Scope Repair. Do not continue OF-FIX-4. TypeScript clean.

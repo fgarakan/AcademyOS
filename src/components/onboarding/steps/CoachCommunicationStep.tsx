@@ -51,7 +51,7 @@ export function CoachCommunicationStep({ draft, updateDraft, onNext, onPrev }: P
     <div>
       <OnboardingStepHeader
         stepNumber={4}
-        totalSteps={12}
+        totalSteps={10}
         title="How do your coaches communicate?"
         subtitle="Choose your primary coaching voice. DONNA uses this to shape language across the whole system."
       />
