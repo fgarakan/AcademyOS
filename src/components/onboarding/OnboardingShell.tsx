@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { ArrowRight, ArrowLeft, Sparkles, Zap } from 'lucide-react'
+import { ArrowRight, Sparkles, Zap } from 'lucide-react'
 import { OnboardingProgressRail } from './OnboardingProgressRail'
 import { OnboardingDonnaPanel } from './OnboardingDonnaPanel'
 import { OnboardingStepHeader } from './OnboardingStepHeader'
@@ -10,6 +10,7 @@ import { CoachingDnaStep } from './steps/CoachingDnaStep'
 import { SessionCurriculumDefaultsStep } from './steps/SessionCurriculumDefaultsStep'
 import { ParentPlayerExperienceStep } from './steps/ParentPlayerExperienceStep'
 import { AcademyDnaReviewStep } from './steps/AcademyDnaReviewStep'
+import { ActivationChecklistStep } from './steps/ActivationChecklistStep'
 
 export interface OnboardingDraft {
   setupMode: string
@@ -167,23 +168,11 @@ export function OnboardingShell() {
                 onEditStep={goToStep}
               />
             )}
-            {currentStep > 5 && currentStep < TOTAL_STEPS - 1 && (
-              <PlaceholderStep
-                stepNumber={currentStep + 1}
-                title={STEP_NAMES[currentStep]}
-                subtitle={STEP_SUBTITLES[currentStep]}
-                onNext={goNext}
-                onPrev={goPrev}
-              />
-            )}
             {currentStep === TOTAL_STEPS - 1 && (
-              <PlaceholderStep
-                stepNumber={TOTAL_STEPS}
-                title={STEP_NAMES[TOTAL_STEPS - 1]}
-                subtitle={STEP_SUBTITLES[TOTAL_STEPS - 1]}
-                onNext={undefined}
+              <ActivationChecklistStep
+                draft={draft}
                 onPrev={goPrev}
-                isFinal
+                onEditStep={goToStep}
               />
             )}
 
@@ -334,76 +323,6 @@ function WelcomeStep({
         >
           Use recommended defaults
         </button>
-      </div>
-    </div>
-  )
-}
-
-// ── Placeholder Step ────────────────────────────────────────────
-
-function PlaceholderStep({
-  stepNumber,
-  title,
-  subtitle,
-  onNext,
-  onPrev,
-  isFinal,
-}: {
-  stepNumber: number
-  title: string
-  subtitle: string
-  onNext?: () => void
-  onPrev: () => void
-  isFinal?: boolean
-}) {
-  return (
-    <div>
-      <OnboardingStepHeader
-        stepNumber={stepNumber}
-        totalSteps={TOTAL_STEPS}
-        title={title}
-        subtitle={subtitle}
-      />
-
-      {/* Placeholder card */}
-      <div className="rounded-2xl border border-border bg-surface p-8 mb-8 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-lime/8 border border-lime/20 flex items-center justify-center mx-auto mb-4">
-          <Sparkles className="w-5 h-5 text-lime" />
-        </div>
-        <p className="text-sm font-medium text-text-secondary mb-1">
-          {title}
-        </p>
-        <p className="text-xs text-text-muted">
-          This step is being built in the next sprint.
-        </p>
-      </div>
-
-      {/* Navigation */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onPrev}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-surface text-sm font-medium text-text-secondary hover:text-text-primary hover:border-border-strong transition-all"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
-        {!isFinal && onNext && (
-          <button
-            onClick={onNext}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lime text-base font-semibold text-sm hover:brightness-110 transition-all shadow-lime"
-          >
-            Continue
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        )}
-        {isFinal && (
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-lime/8 border border-lime/20">
-            <Sparkles className="w-4 h-4 text-lime" />
-            <span className="text-sm font-medium text-lime">
-              Activation Checklist coming in Sprint O-10
-            </span>
-          </div>
-        )}
       </div>
     </div>
   )

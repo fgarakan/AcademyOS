@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-10: Activation Checklist V1
+
+**Files created:** `src/components/onboarding/steps/ActivationChecklistStep.tsx` (Step 7 — 8 checklist items with live draft readiness checks, route links, conditional Activate button), `docs/DONNA_ONBOARDING_ACTIVATION_CHECKLIST.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired ActivationChecklistStep for step 6, removed PlaceholderStep function and unused ArrowLeft import). TypeScript clean.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-9: DONNA Adjustment Draft Panel V1
 
 **Files created:** `src/components/onboarding/DonnaAdjustmentDraftPanel.tsx` (collapsible chat panel with 6 quick-apply draft adjustments, free-text input, applied-state tracking), `docs/DONNA_ONBOARDING_ADJUSTMENT_DRAFT_PANEL.md`. **Files modified:** `src/components/onboarding/steps/AcademyDnaReviewStep.tsx` (embedded adjustment panel between DNA table and DONNA summary). TypeScript clean.
