@@ -11,6 +11,7 @@ import { SessionCurriculumDefaultsStep } from './steps/SessionCurriculumDefaults
 import { ParentPlayerExperienceStep } from './steps/ParentPlayerExperienceStep'
 import { AcademyDnaReviewStep } from './steps/AcademyDnaReviewStep'
 import { ActivationChecklistStep } from './steps/ActivationChecklistStep'
+import { useOnboardingDraftPersistence, OnboardingSaveStatus, DraftResumeBanner } from './OnboardingSaveStatus'
 
 export interface OnboardingDraft {
   setupMode: string
@@ -89,10 +90,13 @@ export function OnboardingShell() {
   const [currentStep, setCurrentStep] = useState(0)
   const [draft, setDraft] = useState<OnboardingDraft>(defaultDraft)
   const [showMobilePanel, setShowMobilePanel] = useState(false)
+  const [showResumeBanner, setShowResumeBanner] = useState(true)
 
   const updateDraft = useCallback((partial: Partial<OnboardingDraft>) => {
     setDraft(prev => ({ ...prev, ...partial }))
   }, [])
+
+  const { lastSaved, restoreDraft, clearDraft, hasSavedDraft } = useOnboardingDraftPersistence(draft, setDraft)
 
   const goNext = useCallback(() => {
     setCurrentStep(s => Math.min(s + 1, TOTAL_STEPS - 1))
@@ -118,6 +122,16 @@ export function OnboardingShell() {
         {/* Content Area */}
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-2xl mx-auto px-6 py-8">
+
+            {/* Resume banner — shown on welcome step when saved draft exists */}
+            {currentStep === 0 && showResumeBanner && hasSavedDraft() && (
+              <div className="mb-6">
+                <DraftResumeBanner
+                  onResume={() => { restoreDraft(); setShowResumeBanner(false) }}
+                  onDismiss={() => { clearDraft(); setShowResumeBanner(false) }}
+                />
+              </div>
+            )}
 
             {/* Step Content */}
             {currentStep === 0 && (
@@ -176,11 +190,17 @@ export function OnboardingShell() {
               />
             )}
 
-            {/* Save status placeholder */}
-            <div className="mt-8 pt-4 border-t border-border">
-              <p className="text-[10px] text-text-muted/50 text-center">
-                Draft only — saved in this browser. Nothing applied until Activation Checklist.
-              </p>
+            {/* Save status */}
+            <div className="mt-8 pt-4 border-t border-border flex items-center justify-center gap-2">
+              <OnboardingSaveStatus
+                lastSaved={lastSaved}
+                onClear={() => { clearDraft(); setDraft(defaultDraft) }}
+              />
+              {!lastSaved && (
+                <p className="text-[10px] text-text-muted/50 text-center">
+                  Draft only — nothing applied until Activation Checklist.
+                </p>
+              )}
             </div>
 
           </div>

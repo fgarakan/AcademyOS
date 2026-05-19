@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-11: Draft Save + Resume V1
+
+**Files created:** `src/components/onboarding/OnboardingSaveStatus.tsx` (useOnboardingDraftPersistence hook, OnboardingSaveStatus component, DraftResumeBanner), `docs/DONNA_ONBOARDING_SAVE_STATUS.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired persistence hook, replaced static footer with live save status, added resume banner on welcome step). TypeScript clean.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-10: Activation Checklist V1
 
 **Files created:** `src/components/onboarding/steps/ActivationChecklistStep.tsx` (Step 7 — 8 checklist items with live draft readiness checks, route links, conditional Activate button), `docs/DONNA_ONBOARDING_ACTIVATION_CHECKLIST.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired ActivationChecklistStep for step 6, removed PlaceholderStep function and unused ArrowLeft import). TypeScript clean.
