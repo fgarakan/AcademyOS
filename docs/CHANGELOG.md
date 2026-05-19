@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-19 — Sprint 1080: Parent Progress Page V1
+
+**Files modified:** `src/app/parent/progress/page.tsx` — replaced stub; level journey card, gate progress bar, current focus badge, 5 domain observation count blocks, encouragement + safety note.
+**Files created:** `docs/PARENT_PROGRESS_1080.md`
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1079: Parent Portal Alignment Audit V1
 
 **Files modified:** none.
