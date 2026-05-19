@@ -65,6 +65,21 @@ function buildChips(
       label: 'I feel stuck — what do I do?',
       response: `Feeling stuck is part of the process — it often means you're right at the edge of a breakthrough. Keep doing the reps even when it doesn't feel like progress. Be honest with your coach at your next session about what feels hard. That's how real development happens.`,
     },
+    {
+      id: 'before-match',
+      label: 'How should I prepare before a match?',
+      response: `The night before: rest, hydrate, and don't think too much about tactics. Morning of: a short dynamic warm-up, your go-to mental reset routine, and one clear intention for the match (e.g. "stay first strike"). Don't try to change anything major — play what's trained.`,
+    },
+    {
+      id: 'after-loss',
+      label: 'I had a tough loss — what now?',
+      response: `A tough loss is information, not failure. Give yourself 24 hours to feel it without analyzing. After that, ask: what was one thing I controlled well, and one thing I want to do differently? Write it down. Bring it to your next session — that's when coaches can actually help you use it.`,
+    },
+    {
+      id: 'stay-focused',
+      label: 'How do I stay focused during practice?',
+      response: `Focus is a skill, not a given. Try setting one specific intention at the start of each drill — not "play well" but something you can observe, like "watch the ball all the way to contact." When your mind wanders, use the between-point reset your coach has given you. Short focus beats long drift.`,
+    },
   ]
 }
 

@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-19 — Sprint 1095: Player DONNA Chip Expansion V1
+
+**Files modified:** `src/app/player/ask-donna/page.tsx` — added 3 new chips: "How should I prepare before a match?", "I had a tough loss — what now?", "How do I stay focused during practice?". Player DONNA now has 8 chips.
+**TypeScript:** Clean.
+
+---
+
 ## 2026-05-19 — Sprint 1094: Director DONNA Recommended Actions Polish V1
 
 **Files modified:** `src/app/director/donna/page.tsx` — added "Review queue" link in Next Best Actions card header; added `ChevronRight` chevron per action row; wrapped action label/reason in `flex-1` for alignment.
