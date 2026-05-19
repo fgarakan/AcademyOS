@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Full Prototype Current System Fit Audit V1
+
+**Files created:** `docs/FULL_PROTOTYPE_TO_CURRENT_SYSTEM_FIT_AUDIT.md` — comprehensive audit of all six prototype zips (`academyos-donna-onboarding.zip`, `academy-curriculum-builder.zip`, `academyos-templates-prototype.zip`, `academyos-coach-portal.zip`, `academyos-player-portal.zip`, `academyos-parent-portal.zip`) against the current AcademyOS system. Sections: executive summary (prototype fit 5/10, current system fit 7/10), full prototype inventory table (58 screens/components), current system inventory (30 routes), unified product map, what works and what does not work from prototypes, recommended final structure, Academy DNA setup decision, module-by-module recommendations, 42-sprint build sequence (379-422), final recommendation. Decision: pivot to Sprint 379 Academy DNA Setup Scope Repair. Do not continue OF-FIX-4. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Connected Onboarding Sprint OF-FIX-3: Coaching Communication Split V1
 
 **Files created:** `steps/CoachCommunicationStep.tsx` (communication voice selection — primary + secondary; DONNA impact strip; step 4 of 12), `docs/CONNECTED_ONBOARDING_OF_FIX_3.md`. **Files modified:** `CoachingDnaStep.tsx` (coaching styles only, comm section removed, totalSteps 12), `OnboardingShell.tsx` (TOTAL_STEPS 11→12, CoachCommunicationStep wired at index 3, all subsequent indices shifted +1), `OnboardingProgressRail.tsx` (12 nodes, 'Comm Voice' added), `OnboardingDonnaPanel.tsx` (Coaching DNA milestone covers steps 2–3, DONNA message added for step 3, messages 3–10 shifted to 4–11, pulse guard updated to < 11), plus stepNumber/totalSteps updated in AcademyBasicsStep, CurriculumBuilderStep, FirstClassTemplateStep, AcademyDnaReviewStep, ActivationChecklistStep. TypeScript clean.
