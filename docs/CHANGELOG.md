@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-1: Prototype and Current Flow Audit V1
+
+**Files created:** `docs/DONNA_ONBOARDING_PROTOTYPE_CURRENT_FLOW_AUDIT.md` — full prototype screen-by-screen IA extraction (10 screens), current AcademyOS onboarding route/component inventory, prototype UI/flow rating (6.5/10), current AcademyOS onboarding rating (5/10), keep/replace/delete table, build risks, recommended 7-step IA. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Sprint 1106: Full Demo Readiness QA V1
 
 **Files created:** `docs/FULL_DEMO_READINESS_QA_1106.md` — complete portal inventory across all 4 roles, safety audit, navigation audit, DONNA chip summary, phase summary. All 50 sprints (1057–1106) delivered. TypeScript clean.
