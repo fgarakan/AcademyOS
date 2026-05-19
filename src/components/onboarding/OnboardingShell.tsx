@@ -7,6 +7,7 @@ import { OnboardingDonnaPanel } from './OnboardingDonnaPanel'
 import { OnboardingStepHeader } from './OnboardingStepHeader'
 import { AcademyBasicsStep } from './steps/AcademyBasicsStep'
 import { CoachingDnaStep } from './steps/CoachingDnaStep'
+import { SessionCurriculumDefaultsStep } from './steps/SessionCurriculumDefaultsStep'
 
 export interface OnboardingDraft {
   setupMode: string
@@ -135,7 +136,15 @@ export function OnboardingShell() {
                 onPrev={goPrev}
               />
             )}
-            {currentStep > 2 && currentStep < TOTAL_STEPS - 1 && (
+            {currentStep === 3 && (
+              <SessionCurriculumDefaultsStep
+                draft={draft}
+                updateDraft={updateDraft}
+                onNext={goNext}
+                onPrev={goPrev}
+              />
+            )}
+            {currentStep > 3 && currentStep < TOTAL_STEPS - 1 && (
               <PlaceholderStep
                 stepNumber={currentStep + 1}
                 title={STEP_NAMES[currentStep]}

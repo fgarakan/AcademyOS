@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-6: Session Curriculum Defaults V1
+
+**Files created:** `src/components/onboarding/steps/SessionCurriculumDefaultsStep.tsx` (Step 4 — 7 session block selectors, live proportional timeline preview, 10 development priority pills with rank display), `docs/DONNA_ONBOARDING_SESSION_CURRICULUM_DEFAULTS.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired SessionCurriculumDefaultsStep for step 3). TypeScript clean.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-5: Coaching DNA Guided Setup V1
 
 **Files created:** `src/components/onboarding/steps/CoachingDnaStep.tsx` (Step 3 — coaching style cards with rank + impact, communication voice Primary/Secondary UI), `docs/DONNA_ONBOARDING_COACHING_DNA.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx`. TypeScript clean.
