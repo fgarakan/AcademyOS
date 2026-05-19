@@ -8,6 +8,7 @@ import { AcademyBasicsStep } from './steps/AcademyBasicsStep'
 import { CoachingDnaStep } from './steps/CoachingDnaStep'
 import { CurriculumBuilderStep } from './steps/CurriculumBuilderStep'
 import { FirstClassTemplateStep } from './steps/FirstClassTemplateStep'
+import { CoachCommunicationStep } from './steps/CoachCommunicationStep'
 import { AcademyDnaReviewStep } from './steps/AcademyDnaReviewStep'
 import { ActivationChecklistStep } from './steps/ActivationChecklistStep'
 import { useOnboardingDraftPersistence, OnboardingSaveStatus, DraftResumeBanner } from './OnboardingSaveStatus'
@@ -110,12 +111,13 @@ const SETUP_MODES = [
   { id: 'multi-location',  label: 'Multi-Location Academy',  time: '~30 min',    desc: 'Multiple courts, locations, or coaching groups.' },
 ]
 
-export const TOTAL_STEPS = 11
+export const TOTAL_STEPS = 12
 
 const STEP_NAMES = [
   'Welcome',
   'Academy Basics',
-  'Coaching DNA',
+  'Coaching Philosophy',
+  'Coach Communication',
   'Curriculum Builder',
   'First Class Template',
   'First Fitness Template',
@@ -129,7 +131,8 @@ const STEP_NAMES = [
 const STEP_SUBTITLES = [
   'Tell DONNA how your academy works.',
   'Your academy identity and structure.',
-  'How your coaches teach and communicate.',
+  'How your coaches teach and develop players.',
+  'How your coaches communicate on court and in reports.',
   'Curriculum starting point and session structure.',
   'Draft your first class template.',
   'Draft your first fitness template.',
@@ -198,24 +201,27 @@ export function OnboardingShell() {
               <CoachingDnaStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 3 && (
-              <CurriculumBuilderStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
+              <CoachCommunicationStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 4 && (
-              <FirstClassTemplateStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
+              <CurriculumBuilderStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 5 && (
-              <FirstFitnessTemplatePlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={6} totalSteps={TOTAL_STEPS} />
+              <FirstClassTemplateStep draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} />
             )}
             {currentStep === 6 && (
-              <PlayerUploadPlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={7} totalSteps={TOTAL_STEPS} />
+              <FirstFitnessTemplatePlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={7} totalSteps={TOTAL_STEPS} />
             )}
             {currentStep === 7 && (
-              <AddCoachesPlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={8} totalSteps={TOTAL_STEPS} />
+              <PlayerUploadPlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={8} totalSteps={TOTAL_STEPS} />
             )}
             {currentStep === 8 && (
-              <PortalPreviewPlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={9} totalSteps={TOTAL_STEPS} />
+              <AddCoachesPlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={9} totalSteps={TOTAL_STEPS} />
             )}
             {currentStep === 9 && (
+              <PortalPreviewPlaceholder draft={draft} updateDraft={updateDraft} onNext={goNext} onPrev={goPrev} stepNum={10} totalSteps={TOTAL_STEPS} />
+            )}
+            {currentStep === 10 && (
               <AcademyDnaReviewStep
                 draft={draft}
                 updateDraft={updateDraft}

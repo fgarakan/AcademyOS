@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — Connected Onboarding Sprint OF-FIX-3: Coaching Communication Split V1
+
+**Files created:** `steps/CoachCommunicationStep.tsx` (communication voice selection — primary + secondary; DONNA impact strip; step 4 of 12), `docs/CONNECTED_ONBOARDING_OF_FIX_3.md`. **Files modified:** `CoachingDnaStep.tsx` (coaching styles only, comm section removed, totalSteps 12), `OnboardingShell.tsx` (TOTAL_STEPS 11→12, CoachCommunicationStep wired at index 3, all subsequent indices shifted +1), `OnboardingProgressRail.tsx` (12 nodes, 'Comm Voice' added), `OnboardingDonnaPanel.tsx` (Coaching DNA milestone covers steps 2–3, DONNA message added for step 3, messages 3–10 shifted to 4–11, pulse guard updated to < 11), plus stepNumber/totalSteps updated in AcademyBasicsStep, CurriculumBuilderStep, FirstClassTemplateStep, AcademyDnaReviewStep, ActivationChecklistStep. TypeScript clean.
+
+---
+
 ## 2026-05-19 — Connected Onboarding Sprint OF-FIX-2: Welcome + Academy Basics Repair V1
 
 **Files modified:** `OnboardingShell.tsx` (WelcomeStep — added 4-card "What DONNA builds for you" feature strip: Curriculum Builder, Player Pathways, Analytics, Parent Reports; ambient glow and 5-step pills from OF-FIX-1 preserved), `AcademyBasicsStep.tsx` (Primary Goals section removed from UI; `primaryGoals` kept in draft type for compatibility; age group buttons now show always-visible colored ball dot using existing status tokens and Tailwind built-ins; `status-purple` replaced with `status-blue`). **Files created:** `docs/CONNECTED_ONBOARDING_OF_FIX_2.md`. TypeScript clean.

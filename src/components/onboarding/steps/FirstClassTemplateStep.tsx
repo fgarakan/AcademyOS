@@ -138,8 +138,8 @@ export function FirstClassTemplateStep({ draft, updateDraft, onNext, onPrev }: P
   return (
     <div>
       <OnboardingStepHeader
-        stepNumber={5}
-        totalSteps={11}
+        stepNumber={6}
+        totalSteps={12}
         title="Draft first class template"
         subtitle="Build a starting class template using the AcademyOS block model. This stays as an onboarding draft."
       />

@@ -119,7 +119,7 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
           </div>
           <div>
             <p className="text-[9px] font-bold uppercase tracking-widest text-lime/70 mb-0.5">
-              Step 11 of 11 — Activate
+              Step 12 of 12 — Activate
             </p>
             <h2 className="text-lg font-bold text-text-primary leading-tight">
               Your academy foundation is ready.

@@ -5,13 +5,13 @@ import type { OnboardingDraft } from './OnboardingShell'
 
 // 7 grouped milestones — each covers one or more actual steps
 const MILESTONES = [
-  { label: 'Academy Basics', minStep: 1, maxStep: 1 },
-  { label: 'Coaching DNA',   minStep: 2, maxStep: 2 },
-  { label: 'Curriculum',     minStep: 3, maxStep: 3 },
-  { label: 'Templates',      minStep: 4, maxStep: 5 },
-  { label: 'People',         minStep: 6, maxStep: 7 },
-  { label: 'Review',         minStep: 8, maxStep: 9 },
-  { label: 'Activate',       minStep: 10, maxStep: 10 },
+  { label: 'Academy Basics', minStep: 1,  maxStep: 1  },
+  { label: 'Coaching DNA',   minStep: 2,  maxStep: 3  },
+  { label: 'Curriculum',     minStep: 4,  maxStep: 4  },
+  { label: 'Templates',      minStep: 5,  maxStep: 6  },
+  { label: 'People',         minStep: 7,  maxStep: 8  },
+  { label: 'Review',         minStep: 9,  maxStep: 10 },
+  { label: 'Activate',       minStep: 11, maxStep: 11 },
 ]
 
 function getMilestoneStatus(milestone: typeof MILESTONES[number], currentStep: number): 'complete' | 'active' | 'upcoming' {
@@ -33,45 +33,50 @@ const DONNA_MESSAGES: Record<number, { message: string; why: string; next: strin
   },
   2: {
     message: 'Your coaching philosophy shapes every session template, coach cue, and player feedback DONNA prepares.',
-    why: 'Coaching DNA personalizes the language, session structure, and coach prompts across your whole system.',
+    why: 'Coaching styles personalize session structure, block selection, and coach prompts across your whole system.',
     next: 'Select up to 3 coaching styles.',
   },
   3: {
+    message: "Now tell me how your coaches communicate. This shapes the language DONNA uses everywhere — from session cues to parent summaries.",
+    why: 'Communication voice determines coach wrap-up tone, player-facing mission language, and parent-safe phrasing.',
+    next: 'Choose a primary communication voice.',
+  },
+  4: {
     message: "The curriculum starting point tells me which level structure to use and how your sessions are built. I'll use this to suggest your first class and fitness templates.",
     why: 'Curriculum structure determines level gates, skill paths, and session planning across all groups.',
     next: 'Choose a curriculum starting point.',
   },
-  4: {
+  5: {
     message: "Let's draft your first class template using the real AcademyOS block model. I'll suggest blocks based on your coaching DNA.",
     why: 'A first class template gives coaches a structured starting plan. Warm-Up and Reflection are always included.',
     next: 'Select class blocks to build your template draft.',
   },
-  5: {
+  6: {
     message: "Now let's draft a first fitness template. I'll auto-populate exercises for each block you select.",
     why: 'Fitness templates give coaches a structured physical preparation plan tied directly to tennis development.',
     next: 'Select fitness blocks to auto-populate exercises.',
   },
-  6: {
+  7: {
     message: 'Upload or fast-fill your player roster. This is a draft only — no player data is saved until activation.',
     why: 'Starting with players lets DONNA begin organizing groups, levels, and curriculum assignments.',
     next: 'Upload a CSV or fast-fill player names.',
   },
-  7: {
+  8: {
     message: 'Add your coaching staff locally. Coach roles and level assignments shape what DONNA prepares for each group.',
     why: 'Coach assignments determine session visibility, wrap-up flows, and parent communication routing.',
     next: 'Add coach names and assign roles.',
   },
-  8: {
+  9: {
     message: "Preview how each portal will look — director, coach, player, and parent. Configure parent and player experience here.",
     why: 'Seeing the portals before activation helps you confirm the experience matches your academy culture.',
     next: 'Review each portal view and set parent/player preferences.',
   },
-  9: {
+  10: {
     message: "This is your Academy DNA draft. Review it carefully — DONNA will use this to prepare your starting system.",
     why: 'Reviewing your DNA before activation ensures your starting system reflects your academy accurately.',
     next: 'Review all sections and check for any gaps.',
   },
-  10: {
+  11: {
     message: 'Your starting system is ready to prepare. Complete these steps to launch your academy.',
     why: 'Each checklist item builds on the next. Start with curriculum, then templates, then people.',
     next: 'Start with reviewing the curriculum spine.',
@@ -223,7 +228,7 @@ export function OnboardingDonnaPanel({ currentStep, draft }: Props) {
       </div>
 
       {/* Building pulse — shown during active setup, hidden on welcome and final step */}
-      {!isWelcome && currentStep < 10 && (
+      {!isWelcome && currentStep < 11 && (
         <div className="px-4 pb-4">
           <div className="flex items-center gap-2">
             <span className="relative flex w-2 h-2 shrink-0">

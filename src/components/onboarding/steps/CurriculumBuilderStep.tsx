@@ -110,8 +110,8 @@ export function CurriculumBuilderStep({ draft, updateDraft, onNext, onPrev }: Pr
   return (
     <div>
       <OnboardingStepHeader
-        stepNumber={4}
-        totalSteps={11}
+        stepNumber={5}
+        totalSteps={12}
         title="Curriculum Builder"
         subtitle="Choose your curriculum starting point and set up session structure defaults."
       />
