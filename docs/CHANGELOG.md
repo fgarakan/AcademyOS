@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-19 — DONNA Onboarding Sprint O-5: Coaching DNA Guided Setup V1
+
+**Files created:** `src/components/onboarding/steps/CoachingDnaStep.tsx` (Step 3 — coaching style cards with rank + impact, communication voice Primary/Secondary UI), `docs/DONNA_ONBOARDING_COACHING_DNA.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx`. TypeScript clean.
+
+---
+
 ## 2026-05-19 — DONNA Onboarding Sprint O-4: Academy Basics Guided Setup V1
 
 **Files created:** `src/components/onboarding/steps/AcademyBasicsStep.tsx` (Step 2 — academy name, age group pills, academy model cards, primary goals), `docs/DONNA_ONBOARDING_ACADEMY_BASICS.md`. **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (wired AcademyBasicsStep for step 1). TypeScript clean.
