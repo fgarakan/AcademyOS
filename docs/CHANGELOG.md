@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 387D Onboarding Prototype Source Audit V1
+
+**Files created:** `docs/SPRINT_387D_ONBOARDING_PROTOTYPE_SOURCE_AUDIT.md` (full page-by-page audit of `prototype-reference/academyos-donna-onboarding.zip` vs current AcademyOS onboarding implementation). Prototype has exactly 10 screens matching AcademyOS OnboardingShell steps 0–9. CurriculumBuilder, ClassTemplate, FitnessTemplate, PlayerUpload, AddCoaches, PortalPreview, DNAReview, and ActivationChecklist screens do not exist in the prototype zip — correctly implemented as separate AcademyOS routes. Overall parity: 6/10. Biggest gap: progress mechanism (10-node step rail vs prototype 3px gradient bar). DONNA panel parity: 7/10. Session Design parity: 7/10 (proportional timeline bars missing). DNA Summary parity: 6/10 (DNA card visual treatment needs audit of AcademyDnaSummaryCard). DonnaChat parity: 5/10 (proposal card UI gap). Final Activation parity: 5/10 (next steps card grid missing). No app code changed. No migrations. TypeScript: clean.
+
+---
+
 ## 2026-05-20 — Sprint 387C Add Plyometrics Fitness Block V1
 
 **Files modified:** `src/app/director/fitness/templates/new/NewFitnessTemplateForm.tsx` (added `plyometrics` entry to `FITNESS_BLOCK_CATALOG` after agility: `dbType: 'fitness'`, label `'Plyometrics'`, intent `'Jumps, bounds, lateral bounds, and elastic power development.'`, defaultMin 10, orange accent; added `'plyometrics'` to `STANDARD_STRUCTURES.standard` after agility, `STANDARD_STRUCTURES.high_intensity` after agility, `STANDARD_STRUCTURES.assessment` after agility; `low_load`, `recovery`, `post_tournament` unchanged). `dbType: 'fitness'` is a valid DB enum value — no migration required. No schema changes. TypeScript: clean.
