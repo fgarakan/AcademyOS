@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 387A Director Onboarding DNA Route Wiring Fix V1
+
+**Files created:** `src/components/onboarding/AcademyDnaLanding.tsx` (prototype-style onboarding landing: "AcademyOS — Director Onboarding" pill, "Let's build your academy operating system." headline, DONNA will create pills, 6 setup mode cards, right DONNA panel with input and chips, local state only — no DB calls; supported modes: Fast Start, Guided Setup, Full Setup; deferred modes: Import, Consultant, Multi-Location), `src/app/director/setup/page.tsx` (old checklist moved here, import path for AnimatedOnboardingDeck updated, title updated to "Academy Setup Checklist"), `docs/SPRINT_387A_DIRECTOR_ONBOARDING_ROUTE_DNA_WIRING_FIX.md`. **Files modified:** `src/app/director/onboarding/page.tsx` (now renders `<AcademyDnaLanding />` — old checklist removed from this route). Clicking a supported mode and "Begin Setup" renders `OnboardingShell` in-place (10-step DNA setup). Old checklist at `/director/setup`. No migrations. No schema changes. TypeScript: clean.
+
+---
+
 ## 2026-05-19 — Sprint 386 Template List Draft Status Polish V1
 
 **Files modified:** `src/app/director/class-templates/page.tsx` (`TemplateRow`: derived `isDraft` from `tags.includes('status:draft')`; badge renders "Draft" in neutral style instead of Active/Inactive when draft tag present), `src/app/director/fitness/templates/page.tsx` (`FitnessTemplateCard`: same `isDraft` derivation and badge replacement). Templates created by Sprint 384/385 builders now correctly show "Draft" in lists rather than "Active". Badge style: `border-border text-text-secondary` — neutral, no accent/warning color. No migrations. No schema changes. TypeScript clean.
