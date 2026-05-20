@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 387B Fitness Category Database Audit V1
+
+**Files created:** `docs/SPRINT_387B_FITNESS_CATEGORY_DATABASE_AUDIT.md` (full audit across DB enums, generated types, frontend catalog, template builder, and exercise matching engine). Audit conclusion: `plyometrics` is fully defined in `src/lib/fitness/fitnessBlockTypes.ts` (type, DB mapping to `'fitness'`, label, colors `text-status-orange`, default duration 10 min, intent, inferFitnessBlockType keywords) and in `fitnessExerciseMatching.ts`, `fitnessExerciseRecommendations.ts`, `fitnessExerciseAutoPopulate.ts`, `FitnessBuilderStepper.tsx`, `ExecuteClient.tsx`. The only gap: `NewFitnessTemplateForm.tsx` `FITNESS_BLOCK_CATALOG` (11 entries) does not include a plyometrics entry. No migration required — `dbType: 'fitness'` is a valid DB enum value; `safeDbBlockType()` guarantees safe persistence. Sprint 387C unblocked. No app code changes. No migrations. TypeScript: clean.
+
+---
+
 ## 2026-05-20 — Sprint 387B Onboarding Begin Setup Skip Welcome V1
 
 **Files modified:** `src/components/onboarding/OnboardingShell.tsx` (added `OnboardingShellProps` interface with optional `initialStep?: number` and `initialSetupMode?: string`; `currentStep` state initializes from `initialStep`; `draft.setupMode` initializes from `initialSetupMode` via lazy initializer; mode context badge — "Guided Setup selected" — shown above step content when `currentStep >= 1 && draft.setupMode`; public `/onboarding` behavior unchanged — defaults to `initialStep=0`), `src/components/onboarding/AcademyDnaLanding.tsx` (Begin Setup now passes `initialStep={1}` and `initialSetupMode={selectedMode}` to OnboardingShell, skipping Welcome step entirely). No migrations. No schema changes. TypeScript: clean.
