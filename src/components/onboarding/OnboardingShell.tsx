@@ -141,9 +141,16 @@ const STEP_SUBTITLES = [
   'Your Academy DNA is ready. See what comes next.',
 ]
 
-export function OnboardingShell() {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [draft, setDraft] = useState<OnboardingDraft>(defaultDraft)
+interface OnboardingShellProps {
+  initialStep?: number
+  initialSetupMode?: string
+}
+
+export function OnboardingShell({ initialStep = 0, initialSetupMode = '' }: OnboardingShellProps = {}) {
+  const [currentStep, setCurrentStep] = useState(initialStep)
+  const [draft, setDraft] = useState<OnboardingDraft>(() =>
+    initialSetupMode ? { ...defaultDraft, setupMode: initialSetupMode } : defaultDraft
+  )
   const [showMobilePanel, setShowMobilePanel] = useState(false)
   const [showResumeBanner, setShowResumeBanner] = useState(true)
 
@@ -185,6 +192,15 @@ export function OnboardingShell() {
                   onResume={() => { restoreDraft(); setShowResumeBanner(false) }}
                   onDismiss={() => { clearDraft(); setShowResumeBanner(false) }}
                 />
+              </div>
+            )}
+
+            {/* Setup mode context badge — shown when entering via landing with a pre-selected mode */}
+            {currentStep >= 1 && draft.setupMode && (
+              <div className="mb-5">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-raised border border-border text-[10px] text-text-muted">
+                  {SETUP_MODES.find(m => m.id === draft.setupMode)?.label ?? draft.setupMode} selected
+                </span>
               </div>
             )}
 

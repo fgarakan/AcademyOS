@@ -83,7 +83,7 @@ export function AcademyDnaLanding() {
   const [donnaDraftNote, setDonnaDraftNote] = useState('')
 
   if (showShell) {
-    return <OnboardingShell />
+    return <OnboardingShell initialStep={1} initialSetupMode={selectedMode ?? ''} />
   }
 
   const selected = SETUP_MODES.find(m => m.id === selectedMode)
