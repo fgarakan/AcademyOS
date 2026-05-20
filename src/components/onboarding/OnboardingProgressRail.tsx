@@ -1,18 +1,29 @@
 'use client'
 
-import { CheckCircle2 } from 'lucide-react'
+const STEP_PROGRESS: Record<number, number> = {
+  0: 0,
+  1: 14,
+  2: 28,
+  3: 42,
+  4: 56,
+  5: 70,
+  6: 84,
+  7: 96,
+  8: 96,
+  9: 100,
+}
 
-const STEPS = [
-  { id: 'welcome',             label: 'Welcome' },
-  { id: 'academy-basics',      label: 'Academy' },
-  { id: 'coaching-philosophy', label: 'Philosophy' },
-  { id: 'coach-comm',          label: 'Comm Voice' },
-  { id: 'session-design',      label: 'Session' },
-  { id: 'player-development',  label: 'Player Dev' },
-  { id: 'parent-comms',        label: 'Parent Comms' },
-  { id: 'dna-summary',         label: 'DNA Summary' },
-  { id: 'donna-adjustment',    label: 'DONNA Adj' },
-  { id: 'activate',            label: 'Activate' },
+const STEP_LABELS = [
+  'Welcome',
+  'Academy Basics',
+  'Coaching Philosophy',
+  'Coach Communication',
+  'Session Design',
+  'Player Development',
+  'Parent Communication',
+  'DNA Summary',
+  'DONNA Adjustment',
+  'Final Activation',
 ]
 
 interface Props {
@@ -20,59 +31,30 @@ interface Props {
 }
 
 export function OnboardingProgressRail({ currentStep }: Props) {
+  if (currentStep === 0) return null
+  const progress = STEP_PROGRESS[currentStep] ?? 0
+  const label = STEP_LABELS[currentStep] ?? ''
   return (
-    <div className="flex items-center gap-0 px-4 py-3 border-b border-border bg-surface overflow-x-auto">
-      {STEPS.map((step, i) => {
-        const isComplete = i < currentStep
-        const isActive   = i === currentStep
-        return (
-          <div key={step.id} className="flex items-center shrink-0">
-            {/* Node */}
-            <div className="flex flex-col items-center gap-1">
-              <div
-                className={[
-                  'w-6 h-6 rounded-full flex items-center justify-center transition-all',
-                  isComplete
-                    ? 'bg-lime/20 border border-lime/40'
-                    : isActive
-                      ? 'bg-lime/10 border-2 border-lime'
-                      : 'bg-surface-raised border border-border',
-                ].join(' ')}
-              >
-                {isComplete ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-lime" />
-                ) : (
-                  <span
-                    className={[
-                      'text-[9px] font-mono font-bold leading-none',
-                      isActive ? 'text-lime' : 'text-text-muted',
-                    ].join(' ')}
-                  >
-                    {i + 1}
-                  </span>
-                )}
-              </div>
-              <span
-                className={[
-                  'text-[8px] font-medium whitespace-nowrap uppercase tracking-wide leading-none hidden lg:block',
-                  isActive ? 'text-lime' : isComplete ? 'text-text-muted' : 'text-text-muted/50',
-                ].join(' ')}
-              >
-                {step.label}
-              </span>
-            </div>
-            {/* Connector */}
-            {i < STEPS.length - 1 && (
-              <div
-                className={[
-                  'h-px w-5 mx-0.5 shrink-0 transition-all',
-                  i < currentStep ? 'bg-lime/40' : 'bg-border',
-                ].join(' ')}
-              />
-            )}
-          </div>
-        )
-      })}
+    <div className="flex-shrink-0">
+      <div className="h-[3px] bg-border/40">
+        <div
+          className="h-full bg-lime"
+          style={{
+            width: `${progress}%`,
+            borderRadius: '0 9999px 9999px 0',
+            boxShadow: '0 0 6px rgba(200,255,0,0.25)',
+            transition: 'width 400ms cubic-bezier(0.77, 0, 0.175, 1)',
+          }}
+        />
+      </div>
+      <div className="flex items-center justify-between px-6 py-2 border-b border-border">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-lime">
+          {label}
+        </p>
+        <p className="text-[10px] text-text-muted tabular-nums">
+          Step {currentStep} of 9
+        </p>
+      </div>
     </div>
   )
 }

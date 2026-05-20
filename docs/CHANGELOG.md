@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 387E Onboarding Shell Layout Parity V1
+
+**Files modified:** `src/components/onboarding/OnboardingProgressRail.tsx` (complete rewrite — 10-node dot rail replaced with 3px lime gradient progress bar + label strip; returns null on step 0 so Welcome shows no rail; `STEP_PROGRESS` table maps step index to % width; bar animates via `width 400ms cubic-bezier(0.77, 0, 0.175, 1)`; label strip shows current step name left in lime, `Step N of 9` right in `text-text-muted`), `src/components/onboarding/OnboardingShell.tsx` (layout restructured — `OnboardingProgressRail` removed from top-level header position; Content Column wrapper `flex-1 flex flex-col overflow-hidden min-w-0` added; rail placed inside column above `main`; content width `max-w-2xl` → `max-w-3xl`; top padding `py-8` → `py-6`). No step content changes. No landing/routing changes. No migrations. TypeScript: clean.
+
+---
+
 ## 2026-05-20 — Sprint 387D Onboarding Prototype Source Audit V1
 
 **Files created:** `docs/SPRINT_387D_ONBOARDING_PROTOTYPE_SOURCE_AUDIT.md` (full page-by-page audit of `prototype-reference/academyos-donna-onboarding.zip` vs current AcademyOS onboarding implementation). Prototype has exactly 10 screens matching AcademyOS OnboardingShell steps 0–9. CurriculumBuilder, ClassTemplate, FitnessTemplate, PlayerUpload, AddCoaches, PortalPreview, DNAReview, and ActivationChecklist screens do not exist in the prototype zip — correctly implemented as separate AcademyOS routes. Overall parity: 6/10. Biggest gap: progress mechanism (10-node step rail vs prototype 3px gradient bar). DONNA panel parity: 7/10. Session Design parity: 7/10 (proportional timeline bars missing). DNA Summary parity: 6/10 (DNA card visual treatment needs audit of AcademyDnaSummaryCard). DonnaChat parity: 5/10 (proposal card UI gap). Final Activation parity: 5/10 (next steps card grid missing). No app code changed. No migrations. TypeScript: clean.

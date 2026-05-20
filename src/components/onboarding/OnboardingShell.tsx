@@ -175,15 +175,18 @@ export function OnboardingShell({ initialStep = 0, initialSetupMode = '' }: Onbo
   return (
     <div className="flex flex-col min-h-screen bg-base">
 
-      {/* Progress Rail */}
-      <OnboardingProgressRail currentStep={currentStep} />
-
       {/* Main Area */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* Content Area */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto px-6 py-8">
+        {/* Content Column */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+
+          {/* Progress Rail — hidden on welcome (step 0) */}
+          <OnboardingProgressRail currentStep={currentStep} />
+
+          {/* Content Area */}
+          <main className="flex-1 overflow-y-auto">
+            <div className="max-w-3xl mx-auto px-6 py-6">
 
             {/* Resume banner */}
             {currentStep === 0 && showResumeBanner && hasSavedDraft() && (
@@ -255,8 +258,10 @@ export function OnboardingShell({ initialStep = 0, initialSetupMode = '' }: Onbo
               )}
             </div>
 
-          </div>
-        </main>
+            </div>
+          </main>
+
+        </div>{/* end Content Column */}
 
         {/* DONNA Panel — desktop */}
         <div className="hidden lg:block">
