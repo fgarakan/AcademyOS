@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 396 Player Portal Shell Nav Upgrade V1
+
+**Files created:** `src/components/player/PlayerPortalShell.tsx` (`'use client'` shell component — desktop sticky sidebar `w-60 h-screen` with AOS logo, optional player identity section (initials avatar + first name + level pill), 9-item nav with active state `bg-lime/10 text-lime border-l-[2px] border-lime`, footer; mobile fixed top header with current page label + hamburger, slide-out drawer with full nav + player identity, drawer auto-closes on pathname change via `useEffect`; all AcademyOS tokens, no prototype theme system). **Files modified:** `src/app/player/layout.tsx` (still Server Component; profile select expanded to include `academy_id`; two guarded lightweight reads added: `players.first_name + curriculum_level_id` via `profile_id + academy_id + is_active`, then `curriculum_levels.display_name` via level id; replaced `min-h-screen pb-24 / main p-4 max-w-lg mx-auto / BottomTabBar 3-tab` structure with `PlayerPortalShell firstName levelName`; `PreviewBanner` and `FirstRunDeckGate` preserved as shell children). No new pages — all 9 player routes existed. `BottomTabBar.tsx` untouched. No migrations. No schema changes. No package changes. No DB writes. TypeScript: clean. Nav items after: Home, Missions, Skill Path, Competition, Fitness, Level Up, Practice, Achievements, Ask DONNA.
+
+---
+
 ## 2026-05-20 — Sprint 395 Parent Player Portal Prototype Audit V1
 
 **Files created:** `docs/SPRINT_395_PARENT_PLAYER_PORTAL_PROTOTYPE_AUDIT.md` — 12-section audit comparing both prototype implementations (player portal, parent portal) against current AcademyOS portal routes. Parity scores: Player 5/10, Parent 4/10, Data readiness 8/10, Safety readiness 9/10. Key findings: player portal has all pages but nav is 3-tab BottomTabBar vs 10-item prototype sidebar, home path grid has 4 cards not 6, hero card less visually rich. Parent portal is missing `/parent/skill-path`, `/parent/competition-path`, `/parent/fitness-path`, `/parent/next-steps` pages; lesson request is inline single-step not 3-step flow; no desktop 3-column layout with DONNA panel. IDP engine, `sanitizeParentFacingText`, `buildParentSupportGuide` data adapters already solid. Recommended next: Sprint 396 — Player Portal Shell + Nav Upgrade V1. No code changes. No migrations. No schema changes. No package changes. No DB writes.
