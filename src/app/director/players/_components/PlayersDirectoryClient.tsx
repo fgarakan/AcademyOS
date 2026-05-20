@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { ChevronRight, Users, Search, Zap } from 'lucide-react'
+import { ChevronRight, Users, Search, Zap, Upload, UserPlus } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -185,7 +185,25 @@ export function PlayersDirectoryClient({ players, curriculumMap = {} }: Props) {
         <EmptyState
           icon={<Users className="w-5 h-5" />}
           title="No players yet"
-          description="Player profiles live here. Use the Add Player button above to add your first player and begin placement, or use Import to bring in a roster from a CSV file."
+          description="Add your first player or import a roster from a CSV file."
+          action={
+            <div className="flex items-center gap-3 flex-wrap justify-center">
+              <Link
+                href="/director/players/import"
+                className="btn-lime flex items-center gap-2 text-sm"
+              >
+                <Upload className="w-4 h-4" />
+                Import roster
+              </Link>
+              <Link
+                href="/director/players/new"
+                className="btn-ghost flex items-center gap-2 text-sm"
+              >
+                <UserPlus className="w-4 h-4" />
+                Add player
+              </Link>
+            </div>
+          }
         />
       ) : filtered.length === 0 ? (
         <EmptyState

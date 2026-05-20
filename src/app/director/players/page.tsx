@@ -99,9 +99,12 @@ export default async function PlayersPage() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {missingCurriculumCount > 0 && (
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-status-orange/30 bg-status-orange/5 text-[11px] text-status-orange">
+            <Link
+              href="/director/curriculum"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-status-orange/30 bg-status-orange/5 text-[11px] text-status-orange hover:bg-status-orange/10 transition-colors"
+            >
               {missingCurriculumCount} without curriculum level
-            </span>
+            </Link>
           )}
           <Link
             href="/director/players/new"
