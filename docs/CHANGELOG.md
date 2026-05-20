@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 387C Add Plyometrics Fitness Block V1
+
+**Files modified:** `src/app/director/fitness/templates/new/NewFitnessTemplateForm.tsx` (added `plyometrics` entry to `FITNESS_BLOCK_CATALOG` after agility: `dbType: 'fitness'`, label `'Plyometrics'`, intent `'Jumps, bounds, lateral bounds, and elastic power development.'`, defaultMin 10, orange accent; added `'plyometrics'` to `STANDARD_STRUCTURES.standard` after agility, `STANDARD_STRUCTURES.high_intensity` after agility, `STANDARD_STRUCTURES.assessment` after agility; `low_load`, `recovery`, `post_tournament` unchanged). `dbType: 'fitness'` is a valid DB enum value — no migration required. No schema changes. TypeScript: clean.
+
+---
+
 ## 2026-05-20 — Sprint 387B Fitness Category Database Audit V1
 
 **Files created:** `docs/SPRINT_387B_FITNESS_CATEGORY_DATABASE_AUDIT.md` (full audit across DB enums, generated types, frontend catalog, template builder, and exercise matching engine). Audit conclusion: `plyometrics` is fully defined in `src/lib/fitness/fitnessBlockTypes.ts` (type, DB mapping to `'fitness'`, label, colors `text-status-orange`, default duration 10 min, intent, inferFitnessBlockType keywords) and in `fitnessExerciseMatching.ts`, `fitnessExerciseRecommendations.ts`, `fitnessExerciseAutoPopulate.ts`, `FitnessBuilderStepper.tsx`, `ExecuteClient.tsx`. The only gap: `NewFitnessTemplateForm.tsx` `FITNESS_BLOCK_CATALOG` (11 entries) does not include a plyometrics entry. No migration required — `dbType: 'fitness'` is a valid DB enum value; `safeDbBlockType()` guarantees safe persistence. Sprint 387C unblocked. No app code changes. No migrations. TypeScript: clean.

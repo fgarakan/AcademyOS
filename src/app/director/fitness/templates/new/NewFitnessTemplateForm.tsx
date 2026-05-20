@@ -40,6 +40,11 @@ const FITNESS_BLOCK_CATALOG: FitnessCatalogBlock[] = [
     defaultMin: 15, colorClass: 'bg-status-blue/8 border-status-blue/25', badgeClass: 'bg-status-blue/15 text-status-blue border-status-blue/30',
   },
   {
+    id: 'plyometrics',   dbType: 'fitness',   label: 'Plyometrics',
+    intent: 'Jumps, bounds, lateral bounds, and elastic power development.',
+    defaultMin: 10, colorClass: 'bg-status-orange/8 border-status-orange/25', badgeClass: 'bg-status-orange/15 text-status-orange border-status-orange/30',
+  },
+  {
     id: 'coordination',  dbType: 'fitness',   label: 'Coordination',
     intent: 'Rhythm drills, hand-eye tasks, reaction patterns',
     defaultMin: 10, colorClass: 'bg-lime/5 border-lime/15', badgeClass: 'bg-lime/8 text-lime border-lime/20',
@@ -93,12 +98,12 @@ const TEMPLATE_TYPES: { value: FitnessTemplateType; label: string }[] = [
 
 // Standard structure suggestions by template type
 const STANDARD_STRUCTURES: Record<FitnessTemplateType, string[]> = {
-  standard:        ['movement_prep', 'agility', 'speed', 'strength', 'tennis_transfer', 'recovery'],
+  standard:        ['movement_prep', 'agility', 'plyometrics', 'speed', 'strength', 'tennis_transfer', 'recovery'],
   pre_tournament:  ['movement_prep', 'agility', 'coordination', 'footwork', 'tennis_transfer', 'recovery'],
   post_tournament: ['movement_prep', 'mobility', 'recovery'],
-  high_intensity:  ['movement_prep', 'speed', 'agility', 'conditioning', 'strength', 'recovery'],
+  high_intensity:  ['movement_prep', 'speed', 'agility', 'plyometrics', 'conditioning', 'strength', 'recovery'],
   low_load:        ['movement_prep', 'coordination', 'balance', 'mobility', 'recovery'],
-  assessment:      ['movement_prep', 'speed', 'agility', 'strength', 'balance', 'recovery'],
+  assessment:      ['movement_prep', 'speed', 'agility', 'plyometrics', 'strength', 'balance', 'recovery'],
   recovery:        ['movement_prep', 'mobility', 'recovery'],
 }
 
