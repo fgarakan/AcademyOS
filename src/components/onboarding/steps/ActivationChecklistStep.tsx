@@ -1,8 +1,13 @@
 'use client'
 
-import { ArrowLeft, Sparkles, CheckCircle2, Circle, ArrowRight } from 'lucide-react'
+import {
+  ArrowLeft, Sparkles, CheckCircle2, Circle, ArrowRight,
+  BookOpen, LayoutTemplate, Activity, Users, UserPlus, Eye, ArrowUpRight,
+} from 'lucide-react'
 import type { OnboardingDraft } from '../OnboardingShell'
 import { AcademyDnaSummaryCard } from '../AcademyDnaSummaryCard'
+
+// ── DNA foundation checklist ──────────────────────────────────
 
 interface ChecklistItem {
   id: string
@@ -62,14 +67,90 @@ const CHECKLIST: ChecklistItem[] = [
   },
 ]
 
-const POST_DNA_TASKS = [
-  { label: 'Review Curriculum',          desc: 'Review level structure and skill paths.',         href: '/director/curriculum' },
-  { label: 'Create First Class Template', desc: 'Build a default on-court session template.',     href: '/director/class-templates/new' },
-  { label: 'Create Fitness Template',     desc: 'Add a physical prep session template.',           href: '/director/fitness/templates/new' },
-  { label: 'Upload Players',              desc: 'Import your player roster to start tracking.',   href: '/director/players' },
-  { label: 'Add Coaches',                 desc: 'Add coaching staff and assign roles.',            href: '/director/coaches' },
-  { label: 'Preview Portals',             desc: 'See how coach, player, and parent portals look.', href: '/director' },
+// ── Next-steps card grid ──────────────────────────────────────
+
+interface NextStepCard {
+  id: string
+  Icon: typeof BookOpen
+  label: string
+  desc: string
+  href: string | null
+  status: string
+  statusStyle: string
+  iconStyle: string
+  ctaLabel: string
+}
+
+const NEXT_STEP_CARDS: NextStepCard[] = [
+  {
+    id: 'curriculum',
+    Icon: BookOpen,
+    label: 'Review Curriculum',
+    desc: 'Review the curriculum structure DONNA will use as the foundation for your academy.',
+    href: '/director/curriculum',
+    status: 'Next setup task',
+    statusStyle: 'bg-lime/8 border-lime/20 text-lime',
+    iconStyle: 'text-lime',
+    ctaLabel: 'Review',
+  },
+  {
+    id: 'class-template',
+    Icon: LayoutTemplate,
+    label: 'Create Class Template',
+    desc: 'Build a coach-ready class template from your Academy DNA.',
+    href: '/director/class-templates/new',
+    status: 'Draft',
+    statusStyle: 'bg-status-blue/8 border-status-blue/20 text-status-blue',
+    iconStyle: 'text-status-blue',
+    ctaLabel: 'Create draft',
+  },
+  {
+    id: 'fitness-template',
+    Icon: Activity,
+    label: 'Create Fitness Template',
+    desc: 'Build a fitness template with movement, speed, agility, plyometrics, strength, and recovery blocks.',
+    href: '/director/fitness/templates/new',
+    status: 'Draft',
+    statusStyle: 'bg-status-blue/8 border-status-blue/20 text-status-blue',
+    iconStyle: 'text-status-blue',
+    ctaLabel: 'Create draft',
+  },
+  {
+    id: 'players',
+    Icon: Users,
+    label: 'Upload Players',
+    desc: 'Add players to start tracking development after the academy foundation is saved.',
+    href: '/director/players',
+    status: 'Setup later',
+    statusStyle: 'bg-surface-raised border-border text-text-muted',
+    iconStyle: 'text-text-muted',
+    ctaLabel: 'Go to Players',
+  },
+  {
+    id: 'coaches',
+    Icon: UserPlus,
+    label: 'Add Coaches',
+    desc: 'Set up coaches and configure future workflow defaults.',
+    href: '/director/coaches',
+    status: 'Setup later',
+    statusStyle: 'bg-surface-raised border-border text-text-muted',
+    iconStyle: 'text-text-muted',
+    ctaLabel: 'Go to Coaches',
+  },
+  {
+    id: 'portal-preview',
+    Icon: Eye,
+    label: 'Preview Portals',
+    desc: 'Preview what parents and players will see in their portals.',
+    href: null,
+    status: 'Coming next',
+    statusStyle: 'bg-surface-raised border-border text-text-muted/50',
+    iconStyle: 'text-text-muted/40',
+    ctaLabel: 'Not available yet',
+  },
 ]
+
+// ── Component ─────────────────────────────────────────────────
 
 interface Props {
   draft: OnboardingDraft
@@ -78,13 +159,12 @@ interface Props {
 }
 
 export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
-  const items          = CHECKLIST.map(item => ({ ...item, ready: item.readyCheck(draft) }))
-  const requiredReady  = items.filter(i => i.required && i.ready).length
-  const requiredTotal  = items.filter(i => i.required).length
-  const totalReady     = items.filter(i => i.ready).length
-  const canActivate    = requiredReady === requiredTotal
+  const items         = CHECKLIST.map(item => ({ ...item, ready: item.readyCheck(draft) }))
+  const requiredReady = items.filter(i => i.required && i.ready).length
+  const requiredTotal = items.filter(i => i.required).length
+  const totalReady    = items.filter(i => i.ready).length
+  const canActivate   = requiredReady === requiredTotal
 
-  // Build DNA pill values from draft
   const dnaPills: string[] = [
     ...draft.coachingStyles,
     ...draft.sessionBlocks,
@@ -93,6 +173,7 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
 
   return (
     <div>
+
       {/* Celebration header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-3">
@@ -109,7 +190,7 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
           </div>
         </div>
         <p className="text-[13px] text-text-secondary leading-relaxed">
-          Your foundation is set. Head to the Director Dashboard to continue setup.
+          Your foundation is set. Review curriculum, build templates, and continue setup below.
         </p>
       </div>
 
@@ -119,7 +200,7 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
           <span className="font-bold text-lime text-[13px] leading-none select-none">D</span>
         </div>
         <p className="text-[12px] text-text-secondary leading-relaxed">
-          Academy DNA is locked in. Required items below confirm your foundation is complete. The tasks in the next section are ready for you in the Director Dashboard.
+          Academy DNA is captured. Use the cards below to continue setup — curriculum, templates, and team configuration are ready when you are. Nothing is published until you decide to activate each piece.
         </p>
       </div>
 
@@ -142,12 +223,88 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
         </div>
       )}
 
-      {/* Readiness summary */}
+      {/* Continue Setup card grid */}
+      <div className="mb-6">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3">
+          Continue Setup
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {NEXT_STEP_CARDS.map(card => {
+            const { Icon } = card
+            const isActive = card.href !== null
+
+            const cardInner = (
+              <>
+                <div className="flex items-start justify-between mb-3">
+                  <div className={[
+                    'w-8 h-8 rounded-lg border flex items-center justify-center shrink-0',
+                    isActive ? 'bg-surface-raised border-border' : 'bg-surface border-border/50',
+                  ].join(' ')}>
+                    <Icon className={['w-4 h-4', card.iconStyle].join(' ')} />
+                  </div>
+                  <span className={[
+                    'text-[8px] font-bold uppercase tracking-wide rounded px-1.5 py-0.5 border',
+                    card.statusStyle,
+                  ].join(' ')}>
+                    {card.status}
+                  </span>
+                </div>
+                <p className={[
+                  'text-xs font-semibold mb-1 transition-colors',
+                  isActive ? 'text-text-secondary group-hover:text-text-primary' : 'text-text-muted/60',
+                ].join(' ')}>
+                  {card.label}
+                </p>
+                <p className={[
+                  'text-[10px] leading-snug mb-3 flex-1',
+                  isActive ? 'text-text-muted' : 'text-text-muted/40',
+                ].join(' ')}>
+                  {card.desc}
+                </p>
+                <div className="flex items-center gap-1 mt-auto">
+                  {isActive ? (
+                    <>
+                      <span className="text-[10px] font-medium text-text-muted group-hover:text-lime transition-colors">
+                        {card.ctaLabel}
+                      </span>
+                      <ArrowUpRight className="w-3 h-3 text-text-muted group-hover:text-lime transition-colors" />
+                    </>
+                  ) : (
+                    <span className="text-[10px] font-medium text-text-muted/30">{card.ctaLabel}</span>
+                  )}
+                </div>
+              </>
+            )
+
+            if (card.href !== null) {
+              return (
+                <a
+                  key={card.id}
+                  href={card.href}
+                  className="group rounded-xl border border-border bg-surface hover:border-border-strong hover:bg-surface-raised px-4 py-3.5 transition-all flex flex-col"
+                >
+                  {cardInner}
+                </a>
+              )
+            }
+            return (
+              <div
+                key={card.id}
+                className="rounded-xl border border-border/50 bg-surface/50 px-4 py-3.5 flex flex-col opacity-60"
+              >
+                {cardInner}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* DNA Readiness summary card */}
       <div className="mb-6">
         <AcademyDnaSummaryCard draft={draft} onEditStep={onEditStep} compact />
       </div>
 
-      {/* DNA Readiness checklist */}
+      {/* DNA Foundation Check */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
@@ -199,33 +356,10 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
         </div>
       </div>
 
-      {/* Post-DNA Setup Task Grid */}
-      <div className="mb-6">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3">
-          Next Setup Tasks
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {POST_DNA_TASKS.map(task => (
-            <a
-              key={task.label}
-              href={task.href}
-              className="rounded-xl border border-border bg-surface hover:border-border-strong hover:bg-surface-raised px-4 py-3 transition-all group"
-            >
-              <p className="text-xs font-semibold text-text-secondary group-hover:text-text-primary mb-0.5 transition-colors">
-                {task.label}
-              </p>
-              <p className="text-[10px] text-text-muted leading-snug">{task.desc}</p>
-            </a>
-          ))}
-        </div>
-      </div>
-
       {/* DNA status banner */}
       <div className={[
         'mb-8 rounded-2xl border px-5 py-4',
-        canActivate
-          ? 'bg-lime/5 border-lime/20'
-          : 'bg-surface border-border',
+        canActivate ? 'bg-lime/5 border-lime/20' : 'bg-surface border-border',
       ].join(' ')}>
         <div className="flex items-start gap-3">
           <Sparkles className={[
@@ -277,6 +411,7 @@ export function ActivationChecklistStep({ draft, onPrev, onEditStep }: Props) {
       <p className="mt-4 text-[10px] text-text-muted/40 text-center">
         Your Academy DNA is saved to your draft. Settings are applied when you complete setup in the Director Dashboard.
       </p>
+
     </div>
   )
 }
