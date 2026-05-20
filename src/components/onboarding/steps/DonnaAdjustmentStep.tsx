@@ -28,11 +28,10 @@ export function DonnaAdjustmentStep({ draft, updateDraft, onNext, onPrev }: Prop
         </div>
         <div>
           <p className="text-[12px] text-text-secondary leading-relaxed mb-1">
-            I've reviewed your Academy DNA draft. Use the quick adjustments below or describe what you'd like to change.
-            All changes are applied to the local draft — nothing is saved until you activate.
+            I've reviewed your Academy DNA draft. Select an adjustment below or describe what you'd like to change — I'll create a draft proposal for your review. Approve, edit, or cancel before anything changes.
           </p>
           <p className="text-[10px] text-text-muted/60">
-            You can also go back to any previous step to edit sections directly.
+            Nothing is applied until you approve a proposal. You can also go back to any step to edit directly.
           </p>
         </div>
       </div>
