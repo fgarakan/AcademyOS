@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 398 Manual SQL Execution Packet V1
+
+**Files created:** `docs/SPRINT_398_MANUAL_SQL_EXECUTION_PACKET.md` — full copy-paste SQL execution packet for manual application via Supabase SQL Editor. Section 0: 6 pre-flight verification queries (pg_policies, pg_proc, to_regclass, information_schema.columns). Sections 1-7: idempotent SQL for each uncertain/pending migration in application order (060 → 056 → 058 → 061 → 065 → 066 → 067 → 068) — covers IDP scoring columns, session_block_exercises RLS, template_block_exercises RLS, player_requirement_progress columns + indexes, Orange 2/3 curriculum content seed, sessions RLS recursion fix via SECURITY DEFINER function, template_review_requests + template_version_history tables, and granular template policies. Sections 8-9: demo player seed SQL with UUID placeholder pattern (create auth users in Dashboard first, replace `<REPLACE_WITH_*_AUTH_UUID>` tokens, then run). Section 10: 12-query post-execution verification suite. Execution log table for manual tracking. No migrations applied. No Supabase CLI commands. No schema changes from this sprint. No package changes. No DB writes. TypeScript: clean.
+
+---
+
 ## 2026-05-20 — Sprint 398 Data Foundation Migrations Demo Seed V1
 
 **Files created:** `docs/SPRINT_398_DATA_FOUNDATION_MIGRATIONS_DEMO_SEED.md` — full migration audit (68 migration files, 001–068) cross-referenced against database.types.ts. Findings: Sprint 397 estimate of "9 pending migrations" was partially incorrect; migrations 001–062 are confirmed applied (all tables in database.types.ts); migrations 063–064 are likely applied (app uses has_seen_first_run_deck successfully); migrations 065–068 are unverified (template_review_requests not in types). Critical RLS gaps identified: migrations 056, 058, 066 are unverified and if missing cause silent session exercise failures, template block exercise RLS errors, and sessions RLS infinite recursion respectively. Migration application order documented: 060 → 061 → 056 → 058 → 065 → 066 → 067 → 068. Seed plan included: demo academy (ID 00000000-0000-0000-0000-000000000001) and 15 curriculum levels already exist from migration 024+053; demo player requires manual auth user creation in Supabase Dashboard followed by idempotent SQL steps 2–7 documented in the sprint file. Supabase CLI not installed — no migrations applied automatically. No migrations. No schema changes. No package changes. No DB writes. TypeScript: clean.
