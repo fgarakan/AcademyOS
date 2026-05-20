@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 395 Parent Player Portal Prototype Audit V1
+
+**Files created:** `docs/SPRINT_395_PARENT_PLAYER_PORTAL_PROTOTYPE_AUDIT.md` — 12-section audit comparing both prototype implementations (player portal, parent portal) against current AcademyOS portal routes. Parity scores: Player 5/10, Parent 4/10, Data readiness 8/10, Safety readiness 9/10. Key findings: player portal has all pages but nav is 3-tab BottomTabBar vs 10-item prototype sidebar, home path grid has 4 cards not 6, hero card less visually rich. Parent portal is missing `/parent/skill-path`, `/parent/competition-path`, `/parent/fitness-path`, `/parent/next-steps` pages; lesson request is inline single-step not 3-step flow; no desktop 3-column layout with DONNA panel. IDP engine, `sanitizeParentFacingText`, `buildParentSupportGuide` data adapters already solid. Recommended next: Sprint 396 — Player Portal Shell + Nav Upgrade V1. No code changes. No migrations. No schema changes. No package changes. No DB writes.
+
+---
+
 ## 2026-05-20 — Sprint 394 Director Player Import Route Validation V1
 
 **Files modified:** `src/app/director/players/import/playerImportActions.ts` (removed premature early return that rejected entire commit when `parseResult.counts.errorRows > 0`; error rows are already excluded from `normalizedRows` by the parser, so they are safely skipped during the insert loop; `skippedCount` initialised to `parseResult.counts.errorRows` so the result stat is accurate — this fixes the UI/server mismatch where `CommitSection` said "valid rows will still commit" but the server action rejected the whole batch), `src/app/director/players/import/PlayerImportClient.tsx` (dry-run button changed from filled lime `bg-lime` to ghost/border `border-lime/40 text-lime hover:bg-lime/5` to visually distinguish it from the definitive Commit Import button; button label "Run Dry Run" → "Preview Import" / "Re-run Dry Run" → "Re-run Preview" to use director-friendly language). No migrations. No schema changes. No package changes. No parser changes. No new routes. `data/player-import/academy_os_player_import_roster.csv` left unstaged. TypeScript: clean.
