@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 398 Data Foundation Migrations Demo Seed V1
+
+**Files created:** `docs/SPRINT_398_DATA_FOUNDATION_MIGRATIONS_DEMO_SEED.md` — full migration audit (68 migration files, 001–068) cross-referenced against database.types.ts. Findings: Sprint 397 estimate of "9 pending migrations" was partially incorrect; migrations 001–062 are confirmed applied (all tables in database.types.ts); migrations 063–064 are likely applied (app uses has_seen_first_run_deck successfully); migrations 065–068 are unverified (template_review_requests not in types). Critical RLS gaps identified: migrations 056, 058, 066 are unverified and if missing cause silent session exercise failures, template block exercise RLS errors, and sessions RLS infinite recursion respectively. Migration application order documented: 060 → 061 → 056 → 058 → 065 → 066 → 067 → 068. Seed plan included: demo academy (ID 00000000-0000-0000-0000-000000000001) and 15 curriculum levels already exist from migration 024+053; demo player requires manual auth user creation in Supabase Dashboard followed by idempotent SQL steps 2–7 documented in the sprint file. Supabase CLI not installed — no migrations applied automatically. No migrations. No schema changes. No package changes. No DB writes. TypeScript: clean.
+
+---
+
 ## 2026-05-20 — Sprint 397 AcademyOS Pilot Readiness Master Audit V1
 
 **Files created:** `docs/PILOT_READINESS_MASTER_AUDIT.md`, `docs/DONNA_FULL_FUNCTIONALITY_AUDIT.md`, `docs/PILOT_CONNECTION_MATRIX.md`, `docs/PILOT_READY_SPRINT_BACKLOG.md` — comprehensive pilot-readiness audit across all 5 portal surfaces (director onboarding, curriculum builder, coach portal, player portal, parent portal), backend data flow, DONNA functionality, and role safety. Prototype sources: donna-onboarding, curriculum-builder, coach-portal, parent-portal, player-portal zips. No code changes. No migrations. No schema changes. No package changes. No DB writes.
