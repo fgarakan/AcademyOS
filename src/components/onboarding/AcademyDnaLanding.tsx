@@ -48,7 +48,7 @@ const SETUP_MODES = [
     recommended: false,
     supported: false,
     desc: 'Already have data? Start from an import.',
-    deferredCopy: 'Import setup is not yet available in this flow. Contact your onboarding team.',
+    deferredCopy: 'Import setup is not yet available in this flow.',
   },
   {
     id: 'consultant-setup',
@@ -78,16 +78,16 @@ const QUICK_CHIPS = [
 
 export function AcademyDnaLanding() {
   const [selectedMode, setSelectedMode] = useState<string | null>(null)
-  const [showShell, setShowShell] = useState(false)
-  const [inputValue, setInputValue] = useState('')
+  const [showShell, setShowShell]       = useState(false)
+  const [inputValue, setInputValue]     = useState('')
   const [donnaDraftNote, setDonnaDraftNote] = useState('')
 
   if (showShell) {
     return <OnboardingShell initialStep={1} initialSetupMode={selectedMode ?? ''} />
   }
 
-  const selected = SETUP_MODES.find(m => m.id === selectedMode)
-  const canBegin = selected?.supported === true
+  const selected  = SETUP_MODES.find(m => m.id === selectedMode)
+  const canBegin  = selected?.supported === true
 
   function handleBegin() {
     if (canBegin) setShowShell(true)
@@ -102,11 +102,19 @@ export function AcademyDnaLanding() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--bg-app)' }}>
+    <div className="flex min-h-screen bg-base">
 
       {/* Left: hero + content */}
-      <div className="flex-1 overflow-y-auto px-8 py-10">
-        <div className="max-w-2xl">
+      <div className="flex-1 overflow-y-auto px-8 py-10 relative">
+
+        {/* Subtle radial lime glow behind hero — depth without brand saturation */}
+        <div
+          className="pointer-events-none absolute top-0 left-0 w-[640px] h-[420px]"
+          style={{ background: 'radial-gradient(ellipse at 20% 30%, rgba(200,255,0,0.06) 0%, transparent 65%)' }}
+          aria-hidden="true"
+        />
+
+        <div className="max-w-2xl relative">
 
           {/* Top pill */}
           <div className="inline-flex items-center gap-1.5 bg-lime/8 border border-lime/20 rounded-full px-3 py-1 mb-8">
@@ -154,40 +162,55 @@ export function AcademyDnaLanding() {
                 return (
                   <button
                     key={mode.id}
-                    onClick={() => setSelectedMode(mode.id)}
+                    onClick={() => { if (!isDeferred) setSelectedMode(mode.id) }}
                     className={[
                       'relative text-left rounded-xl border px-4 py-3.5 transition-all',
                       isDeferred
-                        ? 'opacity-50'
+                        ? 'opacity-50 cursor-not-allowed bg-surface border-border'
                         : isSelected
-                          ? 'bg-lime/8 border-lime/40'
-                          : 'bg-surface border-border hover:border-border-strong hover:bg-surface-raised',
+                          ? 'bg-lime/8 border-lime/50 shadow-[0_0_0_1px_rgba(200,255,0,0.15)]'
+                          : 'bg-surface border-border hover:border-border-strong hover:bg-surface-raised cursor-pointer',
                     ].join(' ')}
                   >
-                    <div className="flex items-center justify-between mb-1">
+                    {/* Top row: label + time */}
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
                       <span className={[
                         'text-sm font-semibold leading-tight',
                         isSelected && !isDeferred ? 'text-text-primary' : 'text-text-secondary',
                       ].join(' ')}>
                         {mode.label}
-                        {mode.recommended && (
-                          <span className="ml-2 text-[9px] font-bold uppercase tracking-widest text-lime/80">
-                            Recommended
-                          </span>
-                        )}
                       </span>
                       <span className={[
-                        'text-[10px] font-mono shrink-0 ml-2',
+                        'text-[10px] font-mono shrink-0',
                         isSelected && !isDeferred ? 'text-lime' : 'text-text-muted',
                       ].join(' ')}>
                         {mode.time}
                       </span>
                     </div>
+
+                    {/* Recommended badge — standalone pill */}
+                    {mode.recommended && (
+                      <div className="mb-1.5">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-lime/10 border border-lime/25 text-[8px] font-bold uppercase tracking-wider text-lime/80">
+                          Recommended
+                        </span>
+                      </div>
+                    )}
+
                     <p className="text-[11px] text-text-muted leading-relaxed">
                       {isDeferred && mode.deferredCopy ? mode.deferredCopy : mode.desc}
                     </p>
+
+                    {/* Deferred lock icon */}
                     {isDeferred && (
                       <Lock className="absolute top-3 right-3 w-3 h-3 text-text-muted/40" />
+                    )}
+
+                    {/* Selected indicator dot */}
+                    {isSelected && !isDeferred && (
+                      <span className="absolute top-3 right-3 w-4 h-4 rounded-full bg-lime/20 border border-lime/40 flex items-center justify-center">
+                        <span className="w-1.5 h-1.5 rounded-full bg-lime block" />
+                      </span>
                     )}
                   </button>
                 )
@@ -209,10 +232,9 @@ export function AcademyDnaLanding() {
               className={[
                 'inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all',
                 canBegin
-                  ? 'bg-lime hover:brightness-110 transition-all'
+                  ? 'bg-lime text-base hover:brightness-110 shadow-lime'
                   : 'bg-surface-raised text-text-muted border border-border cursor-not-allowed',
               ].join(' ')}
-              style={canBegin ? { color: '#030506' } : {}}
             >
               <Zap className="w-4 h-4" />
               Begin Setup
@@ -231,11 +253,11 @@ export function AcademyDnaLanding() {
       <aside className="hidden lg:flex flex-col w-80 shrink-0 bg-surface border-l border-border">
 
         {/* Header */}
-        <div className="p-5 border-b border-border">
+        <div className="p-5 border-b border-border bg-lime/[0.02]">
           <div className="flex items-center gap-3">
             <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-full bg-lime/10 border border-lime/30 flex items-center justify-center">
-                <span className="font-bold text-lime select-none" style={{ fontSize: '16px', lineHeight: 1 }}>D</span>
+              <div className="w-10 h-10 rounded-full bg-lime/10 border border-lime/30 flex items-center justify-center shadow-[0_0_12px_rgba(200,255,0,0.08)]">
+                <span className="font-bold text-lime select-none" style={{ fontSize: '17px', lineHeight: 1 }}>D</span>
               </div>
               <span className="absolute bottom-0 right-0">
                 <span className="relative flex w-2.5 h-2.5">
@@ -260,9 +282,21 @@ export function AcademyDnaLanding() {
         <div className="flex-1 p-4 overflow-y-auto space-y-3">
           <div className="rounded-xl bg-lime/5 border border-lime/15 p-3.5">
             <p className="text-[12px] text-text-secondary leading-relaxed">
-              I&apos;ll help build your starting operating system. Choose a setup mode and I&apos;ll walk you through the steps.
+              Ready to build your starting system. Choose a setup mode and I&apos;ll walk you through each step &mdash; adjustments are always available after setup begins.
             </p>
           </div>
+
+          {selectedMode && selected?.supported && (
+            <div className="rounded-xl bg-surface-raised border border-border p-3">
+              <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted mb-1">
+                Setup mode selected
+              </p>
+              <p className="text-[12px] text-text-primary font-semibold">
+                {selected.label}
+              </p>
+              <p className="text-[10px] text-text-muted mt-0.5">{selected.desc}</p>
+            </div>
+          )}
 
           {donnaDraftNote && (
             <div className="rounded-xl bg-surface-raised border border-border p-3">
@@ -282,13 +316,17 @@ export function AcademyDnaLanding() {
         {/* Input area */}
         <div className="p-4 border-t border-border">
 
+          <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted mb-2">
+            Quick adjustments
+          </p>
+
           {/* Quick chips */}
           <div className="flex flex-wrap gap-1.5 mb-3">
             {QUICK_CHIPS.map(chip => (
               <button
                 key={chip}
                 onClick={() => setInputValue(chip)}
-                className="text-[10px] px-2.5 py-1 rounded-full bg-surface-raised border border-border text-text-muted hover:border-lime/30 hover:text-text-secondary transition-all"
+                className="text-[10px] px-2.5 py-1 rounded-full bg-surface-raised border border-border text-text-muted hover:border-lime/30 hover:text-text-secondary hover:bg-lime/5 transition-all"
               >
                 {chip}
               </button>

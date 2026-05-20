@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 392 AcademyDna Landing Visual Polish V1
+
+**Files modified:** `src/components/onboarding/AcademyDnaLanding.tsx` (root background changed from `style={{ background: var(--bg-app) }}` to `bg-base` Tailwind token; hero radial lime glow added as absolutely-positioned `pointer-events-none aria-hidden` div with `radial-gradient(ellipse at 20% 30%, rgba(200,255,0,0.06) 0%, transparent 65%)` behind hero content; setup mode card selected state strengthened: `border-lime/50 shadow-[0_0_0_1px_rgba(200,255,0,0.15)]` + selection indicator dot `top-3 right-3`; Recommended badge moved from inline label text to standalone pill chip `bg-lime/10 border-lime/25`; deferred cards made non-clickable via `onClick={() => { if (!isDeferred) setSelectedMode(mode.id) }}` + `cursor-not-allowed` class; Begin Setup button `style={{ color: '#030506' }}` replaced with `text-base` token; DONNA avatar size 9→10, added `shadow-[0_0_12px_rgba(200,255,0,0.08)]`; panel header gets `bg-lime/[0.02]` tint; DONNA welcome message updated; selected mode reflection card added to DONNA conversation area; "Quick adjustments" label added above chips; chip hover gets `hover:bg-lime/5`). No migrations. No schema changes. No packages. No DB writes. No real AI. TypeScript: clean.
+
+---
+
 ## 2026-05-20 — Sprint 391 Session Design Proportional Timeline V1
 
 **Files modified:** `src/components/onboarding/steps/SessionDesignStep.tsx` (added `duration: number` to all 7 entries in `SESSION_BLOCKS`: technique-blocks 20, live-ball-heavy 25, constraint-games 15, point-play 15, stations 20, assessment 10, fitness-integrated 10; timeline bar changed from `className="flex-1 ..."` to `style={{ flex: block.duration }}` so each segment width is proportional to its duration; tooltip updated to include duration; duration label row added below bar using second flex container with matching `style={{ flex: block.duration }}` per segment — labels show `{duration}m` in `text-[8px] font-mono text-text-muted/50`, `overflow-hidden` prevents overflow on narrow segments; legend pills unchanged). No migrations. No schema changes. No packages. No DB writes. TypeScript: clean.
