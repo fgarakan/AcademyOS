@@ -3,18 +3,54 @@
 import { Sparkles, CheckCircle2, Circle, ChevronRight } from 'lucide-react'
 import type { OnboardingDraft } from './OnboardingShell'
 
-// 5 grouped milestones — each covers one or more actual steps
-const MILESTONES = [
-  { label: 'Academy Basics',    minStep: 1, maxStep: 1 },
-  { label: 'Coaching DNA',      minStep: 2, maxStep: 3 },
-  { label: 'Session + Players', minStep: 4, maxStep: 6 },
-  { label: 'DNA Review',        minStep: 7, maxStep: 8 },
-  { label: 'Activate',          minStep: 9, maxStep: 9 },
+type MilestoneStep  = { label: string; stepIndex: number }
+type MilestoneGroup = { label: string; steps: MilestoneStep[] }
+
+const MILESTONE_GROUPS: MilestoneGroup[] = [
+  {
+    label: 'Foundation',
+    steps: [{ label: 'Academy Basics', stepIndex: 1 }],
+  },
+  {
+    label: 'Coaching DNA',
+    steps: [
+      { label: 'Coaching Philosophy',  stepIndex: 2 },
+      { label: 'Coach Communication',  stepIndex: 3 },
+    ],
+  },
+  {
+    label: 'Development Model',
+    steps: [
+      { label: 'Session Design',       stepIndex: 4 },
+      { label: 'Player Development',   stepIndex: 5 },
+    ],
+  },
+  {
+    label: 'Family Communication',
+    steps: [{ label: 'Parent Communication', stepIndex: 6 }],
+  },
+  {
+    label: 'Review',
+    steps: [{ label: 'DNA Summary', stepIndex: 7 }],
+  },
+  {
+    label: 'Adjust',
+    steps: [{ label: 'DONNA Adjustment', stepIndex: 8 }],
+  },
+  {
+    label: 'Activate',
+    steps: [{ label: 'Final Activation', stepIndex: 9 }],
+  },
 ]
 
-function getMilestoneStatus(milestone: typeof MILESTONES[number], currentStep: number): 'complete' | 'active' | 'upcoming' {
-  if (currentStep > milestone.maxStep) return 'complete'
-  if (currentStep >= milestone.minStep) return 'active'
+function getGroupStatus(
+  group: MilestoneGroup,
+  currentStep: number,
+): 'complete' | 'active' | 'upcoming' {
+  const max = Math.max(...group.steps.map(s => s.stepIndex))
+  const min = Math.min(...group.steps.map(s => s.stepIndex))
+  if (currentStep > max) return 'complete'
+  if (currentStep >= min) return 'active'
   return 'upcoming'
 }
 
@@ -81,14 +117,14 @@ export function OnboardingDonnaPanel({ currentStep, draft }: Props) {
   const isWelcome = currentStep === 0
 
   const dnaLines: { label: string; value: string }[] = []
-  if (draft.academyName)               dnaLines.push({ label: 'Academy',      value: draft.academyName })
-  if (draft.academyModel)              dnaLines.push({ label: 'Model',        value: draft.academyModel.replace(/-/g, ' ') })
-  if (draft.ageGroups.length)          dnaLines.push({ label: 'Age Groups',   value: draft.ageGroups.join(', ') })
-  if (draft.coachingStyles.length)     dnaLines.push({ label: 'Coaching',     value: draft.coachingStyles.join(' + ') })
-  if (draft.primaryCommunication)      dnaLines.push({ label: 'Coach Voice',  value: draft.primaryCommunication.replace(/-/g, ' ') })
-  if (draft.sessionBlocks.length)      dnaLines.push({ label: 'Sessions',     value: `${draft.sessionBlocks.length} blocks` })
+  if (draft.academyName)               dnaLines.push({ label: 'Academy',        value: draft.academyName })
+  if (draft.academyModel)              dnaLines.push({ label: 'Model',          value: draft.academyModel.replace(/-/g, ' ') })
+  if (draft.ageGroups.length)          dnaLines.push({ label: 'Age Groups',     value: draft.ageGroups.join(', ') })
+  if (draft.coachingStyles.length)     dnaLines.push({ label: 'Coaching',       value: draft.coachingStyles.join(' + ') })
+  if (draft.primaryCommunication)      dnaLines.push({ label: 'Coach Voice',    value: draft.primaryCommunication.replace(/-/g, ' ') })
+  if (draft.sessionBlocks.length)      dnaLines.push({ label: 'Sessions',       value: `${draft.sessionBlocks.length} blocks` })
   if (draft.developmentPriorities.length) dnaLines.push({ label: 'Dev Priorities', value: `${draft.developmentPriorities.length} ranked` })
-  if (draft.parentStyles.length)       dnaLines.push({ label: 'Parents',      value: draft.parentStyles.join(', ') })
+  if (draft.parentStyles.length)       dnaLines.push({ label: 'Parents',        value: draft.parentStyles.join(', ') })
 
   return (
     <aside className="w-80 shrink-0 bg-surface border-l border-border flex flex-col overflow-y-auto">
@@ -135,36 +171,75 @@ export function OnboardingDonnaPanel({ currentStep, draft }: Props) {
             Setup Progress
           </p>
           <div className="flex flex-col gap-0.5">
-            {MILESTONES.map((milestone) => {
-              const status = getMilestoneStatus(milestone, currentStep)
-              const isComplete = status === 'complete'
-              const isActive   = status === 'active'
+            {MILESTONE_GROUPS.map((group) => {
+              const groupStatus = getGroupStatus(group, currentStep)
+              const isComplete  = groupStatus === 'complete'
+              const isActive    = groupStatus === 'active'
+              const multiStep   = group.steps.length > 1
+
               return (
-                <div
-                  key={milestone.label}
-                  className={[
-                    'flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all',
-                    isActive ? 'bg-lime/8' : '',
-                  ].join(' ')}
-                >
-                  {isComplete ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-lime shrink-0" />
-                  ) : isActive ? (
-                    <div className="w-3.5 h-3.5 rounded-full border-2 border-lime flex items-center justify-center shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-lime block" />
-                    </div>
-                  ) : (
-                    <Circle className="w-3.5 h-3.5 text-text-muted/40 shrink-0" />
-                  )}
-                  <span
+                <div key={group.label}>
+                  {/* Group row */}
+                  <div
                     className={[
-                      'text-xs font-medium flex-1 leading-tight',
-                      isActive ? 'text-lime' : isComplete ? 'text-text-muted' : 'text-text-muted/50',
+                      'flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all',
+                      isActive ? 'bg-lime/8' : '',
                     ].join(' ')}
                   >
-                    {milestone.label}
-                  </span>
-                  {isActive && <ChevronRight className="w-3 h-3 text-lime shrink-0" />}
+                    {isComplete ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-lime shrink-0" />
+                    ) : isActive ? (
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-lime flex items-center justify-center shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-lime block" />
+                      </div>
+                    ) : (
+                      <Circle className="w-3.5 h-3.5 text-text-muted/40 shrink-0" />
+                    )}
+                    <span
+                      className={[
+                        'text-xs font-medium flex-1 leading-tight',
+                        isActive   ? 'text-lime'
+                        : isComplete ? 'text-text-muted'
+                        : 'text-text-muted/50',
+                      ].join(' ')}
+                    >
+                      {group.label}
+                    </span>
+                    {isActive && !multiStep && (
+                      <ChevronRight className="w-3 h-3 text-lime shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Step sub-items — multi-step groups only, shown when active */}
+                  {isActive && multiStep && (
+                    <div className="ml-5 mb-1 flex flex-col gap-0.5">
+                      {group.steps.map((step) => {
+                        const isStepDone   = currentStep > step.stepIndex
+                        const isStepActive = currentStep === step.stepIndex
+                        return (
+                          <div key={step.stepIndex} className="flex items-center gap-1.5 px-2 py-1">
+                            {isStepDone ? (
+                              <CheckCircle2 className="w-2.5 h-2.5 text-lime/70 shrink-0" />
+                            ) : isStepActive ? (
+                              <ChevronRight className="w-2.5 h-2.5 text-lime shrink-0" />
+                            ) : (
+                              <span className="w-2.5 h-2.5 shrink-0" />
+                            )}
+                            <span
+                              className={[
+                                'text-[10px] leading-tight',
+                                isStepActive ? 'text-text-secondary font-medium'
+                                : isStepDone  ? 'text-text-muted/60'
+                                : 'text-text-muted/40',
+                              ].join(' ')}
+                            >
+                              {step.label}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )
             })}

@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 387F DONNA Panel Milestone List Parity V1
+
+**Files modified:** `src/components/onboarding/OnboardingDonnaPanel.tsx` (expanded milestone list from 5 flat groups to 7 milestone groups matching the sprint spec; `MILESTONES` array replaced by typed `MILESTONE_GROUPS: MilestoneGroup[]`; `getMilestoneStatus()` replaced by `getGroupStatus()` computing min/max step index per group; 7 groups: Foundation (step 1), Coaching DNA (steps 2–3), Development Model (steps 4–5), Family Communication (step 6), Review (step 7), Adjust (step 8), Activate (step 9); multi-step groups Coaching DNA and Development Model expand to show individual step sub-items when active — completed sub-step: CheckCircle2 lime/70, active sub-step: ChevronRight lime text-text-secondary, upcoming sub-step: spacer muted; single-step groups show ChevronRight on group row when active, no sub-items; all existing DONNA guidance preserved: per-step DONNA_MESSAGES, Why This Matters, Next Best Action, Live DNA Preview, building pulse, bottom principle quote, draft-only safety copy; mobile toggle unchanged). No migrations. No schema changes. No packages. TypeScript: clean.
+
+---
+
 ## 2026-05-20 — Sprint 387E Onboarding Shell Layout Parity V1
 
 **Files modified:** `src/components/onboarding/OnboardingProgressRail.tsx` (complete rewrite — 10-node dot rail replaced with 3px lime gradient progress bar + label strip; returns null on step 0 so Welcome shows no rail; `STEP_PROGRESS` table maps step index to % width; bar animates via `width 400ms cubic-bezier(0.77, 0, 0.175, 1)`; label strip shows current step name left in lime, `Step N of 9` right in `text-text-muted`), `src/components/onboarding/OnboardingShell.tsx` (layout restructured — `OnboardingProgressRail` removed from top-level header position; Content Column wrapper `flex-1 flex flex-col overflow-hidden min-w-0` added; rail placed inside column above `main`; content width `max-w-2xl` → `max-w-3xl`; top padding `py-8` → `py-6`). No step content changes. No landing/routing changes. No migrations. TypeScript: clean.
