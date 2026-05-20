@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 397 AcademyOS Pilot Readiness Master Audit V1
+
+**Files created:** `docs/PILOT_READINESS_MASTER_AUDIT.md`, `docs/DONNA_FULL_FUNCTIONALITY_AUDIT.md`, `docs/PILOT_CONNECTION_MATRIX.md`, `docs/PILOT_READY_SPRINT_BACKLOG.md` — comprehensive pilot-readiness audit across all 5 portal surfaces (director onboarding, curriculum builder, coach portal, player portal, parent portal), backend data flow, DONNA functionality, and role safety. Prototype sources: donna-onboarding, curriculum-builder, coach-portal, parent-portal, player-portal zips. No code changes. No migrations. No schema changes. No package changes. No DB writes.
+
+---
+
 ## 2026-05-20 — Sprint 396 Player Portal Shell Nav Upgrade V1
 
 **Files created:** `src/components/player/PlayerPortalShell.tsx` (`'use client'` shell component — desktop sticky sidebar `w-60 h-screen` with AOS logo, optional player identity section (initials avatar + first name + level pill), 9-item nav with active state `bg-lime/10 text-lime border-l-[2px] border-lime`, footer; mobile fixed top header with current page label + hamburger, slide-out drawer with full nav + player identity, drawer auto-closes on pathname change via `useEffect`; all AcademyOS tokens, no prototype theme system). **Files modified:** `src/app/player/layout.tsx` (still Server Component; profile select expanded to include `academy_id`; two guarded lightweight reads added: `players.first_name + curriculum_level_id` via `profile_id + academy_id + is_active`, then `curriculum_levels.display_name` via level id; replaced `min-h-screen pb-24 / main p-4 max-w-lg mx-auto / BottomTabBar 3-tab` structure with `PlayerPortalShell firstName levelName`; `PreviewBanner` and `FirstRunDeckGate` preserved as shell children). No new pages — all 9 player routes existed. `BottomTabBar.tsx` untouched. No migrations. No schema changes. No package changes. No DB writes. TypeScript: clean. Nav items after: Home, Missions, Skill Path, Competition, Fitness, Level Up, Practice, Achievements, Ask DONNA.
