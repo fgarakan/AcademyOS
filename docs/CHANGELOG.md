@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-20 — Sprint 391 Session Design Proportional Timeline V1
+
+**Files modified:** `src/components/onboarding/steps/SessionDesignStep.tsx` (added `duration: number` to all 7 entries in `SESSION_BLOCKS`: technique-blocks 20, live-ball-heavy 25, constraint-games 15, point-play 15, stations 20, assessment 10, fitness-integrated 10; timeline bar changed from `className="flex-1 ..."` to `style={{ flex: block.duration }}` so each segment width is proportional to its duration; tooltip updated to include duration; duration label row added below bar using second flex container with matching `style={{ flex: block.duration }}` per segment — labels show `{duration}m` in `text-[8px] font-mono text-text-muted/50`, `overflow-hidden` prevents overflow on narrow segments; legend pills unchanged). No migrations. No schema changes. No packages. No DB writes. TypeScript: clean.
+
+---
+
 ## 2026-05-20 — Sprint 390 Final Activation Next Steps Grid V1
 
 **Files modified:** `src/components/onboarding/steps/ActivationChecklistStep.tsx` (replaced plain `POST_DNA_TASKS` 2-column `<a>` grid with full `NEXT_STEP_CARDS` card grid; `NextStepCard` interface with `Icon: typeof BookOpen`, `label`, `desc`, `href: string | null`, `status`, `statusStyle`, `iconStyle`, `ctaLabel`; 6 cards: Review Curriculum (`/director/curriculum`, BookOpen, lime "Next setup task" badge), Create Class Template (`/director/class-templates/new`, LayoutTemplate, blue "Draft" badge), Create Fitness Template (`/director/fitness/templates/new`, Activity, blue "Draft" badge — desc mentions plyometrics), Upload Players (`/director/players`, Users, muted "Setup later" badge), Add Coaches (`/director/coaches`, UserPlus, muted "Setup later" badge), Preview Portals (null/deferred, Eye, "Coming next" badge — `opacity-60` wrapper, no link, "Not available yet" CTA); active cards: `<a>` with `group` hover (lime CTA arrow, label brightens); deferred card: `<div>` with dimmed treatment; grid responsive `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`; card grid moved above AcademyDnaSummaryCard compact and Foundation Check for visibility; DONNA bubble text updated to explain cards; celebration header subtitle updated; all existing checklist items, AcademyDnaSummaryCard compact, DNA Foundation Check, DNA status banner, Back/CTA nav, footer safety note preserved unchanged). No migrations. No schema changes. No packages. No DB writes. TypeScript: clean.

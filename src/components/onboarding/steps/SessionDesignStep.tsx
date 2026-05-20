@@ -11,6 +11,7 @@ const SESSION_BLOCKS = [
     desc: 'Structured rep blocks with coach-led correction. Forehand, backhand, serve mechanics.',
     color: 'bg-status-blue/8 border-status-blue/30 text-status-blue',
     barColor: 'bg-status-blue',
+    duration: 20,
   },
   {
     id: 'live-ball-heavy',
@@ -18,6 +19,7 @@ const SESSION_BLOCKS = [
     desc: 'Most of the session is fed or played live. Minimal stopping to explain technique.',
     color: 'bg-status-green/8 border-status-green/30 text-status-green',
     barColor: 'bg-status-green',
+    duration: 25,
   },
   {
     id: 'constraint-games',
@@ -25,6 +27,7 @@ const SESSION_BLOCKS = [
     desc: 'Modified games with specific rules to develop skills indirectly. Creative and engaging.',
     color: 'bg-lime/8 border-lime/30 text-lime',
     barColor: 'bg-lime',
+    duration: 15,
   },
   {
     id: 'point-play',
@@ -32,6 +35,7 @@ const SESSION_BLOCKS = [
     desc: 'Cooperative rally builds to competitive rally builds to live point play in every session.',
     color: 'bg-status-orange/8 border-status-orange/30 text-status-orange',
     barColor: 'bg-status-orange',
+    duration: 15,
   },
   {
     id: 'stations',
@@ -39,6 +43,7 @@ const SESSION_BLOCKS = [
     desc: 'Multiple stations running simultaneously. Keeps players active and covers more ground.',
     color: 'bg-purple-500/8 border-purple-500/30 text-purple-400',
     barColor: 'bg-purple-500',
+    duration: 20,
   },
   {
     id: 'assessment',
@@ -46,6 +51,7 @@ const SESSION_BLOCKS = [
     desc: 'Deliberate checkpoints where coaches observe and record player readiness vs. targets.',
     color: 'bg-status-red/8 border-status-red/30 text-status-red',
     barColor: 'bg-status-red',
+    duration: 10,
   },
   {
     id: 'fitness-integrated',
@@ -53,6 +59,7 @@ const SESSION_BLOCKS = [
     desc: 'Athletic prep, footwork, and conditioning woven into the session rather than added on.',
     color: 'bg-yellow-400/8 border-yellow-400/30 text-yellow-400',
     barColor: 'bg-yellow-400',
+    duration: 10,
   },
 ]
 
@@ -114,15 +121,30 @@ export function SessionDesignStep({ draft, updateDraft, onNext, onPrev }: Props)
           <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted mb-2.5">
             Default session shape
           </p>
+          {/* Proportional bar — flex value equals block duration in minutes */}
           <div className="flex h-6 rounded-lg overflow-hidden gap-px">
             {selectedBlocks.map(block => (
               <div
                 key={block.id}
-                title={block.label}
-                className={['flex-1', block.barColor, 'opacity-70'].join(' ')}
+                title={`${block.label} — ${block.duration} min`}
+                className={[block.barColor, 'opacity-70'].join(' ')}
+                style={{ flex: block.duration }}
               />
             ))}
           </div>
+          {/* Duration labels aligned under each segment */}
+          <div className="flex gap-px mt-1">
+            {selectedBlocks.map(block => (
+              <div
+                key={block.id}
+                className="overflow-hidden text-center"
+                style={{ flex: block.duration }}
+              >
+                <span className="text-[8px] font-mono text-text-muted/50">{block.duration}m</span>
+              </div>
+            ))}
+          </div>
+          {/* Legend pills */}
           <div className="flex flex-wrap gap-1 mt-2">
             {selectedBlocks.map(block => (
               <span
