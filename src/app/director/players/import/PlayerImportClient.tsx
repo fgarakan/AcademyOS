@@ -458,9 +458,9 @@ export function PlayerImportClient() {
           <button
             onClick={handleRunDryRun}
             disabled={isDryRunning || !csvText.trim()}
-            className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-lg bg-lime text-base font-semibold hover:bg-lime/90 transition-colors disabled:opacity-40"
+            className="flex items-center gap-2 text-sm px-5 py-2.5 rounded-lg border border-lime/40 text-lime hover:bg-lime/5 transition-colors disabled:opacity-40"
           >
-            {isDryRunning ? 'Checking…' : dryRunReport ? 'Re-run Dry Run' : 'Run Dry Run'}
+            {isDryRunning ? 'Checking…' : dryRunReport ? 'Re-run Preview' : 'Preview Import'}
           </button>
         </CardContent>
       </Card>

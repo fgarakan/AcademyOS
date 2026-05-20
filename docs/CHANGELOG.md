@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-20 — Sprint 394 Director Player Import Route Validation V1
+
+**Files modified:** `src/app/director/players/import/playerImportActions.ts` (removed premature early return that rejected entire commit when `parseResult.counts.errorRows > 0`; error rows are already excluded from `normalizedRows` by the parser, so they are safely skipped during the insert loop; `skippedCount` initialised to `parseResult.counts.errorRows` so the result stat is accurate — this fixes the UI/server mismatch where `CommitSection` said "valid rows will still commit" but the server action rejected the whole batch), `src/app/director/players/import/PlayerImportClient.tsx` (dry-run button changed from filled lime `bg-lime` to ghost/border `border-lime/40 text-lime hover:bg-lime/5` to visually distinguish it from the definitive Commit Import button; button label "Run Dry Run" → "Preview Import" / "Re-run Dry Run" → "Re-run Preview" to use director-friendly language). No migrations. No schema changes. No package changes. No parser changes. No new routes. `data/player-import/academy_os_player_import_roster.csv` left unstaged. TypeScript: clean.
+
+**Validation doc created:** `docs/SPRINT_394_DIRECTOR_PLAYER_IMPORT_ROUTE_VALIDATION.md` — full audit of import route, dry-run behavior, commit behavior, safety notes, and next sprint recommendation.
+
+---
+
 ## 2026-05-20 — Sprint 393 Director Players List Link Polish V1
 
 **Files modified:** `src/app/director/players/_components/PlayersDirectoryClient.tsx` (empty-state description changed to "Add your first player or import a roster from a CSV file."; `action` prop added with two CTA buttons: Import roster → `/director/players/import` using `btn-lime` + `Upload` icon as primary, Add player → `/director/players/new` using `btn-ghost` + `UserPlus` icon as secondary; `Upload` and `UserPlus` added to lucide-react import), `src/app/director/players/page.tsx` (missingCurriculumCount badge changed from non-interactive `<span>` to `<Link href="/director/curriculum">` with `hover:bg-status-orange/10 transition-colors` hover treatment; visual style otherwise unchanged). No migrations. No schema changes. No package changes. No DB writes. No player import logic changes. TypeScript: clean.

@@ -299,15 +299,6 @@ export async function commitPlayerImportAction(csvText: string): Promise<CommitR
   const warnings: string[] = parseResult.warnings.map(w => `Row ${w.rowIndex}: ${w.message}`)
   const errors: string[] = parseResult.errors.map(e => `Row ${e.rowIndex}: ${e.message}`)
 
-  if (parseResult.counts.errorRows > 0) {
-    return {
-      ok: false,
-      error: `${parseResult.counts.errorRows} rows have validation errors. Fix them and re-run.`,
-      ...emptyCommitCounts(),
-      errors,
-    }
-  }
-
   // Load lookup maps (same as dry run)
   const { data: existingPlayers } = await supabase
     .from('players')
@@ -353,7 +344,8 @@ export async function commitPlayerImportAction(csvText: string): Promise<CommitR
   // Process rows
   let createdCount = 0
   let updatedCount = 0
-  let skippedCount = 0
+  // Error rows are already excluded from normalizedRows; count them as skipped.
+  let skippedCount = parseResult.counts.errorRows
   let profileSummaryCreatedCount = 0
   let priorityCreatedCount = 0
   let curriculumAssignedCount = 0
