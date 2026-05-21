@@ -6,7 +6,7 @@
 
 import type { CurriculumStage } from './visualMapModel'
 
-export type RequirementStatus = 'achieved' | 'confirmed' | 'in_progress' | 'not_started'
+export type RequirementStatus = 'met' | 'waived' | 'in_progress' | 'not_started'
 
 export interface RequirementProgressRecord {
   id: string
@@ -54,8 +54,8 @@ export function aggregateLevelRequirementStats(
 ): LevelRequirementStats {
   const levelRecords = records.filter(r => r.curriculumLevelId === levelId)
 
-  const achievedCount = levelRecords.filter(r => r.status === 'achieved').length
-  const confirmedCount = levelRecords.filter(r => r.status === 'confirmed').length
+  const achievedCount = levelRecords.filter(r => r.status === 'met').length
+  const confirmedCount = levelRecords.filter(r => r.status === 'waived').length
   const inProgressCount = levelRecords.filter(r => r.status === 'in_progress').length
   const notStartedCount = levelRecords.filter(r => r.status === 'not_started').length
   const completedCount = achievedCount + confirmedCount
@@ -70,7 +70,7 @@ export function aggregateLevelRequirementStats(
   let totalPlayerPct = 0
   for (const pid of playerIds) {
     const playerRecords = levelRecords.filter(r => r.playerId === pid)
-    const playerCompleted = playerRecords.filter(r => r.status === 'achieved' || r.status === 'confirmed').length
+    const playerCompleted = playerRecords.filter(r => r.status === 'met' || r.status === 'waived').length
     totalPlayerPct += playerRecords.length > 0
       ? (playerCompleted / playerRecords.length) * 100
       : 0
@@ -104,8 +104,8 @@ export function buildPlayerRequirementSummary(
     r => r.playerId === playerId && r.curriculumLevelId === levelId,
   )
 
-  const achievedCount = playerLevelRecords.filter(r => r.status === 'achieved').length
-  const confirmedCount = playerLevelRecords.filter(r => r.status === 'confirmed').length
+  const achievedCount = playerLevelRecords.filter(r => r.status === 'met').length
+  const confirmedCount = playerLevelRecords.filter(r => r.status === 'waived').length
   const inProgressCount = playerLevelRecords.filter(r => r.status === 'in_progress').length
   const notStartedCount = playerLevelRecords.filter(r => r.status === 'not_started').length
   const completedCount = achievedCount + confirmedCount
@@ -142,5 +142,5 @@ export function getPlayerVisibleRequirementRecords(
 export function getCompletedRequirements(
   records: RequirementProgressRecord[],
 ): RequirementProgressRecord[] {
-  return records.filter(r => r.status === 'achieved' || r.status === 'confirmed')
+  return records.filter(r => r.status === 'met' || r.status === 'waived')
 }

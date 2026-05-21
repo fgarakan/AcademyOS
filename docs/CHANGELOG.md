@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-21 — Sprint — requirementProgressAggregator status mismatch fix
+
+**Bug fixed:** `RequirementStatus` type and all DB status comparisons in `requirementProgressAggregator.ts` used non-existent DB values `'achieved'` and `'confirmed'`. DB canonical values are `'met'` and `'waived'`.
+
+**Changes in `src/lib/curriculum/requirementProgressAggregator.ts`:**
+- `RequirementStatus` type: `'achieved' | 'confirmed'` → `'met' | 'waived'`
+- `aggregateLevelRequirementStats`: 3 comparisons corrected (`'achieved'`→`'met'`, `'confirmed'`→`'waived'`, compound filter)
+- `buildPlayerRequirementSummary`: 2 comparisons corrected
+- `getCompletedRequirements`: 1 comparison corrected
+
+**Preserved:** Public interface fields `achievedCount` and `confirmedCount` on `LevelRequirementStats` and `PlayerRequirementSummary` — these are display/summary labels and do not map directly to DB values.
+
+**Cascade check:** `playerCurriculumIntersection.ts` imports `RequirementStatus` — confirmed safe; no callers construct `RequirementStatusSnapshot` objects with `'achieved'`/`'confirmed'` values.
+
+**All migration 041–044 follow-up bugs now resolved:**
+- BUG 1 (status mismatch): fixed in `evidenceQueries.ts`, `progressIndicators.ts`, all Phase 5 portal pages, and now `requirementProgressAggregator.ts`
+- BUG 2 (column mismatch): fixed in all Phase 5 and deferred portal pages
+
+**TypeScript:** clean — `npx tsc --noEmit` exits 0
+
+---
+
 ## 2026-05-21 — Sprint — Deferred current_level_id portal cleanup
 
 **Bug fixed:** `player_curriculum_states` column mismatch — DB column is `current_level_id`; deferred portal pages were still querying `curriculum_level_id` (non-existent on this table), causing current level names to always return null.
