@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 554–563 Curriculum Coverage Node UI (Phase 1)
+
+**Sprints:** 554 (Coverage Full Wiring V1), 555 (Health Score V2), 556 (Expansion Tree UI V1), 557 (Node Detail Drawer V1), 558 (Add Content Draft Flow V1), 559 (DONNA Add-to-Node UI V1), 560 (Parent/Player Preview V1), 561 (Search + Filter V1), 562 (Mobile/Tablet View V1), 563 (UX Polish)
+
+**Files created:**
+- `src/app/director/curriculum/_components/CurriculumDimensionBreakdown.tsx` — Sprint 554: grid of tracked/not-tracked coverage dimension tiles (green = tracked with count, gray = not yet tracked)
+- `src/app/director/curriculum/_components/CurriculumLevelTree.tsx` — Sprint 556+561+562: collapsible stage/level tree with real-time search, level count badges, gate/drill/coach cue counts per row; triggers node drawer on level click; responsive (full-width on mobile)
+- `src/app/director/curriculum/_components/CurriculumNodeDrawer.tsx` — Sprint 557: slide-over level detail drawer with sticky tab bar (Content | Draft | DONNA | Preview); uses existing `CurriculumLevelDetailPanel` for content tab; closes via backdrop or × button
+- `src/app/director/curriculum/_components/CurriculumDraftEntryPanel.tsx` — Sprint 558: draft entry UI with "Draft only" disclaimer; three content type buttons (Gate, Drill, Coach Language) linking to builder; "coming soon" note for unsupported types
+- `src/app/director/curriculum/_components/DonnaCurriculumNodeAddCard.tsx` — Sprint 559: DONNA add-to-node card; text area → "Draft with DONNA" → draft preview card with lime border + approval disclaimer; Reset button; links to builder
+- `src/app/director/curriculum/_components/CurriculumNodePreview.tsx` — Sprint 560: player/parent role toggle preview; player view shows gate/drill counts in safe language; parent view hides all internal criteria and assessment data; safety disclaimer on parent view
+
+**Files modified:**
+- `src/app/director/curriculum/_components/CurriculumHealthPanel.tsx` — Sprint 554+555: added `DimensionSummary` interface (exported), optional `dimensionSummary` prop, `CurriculumDimensionBreakdown` section between disclaimer and per-level bars; V2 score label "gates · drills · language" under grade number
+- `src/app/director/curriculum/page.tsx` — Sprint 554+556: computes `dimensionSummary` from `explorerData` counts; passes to `CurriculumHealthPanel`; adds "Curriculum Levels" section rendering `CurriculumLevelTree`
+
+**Files created (docs):**
+- `docs/CURRICULUM_HEALTH_SCORE_V2_NOTES.md` — Sprint 555: score evolution notes, tracked vs untracked dimensions, planned V3 additions
+- `docs/CURRICULUM_UI_QA.md` — Sprint 563: full QA checklist covering all 10 sprints, security checks, known limitations
+- `docs/CURRICULUM_UI_DEMO_SCRIPT.md` — Sprint 563: 6-act demo script for academy directors and pilots
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-21 — Sprint 553 UI Wiring Foundation V1
 
 **Files created:**

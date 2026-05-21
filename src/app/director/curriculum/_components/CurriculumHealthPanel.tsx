@@ -3,9 +3,20 @@ import { AlertTriangle, Info } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import type { CurriculumCoverageReport, CoverageStatus } from '@/lib/curriculum/coverageModel'
 import { getCoverageStatusLabel } from '@/lib/curriculum/coverageModel'
+import { CurriculumDimensionBreakdown } from './CurriculumDimensionBreakdown'
+
+export interface DimensionSummary {
+  gates: number
+  drills: number
+  coachCues: number
+  competitionTrack: number
+  fitnessGuidance: number
+  volumeGuidance: number
+}
 
 interface Props {
   report: CurriculumCoverageReport
+  dimensionSummary?: DimensionSummary
 }
 
 function scoreToGrade(score: number): 'A' | 'B' | 'C' | 'D' | 'F' {
@@ -44,7 +55,7 @@ function statusBarClass(status: CoverageStatus): string {
   }
 }
 
-export function CurriculumHealthPanel({ report }: Props) {
+export function CurriculumHealthPanel({ report, dimensionSummary }: Props) {
   const overallGrade = scoreToGrade(report.overallScoreOutOf100)
 
   return (
@@ -64,6 +75,7 @@ export function CurriculumHealthPanel({ report }: Props) {
             <p className="text-[10px] uppercase tracking-widest text-text-muted mt-1 font-mono">
               {report.overallScoreOutOf100}<span className="text-text-muted/50">/100</span>
             </p>
+            <p className="text-[9px] text-text-muted/50 mt-0.5">gates · drills · language</p>
           </div>
         </div>
       </CardHeader>
@@ -80,6 +92,28 @@ export function CurriculumHealthPanel({ report }: Props) {
             all content types to be connected.
           </p>
         </div>
+
+        {/* ── Dimension breakdown — Sprint 554 ────────────────────── */}
+        {dimensionSummary && (
+          <CurriculumDimensionBreakdown
+            tracked={[
+              { label: 'Exit Gates',        count: dimensionSummary.gates },
+              { label: 'Drills',            count: dimensionSummary.drills },
+              { label: 'Coach Language',    count: dimensionSummary.coachCues },
+              { label: 'Competition Track', count: dimensionSummary.competitionTrack },
+              { label: 'Fitness Guidance',  count: dimensionSummary.fitnessGuidance },
+              { label: 'Volume Guidance',   count: dimensionSummary.volumeGuidance },
+            ]}
+            notTracked={[
+              'Skills',
+              'Assessment Criteria',
+              'Missions',
+              'Badges',
+              'Parent Guidance',
+              'Learning Modules',
+            ]}
+          />
+        )}
 
         {/* ── Per-level breakdown ──────────────────────────────────── */}
         <div className="space-y-3">

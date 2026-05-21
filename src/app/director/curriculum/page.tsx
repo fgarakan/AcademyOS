@@ -13,7 +13,8 @@ import { CurriculumLoopDiagram } from '@/components/onboarding/CurriculumLoopDia
 import { CurriculumBuilderWelcome } from '@/components/curriculum/builder/CurriculumBuilderWelcome'
 import { buildCurriculumCoverageReport, type LevelCoverageInput } from '@/lib/curriculum/coverageModel'
 import type { CurriculumStage } from '@/lib/curriculum/visualMapModel'
-import { CurriculumHealthPanel } from './_components/CurriculumHealthPanel'
+import { CurriculumHealthPanel, type DimensionSummary } from './_components/CurriculumHealthPanel'
+import { CurriculumLevelTree } from './_components/CurriculumLevelTree'
 
 // ─── Static spine data ────────────────────────────────────────────────────────
 
@@ -131,6 +132,15 @@ export default async function DirectorCurriculumPage() {
   }))
 
   const coverageReport = buildCurriculumCoverageReport(levelCoverageInputs)
+
+  const dimensionSummary: DimensionSummary = {
+    gates:           explorerData.gates.length,
+    drills:          explorerData.drills.length,
+    coachCues:       explorerData.coachLanguage.length,
+    competitionTrack: explorerData.competitionTrack.length,
+    fitnessGuidance:  explorerData.fitnessGuidance.length,
+    volumeGuidance:   explorerData.volumeGuidance.length,
+  }
 
   const rawDb = supabase as any
 
@@ -383,7 +393,15 @@ export default async function DirectorCurriculumPage() {
       {/* ── 4b. Coverage snapshot ────────────────────────────────────────── */}
       {explorerData.levels.length > 0 && (
         <section className="space-y-3">
-          <CurriculumHealthPanel report={coverageReport} />
+          <CurriculumHealthPanel report={coverageReport} dimensionSummary={dimensionSummary} />
+        </section>
+      )}
+
+      {/* ── 4c. Level tree — Sprint 556 ───────────────────────────────────── */}
+      {explorerData.levels.length > 0 && (
+        <section className="space-y-3">
+          <p className="label-xs">Curriculum Levels</p>
+          <CurriculumLevelTree explorerData={explorerData} />
         </section>
       )}
 
