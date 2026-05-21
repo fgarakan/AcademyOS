@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 538–545 Knowledge Ingestion Classification (Phase 4)
+
+**Sprint 538 — Knowledge Ingestion Types**
+**Files created:** `src/lib/knowledge/knowledgeIngestionTypes.ts` (IngestionMethod 5-value union; IngestionStatus union; IngestionPayload, IngestionValidationResult types; INGESTION_CONTENT_SAFETY_PATTERNS array; getIngestionMethodLabel, getIngestionStatusLabel helpers; DOCTRINE: all ingestion produces pending_review only; do not scrape copyrighted content, bypass paywalls, or violate ToS).
+
+**Sprint 539 — Knowledge Ingestion Classifier**
+**Files created:** `src/lib/knowledge/knowledgeIngestionClassifier.ts` (DOMAIN_KEYWORD_MAP: 40+ term → domain mappings; SOURCE_TYPE_KEYWORD_MAP; tokenize, inferDomain, inferSourceType helpers; checkContentSafety: scans for copyright/PII patterns; classifyIngestionPayload: validation + auto-inference; buildIngestionPayload: creates payload with inferred domain/sourceType; deterministic — no AI API calls).
+
+**Sprint 540 — Knowledge Voice Ingestion**
+**Files created:** `src/lib/knowledge/knowledgeVoiceIngestion.ts` (VoiceKnowledgeSubmissionRole; VoiceKnowledgeSubmissionInput, VoiceKnowledgeSubmissionResult types; extractTitleFromTranscript: first sentence up to 100 chars; extractSummaryFromTranscript: sentence-by-sentence up to 300 chars; processVoiceKnowledgeSubmission: maps role to ingestion method, builds payload, validates; requiresReview:true/neverAutoPromotes:true enforced on result).
+
+**Sprint 541 — Knowledge Structured Import**
+**Files created:** `src/lib/knowledge/knowledgeStructuredImport.ts` (StructuredImportRow, StructuredImportResult types; parseDomain/parseSourceType: validates against known sets; parseYear: range check 1900-2100; processStructuredImport: per-row payload building, validation, error/warning collection; getImportSummaryLine helper; requiresReview:true/neverAutoPromotes:true on result).
+
+**Sprint 542 — Knowledge Source Validator**
+**Files created:** `src/lib/knowledge/knowledgeSourceValidator.ts` (SourceValidationStatus; SourceValidationResult; BLOCKED_URL_PATTERNS, KNOWN_OPEN_ACCESS_DOMAINS; isUrlSafe: protocol check + pattern block; isKnownOpenAccess; formatCitation; validateKnowledgeSource: URL safety, attribution check, year range, long-body + non-open-access warning; getSourceValidationStatusLabel helper).
+
+**Sprint 543 — Knowledge Ingestion Dashboard**
+**Files created:** `src/lib/knowledge/knowledgeIngestionDashboard.ts` (IngestionDashboardView type; buildIngestionDashboardView: byMethod/byStatus counts, recentSubmissions, failedItems, requiresAttentionCount, isQueueHealthy (healthy if <20 queued and 0 failed), queueSummary; getIngestionMethodBreakdown: sorted by count with pct).
+
+**Sprint 544 — Knowledge → Curriculum Bridge**
+**Files created:** `src/lib/knowledge/knowledgeCurriculumBridge.ts` (KnowledgeCurriculumBridgeResult with requiresDirectorApproval:true/neverAutoApply:true literals; bridgeKnowledgeToCurriculumDraft: status gate (only approved_general eligible), builds promotion draft, validates, returns promotionPath string; KnowledgeCurriculumLevelContext; buildKnowledgeCurriculumLevelContext; getKnowledgeBridgeSummary helper).
+
+**Sprint 545 — Knowledge Ingestion Report**
+**Files created:** `src/lib/knowledge/knowledgeIngestionReport.ts` (IngestionPhaseReport with requiresDirectorReview:true/neverAutoPromotes:true literals; buildIngestionPhaseReport: counts by method/domain using Map, topSubmitters using Array.from(submitterCounts.keys()); getIngestionReportSummaryLine helper).
+
+---
+
 ## 2026-05-21 — Mega Sprint 528–537 Global Knowledge Library Curation (Phase 3)
 
 **Sprint 528 — Knowledge Library Types**
