@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 437–446 Coach Session Recap Intelligence (Phase 5)
+
+**Sprint 437 — Coach Session Data Layer V1**
+**Files created:** `src/lib/coach/sessionQueries.ts` (fetchCoachUpcomingSessions, fetchCoachRecentSessions, fetchSessionById, verifyCoachSessionAccess; no select('*'); typed CoachSessionSummary; academy+coach_id scoping; status-filtered queries).
+
+**Sprint 438 — Session Attendance Data Layer V1**
+**Files created:** `src/lib/coach/attendanceQueries.ts` (fetchSessionAttendance, computeAttendanceSummary, fetchPlayerAttendanceHistory with sessions join, hasAttendanceBeenMarked; typed AttendanceRecord and AttendanceSummary; attendance rate computed as (present+late)/total).
+
+**Sprint 439 — Coach Recap Intelligence V1**
+**Files created:** `src/lib/coach/recapIntelligence.ts` (assessRecapQuality: 4-signal quality report for transcript_length/block_completion/attendance/observation_count; extractObservationFocusAreas; getSuggestedRecapPrompts with attendance context; minimum 20-char transcript for structuring; pure logic, no DB calls).
+
+**Sprint 440 — Voice Note Data Layer V1**
+**Files created:** `src/lib/coach/voiceNoteQueries.ts` (fetchVoiceNoteById, fetchSessionVoiceNotes, fetchPendingStructuringNotes; isVoiceNoteStructured, hasUsableTranscript guards; typed VoiceNoteRecord with camelCase fields; no select('*')).
+
+**Sprint 441 — Session Block Data Layer V1**
+**Files created:** `src/lib/coach/sessionBlockQueries.ts` (fetchSessionBlocks ordered by order_index; computePlannedDuration, findIncompleteBlocks; computeBlockExecutionSummary with completed/skipped/incomplete counts and completion rate; typed SessionBlock).
+
+**Sprint 442 — Session Wrap-Up Validator V1**
+**Files created:** `src/lib/coach/wrapUpValidator.ts` (validateWrapUpInput: required fields check + quality scoring 0-100; transcript/voice note 40pts, attendance 20pts, observations 30pts, session rating 10pts; wrapUpQualityMessage for user-facing feedback; pure validation, no DB calls).
+
+**Sprint 443 — Coach Observation Tracker V1**
+**Files created:** `src/lib/coach/observationTracker.ts` (validateObservation, filterValidObservations; hasObservationForPlayer, findUnobservedPlayers; inferSentimentHint keyword heuristic: positive/neutral/concern without AI call; pure logic).
+
+**Sprint 444–445 — Coach OS Context Builder V1**
+**Files created:** `src/lib/coach/coachContext.ts` (buildCoachOsContext, buildCoachSessionContext assemblers; isSessionReadyForWrapUp checks planned/in_progress/completed; getCoachSessionStatusMessage builds status string from attendance, blocks, observations, voice notes; pure assembly, no DB calls).
+
+**Sprint 446 — Coach Session Summary Builder V1**
+**Files created:** `src/lib/coach/sessionSummary.ts` (buildSessionSummaryPayload assembles typed proposed_action payload; transcript truncated to 500 chars; buildWrapUpActionLabel generates action_label; getWrapUpStatus maps proposed_action status to WrapUpStatus enum; pure assembly).
+
+**Shared documentation:** `docs/COACH_SESSION_RECAP_INTELLIGENCE_NOTES.md` (export reference; wiring targets; Trust Stack alignment; schema notes).
+
+No migrations. No RLS changes. No new package dependencies. TypeScript: clean.
+
+---
+
 ## 2026-05-21 — Mega Sprint 427–436 Director Curriculum Template Layer (Phase 4)
 
 **Sprint 427 — Director Approval Actions V1**

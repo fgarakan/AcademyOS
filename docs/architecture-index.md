@@ -2,7 +2,7 @@
 
 This file is the index of all architecture and engineering documentation. It is a navigation map — not a specification. Follow the links to the actual documents.
 
-**Last updated:** Mega Sprint 427–436 Phase 4
+**Last updated:** Mega Sprint 437–446 Phase 5
 
 ---
 
@@ -45,6 +45,7 @@ This file is the index of all architecture and engineering documentation. It is 
 | [`FEATURE_FLAGS_KILL_SWITCHES_NOTES.md`](FEATURE_FLAGS_KILL_SWITCHES_NOTES.md) | Feature flags and kill switch implementation (Sprint 414–415) |
 | [`DONNA_ACTION_RELIABILITY_NOTES.md`](DONNA_ACTION_RELIABILITY_NOTES.md) | DONNA action reliability: state machine, guards, audit, gateway (Sprint 417–426) |
 | [`DIRECTOR_CURRICULUM_TEMPLATE_NOTES.md`](DIRECTOR_CURRICULUM_TEMPLATE_NOTES.md) | Director data layer: approval actions, templates, curriculum, groups, alerts (Sprint 427–436) |
+| [`COACH_SESSION_RECAP_INTELLIGENCE_NOTES.md`](COACH_SESSION_RECAP_INTELLIGENCE_NOTES.md) | Coach session, attendance, blocks, voice notes, wrap-up intelligence (Sprint 437–446) |
 
 ---
 
