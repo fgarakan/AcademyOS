@@ -2,6 +2,51 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 462–471 DONNA Academy COO (Phase 2)
+
+**Sprint 462 — DONNA Conversational Core V1**
+**Files created:** `src/lib/donna/conversation/index.ts` (organizational index; re-exports ConversationState, MessageRole, SessionMemoryEntry, DonnaFlowStep, DONNAConfidence; exports DONNA_ROLE_BLOCKS, DraftValidationResult, DonnaSafeReadAnswer; boundary response builders; DONNA_CONVERSATION_RULES constants).
+**Docs created:** `docs/DONNA_CONVERSATIONAL_CORE_NOTES.md` (existing module map, behavior rules, state machine, session memory, trust alignment).
+
+**Sprint 463 — DONNA Academy Knowledge Context V1**
+**Files created:** `src/lib/donna/academyKnowledge/index.ts` (AcademyKnowledgeArea 14 areas; KnowledgeAreaMeta with roles/isSensitive/requiresParentSafe/requiresPlayerSafe/isNoCache per area; DataClassification type; getDataClassification, isAreaAvailableForRole helpers).
+**Docs created:** `docs/DONNA_ACADEMY_KNOWLEDGE_CONTEXT.md` (context area table, data classification rules, context pack rules, existing module map).
+
+**Sprint 464 — DONNA Director COO Briefing V1**
+**Files created:** `src/lib/donna/briefings/directorBriefing.ts` (BriefingSection, DirectorDailyBriefing types; buildDirectorDailyBriefing: 7 sections — sessions/recaps/approvals/signals/parent drafts/curriculum gaps/placement; headline logic; getBriefingSummaryLine; pure assembly, no DB).
+**Docs created:** `docs/DONNA_DIRECTOR_COO_BRIEFING.md` (briefing sections, headline logic, builder API, existing related modules).
+
+**Sprint 465 — Academy KPI Model V1**
+**Files created:** `src/lib/kpis/academyKpiModel.ts` (AcademyKpiId 12 KPIs; AcademyKpiMeta with label/unit/polarity/availability/thresholds; ACADEMY_KPI_META record; KpiValue type; computeKpiStatus, formatKpiValue, buildKpiValue, getAvailableKpis, getOverallAcademyHealth; marks mission/badge KPIs as unavailable pending Sprints 492–496).
+**Docs created:** `docs/ACADEMY_KPI_MODEL.md` (KPI table, status tiers, overall health logic, wiring targets).
+
+**Sprint 466 — DONNA KPI Explanation Engine V1**
+**Files created:** `src/lib/donna/kpiExplanations/kpiExplainer.ts` (KpiExplanation type; healthy/warning/critical template per KPI × 12; explainKpi, explainAllKpis; confidence from availability metadata; trend text with delta; no_data fallback).
+**Docs created:** `docs/DONNA_KPI_EXPLANATION_ENGINE.md` (explanation fields, template logic, confidence rules, usage pattern).
+
+**Sprint 467 — DONNA Multi-Turn Task Flows V1**
+**Files created:** `src/lib/donna/taskFlows/index.ts` (DonnaTaskFlowId, TaskFlowStep, DonnaTaskFlow types; DONNA_TASK_FLOWS record: 10 flows — create_group/build_session_template/find_players_needing_reset/draft_parent_updates/add_curriculum_idea/create_badge/create_mission/schedule_session/review_player_progress/generate_priorities; getTaskFlowsForRole, getTaskFlow helpers).
+**Docs created:** `docs/DONNA_MULTI_TURN_TASK_FLOWS.md` (flow table, rules, state machine reference, voice behavior).
+
+**Sprint 468 — DONNA Academy Search V1**
+**Files created:** `src/lib/donna/search/academySearch.ts` (searchPlayers, searchGroups, searchTemplates, searchAcademy; role-scoped multi-area parallel search; relevance scoring deterministic 0–100; getSearchAreasForRole; is_active and academy_id scoping; player/parent excluded from search).
+**Docs created:** `docs/DONNA_ACADEMY_SEARCH.md` (search areas by role, rules, relevance scoring, future semantic search plan).
+
+**Sprint 469 — DONNA Action Preview Cards V1**
+**Files created:** `src/lib/donna/actionPreview/actionPreviewCards.ts` (ActionPreviewCard type; AffectedEntity type; ActionRiskLevel: low/medium/high/critical; RISK_LEVEL_LABELS, RISK_LEVEL_COLORS; inferActionRisk from action_type; buildActionPreviewCard; getPreviewCardSummaryLine, getPreviewCardRiskLabel; uses actual action_type enum from database.types.ts).
+**Docs created:** `docs/DONNA_ACTION_PREVIEW_CARDS.md` (card fields, risk inference table, required invariants).
+
+**Sprint 470 — DONNA Academy Preferences V1**
+**Files created:** `src/lib/donna/preferences/academyPreferences.ts` (AcademyDonnaPreferences interface; DEFAULT_DONNA_PREFERENCES; validateAcademyPreferences; mergeAcademyPreferences; applyCustomTerminology; stored in academy.settings JSON column — no new table; future per-director table deferred to schema approval).
+**Docs created:** `docs/DONNA_ACADEMY_PREFERENCES.md` (preference table, storage location, terminology system, validation, future persistence note).
+
+**Sprint 471 — DONNA Voice + Text Unified Experience V1**
+**Docs created:** `docs/DONNA_VOICE_TEXT_UNIFIED_EXPERIENCE.md` (unified behavior contract table, voice pipeline, text pipeline, UI unification rules, what is not unified by design, related components).
+
+No migrations. No RLS changes. No new package dependencies. TypeScript: clean.
+
+---
+
 ## 2026-05-21 — Mega Sprint 452–461 Responsive UX Product Polish (Phase 1)
 
 **Sprint 452 — Responsive App Shell Masterclass V1**
