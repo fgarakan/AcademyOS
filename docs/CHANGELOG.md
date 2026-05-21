@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-21 — Sprint 606 — DONNA Universal Director Action Registry V1
+
+**Scope:** Foundation-first universal director DONNA action registry. Pure TypeScript — no DB calls, no AI calls, no UI wiring, no migrations, no RLS changes.
+
+**Files created:**
+- `src/lib/donna/directorActionTypes.ts` — Type definitions: `DirectorActionClass` (8 classes), `DirectorActionDomain` (24 domains), `DirectorActionImplementationStatus` (7 statuses), `DirectorApprovalLevel`, `DirectorDonnaAction` interface
+- `src/lib/donna/directorActionRegistry.ts` — 39-action registry covering all 8 classes and all 24 domains; 4 utility functions (`getDirectorDonnaActionById`, `getDirectorDonnaActionsByRoute`, `getDirectorDonnaActionsByDomain`, `getDirectorDonnaActionsByClass`)
+- `src/lib/donna/directorActionPolicy.ts` — 6 policy evaluation functions including `canDonnaDraftAction`, `doesDonnaActionRequireApproval`, `getDirectorDonnaActionCoverageScore`, `getMissingDirectorDonnaActions`, `getUnsafeOrBlockedDirectorDonnaActions`, `getDirectorDonnaActionsRequiringApproval`
+- `docs/DONNA_UNIVERSAL_DIRECTOR_ACTION_REGISTRY.md` — Human-readable reference: every action, class, status, approval level, domain, routes, safety notes, coverage summary, gap list
+- `docs/DONNA_ACTION_SAFETY_CLASSES.md` — 8 safety class definitions, decision tree, what DONNA must never expose, approval matrix
+- `docs/DONNA_CONVERSATIONAL_QUALITY_STANDARD.md` — Conversational quality standard: 10 principles, sample dialogues for vague/complex requests, approval transparency rules, response format guidance
+
+**Key facts:**
+- 39 actions registered across 8 classes and 24 domains
+- 8 actions currently `implemented_and_wired`; 8 `implemented_not_wired`; 10 `partially_implemented`; 10 `registry_only`
+- All `Director*` prefixed — complements existing `donnaActionTypes.ts` (Sprint 1020), does not replace it
+- Safety invariants: DONNA never directly mutates `player_curriculum_states`, never activates a player, never sends parent communications without approval, never exposes raw coach notes
+
+**TypeScript:** clean — `npx tsc --noEmit` exits 0
+
+---
+
 ## 2026-05-21 — Sprint 605 — DONNA Level Movement UI Wiring V1
 
 **Scope:** Wire existing `saveLevelReadinessDraftAction` to the `/director/level-up` pipeline view. Per-player inline DONNA draft button. No migrations, no RLS changes, no direct player level mutation.
