@@ -2,6 +2,55 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 503–517 Curriculum Experience Core (Phase 1)
+
+**Sprint 503 — Curriculum Experience Audit + Information Architecture**
+**Files created:** `docs/CURRICULUM_EXPERIENCE_AUDIT.md` (route inventory, lib module inventory, gap analysis — visual/attachment/assessment/DONNA/command center); `docs/CURRICULUM_INFORMATION_ARCHITECTURE.md` (core doctrine, full hierarchy, node type visibility table, visual map layout model, expandable tree model, "+ Add" content type model, DONNA curriculum context model, Knowledge Library → Curriculum promotion path, connection map).
+
+**Sprint 504 — Curriculum Command Center View Model**
+**Files created:** `src/lib/curriculum/commandCenter.ts` (CurriculumCommandCenterStatus; LevelSummary, CurriculumCommandCenterInput, CurriculumCommandCenterView types; buildCurriculumCommandCenter: status derivation, atRiskLevels, CTA routing, aggregate counts; getCurriculumCommandCenterSummary helper).
+
+**Sprint 505 — Curriculum Visual Map Model**
+**Files created:** `src/lib/curriculum/visualMapModel.ts` (CurriculumStage 5-value union; StageColorConfig, STAGE_COLORS record; VisualMapLevelInput, VisualMapLevelCard, VisualMapStageGroup, CurriculumVisualMap types; buildCurriculumVisualMap: groups levels by stage using Array.from pattern; completionLabel, hasAlert, alertLabel computed; getVisualMapLevelById helper).
+
+**Sprint 506 — Expandable Curriculum Tree**
+**Files created:** `src/lib/curriculum/expandableTree.ts` (TreeNodeType 21-value union; TreeNode, TreeNodeMetadata, ExpandableTreeState types; createTreeState, toggleExpand, selectNode, expandAll, collapseAll, expandToNode, getVisibleNodes, getChildNodes, buildGroupNode helpers; ancestor traversal uses null-terminating loop).
+
+**Sprint 507 — Node Detail Drawer**
+**Files created:** `src/lib/curriculum/nodeDetailDrawer.ts` (NodeDetailTab 8-value union; NODE_DETAIL_TABS; NodeDetailField, NodeDetailGateRow, NodeDetailDrawerContext, NodeDetailDrawerView types; buildNodeDetailDrawerView: tab badge counts, gate completion %, overview field builders; getDrawerTabLabel helper).
+
+**Sprint 508 — Content Type Model**
+**Files created:** `src/lib/curriculum/contentTypeModel.ts` (CurriculumContentType 10-value union; ContentTypeDefinition with requiresApproval/isParentVisible/isPlayerVisible/isCoachOnly flags; CONTENT_TYPE_DEFINITIONS record; LEVEL_ADD_CONTENT_TYPES; getContentTypeDefinition, getAddableContentTypes, getParentVisibleContentTypes, getPlayerVisibleContentTypes, getCoachOnlyContentTypes helpers; all additions require director approval).
+
+**Sprint 509 — DONNA Curriculum Context Awareness**
+**Files created:** `src/lib/curriculum/donnaCurriculumContext.ts` (DonnaCurriculumAction 6-value union; DonnaCurriculumContextView with canPublish:false/canAutoApply:false/requiresDirectorApproval:true/neverAutoApply:true literal types; DONNA_ACTION_DEFS record; buildDonnaCurriculumContextView; DonnaCurriculumDraftAttachment type; buildDonnaCurriculumDraftAttachment builder; DONNA can draft/surface only — cannot publish or auto-apply).
+
+**Sprint 510 — Drill Attachment Model**
+**Files created:** `src/lib/curriculum/drillAttachmentModel.ts` (DrillDifficulty/DrillDomain unions; DrillAttachment, DrillAttachmentInput, DrillAttachmentSummary types; buildDrillAttachmentSummary; getDrillsForLevel, getDrillsForDomain, getPlayerVisibleDrills, getDrillDifficultyLabel, getDrillDomainLabel helpers).
+
+**Sprint 511 — Skill / Sub-Skill Hierarchy Model**
+**Files created:** `src/lib/curriculum/skillHierarchyModel.ts` (SkillDomain 9-value union; Skill, SubSkill interfaces; buildSkillHierarchySummary; getSkillsForLevel, getSkillsForDomain, getPlayerVisibleSkills, getParentVisibleSkills, flattenSkillTree, getSkillDomainLabel helpers; skills grouped by curriculum level with displayOrder sorting).
+
+**Sprint 512 — Mission Attachment Model**
+**Files created:** `src/lib/curriculum/missionAttachmentModel.ts` (MissionActivationTrigger/MissionCompletionTrigger unions; MissionLevelAttachment type importing MissionId from player/missionModel; buildMissionAttachmentSummary; getMissionsForLevel, getPlayerVisibleMissions, getMissionActivationLabel, getMissionCompletionLabel helpers; all attachments require director approval).
+
+**Sprint 513 — Badge Attachment Model**
+**Files created:** `src/lib/curriculum/badgeAttachmentModel.ts` (BadgeTriggerType 5-value union; BadgeLevelAttachment type importing BadgeId from badges/badgeModel; BadgeAttachmentSummary; buildBadgeAttachmentSummary; getBadgesForLevel, getPlayerVisibleBadges, getBadgeTriggerLabel, getBadgeRarityLabel helpers; byRarity tracking).
+
+**Sprint 514 — Parent Guidance Attachment Model**
+**Files created:** `src/lib/curriculum/parentGuidanceAttachment.ts` (ParentGuidanceTone/ParentGuidanceCategory unions; ParentGuidanceAttachment with isPlayerVisible:false literal, hasDeficitLanguage:false, hasComparisons:false; checkParentGuidanceSafety: scans for deficit/comparison language patterns; buildParentGuidanceAttachment, buildParentGuidanceSummary, getParentGuidanceCategoryLabel, getApprovedParentGuidance helpers; safety check required before approval).
+
+**Sprint 515 — Coach Cue Library**
+**Files created:** `src/lib/curriculum/coachCueLibrary.ts` (CoachCueType 5-value union; CoachCue with isParentVisible:false/isPlayerVisible:false literal types; CoachCueLibrarySummary; buildCoachCueLibrarySummary; getCuesForLevel, getCuesForGate, getCuesForDomain, getObservationPrompts, getGateCheckPrompts, getCoachCueTypeLabel helpers; coach-only visibility enforced).
+
+**Sprint 516 — Assessment Criteria Model**
+**Files created:** `src/lib/curriculum/assessmentCriteriaModel.ts` (AssessmentMethod 6-value union; AssessmentCriterionStatus; AssessmentCriterion, PlayerAssessmentRecord types; buildAssessmentCriteriaSummary; getCriteriaForLevel, getRequiredCriteria, computePlayerAssessmentProgress: uses Map for accepted count per criterion; getAssessmentMethodLabel helper).
+
+**Sprint 517 — Evidence Requirements Model**
+**Files created:** `src/lib/curriculum/evidenceRequirementsModel.ts` (EvidenceType 8-value union; EvidenceStatus; EvidenceRequirement, EvidenceRecord, GateEvidenceStatus types; computeGateEvidenceStatus: builds acceptedByRequirement Map, finds missingRequiredEvidence, sets isComplete; buildEvidenceSummary; getParentSafeEvidence; getEvidenceTypeLabel, getEvidenceStatusLabel helpers).
+
+---
+
 ## 2026-05-21 — Mega Sprint 492–502 Badges Mental Curriculum V1 Launch (Phase 5)
 
 **Sprint 492 — Badge System Model V1**
