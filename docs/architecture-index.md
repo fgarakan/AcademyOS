@@ -2,7 +2,7 @@
 
 This file is the index of all architecture and engineering documentation. It is a navigation map — not a specification. Follow the links to the actual documents.
 
-**Last updated:** Mega Sprint 447–451 Phase 6
+**Last updated:** Mega Sprint 452–461 Phase 1 (Responsive UX Polish)
 
 ---
 

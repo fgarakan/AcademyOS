@@ -5,10 +5,11 @@ import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
 import { DonnaAssistantButton } from '@/components/assistant/DonnaAssistantButton'
 
 const COACH_TABS = [
-  { label: 'Home', href: '/coach', iconKey: 'home', exact: true },
-  { label: 'Players', href: '/coach/players', iconKey: 'players' },
+  { label: 'Home',     href: '/coach',          iconKey: 'home',     exact: true },
   { label: 'Sessions', href: '/coach/sessions', iconKey: 'sessions' },
-  { label: 'DONNA', href: '/coach/donna', iconKey: 'donna' },
+  { label: 'Recap',    href: '/coach/recap',    iconKey: 'voice' },
+  { label: 'Players',  href: '/coach/players',  iconKey: 'players' },
+  { label: 'DONNA',    href: '/coach/donna',    iconKey: 'donna' },
 ]
 
 export default async function CoachLayout({ children }: { children: React.ReactNode }) {
