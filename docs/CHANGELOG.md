@@ -2,6 +2,44 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 417–426 DONNA Action Reliability Approval System (Phase 3)
+
+**Sprint 417 — Proposed Action State Machine V1**
+**Files created:** `src/lib/donna/proposedActionStateMachine.ts` (defines legal transitions for all 8 proposed_action statuses; TERMINAL_STATES array; isValidTransition(), getValidNextStates(), isTerminalState(), canDirectorApprove(), canDirectorReject(), canExecuteAction(), isExpiredAction(), getExpiryStatus(); pure logic, no DB calls).
+
+**Sprint 418 — Approval Center Query Helpers V1**
+**Files created:** `src/lib/donna/approvalCenterQueries.ts` (fetchPendingActions() with filters and pagination; fetchActionById() scoped to academy; fetchRecentlyResolvedActions() for 7-day audit view; fetchPendingActionCount() for director badge; filterExpiredActions() for cleanup jobs; all queries are academy-scoped, no select('*') on critical fields).
+
+**Sprint 419 — DONNA Input Validator V1**
+**Files created:** `src/lib/donna/donnaInputValidator.ts` (validateCreateProposedActionInput, validateApproveActionInput, validateRejectActionInput, validateRequestClarificationInput, validateVoiceCommandInput; each returns {valid, errors}; UUID validation, state machine pre-checks, transcript length limit; no dependencies).
+
+**Sprint 420 — Action Execution Guards V1**
+**Files created:** `src/lib/donna/actionExecutionGuards.ts` (5-layer guard chain: kill switch → status=approved → not expired → academy scope match → role sufficient; runExecutionGuards() returns pass/fail with guardsFailed list; isRegisteredActionType() and getRegisteredActionTypes() for 14 registered action types; uses typed arrays not Set to avoid tsconfig downlevel issue).
+
+**Sprint 421 — DONNA Audit Trail Helpers V1**
+**Files created:** `src/lib/donna/donnaAuditHelpers.ts` (logProposedActionCreated, logActionApproved, logActionRejected, logActionExecuted, logActionExecutionFailed, logClarificationRequested; all wrap writeAuditLog() with intent-specific action strings and typed payloads; source_type='voice' when voiceCommandId present).
+
+**Sprint 422 — Director Dashboard Data Layer V1**
+**Files created:** `src/lib/director/directorDashboardQueries.ts` (fetchDirectorActionCount, fetchTodaySessionCoverage, fetchPlayerRosterSummary, fetchHighRiskPendingActions; no select('*'); targeted column selects; today's session coverage uses scheduled_date range; parallel count queries for performance).
+
+**Sprint 423 — DONNA Trust Boundary Validator V1**
+**Files created:** `src/lib/donna/donnaTrustBoundaryValidator.ts` (validateDonnaTrustBoundary() runs 5 layers: feature enabled → kill switch → role mapping → action classification → future capability gate; canDonnaPerformSafeRead() for lightweight read checks; uses classifyAction() from existing donnaActionTypes.ts).
+
+**Sprint 424 — Approval Context Builder V1**
+**Files created:** `src/lib/donna/approvalContextBuilder.ts` (buildDirectorReviewPackage() builds structured review UI data from raw proposed_action row; buildDirectorReviewQueue() sorts by risk then age; buildActionSummaryLine() for notifications; action-type-specific review hints for move_player_group, generate_parent_update, modify_session, assign_group, create_placement_assessment).
+
+**Sprint 425 — DONNA Gateway V1**
+**Files created:** `src/lib/donna/donnaGateway.ts` (checkDonnaGateway() is the single entry-point for all DONNA server actions; applies feature flag → kill switch → in-process rate limit; returns {allowed, blockedReason, blockedLayer}; logs usage events including blocked events; supports 7 DONNA action types with correct rate limit policy mapping).
+
+**Sprint 426 — DONNA Health Status Reporter V1**
+**Files created:** `src/lib/donna/donnaHealthStatus.ts` (getDonnaHealthStatus() returns snapshot of 6 subsystems: DONNA Intelligence, Voice Transcription, Realtime Voice, TTS, Action Execution, AI Proposed Actions; each has status=operational/degraded/offline and a detail string; overall status is computed; includes registered action types and rate limit policies for diagnostics).
+
+**Shared documentation:** `docs/DONNA_ACTION_RELIABILITY_NOTES.md` (what was created; wiring targets; Trust Stack layer alignment; export reference table).
+
+No migrations. No RLS changes. No new package dependencies. TypeScript: clean.
+
+---
+
 ## 2026-05-21 — Mega Sprint 407–416 Scale Rate Limits Cache Cost Controls (Phase 2)
 
 **Sprint 407 — AI/Voice Usage Metering V1**

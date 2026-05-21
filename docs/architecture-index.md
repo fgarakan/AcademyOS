@@ -2,7 +2,7 @@
 
 This file is the index of all architecture and engineering documentation. It is a navigation map — not a specification. Follow the links to the actual documents.
 
-**Last updated:** Mega Sprint 407–416 Phase 2
+**Last updated:** Mega Sprint 417–426 Phase 3
 
 ---
 
@@ -43,6 +43,7 @@ This file is the index of all architecture and engineering documentation. It is 
 | [`BACKGROUND_JOB_QUEUE_NOTES.md`](BACKGROUND_JOB_QUEUE_NOTES.md) | Background job queue design and types (Sprint 409–410) |
 | [`ENTITY_VERSIONING_NOTES.md`](ENTITY_VERSIONING_NOTES.md) | Optimistic locking pattern and usage (Sprint 411) |
 | [`FEATURE_FLAGS_KILL_SWITCHES_NOTES.md`](FEATURE_FLAGS_KILL_SWITCHES_NOTES.md) | Feature flags and kill switch implementation (Sprint 414–415) |
+| [`DONNA_ACTION_RELIABILITY_NOTES.md`](DONNA_ACTION_RELIABILITY_NOTES.md) | DONNA action reliability: state machine, guards, audit, gateway (Sprint 417–426) |
 
 ---
 
