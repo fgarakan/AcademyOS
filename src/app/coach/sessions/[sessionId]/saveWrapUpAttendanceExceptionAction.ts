@@ -3,6 +3,9 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 import type { Json } from '@/lib/supabase/database.types'
+import { createRequestId } from '@/lib/observability/requestTrace'
+import { createActionLogger } from '@/lib/observability/logger'
+import { createDuplicateSubmissionMessage } from '@/lib/idempotency/actionGuards'
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -48,6 +51,9 @@ export async function saveWrapUpAttendanceExceptionAction(
   unrosteredEntries: WrapUpUnrosteredEntry[],
   attendanceAnswerText: string,
 ): Promise<SaveWrapUpAttendanceExceptionResult> {
+  const requestId = createRequestId('attendance-exc')
+  const log = createActionLogger({ action: 'saveWrapUpAttendanceExceptionAction', requestId })
+
   await assertNotPreviewMode()
 
   if (!sessionId) return { ok: false, error: 'Session ID required.', draftId: null }
@@ -67,7 +73,10 @@ export async function saveWrapUpAttendanceExceptionAction(
 
   // Auth
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'Not authenticated.', draftId: null }
+  if (!user) {
+    log.warn('auth_failed', { sessionId })
+    return { ok: false, error: 'Not authenticated.', draftId: null }
+  }
 
   // Resolve academy_id — never trust client input
   const { data: profile } = await supabase
@@ -99,6 +108,28 @@ export async function saveWrapUpAttendanceExceptionAction(
     .eq('academy_id', academyId)
     .single()
   if (!session) return { ok: false, error: 'Session not found or access denied.', draftId: null }
+
+  log.info('start', { sessionId, userId: user.id, academyId, entryCount: unrosteredEntries.length })
+
+  // Duplicate guard: reject if this user submitted an attendance exception for this session
+  // in the last 15 s. Prevents double-click without requiring a DB unique constraint.
+  // Recommended future constraint: unique(session_id, proposed_by_id, target_module, status)
+  // filtered to 'pending_review' — see docs/IDEMPOTENCY_IMPLEMENTATION_NOTES.md.
+  const rawDb = supabase as any
+  const windowStart = new Date(Date.now() - 15_000).toISOString()
+  const { data: recentException } = await rawDb
+    .from('proposed_actions')
+    .select('id')
+    .eq('academy_id', academyId)
+    .eq('proposed_by_id', user.id)
+    .eq('target_module', 'attendance_exception')
+    .eq('target_object_id', sessionId)
+    .gte('created_at', windowStart)
+    .limit(1)
+  if (recentException && recentException.length > 0) {
+    log.warn('duplicate_submission', { sessionId, userId: user.id })
+    return { ok: false, error: createDuplicateSubmissionMessage('attendance exception'), draftId: null }
+  }
 
   // Build raw_input text for director card display
   const nameList = unrosteredEntries.map(e => `${e.name.trim()} (${NOTE_REASONS[e.note]})`).join(', ')
@@ -147,11 +178,11 @@ export async function saveWrapUpAttendanceExceptionAction(
     .single()
 
   if (vcError || !voiceCommand) {
+    log.error('voice_command_failed', { sessionId, message: vcError?.message ?? 'unknown' })
     return { ok: false, error: `Failed to create command record: ${vcError?.message ?? 'unknown'}`, draftId: null }
   }
 
   // Create proposed_actions row — status pending_review, no mutation until director applies
-  const rawDb = supabase as any
   const { data: proposedAction, error: paError } = await rawDb
     .from('proposed_actions')
     .insert({
@@ -176,8 +207,10 @@ export async function saveWrapUpAttendanceExceptionAction(
     .single()
 
   if (paError || !proposedAction) {
+    log.error('proposed_action_failed', { sessionId, message: paError?.message ?? 'unknown' })
     return { ok: false, error: `Failed to save draft: ${paError?.message ?? 'unknown'}`, draftId: null }
   }
 
+  log.info('success', { sessionId, draftId: proposedAction.id })
   return { ok: true, error: null, draftId: proposedAction.id as string }
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
+import { createRequestId } from '@/lib/observability/requestTrace'
+import { createActionLogger } from '@/lib/observability/logger'
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024 // 4 MB
 const ALLOWED_MIME_TYPES = new Set([
@@ -15,8 +17,11 @@ export async function POST(
   { params }: { params: { sessionId: string } }
 ) {
   const { sessionId } = params
+  const requestId = createRequestId('transcribe')
+  const log = createActionLogger({ action: 'transcribe', requestId, sessionId })
 
   if (!sessionId) {
+    log.warn('missing_session_id')
     return NextResponse.json({ ok: false, error: 'Missing session ID.' }, { status: 400 })
   }
 
@@ -24,6 +29,7 @@ export async function POST(
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
+    log.warn('auth_failed')
     return NextResponse.json({ ok: false, error: 'Not authenticated.' }, { status: 401 })
   }
 
@@ -36,6 +42,7 @@ export async function POST(
 
   const academyId = profile?.academy_id
   if (!academyId) {
+    log.warn('no_academy_context', { userId: user.id })
     return NextResponse.json({ ok: false, error: 'Academy context unavailable.' }, { status: 403 })
   }
 
@@ -51,6 +58,7 @@ export async function POST(
   const role = membership?.role
   const isStaff = role === 'coach' || role === 'head_coach' || role === 'academy_director'
   if (!isStaff) {
+    log.warn('access_denied', { userId: user.id, role })
     return NextResponse.json({ ok: false, error: 'Access denied.' }, { status: 403 })
   }
 
@@ -108,6 +116,8 @@ export async function POST(
   }
 
   // 9. Send to OpenAI Whisper — server-side only, key never exposed to browser
+  log.info('transcription_start', { userId: user.id, academyId, size: audioFile.size, mimeType })
+  const transcribeStart = Date.now()
   try {
     const whisperForm = new FormData()
     whisperForm.append('file', audioFile, `recording.${mimeExtension(mimeType)}`)
@@ -123,8 +133,7 @@ export async function POST(
     })
 
     if (!whisperResponse.ok) {
-      // Do not expose provider error details
-      console.error(`[transcribe] Whisper error status: ${whisperResponse.status} session=${sessionId}`)
+      log.error('whisper_error', { status: whisperResponse.status, latencyMs: Date.now() - transcribeStart })
       return NextResponse.json(
         { ok: false, error: 'Transcription failed. Please try again or type your answer.' },
         { status: 502 }
@@ -164,10 +173,10 @@ export async function POST(
       // ignore audit write failures
     })
 
-    console.log(`[transcribe] ok session=${sessionId} user=${user.id} bytes=${audioFile.size}`)
+    log.info('transcription_success', { userId: user.id, academyId, size: audioFile.size, latencyMs: Date.now() - transcribeStart })
     return NextResponse.json({ ok: true, transcript })
   } catch (err) {
-    console.error('[transcribe] STT call failed', err)
+    log.error('transcription_exception', { latencyMs: Date.now() - transcribeStart, message: (err as Error)?.message ?? 'unknown' })
     return NextResponse.json(
       { ok: false, error: 'Transcription service unavailable. Please type your answer.' },
       { status: 502 }

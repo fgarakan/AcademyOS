@@ -2,6 +2,9 @@
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import { createRequestId } from '@/lib/observability/requestTrace'
+import { createActionLogger } from '@/lib/observability/logger'
+import { createDuplicateSubmissionMessage } from '@/lib/idempotency/actionGuards'
 
 // ─────────────────────────────────────────────────────────────
 // Payload types
@@ -51,15 +54,22 @@ export async function saveWrapUpDraftAction(
     groupNote: string
   },
 ): Promise<SaveWrapUpDraftResult> {
+  const requestId = createRequestId('wrap-up-draft')
+  const log = createActionLogger({ action: 'saveWrapUpDraftAction', requestId })
+
   try { await assertNotPreviewMode() } catch {
     return { ok: false, error: 'Writes are disabled in preview mode.', draftId: null }
   }
 
   const supabase = await getSupabaseServer()
+  const rawDb = supabase as any
 
   // 1. Auth
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'Not authenticated.', draftId: null }
+  if (!user) {
+    log.warn('auth_failed', { sessionId })
+    return { ok: false, error: 'Not authenticated.', draftId: null }
+  }
 
   // 2. Resolve academy_id
   const { data: profile } = await supabase
@@ -92,6 +102,26 @@ export async function saveWrapUpDraftAction(
     .single()
   if (!session) return { ok: false, error: 'Session not found or access denied.', draftId: null }
 
+  log.info('start', { sessionId, userId: user.id, academyId, blockCount: blockCompletion.length })
+
+  // Duplicate guard: reject if this user submitted a wrap-up draft for this session in the last 30 s.
+  // Prevents double-click / double-submit without requiring a DB unique constraint.
+  // True idempotency via a unique constraint is tracked in docs/IDEMPOTENCY_IMPLEMENTATION_NOTES.md.
+  const windowStart = new Date(Date.now() - 30_000).toISOString()
+  const { data: recentDraft } = await rawDb
+    .from('proposed_actions')
+    .select('id')
+    .eq('academy_id', academyId)
+    .eq('proposed_by_id', user.id)
+    .eq('target_module', 'session_wrap_up_v1')
+    .eq('target_object_id', sessionId)
+    .gte('created_at', windowStart)
+    .limit(1)
+  if (recentDraft && recentDraft.length > 0) {
+    log.warn('duplicate_submission', { sessionId, userId: user.id })
+    return { ok: false, error: createDuplicateSubmissionMessage('session wrap-up draft'), draftId: null }
+  }
+
   // 5. Build payload
   const payload: SessionActualDraftPayload = {
     draft_type: 'session_actual_v1',
@@ -115,7 +145,6 @@ export async function saveWrapUpDraftAction(
     : role === 'head_coach' ? 'head_coach'
     : 'coach'
 
-  const rawDb = supabase as any
   const { data: voiceCommand, error: vcError } = await rawDb
     .from('voice_commands')
     .insert({
@@ -131,6 +160,7 @@ export async function saveWrapUpDraftAction(
     .single()
 
   if (vcError || !voiceCommand) {
+    log.error('voice_command_failed', { sessionId, message: vcError?.message ?? 'unknown' })
     return { ok: false, error: `Failed to create command record: ${vcError?.message ?? 'unknown'}`, draftId: null }
   }
 
@@ -159,8 +189,10 @@ export async function saveWrapUpDraftAction(
     .single()
 
   if (paError || !proposedAction) {
+    log.error('proposed_action_failed', { sessionId, message: paError?.message ?? 'unknown' })
     return { ok: false, error: `Failed to save draft: ${paError?.message ?? 'unknown'}`, draftId: null }
   }
 
+  log.info('success', { sessionId, draftId: proposedAction.id })
   return { ok: true, error: null, draftId: proposedAction.id as string }
 }

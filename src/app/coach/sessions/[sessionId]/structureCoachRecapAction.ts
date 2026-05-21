@@ -7,6 +7,8 @@
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 import type { Json } from '@/lib/supabase/database.types'
+import { createRequestId } from '@/lib/observability/requestTrace'
+import { createActionLogger } from '@/lib/observability/logger'
 
 export interface StructureCoachRecapResult {
   ok: boolean
@@ -130,12 +132,18 @@ export async function structureCoachRecapAction(
   voiceNoteId: string,
   sessionId: string,
 ): Promise<StructureCoachRecapResult> {
+  const requestId = createRequestId('recap-structure')
+  const log = createActionLogger({ action: 'structureCoachRecapAction', requestId, sessionId, voiceNoteId })
+
   await assertNotPreviewMode()
 
   const supabase = await getSupabaseServer()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'Not authenticated.', draftId: null, attendanceMentions: [], observationCount: 0 }
+  if (!user) {
+    log.warn('auth_failed')
+    return { ok: false, error: 'Not authenticated.', draftId: null, attendanceMentions: [], observationCount: 0 }
+  }
 
   const { data: profile } = await supabase.from('profiles').select('academy_id').eq('id', user.id).single()
   if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.', draftId: null, attendanceMentions: [], observationCount: 0 }
@@ -159,7 +167,14 @@ export async function structureCoachRecapAction(
 
   const { data: voiceNote } = await supabase.from('voice_notes').select('id, raw_input, processing_status').eq('id', voiceNoteId).eq('session_id', sessionId).eq('academy_id', academyId).is('player_id', null).single()
   if (!voiceNote) return { ok: false, error: 'Recap not found or access denied.', draftId: null, attendanceMentions: [], observationCount: 0 }
-  if (voiceNote.processing_status === 'structured') return { ok: false, error: 'This recap has already been structured.', draftId: null, attendanceMentions: [], observationCount: 0 }
+  // Idempotency guard: processing_status='structured' prevents re-structuring the same voice note.
+  // This is the primary idempotency protection for this action.
+  if (voiceNote.processing_status === 'structured') {
+    log.warn('already_structured', { voiceNoteId })
+    return { ok: false, error: 'This recap has already been structured.', draftId: null, attendanceMentions: [], observationCount: 0 }
+  }
+
+  log.info('start', { sessionId, userId: user.id, academyId })
 
   // Build roster
   const roster: RosterPlayer[] = []
@@ -188,7 +203,10 @@ export async function structureCoachRecapAction(
     processing_status: 'processed',
   }).select('id').single()
 
-  if (vcError || !voiceCommand) return { ok: false, error: `Failed to create command record: ${vcError?.message ?? 'unknown'}`, draftId: null, attendanceMentions: [], observationCount: 0 }
+  if (vcError || !voiceCommand) {
+    log.error('voice_command_failed', { message: vcError?.message ?? 'unknown' })
+    return { ok: false, error: `Failed to create command record: ${vcError?.message ?? 'unknown'}`, draftId: null, attendanceMentions: [], observationCount: 0 }
+  }
 
   const { data: proposedAction, error: paError } = await rawDb.from('proposed_actions').insert({
     academy_id: academyId,
@@ -205,10 +223,14 @@ export async function structureCoachRecapAction(
     risk_notes: ['Coach recap draft. No player records, attendance, or priorities were modified.'],
   }).select('id').single()
 
-  if (paError || !proposedAction) return { ok: false, error: `Failed to save draft: ${paError?.message ?? 'unknown'}`, draftId: null, attendanceMentions: [], observationCount: 0 }
+  if (paError || !proposedAction) {
+    log.error('proposed_action_failed', { message: paError?.message ?? 'unknown' })
+    return { ok: false, error: `Failed to save draft: ${paError?.message ?? 'unknown'}`, draftId: null, attendanceMentions: [], observationCount: 0 }
+  }
 
   await supabase.from('voice_notes').update({ processing_status: 'structured' }).eq('id', voiceNoteId).eq('academy_id', academyId)
 
+  log.info('success', { draftId: proposedAction.id, attendanceMentions: payload.attendance_mentions.length })
   return {
     ok: true,
     error: null,
