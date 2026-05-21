@@ -6,6 +6,13 @@ import { CurriculumLevelDetailPanel } from '@/components/curriculum/CurriculumLe
 import { CurriculumDraftEntryPanel } from './CurriculumDraftEntryPanel'
 import { DonnaCurriculumNodeAddCard } from './DonnaCurriculumNodeAddCard'
 import { CurriculumNodePreview } from './CurriculumNodePreview'
+import { CurriculumVideoPanel } from './CurriculumVideoPanel'
+import { CurriculumDrillDraftPanel } from './CurriculumDrillDraftPanel'
+import { CurriculumSkillDraftPanel } from './CurriculumSkillDraftPanel'
+import { CurriculumTacticalDraftPanel } from './CurriculumTacticalDraftPanel'
+import { CurriculumMentalDraftPanel } from './CurriculumMentalDraftPanel'
+import { CoachCueVideoPairingPanel } from './CoachCueVideoPairingPanel'
+import { MediaRolePreviewPanel } from './MediaRolePreviewPanel'
 import type {
   CurriculumLevel,
   CurriculumGate,
@@ -82,6 +89,7 @@ export function CurriculumNodeDrawer({
               <TabsList className="px-5" scrollable>
                 <TabsTrigger value="content">Content</TabsTrigger>
                 <TabsTrigger value="draft">Draft</TabsTrigger>
+                <TabsTrigger value="video">Video</TabsTrigger>
                 <TabsTrigger value="donna">DONNA</TabsTrigger>
                 <TabsTrigger value="preview">Preview</TabsTrigger>
               </TabsList>
@@ -102,7 +110,41 @@ export function CurriculumNodeDrawer({
               </TabsContent>
 
               <TabsContent value="draft" className="pt-4">
-                <CurriculumDraftEntryPanel
+                <div className="space-y-4">
+                  <CurriculumDraftEntryPanel
+                    levelId={level.id}
+                    levelName={level.display_name}
+                  />
+                  <div className="pt-2 border-t border-border space-y-2">
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted px-1">
+                      Extended Drafts
+                    </p>
+                    <CurriculumDrillDraftPanel
+                      levelId={level.id}
+                      levelName={level.display_name}
+                    />
+                    <CurriculumSkillDraftPanel
+                      levelId={level.id}
+                      levelName={level.display_name}
+                    />
+                    <CurriculumTacticalDraftPanel
+                      levelId={level.id}
+                      levelName={level.display_name}
+                    />
+                    <CurriculumMentalDraftPanel
+                      levelId={level.id}
+                      levelName={level.display_name}
+                    />
+                    <CoachCueVideoPairingPanel
+                      levelId={level.id}
+                      levelName={level.display_name}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="video" className="pt-4">
+                <CurriculumVideoPanel
                   levelId={level.id}
                   levelName={level.display_name}
                 />
@@ -122,6 +164,7 @@ export function CurriculumNodeDrawer({
                   gateCount={gates.length}
                   drillCount={drills.length}
                 />
+                <MediaRolePreviewPanel levelName={level.display_name} />
               </TabsContent>
             </div>
           </Tabs>

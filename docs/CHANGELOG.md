@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 564–573 Curriculum Video Drill Skill Assets (Phase 2)
+
+**Sprints:** 564 (Video Asset Model V1), 565 (Visibility Rules V1), 566 (Attach Video UI V1), 567 (Drill Draft UI V1), 568 (Skill Draft UI V1), 569 (Tactical Draft V1), 570 (Mental Draft V1), 571 (Coach Cue + Video V1), 572 (Video Role Preview V1), 573 (Media QA V1)
+
+**Confirmed:** No upload storage exists. All media operations are external-link draft UI only. No migrations created. No RLS modified.
+
+**Files created (lib):**
+- `src/lib/media/mediaAssetTypes.ts` — Sprint 564: core media asset type layer (`MediaAsset`, `MediaAssetDraft`, `MediaAssetLink`, `MediaVisibilityLevel`, `MediaSourceType`, `MediaOwnerType`, `MediaReviewStatus`, `MediaLicenseStatus`, `LinkedObjectType` — 15 linkable object types; label maps for all enums)
+- `src/lib/media/mediaVisibilityRules.ts` — Sprint 565: role-safe visibility helpers (`canRoleViewMedia`, `isMediaSafeForRole`, `getVisibilityLabel`, `getMediaVisibilityBadgeClass`, `BLOCKED_REASON_LABELS` — 7 blocked reasons; role-to-visibility permission map)
+
+**Files created (UI components):**
+- `src/app/director/curriculum/_components/CurriculumVideoPanel.tsx` — Sprint 566: external video link draft form (source type, URL, title, description, visibility selector, license note); draft preview card with lime border, visibility badge, external link; "future: internal uploads" note
+- `src/app/director/curriculum/_components/CurriculumDrillDraftPanel.tsx` — Sprint 567: collapsible drill draft accordion (title, difficulty, ball colour, setup, player count, equipment, rules, progression, regression, coach cues, evidence target, video link, safety notes)
+- `src/app/director/curriculum/_components/CurriculumSkillDraftPanel.tsx` — Sprint 568: collapsible skill/sub-skill draft accordion (skill name, domain, player-facing label, coach description, sub-skill tag input with Enter-to-add, player/parent visibility toggles)
+- `src/app/director/curriculum/_components/CurriculumTacticalDraftPanel.tsx` — Sprint 569: collapsible tactical concept draft (concept name with 5 example chips, description, when-to-use, coaching notes, player label, video reference)
+- `src/app/director/curriculum/_components/CurriculumMentalDraftPanel.tsx` — Sprint 570: collapsible mental performance draft (concept name with 6 example chips, 7-domain selector, description, observable markers, coaching cues — internal-only, player label, parent label)
+- `src/app/director/curriculum/_components/CoachCueVideoPairingPanel.tsx` — Sprint 571: collapsible coach cue + video pairing panel (cue type × 5, domain, prompt, context, video title + URL); yellow "Coach & Director only" warning; coach-only visibility hardcoded
+- `src/app/director/curriculum/_components/MediaRolePreviewPanel.tsx` — Sprint 572: media visibility simulator in Preview tab (6 visibility options; access grid for director/coach/parent/player; blocked-reason copy from `BLOCKED_REASON_LABELS`; simulation only — no actual media created)
+
+**Files modified:**
+- `src/app/director/curriculum/_components/CurriculumNodeDrawer.tsx` — Sprint 566–572: added "Video" tab (CurriculumVideoPanel); expanded "Draft" tab with "Extended Drafts" accordion section (Drill, Skill, Tactical, Mental, CoachCue+Video panels); added MediaRolePreviewPanel below CurriculumNodePreview in Preview tab; 5 tabs total (Content | Draft | Video | DONNA | Preview)
+
+**Files created (docs):**
+- `docs/CURRICULUM_VIDEO_ASSET_MODEL.md` — Sprint 564: media asset model, linkable object types, field reference, visibility matrix, migration requirements for future DB sprint
+- `docs/CURRICULUM_MEDIA_VISIBILITY_RULES.md` — Sprint 573: role-access matrix, default visibility per asset type, blocked-reason explanations, coach/parent/player restrictions, licensing rules, media review checklist
+- `docs/CURRICULUM_VIDEO_ASSET_QA.md` — Sprint 573: full QA checklist covering all 10 sprints, security checks, known limitations, migration readiness
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-21 — Mega Sprint 554–563 Curriculum Coverage Node UI (Phase 1)
 
 **Sprints:** 554 (Coverage Full Wiring V1), 555 (Health Score V2), 556 (Expansion Tree UI V1), 557 (Node Detail Drawer V1), 558 (Add Content Draft Flow V1), 559 (DONNA Add-to-Node UI V1), 560 (Parent/Player Preview V1), 561 (Search + Filter V1), 562 (Mobile/Tablet View V1), 563 (UX Polish)
