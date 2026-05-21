@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 528–537 Global Knowledge Library Curation (Phase 3)
+
+**Sprint 528 — Knowledge Library Types**
+**Files created:** `src/lib/knowledge/knowledgeTypes.ts` (KnowledgeSourceType 8-value union; KnowledgeDomain 11-value union; KnowledgeStatus/KnowledgeAccessLevel unions; KnowledgeItem with isParentAnswerable:false/isPlayerAnswerable:false literal types; KnowledgeReviewDecision with requiresDirectorApproval:true/neverAutoApply:true literals; KnowledgeLibrarySummary; getKnowledgeStatusLabel, getKnowledgeDomainLabel, getKnowledgeSourceTypeLabel helpers; DOCTRINE: external knowledge never auto-becomes curriculum or parent/player-answerable).
+
+**Sprint 529 — Knowledge Library View Model**
+**Files created:** `src/lib/knowledge/knowledgeLibrary.ts` (KnowledgeLibraryFilters, KnowledgeLibraryView types; buildKnowledgeLibrarySummary; filterKnowledgeLibrary: domain/status/sourceType/accessLevel/academyId/searchQuery filters; buildKnowledgeLibraryView; getItemsForCurriculumLevel, getPendingReviewItems, getApprovedGeneralItems, sortItemsByDate helpers).
+
+**Sprint 530 — Knowledge Review Queue**
+**Files created:** `src/lib/knowledge/knowledgeReviewQueue.ts` (ReviewQueueSortOrder; ReviewQueueItem, ReviewAction types; REVIEW_ACTIONS: 4 actions all with requiresDirectorApproval:true/neverAutoApply:true; buildReviewQueueItem: daysInQueue, isUrgent (>14 days), suggestedDecision (ITF/USTA→promote, research_paper→approve_general); buildKnowledgeReviewQueueView; buildKnowledgeReviewDecision builder).
+
+**Sprint 531 — Knowledge → Curriculum Promotion Path**
+**Files created:** `src/lib/knowledge/knowledgeCurriculumPromotion.ts` (KnowledgeCurriculumPromotionInput, KnowledgeCurriculumPromotionDraft with requiresDirectorApproval:true/neverAutoApply:true/isParentVisible:false/isPlayerVisible:false literal types; buildKnowledgeCurriculumPromotionDraft; validatePromotionDraft: checks title length, summary length, level count, safety invariants; getPromotionStatusLabel, getPromotionPathSummary helpers).
+
+**Sprint 532 — Knowledge Tagging Model**
+**Files created:** `src/lib/knowledge/knowledgeTaggingModel.ts` (KnowledgeTagCategory 6-value union; KnowledgeTag type; SYSTEM_TAG_CATEGORIES; DOMAIN_TAGS/STAGE_TAGS/TOPIC_TAGS arrays; ALL_KNOWN_TAGS; suggestTagsFromText: matches underscored and space-separated forms; buildTaggingContext; groupTagsByCategory using loop accumulation; filterItemsByTag, getTagCategoryLabel helpers).
+
+**Sprint 533 — Knowledge Search Model**
+**Files created:** `src/lib/knowledge/knowledgeSearchModel.ts` (KnowledgeSearchRole; KnowledgeSearchQuery, KnowledgeSearchResult, KnowledgeSearchResponse types; getRoleAllowedStatuses: parent/player get empty access, coach gets approved_general only, director gets approved/promoted; computeRelevanceScore: title/summary/body/tag/domain/level scoring; searchKnowledgeLibrary; isParentAnswerable:false/isPlayerAnswerable:false enforced on response).
+
+**Sprint 534 — Knowledge Privacy Guards**
+**Files created:** `src/lib/knowledge/knowledgePrivacyGuards.ts` (KnowledgeConsumerRole; KnowledgeVisibilityCheck, KnowledgePrivacyAuditResult types; checkKnowledgeVisibility: parent/player always blocked with explanation; coach blocked for non-approved; auditKnowledgeItemPrivacy: checks literal types and status consistency; filterItemsForRole: returns [] for parent/player; PARENT_ACCESSIBLE_STATUSES/PLAYER_ACCESSIBLE_STATUSES typed as never[] to enforce doctrine).
+
+**Sprint 535 — DONNA Knowledge Interface**
+**Files created:** `src/lib/knowledge/knowledgeDonnaInterface.ts` (DonnaKnowledgeAction 5-value union; DonnaKnowledgeActionDef with canApprove:false/canPromote:false/canPublish:false/requiresDirectorDecision:true literals; DONNA_KNOWLEDGE_ACTIONS record; DonnaKnowledgeContextView; buildDonnaKnowledgeContextView: pending count, recent submissions, curriculum candidates filter; getDonnaKnowledgeActionDef helper).
+
+**Sprint 536 — Knowledge Similarity Detector**
+**Files created:** `src/lib/knowledge/knowledgeSimilarityDetector.ts` (KnowledgeSimilarityPair, KnowledgeSimilarityReport types; STOP_WORDS set; tokenize, computeOverlapScore (Jaccard coefficient), computeTagOverlap helpers; detectKnowledgeSimilarity: O(n²) pair comparison with 0.35 threshold; isSuspectedDuplicate at 0.6 or high tag overlap; getSimilarItems, getSuspectedDuplicates helpers; deterministic — no AI API).
+
+**Sprint 537 — Knowledge Audit Log**
+**Files created:** `src/lib/knowledge/knowledgeAuditLog.ts` (KnowledgeAuditEventType 11-value union; KnowledgeAuditEvent, KnowledgeAuditLog types; buildKnowledgeAuditLog: sorts by date, builds statusHistory, counts decision events; createKnowledgeAuditEvent builder; getAuditEventsByType, getAuditEventLabel helpers; all mutations produce audit events — no silent changes).
+
+---
+
 ## 2026-05-21 — Mega Sprint 518–527 Curriculum Coverage Intelligence (Phase 2)
 
 **Sprint 518 — Curriculum Coverage Model**
