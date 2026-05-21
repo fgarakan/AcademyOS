@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-21 — Sprint 604A — DONNA Director Connectivity Audit V1
+
+**Scope:** Full audit of DONNA connectivity across all 26 director-side routes. No app code changed, no migrations, no RLS changes.
+
+**Files created:**
+- `docs/DONNA_DIRECTOR_CONNECTIVITY_AUDIT.md` — Per-route audit of all 26 director routes across 11 DONNA connectivity dimensions with scores and gap analysis
+- `docs/DONNA_DIRECTOR_COVERAGE_MATRIX.md` — Compact grid scoring every route against 10 DONNA capability dimensions (✅/⚠️/❌)
+- `docs/DONNA_DIRECTOR_ACTION_REGISTRY_AUDIT.md` — Full audit of all 13 server actions in `src/app/director/_actions/` — trigger routes, approval gates, parent/player safety, known gaps
+- `docs/DONNA_PAGE_CONTEXT_REQUIREMENTS.md` — What page/object context each director route must provide to DONNA for full functionality, with TypeScript shape definitions
+- `docs/DONNA_DIRECTOR_GAP_FIX_PLAN.md` — Prioritized P0/P1/P2 gap fix plan with 10 recommended next DONNA fix sprints
+- `src/lib/donna/directorCoverageRegistry.ts` — Pure TypeScript registry of all 26 routes → DONNA coverage metadata; utility functions for querying by tier, priority, and approval gap
+
+**Key findings:**
+- Academy-wide DONNA connection score: **4.4/10** across 26 routes
+- Fully connected (score ≥ 8): 4 routes — `/director/review`, `/director/onboarding/interview`, `/director/donna`, `/director/review/[actionId]`
+- Not connected (score 1): 12 routes — including `/director/kpi`, `/director/signals`, `/director/players` (list), `/director/sessions` (list), `/director/curriculum/builder`
+- P0 gaps: `donnaLevelMovementActions.ts` not wired to UI; KPI page has no DONNA despite `kpiExplainer.ts` existing; roster page has no DONNA
+- Process risk: Fitness template session generation bypasses review queue (P1 fix)
+- All 26 routes pass parent/player safety check
+
+**TypeScript:** clean — `npx tsc --noEmit` exits 0
+
+---
+
 ## 2026-05-21 — Sprint — requirementProgressAggregator status mismatch fix
 
 **Bug fixed:** `RequirementStatus` type and all DB status comparisons in `requirementProgressAggregator.ts` used non-existent DB values `'achieved'` and `'confirmed'`. DB canonical values are `'met'` and `'waived'`.
