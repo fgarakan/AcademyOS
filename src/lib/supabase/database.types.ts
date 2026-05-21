@@ -127,6 +127,243 @@ export type Database = {
           },
         ]
       }
+      academy_curriculum_overrides: {
+        Row: {
+          academy_id: string
+          applied_at: string | null
+          applied_by: string | null
+          applied_change: Json | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          curriculum_version_id: string
+          id: string
+          original_snapshot: Json | null
+          override_reason: string | null
+          override_type: string
+          pathway: string | null
+          proposed_change: Json
+          raw_input: string | null
+          rollback_of_override_id: string | null
+          scope: string
+          source: string
+          status: string
+          target_id: string | null
+          target_type: string
+          updated_at: string
+        }
+        Insert: {
+          academy_id: string
+          applied_at?: string | null
+          applied_by?: string | null
+          applied_change?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by: string
+          curriculum_version_id: string
+          id?: string
+          original_snapshot?: Json | null
+          override_reason?: string | null
+          override_type: string
+          pathway?: string | null
+          proposed_change?: Json
+          raw_input?: string | null
+          rollback_of_override_id?: string | null
+          scope?: string
+          source?: string
+          status?: string
+          target_id?: string | null
+          target_type: string
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string
+          applied_at?: string | null
+          applied_by?: string | null
+          applied_change?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          curriculum_version_id?: string
+          id?: string
+          original_snapshot?: Json | null
+          override_reason?: string | null
+          override_type?: string
+          pathway?: string | null
+          proposed_change?: Json
+          raw_input?: string | null
+          rollback_of_override_id?: string | null
+          scope?: string
+          source?: string
+          status?: string
+          target_id?: string | null
+          target_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_curriculum_overrides_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_applied_by_fkey"
+            columns: ["applied_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_applied_by_fkey"
+            columns: ["applied_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_applied_by_fkey"
+            columns: ["applied_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_curriculum_version_id_fkey"
+            columns: ["curriculum_version_id"]
+            isOneToOne: false
+            referencedRelation: "academy_curriculum_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_overrides_rollback_of_override_id_fkey"
+            columns: ["rollback_of_override_id"]
+            isOneToOne: false
+            referencedRelation: "academy_curriculum_overrides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_curriculum_versions: {
+        Row: {
+          academy_id: string
+          activated_at: string | null
+          base_curriculum_version_id: string | null
+          cloned_from_global_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          version_number: number
+        }
+        Insert: {
+          academy_id: string
+          activated_at?: string | null
+          base_curriculum_version_id?: string | null
+          cloned_from_global_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          version_number?: number
+        }
+        Update: {
+          academy_id?: string
+          activated_at?: string | null
+          base_curriculum_version_id?: string | null
+          cloned_from_global_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_curriculum_versions_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "academy_curriculum_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+        ]
+      }
       academy_levels: {
         Row: {
           academy_id: string
@@ -1605,38 +1842,53 @@ export type Database = {
       }
       curriculum_class_template_blocks: {
         Row: {
+          assessment_gate_label: string | null
           block_id: string
+          coach_watch_for: string | null
           content_item_id: string | null
           created_at: string
+          curriculum_level_key: string | null
           drill_id: string | null
           duration_min: number | null
           id: string
           notes: string | null
           order_index: number
+          player_mission_label: string | null
+          source_snapshot: Json
           template_id: string
           updated_at: string
         }
         Insert: {
+          assessment_gate_label?: string | null
           block_id: string
+          coach_watch_for?: string | null
           content_item_id?: string | null
           created_at?: string
+          curriculum_level_key?: string | null
           drill_id?: string | null
           duration_min?: number | null
           id?: string
           notes?: string | null
           order_index: number
+          player_mission_label?: string | null
+          source_snapshot?: Json
           template_id: string
           updated_at?: string
         }
         Update: {
+          assessment_gate_label?: string | null
           block_id?: string
+          coach_watch_for?: string | null
           content_item_id?: string | null
           created_at?: string
+          curriculum_level_key?: string | null
           drill_id?: string | null
           duration_min?: number | null
           id?: string
           notes?: string | null
           order_index?: number
+          player_mission_label?: string | null
+          source_snapshot?: Json
           template_id?: string
           updated_at?: string
         }
@@ -7649,6 +7901,8 @@ export type Database = {
           created_at: string
           display_name: string
           email: string
+          first_run_deck_seen_at: string | null
+          has_seen_first_run_deck: boolean
           id: string
           is_active: boolean
           last_seen_at: string | null
@@ -7662,6 +7916,8 @@ export type Database = {
           created_at?: string
           display_name: string
           email: string
+          first_run_deck_seen_at?: string | null
+          has_seen_first_run_deck?: boolean
           id: string
           is_active?: boolean
           last_seen_at?: string | null
@@ -7675,6 +7931,8 @@ export type Database = {
           created_at?: string
           display_name?: string
           email?: string
+          first_run_deck_seen_at?: string | null
+          has_seen_first_run_deck?: boolean
           id?: string
           is_active?: boolean
           last_seen_at?: string | null
@@ -8316,6 +8574,228 @@ export type Database = {
             columns: ["requirement_id"]
             isOneToOne: false
             referencedRelation: "curriculum_track_requirements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_adjustment_suggestions: {
+        Row: {
+          academy_curriculum_version_id: string | null
+          academy_id: string
+          applied_at: string | null
+          applied_by: string | null
+          approved_at: string | null
+          approved_by: string | null
+          confidence: string
+          created_at: string
+          created_by: string | null
+          curriculum_context: Json
+          curriculum_level_id: string | null
+          group_id: string | null
+          id: string
+          player_needs_considered: Json
+          players_supported: Json
+          reason: string
+          risk_level: string
+          scope: string
+          session_id: string
+          source_template_id: string | null
+          status: string
+          suggested_change: string
+          suggestion_type: string
+          target_session_block_id: string | null
+        }
+        Insert: {
+          academy_curriculum_version_id?: string | null
+          academy_id: string
+          applied_at?: string | null
+          applied_by?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          confidence?: string
+          created_at?: string
+          created_by?: string | null
+          curriculum_context?: Json
+          curriculum_level_id?: string | null
+          group_id?: string | null
+          id?: string
+          player_needs_considered?: Json
+          players_supported?: Json
+          reason: string
+          risk_level?: string
+          scope?: string
+          session_id: string
+          source_template_id?: string | null
+          status?: string
+          suggested_change: string
+          suggestion_type: string
+          target_session_block_id?: string | null
+        }
+        Update: {
+          academy_curriculum_version_id?: string | null
+          academy_id?: string
+          applied_at?: string | null
+          applied_by?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          confidence?: string
+          created_at?: string
+          created_by?: string | null
+          curriculum_context?: Json
+          curriculum_level_id?: string | null
+          group_id?: string | null
+          id?: string
+          player_needs_considered?: Json
+          players_supported?: Json
+          reason?: string
+          risk_level?: string
+          scope?: string
+          session_id?: string
+          source_template_id?: string | null
+          status?: string
+          suggested_change?: string
+          suggestion_type?: string
+          target_session_block_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_adjustment_suggestions_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_applied_by_fkey"
+            columns: ["applied_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_applied_by_fkey"
+            columns: ["applied_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_applied_by_fkey"
+            columns: ["applied_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_curriculum_level_id_fkey"
+            columns: ["curriculum_level_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_curriculum_level_id_fkey"
+            columns: ["curriculum_level_id"]
+            isOneToOne: false
+            referencedRelation: "v_curriculum_level_requirements"
+            referencedColumns: ["level_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_session_load"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_source_template_id_fkey"
+            columns: ["source_template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_source_template_id_fkey"
+            columns: ["source_template_id"]
+            isOneToOne: false
+            referencedRelation: "v_session_recommendation_feed"
+            referencedColumns: ["suggested_template_id"]
+          },
+          {
+            foreignKeyName: "session_adjustment_suggestions_target_session_block_id_fkey"
+            columns: ["target_session_block_id"]
+            isOneToOne: false
+            referencedRelation: "session_blocks"
             referencedColumns: ["id"]
           },
         ]
@@ -9116,27 +9596,57 @@ export type Database = {
       template_block_exercises: {
         Row: {
           block_id: string
+          category: string | null
+          coaching_cue: string | null
           duration_min: number | null
+          equipment: string | null
           exercise_id: string
+          exercise_label: string | null
           id: string
+          load_level: string | null
           notes: string | null
           order_index: number
+          progression: string | null
+          regression: string | null
+          sets_reps_duration: string | null
+          source_snapshot: Json
+          tennis_transfer: string | null
         }
         Insert: {
           block_id: string
+          category?: string | null
+          coaching_cue?: string | null
           duration_min?: number | null
+          equipment?: string | null
           exercise_id: string
+          exercise_label?: string | null
           id?: string
+          load_level?: string | null
           notes?: string | null
           order_index: number
+          progression?: string | null
+          regression?: string | null
+          sets_reps_duration?: string | null
+          source_snapshot?: Json
+          tennis_transfer?: string | null
         }
         Update: {
           block_id?: string
+          category?: string | null
+          coaching_cue?: string | null
           duration_min?: number | null
+          equipment?: string | null
           exercise_id?: string
+          exercise_label?: string | null
           id?: string
+          load_level?: string | null
           notes?: string | null
           order_index?: number
+          progression?: string | null
+          regression?: string | null
+          sets_reps_duration?: string | null
+          source_snapshot?: Json
+          tennis_transfer?: string | null
         }
         Relationships: [
           {
@@ -9157,35 +9667,53 @@ export type Database = {
       }
       template_blocks: {
         Row: {
+          coach_watch_for: string | null
           created_at: string
+          curriculum_connection: string | null
           duration_min: number
+          fitness_block_type: string | null
           id: string
           intensity: number | null
+          intensity_level: string | null
+          load_level: string | null
           name: string
           notes: string | null
           order_index: number
+          source_snapshot: Json
           template_id: string
           type: Database["public"]["Enums"]["block_type"]
         }
         Insert: {
+          coach_watch_for?: string | null
           created_at?: string
+          curriculum_connection?: string | null
           duration_min: number
+          fitness_block_type?: string | null
           id?: string
           intensity?: number | null
+          intensity_level?: string | null
+          load_level?: string | null
           name: string
           notes?: string | null
           order_index: number
+          source_snapshot?: Json
           template_id: string
           type: Database["public"]["Enums"]["block_type"]
         }
         Update: {
+          coach_watch_for?: string | null
           created_at?: string
+          curriculum_connection?: string | null
           duration_min?: number
+          fitness_block_type?: string | null
           id?: string
           intensity?: number | null
+          intensity_level?: string | null
+          load_level?: string | null
           name?: string
           notes?: string | null
           order_index?: number
+          source_snapshot?: Json
           template_id?: string
           type?: Database["public"]["Enums"]["block_type"]
         }
@@ -9206,12 +9734,206 @@ export type Database = {
           },
         ]
       }
-      templates: {
+      template_review_requests: {
         Row: {
           academy_id: string
           created_at: string
+          id: string
+          proposed_action_id: string | null
+          request_type: string
+          requested_by: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          template_draft: Json
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          academy_id: string
+          created_at?: string
+          id?: string
+          proposed_action_id?: string | null
+          request_type: string
+          requested_by?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          template_draft?: Json
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string
+          created_at?: string
+          id?: string
+          proposed_action_id?: string | null
+          request_type?: string
+          requested_by?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          template_draft?: Json
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_review_requests_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_review_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_review_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "template_review_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "template_review_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_review_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "template_review_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "template_review_requests_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_review_requests_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "v_session_recommendation_feed"
+            referencedColumns: ["suggested_template_id"]
+          },
+        ]
+      }
+      template_version_history: {
+        Row: {
+          academy_id: string
+          change_type: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          snapshot: Json
+          template_id: string
+          version_number: number
+        }
+        Insert: {
+          academy_id: string
+          change_type: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          snapshot?: Json
+          template_id: string
+          version_number: number
+        }
+        Update: {
+          academy_id?: string
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          snapshot?: Json
+          template_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_version_history_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_version_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_version_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "template_version_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
+          },
+          {
+            foreignKeyName: "template_version_history_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_version_history_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "v_session_recommendation_feed"
+            referencedColumns: ["suggested_template_id"]
+          },
+        ]
+      }
+      templates: {
+        Row: {
+          academy_id: string
+          approved_at: string | null
+          approved_by: string | null
+          archived_at: string | null
+          created_at: string
           created_by: string | null
           curriculum_level_id: string | null
+          curriculum_level_key: string | null
+          curriculum_source_label: string | null
+          curriculum_stage_key: string | null
           description: string | null
           group_id: string | null
           id: string
@@ -9219,7 +9941,11 @@ export type Database = {
           is_default: boolean
           level_id: string | null
           name: string
+          pathway_focus: string | null
+          status: string
           tags: string[] | null
+          template_goal: string | null
+          template_type: string | null
           total_duration_min: number | null
           track: Database["public"]["Enums"]["development_track"] | null
           updated_at: string
@@ -9227,9 +9953,15 @@ export type Database = {
         }
         Insert: {
           academy_id: string
+          approved_at?: string | null
+          approved_by?: string | null
+          archived_at?: string | null
           created_at?: string
           created_by?: string | null
           curriculum_level_id?: string | null
+          curriculum_level_key?: string | null
+          curriculum_source_label?: string | null
+          curriculum_stage_key?: string | null
           description?: string | null
           group_id?: string | null
           id?: string
@@ -9237,7 +9969,11 @@ export type Database = {
           is_default?: boolean
           level_id?: string | null
           name: string
+          pathway_focus?: string | null
+          status?: string
           tags?: string[] | null
+          template_goal?: string | null
+          template_type?: string | null
           total_duration_min?: number | null
           track?: Database["public"]["Enums"]["development_track"] | null
           updated_at?: string
@@ -9245,9 +9981,15 @@ export type Database = {
         }
         Update: {
           academy_id?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          archived_at?: string | null
           created_at?: string
           created_by?: string | null
           curriculum_level_id?: string | null
+          curriculum_level_key?: string | null
+          curriculum_source_label?: string | null
+          curriculum_stage_key?: string | null
           description?: string | null
           group_id?: string | null
           id?: string
@@ -9255,7 +9997,11 @@ export type Database = {
           is_default?: boolean
           level_id?: string | null
           name?: string
+          pathway_focus?: string | null
+          status?: string
           tags?: string[] | null
+          template_goal?: string | null
+          template_type?: string | null
           total_duration_min?: number | null
           track?: Database["public"]["Enums"]["development_track"] | null
           updated_at?: string
@@ -9268,6 +10014,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "academies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "v_group_summary"
+            referencedColumns: ["lead_coach_id"]
+          },
+          {
+            foreignKeyName: "templates_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "v_player_summary"
+            referencedColumns: ["coach_id"]
           },
           {
             foreignKeyName: "templates_created_by_fkey"
@@ -10947,6 +11714,10 @@ export type Database = {
       score_player: {
         Args: { p_academy_id: string; p_player_id: string }
         Returns: string
+      }
+      session_belongs_to_auth_academy: {
+        Args: { p_session_id: string }
+        Returns: boolean
       }
       set_player_phase: {
         Args: {

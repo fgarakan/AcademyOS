@@ -23,39 +23,14 @@ type TemplateBlockExerciseBaseRow = Tables<'template_block_exercises'>
 // These fields will be present once migration 067 is applied.
 // Before that they will be absent from query results — typed as optional here.
 
-export interface TemplateRow extends TemplateBaseRow {
-  template_type?: string | null
-  status?: string | null
-  curriculum_stage_key?: string | null
-  curriculum_level_key?: string | null
-  curriculum_source_label?: string | null
-  template_goal?: string | null
-  pathway_focus?: string | null
-  approved_by?: string | null
-  approved_at?: string | null
-  archived_at?: string | null
-}
+// These fields are now in the live schema (Sprint 398). Interfaces kept for
+// type-narrowing by callers — base generated type covers all columns.
+export type TemplateRow = TemplateBaseRow
 
-export interface TemplateBlockRow extends TemplateBlockBaseRow {
-  curriculum_connection?: string | null
-  coach_watch_for?: string | null
-  fitness_block_type?: string | null
-  intensity_level?: string | null
-  load_level?: string | null
-  source_snapshot?: Record<string, unknown> | null
-}
+export type TemplateBlockRow = TemplateBlockBaseRow
 
 export interface TemplateBlockExerciseRow extends TemplateBlockExerciseBaseRow {
-  exercise_label?: string | null
-  category?: string | null
-  sets_reps_duration?: string | null
-  load_level?: string | null
-  tennis_transfer?: string | null
-  progression?: string | null
-  regression?: string | null
-  equipment?: string | null
-  coaching_cue?: string | null
-  source_snapshot?: Record<string, unknown> | null
+  // exercises is a join field (not in base type) — kept as optional
   exercises?: { name: string | null; category: string | null } | null
 }
 
