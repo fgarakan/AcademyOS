@@ -2,7 +2,7 @@
 
 This file is the index of all architecture and engineering documentation. It is a navigation map — not a specification. Follow the links to the actual documents.
 
-**Last updated:** Mega Sprint 437–446 Phase 5
+**Last updated:** Mega Sprint 447–451 Phase 6
 
 ---
 
@@ -46,6 +46,7 @@ This file is the index of all architecture and engineering documentation. It is 
 | [`DONNA_ACTION_RELIABILITY_NOTES.md`](DONNA_ACTION_RELIABILITY_NOTES.md) | DONNA action reliability: state machine, guards, audit, gateway (Sprint 417–426) |
 | [`DIRECTOR_CURRICULUM_TEMPLATE_NOTES.md`](DIRECTOR_CURRICULUM_TEMPLATE_NOTES.md) | Director data layer: approval actions, templates, curriculum, groups, alerts (Sprint 427–436) |
 | [`COACH_SESSION_RECAP_INTELLIGENCE_NOTES.md`](COACH_SESSION_RECAP_INTELLIGENCE_NOTES.md) | Coach session, attendance, blocks, voice notes, wrap-up intelligence (Sprint 437–446) |
+| [`PLAYER_EVIDENCE_DEMO_READINESS_NOTES.md`](PLAYER_EVIDENCE_DEMO_READINESS_NOTES.md) | Player evidence, development profile, player/parent portal data layers, demo readiness (Sprint 447–451) |
 
 ---
 

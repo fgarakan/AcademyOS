@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 447–451 Player Evidence Demo Readiness (Phase 6)
+
+**Sprint 447 — Player Evidence Data Layer V1**
+**Files created:** `src/lib/player/evidenceQueries.ts` (fetchPlayerRequirementProgress: all progress for coach/director view; fetchPlayerVisibleProgress: is_player_visible=true only; fetchParentVisibleProgress: is_parent_visible=true only; fetchRequirementEvidenceLinks: optionally scoped to requirement; fetchParentSafeEvidenceLinks: is_parent_safe=true only; countEvidenceByRequirement and summarizeProgressByStatus: pure aggregation; typed RequirementProgressRecord and EvidenceLinkRecord with camelCase fields).
+
+**Sprint 448 — Player Development Profile Queries V1**
+**Files created:** `src/lib/player/developmentProfileQueries.ts` (fetchPlayerDevelopmentSummary: coach/director full view; fetchPlayerSummaryForStudent: show_to_student=true gate; fetchPlayerSummaryForParent: show_to_parent=true gate; fetchPlayerPriorities and fetchTopPlayerPriorities: ordered by priority_rank; isProfileShownToStudent, isProfileShownToParent: pure guards; getStudentFacingContent, getParentFacingContent: safe extraction; no-cache-zone tables — always real-time).
+
+**Sprint 449 — Player Portal Data Layer V1**
+**Files created:** `src/lib/player/playerPortalQueries.ts` (fetchPlayerPortalSummary: reads v_player_summary view with rawDb cast pattern; fetchPlayerPortalProfile: parallel assembly of summary + development content + priorities + visible progress; fetchPlayerPortalProgress: player-visible only; fetchPlayerPortalPriorities: top 3 by rank; isPlayerPortalReady: pure readiness guard; all visibility-gated for player role).
+
+**Sprint 450 — Parent Portal Data Layer V1**
+**Files created:** `src/lib/parent/parentPortalQueries.ts` (fetchParentPortalPlayerCard: parent-safe player fields with group/level name resolution; fetchParentPortalProfile: parallel assembly of all parent-gated data; fetchParentPortalProgress: parent-visible only; fetchParentPortalDevelopmentSummary: show_to_parent=true gate; isParentPortalReady and parentCanSeeDevelopmentContent: pure guards; parents never see coach-internal notes, raw signals, or unflagged evidence).
+
+**Sprint 451 — Demo Readiness Checker V1**
+**Files created:** `src/lib/demo/demoReadinessChecker.ts` (checkPlayerHasRequiredData, checkAcademyHasSessionData, checkAcademyHasTemplates, checkParentSafeSummariesExist, checkProgressDataExists, checkPendingActionsExist; buildDemoReadinessReport: parallel check assembly with pass/fail counts; formatReadinessReport: human-readable output; used by /dev/diagnostics for pilot validation).
+
+**Shared documentation:** `docs/PLAYER_EVIDENCE_DEMO_READINESS_NOTES.md` (visibility rules; table schema notes; wiring targets; Trust Stack alignment).
+
+No migrations. No RLS changes. No new package dependencies. TypeScript: clean.
+
+---
+
 ## 2026-05-21 — Mega Sprint 437–446 Coach Session Recap Intelligence (Phase 5)
 
 **Sprint 437 — Coach Session Data Layer V1**
