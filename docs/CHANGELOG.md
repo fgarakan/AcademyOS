@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 584–593 Coach Mobile Curriculum Assessment Capture (Phase 4)
+
+**Sprints:** 584 (Coach Mobile Home Polish V1), 585 (Coach Session Plan Curriculum Focus V1), 586 (Coach Attendance Exception UX V1), 587 (Coach Quick Capture V2), 588 (Coach Voice-to-Curriculum Draft UI V1), 589 (Coach Voice-to-Assessment Draft UI V1), 590 (End-of-Session Recap UI Polish V1), 591 (Coach Player Observation Draft Review V1), 592 (Coach Curriculum Feedback Loop V1), 593 (Coach Mobile Assessment QA V1)
+
+**Confirmed:** No migrations created. No RLS modified. No official DB writes from any Phase 4 component. All capture flows produce local draft state only. No parent/player data exposed. DONNA classification is keyword pattern matching only — no external AI API calls.
+
+**Files created (coach components):**
+- `src/app/coach/_components/CoachOnCourtActionsBar.tsx` — Sprint 584: on-court capture hub; 4 touch-friendly tiles (Quick Capture/Assessment/Curriculum Idea/Wrap-Up); manages inline fullscreen panel state; shows last-capture confirmation and curriculum feedback card
+- `src/app/coach/_components/CoachSessionFocusCard.tsx` — Sprint 585: collapsible session curriculum focus card; curriculumFocus text, keyDomains chips, watchFors list, assessmentOpportunities (lime accent + Sparkles icon), quick note textarea (local only)
+- `src/app/coach/_components/CoachAttendanceExceptionDraftCard.tsx` — Sprint 586: attendance exception draft capture; 5 exception types; "Everyone present" quick action; quick-add chips; unrostered arrival director-review warning; draft only — no official writes
+- `src/app/coach/_components/CoachQuickCaptureSheet.tsx` — Sprint 587: fullscreen quick capture sheet; 7 types (player_note/session_note/curriculum_idea/drill_idea/assessment_note/parent_followup/readiness_flag); distinct colours per type; player field for applicable types; readiness flag red warning; parent followup director-review warning
+- `src/app/coach/_components/CoachCurriculumDraftCapture.tsx` — Sprint 588: fullscreen voice-to-curriculum draft; 7 content types; 6 stage targets; keyword-based DONNA classification; coach can adjust type/stage before submitting; no AI API call
+- `src/app/coach/_components/CoachAssessmentDraftCapture.tsx` — Sprint 589: fullscreen voice-to-assessment draft; imports `structureVoiceAssessmentInput` from Phase 3 lib; player name required; DONNA classifies domain and score; score picker 1–10 with band label; domain-not-detected error state; confirmed state with "no official record changed"
+- `src/app/coach/_components/CoachObservationDraftReviewPanel.tsx` — Sprint 591: collapsible observation draft review; approve/exclude per observation; parent-safe Eye/EyeOff icons; submit only approved observations; "director reviews before anything reaches players or parents"
+- `src/app/coach/_components/CoachCurriculumFeedbackCard.tsx` — Sprint 592: curriculum feedback card shown after draft submit; content type, stage, idea summary, pipeline status (director review queue / nothing official changed / if approved director adds it); dismiss button
+
+**Files modified:**
+- `src/app/coach/page.tsx` — Sprint 584: added CoachOnCourtActionsBar import; added "ON-COURT CAPTURE" section above "QUICK ACTIONS"
+- `src/app/coach/recap/page.tsx` — Sprint 590: added 7th question "Assessment Notes" (between Needs Attention and Readiness Check); renamed "Safety & Readiness" → "Readiness Check" (non-medical language); added assessment note and player observation awareness cards in review stage; updated DONNA context note; updated `buildDraftSections()` for assessment notes
+
+**Files created (docs):**
+- `docs/COACH_MOBILE_ASSESSMENT_QA.md` — Sprint 593: QA checklist for all 10 Phase 4 sprints; mobile responsiveness, security, DONNA mutation safety, known limitations, migration readiness sections
+
+**TypeScript:** clean — `npx tsc --noEmit` exits 0
+
+---
+
 ## 2026-05-21 — Mega Sprint 574–583 Player Assessment Placement System (Phase 3)
 
 **Sprints:** 574 (Assessment Architecture V1), 575 (Skill Rubric V1), 576 (Competition Rubric V1), 577 (Fitness Rubric V1), 578 (Mental Performance Rubric V1), 579 (DONNA Voice-to-Assessment V1), 580 (Placement Recommendation Engine V1), 581 (New Player Assessment UI V1), 582 (Assessment Director Review V1), 583 (Assessment Cadence + DONNA Reminders V1)

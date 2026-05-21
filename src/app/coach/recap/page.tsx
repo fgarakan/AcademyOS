@@ -1,7 +1,11 @@
 'use client'
 
+// Sprint 590 — End-of-Session Recap UI Polish V1
+// Enhanced with assessment note integration, observation review awareness,
+// and DONNA classification notes in the review stage.
+
 import { useState } from 'react'
-import { ArrowLeft, ArrowRight, CheckCircle2, Mic, ClipboardList, Users, Activity, Star, AlertTriangle, MessageSquare, FileText } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Mic, ClipboardList, Users, Activity, Star, AlertTriangle, MessageSquare, FileText, ClipboardCheck } from 'lucide-react'
 import Link from 'next/link'
 
 // ── Questions ─────────────────────────────────────────────────────────────────
@@ -36,17 +40,24 @@ const RECAP_QUESTIONS = [
     hint: 'Note players who need targeted coaching focus.',
   },
   {
+    id: 'assessment',
+    label: 'Assessment Notes',
+    question: 'Any assessment observations worth noting from today?',
+    placeholder: 'e.g. Marcus is tracking at around a 6 for skill. Emma\'s competition readiness is improving — closer to a 5.',
+    hint: 'Note any assessment observations. DONNA will classify these for the director.',
+  },
+  {
     id: 'safety',
-    label: 'Safety & Readiness',
-    question: 'Any safety or readiness concerns from today?',
-    placeholder: 'e.g. No concerns. / Emma mentioned her knee was sore — monitor next session.',
-    hint: 'Flags any physical concerns, fatigue, or return-to-play situations.',
+    label: 'Readiness Check',
+    question: 'Any readiness concerns from today?',
+    placeholder: 'e.g. No concerns. / Emma seemed low energy — worth monitoring.',
+    hint: 'Flag any concern about player readiness for the next session. Describe what you observed.',
   },
   {
     id: 'followup',
     label: 'Follow-Up Needed',
     question: 'Any parent or director follow-up needed?',
-    placeholder: 'e.g. Nothing needed. / Tyler\'s parents asked about private lessons. / Director should know about the attendance issue.',
+    placeholder: 'e.g. Nothing needed. / Tyler\'s parents asked about schedule changes. / Director should know about the attendance situation.',
     hint: 'Note anything that needs to escalate to the director or be communicated to parents.',
   },
 ]
@@ -147,12 +158,20 @@ function buildDraftSections(answers: Answers): DraftSection[] {
       placeholder: 'No player observation answers provided.',
     },
     {
+      icon: ClipboardCheck,
+      label: 'Assessment Observations',
+      pipelineLabel: 'Assessment Draft',
+      color: 'text-lime',
+      content: answers.assessment?.trim() ? `Assessment notes: ${answers.assessment.trim()}` : null,
+      placeholder: 'No assessment observations noted.',
+    },
+    {
       icon: AlertTriangle,
-      label: 'Safety / Readiness',
+      label: 'Readiness Check',
       pipelineLabel: 'Director Review Item',
       color: 'text-status-red',
       content: answers.safety?.trim() || null,
-      placeholder: 'No safety concerns noted.',
+      placeholder: 'No readiness concerns noted.',
     },
     {
       icon: MessageSquare,
@@ -289,9 +308,32 @@ export default function CoachRecapPage() {
         <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-lime/5 border border-lime/20">
           <span className="text-lime text-[11px] mt-0.5 shrink-0">✦</span>
           <p className="text-[10px] text-text-secondary leading-relaxed">
-            <span className="text-lime font-semibold">DONNA</span> will analyze this recap when your director reviews it — generating observation drafts, flagging follow-up items, and surfacing any concerns for their attention.
+            <span className="text-lime font-semibold">DONNA</span> will analyze this recap when your director reviews it — generating observation drafts, classifying assessment notes, flagging follow-up items, and surfacing any concerns for their attention.
           </p>
         </div>
+
+        {/* Assessment note awareness */}
+        {answers.assessment?.trim() && (
+          <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-surface border border-lime/15">
+            <ClipboardCheck className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
+            <p className="text-[10px] text-text-secondary leading-relaxed">
+              <span className="text-lime font-semibold">Assessment notes detected.</span>{' '}
+              DONNA will attempt to classify your assessment observations by domain (skill, competition, physical capability, mental performance) when the director reviews this recap.
+              Use the <span className="font-medium">Quick Capture → Assessment</span> flow on the home screen for more structured assessment capture.
+            </p>
+          </div>
+        )}
+
+        {/* Player observation draft awareness */}
+        {(answers.standouts?.trim() || answers.attention?.trim()) && (
+          <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-surface border border-border">
+            <Star className="w-3.5 h-3.5 text-text-muted shrink-0 mt-0.5" />
+            <p className="text-[10px] text-text-muted leading-relaxed">
+              Player observations from Standouts and Needs Attention will be extracted as observation drafts for director review.
+              <span className="text-text-secondary"> Nothing reaches players or parents without director approval.</span>
+            </p>
+          </div>
+        )}
 
         {/* Structured draft sections */}
         <div className="space-y-3">

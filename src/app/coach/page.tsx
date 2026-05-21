@@ -14,6 +14,7 @@ import {
   type CoachWorkspaceSummary,
 } from '@/lib/backend/coachWorkspace'
 import { loadWrapUpSessionSelector } from '@/lib/coach/wrapUpSessionSelector'
+import { CoachOnCourtActionsBar } from './_components/CoachOnCourtActionsBar'
 
 function playerInitials(fullName: string | null): string {
   if (!fullName) return '?'
@@ -391,6 +392,12 @@ export default async function CoachHome() {
           </p>
         )}
       </Link>
+
+      {/* ── On-Court Capture ──────────────────────────────────── */}
+      <div>
+        <SectionHeader title="ON-COURT CAPTURE" />
+        <CoachOnCourtActionsBar />
+      </div>
 
       {/* ── Quick Actions ─────────────────────────────────────── */}
       <div>
