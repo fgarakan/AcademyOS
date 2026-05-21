@@ -2,6 +2,43 @@
 
 This file is the index of all architecture and engineering documentation. It is a navigation map — not a specification. Follow the links to the actual documents.
 
+**Last updated:** Mega Sprint 402–406 Phase 1
+
+---
+
+## Visual System Atlas (Sprint 402)
+
+| Document | Purpose |
+|---|---|
+| [`visual-system/00_SYSTEM_ATLAS.md`](visual-system/00_SYSTEM_ATLAS.md) | Index of all visual system maps |
+| [`visual-system/01_EXECUTIVE_PRODUCT_MAP.md`](visual-system/01_EXECUTIVE_PRODUCT_MAP.md) | Full product ecosystem — who uses it, what they do |
+| [`visual-system/02_ROLE_AND_PERMISSION_MAP.md`](visual-system/02_ROLE_AND_PERMISSION_MAP.md) | Role hierarchy, route access, enforcement layers |
+| [`visual-system/03_DONNA_ACTION_FLOW_MAP.md`](visual-system/03_DONNA_ACTION_FLOW_MAP.md) | DONNA action flow — input to approved DB write |
+| [`visual-system/04_DATA_MODEL_AND_EVIDENCE_MAP.md`](visual-system/04_DATA_MODEL_AND_EVIDENCE_MAP.md) | Core entities, relationships, evidence flow |
+| [`visual-system/05_TRUST_AND_SAFETY_MAP.md`](visual-system/05_TRUST_AND_SAFETY_MAP.md) | Trust Stack layers, violation detection, safe defaults |
+| [`visual-system/06_RUNTIME_REQUEST_FLOW_MAP.md`](visual-system/06_RUNTIME_REQUEST_FLOW_MAP.md) | Request from browser through Next.js to Supabase |
+| [`visual-system/07_DEBUGGING_AND_OBSERVABILITY_MAP.md`](visual-system/07_DEBUGGING_AND_OBSERVABILITY_MAP.md) | Trace, debug, and understand failures |
+| [`visual-system/08_MODULE_DEPENDENCY_MAP.md`](visual-system/08_MODULE_DEPENDENCY_MAP.md) | src/lib/ module dependencies |
+| [`visual-system/09_ROADMAP_AND_SPRINT_IMPACT_MAP.md`](visual-system/09_ROADMAP_AND_SPRINT_IMPACT_MAP.md) | Phase roadmap and capability map |
+
+## Engineering Process Docs (Sprint 402)
+
+| Document | Purpose |
+|---|---|
+| [`ENGINEERING_MODULE_REGISTRY.md`](ENGINEERING_MODULE_REGISTRY.md) | Every src/lib/ module: purpose, risk, status |
+| [`ENGINEERING_UPDATE_PROTOCOL.md`](ENGINEERING_UPDATE_PROTOCOL.md) | When and how to update the visual system |
+
+## Infrastructure Implementation Notes (Sprints 401–406)
+
+| Document | Purpose |
+|---|---|
+| [`OBSERVABILITY_IMPLEMENTATION_NOTES.md`](OBSERVABILITY_IMPLEMENTATION_NOTES.md) | Structured logging helpers (Sprint 401) |
+| [`IDEMPOTENCY_IMPLEMENTATION_NOTES.md`](IDEMPOTENCY_IMPLEMENTATION_NOTES.md) | Duplicate guard helpers (Sprint 401) |
+| [`RATE_LIMITING_IMPLEMENTATION_NOTES.md`](RATE_LIMITING_IMPLEMENTATION_NOTES.md) | Rate limit policies and helpers (Sprint 403) |
+| [`DEBOUNCE_AND_DUPLICATE_SUBMIT_NOTES.md`](DEBOUNCE_AND_DUPLICATE_SUBMIT_NOTES.md) | Debounce strategy and UI patterns (Sprint 404) |
+| [`CACHE_TTL_IMPLEMENTATION_NOTES.md`](CACHE_TTL_IMPLEMENTATION_NOTES.md) | Cache key builders and TTL policy (Sprint 405) |
+| [`CACHE_INVALIDATION_MAP.md`](CACHE_INVALIDATION_MAP.md) | Per-mutation revalidation map (Sprint 406) |
+
 ---
 
 ## Trust Stack (Root Doctrine)
