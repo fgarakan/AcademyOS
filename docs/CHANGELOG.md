@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-21 — Sprint 605 — DONNA Level Movement UI Wiring V1
+
+**Scope:** Wire existing `saveLevelReadinessDraftAction` to the `/director/level-up` pipeline view. Per-player inline DONNA draft button. No migrations, no RLS changes, no direct player level mutation.
+
+**Files created:**
+- `src/app/director/level-up/DonnaLevelMovementDraftButton.tsx` — Per-player DONNA draft button; collapsed trigger expands to inline form; calls `saveLevelReadinessDraftAction`; drafts `proposed_actions` row only; success copy confirms no level has changed
+
+**Files modified:**
+- `src/app/director/level-up/page.tsx` — `PlayerReadinessCard` restructured from flat row to vertical container; `DonnaLevelMovementDraftButton` mounted below each player row
+- `src/lib/donna/directorCoverageRegistry.ts` — `/director/level-up` entry updated: score 3→5, tier `weak`→`partially_connected`, `hasPresence: true`, `canDraft: true`, `canRoute: true`, `approvalRequired: true`, `fixPriority: 'P0'→'P1'`
+
+**Safety:** DONNA creates `proposed_actions` rows only (`target_module: 'level_review'`, `status: 'pending_review'`). No player level mutation. No parent/player-visible change. Success copy: "DONNA drafted this level movement for director review. No player level has changed yet."
+
+**Known gap deferred:** `DonnaLevelMovementApplyControls` (apply path) is not yet wired to `DonnaDraftCard` in the review queue — level review items appear as read-only cards until Sprint 606+ wires the apply path.
+
+**TypeScript:** clean — `npx tsc --noEmit` exits 0
+
+---
+
 ## 2026-05-21 — Sprint 604A — DONNA Director Connectivity Audit V1
 
 **Scope:** Full audit of DONNA connectivity across all 26 director-side routes. No app code changed, no migrations, no RLS changes.

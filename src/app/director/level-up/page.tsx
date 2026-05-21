@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/utils'
 import { DEMO_PIPELINE_ROWS } from '@/lib/demo/demoData'
 import { LevelUpDonnaCTA } from './LevelUpDonnaCTA'
 import { DonnaOpenChip } from '@/components/assistant/DonnaOpenChip'
+import { DonnaLevelMovementDraftButton } from './DonnaLevelMovementDraftButton'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -69,51 +70,60 @@ function StatCard({ value, label, color }: { value: number; label: string; color
 
 function PlayerReadinessCard({ row }: { row: PipelineRow }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3 px-4 rounded-xl bg-surface-raised border border-border hover:border-lime/30 transition-colors">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-semibold text-text-primary">{row.full_name ?? 'Unknown player'}</p>
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${urgencyBg(row.urgency)} ${urgencyColor(row.urgency)}`}>
-            {urgencyLabel(row.urgency)}
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-          <span className="text-[11px] text-text-muted">{trackLabel(row.current_track)} track</span>
-          {row.group_name && <span className="text-[11px] text-text-muted">{row.group_name}</span>}
-          {row.coach_name && <span className="text-[11px] text-text-muted">Coach {row.coach_name}</span>}
-          {row.last_assessed_at && (
-            <span className="text-[11px] text-text-muted">Last assessed {formatDate(row.last_assessed_at)}</span>
-          )}
-          {row.urgency === 'overdue' && row.days_overdue != null && row.days_overdue > 0 && (
-            <span className="text-[11px] text-status-red">{row.days_overdue}d overdue</span>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-4 shrink-0">
-        {row.overall_score != null && (
-          <div className="text-right">
-            <p className={`text-base font-mono font-bold ${scoreColor(row.overall_score)}`}>
-              {Math.round(row.overall_score)}
-            </p>
-            <p className="text-[9px] uppercase tracking-widest text-text-muted">score</p>
+    <div className="rounded-xl bg-surface-raised border border-border hover:border-lime/30 transition-colors overflow-hidden">
+      <div className="flex items-center justify-between gap-4 py-3 px-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-semibold text-text-primary">{row.full_name ?? 'Unknown player'}</p>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${urgencyBg(row.urgency)} ${urgencyColor(row.urgency)}`}>
+              {urgencyLabel(row.urgency)}
+            </span>
           </div>
-        )}
-        {row.player_id && row.full_name && (
-          <LevelUpDonnaCTA
-            playerName={row.full_name}
-            currentTrack={row.current_track}
-            urgency={row.urgency}
-          />
-        )}
-        {row.player_id && (
-          <Link
-            href={`/director/players/${row.player_id}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-[11px] text-text-secondary hover:border-lime/40 hover:text-text-primary transition-colors"
-          >
-            View <ArrowRight className="w-3 h-3" />
-          </Link>
-        )}
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+            <span className="text-[11px] text-text-muted">{trackLabel(row.current_track)} track</span>
+            {row.group_name && <span className="text-[11px] text-text-muted">{row.group_name}</span>}
+            {row.coach_name && <span className="text-[11px] text-text-muted">Coach {row.coach_name}</span>}
+            {row.last_assessed_at && (
+              <span className="text-[11px] text-text-muted">Last assessed {formatDate(row.last_assessed_at)}</span>
+            )}
+            {row.urgency === 'overdue' && row.days_overdue != null && row.days_overdue > 0 && (
+              <span className="text-[11px] text-status-red">{row.days_overdue}d overdue</span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-4 shrink-0">
+          {row.overall_score != null && (
+            <div className="text-right">
+              <p className={`text-base font-mono font-bold ${scoreColor(row.overall_score)}`}>
+                {Math.round(row.overall_score)}
+              </p>
+              <p className="text-[9px] uppercase tracking-widest text-text-muted">score</p>
+            </div>
+          )}
+          {row.player_id && row.full_name && (
+            <LevelUpDonnaCTA
+              playerName={row.full_name}
+              currentTrack={row.current_track}
+              urgency={row.urgency}
+            />
+          )}
+          {row.player_id && (
+            <Link
+              href={`/director/players/${row.player_id}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-[11px] text-text-secondary hover:border-lime/40 hover:text-text-primary transition-colors"
+            >
+              View <ArrowRight className="w-3 h-3" />
+            </Link>
+          )}
+        </div>
       </div>
+      {row.player_id && row.full_name && (
+        <DonnaLevelMovementDraftButton
+          playerId={row.player_id}
+          playerName={row.full_name}
+          currentTrackHint={row.current_track}
+        />
+      )}
     </div>
   )
 }
