@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 472–481 Director Command Center KPIs (Phase 3)
+
+**Sprint 472 — Director Attention Queue V1**
+**Files created:** `src/lib/director/attentionQueue/index.ts` (AttentionItem, AttentionQueue types; AttentionSource and AttentionPriority unions; buildAttentionQueue from pending approvals / expiring actions / high alerts / over-capacity groups / curriculum gaps; groupAttentionByPriority, getExpiringActions, summarizeAttentionQueue; pure TypeScript — no DB).
+**Docs created:** `docs/DIRECTOR_ATTENTION_QUEUE_NOTES.md` (source table, priority levels, main functions, wiring targets, safety notes).
+
+**Sprint 473 — Director KPI Dashboard Builder V1**
+**Files created:** `src/lib/director/kpiDashboard.ts` (KpiDashboardRow, KpiDashboardSection, KpiDashboard types; KPI_SECTIONS grouping 12 KPIs into 4 sections; buildKpiDashboard, buildKpiDashboardRow, getTopKpiConcerns, formatKpiSummaryLine; maps kpi/ engine KpiResult to dashboard status; trend label from previous values).
+**Docs created:** `docs/DIRECTOR_KPI_DASHBOARD_NOTES.md` (KPI sections, status mapping from engine → dashboard, two-system distinction, wiring targets).
+
+**Sprint 474 — Director Approval Flow Helpers V1**
+**Files created:** `src/lib/director/approvalFlowHelpers.ts` (PendingApprovalSummary, ApprovalUrgencyScore, ApprovalGroup types; scoreActionUrgency, sortByUrgency, groupActionsByType, getOverdueActions, getActionsExpiringSoon, summarizeApprovalQueue; risk × expiry weighted urgency scoring; pure TypeScript).
+
+**Sprint 475 — Director Curriculum Operating View V1**
+**Files created:** `src/lib/director/curriculumOperatingView.ts` (GroupCurriculumStatus, PendingCurriculumChange, CurriculumOperatingView types; buildCurriculumOperatingView from group list + compliance map + session counts + pending curriculum actions; compliance status per group; overall compliance health; getCurrentWeekLabel).
+
+**Sprint 476 — Director Template Library Helpers V1**
+**Files created:** `src/lib/director/templateLibraryHelpers.ts` (TemplateLibraryEntry, TemplateLibraryCatalogue types; buildTemplateLibraryEntry, filterTemplateLibrary, sortTemplateLibrary, buildTemplateLibraryCatalogue, getTemplatesNeedingAttention; filtering by status/search/compliantOnly; last-updated label).
+
+**Sprint 477 — Director Group Intelligence V1**
+**Files created:** `src/lib/director/groupIntelligence.ts` (GroupAttendanceSignal, GroupDevelopmentSignal, GroupIntelligenceSignal, GroupIntelligenceReport types; buildGroupIntelligenceSignal, buildGroupIntelligenceReport, rankGroupsByRisk; risk scoring: critical+100/at_risk+30/no_data+5; signals text; recommended actions).
+**Docs created:** `docs/GROUP_INTELLIGENCE_NOTES.md` (signal types, status thresholds, risk scoring, wiring targets, data source notes).
+
+**Sprint 478 — Curriculum Inbox V1**
+**Files created:** `src/lib/curriculum/inbox/index.ts` (CurriculumInboxItem, CurriculumInboxSummary types; CurriculumInboxSourceType, CurriculumInboxStatus, CurriculumDomain unions; buildCurriculumInboxItem, validateCurriculumIdea, scoreCurriculumSimilarity (deterministic token overlap), applySimliarityFlags, rankInboxByPriority, buildCurriculumInboxSummary; all items require proposed_action before curriculum change).
+**Docs created:** `docs/CURRICULUM_INBOX_NOTES.md` (source types, item lifecycle, similarity detection, validation rules, safety invariants).
+
+---
+
 ## 2026-05-21 — Mega Sprint 462–471 DONNA Academy COO (Phase 2)
 
 **Sprint 462 — DONNA Conversational Core V1**
