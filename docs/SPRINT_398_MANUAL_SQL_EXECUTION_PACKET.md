@@ -16,7 +16,7 @@
 - **Stop immediately if any error occurs** — do not run subsequent sections
 - All SQL in this document is additive (no DROP TABLE, no DELETE, no TRUNCATE)
 - All schema changes use `IF NOT EXISTS` and `ON CONFLICT DO NOTHING` — safe to re-run
-- The demo player seed requires real auth user UUIDs (see Section 10)
+- The demo player seed requires real auth user UUIDs (see Section 8). The live schema uses `profiles.display_name`, generated `profiles.avatar_initials`, generated `players.full_name`, `academy_levels.id` for `players.current_level_id`, and `guardians.id` for `player_guardians.guardian_id`.
 
 ---
 
@@ -960,185 +960,439 @@ ORDER BY cmd;
 ## Section 8 — Demo Player Seed (Part A: Profile Rows)
 
 **Prerequisite:** Create 4 auth users in Supabase Dashboard → Authentication → Users BEFORE running this section.
-Required emails (or your own preferred pilots):
+Required emails:
 - `director@angles-pilot.test`
 - `coach@angles-pilot.test`
 - `player@angles-pilot.test`
 - `parent@angles-pilot.test`
 
 After creating each user, copy their UUID from the Authentication page.
-Then replace the four placeholder UUIDs below before running.
+Then replace the four UUID values below if your actual UUIDs differ.
+
+**Live schema note:** `profiles` uses `display_name`, not `full_name`; it has no direct `role` column; and `avatar_initials` is generated automatically. Do not insert/update generated columns.
 
 ```sql
--- ── DEMO SEED PART A: PROFILE ROWS ───────────────────────────
--- REPLACE THESE 4 UUIDs with real Supabase Auth user UUIDs before running.
+-- ── DEMO SEED PART A: PROFILE ROWS — CORRECTED FOR LIVE SCHEMA ───────────
+-- Replace these UUIDs only if your Supabase Auth user UUIDs differ.
 
 DO $$
 DECLARE
-  v_director_uuid UUID := '<REPLACE_WITH_DIRECTOR_AUTH_UUID>';
-  v_coach_uuid    UUID := '<REPLACE_WITH_COACH_AUTH_UUID>';
-  v_player_uuid   UUID := '<REPLACE_WITH_PLAYER_AUTH_UUID>';
-  v_parent_uuid   UUID := '<REPLACE_WITH_PARENT_AUTH_UUID>';
+  v_director_uuid UUID := 'dbab9c16-0aed-4abb-a295-e69ffbde1432';
+  v_coach_uuid    UUID := '8e88f3e5-de21-4fb2-9eef-b5abc1d26404';
+  v_player_uuid   UUID := '0b031236-b607-4159-9050-686a28790dff';
+  v_parent_uuid   UUID := '0becc31f-cff5-493d-a966-71c2adc7d3e8';
 BEGIN
-  INSERT INTO profiles (id, email, role, academy_id, full_name, has_seen_first_run_deck)
+  INSERT INTO profiles (
+    id,
+    academy_id,
+    display_name,
+    email,
+    is_active,
+    has_seen_first_run_deck
+  )
   VALUES
-    (v_director_uuid, 'director@angles-pilot.test', 'academy_director',
-     '00000000-0000-0000-0000-000000000001', 'Demo Director', true),
-    (v_coach_uuid,    'coach@angles-pilot.test',    'coach',
-     '00000000-0000-0000-0000-000000000001', 'Demo Coach', true),
-    (v_player_uuid,   'player@angles-pilot.test',   'player',
-     '00000000-0000-0000-0000-000000000001', 'Alex Chen', false),
-    (v_parent_uuid,   'parent@angles-pilot.test',   'parent',
-     '00000000-0000-0000-0000-000000000001', 'Demo Parent', false)
-  ON CONFLICT (id) DO NOTHING;
+    (
+      v_director_uuid,
+      '00000000-0000-0000-0000-000000000001',
+      'Demo Director',
+      'director@angles-pilot.test',
+      true,
+      true
+    ),
+    (
+      v_coach_uuid,
+      '00000000-0000-0000-0000-000000000001',
+      'Demo Coach',
+      'coach@angles-pilot.test',
+      true,
+      true
+    ),
+    (
+      v_player_uuid,
+      '00000000-0000-0000-0000-000000000001',
+      'Alex Chen',
+      'player@angles-pilot.test',
+      true,
+      false
+    ),
+    (
+      v_parent_uuid,
+      '00000000-0000-0000-0000-000000000001',
+      'Demo Parent',
+      'parent@angles-pilot.test',
+      true,
+      false
+    )
+  ON CONFLICT (id) DO UPDATE
+  SET
+    academy_id = EXCLUDED.academy_id,
+    display_name = EXCLUDED.display_name,
+    email = EXCLUDED.email,
+    is_active = EXCLUDED.is_active,
+    has_seen_first_run_deck = EXCLUDED.has_seen_first_run_deck;
 
-  RAISE NOTICE 'Profile rows inserted (or already existed).';
+  RAISE NOTICE 'Corrected Section 8 profile rows inserted or updated.';
 END $$;
 ```
 
-**Verification:**
+**Verification after Section 8:**
 ```sql
-SELECT id, role, full_name FROM profiles
-WHERE academy_id = '00000000-0000-0000-0000-000000000001'
-ORDER BY role;
--- Expected: 4 rows
+SELECT id, academy_id, display_name, email, avatar_initials, is_active, has_seen_first_run_deck
+FROM profiles
+WHERE email IN (
+  'director@angles-pilot.test',
+  'coach@angles-pilot.test',
+  'player@angles-pilot.test',
+  'parent@angles-pilot.test'
+)
+ORDER BY display_name;
+-- Expected: 4 rows — Alex Chen, Demo Coach, Demo Director, Demo Parent
 ```
-
----
 
 ## Section 9 — Demo Player Seed (Part B: Domain Rows)
 
-**Prerequisite:** Section 8 must have completed successfully. Replace `<REPLACE_WITH_PLAYER_AUTH_UUID>` and `<REPLACE_WITH_PARENT_AUTH_UUID>` with the same UUIDs used in Section 8.
+**Prerequisite:** Section 8 must have completed successfully.
+
+**Live schema notes:**
+- `players.current_level_id` references `academy_levels.id`, not `curriculum_levels.id`.
+- `players.full_name` is generated automatically from `first_name` + `last_name`; do not insert/update it.
+- `player_priorities.urgency` does not allow `critical`; use valid values such as `high`, `medium`, or `routine`.
+- `player_development_summary` uses `coach_summary`, `student_friendly_summary`, and `parent_summary`.
+- `player_guardians.guardian_id` references `guardians.id`, not `profiles.id`.
 
 ```sql
--- ── DEMO SEED PART B: DOMAIN ROWS ────────────────────────────
--- REPLACE THE TWO UUIDs below with the same values used in Section 8.
+-- ── DEMO SEED PART B: DOMAIN ROWS — CORRECTED FOR LIVE SCHEMA ─────────────
+-- Replace UUIDs only if your Supabase Auth user UUIDs differ.
 
 DO $$
 DECLARE
-  v_player_uuid   UUID := '<REPLACE_WITH_PLAYER_AUTH_UUID>';
-  v_parent_uuid   UUID := '<REPLACE_WITH_PARENT_AUTH_UUID>';
-  v_coach_uuid    UUID := '<REPLACE_WITH_COACH_AUTH_UUID>';
-  v_o1_level_id   UUID;
+  v_director_uuid UUID := 'dbab9c16-0aed-4abb-a295-e69ffbde1432';
+  v_coach_uuid    UUID := '8e88f3e5-de21-4fb2-9eef-b5abc1d26404';
+  v_player_uuid   UUID := '0b031236-b607-4159-9050-686a28790dff';
+  v_parent_uuid   UUID := '0becc31f-cff5-493d-a966-71c2adc7d3e8';
+
+  v_academy_id  UUID := '00000000-0000-0000-0000-000000000001';
+  v_player_id   UUID := '00000000-0000-0003-0000-000000000001';
+  v_guardian_id UUID := '00000000-0000-0007-0000-000000000001';
+
+  v_orange_level_id UUID;
+
+  v_technical priority_category;
+  v_tactical  priority_category;
+  v_fitness   priority_category;
 BEGIN
-  -- Resolve Orange 1 level ID
-  SELECT id INTO v_o1_level_id
-  FROM curriculum_levels
-  WHERE stage = 'orange_development' AND level_number = 1
+  -- 1. Resolve the academy-level ID.
+  -- players.current_level_id references academy_levels.id.
+  SELECT id INTO v_orange_level_id
+  FROM academy_levels
+  WHERE academy_id = v_academy_id
+    AND is_active = true
+    AND label ILIKE '%Orange%'
+  ORDER BY sort_order ASC, level_number ASC
   LIMIT 1;
 
-  IF v_o1_level_id IS NULL THEN
-    RAISE EXCEPTION 'Orange 1 curriculum level not found. Apply migration 036 first.';
+  IF v_orange_level_id IS NULL THEN
+    RAISE EXCEPTION 'Orange academy level not found in academy_levels.';
   END IF;
 
-  RAISE NOTICE 'Orange 1 level ID: %', v_o1_level_id;
+  RAISE NOTICE 'Using academy level ID: %', v_orange_level_id;
 
-  -- 1. Demo player row
+  -- 2. Resolve priority category enum values safely.
+  SELECT e.enumlabel::priority_category INTO v_technical
+  FROM pg_enum e
+  JOIN pg_type t ON t.oid = e.enumtypid
+  WHERE t.typname = 'priority_category'
+    AND e.enumlabel IN ('technical_skill', 'technical', 'skill', 'technique')
+  ORDER BY e.enumsortorder
+  LIMIT 1;
+
+  SELECT e.enumlabel::priority_category INTO v_tactical
+  FROM pg_enum e
+  JOIN pg_type t ON t.oid = e.enumtypid
+  WHERE t.typname = 'priority_category'
+    AND e.enumlabel IN ('tactical', 'competition', 'competitive', 'competitive_behavior')
+  ORDER BY e.enumsortorder
+  LIMIT 1;
+
+  SELECT e.enumlabel::priority_category INTO v_fitness
+  FROM pg_enum e
+  JOIN pg_type t ON t.oid = e.enumtypid
+  WHERE t.typname = 'priority_category'
+    AND e.enumlabel IN ('fitness', 'movement', 'physical')
+  ORDER BY e.enumsortorder
+  LIMIT 1;
+
+  -- Fallbacks so the seed does not fail if labels are narrower than expected.
+  IF v_technical IS NULL THEN
+    SELECT e.enumlabel::priority_category INTO v_technical
+    FROM pg_enum e
+    JOIN pg_type t ON t.oid = e.enumtypid
+    WHERE t.typname = 'priority_category'
+    ORDER BY e.enumsortorder
+    LIMIT 1;
+  END IF;
+
+  IF v_tactical IS NULL THEN
+    v_tactical := v_technical;
+  END IF;
+
+  IF v_fitness IS NULL THEN
+    v_fitness := v_technical;
+  END IF;
+
+  -- 3. Demo player row.
+  -- full_name is generated, so do not insert/update it.
   INSERT INTO players (
-    id, academy_id, profile_id, first_name, last_name, full_name,
-    date_of_birth, is_active, curriculum_level_id
-  ) VALUES (
-    '00000000-0000-0003-0000-000000000001',
-    '00000000-0000-0000-0000-000000000001',
+    id,
+    academy_id,
+    profile_id,
+    first_name,
+    last_name,
+    date_of_birth,
+    is_active,
+    current_level_id,
+    created_by,
+    notes
+  )
+  VALUES (
+    v_player_id,
+    v_academy_id,
     v_player_uuid,
-    'Alex', 'Chen', 'Alex Chen',
-    '2014-03-15', true,
-    v_o1_level_id
-  ) ON CONFLICT (id) DO NOTHING;
+    'Alex',
+    'Chen',
+    '2014-03-15',
+    true,
+    v_orange_level_id,
+    v_director_uuid,
+    'Pilot demo player seeded for AcademyOS player and parent portal validation.'
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET
+    academy_id = EXCLUDED.academy_id,
+    profile_id = EXCLUDED.profile_id,
+    first_name = EXCLUDED.first_name,
+    last_name = EXCLUDED.last_name,
+    date_of_birth = EXCLUDED.date_of_birth,
+    is_active = EXCLUDED.is_active,
+    current_level_id = EXCLUDED.current_level_id,
+    created_by = EXCLUDED.created_by,
+    notes = EXCLUDED.notes;
 
-  -- 2. Coach profile
-  INSERT INTO coach_profiles (
-    id, academy_id, profile_id, full_name, bio, is_active
-  ) VALUES (
-    '00000000-0000-0007-0000-000000000001',
-    '00000000-0000-0000-0000-000000000001',
-    v_coach_uuid,
-    'Demo Coach', 'Orange ball and green ball specialist. 8 years coaching experience.', true
-  ) ON CONFLICT (id) DO NOTHING;
-
-  -- 3. Player priorities (active missions)
+  -- 4. Player priorities / active missions.
+  -- No show_to_student/show_to_parent here; those are on player_development_summary.
   INSERT INTO player_priorities (
-    id, academy_id, player_id, title, description,
-    category, urgency, priority_rank, is_active, show_to_student, show_to_parent
-  ) VALUES
+    id,
+    academy_id,
+    player_id,
+    category,
+    title,
+    description,
+    priority_rank,
+    priority_level,
+    urgency,
+    confidence_score,
+    is_active,
+    status
+  )
+  VALUES
     (
       '00000000-0000-0004-0000-000000000001',
-      '00000000-0000-0000-0000-000000000001',
-      '00000000-0000-0003-0000-000000000001',
+      v_academy_id,
+      v_player_id,
+      v_technical,
       'Develop consistent forehand follow-through',
-      'Focus on completing the swing with the racket finishing high across the left shoulder. The swing is stopping short — causing inconsistent pace and direction.',
-      'technical', 'critical', 1, true, true, false
+      'Focus on completing the swing with the racket finishing high across the left shoulder. The swing is stopping short, which can cause inconsistent pace and direction.',
+      1,
+      'high',
+      'high',
+      0.90,
+      true,
+      'open'
     ),
     (
       '00000000-0000-0004-0000-000000000002',
-      '00000000-0000-0000-0000-000000000001',
-      '00000000-0000-0003-0000-000000000001',
-      'Rally consistency — 5+ ball exchanges',
-      'Build the habit of staying in the rally rather than going for winners too early. Target: 5 or more controlled ball exchanges in practice.',
-      'tactical', 'high', 2, true, true, false
+      v_academy_id,
+      v_player_id,
+      v_tactical,
+      'Rally consistency - 5+ ball exchanges',
+      'Build the habit of staying in the rally rather than going for winners too early. Target: five or more controlled ball exchanges in practice.',
+      2,
+      'medium',
+      'high',
+      0.85,
+      true,
+      'open'
     ),
     (
       '00000000-0000-0004-0000-000000000003',
-      '00000000-0000-0000-0000-000000000001',
-      '00000000-0000-0003-0000-000000000001',
-      'Court movement — split-step timing',
-      'Practice split-stepping as the opponent is about to strike. Currently moving after the ball has already left their racket, which is too late.',
-      'fitness', 'medium', 3, true, true, false
+      v_academy_id,
+      v_player_id,
+      v_fitness,
+      'Court movement - split-step timing',
+      'Practice split-stepping as the opponent is about to strike. Alex is currently moving after the ball has already left the opponent’s racket, which is too late.',
+      3,
+      'medium',
+      'routine',
+      0.80,
+      true,
+      'open'
     )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE
+  SET
+    academy_id = EXCLUDED.academy_id,
+    player_id = EXCLUDED.player_id,
+    category = EXCLUDED.category,
+    title = EXCLUDED.title,
+    description = EXCLUDED.description,
+    priority_rank = EXCLUDED.priority_rank,
+    priority_level = EXCLUDED.priority_level,
+    urgency = EXCLUDED.urgency,
+    confidence_score = EXCLUDED.confidence_score,
+    is_active = EXCLUDED.is_active,
+    status = EXCLUDED.status;
 
-  -- 4. Player development summary
+  -- 5. Player development summary.
   INSERT INTO player_development_summary (
-    id, academy_id, player_id, current_level_id,
-    summary_text, coach_notes_internal, parent_visible_summary,
-    what_to_work_on, how_parent_can_help, what_player_needs,
-    show_to_student, show_to_parent, source, created_by
-  ) VALUES (
+    id,
+    academy_id,
+    player_id,
+    created_by,
+    updated_by,
+    current_strengths,
+    things_to_work_on,
+    development_focus,
+    coach_summary,
+    student_friendly_summary,
+    parent_summary,
+    show_to_student,
+    show_to_parent,
+    source
+  )
+  VALUES (
     '00000000-0000-0005-0000-000000000001',
-    '00000000-0000-0000-0000-000000000001',
-    '00000000-0000-0003-0000-000000000001',
-    v_o1_level_id,
-    'Alex is showing solid foundations at the Orange 1 level. Forehand technique needs refinement before progressing to Orange 2. Rally consistency is improving session by session.',
-    'Coach internal: Watch the grip tension under pressure — tends to white-knuckle on important points. Not shared with parent.',
-    'Alex is working hard and making real progress. The main focus right now is building a reliable forehand and staying composed during long rallies.',
-    'Consistent forehand follow-through and 5+ ball rally control are the top priorities this phase.',
-    'Encourage practice at home — even 10 minutes of wall rallying makes a difference. Ask about the split-step before matches.',
-    'Positive reinforcement when staying calm in long rallies. Alex responds well to specific praise rather than general encouragement.',
-    true, true, 'director', NULL
-  ) ON CONFLICT (id) DO NOTHING;
+    v_academy_id,
+    v_player_id,
+    v_director_uuid,
+    v_director_uuid,
+    ARRAY[
+      'Shows good effort and attention during Orange Ball sessions',
+      'Can maintain cooperative rallies when tempo is controlled',
+      'Responds well to specific coaching cues'
+    ],
+    ARRAY[
+      'Forehand follow-through',
+      'Rally patience',
+      'Split-step timing'
+    ],
+    'Orange Development rally foundation with focus on forehand finish, rally consistency, and movement timing.',
+    'Alex is showing solid foundations in Orange Development. The current coaching focus is forehand follow-through, rally consistency, and split-step timing.',
+    'Your current mission is to finish your forehand fully, stay patient in rallies, and split-step before the ball comes to you.',
+    'Alex is working hard and making real progress. The main focus right now is building a reliable forehand, staying composed in longer rallies, and improving movement timing.',
+    true,
+    true,
+    'manual'
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET
+    academy_id = EXCLUDED.academy_id,
+    player_id = EXCLUDED.player_id,
+    created_by = EXCLUDED.created_by,
+    updated_by = EXCLUDED.updated_by,
+    current_strengths = EXCLUDED.current_strengths,
+    things_to_work_on = EXCLUDED.things_to_work_on,
+    development_focus = EXCLUDED.development_focus,
+    coach_summary = EXCLUDED.coach_summary,
+    student_friendly_summary = EXCLUDED.student_friendly_summary,
+    parent_summary = EXCLUDED.parent_summary,
+    show_to_student = EXCLUDED.show_to_student,
+    show_to_parent = EXCLUDED.show_to_parent,
+    source = EXCLUDED.source;
 
-  -- 5. Parent/guardian relationship (only insert if player_guardians table exists)
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_name = 'player_guardians' AND table_schema = 'public'
-  ) THEN
-    INSERT INTO player_guardians (
-      id, academy_id, player_id, guardian_profile_id,
-      relationship_type, is_primary, can_receive_updates
-    ) VALUES (
-      '00000000-0000-0006-0000-000000000001',
-      '00000000-0000-0000-0000-000000000001',
-      '00000000-0000-0003-0000-000000000001',
-      v_parent_uuid,
-      'parent', true, true
-    ) ON CONFLICT (id) DO NOTHING;
-    RAISE NOTICE 'player_guardians row inserted.';
-  ELSE
-    RAISE NOTICE 'player_guardians table does not exist — skipping guardian link.';
-  END IF;
+  -- 6. Guardian domain row.
+  -- guardians.profile_id links to the parent profile/auth UUID.
+  -- player_guardians.guardian_id links to guardians.id.
+  INSERT INTO guardians (
+    id,
+    academy_id,
+    profile_id,
+    first_name,
+    last_name,
+    email,
+    relationship,
+    is_primary
+  )
+  VALUES (
+    v_guardian_id,
+    v_academy_id,
+    v_parent_uuid,
+    'Demo',
+    'Parent',
+    'parent@angles-pilot.test',
+    'parent',
+    true
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET
+    academy_id = EXCLUDED.academy_id,
+    profile_id = EXCLUDED.profile_id,
+    first_name = EXCLUDED.first_name,
+    last_name = EXCLUDED.last_name,
+    email = EXCLUDED.email,
+    relationship = EXCLUDED.relationship,
+    is_primary = EXCLUDED.is_primary;
 
-  RAISE NOTICE 'Demo player seed complete. Player ID: 00000000-0000-0003-0000-000000000001';
+  -- 7. Parent / guardian relationship.
+  INSERT INTO player_guardians (
+    player_id,
+    guardian_id
+  )
+  VALUES (
+    v_player_id,
+    v_guardian_id
+  )
+  ON CONFLICT DO NOTHING;
+
+  RAISE NOTICE 'Corrected Section 9 demo seed complete. Player ID: %, Guardian ID: %', v_player_id, v_guardian_id;
 END $$;
 ```
 
----
+**Verification after Section 9:**
+```sql
+SELECT p.id, p.first_name, p.last_name, p.full_name, p.is_active, al.label AS level
+FROM players p
+LEFT JOIN academy_levels al ON al.id = p.current_level_id
+WHERE p.id = '00000000-0000-0003-0000-000000000001';
+-- Expected: 1 row — Alex Chen, Orange Development
+
+SELECT title, category, priority_rank, priority_level, urgency, status
+FROM player_priorities
+WHERE player_id = '00000000-0000-0003-0000-000000000001'
+ORDER BY priority_rank;
+-- Expected: 3 rows
+
+SELECT show_to_student, show_to_parent, source, parent_summary
+FROM player_development_summary
+WHERE player_id = '00000000-0000-0003-0000-000000000001';
+-- Expected: 1 row, show_to_student=true, show_to_parent=true
+
+SELECT g.id AS guardian_id, g.profile_id, g.email, g.first_name, g.last_name, g.relationship
+FROM guardians g
+WHERE g.id = '00000000-0000-0007-0000-000000000001';
+-- Expected: 1 row — Demo Parent
+
+SELECT pg.player_id, pg.guardian_id, g.email, g.first_name, g.last_name
+FROM player_guardians pg
+JOIN guardians g ON g.id = pg.guardian_id
+WHERE pg.player_id = '00000000-0000-0003-0000-000000000001';
+-- Expected: 1 row — Demo Parent linked to Alex Chen
+```
 
 ## Section 10 — Post-Execution Full Verification
 
 Run this after all applicable sections complete successfully.
 
 ```sql
--- ── FULL POST-EXECUTION VERIFICATION ─────────────────────────
+-- ── FULL POST-EXECUTION VERIFICATION — CORRECTED FOR LIVE SCHEMA ─────────
 
 -- 1. RLS policies — session_block_exercises
 SELECT 'session_block_exercises' AS table_name, count(*) AS policy_count
@@ -1151,8 +1405,9 @@ FROM pg_policies WHERE tablename = 'template_block_exercises';
 -- Expected: 4
 
 -- 3. Sessions RLS fix
-SELECT proname FROM pg_proc WHERE proname = 'session_belongs_to_auth_academy';
--- Expected: 1 row
+SELECT proname, prosecdef AS is_security_definer
+FROM pg_proc WHERE proname = 'session_belongs_to_auth_academy';
+-- Expected: 1 row, is_security_definer=true
 
 -- 4. Template review tables
 SELECT to_regclass('public.template_review_requests') AS trr,
@@ -1175,43 +1430,62 @@ WHERE table_name = 'templates' AND column_name = 'status';
 SELECT content_type, count(*) AS rows
 FROM curriculum_content_items
 WHERE content_type IN ('mental_skill', 'competition_behavior') AND academy_id IS NULL
-GROUP BY content_type;
+GROUP BY content_type
+ORDER BY content_type;
 -- Expected: both content_types with rows > 0
 
--- 8. Demo player
-SELECT p.full_name, p.is_active, cl.display_name AS level
-FROM players p
-JOIN curriculum_levels cl ON cl.id = p.curriculum_level_id
-WHERE p.id = '00000000-0000-0003-0000-000000000001';
--- Expected: 1 row — Alex Chen, Orange 1 - Rally
+-- 8. Demo profile rows
+SELECT id, academy_id, display_name, email, avatar_initials, is_active, has_seen_first_run_deck
+FROM profiles
+WHERE email IN (
+  'director@angles-pilot.test',
+  'coach@angles-pilot.test',
+  'player@angles-pilot.test',
+  'parent@angles-pilot.test'
+)
+ORDER BY display_name;
+-- Expected: 4 rows — Alex Chen, Demo Coach, Demo Director, Demo Parent
 
--- 9. Demo player priorities
-SELECT title, category, priority_rank
+-- 9. Demo player
+SELECT p.id, p.first_name, p.last_name, p.full_name, p.is_active, al.label AS level
+FROM players p
+LEFT JOIN academy_levels al ON al.id = p.current_level_id
+WHERE p.id = '00000000-0000-0003-0000-000000000001';
+-- Expected: 1 row — Alex Chen, Orange Development
+
+-- 10. Demo player priorities
+SELECT title, category, priority_rank, priority_level, urgency, status
 FROM player_priorities
 WHERE player_id = '00000000-0000-0003-0000-000000000001'
 ORDER BY priority_rank;
 -- Expected: 3 rows
 
--- 10. Demo development summary
-SELECT show_to_student, show_to_parent, source
+-- 11. Demo development summary
+SELECT show_to_student, show_to_parent, source, parent_summary
 FROM player_development_summary
 WHERE player_id = '00000000-0000-0003-0000-000000000001';
 -- Expected: 1 row, show_to_student=true, show_to_parent=true
 
--- 11. Player portal auth linkage
-SELECT p.full_name, pr.role, pr.email
+-- 12. Player portal auth linkage
+SELECT p.full_name, pr.display_name, pr.email
 FROM players p
 JOIN profiles pr ON pr.id = p.profile_id
 WHERE p.id = '00000000-0000-0003-0000-000000000001';
--- Expected: 1 row — Alex Chen, player role
+-- Expected: 1 row — Alex Chen, player@angles-pilot.test
 
--- 12. Parent portal auth linkage
-SELECT pg.relationship_type, pr.role, pr.email
+-- 13. Guardian domain row
+SELECT g.id AS guardian_id, g.profile_id, g.email, g.first_name, g.last_name, g.relationship
+FROM guardians g
+WHERE g.id = '00000000-0000-0007-0000-000000000001';
+-- Expected: 1 row — Demo Parent
+
+-- 14. Parent portal auth linkage
+SELECT pg.player_id, pg.guardian_id, g.email, g.first_name, g.last_name, pr.display_name AS profile_display_name
 FROM player_guardians pg
-JOIN profiles pr ON pr.id = pg.guardian_profile_id
+JOIN guardians g ON g.id = pg.guardian_id
+JOIN profiles pr ON pr.id = g.profile_id
 WHERE pg.player_id = '00000000-0000-0003-0000-000000000001';
--- Expected: 1 row — parent relationship
--- (If player_guardians does not exist, skip this check)
+-- Expected: 1 row — Demo Parent linked to Alex Chen
 ```
 
 ---
