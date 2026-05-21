@@ -89,20 +89,20 @@ export async function getDemoPortalFoundation(db: DB): Promise<DemoPortalFoundat
     }
   }
 
-  // 3. Priorities
+  // 3. Priorities — column is priority_rank (rank is a reserved PostgreSQL keyword)
   const { data: priorityRows } = await rawDb
     .from('player_priorities')
-    .select('id, title, category, rank, urgency, status')
+    .select('id, title, category, priority_rank, urgency, status')
     .eq('player_id', DEMO_PLAYER_ID)
     .eq('academy_id', DEMO_ACADEMY_ID)
-    .order('rank', { ascending: true })
+    .order('priority_rank', { ascending: true })
 
   const priorities: DemoPortalFoundation['priorities'] = (priorityRows ?? []).map(
     (r: any) => ({
       id: r.id,
       title: r.title,
       category: r.category ?? null,
-      rank: r.rank ?? null,
+      rank: r.priority_rank ?? null,
       urgency: r.urgency ?? null,
       status: r.status ?? null,
     })
@@ -137,19 +137,20 @@ export async function getDemoPortalFoundation(db: DB): Promise<DemoPortalFoundat
       }
     : null
 
-  // 5. Guardian — look up via player_guardians, then guardians + profile
+  // 5. Guardian — look up any guardian linked to the demo player
+  // guardians table has first_name/last_name columns, not name
   const { data: pgRow } = await rawDb
     .from('player_guardians')
     .select('guardian_id')
     .eq('player_id', DEMO_PLAYER_ID)
-    .eq('guardian_id', DEMO_GUARDIAN_ID)
+    .limit(1)
     .single()
 
   let guardian: DemoPortalFoundation['guardian'] = null
   if (pgRow?.guardian_id) {
     const { data: guardianRow } = await rawDb
       .from('guardians')
-      .select('id, profile_id, email, name')
+      .select('id, profile_id, email, first_name, last_name')
       .eq('id', pgRow.guardian_id)
       .single()
 
@@ -164,12 +165,16 @@ export async function getDemoPortalFoundation(db: DB): Promise<DemoPortalFoundat
         profileDisplayName = profileRow?.display_name ?? null
       }
 
+      const name = [guardianRow.first_name, guardianRow.last_name]
+        .filter(Boolean)
+        .join(' ') || null
+
       guardian = {
         id: guardianRow.id,
         profileId: guardianRow.profile_id ?? null,
         profileDisplayName,
         email: guardianRow.email ?? null,
-        name: guardianRow.name ?? null,
+        name,
       }
     }
   }
