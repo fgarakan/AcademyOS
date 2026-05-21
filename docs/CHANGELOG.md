@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 518–527 Curriculum Coverage Intelligence (Phase 2)
+
+**Sprint 518 — Curriculum Coverage Model**
+**Files created:** `src/lib/curriculum/coverageModel.ts` (CoverageStatus; LevelCoverageInput, LevelCoverageScore, CoverageGap, CurriculumCoverageReport types; COVERAGE_WEIGHTS record; computeLevelCoverage: weighted scoring across 8 areas, gap generation with severity; buildCurriculumCoverageReport: aggregate, topGaps; getCoverageStatusLabel, getLevelsNeedingAttention helpers).
+
+**Sprint 519 — Curriculum Gap Analysis**
+**Files created:** `src/lib/curriculum/gapAnalysis.ts` (GapCategory 6-value union; CurriculumGap, GapAnalysisReport types; buildGapAnalysisReport: missing_level (critical if players present), missing_domain_coverage, assessment_gap, parent_engagement_gap signals; topPriorityGaps sorted by severity then affected player count; isHealthy = zero critical/high; getGapCategoryLabel helper).
+
+**Sprint 520 — Domain Balance Checker**
+**Files created:** `src/lib/curriculum/domainBalanceChecker.ts` (BalanceStatus; DomainBalanceEntry, DomainBalanceReport types; STAGE_DOMAIN_EXPECTATIONS record — min/max per domain per stage for all 5 stages; checkDomainBalance: computes deviation for all 9 domains; overIndexed/underIndexed/missing/balanced domain lists; getBalanceStatusLabel helper).
+
+**Sprint 521 — Stage Progression Model**
+**Files created:** `src/lib/curriculum/stageProgressionModel.ts` (STAGE_ORDER; StageGate, PlayerStageProgressInput, PlayerStageProgressView types; STAGE_GATES: 4 inter-stage gates with typicalWeeksAtStage; buildPlayerStageProgressView: blockers list, isReadyForAssessment, isReadyToAdvance; getStageGate, getNextStage, getPreviousStage, isHigherStage helpers).
+
+**Sprint 522 — Level Health Report**
+**Files created:** `src/lib/curriculum/levelHealthReport.ts` (LevelHealthStatus; LevelHealthSignal, LevelHealthReport, LevelHealthInput types; buildLevelHealthReport: starts from coverage score, applies penalties for at-risk/stalled players, pending approvals, staleness, adds positive signals; primaryAction/Href routing; getLevelHealthStatusLabel, sortLevelsByHealth helpers).
+
+**Sprint 523 — Requirement Progress Aggregator**
+**Files created:** `src/lib/curriculum/requirementProgressAggregator.ts` (RequirementStatus; RequirementProgressRecord with correct field names: curriculumLevelId, status, isParentVisible, isPlayerVisible; LevelRequirementStats, PlayerRequirementSummary types; aggregateLevelRequirementStats: per-player completion tracking using Array.from(new Set()); buildPlayerRequirementSummary; getParentSafeRequirementRecords, getPlayerVisibleRequirementRecords, getCompletedRequirements helpers).
+
+**Sprint 524 — Template Connection Model**
+**Files created:** `src/lib/curriculum/templateConnectionModel.ts` (TemplateConnectionStatus; TemplateConnection, LevelTemplateConnectionSummary, CurriculumTemplateConnectionReport, TemplateConnectionRecommendation types; buildLevelTemplateConnectionSummary: primary vs partial vs not connected; buildCurriculumTemplateConnectionReport: aggregate counts, recommends for disconnected levels; getConnectionStatusLabel, getConnectionStrengthLabel helpers).
+
+**Sprint 525 — Player-Curriculum Intersection Model**
+**Files created:** `src/lib/curriculum/playerCurriculumIntersection.ts` (PlayerCurriculumPosition, CurriculumIntersectionSignal, PlayerCurriculumIntersectionView types; buildPlayerCurriculumIntersectionView: ready_to_advance and stalled signals with parent/player visibility gates; parentSafeSignals/playerSafeSignals filtered views; nextLevelPreview with isUnlocked; aggregateCurriculumIntersectionSignals, getSignalsByLevel, getDirectorVisibleSignals helpers).
+
+**Sprint 526 — Curriculum Health Dashboard**
+**Files created:** `src/lib/curriculum/curriculumHealthDashboard.ts` (CurriculumHealthGrade A-F; CurriculumHealthDashboard, CurriculumHealthAction types; buildCurriculumHealthDashboard: weighted score (coverage 35%, gap 25%, player signals 25%, templates 15%); grade derivation; topActions generation; pilotBlockers list; isReadyForPilot; getCurriculumHealthGradeLabel helper).
+
+**Sprint 527 — Coverage Recommendations**
+**Files created:** `src/lib/curriculum/coverageRecommendations.ts` (RecommendationSource; CurriculumRecommendation with requiresDirectorApproval:true/neverAutoApply:true literals; CoverageRecommendationReport; buildCoverageRecommendationReport: merges coverage gaps + analysis gaps, deduplicates, sorts by priority then affected player count; filterRecommendationsByPriority, filterRecommendationsByLevel helpers).
+
+---
+
 ## 2026-05-21 — Mega Sprint 503–517 Curriculum Experience Core (Phase 1)
 
 **Sprint 503 — Curriculum Experience Audit + Information Architecture**
