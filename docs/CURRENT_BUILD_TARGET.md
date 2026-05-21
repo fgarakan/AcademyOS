@@ -1,167 +1,162 @@
 # Current Build Target
 
-**Last updated:** 2026-05-15
-**Current phase:** Phase 1 — Donna COO Foundation Layer COMPLETE (Mega Sprint 359–378 complete)
+**Last updated:** 2026-05-21
+**Current phase:** Mega Sprint 503–552 COMPLETE — Curriculum Experience + Knowledge Engine
 
 ---
 
 ## Active target
 
-**Donna COO Foundation Layer — Mega Sprint 359–378 COMPLETE (2026-05-15)**
+**Mega Sprint 503–552 — Curriculum Experience + Knowledge Engine + Platform Curation — COMPLETE (2026-05-21)**
 
-Donna has been built out from a class-template assistant into an executive assistant / COO foundation layer. All 20 sprints complete and pushed.
+All 50 sprints across 5 phases complete and pushed. The curriculum experience layer (visual map, expandable tree, node detail drawer, attachment models, coverage intelligence, health dashboard) and the Global Knowledge Library (ingestion, classification, review queue, promotion path, retrieval, curriculum intelligence) are fully assembled as pure TypeScript library modules.
 
-Next up: Sprint 379+ — Director-initiated Donna workflows or Production readiness pass.
-
----
-
-## Donna COO Foundation Layer — COMPLETE (Sprints 359–378)
-
-| Sprint | Deliverable | Status |
-|---|---|---|
-| 359 | Draft Persistence (sessionStorage) | COMPLETE |
-| 360 | Version History Panel | COMPLETE |
-| 361 | Audit Trail (in-memory) | COMPLETE |
-| 362 | Approval Contract | COMPLETE |
-| 363 | Role Permission Matrix | COMPLETE |
-| 364 | Protected Action Registry | COMPLETE |
-| 365 | Execution Adapter + Registry | COMPLETE |
-| 366 | Communication Draft + Card | COMPLETE |
-| 367 | Parent-Safe Rules + Content Filter | COMPLETE |
-| 368 | Message Review Panel | COMPLETE |
-| 369 | Daily Brief (API route + card) | COMPLETE |
-| 370 | What Needs Attention Engine | COMPLETE |
-| 371 | Coach Brief Workflow | COMPLETE |
-| 372 | Attendance Exception Workflow | COMPLETE |
-| 373 | Review Queue Badge Integration | COMPLETE |
-| 374 | Recommendation Object Model | COMPLETE |
-| 375 | Rule-Based Recommendation Engine + Card | COMPLETE |
-| 376 | Learning Feedback Signals | COMPLETE |
-| 377 | Preference Memory (localStorage) | COMPLETE |
-| 378 | COO Command QA + Demo Readiness | COMPLETE |
+Next up: UI wiring — connect curriculum coverage/health modules to `/director/curriculum`, wire knowledge library to `/director/curriculum/builder`, or begin the Pilot Readiness pass (schema validation, seed data, director walkthrough).
 
 ---
 
-## Build order — current state
+## Mega Sprint 503–552 — COMPLETE
 
-### AI Note Structuring MVP — COMPLETE (Sprint 100)
-- `src/lib/ai/structureCoachNote.ts` — Anthropic Claude integration; JSON schema output; confidence score; graceful fallback when `ANTHROPIC_API_KEY` absent
-- `src/lib/actions/notes.ts` — `generateNoteDraftAction`; staff membership gate (director/head_coach/coach only); note text never reaches API unless gate passes
-- `src/components/player/AIDraftPanel.tsx` — draft UI: textarea input, "Draft with AI" button, confidence badge, warnings, overwrite guard, 5-field editable form, "Apply Draft to Summary" button
-- `src/app/director/players/[playerId]/NotesAIDraftSection.tsx` — glue: AIDraftPanel + CoachObservationsFeed with "Use for Draft →" per observation
-- Notes tab in player profile wired: observations prefill draft panel; applying draft writes `player_development_summary` with `source='ai_draft'`, `show_to_student=false`, `show_to_parent=false`
-- **Activation:** set `ANTHROPIC_API_KEY` in `.env.local`; feature degrades gracefully (orange warning) when key absent
+| Phase | Commits | Sprints | Content |
+|---|---|---|---|
+| Phase 1 (503–517) | `534b070` | 15 | Curriculum Experience Core — command center, visual map, expandable tree, node drawer, content types, DONNA context, drill/skill/mission/badge/parent guidance/coach cue/assessment/evidence models |
+| Phase 2 (518–527) | `217605f` | 10 | Curriculum Coverage Intelligence — coverage model, gap analysis, domain balance, stage progression, level health, requirement progress aggregator, template connections, player intersection, health dashboard, recommendations |
+| Phase 3 (528–537) | `0698af0` | 10 | Global Knowledge Library — types, library view, review queue, promotion path, tagging, search, privacy guards, DONNA interface, similarity detector, audit log |
+| Phase 4 (538–545) | `0b52d74` | 8 | Knowledge Ingestion Classification — ingestion types, classifier, voice ingestion, structured import, source validator, ingestion dashboard, curriculum bridge, ingestion report |
+| Phase 5 (546–552) | `5da73cb` | 7 | Knowledge Retrieval Intelligence — retrieval model, curriculum intelligence, answerability model, knowledge QA, knowledge index, curriculum knowledge panel view, mega-sprint QA harness |
 
----
-
-### Voice Intake OS Foundation — COMPLETE (Sprints 240–249)
-- Architecture audit + north star document (`docs/conversational-os/voice-intake-architecture.md`)
-- `VoiceIntakePanel` component — controlled voice/text input with role badge, safety note, examples
-- `VoiceIntakeTypes` — full typed model for `VoiceIntakeDraft`, intents, destinations, safety flags
-- `structureVoiceIntake()` — deterministic structuring; intent detection, entity extraction, safety flags, confidence
-- Coach voice structuring wired into `CoachRecapCommandPanel`
-- `voiceDestinationRouter.ts` — 14 destination definitions, role restrictions, risk levels
-- `createVoiceIntakeDraftAction` — proposed_actions pipeline integration; always `pending_review`
-- Voice Intake tab in Director Review Queue with `VoiceIntakeDraftCard` and decision controls
-- `voiceRoleGuardrails.ts` — explicit intent permission matrix; defense-in-depth filtering in structurer
-- Demo flow and QA documentation
+All phases: pure TypeScript — no migrations, no RLS changes, no new dependencies.
 
 ---
 
-### Conversational OS Foundation — COMPLETE (Sprints 219–228)
-- Curriculum learning module model + UI preview (`/director/curriculum/learning`)
-- Role-aware chat guardrails (`src/lib/commands/roleGuardrails.ts`)
-- Director Command Center with guardrails + draft visibility
-- Parent guidance preview (director-side, not sent)
-- Coach recap review improvements
-- Player Q&A learning module integration
-- Conversational OS master plan documented
+## Mega Sprint 452–502 — COMPLETE
+
+| Phase | Commits | Sprints | Content |
+|---|---|---|---|
+| Phase 1 (452–461) | `0ceca70` | 10 | Responsive UX — shell configs, nav, mobile/desktop patterns, empty states, state patterns, quick actions |
+| Phase 2 (462–471) | `9c4b79b` | 10 | DONNA COO — conversation core, academy knowledge, director briefing, KPI model + explainer, task flows, search, action preview, preferences, voice+text unification |
+| Phase 3 (472–481) | `40a855a` | 10 | Director Command Center — attention queue, KPI dashboard, approval flow helpers, curriculum operating view, template library helpers, group intelligence, curriculum inbox |
+| Phase 4 (482–491) | `c6f804c` | 10 | Coach/Parent/Player Portals — coach KPI summary, portal assembly, voice-to-curriculum bridge, parent portal summary, comms prefs, player portal experience, progress indicators, visibility controls |
+| Phase 5 (492–502) | `b0b0f73` | 11 | Badges + Mental + Curriculum + V1 Launch — badge model, eligibility engine, mental performance path, mission model + engine, voice curriculum classifier, curriculum draft helpers, V1 demo QA, pilot launch package |
+
+All phases: pure TypeScript — no migrations, no RLS changes, no new dependencies.
 
 ---
 
-### IDP + Gap Engine — COMPLETE (Sprints 229–238)
-- `IndividualDevelopmentPlan` model + role-specific views
-- Player portal live development plan (`/player`)
-- Parent portal approved development plan (`/parent`)
-- Training gap detection (`detectTrainingGaps`)
-- Knowledge gap detection (`detectKnowledgeGaps`)
-- Role-specific gap guidance (`buildDirectorGapGuidance`, `buildCoachGapGuidance`)
-- `GapGuidanceSummaryCard` wired into director player profile Skill Path tab
-- `CoachSessionGapBriefPanel` wired into coach session workspace
-- `execute_approved_action()` RPC expanded from 5 → 11 of 15 action types
+## What is now available (new modules — library layer only)
+
+### Responsive UX Layer (`src/lib/ux/`)
+- `responsiveShell.ts` — BREAKPOINTS, ShellConfig, SHELL_CONFIGS, getShellVariantForRole
+- `navConfigs.ts` — typed nav items for all 4 roles
+- `mobilePatterns.ts` — TAP_TARGET, BottomSheetConfig, FAB_CONFIGS, STICKY_ACTION_BAR
+- `desktopPatterns.ts` — DESKTOP_LAYOUT, SIDE_DRAWER, DONNA_PANEL, ACTIVITY_FEED
+- `emptyStateConfigs.ts` — 17 empty state configs across 4 roles
+- `statePatterns.ts` — 28 typed loading/error/success states
+- `quickActions.ts` — 12 typed quick actions with role gates
+
+### DONNA COO Layer (`src/lib/donna/`, `src/lib/kpis/`)
+- `conversation/index.ts` — ConversationState, DONNA_ROLE_BLOCKS, trust stack, boundary builders
+- `academyKnowledge/index.ts` — 14 knowledge areas with sensitivity/visibility gates
+- `briefings/directorBriefing.ts` — 7-section daily briefing builder
+- `kpiExplanations/kpiExplainer.ts` — healthy/warning/critical templates for all 12 KPIs
+- `taskFlows/index.ts` — 10 multi-turn task flows
+- `search/academySearch.ts` — role-scoped multi-area search
+- `actionPreview/actionPreviewCards.ts` — preview cards with risk level
+- `preferences/academyPreferences.ts` — academy-level preferences + applyCustomTerminology
+- `kpis/academyKpiModel.ts` — 12 KPI definitions with metadata and thresholds
+
+### Director Command Center Layer (`src/lib/director/`)
+- `attentionQueue/index.ts` — prioritised director attention queue
+- `kpiDashboard.ts` — KPI dashboard view model builder
+- `approvalFlowHelpers.ts` — urgency scoring and grouping for review queue
+- `curriculumOperatingView.ts` — weekly curriculum delivery view
+- `templateLibraryHelpers.ts` — template filtering, compliance rollup
+- `groupIntelligence.ts` — group risk signals and recommendations
+
+### Curriculum Intelligence (`src/lib/curriculum/`)
+- `inbox/index.ts` — voice-to-curriculum idea queue with similarity detection
+- `mentalPerformance.ts` — mental competency definitions for all 5 curriculum stages
+- `curriculumDraftHelpers.ts` — curriculum change proposal builder
+
+### Coach Portal Layer (`src/lib/coach/`)
+- `coachKpiSummary.ts` — coach-level KPI rollup
+- `coachPortalAssembly.ts` — coach mobile portal view model
+- `voiceCurriculumBridge.ts` — coach voice/text → curriculum inbox → director approval
+
+### Parent Portal Layer (`src/lib/parent/`)
+- `parentPortalSummary.ts` — parent-safe portal view model builder
+- `parentCommunicationPreferences.ts` — communication preference types + validation
+
+### Player Portal Layer (`src/lib/player/`)
+- `playerPortalExperience.ts` — player-facing experience view model
+- `progressIndicators.ts` — completion %, level bands, milestones, motivation line
+- `visibilityControls.ts` — centralised content visibility gates for parent/player
+- `missionModel.ts` — 10 player mission definitions
+- `missionEngine.ts` — mission eligibility + recommendation engine
+
+### Badge System (`src/lib/badges/`)
+- `badgeModel.ts` — 10 badge definitions with rarity, criteria, visibility
+- `badgeEligibilityEngine.ts` — badge status computed from player progress
+
+### Voice (`src/lib/voice/`)
+- `voiceCurriculumClassifier.ts` — deterministic curriculum intent classifier
+
+### Demo / Pilot (`src/lib/demo/`)
+- `v1DemoQa.ts` — 22-check V1 demo quality harness
+- `pilotLaunchPackage.ts` — 30-item pilot launch checklist
 
 ---
 
-### Step 1 — Players List `/director/players` — COMPLETE
-Full player directory with search, status filter, curriculum level badge, assessment dates, advancement indicator.
+## What still needs UI wiring
 
----
+These library modules exist but are not yet connected to route pages:
 
-### Step 2 — Player Profile responsive layout — COMPLETE
-`max-w-5xl p-4 sm:p-6` layout. No fixed-width column grid. Back link points to `/director/players`.
-
----
-
-### Step 3 — Player Profile tab structure — COMPLETE
-5 tabs: Overview · Skill Path · Competition · Fitness / Load · Notes
-
----
-
-### Step 4 — Player Profile tab content — IN PROGRESS
-
-| Tab | Status |
+| Module | Wires to |
 |---|---|
-| Overview | Complete — curriculum snapshot, domain counts, development summary |
-| Skill Path | Complete — level picker, assignment card, gap guidance, advancement, gates, Q&A preview |
-| Notes | Complete — observations feed, priorities, evidence timeline, voice note, parent guidance preview |
-| Fitness / Load | Complete (Sprint 239) — volume, domain mix, intensity, fatigue risk, trend, overload alert |
-| Competition | Complete (Sprint 250) — UTR profile, trend chart, match results, insights |
-
-Data available:
-- `src/lib/backend/utr.ts` — UTR history, insights
-- `src/lib/backend/assessments.ts` — assessment history
-
----
-
-### Step 5 — Director Dashboard `/director` — COMPLETE
-Academy Vital Signs, Priority Queue, Alerts, Today's Sessions, Pending Placements, active sessions feed.
+| `attentionQueue/` | `/director` hero section |
+| `kpiDashboard.ts` | `/director` KPI grid |
+| `groupIntelligence.ts` | `/director/groups` |
+| `curriculumOperatingView.ts` | `/director/curriculum` |
+| `coachPortalAssembly.ts` | `/coach` home page |
+| `parentPortalSummary.ts` | `/parent` page |
+| `playerPortalExperience.ts` | `/player` page |
+| `badgeEligibilityEngine.ts` | `/player` + `/director/players/[id]` |
+| `missionEngine.ts` | `/player` home card |
+| `curriculum/inbox/` | `/director/review` curriculum tab |
 
 ---
 
-### Step 6 — Placement Engine
-New student onboarding flow.
+## Build order — historical state (all complete)
 
-Flow: New Player form → 5-dimension Assessment → AI Recommendation review → Approve/Override/Reject → Activate
+### Player Profile — COMPLETE (Sprints 100–250)
+All 5 tabs complete: Overview · Skill Path · Competition · Fitness/Load · Notes
 
-Backend: `src/lib/backend/assessments.ts` has `createAssessment()` and `finalizePlacement()`.
+### Director Dashboard — COMPLETE
+Academy Vital Signs, Priority Queue, Alerts, Sessions, Review Queue, DONNA panel
 
----
+### Coach Workspace — COMPLETE (Sprints 237–249+)
+Coach home, sessions, session detail, wrap-up, recap review
 
-### Step 7 — Templates and Sessions
-Session template library and session builder.
+### Player Portal — COMPLETE (library layer)
+`/player` renders with IDP and Q&A. Experience view model now available via `playerPortalExperience.ts`.
 
-Backend: `src/lib/backend/sessions.ts` is ready.
+### Parent Portal — COMPLETE (library layer)
+`/parent` renders with parent-safe IDP. Summary view model now available via `parentPortalSummary.ts`.
 
----
+### Voice Intake OS — COMPLETE (Sprints 240–249)
+Input → structuring → routing → review queue → safety guardrails
 
-### Step 8 — Coach Workspace
-Coach home, live session runner, outcome recording.
+### DONNA COO Foundation — COMPLETE (Sprints 359–378)
+Approval contract, role permissions, execution adapter, parent-safe rules, recommendation engine
 
-Route: `/coach` — coach sessions workspace partially built (Sprints 237–238).
+### Coach Session Recap Intelligence — COMPLETE (Sprints 437–446)
+Attendance queries, block execution, voice notes, observation tracker, wrap-up flow
 
----
-
-### Step 9 — Voice Command Center (execution layer)
-Voice Intake OS Foundation (Sprints 240–249) is complete — inputs, structuring, routing, review queue, and safety guardrails are all built.
-
-Remaining work before full voice execution:
-- Extend `execute_approved_action()` RPC to cover voice intake action types (currently 11 of 15 total action types)
-- Sprint 250+ — voice intake execution routing: approved voice intake drafts trigger specific downstream actions
-- See `docs/conversational-os/approved-action-execution-coverage-plan.md` for remaining action types
-- See `docs/conversational-os/voice-intake-demo-flow.md` for V1 limitations and AI/STT integration path
+### Player Evidence + Demo Readiness — COMPLETE (Sprints 447–451)
+Evidence queries, development profile queries, player/parent portal queries, demo checker
 
 ---
 
 ## How to confirm the current target before starting
 
-Read this file. The active step is the Competition tab unless this file has been updated.
+Read this file. The active work is UI wiring — connecting the `src/lib/` modules built in Mega Sprint 452–502 to the existing route pages. No new library modules are required to begin wiring.
