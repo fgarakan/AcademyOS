@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 407–416 Scale Rate Limits Cache Cost Controls (Phase 2)
+
+**Sprint 407 — AI/Voice Usage Metering V1**
+**Files created:** `src/lib/usage/usageTypes.ts` (UsageEventType union for 8 metered event types; UsageEvent payload: who, what, model, tokens, latency, blocked state; UsageSummary aggregate shape); `src/lib/usage/usageTracker.ts` (logUsageEvent(), getInProcessDailyCount(), logDonnaCall(), logTranscriptionCall(), logVoiceStructuringCall(); in-process daily counter + structured stdout logging; DB-backed implementation deferred to Sprint 419+); `docs/USAGE_METERING_IMPLEMENTATION_NOTES.md` (current state; how to instrument a new AI call; proposed usage_events table schema for Sprint 419+; metered event type table).
+
+**Sprint 408 — Slow Query + Select-Star Audit V1**
+**Files created:** `docs/SLOW_QUERY_AND_SELECT_STAR_AUDIT.md` (full inventory of 30+ select('*') instances across 8 files; L1/L2/L3 risk classification; remediation plan; Sprint 422 as fix target for medium-risk instances; L3 instances marked acceptable; no N+1 violations found; remediation pattern documented).
+
+**Sprint 409–410 — Background Job Queue Design + Foundation V1**
+**Files created:** `src/lib/jobs/jobTypes.ts` (JobType union for 7 job types; typed JobPayload per job; Job<T> record with status/attempts/timestamps; JobHandler<T> signature; JobResult); `src/lib/jobs/jobQueue.ts` (registerJobHandler(), enqueueJob() that dispatches async; failed jobs log to stderr; no retry in in-process mode; full reliability warning); `docs/BACKGROUND_JOB_QUEUE_NOTES.md` (current limitation; registered job types table; usage pattern; DB-backed queue design for Sprint 420+; Trust Stack alignment rules).
+
+**Sprint 411 — Entity Versioning + Optimistic Locking V1**
+**Files created:** `src/lib/versioning/entityVersioning.ts` (checkOptimisticLock(), optimisticLockFilter(), wasOptimisticLockRejected(), staleReadErrorMessage(); uses updated_at timestamps, no new columns needed); `docs/ENTITY_VERSIONING_NOTES.md` (how optimistic locking works; full usage pattern; when to apply; conflict resolution UX; note on take_snapshot() for audit).
+
+**Sprint 412 — Persistent Idempotency Design V1**
+**Files created:** `src/lib/idempotency/persistentIdempotency.ts` (IdempotencyRecord, IdempotencyCheckResult types; buildIdempotencyExpiry(); checkIdempotencyKey() stub; recordIdempotencyKey() stub; duplicateIdempotencyMessage(); interface stable so callers can be written now; DB migration deferred to Sprint 420+).
+
+**Sprint 413 — Audit Log Application V1**
+**Files created:** `src/lib/audit/auditLogger.ts` (writeAuditLog() with full typed params matching audit_logs schema; writeSystemAuditLog() convenience wrapper; writeVoiceAuditLog() convenience wrapper; never throws — audit failures are logged but do not block mutations; uses Json type for payload).
+
+**Sprint 414–415 — Feature Flags + Kill Switches V1**
+**Files created:** `src/lib/featureFlags/featureFlags.ts` (env-var feature flags for DONNA, voice, TTS, realtime voice, player summary generation, background jobs, persistent idempotency, UTR sync; getAllFeatureFlags() for diagnostics); `src/lib/killSwitches/killSwitches.ts` (KILL_SWITCH_ALLOW_* env-var pattern; 7 kill switches; isKillSwitchAllowed() logs a warning when blocked; killSwitchBlockedMessage() for user-facing errors; getAllKillSwitchStates() for diagnostics; local-only ACADEMYOS_DISABLE_ALL_KILL_SWITCHES override blocked in production); `docs/FEATURE_FLAGS_KILL_SWITCHES_NOTES.md` (flags vs. kill switches table; env var reference; how to add a new kill switch; how to gate a server action; diagnostics console pointer; DB-backed flags roadmap Sprint 421+).
+
+**Sprint 416 — Internal Diagnostics Console V1**
+**Files created:** `src/app/dev/diagnostics/page.tsx` (dev-only page; not visible in production; shows: feature flags table with ENABLED/OFF badges; kill switch table with ALLOWED/BLOCKED badges; rate limit policy table with limit and window; module health summary with live/stub status; all data is render-time, no caching).
+
+No migrations. No RLS changes. No new package dependencies. No app behavior changes beyond adding the /dev/diagnostics page. TypeScript: clean.
+
+---
+
 ## 2026-05-21 — Mega Sprint 402–406 Engineering Clarity System Safety (Phase 1)
 
 **Sprint 402 — AcademyOS Visual System Atlas V1**

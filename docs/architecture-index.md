@@ -2,7 +2,7 @@
 
 This file is the index of all architecture and engineering documentation. It is a navigation map — not a specification. Follow the links to the actual documents.
 
-**Last updated:** Mega Sprint 402–406 Phase 1
+**Last updated:** Mega Sprint 407–416 Phase 2
 
 ---
 
@@ -28,7 +28,7 @@ This file is the index of all architecture and engineering documentation. It is 
 | [`ENGINEERING_MODULE_REGISTRY.md`](ENGINEERING_MODULE_REGISTRY.md) | Every src/lib/ module: purpose, risk, status |
 | [`ENGINEERING_UPDATE_PROTOCOL.md`](ENGINEERING_UPDATE_PROTOCOL.md) | When and how to update the visual system |
 
-## Infrastructure Implementation Notes (Sprints 401–406)
+## Infrastructure Implementation Notes (Sprints 401–416)
 
 | Document | Purpose |
 |---|---|
@@ -38,6 +38,11 @@ This file is the index of all architecture and engineering documentation. It is 
 | [`DEBOUNCE_AND_DUPLICATE_SUBMIT_NOTES.md`](DEBOUNCE_AND_DUPLICATE_SUBMIT_NOTES.md) | Debounce strategy and UI patterns (Sprint 404) |
 | [`CACHE_TTL_IMPLEMENTATION_NOTES.md`](CACHE_TTL_IMPLEMENTATION_NOTES.md) | Cache key builders and TTL policy (Sprint 405) |
 | [`CACHE_INVALIDATION_MAP.md`](CACHE_INVALIDATION_MAP.md) | Per-mutation revalidation map (Sprint 406) |
+| [`USAGE_METERING_IMPLEMENTATION_NOTES.md`](USAGE_METERING_IMPLEMENTATION_NOTES.md) | AI/voice usage metering and event types (Sprint 407) |
+| [`SLOW_QUERY_AND_SELECT_STAR_AUDIT.md`](SLOW_QUERY_AND_SELECT_STAR_AUDIT.md) | Select-star audit and query remediation plan (Sprint 408) |
+| [`BACKGROUND_JOB_QUEUE_NOTES.md`](BACKGROUND_JOB_QUEUE_NOTES.md) | Background job queue design and types (Sprint 409–410) |
+| [`ENTITY_VERSIONING_NOTES.md`](ENTITY_VERSIONING_NOTES.md) | Optimistic locking pattern and usage (Sprint 411) |
+| [`FEATURE_FLAGS_KILL_SWITCHES_NOTES.md`](FEATURE_FLAGS_KILL_SWITCHES_NOTES.md) | Feature flags and kill switch implementation (Sprint 414–415) |
 
 ---
 
