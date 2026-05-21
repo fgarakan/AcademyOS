@@ -95,11 +95,11 @@ export default async function ParentHome() {
             // 4. Curriculum state
             const { data: csRows } = await rawDb
               .from('player_curriculum_states')
-              .select('curriculum_level_id')
+              .select('current_level_id')
               .eq('player_id', playerRow.id)
               .eq('academy_id', academyId)
               .limit(1)
-            const currentLevelId: string | null = csRows?.[0]?.curriculum_level_id ?? null
+            const currentLevelId: string | null = csRows?.[0]?.current_level_id ?? null
 
             let currentLevelName: string | null = null
             let currentStage: string | null = null

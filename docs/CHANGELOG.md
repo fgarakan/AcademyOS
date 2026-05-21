@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-21 — Sprint — Deferred current_level_id portal cleanup
+
+**Bug fixed:** `player_curriculum_states` column mismatch — DB column is `current_level_id`; deferred portal pages were still querying `curriculum_level_id` (non-existent on this table), causing current level names to always return null.
+
+**Scope:** BUG 2 fix only — no progress status logic changes, no migrations, no RLS changes, no schema changes.
+
+**Files modified:**
+- `src/app/player/level-up/page.tsx` — `player_curriculum_states` select + result access: `curriculum_level_id` → `current_level_id`
+- `src/app/player/fitness-path/page.tsx` — same fix + `.eq('id', ...)` argument
+- `src/app/player/ask-donna/page.tsx` — same fix
+- `src/app/player/competition-path/page.tsx` — same fix + `.eq('id', ...)` argument
+- `src/app/parent/page.tsx` — same fix
+- `src/app/parent/development/page.tsx` — same fix
+- `src/app/parent/ask-donna/page.tsx` — same fix
+- `src/app/parent/progress/page.tsx` — same fix
+
+**Confirmed:** `curriculum_level_id` on `player_requirement_progress` and other curriculum tables is untouched.
+
+**Remaining deferred:** `src/lib/curriculum/requirementProgressAggregator.ts` — BUG 1 status mismatch (`'achieved'`/`'confirmed'`) — separate sprint.
+
+**TypeScript:** clean — `npx tsc --noEmit` exits 0
+
+---
+
 ## 2026-05-21 — Sprint — Progress status and curriculum state column fixes
 
 **Bugs fixed:** Two TypeScript/DB mismatches identified during migration 041–044 safety audit and confirmed after live SQL execution.

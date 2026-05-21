@@ -131,12 +131,12 @@ export default async function PlayerAskDonnaPage() {
         // Current level
         const { data: csRows } = await rawDb
           .from('player_curriculum_states')
-          .select('curriculum_level_id')
+          .select('current_level_id')
           .eq('player_id', playerRow.id)
           .eq('academy_id', academyId)
           .limit(1)
 
-        const levelId = csRows?.[0]?.curriculum_level_id ?? null
+        const levelId = csRows?.[0]?.current_level_id ?? null
         if (levelId) {
           const { data: lvl } = await rawDb
             .from('curriculum_levels')

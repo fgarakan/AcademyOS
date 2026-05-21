@@ -80,16 +80,16 @@ export default async function PlayerFitnessPathPage() {
         // Level name
         const { data: csRows } = await rawDb
           .from('player_curriculum_states')
-          .select('curriculum_level_id')
+          .select('current_level_id')
           .eq('player_id', playerRow.id)
           .eq('academy_id', academyId)
           .limit(1)
 
-        if (csRows?.[0]?.curriculum_level_id) {
+        if (csRows?.[0]?.current_level_id) {
           const { data: lvl } = await rawDb
             .from('curriculum_levels')
             .select('display_name')
-            .eq('id', csRows[0].curriculum_level_id)
+            .eq('id', csRows[0].current_level_id)
             .single()
           currentLevelName = lvl?.display_name ?? null
         }
