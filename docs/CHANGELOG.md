@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 482–491 Coach Parent Player Portals (Phase 4)
+
+**Sprint 482 — Coach KPI Summary V1**
+**Files created:** `src/lib/coach/coachKpiSummary.ts` (CoachSessionRecord, CoachKpiSummary types; buildCoachKpiSummary from pre-fetched sessions; sessionsTaught, wrapUpRatePct, averageAttendancePct, totalCoachingHours, groupsCoached, pendingWrapUpCount; getCoachWrapUpStatus, getCoachAttendanceStatus helpers; pure TypeScript — no DB).
+
+**Sprint 483 — Coach Mobile Portal Assembly V1**
+**Files created:** `src/lib/coach/coachPortalAssembly.ts` (CoachPortalHomeCard, CoachQuickAction, CoachPortalViewModel types; buildCoachPortalViewModel from CoachOsContext + CoachKpiSummary; home cards: session_today/pending_wrapup/kpi_snapshot/donna_prompt; DONNA prompts dynamically selected from KPI signals).
+**Docs created:** `docs/COACH_PORTAL_ASSEMBLY_NOTES.md` (KPI summary table, home card types, voice-to-curriculum bridge flow, safety invariants).
+
+**Sprint 484 — Coach Voice-to-Curriculum Bridge V1**
+**Files created:** `src/lib/coach/voiceCurriculumBridge.ts` (CoachCurriculumSubmission, CoachCurriculumBridgeResult, CoachCurriculumActionPayload types; processCurriculumSubmission: validates + packages curriculum idea into CurriculumInboxItem; requiresDirectorApproval and neverAutoApply invariants; isCoachAllowedToSubmitCurriculumIdea role gate; never writes DB directly).
+
+**Sprint 486 — Parent Portal Summary Builder V1**
+**Files created:** `src/lib/parent/parentPortalSummary.ts` (ParentPortalHighlight, ParentSupportPrompt, ParentPortalSummaryViewModel types; buildParentPortalSummary from pre-gated ParentPortalProfile; highlights: completed count/level/assessment; supportPrompts: 4 category prompts; inferEngagementLevel; never surfaces coach_summary or unflagged data).
+**Docs created:** `docs/PARENT_PORTAL_SUMMARY_NOTES.md` (view model fields, what parents never see, communication preferences table).
+
+**Sprint 487 — Parent Communication Preferences V1**
+**Files created:** `src/lib/parent/parentCommunicationPreferences.ts` (ParentCommunicationPreferences interface; DEFAULT_PARENT_COMMUNICATION_PREFERENCES; validateParentCommunicationPreferences, mergeParentCommunicationPreferences; isParentCommunicationEnabled: optOut gate before all comms; getFrequencyLabel, getToneLabel; stored in parent_profiles.preferences JSON — no new table).
+
+**Sprint 488 — Player Portal Experience Builder V1**
+**Files created:** `src/lib/player/playerPortalExperience.ts` (PlayerHomeCard, PlayerChallenge, PlayerPortalExperienceViewModel types; buildPlayerPortalExperience from pre-gated PlayerPortalProfile; home cards: progress/focus/challenge/encouragement; challenges from top 3 priorities; welcomeMessage, motivationLine; uses progressIndicators.ts for indicators).
+**Docs created:** `docs/PLAYER_PORTAL_EXPERIENCE_NOTES.md` (view model fields, what players never see, domain status labels).
+
+**Sprint 489 — Player Progress Indicators V1**
+**Files created:** `src/lib/player/progressIndicators.ts` (LevelProgressBand, MilestoneDetection, PlayerProgressIndicators types; buildPlayerProgressIndicators; computeOverallCompletionPct; computeLevelProgressBands from RequirementProgressRecord grouped by curriculumLevelId; detectMilestones: first_completion/halfway/near_complete/all_complete; motivationLine; correct field names: achieved+confirmed for completed, inProgress, notStarted).
+
+**Sprint 490 — Visibility Control Layer V1**
+**Files created:** `src/lib/player/visibilityControls.ts` (VisibilityRole, VisibilityGateInput, ContentVisibilityResult types; isDevelopmentSummaryVisible, isProgressRecordVisible, isEvidenceLinkVisible, computeContentVisibility, filterByVisibility; isCoachNoteVisibleToParent, isCoachNoteVisibleToPlayer; defense-in-depth gate: parent requires all flags AND true).
+**Docs created:** `docs/VISIBILITY_CONTROLS_NOTES.md` (flag matrix table, visibility by role table, invariants).
+
+---
+
 ## 2026-05-21 — Mega Sprint 472–481 Director Command Center KPIs (Phase 3)
 
 **Sprint 472 — Director Attention Queue V1**
