@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-21 — Sprint — Progress status and curriculum state column fixes
+
+**Bugs fixed:** Two TypeScript/DB mismatches identified during migration 041–044 safety audit and confirmed after live SQL execution.
+
+**BUG 1 — Status value mismatch:** `player_requirement_progress.status` DB values are `met` and `waived`. TypeScript layer was comparing against `'achieved'` and `'confirmed'` (non-existent DB values), causing progress bars to always show 0%, badge eligibility to never fire, and level completion to always be false.
+
+**BUG 2 — Wrong column on `player_curriculum_states`:** DB column is `current_level_id`. Queries used `curriculum_level_id` (does not exist on this table), causing level name header to always show null. Note: `curriculum_level_id` is valid on `player_requirement_progress` and `curriculum_track_requirements` — only the `player_curriculum_states` queries were wrong.
+
+**Confirmed:** No migrations. No RLS changes. No new dependencies. No schema changes. TypeScript field names `achieved`/`confirmed` in `ProgressStatusSummary` are preserved — only the DB status string comparisons were corrected.
+
+**Files modified (lib):**
+- `src/lib/player/evidenceQueries.ts` — `summarizeProgressByStatus()`: `'achieved'`→`'met'`, `'confirmed'`→`'waived'`
+- `src/lib/player/progressIndicators.ts` — `computeLevelProgressBands()`: same two status strings corrected
+
+**Files modified (portal pages — both bugs):**
+- `src/app/player/missions/page.tsx` — BUG 1 inline status strings + BUG 2 `player_curriculum_states` column
+- `src/app/player/skill-path/page.tsx` — BUG 1 inline status strings + BUG 2 `player_curriculum_states` column
+- `src/app/player/page.tsx` — BUG 1 inline status strings + BUG 2 `player_curriculum_states` column
+- `src/app/player/celebration/page.tsx` — BUG 1 inline status strings + BUG 2 `player_curriculum_states` column
+
+**Files modified (portal pages — BUG 1 only):**
+- `src/app/player/wins/page.tsx` — BUG 1 inline status strings
+- `src/app/parent/wins/page.tsx` — BUG 1 inline status strings
+
+**Deferred (separate sprint):** `src/lib/curriculum/requirementProgressAggregator.ts` has same BUG 1 status strings — deferred to avoid scope creep into curriculum intelligence layer. Non-Phase-5 portal pages (`level-up`, `fitness-path`, `ask-donna`, `competition-path`, `parent/page`, `parent/development`, `parent/ask-donna`, `parent/progress`) still have BUG 2 — deferred to a follow-up portal column-fix sprint.
+
+**TypeScript:** clean — `npx tsc --noEmit` exits 0
+
+---
+
 ## 2026-05-21 — Mega Sprint 594–603 Player Parent Portal Licensing (Phase 5)
 
 **Sprints:** 594 (Player Badge Wins V1), 595 (Player Wins Page V1), 596 (Player Celebration Page V1), 597 (Parent Badge Visibility V1), 598 (Director Pilot Readiness Dashboard V1), 599 (Practice Page — no changes needed), 600 (Player Skill Path Progress Indicator V1), 601 (Mission Engine Recommendation V1), 602 (Build Target Update), 603 (Phase 5 QA Doc)

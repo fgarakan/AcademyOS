@@ -59,7 +59,7 @@ export function computeLevelProgressBands(
     const levelId = record.curriculumLevelId
     const existing = levelMap.get(levelId) ?? { completed: 0, inProgress: 0, total: 0 }
     existing.total += 1
-    if (record.status === 'achieved' || record.status === 'confirmed') {
+    if (record.status === 'met' || record.status === 'waived') {
       existing.completed += 1
     } else if (record.status === 'in_progress') {
       existing.inProgress += 1

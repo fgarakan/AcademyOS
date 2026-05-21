@@ -73,11 +73,11 @@ export default async function PlayerHome() {
         // 3. Get curriculum state
         const { data: csRows } = await rawDb
           .from('player_curriculum_states')
-          .select('curriculum_level_id')
+          .select('current_level_id')
           .eq('player_id', playerRow.id)
           .eq('academy_id', academyId)
           .limit(1)
-        const currentLevelId: string | null = csRows?.[0]?.curriculum_level_id ?? null
+        const currentLevelId: string | null = csRows?.[0]?.current_level_id ?? null
 
         let currentLevelName: string | null = null
         let currentStage: string | null = null
@@ -288,8 +288,8 @@ export default async function PlayerHome() {
             total: rows.length,
             notStarted: rows.filter(r => r.status === 'not_started').length,
             inProgress: rows.filter(r => r.status === 'in_progress').length,
-            achieved: rows.filter(r => r.status === 'achieved').length,
-            confirmed: rows.filter(r => r.status === 'confirmed').length,
+            achieved: rows.filter(r => r.status === 'met').length,
+            confirmed: rows.filter(r => r.status === 'waived').length,
           }
           const progressIndicators = buildPlayerProgressIndicators(progressSummary, [])
 

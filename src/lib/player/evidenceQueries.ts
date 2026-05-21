@@ -215,8 +215,8 @@ export function summarizeProgressByStatus(
   for (const r of records) {
     if (r.status === 'not_started') summary.notStarted++
     else if (r.status === 'in_progress') summary.inProgress++
-    else if (r.status === 'achieved') summary.achieved++
-    else if (r.status === 'confirmed') summary.confirmed++
+    else if (r.status === 'met') summary.achieved++
+    else if (r.status === 'waived') summary.confirmed++
   }
 
   return summary

@@ -162,12 +162,12 @@ export default async function PlayerMissionsPage() {
         // Fetch current level name
         const { data: csRows } = await rawDb
           .from('player_curriculum_states')
-          .select('curriculum_level_id')
+          .select('current_level_id')
           .eq('player_id', playerRow.id)
           .eq('academy_id', academyId)
           .limit(1)
 
-        const levelId = csRows?.[0]?.curriculum_level_id ?? null
+        const levelId = csRows?.[0]?.current_level_id ?? null
         if (levelId) {
           const { data: lvl } = await rawDb
             .from('curriculum_levels')
@@ -190,8 +190,8 @@ export default async function PlayerMissionsPage() {
             total: rows.length,
             notStarted: rows.filter(r => r.status === 'not_started').length,
             inProgress: rows.filter(r => r.status === 'in_progress').length,
-            achieved: rows.filter(r => r.status === 'achieved').length,
-            confirmed: rows.filter(r => r.status === 'confirmed').length,
+            achieved: rows.filter(r => r.status === 'met').length,
+            confirmed: rows.filter(r => r.status === 'waived').length,
           }
           const { data: attRows } = await rawDb
             .from('session_attendance')

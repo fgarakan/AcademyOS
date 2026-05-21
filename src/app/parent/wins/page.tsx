@@ -141,8 +141,8 @@ export default async function ParentWinsPage() {
                 total: rows.length,
                 notStarted: rows.filter(r => r.status === 'not_started').length,
                 inProgress: rows.filter(r => r.status === 'in_progress').length,
-                achieved: rows.filter(r => r.status === 'achieved').length,
-                confirmed: rows.filter(r => r.status === 'confirmed').length,
+                achieved: rows.filter(r => r.status === 'met').length,
+                confirmed: rows.filter(r => r.status === 'waived').length,
               }
               const progressIndicators = buildPlayerProgressIndicators(progressSummary, [])
               const report = buildBadgeEligibilityReport({
