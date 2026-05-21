@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 492–502 Badges Mental Curriculum V1 Launch (Phase 5)
+
+**Sprint 492 — Badge System Model V1**
+**Files created:** `src/lib/badges/badgeModel.ts` (BadgeId 10-value union; BadgeRarity/BadgeCategory/BadgeCriteriaType types; BadgeDefinition interface; BadgeStatus/BadgeAward types; BADGE_DEFINITIONS record — 10 badges from first_step to promotion_ready; getBadgeDefinition, getVisibleBadgesForPlayer, getVisibleBadgesForParent, getBadgesByCategory, getRarityLabel helpers; no DB tables — badge state computed from progress).
+**Docs created:** `docs/BADGE_SYSTEM_NOTES.md` (badge catalogue, eligibility engine, privacy rules, wiring targets).
+
+**Sprint 493 — Badge Eligibility Engine V1**
+**Files created:** `src/lib/badges/badgeEligibilityEngine.ts` (BadgeEligibilityInput, BadgeEligibilityReport types; buildBadgeEligibilityReport: evaluates all 10 badges against player progress, attendance streak, domain completion, promotionReady; getEarnedBadges, getNextBadgeToEarn helpers; pure TypeScript — no DB).
+
+**Sprint 494 — Mental Performance Path V1**
+**Files created:** `src/lib/curriculum/mentalPerformance.ts` (MentalPerformanceDomain 7-value union; CurriculumStageId type; MentalCompetency interface with observableMarkers/coachingCues/playerFacingLabel/parentFacingLabel; MentalPerformanceStageProfile; MENTAL_STAGE_PROFILES record for all 5 stages; getMentalStageProfile, getMentalCompetenciesByDomain, getMentalDomainLabel helpers; pure static data — no DB).
+**Docs created:** `docs/MENTAL_PERFORMANCE_PATH_NOTES.md` (domain table, stage progression, data format, wiring targets).
+
+**Sprint 495 — Mission Model V1**
+**Files created:** `src/lib/player/missionModel.ts` (MissionId 10-value union; MissionCategory/MissionDifficulty/MissionStatus/MissionCriteria/MissionDefinition/MissionProgress types; MISSION_DEFINITIONS record — 10 missions from complete_first_requirement to complete_curriculum_level; getMissionDefinition, getMissionsByCategory, getPlayerVisibleMissions, getMissionDifficultyLabel helpers; no DB — computed from player state).
+**Docs created:** `docs/MISSION_MODEL_NOTES.md` (mission catalogue, engine API, recommendation logic, privacy rules, wiring targets).
+
+**Sprint 496 — Mission Eligibility Engine V1**
+**Files created:** `src/lib/player/missionEngine.ts` (MissionEngineInput, MissionRecommendation, MissionEngineReport types; buildMissionEngineReport: evaluates all 10 missions; in-progress missions recommended first; first_step recommended for new players; levelBand completion drives halfway recommendation; primaryMission for player home card).
+
+**Sprint 497 — Voice-to-Curriculum Intent Classifier V1**
+**Files created:** `src/lib/voice/voiceCurriculumClassifier.ts` (CurriculumIntentType 7-value union; CurriculumIntentClassification type; keyword-based classifyIntentType, extractDomain, extractLevel; isCurriculumRelated gate; classifyCurriculumIntent: deterministic — no AI API calls; does not modify locked voiceIntakeTypes.ts).
+
+**Sprint 498 — Curriculum Draft Helpers V1**
+**Files created:** `src/lib/curriculum/curriculumDraftHelpers.ts` (CurriculumChangeType, CurriculumDraftProposal, CurriculumDraftValidation types; buildCurriculumDraftProposal from CurriculumInboxItem; validateCurriculumDraft; inferChangeType/inferRiskLevel from idea text; requiresDirectorApproval and neverAutoApply always true; formatCurriculumDraftLabel, getCurriculumChangeRiskLabel helpers).
+
+**Sprint 499 — V1 Demo QA Harness V1**
+**Files created:** `src/lib/demo/v1DemoQa.ts` (DemoQaCheck, V1DemoQaReport types; V1DemoQaInput: 23 boolean inputs; buildV1DemoQaReport: 22 checks across data/donna/portal/approval/kpi/curriculum categories; blocker vs warning distinction; getDemoQaBlockers, getDemoQaByCategory helpers).
+
+**Sprint 500 — Pilot Launch Package V1**
+**Files created:** `src/lib/demo/pilotLaunchPackage.ts` (LaunchChecklistItem, PilotLaunchPackage types; PilotLaunchInput: 31 boolean inputs; buildPilotLaunchPackage: 30 checklist items across 8 categories (schema/demo_data/director_os/coach_portal/parent_player_portals/donna_coo/kpi_layer/curriculum_intelligence/security_and_privacy); getLaunchChecklistByCategory, formatLaunchStatusBadge helpers).
+**Docs created:** `docs/V1_PILOT_LAUNCH_NOTES.md` (QA harness categories, launch checklist categories, Mega Sprint 452–502 completion summary).
+
+---
+
 ## 2026-05-21 — Mega Sprint 482–491 Coach Parent Player Portals (Phase 4)
 
 **Sprint 482 — Coach KPI Summary V1**
