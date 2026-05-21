@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 427–436 Director Curriculum Template Layer (Phase 4)
+
+**Sprint 427 — Director Approval Actions V1**
+**Files created:** `src/lib/director/approvalActions.ts` (approveProposedAction, rejectProposedAction, requestClarificationOnAction, validateExecutionContext; each fetches current status, validates state machine transition, applies DB update with optimistic lock condition, writes audit log non-blocking; all use donnaInputValidator + proposedActionStateMachine + donnaAuditHelpers).
+
+**Sprint 428 — Director Template Query Layer V1**
+**Files created:** `src/lib/director/templateQueries.ts` (fetchPublishedTemplates, fetchTemplatesByStatus, fetchTemplateCounts using parallel count queries, fetchRecentlyUsedTemplates aggregating session join data; no select('*'); uses actual templates table columns: id, name, status, description, is_active, created_at, updated_at, academy_id).
+
+**Sprint 429 — Curriculum Progress Data Layer V1**
+**Files created:** `src/lib/director/curriculumProgressQueries.ts` (fetchAcademyLevels ordered by sort_order; fetchPlayerCurriculumProgress for single player; fetchPlayersNearingLevelAdvancement with configurable threshold and sequential queries to avoid N+1).
+
+**Sprint 430 — Group Management Data Layer V1**
+**Files created:** `src/lib/director/groupManagementQueries.ts` (fetchGroupsWithMemberCount using parallel queries; fetchOverCapacityGroups; fetchUnassignedPlayers; group_memberships uses is_current column not is_active; groups uses is_active).
+
+**Sprint 431 — Director Session Timeline Data Layer V1**
+**Files created:** `src/lib/director/sessionTimelineQueries.ts` (fetchSessionsInRange, fetchTodaySessions, fetchThisWeekSessions; groupSessionsByDate for calendar view; computeSessionCoverage for wrap-up stats; session_status enum: planned/in_progress/completed/cancelled).
+
+**Sprint 432 — Curriculum Gap Detector V1**
+**Files created:** `src/lib/director/curriculumGapDetector.ts` (detectPlayerCurriculumGaps: no_evidence/stalled/low_progress gap types; configurable stalledDays and lowProgressThreshold; severity: high/medium/low; summarizeGaps for counts; pure logic, no DB calls).
+
+**Sprint 433 — Template Compliance Checker V1**
+**Files created:** `src/lib/director/templateComplianceChecker.ts` (checkTemplateCompliance: issues no_curriculum_alignment/no_requirements_linked/missing_duration with severity; alignmentPct computed; findNonCompliantTemplates sorts by alignment%; pure logic, no DB calls).
+
+**Sprint 434 — Director Alert Queries V1**
+**Files created:** `src/lib/director/directorAlertQueries.ts` (fetchDirectorAlerts from v_player_signal_dashboard view, high/critical severity only; fetchDirectorAlertCount for badge; fetchPlayerSignals per player; rawDb cast required for view access).
+
+**Sprint 435–436 — Director OS Summary Builder V1**
+**Files created:** `src/lib/director/directorOsSummary.ts` (buildDirectorOsSummary assembles typed summary from parallel-fetched data; getDirectorStatusHeadline for command bar; status items: pending review, clarification needed, wrap-up coverage, active players, alerts; overall status: all-clear/attention-needed/urgent; pure aggregation, no DB calls).
+
+**Shared documentation:** `docs/DIRECTOR_CURRICULUM_TEMPLATE_NOTES.md` (export reference; wiring targets; schema notes for corrected column names).
+
+No migrations. No RLS changes. No new package dependencies. TypeScript: clean.
+
+---
+
 ## 2026-05-21 — Mega Sprint 417–426 DONNA Action Reliability Approval System (Phase 3)
 
 **Sprint 417 — Proposed Action State Machine V1**

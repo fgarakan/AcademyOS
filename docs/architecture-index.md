@@ -2,7 +2,7 @@
 
 This file is the index of all architecture and engineering documentation. It is a navigation map — not a specification. Follow the links to the actual documents.
 
-**Last updated:** Mega Sprint 417–426 Phase 3
+**Last updated:** Mega Sprint 427–436 Phase 4
 
 ---
 
@@ -44,6 +44,7 @@ This file is the index of all architecture and engineering documentation. It is 
 | [`ENTITY_VERSIONING_NOTES.md`](ENTITY_VERSIONING_NOTES.md) | Optimistic locking pattern and usage (Sprint 411) |
 | [`FEATURE_FLAGS_KILL_SWITCHES_NOTES.md`](FEATURE_FLAGS_KILL_SWITCHES_NOTES.md) | Feature flags and kill switch implementation (Sprint 414–415) |
 | [`DONNA_ACTION_RELIABILITY_NOTES.md`](DONNA_ACTION_RELIABILITY_NOTES.md) | DONNA action reliability: state machine, guards, audit, gateway (Sprint 417–426) |
+| [`DIRECTOR_CURRICULUM_TEMPLATE_NOTES.md`](DIRECTOR_CURRICULUM_TEMPLATE_NOTES.md) | Director data layer: approval actions, templates, curriculum, groups, alerts (Sprint 427–436) |
 
 ---
 
