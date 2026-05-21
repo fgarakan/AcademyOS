@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 574–583 Player Assessment Placement System (Phase 3)
+
+**Sprints:** 574 (Assessment Architecture V1), 575 (Skill Rubric V1), 576 (Competition Rubric V1), 577 (Fitness Rubric V1), 578 (Mental Performance Rubric V1), 579 (DONNA Voice-to-Assessment V1), 580 (Placement Recommendation Engine V1), 581 (New Player Assessment UI V1), 582 (Assessment Director Review V1), 583 (Assessment Cadence + DONNA Reminders V1)
+
+**Confirmed:** No migrations created. No RLS modified. No official player placement writes. All assessment outputs are draft recommendations only. No medical/diagnostic language. No parent/player data exposed.
+
+**Files created (lib):**
+- `src/lib/assessments/index.ts` — Sprint 574: core assessment types (`AssessmentEventDraft`, `AssessmentDomain`, `AssessmentDomainScore`, `AssessmentEventType`, `AssessmentDraftStatus`); `computeWeightedScore`, `isAssessmentComplete`, `makeEmptyDraft`; default domain weights (skill 40%, competition 25%, fitness 20%, mental 15%)
+- `src/lib/assessments/skillRubric.ts` — Sprint 575: skill & technique rubric (5 bands 1–10, 7 rubric items across groundstrokes/serve-return/net-play/footwork/rally); `getSkillBandForScore`, `getRequiredSkillItems`, `computeSkillDomainScore`
+- `src/lib/assessments/competitionRubric.ts` — Sprint 576: competition readiness rubric (5 bands, 5 rubric items: match experience, rules/scoring, tactical awareness, competitive behaviour, match management)
+- `src/lib/assessments/fitnessRubric.ts` — Sprint 577: physical capability rubric — non-medical observable language only (5 bands, 6 items: movement quality, on-court endurance, recovery speed, coordination, power output)
+- `src/lib/assessments/mentalPerformanceRubric.ts` — Sprint 578: mental performance rubric (5 bands, 5 items: error response, pressure behaviour, effort/body language, observable self-talk, routine/preparation); mapped to `MentalPerformanceDomain`; player-facing and parent-facing labels
+- `src/lib/assessments/voiceStructuring.ts` — Sprint 579: DONNA voice-to-assessment draft structuring; keyword-based domain detection (no AI API); score extraction from numeric patterns and qualitative words; returns `VoiceAssessmentDraft` with confidence level and DONNA comment
+- `src/lib/assessments/placementRecommendation.ts` — Sprint 580: weighted-score-to-stage engine; 5 stage bands (red/orange/green/yellow/high-performance); `generatePlacementRecommendation` returns full draft with confidence, strengths, areas for attention, director note; `isDirectorApprovalRequired: true` always
+- `src/lib/assessments/reviewModel.ts` — Sprint 582: director review types (`ReviewDecision`: approve/adjust_and_approve/reject/defer); `makeReviewAction`, `getFinalStage`, `isReviewComplete`; decision labels and descriptions
+- `src/lib/assessments/cadence.ts` — Sprint 583: 5 cadence rules by stage (8–26 weeks); `computeCadenceStatus` returns urgency (on_track/due_soon/overdue/not_yet_assessed); `buildDonnaReminderMessage` templates; urgency badge classes
+
+**Files created (UI components):**
+- `src/app/director/curriculum/_components/NewPlayerAssessmentPanel.tsx` — Sprint 581: collapsible assessment entry panel (domain tabs: Skill/Competition/Fitness/Mental; 1–10 score picker per domain; live band display with description and coach notes; required observation prompts; evidence notes textarea; submit for review → inline placement recommendation with weighted score, stage, confidence)
+- `src/app/director/curriculum/_components/AssessmentReviewPanel.tsx` — Sprint 582: collapsible director review panel (recommendation preview card; approve/adjust/reject/defer selector; adjusted-stage picker for overrides; director notes textarea; coach flag checkbox; confirmed view shows final decision; no player record modified)
+
+**Files modified:**
+- `src/app/director/curriculum/_components/CurriculumNodeDrawer.tsx` — added "Assessment" section to Draft tab (NewPlayerAssessmentPanel + AssessmentReviewPanel below Extended Drafts)
+
+**Files created (docs):**
+- `docs/PLAYER_ASSESSMENT_ARCHITECTURE.md` — Sprint 574: assessment system overview, file index, domain weights, event types, scoring bands, cadence rules, safety constraints, migration requirements
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-21 — Mega Sprint 564–573 Curriculum Video Drill Skill Assets (Phase 2)
 
 **Sprints:** 564 (Video Asset Model V1), 565 (Visibility Rules V1), 566 (Attach Video UI V1), 567 (Drill Draft UI V1), 568 (Skill Draft UI V1), 569 (Tactical Draft V1), 570 (Mental Draft V1), 571 (Coach Cue + Video V1), 572 (Video Role Preview V1), 573 (Media QA V1)

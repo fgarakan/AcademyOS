@@ -13,6 +13,8 @@ import { CurriculumTacticalDraftPanel } from './CurriculumTacticalDraftPanel'
 import { CurriculumMentalDraftPanel } from './CurriculumMentalDraftPanel'
 import { CoachCueVideoPairingPanel } from './CoachCueVideoPairingPanel'
 import { MediaRolePreviewPanel } from './MediaRolePreviewPanel'
+import { NewPlayerAssessmentPanel } from './NewPlayerAssessmentPanel'
+import { AssessmentReviewPanel } from './AssessmentReviewPanel'
 import type {
   CurriculumLevel,
   CurriculumGate,
@@ -137,6 +139,18 @@ export function CurriculumNodeDrawer({
                     />
                     <CoachCueVideoPairingPanel
                       levelId={level.id}
+                      levelName={level.display_name}
+                    />
+                  </div>
+                  <div className="pt-2 border-t border-border space-y-2">
+                    <p className="text-[10px] uppercase tracking-widest text-text-muted px-1">
+                      Assessment
+                    </p>
+                    <NewPlayerAssessmentPanel
+                      levelId={level.id}
+                      levelName={level.display_name}
+                    />
+                    <AssessmentReviewPanel
                       levelName={level.display_name}
                     />
                   </div>
