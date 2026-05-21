@@ -1,4 +1,5 @@
-import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight, HelpCircle, Sparkles, CheckCircle, Zap, Activity, Map as MapIcon, Shield, ChevronRight } from 'lucide-react'
+// Sprint 594 — Player Badge Wins V1
+import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight, HelpCircle, Sparkles, CheckCircle, Zap, Activity, Map as MapIcon, Shield, ChevronRight, Star, Flame, Award, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { PlayerMissionPreview } from '@/components/player/PlayerMissionPreview'
@@ -13,6 +14,11 @@ import { buildModuleForLevelDomain } from '@/lib/curriculum/learningModules'
 import type { LearningModuleDomain } from '@/lib/curriculum/learningModules'
 import { buildPlayerMissionCopy } from '@/lib/player/playerMissionCopy'
 import type { PlayerMissionCopy } from '@/lib/player/playerMissionCopy'
+import { buildBadgeEligibilityReport, getNextBadgeToEarn } from '@/lib/badges/badgeEligibilityEngine'
+import { getVisibleBadgesForPlayer, BADGE_DEFINITIONS } from '@/lib/badges/badgeModel'
+import type { BadgeEligibilityReport } from '@/lib/badges/badgeEligibilityEngine'
+import { buildPlayerProgressIndicators } from '@/lib/player/progressIndicators'
+import type { ProgressStatusSummary } from '@/lib/player/evidenceQueries'
 
 
 export default async function PlayerHome() {
@@ -33,6 +39,7 @@ export default async function PlayerHome() {
     status: string
   }
   let recentSessionHistory: SessionHistoryItem[] = []
+  let badgeReport: BadgeEligibilityReport | null = null
 
   if (user) {
     const rawDb = supabase as any
@@ -265,6 +272,45 @@ export default async function PlayerHome() {
             })
             .filter((r): r is SessionHistoryItem => r !== null)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        }
+
+        // 7. Badge eligibility — computed from requirement progress (graceful fallback if table absent)
+        try {
+          const { data: progressRows } = await rawDb
+            .from('player_requirement_progress')
+            .select('id, status, curriculum_level_id')
+            .eq('player_id', playerRow.id)
+            .eq('academy_id', academyId)
+            .limit(200)
+
+          const rows = (progressRows ?? []) as Array<{ id: string; status: string; curriculum_level_id: string }>
+          const progressSummary: ProgressStatusSummary = {
+            total: rows.length,
+            notStarted: rows.filter(r => r.status === 'not_started').length,
+            inProgress: rows.filter(r => r.status === 'in_progress').length,
+            achieved: rows.filter(r => r.status === 'achieved').length,
+            confirmed: rows.filter(r => r.status === 'confirmed').length,
+          }
+          const progressIndicators = buildPlayerProgressIndicators(progressSummary, [])
+
+          // Compute consecutive attendance streak from recentSessionHistory (most-recent-first)
+          let attendanceStreak = 0
+          for (const s of recentSessionHistory) {
+            if (s.status === 'present' || s.status === 'late') attendanceStreak++
+            else break
+          }
+
+          badgeReport = buildBadgeEligibilityReport({
+            playerId: playerRow.id,
+            progressSummary,
+            progressIndicators,
+            promotionReady: null,
+            attendanceStreak,
+            domainCompletedIds: [],
+            levelCompleted: progressSummary.total > 0 && progressSummary.total === (progressSummary.achieved + progressSummary.confirmed),
+          })
+        } catch {
+          // player_requirement_progress table may not exist on live DB yet — badge display stays null
         }
       }
     }
@@ -714,23 +760,114 @@ export default async function PlayerHome() {
       {/* ── Wins & Streaks ────────────────────────────────────── */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
-              <Trophy className="w-4 h-4 text-text-muted" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
+                <Trophy className="w-4 h-4 text-text-muted" />
+              </div>
+              <div>
+                <p className="font-semibold text-text-primary text-sm">Wins &amp; Badges</p>
+                <p className="text-text-muted text-xs">Your achievements</p>
+              </div>
             </div>
-            <div>
-              <p className="font-semibold text-text-primary text-sm">Wins &amp; Streaks</p>
-              <p className="text-text-muted text-xs">Your achievements</p>
-            </div>
+            {badgeReport && badgeReport.earnedCount > 0 && (
+              <Link href="/player/wins">
+                <span className="text-[10px] text-lime hover:text-lime/80 transition-colors">See all</span>
+              </Link>
+            )}
           </div>
         </CardHeader>
         <CardContent>
-          <EmptyState
-            icon={<Trophy className="w-5 h-5" />}
-            title="Wins are coming"
-            description="Wins and streaks will come alive after a few sessions. Keep showing up."
-            className="py-8"
-          />
+          {badgeReport && badgeReport.earnedCount > 0 ? (
+            <div className="space-y-3">
+              {/* Earned badges */}
+              <div className="grid grid-cols-2 gap-2">
+                {badgeReport.awards
+                  .filter(a => a.status === 'earned')
+                  .slice(0, 4)
+                  .map(award => {
+                    const def = BADGE_DEFINITIONS[award.badgeId]
+                    return (
+                      <div key={award.badgeId} className="flex items-center gap-2 px-2.5 py-2 rounded-xl bg-lime/5 border border-lime/20">
+                        <div className="w-6 h-6 rounded-lg bg-lime/15 border border-lime/30 flex items-center justify-center shrink-0">
+                          <Star className="w-3 h-3 text-lime" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-semibold text-lime leading-tight truncate">{def.name}</p>
+                          <p className="text-[9px] text-lime/60 capitalize">{def.rarity}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+              {/* In-progress / next badge */}
+              {(() => {
+                const next = getNextBadgeToEarn(badgeReport)
+                if (!next) return null
+                const def = BADGE_DEFINITIONS[next.badgeId]
+                const pct = next.progressMax > 0 ? Math.round((next.progress / next.progressMax) * 100) : 0
+                return (
+                  <div className="space-y-1">
+                    <p className="text-[9px] uppercase tracking-widest text-text-muted">Next Badge</p>
+                    <div className="px-3 py-2.5 rounded-xl border border-border bg-surface-raised">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <p className="text-xs font-medium text-text-secondary">{def.name}</p>
+                        <p className="text-[10px] text-text-muted">{next.progressLabel}</p>
+                      </div>
+                      <div className="h-1.5 bg-surface rounded-full overflow-hidden">
+                        <div className="h-full bg-lime/60 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+              <p className="text-[9px] text-text-muted text-center">
+                {badgeReport.earnedCount} badge{badgeReport.earnedCount !== 1 ? 's' : ''} earned · {badgeReport.inProgressCount} in progress
+              </p>
+            </div>
+          ) : badgeReport && badgeReport.inProgressCount > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-raised border border-border">
+                <Flame className="w-3.5 h-3.5 text-status-orange shrink-0" />
+                <p className="text-xs text-text-secondary">
+                  Badges unlock as you complete requirements and attend sessions.
+                </p>
+              </div>
+              {(() => {
+                const next = getNextBadgeToEarn(badgeReport)
+                if (!next) return null
+                const def = BADGE_DEFINITIONS[next.badgeId]
+                const pct = next.progressMax > 0 ? Math.round((next.progress / next.progressMax) * 100) : 0
+                return (
+                  <div className="space-y-1">
+                    <p className="text-[9px] uppercase tracking-widest text-text-muted">Working Toward</p>
+                    <div className="px-3 py-2.5 rounded-xl border border-border bg-surface">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <p className="text-xs font-medium text-text-secondary">{def.name}</p>
+                        <p className="text-[10px] text-text-muted">{next.progressLabel}</p>
+                      </div>
+                      <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden">
+                        <div className="h-full bg-lime/40 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          ) : (
+            <div className="space-y-3 py-2">
+              <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-raised border border-border">
+                <Lock className="w-4 h-4 text-text-muted shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-text-secondary">Badges unlock as you train</p>
+                  <p className="text-[10px] text-text-muted mt-0.5">Attend sessions and complete requirements to earn your first badge.</p>
+                </div>
+              </div>
+              <p className="text-[9px] text-text-muted text-center">
+                {getVisibleBadgesForPlayer().length} badges available to earn
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

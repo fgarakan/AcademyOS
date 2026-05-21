@@ -1,12 +1,16 @@
-// Parent Wins — Sprint 1081
+// Parent Wins — Sprint 1081 + Sprint 597 (parent badge visibility)
 // Positive highlights for parents. Observation counts only (never content).
-// Session consistency and gate achievement counts.
+// Session consistency, gate achievement counts, and parent-visible badge status.
 // Parent-authenticated via guardian -> player_guardians chain.
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
-import { Star, CheckCircle2, Calendar, AlertCircle, ArrowRight } from 'lucide-react'
+import { Star, CheckCircle2, Calendar, AlertCircle, ArrowRight, Trophy } from 'lucide-react'
 import Link from 'next/link'
+import { buildBadgeEligibilityReport } from '@/lib/badges/badgeEligibilityEngine'
+import { getVisibleBadgesForParent, BADGE_DEFINITIONS } from '@/lib/badges/badgeModel'
+import { buildPlayerProgressIndicators } from '@/lib/player/progressIndicators'
+import type { ProgressStatusSummary } from '@/lib/player/evidenceQueries'
 
 export default async function ParentWinsPage() {
   const supabase = await getSupabaseServer()
@@ -19,6 +23,8 @@ export default async function ParentWinsPage() {
   let longestStreak = 0
   let gatesPassedCount = 0
   let noAccess = false
+  let earnedParentVisibleBadgeCount = 0
+  let earnedParentVisibleBadgeNames: string[] = []
 
   if (user) {
     const rawDb = supabase as any
@@ -121,6 +127,41 @@ export default async function ParentWinsPage() {
               .eq('academy_id', academyId)
               .eq('status', 'passed')
             gatesPassedCount = (gatePassRows ?? []).length
+
+            // Parent-visible badge count (graceful fallback)
+            try {
+              const { data: progressRows } = await rawDb
+                .from('player_requirement_progress')
+                .select('id, status, curriculum_level_id')
+                .eq('player_id', playerRow.id)
+                .eq('academy_id', academyId)
+                .limit(200)
+              const rows = (progressRows ?? []) as Array<{ id: string; status: string; curriculum_level_id: string }>
+              const progressSummary: ProgressStatusSummary = {
+                total: rows.length,
+                notStarted: rows.filter(r => r.status === 'not_started').length,
+                inProgress: rows.filter(r => r.status === 'in_progress').length,
+                achieved: rows.filter(r => r.status === 'achieved').length,
+                confirmed: rows.filter(r => r.status === 'confirmed').length,
+              }
+              const progressIndicators = buildPlayerProgressIndicators(progressSummary, [])
+              const report = buildBadgeEligibilityReport({
+                playerId: playerRow.id,
+                progressSummary,
+                progressIndicators,
+                promotionReady: null,
+                attendanceStreak: longestStreak,
+                domainCompletedIds: [],
+                levelCompleted: progressSummary.total > 0 && progressSummary.total === (progressSummary.achieved + progressSummary.confirmed),
+              })
+              const parentVisibleIds = new Set(getVisibleBadgesForParent().map(b => b.id))
+              const earnedParentBadges = report.awards
+                .filter(a => a.status === 'earned' && parentVisibleIds.has(a.badgeId))
+              earnedParentVisibleBadgeCount = earnedParentBadges.length
+              earnedParentVisibleBadgeNames = earnedParentBadges.map(a => BADGE_DEFINITIONS[a.badgeId].name)
+            } catch {
+              // player_requirement_progress absent — skip badge display
+            }
           }
         }
       }
@@ -235,6 +276,31 @@ export default async function ParentWinsPage() {
                     These are milestones toward {name}&apos;s next level.
                   </p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Parent-visible badges */}
+          {earnedParentVisibleBadgeCount > 0 && (
+            <div className="rounded-xl border border-lime/20 bg-lime/5 px-4 py-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-lime/15 border border-lime/20 flex items-center justify-center shrink-0">
+                  <Trophy className="w-5 h-5 text-lime" />
+                </div>
+                <div>
+                  <p className="label-xs text-lime mb-0.5">Achievement Badges</p>
+                  <p className="text-sm font-semibold text-text-primary">
+                    {earnedParentVisibleBadgeCount} badge{earnedParentVisibleBadgeCount !== 1 ? 's' : ''} earned
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {earnedParentVisibleBadgeNames.map(name => (
+                  <span key={name} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-lime/10 border border-lime/20 text-lime font-medium">
+                    <Star className="w-2.5 h-2.5" />
+                    {name}
+                  </span>
+                ))}
               </div>
             </div>
           )}

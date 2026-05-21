@@ -1,12 +1,14 @@
-// Player Skill Path — Sprint 1072
+// Player Skill Path — Sprint 1072 + Sprint 600 (progress indicator)
 // Technical development view for the player.
-// Shows skill area status and observation counts — never raw coach note content.
+// Shows skill area status, observation counts, and requirement progress indicator.
 // Director-set focus from active priorities only.
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
 import { Zap, CheckCircle2, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { buildPlayerProgressIndicators } from '@/lib/player/progressIndicators'
+import type { ProgressStatusSummary } from '@/lib/player/evidenceQueries'
 
 const SKILL_AREAS = [
   { key: 'forehand',   label: 'Forehand',           sub: ['Preparation', 'Contact', 'Finish'], obsTypes: ['technical'] },
@@ -39,6 +41,8 @@ export default async function PlayerSkillPathPage() {
   let currentFocusCategory: string | null = null
   let currentLevelName: string | null = null
   let noAccess = false
+  let completionPct = 0
+  let completionLabel = ''
 
   if (user) {
     const rawDb = supabase as any
@@ -102,6 +106,29 @@ export default async function PlayerSkillPathPage() {
             .single()
           currentLevelName = lvl?.display_name ?? null
         }
+
+        // Requirement progress indicator (graceful fallback)
+        try {
+          const { data: progressRows } = await rawDb
+            .from('player_requirement_progress')
+            .select('id, status, curriculum_level_id')
+            .eq('player_id', playerRow.id)
+            .eq('academy_id', academyId)
+            .limit(200)
+          const rows = (progressRows ?? []) as Array<{ id: string; status: string; curriculum_level_id: string }>
+          const progressSummary: ProgressStatusSummary = {
+            total: rows.length,
+            notStarted: rows.filter(r => r.status === 'not_started').length,
+            inProgress: rows.filter(r => r.status === 'in_progress').length,
+            achieved: rows.filter(r => r.status === 'achieved').length,
+            confirmed: rows.filter(r => r.status === 'confirmed').length,
+          }
+          const indicators = buildPlayerProgressIndicators(progressSummary, [])
+          completionPct = indicators.overallCompletionPct
+          completionLabel = indicators.progressLabel
+        } catch {
+          // Graceful fallback — table may not exist yet
+        }
       }
     }
   }
@@ -141,6 +168,20 @@ export default async function PlayerSkillPathPage() {
               <p className="text-xs text-lime mt-2">Your current mission is in the skill path.</p>
             )}
           </div>
+
+          {/* Requirement progress bar (shown when data is available) */}
+          {completionPct > 0 && (
+            <div className="rounded-xl border border-border bg-surface px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-text-secondary">Level Requirement Progress</p>
+                <p className="text-xs font-mono text-lime">{completionPct}%</p>
+              </div>
+              <div className="h-2 bg-surface-raised rounded-full overflow-hidden">
+                <div className="h-full bg-lime rounded-full transition-all" style={{ width: `${completionPct}%` }} />
+              </div>
+              <p className="text-[10px] text-text-muted">{completionLabel}</p>
+            </div>
+          )}
 
           {/* Skill area cards */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

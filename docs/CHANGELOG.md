@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 594–603 Player Parent Portal Licensing (Phase 5)
+
+**Sprints:** 594 (Player Badge Wins V1), 595 (Player Wins Page V1), 596 (Player Celebration Page V1), 597 (Parent Badge Visibility V1), 598 (Director Pilot Readiness Dashboard V1), 599 (Practice Page — no changes needed), 600 (Player Skill Path Progress Indicator V1), 601 (Mission Engine Recommendation V1), 602 (Build Target Update), 603 (Phase 5 QA Doc)
+
+**Confirmed:** No migrations created. No RLS modified. No new dependencies. No official DB writes. No coach notes exposed to player/parent views. No unapproved content in player/parent views. All `player_requirement_progress` queries wrapped in try/catch for graceful fallback when table absent.
+
+**Files modified:**
+- `src/app/player/page.tsx` — Sprint 594: badge eligibility engine wired; "Wins & Badges" section shows earned badge chips, next badge progress bar, locked count; replaces stub EmptyState; graceful fallback when table absent
+- `src/app/player/celebration/page.tsx` — Sprint 596: rebuilt from stub; shows hero trophy, earned badge chips, next mission link, "see all badges" link; player auth chain
+- `src/app/parent/wins/page.tsx` — Sprint 597: parent-visible badge section added; `getVisibleBadgesForParent()` filter applied; badge names as lime chips; try/catch fallback
+- `src/app/player/skill-path/page.tsx` — Sprint 600: requirement progress bar added between overview and skill grid; `buildPlayerProgressIndicators()` called with try/catch; shows only when `completionPct > 0`
+- `src/app/player/missions/page.tsx` — Sprint 601: DONNA mission engine suggestion card added; `buildMissionEngineReport()` called with try/catch; "your coach's mission always takes priority" safety note
+- `docs/CURRENT_BUILD_TARGET.md` — Sprint 602: marked Mega Sprint 554–603 COMPLETE; 5-phase table added; next steps: pending migrations + Director KPI wiring
+
+**Files created:**
+- `src/app/player/wins/page.tsx` — Sprint 595: full badge status grid page; all player-visible badges with rarity/status styling; summary strip (Earned/In Progress/Locked); attendance note; graceful fallback
+- `src/app/director/pilot-readiness/page.tsx` — Sprint 598: live pilot readiness dashboard using `buildPilotLaunchPackage()`; live counts for players/groups/sessions/curriculum; grouped checklist by category; critical gaps section; read-only
+- `docs/PLAYER_PARENT_PORTAL_LICENSING_QA.md` — Sprint 603: Phase 5 QA checklist; security sign-off; per-sprint checks; data flow integrity table; known limitations; migration requirements
+
+**TypeScript:** clean — `npx tsc --noEmit` exits 0
+
+---
+
 ## 2026-05-21 — Mega Sprint 584–593 Coach Mobile Curriculum Assessment Capture (Phase 4)
 
 **Sprints:** 584 (Coach Mobile Home Polish V1), 585 (Coach Session Plan Curriculum Focus V1), 586 (Coach Attendance Exception UX V1), 587 (Coach Quick Capture V2), 588 (Coach Voice-to-Curriculum Draft UI V1), 589 (Coach Voice-to-Assessment Draft UI V1), 590 (End-of-Session Recap UI Polish V1), 591 (Coach Player Observation Draft Review V1), 592 (Coach Curriculum Feedback Loop V1), 593 (Coach Mobile Assessment QA V1)

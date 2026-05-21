@@ -1,4 +1,4 @@
-// Player Mission Map — Sprint 1070
+// Player Mission Map — Sprint 1070 + Sprint 601 (mission engine recommendation)
 // Shows active priorities as player missions: Active, Next Up, Future.
 // Director-set priority data only. No raw coach notes. No automatic level movement.
 // Player-authenticated via profile_id linkage — never URL params.
@@ -6,7 +6,11 @@
 import Link from 'next/link'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
-import { CheckCircle2, Lock, ArrowRight, ChevronRight, Map, AlertCircle } from 'lucide-react'
+import { CheckCircle2, Lock, ArrowRight, ChevronRight, Map, AlertCircle, Sparkles } from 'lucide-react'
+import { buildMissionEngineReport } from '@/lib/player/missionEngine'
+import { MISSION_DEFINITIONS } from '@/lib/player/missionModel'
+import { buildPlayerProgressIndicators } from '@/lib/player/progressIndicators'
+import type { ProgressStatusSummary } from '@/lib/player/evidenceQueries'
 
 interface PriorityRow {
   id: string
@@ -115,6 +119,8 @@ export default async function PlayerMissionsPage() {
   let priorities: PriorityRow[] = []
   let noMappingReason: string | null = null
   let currentLevelName: string | null = null
+  let enginePrimaryMissionLabel: string | null = null
+  let enginePrimaryMissionReason: string | null = null
 
   if (user) {
     const rawDb = supabase as any
@@ -169,6 +175,57 @@ export default async function PlayerMissionsPage() {
             .eq('id', levelId)
             .single()
           currentLevelName = lvl?.display_name ?? null
+        }
+
+        // Mission engine recommendation (graceful fallback)
+        try {
+          const { data: progressRows } = await rawDb
+            .from('player_requirement_progress')
+            .select('id, status, curriculum_level_id')
+            .eq('player_id', playerRow.id)
+            .eq('academy_id', academyId)
+            .limit(200)
+          const rows = (progressRows ?? []) as Array<{ id: string; status: string; curriculum_level_id: string }>
+          const progressSummary: ProgressStatusSummary = {
+            total: rows.length,
+            notStarted: rows.filter(r => r.status === 'not_started').length,
+            inProgress: rows.filter(r => r.status === 'in_progress').length,
+            achieved: rows.filter(r => r.status === 'achieved').length,
+            confirmed: rows.filter(r => r.status === 'confirmed').length,
+          }
+          const { data: attRows } = await rawDb
+            .from('session_attendance')
+            .select('status')
+            .eq('player_id', playerRow.id)
+            .eq('academy_id', academyId)
+            .limit(20)
+          let attendanceStreak = 0
+          for (const s of (attRows ?? []) as Array<{ status: string }>) {
+            if (s.status === 'present' || s.status === 'late') attendanceStreak++
+            else break
+          }
+          const { data: obsRows } = await rawDb
+            .from('coach_observations')
+            .select('id')
+            .eq('player_id', playerRow.id)
+            .eq('academy_id', academyId)
+            .limit(1)
+          const engineReport = buildMissionEngineReport({
+            playerId: playerRow.id,
+            progressSummary,
+            progressIndicators: buildPlayerProgressIndicators(progressSummary, []),
+            attendanceStreak,
+            observationCount: (obsRows ?? []).length,
+            nextAssessmentDue: null,
+            promotionReady: null,
+          })
+          if (engineReport.primaryMission) {
+            const def = MISSION_DEFINITIONS[engineReport.primaryMission.missionId]
+            enginePrimaryMissionLabel = def.title
+            enginePrimaryMissionReason = engineReport.recommendedMissions[0]?.reason ?? null
+          }
+        } catch {
+          // Graceful fallback
         }
       }
     }
@@ -244,6 +301,21 @@ export default async function PlayerMissionsPage() {
             <MissionCard key={p.id} priority={p} status="future" />
           ))}
         </section>
+      )}
+
+      {/* DONNA mission engine suggestion */}
+      {enginePrimaryMissionLabel && (
+        <div className="rounded-xl border border-status-blue/20 bg-status-blue/5 px-4 py-3 space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3 text-status-blue shrink-0" />
+            <p className="text-[9px] uppercase tracking-widest text-status-blue font-semibold">DONNA suggests</p>
+          </div>
+          <p className="text-xs font-medium text-text-primary">{enginePrimaryMissionLabel}</p>
+          {enginePrimaryMissionReason && (
+            <p className="text-[10px] text-text-muted">{enginePrimaryMissionReason}</p>
+          )}
+          <p className="text-[9px] text-text-muted/60">Suggestion — your coach's mission always takes priority.</p>
+        </div>
       )}
 
       {/* Level Up discovery */}

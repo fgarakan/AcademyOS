@@ -1,17 +1,25 @@
 # Current Build Target
 
 **Last updated:** 2026-05-21
-**Current phase:** Mega Sprint 503–552 COMPLETE — Curriculum Experience + Knowledge Engine
+**Current phase:** Mega Sprint 554–603 COMPLETE — Curriculum-Centered V1 Productization
 
 ---
 
 ## Active target
 
-**Mega Sprint 503–552 — Curriculum Experience + Knowledge Engine + Platform Curation — COMPLETE (2026-05-21)**
+**Mega Sprint 554–603 — Curriculum-Centered V1 Productization — COMPLETE (2026-05-21)**
 
-All 50 sprints across 5 phases complete and pushed. The curriculum experience layer (visual map, expandable tree, node detail drawer, attachment models, coverage intelligence, health dashboard) and the Global Knowledge Library (ingestion, classification, review queue, promotion path, retrieval, curriculum intelligence) are fully assembled as pure TypeScript library modules.
+All 50 sprints across 5 phases complete and pushed.
 
-Next up: UI wiring — connect curriculum coverage/health modules to `/director/curriculum`, wire knowledge library to `/director/curriculum/builder`, or begin the Pilot Readiness pass (schema validation, seed data, director walkthrough).
+| Phase | Sprints | Content |
+|---|---|---|
+| Phase 1 (554–563) | Curriculum Node Drawer + Content Types | CurriculumNodeDrawer, 10 content type models, DONNA context, coach cue video pairing |
+| Phase 2 (564–573) | Curriculum Coverage + Health Dashboard | Coverage model, gap analysis, level health, template connections, health dashboard |
+| Phase 3 (574–583) | Player Assessment + Placement System | 4-domain rubrics (skill/competition/fitness/mental), voice structuring, placement recommendation, director assessment UI, cadence model |
+| Phase 4 (584–593) | Coach Mobile + Curriculum/Assessment Capture | On-court action hub, session focus card, attendance exception draft, quick capture V2, voice-to-curriculum, voice-to-assessment, recap polish, observation draft review, curriculum feedback loop |
+| Phase 5 (594–603) | Player/Parent Portal + Licensing | Badge system wired (player wins, wins page, celebration), progress indicators, parent badge visibility, pilot readiness dashboard, skill-path progress, mission engine recommendation |
+
+**Next up:** Apply pending Supabase migrations (see `docs/KNOWN_LIMITATIONS.md`), then begin Director Dashboard KPI wiring and attention queue wiring.
 
 ---
 
