@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-21 — Sprint 553 UI Wiring Foundation V1
+
+**Files created:**
+- `src/app/director/curriculum/_components/CurriculumHealthPanel.tsx` — Display component for curriculum content coverage. Receives `CurriculumCoverageReport` as props. Renders overall grade (A–F), per-level progress bars with grade and critical gap chips, top gaps summary with fix hints, summary counts grid. Prominent partial-score disclaimer. Read-only, director-only, no parent/player data.
+
+**Files modified:**
+- `src/app/director/curriculum/page.tsx` — Imports `buildCurriculumCoverageReport` from `coverageModel.ts`. Builds `LevelCoverageInput[]` from existing `getCurriculumExplorerData` output (gate/drill/coachLanguage counts per level). Maps DB `curriculum_stage` enum to `CurriculumStage`. Renders `CurriculumHealthPanel` after the setup checklist when levels exist.
+
+**Files created (docs):**
+- `docs/UI_WIRING_FOUNDATION_NOTES.md` — Full audit: routes audited, modules assessed, blockers documented, safety review, recommended next sprints 554–557.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-21 — Mega Sprint 546–552 Knowledge Retrieval Curriculum Intelligence (Phase 5)
 
 **Sprint 546 — Knowledge Retrieval Model**

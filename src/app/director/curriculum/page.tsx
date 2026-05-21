@@ -11,6 +11,9 @@ import { PageExplainerCard } from '@/components/onboarding/PageExplainerCard'
 import { CurriculumCustomizationAssistant } from '@/components/curriculum/CurriculumCustomizationAssistant'
 import { CurriculumLoopDiagram } from '@/components/onboarding/CurriculumLoopDiagram'
 import { CurriculumBuilderWelcome } from '@/components/curriculum/builder/CurriculumBuilderWelcome'
+import { buildCurriculumCoverageReport, type LevelCoverageInput } from '@/lib/curriculum/coverageModel'
+import type { CurriculumStage } from '@/lib/curriculum/visualMapModel'
+import { CurriculumHealthPanel } from './_components/CurriculumHealthPanel'
 
 // ─── Static spine data ────────────────────────────────────────────────────────
 
@@ -100,6 +103,34 @@ export default async function DirectorCurriculumPage() {
   }
 
   const explorerData = await getCurriculumExplorerData(supabase)
+
+  // ─── Curriculum coverage snapshot ────────────────────────────────────────
+  // Maps DB curriculum_stage enum (snake_case) to the CurriculumStage union used by coverageModel.
+  const DB_STAGE_TO_CURRICULUM_STAGE: Record<string, CurriculumStage> = {
+    red_foundation:     'Red Ball',
+    orange_development: 'Orange Ball',
+    green_performance:  'Green Ball',
+    yellow_competitive: 'Yellow Ball',
+    high_performance:   'High Performance',
+  }
+
+  const levelCoverageInputs: LevelCoverageInput[] = explorerData.levels.map(level => ({
+    levelId:                   level.id,
+    levelName:                 level.display_name,
+    stage:                     DB_STAGE_TO_CURRICULUM_STAGE[level.stage] ?? 'Red Ball',
+    gateCount:                 explorerData.gates.filter(g => g.from_level_id === level.id).length,
+    drillCount:                explorerData.drills.filter(d => d.level_min_id === level.id).length,
+    coachCueCount:             explorerData.coachLanguage.filter(c => c.level_id === level.id).length,
+    skillCount:                0,
+    assessmentCriteriaCount:   0,
+    evidenceRequirementCount:  0,
+    missionCount:              0,
+    badgeCount:                0,
+    parentGuidanceCount:       0,
+    learningModuleCount:       0,
+  }))
+
+  const coverageReport = buildCurriculumCoverageReport(levelCoverageInputs)
 
   const rawDb = supabase as any
 
@@ -348,6 +379,13 @@ export default async function DirectorCurriculumPage() {
           ))}
         </div>
       </section>
+
+      {/* ── 4b. Coverage snapshot ────────────────────────────────────────── */}
+      {explorerData.levels.length > 0 && (
+        <section className="space-y-3">
+          <CurriculumHealthPanel report={coverageReport} />
+        </section>
+      )}
 
       {/* ── 5. Continue Builder ──────────────────────────────────────────── */}
       <div className="rounded-2xl border border-border bg-surface p-5 flex flex-col sm:flex-row sm:items-center gap-4">
