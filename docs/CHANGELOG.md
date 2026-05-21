@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-21 — Mega Sprint 546–552 Knowledge Retrieval Curriculum Intelligence (Phase 5)
+
+**Sprint 546 — Knowledge Retrieval Model**
+**Files created:** `src/lib/knowledge/knowledgeRetrievalModel.ts` (RetrievalContext 5-value union; KnowledgeRetrievalRequest, KnowledgeRetrievalResult types; CONTEXT_LABELS record; isItemEligibleForContext: coach blocked from director_only items; scoreItemForContext: domain/stage/levelId/tag/sourceType scoring; retrieveKnowledgeItems: filters eligible, scores, returns top N; isParentVisible:false/isPlayerVisible:false on result).
+
+**Sprint 547 — Knowledge Curriculum Intelligence**
+**Files created:** `src/lib/knowledge/knowledgeCurriculumIntelligence.ts` (KnowledgeGapMatch, KnowledgeCurriculumIntelligenceReport types; computeMatchStrength: strong if ≥2 items with domain or level match; findItemsForGap: domain/level/tag matching; buildKnowledgeCurriculumIntelligenceReport: matches all gaps, computes strength, suggests action; requiresDirectorReview:true/neverAutoFills:true on all; getGapMatchesForLevel, getCoverageIntelligenceSummary helpers).
+
+**Sprint 548 — Knowledge Answerability Model**
+**Files created:** `src/lib/knowledge/knowledgeAnswerabilityModel.ts` (AnswerabilityRole; AnswerabilityStatus; AnswerabilityCheck with isParentAnswerable:false/isPlayerAnswerable:false literals; checkAnswerability: parent/player always blocked with promotion path explanation; coach blocked for director_only; buildAnswerabilityReport: runs all 5 roles; AnswerabilityReport with requiresApprovalForAll:true; getAnswerabilityStatusLabel helper).
+
+**Sprint 549 — Knowledge Mega-Sprint QA**
+**Files created:** `src/lib/knowledge/knowledgeMegaSprintQa.ts` (KnowledgeQaCheckId 25-value union; KNOWLEDGE_QA_CHECKS: 25 checks across modules/doctrine/privacy/approval categories; KnowledgeQaInput, KnowledgeQaReport types; runKnowledgeQa: maps input flags to check results, counts blockers, isSystemReady = zero blocker failures).
+
+**Sprint 550 — Knowledge Library Index**
+**Files created:** `src/lib/knowledge/knowledgeIndex.ts` (central re-export for all 18 knowledge modules: types, library view model, review queue, promotion path, privacy guards, audit log, ingestion, bridge, retrieval, curriculum intelligence, answerability, QA).
+
+**Sprint 551 — Curriculum Knowledge View**
+**Files created:** `src/lib/curriculum/curriculumKnowledgeView.ts` (CurriculumKnowledgePanelView type with isParentVisible:false/isPlayerVisible:false literals; buildCurriculumKnowledgePanelView: connects coverage + health + knowledge items + gap matches; promotableCandidates = approved_general items; requiresDirectorAction triggers for critical/at-risk health with available knowledge; getCurriculumKnowledgePanelSummary helper).
+
+**Sprint 552 — Mega Sprint Curriculum QA**
+**Files created:** `src/lib/curriculum/megaSprintCurriculumQa.ts` (CurriculumQaCheckId 48-value union; CURRICULUM_MEGA_SPRINT_QA_CHECKS: 48 checks across 5 phases + doctrine; CurriculumMegaSprintQaReport with byPhase breakdown; runCurriculumMegaSprintQa: pass set → results, blocker count, phase breakdown, isComplete; summary line includes "Mega Sprint 503-552 complete" on passing).
+
+---
+
 ## 2026-05-21 — Mega Sprint 538–545 Knowledge Ingestion Classification (Phase 4)
 
 **Sprint 538 — Knowledge Ingestion Types**
