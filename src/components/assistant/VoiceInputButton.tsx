@@ -1,7 +1,14 @@
 'use client'
 
+// Sprint 641 — DONNA Persistent Voice Session V1
+// Added `persistent` prop: when true, recognition auto-restarts on silence so the
+// session stays active until the director explicitly stops it.
+// Sprint 642 — Speech Recognition Auto-Restart V1
+// Added `maxRetries` guard: after consecutive restart failures, session stops and
+// shows a safe fallback rather than looping forever.
+
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Mic, MicOff, Square } from 'lucide-react'
+import { Mic, MicOff, Square, WifiOff } from 'lucide-react'
 
 // Browser SpeechRecognition — no TypeScript DOM lib definition in strict mode.
 // We access via window to avoid declaring globals.
@@ -63,9 +70,23 @@ interface VoiceInputButtonProps {
   onError?: (error: string) => void
   /** Called once on mount with whether SpeechRecognition is supported. */
   onSupportedChange?: (supported: boolean) => void
+  /**
+   * Sprint 641 — Persistent session mode.
+   * When true, the session stays active after each utterance and auto-restarts
+   * recognition on silence. User must click Stop to end the session.
+   * Default: false (single-shot mode).
+   */
+  persistent?: boolean
+  /**
+   * Sprint 642 — Max restart retries before giving up.
+   * Only applies when persistent=true.
+   * Default: 3
+   */
+  maxRetries?: number
 }
 
-type VoiceState = 'idle' | 'listening' | 'unsupported'
+// Sprint 641: four states for persistent mode
+type VoiceState = 'idle' | 'listening' | 'paused' | 'stopped' | 'unsupported'
 
 export function VoiceInputButton({
   onTranscript,
@@ -76,10 +97,17 @@ export function VoiceInputButton({
   onInterimTranscript,
   onError,
   onSupportedChange,
+  persistent = false,
+  maxRetries = 3,
 }: VoiceInputButtonProps) {
   const [voiceState, setVoiceState] = useState<VoiceState>('idle')
   const [supported, setSupported] = useState<boolean | null>(null)
+  const [retryExhausted, setRetryExhausted] = useState(false)
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
+  // Session active ref — set to false when director explicitly stops
+  const sessionActiveRef = useRef(false)
+  // Sprint 642: consecutive restart counter
+  const retryCountRef = useRef(0)
 
   useEffect(() => {
     const result = getSpeechRecognitionConstructor() !== null
@@ -87,18 +115,22 @@ export function VoiceInputButton({
     onSupportedChange?.(result)
   }, []) // onSupportedChange called once on mount
 
-  const stopListening = useCallback(() => {
+  const stopSession = useCallback(() => {
+    sessionActiveRef.current = false
+    retryCountRef.current = 0
     if (recognitionRef.current) {
       recognitionRef.current.stop()
       recognitionRef.current = null
     }
     setVoiceState('idle')
+    setRetryExhausted(false)
     onListeningChange?.(false)
   }, [onListeningChange])
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
+      sessionActiveRef.current = false
       if (recognitionRef.current) {
         recognitionRef.current.abort()
         recognitionRef.current = null
@@ -106,7 +138,7 @@ export function VoiceInputButton({
     }
   }, [])
 
-  function startListening() {
+  const startRecognition = useCallback(() => {
     const Constructor = getSpeechRecognitionConstructor()
     if (!Constructor) return
 
@@ -121,6 +153,8 @@ export function VoiceInputButton({
       const transcript = result[0].transcript.trim()
       if (!transcript) return
       if (result.isFinal) {
+        // Successful capture — reset retry counter
+        retryCountRef.current = 0
         onTranscript(transcript)
       } else {
         onInterimTranscript?.(transcript)
@@ -128,27 +162,55 @@ export function VoiceInputButton({
     }
 
     recognition.onerror = (event) => {
-      onError?.(event.error)
-      stopListening()
+      // 'no-speech' is not a real error in persistent mode — just silence; let onend handle it
+      if (event.error !== 'no-speech') {
+        onError?.(event.error)
+      }
+      recognitionRef.current = null
     }
 
     recognition.onend = () => {
       recognitionRef.current = null
-      setVoiceState('idle')
-      onListeningChange?.(false)
+
+      if (persistent && sessionActiveRef.current) {
+        // Sprint 642: guard against infinite restart loops
+        retryCountRef.current += 1
+        if (retryCountRef.current >= maxRetries) {
+          sessionActiveRef.current = false
+          setVoiceState('stopped')
+          setRetryExhausted(true)
+          onListeningChange?.(false)
+          return
+        }
+        // Paused state — briefly between utterances
+        setVoiceState('paused')
+        // Restart after short pause (300ms)
+        setTimeout(() => {
+          if (sessionActiveRef.current) {
+            startRecognition()
+          }
+        }, 300)
+      } else {
+        setVoiceState('idle')
+        onListeningChange?.(false)
+      }
     }
 
     recognitionRef.current = recognition
     recognition.start()
     setVoiceState('listening')
     onListeningChange?.(true)
-  }
+  }, [persistent, maxRetries, onTranscript, onInterimTranscript, onError, onListeningChange])
 
   function handleToggle() {
-    if (voiceState === 'listening') {
-      stopListening()
+    if (voiceState === 'listening' || voiceState === 'paused') {
+      stopSession()
     } else {
-      startListening()
+      // Start new session
+      sessionActiveRef.current = persistent
+      retryCountRef.current = 0
+      setRetryExhausted(false)
+      startRecognition()
     }
   }
 
@@ -165,8 +227,17 @@ export function VoiceInputButton({
     )
   }
 
+  const isActive = voiceState === 'listening' || voiceState === 'paused'
   const isListening = voiceState === 'listening'
-  const buttonLabel = label ?? (isListening ? 'Listening…' : 'Speak')
+  const isPaused = voiceState === 'paused'
+
+  function getButtonLabel(): string {
+    if (label) return label
+    if (isListening) return persistent ? 'Listening… (tap to stop)' : 'Listening…'
+    if (isPaused) return 'Paused — listening for next phrase'
+    if (retryExhausted) return 'Voice stopped — tap to restart'
+    return 'Speak'
+  }
 
   return (
     <div className="space-y-1.5">
@@ -174,35 +245,60 @@ export function VoiceInputButton({
         type="button"
         onClick={handleToggle}
         disabled={disabled}
-        title={isListening ? 'Stop recording' : 'Speak your answer'}
+        title={isActive ? 'Stop voice session' : 'Start voice input'}
         className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition-colors disabled:opacity-40 ${
           isListening
             ? 'border-status-red/40 bg-status-red/10 text-status-red animate-pulse'
+            : isPaused
+            ? 'border-status-orange/40 bg-status-orange/10 text-status-orange'
+            : retryExhausted
+            ? 'border-border bg-surface-raised text-text-muted'
             : 'border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-text-primary'
         }`}
       >
-        {isListening ? (
+        {isActive ? (
           <>
             <Square className="w-3 h-3 fill-current" />
-            {buttonLabel}
+            {getButtonLabel()}
+          </>
+        ) : retryExhausted ? (
+          <>
+            <WifiOff className="w-3 h-3" />
+            {getButtonLabel()}
           </>
         ) : (
           <>
             <Mic className="w-3 h-3" />
-            {buttonLabel}
+            {getButtonLabel()}
           </>
         )}
       </button>
-      {!isListening && (
+
+      {/* Sprint 642: retry exhausted notice */}
+      {retryExhausted && (
+        <p className="text-[9px] text-text-muted leading-snug">
+          Voice stopped after repeated silence. Tap the button to start again, or type below.
+        </p>
+      )}
+
+      {/* Status hints */}
+      {!isActive && !retryExhausted && (
         <p className="text-[9px] text-text-muted">
-          {appendMode
+          {persistent
+            ? 'Session stays active. Tap Stop when done.'
+            : appendMode
             ? 'You can speak your answer, then edit before saving.'
             : 'Voice input turns speech into text in your browser. Review before saving.'}
         </p>
       )}
       {isListening && (
         <p className="text-[9px] text-status-red/80">
-          Listening… tap Stop when done.
+          {persistent ? 'Listening… speak, pause, speak again. Tap Stop when done.' : 'Listening… tap Stop when done.'}
+        </p>
+      )}
+      {isPaused && (
+        <p className="text-[9px] text-status-orange/80">
+          Session paused between phrases. Ready for next utterance.
         </p>
       )}
     </div>

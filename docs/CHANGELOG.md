@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-22 — Sprint 642 — Speech Recognition Auto-Restart V1
+
+**Scope:** Added max retry guard to persistent voice session. No new files — extends Sprint 641 changes to VoiceInputButton.
+
+**What changed:**
+- `src/components/assistant/VoiceInputButton.tsx` — `retryCountRef` tracks consecutive `onend` events in persistent mode. After `maxRetries` (default: 3), session stops, `retryExhausted` state set to true. User sees "Voice stopped — tap to restart" button. "Voice stopped after repeated silence" notice shown. `no-speech` errors no longer counted as real errors (expected in persistent mode).
+
+**Safety:** No auto-recording without user action. No infinite crash loops. Text fallback always available.
+
+**TypeScript:** Clean
+
+---
+
+## 2026-05-22 — Sprint 641 — DONNA Persistent Voice Session V1
+
+**Scope:** Extended VoiceInputButton with persistent session mode. Session stays active across silence. User controls stop.
+
+**What changed:**
+- `src/components/assistant/VoiceInputButton.tsx` — added `persistent?: boolean` (default false) and `maxRetries?: number` (default 3) props. New `VoiceState`: added 'paused' and 'stopped'. `sessionActiveRef` ref tracks director's intent — set to true on session start, false on Stop. On `onend` in persistent mode: brief 300ms delay, then restart recognition. New status hints: paused/listening/stopped states visible. `WifiOff` icon shown when retry-exhausted.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 640 — Review Approval Audit Trail V1
 
 **Scope:** Add audit trail panel to the review item detail page. Reads from existing `audit_logs` table (director-only via RLS). Shows action, timestamp, source_type for the proposed_action ID and player ID (if player-related).
