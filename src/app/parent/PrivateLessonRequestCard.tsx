@@ -6,10 +6,11 @@ import { Card, CardHeader, CardContent } from '@/components/ui'
 import { requestPrivateLessonAction } from './requestPrivateLessonAction'
 
 interface Props {
+  playerId: string
   playerFirstName: string
 }
 
-export function PrivateLessonRequestCard({ playerFirstName }: Props) {
+export function PrivateLessonRequestCard({ playerId, playerFirstName }: Props) {
   const [preferredDay, setPreferredDay] = useState('')
   const [preferredTime, setPreferredTime] = useState('')
   const [focusArea, setFocusArea] = useState('')
@@ -24,6 +25,7 @@ export function PrivateLessonRequestCard({ playerFirstName }: Props) {
     setResult(null)
     startTransition(async () => {
       const res = await requestPrivateLessonAction({
+        playerId,
         playerName: playerFirstName,
         preferredDay,
         preferredTime,

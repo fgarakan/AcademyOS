@@ -786,7 +786,7 @@ export default async function ParentHome({
               </CardContent>
             </Card>
           )}
-          <PrivateLessonRequestCard playerFirstName={linkedPlayerFirstName} />
+          <PrivateLessonRequestCard playerId={activeChildId ?? ''} playerFirstName={linkedPlayerFirstName} />
         </>
       )}
 
