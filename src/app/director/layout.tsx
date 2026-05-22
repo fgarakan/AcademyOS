@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { SidebarNav } from '@/components/nav/SidebarNav'
+import { DirectorMobileNav } from '@/components/nav/DirectorMobileNav'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { PreviewBanner } from '@/components/platform/PreviewBanner'
 import { DonnaAssistantButton } from '@/components/assistant/DonnaAssistantButton'
@@ -88,7 +89,7 @@ export default async function DirectorLayout({
           userDisplayName={userDisplayName}
           onboardingIncomplete={onboardingIncomplete}
         />
-        <main className="flex-1 ml-60 min-h-screen">
+        <main className="flex-1 lg:ml-60 min-h-screen pb-16 lg:pb-0">
           <PreviewBanner />
           <Suspense>
             <DemoModeBanner />
@@ -103,6 +104,7 @@ export default async function DirectorLayout({
             directorName={userDisplayName || undefined}
           />
         )}
+        <DirectorMobileNav pendingCount={pendingCount} />
       </div>
     </DonnaSessionContextProvider>
   )
