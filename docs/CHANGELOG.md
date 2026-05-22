@@ -2,6 +2,64 @@
 
 ---
 
+## 2026-05-22 — Sprint 620 — DONNA Full COO Readiness Audit V1
+
+**Scope:** Full-system DONNA audit. No runtime features built. No migrations. No RLS changes. No new DONNA actions. No new buttons. No DB calls. No AI calls. No mutations. Audit-only sprint.
+
+**Core question answered:** Is DONNA ready to be the director's eyes, ears, analyst, strategist, and operating assistant across the entire academy?
+
+**Answer:** No — DONNA is partially ready (4/10 overall). The architecture is sound but most routes are unwired, KPI fluency is zero, conversational quality is keyword-only, and voice does not persist.
+
+**Overall COO Readiness Score: 4 / 10 (partially ready)**
+
+| Dimension | Score | Key finding |
+|---|---|---|
+| Route Connectivity | 4/10 | Avg 4.1 across 26 routes; 11/26 routes score 1 (not connected) |
+| KPI Fluency | 2/10 | kpiExplainer.ts (Sprint 466) exists but not wired to any page |
+| Conversational Quality | 3/10 | Keyword-only intent classifier; 9 categories; 54% of prompts fail |
+| Review/Approval Safety | 7/10 | Well-built review queue; two approval path gaps |
+| Parent/Player Safety | 8/10 | Strong library-level boundaries; no formal end-to-end tests |
+| Voice Readiness | 3/10 | Ends on silence; no auto-restart; no transcript editing |
+| Mobile Usability | 3/10 | Desktop-only layout; DONNA shell not mobile-adapted |
+
+**Files created:**
+- `src/lib/donna/donnaCooReadinessScorecard.ts` — pure TypeScript scorecard; derives scores from directorActionRegistry and directorCoverageRegistry; defines 30 gap entries by P0/P1/P2/P3 priority; no DB, no AI, no mutations, no UI imports
+- `docs/DONNA_FULL_COO_READINESS_AUDIT_620.md` — master audit with executive summary, architecture inventory, route summary, KPI summary, conversational quality summary, COO dimension scores, parent/player safety summary, review/approval summary, voice reliability summary, prioritized gap list
+- `docs/DONNA_ROUTE_CONNECTIVITY_SCORECARD_620.md` — per-route scoring for all 26 director routes; 4 tiers; detailed capability matrix per route; P0/P1/P2 fix priorities
+- `docs/DONNA_KPI_FLUENCY_AUDIT_620.md` — 12-KPI inventory; DONNA explain/summarize/attribute/recommend gap per KPI; KPI dashboard current state analysis; priority recommendations
+- `docs/DONNA_CONVERSATIONAL_GAP_ANALYSIS_620.md` — 28 director prompts tested (basic, operational, strategic, action-oriented, safety); 21% working end-to-end; 54% failing completely; per-prompt expected/current/gap analysis
+- `docs/DONNA_REVIEW_APPROVAL_AUDIT_620.md` — per-action-type approval audit for 11 action types; execute_approved_action() coverage (11/15); fitness template bypass detail; approval safety gap register
+- `docs/DONNA_PARENT_PLAYER_SAFETY_AUDIT_620.md` — 7 safety questions answered; enforcement layer inventory; visibility risk register; recommended safety actions before pilot
+- `docs/DONNA_10_OUT_OF_10_ROADMAP_620.md` — P0/P1/P2/P3 gap list; recommended next 10 sprints; recommended next 25 sprints; exact Sprint 621 specification; score trajectory to 9/10
+
+**Files modified:**
+- `docs/CHANGELOG.md` — this entry
+
+**P0 gaps (before pilot):**
+1. /director/kpi has zero DONNA — kpiExplainer.ts not wired
+2. /director/players has zero DONNA — cannot surface at-risk players
+3. /director main dashboard has no DONNA explain/recommend capability
+4. Intent classifier is keyword-only (9 categories) — no NLU
+5. No cross-page session memory
+
+**P1 gaps (before premium V1):**
+- explain_kpi and summarize_kpi not wired to any UI
+- /director/signals has no DONNA narrator
+- Player profile has no inline DONNA Q&A chat shell
+- DonnaLevelMovementApplyControls not wired to review queue
+- Fitness template session generation bypasses proposed_actions
+- execute_approved_action() covers 11/15 action types
+- Coach profile: donnaCoachIntelligenceAction.ts unwired
+- Voice: ends on silence, no auto-restart, no transcript editing
+- Curriculum builder: zero DONNA guidance
+- No "why did this KPI change?" attribution logic
+
+**Recommended Sprint 621:** DONNA KPI Fluency + Dashboard Presence V1 — wire kpiExplainer.ts to /director/kpi, add DONNA chip to /director dashboard and /director/players. No new server actions needed — library is already built.
+
+**TypeScript:** Clean — `npx tsc --noEmit` passes.
+
+---
+
 ## 2026-05-22 — Sprint 619 — Parent Child Switcher UI V1
 
 **Scope:** Safety-gated parent child switcher. Server-side childId validation before any child-specific data fetch. Lesson request leakage fixed by suppression for multi-child parents. No migrations, no RLS changes, no dependencies.
