@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-22 — Sprint 632 — Review Item Detail Page V1
+
+**Scope:** Extend DonnaReviewContextPanel with missing sprint-required fields: visibility impact, approval requirement, who can approve, source evidence. No apply logic added. No DB changes.
+
+**What changed:**
+
+Extended `DonnaReviewContextPanel.tsx`:
+- Added imports from `@/lib/review/reviewCenterFilters` (Sprint 631 resolvers)
+- Added `MODULE_SOURCE_EVIDENCE` map — per-module list of data sources that informed the draft
+- Added `MODULE_WHO_CAN_APPROVE` map — role-aware approval authority per module type
+- Added "Approval & Visibility" card: approval requirement, who can approve, visibility impact (color-coded red if high-risk module)
+- Added "Source Evidence" card: lists what data sources were used to create the draft
+- Context panel now shows all sprint-required fields: what DONNA drafted (existing brief), why (existing brief), source evidence (new), affected object (existing entity links), approval required (new card), visibility impact (new card), what changes (existing), what does not change (existing), who can approve (new), current status (existing header)
+
+**Files modified:**
+- `src/app/director/review/[actionId]/DonnaReviewContextPanel.tsx` — approval/visibility/evidence cards added
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 631 — Universal Review Center Command View V1
 
 **Scope:** Pure TypeScript filter taxonomy + client UI filter bar for /director/review. No DB calls. No apply logic. Non-breaking (no changes to existing 2203-line page).

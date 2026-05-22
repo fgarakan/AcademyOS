@@ -1,6 +1,11 @@
 import Link from 'next/link'
-import { Sparkles, ShieldCheck, User, Calendar, FileText, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react'
+import { Sparkles, ShieldCheck, User, Calendar, FileText, AlertTriangle, CheckCircle2, ArrowRight, Eye, Lock } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
+import {
+  resolveVisibilityImpact,
+  resolveApprovalRequirement,
+  classifyReviewItemRisk,
+} from '@/lib/review/reviewCenterFilters'
 
 interface WhatChanges {
   willChange: string[]
@@ -117,6 +122,35 @@ const MODULE_CHANGES: Record<string, WhatChanges> = {
   },
 }
 
+const MODULE_SOURCE_EVIDENCE: Record<string, string[]> = {
+  session_wrap_up_v1: ['Coach wrap-up answers', 'Session roster', 'Session template blocks'],
+  attendance_exception: ['Coach attendance submission', 'Existing session roster'],
+  coach_observation_draft_v1: ['Coach session observation note'],
+  priority_recommendation: ['Coach assessment inputs', 'Current player priorities'],
+  requirement_evidence_link: ['Assessment score or coach observation linked to a curriculum requirement'],
+  development_summary_draft_v1: ['Player profile data', 'Coach observations', 'Assessment history'],
+  session_recap_structuring: ['Raw coach recap text', 'Session context'],
+  curriculum_override: ['Coach voice or text instruction', 'Session template block'],
+  parent_communication: ['Player profile', 'Coach observations (sanitized)', 'Assessment summary'],
+  level_review: ['Player assessment scores', 'Curriculum requirement gates', 'Coach readiness signal'],
+  placement_recommendation_draft: ['Placement assessment answers', 'Group and level options'],
+}
+
+const MODULE_WHO_CAN_APPROVE: Record<string, string> = {
+  session_wrap_up_v1: 'Academy director or head coach',
+  attendance_exception: 'Academy director or head coach',
+  coach_observation_draft_v1: 'Academy director or head coach',
+  priority_recommendation: 'Academy director',
+  requirement_evidence_link: 'Academy director',
+  development_summary_draft_v1: 'Academy director',
+  session_recap_structuring: 'Academy director or head coach',
+  curriculum_override: 'Academy director',
+  parent_communication: 'Academy director only',
+  level_review: 'Academy director only',
+  placement_recommendation_draft: 'Academy director only',
+  knowledge_promotion: 'Platform owner (for global); academy director (for academy-local)',
+}
+
 const DONNA_BRIEF: Record<string, string> = {
   session_wrap_up_v1: 'This is a coach session wrap-up. Review for accuracy and completeness, then approve and apply to record the session actual. If anything is unclear, use Needs Clarification.',
   attendance_exception: 'This attendance exception was flagged by a coach. Any unrostered attendees will create a follow-up placement item — no player is created automatically. Review the roster changes before approving.',
@@ -155,6 +189,11 @@ export function DonnaReviewContextPanel({
 }: Props) {
   const changes = MODULE_CHANGES[targetModule]
   const brief = DONNA_BRIEF[targetModule]
+  const sourceEvidence = MODULE_SOURCE_EVIDENCE[targetModule]
+  const whoCanApprove = MODULE_WHO_CAN_APPROVE[targetModule]
+  const visibilityImpact = resolveVisibilityImpact(targetModule)
+  const approvalReq = resolveApprovalRequirement(targetModule)
+  const riskFromModule = classifyReviewItemRisk(targetModule)
 
   const formattedDate = new Date(createdAt).toLocaleString('en-US', {
     month: 'short',
@@ -234,6 +273,48 @@ export function DonnaReviewContextPanel({
           </div>
         </CardContent>
       </Card>
+
+      {/* Approval & Visibility */}
+      <Card>
+        <CardContent className="py-3 space-y-2.5">
+          <p className="label-xs">Approval &amp; Visibility</p>
+          <div className="space-y-1.5">
+            <div className="flex items-start gap-2 text-[11px] text-text-secondary">
+              <Lock className="w-3 h-3 text-text-muted shrink-0 mt-0.5" />
+              <span>{approvalReq}</span>
+            </div>
+            {whoCanApprove && (
+              <div className="flex items-start gap-2 text-[11px] text-text-secondary">
+                <User className="w-3 h-3 text-text-muted shrink-0 mt-0.5" />
+                <span>Who can approve: {whoCanApprove}</span>
+              </div>
+            )}
+            <div className="flex items-start gap-2 text-[11px]">
+              <Eye className={`w-3 h-3 shrink-0 mt-0.5 ${riskFromModule.risk === 'high' ? 'text-status-red' : 'text-text-muted'}`} />
+              <span className={riskFromModule.risk === 'high' ? 'text-status-red' : 'text-text-secondary'}>
+                {visibilityImpact}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Source evidence */}
+      {sourceEvidence && sourceEvidence.length > 0 && (
+        <Card>
+          <CardContent className="py-3 space-y-2">
+            <p className="label-xs">Source Evidence</p>
+            <div className="space-y-1">
+              {sourceEvidence.map((ev, i) => (
+                <div key={i} className="flex items-start gap-2 text-[11px] text-text-secondary">
+                  <FileText className="w-3 h-3 text-text-muted shrink-0 mt-0.5" />
+                  <span>{ev}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* What changes when applied */}
       {changes && (
