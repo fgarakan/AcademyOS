@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-22 — Sprint 631 — Universal Review Center Command View V1
+
+**Scope:** Pure TypeScript filter taxonomy + client UI filter bar for /director/review. No DB calls. No apply logic. Non-breaking (no changes to existing 2203-line page).
+
+**What changed:**
+
+Created `src/lib/review/reviewCenterFilters.ts`:
+- `ReviewFilter` type + `REVIEW_CENTER_FILTERS` — 11 filter definitions: needs_approval, high_risk, parent_player_visible, level_movement, placement, curriculum, parent_summary, badge_mission, video_visibility, knowledge_promotion, licensing_review
+- `classifyReviewItemRisk(targetModule)` — returns high/medium/low risk with reason
+- `resolveModuleLabel(targetModule)` — human label for each proposed_action module
+- `resolveVisibilityImpact(targetModule)` — what becomes visible and when
+- `resolveApprovalRequirement(targetModule)` — who must approve and at what level
+- `getMatchingFilters(targetModule, status)` — returns all filter IDs a review item matches
+
+Created `src/components/review/ReviewFilterBar.tsx`:
+- `ReviewFilterBar` — client chip component: renders 11 filter chips, active/inactive state, optional count badge, lime accent when active
+- `ReviewItemMetaRow` — meta display row per item: risk badge (color-coded), module label, visibility impact, approval requirement, created date, source, status — all from the pure TypeScript resolvers above
+
+**Files created:**
+- `src/lib/review/reviewCenterFilters.ts` — filter framework (pure TypeScript)
+- `src/components/review/ReviewFilterBar.tsx` — filter bar + item meta row (client UI)
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 630 — DONNA COO Score Re-Audit V1
 
 **Scope:** Re-audit and re-score DONNA COO readiness after Sprints 621–629. Pure TypeScript scorecard update + doc. No DB calls. No mutations.
