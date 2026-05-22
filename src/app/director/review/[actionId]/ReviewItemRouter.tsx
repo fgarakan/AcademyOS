@@ -24,6 +24,12 @@ import { CurriculumBuilderDraftCard } from '@/app/director/review/CurriculumBuil
 import type { CurriculumBuilderDraftItem } from '@/app/director/review/CurriculumBuilderDraftCard'
 import { CurriculumAdjustmentReviewCard } from '@/app/director/review/CurriculumAdjustmentReviewCard'
 import type { EnrichedCurriculumAdjustmentDraftItem } from '@/app/director/review/CurriculumAdjustmentReviewCard'
+import { BadgeMissionReviewCard } from '@/app/director/review/BadgeMissionReviewCard'
+import type { EnrichedBadgeMissionDraftItem } from '@/app/director/review/BadgeMissionReviewCard'
+import { VideoVisibilityReviewCard } from '@/app/director/review/VideoVisibilityReviewCard'
+import type { EnrichedVideoVisibilityDraftItem } from '@/app/director/review/VideoVisibilityReviewCard'
+import { KnowledgePromotionReviewCard } from '@/app/director/review/KnowledgePromotionReviewCard'
+import type { EnrichedKnowledgePromotionDraftItem } from '@/app/director/review/KnowledgePromotionReviewCard'
 
 export type ReviewItemData =
   | { type: 'wrap_up'; item: EnrichedWrapUpDraftItem }
@@ -38,6 +44,10 @@ export type ReviewItemData =
   | { type: 'parent_summary'; item: EnrichedParentSummaryDraftItem }
   | { type: 'curriculum_builder'; item: CurriculumBuilderDraftItem }
   | { type: 'curriculum_adjustment'; item: EnrichedCurriculumAdjustmentDraftItem }
+  | { type: 'badge_award'; item: EnrichedBadgeMissionDraftItem }
+  | { type: 'mission_assignment'; item: EnrichedBadgeMissionDraftItem }
+  | { type: 'video_visibility'; item: EnrichedVideoVisibilityDraftItem }
+  | { type: 'knowledge_promotion'; item: EnrichedKnowledgePromotionDraftItem }
   | { type: 'unsupported'; targetModule: string; actionId: string; status: string; createdAt: string }
 
 function UnsupportedCard({ targetModule, actionId }: { targetModule: string; actionId: string }) {
@@ -73,5 +83,8 @@ export function ReviewItemRouter({ data }: { data: ReviewItemData }) {
   if (data.type === 'parent_summary') return <ParentSummaryReviewCard draft={data.item} />
   if (data.type === 'curriculum_builder') return <CurriculumBuilderDraftCard draft={data.item} />
   if (data.type === 'curriculum_adjustment') return <CurriculumAdjustmentReviewCard draft={data.item} />
+  if (data.type === 'badge_award' || data.type === 'mission_assignment') return <BadgeMissionReviewCard draft={data.item} />
+  if (data.type === 'video_visibility') return <VideoVisibilityReviewCard draft={data.item} />
+  if (data.type === 'knowledge_promotion') return <KnowledgePromotionReviewCard draft={data.item} />
   return <UnsupportedCard targetModule={data.targetModule} actionId={data.actionId} />
 }

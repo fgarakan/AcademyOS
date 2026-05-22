@@ -8,6 +8,7 @@ import type { ReviewItemData } from './ReviewItemRouter'
 import { DonnaReviewContextPanel } from './DonnaReviewContextPanel'
 import { ApprovalPreviewCard } from '@/components/review/ApprovalPreviewCard'
 import { buildApprovalPreview } from '@/lib/review/approvalPreview'
+import { ReviewAuditTrailPanel } from './ReviewAuditTrailPanel'
 import type { SessionActualDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpDraftAction'
 import type { AttendanceExceptionPayload } from '@/app/director/sessions/[sessionId]/attendanceExceptionDraftAction'
 import type { CoachObservationDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpObservationsAction'
@@ -20,6 +21,9 @@ import type { LevelMovementPayload } from '@/app/director/review/LevelMovementRe
 import type { ParentSummaryPayload } from '@/app/director/review/ParentSummaryReviewCard'
 import type { CurriculumBuilderDraftPayload } from '@/app/director/review/CurriculumBuilderDraftCard'
 import type { CurriculumAdjustmentPayload } from '@/app/director/review/CurriculumAdjustmentReviewCard'
+import type { BadgeMissionPayload } from '@/app/director/review/BadgeMissionReviewCard'
+import type { VideoVisibilityPayload } from '@/app/director/review/VideoVisibilityReviewCard'
+import type { KnowledgePromotionPayload } from '@/app/director/review/KnowledgePromotionReviewCard'
 
 const MODULE_LABEL: Record<string, string> = {
   session_wrap_up_v1: 'Session Wrap-Up',
@@ -39,7 +43,7 @@ const MODULE_LABEL: Record<string, string> = {
 // Determine which entity type this module links to
 function entityType(module: string): 'session' | 'player' | 'none' {
   if (['session_wrap_up_v1', 'attendance_exception', 'session_recap_structuring'].includes(module)) return 'session'
-  if (['coach_observation_draft_v1', 'priority_recommendation', 'requirement_evidence_link', 'development_summary_draft_v1', 'level_review', 'parent_communication'].includes(module)) return 'player'
+  if (['coach_observation_draft_v1', 'priority_recommendation', 'requirement_evidence_link', 'development_summary_draft_v1', 'level_review', 'parent_communication', 'badge_award', 'mission_assignment', 'video_visibility_change'].includes(module)) return 'player'
   return 'none'
 }
 
@@ -284,6 +288,58 @@ export default async function ReviewItemDetailPage({
         payload: action.proposed_payload as unknown as CurriculumAdjustmentPayload,
       },
     }
+  } else if (targetModule === 'badge_award') {
+    itemData = {
+      type: 'badge_award',
+      item: {
+        id: action.id,
+        status: action.status,
+        createdAt: action.created_at,
+        targetModule: 'badge_award',
+        playerId,
+        playerName,
+        proposerName,
+        payload: action.proposed_payload as unknown as BadgeMissionPayload,
+      },
+    }
+  } else if (targetModule === 'mission_assignment') {
+    itemData = {
+      type: 'mission_assignment',
+      item: {
+        id: action.id,
+        status: action.status,
+        createdAt: action.created_at,
+        targetModule: 'mission_assignment',
+        playerId,
+        playerName,
+        proposerName,
+        payload: action.proposed_payload as unknown as BadgeMissionPayload,
+      },
+    }
+  } else if (targetModule === 'video_visibility_change') {
+    itemData = {
+      type: 'video_visibility',
+      item: {
+        id: action.id,
+        status: action.status,
+        createdAt: action.created_at,
+        playerId,
+        playerName,
+        proposerName,
+        payload: action.proposed_payload as unknown as VideoVisibilityPayload,
+      },
+    }
+  } else if (targetModule === 'knowledge_promotion') {
+    itemData = {
+      type: 'knowledge_promotion',
+      item: {
+        id: action.id,
+        status: action.status,
+        createdAt: action.created_at,
+        proposerName,
+        payload: action.proposed_payload as unknown as KnowledgePromotionPayload,
+      },
+    }
   } else {
     itemData = {
       type: 'unsupported',
@@ -369,6 +425,11 @@ export default async function ReviewItemDetailPage({
             reviewerNotes={action.reviewer_notes ?? null}
           />
           <ApprovalPreviewCard preview={approvalPreview} />
+          <ReviewAuditTrailPanel
+            actionId={actionId}
+            academyId={academyId}
+            playerId={playerId}
+          />
         </div>
       </div>
 
