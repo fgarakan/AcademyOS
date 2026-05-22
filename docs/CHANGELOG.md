@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-22 — Sprint 665 — Empty States Master Pass V1
+
+**Scope:** Audit and standardize empty/no-access states across all portals. Player portal raw Card patterns replaced with EmptyState component.
+
+**What changed:**
+- `src/app/player/fitness-path/page.tsx` — noAccess state: raw Card → `EmptyState` with title + description
+- `src/app/player/practice/page.tsx` — same
+- `src/app/player/level-up/page.tsx` — same
+- `src/app/player/skill-path/page.tsx` — same
+- `docs/EMPTY_STATES_AUDIT_665.md` — full audit doc: what was found, what was fixed, what's acceptable as-is
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 664 — Player Mobile Mission Pass V1
 
 **Scope:** Player portal mobile UX improvements: Ask DONNA icon, hamburger touch target, mission card CTA.

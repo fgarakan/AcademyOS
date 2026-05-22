@@ -4,7 +4,7 @@
 // Director-set focus from active priorities only.
 
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { Card, CardContent } from '@/components/ui'
+import { Card, CardContent, EmptyState } from '@/components/ui'
 import { Zap, CheckCircle2, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { buildPlayerProgressIndicators } from '@/lib/player/progressIndicators'
@@ -146,12 +146,11 @@ export default async function PlayerSkillPathPage() {
       </div>
 
       {noAccess && (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <AlertCircle className="w-7 h-7 text-text-muted mx-auto mb-2" />
-            <p className="text-text-muted text-xs">Ask your director to link your profile to see your skill path.</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<AlertCircle className="w-5 h-5" />}
+          title="Profile not linked"
+          description="Ask your director to link your profile to see your skill path."
+        />
       )}
 
       {!noAccess && (
