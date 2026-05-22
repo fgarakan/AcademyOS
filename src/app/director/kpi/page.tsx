@@ -5,6 +5,7 @@ import {
   type AttendanceRow,
 } from '@/lib/kpi/attendanceKpiEngine'
 import { computeTimeInLevel } from '@/lib/kpi/developmentVelocityKpiEngine'
+import { DonnaKpiExplainerPanel } from '@/components/donna/DonnaKpiExplainerPanel'
 import Link from 'next/link'
 import { AlertTriangle, CheckCircle, Clock } from 'lucide-react'
 
@@ -307,6 +308,13 @@ export default async function KpiDashboardPage() {
         explicit absence markings only; sessions not marked are excluded. Advancement readiness from
         curriculum state.
       </p>
+
+      {/* DONNA KPI explainer entry point */}
+      <DonnaKpiExplainerPanel
+        activePlayers={players.length}
+        advancementReady={playerKpis.filter(p => p.advancementEligible).length}
+        atRiskCount={atRiskCount}
+      />
     </div>
   )
 }

@@ -22,6 +22,7 @@ import { DonnaExecutiveCard, type DonnaExecutivePriorityItem } from './_componen
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
 import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
+import { DonnaDashboardPresenceCTA } from '@/components/donna/DonnaKpiExplainerPanel'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -400,6 +401,15 @@ export default async function DirectorDashboard() {
 
       {/* ── DONNA Executive Attention Card ─────────────────── */}
       <DonnaExecutiveCard items={donnaItems} directorName={directorDisplayName} />
+
+      {/* ── DONNA dashboard presence CTA ─────────────────── */}
+      <DonnaDashboardPresenceCTA
+        pendingWrapUps={pendingWrapUpsCount}
+        attentionCount={attentionCount}
+        pendingCount={pendingCount}
+        newRequests={newRequests}
+        advancementReady={advancementReadyCount}
+      />
 
       {/* ── Recommended next action ───────────────────────── */}
       {priorityAction && (

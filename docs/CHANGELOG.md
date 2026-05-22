@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-05-22 — Sprint 621 — DONNA KPI Fluency Dashboard Presence V1
+
+**Scope:** UI wiring only. Three P0 DONNA entry points added across /director/kpi, /director, and /director/players. No new server actions. No migrations. No RLS changes. No DB writes. No parent/player data exposure. No mutations.
+
+**What changed:** DONNA now has a presence chip on the 3 most-visited director routes that previously had zero DONNA connectivity. Each chip fires `donna:open` with a context-injected prompt built from pre-computed server-side signals. Safety copy on every entry point.
+
+**Files created:**
+- `src/components/donna/DonnaKpiExplainerPanel.tsx` — client component exporting DonnaKpiExplainerPanel (3 chips for /director/kpi), DonnaDashboardPresenceCTA ("What should I do first?" for /director), DonnaPlayersPresenceCTA ("Who needs attention?" for /director/players). All fire donna:open CustomEvent. No mutations.
+- `src/lib/donna/directorKpiDonnaContext.ts` — pure TypeScript context string builders (buildKpiPageDonnaPrompt, buildDashboardDonnaPrompt, buildPlayersPageDonnaPrompt). No DB calls. No imports from server modules.
+
+**Files modified:**
+- `src/app/director/kpi/page.tsx` — imported and rendered DonnaKpiExplainerPanel with activePlayers, advancementReady, atRiskCount props
+- `src/app/director/page.tsx` — imported and rendered DonnaDashboardPresenceCTA after DonnaExecutiveCard with pendingWrapUps, attentionCount, pendingCount, newRequests, advancementReady props
+- `src/app/director/players/page.tsx` — imported and rendered DonnaPlayersPresenceCTA before PlayersDirectoryClient with activePlayers, missingCurriculumCount, advancementReadyCount props
+- `src/lib/donna/directorCoverageRegistry.ts` — updated scores for /director/kpi (1→3), /director (4→5), /director/players (1→3); updated hasPresence, isPageAware, missingContext, missingActions for all three routes
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean — npx tsc --noEmit passed with no errors.
+
+**Score changes (conservative):**
+- /director/kpi: 1→3 (entry points added; kpiExplainer.ts output still not wired to DONNA response)
+- /director: 4→5 (DONNA CTA with context-injected prompt; canRecommend now true)
+- /director/players: 1→3 (entry point added; per-player intelligence still missing from response)
+
+**Remaining P0 gaps on these routes:**
+- kpiExplainer.ts output not connected to DONNA's response — DONNA still uses keyword classifier to respond
+- DONNA cannot name specific at-risk players by name in its response (no per-player signal in context)
+- No cross-page session memory — context resets on navigation
+
+---
+
 ## 2026-05-22 — Sprint 620 — DONNA Full COO Readiness Audit V1
 
 **Scope:** Full-system DONNA audit. No runtime features built. No migrations. No RLS changes. No new DONNA actions. No new buttons. No DB calls. No AI calls. No mutations. Audit-only sprint.

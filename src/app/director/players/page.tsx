@@ -3,6 +3,7 @@ import { Upload, Users, UserPlus, Zap, ChevronRight } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { PlayersDirectoryClient } from './_components/PlayersDirectoryClient'
+import { DonnaPlayersPresenceCTA } from '@/components/donna/DonnaKpiExplainerPanel'
 
 export interface PlayerCurriculumEntry {
   levelName: string
@@ -148,6 +149,13 @@ export default async function PlayersPage() {
           </div>
         </div>
       )}
+
+      {/* DONNA players presence entry point */}
+      <DonnaPlayersPresenceCTA
+        activePlayers={players.length}
+        missingCurriculumCount={missingCurriculumCount}
+        advancementReadyCount={advancementReadyPlayers.length}
+      />
 
       <PlayersDirectoryClient players={players} curriculumMap={curriculumMap} />
     </div>
