@@ -18,6 +18,8 @@ import type { StructuredDraftPayload } from '@/app/director/sessions/[sessionId]
 import type { CurriculumOverrideDraftPayload } from '@/lib/actions/curriculumOverrideDraft'
 import type { LevelMovementPayload } from '@/app/director/review/LevelMovementReviewCard'
 import type { ParentSummaryPayload } from '@/app/director/review/ParentSummaryReviewCard'
+import type { CurriculumBuilderDraftPayload } from '@/app/director/review/CurriculumBuilderDraftCard'
+import type { CurriculumAdjustmentPayload } from '@/app/director/review/CurriculumAdjustmentReviewCard'
 
 const MODULE_LABEL: Record<string, string> = {
   session_wrap_up_v1: 'Session Wrap-Up',
@@ -258,6 +260,28 @@ export default async function ReviewItemDetailPage({
         playerName,
         proposerName,
         payload: action.proposed_payload as unknown as ParentSummaryPayload,
+      },
+    }
+  } else if (targetModule === 'curriculum_builder') {
+    itemData = {
+      type: 'curriculum_builder',
+      item: {
+        id: action.id,
+        status: action.status,
+        createdAt: action.created_at,
+        proposerName,
+        payload: action.proposed_payload as unknown as CurriculumBuilderDraftPayload,
+      },
+    }
+  } else if (targetModule === 'curriculum_adjustment') {
+    itemData = {
+      type: 'curriculum_adjustment',
+      item: {
+        id: action.id,
+        status: action.status,
+        createdAt: action.created_at,
+        proposerName,
+        payload: action.proposed_payload as unknown as CurriculumAdjustmentPayload,
       },
     }
   } else {

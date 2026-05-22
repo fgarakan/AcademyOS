@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-22 — Sprint 636 — Curriculum Draft Review Flow V1
+
+**Scope:** Wire curriculum_builder and curriculum_adjustment proposed_actions into the review item detail page. No new server actions. No migrations. No direct curriculum mutations.
+
+**What changed:**
+- Created `src/app/director/review/CurriculumAdjustmentReviewCard.tsx` — shows adjustment_type, target_level, proposed_change, reason, affected_players, warnings. Decision controls via `DonnaIntelligenceDraftDecisionControls`. Apply step via `DonnaCurriculumAdjustmentApplyControls` (Sprint 285 — creates versioned override, writes audit log). Internal notes on parent/player visibility (none) and scope (no direct curriculum spine mutation).
+- Modified `src/app/director/review/[actionId]/ReviewItemRouter.tsx` — added `curriculum_builder` and `curriculum_adjustment` to `ReviewItemData` union; renders `CurriculumBuilderDraftCard` (existing) and `CurriculumAdjustmentReviewCard` (new)
+- Modified `src/app/director/review/[actionId]/page.tsx` — added `curriculum_builder` and `curriculum_adjustment` itemData branches; added type imports
+
+**Safety verification:**
+- curriculum_builder: no apply path exists in the existing card — approval captures decision only
+- curriculum_adjustment: apply creates versioned override record (no direct spine/template mutation)
+- No parent/player visibility change for either type
+- No notifications sent
+- No RLS changes
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 635 — Parent Summary Review Flow V1
 
 **Scope:** Wire parent_communication proposed_actions into the review item detail page. Review-and-approve only — no send path exists. No raw coach notes displayed.

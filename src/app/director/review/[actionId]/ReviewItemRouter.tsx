@@ -20,6 +20,10 @@ import { LevelMovementReviewCard } from '@/app/director/review/LevelMovementRevi
 import type { EnrichedLevelMovementDraftItem } from '@/app/director/review/LevelMovementReviewCard'
 import { ParentSummaryReviewCard } from '@/app/director/review/ParentSummaryReviewCard'
 import type { EnrichedParentSummaryDraftItem } from '@/app/director/review/ParentSummaryReviewCard'
+import { CurriculumBuilderDraftCard } from '@/app/director/review/CurriculumBuilderDraftCard'
+import type { CurriculumBuilderDraftItem } from '@/app/director/review/CurriculumBuilderDraftCard'
+import { CurriculumAdjustmentReviewCard } from '@/app/director/review/CurriculumAdjustmentReviewCard'
+import type { EnrichedCurriculumAdjustmentDraftItem } from '@/app/director/review/CurriculumAdjustmentReviewCard'
 
 export type ReviewItemData =
   | { type: 'wrap_up'; item: EnrichedWrapUpDraftItem }
@@ -32,6 +36,8 @@ export type ReviewItemData =
   | { type: 'curriculum_override'; item: EnrichedCurriculumOverrideDraftItem }
   | { type: 'level_review'; item: EnrichedLevelMovementDraftItem }
   | { type: 'parent_summary'; item: EnrichedParentSummaryDraftItem }
+  | { type: 'curriculum_builder'; item: CurriculumBuilderDraftItem }
+  | { type: 'curriculum_adjustment'; item: EnrichedCurriculumAdjustmentDraftItem }
   | { type: 'unsupported'; targetModule: string; actionId: string; status: string; createdAt: string }
 
 function UnsupportedCard({ targetModule, actionId }: { targetModule: string; actionId: string }) {
@@ -65,5 +71,7 @@ export function ReviewItemRouter({ data }: { data: ReviewItemData }) {
   if (data.type === 'curriculum_override') return <CurriculumOverrideDraftCard draft={data.item} />
   if (data.type === 'level_review') return <LevelMovementReviewCard draft={data.item} />
   if (data.type === 'parent_summary') return <ParentSummaryReviewCard draft={data.item} />
+  if (data.type === 'curriculum_builder') return <CurriculumBuilderDraftCard draft={data.item} />
+  if (data.type === 'curriculum_adjustment') return <CurriculumAdjustmentReviewCard draft={data.item} />
   return <UnsupportedCard targetModule={data.targetModule} actionId={data.actionId} />
 }
