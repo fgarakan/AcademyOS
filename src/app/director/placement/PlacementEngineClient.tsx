@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { ChevronRight, Check, Loader2, AlertTriangle, Users, Zap } from 'lucide-react'
+import { ChevronRight, Check, Loader2, AlertTriangle, Users, Zap, Sparkles } from 'lucide-react'
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -11,6 +11,7 @@ import {
   approvePlacementDraftAction,
   activatePlayerAction,
 } from './placementDraftAction'
+import { buildPlacementDonnaChip } from '@/lib/donna/assessmentDonnaContext'
 
 export interface PendingPlayer {
   id: string
@@ -317,6 +318,12 @@ interface Props {
   levels: LevelOption[]
 }
 
+const placementChip = buildPlacementDonnaChip()
+
+function openDonnaWithPlacementPrompt() {
+  window.dispatchEvent(new CustomEvent('donna:open', { detail: { prompt: placementChip.prompt } }))
+}
+
 export function PlacementEngineClient({ players, academyId, groups, levels }: Props) {
   if (players.length === 0) {
     return (
@@ -339,6 +346,21 @@ export function PlacementEngineClient({ players, academyId, groups, levels }: Pr
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 px-0.5">
+        <p className="text-xs text-text-muted">
+          Review each player and create a placement draft to begin.
+        </p>
+        <button
+          type="button"
+          onClick={openDonnaWithPlacementPrompt}
+          title={placementChip.safetyNote}
+          className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-lime transition-colors shrink-0"
+        >
+          <Sparkles className="w-3 h-3 shrink-0" />
+          Ask DONNA
+        </button>
+      </div>
+
       {players.map(player => (
         <PlayerPlacementCard
           key={player.id}

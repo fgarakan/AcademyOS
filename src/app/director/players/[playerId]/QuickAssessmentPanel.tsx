@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Loader2, CheckCircle, AlertCircle, ClipboardList } from 'lucide-react'
+import { Loader2, CheckCircle, AlertCircle, ClipboardList, Sparkles } from 'lucide-react'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { quickAssessmentAction } from './quickAssessmentAction'
+import { buildAssessmentDonnaChip } from '@/lib/donna/assessmentDonnaContext'
 
 interface Props {
   playerId: string
@@ -40,6 +41,12 @@ function ratingColor(v: Rating | null): string {
   if (v === 2) return 'bg-status-orange/10 text-status-orange border-status-orange/40'
   if (v === 3) return 'bg-lime/10 text-lime border-lime/40'
   return 'bg-status-green/10 text-status-green border-status-green/40'
+}
+
+const donnaChip = buildAssessmentDonnaChip()
+
+function openDonnaWithAssessmentPrompt() {
+  window.dispatchEvent(new CustomEvent('donna:open', { detail: { prompt: donnaChip.prompt } }))
 }
 
 export function QuickAssessmentPanel({ playerId }: Props) {
@@ -104,14 +111,25 @@ export function QuickAssessmentPanel({ playerId }: Props) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
-            <ClipboardList className="w-4 h-4 text-text-muted" />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
+              <ClipboardList className="w-4 h-4 text-text-muted" />
+            </div>
+            <div>
+              <p className="font-semibold text-text-primary text-sm">Quick Assessment</p>
+              <p className="text-text-muted text-xs">Rate any domain — saved as ad-hoc, no level change</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-text-primary text-sm">Quick Assessment</p>
-            <p className="text-text-muted text-xs">Rate any domain — saved as ad-hoc, no level change</p>
-          </div>
+          <button
+            type="button"
+            onClick={openDonnaWithAssessmentPrompt}
+            title={donnaChip.safetyNote}
+            className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-lime transition-colors shrink-0"
+          >
+            <Sparkles className="w-3 h-3 shrink-0" />
+            Ask DONNA
+          </button>
         </div>
       </CardHeader>
       <CardContent className="space-y-3 pt-0">

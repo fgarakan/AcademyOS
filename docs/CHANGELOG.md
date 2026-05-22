@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-22 — Sprint 615 — DONNA Assessment Placement Wiring V1
+
+**Scope:** Read-only DONNA context entry points in the Quick Assessment panel and Placement Engine. Pure TypeScript context helpers + two UI wiring points. No migrations, no RLS changes, no new mutations, no new server actions.
+
+**Audit findings:**
+- `draft_assessment_recommendation` (registry): `partially_implemented` — proposed_action shape not yet defined; `quickAssessmentAction.ts` writes directly to `assessments` and is not a DONNA draft path. No safe DONNA server action exists.
+- `propose_player_placement` (registry): `implemented_not_wired` — `placementDraftAction.ts` writes directly to `placement_recommendations`, bypassing the proposed_actions pipeline. DONNA must not call it.
+- Decision: both entry points are read-only CTAs using the existing `donna:open` CustomEvent pattern. Missing backend actions documented as follow-up sprint.
+
+**Files created:**
+- `src/lib/donna/assessmentDonnaContext.ts` — pure TypeScript context helpers; `buildAssessmentDonnaChip()` and `buildPlacementDonnaChip()` return typed `DonnaSuggestionChip` objects (label, prompt, safetyNote); documents the two missing backend actions as a follow-up sprint requirement
+
+**Files modified:**
+- `src/app/director/players/[playerId]/QuickAssessmentPanel.tsx` — added `Sparkles` icon and `buildAssessmentDonnaChip` import; added "Ask DONNA" button to card header (right-aligned); dispatches `donna:open` CustomEvent with assessment focus prompt; no props changed
+- `src/app/director/placement/PlacementEngineClient.tsx` — added `Sparkles` icon and `buildPlacementDonnaChip` import; added DONNA chip row above player placement cards; dispatches `donna:open` CustomEvent with placement guidance prompt; no write path, no calls to existing placement actions
+
+**Key facts:**
+- DONNA entry points are read-only explanatory CTAs — no assessment record created, no placement draft created
+- Both chips use the established `donna:open` CustomEvent pattern (same as `TodayDonnaSuggestionChip`)
+- `safetyNote` is set as the button `title` attribute to reinforce expectations on hover
+- TypeScript: clean (`npx tsc --noEmit` passes with no errors)
+- No migrations. No RLS changes. No new npm packages. No .env changes. No parent/player data exposed.
+
 ## 2026-05-21 — Sprint 606 — DONNA Universal Director Action Registry V1
 
 **Scope:** Foundation-first universal director DONNA action registry. Pure TypeScript — no DB calls, no AI calls, no UI wiring, no migrations, no RLS changes.
