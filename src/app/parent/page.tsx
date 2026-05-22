@@ -1,3 +1,15 @@
+// Sprint 619 — Parent Child Switcher UI V1
+// Key changes from pre-619:
+//   1. searchParams.childId read and validated server-side before any child data fetch.
+//   2. Guardian relationship resolved; all linked players fetched for multi-child resolution.
+//   3. resolveParentChildList() + validateChildBelongsToGuardian() gate every child query.
+//   4. playerIds[0] collapse replaced by validated activeChildId.
+//   5. Lesson request display and form suppressed for multi-child parents:
+//      proposed_actions.target_object_id is null for parent_lesson_request actions —
+//      no player-scoped filter is possible without a schema migration. Hiding prevents
+//      cross-child leakage. Re-enable in a future sprint after the migration is applied.
+//   6. ParentChildSwitcher rendered above content when multiple selectable children exist.
+
 import { MessageSquare, Calendar, Heart, Bell, BookOpen, ShieldCheck, TrendingUp, ArrowRight, ChevronRight, Sparkles } from 'lucide-react'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { ParentSafeProgressPreview } from '@/components/player/ParentSafeProgressPreview'
@@ -9,8 +21,20 @@ import { sanitizeParentFacingText } from '@/lib/communications/parentSafeRespons
 import { buildParentSupportGuide } from '@/lib/parent/parentSupportGuide'
 import type { ParentSupportGuide } from '@/lib/parent/parentSupportGuide'
 import Link from 'next/link'
+import {
+  resolveParentChildList,
+  validateChildBelongsToGuardian,
+  type RawChildInput,
+  type ChildRelationshipRecord,
+  type GuardianRelationshipType,
+} from '@/lib/parent/parentPlayerRelationshipModel'
+import { ParentChildSwitcher } from '@/components/parent/ParentChildSwitcher'
 
-export default async function ParentHome() {
+export default async function ParentHome({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>
+}) {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -39,6 +63,13 @@ export default async function ParentHome() {
     parentSafeStatus: string
   }
   let latestLessonRequest: LessonRequestStatus | null = null
+  // Multi-child state — exposed to render section
+  let selectableChildRecords: ChildRelationshipRecord[] = []
+  let activeChildId: string | null = null
+  // Lesson requests cannot be safely scoped to a child without a migration.
+  // proposed_actions.target_object_id is null for parent_lesson_request.
+  // Safe only when guardian has ≤ 1 selectable child (no sibling leakage possible).
+  let canShowLessonRequest = true
 
   if (user) {
     const rawDb = supabase as any
@@ -55,10 +86,10 @@ export default async function ParentHome() {
     if (!academyId) {
       noMappingReason = 'no_academy'
     } else {
-      // 2. Auth user → guardian record via profile_id
+      // 2. Auth user → guardian record (now fetches relationship for resolver)
       const { data: guardian } = await rawDb
         .from('guardians')
-        .select('id')
+        .select('id, relationship')
         .eq('profile_id', user.id)
         .eq('academy_id', academyId)
         .maybeSingle()
@@ -66,7 +97,7 @@ export default async function ParentHome() {
       if (!guardian) {
         noMappingReason = 'no_guardian_link'
       } else {
-        // 3. Guardian → linked player(s) via player_guardians
+        // 3. Guardian → all linked player IDs
         const { data: pgRows } = await rawDb
           .from('player_guardians')
           .select('player_id')
@@ -78,199 +109,251 @@ export default async function ParentHome() {
         if (playerIds.length === 0) {
           noMappingReason = 'no_player_link'
         } else {
-          // Use first active linked player
-          const { data: playerRow } = await rawDb
+          // 4. Fetch all linked players for multi-child relationship resolution.
+          // No is_active filter here — the resolver marks inactive children as unselectable.
+          const { data: linkedPlayerRows } = await rawDb
             .from('players')
-            .select('id, first_name, last_name, full_name')
-            .eq('id', playerIds[0])
+            .select('id, first_name, last_name, full_name, academy_id, is_active')
+            .in('id', playerIds)
             .eq('academy_id', academyId)
-            .eq('is_active', true)
-            .maybeSingle()
 
-          if (!playerRow) {
+          // Preserve playerIds ordering — IN query result order is not guaranteed.
+          const playerMap = new Map<string, any>(
+            (linkedPlayerRows ?? []).map((p: any) => [p.id as string, p])
+          )
+          const rawChildren: RawChildInput[] = playerIds
+            .map((id: string): RawChildInput | null => {
+              const p = playerMap.get(id)
+              if (!p) return null
+              const rawName: string | null =
+                (p.full_name as string | null) ??
+                (`${(p.first_name as string) ?? ''} ${(p.last_name as string) ?? ''}`.trim() || null)
+              return {
+                playerId: id,
+                playerName: rawName,
+                playerAcademyId: (p.academy_id as string | null) ?? null,
+                isActive: (p.is_active as boolean) ?? false,
+              }
+            })
+            .filter((x): x is RawChildInput => x !== null)
+
+          // 5. Resolve and validate candidate childId from URL search params.
+          // SAFETY: validateChildBelongsToGuardian() only accepts IDs in the
+          // guardian's verified linked list. Unlinked IDs fall back to the default.
+          const candidateChildId: string | null =
+            typeof searchParams.childId === 'string' ? searchParams.childId : null
+          const relationshipType = (guardian.relationship ?? 'parent') as GuardianRelationshipType
+          const resolution = resolveParentChildList(
+            rawChildren,
+            guardian.id as string,
+            academyId,
+            relationshipType,
+          )
+          const validation = validateChildBelongsToGuardian(candidateChildId, resolution)
+
+          // Expose to render scope
+          activeChildId = validation.resolvedChildId
+          selectableChildRecords = resolution.selectableChildren
+          canShowLessonRequest = resolution.selectableChildren.length <= 1
+
+          if (!activeChildId) {
             noMappingReason = 'player_not_active'
           } else {
-            linkedPlayerFirstName = playerRow.first_name ?? playerRow.full_name ?? null
+            // Active player row — guaranteed to be in the verified resolution list
+            const playerRow = playerMap.get(activeChildId) ?? null
 
-            // 4. Curriculum state
-            const { data: csRows } = await rawDb
-              .from('player_curriculum_states')
-              .select('current_level_id')
-              .eq('player_id', playerRow.id)
-              .eq('academy_id', academyId)
-              .limit(1)
-            const currentLevelId: string | null = csRows?.[0]?.current_level_id ?? null
+            if (!playerRow || !(playerRow.is_active as boolean)) {
+              noMappingReason = 'player_not_active'
+            } else {
+              linkedPlayerFirstName =
+                (playerRow.first_name as string | null) ??
+                (playerRow.full_name as string | null) ?? null
 
-            let currentLevelName: string | null = null
-            let currentStage: string | null = null
-            let nextLevelName: string | null = null
-            let coachLangDomain: string | null = null
-            let coachLangDoingWell: string | null = null
-            let coachLangWorkingOn: string | null = null
-            let coachLangCurrentFocus: string | null = null
-            let coachLangNextStep: string | null = null
-
-            if (currentLevelId) {
-              const { data: lvl } = await rawDb
-                .from('curriculum_levels')
-                .select('display_name, stage, sort_order')
-                .eq('id', currentLevelId)
-                .single()
-              currentLevelName = lvl?.display_name ?? null
-              currentStage = lvl?.stage ?? null
-
-              if (lvl?.sort_order != null) {
-                const { data: nextLvl } = await rawDb
-                  .from('curriculum_levels')
-                  .select('display_name')
-                  .gt('sort_order', lvl.sort_order)
-                  .order('sort_order', { ascending: true })
-                  .limit(1)
-                nextLevelName = nextLvl?.[0]?.display_name ?? null
-              }
-
-              // Coach language — sanitize before IDP build (safety layer)
-              const { data: clData } = await rawDb
-                .from('curriculum_coach_language')
-                .select('domain, doing_well, working_on, current_focus, next_step')
-                .eq('level_id', currentLevelId)
+              // 6. Curriculum state
+              const { data: csRows } = await rawDb
+                .from('player_curriculum_states')
+                .select('current_level_id')
+                .eq('player_id', playerRow.id)
+                .eq('academy_id', academyId)
                 .limit(1)
-              const cl = clData?.[0] ?? null
-              if (cl) {
-                coachLangDomain = cl.domain ?? null
-                coachLangDoingWell = cl.doing_well ? sanitizeParentFacingText(cl.doing_well) : null
-                coachLangWorkingOn = cl.working_on ? sanitizeParentFacingText(cl.working_on) : null
-                coachLangCurrentFocus = cl.current_focus ? sanitizeParentFacingText(cl.current_focus) : null
-                coachLangNextStep = cl.next_step ? sanitizeParentFacingText(cl.next_step) : null
+              const currentLevelId: string | null = csRows?.[0]?.current_level_id ?? null
+
+              let currentLevelName: string | null = null
+              let currentStage: string | null = null
+              let nextLevelName: string | null = null
+              let coachLangDomain: string | null = null
+              let coachLangDoingWell: string | null = null
+              let coachLangWorkingOn: string | null = null
+              let coachLangCurrentFocus: string | null = null
+              let coachLangNextStep: string | null = null
+
+              if (currentLevelId) {
+                const { data: lvl } = await rawDb
+                  .from('curriculum_levels')
+                  .select('display_name, stage, sort_order')
+                  .eq('id', currentLevelId)
+                  .single()
+                currentLevelName = lvl?.display_name ?? null
+                currentStage = lvl?.stage ?? null
+
+                if (lvl?.sort_order != null) {
+                  const { data: nextLvl } = await rawDb
+                    .from('curriculum_levels')
+                    .select('display_name')
+                    .gt('sort_order', lvl.sort_order)
+                    .order('sort_order', { ascending: true })
+                    .limit(1)
+                  nextLevelName = nextLvl?.[0]?.display_name ?? null
+                }
+
+                // Coach language — sanitized before IDP build
+                const { data: clData } = await rawDb
+                  .from('curriculum_coach_language')
+                  .select('domain, doing_well, working_on, current_focus, next_step')
+                  .eq('level_id', currentLevelId)
+                  .limit(1)
+                const cl = clData?.[0] ?? null
+                if (cl) {
+                  coachLangDomain = cl.domain ?? null
+                  coachLangDoingWell = cl.doing_well ? sanitizeParentFacingText(cl.doing_well) : null
+                  coachLangWorkingOn = cl.working_on ? sanitizeParentFacingText(cl.working_on) : null
+                  coachLangCurrentFocus = cl.current_focus ? sanitizeParentFacingText(cl.current_focus) : null
+                  coachLangNextStep = cl.next_step ? sanitizeParentFacingText(cl.next_step) : null
+                }
               }
-            }
 
-            // 5. Active priorities (parent-safe fields only)
-            const { data: prioritiesData } = await rawDb
-              .from('player_priorities')
-              .select('title, description, category')
-              .eq('player_id', playerRow.id)
-              .eq('academy_id', academyId)
-              .eq('is_active', true)
-              .order('priority_rank', { ascending: true })
-              .limit(3)
+              // 7. Active priorities (parent-safe fields only)
+              const { data: prioritiesData } = await rawDb
+                .from('player_priorities')
+                .select('title, description, category')
+                .eq('player_id', playerRow.id)
+                .eq('academy_id', academyId)
+                .eq('is_active', true)
+                .order('priority_rank', { ascending: true })
+                .limit(3)
 
-            const activePriorities = (prioritiesData ?? []).map((p: any) => ({
-              title: p.title as string,
-              description: (p.description ?? null) as string | null,
-              category: (p.category ?? null) as string | null,
-            }))
+              const activePriorities = (prioritiesData ?? []).map((p: any) => ({
+                title: p.title as string,
+                description: (p.description ?? null) as string | null,
+                category: (p.category ?? null) as string | null,
+              }))
 
-            // Hoist level info and support guide for the render
-            parentCurrentLevelName = currentLevelName
-            parentNextLevelName = nextLevelName
-            parentSafeDoingWell = coachLangDoingWell
-            if (activePriorities.length > 0) {
-              parentActiveMissionTitle = activePriorities[0].title ?? null
-              parentActiveMissionCategory = activePriorities[0].category ?? null
-            }
-            parentSupportGuide = buildParentSupportGuide({
-              domain: coachLangDomain,
-              levelStage: currentStage,
-              playerFirstName: playerRow.first_name ?? playerRow.full_name ?? 'your child',
-            })
-
-            // 6. Build IDP → parent role view
-            const plan = buildIndividualDevelopmentPlan({
-              player_id: playerRow.id,
-              player_name: playerRow.full_name ?? `${playerRow.first_name ?? ''} ${playerRow.last_name ?? ''}`.trim(),
-              player_first_name: playerRow.first_name ?? playerRow.full_name ?? 'Your child',
-              current_level: currentLevelName,
-              current_stage: currentStage,
-              next_target_level: nextLevelName,
-              active_priorities: activePriorities,
-              coach_language_current_focus: coachLangCurrentFocus,
-              coach_language_next_step: coachLangNextStep,
-              coach_language_doing_well: coachLangDoingWell,
-              coach_language_working_on: coachLangWorkingOn,
-            })
-
-            parentView = buildRoleSpecificIdpView(plan, 'parent') as IdpParentView
-
-            // 7. Session attendance — last 60 days (parent-safe: their own child only)
-            const sixtyDaysAgo = new Date()
-            sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
-            const sixtyDaysAgoStr = sixtyDaysAgo.toISOString().slice(0, 10)
-
-            const { data: attendanceRows } = await rawDb
-              .from('session_attendance')
-              .select('status, session_id')
-              .eq('player_id', playerRow.id)
-              .eq('academy_id', academyId)
-              .limit(30)
-
-            const attendanceData = (attendanceRows ?? []) as Array<{ status: string; session_id: string }>
-
-            // 8. Lesson request status — most recent request submitted by this parent (via proposed_actions)
-            const { data: lessonRows } = await rawDb
-              .from('proposed_actions')
-              .select('status, proposed_payload, created_at')
-              .eq('academy_id', academyId)
-              .eq('proposed_by_id', user!.id)
-              .eq('target_module', 'parent_lesson_request')
-              .order('created_at', { ascending: false })
-              .limit(1)
-
-            const lessonRow = (lessonRows ?? [])[0] as {
-              status: string
-              proposed_payload: any
-              created_at: string
-            } | undefined
-
-            if (lessonRow) {
-              const STATUS_MAP: Record<string, string> = {
-                pending_review: 'Submitted — under review',
-                approved: 'Under review',
-                applied: 'Assigned',
-                rejected: 'Declined',
-                dismissed: 'Closed',
+              parentCurrentLevelName = currentLevelName
+              parentNextLevelName = nextLevelName
+              parentSafeDoingWell = coachLangDoingWell
+              if (activePriorities.length > 0) {
+                parentActiveMissionTitle = activePriorities[0].title ?? null
+                parentActiveMissionCategory = activePriorities[0].category ?? null
               }
-              latestLessonRequest = {
-                preferredDay: lessonRow.proposed_payload?.preferred_day ?? null,
-                focusArea: lessonRow.proposed_payload?.focus_area ?? null,
-                submittedAt: lessonRow.created_at,
-                status: lessonRow.status,
-                parentSafeStatus: STATUS_MAP[lessonRow.status] ?? 'Under review',
-              }
-            }
+              parentSupportGuide = buildParentSupportGuide({
+                domain: coachLangDomain,
+                levelStage: currentStage,
+                playerFirstName: (playerRow.first_name as string | null) ?? (playerRow.full_name as string | null) ?? 'your child',
+              })
 
-            if (attendanceData.length > 0) {
-              const sessionIds = attendanceData.map(r => r.session_id)
-              const { data: sessionRows } = await rawDb
-                .from('sessions')
-                .select('id, name, scheduled_date')
-                .in('id', sessionIds)
-                .gte('scheduled_date', sixtyDaysAgoStr)
-                .order('scheduled_date', { ascending: false })
+              // 8. Build IDP → parent role view
+              const plan = buildIndividualDevelopmentPlan({
+                player_id: playerRow.id,
+                player_name: (playerRow.full_name as string | null) ?? `${(playerRow.first_name as string) ?? ''} ${(playerRow.last_name as string) ?? ''}`.trim(),
+                player_first_name: (playerRow.first_name as string | null) ?? (playerRow.full_name as string | null) ?? 'Your child',
+                current_level: currentLevelName,
+                current_stage: currentStage,
+                next_target_level: nextLevelName,
+                active_priorities: activePriorities,
+                coach_language_current_focus: coachLangCurrentFocus,
+                coach_language_next_step: coachLangNextStep,
+                coach_language_doing_well: coachLangDoingWell,
+                coach_language_working_on: coachLangWorkingOn,
+              })
+
+              parentView = buildRoleSpecificIdpView(plan, 'parent') as IdpParentView
+
+              // 9. Session attendance — last 60 days (parent-safe: active child only)
+              const sixtyDaysAgo = new Date()
+              sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+              const sixtyDaysAgoStr = sixtyDaysAgo.toISOString().slice(0, 10)
+
+              const { data: attendanceRows } = await rawDb
+                .from('session_attendance')
+                .select('status, session_id')
+                .eq('player_id', playerRow.id)
+                .eq('academy_id', academyId)
                 .limit(30)
 
-              const sessionDateMap = new Map<string, { name: string | null; scheduled_date: string }>()
-              for (const s of (sessionRows ?? [])) {
-                sessionDateMap.set(s.id, { name: s.name ?? null, scheduled_date: s.scheduled_date })
+              const attendanceData = (attendanceRows ?? []) as Array<{ status: string; session_id: string }>
+
+              // 10. Lesson request status — only for single-child guardians.
+              // For multi-child parents: proposed_actions.target_object_id is null for
+              // parent_lesson_request actions. Filtering by proposed_by_id: user.id
+              // would return all requests across all children (cross-child leakage).
+              // This section is suppressed until a player-scoped migration exists.
+              if (canShowLessonRequest) {
+                const { data: lessonRows } = await rawDb
+                  .from('proposed_actions')
+                  .select('status, proposed_payload, created_at')
+                  .eq('academy_id', academyId)
+                  .eq('proposed_by_id', user!.id)
+                  .eq('target_module', 'parent_lesson_request')
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+
+                const lessonRow = (lessonRows ?? [])[0] as {
+                  status: string
+                  proposed_payload: any
+                  created_at: string
+                } | undefined
+
+                if (lessonRow) {
+                  const STATUS_MAP: Record<string, string> = {
+                    pending_review: 'Submitted — under review',
+                    approved: 'Under review',
+                    applied: 'Assigned',
+                    rejected: 'Declined',
+                    dismissed: 'Closed',
+                  }
+                  latestLessonRequest = {
+                    preferredDay: lessonRow.proposed_payload?.preferred_day ?? null,
+                    focusArea: lessonRow.proposed_payload?.focus_area ?? null,
+                    submittedAt: lessonRow.created_at,
+                    status: lessonRow.status,
+                    parentSafeStatus: STATUS_MAP[lessonRow.status] ?? 'Under review',
+                  }
+                }
               }
 
-              const recentAttendance = attendanceData
-                .filter(r => sessionDateMap.has(r.session_id))
-                .slice(0, 10)
+              if (attendanceData.length > 0) {
+                const sessionIds = attendanceData.map(r => r.session_id)
+                const { data: sessionRows } = await rawDb
+                  .from('sessions')
+                  .select('id, name, scheduled_date')
+                  .in('id', sessionIds)
+                  .gte('scheduled_date', sixtyDaysAgoStr)
+                  .order('scheduled_date', { ascending: false })
+                  .limit(30)
 
-              attendanceStat = {
-                totalRecorded: recentAttendance.length,
-                presentCount: recentAttendance.filter(r => r.status === 'present' || r.status === 'late').length,
-                absentCount: recentAttendance.filter(r => r.status === 'absent').length,
-                lateCount: recentAttendance.filter(r => r.status === 'late').length,
-                recentSessions: recentAttendance.slice(0, 5).map(r => {
-                  const s = sessionDateMap.get(r.session_id)
-                  return {
-                    date: s?.scheduled_date ?? '',
-                    sessionName: s?.name ?? null,
-                    status: r.status,
-                  }
-                }),
+                const sessionDateMap = new Map<string, { name: string | null; scheduled_date: string }>()
+                for (const s of (sessionRows ?? [])) {
+                  sessionDateMap.set(s.id, { name: s.name ?? null, scheduled_date: s.scheduled_date })
+                }
+
+                const recentAttendance = attendanceData
+                  .filter(r => sessionDateMap.has(r.session_id))
+                  .slice(0, 10)
+
+                attendanceStat = {
+                  totalRecorded: recentAttendance.length,
+                  presentCount: recentAttendance.filter(r => r.status === 'present' || r.status === 'late').length,
+                  absentCount: recentAttendance.filter(r => r.status === 'absent').length,
+                  lateCount: recentAttendance.filter(r => r.status === 'late').length,
+                  recentSessions: recentAttendance.slice(0, 5).map(r => {
+                    const s = sessionDateMap.get(r.session_id)
+                    return {
+                      date: s?.scheduled_date ?? '',
+                      sessionName: s?.name ?? null,
+                      status: r.status,
+                    }
+                  }),
+                }
               }
             }
           }
@@ -290,6 +373,11 @@ export default async function ParentHome() {
         </h1>
         <p className="page-subtitle">Stay connected to your child's tennis development.</p>
       </div>
+
+      {/* ── Child Switcher — rendered only when multiple verified children exist ── */}
+      {selectableChildRecords.length > 1 && (
+        <ParentChildSwitcher records={selectableChildRecords} activeChildId={activeChildId} />
+      )}
 
       {/* ── Approved data banner ──────────────────────────────────── */}
       {parentView && (
@@ -644,10 +732,12 @@ export default async function ParentHome() {
         </CardContent>
       </Card>
 
-      {/* Messages & Updates removed — covered by Updates tab (/parent/updates) */}
-
       {/* ── Private Lesson Request + Status ─────────────────────── */}
-      {parentView && linkedPlayerFirstName && (
+      {/* Shown only when guardian has ≤ 1 selectable child.
+          For multi-child parents: proposed_actions.target_object_id is null for
+          parent_lesson_request — no player-scoped filter is possible. Displaying
+          the status or form could expose cross-child data. Re-enable after migration. */}
+      {parentView && linkedPlayerFirstName && canShowLessonRequest && (
         <>
           {latestLessonRequest && (
             <Card>

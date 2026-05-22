@@ -2,6 +2,62 @@
 
 ---
 
+## 2026-05-22 — Sprint 619 — Parent Child Switcher UI V1
+
+**Scope:** Safety-gated parent child switcher. Server-side childId validation before any child-specific data fetch. Lesson request leakage fixed by suppression for multi-child parents. No migrations, no RLS changes, no dependencies.
+
+**Key implementation decisions:**
+
+**Child ID validation:**
+- `searchParams.childId` is read server-side in `parent/page.tsx`
+- `validateChildBelongsToGuardian(candidateChildId, resolution)` is called before any player-specific query
+- If `candidateChildId` is null, invalid, or unlinked to the guardian: falls back to the first verified selectable child
+- No child data is ever fetched for an unvalidated ID
+
+**Multi-child resolution:**
+- Guardian query now fetches `id, relationship` (previously `id` only)
+- All linked players fetched in one bulk query (previously only `playerIds[0]`)
+- `resolveParentChildList()` from Sprint 618 resolves all children with academy cross-check
+- `playerIds[0]` collapse at line 85 replaced by `validation.resolvedChildId`
+
+**Lesson request leakage fix:**
+- `proposed_actions.target_object_id` is `null` for `parent_lesson_request` actions (confirmed in `requestPrivateLessonAction.ts`)
+- No player-scoped filter is possible without a schema migration
+- Filtering by `proposed_by_id: user.id` alone returns all lesson requests across all children
+- **Fix:** `canShowLessonRequest = resolution.selectableChildren.length <= 1`
+- When `canShowLessonRequest = false`: lesson request status card AND `PrivateLessonRequestCard` form are both hidden
+- Single-child parents (the current common case): behavior unchanged — `canShowLessonRequest = true`
+- Suppression is documented inline in the render JSX
+
+**`ParentChildSwitcher` component:**
+- Returns null when `records.length <= 1` — no visible change for single-child parents
+- Renders horizontal chip row when multiple verified selectable children exist
+- On chip click: `router.push('?childId=encodeURIComponent(playerId)')` — server re-validates on next render
+- Does NOT use `useSearchParams` — no Suspense boundary required
+- Does NOT fetch data, read Supabase, or access coach/assessment/internal data
+
+**Files created:**
+- `src/components/parent/ParentChildSwitcher.tsx` — client component; chip switcher for verified selectable children; returns null for single-child; dispatches `?childId=` URL param
+
+**Files modified:**
+- `src/app/parent/page.tsx` — added `searchParams` prop; guardian query now fetches `relationship`; bulk player fetch replaces single-player fetch; `resolveParentChildList()` + `validateChildBelongsToGuardian()` gate all child queries; `playerIds[0]` collapse replaced; lesson request query and render gated by `canShowLessonRequest`; `ParentChildSwitcher` rendered below header when multiple selectable children exist
+
+**Safety verifications:**
+- One child parent: no switcher rendered; existing behavior preserved; `canShowLessonRequest = true`
+- Invalid `?childId`: `validateChildBelongsToGuardian()` returns `not_linked`; defaults to first verified child
+- Unlinked child ID in URL: no data fetch for that player occurs
+- Multi-child parent: lesson request section hidden; no cross-child leakage
+- No raw coach notes, assessment internals, or private data exposed
+- TypeScript: clean (`npx tsc --noEmit` passes)
+- No migrations. No RLS changes. No new npm packages. No .env changes.
+
+**Remaining limitations:**
+- Stable switcher ordering blocked: `player_guardians.display_order` does not exist (future migration)
+- Per-child default selection blocked: `player_guardians.is_primary_child` does not exist (future migration)
+- Lesson request form for multi-child parents blocked: `proposed_actions.target_object_id` must be set to `playerId` at request creation and a filter added at fetch time (future sprint after migration)
+
+---
+
 ## 2026-05-22 — Sprint 618 — Parent Player Relationship Model V1
 
 **Scope:** Pure TypeScript relationship resolution layer for future parent child switching. No migrations, no UI changes, no parent runtime behavior changes, no RLS changes, no query modifications.
