@@ -113,7 +113,7 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
           changes: answers.adjust ?? '',
           standouts: answers.standouts ?? '',
           attention: answers.attention ?? '',
-          nextFocus: answers.adjust ?? '',
+          nextFocus: answers.followup ?? '',
           groupNote: answers.overall ?? '',
         }
       )
@@ -222,9 +222,19 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
         <p className="text-xs text-text-secondary leading-relaxed">
           {stepIndex === 0
             ? "Let's wrap this up. Quick answers — I'll build the draft as you go. Nothing is sent until the director reviews it."
+            : currentQuestion.key === 'attendance'
+            ? "Any exceptions to normal attendance? Absences, late arrivals, or unregistered players?"
+            : currentQuestion.key === 'standouts'
+            ? "Any players who showed a breakthrough today? Name them — it goes into their record."
+            : currentQuestion.key === 'attention'
+            ? "Who needs more support next session? Be specific — this helps the director prioritize."
+            : currentQuestion.key === 'adjust'
+            ? "What would you change about today's plan for next time? Pacing, drills, energy?"
+            : currentQuestion.key === 'followup'
+            ? "Any items that need director or parent attention? Flag them here."
             : answered >= QUESTIONS.length - 2
-            ? "Almost done — just a couple more questions."
-            : "Keep going — your draft is building in real time below."}
+            ? "Almost done. Your draft is ready to submit."
+            : "Keep going — your draft is building below."}
         </p>
       </div>
 
@@ -303,6 +313,21 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
       {/* Error */}
       {saveError && (
         <p className="text-xs text-status-red mt-3 text-center">{saveError}</p>
+      )}
+
+      {/* Early submit — available once at least one answer exists and not on last question */}
+      {answered > 0 && !isLast && (
+        <div className="flex items-center justify-between mt-3 px-1">
+          <p className="text-[10px] text-text-muted">{answered} answer{answered !== 1 ? 's' : ''} captured</p>
+          <button
+            onClick={handleSave}
+            disabled={isPending}
+            className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-lime/20 bg-lime/5 text-lime hover:bg-lime/10 transition-colors disabled:opacity-50"
+          >
+            {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+            Submit early
+          </button>
+        </div>
       )}
 
       {/* Navigation */}
