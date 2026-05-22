@@ -1,12 +1,17 @@
 // Sprint 640 — Review Approval Audit Trail V1
+// Sprint 667 — Debug IDs + Action Trace V1 (added action ID chip and player ID chip)
 // Server component — reads audit_logs for the current proposed_action.
 // Director-only: the parent page already validates academy_director / head_coach role.
 // No sensitive data exposed. Shows: action, actor (by ID), timestamp, source_type.
 // Uses rawDb for consistency with existing audit_log query pattern (see player profile page).
 
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { ShieldCheck, Clock, User } from 'lucide-react'
+import { ShieldCheck, Clock } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
+
+function shortId(id: string): string {
+  return id.slice(0, 8)
+}
 
 interface AuditEntry {
   id: string
@@ -57,15 +62,29 @@ export async function ReviewAuditTrailPanel({ actionId, academyId, playerId }: P
 
   const entries: AuditEntry[] = rows ?? []
 
+  const debugChips = (
+    <div className="flex flex-wrap gap-1.5 mt-2">
+      <span className="font-mono text-[9px] text-text-muted bg-surface-raised border border-border px-1.5 py-0.5 rounded">
+        action:{shortId(actionId)}
+      </span>
+      {playerId && (
+        <span className="font-mono text-[9px] text-text-muted bg-surface-raised border border-border px-1.5 py-0.5 rounded">
+          player:{shortId(playerId)}
+        </span>
+      )}
+    </div>
+  )
+
   if (entries.length === 0) {
     return (
       <Card>
         <CardContent className="py-4">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-1">
             <ShieldCheck className="w-3.5 h-3.5 text-status-green shrink-0" />
             <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">Audit Trail</p>
           </div>
-          <p className="text-[11px] text-text-muted">No audit events recorded for this item yet.</p>
+          {debugChips}
+          <p className="text-[11px] text-text-muted mt-3">No audit events recorded for this item yet.</p>
         </CardContent>
       </Card>
     )
@@ -74,9 +93,12 @@ export async function ReviewAuditTrailPanel({ actionId, academyId, playerId }: P
   return (
     <Card>
       <CardContent className="py-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-3.5 h-3.5 text-status-green shrink-0" />
-          <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">Audit Trail</p>
+        <div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-status-green shrink-0" />
+            <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">Audit Trail</p>
+          </div>
+          {debugChips}
         </div>
 
         <div className="space-y-2">

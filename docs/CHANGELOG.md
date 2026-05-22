@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-22 — Sprint 667 — Debug IDs + Action Trace V1
+
+**Scope:** Add visible debug identifiers to the review audit trail panel for support traceability.
+
+**What changed:**
+- `src/app/director/review/[actionId]/ReviewAuditTrailPanel.tsx` — Added `shortId()` helper (first 8 chars of UUID); debug chips `action:XXXXXXXX` and `player:XXXXXXXX` rendered in monospace below the Audit Trail header, visible to director only. Removed unused `User` lucide import.
+
+**Safety:** Debug chips show only abbreviated IDs — no sensitive content. Director-only view, no change to data access.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 666 — Error States Master Pass V1
 
 **Scope:** Audit all error.tsx boundaries for consistency. Fixed 2 outliers in director portal.
