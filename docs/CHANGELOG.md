@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-05-22 — Sprint 618 — Parent Player Relationship Model V1
+
+**Scope:** Pure TypeScript relationship resolution layer for future parent child switching. No migrations, no UI changes, no parent runtime behavior changes, no RLS changes, no query modifications.
+
+**Architecture:** Sits between `parentPortalQueries.ts` (data fetch) and `parentMultiChildModel.ts` (session state). Accepts already-fetched, RLS-gated data and resolves, validates, and safety-checks each guardian → child link. Never fetches data itself.
+
+**Key decisions:**
+- `resolveParentChildList()` cross-checks `playerAcademyId` against `guardianAcademyId`; marks records `isSelectable = false` on mismatch, null academy_id, or inactive player
+- `validateChildBelongsToGuardian()` / `buildChildSelectionValidationResult()` never trust a raw candidateChildId — always validates against the guardian's verified list
+- Typed reason codes (`ChildSelectionValidationReason`) enable Sprint 619 to give precise error messages
+- `sortChildRelationships()` is positional-only (queryIndex) with an explicit note that `display_order` doesn't exist yet
+- `getRelationshipColumnGaps()` returns a machine-readable list of all schema gaps, including which sprint they're required for
+- `GuardianRelationshipType` is a type alias of `ParentChildRelationshipKind` from Sprint 617 — no type duplication
+
+**Schema gaps confirmed and documented (migration required — not this sprint):**
+- `player_guardians.display_order` — stable ordering (blocks stable switcher)
+- `player_guardians.is_primary_child` — explicit default child (blocks user-configurable default)
+- `player_guardians.portal_permissions` — per-child visibility (not yet scheduled)
+- `player_guardians.relationship_type` — per-child relationship override (not yet scheduled)
+
+**Cross-child leakage risk (unchanged — blocked pending Sprint 619):**
+- `page.tsx` lesson request query (`proposed_by_id: user!.id`) is guardian-scoped, not child-scoped. Must be fixed in Sprint 619 before the switcher goes live.
+
+**Files created:**
+- `src/lib/parent/parentPlayerRelationshipModel.ts` — types: `GuardianRelationshipType`, `RawChildInput`, `ChildRelationshipRecord`, `RelationshipResolutionResult`, `ChildSelectionValidationReason`, `ChildSelectionValidationResult`, `ParentRelationshipColumnGap`; helpers: `resolveParentChildList()`, `validateChildBelongsToGuardian()`, `buildChildSelectionValidationResult()`, `getDefaultActiveChildId()`, `sortChildRelationships()`, `getChildRelationshipLabel()`, `getSafeChildDisplayLabel()`, `getRelationshipColumnGaps()`
+- `docs/PARENT_PLAYER_RELATIONSHIP_MODEL_618.md` — architecture diagram, safety contract, schema gap table, Sprint 619 readiness checklist, recommended future migration
+
+**Key facts:**
+- No mutations. No DB reads. No auth. No parent UI changes. No child switcher yet.
+- `page.tsx`, `parentPortalQueries.ts`, `parentPortalSummary.ts` — all untouched.
+- TypeScript: clean (`npx tsc --noEmit` passes with no errors)
+- No migrations. No RLS changes. No new npm packages. No .env changes.
+
+---
+
 ## 2026-05-22 — Sprint 617 — Parent Multi-Child Data Model Audit V1
 
 **Scope:** Audit-only. Non-mutating. No migrations, no UI changes, no parent runtime behavior changes, no RLS changes. Pure TypeScript types + helpers + audit document.
