@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-05-22 — Sprint 633 — Approval Preview V1
+
+**Scope:** Wire pre-existing untracked approval preview files into the review item detail page. Preview-only — no apply logic, no DB calls, no mutations.
+
+**Untracked file audit:**
+- `src/lib/review/approvalPreview.ts` — KEPT as-is. Pure TypeScript. Defines `ApprovalPreview` interface and `buildApprovalPreview()` covering 7 module types + safe default. Safe and correct.
+- `src/components/review/ApprovalPreviewCard.tsx` — KEPT as-is. Client presentational component only. No DB calls, no mutations, no server actions. Correct.
+
+**What changed:**
+- `src/app/director/review/[actionId]/page.tsx` — Imported `buildApprovalPreview` and `ApprovalPreviewCard`. Built `approvalPreview` from `targetModule`. Rendered `<ApprovalPreviewCard>` in the right column below `DonnaReviewContextPanel`. Right column now uses `space-y-4` for stacking.
+
+**Preview behavior added:**
+- Level movement → two-step "Apply step required" (orange, irreversible class)
+- Parent communication → "HIGH VISIBILITY RISK — parent will see once send step triggered" (red)
+- Session wrap-up, attendance exception, observation, development summary → standard safe defaults
+- Placement recommendation → "director must call finalize_player_placement()" 
+- Curriculum override → "internal session record only, spine not changed"
+- Unknown modules → safe generic "check module-specific apply path" copy
+
+**Files created in this sprint:** none (files were untracked from prior session)
+**Files staged for the first time:** `src/lib/review/approvalPreview.ts`, `src/components/review/ApprovalPreviewCard.tsx`
+**Files modified:** `src/app/director/review/[actionId]/page.tsx`, `docs/CHANGELOG.md`
+
+**What remains for Sprint 634:** Level movement apply controls — first sprint with real mutation path.
+
+**Confirmation:** No mutations occurred. No DB writes. No approval execution. No parent/player visibility changed.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 632 — Review Item Detail Page V1
 
 **Scope:** Extend DonnaReviewContextPanel with missing sprint-required fields: visibility impact, approval requirement, who can approve, source evidence. No apply logic added. No DB changes.

@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui'
 import { ReviewItemRouter } from './ReviewItemRouter'
 import type { ReviewItemData } from './ReviewItemRouter'
 import { DonnaReviewContextPanel } from './DonnaReviewContextPanel'
+import { ApprovalPreviewCard } from '@/components/review/ApprovalPreviewCard'
+import { buildApprovalPreview } from '@/lib/review/approvalPreview'
 import type { SessionActualDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpDraftAction'
 import type { AttendanceExceptionPayload } from '@/app/director/sessions/[sessionId]/attendanceExceptionDraftAction'
 import type { CoachObservationDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpObservationsAction'
@@ -241,6 +243,7 @@ export default async function ReviewItemDetailPage({
   }
 
   const moduleLabel = MODULE_LABEL[targetModule] ?? targetModule
+  const approvalPreview = buildApprovalPreview(targetModule)
 
   return (
     <div className="animate-fade-in p-6 space-y-6 max-w-5xl">
@@ -299,7 +302,7 @@ export default async function ReviewItemDetailPage({
         <div className="lg:col-span-2">
           <ReviewItemRouter data={itemData} />
         </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-4">
           <DonnaReviewContextPanel
             targetModule={targetModule}
             moduleLabel={moduleLabel}
@@ -313,6 +316,7 @@ export default async function ReviewItemDetailPage({
             riskLevel={action.risk_level ?? null}
             reviewerNotes={action.reviewer_notes ?? null}
           />
+          <ApprovalPreviewCard preview={approvalPreview} />
         </div>
       </div>
 
