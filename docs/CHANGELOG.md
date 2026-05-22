@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-22 — Sprint 629 — DONNA Top Director Route Coverage Pass V1
+
+**Scope:** Pure TypeScript page context additions for two uncovered director routes. Conservative registry update. No DB calls. No mutations.
+
+**What changed:**
+
+Added two missing entries to `donnaPageContextRegistry.ts`:
+- `/director/placement` — Placement Engine: explains what pending players need, what happens on approval, what will NOT happen automatically. Lists: explain_placement_recommendation, summarize_pending_players, explain_what_happens_after_approval. Approval gates: finalize_player_placement, reject_placement_candidate, change_recommended_level.
+- `/director/curriculum/builder` — Curriculum Builder: explains each builder step, what belongs in each level. Approval gates: save_curriculum_changes, publish_curriculum_to_players, modify_level_requirements. Suggested prompts answer all four sprint questions.
+
+Updated `directorCoverageRegistry.ts` conservatively for 4 routes:
+- `/director/curriculum` — hasPresence: false → true (floating button exists at layout level)
+- `/director/signals` — hasPresence: false → true, isPageAware: false → true, score: 1 → 2, tier: not_connected → weak
+- `/director/placement` — hasPresence: false → true, isPageAware: false → true (page context now added)
+- `/director/curriculum/builder` — hasPresence: false → true, isPageAware: false → true, score: 1 → 2, tier: not_connected → weak
+
+Did NOT inflate scores beyond what the page context genuinely provides. `/director/review` and `/director/level-up` untouched (already accurate).
+
+**Files modified:**
+- `src/components/assistant/donnaPageContextRegistry.ts` — 2 new route entries added
+- `src/lib/donna/directorCoverageRegistry.ts` — conservative updates for 4 routes
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 628 — DONNA Action Preview Chat V1
 
 **Scope:** Pure TypeScript action preview layer wired into the director DONNA chat path. No DB calls. No mutations. No AI calls.

@@ -712,6 +712,86 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     ],
   },
 
+  // ── Placement Engine ──────────────────────────────────────────────────────────
+  {
+    routePattern: '/director/placement',
+    screenName: 'Placement Engine',
+    objectType: 'placement_pipeline',
+    purpose:
+      'Place new and pending players into groups and curriculum levels. Placement recommendations are drafted by DONNA — finalized only after your explicit approval.',
+    nextAction: 'Review pending players and confirm or adjust the placement recommendation.',
+    assistantIntro:
+      'I can explain what each pending player needs next and what a placement recommendation means. I cannot finalize a placement — that requires your explicit approval. The only path to activating a player is finalize_player_placement(), which you trigger.',
+    readableContext: [
+      'pending_players',
+      'placement_recommendations',
+      'group_options',
+      'level_options',
+      'assessment_results',
+    ],
+    safeDraftActions: [
+      'explain_placement_recommendation',
+      'summarize_pending_players',
+      'explain_what_happens_after_approval',
+    ],
+    approvalRequiredFor: [
+      'finalize_player_placement',
+      'reject_placement_candidate',
+      'change_recommended_level',
+    ],
+    suggestedPrompts: [
+      'What does this placement recommendation mean?',
+      'What happens when I approve this?',
+      'What actions require approval here?',
+      'What will not happen automatically?',
+    ],
+    unsafeActions: [
+      'auto_place_player',
+      'activate_player_without_approval',
+      'skip_placement_review',
+    ],
+  },
+
+  // ── Curriculum Builder ────────────────────────────────────────────────────────
+  {
+    routePattern: '/director/curriculum/builder',
+    screenName: 'Curriculum Builder',
+    objectType: 'curriculum_setup',
+    purpose:
+      'Build or update your academy curriculum structure — levels, requirements, and content categories. Changes go through a review process before taking effect.',
+    nextAction: 'Complete the current builder step and review before approving.',
+    assistantIntro:
+      'I can explain each builder step and help you understand what to include in each level. I cannot write curriculum automatically — all curriculum changes require your review and approval before they take effect.',
+    readableContext: [
+      'curriculum_structure',
+      'current_builder_step',
+      'level_definitions',
+      'requirement_templates',
+    ],
+    safeDraftActions: [
+      'explain_builder_step',
+      'explain_level_structure',
+      'suggest_what_belongs_in_level',
+      'summarize_curriculum_health',
+    ],
+    approvalRequiredFor: [
+      'save_curriculum_changes',
+      'publish_curriculum_to_players',
+      'modify_level_requirements',
+    ],
+    suggestedPrompts: [
+      'What can DONNA help with here?',
+      'What should I inspect first?',
+      'What actions require approval?',
+      'What will not happen automatically?',
+    ],
+    unsafeActions: [
+      'auto_build_curriculum',
+      'publish_without_approval',
+      'modify_spine_without_review',
+    ],
+  },
+
   // ── Dashboard — registered last so /director prefix doesn't shadow other routes ──
   {
     routePattern: '/director',
