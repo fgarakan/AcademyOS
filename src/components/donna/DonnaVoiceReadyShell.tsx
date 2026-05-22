@@ -32,6 +32,7 @@ import { tryAnswerDashboardPriorityQuestion } from '@/lib/donna/directorDashboar
 import { tryAnswerRosterAttentionQuestion } from '@/lib/donna/directorPlayersDonnaIntelligence'
 import { buildChatMessageFromAnswer } from '@/components/donna/DonnaChatThread'
 import { tryDirectorClarificationOrBlock } from '@/lib/donna/directorClarificationEngine'
+import { tryBuildActionPreview } from '@/lib/donna/directorActionPreview'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -180,6 +181,25 @@ export function DonnaVoiceReadyShell({
             actionId: clarifyOrBlock.actionId,
             confidence: clarifyOrBlock.confidence,
             sourceNote: clarifyOrBlock.sourceNote,
+          })
+        }, 600)
+        return
+      }
+    }
+
+    // Action preview intercept — fires for needs_review intents that passed clarification
+    // (i.e., enough context is present — show what will and will not happen before drafting)
+    if (plainRole === 'director') {
+      const previewAnswer = tryBuildActionPreview(trimmed)
+      if (previewAnswer) {
+        const donnaMsg = buildChatMessageFromAnswer(previewAnswer)
+        setTimeout(() => {
+          setMessages(prev => [...prev, donnaMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, donnaMsg.text, {
+            actionId: previewAnswer.actionId,
+            confidence: previewAnswer.confidence,
+            sourceNote: previewAnswer.sourceNote,
           })
         }, 600)
         return

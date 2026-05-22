@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-05-22 — Sprint 628 — DONNA Action Preview Chat V1
+
+**Scope:** Pure TypeScript action preview layer wired into the director DONNA chat path. No DB calls. No mutations. No AI calls.
+
+**What changed:**
+
+Expanded `directorActionPreview.ts` (was untracked stub) with full structured exports:
+- `DirectorActionPreview` — structured shape: title, summary, willHappen[], willNotHappen[], affectedObjectLabel, affectedRoleOrAudience, approvalRequirement, visibilityImpact, safetyClass, confidence, nextStepLabel
+- `buildDirectorActionPreview(intent, text)` — returns full structured preview for parent_summary, level_movement, assessment_or_placement, curriculum_builder, coach_note_summary
+- `getActionPreviewVisibilityRisk(intent)` — returns visibility risk label per intent
+- `getActionPreviewApprovalRequirement(intent)` — returns approval requirement label per intent
+- `getActionPreviewSafetyLabel(intent)` — returns safety class label per intent
+- `tryBuildActionPreview(text)` — main entry point; classifies intent, builds preview, returns DonnaSafeReadAnswer or null
+
+Wired `tryBuildActionPreview` into `DonnaVoiceReadyShell.tsx` between the clarification/block check and the safe-read dispatch. Director-only. Fires only for `needs_review` intents that passed clarification (i.e., enough context was already present).
+
+**Chat intercept order after Sprint 628:**
+1. Boundaries
+2. KPI question (Sprint 622)
+3. Dashboard priority (Sprint 623)
+4. Roster attention (Sprint 624)
+5. Clarification / block (Sprint 627)
+6. **Action preview** (Sprint 628) — for needs_review intents with sufficient context
+7. Safe read dispatch
+8. Fallback
+
+**Files modified/created:**
+- `src/lib/donna/directorActionPreview.ts` — created (was untracked stub, now full implementation)
+- `src/components/donna/DonnaVoiceReadyShell.tsx` — import + action preview intercept block added
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 627 — DONNA Clarifying Question Chat V1
 
 **Scope:** Pure TypeScript clarification layer wired into the director DONNA chat path. No DB calls. No mutations. No AI calls.
