@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-05-22 — Sprint 623 — DONNA Dashboard Priority Answer V1
+
+**Scope:** Pure TypeScript wiring only. No migrations. No RLS changes. No DB writes. No new server actions. No parent/player data exposure. No mutations.
+
+**What changed:** DONNA can now answer "What should I do first?" and similar dashboard priority questions when typed into `/director/donna`. A new pure-TypeScript `directorDashboardDonnaAnswer.ts` module exports `detectDashboardPriorityQuestion`, `buildDashboardPriorityResponse`, and `tryAnswerDashboardPriorityQuestion`. The response uses live `DirectorDonnaContext` signals (missing wrap-ups, at-risk players with names, pending reviews) to give a COO-quality prioritized answer. `detectKpiQuestionType` was tightened to require explicit KPI vocabulary, preventing dashboard questions from being incorrectly routed to the KPI answer path. The intercept fires after the KPI intercept and before the existing safe-read dispatcher.
+
+**Dashboard priority questions now answered:**
+- "What should I do first?"
+- "What should I do today?"
+- "What needs my attention today?"
+- "What is the most important thing right now?"
+- "How healthy is my academy?"
+- "What is the biggest bottleneck?"
+- "What should I fix first?"
+- "What is urgent today?"
+
+**Files created:**
+- `src/lib/donna/directorDashboardDonnaAnswer.ts` — pure TS; `detectDashboardPriorityQuestion`, `buildDashboardPriorityResponse`, `tryAnswerDashboardPriorityQuestion`; COO-quality priority order: wrap-ups → at-risk players (with names) → review queue → healthy state
+
+**Files modified:**
+- `src/lib/donna/donnaSafeReadActions.ts` — `detectKpiQuestionType` now requires explicit KPI vocabulary (`kpi|metric|attendance|recap|progress|velocity|coverage|completion|rate|score`) for explain/priority branches; prevents dashboard questions from matching; trend questions still fire without vocab check
+- `src/components/donna/DonnaVoiceReadyShell.tsx` — dashboard priority intercept added between KPI intercept and `detectActionIdFromText`; imports `tryAnswerDashboardPriorityQuestion`
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean — npx tsc --noEmit passed with no errors.
+
+**Intercept priority order (post Sprint 623):**
+1. KPI question (explicit KPI vocab required)
+2. Dashboard priority question (new)
+3. Existing safe-read/action classifier (today, pending reviews, risks)
+4. Fallback
+
+**Known limitations:**
+- Dashboard chip on `/director` still uses `buildDashboardPriorityAnswer` (takes `DashboardDonnaContext`) — different context shape than hub. No delegation between them — contexts are intentionally separate.
+- No cross-page memory — DONNA does not know what route the director was on before opening the hub
+- No exact named coach accountability unless in `DirectorDonnaContext.academyRisks`
+- No full trend attribution ("why did this change?") — intentional, honest limitation
+- Dashboard chip typed-answer path from Sprint 622 still works independently
+
+---
+
 ## 2026-05-22 — Sprint 622 — DONNA KPI Explainer Response Path V1
 
 **Scope:** Pure TypeScript wiring only. No migrations. No RLS changes. No DB writes. No new server actions. No parent/player data exposure. No mutations.

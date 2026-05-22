@@ -264,11 +264,14 @@ type KpiQuestionType = 'explain' | 'priority' | 'trend'
 
 export function detectKpiQuestionType(text: string): KpiQuestionType | null {
   const t = text.toLowerCase()
+  // Trend questions — "why did X change?" — fire before KPI vocab check
   if (/why|changed|went|dropped|fell|increased|decreased|spiked|worse|better/.test(t)) return 'trend'
+  // Require explicit KPI vocabulary for explain and priority — prevents grabbing dashboard questions
+  const hasKpiVocab = /kpi|metric|attendance|recap|progress|velocity|coverage|completion|rate\b|score\b/.test(t)
+  if (!hasKpiVocab) return null
   if (/explain|what (is|are|does)|mean|how does|tell me about/.test(t)) return 'explain'
   if (/which|first|most|priority|focus|attention|important|urgent|should i/.test(t)) return 'priority'
-  if (/kpi|metric|signal|attendance|recap|progress|velocity|coverage|completion/.test(t)) return 'explain'
-  return null
+  return 'explain'
 }
 
 export function tryAnswerKpiQuestion(

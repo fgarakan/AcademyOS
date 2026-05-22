@@ -28,6 +28,7 @@ import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import type { CoachDonnaContext } from '@/lib/donna/coachDonnaContext'
 import { getSuggestedQuestionsForRole } from '@/lib/donna/donnaSuggestedQuestions'
 import { dispatchSafeReadAction, tryAnswerKpiQuestion, type DonnaSafeReadAnswer } from '@/lib/donna/donnaSafeReadActions'
+import { tryAnswerDashboardPriorityQuestion } from '@/lib/donna/directorDashboardDonnaAnswer'
 import { buildChatMessageFromAnswer } from '@/components/donna/DonnaChatThread'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -123,6 +124,24 @@ export function DonnaVoiceReadyShell({
             actionId: kpiAnswer.actionId,
             confidence: kpiAnswer.confidence,
             sourceNote: kpiAnswer.sourceNote,
+          })
+        }, 600)
+        return
+      }
+    }
+
+    // Dashboard priority intercept — answer "what should I do first?" style questions
+    if (plainRole === 'director' && directorCtx) {
+      const dashAnswer = tryAnswerDashboardPriorityQuestion(trimmed, directorCtx)
+      if (dashAnswer) {
+        const donnaMsg = buildChatMessageFromAnswer(dashAnswer)
+        setTimeout(() => {
+          setMessages(prev => [...prev, donnaMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, donnaMsg.text, {
+            actionId: dashAnswer.actionId,
+            confidence: dashAnswer.confidence,
+            sourceNote: dashAnswer.sourceNote,
           })
         }, 600)
         return
