@@ -6,7 +6,7 @@
 import Link from 'next/link'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
-import { CheckCircle2, Lock, ArrowRight, ChevronRight, Map, AlertCircle, Sparkles } from 'lucide-react'
+import { CheckCircle2, Lock, ArrowRight, ChevronRight, Map, AlertCircle, Sparkles, Award } from 'lucide-react'
 import { buildMissionEngineReport } from '@/lib/player/missionEngine'
 import { MISSION_DEFINITIONS } from '@/lib/player/missionModel'
 import { buildPlayerProgressIndicators } from '@/lib/player/progressIndicators'
@@ -97,7 +97,7 @@ function MissionCard({ priority, status }: MissionCardProps) {
         {isActive && (
           <Link
             href={`/player/missions/${priority.id}`}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-lime hover:text-lime/80 transition-colors ml-auto"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-lime hover:text-lime/80 transition-colors ml-auto min-h-[36px] px-1"
           >
             See details <ArrowRight className="w-3 h-3" />
           </Link>
@@ -232,9 +232,9 @@ export default async function PlayerMissionsPage() {
   }
 
   const total = priorities.length
-  const active   = priorities.filter((_, i) => deriveMissionStatus(priorities[i].priority_rank, total) === 'active')
-  const next     = priorities.filter((_, i) => deriveMissionStatus(priorities[i].priority_rank, total) === 'next')
-  const future   = priorities.filter((_, i) => deriveMissionStatus(priorities[i].priority_rank, total) === 'future')
+  const active  = priorities.filter(p => deriveMissionStatus(p.priority_rank, total) === 'active')
+  const next    = priorities.filter(p => deriveMissionStatus(p.priority_rank, total) === 'next')
+  const future  = priorities.filter(p => deriveMissionStatus(p.priority_rank, total) === 'future')
 
   return (
     <div className="space-y-5">
@@ -316,6 +316,23 @@ export default async function PlayerMissionsPage() {
           )}
           <p className="text-[9px] text-text-muted/60">Suggestion — your coach's mission always takes priority.</p>
         </div>
+      )}
+
+      {/* Badges section — director-awarded only, no self-claim */}
+      {!noMappingReason && (
+        <section className="space-y-2">
+          <p className="label-xs text-text-muted">Badges Earned</p>
+          <Card>
+            <CardContent className="py-6 flex flex-col items-center gap-2.5 text-center">
+              <Award className="w-7 h-7 text-text-muted opacity-50" />
+              <p className="text-sm font-medium text-text-primary">No badges yet</p>
+              <p className="text-xs text-text-muted leading-relaxed max-w-xs">
+                Badges are awarded by your coach when you hit key milestones.
+                Keep working on your mission — your first badge will arrive soon.
+              </p>
+            </CardContent>
+          </Card>
+        </section>
       )}
 
       {/* Level Up discovery */}
