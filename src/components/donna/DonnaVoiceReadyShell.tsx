@@ -31,6 +31,7 @@ import { dispatchSafeReadAction, tryAnswerKpiQuestion, type DonnaSafeReadAnswer 
 import { tryAnswerDashboardPriorityQuestion } from '@/lib/donna/directorDashboardDonnaAnswer'
 import { tryAnswerRosterAttentionQuestion } from '@/lib/donna/directorPlayersDonnaIntelligence'
 import { buildChatMessageFromAnswer } from '@/components/donna/DonnaChatThread'
+import { tryDirectorClarificationOrBlock } from '@/lib/donna/directorClarificationEngine'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -161,6 +162,24 @@ export function DonnaVoiceReadyShell({
             actionId: rosterAnswer.actionId,
             confidence: rosterAnswer.confidence,
             sourceNote: rosterAnswer.sourceNote,
+          })
+        }, 600)
+        return
+      }
+    }
+
+    // Clarification / blocked intent intercept — fires for director after roster check
+    if (plainRole === 'director') {
+      const clarifyOrBlock = tryDirectorClarificationOrBlock(trimmed)
+      if (clarifyOrBlock) {
+        const donnaMsg = buildChatMessageFromAnswer(clarifyOrBlock)
+        setTimeout(() => {
+          setMessages(prev => [...prev, donnaMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, donnaMsg.text, {
+            actionId: clarifyOrBlock.actionId,
+            confidence: clarifyOrBlock.confidence,
+            sourceNote: clarifyOrBlock.sourceNote,
           })
         }, 600)
         return

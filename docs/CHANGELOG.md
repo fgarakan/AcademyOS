@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-05-22 — Sprint 627 — DONNA Clarifying Question Chat V1
+
+**Scope:** Pure TypeScript clarification layer wired into the director DONNA chat path. No DB calls. No mutations. No AI calls.
+
+**What changed:**
+
+Created `directorClarificationEngine.ts` with five exports:
+- `buildClarifyingQuestion(intent, text)` — returns one focused question or null if enough context is present
+- `needsClarification(intentResult, text)` — checks both intent membership and missing context
+- `buildClarifyingAnswer(intentResult, text)` — wraps clarifying question as `DonnaSafeReadAnswer`
+- `buildBlockedRequestAnswer(text)` — specific explanatory blocks for: raw notes to parent, cross-academy, direct mutation
+- `tryDirectorClarificationOrBlock(text)` — single entry point; calls classifier, blocks unsafe intents, asks one question for needs_review intents with missing context
+
+Wired `tryDirectorClarificationOrBlock` into `DonnaVoiceReadyShell.tsx` between the roster attention intercept and the safe-read action dispatch. Director-only. Fires only when all three answer intercepts (KPI, dashboard, roster) have already missed.
+
+Clarification fires for:
+- `parent_summary` — if no player mentioned
+- `level_movement` — if no player or level mentioned
+- `assessment_or_placement` — if no player mentioned
+- `curriculum_builder` — if "add/create/build" with no level/group context
+- `coach_note_summary` — if no player mentioned
+- `ambiguous_context` — always asks for more context
+
+Blocking fires for:
+- Raw coach notes to parents
+- Cross-academy data requests
+- Direct mutations (`move now`, `approve now`, `publish now`)
+
+**Files modified/created:**
+- `src/lib/donna/directorClarificationEngine.ts` — created
+- `src/components/donna/DonnaVoiceReadyShell.tsx` — import + intercept block added
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 626 — DONNA Intent Classifier Upgrade V1
 
 **Scope:** Pure TypeScript classifier upgrade. No DB calls. No AI calls. No mutations. No breaking changes to existing coach classifier.
