@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-22 — Sprint 668 — Admin Support Diagnostic View V1
+
+**Scope:** New director-only support diagnostics page at `/director/support-diagnostics`. Not in sidebar — accessed by URL for support use.
+
+**What changed:**
+- `src/app/director/support-diagnostics/page.tsx` (new) — Shows: academy identity (name + abbreviated ID), data counts (players, coaches, pending actions, sessions, audit events), onboarding checklist status, 5 most recent audit events. Role guard: director or head_coach only. No sidebar item — URL-only access.
+
+**Safety:** IDs abbreviated. No raw personal data. Academy-scoped. Director-visible only.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 667 — Debug IDs + Action Trace V1
 
 **Scope:** Add visible debug identifiers to the review audit trail panel for support traceability.
