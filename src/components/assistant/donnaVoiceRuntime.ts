@@ -190,6 +190,23 @@ export const STEP_STUCK_TIMEOUT_MS = 15_000
 /** ms before showing "No transcript yet. Retry or type instead." */
 export const TRANSCRIPT_TIMEOUT_MS = 10_000
 
+// ── Sprint 642 — Speech recognition auto-restart policy ──────────────────────
+// VoiceInputButton persistent mode restarts recognition on silence (onend).
+// These constants define the restart behavior and guard limits.
+
+/** ms to wait before restarting recognition after onend in persistent mode */
+export const VOICE_RESTART_DELAY_MS = 300
+
+/** Max consecutive onend restarts before giving up and showing fallback */
+export const VOICE_MAX_RETRIES = 3
+
+/** Whether a recognition error code is recoverable (retry allowed) */
+export function isRecoverableRecognitionError(errorCode: string): boolean {
+  // 'no-speech' and 'aborted' are expected in persistent mode — retry allowed
+  // 'not-allowed', 'service-not-allowed', 'audio-capture' are non-recoverable
+  return errorCode === 'no-speech' || errorCode === 'aborted'
+}
+
 // ── Demo mode routing ──────────────────────────────────────────────────────────
 // Donna can explain and route to workflows. She never auto-starts them.
 
