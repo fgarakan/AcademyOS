@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-22 — Sprint 616 — DONNA Curriculum Builder Wiring V1
+
+**Scope:** Read-only DONNA context entry points for the curriculum builder. Pure TypeScript context helpers + one UI fix. No migrations, no RLS changes, no curriculum mutations, no new server action calls.
+
+**Audit findings:**
+- `identify_curriculum_gaps` (registry): `answer_only`, `implemented_not_wired`. Gap lib exists. Safe to surface as read-only CTA.
+- `explain_curriculum_builder_step` (registry): `answer_only`, `registry_only`. No backend needed.
+- `draft_curriculum_item` (registry): `draft_only`, `implemented_not_wired`. `saveCurriculumDraftAction` exists in `src/lib/actions/curriculumDraft.ts` and routes through `proposed_actions` — BUT inserts into `voice_commands` first as a hard dependency. Code has a comment: "Schema may need voice_command_id to be optional for curriculum drafts." Fragility confirmed — not safe to wire this sprint.
+- `draft_drill`, `draft_curriculum_mission`, `draft_curriculum_badge`: `registry_only`. No server actions built yet.
+- `DonnaAddDrillDraft`, `DonnaCurriculumNodeAddCard`: UI-only mocks — `handleSubmit()` and `handleDraft()` set local state only; neither calls `saveCurriculumDraftAction`.
+- `CurriculumDonnaPanel` is already rendered on the level detail page (desktop right sidebar) via `CurriculumLevelBuilderExperience`. No gap at `level/[levelId]/page.tsx` level — DONNA panel already present. File not modified.
+- **Bug fixed:** `CurriculumSetupBuilder.tsx` had a button labeled "Ask DONNA to Suggest Priorities" that called `router.push('/director/curriculum/map')` — pushing to the visual map, not to DONNA. Fixed to dispatch `donna:open` with the correct `identify_curriculum_gaps` prompt.
+
+**Files created:**
+- `src/lib/donna/curriculumBuilderDonnaContext.ts` — pure TypeScript chip helpers; `buildCurriculumGapChip()` and `buildCurriculumBuilderExplainChip(stepContext?)` return typed `CurriculumDonnaSuggestionChip` objects; documents `draft_curriculum_item` fragility and all `registry_only` actions as follow-up sprint requirements
+
+**Files modified:**
+- `src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx` — imported `buildCurriculumGapChip`; added module-level `curriculumGapChip` constant and `openDonnaWithCurriculumGapPrompt()` dispatch function; fixed "Ask DONNA to Suggest Priorities" button from incorrect `router.push('/director/curriculum/map')` to correct `donna:open` CustomEvent dispatch; `safetyNote` set as `title` attribute
+
+**Key facts:**
+- Both CTAs are read-only: no curriculum content created, no proposed_action created, no template/session blocks touched
+- `donna:open` CustomEvent pattern consistent with Sprint 615 and `TodayDonnaSuggestionChip`
+- `level/[levelId]/page.tsx` not modified — DONNA panel already present via `CurriculumLevelBuilderExperience`
+- TypeScript: clean (`npx tsc --noEmit` passes with no errors)
+- No migrations. No RLS changes. No new npm packages. No .env changes. No parent/player data exposed.
+
 ## 2026-05-22 — Sprint 615 — DONNA Assessment Placement Wiring V1
 
 **Scope:** Read-only DONNA context entry points in the Quick Assessment panel and Placement Engine. Pure TypeScript context helpers + two UI wiring points. No migrations, no RLS changes, no new mutations, no new server actions.

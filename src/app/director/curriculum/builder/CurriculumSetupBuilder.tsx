@@ -6,6 +6,7 @@ import { Sparkles, Shield, CheckCircle2, ChevronRight, BookOpen, Pencil, X, Sett
 import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes'
 import type { CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 import { CurriculumKeyboardHintBar } from '@/components/curriculum/builder/CurriculumKeyboardHintBar'
+import { buildCurriculumGapChip } from '@/lib/donna/curriculumBuilderDonnaContext'
 
 interface Props {
   initialState: CurriculumSetupState
@@ -79,6 +80,12 @@ const HOW_IT_WORKS = [
     desc: 'Nothing goes live until you review and approve every change.',
   },
 ]
+
+const curriculumGapChip = buildCurriculumGapChip()
+
+function openDonnaWithCurriculumGapPrompt() {
+  window.dispatchEvent(new CustomEvent('donna:open', { detail: { prompt: curriculumGapChip.prompt } }))
+}
 
 export function CurriculumSetupBuilder({ levels = [] }: Props) {
   const router = useRouter()
@@ -212,7 +219,8 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={() => router.push('/director/curriculum/map')}
+                onClick={openDonnaWithCurriculumGapPrompt}
+                title={curriculumGapChip.safetyNote}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
                 style={{
                   background: 'rgba(17,217,223,0.04)',
