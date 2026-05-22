@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-05-22 — Sprint 630 — DONNA COO Score Re-Audit V1
+
+**Scope:** Re-audit and re-score DONNA COO readiness after Sprints 621–629. Pure TypeScript scorecard update + doc. No DB calls. No mutations.
+
+**What changed:**
+
+Updated `donnaCooReadinessScorecard.ts` sprint 620 → 630 with honest evidence-based re-scores:
+- overallCooReadiness: 4 → 5
+- kpiFluency: 2 → 4 (KPI explainer wired into chat)
+- conversationalQuality: 3 → 5 (KPI, dashboard priority, roster, clarification, preview, cross-page memory)
+- routeConnectivity: 4 (unchanged — chat improvements are /director/donna scoped)
+- reviewApprovalSafety: 7 (unchanged — apply path gaps remain)
+- parentPlayerSafety: 8 (unchanged)
+- voiceReadiness: 3 (unchanged — Sprints 641-650 planned)
+- mobileUsability: 3 (unchanged — Sprints 661-664 planned)
+
+Created `docs/DONNA_COO_SCORE_REAUDIT_630.md`:
+- Full dimension-by-dimension evidence and rationale
+- P0 gaps resolved vs remaining (0 P0 gaps remaining)
+- Remaining P1 gaps with sprint plan
+- Honest readiness statement: pilot-approaching, not premium-V1-ready
+
+**Files modified/created:**
+- `src/lib/donna/donnaCooReadinessScorecard.ts` — sprint number and scores updated
+- `docs/DONNA_COO_SCORE_REAUDIT_630.md` — created
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 629 — DONNA Top Director Route Coverage Pass V1
 
 **Scope:** Pure TypeScript page context additions for two uncovered director routes. Conservative registry update. No DB calls. No mutations.

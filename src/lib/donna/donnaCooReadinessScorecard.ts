@@ -78,66 +78,62 @@ export function computeDonnaCooReadinessScorecard(): DonnaCooReadinessScorecard 
   const registryOnlyActions = actionCoverage.missing
 
   return {
-    sprint: 620,
+    sprint: 630,
     date: '2026-05-22',
 
-    // ── Dimension scoring rationale ───────────────────────────────────────────
+    // ── Dimension scoring rationale (Sprint 630 re-audit) ─────────────────────
     //
-    // overallCooReadiness: 4
-    //   DONNA has solid safety foundations and a complete action registry, but
-    //   most director routes have no DONNA presence, the intent classifier is
-    //   keyword-only (9 categories), KPI page has zero DONNA entry points,
-    //   voice does not persist across navigation, and conversational quality is
-    //   limited to the /director/donna page. A pilot director asking "What should
-    //   I focus on today?" from /director gets nothing. Score: 4 (partially ready).
+    // overallCooReadiness: 5 (up from 4)
+    //   KPI explainer wired (Sprints 621-622), dashboard priority answered (623),
+    //   roster intelligence answered with named players (624), cross-page session
+    //   context (625), intent classifier upgraded 9→13 families (626), clarification
+    //   layer (627), action preview (628), 2 new route contexts (629).
+    //   DONNA is pilot-approaching but NOT voice-ready or mobile-ready.
     //
-    // routeConnectivity: 4
-    //   Average score across 26 routes is 4.1/10. 11/26 routes score 1 (not connected).
-    //   Only 4/26 routes score ≥8. 15/26 routes have no DONNA presence at all.
+    // routeConnectivity: 4 (unchanged)
+    //   Route average score ~4.3/10 (26 routes). Chat improvements are scoped to
+    //   /director/donna — floating button always existed everywhere. 2 new route
+    //   context entries (placement, curriculum/builder) help orientation but do not
+    //   raise functional DONNA capability on those routes. 4/26 routes score ≥8.
     //
-    // kpiFluency: 2
-    //   kpiExplainer.ts (Sprint 466) has 12 KPI templates. None are wired.
-    //   /director/kpi scores 1 in coverage registry. DONNA cannot answer any KPI
-    //   question from any page. The KPI page itself only surfaces 2 signals
-    //   (attendance, time-in-level) via custom calculation — not the 12-KPI model.
+    // kpiFluency: 4 (up from 2)
+    //   kpiExplainer.ts now wired into DONNA chat (Sprints 621-622). Director can
+    //   ask: "Explain attendance rate", "Which KPI is most urgent?", "Why is recap
+    //   completion low?". Gaps: KPI page has no per-metric chip; trend attribution
+    //   not wired ("why did attendance drop?" gets honest limitation response).
     //
-    // conversationalQuality: 3
-    //   DonnaDirectorShellClient exists on /director/donna and can surface
-    //   attention items and risks from live context. Intent classifier is
-    //   keyword-only (9 categories). Cannot handle: "why did attendance drop?",
-    //   "which curriculum areas are weak?", "what should I tell Brian?", any
-    //   strategic or multi-step question. No cross-page context persistence.
+    // conversationalQuality: 5 (up from 3)
+    //   DONNA now handles: KPI explanation, dashboard priority, roster attention,
+    //   one clarifying question, action preview with willHappen/willNotHappen,
+    //   cross-page memory. Cannot handle: strategic questions, curriculum health,
+    //   multi-step conversations, entity resolution across sessions.
     //
-    // reviewApprovalSafety: 7
-    //   Review queue is well-built and well-connected. approve/reject are wired.
-    //   proposed_actions pipeline is the architectural foundation. Two gaps:
-    //   (1) DonnaLevelMovementApplyControls not wired to DonnaDraftCard,
-    //   (2) fitness template session generation bypasses proposed_actions.
-    //   execute_approved_action() covers 11/15 action types.
+    // reviewApprovalSafety: 7 (unchanged)
+    //   proposed_actions pipeline is the architectural foundation. approve/reject wired.
+    //   Action preview (Sprint 628) adds clarity before any draft. Remaining gaps:
+    //   DonnaLevelMovementApplyControls not wired, fitness template bypasses pipeline,
+    //   4 action types lack apply paths. Target: Sprint 631-640 block.
     //
-    // parentPlayerSafety: 8
+    // parentPlayerSafety: 8 (unchanged)
     //   parentSafeResponseRules.ts, observationVisibilityGuardrails.ts,
-    //   donnaTrustBoundaryValidator.ts, and donnaBoundaryResponses.ts all exist.
-    //   Raw coach notes are blocked at library level. block_unsafe_parent_visibility_request
-    //   is implemented and wired. Score drops from 9 because runtime enforcement
-    //   is not tested end-to-end in a formal test suite.
+    //   donnaTrustBoundaryValidator.ts, donnaBoundaryResponses.ts all exist.
+    //   Sprint 627 blocking fires for raw notes to parents in chat.
+    //   Gap: no formal end-to-end test suite.
     //
-    // voiceReadiness: 3
+    // voiceReadiness: 3 (unchanged)
     //   Browser SpeechRecognition (Chrome/Edge only). continuous=false — ends on
-    //   silence. No auto-restart. No transcript editing. No multi-turn context.
-    //   No name disambiguation. useSpeechOutput.ts exists for TTS. Voice intake
-    //   works in command-center for structured commands only.
+    //   silence. No auto-restart. No transcript editing. No name disambiguation.
+    //   Target: Sprint 641-650 voice reliability block.
     //
-    // mobileUsability: 3
-    //   Director portal uses fixed sidebar (w-60) + flex-1 layout — not
-    //   mobile-optimized. DONNA shell on /director/donna is 560px fixed height.
-    //   No bottom tab bar for director role. Director portal is desktop-first by
-    //   design, but a COO-level assistant must work on a director's phone.
+    // mobileUsability: 3 (unchanged)
+    //   Director portal uses fixed sidebar (w-60) — not mobile-optimized.
+    //   DONNA shell on /director/donna is 560px fixed height.
+    //   Target: Sprint 661-664 mobile polish block.
 
-    overallCooReadiness: 4,
+    overallCooReadiness: 5,
     routeConnectivity: 4,
-    kpiFluency: 2,
-    conversationalQuality: 3,
+    kpiFluency: 4,
+    conversationalQuality: 5,
     reviewApprovalSafety: 7,
     parentPlayerSafety: 8,
     voiceReadiness: 3,
