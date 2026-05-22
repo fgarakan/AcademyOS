@@ -84,6 +84,10 @@ function evaluateMissionProgress(
       }
     case 'mental_focus_week':
       return { status: 'not_started', current: 0, target: 5 }
+    case 'breathe_and_reset':
+      return { status: 'not_started', current: 0, target: 3 }
+    case 'positive_self_talk':
+      return { status: 'not_started', current: 0, target: 3 }
     case 'perfect_attendance_week':
       return { status: 'not_started', current: 0, target: 1 }
     case 'get_assessment_scheduled':

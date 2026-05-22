@@ -12,6 +12,8 @@ export type MissionId =
   | 'complete_level_50pct'
   | 'earn_assessment_badge'
   | 'mental_focus_week'
+  | 'breathe_and_reset'
+  | 'positive_self_talk'
   | 'perfect_attendance_week'
   | 'get_assessment_scheduled'
   | 'complete_curriculum_level'
@@ -144,6 +146,32 @@ export const MISSION_DEFINITIONS: Record<MissionId, MissionDefinition> = {
     estimatedWeeks: 2,
     criteria: { type: 'mental_sessions_gte', threshold: 5, description: '5 sessions with mental focus practised' },
     celebrationMessage: 'Your mental game is levelling up!',
+    isPlayerVisible: true,
+    isParentVisible: false,
+  },
+  breathe_and_reset: {
+    id: 'breathe_and_reset',
+    title: 'Breathe & Reset',
+    description: 'Practice your breathing reset routine in every session this week',
+    playerFacingHint: 'When you feel the pressure, take one breath before your next point.',
+    category: 'mental',
+    difficulty: 'easy',
+    estimatedWeeks: 1,
+    criteria: { type: 'mental_sessions_gte', threshold: 3, description: '3 sessions with reset routine practised' },
+    celebrationMessage: 'Your reset is getting automatic. Big skill!',
+    isPlayerVisible: true,
+    isParentVisible: false,
+  },
+  positive_self_talk: {
+    id: 'positive_self_talk',
+    title: 'Inner Coach',
+    description: 'Replace negative self-talk with a neutral cue in 3 consecutive sessions',
+    playerFacingHint: 'When you make an error, say "next ball" instead of criticizing yourself.',
+    category: 'mental',
+    difficulty: 'medium',
+    estimatedWeeks: 2,
+    criteria: { type: 'mental_sessions_gte', threshold: 3, description: '3 sessions with positive self-talk focus' },
+    celebrationMessage: 'Your inner voice is your best coach. Keep it positive!',
     isPlayerVisible: true,
     isParentVisible: false,
   },
