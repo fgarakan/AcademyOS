@@ -355,6 +355,20 @@ export default async function CoachHome() {
                     </li>
                   ))}
                 </ul>
+              ) : assignedPlayers.length > 0 ? (
+                <div className="text-center py-6 space-y-3">
+                  <FileText className="w-5 h-5 text-text-muted mx-auto opacity-40" />
+                  <p className="text-sm font-medium text-text-primary">No observations yet this week</p>
+                  <p className="text-xs text-text-muted leading-relaxed max-w-xs mx-auto">
+                    Writing a quick note after each session builds {assignedPlayers[0]?.full_name?.split(' ')[0] ?? 'your player'}&apos;s record over time.
+                  </p>
+                  <Link
+                    href="/coach/sessions"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-lime border border-lime/20 bg-lime/5 hover:bg-lime/10 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Go to a session to add a note
+                  </Link>
+                </div>
               ) : (
                 <EmptyState
                   icon={<FileText className="w-5 h-5" />}
