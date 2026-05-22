@@ -200,6 +200,87 @@ export function buildApprovalPreview(targetModule: string | null): ApprovalPrevi
         safetyClass: 'standard',
       }
 
+    case 'badge_award':
+      return {
+        moduleLabel: 'Badge Award',
+        databaseObjectAffected: 'player badge records (apply path not yet built)',
+        parentPlayerVisibility: 'Player and parent badge visibility controlled by apply step — not yet implemented',
+        auditLogRequired: true,
+        auditLogNote: 'Badge award decision recorded in audit_logs when apply path is built',
+        appliesImmediately: false,
+        immediateOrNextStep: 'Approval captured — no badge apply path exists yet. Implement badge award apply action before awarding.',
+        notificationSent: false,
+        notificationNote: 'No notification sent — no badge award apply infrastructure exists',
+        willNotHappenAutomatically: [
+          'Badge is not awarded on approval alone',
+          'Player or parent will not see any badge change',
+          'No apply path exists — future sprint required',
+        ],
+        rollbackNote: 'No badge changes occurred — nothing to roll back',
+        safetyClass: 'standard',
+      }
+
+    case 'mission_assignment':
+      return {
+        moduleLabel: 'Mission Assignment',
+        databaseObjectAffected: 'player mission records (apply path not yet built)',
+        parentPlayerVisibility: 'Mission visibility controlled by apply step — not yet implemented',
+        auditLogRequired: true,
+        auditLogNote: 'Mission assignment decision recorded in audit_logs when apply path is built',
+        appliesImmediately: false,
+        immediateOrNextStep: 'Approval captured — no mission apply path exists yet. Implement mission apply action before assigning.',
+        notificationSent: false,
+        notificationNote: 'No notification sent — no mission assignment apply infrastructure exists',
+        willNotHappenAutomatically: [
+          'Mission is not assigned on approval alone',
+          'Player or parent will not see any mission change',
+          'No apply path exists — future sprint required',
+        ],
+        rollbackNote: 'No mission changes occurred — nothing to roll back',
+        safetyClass: 'standard',
+      }
+
+    case 'video_visibility_change':
+      return {
+        moduleLabel: 'Video Visibility Change',
+        databaseObjectAffected: 'video/media visibility records (apply path not yet built)',
+        parentPlayerVisibility: 'HIGH VISIBILITY RISK — parent/player video visibility will change when apply step is triggered',
+        auditLogRequired: true,
+        auditLogNote: 'Visibility decision recorded in audit_logs when apply path is built',
+        appliesImmediately: false,
+        immediateOrNextStep: 'Approval captured — no video visibility apply path exists yet. Implement visibility apply action before publishing.',
+        notificationSent: false,
+        notificationNote: 'No notification sent — apply path does not exist yet',
+        willNotHappenAutomatically: [
+          'Video visibility does not change on approval alone',
+          'Parent or player cannot access this video until apply step is triggered',
+          'No apply path exists — future sprint required',
+        ],
+        rollbackNote: 'No visibility changed — nothing to roll back',
+        safetyClass: 'high_visibility_risk',
+      }
+
+    case 'knowledge_promotion':
+      return {
+        moduleLabel: 'Knowledge Promotion',
+        databaseObjectAffected: 'global knowledge library (platform-owner approval required)',
+        parentPlayerVisibility: 'Not visible to parents or players until explicitly promoted and published',
+        auditLogRequired: true,
+        auditLogNote: 'Promotion decision recorded in audit_logs',
+        appliesImmediately: false,
+        immediateOrNextStep: 'Academy director approval recorded — platform-owner approval required before global promotion. Apply path not yet built.',
+        notificationSent: false,
+        notificationNote: 'No notification sent — knowledge promotion requires platform-owner review',
+        willNotHappenAutomatically: [
+          'Knowledge is not promoted globally on academy director approval alone',
+          'Platform-owner approval required for global promotion',
+          'Parent or player will not see this content automatically',
+          'No apply path exists — future sprint required',
+        ],
+        rollbackNote: 'No promotion occurred — nothing to roll back',
+        safetyClass: 'standard',
+      }
+
     default:
       return {
         moduleLabel: targetModule ?? 'Unknown action',

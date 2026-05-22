@@ -2,6 +2,66 @@
 
 ---
 
+## 2026-05-22 — Sprint 640 — Review Approval Audit Trail V1
+
+**Scope:** Add audit trail panel to the review item detail page. Reads from existing `audit_logs` table (director-only via RLS). Shows action, timestamp, source_type for the proposed_action ID and player ID (if player-related).
+
+**What changed:**
+- Created `src/app/director/review/[actionId]/ReviewAuditTrailPanel.tsx` — server component. Queries `audit_logs` for entries matching the proposed_action ID and/or player ID, ordered by created_at descending, limit 15. Shows action name (color-coded: green=executed/applied, red=rejected, lime=approved, blue=created), timestamp, source_type. Safe empty state. Academy-scoped.
+- Modified `src/app/director/review/[actionId]/page.tsx` — imported and wired `ReviewAuditTrailPanel` in the right column below `ApprovalPreviewCard`
+
+**Audit fields shown:** action, timestamp, source_type, target_type. Actor ID not exposed (no actor name resolution in V1 — future sprint).
+**Blocker documented:** No actor name resolution yet — raw actor_id not shown to avoid exposing UUIDs.
+
+**TypeScript:** Clean
+
+---
+
+## 2026-05-22 — Sprint 639 — Knowledge Promotion Review Flow V1
+
+**Scope:** Create review infrastructure for knowledge_promotion proposed_actions. No apply path exists. Approval captures decision only. Platform-owner gating documented.
+
+**What changed:**
+- Created `src/app/director/review/KnowledgePromotionReviewCard.tsx` — shows knowledge item, summary, source attribution, proposed destination, tags. Platform-owner gate banner for global destinations. Explains that academy directors cannot approve global promotions. Decision controls for academy-local destinations. Blocker notice for apply path.
+- Updated `src/lib/review/approvalPreview.ts` — added `knowledge_promotion` case
+- Wired into `ReviewItemRouter.tsx` and `page.tsx`
+
+**Blocker:** No knowledge_promotion apply server action exists. No `target_module = 'knowledge_promotion'` proposed_actions yet. Infrastructure is ready for when they are created.
+
+**TypeScript:** Clean
+
+---
+
+## 2026-05-22 — Sprint 638 — Video Visibility Review Flow V1
+
+**Scope:** Create review infrastructure for video_visibility_change proposed_actions. No apply path exists. HIGH VISIBILITY RISK for parent/player-visible destinations.
+
+**What changed:**
+- Created `src/app/director/review/VideoVisibilityReviewCard.tsx` — shows current→proposed visibility states (internal_only / coach_visible / parent_visible / player_visible / public_demo), orange banner for high-risk destinations, curriculum context, ownership/licensing notes. Apply path blocker notice. Decision controls.
+- Updated `src/lib/review/approvalPreview.ts` — added `video_visibility_change` case (high_visibility_risk safety class)
+- Wired into `ReviewItemRouter.tsx` and `page.tsx`
+
+**Blocker:** No video visibility apply server action exists. No `target_module = 'video_visibility_change'` proposed_actions yet. Infrastructure is ready.
+
+**TypeScript:** Clean
+
+---
+
+## 2026-05-22 — Sprint 637 — Badge/Mission Award Review Flow V1
+
+**Scope:** Create review infrastructure for badge_award and mission_assignment proposed_actions. No apply path exists. Approval captures decision only.
+
+**What changed:**
+- Created `src/app/director/review/BadgeMissionReviewCard.tsx` — shows player, badge/mission label, criteria met/missing, evidence source/summary, visibility state, apply path blocker notice. Decision controls for approve/reject.
+- Updated `src/lib/review/approvalPreview.ts` — added `badge_award` and `mission_assignment` cases
+- Wired into `ReviewItemRouter.tsx` (as separate `badge_award` and `mission_assignment` union members) and `page.tsx`
+
+**Blocker:** No badge/mission award apply server action exists. No `target_module = 'badge_award' / 'mission_assignment'` proposed_actions yet. Infrastructure ready.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 636 — Curriculum Draft Review Flow V1
 
 **Scope:** Wire curriculum_builder and curriculum_adjustment proposed_actions into the review item detail page. No new server actions. No migrations. No direct curriculum mutations.
