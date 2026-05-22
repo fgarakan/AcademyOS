@@ -13,6 +13,7 @@ import {
   User,
   Bell,
   Map,
+  Sparkles,
 } from 'lucide-react'
 import { type LucideIcon } from 'lucide-react'
 
@@ -27,7 +28,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   profile: User,
   updates: Bell,
   missions: Map,
-  donna: MessageCircle,
+  donna: Sparkles,
 }
 
 interface TabItem {

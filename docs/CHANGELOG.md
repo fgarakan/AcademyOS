@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-22 — Sprint 662 — Coach Mobile On-Court Pass V1
+
+**Scope:** DONNA tab icon upgrade in shared BottomTabBar. Coach mobile nav now uses Sparkles instead of MessageCircle for the DONNA tab.
+
+**What changed:**
+- `src/components/nav/BottomTabBar.tsx` — added `Sparkles` to lucide imports; changed `donna` key in `ICON_MAP` from `MessageCircle` to `Sparkles`. Safe-area-bottom class already present.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 642 — Speech Recognition Auto-Restart V1
 
 **Scope:** Added max retry guard to persistent voice session. No new files — extends Sprint 641 changes to VoiceInputButton.
