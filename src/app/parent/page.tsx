@@ -601,22 +601,22 @@ export default async function ParentHome({
           <CardContent className="space-y-4">
             <div className="px-3 py-3 rounded-xl bg-status-green/5 border border-status-green/20">
               <p className="text-[10px] uppercase tracking-widest text-status-green mb-1">What to Praise</p>
-              <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.whatToPraise}</p>
+              <p className="text-sm text-text-primary font-medium leading-relaxed">{parentSupportGuide.whatToPraise}</p>
             </div>
             <div className="px-3 py-3 rounded-xl bg-surface-raised border border-border">
               <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">At-Home Support Idea</p>
               <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.atHomeSupportIdea}</p>
             </div>
-            <div className="px-3 py-3 rounded-xl bg-surface-raised border border-border">
-              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">After Practice, Try Saying</p>
+            <div className="px-3 py-3 rounded-xl bg-lime/5 border border-lime/15">
+              <p className="text-[10px] uppercase tracking-widest text-lime mb-1">After Practice, Try Saying</p>
               <p className="text-sm text-text-secondary leading-relaxed italic">&ldquo;{parentSupportGuide.practiceLanguage.replace(/^"|"$/g, '')}&rdquo;</p>
             </div>
-            <div className="px-3 py-3 rounded-xl bg-status-orange/5 border border-status-orange/20">
-              <p className="text-[10px] uppercase tracking-widest text-status-orange mb-1">Avoid Overcoaching This</p>
+            <div className="px-3 py-3 rounded-xl bg-surface-raised border border-border">
+              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Leave This to the Coaching Team</p>
               <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.avoidOvercoaching}</p>
             </div>
-            <div className="px-3 py-3 rounded-xl bg-surface-raised border border-border">
-              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">When to Ask the Coach</p>
+            <div className="px-3 py-3 rounded-xl bg-status-blue/5 border border-status-blue/15">
+              <p className="text-[10px] uppercase tracking-widest text-status-blue mb-1">A Question to Ask the Coach</p>
               <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.whenToAskCoach}</p>
             </div>
           </CardContent>

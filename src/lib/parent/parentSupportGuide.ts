@@ -132,8 +132,11 @@ const DOMAIN_GUIDES: Record<DomainKey, Omit<ParentSupportGuide, never>> = {
 
 const STAGE_ADDENDUM: Record<string, string> = {
   beginner: 'At the beginner stage, enjoyment and comfort matter most. Keep tennis fun and pressure-free at home.',
+  beginner_early: 'In the earliest stage of development, playfulness and curiosity are the goals. Let the coaching team set the structure.',
   intermediate: 'At the intermediate stage, consistency and repetition are building habits. Patience with the process is everything.',
   advanced: 'At the advanced stage, mental resilience and recovery quality become critical. Support those areas at home.',
+  competition: 'During competition development, staying calm about results and focusing on process is the most powerful support you can give.',
+  mental_development: 'When mental skills are a focus, your language at home matters enormously. Neutral, calm energy after sessions is the best support.',
 }
 
 export function buildParentSupportGuide(input: SupportGuideInput): ParentSupportGuide {
