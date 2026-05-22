@@ -163,7 +163,7 @@ export function ExecuteClient({ sessionId, sessionName, blocks, wrapUpHref }: Pr
           <div className="flex gap-2">
             <button
               onClick={() => setAdjust('easier')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl border text-xs font-medium transition-all ${
                 currentAdjust === 'easier'
                   ? 'border-status-blue/40 bg-status-blue/10 text-status-blue'
                   : 'border-border bg-surface-raised text-text-muted hover:border-border hover:text-text-secondary'
@@ -174,7 +174,7 @@ export function ExecuteClient({ sessionId, sessionName, blocks, wrapUpHref }: Pr
             </button>
             <button
               onClick={() => setAdjust('harder')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl border text-xs font-medium transition-all ${
                 currentAdjust === 'harder'
                   ? 'border-lime/40 bg-lime/10 text-lime'
                   : 'border-border bg-surface-raised text-text-muted hover:border-border hover:text-text-secondary'
@@ -197,16 +197,20 @@ export function ExecuteClient({ sessionId, sessionName, blocks, wrapUpHref }: Pr
         <div>
           <button
             onClick={() => setShowNoteInput(prev => ({ ...prev, [block.id]: !noteOpen }))}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
+            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary min-h-[36px] px-1 transition-colors"
           >
             <MessageSquarePlus className="w-3.5 h-3.5" />
-            {noteOpen ? 'Hide note' : 'Add quick note'}
+            {noteOpen ? 'Hide note' : noteValue.trim() ? 'Edit note' : 'Add quick note'}
+            {noteValue.trim() && !noteOpen && (
+              <span className="ml-1 w-1.5 h-1.5 rounded-full bg-lime inline-block" />
+            )}
           </button>
           {noteOpen && (
             <textarea
               value={noteValue}
               onChange={e => setNotes(prev => ({ ...prev, [block.id]: e.target.value }))}
-              placeholder="Capture anything mid-block... (saved locally until wrap-up)"
+              placeholder="Capture anything mid-block… (visible in wrap-up)"
+              autoFocus
               className="mt-2 w-full rounded-xl bg-surface-raised border border-border px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:border-lime/40 transition-colors"
               rows={3}
             />
@@ -225,6 +229,15 @@ export function ExecuteClient({ sessionId, sessionName, blocks, wrapUpHref }: Pr
           <ChevronLeft className="w-4 h-4" />
           Prev
         </button>
+        {!isLast && (
+          <Link
+            href={wrapUpHref}
+            className="flex items-center gap-1.5 px-3 py-3 rounded-xl border border-border text-xs text-text-muted hover:bg-surface-raised transition-all"
+          >
+            <Flag className="w-3.5 h-3.5" />
+            End early
+          </Link>
+        )}
         <div className="flex-1" />
         {isLast ? (
           <Link
