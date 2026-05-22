@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-22 — Sprint 617 — Parent Multi-Child Data Model Audit V1
+
+**Scope:** Audit-only. Non-mutating. No migrations, no UI changes, no parent runtime behavior changes, no RLS changes. Pure TypeScript types + helpers + audit document.
+
+**Audit findings (13 questions answered — see `docs/PARENT_MULTI_CHILD_AUDIT_617.md`):**
+- `player_guardians` is a bare join table: only `player_id` + `guardian_id`. No `display_order`, no per-child permissions, no per-child `is_primary`.
+- `guardians.relationship` is global to the guardian row (not per-child). Constrained to `('parent', 'guardian', 'other')`.
+- `guardians.is_primary` is global to the guardian row (not per-child).
+- **Collapse point confirmed:** `src/app/parent/page.tsx` line 85 — `playerIds[0]` only. Children at index 1+ silently discarded.
+- Query already fetches up to 3 player IDs (`.limit(3)`) but only uses the first.
+- **Cross-child leakage risk:** lesson request query at ~line 210 uses `proposed_by_id: user!.id` (guardian auth ID, not child player ID). All lesson requests across all children would appear in any child's view.
+- RLS policies gate by guardian → player chain with no per-child permission granularity.
+- All `parentPortalQueries.ts` functions are single-child APIs — require extension in Sprint 618.
+
+**Schema gaps requiring future migration (not this sprint):**
+- `player_guardians.display_order` — needed for stable ordering
+- `player_guardians.is_primary_child` — needed for default child
+- `player_guardians.portal_permissions` — needed for per-child visibility flags
+
+**Files created:**
+- `src/lib/parent/parentMultiChildModel.ts` — pure TypeScript types and helpers: `ParentChildAccessStatus`, `ParentChildRelationshipKind`, `ParentChildPermissionFlags`, `ChildLinkRecord`, `ParentMultiChildState`; helpers: `buildParentMultiChildState()`, `getActiveChildLink()`, `hasMultipleChildren()`, `validateActiveChildId()`, `getSafeChildSwitcherLabel()`, `buildChildLinkRecord()`
+- `docs/PARENT_MULTI_CHILD_AUDIT_617.md` — full 13-question audit with gap summary and next-sprint roadmap
+
+**Key facts:**
+- No mutations. No DB reads. No auth. No parent UI changes. No child switcher yet.
+- TypeScript: clean (`npx tsc --noEmit` passes with no errors)
+- No migrations. No RLS changes. No new npm packages. No .env changes. No DONNA context changes.
+
+---
+
 ## 2026-05-22 — Sprint 616 — DONNA Curriculum Builder Wiring V1
 
 **Scope:** Read-only DONNA context entry points for the curriculum builder. Pure TypeScript context helpers + one UI fix. No migrations, no RLS changes, no curriculum mutations, no new server action calls.
