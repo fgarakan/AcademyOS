@@ -16,6 +16,8 @@ import { StructuredDraftCard } from '@/app/director/review/StructuredDraftCard'
 import type { EnrichedDraftItem } from '@/app/director/review/StructuredDraftCard'
 import { CurriculumOverrideDraftCard } from '@/app/director/review/CurriculumOverrideDraftCard'
 import type { EnrichedCurriculumOverrideDraftItem } from '@/app/director/review/CurriculumOverrideDraftCard'
+import { LevelMovementReviewCard } from '@/app/director/review/LevelMovementReviewCard'
+import type { EnrichedLevelMovementDraftItem } from '@/app/director/review/LevelMovementReviewCard'
 
 export type ReviewItemData =
   | { type: 'wrap_up'; item: EnrichedWrapUpDraftItem }
@@ -26,6 +28,7 @@ export type ReviewItemData =
   | { type: 'development_summary'; item: EnrichedSummaryDraftItem }
   | { type: 'session_recap'; item: EnrichedDraftItem }
   | { type: 'curriculum_override'; item: EnrichedCurriculumOverrideDraftItem }
+  | { type: 'level_review'; item: EnrichedLevelMovementDraftItem }
   | { type: 'unsupported'; targetModule: string; actionId: string; status: string; createdAt: string }
 
 function UnsupportedCard({ targetModule, actionId }: { targetModule: string; actionId: string }) {
@@ -57,5 +60,6 @@ export function ReviewItemRouter({ data }: { data: ReviewItemData }) {
   if (data.type === 'development_summary') return <DevelopmentSummaryDraftCard draft={data.item} />
   if (data.type === 'session_recap') return <StructuredDraftCard draft={data.item} />
   if (data.type === 'curriculum_override') return <CurriculumOverrideDraftCard draft={data.item} />
+  if (data.type === 'level_review') return <LevelMovementReviewCard draft={data.item} />
   return <UnsupportedCard targetModule={data.targetModule} actionId={data.actionId} />
 }

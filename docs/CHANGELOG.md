@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-22 — Sprint 634 — Level Movement Apply Controls V1
+
+**Scope:** Wire level_review proposed_actions into the review item detail page. Uses pre-existing Sprint 284 server action (`applyApprovedLevelMovementAction`) and client controls (`DonnaLevelMovementApplyControls`). No new server actions. No new migrations.
+
+**What changed:**
+- Created `src/app/director/review/LevelMovementReviewCard.tsx` — displays level movement payload (player, current→next, evidence present/missing, readiness summary, gate evidence, coach context, warnings). Shows `DonnaIntelligenceDraftDecisionControls` when pending, `DonnaLevelMovementApplyControls` when approved, terminal states for executed/rejected.
+- Modified `src/app/director/review/[actionId]/ReviewItemRouter.tsx` — added `level_review` to `ReviewItemData` union, renders `LevelMovementReviewCard`
+- Modified `src/app/director/review/[actionId]/page.tsx` — added `level_review` to `entityType()` (player lookup), added `level_review` itemData branch, added `LevelMovementPayload` import
+
+**Safety verification:**
+- Apply path validates academy ownership, player ownership, and `status === 'approved'`
+- Cannot apply from chat, from unapproved items, or by bypassing review
+- No parent notification sent
+- Audit log written by pre-existing action
+- No RLS changes
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 633 — Approval Preview V1
 
 **Scope:** Wire pre-existing untracked approval preview files into the review item detail page. Preview-only — no apply logic, no DB calls, no mutations.

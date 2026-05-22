@@ -16,6 +16,7 @@ import type { EvidenceRequirementLinkPayload } from '@/app/director/review/Evide
 import type { DevelopmentSummaryDraftPayload } from '@/app/director/players/[playerId]/draftSummaryUpdateAction'
 import type { StructuredDraftPayload } from '@/app/director/sessions/[sessionId]/structureRecapAction'
 import type { CurriculumOverrideDraftPayload } from '@/lib/actions/curriculumOverrideDraft'
+import type { LevelMovementPayload } from '@/app/director/review/LevelMovementReviewCard'
 
 const MODULE_LABEL: Record<string, string> = {
   session_wrap_up_v1: 'Session Wrap-Up',
@@ -35,7 +36,7 @@ const MODULE_LABEL: Record<string, string> = {
 // Determine which entity type this module links to
 function entityType(module: string): 'session' | 'player' | 'none' {
   if (['session_wrap_up_v1', 'attendance_exception', 'session_recap_structuring'].includes(module)) return 'session'
-  if (['coach_observation_draft_v1', 'priority_recommendation', 'requirement_evidence_link', 'development_summary_draft_v1'].includes(module)) return 'player'
+  if (['coach_observation_draft_v1', 'priority_recommendation', 'requirement_evidence_link', 'development_summary_draft_v1', 'level_review'].includes(module)) return 'player'
   return 'none'
 }
 
@@ -230,6 +231,19 @@ export default async function ReviewItemDetailPage({
         createdAt: action.created_at,
         proposerName,
         payload: action.proposed_payload as unknown as CurriculumOverrideDraftPayload,
+      },
+    }
+  } else if (targetModule === 'level_review') {
+    itemData = {
+      type: 'level_review',
+      item: {
+        id: action.id,
+        status: action.status,
+        createdAt: action.created_at,
+        playerId,
+        playerName,
+        proposerName,
+        payload: action.proposed_payload as unknown as LevelMovementPayload,
       },
     }
   } else {
