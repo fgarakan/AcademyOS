@@ -399,7 +399,7 @@ export default async function ParentHome({
             { href: '/parent/wins',        icon: Heart,        label: 'Wins',              sub: 'Highlights',            accent: 'text-status-green',  bg: 'bg-status-green/10',   border: 'border-status-green/20' },
           ].map(({ href, icon: Icon, label, sub, accent, bg, border }) => (
             <Link key={href} href={href}>
-              <div className="rounded-xl bg-surface border border-border hover:border-lime/20 transition-colors px-3 py-3">
+              <div className="rounded-xl bg-surface border border-border hover:border-lime/20 transition-colors px-3 py-3.5 min-h-[72px] flex flex-col justify-center">
                 <div className={`w-7 h-7 rounded-lg ${bg} border ${border} flex items-center justify-center mb-2`}>
                   <Icon className={`w-3.5 h-3.5 ${accent}`} />
                 </div>
@@ -625,7 +625,7 @@ export default async function ParentHome({
 
       {/* ── Coach Updates CTA ────────────────────────────────────── */}
       <Link href="/parent/updates">
-        <div className="rounded-xl border border-border bg-surface-raised px-4 py-3.5 flex items-center justify-between hover:border-lime/20 transition-colors">
+        <div className="rounded-xl border border-border bg-surface-raised px-4 py-3.5 min-h-[64px] flex items-center justify-between hover:border-lime/20 transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-surface border border-border flex items-center justify-center shrink-0">
               <MessageSquare className="w-4 h-4 text-text-muted" />

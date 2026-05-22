@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-22 — Sprint 663 — Parent Mobile Clarity Pass V1
+
+**Scope:** Mobile touch targets and safe-area clearance in the parent portal.
+
+**What changed:**
+- `src/app/parent/layout.tsx` — bottom padding increased from `pb-24` (96px) to `pb-28` (112px) to clear iOS home indicator safely
+- `src/app/parent/page.tsx` — quick nav grid cards: `py-3` → `py-3.5 min-h-[72px] flex flex-col justify-center` for reliable touch; Coach Updates CTA link: added `min-h-[64px]`
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 662 — Coach Mobile On-Court Pass V1
 
 **Scope:** DONNA tab icon upgrade in shared BottomTabBar. Coach mobile nav now uses Sparkles instead of MessageCircle for the DONNA tab.
