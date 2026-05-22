@@ -103,10 +103,14 @@ export function DonnaVoiceLayer({
       >
         <div className="flex items-center gap-1.5 mb-1">
           <Mic className="w-3.5 h-3.5 shrink-0" style={{ color: '#8b5cf6' }} />
-          <p className="text-sm font-semibold text-text-primary">Ask {DONNA_PUBLIC_NAME}</p>
+          <p className="text-sm font-semibold text-text-primary">{DONNA_PUBLIC_NAME}</p>
         </div>
         <p className="text-[11px] text-text-muted leading-snug mb-3">
-          Use voice to ask {DONNA_NAME} what to do next, answer the current question, or capture a director note.
+          {guidedCurrentQ
+            ? `Answer ${DONNA_NAME}'s question by voice or type below.`
+            : isOnboardingActive(onboardingStep)
+            ? `Answer the setup question by voice or type your response.`
+            : `Ask ${DONNA_NAME} what needs attention, or start a workflow.`}
         </p>
 
         {/* Onboarding current question spotlight */}
@@ -224,14 +228,14 @@ export function DonnaVoiceLayer({
                 type="button"
                 onClick={onConfirmVoiceAnswer}
                 disabled={!pendingVoiceAnswer.editedText.trim()}
-                className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
+                className="btn-lime text-xs px-3 py-2 min-h-[44px] disabled:opacity-50"
               >
                 Use this answer
               </button>
               <button
                 type="button"
                 onClick={onRetryVoice}
-                className="text-[10px] text-text-muted hover:text-status-red underline underline-offset-2 transition-colors"
+                className="text-[11px] min-h-[44px] px-2 text-text-muted hover:text-status-red underline underline-offset-2 transition-colors"
               >
                 Try again
               </button>
@@ -318,20 +322,20 @@ export function DonnaVoiceLayer({
           }}
         >
           <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-2">
-            Try asking
+            Quick actions
           </p>
           <div className="flex flex-wrap gap-1.5">
             {[
-              'What needs attention today?',
-              'Draft a parent update',
+              'What needs attention?',
+              'Review queue',
+              'Draft parent update',
               'Create class template',
-              'Help me with Academy Setup',
             ].map(chip => (
               <button
                 key={chip}
                 type="button"
                 onClick={() => onCommandSubmit(chip)}
-                className="text-[11px] px-2.5 py-1 rounded-full transition-all leading-snug"
+                className="text-[11px] px-3 py-2 min-h-[36px] rounded-full transition-all leading-snug"
                 style={{
                   background: 'rgba(139,92,246,0.08)',
                   border: '1px solid rgba(139,92,246,0.2)',
