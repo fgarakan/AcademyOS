@@ -5,6 +5,7 @@ import { PreviewBanner } from '@/components/platform/PreviewBanner'
 import { DonnaAssistantButton } from '@/components/assistant/DonnaAssistantButton'
 import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
 import { DemoModeBanner } from '@/components/demo/DemoModeBanner'
+import { DonnaSessionContextProvider } from '@/components/donna/DonnaSessionContextProvider'
 
 export default async function DirectorLayout({
   children,
@@ -78,29 +79,31 @@ export default async function DirectorLayout({
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--bg-app)' }}>
-      <SidebarNav
-        academyName={academyName}
-        pendingCount={pendingCount}
-        userEmail={userEmail}
-        userDisplayName={userDisplayName}
-        onboardingIncomplete={onboardingIncomplete}
-      />
-      <main className="flex-1 ml-60 min-h-screen">
-        <PreviewBanner />
-        <Suspense>
-          <DemoModeBanner />
-        </Suspense>
-        <FirstRunDeckGate hasSeenDeck={hasSeenFirstRunDeck} role="director">
-          {children}
-        </FirstRunDeckGate>
-      </main>
-      {academyId && (
-        <DonnaAssistantButton
-          academyId={academyId}
-          directorName={userDisplayName || undefined}
+    <DonnaSessionContextProvider>
+      <div className="flex min-h-screen" style={{ background: 'var(--bg-app)' }}>
+        <SidebarNav
+          academyName={academyName}
+          pendingCount={pendingCount}
+          userEmail={userEmail}
+          userDisplayName={userDisplayName}
+          onboardingIncomplete={onboardingIncomplete}
         />
-      )}
-    </div>
+        <main className="flex-1 ml-60 min-h-screen">
+          <PreviewBanner />
+          <Suspense>
+            <DemoModeBanner />
+          </Suspense>
+          <FirstRunDeckGate hasSeenDeck={hasSeenFirstRunDeck} role="director">
+            {children}
+          </FirstRunDeckGate>
+        </main>
+        {academyId && (
+          <DonnaAssistantButton
+            academyId={academyId}
+            directorName={userDisplayName || undefined}
+          />
+        )}
+      </div>
+    </DonnaSessionContextProvider>
   )
 }

@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-22 — Sprint 625 — DONNA Cross-Page Session Context V1
+
+**Scope:** In-memory React context only. No localStorage for sensitive data. No migrations. No DB writes. No mutations. No parent/player data.
+
+**What changed:** `DonnaSessionContextProvider` now wraps the entire director layout, tracking route changes automatically via `usePathname`. Any component can call `useDonnaSessionContext()` to read `lastRoute`, `lastModule`, `lastPrompt`, `lastObjectLabel`, `lastSummary`. Values are truncated to safe lengths. Provider does not track sensitive objects — only safe labels and summaries. This is the foundation for DONNA to know "where the director was" without full page re-context.
+
+**Files created:**
+- `src/lib/donna/donnaSessionContext.ts` — TypeScript shape, React context creation, `useDonnaSessionContext` hook, `routeToModuleLabel` helper (maps `/director/kpi` → `"KPI Dashboard"` etc.)
+- `src/components/donna/DonnaSessionContextProvider.tsx` — client component; tracks `usePathname` changes; exposes `updateRoute`, `updateModule`, `updatePrompt`, `updateObjectContext`, `clearSession`
+
+**Files modified:**
+- `src/app/director/layout.tsx` — wrapped layout contents in `DonnaSessionContextProvider`
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean
+
+**Known limitations:** Context is available but not yet consumed by DONNA response path — future sprints can read `useDonnaSessionContext()` to improve answers with "you were just on the Players page" context. No cross-session persistence.
+
+---
+
 ## 2026-05-22 — Sprint 624 — DONNA Players Roster Intelligence V1
 
 **Scope:** Pure TypeScript + minimal page props extension. No migrations. No RLS. No DB writes. No parent/player exposure. No mutations.
