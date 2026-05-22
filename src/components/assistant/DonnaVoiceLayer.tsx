@@ -163,7 +163,7 @@ export function DonnaVoiceLayer({
               <button
                 type="button"
                 onClick={() => onVoiceTranscriptRaw(interimVoiceTranscript)}
-                className="text-[10px] font-medium px-2 py-0.5 rounded-md transition-colors"
+                className="text-[10px] font-medium px-3 py-2 min-h-[36px] rounded-md transition-colors"
                 style={{ background: 'rgba(139,92,246,0.12)', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.2)' }}
               >
                 Use this
@@ -297,7 +297,7 @@ export function DonnaVoiceLayer({
               type="button"
               onClick={() => onCommandSubmit()}
               disabled={!typedText.trim()}
-              className="btn-lime text-xs px-3 py-1.5 disabled:opacity-50"
+              className="btn-lime text-xs px-3 py-2 min-h-[44px] disabled:opacity-50"
             >
               Send
             </button>

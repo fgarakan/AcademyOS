@@ -246,7 +246,7 @@ export function VoiceInputButton({
         onClick={handleToggle}
         disabled={disabled}
         title={isActive ? 'Stop voice session' : 'Start voice input'}
-        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition-colors disabled:opacity-40 ${
+        className={`flex items-center gap-1.5 text-xs px-3 py-2 min-h-[44px] rounded-xl border transition-colors disabled:opacity-40 ${
           isListening
             ? 'border-status-red/40 bg-status-red/10 text-status-red animate-pulse'
             : isPaused
