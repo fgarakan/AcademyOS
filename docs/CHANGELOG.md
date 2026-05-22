@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-22 — Sprint 635 — Parent Summary Review Flow V1
+
+**Scope:** Wire parent_communication proposed_actions into the review item detail page. Review-and-approve only — no send path exists. No raw coach notes displayed.
+
+**What changed:**
+- Created `src/app/director/review/ParentSummaryReviewCard.tsx` — shows parent-safe draft content (draft_text, draft_sections: working_on/improved/needs_support/parent_can_do/whats_next), source signals (assessment/priorities/advancement_eligible), DONNA safety warnings, "no raw coach notes" notice, "no send infrastructure yet" notice. Decision controls via `DonnaIntelligenceDraftDecisionControls(targetModule='parent_communication')`. Terminal states for approved/executed/rejected.
+- Modified `src/app/director/review/[actionId]/ReviewItemRouter.tsx` — added `parent_summary` to `ReviewItemData` union, renders `ParentSummaryReviewCard`
+- Modified `src/app/director/review/[actionId]/page.tsx` — added `parent_communication` to `entityType()` (player lookup), added `parent_summary` itemData branch, added `ParentSummaryPayload` import
+
+**Safety verification:**
+- No raw coach notes — content was filtered at draft creation in `donnaDirectorIntelligenceActions.ts`
+- Parent cannot see this content — no send infrastructure exists
+- Approval captures director decision only — no message is transmitted
+- Blocker documented inline: "No send infrastructure exists yet. Approving captures approval decision only."
+- No RLS changes
+
+**Remaining for Sprint 636:** Curriculum draft review flow.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 634 — Level Movement Apply Controls V1
 
 **Scope:** Wire level_review proposed_actions into the review item detail page. Uses pre-existing Sprint 284 server action (`applyApprovedLevelMovementAction`) and client controls (`DonnaLevelMovementApplyControls`). No new server actions. No new migrations.
