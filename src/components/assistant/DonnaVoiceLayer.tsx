@@ -13,6 +13,7 @@
 
 import { Mic } from 'lucide-react'
 import { VoiceInputButton } from './VoiceInputButton'
+import { DonnaCurrentQuestionDisplay } from './DonnaCurrentQuestionDisplay'
 import type { DonnaVoiceTranscriptState } from './donnaVoiceUiTypes'
 import type { DonnaTaskQuestion } from './donnaTaskContracts'
 import {
@@ -110,35 +111,21 @@ export function DonnaVoiceLayer({
 
         {/* Onboarding current question spotlight */}
         {isOnboardingActive(onboardingStep) && onboardingStep === 1 && (
-          <div
-            className="mb-3 rounded-lg px-3 py-2"
-            style={{ background: 'rgba(200,255,0,0.05)', border: '1px solid rgba(200,255,0,0.2)' }}
-          >
-            <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-lime">
-              Current question
-            </p>
-            <p className="text-[12px] text-text-primary font-medium leading-snug">
-              {DONNA_ONBOARDING_STEPS[1].question}
-            </p>
-            <p className="text-[10px] text-text-muted mt-1 leading-snug">
-              {DONNA_ONBOARDING_STEPS[1].helperText}
-            </p>
-          </div>
+          <DonnaCurrentQuestionDisplay
+            question={DONNA_ONBOARDING_STEPS[1].question}
+            helperText={(DONNA_ONBOARDING_STEPS[1] as { helperText?: string }).helperText ?? null}
+            context="onboarding"
+            className="mb-3"
+          />
         )}
 
         {/* Current question spotlight — guided_task mode only */}
         {guidedCurrentQ && !isOnboardingActive(onboardingStep) && (
-          <div
-            className="mb-3 rounded-lg px-3 py-2"
-            style={{ background: 'rgba(200,255,0,0.05)', border: '1px solid rgba(200,255,0,0.2)' }}
-          >
-            <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5 text-lime">
-              Current question
-            </p>
-            <p className="text-[12px] text-text-primary font-medium leading-snug">
-              {guidedCurrentQ.question}
-            </p>
-          </div>
+          <DonnaCurrentQuestionDisplay
+            question={guidedCurrentQ.question}
+            context="guided_task"
+            className="mb-3"
+          />
         )}
 
         {/* VoiceInputButton — browser SpeechRecognition only, no API, no DB write */}
