@@ -104,9 +104,15 @@ export default async function ParentUpdatesPage() {
 
       {noAccess && (
         <Card>
-          <CardContent className="py-8 text-center">
-            <AlertCircle className="w-7 h-7 text-text-muted mx-auto mb-2" />
-            <p className="text-text-muted text-xs">Ask the academy director to link your parent account.</p>
+          <CardContent className="py-8 flex flex-col items-center gap-3 text-center">
+            <AlertCircle className="w-7 h-7 text-text-muted mx-auto" />
+            <div>
+              <p className="text-sm font-medium text-text-primary">Account not linked</p>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed max-w-xs mx-auto">
+                Your parent account hasn't been connected to a player yet.
+                Contact your academy director to have your account linked.
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -123,8 +129,8 @@ export default async function ParentUpdatesPage() {
 
           {/* Coach development summary */}
           {devSummary ? (
-            <div className="rounded-xl border border-border overflow-hidden">
-              <div className="bg-surface-raised px-4 py-3 border-b border-border flex items-center justify-between">
+            <Card>
+              <div className="bg-surface-raised px-4 py-3 border-b border-border flex items-center justify-between rounded-t-xl">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-text-muted" />
                   <p className="text-sm font-semibold text-text-primary">Development Summary</p>
@@ -135,29 +141,29 @@ export default async function ParentUpdatesPage() {
                   })}
                 </p>
               </div>
-              <div className="bg-surface px-4 py-4 space-y-3">
+              <CardContent className="py-4 space-y-3">
                 {devSummary.developmentFocus && (
-                  <div>
+                  <div className="px-3 py-2 rounded-lg bg-surface-raised border border-border">
                     <p className="label-xs text-text-muted mb-1">Current Focus</p>
-                    <p className="text-xs text-text-secondary">{devSummary.developmentFocus}</p>
+                    <p className="text-sm font-medium text-text-primary">{devSummary.developmentFocus}</p>
                   </div>
                 )}
                 <div>
                   <p className="label-xs text-text-muted mb-2">From Your Coaching Team</p>
-                  <p className="text-sm text-text-primary leading-relaxed">{devSummary.parentSummary}</p>
+                  <p className="text-sm text-text-secondary leading-relaxed">{devSummary.parentSummary}</p>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ) : (
             <Card>
               <CardContent className="py-8 flex flex-col items-center gap-3 text-center">
                 <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border flex items-center justify-center">
                   <MessageSquare className="w-5 h-5 text-text-muted" />
                 </div>
-                <p className="text-text-primary text-sm font-medium">Your first update is on its way</p>
+                <p className="text-text-primary text-sm font-medium">No updates yet for {name}</p>
                 <p className="text-text-muted text-xs leading-relaxed max-w-xs">
-                  When your coaching team prepares a parent summary for {name}, it will appear here.
-                  Your director reviews all content before it reaches you.
+                  When your coaching team prepares a parent summary, your director will review and approve it before it appears here.
+                  This is usually done after key milestones or at the end of a training block.
                 </p>
               </CardContent>
             </Card>
