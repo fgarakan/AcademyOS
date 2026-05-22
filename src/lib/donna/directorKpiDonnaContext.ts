@@ -57,6 +57,8 @@ export interface PlayersPageDonnaContext {
   activePlayers: number
   missingCurriculumCount: number
   advancementReadyCount: number
+  namedSignals?: Array<{ name: string; reason: string }>
+  assessmentDueCount?: number
 }
 
 export function buildPlayersPageDonnaPrompt(ctx: PlayersPageDonnaContext): string {
@@ -161,9 +163,12 @@ export function buildDashboardPriorityAnswer(ctx: DashboardDonnaContext): DonnaI
 export function buildRosterAttentionAnswer(ctx: PlayersPageDonnaContext): DonnaInlineAnswer {
   const parts: string[] = []
   if (ctx.missingCurriculumCount > 0)
-    parts.push(`${ctx.missingCurriculumCount} player${ctx.missingCurriculumCount !== 1 ? 's' : ''} without a curriculum level — assign levels to enable progress tracking`)
+    parts.push(`${ctx.missingCurriculumCount} player${ctx.missingCurriculumCount !== 1 ? 's' : ''} without a curriculum level`)
   if (ctx.advancementReadyCount > 0)
-    parts.push(`${ctx.advancementReadyCount} player${ctx.advancementReadyCount !== 1 ? 's' : ''} ready to advance — review their skill path`)
+    parts.push(`${ctx.advancementReadyCount} player${ctx.advancementReadyCount !== 1 ? 's' : ''} ready to advance`)
+  if (ctx.assessmentDueCount && ctx.assessmentDueCount > 0)
+    parts.push(`${ctx.assessmentDueCount} player${ctx.assessmentDueCount !== 1 ? 's' : ''} with overdue assessment`)
+
   if (parts.length === 0) {
     return {
       message: `All ${ctx.activePlayers} players have curriculum levels assigned. No urgent roster signals detected.`,
@@ -171,8 +176,13 @@ export function buildRosterAttentionAnswer(ctx: PlayersPageDonnaContext): DonnaI
       label: 'Roster status',
     }
   }
+
+  const namedNote = ctx.namedSignals && ctx.namedSignals.length > 0
+    ? ` Key players: ${ctx.namedSignals.slice(0, 3).map(s => `${s.name} (${s.reason})`).join(', ')}.`
+    : ''
+
   return {
-    message: parts.join('. ') + '.',
+    message: parts.join('. ') + '.' + namedNote,
     type: ctx.missingCurriculumCount > 0 ? 'warning' : 'info',
     label: 'Roster attention',
   }

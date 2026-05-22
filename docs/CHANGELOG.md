@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-22 — Sprint 624 — DONNA Players Roster Intelligence V1
+
+**Scope:** Pure TypeScript + minimal page props extension. No migrations. No RLS. No DB writes. No parent/player exposure. No mutations.
+
+**What changed:** DONNA can now answer "Who needs attention?", "Who is at risk?", "Which players need review?" in `/director/donna` using player names from `DirectorDonnaContext.attentionItems`. The players page chip now passes named roster signals (up to 5 players with name + reason) computed server-side from already-fetched player summaries. `PlayersPageDonnaContext` extended with optional `namedSignals` and `assessmentDueCount`. Hub intercept fires before existing safe-read dispatcher.
+
+**Hub intercept order (post Sprint 624):**
+1. KPI question (explicit KPI vocab required)
+2. Dashboard priority question
+3. Roster attention question (new)
+4. Existing safe-read/action classifier
+5. Fallback
+
+**Files created:**
+- `src/lib/donna/directorPlayersDonnaIntelligence.ts` — `detectRosterAttentionQuestion`, `buildRosterHubAnswer`, `tryAnswerRosterAttentionQuestion`; uses `DirectorDonnaContext.attentionItems` with player names; includes honest limitation if no players are flagged
+
+**Files modified:**
+- `src/lib/donna/directorKpiDonnaContext.ts` — `PlayersPageDonnaContext` extended with `namedSignals?` and `assessmentDueCount?`; `buildRosterAttentionAnswer` updated to include named players in chip answer
+- `src/app/director/players/page.tsx` — computes `namedSignals` (on-hold, overdue assessment, no curriculum, declining score) and `assessmentDueCount` from already-fetched data; passes to chip
+- `src/components/donna/DonnaVoiceReadyShell.tsx` — roster intercept added; imports `tryAnswerRosterAttentionQuestion`
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean
+
+**Known limitations:** Hub uses `DirectorDonnaContext.attentionItems` (observations + attendance) — does not include curriculum gaps or advancement-ready from players page. Those are chip-only signals unless the session context carries them (Sprint 625 target).
+
+---
+
 ## 2026-05-22 — Sprint 623 — DONNA Dashboard Priority Answer V1
 
 **Scope:** Pure TypeScript wiring only. No migrations. No RLS changes. No DB writes. No new server actions. No parent/player data exposure. No mutations.

@@ -86,6 +86,28 @@ export default async function PlayersPage() {
     .filter(p => p.player_id && curriculumMap[p.player_id]?.advancementEligible)
     .slice(0, 5)
 
+  // Compute named signals for DONNA chip (director-only, no sensitive data exposed)
+  const namedSignals: Array<{ name: string; reason: string }> = []
+  const now = new Date()
+  for (const p of players) {
+    if (!p.player_id || !p.full_name) continue
+    if (p.player_status === 'on_hold') {
+      namedSignals.push({ name: p.full_name, reason: 'on hold' })
+    } else if (p.assessment_status === 'overdue') {
+      namedSignals.push({ name: p.full_name, reason: 'assessment overdue' })
+    } else if (!curriculumMap[p.player_id]) {
+      namedSignals.push({ name: p.full_name, reason: 'no curriculum level' })
+    } else if (typeof p.score_delta === 'number' && p.score_delta < -5) {
+      namedSignals.push({ name: p.full_name, reason: 'declining score' })
+    }
+    if (namedSignals.length >= 5) break
+  }
+
+  const assessmentDueCount = players.filter(p =>
+    p.assessment_status === 'overdue' ||
+    (p.next_assessment_due && new Date(p.next_assessment_due) < now)
+  ).length
+
   return (
     <div className="p-6 animate-fade-in space-y-6 max-w-5xl">
       <div className="flex items-start justify-between gap-4">
@@ -155,6 +177,8 @@ export default async function PlayersPage() {
         activePlayers={players.length}
         missingCurriculumCount={missingCurriculumCount}
         advancementReadyCount={advancementReadyPlayers.length}
+        namedSignals={namedSignals}
+        assessmentDueCount={assessmentDueCount}
       />
 
       <PlayersDirectoryClient players={players} curriculumMap={curriculumMap} />

@@ -29,6 +29,7 @@ import type { CoachDonnaContext } from '@/lib/donna/coachDonnaContext'
 import { getSuggestedQuestionsForRole } from '@/lib/donna/donnaSuggestedQuestions'
 import { dispatchSafeReadAction, tryAnswerKpiQuestion, type DonnaSafeReadAnswer } from '@/lib/donna/donnaSafeReadActions'
 import { tryAnswerDashboardPriorityQuestion } from '@/lib/donna/directorDashboardDonnaAnswer'
+import { tryAnswerRosterAttentionQuestion } from '@/lib/donna/directorPlayersDonnaIntelligence'
 import { buildChatMessageFromAnswer } from '@/components/donna/DonnaChatThread'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -142,6 +143,24 @@ export function DonnaVoiceReadyShell({
             actionId: dashAnswer.actionId,
             confidence: dashAnswer.confidence,
             sourceNote: dashAnswer.sourceNote,
+          })
+        }, 600)
+        return
+      }
+    }
+
+    // Roster attention intercept — "Who needs attention?" style questions
+    if (plainRole === 'director' && directorCtx) {
+      const rosterAnswer = tryAnswerRosterAttentionQuestion(trimmed, directorCtx)
+      if (rosterAnswer) {
+        const donnaMsg = buildChatMessageFromAnswer(rosterAnswer)
+        setTimeout(() => {
+          setMessages(prev => [...prev, donnaMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, donnaMsg.text, {
+            actionId: rosterAnswer.actionId,
+            confidence: rosterAnswer.confidence,
+            sourceNote: rosterAnswer.sourceNote,
           })
         }, 600)
         return
