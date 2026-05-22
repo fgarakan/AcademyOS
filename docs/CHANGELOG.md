@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-22 — Sprint 664 — Player Mobile Mission Pass V1
+
+**Scope:** Player portal mobile UX improvements: Ask DONNA icon, hamburger touch target, mission card CTA.
+
+**What changed:**
+- `src/components/player/PlayerPortalShell.tsx` — `MessageCircle` → `Sparkles` for Ask DONNA nav item; hamburger button: `p-1.5` → `p-2 min-h-[44px] min-w-[44px] flex items-center justify-center` for iOS touch standard
+- `src/app/player/missions/page.tsx` — "See details" link: `min-h-[36px] px-1` → `min-h-[44px] px-2`
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 663 — Parent Mobile Clarity Pass V1
 
 **Scope:** Mobile touch targets and safe-area clearance in the parent portal.

@@ -97,7 +97,7 @@ function MissionCard({ priority, status }: MissionCardProps) {
         {isActive && (
           <Link
             href={`/player/missions/${priority.id}`}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-lime hover:text-lime/80 transition-colors ml-auto min-h-[36px] px-1"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-lime hover:text-lime/80 transition-colors ml-auto min-h-[44px] px-2"
           >
             See details <ArrowRight className="w-3 h-3" />
           </Link>

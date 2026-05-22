@@ -13,7 +13,7 @@ import {
   ArrowUp,
   Dumbbell,
   Star,
-  MessageCircle,
+  Sparkles,
   Menu,
   X,
   ChevronRight,
@@ -35,7 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/player/level-up',         icon: ArrowUp,        label: 'Level Up' },
   { href: '/player/practice',         icon: Dumbbell,       label: 'Practice' },
   { href: '/player/celebration',      icon: Star,           label: 'Achievements' },
-  { href: '/player/ask-donna',        icon: MessageCircle,  label: 'Ask DONNA' },
+  { href: '/player/ask-donna',        icon: Sparkles,       label: 'Ask DONNA' },
 ]
 
 interface PlayerPortalShellProps {
@@ -167,7 +167,7 @@ export function PlayerPortalShell({ children, firstName, levelName }: PlayerPort
           onClick={() => setDrawerOpen(prev => !prev)}
           aria-label={drawerOpen ? 'Close navigation' : 'Open navigation'}
           aria-expanded={drawerOpen}
-          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors shrink-0"
+          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors shrink-0"
         >
           {drawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
