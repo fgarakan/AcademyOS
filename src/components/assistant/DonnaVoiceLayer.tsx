@@ -142,15 +142,34 @@ export function DonnaVoiceLayer({
         {/* Live interim transcript — shown while recognition is active */}
         {isVoiceListening && interimVoiceTranscript && (
           <div
-            className="mt-2.5 rounded-lg px-3 py-2"
-            style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)' }}
+            className="mt-2.5 rounded-lg overflow-hidden"
+            style={{ border: '1px solid rgba(139,92,246,0.15)' }}
           >
-            <p className="text-[10px] uppercase tracking-widest font-semibold mb-0.5" style={{ color: '#8b5cf6' }}>
-              {DONNA_PUBLIC_NAME} is listening…
-            </p>
-            <p className="text-[12px] text-text-muted leading-snug italic">
-              {interimVoiceTranscript}
-            </p>
+            <div
+              className="px-3 py-2"
+              style={{ background: 'rgba(139,92,246,0.06)' }}
+            >
+              <p className="text-[10px] uppercase tracking-widest font-semibold mb-1" style={{ color: '#8b5cf6' }}>
+                {DONNA_PUBLIC_NAME} is listening…
+              </p>
+              <p className="text-[12px] text-text-muted leading-snug italic">
+                {interimVoiceTranscript}
+              </p>
+            </div>
+            <div
+              className="flex items-center gap-2 px-3 py-1.5"
+              style={{ background: 'rgba(139,92,246,0.03)', borderTop: '1px solid rgba(139,92,246,0.1)' }}
+            >
+              <button
+                type="button"
+                onClick={() => onVoiceTranscriptRaw(interimVoiceTranscript)}
+                className="text-[10px] font-medium px-2 py-0.5 rounded-md transition-colors"
+                style={{ background: 'rgba(139,92,246,0.12)', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.2)' }}
+              >
+                Use this
+              </button>
+              <p className="text-[10px] text-text-muted">Capture partial — edit before confirming</p>
+            </div>
           </div>
         )}
 
@@ -184,6 +203,7 @@ export function DonnaVoiceLayer({
               </p>
               <textarea
                 rows={2}
+                autoFocus
                 value={pendingVoiceAnswer.editedText}
                 onChange={e =>
                   onPendingVoiceAnswerChange({
