@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-22 — Sprint 626 — DONNA Intent Classifier Upgrade V1
+
+**Scope:** Pure TypeScript classifier upgrade. No DB calls. No AI calls. No mutations. No breaking changes to existing coach classifier.
+
+**What changed:** Added `classifyDirectorIntent(input)` to `donnaIntentClassifier.ts` alongside the existing coach `classifyDonnaIntent`. New function returns `DirectorIntentResult` with: `intent`, `confidence`, `missingContext`, `safetyClass` (`safe | needs_review | blocked`), `recommendedAction`. 13 director-specific intent families, each with regex signal arrays, safety class, and recommended action. Unsafe visibility requests always return `blocked` and are checked first.
+
+**Intent families added:**
+- `kpi_explanation` / `kpi_priority` — safe, KPI answer paths
+- `dashboard_priority` / `roster_attention` — safe, existing Sprint 623/624 paths
+- `review_queue` — safe, routes to /director/review
+- `parent_summary` — needs_review, clarifies which player
+- `level_movement` — needs_review, clarifies player + level
+- `assessment_or_placement` — needs_review, clarifies which player
+- `curriculum_builder` — needs_review, drafts for review
+- `coach_note_summary` — needs_review, director-only (no parent exposure)
+- `unsafe_visibility_request` — blocked (raw notes to parent, cross-academy, direct mutations)
+- `ambiguous_context` — low confidence, clarification needed
+
+**Files modified:**
+- `src/lib/donna/donnaIntentClassifier.ts` — added `DonnaDirectorIntent`, `DonnaSafetyClass`, `DirectorIntentResult`, `classifyDirectorIntent`, `formatDirectorIntentLabel`; existing coach classifier untouched
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean
+
+**Known limitations:** `classifyDirectorIntent` is exported but not yet wired into the director response path — that's the role of Sprint 627+ clarification and response routing. The classifier provides the ground truth; the response path uses it.
+
+---
+
 ## 2026-05-22 — Sprint 625 — DONNA Cross-Page Session Context V1
 
 **Scope:** In-memory React context only. No localStorage for sensitive data. No migrations. No DB writes. No mutations. No parent/player data.

@@ -165,3 +165,280 @@ export function formatCategoryLabel(category: DonnaCommandCategory): string {
 export function isInputTooShort(input: string, minWords = 2): boolean {
   return input.trim().split(/\s+/).filter(Boolean).length < minWords
 }
+
+// ── Sprint 626 — Director Intent Classification Upgrade ───────────────────────
+// Extended director-specific intent families with safety classification.
+// No AI calls. Deterministic rule-based only.
+
+export type DonnaDirectorIntent =
+  | 'kpi_explanation'
+  | 'kpi_priority'
+  | 'dashboard_priority'
+  | 'roster_attention'
+  | 'review_queue'
+  | 'parent_summary'
+  | 'level_movement'
+  | 'assessment_or_placement'
+  | 'curriculum_builder'
+  | 'coach_note_summary'
+  | 'unsafe_visibility_request'
+  | 'ambiguous_context'
+  | 'unknown'
+
+export type DonnaSafetyClass = 'safe' | 'needs_review' | 'blocked'
+
+export interface DirectorIntentResult {
+  intent: DonnaDirectorIntent
+  confidence: 'high' | 'medium' | 'low'
+  missingContext: string | null
+  safetyClass: DonnaSafetyClass
+  recommendedAction: string
+}
+
+type DirectorSignalEntry = {
+  intent: DonnaDirectorIntent
+  signals: RegExp[]
+  safetyClass: DonnaSafetyClass
+  recommendedAction: string
+  missingContext?: string
+}
+
+const DIRECTOR_SIGNAL_MAP: DirectorSignalEntry[] = [
+  {
+    intent: 'unsafe_visibility_request',
+    signals: [
+      /show (raw |this |the |a )?(coach )?note to (the |a )?parent/,
+      /send (raw |this |the )?note to (the |a )?parent/,
+      /expose (coach )?notes? to parent/,
+      /give parent (access to |the )?raw (coach )?notes?/,
+      /share (coach )?observation with parent/,
+      /show another academy/,
+      /show me (data from |a )?(another|different) academy/,
+      /publish (this |the )?(video|content) (to |for )?(the |a )?player now/,
+      /move (the |this )?player (up|down) now/,
+      /approve (this |the )?(action|change) (right now|immediately|automatically)/,
+    ],
+    safetyClass: 'blocked',
+    recommendedAction: 'Block and explain why this action is not allowed. Offer a safe alternative through the review queue.',
+  },
+  {
+    intent: 'kpi_explanation',
+    signals: [
+      /\bkpi\b/,
+      /\bmetric\b/,
+      /attendance rate/,
+      /recap completion/,
+      /curriculum coverage/,
+      /template usage/,
+      /coach follow.?through/,
+      /player progress velocity/,
+      /level readiness/,
+      /mission completion/,
+      /badge progress/,
+      /mental performance coverage/,
+      /explain (these |the |this )?(kpi|metric|signal|score|rate)/,
+      /what (is|does|are) (the |this |these )?(kpi|metric|attendance|recap|coverage|velocity)/,
+    ],
+    safetyClass: 'safe',
+    recommendedAction: 'Answer using kpiExplainer templates. State trend limitation if trend data is unavailable.',
+  },
+  {
+    intent: 'kpi_priority',
+    signals: [
+      /which kpi (needs?|is|has) (the most )?attention/,
+      /which (metric|signal) (should i|is most) (important|urgent|critical)/,
+      /what (kpi|metric|signal) (to|should i) (focus on|look at|fix) first/,
+    ],
+    safetyClass: 'safe',
+    recommendedAction: 'Use kpiExplainer priority path from available context signals.',
+  },
+  {
+    intent: 'dashboard_priority',
+    signals: [
+      /what (should|do|can) i (do|focus|fix|work on|start) (first|today|now|next)?/,
+      /what (needs?|need) (my )?attention/,
+      /most important (thing|task|issue)/,
+      /how healthy (is|are) (my|the|this) academy/,
+      /\bacademy health\b/,
+      /biggest bottleneck/,
+      /what (to|should i) fix first/,
+      /what (is|are) (urgent|critical) (today|now)/,
+    ],
+    safetyClass: 'safe',
+    recommendedAction: 'Use buildDashboardPriorityResponse from directorDashboardDonnaAnswer.',
+  },
+  {
+    intent: 'roster_attention',
+    signals: [
+      /who (needs?|need) (attention|help|review)/,
+      /which players? (need|are|require) (attention|review|at risk)/,
+      /who (is|are) at risk/,
+      /who should i (focus on|check on|prioritize)/,
+      /advancement.ready players?/,
+      /who is ready (to advance|for level)/,
+      /players? (at risk|falling behind|missing curriculum)/,
+    ],
+    safetyClass: 'safe',
+    recommendedAction: 'Use tryAnswerRosterAttentionQuestion from directorPlayersDonnaIntelligence.',
+  },
+  {
+    intent: 'review_queue',
+    signals: [
+      /review queue/,
+      /pending (review|approval)/,
+      /what('?s| is) pending/,
+      /items? (to review|awaiting)/,
+      /approval queue/,
+      /review (center|hub)/,
+    ],
+    safetyClass: 'safe',
+    recommendedAction: 'Show pending review count and route to /director/review.',
+  },
+  {
+    intent: 'parent_summary',
+    signals: [
+      /parent (summary|update|message|communication)/,
+      /draft (a |an )?(parent|family) (summary|update|message)/,
+      /send (to|a message to) (the |a )?parent/,
+      /parent.safe (summary|update)/,
+      /family update/,
+    ],
+    safetyClass: 'needs_review',
+    recommendedAction: 'Propose a parent-safe draft for review. Do not publish. Route to proposed_actions.',
+    missingContext: 'Which player should this parent summary be for?',
+  },
+  {
+    intent: 'level_movement',
+    signals: [
+      /level (up|down|movement|change|advance|promotion)/,
+      /move (the |this )?player (up|down|to level)/,
+      /promote (the |this )?player/,
+      /ready to (move up|advance|level up)/,
+      /level (readiness|assessment)/,
+      /advance (the |this )?player/,
+    ],
+    safetyClass: 'needs_review',
+    recommendedAction: 'Propose level movement for director review. Do not apply automatically.',
+    missingContext: 'Which player and which level?',
+  },
+  {
+    intent: 'assessment_or_placement',
+    signals: [
+      /\bassessment\b/,
+      /\bplacement\b/,
+      /assess (the |this )?player/,
+      /place (the |this )?player/,
+      /schedule (an |a )?assessment/,
+      /reassess/,
+      /initial placement/,
+      /placement recommendation/,
+    ],
+    safetyClass: 'needs_review',
+    recommendedAction: 'Route to placement/assessment flow. Propose for review. Do not finalize automatically.',
+    missingContext: 'Which player needs assessment?',
+  },
+  {
+    intent: 'curriculum_builder',
+    signals: [
+      /add (a |an )?(drill|skill|mission|badge|exercise|block|requirement)/,
+      /create (a |an )?(drill|skill|mission|badge|exercise|block|curriculum)/,
+      /curriculum (builder|edit|update|change)/,
+      /add (this |the )?drill to/,
+      /create (a )?badge for/,
+      /build (a )?(session|template|curriculum)/,
+      /new (drill|mission|badge|block|skill)/,
+    ],
+    safetyClass: 'needs_review',
+    recommendedAction: 'Draft curriculum item and route to review. Do not publish directly.',
+  },
+  {
+    intent: 'coach_note_summary',
+    signals: [
+      /summarize (the |this |a )?coach (note|observation)/,
+      /coach note (summary|digest|review)/,
+      /what did (the )?coach (say|note|write|observe)/,
+      /coach observation (summary|digest)/,
+    ],
+    safetyClass: 'needs_review',
+    recommendedAction: 'Summarize internal coach notes for director only. Do not expose raw notes to parents/players.',
+  },
+]
+
+export function classifyDirectorIntent(input: string): DirectorIntentResult {
+  const t = input.toLowerCase().trim()
+
+  // Check unsafe first — always blocked
+  for (const entry of DIRECTOR_SIGNAL_MAP) {
+    if (entry.intent === 'unsafe_visibility_request') {
+      for (const signal of entry.signals) {
+        if (signal.test(t)) {
+          return {
+            intent: 'unsafe_visibility_request',
+            confidence: 'high',
+            missingContext: null,
+            safetyClass: 'blocked',
+            recommendedAction: entry.recommendedAction,
+          }
+        }
+      }
+    }
+  }
+
+  type ScoredMatch = DirectorSignalEntry & { score: number }
+  const matches: ScoredMatch[] = []
+
+  for (const entry of DIRECTOR_SIGNAL_MAP) {
+    if (entry.intent === 'unsafe_visibility_request') continue
+    let score = 0
+    for (const signal of entry.signals) {
+      if (signal.test(t)) score++
+    }
+    if (score > 0) matches.push({ ...entry, score })
+  }
+
+  if (matches.length === 0) {
+    return {
+      intent: 'unknown',
+      confidence: 'low',
+      missingContext: 'What would you like to know or do?',
+      safetyClass: 'safe',
+      recommendedAction: 'Ask a clarifying question to identify the intent.',
+    }
+  }
+
+  matches.sort((a, b) => b.score - a.score)
+  const best = matches[0]
+  const ambiguous = matches.length > 1 && matches[0].score === matches[1].score
+
+  const confidence: DirectorIntentResult['confidence'] =
+    best.score >= 2 ? 'high' : matches.length === 1 ? 'medium' : 'low'
+
+  return {
+    intent: ambiguous ? 'ambiguous_context' : best.intent,
+    confidence: ambiguous ? 'low' : confidence,
+    missingContext: ambiguous
+      ? `Did you mean ${formatDirectorIntentLabel(matches[0].intent)} or ${formatDirectorIntentLabel(matches[1].intent)}?`
+      : (best.missingContext ?? null),
+    safetyClass: ambiguous ? 'safe' : best.safetyClass,
+    recommendedAction: best.recommendedAction,
+  }
+}
+
+export function formatDirectorIntentLabel(intent: DonnaDirectorIntent): string {
+  const labels: Record<DonnaDirectorIntent, string> = {
+    kpi_explanation: 'a KPI explanation',
+    kpi_priority: 'a KPI priority check',
+    dashboard_priority: 'a dashboard priority summary',
+    roster_attention: 'roster attention',
+    review_queue: 'the review queue',
+    parent_summary: 'a parent summary',
+    level_movement: 'a level movement',
+    assessment_or_placement: 'an assessment or placement',
+    curriculum_builder: 'curriculum building',
+    coach_note_summary: 'a coach note summary',
+    unsafe_visibility_request: 'an unsafe visibility request',
+    ambiguous_context: 'something ambiguous',
+    unknown: 'something unclear',
+  }
+  return labels[intent]
+}
