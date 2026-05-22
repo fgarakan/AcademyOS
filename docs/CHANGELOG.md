@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-22 — Sprint 666 — Error States Master Pass V1
+
+**Scope:** Audit all error.tsx boundaries for consistency. Fixed 2 outliers in director portal.
+
+**What changed:**
+- `src/app/director/today/error.tsx` — Replaced card-wrapped layout + `AlertTriangle` icon with standard error pattern: red circle icon box, `AlertCircle`, `RefreshCw` button, Dashboard link
+- `src/app/director/parents/error.tsx` — Added icon, `RefreshCw` button, replaced raw `<a>` with `Link`, matched standard layout
+- `docs/ERROR_STATES_AUDIT_666.md` — Full audit table: 10 files reviewed, 2 fixed, 8 already conformant
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-22 — Sprint 665 — Empty States Master Pass V1
 
 **Scope:** Audit and standardize empty/no-access states across all portals. Player portal raw Card patterns replaced with EmptyState component.
