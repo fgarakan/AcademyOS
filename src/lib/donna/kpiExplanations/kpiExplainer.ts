@@ -208,3 +208,21 @@ export function explainKpi(kpiValue: KpiValue): KpiExplanation {
 export function explainAllKpis(values: KpiValue[]): KpiExplanation[] {
   return values.map(explainKpi)
 }
+
+// ── Status-only helper (Sprint 622) ───────────────────────────────────────────
+// Returns KPI template text by ID and status without requiring a full KpiValue.
+// Used by DONNA answer builders that derive status from available context signals
+// rather than from computed KpiValue objects.
+
+export function explainKpiByStatus(
+  kpiId: AcademyKpiId,
+  status: 'healthy' | 'warning' | 'critical',
+): { headline: string; whyItMatters: string; recommendedNextAction: string; nextActionHref: string | null } {
+  const template = KPI_EXPLANATIONS[kpiId][status]
+  return {
+    headline: template.headline,
+    whyItMatters: template.whyItMatters,
+    recommendedNextAction: template.action,
+    nextActionHref: template.href,
+  }
+}

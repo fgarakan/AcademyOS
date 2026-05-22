@@ -824,8 +824,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // window.dispatchEvent(new CustomEvent('donna:open', { detail: { prompt: '...' } }))
   useEffect(() => {
     function handleDonnaOpen(e: Event) {
-      const detail = (e as CustomEvent<{ prompt?: string }>).detail
+      const detail = (e as CustomEvent<{ prompt?: string; donnaAnswer?: { message: string; type: 'info' | 'success' | 'warning' | 'error'; label?: string } }>).detail
       setPanelOpen(true)
+      if (detail?.donnaAnswer) {
+        const { message, label } = detail.donnaAnswer
+        setCommandResponse({ message, type: 'info', label })
+        return
+      }
       if (detail?.prompt) {
         setTypedText(detail.prompt)
       }

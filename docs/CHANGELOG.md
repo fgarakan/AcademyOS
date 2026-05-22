@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-22 — Sprint 622 — DONNA KPI Explainer Response Path V1
+
+**Scope:** Pure TypeScript wiring only. No migrations. No RLS changes. No DB writes. No new server actions. No parent/player data exposure. No mutations.
+
+**What changed:** KPI chip answers are now pre-computed at render time using `kpiExplainer.ts` templates and passed as typed `DonnaInlineAnswer` objects in the `donna:open` event. `DonnaAssistantButton.handleDonnaOpen` now detects the pre-built answer and calls `setCommandResponse` immediately — no submit fallthrough. The `/director/donna` hub receives a KPI intercept in `DonnaVoiceReadyShell.handleSend` via `tryAnswerKpiQuestion()`, which answers KPI explain/priority/trend questions from live `DirectorDonnaContext` signals and gives an honest limitation response for trend attribution.
+
+**Files modified:**
+- `src/lib/donna/kpiExplanations/kpiExplainer.ts` — added `explainKpiByStatus()` (Sprint 622 status-only helper; started in previous session, confirmed present)
+- `src/lib/donna/directorKpiDonnaContext.ts` — added `DonnaInlineAnswer` exported type; added `buildKpiExplainAnswer`, `buildKpiPriorityAnswer`, `buildDashboardPriorityAnswer`, `buildRosterAttentionAnswer` answer builder functions; added imports for `explainKpiByStatus` and `AcademyKpiId`
+- `src/components/donna/DonnaKpiExplainerPanel.tsx` — imported builders and `DonnaInlineAnswer`; updated `fireDonna()` to accept optional `donnaAnswer`; updated `DonnaChip` to accept and pass `donnaAnswer`; all chips pre-compute and pass typed answers
+- `src/components/assistant/DonnaAssistantButton.tsx` — updated `handleDonnaOpen` to detect `donnaAnswer` in event detail and call `setCommandResponse` immediately (bypassing typed submit fallthrough)
+- `src/lib/donna/donnaSafeReadActions.ts` — added `detectKpiQuestionType()` and `tryAnswerKpiQuestion()` for hub typed path; added `explainKpiByStatus` import
+- `src/components/donna/DonnaVoiceReadyShell.tsx` — added KPI intercept block before `detectActionIdFromText` in `handleSend`; imports `tryAnswerKpiQuestion`
+- `docs/CHANGELOG.md` — this entry
+
+**TypeScript:** Clean — npx tsc --noEmit passed with no errors.
+
+**Score changes:**
+- /director/kpi: 3→6 (DONNA now delivers typed answers from kpiExplainer templates; trend attribution still honest-limited)
+- /director: 5→6 (dashboard chip now delivers pre-computed priority answer immediately)
+- /director/players: 3→5 (roster chip now delivers pre-computed attention answer immediately)
+- /director/donna hub: KPI questions now answered from live DirectorDonnaContext signals
+
+**Known limitations:**
+- Trend attribution ("why did this change?") is intentionally not wired — DONNA gives an honest limitation answer
+- Hub KPI answers use `DirectorDonnaContext` signals (attention items, pending reviews, wrap-ups) — not raw KPI page values
+- Per-player intelligence on /director/players still pending (P1)
+
+---
+
 ## 2026-05-22 — Sprint 621 — DONNA KPI Fluency Dashboard Presence V1
 
 **Scope:** UI wiring only. Three P0 DONNA entry points added across /director/kpi, /director, and /director/players. No new server actions. No migrations. No RLS changes. No DB writes. No parent/player data exposure. No mutations.

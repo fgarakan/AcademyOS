@@ -27,7 +27,7 @@ import type { DonnaRole } from '@/lib/donna/donnaRoleBoundaries'
 import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import type { CoachDonnaContext } from '@/lib/donna/coachDonnaContext'
 import { getSuggestedQuestionsForRole } from '@/lib/donna/donnaSuggestedQuestions'
-import { dispatchSafeReadAction, type DonnaSafeReadAnswer } from '@/lib/donna/donnaSafeReadActions'
+import { dispatchSafeReadAction, tryAnswerKpiQuestion, type DonnaSafeReadAnswer } from '@/lib/donna/donnaSafeReadActions'
 import { buildChatMessageFromAnswer } from '@/components/donna/DonnaChatThread'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -109,6 +109,24 @@ export function DonnaVoiceReadyShell({
       setIsTyping(false)
       recordTurn(trimmed, boundaryMsg.text, { confidence: boundary.confidenceKind })
       return
+    }
+
+    // KPI question intercept — answer KPI questions from available director context
+    if (plainRole === 'director' && directorCtx) {
+      const kpiAnswer = tryAnswerKpiQuestion(trimmed, directorCtx)
+      if (kpiAnswer) {
+        const donnaMsg = buildChatMessageFromAnswer(kpiAnswer)
+        setTimeout(() => {
+          setMessages(prev => [...prev, donnaMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, donnaMsg.text, {
+            actionId: kpiAnswer.actionId,
+            confidence: kpiAnswer.confidence,
+            sourceNote: kpiAnswer.sourceNote,
+          })
+        }, 600)
+        return
+      }
     }
 
     // Try safe read dispatch based on keywords

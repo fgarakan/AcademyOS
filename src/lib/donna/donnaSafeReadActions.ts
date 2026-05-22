@@ -8,6 +8,7 @@ import type { DonnaRole } from '@/lib/donna/donnaRoleBoundaries'
 import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import type { CoachDonnaContext } from '@/lib/donna/coachDonnaContext'
 import { getConfidencePrefix, isAnswerable } from '@/lib/donna/donnaConfidence'
+import { explainKpiByStatus } from '@/lib/donna/kpiExplanations/kpiExplainer'
 
 // ── Answer shape ──────────────────────────────────────────────────────────────
 
@@ -251,6 +252,108 @@ export function answerCoachWrapUpStatus(ctx: CoachDonnaContext): DonnaSafeReadAn
     sourceNote: 'Live from proposed_actions',
     followUp: ctx.activeSessionId ? `Want to submit the wrap-up for ${ctx.activeSessionName ?? 'your session'}?` : null,
     href: ctx.activeSessionId ? `/coach/sessions/${ctx.activeSessionId}/wrap-up` : '/coach/sessions',
+    isAnswerable: true,
+  }
+}
+
+// ── KPI question detection and answering (Sprint 622) ────────────────────────
+// Used by DonnaVoiceReadyShell to intercept KPI questions on the /director/donna hub.
+// Answers from available DirectorDonnaContext signals only — no external data fetch.
+
+type KpiQuestionType = 'explain' | 'priority' | 'trend'
+
+export function detectKpiQuestionType(text: string): KpiQuestionType | null {
+  const t = text.toLowerCase()
+  if (/why|changed|went|dropped|fell|increased|decreased|spiked|worse|better/.test(t)) return 'trend'
+  if (/explain|what (is|are|does)|mean|how does|tell me about/.test(t)) return 'explain'
+  if (/which|first|most|priority|focus|attention|important|urgent|should i/.test(t)) return 'priority'
+  if (/kpi|metric|signal|attendance|recap|progress|velocity|coverage|completion/.test(t)) return 'explain'
+  return null
+}
+
+export function tryAnswerKpiQuestion(
+  text: string,
+  ctx: DirectorDonnaContext,
+): DonnaSafeReadAnswer | null {
+  const questionType = detectKpiQuestionType(text)
+  if (!questionType) return null
+
+  if (questionType === 'trend') {
+    return {
+      actionId: 'kpi_trend',
+      text: "I can explain what each KPI means and what to inspect next, but trend attribution — why a number changed — is not wired yet. To investigate: check session attendance logs, coach recap history, or filter by date range in the KPI dashboard.",
+      confidence: 'partial',
+      sourceNote: 'Honest limitation — session-level trend analysis pending',
+      followUp: 'Want me to show current academy risk signals instead?',
+      href: '/director/kpi',
+      isAnswerable: true,
+    }
+  }
+
+  const highRisk = ctx.attentionItems.filter(a => a.risk === 'high').length
+  const medRisk = ctx.attentionItems.filter(a => a.risk === 'medium').length
+
+  if (questionType === 'priority') {
+    if (ctx.missingWrapUps > 0) {
+      const { headline, recommendedNextAction } = explainKpiByStatus('recap_completion_rate', ctx.missingWrapUps > 3 ? 'critical' : 'warning')
+      return {
+        actionId: 'kpi_priority',
+        text: `${headline}. ${ctx.missingWrapUps} wrap-up${ctx.missingWrapUps !== 1 ? 's' : ''} missing today. ${recommendedNextAction}.`,
+        confidence: ctx.confidence,
+        sourceNote: ctx.isLive ? 'Live from sessions' : 'Demo data',
+        followUp: 'Want to see which sessions are missing wrap-ups?',
+        href: '/director/sessions',
+        isAnswerable: true,
+      }
+    }
+    if (highRisk > 0) {
+      const { headline, recommendedNextAction } = explainKpiByStatus('player_progress_velocity', highRisk > 2 ? 'critical' : 'warning')
+      return {
+        actionId: 'kpi_priority',
+        text: `${headline}. ${highRisk} player${highRisk !== 1 ? 's' : ''} flagged as high risk${medRisk > 0 ? `, ${medRisk} medium risk` : ''}. ${recommendedNextAction}.`,
+        confidence: ctx.confidence,
+        sourceNote: ctx.isLive ? 'Live from observations and attendance' : 'Demo data',
+        followUp: 'Want to see the attention list?',
+        href: '/director/players',
+        isAnswerable: true,
+      }
+    }
+    if (ctx.pendingReviews > 0) {
+      const { headline, recommendedNextAction } = explainKpiByStatus('level_readiness_queue_size', ctx.pendingReviews > 3 ? 'critical' : 'warning')
+      return {
+        actionId: 'kpi_priority',
+        text: `${headline}. ${ctx.pendingReviews} item${ctx.pendingReviews !== 1 ? 's' : ''} pending your review. ${recommendedNextAction}.`,
+        confidence: ctx.confidence,
+        sourceNote: ctx.isLive ? 'Live from proposed_actions' : 'Demo data',
+        followUp: 'Want to go to the review queue?',
+        href: '/director/review',
+        isAnswerable: true,
+      }
+    }
+    const { headline } = explainKpiByStatus('attendance_rate', 'healthy')
+    return {
+      actionId: 'kpi_priority',
+      text: `No urgent KPI signals at the moment. ${headline}. Review curriculum coverage or plan upcoming sessions.`,
+      confidence: ctx.confidence,
+      sourceNote: ctx.isLive ? 'Live data' : 'Demo data',
+      followUp: null,
+      href: '/director/kpi',
+      isAnswerable: true,
+    }
+  }
+
+  // questionType === 'explain'
+  const { headline, whyItMatters } = explainKpiByStatus(
+    ctx.missingWrapUps > 0 ? 'recap_completion_rate' : highRisk > 0 ? 'player_progress_velocity' : 'attendance_rate',
+    ctx.missingWrapUps > 0 ? (ctx.missingWrapUps > 3 ? 'critical' : 'warning') : highRisk > 0 ? 'warning' : 'healthy',
+  )
+  return {
+    actionId: 'kpi_explain',
+    text: `${headline}. ${whyItMatters} Note: trend attribution (why a number changed) is not wired yet — check session data for root causes.`,
+    confidence: ctx.confidence,
+    sourceNote: ctx.isLive ? 'Live data' : 'Demo data',
+    followUp: 'Want to see which signals need attention?',
+    href: '/director/kpi',
     isAnswerable: true,
   }
 }
