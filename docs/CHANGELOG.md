@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-23 — Sprint 699 — DONNA 10/10 COO Readiness Audit V1
+
+**Scope:** Re-audit DONNA after Sprint 697 wiring. Honest re-score all 10 categories. Re-run all 15 golden path scenarios. Issue Go/No-Go for Brian demo. No runtime changes — audit and documentation only.
+
+**Critical finding:** Sprint 697 CHANGELOG overstated two fixes. "Move Sarah up" and "Show the raw coach note to the parent" are STILL P0 failures after Sprint 697 wiring. Root causes: (1) `level_movement` signals in `donnaIntentClassifier.ts` require literal "player" or "level" keyword — "Move Sarah up" has neither. (2) The `unsafe_visibility_request` regex `(raw |this |the |a )?` absorbs only one word, but "the raw" is two words before "coach" — no match. Both remain in Sprint 700 backlog.
+
+**Files created:**
+- `docs/DONNA_10_OUT_OF_10_COO_READINESS_AUDIT_699.md` — 9-section readiness audit. (1) Executive summary answering 8 COO readiness questions — Sprint 697 wiring confirmed live; 2 of 15 golden path scenarios still P0. (2) 10-category re-score: honest total 60/100 (corrects Sprint 697's optimistic 73/100 estimate). Categories: Conversational Intelligence 16/20, Safety Architecture 10/10, System Awareness 7/10, Page Awareness 7/10, Action Pipeline 5/10, KPI Intelligence 4/10, Roster Intelligence 4/10, Curriculum Intelligence 2/10, Voice Input Quality 3/10, Session Memory 2/10. (3) All 15 golden path scenarios re-evaluated with Sprint 699 status — 9 passing/improved, 4 partially fixed, 2 still P0. (4) Sprint 697 wiring validation table — 6 COO functions confirmed live, 1 (getActionPreviewForRequest) not wired; recordRouteChange not wired. (5) Demo readiness vs Sprint 698 script — 9/12 prompts demo-safe, 2/12 NOT demo-safe (K and M), 1/12 partially safe. (6) What not to claim — 6 items including live level mutation, real-time coach notes, parent push, curriculum AI. (7) Remaining gaps by severity — 2 P0 (K, M), 4 P1, 4 P2. (8) Go/No-Go: C — GO for internal testing, NOT YET for Brian demo. Interim demo workarounds: use "Is Sarah ready to level up?" instead of "Move Sarah up"; use "Expose the coach notes to the parent" instead of "Show the raw coach note to the parent." (9) Sprint 700 recommendation — 4 targeted fixes: add `/move \w+ (up|down)/` to level_movement signals, add `/show.*raw.*coach.*note.*to.*parent/` to unsafe_visibility_request signals, add curriculum gap pattern to isPageQuestion, wire recordRouteChange in DonnaAssistantButton.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — Sprint 699 entry added.
+
+**TypeScript:** N/A (documentation sprint — no code changes)
+
+---
+
 ## 2026-05-23 — Sprint 698 — DONNA Demo Mode COO Script V1
 
 **Scope:** Director-facing demo script for the Brian / academy director presentation. Documents the Sprint 697 golden path, exact prompts, fallback lines, demo scorecard, and what not to claim. No runtime changes.
