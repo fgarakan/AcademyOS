@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 678 — Premium V1 Product Walkthrough V1
+
+**Scope:** Non-technical product walkthrough covering all four portal experiences (director, coach, parent, player) and V1 feature inventory.
+
+**What changed:**
+- `docs/PREMIUM_V1_PRODUCT_WALKTHROUGH_678.md` (new) — Full product walkthrough in non-technical tone. Covers: director dashboard + DONNA + review queue + player profiles; coach portal + wrap-up flow + voice observations + DONNA coach scope; parent portal + development summary + child switcher + what parents see/don't see; player portal + level + gates + badges + DONNA player scope. V1 feature matrix (what's in, what's V2). Post-V1 roadmap preview.
+
+**TypeScript:** Clean (no code changed)
+
+---
+
 ## 2026-05-23 — Sprint 677 — Golden Path QA Scripts V1
 
 **Scope:** 12 golden path QA scripts covering all primary user journeys. Each path defines preconditions, steps, pass criteria, and known limitations.
