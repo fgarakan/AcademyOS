@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 687 — DONNA Page Aware Context Engine V1
+
+**Scope:** Create `donnaPageContextEngine.ts` — a structured per-route COO capability map and question-answering layer for 12 director routes.
+
+**Files created:**
+- `src/lib/donna/donnaPageContextEngine.ts` — `DonnaPageCapabilityMap` type; route registry for `/director`, `/director/donna`, `/director/kpi`, `/director/players`, `/director/players/[playerId]`, `/director/review`, `/director/signals`, `/director/curriculum`, `/director/curriculum/builder`, `/director/placement`, `/director/level-up`, `/director/support-diagnostics`. Exports: `getPageCapabilityMap`, `whereAmI`, `whatCanYouHelpWith`, `whatShouldIInspectFirst`, `whatActionsRequireApproval`, `whatShouldINotDo`, `dataFallbackMessage`.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 686 — DONNA Global Provider Session Persistence V1
 
 **Scope:** Lift `panelOpen` state from `DonnaAssistantButton` into `DonnaSessionContextProvider` so DONNA's open state is owned by the layout-level context. Wire `updatePrompt` on every command submit to track the last safe director prompt across routes.
