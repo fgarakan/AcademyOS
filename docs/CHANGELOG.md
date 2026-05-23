@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 673 — Parent/Player Visibility QA V1
+
+**Scope:** Static audit of parent and player content visibility gating. Verified parents and players see only approved, sanitized content. Coach observations fully excluded from parent/player portals.
+
+**What changed:**
+- `docs/PARENT_PLAYER_VISIBILITY_QA_673.md` (new) — Full visibility audit. Covers: three-layer visibility model (DB flags, field allowlist, text sanitization); parent progress gate (`is_parent_visible=true`); parent evidence gate (`is_parent_safe=true`); parent development summary gate (`show_to_parent=true`); `coachSummary` field excluded from `getParentFacingContent()`; player identity via `profile_id=user.id` (never URL param); player summary gate (`show_to_student=true`); coach_observations not queried in parent/player portals; text sanitization pipeline (14 rules); `sanitizeParentFacingText()` strips INTERNAL/COACH/DIRECTOR annotations. Gap 1 (P2): `player_priorities` shown to parents without `is_parent_visible` gate — V1 mitigation: ensure AI-generated priority titles use parent-safe language. Gap 2/3 are P3 documentation only. No P0 blockers.
+
+**TypeScript:** Clean (no code changed)
+
+---
+
 ## 2026-05-23 — Sprint 672 — Tenant Isolation QA V1
 
 **Scope:** Static audit of cross-academy data isolation. Verified Academy A cannot access Academy B data across all query paths, API routes, DONNA context builders, and parent/child scoping.
