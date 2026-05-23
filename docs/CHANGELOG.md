@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 692 — DONNA Action Preview Review Routing Integration V1
+
+**Scope:** Create `donnaActionPreviewIntegration.ts` — natural-language action preview layer connecting director chat requests to the existing action preview and review routing system.
+
+**Files created:**
+- `src/lib/donna/donnaActionPreviewIntegration.ts` — `ActionPreviewResult` type. `getActionPreviewForRequest(text)` — classifies intent, builds preview for eligible intents (parent_summary, level_movement, assessment_or_placement, curriculum_builder, coach_note_summary), blocks unsafe requests, returns natural response. Natural response library for Move Sarah up / Draft parent update / Create mission / Add curriculum change / Publish video / Promote knowledge / Approve all / Show raw coach note. `explainApprovalRequirement` and `explainBlockedRequest` COO-style helpers. `SPRINT_692_TEST_REQUESTS` for validation.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 691 — DONNA Safe Memory Session Recall V1
 
 **Scope:** Create `donnaSafeSessionMemory.ts` — sessionStorage-backed safe memory for DONNA session continuity. No raw audio, no coach notes, no private data.
