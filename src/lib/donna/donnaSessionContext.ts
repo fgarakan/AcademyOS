@@ -22,6 +22,10 @@ export interface DonnaSessionContextValue {
   updatePrompt: (prompt: string) => void
   updateObjectContext: (label: string, summary?: string) => void
   clearSession: () => void
+  // Sprint 686 — panel open state lifted to provider so it survives across mounts
+  panelOpen: boolean
+  openDonnaPanel: () => void
+  closeDonnaPanel: () => void
 }
 
 // ── Default / empty state ─────────────────────────────────────────────────────
@@ -43,6 +47,9 @@ export const DonnaSessionContext = createContext<DonnaSessionContextValue>({
   updatePrompt: () => {},
   updateObjectContext: () => {},
   clearSession: () => {},
+  panelOpen: false,
+  openDonnaPanel: () => {},
+  closeDonnaPanel: () => {},
 })
 
 // ── Hook ─────────────────────────────────────────────────────────────────────

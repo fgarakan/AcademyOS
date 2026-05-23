@@ -213,6 +213,8 @@ import {
   COACH_QUICK_LINKS,
   type DonnaRole,
 } from '@/lib/donna/donnaRoleBoundaries'
+// Sprint 686 — Session context: panelOpen + updatePrompt lifted to provider
+import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -358,7 +360,8 @@ interface Props {
 export function DonnaAssistantButton({ academyId, directorName, role = 'director' }: Props) {
   const pathname = usePathname()
   const router = useRouter()
-  const [panelOpen, setPanelOpen] = useState(false)
+  // Sprint 686 — panelOpen lifted to DonnaSessionContextProvider; survives route changes
+  const { panelOpen, openDonnaPanel, closeDonnaPanel, updatePrompt } = useDonnaSessionContext()
   const [captureOpen, setCaptureOpen] = useState(false)
   const [activeMode, setActiveMode] = useState<AssistantMode | null>(null)
 
@@ -768,7 +771,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       : []
 
   const closePanel = useCallback(() => {
-    setPanelOpen(false)
+    closeDonnaPanel()
     setActiveMode(null)
     setTemplateDraft(null)
     setGenericDraft(null)
@@ -818,7 +821,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       window.speechSynthesis.cancel()
     }
     stopServerTts()
-  }, [realtimeDisconnect])
+  }, [realtimeDisconnect, closeDonnaPanel])
 
   // Escape closes the panel
   useEffect(() => {
@@ -836,7 +839,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   useEffect(() => {
     function handleDonnaOpen(e: Event) {
       const detail = (e as CustomEvent<{ prompt?: string; donnaAnswer?: { message: string; type: 'info' | 'success' | 'warning' | 'error'; label?: string } }>).detail
-      setPanelOpen(true)
+      openDonnaPanel()
       if (detail?.donnaAnswer) {
         const { message, label } = detail.donnaAnswer
         setCommandResponse({ message, type: 'info', label })
@@ -2271,6 +2274,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     const text = (overrideText ?? typedText).trim()
     if (!text) return
 
+    // Sprint 686 — track last safe prompt in session context for continuity
+    updatePrompt(text)
+
     // Sprint 290: onboarding intro — typed answers route through the onboarding handler.
     if (isOnboardingActive(onboardingStep)) {
       handleOnboardingAnswer(onboardingStep, text)
@@ -2463,7 +2469,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       {/* ------------------------------------------------------------------ */}
       <button
         onClick={() => {
-          setPanelOpen(true)
+          openDonnaPanel()
           // Sprint 359: restore draft from session if no active draft currently
           // Must run before the onboarding check so restored drafts skip intro.
           setConvState(prev => {

@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-23 — Sprint 686 — DONNA Global Provider Session Persistence V1
+
+**Scope:** Lift `panelOpen` state from `DonnaAssistantButton` into `DonnaSessionContextProvider` so DONNA's open state is owned by the layout-level context. Wire `updatePrompt` on every command submit to track the last safe director prompt across routes.
+
+**Files modified:**
+- `src/lib/donna/donnaSessionContext.ts` — Added `panelOpen: boolean`, `openDonnaPanel`, `closeDonnaPanel` to `DonnaSessionContextValue` interface and default context.
+- `src/components/donna/DonnaSessionContextProvider.tsx` — Added `panelOpen` state, `openDonnaPanel`/`closeDonnaPanel` callbacks, provided through context value.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Removed local `panelOpen` state. Imported `useDonnaSessionContext`. Reads `panelOpen`, `openDonnaPanel`, `closeDonnaPanel`, `updatePrompt` from context. Replaced all `setPanelOpen(true/false)` calls with context methods. Added `closeDonnaPanel` to `closePanel` useCallback deps. Wired `updatePrompt(text)` at the top of `handleCommandSubmit` for session continuity.
+- `docs/CHANGELOG.md` — This entry.
+
+**Behavior after fix:**
+- `panelOpen` state now lives in `DonnaSessionContextProvider` which wraps the entire director layout. Any component in the layout tree can call `openDonnaPanel()` or read `panelOpen` from context.
+- The `donna:open` custom event and floating button both call `openDonnaPanel()` via context.
+- `closePanel()` calls `closeDonnaPanel()` via context, then resets all local component state as before.
+- Every director command submit records the last safe prompt in context for future session recall.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 685 — DONNA Voice State Indicator Daily Greeting V1
 
 **Scope:** Add a visible voice status indicator to the DONNA panel header and replace the flat daily greeting with a richer full greeting (first open of day) and page-aware re-entry copy (subsequent opens).

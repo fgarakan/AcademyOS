@@ -16,6 +16,11 @@ import {
 export function DonnaSessionContextProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const [session, setSession] = useState<DonnaSessionState>(DEFAULT_DONNA_SESSION)
+  // Sprint 686 — panel open state lifted from DonnaAssistantButton so it persists
+  // across mounts and is readable by any consumer in the director layout tree.
+  const [panelOpen, setPanelOpen] = useState(false)
+  const openDonnaPanel = useCallback(() => setPanelOpen(true), [])
+  const closeDonnaPanel = useCallback(() => setPanelOpen(false), [])
 
   // Track route changes automatically
   useEffect(() => {
@@ -58,7 +63,7 @@ export function DonnaSessionContextProvider({ children }: { children: ReactNode 
 
   return (
     <DonnaSessionContext.Provider
-      value={{ session, updateRoute, updateModule, updatePrompt, updateObjectContext, clearSession }}
+      value={{ session, updateRoute, updateModule, updatePrompt, updateObjectContext, clearSession, panelOpen, openDonnaPanel, closeDonnaPanel }}
     >
       {children}
     </DonnaSessionContext.Provider>
