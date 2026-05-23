@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-23 — Sprint 703 — DONNA Role-Aware COO Router V1
+
+**Scope:** Make `handleDonnaCooPrompt` role-aware so coaches get appropriate director-referral responses for director-only intents. No DB/schema/RLS changes.
+
+**P1-A fix — COO router ignores role:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added role guard at the start of `handleDonnaCooPrompt`: if `role === 'coach'` AND intent is in `{level_movement, assessment_or_placement, parent_summary, curriculum_builder}` (director-only intents), DONNA returns "That requires director approval. I can help you capture an observation..." instead of the director-centric route-to-review response. Coach gets a clear explanation with a safe alternative. Turn is recorded to chat session memory. All other routing unchanged — coaches still get full access to page-awareness, system-map, KPI, roster questions.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — role-aware guard in `handleDonnaCooPrompt`
+- `docs/CHANGELOG.md` — Sprint 703 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** Role awareness 6/10 → 8/10
+
+---
+
 ## 2026-05-23 — Sprint 702 — DONNA Chat Session Memory and Continuity Wiring V1
 
 **Scope:** Wire `donnaChatSessionMemory` (Sprint 1032 — previously dead code) into the live DONNA command path. Wire `buildContinuityMessage` to panel re-open for session re-entry context. No DB/schema/RLS/migration changes.

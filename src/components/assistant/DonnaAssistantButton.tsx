@@ -2315,9 +2315,22 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Returns false to fall through to legacy detectAndHandleCommand.
   // Falls through only for answer_directly (unknown intent) so all existing legacy routes are preserved.
   // Sprint 702 — records each turn to donnaChatSessionMemory; injects follow-up prefix when topic was previously discussed.
+  // Sprint 703 — role-aware: coach gets director-referral response for director-only intents.
   function handleDonnaCooPrompt(text: string): boolean {
     const routing = routeDonnaPrompt(text, pathname)
     if (routing.responseMode === 'answer_directly') return false
+
+    // Sprint 703 — coach role guard: redirect director-only intents to director-referral copy
+    const DIRECTOR_ONLY_INTENTS = new Set(['level_movement', 'assessment_or_placement', 'parent_summary', 'curriculum_builder'])
+    if (role === 'coach' && DIRECTOR_ONLY_INTENTS.has(routing.intent)) {
+      const coachMsg = `That requires director approval. I can help you capture an observation so it's ready for the director to review.\n\nYour director can then use it in the review queue.`
+      setCommandResponse({ message: coachMsg, type: 'info', label: 'Director required' })
+      recordPrompt(text)
+      recordSummary(coachMsg)
+      recordTurn(text, coachMsg, { domain: 'general' })
+      speakDonna(coachMsg)
+      return true
+    }
 
     const lower = text.toLowerCase()
     let composed
