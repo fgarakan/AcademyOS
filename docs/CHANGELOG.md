@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-23 — Sprint 670 — Performance Fix Pass V1
+
+**Scope:** Applied all three P1 fixes from Sprint 669 audit to `src/app/director/page.tsx`. Director dashboard query count reduced from 19 → 16. No behavior changes. No migrations. No RLS changes.
+
+**What changed:**
+- `src/app/director/page.tsx` — Merged 2 `academies` queries → 1 (`select('name, settings')`); merged 2 `academy_suggestions` queries → 1 (derive curricGapCount in-memory); merged 2 `player_curriculum_states` queries → 1 (derive advancementReadyCount in-memory)
+- `docs/PERFORMANCE_FIX_PASS_670.md` (new) — Documents all 3 fixes, before/after query counts, manual verification checklist, and deferred P2/P3 items
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 669 — Performance + Lean Runtime Audit V1
 
 **Scope:** Static code audit of AcademyOS runtime cost, query patterns, component weight, DONNA bundle, and server/client boundaries. No code changes — audit document only.

@@ -90,13 +90,13 @@ export default async function DirectorDashboard() {
     )
   }
 
-  const { data: academy } = await supabase
+  const { data: academy } = await rawDb
     .from('academies')
-    .select('name')
+    .select('name, settings')
     .eq('id', academyId)
     .single()
 
-  const academyName = academy?.name ?? 'Your Academy'
+  const academyName = (academy?.name as string | null) ?? 'Your Academy'
 
   const players = await getPlayerSummaries(supabase, academyId)
   const priorityQueue = await getAcademyPriorityQueue(supabase, academyId, { limit: 5 })
@@ -133,13 +133,8 @@ export default async function DirectorDashboard() {
 
   const sessionsThisWeek = (weekSessions ?? []).length
 
-  // Onboarding settings
-  const { data: academyWithSettings } = await rawDb
-    .from('academies')
-    .select('settings')
-    .eq('id', academyId)
-    .single()
-  const onboardingSettings = (academyWithSettings?.settings as Record<string, unknown>) ?? {}
+  // Onboarding settings — derived from academy already fetched above (no extra query)
+  const onboardingSettings = (academy?.settings as Record<string, unknown>) ?? {}
   const hasAcademyDna = typeof onboardingSettings.academy_dna === 'object' && onboardingSettings.academy_dna !== null
   const dnaSavedAt = typeof onboardingSettings.academy_dna_completed_at === 'string'
     ? onboardingSettings.academy_dna_completed_at
@@ -154,39 +149,25 @@ export default async function DirectorDashboard() {
   const allRequests = (plrData ?? []) as Array<{ id: string; status: string }>
   const newRequests = allRequests.filter(r => r.status === 'new').length
 
-  // AI Suggestions pending count
+  // AI Suggestions — single query; derive pending count, high-priority count, and curriculum gap count
   const { data: suggestionCountData } = await rawDb
     .from('academy_suggestions')
-    .select('priority')
+    .select('priority, suggestion_type')
     .eq('academy_id', academyId)
     .eq('status', 'pending')
-  const pendingSuggestions = (suggestionCountData ?? []) as Array<{ priority: string }>
+  const pendingSuggestions = (suggestionCountData ?? []) as Array<{ priority: string; suggestion_type: string }>
   const pendingSuggestionsCount = pendingSuggestions.length
   const highPrioritySuggestionsCount = pendingSuggestions.filter(s => s.priority === 'high').length
+  const curricGapCount = pendingSuggestions.filter(s => s.suggestion_type === 'curriculum_gap').length
 
-  // Curriculum coverage
+  // Curriculum coverage — single query; derive players-with-level and advancement-ready count
   const { data: curricStateRows } = await rawDb
     .from('player_curriculum_states')
-    .select('player_id')
+    .select('player_id, advancement_eligible')
     .eq('academy_id', academyId)
   const playersWithLevel = (curricStateRows ?? []).length
   const playersWithoutLevel = Math.max(0, activePlayers - playersWithLevel)
-
-  const { data: curricGapData } = await rawDb
-    .from('academy_suggestions')
-    .select('id')
-    .eq('academy_id', academyId)
-    .eq('status', 'pending')
-    .eq('suggestion_type', 'curriculum_gap')
-  const curricGapCount = (curricGapData ?? []).length
-
-  // Advancement-ready count
-  const { data: advancementReadyData } = await rawDb
-    .from('player_curriculum_states')
-    .select('player_id')
-    .eq('academy_id', academyId)
-    .eq('advancement_eligible', true)
-  const advancementReadyCount = (advancementReadyData ?? []).length
+  const advancementReadyCount = (curricStateRows ?? []).filter((r: { advancement_eligible: boolean }) => r.advancement_eligible === true).length
 
   // Pending coach wrap-ups
   const { data: pendingWrapUpData } = await rawDb
