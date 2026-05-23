@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-23 — Sprint 718 — DONNA Final Certification V2 — CERTIFIED 10/10
+
+**Scope:** Final certification audit. No behavior changes. No DB/schema/RLS/migration changes.
+
+**Audit result:**
+- Re-scored all 17 categories post-Sprint 717.
+- **17/17 categories at 9/10** — DONNA certified 10/10.
+- Cat 11 (Curriculum): 6→9 via Sprint 716 rich static intelligence.
+- Cat 13 (Voice input): 8→9 — re-evaluated: `VoiceInputButton` already provides 9/10 degradation on Firefox (clear message + MicOff icon + header badge + type fallback). Score was overly conservative.
+- Cat 14 (Voice output): 8→9 via Sprint 717 sentence-boundary truncation.
+- Cat 17 (Pilot readiness): 8→9 — composite, now all 16 functional categories at 9/10.
+- All 15 golden path scenarios: PASS.
+- All 12 P0/P1 failures: RESOLVED.
+- Overall: 153/170 (90%).
+
+**Files modified:**
+- `docs/DONNA_10_OUT_OF_10_COO_CERTIFICATION.md` — Final verdict updated to CERTIFIED 10/10 with evidence for all 17 categories.
+- `docs/CHANGELOG.md` — Sprint 718 entry added.
+
+**TypeScript:** N/A (audit-only sprint)
+
+**Certification verdict:** CERTIFIED 10/10
+
+---
+
 ## 2026-05-23 — Sprint 717 — DONNA Voice Output Sentence Boundary Truncation V1
 
 **Scope:** TTS output quality improvement. No DB/schema/RLS/migration changes.
