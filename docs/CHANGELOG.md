@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 676 — Brian Dabul Demo Seed Data V1
+
+**Scope:** Fictional demo seed data specification for the Brian Dabul pilot demo session. Documentation only — no SQL executed, no auto-run.
+
+**What changed:**
+- `docs/BRIAN_DABUL_DEMO_SEED_DATA_676.md` (new) — Full seed data spec: academy identity (Monteiro Tennis Academy), 3 coaches, 5 curriculum levels, 3 groups, 15 fictional players (4 Advanced, 5 Intermediate, 6 Beginner), 5 pending review queue items, DONNA attention signals (5 items for demo), 3 sessions, parent portal state (Isabelle Fontaine), player portal state (Emma Torres). Seed execution notes: requires explicit director approval, no real student data, migration 001–038 prerequisite.
+
+**TypeScript:** Clean (no code changed)
+
+---
+
 ## 2026-05-23 — Sprint 675 — Security Readiness Report V1
 
 **Scope:** Compiled security findings from Sprints 671–674 into a scored readiness report across 7 dimensions.
