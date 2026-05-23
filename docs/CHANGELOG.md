@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 689 — DONNA Conversational Router Upgrade V1
+
+**Scope:** Create `donnaConversationalRouter.ts` — a ChatGPT-like routing layer that maps any director prompt to the correct response mode using intent classification, page context, system map, and safety class.
+
+**Files created:**
+- `src/lib/donna/donnaConversationalRouter.ts` — `DonnaResponseMode` (11 modes), `DonnaRoutingResult` type. `routeDonnaPrompt(text, pathname)` — main router: detects system questions → system map, page questions → page context, then runs intent classifier and maps to mode. Includes `SPRINT_689_TEST_PROMPTS` covering 10 manual test scenarios. Safe/needs-review/blocked dispatch. Source context label and next-step recommendation per mode.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 688 — DONNA System Aware Academy Map V1
 
 **Scope:** Create `donnaSystemMap.ts` — full AcademyOS system module registry with connected-module graph, safe/blocked action lists, and system-level COO question answering.
