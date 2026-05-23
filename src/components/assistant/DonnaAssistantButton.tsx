@@ -528,7 +528,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         return
       }
       // Realtime failed (bad token, SDP error, etc.) — fall through to browser TTS
-      console.warn('[Donna] Realtime connect failed:', result.reason)
+      console.warn('[Donna] Realtime connect failed — falling back to browser TTS')
     }
 
     // ── Path 2: Browser TTS (fallback) ────────────────────────────────────────
@@ -882,6 +882,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setInterimVoiceTranscript(null)
     // Sprint 683: voice listening/speaking/wake state intentionally NOT reset on route change.
     // DONNA should stay active across director navigation. Explicit close/stop still resets these.
+    // Sprint 693: cancel any active TTS utterance on navigation — content from the previous page
+    // should not continue speaking after the director moves to a new route.
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
+    stopServerTts()
+    setIsSpeaking(false)
     setVoicePermissionError(null)
     lastSpokenTextRef.current = null
     lastSpokenAtRef.current = 0
@@ -2946,6 +2953,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                         {activatedVoiceModeRef.current === 'realtime'
                           ? 'Donna voice was not confirmed. Try Browser Voice or continue typed.'
                           : "Donna's voice did not start. Click Play Donna voice again or type instead."}
+                      </p>
+                    )}
+                    {/* Error message — browser TTS threw an error (e.g. no speechSynthesis support) */}
+                    {voiceGreetingStatus === 'error' && (
+                      <p className="text-[10px] leading-snug" style={{ color: '#FF3B30' }}>
+                        {getFallbackMessage('browser_tts_error')}
                       </p>
                     )}
                     {/* Try Browser Voice — direct browser TTS bypass, shown only after Realtime stall */}

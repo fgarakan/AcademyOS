@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 693 — DONNA Voice Speaking TTS Reliability V1
+
+**Scope:** Audit TTS pipeline (Realtime vs. browser fallback); fix three safe reliability issues in `DonnaAssistantButton`.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — (1) Cancel orphaned `speechSynthesis` utterance + `stopServerTts()` + reset `isSpeaking` on route change so content from a previous page stops speaking when director navigates. (2) Sanitize `console.warn` for Realtime connect failures — no longer logs `result.reason` which could contain long OpenAI API error strings. (3) Add `voiceGreetingStatus === 'error'` UI message using `getFallbackMessage('browser_tts_error')` — previously the error state showed a retry button but no explanation.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 692 — DONNA Action Preview Review Routing Integration V1
 
 **Scope:** Create `donnaActionPreviewIntegration.ts` — natural-language action preview layer connecting director chat requests to the existing action preview and review routing system.
