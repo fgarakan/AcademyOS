@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-23 — Sprint 698 — DONNA Demo Mode COO Script V1
+
+**Scope:** Director-facing demo script for the Brian / academy director presentation. Documents the Sprint 697 golden path, exact prompts, fallback lines, demo scorecard, and what not to claim. No runtime changes.
+
+**Files created:**
+- `docs/DONNA_BRIAN_DEMO_COO_SCRIPT_698.md` — 11-section demo script. (1) Executive positioning — DONNA as COO layer, not chatbot. (2) Prerequisites — browser, login role, Supabase, voice, demo data rules. (3) Tight 5-minute demo flow: open → "What should I do first today?" → "Where am I?" → "What can you help me with here?" → "How does this system work?" → navigate to players → "Which players need attention?" → "Move Sarah up." → navigate to review → "What needs approval first?" → "Show the raw coach note to the parent." → voice mini-demo. (4) 10-minute expanded flow table covering KPI, player profile, curriculum, review center, unsafe request, voice. (5) 12 verified demo-safe prompts each with best route, expected response type, demo talking point, and fallback. (6) What NOT to demo — visual action preview cards, level mutation, auto-publish, Firefox voice, unseeded data as real, Realtime TTS without key. (7) Fallback script — calm lines for "Not recognized", voice failure, empty data, missing preview card, TTS stall. (8) Director-facing value narrative — 7 items covering time savings, cognitive load, data → priorities, parent/player protection, coach focus, human approval, academy trust. (9) Demo scorecard — 10 binary checks to run before any live presentation. (10) Recommended Sprint 699 — DONNA 10/10 COO Readiness Audit V1, plus candidate fix sprints 698b/698c if demo surfaces runtime gaps. (11) Quick reference card — print-ready 5-minute path, fallback lines, do-not-claim list.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — Sprint 698 entry added.
+
+**TypeScript:** N/A (documentation sprint — no code changes)
+
+---
+
 ## 2026-05-23 — Sprint 697 — DONNA Conversational Router Live Wiring V1
 
 **Scope:** Wire COO intelligence modules (Sprints 687–692) into the live DONNA command path so natural director prompts are answered by the page-aware, system-aware, safety-aware conversational router instead of falling through to "Not recognized." No DB/schema/RLS/migration changes. No mutations from chat.
