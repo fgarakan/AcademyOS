@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-23 — Sprint 713 — DONNA Action Preview CTA and Roster Player Names V1
+
+**Scope:** Two targeted improvements. No DB/schema/RLS/migration changes.
+
+**Fix 1 — Action preview actionable CTA (Category 7: 8→9)**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added "Go to Review Center" button to action preview card (calls `handleOpenReviewQueue()` + clears preview); the Dismiss button now visually separates from the CTA. Previously the card was informational only with no forward action.
+
+**Fix 2 — Roster intel player names (Category 10: 8→9)**
+- `src/lib/donna/donnaResponseComposer.ts` — Updated `composeRosterIntelAnswer(report, reviewData, firstName)` to accept `DonnaReviewQueueSummary | null` as second param; extracts unique `playerLabel` values from review queue items (up to 4 names); appends "Players with pending review items: X, Y" to the response or uses names in the fallback when `AttentionReport` has no flags. Fixed TS2802 by using `Array.from(new Set(...))`.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Updated `use_roster_intel` branch to pass `reviewQueueData` as second arg.
+
+**Files modified:**
+- `src/lib/donna/donnaResponseComposer.ts` — `composeRosterIntelAnswer` signature + player names
+- `src/components/assistant/DonnaAssistantButton.tsx` — action preview CTA + roster caller update
+- `docs/CHANGELOG.md` — Sprint 713 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** Action preview safety 8/10 → 9/10; Roster/player intelligence 8/10 → 9/10
+
+---
+
 ## 2026-05-23 — Sprint 712 — DONNA KPI Full Coverage and Role Awareness Depth V1
 
 **Scope:** Two targeted fixes. No DB/schema/RLS/migration changes.

@@ -2406,8 +2406,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       // Sprint 706 — inject live review queue count into response
       composed = composeReviewQueueAnswer(reviewQueuePendingCount, reviewQueueData, firstName)
     } else if (routing.responseMode === 'use_roster_intel') {
-      // Sprint 706 — inject live attention report into roster response
-      composed = composeRosterIntelAnswer(attentionReport, firstName)
+      // Sprint 706/713 — inject live attention report + review queue player names into roster response
+      composed = composeRosterIntelAnswer(attentionReport, reviewQueueData, firstName)
     } else {
       composed = composeDonnaResponse(routing, pathname, firstName)
     }
@@ -3391,13 +3391,24 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 </div>
               )}
               <p className="text-[10px] text-status-orange leading-relaxed">{actionPreview.approvalRequirement}</p>
-              <button
-                type="button"
-                className="text-[10px] uppercase tracking-widest font-semibold text-lime hover:opacity-80 transition-opacity"
-                onClick={() => setActionPreview(null)}
-              >
-                Dismiss
-              </button>
+              {/* Sprint 713 — actionable CTA: open review center */}
+              <div className="flex items-center gap-3 pt-0.5">
+                <button
+                  type="button"
+                  className="text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-colors"
+                  style={{ background: 'rgba(139,92,246,0.15)', color: '#c084fc' }}
+                  onClick={() => { void handleOpenReviewQueue(); setActionPreview(null) }}
+                >
+                  Go to Review Center
+                </button>
+                <button
+                  type="button"
+                  className="text-[10px] uppercase tracking-widest font-semibold text-text-muted hover:opacity-80 transition-opacity"
+                  onClick={() => setActionPreview(null)}
+                >
+                  Dismiss
+                </button>
+              </div>
             </div>
           )}
 

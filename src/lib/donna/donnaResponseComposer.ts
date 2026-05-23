@@ -337,15 +337,28 @@ export function composeReviewQueueAnswer(
   )
 }
 
-// ── Sprint 706 — Roster intel composer ────────────────────────────────────────
+// ── Sprint 706 / Sprint 713 — Roster intel composer ──────────────────────────
 
 export function composeRosterIntelAnswer(
   report: AttentionReport | null,
+  reviewData: DonnaReviewQueueSummary | null,
   firstName: string | null = null,
 ): ComposedDonnaResponse {
   const name = firstName ? `${firstName}, ` : ''
 
+  // Sprint 713 — extract unique player names from review queue items
+  const reviewPlayerNames: string[] = reviewData
+    ? Array.from(new Set(reviewData.items.map(i => i.playerLabel).filter((l): l is string => !!l))).slice(0, 4)
+    : []
+
   if (!report || report.items.length === 0) {
+    if (reviewPlayerNames.length > 0) {
+      return directAnswer(
+        `${name}no attention flags from observations, but ${reviewPlayerNames.length} player${reviewPlayerNames.length !== 1 ? 's have' : ' has'} items in the review queue: ${reviewPlayerNames.join(', ')}. I can help draft a parent-safe update or coach summary — it will go to review before anything is sent.`,
+        'View Players',
+        '/director/players',
+      )
+    }
     return directAnswer(
       `${name}no players are currently flagged for attention. For full roster intelligence — curriculum gaps, advancement readiness, assessment due — navigate to the player directory and I'll surface what matters there.`,
       'View Players',
@@ -360,9 +373,13 @@ export function composeRosterIntelAnswer(
   const urgencyNote = urgentCount > 0
     ? ` ${urgentCount} need${urgentCount !== 1 ? '' : 's'} urgent attention${topTitles ? ` (${topTitles})` : ''}.`
     : ''
+  // Sprint 713 — add player names from review queue if available
+  const playerNameNote = reviewPlayerNames.length > 0
+    ? ` Players with pending review items: ${reviewPlayerNames.join(', ')}.`
+    : ''
 
   return directAnswer(
-    `${name}${totalCount} player${totalCount !== 1 ? 's are' : ' is'} flagged for attention.${urgencyNote}\n\nI can help draft a parent-safe update or coach summary for any of these players — it will go to your review queue before anything is sent.`,
+    `${name}${totalCount} player${totalCount !== 1 ? 's are' : ' is'} flagged for attention.${urgencyNote}${playerNameNote}\n\nI can help draft a parent-safe update or coach summary for any of these players — it will go to your review queue before anything is sent.`,
     'View Players',
     '/director/players',
   )
