@@ -133,6 +133,8 @@ export function DonnaVoiceLayer({
         )}
 
         {/* VoiceInputButton — browser SpeechRecognition only, no API, no DB write */}
+        {/* Sprint 684: persistent=true activates auto-restart on silence (built in Sprint 641). */}
+        {/* maxRetries=5 allows up to 5 consecutive silence cycles before stopping gracefully. */}
         <VoiceInputButton
           onTranscript={onVoiceTranscriptRaw}
           label={`Ask ${DONNA_PUBLIC_NAME}`}
@@ -141,6 +143,8 @@ export function DonnaVoiceLayer({
           onInterimTranscript={onInterimTranscript}
           onError={onVoiceError}
           onSupportedChange={onSupportedChange}
+          persistent={true}
+          maxRetries={5}
         />
 
         {/* Live interim transcript — shown while recognition is active */}

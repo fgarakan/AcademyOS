@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-23 — Sprint 684 — DONNA Persistent Voice Auto-Restart Fix V1
+
+**Scope:** Activate DONNA's already-built persistent listening mode so voice session stays active after each utterance.
+
+**What changed:**
+- `src/components/assistant/DonnaVoiceLayer.tsx` — Added `persistent={true}` and `maxRetries={5}` to the `VoiceInputButton` render call. The persistent mode and auto-restart logic was already built in Sprint 641/642 (`VoiceInputButton.tsx`) but was never activated — the props were simply not being passed.
+
+**Behavior after fix:**
+- After the director speaks and pauses, `VoiceInputButton` auto-restarts recognition instead of stopping.
+- Up to 5 consecutive silence cycles are allowed before the session falls back to "Voice stopped — tap to restart."
+- User must explicitly click Stop or close DONNA to end the voice session.
+- No microphone starts before user action — persistent mode only activates once the user clicks Start.
+- Text fallback remains always available.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 683 — DONNA Route-Change Voice Persistence Fix V1
 
 **Scope:** Remove route-change voice teardown from `DonnaAssistantButton`. DONNA voice/speaking/wake state now survives director navigation.
