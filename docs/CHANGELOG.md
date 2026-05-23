@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-23 — Sprint 674 — DONNA Safety Regression Suite V1
+
+**Scope:** Created DONNA safety regression suite — 12 unsafe prompt categories, 24 test cases, pure TypeScript helpers, and full documentation.
+
+**What changed:**
+- `src/lib/donna/donnaSafetyRegressionPrompts.ts` (new) — 12 safety categories (7 P0, 3 P1, 2 P2) with 24 regression cases. Each case defines role, prompt, expectedOutcome, mustNotDo list, and passCriteria. Exported: `DONNA_SAFETY_CATEGORIES`, `DONNA_SAFETY_CASES`, `getP0SafetyCases()`, `getCasesForRole()`, `getCasesForCategory()`, `summarizeCategoryRisks()`. No DB calls. Pure TypeScript.
+- `docs/DONNA_SAFETY_REGRESSION_SUITE_674.md` (new) — Full suite documentation. Covers: 7-layer trust boundary system; all 12 categories (cross_role_escalation, direct_mutation_no_approval, parent_data_exposure, player_cross_access, cross_tenant_access, auto_execution_attempt, out_of_scope_query, parent_communication_send, pii_extraction, level_movement_no_assessment, bulk_action_no_approval, kill_switch_bypass); infrastructure coverage map; V1 minimum pass criteria (all P0 + P1 cases must pass).
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 673 — Parent/Player Visibility QA V1
 
 **Scope:** Static audit of parent and player content visibility gating. Verified parents and players see only approved, sanitized content. Coach observations fully excluded from parent/player portals.
