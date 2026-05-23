@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-23 — Sprint 682 — DONNA Full Voice Persistence + COO Assistant Audit V1
+
+**Scope:** Full audit of DONNA voice architecture — why DONNA stops, why it doesn't persist, how to fix it. Pure documentation sprint — no code changes, no migrations, no schema changes.
+
+**What changed:**
+- `docs/DONNA_FULL_VOICE_PERSISTENCE_AUDIT_682.md` (new) — Complete audit: executive summary, architecture map, lifecycle diagram, all stop/close triggers, root cause analysis, browser/API constraints, proposed state machine, persistence model, exact files to change per sprint, risk assessment, recommended sprint sequence (683–688), manual QA checklist, go/no-go decision for demo voice usage.
+
+**Key findings:**
+- Top P0 root cause: `VoiceInputButton` defaults `persistent=false`; voice stops after every utterance. `persistent=true` is implemented (Sprint 641) but never passed from `DonnaVoiceLayer`. One prop change fixes it (Sprint 684).
+- Route-change `useEffect` in `DonnaAssistantButton` resets voice state, speaking state, and wake phrase on every navigation. Panel stays open but DONNA feels "reset."
+- Two DONNA implementations coexist: floating `DonnaAssistantButton` (old model, no persistent voice) and `/director/donna` page (new chat model, no TTS). Neither is a true COO session.
+- OpenAI Realtime requires `OPENAI_API_KEY` on server. Without it every Realtime connect → 503 → fallback to browser TTS.
+- Go/No-Go for Brian demo: text chat at `/director/donna` = GO; single-shot voice demo = CONDITIONAL; continuous COO voice = NO-GO until Sprint 684.
+
+**TypeScript:** Clean (no TypeScript files changed)
+
+---
+
 ## 2026-05-23 — Sprint 681 — Brian Dabul Demo Seed Execution Packet V1
 
 **Scope:** Safe demo seed execution packet for Monteiro Tennis Academy. Documentation + SQL only — no SQL was executed.
