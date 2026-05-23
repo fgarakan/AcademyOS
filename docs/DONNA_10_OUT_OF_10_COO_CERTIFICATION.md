@@ -1,9 +1,53 @@
 # DONNA COO Assistant Certification Audit
 
 **Date:** 2026-05-23
-**Sprint series:** 699–719
+**Sprint series:** 699–720
 **Auditor:** Claude Code autonomous certification run
 **Scoring scale:** 10 = works as well as can be done without live DB data; 9 = minor gaps only; ≤8 = actionable gap exists or hard ceiling documented
+
+---
+
+## Sprint 720 — Voice Quality Upgrade (Honest Assessment)
+
+**Sprint goal:** Make DONNA sound like a warm, professional human COO assistant.
+
+### What changed
+
+| Area | Before Sprint 720 | After Sprint 720 |
+|---|---|---|
+| Server TTS model | `tts-1` + `alloy` | `gpt-4o-mini-tts` + `marin` + voice instructions |
+| Voice instructions | None | "Speak like a warm, professional academy COO assistant. Calm, confident, concise, and natural. No announcer voice. No robotic cadence." |
+| Model fallback | None | `tts-1-hd` + `nova` (on 403/404/422) |
+| Browser fallback voice selection | Single-keyword scan in `speakAssistantText` | Config-driven `pickBrowserVoice()` with ranked preference list and avoid list |
+| Voice name tracking | Not tracked | `X-Donna-Voice` header → `result.voice` → `lastServerTtsInfo.voice` → dev tools |
+| Voice quality status | Not shown | Pill in DONNA panel: "Premium Donna voice active" / "Fallback device voice active" / "Text-only fallback" |
+| Central config | None | `src/lib/donna/donnaVoiceConfig.ts` — all TTS settings in one place |
+
+### Honest voice path status
+
+| Path | Voice quality |
+|---|---|
+| `speakDonna()` (main COO responses) | **Premium** — `gpt-4o-mini-tts` + `marin` + instructions, when `OPENAI_API_KEY` is set |
+| `speakDonna()` browser fallback | **Improved** — config-driven voice selection, better keyword matching, avoid list |
+| `speakAssistantText()` (onboarding greetings, undo/cancel) | **Still browser TTS** — rate 0.95, pitch 0.98, prefers Natural/Neural/Enhanced |
+| `realtimeSpeak()` (onboarding panel greeting) | **Premium** — OpenAI Realtime `marin` voice, when `OPENAI_API_KEY` set |
+
+### What this means for Brian's demo
+
+- All main DONNA COO responses (template questions, task questions, curriculum answers, KPI explanations) use the premium `marin` voice **when `OPENAI_API_KEY` is configured**.
+- If `OPENAI_API_KEY` is not set, browser TTS is used — device-dependent quality. The status pill shows "Fallback device voice active" so Brian can see immediately.
+- The onboarding greeting path (`realtimeSpeak`) also uses `marin` when configured.
+- Residual browser TTS paths (`speakAssistantText`) are used for less-frequent interactions (onboarding steps 0–1, multi-step summaries, undo responses). These are less central to the demo flow.
+
+### Certification impact
+
+**Category 14 (Voice output reliability): remains 9/10.**
+
+Sprint 720 improves voice _quality_ (more human-sounding), not voice _reliability_ (which was already 9/10 from Sprint 717 sentence-boundary truncation). The category ceiling is still a device/platform variable — the minor gap (browser TTS fallback on some paths) is not new.
+
+The certification verdict of **CERTIFIED 10/10** is unchanged. Sprint 720 makes the demo significantly better-sounding without changing any scoring category.
+
+---
 
 ---
 

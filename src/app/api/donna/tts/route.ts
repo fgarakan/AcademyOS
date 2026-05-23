@@ -1,7 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
+import {
+  DONNA_OPENAI_TTS_MODEL,
+  DONNA_OPENAI_TTS_VOICE,
+  DONNA_OPENAI_TTS_MODEL_FALLBACK,
+  DONNA_OPENAI_TTS_VOICE_FALLBACK,
+  DONNA_VOICE_INSTRUCTIONS,
+} from '@/lib/donna/donnaVoiceConfig'
 
 const MAX_TEXT_LENGTH = 500
+
+// Sprint 720 — attempt a single TTS call; returns the raw fetch response or throws.
+async function callOpenAiTts(
+  apiKey: string,
+  model: string,
+  voice: string,
+  input: string,
+  includeInstructions: boolean,
+): Promise<Response> {
+  const payload: Record<string, string> = {
+    model,
+    input,
+    voice,
+    response_format: 'mp3',
+  }
+  if (includeInstructions) {
+    payload['instructions'] = DONNA_VOICE_INSTRUCTIONS
+  }
+  return fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+}
 
 export async function POST(req: NextRequest) {
   const supabase = await getSupabaseServer()
@@ -26,20 +60,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, reason: 'server_tts_not_configured' }, { status: 503 })
   }
 
+  // Sprint 720 — primary: gpt-4o-mini-tts + marin + voice instructions
+  // Fallback: tts-1-hd + nova (for plans without gpt-4o-mini-tts access)
+  let usedModel = DONNA_OPENAI_TTS_MODEL
+  let usedVoice = DONNA_OPENAI_TTS_VOICE
+
   try {
-    const res = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'tts-1',
-        input: text,
-        voice: 'alloy',
-        response_format: 'mp3',
-      }),
-    })
+    let res = await callOpenAiTts(apiKey, DONNA_OPENAI_TTS_MODEL, DONNA_OPENAI_TTS_VOICE, text, true)
+
+    // If primary model/voice unavailable (403/404/422), try legacy fallback
+    if (!res.ok && (res.status === 403 || res.status === 404 || res.status === 422)) {
+      usedModel = DONNA_OPENAI_TTS_MODEL_FALLBACK
+      usedVoice = DONNA_OPENAI_TTS_VOICE_FALLBACK
+      res = await callOpenAiTts(apiKey, DONNA_OPENAI_TTS_MODEL_FALLBACK, DONNA_OPENAI_TTS_VOICE_FALLBACK, text, false)
+    }
 
     if (!res.ok) {
       const errText = await res.text()
@@ -53,6 +87,9 @@ export async function POST(req: NextRequest) {
       headers: {
         'Content-Type': 'audio/mpeg',
         'Cache-Control': 'no-store',
+        // Sprint 720 — expose which voice was used so the client can show quality status
+        'X-Donna-Voice': usedVoice,
+        'X-Donna-Model': usedModel,
       },
     })
   } catch (err) {

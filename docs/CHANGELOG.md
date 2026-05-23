@@ -2,6 +2,111 @@
 
 ---
 
+## 2026-05-23 — Sprint 720 — DONNA Premium Human Voice Upgrade V1
+
+**Scope:** Premium TTS upgrade — central voice config, OpenAI premium voice wiring, browser fallback hardening, visible voice quality status. No DB/schema/RLS/migration/seed/env changes.
+
+**Goal:** Make DONNA sound like a warm, professional, human COO assistant instead of a robotic browser voice.
+
+---
+
+### Part 1 — Current TTS path (documented)
+
+| Path | Used by | Voice |
+|---|---|---|
+| `speakAssistantText()` | Onboarding greetings, undo/cancel, mode-click questions | Browser `speechSynthesis` — rate 0.95, pitch 0.98, prefers Natural/Neural/Enhanced |
+| `speakDonna()` → `speakWithServerTts()` | Template questions, task questions, COO responses | **Primary:** OpenAI `gpt-4o-mini-tts` + `marin` + voice instructions → **Fallback:** `tts-1-hd` + `nova` → browser |
+| `realtimeSpeak()` | Onboarding greeting panel | OpenAI Realtime WebRTC → `marin` → browser |
+
+---
+
+### Part 2 — Central voice config created
+
+**File created:** `src/lib/donna/donnaVoiceConfig.ts`
+
+- `DONNA_VOICE_PERSONALITY = 'warm_professional_coo'`
+- `DONNA_TTS_PROVIDER_PRIORITY = ['server', 'browser']`
+- `DONNA_OPENAI_TTS_MODEL = 'gpt-4o-mini-tts'`
+- `DONNA_OPENAI_TTS_VOICE = 'marin'` — warm, professional, natural-sounding
+- `DONNA_OPENAI_TTS_MODEL_FALLBACK = 'tts-1-hd'`
+- `DONNA_OPENAI_TTS_VOICE_FALLBACK = 'nova'` — warmest legacy voice
+- `DONNA_VOICE_INSTRUCTIONS` — speak like a warm, professional COO assistant; calm, confident, no announcer voice, no robotic cadence
+- `fallbackBrowserRate = 0.95`, `fallbackBrowserPitch = 0.98`, `fallbackBrowserVolume = 1`
+- `preferredBrowserVoiceKeywords`: Natural, Neural, Enhanced, Samantha, Microsoft Jenny, Microsoft Aria, Google US English, Daniel, Karen
+- `avoidBrowserVoiceKeywords`: compact, robot, whisper, novelty
+
+---
+
+### Part 3 — Server TTS upgraded (primary path)
+
+**File modified:** `src/app/api/donna/tts/route.ts`
+
+- Upgraded from `tts-1` + `alloy` (robotic default) → `gpt-4o-mini-tts` + `marin` + voice instructions
+- `callOpenAiTts()` helper: single-call function with optional `instructions` param
+- Graceful model/voice fallback on 403/404/422: falls back to `tts-1-hd` + `nova`
+- Returns `X-Donna-Voice` and `X-Donna-Model` response headers so client can show quality status
+- Server TTS is primary; browser is fallback only
+- `OPENAI_API_KEY` required (server-side only — never exposed to client)
+- If key missing → returns 503 `server_tts_not_configured` → graceful browser fallback
+
+---
+
+### Part 4 — Server TTS client upgraded (browser fallback hardened)
+
+**File modified:** `src/components/assistant/donnaServerTtsClient.ts`
+
+- `pickBrowserVoice()` — selects best available browser voice using `preferredBrowserVoiceKeywords` and `avoidBrowserVoiceKeywords` from central config
+- Reads `X-Donna-Voice` header from server response; reports `voice` in `ServerTtsResult`
+- Config-driven rate/pitch/volume applied to browser fallback utterance
+- Dev-only console log: `[DonnaTTS] Browser fallback voice: <name>` — not logged in production
+- `voice?: string` added to `ServerTtsResult` interface
+
+---
+
+### Part 5 — Voice name wired through to UI
+
+**File modified:** `src/components/assistant/DonnaAssistantButton.tsx`
+
+- `speakDonna()`: wires `result.voice` into `setLastServerTtsInfo` — voice name now propagates from server response header to UI state
+- `lastServerTtsInfo` state type extended: `voice?: string`
+- **Voice quality status pill** added to DONNA panel — small, non-noisy, shown only after TTS is used:
+  - 🟢 `Premium Donna voice active` — when server TTS (`contract_tts`) is used
+  - 🟠 `Fallback device voice active` — when browser TTS fallback is used
+  - ⚪ `Text-only fallback` — when both paths fail (silent)
+
+**File modified:** `src/components/assistant/DonnaDeveloperTools.tsx`
+
+- `lastServerTtsInfo` prop type updated to include `voice?: string`
+- "Last TTS" developer section now shows voice name (e.g., `marin`, `nova`, `Samantha`) when available
+
+---
+
+### Certification status (honest)
+
+- **Premium server voice is wired and active when `OPENAI_API_KEY` is set.** `speakDonna()` uses `gpt-4o-mini-tts` + `marin` + style instructions.
+- **Browser fallback is improved** — config-driven voice selection, better keyword matching, avoidance list.
+- **`speakAssistantText()` still uses browser TTS only** — onboarding greetings and a few other paths remain browser-dependent.
+- **Not claiming full-human voice unless server key is configured.** When `OPENAI_API_KEY` is absent, DONNA falls back to browser TTS (device-dependent quality).
+
+---
+
+**Files created:**
+- `src/lib/donna/donnaVoiceConfig.ts` — central voice config (personality, model, voice, instructions, browser fallback settings)
+
+**Files modified:**
+- `src/app/api/donna/tts/route.ts` — upgraded TTS model/voice, fallback, voice instructions, response headers
+- `src/components/assistant/donnaServerTtsClient.ts` — config-driven browser fallback, voice name reporting, X-Donna-Voice header
+- `src/components/assistant/DonnaAssistantButton.tsx` — voice wire, quality status pill
+- `src/components/assistant/DonnaDeveloperTools.tsx` — voice name in Last TTS section
+- `docs/CHANGELOG.md` — Sprint 720 entry
+- `docs/DONNA_10_OUT_OF_10_COO_CERTIFICATION.md` — Sprint 720 voice quality update
+
+**TypeScript:** `npx tsc --noEmit` — CLEAN
+
+**No migrations. No schema changes. No RLS changes. No seed data. No env file changes. No new npm packages.**
+
+---
+
 ## 2026-05-23 — Sprint 719 — DONNA Live Conversational Experience Fix V1
 
 **Scope:** Live browser UX fixes found after Sprint 718 code-inspection certification. No DB/schema/RLS/migration/env changes.

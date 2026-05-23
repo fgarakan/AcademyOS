@@ -616,7 +616,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         result.source === 'server' ? 'contract_tts'
         : result.source === 'browser' ? 'browser_tts'
         : 'silent'
-      setLastServerTtsInfo({ source, text: text.slice(0, 80) })
+      // Sprint 720 — include voice name for quality status display
+      setLastServerTtsInfo({ source, text: text.slice(0, 80), voice: result.voice })
     })
   }
 
@@ -774,9 +775,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Sprint 296A — isolated TTS test state (never touches speech guard refs or onboardingStep)
   const [testVoiceStatus, setTestVoiceStatus] = useState<'idle' | 'speaking' | 'done' | 'error'>('idle')
   // Sprint 350 — tracks last server TTS call result for Developer Tools display
+  // Sprint 720 — extended with voice name for quality status display
   const [lastServerTtsInfo, setLastServerTtsInfo] = useState<{
     source: DonnaVoiceOutputMode
     text: string
+    voice?: string
   } | null>(null)
 
   // Sprint 290 — Guided onboarding intro state
@@ -3981,6 +3984,26 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   )
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Sprint 720 — Voice quality status pill: small, non-noisy, shown only after TTS is used */}
+          {lastServerTtsInfo && (
+            <div className="px-4 pb-1">
+              <p className="text-[10px] text-text-muted flex items-center gap-1.5 leading-none">
+                <span
+                  className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${
+                    lastServerTtsInfo.source === 'contract_tts' ? 'bg-lime' :
+                    lastServerTtsInfo.source === 'browser_tts' ? 'bg-status-orange' :
+                    'bg-text-muted'
+                  }`}
+                />
+                {lastServerTtsInfo.source === 'contract_tts'
+                  ? 'Premium Donna voice active'
+                  : lastServerTtsInfo.source === 'browser_tts'
+                  ? 'Fallback device voice active'
+                  : 'Text-only fallback'}
+              </p>
             </div>
           )}
 

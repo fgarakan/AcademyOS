@@ -38,7 +38,8 @@ interface Props {
   wakeListeningActive: boolean
   wakeDetectedCommand: string | null
   testVoiceStatus: 'idle' | 'speaking' | 'done' | 'error'
-  lastServerTtsInfo: { source: string; text: string } | null
+  // Sprint 720 — extended with voice name for quality status display
+  lastServerTtsInfo: { source: string; text: string; voice?: string } | null
   draftRestoredFromSession: boolean
   // Callbacks
   onResetIntro: () => void
@@ -96,13 +97,18 @@ export function DonnaDeveloperTools({
           Reset Donna intro
         </button>
 
-        {/* Last TTS source */}
+        {/* Last TTS source — Sprint 720: also shows voice name */}
         {lastServerTtsInfo && (
           <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
             <div className="text-text-muted uppercase tracking-widest">Last TTS</div>
             <div className="text-text-secondary">
               Source: <span className="text-lime">{DONNA_VOICE_MODE_LABELS[lastServerTtsInfo.source as keyof typeof DONNA_VOICE_MODE_LABELS] ?? lastServerTtsInfo.source}</span>
             </div>
+            {lastServerTtsInfo.voice && (
+              <div className="text-text-secondary">
+                Voice: <span className="text-lime">{lastServerTtsInfo.voice}</span>
+              </div>
+            )}
             <div className="text-text-secondary truncate">
               Text: <span className="text-text-primary">{lastServerTtsInfo.text}</span>
             </div>
