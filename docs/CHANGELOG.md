@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 677 — Golden Path QA Scripts V1
+
+**Scope:** 12 golden path QA scripts covering all primary user journeys. Each path defines preconditions, steps, pass criteria, and known limitations.
+
+**What changed:**
+- `docs/GOLDEN_PATH_QA_677.md` (new) — 12 golden paths: Director login + dashboard, DONNA daily brief, review queue walkthrough, player profile (director), voice session recap, coach observation draft, parent portal child view, parent child switcher, player portal level view, director advancement approval, platform owner preview, DONNA safety boundary enforcement. V1 minimum: Paths 1/3/4/7/9/12 must Pass; Paths 2/5/6/10 may be Partial with known limitations; Paths 8/11 best-effort.
+
+**TypeScript:** Clean (no code changed)
+
+---
+
 ## 2026-05-23 — Sprint 676 — Brian Dabul Demo Seed Data V1
 
 **Scope:** Fictional demo seed data specification for the Brian Dabul pilot demo session. Documentation only — no SQL executed, no auto-run.
