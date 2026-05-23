@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-23 — Sprint 709 — DONNA 10/10 COO Certification Audit V1
+
+**Scope:** Full regression audit across all 17 categories; golden path scenario verification; certification document. No code changes.
+
+**Result:**
+- 15/15 golden path scenarios PASS
+- 12/12 P0/P1 failures RESOLVED
+- Score: 124/170 (73%) — up from 98/170 (58%) at Sprint 701 baseline
+- 3 categories at ≥9/10: Persistent availability (9), Review queue intelligence (9), Parent-safe communication (9)
+- Certification verdict: **PILOT-READY BUT NOT 10/10**
+
+**Hard ceilings documented:**
+- Category 1+4 (conversational thread): single `commandResponse` slot; needs `DonnaChatThread` rendering
+- Category 11 (curriculum intelligence): requires live DB curriculum gap query
+- Category 9 (KPI intelligence): requires live KPI values passed into composer
+
+**Files created:**
+- `docs/DONNA_10_OUT_OF_10_COO_CERTIFICATION.md` — full 17-category certification audit, P0/P1 registry, hard ceiling documentation, final verdict
+
+**Files modified:**
+- `docs/CHANGELOG.md` — Sprint 709 entry added.
+
+**TypeScript:** Clean (no code changes this sprint)
+
+---
+
 ## 2026-05-23 — Sprint 708 — DONNA Voice Reliability Hardening V1
 
 **Scope:** Two surgical voice reliability fixes. No DB/schema/RLS/migration changes.
