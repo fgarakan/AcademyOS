@@ -9,6 +9,9 @@ import { howDoesThisSystemWork, whatHappensAfterCoachRecap, howDoesParentUpdateG
 // Sprint 705 — KPI explainer wiring
 import { explainKpiByStatus } from './kpiExplanations/kpiExplainer'
 import type { AcademyKpiId } from '@/lib/kpis/academyKpiModel'
+// Sprint 706 — Review queue + roster intel composers
+import type { DonnaReviewQueueSummary } from '@/components/assistant/donnaReviewQueueTypes'
+import type { AttentionReport } from '@/components/assistant/donnaAttentionEngine'
 
 // ── Response style rules ───────────────────────────────────────────────────────
 // 1. Start with the answer, not a preamble.
@@ -258,4 +261,67 @@ export function composePageContextAnswer(questionType: 'where_am_i' | 'help_here
     default:
       return directAnswer(whatCanYouHelpWith(pathname, firstName))
   }
+}
+
+// ── Sprint 706 — Review queue live count composer ──────────────────────────────
+
+export function composeReviewQueueAnswer(
+  count: number,
+  queueData: DonnaReviewQueueSummary | null,
+  firstName: string | null = null,
+): ComposedDonnaResponse {
+  const name = firstName ? `${firstName}, ` : ''
+
+  if (count === 0) {
+    return directAnswer(
+      `${name}your review queue is clear right now. Nothing is waiting for your approval — coaches are up to date and no proposed actions are pending.`,
+      'Open Review Center',
+      '/director/review',
+    )
+  }
+
+  const parts: string[] = []
+  if (queueData) {
+    if (queueData.proposedActionsCount > 0) parts.push(`${queueData.proposedActionsCount} proposed action${queueData.proposedActionsCount !== 1 ? 's' : ''}`)
+    if (queueData.sessionNeedsBlocksCount > 0) parts.push(`${queueData.sessionNeedsBlocksCount} session${queueData.sessionNeedsBlocksCount !== 1 ? 's' : ''} without blocks`)
+    if (queueData.needsRoutingCount > 0) parts.push(`${queueData.needsRoutingCount} item${queueData.needsRoutingCount !== 1 ? 's' : ''} needing routing`)
+  }
+  const breakdown = parts.length > 0 ? ` — ${parts.join(', ')}` : ''
+
+  return directAnswer(
+    `${name}${count} item${count !== 1 ? 's are' : ' is'} waiting in your review queue${breakdown}. Items are sorted by risk — parent-visible items first, then level changes, then internal drafts. Nothing takes effect until you approve it.`,
+    'Open Review Center',
+    '/director/review',
+  )
+}
+
+// ── Sprint 706 — Roster intel composer ────────────────────────────────────────
+
+export function composeRosterIntelAnswer(
+  report: AttentionReport | null,
+  firstName: string | null = null,
+): ComposedDonnaResponse {
+  const name = firstName ? `${firstName}, ` : ''
+
+  if (!report || report.items.length === 0) {
+    return directAnswer(
+      `${name}no players are currently flagged for attention. For full roster intelligence — curriculum gaps, advancement readiness, assessment due — navigate to the player directory and I'll surface what matters there.`,
+      'View Players',
+      '/director/players',
+    )
+  }
+
+  const urgent = report.items.filter(i => i.urgency === 'critical' || i.urgency === 'high')
+  const totalCount = report.items.length
+  const urgentCount = urgent.length
+  const topTitles = urgent.slice(0, 2).map(i => i.title).join(' and ')
+  const urgencyNote = urgentCount > 0
+    ? ` ${urgentCount} need${urgentCount !== 1 ? '' : 's'} urgent attention${topTitles ? ` (${topTitles})` : ''}.`
+    : ''
+
+  return directAnswer(
+    `${name}${totalCount} player${totalCount !== 1 ? 's are' : ' is'} flagged for attention.${urgencyNote}\n\nI can help draft a parent-safe update or coach summary for any of these players — it will go to your review queue before anything is sent.`,
+    'View Players',
+    '/director/players',
+  )
 }

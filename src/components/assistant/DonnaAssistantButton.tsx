@@ -218,7 +218,7 @@ import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import { getDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/donnaDirectorPromptPalette'
 // Sprint 697 — COO conversational router live wiring
 import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
-import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer } from '@/lib/donna/donnaResponseComposer'
+import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer, composeReviewQueueAnswer, composeRosterIntelAnswer } from '@/lib/donna/donnaResponseComposer'
 import { recordPrompt, recordSummary, recordRouteChange, getSessionMemory, buildContinuityMessage } from '@/lib/donna/donnaSafeSessionMemory'
 // Sprint 702 — Chat session memory + continuity wiring
 import { ensureChatSession, recordTurn, getRecentTurns, getContextualPrefix } from '@/lib/donna/donnaChatSessionMemory'
@@ -2360,6 +2360,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         : (lower.includes('player progress') || lower.includes('connected to')) ? 'player_progress' as const
         : 'system_overview' as const
       composed = composeSystemFlowAnswer(qType)
+    } else if (routing.responseMode === 'use_review_context') {
+      // Sprint 706 — inject live review queue count into response
+      composed = composeReviewQueueAnswer(reviewQueuePendingCount, reviewQueueData, firstName)
+    } else if (routing.responseMode === 'use_roster_intel') {
+      // Sprint 706 — inject live attention report into roster response
+      composed = composeRosterIntelAnswer(attentionReport, firstName)
     } else {
       composed = composeDonnaResponse(routing, pathname, firstName)
     }

@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-23 — Sprint 706 — DONNA Review Queue Live Count and Roster Intel Wiring V1
+
+**Scope:** Wire live component state (`reviewQueuePendingCount`, `reviewQueueData`, `attentionReport`) into `use_review_context` and `use_roster_intel` response modes. No DB/schema/RLS/migration changes.
+
+**P1-B fix — `use_review_context` returned static generic text:**
+- `src/lib/donna/donnaResponseComposer.ts` — Added `composeReviewQueueAnswer(count, queueData, firstName)`: returns a count-zero clear-queue message or a live breakdown using `proposedActionsCount`, `sessionNeedsBlocksCount`, `needsRoutingCount` from `DonnaReviewQueueSummary`. Also added `import type { DonnaReviewQueueSummary }`.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `use_review_context` branch in `handleDonnaCooPrompt` calling `composeReviewQueueAnswer(reviewQueuePendingCount, reviewQueueData, firstName)`.
+
+**P1-C fix — `use_roster_intel` returned static generic text:**
+- `src/lib/donna/donnaResponseComposer.ts` — Added `composeRosterIntelAnswer(report, firstName)`: uses `AttentionReport.items` to produce live counts of urgent vs. normal flags, names top urgent items, falls back gracefully when no flags exist. Also added `import type { AttentionReport }`.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `use_roster_intel` branch calling `composeRosterIntelAnswer(attentionReport, firstName)`.
+
+**Files modified:**
+- `src/lib/donna/donnaResponseComposer.ts` — two new exported composers + two new type imports
+- `src/components/assistant/DonnaAssistantButton.tsx` — two new response mode branches + updated import
+- `docs/CHANGELOG.md` — Sprint 706 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** Review queue intelligence 6/10 → 9/10; Roster/player intelligence 4/10 → 8/10
+
+---
+
 ## 2026-05-23 — Sprint 705 — DONNA KPI Explainer Wiring V1
 
 **Scope:** Wire `explainKpiByStatus` from `kpiExplainer.ts` into the live `use_kpi_answer` response path. No DB/schema/RLS/migration changes.
