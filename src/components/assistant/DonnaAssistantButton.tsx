@@ -220,7 +220,7 @@ import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import { getDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/donnaDirectorPromptPalette'
 // Sprint 697 — COO conversational router live wiring
 import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
-import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer, composeReviewQueueAnswer, composeRosterIntelAnswer, composeModuleAnswer, composeCurriculumExplanationAnswer } from '@/lib/donna/donnaResponseComposer'
+import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer, composeReviewQueueAnswer, composeRosterIntelAnswer, composeModuleAnswer, composeCurriculumAnswer, detectCurriculumQuestionType } from '@/lib/donna/donnaResponseComposer'
 import { recordPrompt, recordSummary, recordRouteChange, getSessionMemory, buildContinuityMessage } from '@/lib/donna/donnaSafeSessionMemory'
 // Sprint 702 — Chat session memory + continuity wiring
 import { ensureChatSession, recordTurn, getRecentTurns, getContextualPrefix } from '@/lib/donna/donnaChatSessionMemory'
@@ -584,8 +584,19 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Use ONLY for: onboarding questions, next missing-field questions, protected_action_blocked.
   // Do NOT call globally — speakAssistantText remains for voice greeter, test paths, etc.
   function speakDonna(text: string) {
-    // Sprint 708 — truncate TTS to 150 chars to prevent browser TTS cut-off; full text shown in UI
-    const ttsText = text.length > 150 ? text.slice(0, 147) + '...' : text
+    // Sprint 717 — sentence-boundary TTS truncation: cut at last sentence end within 150 chars,
+    // then last clause, then raw truncation. Full text always shown in UI.
+    let ttsText = text
+    if (text.length > 150) {
+      const candidate = text.slice(0, 150)
+      const sentenceEnd = Math.max(candidate.lastIndexOf('. '), candidate.lastIndexOf('? '), candidate.lastIndexOf('! '))
+      if (sentenceEnd > 80) {
+        ttsText = candidate.slice(0, sentenceEnd + 1)
+      } else {
+        const clauseEnd = Math.max(candidate.lastIndexOf(', '), candidate.lastIndexOf('; '))
+        ttsText = clauseEnd > 70 ? candidate.slice(0, clauseEnd + 1) : candidate.slice(0, 147) + '…'
+      }
+    }
     void speakWithServerTts(ttsText, (status) => {
       if (status === 'speaking') setIsSpeaking(true)
       else if (status === 'done' || status === 'error') setIsSpeaking(false)
@@ -2376,11 +2387,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     let composed
 
     if (routing.responseMode === 'use_page_context') {
-      // Sprint 714 — curriculum gap questions get a dedicated structural explanation
-      const isCurriculumGapQ = lower.includes('curriculum gap') || lower.includes('curriculum missing') ||
-        lower.includes('missing from the curriculum') || lower.includes('find curriculum gap')
-      if (isCurriculumGapQ) {
-        composed = composeCurriculumExplanationAnswer(firstName)
+      // Sprint 716 — all curriculum questions route to composeCurriculumAnswer with detected sub-type
+      const isCurriculumQ = lower.includes('curriculum') ||
+        (lower.includes('template') && (lower.includes('class') || lower.includes('level') || lower.includes('session')))
+      if (isCurriculumQ) {
+        composed = composeCurriculumAnswer(detectCurriculumQuestionType(lower), firstName)
       } else {
         // Sprint 710 — wire inspect_first sub-type
         const qType =
@@ -2395,19 +2406,26 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       // Sprint 705 — use kpiExplainer to produce per-KPI answer from text
       composed = composeKpiAnswer(text, firstName)
     } else if (routing.responseMode === 'use_system_map') {
-      // Sprint 710 — try module-specific answer first; fall back to flow answers
-      const moduleAnswer = composeModuleAnswer(text, firstName)
-      if (moduleAnswer) {
-        composed = moduleAnswer
+      // Sprint 716 — curriculum system questions get rich multi-type responses
+      const isCurriculumSystemQ = lower.includes('curriculum') ||
+        (lower.includes('template') && (lower.includes('class') || lower.includes('level')))
+      if (isCurriculumSystemQ) {
+        composed = composeCurriculumAnswer(detectCurriculumQuestionType(lower), firstName)
       } else {
-        const qType =
-          (lower.includes('coach recap') || lower.includes('after a recap') || lower.includes('after the recap')) ? 'coach_recap' as const
-          : (lower.includes('parent update') && (lower.includes('how') || lower.includes('approved'))) ? 'parent_update' as const
-          : (lower.includes('mission') || lower.includes('badge')) ? 'missions_badges' as const
-          : (lower.includes('test first') || lower.includes('what should i test')) ? 'test_first' as const
-          : (lower.includes('player progress') || lower.includes('connected to')) ? 'player_progress' as const
-          : 'system_overview' as const
-        composed = composeSystemFlowAnswer(qType)
+        // Sprint 710 — try module-specific answer first; fall back to flow answers
+        const moduleAnswer = composeModuleAnswer(text, firstName)
+        if (moduleAnswer) {
+          composed = moduleAnswer
+        } else {
+          const qType =
+            (lower.includes('coach recap') || lower.includes('after a recap') || lower.includes('after the recap')) ? 'coach_recap' as const
+            : (lower.includes('parent update') && (lower.includes('how') || lower.includes('approved'))) ? 'parent_update' as const
+            : (lower.includes('mission') || lower.includes('badge')) ? 'missions_badges' as const
+            : (lower.includes('test first') || lower.includes('what should i test')) ? 'test_first' as const
+            : (lower.includes('player progress') || lower.includes('connected to')) ? 'player_progress' as const
+            : 'system_overview' as const
+          composed = composeSystemFlowAnswer(qType)
+        }
       }
     } else if (routing.responseMode === 'use_review_context') {
       // Sprint 706 — inject live review queue count into response

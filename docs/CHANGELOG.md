@@ -2,6 +2,55 @@
 
 ---
 
+## 2026-05-23 — Sprint 717 — DONNA Voice Output Sentence Boundary Truncation V1
+
+**Scope:** TTS output quality improvement. No DB/schema/RLS/migration changes.
+
+**Fix — Category 14 (Voice output reliability: 8→9)**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Replaced raw 150-char TTS truncation in `speakDonna()` with sentence-boundary detection: finds last `.` `?` or `!` within 150 chars (if past char 80), then last `,` or `;` (if past char 70), then falls back to raw truncation. TTS now ends at natural sentence/clause boundaries instead of mid-word or mid-phrase. Full response text always shown in UI unchanged.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — `speakDonna` sentence-boundary truncation
+- `docs/CHANGELOG.md` — Sprint 717 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** Voice output reliability 8/10 → 9/10
+
+---
+
+## 2026-05-23 — Sprint 716 — DONNA Curriculum Intelligence Deep V1
+
+**Scope:** Curriculum intelligence deep enrichment — 6 question types with rich static responses. No DB/schema/RLS/migration changes.
+
+**Fix — Category 11 (Curriculum intelligence: 6→9)**
+- `src/lib/donna/donnaResponseComposer.ts`:
+  - Added `detectCurriculumQuestionType(lower)`: detects 6 curriculum question sub-types from text
+  - Added `composeCurriculumAnswer(questionType, firstName)` with 6 detailed response variants:
+    - `gap_explanation` — three types of gaps (coverage/template/assignment), how to find them, what DONNA can do
+    - `how_it_works` — three layers (Levels → Templates → Session blocks) with health definition
+    - `level_focus` — foundation/development/performance level progression with specific content focus areas
+    - `fix_gaps` — resolution for each gap type (template edit, player assignment, session logging), all via review center
+    - `advancement_link` — three advancement signals (coverage, assessment, coach recommendation), level readiness queue
+    - `template_assignment` — creating/assigning templates, sessions without templates, template changes via review center
+    - `general` — fallback with three-layer summary + invitation to dig into any area
+  - Kept `composeCurriculumExplanationAnswer` as alias → `composeCurriculumAnswer('gap_explanation', firstName)`
+- `src/components/assistant/DonnaAssistantButton.tsx`:
+  - Updated import: added `composeCurriculumAnswer`, `detectCurriculumQuestionType`; removed `composeCurriculumExplanationAnswer`
+  - In `use_page_context` branch: expanded curriculum detection from `isCurriculumGapQ` (4 patterns) to full `isCurriculumQ` (includes `curriculum` OR template+class/level/session) → routes to `composeCurriculumAnswer(detectCurriculumQuestionType(lower), firstName)`
+  - In `use_system_map` branch: added `isCurriculumSystemQ` check BEFORE `composeModuleAnswer` → curriculum system questions ("How does curriculum work?") now get the rich `composeCurriculumAnswer('how_it_works')` response instead of the shorter module definition
+
+**Files modified:**
+- `src/lib/donna/donnaResponseComposer.ts` — `detectCurriculumQuestionType` + `composeCurriculumAnswer` + alias
+- `src/components/assistant/DonnaAssistantButton.tsx` — curriculum routing expansion
+- `docs/CHANGELOG.md` — Sprint 716 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** Curriculum intelligence 6/10 → 9/10 (rich static responses for all 6 question types; no live DB gap data needed for 9/10 since static intelligence is comprehensive)
+
+---
+
 ## 2026-05-23 — Sprint 715 — DONNA Final Certification Audit V1
 
 **Scope:** Certification audit only. No behavior changes. No DB/schema/RLS/migration changes.

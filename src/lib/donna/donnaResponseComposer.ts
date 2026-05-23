@@ -385,13 +385,88 @@ export function composeRosterIntelAnswer(
   )
 }
 
-// ── Sprint 714 — Curriculum structure explanation (honest ceiling: no live gap data) ──
+// ── Sprint 716 — Curriculum Intelligence Deep (Category 11: 6→9) ─────────────
 
-export function composeCurriculumExplanationAnswer(firstName: string | null = null): ComposedDonnaResponse {
+type CurriculumQuestionType =
+  | 'gap_explanation'      // What are curriculum gaps? / What gaps exist?
+  | 'how_it_works'         // How does curriculum work? / Explain curriculum
+  | 'level_focus'          // What should Orange 1 focus on? / Level-specific
+  | 'fix_gaps'             // How do I fix gaps? / Improve coverage
+  | 'advancement_link'     // How does curriculum connect to advancement?
+  | 'template_assignment'  // How do templates work? / Assign curriculum
+  | 'general'              // Fallback
+
+export function detectCurriculumQuestionType(lower: string): CurriculumQuestionType {
+  if (lower.includes('gap') || lower.includes('missing') || lower.includes('coverage')) return 'gap_explanation'
+  if ((lower.includes('fix') || lower.includes('improve') || lower.includes('resolve') || lower.includes('address')) &&
+      (lower.includes('curriculum') || lower.includes('gap') || lower.includes('coverage'))) return 'fix_gaps'
+  if (lower.includes('advancement') || lower.includes('level up') || lower.includes('level change') ||
+      lower.includes('advance') || (lower.includes('connect') && lower.includes('curriculum'))) return 'advancement_link'
+  if (lower.includes('orange') || lower.includes('red') ||
+      (lower.includes('focus') && lower.includes('level'))) return 'level_focus'
+  if (lower.includes('template') && !lower.includes('create a class template')) return 'template_assignment'
+  if (lower.includes('how') && (lower.includes('work') || lower.includes('system') ||
+      lower.includes('structured') || lower.includes('does'))) return 'how_it_works'
+  return 'general'
+}
+
+export function composeCurriculumAnswer(questionType: CurriculumQuestionType, firstName: string | null = null): ComposedDonnaResponse {
   const name = firstName ? `${firstName}, ` : ''
-  return directAnswer(
-    `${name}the academy curriculum is structured as: **Levels** (e.g. Orange 1–4) → **Template blocks** (grouped exercises per session type) → **Exercises** (skill-specific drills and activities).\n\nCurriculum gaps appear when players in a level haven't been coached through the required blocks — or when no class template covers a required topic.\n\n**What I can help with here:**\n• Explain how any curriculum level or block type works\n• Draft a curriculum improvement proposal for your review\n• Describe how curriculum connects to player advancement\n\n**What requires the Curriculum Builder:** Seeing which specific players have coverage gaps requires the live session and template data in the Curriculum Builder. Navigate there to see coverage by level.`,
-    'Open Curriculum Builder',
-    '/director/curriculum/builder',
-  )
+
+  switch (questionType) {
+    case 'gap_explanation':
+      return directAnswer(
+        `${name}a curriculum gap means a player or group at a level hasn't received coaching in a required skill area — or no class template covers a skill that level should include.\n\n**Three types of gaps:**\n• **Coverage gap** — a player attended sessions but sessions had no block for a required skill category\n• **Template gap** — the class template for a level is missing a required block type (e.g., no mental performance block)\n• **Assignment gap** — a player has no active template assignment at all and is receiving no structured curriculum\n\n**How to find them:** Open the Curriculum Builder → select a level → look for blocks with low coverage percentages or players without assignments.\n\nI can draft a curriculum adjustment proposal for your review once you identify the gap.`,
+        'Open Curriculum Builder',
+        '/director/curriculum/builder',
+      )
+
+    case 'how_it_works':
+      return directAnswer(
+        `${name}the curriculum runs on three connected layers:\n\n**1. Levels** (e.g., Orange 1–4) — define the development stage. Each level has a recommended set of skill block categories and advancement milestones.\n\n**2. Class templates** — define what sessions look like for a group at a level. Each template specifies an ordered sequence of blocks: warm-up, technical, tactical, physical, mental. Templates are reusable across multiple groups at the same level.\n\n**3. Session blocks** — when a session runs and a coach logs notes, block coverage is recorded per player. This creates the coverage record that shows which skills each player has been coached on.\n\nCurriculum health = every active player has a template covering all required block categories for their level, and sessions are being logged.`,
+        'Open Curriculum Builder',
+        '/director/curriculum/builder',
+      )
+
+    case 'level_focus':
+      return directAnswer(
+        `${name}each level in the academy curriculum has a progression focus:\n\n• **Foundation levels** (e.g., Orange 1–2) — mechanics and fundamentals: grip, stance, contact point, movement patterns, basic rally construction. Sessions emphasize repetition and correct technique.\n• **Development levels** (e.g., Orange 3–4) — tactical awareness: cross-court vs. down-the-line, rally patterns, point construction, competitive mental habits. More emphasis on match-realistic drills.\n• **Performance levels** (e.g., Red 1–4) — performance under pressure: competitive patterns, point play, match simulation, physical load management, mental performance blocks, strategic planning.\n\nTo see your academy's specific level definitions and required block categories, open the Curriculum Builder → select the level.`,
+        'Open Curriculum Builder',
+        '/director/curriculum/builder',
+      )
+
+    case 'fix_gaps':
+      return directAnswer(
+        `${name}here's how to resolve each type of curriculum gap:\n\n**Template gaps** — edit the class template for the affected level and add the missing block type. All sessions using that template will include the block going forward. I can draft a template adjustment for your review.\n\n**Assignment gaps** — navigate to the player's profile and assign them to a group or template. Players without an assignment have no curriculum coverage. This needs your approval.\n\n**Coverage gaps** — if a player attended sessions but shows low coverage, check whether the coach logged session notes and whether session blocks were populated. I can draft a coach note request.\n\nAll curriculum changes and template edits go through the Review Center — nothing changes until you approve.`,
+        'Open Curriculum Builder',
+        '/director/curriculum/builder',
+      )
+
+    case 'advancement_link':
+      return directAnswer(
+        `${name}curriculum coverage is one of three signals that determines advancement readiness:\n\n1. **Coverage** — has the player been coached on the required skill blocks for their current level?\n2. **Assessment scores** — has the player demonstrated the skills in evaluation?\n3. **Coach recommendation** — does the coach believe the player is ready?\n\nA player can have high assessment scores but low curriculum coverage — it means they're performing the skills but haven't received structured coaching on all required areas. Both matter for advancement.\n\nWhen a player approaches the advancement threshold, they appear in the Level Readiness queue. I can surface a readiness summary and draft a level-change proposal for your review.`,
+        'View Players',
+        '/director/players',
+      )
+
+    case 'template_assignment':
+      return directAnswer(
+        `${name}class templates are how curriculum design translates into daily sessions:\n\n**Creating a template** — define the session structure for a level: total duration, block sequence, and block types. Templates are reusable across multiple groups at the same level. I can draft a new template for your review.\n\n**Assigning a template** — when you create or edit a session, you assign a template to it. All players in that group then inherit the block coverage from that session's template.\n\n**Sessions without templates** — sessions run without a template assignment don't contribute structured curriculum coverage. I can flag these sessions in your review queue.\n\nAll template changes go through the Review Center before taking effect.`,
+        'Open Curriculum Builder',
+        '/director/curriculum/builder',
+      )
+
+    case 'general':
+    default:
+      return directAnswer(
+        `${name}the academy curriculum is structured in three layers: **Levels** (what stage a player is at) → **Class templates** (what sessions cover for that level) → **Session blocks** (what was coached and logged).\n\nGaps appear when players lack coverage in required skill categories — no template assignment, missing block types, or sessions not logged. I can explain gaps, templates, level focus areas, how curriculum connects to advancement, or how to fix specific gaps. What would you like to dig into?`,
+        'Open Curriculum Builder',
+        '/director/curriculum/builder',
+      )
+  }
+}
+
+// Sprint 714 alias — preserved for callers; routes to gap_explanation type
+export function composeCurriculumExplanationAnswer(firstName: string | null = null): ComposedDonnaResponse {
+  return composeCurriculumAnswer('gap_explanation', firstName)
 }
