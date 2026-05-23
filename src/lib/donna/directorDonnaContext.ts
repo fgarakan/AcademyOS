@@ -48,6 +48,10 @@ export interface DirectorDonnaContext {
   attendanceExceptions: number
   evidenceDrafts: number
   todaySessions: number
+  // Setup status (Sprint 721)
+  playerCount: number
+  coachCount: number
+  isFirstTimeSetup: boolean
   // Lists
   attentionItems: DirectorAttentionItem[]
   curriculumGaps: string[]
@@ -69,6 +73,9 @@ function buildDemoContext(): DirectorDonnaContext {
     attendanceExceptions: 2,
     evidenceDrafts: 4,
     todaySessions: 5,
+    playerCount: 8,
+    coachCount: 3,
+    isFirstTimeSetup: false,
     attentionItems: [
       {
         playerId: null,
@@ -459,6 +466,10 @@ export async function loadDirectorDonnaContext(
     attendanceExceptions,
     evidenceDrafts,
     todaySessions,
+    // Sprint 721 — setup status (queries deferred to Sprint 723)
+    playerCount: 0,
+    coachCount: 0,
+    isFirstTimeSetup: false,
     attentionItems,
     curriculumGaps,
     academyRisks,

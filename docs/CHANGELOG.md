@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-23 — Sprint 722 — DONNA ChatGPT-Quality Conversational Audit V1
+
+- Created `src/lib/donna/donnaMissingContextEngine.ts` — missing-context answer engine (7 scenarios: onboarding, no-players, no-coaches, no-curriculum, no-templates, early-setup next-step, why-can't-you)
+- Modified `src/lib/donna/directorDonnaContext.ts` — added `playerCount`, `coachCount`, `isFirstTimeSetup` to interface + demo context; live return uses stubs (queries in Sprint 723)
+- Created `docs/DONNA_CHATGPT_QUALITY_CONVERSATIONAL_AUDIT_722.md` — 45-prompt regression, 10-dimension score (26/100), gap analysis, P0/P1/P2/P3 blockers, sprint sequence to certification
+- TypeScript: clean
+
+---
+
 ## 2026-05-23 — Sprint 720 — DONNA Premium Human Voice Upgrade V1
 
 **Scope:** Premium TTS upgrade — central voice config, OpenAI premium voice wiring, browser fallback hardening, visible voice quality status. No DB/schema/RLS/migration/seed/env changes.
