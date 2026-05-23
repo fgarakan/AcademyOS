@@ -64,6 +64,9 @@ interface Props {
   convState: ConversationState
   genericDraft: GenericTaskDraft | null
   templateDraft: TemplateDraft | null
+  // Sprint 694 — COO conversation context + thinking state
+  isThinking?: boolean
+  donnaLastResponse?: string | null
 }
 
 export function DonnaVoiceLayer({
@@ -92,6 +95,8 @@ export function DonnaVoiceLayer({
   convState,
   genericDraft,
   templateDraft,
+  isThinking = false,
+  donnaLastResponse = null,
 }: Props) {
   return (
     <div
@@ -114,8 +119,27 @@ export function DonnaVoiceLayer({
             ? `Answer ${DONNA_NAME}'s question by voice or type below.`
             : isOnboardingActive(onboardingStep)
             ? `Answer the setup question by voice or type your response.`
+            : isThinking
+            ? `${DONNA_NAME} is thinking…`
             : `Ask ${DONNA_NAME} what needs attention, or start a workflow.`}
         </p>
+
+        {/* Sprint 694 — COO last response context: keeps conversation visible above input */}
+        {donnaLastResponse && !guidedCurrentQ && !isOnboardingActive(onboardingStep) && !isThinking && (
+          <div
+            className="rounded-lg px-3 py-2.5 mb-3"
+            style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.15)' }}
+          >
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-lime mb-1">
+              {DONNA_NAME} says
+            </p>
+            <p className="text-[12px] text-text-secondary leading-snug">
+              {donnaLastResponse.length > 160
+                ? `${donnaLastResponse.slice(0, 160)}…`
+                : donnaLastResponse}
+            </p>
+          </div>
+        )}
 
         {/* Onboarding current question spotlight */}
         {isOnboardingActive(onboardingStep) && onboardingStep === 1 && (
@@ -273,7 +297,7 @@ export function DonnaVoiceLayer({
             </p>
             {activeMode !== 'create_template' && activeMode !== 'guided_task' && (
               <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
-                To save this note, type it in the field below and send.
+                Edit above or type below — send when ready.
               </p>
             )}
             <button

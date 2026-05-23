@@ -2711,6 +2711,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   Voice unavailable
                 </span>
               )}
+              {/* Sprint 694 — Thinking badge: shown when any async operation is in progress */}
+              {(isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading) && !isSpeaking && (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold animate-pulse"
+                  style={{ background: 'rgba(10,132,255,0.15)', color: '#0A84FF' }}
+                >
+                  Thinking…
+                </span>
+              )}
             </div>
             <p className="text-[10px] text-text-muted leading-snug mt-0.5">
               {DONNA_PUBLIC_TITLE}
@@ -3079,6 +3088,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             convState={convState}
             genericDraft={genericDraft}
             templateDraft={templateDraft}
+            isThinking={isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading}
+            donnaLastResponse={commandResponse?.message ?? null}
           />
 
           {/* ── Sprint 384: Workflow output cards — extracted to DonnaWorkflowCards ── */}

@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-23 — Sprint 694 — DONNA Current Question Transcript COO Polish V1
+
+**Scope:** UI/UX polish for DONNA's voice interaction layer — conversation context visibility, thinking state feedback, transcript copy clarity. No logic changes, no safety changes, no schema changes.
+
+**Files modified:**
+- `src/components/assistant/DonnaVoiceLayer.tsx` — (1) Added `isThinking` + `donnaLastResponse` props. (2) "DONNA says" context card shown above voice input when DONNA has responded and no guided question is active — keeps conversation context visible while director formulates next input. (3) Subtitle switches to "DONNA is thinking…" when `isThinking` is true and hides the context card to avoid stale display. (4) Fixed voice transcript copy from "To save this note, type it in the field below and send." → "Edit above or type below — send when ready." — the original copy was misleading since COO mode routes voice automatically.
+- `src/components/assistant/DonnaAssistantButton.tsx` — (1) Added "Thinking…" header badge (blue, pulsing) shown when any of `isLoadingContext`, `isLoadingReviewQueue`, `isDailyBriefLoading`, or `isAttentionLoading` is true and DONNA is not already showing Speaking. Completes the 8-state indicator. (2) Passes `isThinking` and `donnaLastResponse` to `DonnaVoiceLayer`.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 693 — DONNA Voice Speaking TTS Reliability V1
 
 **Scope:** Audit TTS pipeline (Realtime vs. browser fallback); fix three safe reliability issues in `DonnaAssistantButton`.
