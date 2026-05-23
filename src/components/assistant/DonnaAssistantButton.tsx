@@ -219,7 +219,9 @@ import { getDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/d
 // Sprint 697 — COO conversational router live wiring
 import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
 import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer } from '@/lib/donna/donnaResponseComposer'
-import { recordPrompt, recordSummary, recordRouteChange } from '@/lib/donna/donnaSafeSessionMemory'
+import { recordPrompt, recordSummary, recordRouteChange, getSessionMemory, buildContinuityMessage } from '@/lib/donna/donnaSafeSessionMemory'
+// Sprint 702 — Chat session memory + continuity wiring
+import { ensureChatSession, recordTurn, getRecentTurns, getContextualPrefix } from '@/lib/donna/donnaChatSessionMemory'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -381,6 +383,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
   // Spoken greeting — fires once on first intentional panel open, never again in this session
   const hasGreetedRef = useRef(false)
+  const panelOpenCountRef = useRef(0)
   const [showGreeting, setShowGreeting] = useState(false)
   // Sprint 647 — daily greeting state (localStorage-backed, once per day)
   const [dailyGreetingState, setDailyGreetingState] = useState<DailyGreetingState | null>(null)
@@ -837,6 +840,26 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [panelOpen, closePanel])
+
+  // Sprint 702 — Initialize chat session memory on mount (or role change)
+  useEffect(() => {
+    ensureChatSession(role)
+  }, [role])
+
+  // Sprint 702 — Show continuity message on subsequent panel opens (not first open)
+  useEffect(() => {
+    if (!panelOpen) return
+    panelOpenCountRef.current += 1
+    if (panelOpenCountRef.current <= 1) return // first open handled by greeting flow
+    const session = ensureChatSession(role) // safe — returns existing session
+    if (session.turns.length === 0) return
+    const memory = getSessionMemory()
+    const continuity = buildContinuityMessage(memory, firstName)
+    if (continuity) {
+      setCommandResponse({ message: continuity, type: 'info', label: 'DONNA' })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panelOpen])
 
   // Sprint 405 — donna:open custom event listener
   // Allows any page component to open DONNA and pre-fill the input via:
@@ -2291,6 +2314,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Returns true if the router handled the prompt (commandResponse set, speakDonna called).
   // Returns false to fall through to legacy detectAndHandleCommand.
   // Falls through only for answer_directly (unknown intent) so all existing legacy routes are preserved.
+  // Sprint 702 — records each turn to donnaChatSessionMemory; injects follow-up prefix when topic was previously discussed.
   function handleDonnaCooPrompt(text: string): boolean {
     const routing = routeDonnaPrompt(text, pathname)
     if (routing.responseMode === 'answer_directly') return false
@@ -2318,14 +2342,34 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       composed = composeDonnaResponse(routing, pathname, firstName)
     }
 
+    // Sprint 702 — map routing intent to a TopicDomain for session memory
+    type TopicDomainMap = Record<string, import('@/lib/donna/donnaChatSessionMemory').TopicDomain>
+    const INTENT_TO_DOMAIN: TopicDomainMap = {
+      review_queue: 'review_queue',
+      roster_attention: 'players',
+      level_movement: 'players',
+      assessment_or_placement: 'players',
+      kpi_explanation: 'academy_health',
+      kpi_priority: 'academy_health',
+      curriculum_builder: 'curriculum',
+      parent_summary: 'general',
+    }
+    const domain = INTENT_TO_DOMAIN[routing.intent] ?? 'general'
+
+    // Prepend follow-up prefix when this topic was already discussed this session
+    const prefix = !composed.isBlocked ? getContextualPrefix(domain) : ''
+    const finalText = prefix ? prefix + composed.text : composed.text
+
     setCommandResponse({
-      message: composed.text,
+      message: finalText,
       type: composed.isBlocked ? 'honest' : 'info',
       label: composed.isBlocked ? 'Not allowed' : (composed.nextStepLabel ?? 'DONNA'),
     })
     recordPrompt(text)
-    if (composed.text) recordSummary(composed.text)
-    speakDonna(composed.text)
+    if (finalText) recordSummary(finalText)
+    // Sprint 702 — record turn so follow-up questions have session context
+    recordTurn(text, finalText, { domain })
+    speakDonna(finalText)
     return true
   }
 

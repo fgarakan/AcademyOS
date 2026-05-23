@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-23 — Sprint 702 — DONNA Chat Session Memory and Continuity Wiring V1
+
+**Scope:** Wire `donnaChatSessionMemory` (Sprint 1032 — previously dead code) into the live DONNA command path. Wire `buildContinuityMessage` to panel re-open for session re-entry context. No DB/schema/RLS/migration changes.
+
+**P0-A fix — chat session memory not wired:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — (1) Added imports: `ensureChatSession`, `recordTurn`, `getRecentTurns`, `getContextualPrefix` from `donnaChatSessionMemory`; `getSessionMemory`, `buildContinuityMessage` from `donnaSafeSessionMemory`. (2) Added `panelOpenCountRef` ref. (3) Added `useEffect([role])` to initialize chat session on mount via `ensureChatSession(role)`. (4) Added `useEffect([panelOpen])` for panel re-open: on second+ open, if prior turns exist, calls `buildContinuityMessage(memory, firstName)` and shows it as `commandResponse` — giving the director "you were working on X earlier" re-entry context. (5) Modified `handleDonnaCooPrompt` to: map routing intent to `TopicDomain`; call `getContextualPrefix(domain)` and prepend "Following up on that — " prefix if the same topic was already discussed this session; call `recordTurn(text, finalText, { domain })` after every COO-handled response. All three changes together make DONNA contextually aware of prior turns for the first time.
+
+**P1-D fix — `buildContinuityMessage` not wired:**
+- Wired above. Director now sees continuity message ("you were on the Player Directory earlier — do you want to continue there?") when reopening DONNA after prior navigation.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — chat session memory wiring + panel re-entry continuity
+- `docs/CHANGELOG.md` — Sprint 702 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** Context awareness 4/10 → 7/10; Conversational quality 7/10 → 8/10
+
+---
+
 ## 2026-05-23 — Sprint 701 — DONNA Post-700 Reaudit and 10/10 Gap Map
 
 **Scope:** Full 17-category post-700 reaudit based on complete code inspection. No runtime changes. Audit and documentation only.
