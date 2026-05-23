@@ -691,6 +691,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [commandResponse, setCommandResponse] = useState<CommandResponse | null>(null)
   // Sprint 704 — action preview card for route_to_review responses
   const [actionPreview, setActionPreview] = useState<DirectorActionPreview | null>(null)
+  // Sprint 711 — visible conversation thread for COO responses
+  const [cooThread, setCooThread] = useState<Array<{ user: string; donna: string }>>([])
 
   // Generic task draft state — contract-only, local only, no DB writes (Sprint 266)
   const [genericDraft, setGenericDraft] = useState<GenericTaskDraft | null>(null)
@@ -800,6 +802,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setDailyGreetingState(null)
     setTemplateCommandInput('')
     setCommandResponse(null)
+    // Sprint 711 — clear conversation thread on panel close
+    setCooThread([])
     setContextSummary(null)
     setSuggestions([])
     setIsLoadingContext(false)
@@ -2422,6 +2426,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (finalText) recordSummary(finalText)
     // Sprint 702 — record turn so follow-up questions have session context
     recordTurn(text, finalText, { domain })
+    // Sprint 711 — push to visible conversation thread (last 5 turns, prior turns shown above current response)
+    setCooThread(prev => [...prev.slice(-4), { user: text, donna: finalText }])
     speakDonna(finalText)
     return true
   }
@@ -3251,6 +3257,31 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             promptCategoryLabel={getPromptCategoryLabel(pathname)}
             pathname={pathname}
           />
+
+          {/* ── Sprint 711 — COO conversation history thread ── */}
+          {cooThread.length > 1 && (
+            <div className="mx-3 mb-2 space-y-2 border-b pb-3" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              <p className="text-[9px] uppercase tracking-widest font-semibold mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                Conversation
+              </p>
+              {cooThread.slice(0, -1).slice(-3).map((turn, i) => (
+                <div key={i} className="space-y-1">
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] rounded-2xl rounded-tr-sm px-2.5 py-1.5" style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.12)' }}>
+                      <p className="text-[11px] text-text-primary leading-snug">{turn.user}</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-start">
+                    <div className="max-w-[88%] rounded-2xl rounded-tl-sm px-2.5 py-1.5" style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.1)' }}>
+                      <p className="text-[10px] text-text-muted leading-relaxed">
+                        {turn.donna.length > 130 ? turn.donna.slice(0, 127) + '…' : turn.donna}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* ── Sprint 384: Workflow output cards — extracted to DonnaWorkflowCards ── */}
           <DonnaWorkflowCards
