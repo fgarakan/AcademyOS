@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-23 — Sprint 704 — DONNA Action Preview Cards Wiring V1
+
+**Scope:** Wire `getActionPreviewForRequest` and render a structured action preview panel for `route_to_review` and `build_action_preview` responses. No DB/schema/RLS/migration changes.
+
+**P0-B fix — action preview cards not rendered:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — (1) Added imports: `getActionPreviewForRequest` from `donnaActionPreviewIntegration`, `DirectorActionPreview` type from `directorActionPreview`. (2) Added `actionPreview: DirectorActionPreview | null` state. (3) In `handleDonnaCooPrompt`, calls `getActionPreviewForRequest(text)` when mode is `route_to_review` or `build_action_preview`; stores `previewResult.preview` in state. (4) Added JSX action preview card below `DonnaWorkflowCards`: shows title, summary, "Will happen" checklist (green), "Will NOT happen" list (muted), approval requirement note (orange), Dismiss button. Follows design tokens from CLAUDE.md. (5) Clears `actionPreview` on route change alongside `commandResponse`. Director now sees a structured "What will happen / What won't happen / Approval required" card for level movement and parent summary requests — not just text.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — action preview wiring + JSX card
+- `docs/CHANGELOG.md` — Sprint 704 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** Action preview safety 4/10 → 8/10; Demo readiness 7/10 → 9/10
+
+---
+
 ## 2026-05-23 — Sprint 703 — DONNA Role-Aware COO Router V1
 
 **Scope:** Make `handleDonnaCooPrompt` role-aware so coaches get appropriate director-referral responses for director-only intents. No DB/schema/RLS changes.

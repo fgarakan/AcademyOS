@@ -222,6 +222,9 @@ import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer
 import { recordPrompt, recordSummary, recordRouteChange, getSessionMemory, buildContinuityMessage } from '@/lib/donna/donnaSafeSessionMemory'
 // Sprint 702 — Chat session memory + continuity wiring
 import { ensureChatSession, recordTurn, getRecentTurns, getContextualPrefix } from '@/lib/donna/donnaChatSessionMemory'
+// Sprint 704 — Action preview cards wiring
+import { getActionPreviewForRequest } from '@/lib/donna/donnaActionPreviewIntegration'
+import type { DirectorActionPreview } from '@/lib/donna/directorActionPreview'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -678,6 +681,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [fromVoiceCapture, setFromVoiceCapture] = useState(false)
   const [templateCommandInput, setTemplateCommandInput] = useState('')
   const [commandResponse, setCommandResponse] = useState<CommandResponse | null>(null)
+  // Sprint 704 — action preview card for route_to_review responses
+  const [actionPreview, setActionPreview] = useState<DirectorActionPreview | null>(null)
 
   // Generic task draft state — contract-only, local only, no DB writes (Sprint 266)
   const [genericDraft, setGenericDraft] = useState<GenericTaskDraft | null>(null)
@@ -899,6 +904,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     setCommandResponse(null)
+    setActionPreview(null)
     setContextSummary(null)
     setSuggestions([])
     setIsLoadingContext(false)
@@ -2378,6 +2384,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       type: composed.isBlocked ? 'honest' : 'info',
       label: composed.isBlocked ? 'Not allowed' : (composed.nextStepLabel ?? 'DONNA'),
     })
+
+    // Sprint 704 — show structured action preview card for route_to_review and build_action_preview
+    if (routing.responseMode === 'route_to_review' || routing.responseMode === 'build_action_preview') {
+      const previewResult = getActionPreviewForRequest(text)
+      setActionPreview(previewResult.preview)
+    } else {
+      setActionPreview(null)
+    }
+
     recordPrompt(text)
     if (finalText) recordSummary(finalText)
     // Sprint 702 — record turn so follow-up questions have session context
@@ -3259,6 +3274,52 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             contextSummary={contextSummary}
             onDismissContextSummary={() => setContextSummary(null)}
           />
+
+          {/* ── Sprint 704 — Action preview card for route_to_review responses ── */}
+          {actionPreview && (
+            <div
+              className="rounded-xl px-3.5 py-3 space-y-2"
+              style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.15)' }}
+            >
+              <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: '#8b5cf6' }}>
+                Action preview
+              </p>
+              <p className="text-[12px] font-semibold text-text-primary">{actionPreview.title}</p>
+              <p className="text-[11px] text-text-secondary leading-relaxed">{actionPreview.summary}</p>
+              {actionPreview.willHappen.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-status-green font-semibold mb-1">Will happen</p>
+                  <ul className="space-y-0.5">
+                    {actionPreview.willHappen.map((item, i) => (
+                      <li key={i} className="text-[11px] text-text-secondary flex gap-1.5 items-start">
+                        <span className="text-status-green mt-0.5">✓</span>{item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {actionPreview.willNotHappen.length > 0 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-1">Will NOT happen</p>
+                  <ul className="space-y-0.5">
+                    {actionPreview.willNotHappen.map((item, i) => (
+                      <li key={i} className="text-[11px] text-text-muted flex gap-1.5 items-start">
+                        <span className="mt-0.5">✕</span>{item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="text-[10px] text-status-orange leading-relaxed">{actionPreview.approvalRequirement}</p>
+              <button
+                type="button"
+                className="text-[10px] uppercase tracking-widest font-semibold text-lime hover:opacity-80 transition-opacity"
+                onClick={() => setActionPreview(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           {/* ── Current context card — hidden in template, guided-task, and review_queue modes ── */}
           {activeMode !== 'create_template' && activeMode !== 'guided_task' && activeMode !== 'review_queue' && (
