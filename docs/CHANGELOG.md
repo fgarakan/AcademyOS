@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-23 — Sprint 696 — DONNA Golden Path Conversation QA V1
+
+**Scope:** Rigorous QA document assessing the live DONNA experience after Sprints 682–695. No runtime changes — audit and documentation only.
+
+**Files created:**
+- `docs/DONNA_GOLDEN_CONVERSATION_QA_696.md` — 15 golden path scenarios (A–O) with pass/partial/fail ratings, severity classification, and files involved. Executive summary, test environment assumptions, 10-category scoring (52/100), wiring gap identification for 5 unconnected COO modules (Sprints 687–692), recommended sprints 697–700. P0 failures: "Move Sarah up" and "Show raw coach note to parent" both return "Not recognized" — confirmed missing from `VOICE_PROTECTED_PHRASES` and legacy keyword router. P1 failures: curriculum chip, "Where am I?", "What can you help with here?", "How does this system work?". Confirmed `routeDonnaPrompt`, `composeDonnaResponse`, `getActionPreviewForRequest`, `donnaSafeSessionMemory`, and `donnaPageContextEngine` answers are dead code paths in live `handleCommandSubmit`.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — Sprint 696 entry added.
+
+**TypeScript:** N/A (documentation sprint — no code changes)
+
+---
+
 ## 2026-05-23 — Sprint 695 — DONNA Director Command Palette Prompts V1
 
 **Scope:** Replace static suggestion chips with page-aware, route-specific COO prompt suggestions. Pure TS palette module; no DB calls; no routing logic changes.
