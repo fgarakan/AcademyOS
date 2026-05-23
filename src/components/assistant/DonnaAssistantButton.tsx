@@ -866,8 +866,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setIsLoadingReviewQueue(false)
     setPendingVoiceAnswer(null)
     setInterimVoiceTranscript(null)
-    setIsVoiceListening(false)
-    setIsSpeaking(false)
+    // Sprint 683: voice listening/speaking/wake state intentionally NOT reset on route change.
+    // DONNA should stay active across director navigation. Explicit close/stop still resets these.
     setVoicePermissionError(null)
     lastSpokenTextRef.current = null
     lastSpokenAtRef.current = 0
@@ -881,7 +881,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       voiceWatchdogRef.current = null
     }
     playVersionRef.current += 1
-    stopWakeListening()
     setWakeDetectedCommand(null)
     setVoiceOutputConfirmed(null)
     setConvState(createConversationState())

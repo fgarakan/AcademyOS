@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-05-23 — Sprint 683 — DONNA Route-Change Voice Persistence Fix V1
+
+**Scope:** Remove route-change voice teardown from `DonnaAssistantButton`. DONNA voice/speaking/wake state now survives director navigation.
+
+**What changed:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Removed `setIsVoiceListening(false)`, `setIsSpeaking(false)`, and `stopWakeListening()` from the `useEffect([pathname])` route-change handler. Replaced with a single explanatory comment. All other route-change resets (draft state, mode, template, context) remain intact. `closePanel()` still fully resets all state including voice.
+
+**Behavior after fix:**
+- DONNA voice listening/speaking/wake state is not killed by navigation within `/director/*`.
+- Text chat, draft state, context resets continue to work as before on route change.
+- Explicit panel close (`X` / Escape) still fully stops voice and resets all state.
+- No microphone starts before user action — no autostart behavior added.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 682 — DONNA Full Voice Persistence + COO Assistant Audit V1
 
 **Scope:** Full audit of DONNA voice architecture — why DONNA stops, why it doesn't persist, how to fix it. Pure documentation sprint — no code changes, no migrations, no schema changes.
