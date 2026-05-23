@@ -197,6 +197,14 @@ import {
   markGreetedToday,
   type DailyGreetingState,
 } from '@/lib/donna/donnaDailyGreeting'
+// Sprint 685 — Director greeting content + daily tracking
+import {
+  shouldShowDailyDonnaGreeting,
+  markDailyDonnaGreetingShown,
+  buildDonnaOpeningGreeting,
+} from '@/lib/donna/donnaGreeting'
+// Sprint 685 — VoiceState type for status indicator
+import type { VoiceState } from '@/components/assistant/VoiceInputButton'
 // Sprint 656 — Role Boundaries
 import {
   isTaskAllowedForRole,
@@ -706,6 +714,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
   // Voice UI state — Sprint 289
   const [isVoiceListening, setIsVoiceListening] = useState(false)
+  // Sprint 685 — full VoiceState from VoiceInputButton for the status indicator
+  const [voiceStateForIndicator, setVoiceStateForIndicator] = useState<VoiceState>('idle')
   const [isVoiceSupported, setIsVoiceSupported] = useState<boolean | null>(null)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [interimVoiceTranscript, setInterimVoiceTranscript] = useState<string | null>(null)
@@ -778,6 +788,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setPendingVoiceAnswer(null)
     setInterimVoiceTranscript(null)
     setIsVoiceListening(false)
+    setVoiceStateForIndicator('idle')
     setIsSpeaking(false)
     setVoicePermissionError(null)
     lastSpokenTextRef.current = null
@@ -2486,27 +2497,41 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               setOnboardingStep(0)
               setShowOnboardingSuggestions(false)
             } else {
-              // Sprint 647/648/651 — daily welcome (onboarding already complete).
-              // Check localStorage to determine first open today vs. same-day return.
-              // role='coach' produces coach-specific priority routing copy.
-              const greeting = getDailyGreetingState(firstName, role)
-              // Sprint 651 — session context override: when on a session page, replace
-              // the follow-up with session-specific help copy regardless of first-open state.
               const isOnSessionPage =
                 pathname.includes('/sessions/') && pathname.split('/sessions/')[1]?.length > 0
-              if (isOnSessionPage) {
-                greeting.followUp =
-                  role === 'coach'
-                    ? "I can help with notes, observations, or wrap-up for this session."
-                    : "I can help you review this session or capture a coach note."
-              }
-              setDailyGreetingState(greeting)
-              if (greeting.isFirstOpenToday) {
-                markGreetedToday()
-                // Attempt voice — inside button click (user gesture); failure is silent.
-                // Text always renders regardless of voice outcome.
-                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                  speakAssistantText(greeting.primaryText)
+              if (role === 'director') {
+                // Sprint 685 — richer director greeting with page-aware re-entry copy.
+                const isFirstOpenToday = shouldShowDailyDonnaGreeting()
+                const content = buildDonnaOpeningGreeting(firstName, pathname, isFirstOpenToday)
+                const followUp = isOnSessionPage
+                  ? "I can help you review this session or capture a coach note."
+                  : content.followUp
+                const greeting: DailyGreetingState = {
+                  isFirstOpenToday,
+                  primaryText: content.primaryText,
+                  followUp,
+                }
+                setDailyGreetingState(greeting)
+                if (isFirstOpenToday) {
+                  markDailyDonnaGreetingShown()
+                  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    speakAssistantText(content.primaryText)
+                  }
+                }
+              } else {
+                // Coach path — keep existing donnaDailyGreeting behavior.
+                // Sprint 647/648/651 daily welcome; role='coach' routing copy.
+                const greeting = getDailyGreetingState(firstName, role)
+                // Sprint 651 — session context override
+                if (isOnSessionPage) {
+                  greeting.followUp = "I can help with notes, observations, or wrap-up for this session."
+                }
+                setDailyGreetingState(greeting)
+                if (greeting.isFirstOpenToday) {
+                  markGreetedToday()
+                  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    speakAssistantText(greeting.primaryText)
+                  }
                 }
               }
             }
@@ -2616,7 +2641,16 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               >
                 Review-first
               </span>
-              {isVoiceListening && (
+              {/* Sprint 685 — Voice status indicator: full state from VoiceInputButton */}
+              {isSpeaking && (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'rgba(139,92,246,0.15)', color: '#8b5cf6' }}
+                >
+                  Speaking
+                </span>
+              )}
+              {!isSpeaking && voiceStateForIndicator === 'listening' && (
                 <span
                   className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold animate-pulse"
                   style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}
@@ -2624,12 +2658,44 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   Listening
                 </span>
               )}
-              {!isVoiceListening && isSpeaking && (
+              {!isSpeaking && voiceStateForIndicator === 'paused' && (
                 <span
                   className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                  style={{ background: 'rgba(139,92,246,0.15)', color: '#8b5cf6' }}
+                  style={{ background: 'rgba(255,149,0,0.15)', color: '#FF9500' }}
                 >
-                  Speaking
+                  Paused — active
+                </span>
+              )}
+              {!isSpeaking && voiceStateForIndicator === 'stopped' && (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'rgba(85,85,85,0.2)', color: '#AAAAAA' }}
+                >
+                  Stopped
+                </span>
+              )}
+              {!isSpeaking && voiceStateForIndicator === 'idle' && isVoiceSupported === true && !voicePermissionError && (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'rgba(200,255,0,0.06)', color: 'rgba(200,255,0,0.45)' }}
+                >
+                  Ready
+                </span>
+              )}
+              {voicePermissionError && voiceStateForIndicator === 'idle' && (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'rgba(255,149,0,0.15)', color: '#FF9500' }}
+                >
+                  Mic blocked
+                </span>
+              )}
+              {isVoiceSupported === false && (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'rgba(85,85,85,0.15)', color: '#555555' }}
+                >
+                  Voice unavailable
                 </span>
               )}
             </div>
@@ -2976,6 +3042,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             onInterimTranscript={handleInterimTranscript}
             onVoiceError={handleVoiceError}
             onSupportedChange={setIsVoiceSupported}
+            onVoiceStateChange={setVoiceStateForIndicator}
             isVoiceListening={isVoiceListening}
             interimVoiceTranscript={interimVoiceTranscript}
             voicePermissionError={voicePermissionError}

@@ -71,6 +71,11 @@ interface VoiceInputButtonProps {
   /** Called once on mount with whether SpeechRecognition is supported. */
   onSupportedChange?: (supported: boolean) => void
   /**
+   * Sprint 685 — Full voice state callback.
+   * Fires whenever the internal VoiceState changes so callers can drive a richer status indicator.
+   */
+  onVoiceStateChange?: (state: VoiceState) => void
+  /**
    * Sprint 641 — Persistent session mode.
    * When true, the session stays active after each utterance and auto-restarts
    * recognition on silence. User must click Stop to end the session.
@@ -86,7 +91,8 @@ interface VoiceInputButtonProps {
 }
 
 // Sprint 641: four states for persistent mode
-type VoiceState = 'idle' | 'listening' | 'paused' | 'stopped' | 'unsupported'
+// Sprint 685: exported so callers can display a richer status indicator
+export type VoiceState = 'idle' | 'listening' | 'paused' | 'stopped' | 'unsupported'
 
 export function VoiceInputButton({
   onTranscript,
@@ -97,6 +103,7 @@ export function VoiceInputButton({
   onInterimTranscript,
   onError,
   onSupportedChange,
+  onVoiceStateChange,
   persistent = false,
   maxRetries = 3,
 }: VoiceInputButtonProps) {
@@ -123,9 +130,10 @@ export function VoiceInputButton({
       recognitionRef.current = null
     }
     setVoiceState('idle')
+    onVoiceStateChange?.('idle')
     setRetryExhausted(false)
     onListeningChange?.(false)
-  }, [onListeningChange])
+  }, [onListeningChange, onVoiceStateChange])
 
   // Clean up on unmount
   useEffect(() => {
@@ -178,12 +186,14 @@ export function VoiceInputButton({
         if (retryCountRef.current >= maxRetries) {
           sessionActiveRef.current = false
           setVoiceState('stopped')
+          onVoiceStateChange?.('stopped')
           setRetryExhausted(true)
           onListeningChange?.(false)
           return
         }
         // Paused state — briefly between utterances
         setVoiceState('paused')
+        onVoiceStateChange?.('paused')
         // Restart after short pause (300ms)
         setTimeout(() => {
           if (sessionActiveRef.current) {
@@ -192,6 +202,7 @@ export function VoiceInputButton({
         }, 300)
       } else {
         setVoiceState('idle')
+        onVoiceStateChange?.('idle')
         onListeningChange?.(false)
       }
     }
@@ -199,8 +210,9 @@ export function VoiceInputButton({
     recognitionRef.current = recognition
     recognition.start()
     setVoiceState('listening')
+    onVoiceStateChange?.('listening')
     onListeningChange?.(true)
-  }, [persistent, maxRetries, onTranscript, onInterimTranscript, onError, onListeningChange])
+  }, [persistent, maxRetries, onTranscript, onInterimTranscript, onError, onListeningChange, onVoiceStateChange])
 
   function handleToggle() {
     if (voiceState === 'listening' || voiceState === 'paused') {

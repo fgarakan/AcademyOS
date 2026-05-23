@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-23 — Sprint 685 — DONNA Voice State Indicator Daily Greeting V1
+
+**Scope:** Add a visible voice status indicator to the DONNA panel header and replace the flat daily greeting with a richer full greeting (first open of day) and page-aware re-entry copy (subsequent opens).
+
+**Files created:**
+- `src/lib/donna/donnaGreeting.ts` — Pure-TS director greeting module: `shouldShowDailyDonnaGreeting`, `markDailyDonnaGreetingShown`, `getTodayDonnaGreetingKey`, `buildDonnaOpeningGreeting`. Separate localStorage key from `donnaDailyGreeting.ts`. Director role only.
+
+**Files modified:**
+- `src/components/assistant/VoiceInputButton.tsx` — Exported `VoiceState` type. Added `onVoiceStateChange?: (state: VoiceState) => void` prop. Wired callback at all four `setVoiceState` call sites (idle, listening, paused, stopped). Added `onVoiceStateChange` to both `useCallback` dep arrays.
+- `src/components/assistant/DonnaVoiceLayer.tsx` — Added `onVoiceStateChange` to Props interface and destructuring. Imported `VoiceState` type. Passed prop through to `VoiceInputButton`.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Imported `VoiceState` type and new greeting functions. Added `voiceStateForIndicator` state. Reset it in `closePanel()`. Passed `onVoiceStateChange={setVoiceStateForIndicator}` to `DonnaVoiceLayer`. Replaced two-badge header (Listening / Speaking) with seven-state status indicator (Speaking / Listening / Paused—active / Stopped / Ready / Mic blocked / Voice unavailable). Split panel-open greeting into director path (using `donnaGreeting.ts`) and coach path (keeping `donnaDailyGreeting.ts`). Director first-open: full time-of-day greeting. Director re-entry: page-aware contextual copy per route.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 684 — DONNA Persistent Voice Auto-Restart Fix V1
 
 **Scope:** Activate DONNA's already-built persistent listening mode so voice session stays active after each utterance.

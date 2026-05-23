@@ -13,6 +13,7 @@
 
 import { Mic } from 'lucide-react'
 import { VoiceInputButton } from './VoiceInputButton'
+import type { VoiceState } from './VoiceInputButton'
 import { DonnaCurrentQuestionDisplay } from './DonnaCurrentQuestionDisplay'
 import type { DonnaVoiceTranscriptState } from './donnaVoiceUiTypes'
 import type { DonnaTaskQuestion } from './donnaTaskContracts'
@@ -39,6 +40,8 @@ interface Props {
   onInterimTranscript: (text: string) => void
   onVoiceError: (error: string) => void
   onSupportedChange: (supported: boolean) => void
+  // Sprint 685 — full voice state for status indicator in panel header
+  onVoiceStateChange?: (state: VoiceState) => void
   // Voice state
   isVoiceListening: boolean
   interimVoiceTranscript: string | null
@@ -71,6 +74,7 @@ export function DonnaVoiceLayer({
   onInterimTranscript,
   onVoiceError,
   onSupportedChange,
+  onVoiceStateChange,
   isVoiceListening,
   interimVoiceTranscript,
   voicePermissionError,
@@ -135,6 +139,7 @@ export function DonnaVoiceLayer({
         {/* VoiceInputButton — browser SpeechRecognition only, no API, no DB write */}
         {/* Sprint 684: persistent=true activates auto-restart on silence (built in Sprint 641). */}
         {/* maxRetries=5 allows up to 5 consecutive silence cycles before stopping gracefully. */}
+        {/* Sprint 685: onVoiceStateChange exposes full VoiceState to the panel header indicator. */}
         <VoiceInputButton
           onTranscript={onVoiceTranscriptRaw}
           label={`Ask ${DONNA_PUBLIC_NAME}`}
@@ -143,6 +148,7 @@ export function DonnaVoiceLayer({
           onInterimTranscript={onInterimTranscript}
           onError={onVoiceError}
           onSupportedChange={onSupportedChange}
+          onVoiceStateChange={onVoiceStateChange}
           persistent={true}
           maxRetries={5}
         />
