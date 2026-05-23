@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-23 — Sprint 723 — DONNA Setup State Context Queries V1
+
+- Modified `src/lib/donna/directorDonnaContext.ts` — added live `playerCount` and `coachCount` queries (sequential, RLS-safe); wired real values into return; `isFirstTimeSetup = playerCount === 0`
+- TypeScript: clean
+
+---
+
 ## 2026-05-23 — Sprint 722 — DONNA ChatGPT-Quality Conversational Audit V1
 
 - Created `src/lib/donna/donnaMissingContextEngine.ts` — missing-context answer engine (7 scenarios: onboarding, no-players, no-coaches, no-curriculum, no-templates, early-setup next-step, why-can't-you)

@@ -186,6 +186,39 @@ export async function loadDirectorDonnaContext(
     fieldStatuses.reviewQueue = 'insufficient_data'
   }
 
+  // ── 2b. Player count (Sprint 723) ─────────────────────────────────────────
+
+  let playerCount = 0
+
+  try {
+    const { count: pCount } = await db
+      .from('players')
+      .select('id', { count: 'exact', head: true })
+      .eq('academy_id', academyId)
+    playerCount = pCount ?? 0
+    fieldStatuses.players = 'live'
+  } catch {
+    fieldStatuses.players = 'insufficient_data'
+  }
+
+  // ── 2c. Coach count (Sprint 723) ───────────────────────────────────────────
+
+  let coachCount = 0
+
+  try {
+    const rawDbMemberships = db as any
+    const { count: cCount } = await rawDbMemberships
+      .from('academy_memberships')
+      .select('id', { count: 'exact', head: true })
+      .eq('academy_id', academyId)
+      .in('role', ['coach', 'head_coach'])
+      .eq('is_active', true)
+    coachCount = cCount ?? 0
+    fieldStatuses.coaches = 'live'
+  } catch {
+    fieldStatuses.coaches = 'insufficient_data'
+  }
+
   // ── 3. Missing wrap-ups (sessions today without a wrap-up proposed action) ─
 
   let missingWrapUps = 0
@@ -466,10 +499,9 @@ export async function loadDirectorDonnaContext(
     attendanceExceptions,
     evidenceDrafts,
     todaySessions,
-    // Sprint 721 — setup status (queries deferred to Sprint 723)
-    playerCount: 0,
-    coachCount: 0,
-    isFirstTimeSetup: false,
+    playerCount,
+    coachCount,
+    isFirstTimeSetup: playerCount === 0,
     attentionItems,
     curriculumGaps,
     academyRisks,
