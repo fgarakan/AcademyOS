@@ -17,6 +17,8 @@ import type { VoiceState } from './VoiceInputButton'
 import { DonnaCurrentQuestionDisplay } from './DonnaCurrentQuestionDisplay'
 import type { DonnaVoiceTranscriptState } from './donnaVoiceUiTypes'
 import type { DonnaTaskQuestion } from './donnaTaskContracts'
+import type { DonnaPromptSuggestion } from '@/lib/donna/donnaDirectorPromptPalette'
+import { getDefaultDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/donnaDirectorPromptPalette'
 import {
   DONNA_PUBLIC_NAME,
   DONNA_PUBLIC_NAME as DONNA_NAME,
@@ -67,6 +69,10 @@ interface Props {
   // Sprint 694 — COO conversation context + thinking state
   isThinking?: boolean
   donnaLastResponse?: string | null
+  // Sprint 695 — page-aware prompt suggestions
+  promptSuggestions?: DonnaPromptSuggestion[]
+  promptCategoryLabel?: string
+  pathname?: string
 }
 
 export function DonnaVoiceLayer({
@@ -97,7 +103,12 @@ export function DonnaVoiceLayer({
   templateDraft,
   isThinking = false,
   donnaLastResponse = null,
+  promptSuggestions,
+  promptCategoryLabel,
+  pathname = '',
 }: Props) {
+  const chips = promptSuggestions ?? getDefaultDonnaPromptSuggestions()
+  const categoryLabel = promptCategoryLabel ?? getPromptCategoryLabel(pathname)
   return (
     <div
       className="rounded-xl overflow-hidden"
@@ -346,7 +357,7 @@ export function DonnaVoiceLayer({
         </div>
       </div>
 
-      {/* Suggestion chips — shown only when no active workflow */}
+      {/* Suggestion chips — page-aware (Sprint 695), shown only when no active workflow */}
       {!isOnboardingActive(onboardingStep) && convState.activeDraft === null && !genericDraft && !templateDraft && (
         <div
           className="px-4 py-3"
@@ -356,19 +367,14 @@ export function DonnaVoiceLayer({
           }}
         >
           <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-2">
-            Quick actions
+            {categoryLabel}
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {[
-              'What needs attention?',
-              'Review queue',
-              'Draft parent update',
-              'Create class template',
-            ].map(chip => (
+            {chips.map(chip => (
               <button
-                key={chip}
+                key={chip.id}
                 type="button"
-                onClick={() => onCommandSubmit(chip)}
+                onClick={() => onCommandSubmit(chip.prompt)}
                 className="text-[11px] px-3 py-2 min-h-[36px] rounded-full transition-all leading-snug"
                 style={{
                   background: 'rgba(139,92,246,0.08)',
@@ -376,7 +382,7 @@ export function DonnaVoiceLayer({
                   color: '#c4b5fd',
                 }}
               >
-                {chip}
+                {chip.label}
               </button>
             ))}
           </div>

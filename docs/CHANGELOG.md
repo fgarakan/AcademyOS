@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-23 — Sprint 695 — DONNA Director Command Palette Prompts V1
+
+**Scope:** Replace static suggestion chips with page-aware, route-specific COO prompt suggestions. Pure TS palette module; no DB calls; no routing logic changes.
+
+**Files created:**
+- `src/lib/donna/donnaDirectorPromptPalette.ts` — `DonnaPromptSuggestion` type (`id`, `label`, `prompt`, `intentHint`). `getDonnaPromptSuggestions(pathname)` — returns 4 page-specific suggestions for 11 director routes with exact/prefix/parameterized matching. `getDefaultDonnaPromptSuggestions()` — safe static fallback. `getPromptCategoryLabel(pathname)` — dynamic chip section header (e.g. "Player Directory actions"). Falls back to `donnaPageContextEngine` `suggestedPrompts` for unregistered routes. Routes covered: `/director`, `/director/donna`, `/director/players`, `/director/players/[playerId]`, `/director/review`, `/director/kpi`, `/director/curriculum`, `/director/curriculum/builder`, `/director/signals`, `/director/placement`, `/director/level-up`, `/director/support-diagnostics`.
+
+**Files modified:**
+- `src/components/assistant/DonnaVoiceLayer.tsx` — added `promptSuggestions`, `promptCategoryLabel`, `pathname` props. Static `['What needs attention?', 'Review queue', 'Draft parent update', 'Create class template']` chips replaced with `chips.map(chip => ...)` using `chip.id` as key and `chip.prompt` as the submitted text. "Quick actions" hardcoded label replaced with `categoryLabel` from `getPromptCategoryLabel`. Falls back to default chips when props not provided.
+- `src/components/assistant/DonnaAssistantButton.tsx` — imports `getDonnaPromptSuggestions` and `getPromptCategoryLabel`; passes computed suggestions, category label, and `pathname` to `DonnaVoiceLayer`.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 694 — DONNA Current Question Transcript COO Polish V1
 
 **Scope:** UI/UX polish for DONNA's voice interaction layer — conversation context visibility, thinking state feedback, transcript copy clarity. No logic changes, no safety changes, no schema changes.

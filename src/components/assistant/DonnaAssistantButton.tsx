@@ -215,6 +215,7 @@ import {
 } from '@/lib/donna/donnaRoleBoundaries'
 // Sprint 686 — Session context: panelOpen + updatePrompt lifted to provider
 import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
+import { getDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/donnaDirectorPromptPalette'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -3090,6 +3091,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             templateDraft={templateDraft}
             isThinking={isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading}
             donnaLastResponse={commandResponse?.message ?? null}
+            promptSuggestions={getDonnaPromptSuggestions(pathname)}
+            promptCategoryLabel={getPromptCategoryLabel(pathname)}
+            pathname={pathname}
           />
 
           {/* ── Sprint 384: Workflow output cards — extracted to DonnaWorkflowCards ── */}
