@@ -176,11 +176,18 @@ function isPageQuestion(text: string): boolean {
     lower.includes('what page') ||
     lower.includes('what can you help') ||
     lower.includes('what should i inspect') ||
-    lower.includes('what actions') && lower.includes('require') ||
+    (lower.includes('what actions') && lower.includes('require')) ||
     lower.includes("what should i not do") ||
     lower.includes('what can i do here') ||
     lower.includes('help me here') ||
-    lower.includes('help on this page')
+    lower.includes('help on this page') ||
+    // Sprint 700 — P1 fix: curriculum gap questions
+    lower.includes('curriculum gap') ||
+    lower.includes('curriculum missing') ||
+    lower.includes('missing from the curriculum') ||
+    lower.includes('what should i review in the curriculum') ||
+    lower.includes('find curriculum gap') ||
+    lower.includes('where is the curriculum')
   )
 }
 

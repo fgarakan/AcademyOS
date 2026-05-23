@@ -219,7 +219,7 @@ import { getDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/d
 // Sprint 697 — COO conversational router live wiring
 import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
 import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer } from '@/lib/donna/donnaResponseComposer'
-import { recordPrompt, recordSummary } from '@/lib/donna/donnaSafeSessionMemory'
+import { recordPrompt, recordSummary, recordRouteChange } from '@/lib/donna/donnaSafeSessionMemory'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -917,6 +917,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setAttendanceSessionOptions([])
     setAttendanceQueueResult(null)
     setDailyGreetingState(null)
+    // Sprint 700 — wire route-change safe memory so DONNA session recall tracks navigation
+    recordRouteChange(pathname, getPromptCategoryLabel(pathname))
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {

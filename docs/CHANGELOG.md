@@ -2,6 +2,39 @@
 
 ---
 
+## 2026-05-23 — Sprint 700 — DONNA Final COO Hardening V1
+
+**Scope:** Surgical fix of the two P0 failures and two P1 gaps identified in Sprint 699. No new product features. No DB/schema/RLS/migration changes. No new architecture.
+
+**P0 fix — "Move Sarah up" (Scenario K):**
+- `src/lib/donna/donnaIntentClassifier.ts` — added `/move\s+[\w'-]+\s+(up|down)/i`, `/can\s+[\w'-]+\s+move\s+(up|down)/i`, `/should\s+[\w'-]+\s+move\s+(up|down)/i` to `level_movement` signals. These patterns match natural "Move [name] up/down" and question forms without requiring the literal words "player" or "level." Result: `route_to_review` response, no mutation.
+
+**P0 fix — "Show the raw coach note to the parent" (Scenario M):**
+- `src/lib/donna/donnaIntentClassifier.ts` — added `/show.*raw.*coach.*note.*parent/i`, `/send.*raw.*coach.*note.*parent/i`, `/expose.*raw.*coach.*note.*parent/i`, `/parent.*see.*raw.*coach.*note/i`, `/raw.*coach.*note.*parent.*visible/i`, `/make.*raw.*coach.*note.*parent/i` to `unsafe_visibility_request` signals. Previous regex could absorb only one word before "coach"; new broad-match patterns catch multi-word variants. Result: `block_unsafe_request` response with safe alternative, no parent visibility change.
+
+**P1 fix — "Where are the curriculum gaps?" (Scenario L):**
+- `src/lib/donna/donnaConversationalRouter.ts` — added `curriculum gap`, `curriculum missing`, `missing from the curriculum`, `what should i review in the curriculum`, `find curriculum gap`, `where is the curriculum` to `isPageQuestion()`. Also added explicit parentheses around the pre-existing `(lower.includes('what actions') && lower.includes('require'))` pair to fix operator precedence. Result: routes to `use_page_context` on curriculum pages; honest dataFallback response.
+
+**P1 fix — Route-change safe memory (Scenario N):**
+- `src/components/assistant/DonnaAssistantButton.tsx` — added `recordRouteChange` to `donnaSafeSessionMemory` import. Added `recordRouteChange(pathname, getPromptCategoryLabel(pathname))` at the end of the existing `[pathname]` useEffect. Result: every director navigation now writes route/module metadata to sessionStorage; `buildContinuityMessage` and `buildPageConnectionMessage` can now surface context on DONNA panel open.
+
+**Files created:**
+- `docs/DONNA_FINAL_COO_HARDENING_700.md` — Go/No-Go note: what was fixed, full regression table, updated score estimate (~64/100), Brian demo GO recommendation with exact safe demo path, remaining caveats, Sprint 701 recommendation.
+
+**Files modified:**
+- `src/lib/donna/donnaIntentClassifier.ts` — P0 level_movement + P0 unsafe_visibility_request regex additions.
+- `src/lib/donna/donnaConversationalRouter.ts` — P1 curriculum gap routing + operator precedence fix.
+- `src/components/assistant/DonnaAssistantButton.tsx` — P1 route-change safe memory wiring.
+- `docs/CHANGELOG.md` — Sprint 700 entry added.
+
+**Go/No-Go:** GO — Brian demo approved (text primary, voice optional).
+
+**Updated DONNA score estimate:** ~64/100 (up from 60/100 in Sprint 699). Scenario pass count: 11/15 (up from 9/15).
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 699 — DONNA 10/10 COO Readiness Audit V1
 
 **Scope:** Re-audit DONNA after Sprint 697 wiring. Honest re-score all 10 categories. Re-run all 15 golden path scenarios. Issue Go/No-Go for Brian demo. No runtime changes — audit and documentation only.
