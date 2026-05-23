@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-23 — Sprint 701 — DONNA Post-700 Reaudit and 10/10 Gap Map
+
+**Scope:** Full 17-category post-700 reaudit based on complete code inspection. No runtime changes. Audit and documentation only.
+
+**Files created:**
+- `docs/DONNA_701_POST_700_REAUDIT_GAP_MAP.md` — Full 17-category re-score (98/170, 58%), category-by-category evidence with source file references, P0/P1/P2/P3 gap registry, and exact sprint plan for Sprints 702–709.
+
+**Key findings:**
+- Parent-safe communication: 9/10 (only category passing)
+- 8 categories below 5/10 — certification requires 7 more sprints (702–709)
+- 4 P0 blockers: chat session memory not wired (702), action preview cards not rendered (704), kpiExplainer not wired (705), mobile 90vw drawer (707)
+- 4 P1 gaps: COO router ignores role (703), review queue response static (706), roster intel not wired (706), continuity message not wired (702)
+
+**Certification verdict:** NOT CERTIFIED — exact blockers documented in gap map.
+
+**Files modified:**
+- `docs/CHANGELOG.md` — Sprint 701 entry added.
+
+**TypeScript:** N/A (documentation sprint)
+
+---
+
 ## 2026-05-23 — Sprint 700 — DONNA Final COO Hardening V1
 
 **Scope:** Surgical fix of the two P0 failures and two P1 gaps identified in Sprint 699. No new product features. No DB/schema/RLS/migration changes. No new architecture.
