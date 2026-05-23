@@ -153,8 +153,17 @@ function recommendedNextStep(
 
 // ── System-level question detection ──────────────────────────────────────────
 
+// Sprint 710 — module name list for module-specific question detection
+const SYSTEM_MODULE_TERMS = [
+  'review center', 'review queue', 'kpi', 'dashboard', 'curriculum', 'player profile',
+  'placement', 'assessment', 'coach recap', 'parent summary', 'parent portal',
+  'player portal', 'mission', 'badge', 'session', 'signal', 'attendance', 'level up', 'voice assistant',
+]
+
 function isSystemQuestion(text: string): boolean {
   const lower = text.toLowerCase()
+  // Sprint 710 — module-specific question detection
+  const mentionsModule = SYSTEM_MODULE_TERMS.some(term => lower.includes(term))
   return (
     lower.includes('how does') ||
     lower.includes('how do') ||
@@ -165,7 +174,11 @@ function isSystemQuestion(text: string): boolean {
     lower.includes('how does this system') ||
     lower.includes('what should i test') ||
     lower.includes('explain the system') ||
-    lower.includes('how does academy')
+    lower.includes('how does academy') ||
+    // Sprint 710 — "What does X do?", "Tell me about X", "Explain X" for known modules
+    (lower.includes('what does') && mentionsModule) ||
+    (lower.includes('tell me about') && mentionsModule) ||
+    (lower.includes('explain') && mentionsModule && !lower.includes('explain the system'))
   )
 }
 

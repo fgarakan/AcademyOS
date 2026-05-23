@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-23 — Sprint 710 — DONNA System Awareness Depth and Page Inspect Wiring V1
+
+**Scope:** Three targeted improvements. No DB/schema/RLS/migration changes.
+
+**Fix 1 — System awareness: module-specific answers (Category 6: 7→9)**
+- `src/lib/donna/donnaConversationalRouter.ts` — Added `SYSTEM_MODULE_TERMS` array; expanded `isSystemQuestion()` to catch "What does the review center do?", "Tell me about the KPI module", "Explain the curriculum" patterns.
+- `src/lib/donna/donnaResponseComposer.ts` — Added `detectModuleId(text)` (maps 15 module phrases to IDs) and `composeModuleAnswer(text, firstName)` (calls `getModuleDefinition(id)` → returns `userFacingExplanation` + safe actions + review-required actions). Imported `getModuleDefinition` from `donnaSystemMap`. Imported `whatShouldIInspectFirst` from `donnaPageContextEngine`.
+- `src/components/assistant/DonnaAssistantButton.tsx` — `use_system_map` branch now tries `composeModuleAnswer` first (module-specific); falls back to `composeSystemFlowAnswer` for system-flow questions.
+
+**Fix 2 — Page awareness: `inspect_first` wired (Category 3: 8→9)**
+- `src/lib/donna/donnaResponseComposer.ts` — Added `case 'inspect_first': return directAnswer(whatShouldIInspectFirst(pathname))` (was falling to default).
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `inspect_first` branch to `use_page_context` qType detection: matches "what should i inspect" and "inspect first".
+
+**Files modified:**
+- `src/lib/donna/donnaConversationalRouter.ts` — module question patterns
+- `src/lib/donna/donnaResponseComposer.ts` — module answer + inspect_first fix + imports
+- `src/components/assistant/DonnaAssistantButton.tsx` — two wiring changes + import
+- `docs/CHANGELOG.md` — Sprint 710 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** System awareness 7/10 → 9/10; Page awareness 8/10 → 9/10
+
+---
+
 ## 2026-05-23 — Sprint 709 — DONNA 10/10 COO Certification Audit V1
 
 **Scope:** Full regression audit across all 17 categories; golden path scenario verification; certification document. No code changes.

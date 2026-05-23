@@ -220,7 +220,7 @@ import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import { getDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/donnaDirectorPromptPalette'
 // Sprint 697 — COO conversational router live wiring
 import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
-import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer, composeReviewQueueAnswer, composeRosterIntelAnswer } from '@/lib/donna/donnaResponseComposer'
+import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer, composeReviewQueueAnswer, composeRosterIntelAnswer, composeModuleAnswer } from '@/lib/donna/donnaResponseComposer'
 import { recordPrompt, recordSummary, recordRouteChange, getSessionMemory, buildContinuityMessage } from '@/lib/donna/donnaSafeSessionMemory'
 // Sprint 702 — Chat session memory + continuity wiring
 import { ensureChatSession, recordTurn, getRecentTurns, getContextualPrefix } from '@/lib/donna/donnaChatSessionMemory'
@@ -2350,24 +2350,32 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     let composed
 
     if (routing.responseMode === 'use_page_context') {
+      // Sprint 710 — wire inspect_first sub-type
       const qType =
         lower.includes('where am i') ? 'where_am_i' as const
         : (lower.includes('what actions') && lower.includes('require')) ? 'approval_actions' as const
         : lower.includes('what should i not do') ? 'not_do' as const
+        : (lower.includes('what should i inspect') || lower.includes('inspect first')) ? 'inspect_first' as const
         : 'help_here' as const
       composed = composePageContextAnswer(qType, pathname, firstName)
     } else if (routing.responseMode === 'use_kpi_answer') {
       // Sprint 705 — use kpiExplainer to produce per-KPI answer from text
       composed = composeKpiAnswer(text, firstName)
     } else if (routing.responseMode === 'use_system_map') {
-      const qType =
-        (lower.includes('coach recap') || lower.includes('after a recap') || lower.includes('after the recap')) ? 'coach_recap' as const
-        : (lower.includes('parent update') && (lower.includes('how') || lower.includes('approved'))) ? 'parent_update' as const
-        : (lower.includes('mission') || lower.includes('badge')) ? 'missions_badges' as const
-        : (lower.includes('test first') || lower.includes('what should i test')) ? 'test_first' as const
-        : (lower.includes('player progress') || lower.includes('connected to')) ? 'player_progress' as const
-        : 'system_overview' as const
-      composed = composeSystemFlowAnswer(qType)
+      // Sprint 710 — try module-specific answer first; fall back to flow answers
+      const moduleAnswer = composeModuleAnswer(text, firstName)
+      if (moduleAnswer) {
+        composed = moduleAnswer
+      } else {
+        const qType =
+          (lower.includes('coach recap') || lower.includes('after a recap') || lower.includes('after the recap')) ? 'coach_recap' as const
+          : (lower.includes('parent update') && (lower.includes('how') || lower.includes('approved'))) ? 'parent_update' as const
+          : (lower.includes('mission') || lower.includes('badge')) ? 'missions_badges' as const
+          : (lower.includes('test first') || lower.includes('what should i test')) ? 'test_first' as const
+          : (lower.includes('player progress') || lower.includes('connected to')) ? 'player_progress' as const
+          : 'system_overview' as const
+        composed = composeSystemFlowAnswer(qType)
+      }
     } else if (routing.responseMode === 'use_review_context') {
       // Sprint 706 — inject live review queue count into response
       composed = composeReviewQueueAnswer(reviewQueuePendingCount, reviewQueueData, firstName)

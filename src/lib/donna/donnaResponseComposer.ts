@@ -4,8 +4,8 @@
 
 import type { DonnaRoutingResult } from './donnaConversationalRouter'
 import type { DonnaDirectorIntent } from './donnaIntentClassifier'
-import { getPageCapabilityMap, whatCanYouHelpWith, whatActionsRequireApproval, whatShouldINotDo, whereAmI } from './donnaPageContextEngine'
-import { howDoesThisSystemWork, whatHappensAfterCoachRecap, howDoesParentUpdateGetApproved, howDoMissionsAndBadgesConnectToCurriculum, whatShouldITestFirst, whatIsConnectedToPlayerProgress } from './donnaSystemMap'
+import { getPageCapabilityMap, whatCanYouHelpWith, whatActionsRequireApproval, whatShouldINotDo, whereAmI, whatShouldIInspectFirst } from './donnaPageContextEngine'
+import { howDoesThisSystemWork, whatHappensAfterCoachRecap, howDoesParentUpdateGetApproved, howDoMissionsAndBadgesConnectToCurriculum, whatShouldITestFirst, whatIsConnectedToPlayerProgress, getModuleDefinition } from './donnaSystemMap'
 // Sprint 705 — KPI explainer wiring
 import { explainKpiByStatus } from './kpiExplanations/kpiExplainer'
 import type { AcademyKpiId } from '@/lib/kpis/academyKpiModel'
@@ -254,6 +254,9 @@ export function composePageContextAnswer(questionType: 'where_am_i' | 'help_here
       return directAnswer(whereAmI(pathname, firstName))
     case 'help_here':
       return directAnswer(whatCanYouHelpWith(pathname, firstName))
+    case 'inspect_first':
+      // Sprint 710 — wired: was falling through to default
+      return directAnswer(whatShouldIInspectFirst(pathname))
     case 'approval_actions':
       return directAnswer(whatActionsRequireApproval(pathname))
     case 'not_do':
@@ -261,6 +264,43 @@ export function composePageContextAnswer(questionType: 'where_am_i' | 'help_here
     default:
       return directAnswer(whatCanYouHelpWith(pathname, firstName))
   }
+}
+
+// ── Sprint 710 — module-specific system answer ────────────────────────────────
+
+function detectModuleId(text: string): string | null {
+  const t = text.toLowerCase()
+  if (t.includes('review center') || t.includes('review queue')) return 'review_center'
+  if (t.includes('kpi') || t.includes('metric')) return 'kpi'
+  if (t.includes('curriculum')) return 'curriculum'
+  if (t.includes('placement')) return 'placement'
+  if (t.includes('assessment')) return 'assessments'
+  if (t.includes('coach recap') || t.includes('session recap')) return 'coach_recaps'
+  if (t.includes('parent summary') || t.includes('parent update')) return 'parent_summaries'
+  if (t.includes('parent portal')) return 'parent_portal'
+  if (t.includes('player portal')) return 'player_portal'
+  if (t.includes('player profile') || t.includes('player record')) return 'player_profiles'
+  if (t.includes('mission')) return 'missions'
+  if (t.includes('badge')) return 'badges'
+  if (t.includes('level up') || t.includes('level movement')) return 'level_up'
+  if (t.includes('voice assistant') || t.includes('voice command')) return 'voice_assistant'
+  if (t.includes('signal') || t.includes('attention queue')) return 'attention_queue'
+  if (t.includes('dashboard')) return 'director_dashboard'
+  return null
+}
+
+export function composeModuleAnswer(text: string, firstName: string | null = null): ComposedDonnaResponse | null {
+  const moduleId = detectModuleId(text)
+  if (!moduleId) return null
+  const mod = getModuleDefinition(moduleId)
+  if (!mod) return null
+  const name = firstName ? `${firstName}, ` : ''
+  const safeList = mod.safeReadActions.slice(0, 3).map(a => `• ${a}`).join('\n')
+  const reviewList = mod.reviewRequiredActions.slice(0, 2).map(a => `• ${a}`).join('\n')
+  return directAnswer(
+    `${name}**${mod.label}**: ${mod.userFacingExplanation}\n\nWhat I can read here:\n${safeList}\n\nWhat requires your approval:\n${reviewList}`,
+    `View ${mod.label}`,
+  )
 }
 
 // ── Sprint 706 — Review queue live count composer ──────────────────────────────
