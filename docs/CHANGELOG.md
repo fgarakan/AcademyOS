@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 672 — Tenant Isolation QA V1
+
+**Scope:** Static audit of cross-academy data isolation. Verified Academy A cannot access Academy B data across all query paths, API routes, DONNA context builders, and parent/child scoping.
+
+**What changed:**
+- `docs/TENANT_ISOLATION_QA_672.md` (new) — Full tenant isolation audit. Covers: academy_id derivation pattern (always server-side, never client-supplied); backend library query audit across players.ts, sessions.ts, director.ts, coachWorkspace.ts, directorDonnaContext.ts, parentPortalQueries.ts; all 6 API routes; parent/child isolation; platform owner isolation; 6 cross-academy attack scenarios tested statically. Gap 1 (P2): player/session ID functions rely on RLS alone — no application-level academy_id guard; safe via RLS backstop. Gap 2 (P3): coach workspace player name lookup — indirect scoping, safe by construction. Gap 3 (P2): getPlayerProfileData players query has no academy_id application filter. No P0/P1 cross-tenant leakage found.
+
+**TypeScript:** Clean (no code changed)
+
+---
+
 ## 2026-05-23 — Sprint 671 — Role Permission QA Matrix V1
 
 **Scope:** Static audit of all role/permission boundaries across middleware, DONNA commands, voice intents, review queue, and data access. No code changes — audit document only.
