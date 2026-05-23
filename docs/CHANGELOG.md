@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-23 — Sprint 681 — Brian Dabul Demo Seed Execution Packet V1
+
+**Scope:** Safe demo seed execution packet for Monteiro Tennis Academy. Documentation + SQL only — no SQL was executed.
+
+**What changed:**
+- `docs/BRIAN_DABUL_DEMO_SEED_EXECUTION_PACKET.md` (new) — Full execution packet following Sprint 398 manual SQL pattern. Answers 8 preliminary audit questions. 9 SQL sections (Section 0 pre-flight, Sections 1–8 data). UUID substitution checklist for 6 auth users. Verification queries per section. Rollback SQL in FK-safe reverse order. Explicit stop gate confirming SQL was not executed.
+- `supabase/seeds/brian_dabul_demo_seed.sql` (new) — Companion standalone SQL file. Same data as the packet, structured for `sed` UUID substitution before running. Rollback SQL commented at the bottom.
+
+**Key findings documented:**
+- Critical FK: `proposed_actions.voice_command_id NOT NULL` — `voice_commands` must be seeded before review queue items (not listed in Sprint 676 spec — corrected in this packet).
+- `profiles.id` must be a real `auth.users` UUID — 6 auth accounts must be created in Supabase dashboard before running Sections 3–9.
+- `sessions.coach_id NOT NULL` — same dependency.
+- `player_curriculum_states` references global `curriculum_levels` (not per-academy `academy_levels`) — seeded via stage+level_number subqueries (requires migration 053).
+- Migration baseline: 068 (Sprint 676 referenced 038 — updated).
+- UUID namespace: Monteiro uses position-4 `0001`; Angles uses `0000` — no collision.
+
+**Execution status:** NOT EXECUTED. Awaiting explicit instruction: "run the demo seed locally" or "apply the demo seed to [environment]".
+
+**TypeScript:** Clean (no TypeScript files changed)
+
+---
+
 ## 2026-05-23 — Sprint 680 — Premium V1 Readiness Certification V1
 
 **Scope:** Final readiness certification across 14 dimensions. Synthesizes all Sprint 669–679 findings.
