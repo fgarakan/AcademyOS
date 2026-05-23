@@ -2350,6 +2350,28 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       return true
     }
 
+    // Sprint 712 — coach-contextual responses for shared intents (KPI, roster)
+    if (role === 'coach') {
+      if (routing.intent === 'kpi_explanation' || routing.intent === 'kpi_priority') {
+        const coachKpiMsg = `As a coach, your focus is on individual player attendance and session quality within your groups. Academy-wide KPIs are reviewed by your director.\n\nI can help you capture session notes, flag a player for attention, or summarize your recent sessions. What do you need?`
+        setCommandResponse({ message: coachKpiMsg, type: 'info', label: 'Coach context' })
+        recordPrompt(text)
+        recordSummary(coachKpiMsg)
+        recordTurn(text, coachKpiMsg, { domain: 'academy_health' })
+        speakDonna(coachKpiMsg)
+        return true
+      }
+      if (routing.intent === 'roster_attention') {
+        const coachRosterMsg = `I can help you focus on the players in your sessions. For academy-wide flags and risk levels, your director has that view.\n\nTell me which player you're thinking about — I can help you draft an observation or session note.`
+        setCommandResponse({ message: coachRosterMsg, type: 'info', label: 'Coach context' })
+        recordPrompt(text)
+        recordSummary(coachRosterMsg)
+        recordTurn(text, coachRosterMsg, { domain: 'players' })
+        speakDonna(coachRosterMsg)
+        return true
+      }
+    }
+
     const lower = text.toLowerCase()
     let composed
 

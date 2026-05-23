@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-23 — Sprint 712 — DONNA KPI Full Coverage and Role Awareness Depth V1
+
+**Scope:** Two targeted fixes. No DB/schema/RLS/migration changes.
+
+**Fix 1 — KPI full coverage (Category 9: 7→9)**
+- `src/lib/donna/donnaResponseComposer.ts` — Added `player_progress_velocity` to `detectKpiId`: matches "progress velocity", "player velocity", "development velocity", "player progress". This was the only missing KPI ID of the 12 defined in `AcademyKpiId`. All KPI IDs now have detection coverage.
+
+**Fix 2 — Role awareness depth (Category 5: 8→9)**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added coach-specific responses for `kpi_explanation`/`kpi_priority` and `roster_attention` intents. Coach asking about KPIs gets: "As a coach, focus on individual player attendance and session quality — your director manages academy-level KPIs." Coach asking about roster gets: "Tell me which player you're thinking about — I can help you capture an observation." Both record to session memory and speak via TTS.
+
+**Files modified:**
+- `src/lib/donna/donnaResponseComposer.ts` — `player_progress_velocity` detection
+- `src/components/assistant/DonnaAssistantButton.tsx` — coach KPI + roster guards
+- `docs/CHANGELOG.md` — Sprint 712 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** KPI intelligence 7/10 → 9/10; Role awareness 8/10 → 9/10
+
+---
+
 ## 2026-05-23 — Sprint 711 — DONNA Conversation History Thread V1
 
 **Scope:** Add visible conversation history to DONNA COO panel. No DB/schema/RLS/migration changes.

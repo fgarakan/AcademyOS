@@ -204,6 +204,8 @@ function detectKpiId(text: string): AcademyKpiId | null {
   if (t.includes('badge')) return 'badge_progress_rate'
   if (t.includes('mental')) return 'mental_performance_coverage'
   if (t.includes('priority') || t.includes('priorities')) return 'player_priority_coverage'
+  // Sprint 712 — add missing KPI ID
+  if (t.includes('progress velocity') || t.includes('player velocity') || t.includes('development velocity') || t.includes('player progress')) return 'player_progress_velocity'
   return null
 }
 
