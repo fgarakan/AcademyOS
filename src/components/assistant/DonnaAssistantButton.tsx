@@ -191,6 +191,8 @@ import { fetchRecentSessionsAction } from '@/app/director/_actions/donnaAttendan
 import { DonnaDeveloperTools } from '@/components/assistant/DonnaDeveloperTools'
 import { DonnaVoiceLayer } from '@/components/assistant/DonnaVoiceLayer'
 import { DonnaWorkflowCards } from '@/components/assistant/DonnaWorkflowCards'
+// Sprint 707 — Mobile command bar
+import { DONNADirectorMobileCommandBar } from '@/components/donna/DONNADirectorMobileCommandBar'
 // Sprint 647 — First Daily Welcome
 import {
   getDailyGreetingState,
@@ -582,7 +584,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Use ONLY for: onboarding questions, next missing-field questions, protected_action_blocked.
   // Do NOT call globally — speakAssistantText remains for voice greeter, test paths, etc.
   function speakDonna(text: string) {
-    void speakWithServerTts(text, (status) => {
+    // Sprint 708 — truncate TTS to 150 chars to prevent browser TTS cut-off; full text shown in UI
+    const ttsText = text.length > 150 ? text.slice(0, 147) + '...' : text
+    void speakWithServerTts(ttsText, (status) => {
       if (status === 'speaking') setIsSpeaking(true)
       else if (status === 'done' || status === 'error') setIsSpeaking(false)
     }).then((result) => {
@@ -618,7 +622,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (typeof window === 'undefined') return
     const w = window as unknown as Record<string, unknown>
     const Ctor = (w['SpeechRecognition'] ?? w['webkitSpeechRecognition']) as (new () => WakeSpeechRecognition) | undefined
-    if (!Ctor) return
+    // Sprint 708 — Firefox does not support SpeechRecognition; surface a clear message instead of silent failure
+    if (!Ctor) {
+      setVoicePermissionError('Voice input is not supported in this browser. Use Chrome or Safari for voice.')
+      return
+    }
 
     const rec = new Ctor()
     rec.continuous = true
@@ -2726,7 +2734,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         title={`Ask ${DONNA_PUBLIC_NAME}`}
         className={cn(
           'fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full',
-          'flex items-center justify-center',
+          // Sprint 707 — hide floating button on mobile for directors; mobile bar replaces it
+          role === 'director' ? 'hidden sm:flex' : 'flex',
+          'items-center justify-center',
           'text-white',
           'shadow-[0_4px_16px_rgba(139,92,246,0.4)]',
           'hover:brightness-110 hover:-translate-y-0.5',
@@ -3898,6 +3908,19 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         onClose={() => setCaptureOpen(false)}
         academyId={academyId}
       />
+
+      {/* Sprint 707 — Mobile command bar: only for directors on small screens */}
+      {role === 'director' && (
+        <DONNADirectorMobileCommandBar
+          academyHealthScore={null}
+          pendingReviewCount={reviewQueuePendingCount}
+          urgentReviewCount={reviewQueueData?.items.filter(i => i.priority === 'high').length ?? 0}
+          onCommand={(text) => { openDonnaPanel(); handleCommandSubmit(text) }}
+          onOpenReviewQueue={() => { openDonnaPanel(); void handleOpenReviewQueue() }}
+          onOpenHealthDetail={openDonnaPanel}
+          className="fixed bottom-0 inset-x-0 z-50 sm:hidden"
+        />
+      )}
     </>
   )
 }

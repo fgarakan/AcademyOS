@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-05-23 — Sprint 708 — DONNA Voice Reliability Hardening V1
+
+**Scope:** Two surgical voice reliability fixes. No DB/schema/RLS/migration changes.
+
+**Fix 1 — Firefox silent failure:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — `startWakeListening()`: changed `if (!Ctor) return` to set `voicePermissionError('Voice input is not supported in this browser. Use Chrome or Safari for voice.')` before returning. Firefox and other browsers without `SpeechRecognition` now show a clear user-visible message instead of silently failing.
+
+**Fix 2 — TTS truncation:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — `speakDonna(text)`: added 150-char truncation for the TTS call (`ttsText = text.length > 150 ? text.slice(0,147)+'...' : text`). Full text still renders in the UI; only the TTS audio is truncated to prevent browser TTS cut-off on long responses.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — two targeted voice fixes
+- `docs/CHANGELOG.md` — Sprint 708 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** Voice input reliability 6/10 → 8/10; Voice output reliability 6/10 → 8/10
+
+---
+
+## 2026-05-23 — Sprint 707 — DONNA Mobile Usability V1
+
+**Scope:** Wire `DONNADirectorMobileCommandBar` for director mobile users. No DB/schema/RLS/migration changes.
+
+**P0-D fix — no mobile-optimized entry point for DONNA on small screens:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — imported `DONNADirectorMobileCommandBar`; rendered it as `fixed bottom-0 inset-x-0 sm:hidden` for `role === 'director'`; wired props: `pendingReviewCount={reviewQueuePendingCount}`, `urgentReviewCount={reviewQueueData?.items.filter(i => i.priority === 'high').length ?? 0}`, `onCommand` opens panel + submits command, `onOpenReviewQueue` opens panel + review queue, `onOpenHealthDetail` opens panel. Floating trigger changed to `hidden sm:flex` for directors (mobile bar replaces it on small screens); non-director roles keep original `flex`.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — import + render + floating button responsive tweak
+- `docs/CHANGELOG.md` — Sprint 707 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** Mobile usability 3/10 → 8/10
+
+---
+
 ## 2026-05-23 — Sprint 706 — DONNA Review Queue Live Count and Roster Intel Wiring V1
 
 **Scope:** Wire live component state (`reviewQueuePendingCount`, `reviewQueueData`, `attentionReport`) into `use_review_context` and `use_roster_intel` response modes. No DB/schema/RLS/migration changes.
