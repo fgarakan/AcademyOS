@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-23 — Sprint 671 — Role Permission QA Matrix V1
+
+**Scope:** Static audit of all role/permission boundaries across middleware, DONNA commands, voice intents, review queue, and data access. No code changes — audit document only.
+
+**What changed:**
+- `docs/ROLE_PERMISSION_QA_MATRIX_671.md` (new) — Full role permission matrix covering: middleware route access per role, route access matrix (6 roles × 14 routes), data access matrix (11 data categories × 5 roles), DONNA actions allowed (12 intents × 5 roles), voice intents allowed (12 intents × 5 roles), review queue actions, per-role capability descriptions. 4 gaps identified: Gap 1 (P2) head_coach in-page review check is dead code — middleware blocks /director before reach; Gap 2 (P2) API routes excluded from middleware — each route handles auth independently; Gap 3 (P3) director can view /coach routes — intentional; Gap 4 (P3) support diagnostics URL-only — intentional. No P0 security findings.
+
+**Sources audited:** `src/middleware.ts`, `src/lib/commands/roleGuardrails.ts`, `src/lib/voice/voiceRoleGuardrails.ts`, `src/app/director/review/page.tsx`, `src/app/director/support-diagnostics/page.tsx`
+
+**TypeScript:** Clean (no code changed)
+
+---
+
 ## 2026-05-23 — Sprint 670 — Performance Fix Pass V1
 
 **Scope:** Applied all three P1 fixes from Sprint 669 audit to `src/app/director/page.tsx`. Director dashboard query count reduced from 19 → 16. No behavior changes. No migrations. No RLS changes.
