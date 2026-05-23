@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 691 — DONNA Safe Memory Session Recall V1
+
+**Scope:** Create `donnaSafeSessionMemory.ts` — sessionStorage-backed safe memory for DONNA session continuity. No raw audio, no coach notes, no private data.
+
+**Files created:**
+- `src/lib/donna/donnaSafeSessionMemory.ts` — `DonnaSafeSessionMemory` type (currentRoute, previousRoute, module labels, last 5 prompts, last 5 summaries, last safe topic, last safe entity label, next step, active workflow). Read/write via `sessionStorage`. Exports: `getSessionMemory`, `recordRouteChange`, `recordPrompt`, `recordSummary`, `recordTopic`, `recordEntityLabel`, `recordNextStep`, `setActiveWorkflow`, `clearSessionMemory`. `buildContinuityMessage` — natural re-entry message using session context. `buildPageConnectionMessage` — connects prior question to current page.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 690 — DONNA Natural Response Composer V1
 
 **Scope:** Create `donnaResponseComposer.ts` — premium COO response templates mapping routing results to natural, warm, action-oriented text.
