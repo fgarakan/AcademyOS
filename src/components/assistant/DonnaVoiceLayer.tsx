@@ -73,6 +73,8 @@ interface Props {
   promptSuggestions?: DonnaPromptSuggestion[]
   promptCategoryLabel?: string
   pathname?: string
+  // Sprint 719 — TTS speaking state for hands-free voice loop pause/resume
+  isSpeaking?: boolean
 }
 
 export function DonnaVoiceLayer({
@@ -106,6 +108,7 @@ export function DonnaVoiceLayer({
   promptSuggestions,
   promptCategoryLabel,
   pathname = '',
+  isSpeaking = false,
 }: Props) {
   const chips = promptSuggestions ?? getDefaultDonnaPromptSuggestions()
   const categoryLabel = promptCategoryLabel ?? getPromptCategoryLabel(pathname)
@@ -175,6 +178,7 @@ export function DonnaVoiceLayer({
         {/* Sprint 684: persistent=true activates auto-restart on silence (built in Sprint 641). */}
         {/* maxRetries=5 allows up to 5 consecutive silence cycles before stopping gracefully. */}
         {/* Sprint 685: onVoiceStateChange exposes full VoiceState to the panel header indicator. */}
+        {/* Sprint 719: shouldPause pauses mic during TTS so DONNA doesn't hear herself. */}
         <VoiceInputButton
           onTranscript={onVoiceTranscriptRaw}
           label={`Ask ${DONNA_PUBLIC_NAME}`}
@@ -186,7 +190,15 @@ export function DonnaVoiceLayer({
           onVoiceStateChange={onVoiceStateChange}
           persistent={true}
           maxRetries={5}
+          shouldPause={isSpeaking}
         />
+        {/* Sprint 719 — hands-free loop status: shown while DONNA is speaking */}
+        {isSpeaking && (
+          <p className="mt-2 text-[10px] text-text-muted leading-snug flex items-center gap-1">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-lime animate-pulse" />
+            Session active — speak when DONNA finishes.
+          </p>
+        )}
 
         {/* Live interim transcript — shown while recognition is active */}
         {isVoiceListening && interimVoiceTranscript && (

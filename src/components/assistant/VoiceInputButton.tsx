@@ -88,6 +88,13 @@ interface VoiceInputButtonProps {
    * Default: 3
    */
   maxRetries?: number
+  /**
+   * Sprint 719 — Pause recognition while DONNA is speaking (TTS).
+   * When true: aborts active recognition but keeps session alive.
+   * When false: restarts recognition after 600ms so user can speak next turn.
+   * Only applies when persistent=true and a session is active.
+   */
+  shouldPause?: boolean
 }
 
 // Sprint 641: four states for persistent mode
@@ -106,6 +113,7 @@ export function VoiceInputButton({
   onVoiceStateChange,
   persistent = false,
   maxRetries = 3,
+  shouldPause = false,
 }: VoiceInputButtonProps) {
   const [voiceState, setVoiceState] = useState<VoiceState>('idle')
   const [supported, setSupported] = useState<boolean | null>(null)
@@ -213,6 +221,28 @@ export function VoiceInputButton({
     onVoiceStateChange?.('listening')
     onListeningChange?.(true)
   }, [persistent, maxRetries, onTranscript, onInterimTranscript, onError, onListeningChange, onVoiceStateChange])
+
+  // Sprint 719 — pause mic while DONNA speaks; resume after she finishes
+  useEffect(() => {
+    if (!persistent || !sessionActiveRef.current) return
+    if (shouldPause) {
+      // Abort active recognition; session remains alive for auto-resume
+      if (recognitionRef.current) {
+        recognitionRef.current.abort()
+        recognitionRef.current = null
+      }
+      setVoiceState('paused')
+      onVoiceStateChange?.('paused')
+    } else {
+      // DONNA finished speaking — restart after 600ms buffer
+      const tid = setTimeout(() => {
+        if (sessionActiveRef.current && !recognitionRef.current) {
+          startRecognition()
+        }
+      }, 600)
+      return () => clearTimeout(tid)
+    }
+  }, [shouldPause, persistent, startRecognition, onVoiceStateChange])
 
   function handleToggle() {
     if (voiceState === 'listening' || voiceState === 'paused') {

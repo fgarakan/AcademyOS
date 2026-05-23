@@ -20,6 +20,12 @@ export interface DonnaPromptSuggestion {
 // ── Per-route palette ─────────────────────────────────────────────────────────
 
 const PALETTE_BY_ROUTE: Record<string, DonnaPromptSuggestion[]> = {
+  '/director/onboarding': [
+    { id: 'ob_help', label: 'Can you help me with setup?', prompt: 'Can you help me with the onboarding process?', intentHint: 'explanation' },
+    { id: 'ob_modes', label: 'What are the setup modes?', prompt: 'What are the setup modes — Fast Start, Guided, Full?', intentHint: 'explanation' },
+    { id: 'ob_recommend', label: 'Which setup do you recommend?', prompt: 'Which setup mode do you recommend?', intentHint: 'explanation' },
+    { id: 'ob_next', label: 'What do I do next?', prompt: 'What should I do next in setup?', intentHint: 'attention' },
+  ],
   '/director': [
     { id: 'd_first', label: 'What should I do first today?', prompt: 'What should I do first today?', intentHint: 'attention' },
     { id: 'd_signal', label: 'Which signal needs attention?', prompt: 'Which academy signal needs attention?', intentHint: 'attention' },

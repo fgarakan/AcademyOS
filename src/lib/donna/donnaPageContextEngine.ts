@@ -20,6 +20,59 @@ export interface DonnaPageCapabilityMap {
 // ── Route capability registry ─────────────────────────────────────────────────
 
 const PAGE_CAPABILITY_MAP: DonnaPageCapabilityMap[] = [
+  // ── Onboarding ──────────────────────────────────────────────────────────────
+  {
+    route: '/director/onboarding',
+    pageLabel: 'Academy Setup',
+    directorIntent: 'Configure your academy before going live — choose a setup path, answer key questions, and activate the platform.',
+    safeContext: ['setup mode selection', 'onboarding progress', 'academy configuration options', 'setup step guidance'],
+    suggestedPrompts: [
+      'Which setup mode should I choose?',
+      'What is Guided Setup?',
+      'What is Fast Start?',
+      'Walk me through this step.',
+      'What should I do first?',
+    ],
+    allowedAnswerTypes: ['setup guidance', 'mode explanation', 'step-by-step walkthrough', 'onboarding navigation'],
+    reviewRequiredActions: ['confirming academy curriculum setup', 'activating player placements', 'publishing academy configuration'],
+    blocked: ['skip required setup steps', 'activate players before placement review', 'configure academy without director confirmation'],
+    dataFallback: 'You\'re in academy setup. I can explain each setup mode and help you choose. Three paths are available: Fast Start (quickest), Guided Setup (recommended), and Full Setup (most control).',
+  },
+  {
+    route: '/director/onboarding/interview',
+    pageLabel: 'Academy Interview',
+    directorIntent: 'Answer 7 questions about your academy philosophy, player focus, competition approach, and 90-day vision.',
+    safeContext: ['interview questions', 'academy philosophy', 'response guidance'],
+    suggestedPrompts: [
+      'What does this question mean?',
+      'Why is this question important?',
+      'Can I change my answers later?',
+      'Walk me through this interview.',
+      'What is this section about?',
+    ],
+    allowedAnswerTypes: ['question explanation', 'interview guidance', 'answer coaching'],
+    reviewRequiredActions: ['submitting interview answers'],
+    blocked: ['auto-fill interview answers', 'skip interview questions'],
+    dataFallback: 'You\'re in the academy interview. Answer each question about your philosophy, players, and goals. You can change answers before submitting.',
+  },
+  {
+    route: '/director/onboarding/curriculum',
+    pageLabel: 'Curriculum Setup',
+    directorIntent: 'Select your academy\'s curriculum structure and development levels before going live.',
+    safeContext: ['curriculum levels', 'development structure', 'starter curriculum options'],
+    suggestedPrompts: [
+      'What curriculum should I choose?',
+      'What are the ball colors for?',
+      'How many levels should I start with?',
+      'What is the recommended structure?',
+      'Can I change this later?',
+    ],
+    allowedAnswerTypes: ['curriculum guidance', 'level explanation', 'structure recommendation'],
+    reviewRequiredActions: ['confirming curriculum structure'],
+    blocked: ['auto-assign players to levels', 'publish curriculum without review'],
+    dataFallback: 'You\'re configuring curriculum structure. Choose the level progression that matches your academy\'s current players.',
+  },
+  // ── Director Dashboard ─────────────────────────────────────────────────────
   {
     route: '/director',
     pageLabel: 'Director Dashboard',
@@ -261,7 +314,8 @@ function name(firstName: string | null): string {
 
 export function whereAmI(pathname: string, firstName: string | null = null): string {
   const map = getPageCapabilityMap(pathname)
-  return `You're on the **${map.pageLabel}**. ${map.directorIntent}`
+  const greeting = firstName ? `Hi ${firstName}, you're` : `You're`
+  return `${greeting} on the **${map.pageLabel}**. ${map.directorIntent}`
 }
 
 export function whatCanYouHelpWith(pathname: string, firstName: string | null = null): string {

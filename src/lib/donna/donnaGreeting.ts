@@ -32,6 +32,10 @@ function greetingWord(): string {
 
 function pageReentryText(name: string | null, pathname: string): string {
   const n = name ? `Hi ${name}` : 'Hi there'
+  // Sprint 719 — onboarding-route must come before /director/placement to avoid prefix collision
+  if (pathname.startsWith('/director/onboarding')) {
+    return `${n}. I can walk you through academy setup — Fast Start, Guided Setup, or Full Setup. Ask me anything about the process.`
+  }
   if (pathname.startsWith('/director/players')) {
     return `${n}. I can help you find which players need review, track development progress, or prepare a parent update.`
   }

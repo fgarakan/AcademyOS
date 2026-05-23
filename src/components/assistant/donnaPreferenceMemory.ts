@@ -28,7 +28,7 @@ export interface DonnaPreferences {
 
 // ── Defaults ───────────────────────────────────────────────────────────────────
 
-function defaultPreferences(): DonnaPreferences {
+export function defaultPreferences(): DonnaPreferences {
   const now = new Date().toISOString()
   return {
     preferVoiceInput: false,

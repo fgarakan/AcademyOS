@@ -2,6 +2,42 @@
 
 ---
 
+## 2026-05-23 — Sprint 719 — DONNA Live Conversational Experience Fix V1
+
+**Scope:** Live browser UX fixes found after Sprint 718 code-inspection certification. No DB/schema/RLS/migration/env changes.
+
+**Fixes:**
+
+1. **Hydration mismatch** — `useState(() => loadPreferences())` read localStorage during client first render, mismatching server render. Fixed: initialize state with `defaultPreferences()` (exported from `donnaPreferenceMemory.ts`), load real value in `useEffect`. `DonnaDeveloperTools` storage-reading sections gated behind `preferencesMounted` prop.
+
+2. **Onboarding page awareness** — DONNA returned "I need more context" on `/director/onboarding`. Fixed: added three entries to `PAGE_CAPABILITY_MAP` in `donnaPageContextEngine.ts`; added onboarding-route intercept in `handleDonnaCooPrompt` that calls `composeOnboardingAnswer()` (new function in `donnaResponseComposer.ts`) giving Fast Start / Guided Setup / Full Setup breakdown; added suggestions to `donnaDirectorPromptPalette.ts`; added greeting case to `donnaGreeting.ts`.
+
+3. **Conversational phrases** — Natural phrases ("Can you help me?", "I'm confused", "What do I do?", "What next?") fell to generic fallback. Fixed: expanded `isPageQuestion()` in `donnaConversationalRouter.ts` with 10 new phrase patterns.
+
+4. **Hands-free voice loop** — After DONNA speaks (TTS), voice recognition did not auto-resume. Fixed: added `shouldPause?: boolean` prop to `VoiceInputButton` with useEffect that aborts recognition when DONNA is speaking and resumes after 600ms; wired through `DonnaVoiceLayer` via `isSpeaking` prop from `DonnaAssistantButton`; added "Session active — speak when DONNA finishes." status during TTS.
+
+5. **Voice naturalness** — TTS was robotic at rate 1.0, no voice selection. Fixed: rate 0.95, pitch 0.98, prefer Natural/Neural/Enhanced English voices in `speakAssistantText`.
+
+6. **Certification doc** — Updated `DONNA_10_OUT_OF_10_COO_CERTIFICATION.md` to document Sprint 718 as code-inspection, Sprint 719 as live-browser confirmation.
+
+**Files modified:**
+- `src/components/assistant/donnaPreferenceMemory.ts` — exported `defaultPreferences`
+- `src/components/assistant/DonnaAssistantButton.tsx` — hydration fix, voice naturalness, onboarding intercept, isSpeaking prop wiring
+- `src/components/assistant/DonnaDeveloperTools.tsx` — `preferencesMounted` prop + storage guards
+- `src/components/assistant/DonnaVoiceLayer.tsx` — `isSpeaking` prop + TTS status message
+- `src/components/assistant/VoiceInputButton.tsx` — `shouldPause` prop with pause/resume useEffect
+- `src/lib/donna/donnaConversationalRouter.ts` — expanded `isPageQuestion()` phrases
+- `src/lib/donna/donnaResponseComposer.ts` — `composeOnboardingAnswer()`
+- `src/lib/donna/donnaPageContextEngine.ts` — onboarding route entries + `whereAmI` firstName fix
+- `src/lib/donna/donnaDirectorPromptPalette.ts` — `/director/onboarding` suggestions
+- `src/lib/donna/donnaGreeting.ts` — onboarding page reentry greeting
+- `docs/DONNA_10_OUT_OF_10_COO_CERTIFICATION.md` — Sprint 718 vs 719 distinction + live-browser verdict
+- `docs/CHANGELOG.md` — Sprint 719 entry
+
+**TypeScript:** `npx tsc --noEmit` — CLEAN
+
+---
+
 ## 2026-05-23 — Sprint 718 — DONNA Final Certification V2 — CERTIFIED 10/10
 
 **Scope:** Final certification audit. No behavior changes. No DB/schema/RLS/migration changes.

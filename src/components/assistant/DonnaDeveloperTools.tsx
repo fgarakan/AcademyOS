@@ -25,6 +25,7 @@ interface Props {
   attendanceExceptionDraft: AttendanceExceptionDraft | null
   attendanceQueueResult: DonnaApprovalExecutionResult | null
   preferences: DonnaPreferences
+  preferencesMounted: boolean
   recommendationSet: DonnaRecommendationSet | null
   lastCardAction: LastCardActionRecord | null
   realtimeStatus: DonnaRealtimeStatus
@@ -54,6 +55,7 @@ export function DonnaDeveloperTools({
   attendanceExceptionDraft,
   attendanceQueueResult,
   preferences,
+  preferencesMounted,
   recommendationSet,
   lastCardAction,
   realtimeStatus,
@@ -176,15 +178,21 @@ export function DonnaDeveloperTools({
           )
         })()}
 
-        {/* Preference memory */}
+        {/* Preference memory — gated until after mount to avoid hydration mismatch */}
         <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
           <div className="text-text-muted uppercase tracking-widest">Preferences (localStorage)</div>
-          <div className="text-text-secondary">
-            Last workflow: <span className="text-lime">{preferences.lastUsedWorkflowId ?? 'none'}</span>
-          </div>
-          <div className="text-text-secondary">
-            Frequent categories: <span className="text-lime">{preferences.frequentCategories.join(', ') || 'none'}</span>
-          </div>
+          {preferencesMounted ? (
+            <>
+              <div className="text-text-secondary">
+                Last workflow: <span className="text-lime">{preferences.lastUsedWorkflowId ?? 'none'}</span>
+              </div>
+              <div className="text-text-secondary">
+                Frequent categories: <span className="text-lime">{preferences.frequentCategories.join(', ') || 'none'}</span>
+              </div>
+            </>
+          ) : (
+            <div className="text-text-muted">Loading…</div>
+          )}
         </div>
 
         {/* COO command routing state */}
@@ -279,14 +287,18 @@ export function DonnaDeveloperTools({
           )}
         </div>
 
-        {/* Draft session storage state */}
+        {/* Draft session storage state — gated until after mount to avoid hydration mismatch */}
         <div className="p-2 rounded text-[10px] font-mono space-y-0.5" style={{ background: 'var(--surface-raised)' }}>
           <div className="text-text-muted uppercase tracking-widest">Draft Session Storage</div>
           <div className="text-text-secondary">
             Key present:{' '}
-            <span className={hasDraftSession() ? 'text-lime' : 'text-text-muted'}>
-              {hasDraftSession() ? 'yes' : 'no'}
-            </span>
+            {preferencesMounted ? (
+              <span className={hasDraftSession() ? 'text-lime' : 'text-text-muted'}>
+                {hasDraftSession() ? 'yes' : 'no'}
+              </span>
+            ) : (
+              <span className="text-text-muted">—</span>
+            )}
           </div>
           {convState.activeDraft && (
             <div className="text-text-secondary">

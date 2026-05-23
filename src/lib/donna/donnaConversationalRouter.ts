@@ -200,7 +200,22 @@ function isPageQuestion(text: string): boolean {
     lower.includes('missing from the curriculum') ||
     lower.includes('what should i review in the curriculum') ||
     lower.includes('find curriculum gap') ||
-    lower.includes('where is the curriculum')
+    lower.includes('where is the curriculum') ||
+    // Sprint 719 — conversational help phrases
+    lower.includes('can you help me') ||
+    lower.includes('help me with') ||
+    lower.includes('walk me through') ||
+    lower.includes('what am i supposed to do') ||
+    lower.includes("i'm confused") ||
+    lower.includes('im confused') ||
+    lower.includes('what should i click') ||
+    lower.includes('help me finish') ||
+    lower.includes('what do i do') ||
+    (lower.includes('what next') && !lower.includes('what needs')) ||
+    (lower === 'help') ||
+    (lower === 'confused') ||
+    lower.includes('not sure what to do') ||
+    lower.includes('what should i do here')
   )
 }
 

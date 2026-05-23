@@ -151,6 +151,7 @@ import { recordSignal } from '@/components/assistant/donnaLearningSignals'
 // Sprint 377 — Preference memory (localStorage-backed)
 import {
   loadPreferences,
+  defaultPreferences,
   recordWorkflowUsed,
   recordCategoryUsed,
 } from '@/components/assistant/donnaPreferenceMemory'
@@ -220,7 +221,7 @@ import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import { getDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/donnaDirectorPromptPalette'
 // Sprint 697 — COO conversational router live wiring
 import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
-import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer, composeReviewQueueAnswer, composeRosterIntelAnswer, composeModuleAnswer, composeCurriculumAnswer, detectCurriculumQuestionType } from '@/lib/donna/donnaResponseComposer'
+import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer, composeReviewQueueAnswer, composeRosterIntelAnswer, composeModuleAnswer, composeCurriculumAnswer, detectCurriculumQuestionType, composeOnboardingAnswer } from '@/lib/donna/donnaResponseComposer'
 import { recordPrompt, recordSummary, recordRouteChange, getSessionMemory, buildContinuityMessage } from '@/lib/donna/donnaSafeSessionMemory'
 // Sprint 702 — Chat session memory + continuity wiring
 import { ensureChatSession, recordTurn, getRecentTurns, getContextualPrefix } from '@/lib/donna/donnaChatSessionMemory'
@@ -470,8 +471,18 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       window.speechSynthesis.cancel()
     }
     const utt = new SpeechSynthesisUtterance(text)
-    utt.rate = 1.0
-    utt.pitch = 1.0
+    utt.rate = 0.95
+    utt.pitch = 0.98
+    // Sprint 719 — prefer natural/neural English voices; avoid compact/robotic variants
+    const voices = window.speechSynthesis.getVoices()
+    const preferred = voices.find(v =>
+      v.lang.startsWith('en') && (
+        v.name.toLowerCase().includes('natural') ||
+        v.name.toLowerCase().includes('neural') ||
+        v.name.toLowerCase().includes('enhanced')
+      )
+    ) ?? voices.find(v => v.lang.startsWith('en') && v.localService) ?? voices.find(v => v.lang.startsWith('en')) ?? null
+    if (preferred) utt.voice = preferred
     utt.onstart = () => {
       setIsSpeaking(true)
       onStatus?.('speaking')
@@ -730,7 +741,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Sprint 375 — Rule-based recommendation set (computed from signals on panel open)
   const [recommendationSet, setRecommendationSet] = useState<DonnaRecommendationSet | null>(null)
   // Sprint 377 — Preference memory (loaded from localStorage on mount)
-  const [preferences, setPreferences] = useState<DonnaPreferences>(() => loadPreferences())
+  // Sprint 719 — initialize with static default to avoid SSR hydration mismatch; load real values in useEffect
+  const [preferences, setPreferences] = useState<DonnaPreferences>(defaultPreferences)
+  const [preferencesMounted, setPreferencesMounted] = useState(false)
   // Sprint 381 — Attendance exception draft (director-initiated)
   const [attendanceExceptionDraft, setAttendanceExceptionDraft] = useState<AttendanceExceptionDraft | null>(null)
   // Sprint 382 — Last workflow card action (Dev Tools tracking)
@@ -868,6 +881,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [panelOpen, closePanel])
+
+  // Sprint 719 — Load preferences from localStorage after mount (avoids SSR hydration mismatch)
+  useEffect(() => {
+    setPreferences(loadPreferences())
+    setPreferencesMounted(true)
+  }, [])
 
   // Sprint 702 — Initialize chat session memory on mount (or role change)
   useEffect(() => {
@@ -2349,6 +2368,23 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     const routing = routeDonnaPrompt(text, pathname)
     if (routing.responseMode === 'answer_directly') return false
 
+    // Sprint 719 — onboarding-route intercept: give setup-mode answer when on /director/onboarding
+    if (pathname.startsWith('/director/onboarding')) {
+      const lower = text.toLowerCase()
+      const isOnboardingQ = lower.includes('onboard') || lower.includes('setup') || lower.includes('set up') ||
+        lower.includes('help') || lower.includes('walk me') || lower.includes('start') || lower.includes('begin') ||
+        lower.includes('what') || lower.includes('how') || lower.includes('confused') || lower.includes('next')
+      if (isOnboardingQ) {
+        const composed = composeOnboardingAnswer(firstName)
+        setCommandResponse({ message: composed.text, type: 'info', label: 'Academy Setup' })
+        recordPrompt(text)
+        recordSummary(composed.text)
+        recordTurn(text, composed.text, { domain: 'general' })
+        speakDonna(composed.text)
+        return true
+      }
+    }
+
     // Sprint 703 — coach role guard: redirect director-only intents to director-referral copy
     const DIRECTOR_ONLY_INTENTS = new Set(['level_movement', 'assessment_or_placement', 'parent_summary', 'curriculum_builder'])
     if (role === 'coach' && DIRECTOR_ONLY_INTENTS.has(routing.intent)) {
@@ -3305,6 +3341,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             promptSuggestions={getDonnaPromptSuggestions(pathname)}
             promptCategoryLabel={getPromptCategoryLabel(pathname)}
             pathname={pathname}
+            isSpeaking={isSpeaking}
           />
 
           {/* ── Sprint 711 — COO conversation history thread ── */}
@@ -3955,6 +3992,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               attendanceExceptionDraft={attendanceExceptionDraft}
               attendanceQueueResult={attendanceQueueResult}
               preferences={preferences}
+              preferencesMounted={preferencesMounted}
               recommendationSet={recommendationSet}
               lastCardAction={lastCardAction}
               realtimeStatus={realtimeStatus}

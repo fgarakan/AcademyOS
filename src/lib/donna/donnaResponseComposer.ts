@@ -470,3 +470,14 @@ export function composeCurriculumAnswer(questionType: CurriculumQuestionType, fi
 export function composeCurriculumExplanationAnswer(firstName: string | null = null): ComposedDonnaResponse {
   return composeCurriculumAnswer('gap_explanation', firstName)
 }
+
+// ── Sprint 719 — Onboarding answer ────────────────────────────────────────────
+
+export function composeOnboardingAnswer(firstName: string | null = null): ComposedDonnaResponse {
+  const name = firstName ? `${firstName}, ` : ''
+  return directAnswer(
+    `${name}yes. You're in academy setup. I can walk you through it step by step.\n\nRight now you're choosing how much setup you want to do:\n\n• **Fast Start** — quickest path. Minimal configuration, get started immediately. Best if you want to explore the system before committing to a full build.\n• **Guided Setup** — recommended path. Covers academy basics, curriculum structure, class templates, player import, and coach invites. Structured without forcing a full buildout.\n• **Full Setup** — most control. Every configuration option before going live. Best for academies that want everything defined upfront.\n\nI recommend **Guided Setup** for most academies. Want me to explain what each step covers, or would you like to start?`,
+    'Continue Setup',
+    '/director/onboarding',
+  )
+}
