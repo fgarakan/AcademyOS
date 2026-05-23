@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 679 — Premium V1 Final Bug Bash V1
+
+**Scope:** Final P0/P1 bug scan across all prior sprint findings (669–678). No new bugs found. TypeScript clean.
+
+**What changed:**
+- `docs/PREMIUM_V1_FINAL_BUG_BASH_679.md` (new) — Systematic review of all prior findings. All Sprint 669 P1 fixes confirmed applied. All Sprint 671–674 gaps confirmed P2 or lower. Additional manual scans: session attendance sub-query (safe), parent childId validation (correct), DONNA hard-blocked intents (correct), review queue academy_id scoping (correct). No code changes required. 5 known P2 limitations documented with V1 impact assessment. V1 launch decision: all P0/P1 items resolved.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 678 — Premium V1 Product Walkthrough V1
 
 **Scope:** Non-technical product walkthrough covering all four portal experiences (director, coach, parent, player) and V1 feature inventory.
