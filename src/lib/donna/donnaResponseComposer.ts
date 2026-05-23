@@ -384,3 +384,14 @@ export function composeRosterIntelAnswer(
     '/director/players',
   )
 }
+
+// ── Sprint 714 — Curriculum structure explanation (honest ceiling: no live gap data) ──
+
+export function composeCurriculumExplanationAnswer(firstName: string | null = null): ComposedDonnaResponse {
+  const name = firstName ? `${firstName}, ` : ''
+  return directAnswer(
+    `${name}the academy curriculum is structured as: **Levels** (e.g. Orange 1–4) → **Template blocks** (grouped exercises per session type) → **Exercises** (skill-specific drills and activities).\n\nCurriculum gaps appear when players in a level haven't been coached through the required blocks — or when no class template covers a required topic.\n\n**What I can help with here:**\n• Explain how any curriculum level or block type works\n• Draft a curriculum improvement proposal for your review\n• Describe how curriculum connects to player advancement\n\n**What requires the Curriculum Builder:** Seeing which specific players have coverage gaps requires the live session and template data in the Curriculum Builder. Navigate there to see coverage by level.`,
+    'Open Curriculum Builder',
+    '/director/curriculum/builder',
+  )
+}

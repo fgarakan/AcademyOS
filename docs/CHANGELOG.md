@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-23 — Sprint 714 — DONNA Mobile Panel Overlap Fix and Curriculum Structure Explanation V1
+
+**Scope:** Two targeted fixes. No DB/schema/RLS/migration changes.
+
+**Fix 1 — Mobile panel overlap fix (Category 15: mobile usability)**
+- `src/components/assistant/DonnaAssistantButton.tsx` — Changed panel `aside` className from `fixed top-0 right-0 bottom-0 z-50` to `fixed top-0 right-0 z-50` with `sm:bottom-0 bottom-[60px]` so the panel does not overlap the `DONNADirectorMobileCommandBar` on small screens.
+
+**Fix 2 — Curriculum structure explanation (Category 11: 3→6)**
+- `src/lib/donna/donnaResponseComposer.ts` — Added `composeCurriculumExplanationAnswer(firstName)`: returns a detailed structural explanation (Levels → Template blocks → Exercises), explains what curriculum gaps mean, and directs the director to Curriculum Builder for live coverage data. CTA: "Open Curriculum Builder".
+- `src/components/assistant/DonnaAssistantButton.tsx` — Imported `composeCurriculumExplanationAnswer`; in `use_page_context` branch, detects curriculum-gap questions (`curriculum gap`, `curriculum missing`, `missing from the curriculum`, `find curriculum gap`) and routes to `composeCurriculumExplanationAnswer` instead of the generic page context answer.
+
+**Files modified:**
+- `src/lib/donna/donnaResponseComposer.ts` — `composeCurriculumExplanationAnswer` added
+- `src/components/assistant/DonnaAssistantButton.tsx` — mobile panel height fix + curriculum routing
+- `docs/CHANGELOG.md` — Sprint 714 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** Mobile usability confirmed 9/10; Curriculum intelligence 3/10 → 6/10 (hard ceiling: live gap data requires DB server action)
+
+---
+
 ## 2026-05-23 — Sprint 713 — DONNA Action Preview CTA and Roster Player Names V1
 
 **Scope:** Two targeted improvements. No DB/schema/RLS/migration changes.

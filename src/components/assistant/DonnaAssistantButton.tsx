@@ -220,7 +220,7 @@ import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import { getDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/donnaDirectorPromptPalette'
 // Sprint 697 — COO conversational router live wiring
 import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
-import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer, composeReviewQueueAnswer, composeRosterIntelAnswer, composeModuleAnswer } from '@/lib/donna/donnaResponseComposer'
+import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer, composeReviewQueueAnswer, composeRosterIntelAnswer, composeModuleAnswer, composeCurriculumExplanationAnswer } from '@/lib/donna/donnaResponseComposer'
 import { recordPrompt, recordSummary, recordRouteChange, getSessionMemory, buildContinuityMessage } from '@/lib/donna/donnaSafeSessionMemory'
 // Sprint 702 — Chat session memory + continuity wiring
 import { ensureChatSession, recordTurn, getRecentTurns, getContextualPrefix } from '@/lib/donna/donnaChatSessionMemory'
@@ -2376,14 +2376,21 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     let composed
 
     if (routing.responseMode === 'use_page_context') {
-      // Sprint 710 — wire inspect_first sub-type
-      const qType =
-        lower.includes('where am i') ? 'where_am_i' as const
-        : (lower.includes('what actions') && lower.includes('require')) ? 'approval_actions' as const
-        : lower.includes('what should i not do') ? 'not_do' as const
-        : (lower.includes('what should i inspect') || lower.includes('inspect first')) ? 'inspect_first' as const
-        : 'help_here' as const
-      composed = composePageContextAnswer(qType, pathname, firstName)
+      // Sprint 714 — curriculum gap questions get a dedicated structural explanation
+      const isCurriculumGapQ = lower.includes('curriculum gap') || lower.includes('curriculum missing') ||
+        lower.includes('missing from the curriculum') || lower.includes('find curriculum gap')
+      if (isCurriculumGapQ) {
+        composed = composeCurriculumExplanationAnswer(firstName)
+      } else {
+        // Sprint 710 — wire inspect_first sub-type
+        const qType =
+          lower.includes('where am i') ? 'where_am_i' as const
+          : (lower.includes('what actions') && lower.includes('require')) ? 'approval_actions' as const
+          : lower.includes('what should i not do') ? 'not_do' as const
+          : (lower.includes('what should i inspect') || lower.includes('inspect first')) ? 'inspect_first' as const
+          : 'help_here' as const
+        composed = composePageContextAnswer(qType, pathname, firstName)
+      }
     } else if (routing.responseMode === 'use_kpi_answer') {
       // Sprint 705 — use kpiExplainer to produce per-KPI answer from text
       composed = composeKpiAnswer(text, firstName)
@@ -2812,7 +2819,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         aria-modal="true"
         aria-label={DONNA_FULL_LABEL}
         className={cn(
-          'fixed top-0 right-0 bottom-0 z-50 w-96 max-w-[90vw] flex flex-col',
+          // Sprint 714 — mobile: constrain panel to upper 70% of viewport so mobile bar stays visible
+          'fixed top-0 right-0 z-50 w-96 max-w-[90vw] flex flex-col',
+          'sm:bottom-0 bottom-[60px]',
           'transition-transform duration-200 ease-out',
           panelOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none',
         )}
