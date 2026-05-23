@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-23 — Sprint 697 — DONNA Conversational Router Live Wiring V1
+
+**Scope:** Wire COO intelligence modules (Sprints 687–692) into the live DONNA command path so natural director prompts are answered by the page-aware, system-aware, safety-aware conversational router instead of falling through to "Not recognized." No DB/schema/RLS/migration changes. No mutations from chat.
+
+**Files modified:**
+- `src/components/assistant/DonnaAssistantButton.tsx` — (1) Added imports: `routeDonnaPrompt` from `donnaConversationalRouter`, `composeDonnaResponse`/`composeSystemFlowAnswer`/`composePageContextAnswer` from `donnaResponseComposer`, `recordPrompt`/`recordSummary` from `donnaSafeSessionMemory`. (2) Added `handleDonnaCooPrompt(text)` function inside the component: calls `routeDonnaPrompt(text, pathname)`, falls through for `answer_directly` mode (preserving all legacy routing), dispatches `use_page_context` to `composePageContextAnswer` with detected question type (where_am_i / help_here / approval_actions / not_do), dispatches `use_system_map` to `composeSystemFlowAnswer` with detected question type (system_overview / coach_recap / parent_update / missions_badges / test_first / player_progress), dispatches all other modes (block_unsafe_request, route_to_review, build_action_preview, ask_clarification, use_kpi_answer, use_roster_intel, use_review_context, explain_limitation) to `composeDonnaResponse`; sets `commandResponse`, calls `speakDonna`, records prompt/summary in `donnaSafeSessionMemory`, returns `true` if handled. (3) Wired `handleDonnaCooPrompt` into `handleCommandSubmit` before `detectAndHandleCommand` — COO router runs first; legacy routing only fires if COO returns false; "Not recognized" only shown if both return false. (4) Wired `handleDonnaCooPrompt` into `handleVoiceTranscript` before `detectAndHandleCommand` — same priority order as typed path.
+
+**Live prompts now answered (previously "Not recognized"):**
+- "Where am I?" → `whereAmI(pathname, firstName)` page context answer
+- "What can you help me with here?" → `whatCanYouHelpWith(pathname, firstName)` answer
+- "What actions require approval?" → `whatActionsRequireApproval(pathname)` answer
+- "What should I not do here?" → `whatShouldINotDo(pathname)` answer
+- "How does this system work?" → `howDoesThisSystemWork()` answer
+- "How does a parent update get approved?" → `howDoesParentUpdateGetApproved()` answer
+- "What should I test first?" → `whatShouldITestFirst()` answer
+- "Move Sarah up" → `route_to_review` → "Level changes always go through review first…"
+- "Show the raw coach note to the parent" → `block_unsafe_request` → explicit block + safe alternative
+- "Where are the curriculum gaps?" → page-context answer on curriculum route
+
+**Legacy routing preserved:** All existing routes (attention, review queue, daily brief, template creation, generic tasks, attendance exception, controller drafts, onboarding) run unchanged — COO router falls through for `answer_directly` mode only.
+
+**Session memory:** `recordPrompt` and `recordSummary` called on every COO-handled response — `donnaSafeSessionMemory` sessionStorage is now actively written for the first time.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 696 — DONNA Golden Path Conversation QA V1
 
 **Scope:** Rigorous QA document assessing the live DONNA experience after Sprints 682–695. No runtime changes — audit and documentation only.

@@ -216,6 +216,10 @@ import {
 // Sprint 686 — Session context: panelOpen + updatePrompt lifted to provider
 import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import { getDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/donnaDirectorPromptPalette'
+// Sprint 697 — COO conversational router live wiring
+import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
+import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer } from '@/lib/donna/donnaResponseComposer'
+import { recordPrompt, recordSummary } from '@/lib/donna/donnaSafeSessionMemory'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -1267,8 +1271,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       return
     }
 
-    // 8. Generic navigation and info commands
-    detectAndHandleCommand(text)
+    // 8. Sprint 697 — COO conversational router: runs before legacy detectAndHandleCommand
+    const cooHandled = handleDonnaCooPrompt(text)
+    if (!cooHandled) {
+      detectAndHandleCommand(text)
+    }
   }
 
   // Clicking a suggestion — same routing priority as voice/typed
@@ -2278,6 +2285,48 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     return false
   }
 
+  // Sprint 697 — COO conversational router: first-pass handler before legacy routing.
+  // Returns true if the router handled the prompt (commandResponse set, speakDonna called).
+  // Returns false to fall through to legacy detectAndHandleCommand.
+  // Falls through only for answer_directly (unknown intent) so all existing legacy routes are preserved.
+  function handleDonnaCooPrompt(text: string): boolean {
+    const routing = routeDonnaPrompt(text, pathname)
+    if (routing.responseMode === 'answer_directly') return false
+
+    const lower = text.toLowerCase()
+    let composed
+
+    if (routing.responseMode === 'use_page_context') {
+      const qType =
+        lower.includes('where am i') ? 'where_am_i' as const
+        : (lower.includes('what actions') && lower.includes('require')) ? 'approval_actions' as const
+        : lower.includes('what should i not do') ? 'not_do' as const
+        : 'help_here' as const
+      composed = composePageContextAnswer(qType, pathname, firstName)
+    } else if (routing.responseMode === 'use_system_map') {
+      const qType =
+        (lower.includes('coach recap') || lower.includes('after a recap') || lower.includes('after the recap')) ? 'coach_recap' as const
+        : (lower.includes('parent update') && (lower.includes('how') || lower.includes('approved'))) ? 'parent_update' as const
+        : (lower.includes('mission') || lower.includes('badge')) ? 'missions_badges' as const
+        : (lower.includes('test first') || lower.includes('what should i test')) ? 'test_first' as const
+        : (lower.includes('player progress') || lower.includes('connected to')) ? 'player_progress' as const
+        : 'system_overview' as const
+      composed = composeSystemFlowAnswer(qType)
+    } else {
+      composed = composeDonnaResponse(routing, pathname, firstName)
+    }
+
+    setCommandResponse({
+      message: composed.text,
+      type: composed.isBlocked ? 'honest' : 'info',
+      label: composed.isBlocked ? 'Not allowed' : (composed.nextStepLabel ?? 'DONNA'),
+    })
+    recordPrompt(text)
+    if (composed.text) recordSummary(composed.text)
+    speakDonna(composed.text)
+    return true
+  }
+
   function handleCommandSubmit(overrideText?: string) {
     const text = (overrideText ?? typedText).trim()
     if (!text) return
@@ -2455,15 +2504,21 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       return
     }
 
-    const handled = detectAndHandleCommand(text)
-    if (!handled) {
-      recordSignal('command_unrecognized')
-      const fallback = getFailureMode('intent_unknown')
-      setCommandResponse({
-        message: fallback.userMessage,
-        type: 'honest',
-        label: 'Not recognized',
-      })
+    // Sprint 697 — COO conversational router: runs before legacy detectAndHandleCommand
+    const cooHandled = handleDonnaCooPrompt(text)
+    if (!cooHandled) {
+      const handled = detectAndHandleCommand(text)
+      if (!handled) {
+        recordSignal('command_unrecognized')
+        const fallback = getFailureMode('intent_unknown')
+        setCommandResponse({
+          message: fallback.userMessage,
+          type: 'honest',
+          label: 'Not recognized',
+        })
+      } else {
+        recordSignal('command_issued')
+      }
     } else {
       recordSignal('command_issued')
     }
