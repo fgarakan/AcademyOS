@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-23 — Sprint 705 — DONNA KPI Explainer Wiring V1
+
+**Scope:** Wire `explainKpiByStatus` from `kpiExplainer.ts` into the live `use_kpi_answer` response path. No DB/schema/RLS/migration changes.
+
+**P0-C fix — `kpiExplainer` not wired:**
+- `src/lib/donna/donnaResponseComposer.ts` — Added `composeKpiAnswer(text, firstName)`: detects the KPI topic from text (attendance, recap, curriculum coverage, parent summaries, template usage, coach follow-through, level readiness, missions, badges, mental performance, player priorities); calls `explainKpiByStatus(kpiId, 'warning')` to produce a real per-KPI explanation with headline, why-it-matters, and recommended action; falls back to a prompt guiding the director to name the specific KPI. Uses 'warning' status as the actionable default (no live KPI values available in the COO panel). Also added `import { explainKpiByStatus }` and `import type { AcademyKpiId }`.
+- `src/components/assistant/DonnaAssistantButton.tsx` — Added `composeKpiAnswer` to import; added `use_kpi_answer` branch in `handleDonnaCooPrompt` that calls `composeKpiAnswer(text, firstName)` instead of falling through to the generic `composeDonnaResponse` case.
+
+**Result:** "Why is attendance low?" now returns a real explanation (headline + whyItMatters + recommended action + link to KPI dashboard). "Why is recap completion low?" does the same. Previously both returned the same generic "KPI data reflects real activity..." fallback.
+
+**Files modified:**
+- `src/lib/donna/donnaResponseComposer.ts` — `composeKpiAnswer` function + kpiExplainer import
+- `src/components/assistant/DonnaAssistantButton.tsx` — `use_kpi_answer` branch + import
+- `docs/CHANGELOG.md` — Sprint 705 entry added.
+
+**TypeScript:** Clean
+
+**Score impact:** KPI intelligence 3/10 → 7/10
+
+---
+
 ## 2026-05-23 — Sprint 704 — DONNA Action Preview Cards Wiring V1
 
 **Scope:** Wire `getActionPreviewForRequest` and render a structured action preview panel for `route_to_review` and `build_action_preview` responses. No DB/schema/RLS/migration changes.

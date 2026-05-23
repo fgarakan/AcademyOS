@@ -6,6 +6,9 @@ import type { DonnaRoutingResult } from './donnaConversationalRouter'
 import type { DonnaDirectorIntent } from './donnaIntentClassifier'
 import { getPageCapabilityMap, whatCanYouHelpWith, whatActionsRequireApproval, whatShouldINotDo, whereAmI } from './donnaPageContextEngine'
 import { howDoesThisSystemWork, whatHappensAfterCoachRecap, howDoesParentUpdateGetApproved, howDoMissionsAndBadgesConnectToCurriculum, whatShouldITestFirst, whatIsConnectedToPlayerProgress } from './donnaSystemMap'
+// Sprint 705 — KPI explainer wiring
+import { explainKpiByStatus } from './kpiExplanations/kpiExplainer'
+import type { AcademyKpiId } from '@/lib/kpis/academyKpiModel'
 
 // ── Response style rules ───────────────────────────────────────────────────────
 // 1. Start with the answer, not a preamble.
@@ -181,6 +184,44 @@ export function composeDonnaResponse(
       )
     }
   }
+}
+
+// ── Sprint 705 — KPI explainer: detect KPI from text, return explanation ──────
+
+function detectKpiId(text: string): AcademyKpiId | null {
+  const t = text.toLowerCase()
+  if (t.includes('attendance')) return 'attendance_rate'
+  if (t.includes('recap') || t.includes('session note')) return 'recap_completion_rate'
+  if (t.includes('parent summar') || t.includes('parent update') || t.includes('family update')) return 'parent_summary_freshness'
+  if (t.includes('curriculum') || t.includes('coverage')) return 'curriculum_coverage'
+  if (t.includes('template')) return 'template_usage_rate'
+  if (t.includes('follow') || t.includes('follow-through')) return 'coach_followthrough_rate'
+  if (t.includes('level readiness') || t.includes('advancement queue')) return 'level_readiness_queue_size'
+  if (t.includes('mission')) return 'mission_completion_rate'
+  if (t.includes('badge')) return 'badge_progress_rate'
+  if (t.includes('mental')) return 'mental_performance_coverage'
+  if (t.includes('priority') || t.includes('priorities')) return 'player_priority_coverage'
+  return null
+}
+
+export function composeKpiAnswer(text: string, firstName: string | null = null): ComposedDonnaResponse {
+  const name = firstName ? `${firstName}, ` : ''
+  const kpiId = detectKpiId(text)
+
+  if (!kpiId) {
+    return directAnswer(
+      `${name}KPI data reflects real activity in your academy — attendance records, coach sessions, and assessment results. A low KPI usually means either the data pipeline isn't yet populated, or there's a real gap to address.\n\nTell me which specific KPI you want to understand — attendance, recap completion, curriculum coverage, parent summaries, template usage, or level readiness — and I'll give you a direct explanation.`,
+      'View KPIs',
+      '/director/kpi',
+    )
+  }
+
+  const explanation = explainKpiByStatus(kpiId, 'warning')
+  return directAnswer(
+    `${name}${explanation.headline}.\n\n${explanation.whyItMatters}\n\n**What to do:** ${explanation.recommendedNextAction}`,
+    'View KPIs',
+    explanation.nextActionHref ?? '/director/kpi',
+  )
 }
 
 // ── Specialized composers ──────────────────────────────────────────────────────

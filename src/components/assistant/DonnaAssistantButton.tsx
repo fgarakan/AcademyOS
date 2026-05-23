@@ -218,7 +218,7 @@ import { useDonnaSessionContext } from '@/lib/donna/donnaSessionContext'
 import { getDonnaPromptSuggestions, getPromptCategoryLabel } from '@/lib/donna/donnaDirectorPromptPalette'
 // Sprint 697 — COO conversational router live wiring
 import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
-import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer } from '@/lib/donna/donnaResponseComposer'
+import { composeDonnaResponse, composeSystemFlowAnswer, composePageContextAnswer, composeKpiAnswer } from '@/lib/donna/donnaResponseComposer'
 import { recordPrompt, recordSummary, recordRouteChange, getSessionMemory, buildContinuityMessage } from '@/lib/donna/donnaSafeSessionMemory'
 // Sprint 702 — Chat session memory + continuity wiring
 import { ensureChatSession, recordTurn, getRecentTurns, getContextualPrefix } from '@/lib/donna/donnaChatSessionMemory'
@@ -2348,6 +2348,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         : lower.includes('what should i not do') ? 'not_do' as const
         : 'help_here' as const
       composed = composePageContextAnswer(qType, pathname, firstName)
+    } else if (routing.responseMode === 'use_kpi_answer') {
+      // Sprint 705 — use kpiExplainer to produce per-KPI answer from text
+      composed = composeKpiAnswer(text, firstName)
     } else if (routing.responseMode === 'use_system_map') {
       const qType =
         (lower.includes('coach recap') || lower.includes('after a recap') || lower.includes('after the recap')) ? 'coach_recap' as const
