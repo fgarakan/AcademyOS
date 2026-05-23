@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 675 — Security Readiness Report V1
+
+**Scope:** Compiled security findings from Sprints 671–674 into a scored readiness report across 7 dimensions.
+
+**What changed:**
+- `docs/SECURITY_READINESS_REPORT_675.md` (new) — Overall score: 91/100. Status: Ready for controlled internal testing. 7 dimensions scored: Route access control (10/10), Tenant isolation (17/20), Parent visibility (16/20), Player isolation (10/10), DONNA safety (18/20), API auth (10/10), Review queue (10/10). Complete gap register: 0 P0, 0 P1, 7 P2, 4 P3. Three pre-demo recommendations: priority language audit, transcribe API review, dead code removal. Final determination: Ready for Brian demo / single-academy pilot; not recommended for multi-tenant public launch until P2 defense-in-depth gaps are resolved.
+
+**TypeScript:** Clean (no code changed)
+
+---
+
 ## 2026-05-23 — Sprint 674 — DONNA Safety Regression Suite V1
 
 **Scope:** Created DONNA safety regression suite — 12 unsafe prompt categories, 24 test cases, pure TypeScript helpers, and full documentation.
