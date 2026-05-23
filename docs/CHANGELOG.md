@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-23 — Sprint 688 — DONNA System Aware Academy Map V1
+
+**Scope:** Create `donnaSystemMap.ts` — full AcademyOS system module registry with connected-module graph, safe/blocked action lists, and system-level COO question answering.
+
+**Files created:**
+- `src/lib/donna/donnaSystemMap.ts` — `DonnaModuleDefinition` type; 18-module registry covering director_dashboard, kpi, attention_queue, players, player_profiles, curriculum, review_center, coach_recaps, parent_summaries, parent_portal, player_portal, missions, badges, assessments, placement, level_up, voice_assistant, demo_data. Exports: `getModuleDefinition`, `getAllModuleIds`, `getConnectedModules`, `howDoesThisSystemWork`, `whatIsConnectedToPlayerProgress`, `whatHappensAfterCoachRecap`, `howDoesParentUpdateGetApproved`, `howDoMissionsAndBadgesConnectToCurriculum`, `whatShouldITestFirst`.
+
+**TypeScript:** Clean
+
+---
+
 ## 2026-05-23 — Sprint 687 — DONNA Page Aware Context Engine V1
 
 **Scope:** Create `donnaPageContextEngine.ts` — a structured per-route COO capability map and question-answering layer for 12 director routes.
