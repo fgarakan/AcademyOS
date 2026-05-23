@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-23 — Sprint 669 — Performance + Lean Runtime Audit V1
+
+**Scope:** Static code audit of AcademyOS runtime cost, query patterns, component weight, DONNA bundle, and server/client boundaries. No code changes — audit document only.
+
+**What changed:**
+- `docs/PERFORMANCE_RUNTIME_AUDIT_669.md` (new) — Full audit across 14 categories. No P0 blockers. Three P1 duplicate-query fixes identified for director dashboard (`page.tsx`): academies table queried twice, academy_suggestions queried twice, player_curriculum_states queried twice. All other findings are P2/P3. All routes confirmed server-rendered correctly. DONNA bundle confirmed route-isolated. Review center query structure correct (batch, not N+1). Support diagnostics `Promise.all` pattern confirmed optimal.
+
+**P1 fixes targeted for Sprint 670:**
+- Merge 2 `academies` queries → 1 in `src/app/director/page.tsx`
+- Merge 2 `academy_suggestions` queries → 1 in `src/app/director/page.tsx`
+- Merge 2 `player_curriculum_states` queries → 1 in `src/app/director/page.tsx`
+
+**TypeScript:** Clean (no code changed)
+
+---
+
 ## 2026-05-22 — Sprint 668 — Admin Support Diagnostic View V1
 
 **Scope:** New director-only support diagnostics page at `/director/support-diagnostics`. Not in sidebar — accessed by URL for support use.
