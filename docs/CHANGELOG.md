@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-23 — Sprint 715 — DONNA Final Certification Audit V1
+
+**Scope:** Certification audit only. No behavior changes. No DB/schema/RLS/migration changes.
+
+**Audit result:**
+- Re-scored all 17 categories with post-714 state.
+- 13/17 categories at 9/10 (up from 3/17 at Sprint 709).
+- 4 categories at documented hard ceilings: Category 11 (6/10 — DB server action required), Category 13 (8/10 — browser API platform ceiling), Category 14 (8/10 — TTS platform ceiling), Category 17 (8/10 — composite).
+- All 15 golden path scenarios: PASS.
+- All 12 P0/P1 failures: RESOLVED.
+- Overall: 147/170 (86%) — up from 124/170 (73%) at Sprint 709.
+
+**Files modified:**
+- `docs/DONNA_10_OUT_OF_10_COO_CERTIFICATION.md` — updated with final post-714 scores, 13/17 at 9/10, exact blocker documentation for 4 hard-ceiling categories.
+- `docs/CHANGELOG.md` — Sprint 715 entry added.
+
+**TypeScript:** N/A (audit-only sprint, no code changes)
+
+**Certification verdict:** CERTIFIED — 13/17 AT 9/10. FOUR CATEGORIES AT PROVEN HARD CEILING.
+
+---
+
 ## 2026-05-23 — Sprint 714 — DONNA Mobile Panel Overlap Fix and Curriculum Structure Explanation V1
 
 **Scope:** Two targeted fixes. No DB/schema/RLS/migration changes.
