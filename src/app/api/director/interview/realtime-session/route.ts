@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server'
 import { getSupabaseServer } from '@/lib/supabase/server'
 
 export async function POST() {
-  console.log('[realtime-session] route reached')
-
   // Authenticate
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
@@ -48,10 +46,6 @@ export async function POST() {
   const apiKey = process.env.OPENAI_API_KEY
   const model = process.env.OPENAI_REALTIME_MODEL ?? 'gpt-realtime'
   const voice = process.env.OPENAI_REALTIME_VOICE ?? 'marin'
-
-  console.log('[realtime-session] API key exists:', !!apiKey)
-  console.log('[realtime-session] model:', model)
-  console.log('[realtime-session] voice:', voice)
 
   if (!apiKey) {
     return NextResponse.json(

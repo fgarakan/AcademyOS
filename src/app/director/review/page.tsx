@@ -1371,16 +1371,16 @@ export default async function DirectorReviewQueuePage({
       <Tabs defaultValue={activeDefaultTab}>
         <TabsList>
           <TabsTrigger value="needs_approval">
-            <TabLabel label="Needs Approval" pending={needsApprovalPending} ready={needsApprovalReady} />
+            <TabLabel label="For Your Review" pending={needsApprovalPending} ready={needsApprovalReady} />
           </TabsTrigger>
           <TabsTrigger value="player_updates">
-            <TabLabel label="Player Updates" pending={playerUpdatesPending} ready={playerUpdatesReady} />
+            <TabLabel label="Player Signals" pending={playerUpdatesPending} ready={playerUpdatesReady} />
           </TabsTrigger>
           <TabsTrigger value="curriculum_session">
-            <TabLabel label="Curriculum / Sessions" pending={curriculumSessionPending} ready={curriculumSessionReady} />
+            <TabLabel label="Sessions & Curriculum" pending={curriculumSessionPending} ready={curriculumSessionReady} />
           </TabsTrigger>
           <TabsTrigger value="completed">
-            <TabLabel label="Completed" pending={0} ready={completedCount} />
+            <TabLabel label="Done" pending={0} ready={completedCount} />
           </TabsTrigger>
         </TabsList>
 

@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-24 — Working Tree Cleanup — Review Labels + Realtime Debug Log Cleanup
+
+- Removed 4 debug `console.log` statements from `src/app/api/director/interview/realtime-session/route.ts` — production noise cleanup; no logic changes
+- Updated Director Review Queue tab labels in `src/app/director/review/page.tsx` for lower-cognitive-load AIQS language: "Needs Approval" → "For Your Review" · "Player Updates" → "Player Signals" · "Curriculum / Sessions" → "Sessions & Curriculum" · "Completed" → "Done"
+- No runtime logic changes. No DONNA dispatcher or Godmode changes.
+- `DonnaAssistantButton.tsx` `handleOperatorStepAdvance` function intentionally left uncommitted — function is complete but has no call site; pending Sprint 779 focused completion sprint.
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 778 — Player Portal AIQS Mission-First Layout V1
 
 - Modified `src/app/player/page.tsx` — 7 AIQS fixes reducing 14+ card scroll depth to 7–9 cards in 3 named zones
