@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-24 — Sprint 776 — Director KPI AIQS Table → Cards + Action Surface V1
+
+- Modified `src/app/director/kpi/page.tsx` — 5 AIQS fixes on the lowest-scoring page (65/100) in the app
+- Fix 1: Added contextual action banner above table (orange alert if atRiskCount > 0 → link to /director/players; lime all-clear otherwise) — primary action clarity 4→7/10
+- Fix 2: Moved DonnaKpiExplainerPanel from bottom of page to above the table (after summary cards) — DONNA integration 3→5/5
+- Fix 3: Promoted data provenance note from bottom to styled banner below page header (before summary cards) — trust/safety 4→5/5
+- Fix 4: Three summary card sub-labels text-[10px] → text-xs (missed by Sprint 770 sweep) — typography 7→8/10
+- Fix 5: Added sm:hidden mobile card rows (stacked per-player cards with level/absences/advancement); existing table wrapped in hidden sm:block — spacing/layout 7→9/10, role fit 6→8/10
+- Created `docs/AIQS_DIRECTOR_KPI_776.md` — sprint doc; issue-by-issue breakdown; guardrails
+- Estimated score improvement: 65 → ~76 (+11 — highest single-sprint gain in the AIQS sweep)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 775 — Player Profile AIQS Development Command Profile V1
 
 - Modified `src/app/director/players/[playerId]/page.tsx` — Moved PlayerKpiDrilldownCard to after PlayerActionSummaryCard in overviewSlot (CommandCenter + ActionSummary now adjacent above-fold); added parent view divider in notesSlot before parent-safe preview components
