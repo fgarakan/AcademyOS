@@ -48,6 +48,12 @@ function buildChips(
   const afterPracticeQ = focusCategory ? (CATEGORY_AFTER_PRACTICE[focusCategory] ?? 'What was the best moment of today?') : 'What was one good thing from today?'
 
   return [
+    // Sprint 760 — page capability surfacing chip (always first)
+    {
+      id: 'what-can-donna-do',
+      label: 'What can DONNA do here?',
+      response: `On this page, DONNA can help you navigate to: ${name}'s Progress overview, Wins & Milestones, and Coach Updates from the director.\n\nDONNA helps you understand your child's development journey and provides guidance on supporting them at home. Level changes, program changes, and direct coach communications always go through director approval — DONNA never makes those decisions or shares private coaching notes.`,
+    },
     {
       id: 'support-at-home',
       label: 'How can I support at home?',

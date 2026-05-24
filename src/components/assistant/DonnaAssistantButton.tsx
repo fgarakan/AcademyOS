@@ -228,9 +228,10 @@ import { ensureChatSession, recordTurn, getRecentTurns, getContextualPrefix } fr
 import { getActionPreviewForRequest } from '@/lib/donna/donnaActionPreviewIntegration'
 import type { DirectorActionPreview } from '@/lib/donna/directorActionPreview'
 // Sprint 757 — UI action dispatcher pre-check (structured safety + navigation layer)
-import { dispatchUIIntent } from '@/lib/donna/donnaUIActionDispatcher'
-import { getOperatorById } from '@/lib/donna/donnaUIGuidedOperators'
-import type { UIActionRole } from '@/lib/donna/donnaUIActionRegistry'
+// Sprint 760 — Page-aware action surfacing
+import { dispatchUIIntent, getAvailableActionsForContext } from '@/lib/donna/donnaUIActionDispatcher'
+import { getOperatorById, getOperatorStep } from '@/lib/donna/donnaUIGuidedOperators'
+import type { UIActionRole, UIActionSafetyClass } from '@/lib/donna/donnaUIActionRegistry'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -771,6 +772,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Sprint 757 — Active guided operator state (runtime step tracking)
   const [currentOperatorId, setCurrentOperatorId] = useState<string | null>(null)
   const [currentOperatorStep, setCurrentOperatorStep] = useState<number>(0)
+  // Sprint 760 — Page-aware action surfacing
+  const [showPageActions, setShowPageActions] = useState(false)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -2396,6 +2399,25 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     return false
   }
 
+  // Sprint 760 — Safety label display for page-aware action surfacing
+  function getSafetyLabel(safetyClass: UIActionSafetyClass): string {
+    switch (safetyClass) {
+      case 'always_safe': return '✓ Safe'
+      case 'safe_with_context': return '✓ Safe'
+      case 'draft_to_review': return 'Draft → Review'
+      case 'director_approval': return 'Director Approval Required'
+      case 'platform_required': return 'Platform Required'
+      case 'always_blocked': return 'Blocked'
+      default: return '✓ Safe'
+    }
+  }
+
+  // Sprint 760 — Handle "What can DONNA do here?" chip
+  function handleShowPageActions() {
+    setShowPageActions(prev => !prev)
+    setCommandResponse(null)
+  }
+
   // Sprint 757 — UI action dispatcher pre-check.
   // Intercepts three definitive kinds before the COO router, in priority order:
   //   1. blocked (confidence === 'blocked') — architecture invariant violations
@@ -3097,6 +3119,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             ? ([
                 { label: 'My Sessions', action: () => { router.push('/coach/sessions'); closePanel() } },
                 { label: 'Player Notes', action: () => setTypedText('Capture a player note') },
+                // Sprint 760 — page-aware action surfacing chip
+                { label: 'What can DONNA do here?', action: handleShowPageActions },
                 {
                   label: 'Ask Anything',
                   action: () => {
@@ -3115,6 +3139,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 { label: 'Prepare Coaches', action: () => dispatchCooCommand('coach_brief') },
                 { label: 'Player Progress', action: () => { router.push('/director/level-up') } },
                 { label: 'Parent Updates', action: () => { router.push('/director/parents') } },
+                // Sprint 760 — page-aware action surfacing chip
+                { label: 'What can DONNA do here?', action: handleShowPageActions },
                 {
                   label: 'Ask Anything',
                   action: () => {
@@ -3143,6 +3169,65 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+
+          {/* ── Sprint 760: Page-aware action surfacing card ── */}
+          {showPageActions && (
+            <div
+              className="rounded-xl px-3.5 py-3 space-y-2"
+              style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.15)' }}
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-widest font-semibold text-lime">
+                  What DONNA can do here
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowPageActions(false)}
+                  className="text-text-muted hover:text-text-primary text-[10px] transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-[11px] text-text-secondary leading-snug">
+                On <span className="text-text-primary font-medium">{pathname}</span>
+              </p>
+              {(() => {
+                const actions = getAvailableActionsForContext(uiActionRole, pathname).slice(0, 6)
+                if (actions.length === 0) {
+                  return (
+                    <p className="text-[12px] text-text-muted leading-snug">
+                      No specific actions registered for this page. DONNA can still help you navigate, draft, and guide — just ask.
+                    </p>
+                  )
+                }
+                return (
+                  <div className="space-y-1.5">
+                    {actions.map(action => (
+                      <div key={action.actionId} className="flex items-start justify-between gap-2">
+                        <p className="text-[12px] text-text-primary leading-snug flex-1">{action.displayName}</p>
+                        <span
+                          className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                          style={{
+                            background: action.safetyClass === 'always_safe' || action.safetyClass === 'safe_with_context'
+                              ? 'rgba(48,209,88,0.12)' : action.safetyClass === 'draft_to_review'
+                              ? 'rgba(255,149,0,0.12)' : 'rgba(255,59,48,0.12)',
+                            color: action.safetyClass === 'always_safe' || action.safetyClass === 'safe_with_context'
+                              ? '#30D158' : action.safetyClass === 'draft_to_review'
+                              ? '#FF9500' : '#FF3B30',
+                          }}
+                        >
+                          {getSafetyLabel(action.safetyClass)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+              <p className="text-[10px] text-text-muted leading-snug pt-1">
+                Ask DONNA about any of these actions, or type a command below.
+              </p>
+            </div>
+          )}
 
           {/* ── Greeting / onboarding intro card — shown on first open ── */}
           {/* Sprint 290: shows the first onboarding question (same text spoken + displayed). */}

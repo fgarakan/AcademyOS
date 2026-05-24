@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-24 — Sprint 760 — DONNA Per-Page Action Surfacing V1
+
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — added `showPageActions` state; added `getSafetyLabel()` helper mapping UIActionSafetyClass to human labels ("✓ Safe", "Draft → Review", "Director Approval Required"); added `handleShowPageActions()` toggle; added "What can DONNA do here?" chip to both director and coach tab bar chips; added page-aware action surfacing panel in scrollable body using `getAvailableActionsForContext(uiActionRole, pathname)` (max 6 actions, color-coded safety labels, pure UI — no DB/AI); updated imports to include `getAvailableActionsForContext`, `getOperatorStep`, `UIActionSafetyClass`
+- Modified `src/app/player/ask-donna/page.tsx` — added "What can DONNA do here?" chip as first chip with player-portal capability summary and explicit approval boundary statement
+- Modified `src/app/parent/ask-donna/page.tsx` — added "What can DONNA do here?" chip as first chip with parent-portal capability summary and explicit approval boundary statement
+- Created `docs/DONNA_PER_PAGE_ACTION_SURFACING_760.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 759 — DONNA Site-Wide UI Operator Manual QA + Certification Challenge V1
 
 - Modified `src/lib/donna/donnaUIActionDispatcher.ts` — QA-driven fixes raised pass rate from 33% (12/36) to 100% (36/36); major changes: broadened BLOCKED_PATTERNS for send-message, raw-notes, and billing; added `checkRoleBoundaryForNav()` enforcing DIRECTOR_ONLY_ROUTES set; broadened OPERATOR_PATTERNS to catch "open the curriculum builder", "start session wrap-up", "review this player"; fixed `requiresApproval: false` on guided_operator launch; added `isCreationOrDraftIntent()` so "create session template" routes to draft before nav; moved publish curriculum check to step 3.5 (before nav); added role-scoped player/parent routes to `NAV_PATTERNS` (`resolveNavigation` now accepts optional `role`); added parent data access boundary for bulk session records; added `resolveFilterIntent()` for filter/search intents; fixed action ID `draft_session_template → draft_class_template`; rewording fixes (removed "send" from parent update message, added "review" to publish message, added "draft" to template message); removed unused imports and variables; TS clean throughout

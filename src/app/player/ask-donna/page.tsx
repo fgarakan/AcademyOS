@@ -36,6 +36,12 @@ function buildChips(
   const catTip   = missionCategory ? (CATEGORY_PRACTICE_TIPS[missionCategory] ?? 'consistent repetition and focused practice') : 'consistent repetition and focused practice'
 
   return [
+    // Sprint 760 — page capability surfacing chip (always first)
+    {
+      id: 'what-can-donna-do',
+      label: 'What can DONNA do here?',
+      response: `On this page, DONNA can help you navigate to: Missions (your active training goals), Skill Path (your level and progression), Level Up requirements, Competition Path, Fitness Path, Practice drills, and Wins & Achievements.\n\nDONNA guides your navigation and helps you understand your training journey. Official level changes, coach communications, and program changes always go through your coach and director — DONNA never makes those decisions.`,
+    },
     {
       id: 'what-work-on',
       label: 'What should I work on?',
