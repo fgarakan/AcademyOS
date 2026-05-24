@@ -2,10 +2,12 @@
 // Answers curriculum structure, level explanation, content type summary, and gap questions.
 // Uses static AcademyOS curriculum knowledge (level names, stages, content types).
 // Uses DirectorDonnaContext.curriculumGaps when live data exists.
+// Sprint 742C -- Added template coverage gap patterns and answer builder.
 // Pure TypeScript -- no DB, no AI, no mutations, no side effects.
 
 import type { DonnaSafeReadAnswer } from '@/lib/donna/donnaSafeReadActions'
 import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
+import { summarizeCoverageGaps } from '@/lib/donna/curriculumTemplateCoverageGapDetector'
 
 // -- Pattern detection --------------------------------------------------------
 
@@ -27,6 +29,10 @@ const GAP_PATTERNS =
 const HOW_CURRICULUM_PATTERNS =
   /\b(how does.{0,20}(curriculum|level.?system|progression) work|explain.{0,20}(curriculum|level.?system|how levels?)|(curriculum|level).{0,20}(work|structure|system|explained?))\b/i
 
+// Sprint 742C — Template coverage gap patterns
+const TEMPLATE_COVERAGE_PATTERNS =
+  /\b(levels?.{0,30}no templates?|templates?.{0,30}(missing|gaps?|coverage|which|levels?)|levels?.{0,20}(no|without|missing).{0,10}templates?|what templates?.{0,30}(build|create|need|next|fix|missing)|fix.{0,20}templates?|template.{0,20}(coverage|gaps?|priority)|which levels?.{0,20}(need|missing|no).{0,10}templates?|template.{0,20}fix first)\b/i
+
 export function isCurriculumLevelQuestion(text: string): boolean {
   return (
     LEVEL_STRUCTURE_PATTERNS.test(text) ||
@@ -34,7 +40,8 @@ export function isCurriculumLevelQuestion(text: string): boolean {
     CONTENT_SUMMARY_PATTERNS.test(text) ||
     CONTENT_EXPLAIN_PATTERNS.test(text) ||
     GAP_PATTERNS.test(text) ||
-    HOW_CURRICULUM_PATTERNS.test(text)
+    HOW_CURRICULUM_PATTERNS.test(text) ||
+    TEMPLATE_COVERAGE_PATTERNS.test(text)
   )
 }
 
@@ -217,6 +224,81 @@ function buildGapAnalysisAnswer(ctx: DirectorDonnaContext | null): DonnaSafeRead
   }
 }
 
+// Sprint 742C — Template coverage gap answer builder
+function buildTemplateCoverageGapAnswer(ctx: DirectorDonnaContext | null): DonnaSafeReadAnswer {
+  // No context at all
+  if (!ctx) {
+    return {
+      actionId: 'template_coverage_no_context',
+      text: 'I need live data to check template coverage. Make sure your academy is set up and DONNA is connected.',
+      confidence: 'insufficient',
+      sourceNote: 'No context available',
+      followUp: 'Take me to Templates',
+      href: '/director/templates',
+      isAnswerable: false,
+    }
+  }
+
+  // Coverage analysis not yet available (context not loaded)
+  if (!ctx.templateCoverageContextAvailable) {
+    const missingPieces: string[] = []
+    if (!ctx.playerProgressContextAvailable) missingPieces.push('player curriculum states')
+    if (!ctx.templateContextAvailable) missingPieces.push('template data')
+
+    return {
+      actionId: 'template_coverage_unavailable',
+      text: missingPieces.length > 0
+        ? `Template coverage analysis requires ${missingPieces.join(' and ')} to be available. I\'m not seeing that data yet. Go to Templates to review what\'s built.`
+        : 'Template coverage analysis is not yet available. Go to Templates to review what\'s built.',
+      confidence: 'insufficient',
+      sourceNote: 'Coverage context not loaded',
+      followUp: 'Take me to Templates',
+      href: '/director/templates',
+      isAnswerable: true,
+    }
+  }
+
+  const gaps = ctx.curriculumTemplateCoverageGaps
+  const summary = summarizeCoverageGaps({
+    gaps,
+    levelsWithPlayers: ctx.playerCurriculumStateCount > 0 ? 1 : 0, // approximate
+    levelsWithTemplates: ctx.templateCount,
+    unassignedTemplateCount: ctx.templateSummaries.filter(t => !t.curriculumLevelId).length,
+    coverageAvailable: ctx.templateCoverageContextAvailable,
+  })
+
+  if (gaps.length === 0) {
+    return {
+      actionId: 'template_coverage_no_gaps',
+      text: summary,
+      confidence: 'high',
+      sourceNote: 'Live template coverage data',
+      followUp: 'View all templates',
+      href: '/director/templates',
+      isAnswerable: true,
+    }
+  }
+
+  // Gaps found — build prioritised answer
+  const topGap = gaps[0]
+  const nextAction = `Start with ${topGap.levelDisplayName} — that\'s the highest-priority level (${topGap.playerCountAtLevel} player${topGap.playerCountAtLevel !== 1 ? 's' : ''}, no template). ${topGap.recommendedAction}`
+
+  return {
+    actionId: 'template_coverage_gaps_live',
+    text: [
+      summary,
+      '',
+      `**Next recommended action:**`,
+      nextAction,
+    ].join('\n'),
+    confidence: 'high',
+    sourceNote: 'Live player curriculum states + active templates',
+    followUp: 'Take me to Templates',
+    href: '/director/templates',
+    isAnswerable: true,
+  }
+}
+
 function buildHowCurriculumWorksAnswer(): DonnaSafeReadAnswer {
   return {
     actionId: 'curriculum_how_it_works',
@@ -256,7 +338,13 @@ export function tryAnswerCurriculumLevelQuestion(
 ): DonnaSafeReadAnswer | null {
   if (!isCurriculumLevelQuestion(text)) return null
 
-  // Gap analysis
+  // Template coverage gap questions — checked first among gap-type questions
+  // so "which levels have no templates" does not fall through to the general GAP_PATTERNS path.
+  if (TEMPLATE_COVERAGE_PATTERNS.test(text)) {
+    return buildTemplateCoverageGapAnswer(ctx)
+  }
+
+  // Curriculum content gap analysis (missing gates / drills per level)
   if (GAP_PATTERNS.test(text)) {
     return buildGapAnalysisAnswer(ctx)
   }

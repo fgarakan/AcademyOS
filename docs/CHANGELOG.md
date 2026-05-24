@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-24 — Sprint 742C — DONNA Curriculum Template Coverage Gap Detector V1
+
+- Created `src/lib/donna/curriculumTemplateCoverageGapDetector.ts` — Pure TypeScript gap detector (no DB, no AI, no side effects); exports `CurriculumTemplateCoverageGap`, `CurriculumTemplateCoverageResult`, `detectCurriculumTemplateCoverageGaps(ctx)`, `summarizeCoverageGaps(result)`; detection logic: group players by `current_level_id` UUID → build covered-level Set from `templates.curriculum_level_id` UUID → gap = levels with players but no template; severity high (≥3 players) / medium / low; sorted by severity then playerCount; fails safely with empty result if either context is unavailable; also tracks `unassignedTemplateCount`; fixed Map iteration TS error (replaced `for...of Map` with `Array.from().forEach()`)
+- Modified `src/lib/donna/extendedContextLoaders.ts` — Sprint 742C: added `currentLevelDisplayName: string | null` to `PlayerCurriculumStateSummary` via `curriculum_levels(display_name)` join in `loadPlayerCurriculumStates`; added `curriculumLevelId: string | null` to `TemplateSummary` and included `curriculum_level_id` in the templates select; both changes enable UUID-based matching in the gap detector
+- Modified `src/lib/donna/directorDonnaContext.ts` — Sprint 742C: added 3 new fields to `DirectorDonnaContext` (curriculumTemplateCoverageGaps, curriculumTemplateCoverageGapCount, templateCoverageContextAvailable); added section 7f calling `detectCurriculumTemplateCoverageGaps()` after sections 7b–7e; added "Curriculum-template coverage gap" risk signal when gaps > 0 (high urgency ≥3 gaps, medium otherwise, href /director/templates); updated `buildDemoContext()` and return value with new fields
+- Modified `src/lib/donna/curriculumLevelDonnaAnswer.ts` — Sprint 742C: added `TEMPLATE_COVERAGE_PATTERNS` regex matching template-gap questions (levels with no templates, template coverage, fix first in templates, etc.); added `buildTemplateCoverageGapAnswer(ctx)` using `summarizeCoverageGaps()` with live data + honest fallback when context unavailable; added TEMPLATE_COVERAGE_PATTERNS check at top of dispatch (before GAP_PATTERNS) in `tryAnswerCurriculumLevelQuestion`; added `isCurriculumLevelQuestion()` update; imported `summarizeCoverageGaps` from gap detector
+- Created `docs/DONNA_CURRICULUM_TEMPLATE_COVERAGE_GAPS_742C.md` — Full architecture doc: detection logic, UUID matching rationale, new fields, answer behavior examples (gaps / no gaps / unavailable), what remains blocked (unassigned templates, type differentiation, assessment linking, gate evidence), updated Godmode readiness 5.1/10 → 5.5/10, recommended next sprint (742D — assessment coverage gap)
+- Modified `docs/DONNA_GODMODE_FOUNDATION_ARCHITECTURE_742A.md` — Updated domain capability map: Class Templates View now shows coverage gap detection (Sprint 742C)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 742B — DONNA Extended Context Loader V1
 
 - Created `src/lib/donna/extendedContextLoaders.ts` — Four typed read-only loaders: `loadPlayerCurriculumStates` (player_curriculum_states: count, advancement_eligible count, 30-record summary), `loadAssessmentsSummary` (assessments: total count, recent-30d count, 30-record summary with promotion_ready/overall_score), `loadGroupsSummary` (groups: active group count and names/levels/tracks), `loadTemplatesSummary` (templates: active count and names/types/curriculum_level_key/curriculum_stage_key); all academy_id-scoped, all fail safely with insufficient_data, all capped at 30; rawDb pattern used for player_curriculum_states/assessments/templates to prevent TS2589; groups follows clean typed pattern from groupHealthLoader.ts

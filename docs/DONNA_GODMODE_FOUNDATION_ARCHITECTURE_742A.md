@@ -37,7 +37,7 @@ No mutation reaches the database without:
 | Domain | View | Explain | Draft | Approve-Route | Execute Path | Audit |
 |---|---|---|---|---|---|---|
 | Curriculum | ✅ Structural gaps live | ✅ Full 12-level + content types | ✅ Proposal text | ✅ → /director/curriculum/builder | ❌ No apply action | ❌ |
-| Class Templates | ✅ Draft shape | ✅ Block types + cues | ✅ DONNA draft | ✅ → /director/class-templates | ❌ No DB save from DONNA | ❌ |
+| Class Templates | ✅ Draft shape + coverage gaps (742C) | ✅ Block types + cues | ✅ DONNA draft | ✅ → /director/templates | ❌ No DB save from DONNA | ❌ |
 | Fitness Templates | ✅ Draft shape | ✅ Block types + cues | ✅ DONNA draft | ✅ → /director/fitness/templates | ❌ No DB save from DONNA | ❌ |
 | Sessions | ✅ Today count | ✅ Session adjustments | ✅ Mod draft shape | ⚠️ Partial → /director/sessions | ❌ `modify_session` not apply-wired | ⚠️ |
 | Players | ✅ Attention items | ✅ Profile summary | ❌ No DONNA draft UI | ⚠️ Routes to /director/players | ❌ Level move not wired | ❌ |

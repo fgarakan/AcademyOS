@@ -1,4 +1,6 @@
 // Sprint 742B — Extended Context Loaders V1
+// Sprint 742C — Added currentLevelDisplayName (join with curriculum_levels) to PlayerCurriculumStateSummary;
+//               added curriculumLevelId to TemplateSummary for UUID-based coverage gap matching.
 // Lightweight read-only loaders for player_curriculum_states, assessments, groups, templates.
 // No migrations required. All tables have academy_id RLS scoping.
 // All loaders fail safely — any error returns insufficient_data, never throws.
@@ -12,6 +14,7 @@ import type { COOFieldStatus } from '@/lib/donna/cooDataStatus'
 export interface PlayerCurriculumStateSummary {
   playerId: string
   currentLevelId: string
+  currentLevelDisplayName: string | null  // Sprint 742C: joined from curriculum_levels.display_name
   advancementEligible: boolean
   enrolledAt: string
   lastEvaluatedAt: string | null
@@ -39,6 +42,7 @@ export interface TemplateSummary {
   name: string
   templateType: string | null
   status: string
+  curriculumLevelId: string | null    // Sprint 742C: UUID for matching against player_curriculum_states.current_level_id
   curriculumLevelKey: string | null
   curriculumStageKey: string | null
   totalDurationMin: number | null
@@ -90,10 +94,12 @@ export async function loadPlayerCurriculumStates(
   try {
     // rawDb: player_curriculum_states has complex FK relationships that can trigger TS2589
     const rawDb = db as any
+    // Sprint 742C: join curriculum_levels to get display_name for human-readable gap messages.
+    // curriculum_levels is global (no academy_id) with authenticated-read RLS — safe to join.
     const { data, count } = await rawDb
       .from('player_curriculum_states')
       .select(
-        'player_id, current_level_id, advancement_eligible, enrolled_at, last_evaluated_at',
+        'player_id, current_level_id, advancement_eligible, enrolled_at, last_evaluated_at, curriculum_levels(display_name)',
         { count: 'exact' },
       )
       .eq('academy_id', academyId)
@@ -106,11 +112,13 @@ export async function loadPlayerCurriculumStates(
       advancement_eligible: boolean
       enrolled_at: string
       last_evaluated_at: string | null
+      curriculum_levels: { display_name: string } | null
     }>
 
     const summaries: PlayerCurriculumStateSummary[] = rows.map(r => ({
       playerId: r.player_id,
       currentLevelId: r.current_level_id,
+      currentLevelDisplayName: r.curriculum_levels?.display_name ?? null,
       advancementEligible: r.advancement_eligible,
       enrolledAt: r.enrolled_at,
       lastEvaluatedAt: r.last_evaluated_at,
@@ -247,10 +255,11 @@ export async function loadTemplatesSummary(
   try {
     // rawDb: templates has many columns and complex FK relationships — use rawDb to prevent TS2589
     const rawDb = db as any
+    // Sprint 742C: also select curriculum_level_id (UUID) for matching against player_curriculum_states.current_level_id.
     const { data, count } = await rawDb
       .from('templates')
       .select(
-        'id, name, template_type, status, curriculum_level_key, curriculum_stage_key, total_duration_min, track',
+        'id, name, template_type, status, curriculum_level_id, curriculum_level_key, curriculum_stage_key, total_duration_min, track',
         { count: 'exact' },
       )
       .eq('academy_id', academyId)
@@ -263,6 +272,7 @@ export async function loadTemplatesSummary(
       name: string
       template_type: string | null
       status: string
+      curriculum_level_id: string | null
       curriculum_level_key: string | null
       curriculum_stage_key: string | null
       total_duration_min: number | null
@@ -274,6 +284,7 @@ export async function loadTemplatesSummary(
       name: r.name,
       templateType: r.template_type,
       status: r.status,
+      curriculumLevelId: r.curriculum_level_id,
       curriculumLevelKey: r.curriculum_level_key,
       curriculumStageKey: r.curriculum_stage_key,
       totalDurationMin: r.total_duration_min,

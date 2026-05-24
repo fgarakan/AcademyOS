@@ -3,6 +3,7 @@
 // Read-only. No DB writes. No migrations required. Fails safely with demo fallback.
 // Sprint 741 — Curriculum structural gap query wired (loadCurriculumStructuralGaps).
 // Sprint 742B — Extended context wired: player_curriculum_states, assessments, groups, templates.
+// Sprint 742C — Curriculum-to-template coverage gap detection wired (pure logic, no new DB calls).
 
 import type { DB } from '@/lib/types/db'
 import type { DONNAConfidence } from '@/lib/donna/donnaCOOAnswerEngine'
@@ -21,6 +22,12 @@ import type {
   GroupSummary,
   TemplateSummary,
 } from '@/lib/donna/extendedContextLoaders'
+import {
+  detectCurriculumTemplateCoverageGaps,
+} from '@/lib/donna/curriculumTemplateCoverageGapDetector'
+import type {
+  CurriculumTemplateCoverageGap,
+} from '@/lib/donna/curriculumTemplateCoverageGapDetector'
 
 // ── Output types ──────────────────────────────────────────────────────────────
 
@@ -87,6 +94,10 @@ export interface DirectorDonnaContext {
   groupSummaries: GroupSummary[]
   templateSummaries: TemplateSummary[]
   assessmentSummaries: AssessmentSummary[]
+  // Curriculum-to-template coverage (Sprint 742C)
+  curriculumTemplateCoverageGaps: CurriculumTemplateCoverageGap[]
+  curriculumTemplateCoverageGapCount: number
+  templateCoverageContextAvailable: boolean
   // Meta
   sourceLabels: DirectorSourceLabel[]
   confidence: DONNAConfidence
@@ -171,6 +182,10 @@ function buildDemoContext(): DirectorDonnaContext {
     groupSummaries: [],
     templateSummaries: [],
     assessmentSummaries: [],
+    // Coverage gaps — empty in demo mode
+    curriculumTemplateCoverageGaps: [],
+    curriculumTemplateCoverageGapCount: 0,
+    templateCoverageContextAvailable: false,
     sourceLabels: [
       { field: 'Review queue', status: 'insufficient_data', label: 'Demo data' },
       { field: 'Sessions', status: 'insufficient_data', label: 'Demo data' },
@@ -488,6 +503,21 @@ export async function loadDirectorDonnaContext(
   templateSummaries = templateResult.summaries
   fieldStatuses.templates = templateResult.fieldStatus
 
+  // ── 7f. Curriculum-to-template coverage gaps (Sprint 742C) ───────────────
+  // Pure logic: no new DB call. Runs on already-loaded summaries from 7b and 7e.
+  // Detects levels with active players but no active class template assigned by UUID.
+
+  const coverageResult = detectCurriculumTemplateCoverageGaps({
+    playerCurriculumStateSummaries,
+    templateSummaries,
+    playerProgressContextAvailable: pcsResult.fieldStatus === 'live',
+    templateContextAvailable: templateResult.fieldStatus === 'live',
+  })
+
+  const curriculumTemplateCoverageGaps = coverageResult.gaps
+  const curriculumTemplateCoverageGapCount = coverageResult.gaps.length
+  const templateCoverageContextAvailable = coverageResult.coverageAvailable
+
   // ── 8. Academy risks ───────────────────────────────────────────────────────
 
   const academyRisks: DirectorAcademyRisk[] = []
@@ -535,6 +565,15 @@ export async function loadDirectorDonnaContext(
       detail: `${advancementEligibleCount} player${advancementEligibleCount !== 1 ? 's' : ''} ready to advance — director action needed`,
       urgency: advancementEligibleCount >= 3 ? 'high' : 'medium',
       actionHref: '/director/players',
+    })
+  }
+
+  if (curriculumTemplateCoverageGapCount > 0) {
+    academyRisks.push({
+      signal: 'Curriculum-template coverage gap',
+      detail: `${curriculumTemplateCoverageGapCount} curriculum level${curriculumTemplateCoverageGapCount !== 1 ? 's' : ''} have active players but no class template assigned`,
+      urgency: curriculumTemplateCoverageGapCount >= 3 ? 'high' : 'medium',
+      actionHref: '/director/templates',
     })
   }
 
@@ -645,6 +684,10 @@ export async function loadDirectorDonnaContext(
     groupSummaries,
     templateSummaries,
     assessmentSummaries,
+    // Coverage gaps (Sprint 742C)
+    curriculumTemplateCoverageGaps,
+    curriculumTemplateCoverageGapCount,
+    templateCoverageContextAvailable,
     sourceLabels,
     confidence,
     isLive,
