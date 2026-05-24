@@ -47,6 +47,7 @@ import { DONNA_SYSTEM_MAP } from '@/lib/donna/donnaSystemMap'
 import { detectShortPhrase, buildShortPhraseAnswer } from '@/lib/donna/donnaShortPhraseEngine'
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
 import { tryAnswerTemplateDraftRequest } from '@/lib/donna/templateDraftDonnaAnswer'
+import { tryAnswerFitnessDraftRequest } from '@/lib/donna/fitnessDraftDonnaAnswer'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
@@ -288,6 +289,28 @@ export function DonnaVoiceReadyShell({
             sourceNote: coachHealth.sourceNote,
           })
           if (coachHealthNavOffer) setPendingNavOffer(coachHealthNavOffer)
+        }, 600)
+        return
+      }
+    }
+
+    // ── Sprint 736: Fitness template draft intercept ─────────────────────────
+    // Fires before class template intercept so "fitness template" doesn't match
+    // isTemplateCreationIntent (which also catches generic "template" keywords).
+    if (plainRole === 'director') {
+      const fitnessResult = tryAnswerFitnessDraftRequest(trimmed)
+      if (fitnessResult) {
+        const fitnessMsg = buildChatMessageFromAnswer(fitnessResult.answer)
+        const fitnessNavOffer = buildNavOfferFromHref(fitnessResult.answer.href, trimmed)
+        setTimeout(() => {
+          setMessages(prev => [...prev, fitnessMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, fitnessMsg.text, {
+            actionId: fitnessResult.answer.actionId,
+            confidence: fitnessResult.answer.confidence,
+            sourceNote: fitnessResult.answer.sourceNote,
+          })
+          if (fitnessNavOffer) setPendingNavOffer(fitnessNavOffer)
         }, 600)
         return
       }

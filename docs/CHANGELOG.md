@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-24 — Sprint 736 — DONNA Fitness Template Draft Engine V1
+
+- Created `src/lib/donna/fitnessDraftDonnaAnswer.ts` — `isFitnessCreationIntent()` matches 9 fitness intent patterns; `buildFitnessDraft(text)` extracts ageGroup/sessionType(7 types)/trainingGoal/duration then calls `selectBlockSet()` for appropriate FitnessBlockType set; `allocateFitnessBlockDurations()` scales proportionally to total minutes; static `FITNESS_COACH_CUES` and `FITNESS_TENNIS_TRANSFER` per FitnessBlockType; `buildFitnessDraftAnswer()` formats block list with intent/cue/transfer notes; navOffer to /director/fitness/templates
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — wired Sprint 736 fitness draft dispatch step before Sprint 735 class template step (so fitness intent is tested first); imports `tryAnswerFitnessDraftRequest`
+- Addresses CAP 7 (Draft fitness templates from age/level/focus)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 735 — DONNA Class Template Drafting Dispatch V1
 
 - Created `src/lib/donna/templateDraftDonnaAnswer.ts` — `tryAnswerTemplateDraftRequest(text, pendingDraft)`: detects template creation intent via `isTemplateCreationIntent()`; calls `parseTemplateDraft()` to extract level/duration/blocks; if draft complete returns full summary (blocks + timing + coaching cues + success criteria per block); if missing fields asks first clarification question; handles multi-turn via `pendingDraft` param with `looksLikeAnswerToField()` guard; static `BLOCK_COACH_CUES` and `BLOCK_SUCCESS_CRITERIA` per block category; navOffer to /director/class-templates
