@@ -3,10 +3,13 @@
 // Tracks: conversation turns, topics covered, context injected, actions dispatched.
 // Allows DONNA to reference prior turns and build contextual answers.
 // Pure in-memory. No DB. No persistence across page reloads.
+//
+// Sprint 735 — added pendingTemplateDraft for multi-turn class template drafting.
 
 import type { ChatMessage } from '@/components/donna/DonnaChatThread'
 import type { DonnaRole } from '@/lib/donna/donnaRoleBoundaries'
 import type { DONNAConfidence } from '@/lib/donna/donnaCOOAnswerEngine'
+import type { TemplateDraft } from '@/components/assistant/templateDraftTypes'
 
 // ── Turn types ────────────────────────────────────────────────────────────────
 
@@ -52,7 +55,8 @@ export interface DonnaChatSessionState {
   actionsDispatched: string[]
   contextLoadedAt: number | null
   lastActivityAt: number
-  pendingNavOffer: PendingNavOffer | null   // Sprint 724
+  pendingNavOffer: PendingNavOffer | null       // Sprint 724
+  pendingTemplateDraft: TemplateDraft | null    // Sprint 735
 }
 
 // ── Module state ──────────────────────────────────────────────────────────────
@@ -73,7 +77,8 @@ export function initChatSession(role: DonnaRole): DonnaChatSessionState {
     actionsDispatched: [],
     contextLoadedAt: null,
     lastActivityAt: Date.now(),
-    pendingNavOffer: null,  // Sprint 724
+    pendingNavOffer: null,       // Sprint 724
+    pendingTemplateDraft: null,  // Sprint 735
   }
   return _state
 }
@@ -225,6 +230,26 @@ export function getContextualPrefix(domain: TopicDomain): string {
 export function clearChatSession(): void {
   _state = null
   _turnCounter = 0
+}
+
+// ── Pending template draft helpers (Sprint 735) ───────────────────────────────
+
+/** Store an in-progress template draft so the next user turn can add to it. */
+export function setPendingTemplateDraft(draft: TemplateDraft | null): void {
+  if (_state) _state.pendingTemplateDraft = draft
+}
+
+/** Return the current pending template draft without clearing it. */
+export function getPendingTemplateDraft(): TemplateDraft | null {
+  return _state?.pendingTemplateDraft ?? null
+}
+
+/** Consume and clear the pending template draft. Returns null if none exists. */
+export function consumePendingTemplateDraft(): TemplateDraft | null {
+  if (!_state || !_state.pendingTemplateDraft) return null
+  const draft = _state.pendingTemplateDraft
+  _state.pendingTemplateDraft = null
+  return draft
 }
 
 // ── Pending navigation offer helpers (Sprint 724) ─────────────────────────────

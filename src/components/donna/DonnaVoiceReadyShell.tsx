@@ -21,6 +21,8 @@ import {
   ensureChatSession,
   setPendingNavOffer,
   consumePendingNavOffer,
+  setPendingTemplateDraft,
+  getPendingTemplateDraft,
   type PendingNavOffer,
 } from '@/lib/donna/donnaChatSessionMemory'
 import {
@@ -44,6 +46,7 @@ import { getPageCapabilityMap } from '@/lib/donna/donnaPageContextEngine'
 import { DONNA_SYSTEM_MAP } from '@/lib/donna/donnaSystemMap'
 import { detectShortPhrase, buildShortPhraseAnswer } from '@/lib/donna/donnaShortPhraseEngine'
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
+import { tryAnswerTemplateDraftRequest } from '@/lib/donna/templateDraftDonnaAnswer'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
@@ -285,6 +288,30 @@ export function DonnaVoiceReadyShell({
             sourceNote: coachHealth.sourceNote,
           })
           if (coachHealthNavOffer) setPendingNavOffer(coachHealthNavOffer)
+        }, 600)
+        return
+      }
+    }
+
+    // ── Sprint 735: Template draft intercept ─────────────────────────────────
+    // Fires after coach health, before clarification/blocked.
+    // Handles both new template creation intent and multi-turn pending draft answers.
+    if (plainRole === 'director') {
+      const pendingTd = getPendingTemplateDraft()
+      const tdResult = tryAnswerTemplateDraftRequest(trimmed, pendingTd)
+      if (tdResult) {
+        const tdMsg = buildChatMessageFromAnswer(tdResult.answer)
+        const tdNavOffer = buildNavOfferFromHref(tdResult.answer.href, trimmed)
+        setPendingTemplateDraft(tdResult.isComplete ? null : tdResult.updatedDraft)
+        setTimeout(() => {
+          setMessages(prev => [...prev, tdMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, tdMsg.text, {
+            actionId: tdResult.answer.actionId,
+            confidence: tdResult.answer.confidence,
+            sourceNote: tdResult.answer.sourceNote,
+          })
+          if (tdNavOffer) setPendingNavOffer(tdNavOffer)
         }, 600)
         return
       }

@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-24 — Sprint 735 — DONNA Class Template Drafting Dispatch V1
+
+- Created `src/lib/donna/templateDraftDonnaAnswer.ts` — `tryAnswerTemplateDraftRequest(text, pendingDraft)`: detects template creation intent via `isTemplateCreationIntent()`; calls `parseTemplateDraft()` to extract level/duration/blocks; if draft complete returns full summary (blocks + timing + coaching cues + success criteria per block); if missing fields asks first clarification question; handles multi-turn via `pendingDraft` param with `looksLikeAnswerToField()` guard; static `BLOCK_COACH_CUES` and `BLOCK_SUCCESS_CRITERIA` per block category; navOffer to /director/class-templates
+- Modified `src/lib/donna/donnaChatSessionMemory.ts` — added `pendingTemplateDraft: TemplateDraft | null` to `DonnaChatSessionState`; added `setPendingTemplateDraft()`, `getPendingTemplateDraft()`, `consumePendingTemplateDraft()` helpers; imports `TemplateDraft` from `@/components/assistant/templateDraftTypes`
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — wired Sprint 735 template draft dispatch step (after coach health, before clarification/blocked); imports `tryAnswerTemplateDraftRequest`, `setPendingTemplateDraft`, `getPendingTemplateDraft`; stores `updatedDraft` in session memory after clarification; clears on completion
+- Addresses CAP 6 (Draft class templates from intent) and CAP 10 (multi-turn build intent memory)
+- TypeScript: clean
+
+---
+
+## 2026-05-24 — Sprint 734 — DONNA Builder Assistant Audit V1
+
+- Created `docs/DONNA_BUILDER_ASSISTANT_AUDIT_734.md` — full pre-implementation audit of 15 builder capabilities against existing codebase; reads 15 key files across donna lib, curriculum lib, assistant components, and template infrastructure; verdict: 4 PASS / 10 PARTIAL / 1 FAIL; score 60/100; NOT CERTIFIED with 7 specific blockers identified; recommends Sprint 735-740 sequence to certification
+- No code written. No files modified. Audit only.
+- TypeScript: clean (no changes)
+
+---
+
 ## 2026-05-24 — Sprint 733 — DONNA Five Partial Closures V1
 
 - Modified `src/lib/donna/donnaMissingContextEngine.ts` — extended PLAYERS_QUESTION_PATTERNS (how many players, player count), CURRICULUM_QUESTION_PATTERNS (bottleneck, gap, issue, coverage), WHY_CANT_PATTERNS (don't have any data, have no data, nothing set up); added step 8 (player count answer when data exists) and step 9 (curriculum coverage explanation when not first-time setup)
