@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 746 — DONNA Mode Buttons Collapse + Greeting Thread Unification V1
+
+- Created `docs/DONNA_PREMIUM_UI_PASS_746.md` — Sprint 746 UI pass document; updated 10-criteria scores (overall 6/10 → 7/10); scroll reduction table (~308px removed from default view); remaining gaps for Sprint 747+
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — (1) Mode buttons collapsed: added `showMoreOptions` state and `ChevronDown` icon; 5 MODES buttons now hidden behind "More options ▾" chip by default (~256px saved); Review Queue always visible for directors; clicking a mode collapses the list; when a mode is already active, the list remains expanded; (2) Greeting card now suppressed when `cooThread.length > 0` or `commandResponse` is set — eliminates two simultaneous response surfaces; (3) "Ask about this page" converted from tall full-width button (~80px) to compact inline chip (~28px) — same handler, same mode guards, same disabled state
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 745 — DONNA Premium Assistant UI + Persistence Audit V1
 
 - Created `docs/DONNA_PREMIUM_UI_PERSISTENCE_AUDIT_745.md` — Full UX audit of the DONNA sidebar panel against 10 premium criteria; scores all dimensions (Visual Clarity 4/10, Cognitive Load 3/10, Scroll Burden 3/10, Repeated Elements 3/10, etc.); documents target 5-zone panel layout; lists all changes made in Sprint 745 and remaining gaps for Sprint 746/747+; no Godmode intelligence changes

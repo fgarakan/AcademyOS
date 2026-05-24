@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Layers, Inbox,
+  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Layers, Inbox, ChevronDown,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -376,6 +376,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const { panelOpen, openDonnaPanel, closeDonnaPanel, updatePrompt } = useDonnaSessionContext()
   const [captureOpen, setCaptureOpen] = useState(false)
   const [activeMode, setActiveMode] = useState<AssistantMode | null>(null)
+  // Sprint 746 — mode buttons collapsed by default; "More options" toggle reveals them
+  const [showMoreOptions, setShowMoreOptions] = useState(false)
 
   // Sprint 297 — Realtime voice output (primary path, no mic required)
   const {
@@ -3057,7 +3059,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
           {/* ── Greeting / onboarding intro card — shown on first open ── */}
           {/* Sprint 290: shows the first onboarding question (same text spoken + displayed). */}
-          {showGreeting && (
+          {/* Sprint 746: suppress greeting when a conversation/DONNA response is already active
+               to avoid two simultaneous response surfaces (greeting card + DONNA says box) */}
+          {showGreeting && cooThread.length === 0 && !commandResponse && (
             <div
               className="rounded-xl px-3.5 py-3"
               style={{
@@ -3810,38 +3814,29 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             </div>
           )}
 
-          {/* ── Ask about this page — hidden in template, guided-task, and review_queue modes ── */}
+          {/* ── Ask about this page — compact chip (Sprint 746) ── */}
           {activeMode !== 'create_template' && activeMode !== 'guided_task' && activeMode !== 'review_queue' && (
             <button
+              type="button"
               onClick={() => void handleContextSummary()}
               disabled={isLoadingContext}
-              className="w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150 text-text-secondary hover:text-text-primary disabled:opacity-60"
-              style={{ background: 'var(--bg-surface)', border: '1px solid rgba(200,255,0,0.2)' }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all disabled:opacity-60 hover:brightness-110"
+              style={{
+                background: 'rgba(200,255,0,0.06)',
+                border: '1px solid rgba(200,255,0,0.2)',
+                color: '#C8FF00',
+              }}
             >
-              <div className="flex items-start gap-2.5">
-                <Sparkles
-                  className="w-3.5 h-3.5 mt-0.5 shrink-0"
-                  style={{ color: '#C8FF00' }}
-                />
-                <div>
-                  <p className="text-[12px] font-semibold leading-tight text-lime">
-                    {isLoadingContext ? 'Reading academy data…' : 'Ask about this page'}
-                  </p>
-                  <p className="text-[11px] text-text-muted leading-snug mt-0.5">
-                    Summarize what&apos;s happening right now, based on live data.
-                  </p>
-                </div>
-              </div>
+              <Sparkles className="w-3 h-3 shrink-0" />
+              {isLoadingContext ? 'Reading…' : 'Ask about this page'}
             </button>
           )}
 
-          {/* ── Mode buttons ── */}
+          {/* ── Mode buttons — collapsed by default (Sprint 746) ── */}
+          {/* Review Queue is always visible for directors (count badge = primary action) */}
+          {/* Secondary modes are behind "More options" toggle to reduce default scroll */}
           <div className="space-y-1.5">
-            <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
-              What would you like?
-            </p>
-
-            {/* Review Queue button — Sprint 273; director-only (Sprint 656) */}
+            {/* Review Queue — always visible for directors */}
             {role === 'director' && (
               <button
                 onClick={() => void handleOpenReviewQueue()}
@@ -3879,48 +3874,75 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               </button>
             )}
 
-            {MODES.filter(({ mode }) => isModeAllowedForRole(mode, role)).map(({ mode, label, desc, Icon, category, safeStatus }) => (
+            {/* "More options" toggle — shown only when no mode is active */}
+            {activeMode === null && (
               <button
-                key={mode}
-                onClick={() => handleModeClick(mode)}
-                className={cn(
-                  'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150',
-                  activeMode === mode
-                    ? 'text-text-primary'
-                    : 'text-text-secondary hover:text-text-primary',
-                )}
-                style={{
-                  background:
-                    activeMode === mode ? 'rgba(139,92,246,0.06)' : 'var(--bg-surface)',
-                  border:
-                    activeMode === mode
-                      ? '1px solid rgba(139,92,246,0.2)'
-                      : '1px solid var(--border)',
-                }}
+                type="button"
+                onClick={() => setShowMoreOptions(prev => !prev)}
+                className="w-full text-left px-3 py-2.5 rounded-xl flex items-center justify-between transition-all duration-150 text-text-secondary hover:text-text-primary"
+                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
               >
-                <div className="flex items-start gap-2.5">
-                  <Icon
-                    className={cn(
-                      'w-3.5 h-3.5 mt-0.5 shrink-0',
-                      activeMode === mode ? 'text-violet-400' : 'text-text-muted',
-                    )}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <p className="text-[12px] font-semibold leading-tight">{label}</p>
-                      <span
-                        className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-                        style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.18)', color: '#a78bfa' }}
-                      >
-                        {category}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-text-muted leading-snug mt-0.5">{desc}</p>
-                    <p className="text-[10px] leading-snug mt-1" style={{ color: '#2dd4bf' }}>{safeStatus}</p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-text-muted" />
+                  <span className="text-[12px] font-semibold">More options</span>
                 </div>
+                <ChevronDown className={cn(
+                  'w-3.5 h-3.5 text-text-muted transition-transform duration-150',
+                  showMoreOptions && 'rotate-180',
+                )} />
               </button>
-            ))}
+            )}
+
+            {/* Expanded mode list — visible when toggle is open OR a mode is already active */}
+            {(showMoreOptions || activeMode !== null) && (
+              <>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
+                  What would you like?
+                </p>
+                {MODES.filter(({ mode }) => isModeAllowedForRole(mode, role)).map(({ mode, label, desc, Icon, category, safeStatus }) => (
+                  <button
+                    key={mode}
+                    onClick={() => { handleModeClick(mode); setShowMoreOptions(false) }}
+                    className={cn(
+                      'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150',
+                      activeMode === mode
+                        ? 'text-text-primary'
+                        : 'text-text-secondary hover:text-text-primary',
+                    )}
+                    style={{
+                      background:
+                        activeMode === mode ? 'rgba(139,92,246,0.06)' : 'var(--bg-surface)',
+                      border:
+                        activeMode === mode
+                          ? '1px solid rgba(139,92,246,0.2)'
+                          : '1px solid var(--border)',
+                    }}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <Icon
+                        className={cn(
+                          'w-3.5 h-3.5 mt-0.5 shrink-0',
+                          activeMode === mode ? 'text-violet-400' : 'text-text-muted',
+                        )}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-[12px] font-semibold leading-tight">{label}</p>
+                          <span
+                            className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.18)', color: '#a78bfa' }}
+                          >
+                            {category}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-text-muted leading-snug mt-0.5">{desc}</p>
+                        <p className="text-[10px] leading-snug mt-1" style={{ color: '#2dd4bf' }}>{safeStatus}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
           </div>
 
           {/* ── Quick actions for this page — contextual task shortcuts (Sprint 266) ── */}
