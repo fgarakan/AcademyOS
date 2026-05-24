@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 751 — DONNA VoiceReadyShell Response Audit V1
+
+- Created `docs/DONNA_VOICE_READY_SHELL_RESPONSE_AUDIT_751.md` — Full response surface audit of `DonnaVoiceReadyShell.tsx` and `DonnaChatThread.tsx`; confirms no duplicate surfaces (single `messages` state → single `DonnaChatThread`); voice state coverage table (Ready/Listening/Thinking/Speaking/Error); compares architecture to sidebar panel; UI score 8.1/10 → 8.6/10; remaining gaps for Sprint 752+
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — Added `isSpeaking` state to track TTS active state; wired `speakWithServerTts` status callback (`'done' | 'error'` → `setIsSpeaking(false)`); added `setIsSpeaking(false)` to `handleVoiceToggle` (alongside existing `stopServerTts()` call); added compact violet "Speaking…" status banner between Listening bar and voice error banner — banner includes Stop button that calls `stopServerTts()` + `setIsSpeaking(false)`; completes voice state UX (was missing Speaking indicator while TTS auto-played after voice input)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 750 — DONNA Voice Layer Response Suppression V1
 
 - Created `docs/DONNA_VOICE_LAYER_RESPONSE_SUPPRESSION_750.md` — Full audit of the third duplicate response surface (DonnaVoiceLayer "DONNA says" block, Sprint 694 origin); suppression condition; Category A vs B behavior table; response surface map across all sprints (747–750); voice controls preservation table; UI score update 8.6/10 → 9/10; remaining gaps for Sprint 751+

@@ -90,6 +90,8 @@ export function DonnaVoiceReadyShell({
   const plainRole = toPlainRole(role)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isTyping, setIsTyping] = useState(false)
+  // Sprint 751 — track TTS speaking state so the UI shows a "Speaking…" indicator
+  const [isSpeaking, setIsSpeaking] = useState(false)
   const voice = useVoiceDictation()
   const pendingVoiceRef = useRef<string | null>(null)
   const router = useRouter()
@@ -112,7 +114,11 @@ export function DonnaVoiceReadyShell({
     const msSinceVoice = Date.now() - lastVoiceInputAt.current
     if (msSinceVoice > 30_000) return  // too long since voice input
     lastSpokenIdRef.current = lastMsg.id
-    void speakWithServerTts(stripMarkdownForTts(lastMsg.text))
+    // Sprint 751: pass status callback to track speaking state for UI indicator
+    setIsSpeaking(true)
+    void speakWithServerTts(stripMarkdownForTts(lastMsg.text), (status) => {
+      if (status === 'done' || status === 'error') setIsSpeaking(false)
+    })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages])
 
@@ -730,6 +736,7 @@ export function DonnaVoiceReadyShell({
       voice.stop()
     } else {
       stopServerTts()  // Sprint 731: stop any playing TTS before mic activates
+      setIsSpeaking(false)  // Sprint 751: clear speaking indicator when mic activates
       voice.reset()
       pendingVoiceRef.current = null
       voice.start()
@@ -748,6 +755,28 @@ export function DonnaVoiceReadyShell({
               {voice.interimTranscript}
             </span>
           )}
+        </div>
+      )}
+
+      {/* Sprint 751 — speaking indicator: shown when TTS auto-play is active after a voice input */}
+      {isSpeaking && (
+        <div
+          className="flex items-center justify-center gap-2 py-1.5"
+          style={{ background: 'rgba(139,92,246,0.08)', borderBottom: '1px solid rgba(139,92,246,0.2)' }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
+            style={{ background: '#8b5cf6' }}
+          />
+          <span className="text-xs" style={{ color: '#8b5cf6' }}>Speaking…</span>
+          <button
+            type="button"
+            onClick={() => { stopServerTts(); setIsSpeaking(false) }}
+            className="text-[10px] px-2 py-0.5 rounded-lg border ml-1 transition-colors hover:opacity-80"
+            style={{ borderColor: 'rgba(139,92,246,0.3)', color: 'rgba(139,92,246,0.8)' }}
+          >
+            Stop
+          </button>
         </div>
       )}
 
