@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-24 — Sprint 756 — DONNA Site-Wide UI Operator Certification V1
+
+- Created `docs/DONNA_SITE_WIDE_UI_OPERATOR_CERTIFICATION.md` — Formal certification document issuing verdict **FOUNDATION READY — NOT FULL SITE-WIDE CERTIFIED**; audits all 11 certification requirements (registry, matrix, page map, 6 operators, dispatcher, regression prompts); verifies all architecture invariants intact (execute_approved_action never bypassed, finalize_player_placement never called, direct sends always blocked, cross-tenant always blocked); documents Director portal as fully operator-covered; documents coach/player/parent as navigation-only; lists 5 gaps with suggested sprints (757: wire dispatcher to live panel; 758: runtime operator step tracking; 759–760: coach/player/parent operators; 761: per-page action surfacing; 762: CI regression harness); certification evidence table; upgrade path to CERTIFIED SITE-WIDE UI OPERATOR
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 755 — DONNA Safe Action Dispatcher + UI Regression Prompts V1
 
 - Created `src/lib/donna/donnaUIActionDispatcher.ts` — Master UI intent dispatcher for DONNA; priority-ordered dispatch pipeline: (1) blocked phrases → hard refusal, (2) guided operator launch → operator step 1, (3) navigation → route resolution, (4) draft intent → proposed_actions routing, (5) approval routing → director review queue, (6) clarification fallback; `DispatchResult` interface with `kind`, `actionId`, `message`, `route`, `operatorId`, `stepNumber`, `filterParams`, `requiresApproval`, `approvalRoute`, `matrixPermission`, `confidence`, `safetyClass`; 16 nav patterns, 6 blocked patterns, 6 operator trigger patterns; secondary utilities `validateUIActionForContext()` and `getAvailableActionsForContext()`
