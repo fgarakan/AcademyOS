@@ -284,8 +284,8 @@ The following invariants are confirmed **intact** across all certification sprin
 
 | Gap | Impact | Suggested Sprint |
 |---|---|---|
-| `dispatchUIIntent()` is not wired to `DonnaAssistantButton` live panel | Dispatcher logic exists but is not called from the running UI. DONNA's live panel still uses the existing `donnaCommandRouter.ts` + `DonnaCommandDispatcher.ts` path. | Sprint 757: Wire `dispatchUIIntent()` as pre-check in `DonnaAssistantButton.tsx` before GODmode dispatch |
-| Guided operator step progression has no runtime state | `getOperatorStep(operatorId, stepNumber)` exists but no component tracks which step the user is on across turns | Sprint 758: Add operator progress state to `cooThread` metadata or a dedicated `currentOperatorStep` state |
+| ~~`dispatchUIIntent()` is not wired to live panel~~ | ~~Dispatcher logic exists but not called from running UI~~ | ✅ **CLOSED — Sprint 757** |
+| ~~Guided operator step progression has no runtime state~~ | ~~No component tracks which step the user is on~~ | ✅ **CLOSED — Sprint 757** (`currentOperatorId` + `currentOperatorStep` state added) |
 | Coach/player/parent portals have no guided operators | Only navigation is DONNA-assisted; no multi-step operator flows | Sprint 759–760: SESSION_OPERATOR already supports coach role; wire to `/coach` layout |
 | `getUIActionsForPage()` not yet called from page components | Each page could pass its current route and receive DONNA's available action set for context-aware suggestions | Sprint 761: Pass current route to DONNA panel for per-page quick action surfacing |
 | Regression cases are not run in CI | 36 cases defined but no automated runner; QA is manual | Sprint 762: Build lightweight test harness runner against `dispatchUIIntent()` |
@@ -311,31 +311,31 @@ The following invariants are confirmed **intact** across all certification sprin
 | TypeScript clean | `npx tsc --noEmit` | — | ✅ |
 | No migrations | git diff | — | ✅ |
 | No package installs | package.json unchanged | — | ✅ |
-| Dispatcher wired to live panel | not yet implemented | — | ❌ |
-| Runtime operator step tracking | not yet implemented | — | ❌ |
-| Coach/player/parent operators | not yet implemented | — | ❌ |
+| Dispatcher wired to live panel | `DonnaAssistantButton.tsx` Sprint 757 | — | ✅ |
+| Runtime operator step tracking | `currentOperatorId`/`currentOperatorStep` state Sprint 757 | — | ✅ |
+| Coach/player/parent operators | not yet wired to `/coach` layout | — | ❌ |
 
 ---
 
-## Final Verdict
+## Final Verdict — Updated Sprint 757
 
 ```
-FOUNDATION READY — NOT FULL SITE-WIDE CERTIFIED
+FOUNDATION READY BUT NOT FULL SITE-WIDE
 
-The complete UI operator infrastructure exists and is TypeScript-clean:
-  - 39 registered UI actions across 6 safety classes and 10 domains
-  - Formal 5-role × 6-class approval matrix
-  - 6 domain guided operators with step-by-step DONNA prompts
-  - Priority-ordered safe dispatcher with architecture invariant enforcement
-  - 36 regression cases covering all roles, all safety classes, and all invariants
+Sprint 757 closed the two primary blockers:
+  ✅ dispatchUIIntent() is now live-wired in DonnaAssistantButton.tsx
+  ✅ Guided operator runtime state (currentOperatorId + currentOperatorStep) is tracked
 
-DONNA is certified to operate the Director portal through the existing
-DonnaCommandDispatcher + GODmode path, which is separately certified at 9.3/10.
+What works after Sprint 757:
+  - Architecture invariant violations (direct sends, deletions, bypass queue, cross-tenant)
+    are intercepted by the structured dispatcher BEFORE the COO router fires
+  - Explicit navigation commands route via the dispatcher's 16-pattern NAV_PATTERNS
+  - Guided operator phrases launch the 6 domain operators with step 1 prompt displayed
+  - GODmode dispatch, COO router, draft/approval, and all legacy routing are unchanged
 
-The new UI operator layer (donnaUIActionDispatcher) provides the structural
-foundation for full site-wide certification. Certification upgrades to
-CERTIFIED SITE-WIDE UI OPERATOR when the dispatcher is wired to the live panel
-(Sprint 757) and operator step state is tracked across turns (Sprint 758).
+Remaining gap preventing full site-wide certification:
+  - Coach/player/parent portals are not yet wired to the dispatcher
+    (only the Director layout has DonnaAssistantButton — the primary panel)
 
 No architecture invariants were weakened. No protected files were modified.
 No migrations, no package installs, no AI/DB calls in certification files.
@@ -344,5 +344,6 @@ No migrations, no package installs, no AI/DB calls in certification files.
 ---
 
 *Produced by Sprint 756 — 2026-05-24*
+*Dispatcher wired: Sprint 757 — 2026-05-24*
 *Infrastructure: Sprints 753–755*
 *Godmode base certification: Sprint 744 (9.3/10)*
