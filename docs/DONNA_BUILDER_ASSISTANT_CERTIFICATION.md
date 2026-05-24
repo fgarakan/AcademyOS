@@ -327,7 +327,7 @@ Evidence:
 
 ## Remaining Gaps (Honest Assessment)
 
-1. **Live curriculum content item counts**: Specific gate counts, drill counts, skill lists per level require live DB data not currently in `DirectorDonnaContext`. DONNA explains level structure from static knowledge; actual item inventories are surfaced through the Curriculum page.
+1. **Live curriculum structural gaps — PARTIALLY WIRED (Sprint 741)**: `DirectorDonnaContext.curriculumGaps` is now populated from `loadCurriculumStructuralGaps()` — queries `curriculum_levels`, `curriculum_gates`, and `curriculum_drills` to detect levels with no gates or no drills. DONNA can now surface real structural gaps (e.g., "Orange 2 — no advancement gates defined"). **Still blocked**: player-progress gaps (requires migrations 041-044), template-to-level gaps (requires migration 045), parent-safe description coverage (requires migration 061). See `docs/DONNA_CURRICULUM_GAP_WIREUP_LIMITATION_741.md` for full details.
 
 2. **`voice_command_id` optional in curriculum draft**: `saveCurriculumDraftAction` still has a voice_commands dependency. DONNA drafts the proposal text and routes to Curriculum Builder — the formal save is done by the director in the UI. No DB writes from DONNA.
 

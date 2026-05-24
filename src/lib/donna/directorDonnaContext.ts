@@ -1,11 +1,13 @@
 // Sprint 1012 — Director Context Aggregator V1
 // Aggregates all director-visible DONNA context from live sources.
 // Read-only. No DB writes. No migrations required. Fails safely with demo fallback.
+// Sprint 741 — Curriculum structural gap query wired (loadCurriculumStructuralGaps).
 
 import type { DB } from '@/lib/types/db'
 import type { DONNAConfidence } from '@/lib/donna/donnaCOOAnswerEngine'
 import type { COOFieldStatus } from '@/lib/donna/cooDataStatus'
 import { deriveOverallStatus } from '@/lib/donna/cooDataStatus'
+import { loadCurriculumStructuralGaps } from '@/lib/donna/curriculumStructuralGapLoader'
 
 // ── Output types ──────────────────────────────────────────────────────────────
 
@@ -373,10 +375,21 @@ export async function loadDirectorDonnaContext(
     fieldStatuses.attentionItems = 'insufficient_data'
   }
 
-  // ── 7. Curriculum gaps (blocked — schema gap) ─────────────────────────────
+  // ── 7. Curriculum gaps (structural gap query — Sprint 741) ───────────────────
+  // loadCurriculumStructuralGaps queries curriculum_levels + curriculum_gates +
+  // curriculum_drills (global and academy-scoped). Returns gap strings such as
+  // "Orange 2 — no drills defined (3 gates exist)". Fails safely with [] on
+  // any RLS block or schema error. Player-progress gaps remain blocked pending
+  // migrations 041-044 (documented in DONNA_CURRICULUM_GAP_WIREUP_LIMITATION_741.md).
 
-  const curriculumGaps: string[] = []
-  fieldStatuses.curriculum = 'blocked_by_schema'
+  let curriculumGaps: string[] = []
+
+  try {
+    curriculumGaps = await loadCurriculumStructuralGaps(db, academyId)
+    fieldStatuses.curriculum = curriculumGaps.length > 0 ? 'live' : 'partial'
+  } catch {
+    fieldStatuses.curriculum = 'insufficient_data'
+  }
 
   // ── 8. Academy risks ───────────────────────────────────────────────────────
 
@@ -477,7 +490,7 @@ export async function loadDirectorDonnaContext(
     { field: 'Wrap-up coverage', status: fieldStatuses.wrapUps as COOFieldStatus, label: statusLabel(fieldStatuses.wrapUps as COOFieldStatus) },
     { field: 'Attendance exceptions', status: fieldStatuses.attendance as COOFieldStatus, label: statusLabel(fieldStatuses.attendance as COOFieldStatus) },
     { field: 'Attention flags', status: fieldStatuses.attentionItems as COOFieldStatus, label: statusLabel(fieldStatuses.attentionItems as COOFieldStatus) },
-    { field: 'Curriculum gaps', status: 'blocked_by_schema', label: 'Migration pending' },
+    { field: 'Curriculum gaps', status: fieldStatuses.curriculum as COOFieldStatus, label: statusLabel(fieldStatuses.curriculum as COOFieldStatus) },
   ]
 
   // ── 11. Confidence and isLive ──────────────────────────────────────────────

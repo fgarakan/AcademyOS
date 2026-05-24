@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-24 — Sprint 741 — DONNA Live Curriculum Gap Wire-Up V1
+
+- Created `src/lib/donna/curriculumStructuralGapLoader.ts` — Read-only curriculum structural gap query helper; `loadCurriculumStructuralGaps(db, academyId)` queries `curriculum_levels` (global spine, all 12 levels), `curriculum_gates` (global, counts active gates per level via `from_level_id`), `curriculum_drills` (global `academy_id = null` + academy-specific drills, counts per `level_min_id`); returns string[] of gap descriptions for levels missing drills or gates; fails safely with `[]` on any error or RLS block; includes `loadCurriculumStructuralGapDetail()` for curriculum builder UI use
+- Modified `src/lib/donna/directorDonnaContext.ts` — Section 7 wired: replaces hardcoded `curriculumGaps = []` + `fieldStatuses.curriculum = 'blocked_by_schema'` with `await loadCurriculumStructuralGaps(db, academyId)`; sets `fieldStatuses.curriculum = 'live'` when gaps are detected, `'partial'` when query succeeds with no gaps, `'insufficient_data'` on error; source label for curriculum gaps now uses live field status instead of hardcoded `'Migration pending'`
+- Created `docs/DONNA_CURRICULUM_GAP_WIREUP_LIMITATION_741.md` — Full limitation doc: what is wired (structural gaps: no gates, no drills per level), what remains blocked (player-progress gaps blocked by migrations 041-044, template-to-level gaps blocked by migration 045, parent-safe description gaps blocked by migration 061), architecture notes on why curriculum_levels/gates are global, RLS behavior, recommended future sprint for player-progress gap wiring
+- Modified `docs/DONNA_BUILDER_ASSISTANT_CERTIFICATION.md` — Updated Remaining Gap #1: "Live curriculum content item counts" → now "Live curriculum structural gaps — PARTIALLY WIRED (Sprint 741)"; documents that structural gaps (no gates, no drills) are now live; player-progress, template, and parent-safe description gaps remain blocked pending migrations
+- CAP 4 (Identify missing curriculum information) now uses partial live data: structural gap strings from DB when available, honest fallback to setup guidance when data is empty
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 740 — DONNA Builder Assistant Certification V1
 
 - Modified `src/lib/donna/donnaBoundaryResponses.ts` — narrowed `SCHEMA_GAP_TOPICS` gate pattern from broad `\b(gate|curriculum.?gate|gate.?progress|evidence)\b` to explicit live-data queries only (`gate.?progress|gate.?evidence|gate.?completion|gate.?status|passed.?gate|gate.?check.?for`); similarly narrowed level-requirement pattern; fixes CAP 5 regression where "add a gate to Orange 2" was being blocked by schema gap before the curriculum draft dispatch could intercept it
