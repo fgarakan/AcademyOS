@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-24 — Sprint 771 — AIQS Major Route Loading Skeletons V1
+
+- Created `src/app/director/loading.tsx` — Director Home skeleton: header, command center hero, KPI grid, sessions (was blank on load)
+- Created `src/app/coach/loading.tsx` — Coach Home skeleton: header, next session, stat row, today, watchlist (was blank on load)
+- Created `src/app/player/loading.tsx` — Player Home skeleton: header, quick links, mission card, level, badges (was blank on load)
+- Created `src/app/parent/loading.tsx` — Parent Home skeleton: header, quick links, mission context, level, progress, attendance (was blank on load)
+- Created `src/app/director/donna/loading.tsx` — DONNA Command skeleton: header, 2-column layout (left cards + right chat shell) (was blank on load)
+- Created `src/app/director/curriculum/loading.tsx` — Curriculum Map skeleton: header, filter bar, level cards + DONNA sidebar (was blank on load)
+- Created `src/app/director/settings/loading.tsx` — Settings skeleton: header + form card (was blank on load)
+- Created `docs/AIQS_LOADING_SKELETONS_771.md` — sprint doc; files created; already-covered routes; implementation notes
+- All skeletons use SkeletonCard + animate-skeleton; no business logic, no DB calls
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 770 — AIQS Micro-Text Sweep V1
 
 - Modified `src/app/director/page.tsx` — day labels + activity timestamp: `text-[10px]` → `text-[11px]`/`text-xs`
