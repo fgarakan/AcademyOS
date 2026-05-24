@@ -1,5 +1,7 @@
 // Sprint 594 — Player Badge Wins V1
-import { TrendingUp, Trophy, MessageCircle, BookOpen, ArrowRight, HelpCircle, Sparkles, CheckCircle, Zap, Activity, Map as MapIcon, Shield, ChevronRight, Star, Flame, Award, Lock } from 'lucide-react'
+// Sprint 778 — AIQS Mission-First Layout: merged 3 dev cards → 1, removed Q&A + Ask-Coach + Encouragement cards,
+//              added section separators (Development Focus / Sessions / Progress) to organize scroll.
+import { TrendingUp, Trophy, BookOpen, ArrowRight, Sparkles, CheckCircle, Zap, Activity, Map as MapIcon, Shield, ChevronRight, Star, Flame, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { PlayerMissionPreview } from '@/components/player/PlayerMissionPreview'
@@ -9,7 +11,6 @@ import { LevelProgressRing } from '@/components/player/LevelProgressRing'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { buildIndividualDevelopmentPlan, buildRoleSpecificIdpView } from '@/lib/player/individualDevelopmentPlan'
 import type { IdpPlayerView } from '@/lib/player/individualDevelopmentPlan'
-import { parsePlayerProgressQuestion, buildPlayerProgressAnswer } from '@/lib/player/playerProgressQa'
 import { buildModuleForLevelDomain } from '@/lib/curriculum/learningModules'
 import type { LearningModuleDomain } from '@/lib/curriculum/learningModules'
 import { buildPlayerMissionCopy } from '@/lib/player/playerMissionCopy'
@@ -316,46 +317,6 @@ export default async function PlayerHome() {
     }
   }
 
-  // Q&A using playerProgressQa helper with player role view data
-  const qaAnswer = idpView
-    ? buildPlayerProgressAnswer(
-        parsePlayerProgressQuestion('what to practice'),
-        {
-          currentLevelName: idpView.current_level,
-          currentLevelStage: null,
-          nextLevelName: null,
-          hasCurriculumState: !!idpView.current_level,
-          gates: idpView.requirements_to_move_up.map((c, i) => ({
-            id: `gate_${i}`,
-            domain: '',
-            criterion: c,
-            threshold: '',
-            evaluator: '',
-            cadence: '',
-            evidence_window: null,
-          })),
-          drills: idpView.what_to_practice.map((p, i) => {
-            const [name, ...rest] = p.split(' — ')
-            return {
-              id: `drill_${i}`,
-              name: name ?? p,
-              domain: '',
-              session_block: '',
-              objective: rest.join(' — ') || p,
-            }
-          }),
-          coachLanguage: [],
-          learningModuleHint: idpView.mini_challenge
-            ? {
-                mini_challenge: idpView.mini_challenge,
-                reflection_question: idpView.reflection_question ?? '',
-                try_this: null,
-              }
-            : null,
-        },
-      )
-    : null
-
   const sessionPresentCount = recentSessionHistory.filter(r => r.status === 'present' || r.status === 'late').length
   const sessionAttendancePct = recentSessionHistory.length > 0
     ? Math.round((sessionPresentCount / recentSessionHistory.length) * 100)
@@ -452,87 +413,84 @@ export default async function PlayerHome() {
         </Card>
       )}
 
-      {/* ── Live Development Plan ────────────────────────────── */}
+      {/* ── Development Plan ─────────────────────────────────── */}
+      {/* Sprint 778: section separator + 3 cards merged → 1; Q&A + Ask-Coach + Encouragement removed */}
       {idpView && (
         <>
-          {/* Current Level Card */}
-          {idpView.current_level && (
-            <Card>
-              <CardContent className="py-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
-                      <TrendingUp className="w-5 h-5 text-lime" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">Current Level</p>
-                      <p className="font-bold text-text-primary text-base leading-tight">{idpView.current_level}</p>
-                      {currentLevelStage && (
-                        <p className="text-xs text-text-muted capitalize">{currentLevelStage.replace(/_/g, ' ')} stage</p>
-                      )}
-                    </div>
-                  </div>
-                  {nextLevelDisplayName && (
-                    <div className="text-right shrink-0">
-                      <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">Next Level</p>
-                      <p className="text-xs text-text-secondary font-medium">{nextLevelDisplayName}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Section separator */}
+          <div className="flex items-center gap-3 pt-2">
+            <div className="flex-1 h-px bg-border" />
+            <p className="label-xs shrink-0">Development Focus</p>
+            <div className="flex-1 h-px bg-border" />
+          </div>
 
-          {/* What to Practice */}
-          {idpView.what_to_practice.length > 0 && (
+          {/* Merged: Level + What to Work On + What to Understand (was 3 separate cards) */}
+          {(idpView.current_level || idpView.what_to_practice.length > 0 || idpView.what_to_understand.length > 0) && (
             <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
-                    <TrendingUp className="w-4 h-4 text-text-muted" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-text-primary text-sm">What to Work On</p>
-                    <p className="text-text-muted text-xs">Your current drill focus</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {idpView.what_to_practice.map((item, i) => (
-                    <li key={i} className="flex gap-2 text-sm text-text-secondary">
-                      <span className="text-lime shrink-0 mt-0.5">·</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
+              <CardContent className="py-4 space-y-4">
 
-          {/* What to Understand */}
-          {idpView.what_to_understand.length > 0 && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
-                    <BookOpen className="w-4 h-4 text-text-muted" />
+                {/* Current Level row */}
+                {idpView.current_level && (
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center shrink-0">
+                        <TrendingUp className="w-4 h-4 text-lime" />
+                      </div>
+                      <div>
+                        <p className="label-xs mb-0.5">Current Level</p>
+                        <p className="font-bold text-text-primary text-sm leading-tight">{idpView.current_level}</p>
+                        {currentLevelStage && (
+                          <p className="text-xs text-text-muted capitalize">{currentLevelStage.replace(/_/g, ' ')} stage</p>
+                        )}
+                      </div>
+                    </div>
+                    {nextLevelDisplayName && (
+                      <div className="text-right shrink-0">
+                        <p className="label-xs mb-0.5">Next Level</p>
+                        <p className="text-xs text-text-secondary font-medium">{nextLevelDisplayName}</p>
+                      </div>
+                    )}
                   </div>
+                )}
+
+                {/* What to Work On */}
+                {idpView.what_to_practice.length > 0 && (
                   <div>
-                    <p className="font-semibold text-text-primary text-sm">What to Understand</p>
-                    <p className="text-text-muted text-xs">Ideas to build this week</p>
+                    {idpView.current_level && <div className="h-px bg-border" />}
+                    <div className="flex items-center gap-1.5 mb-2 pt-1">
+                      <TrendingUp className="w-3.5 h-3.5 text-text-muted" />
+                      <p className="text-xs font-semibold text-text-primary">What to Work On</p>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {idpView.what_to_practice.map((item, i) => (
+                        <li key={i} className="flex gap-2 text-sm text-text-secondary">
+                          <span className="text-lime shrink-0 mt-0.5">·</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {idpView.what_to_understand.map((item, i) => (
-                    <li key={i} className="flex gap-2 text-sm text-text-secondary">
-                      <span className="text-status-blue shrink-0 mt-0.5">·</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                )}
+
+                {/* What to Understand */}
+                {idpView.what_to_understand.length > 0 && (
+                  <div>
+                    <div className="h-px bg-border" />
+                    <div className="flex items-center gap-1.5 mb-2 pt-1">
+                      <BookOpen className="w-3.5 h-3.5 text-text-muted" />
+                      <p className="text-xs font-semibold text-text-secondary">What to Understand</p>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {idpView.what_to_understand.map((item, i) => (
+                        <li key={i} className="flex gap-2 text-sm text-text-secondary">
+                          <span className="text-status-blue shrink-0 mt-0.5">·</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
               </CardContent>
             </Card>
           )}
@@ -573,7 +531,7 @@ export default async function PlayerHome() {
                     <Trophy className="w-4 h-4 text-lime" />
                   </div>
                   <div>
-                    <p className="font-semibold text-text-primary text-sm">This Week's Challenge</p>
+                    <p className="font-semibold text-text-primary text-sm">This Week&apos;s Challenge</p>
                     <p className="text-text-muted text-xs">From your curriculum learning module</p>
                   </div>
                 </div>
@@ -595,139 +553,75 @@ export default async function PlayerHome() {
             </Card>
           )}
 
-          {/* What to ask your coach */}
-          {(idpView.what_to_understand.length > 0 || idpView.recommended_next_mission) && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
-                    <HelpCircle className="w-4 h-4 text-text-muted" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-text-primary text-sm">What to Ask Your Coach</p>
-                    <p className="text-text-muted text-xs">Good questions to ask this week</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {idpView.what_to_understand.slice(0, 2).map((item, i) => (
-                    <li key={i} className="flex gap-2 text-sm text-text-secondary">
-                      <span className="text-lime shrink-0 mt-0.5">?</span>
-                      <span>&ldquo;How am I doing with {item.toLowerCase().replace(/\.$/, '')}?&rdquo;</span>
-                    </li>
-                  ))}
-                  {idpView.recommended_next_mission && (
-                    <li className="flex gap-2 text-sm text-text-secondary">
-                      <span className="text-lime shrink-0 mt-0.5">?</span>
-                      <span>&ldquo;What does success look like for my current mission?&rdquo;</span>
-                    </li>
-                  )}
-                </ul>
-                <p className="text-xs text-text-muted mt-3">
-                  Great players ask great questions. These are safe to bring to any session.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Q&A Answer */}
-          {qaAnswer && qaAnswer.question_intent !== 'unknown' && qaAnswer.bullets.length > 0 && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center shrink-0">
-                    <MessageCircle className="w-4 h-4 text-text-muted" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-text-primary text-sm">{qaAnswer.title}</p>
-                    <p className="text-text-muted text-xs">From your development plan</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-text-secondary mb-3 leading-relaxed">{qaAnswer.answer}</p>
-                {qaAnswer.bullets.length > 0 && (
-                  <ul className="space-y-1.5">
-                    {qaAnswer.bullets.slice(0, 4).map((b, i) => (
-                      <li key={i} className="flex gap-2 text-xs text-text-muted">
-                        <span className="text-lime shrink-0 mt-0.5">·</span>
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-          )}
-          {/* Encouragement */}
-          <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-surface-raised border border-border">
-            <Sparkles className="w-4 h-4 text-lime shrink-0 mt-0.5" />
-            <p className="text-xs text-text-muted leading-relaxed">
-              Your coach updates this plan as you grow. Keep showing up — every session counts.
-            </p>
-          </div>
-
           {/* Recent session history */}
           {recentSessionHistory.length > 0 && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <LevelProgressRing
-                    percent={sessionAttendancePct}
-                    size={44}
-                    label={`${sessionAttendancePct}%`}
-                    className="shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-text-primary text-sm">Recent Sessions</p>
-                    <p className="text-text-muted text-xs">Your last {recentSessionHistory.length} sessions</p>
+            <>
+              {/* Section separator: Sessions */}
+              <div className="flex items-center gap-3 pt-2">
+                <div className="flex-1 h-px bg-border" />
+                <p className="label-xs shrink-0">Sessions</p>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <LevelProgressRing
+                      percent={sessionAttendancePct}
+                      size={44}
+                      label={`${sessionAttendancePct}%`}
+                      className="shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-text-primary text-sm">Recent Sessions</p>
+                      <p className="text-text-muted text-xs">Your last {recentSessionHistory.length} sessions</p>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <AttendanceSparkline
-                  sessions={recentSessionHistory}
-                  className="mb-3"
-                />
-                <div className="divide-y divide-border">
-                  {recentSessionHistory.map((item, i) => {
-                    const statusLabel =
-                      item.status === 'present' ? 'Attended'
-                      : item.status === 'late' ? 'Attended late'
-                      : item.status === 'excused' ? 'Excused'
-                      : 'Not attended'
-                    const statusColor =
-                      item.status === 'present' ? 'text-status-green'
-                      : item.status === 'late' ? 'text-status-orange'
-                      : item.status === 'excused' ? 'text-status-blue'
-                      : 'text-text-muted'
-                    return (
-                      <div key={i} className="flex items-center justify-between gap-3 py-2.5">
-                        <div className="min-w-0">
-                          <p className="text-sm text-text-primary truncate">
-                            {item.sessionName ?? 'Session'}
-                          </p>
-                          <p className="text-xs text-text-muted">
-                            {new Date(item.date).toLocaleDateString('en-US', {
-                              weekday: 'short', month: 'short', day: 'numeric',
-                            })}
-                          </p>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <AttendanceSparkline
+                    sessions={recentSessionHistory}
+                    className="mb-3"
+                  />
+                  <div className="divide-y divide-border">
+                    {recentSessionHistory.map((item, i) => {
+                      const statusLabel =
+                        item.status === 'present' ? 'Attended'
+                        : item.status === 'late' ? 'Attended late'
+                        : item.status === 'excused' ? 'Excused'
+                        : 'Not attended'
+                      const statusColor =
+                        item.status === 'present' ? 'text-status-green'
+                        : item.status === 'late' ? 'text-status-orange'
+                        : item.status === 'excused' ? 'text-status-blue'
+                        : 'text-text-muted'
+                      return (
+                        <div key={i} className="flex items-center justify-between gap-3 py-2.5">
+                          <div className="min-w-0">
+                            <p className="text-sm text-text-primary truncate">
+                              {item.sessionName ?? 'Session'}
+                            </p>
+                            <p className="text-xs text-text-muted">
+                              {new Date(item.date).toLocaleDateString('en-US', {
+                                weekday: 'short', month: 'short', day: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {item.status === 'present' && (
+                              <CheckCircle className="w-3 h-3 text-status-green" />
+                            )}
+                            <span className={`text-[11px] font-semibold ${statusColor}`}>
+                              {statusLabel}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {item.status === 'present' && (
-                            <CheckCircle className="w-3 h-3 text-status-green" />
-                          )}
-                          <span className={`text-[11px] font-semibold ${statusColor}`}>
-                            {statusLabel}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
         </>
       )}
@@ -757,7 +651,14 @@ export default async function PlayerHome() {
         </Card>
       )}
 
-      {/* ── Wins & Streaks ────────────────────────────────────── */}
+      {/* Section separator: Progress */}
+      <div className="flex items-center gap-3 pt-2">
+        <div className="flex-1 h-px bg-border" />
+        <p className="label-xs shrink-0">Progress</p>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      {/* ── Wins & Badges ────────────────────────────────────── */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
@@ -886,7 +787,6 @@ export default async function PlayerHome() {
           <ChevronRight className="w-4 h-4 text-status-blue/40 shrink-0" />
         </div>
       </Link>
-
 
     </div>
   )

@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-24 — Sprint 778 — Player Portal AIQS Mission-First Layout V1
+
+- Modified `src/app/player/page.tsx` — 7 AIQS fixes reducing 14+ card scroll depth to 7–9 cards in 3 named zones
+- Added "Development Focus" section separator before IDP content block — explicit zone break after above-fold hero
+- Merged 3 parallel development cards (Current Level + What to Work On + What to Understand) → 1 unified card with internal `h-px bg-border` dividers — 3 cards → 1, same data
+- Removed "What to Ask Your Coach" card (HelpCircle) — generic questions derived from what_to_understand, already visible in merged card; no decision value
+- Removed Q&A Answer card + `qaAnswer` computation block — duplicated Development Focus data in generic prose form; not actionable; `buildPlayerProgressAnswer`/`parsePlayerProgressQuestion` imports removed
+- Removed standalone Encouragement note — hero card + mission preview already set motivating tone; mid-scroll noise
+- Added "Sessions" section separator before Recent Sessions card (inside idpView + recentSessionHistory conditional)
+- Added "Progress" section separator before Wins & Badges (always shown)
+- Result: 3-zone scroll structure — Above fold (Hero + Mission) / Development Focus / Progress
+- Cleaned unused imports: MessageCircle, HelpCircle, Award, parsePlayerProgressQuestion, buildPlayerProgressAnswer
+- Created `docs/AIQS_PLAYER_PORTAL_778.md` — sprint doc; full structural audit; guardrails
+- Estimated score improvement: ~73 → ~82 (+9)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 777 — Director DONNA AIQS Cognitive Load V1
 
 - Modified `src/app/director/donna/page.tsx` — 4 structural removals + 1 standardization on the AIQS #1 priority page (71/100)
