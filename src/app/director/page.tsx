@@ -21,6 +21,8 @@ import { OnboardingProgressCard } from './OnboardingProgressCard'
 import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
 import { DirectorKpiHealthSection } from './_components/DirectorKpiHealthSection'
 import { DonnaExecutiveCard, type DonnaExecutivePriorityItem } from './_components/DonnaExecutiveCard'
+import { DirectorAttentionQueueHero } from './_components/DirectorAttentionQueueHero'
+import { buildAttentionQueue, type AttentionQueueInput } from '@/lib/director/attentionQueue'
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
 import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
@@ -335,40 +337,64 @@ export default async function DirectorDashboard() {
     })
   }
 
+  // Sprint 763 — Build attention queue from existing data, no new DB queries.
+  // pendingApprovals: aggregate items from counts already fetched.
+  // highAlerts: mapped from priorityQueue (already fetched via getAcademyPriorityQueue).
+  // overCapacityGroups: empty (no group capacity query on this page — not fabricated).
+  // noCoverageGroupCount: 0 (no per-group session coverage query — not fabricated).
+  const attentionQueueInput: AttentionQueueInput = {
+    pendingApprovals: [
+      ...(pendingWrapUpsCount > 0 ? [{
+        id: 'pending-wrap-ups',
+        actionLabel: `${pendingWrapUpsCount.toString()} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting review`,
+        riskLevel: 'medium',
+        expiresAt: null,
+        entityLabel: null,
+      }] : []),
+      ...(newRequests > 0 ? [{
+        id: 'lesson-requests',
+        actionLabel: `${newRequests.toString()} lesson request${newRequests !== 1 ? 's' : ''} need review`,
+        riskLevel: 'medium',
+        expiresAt: null,
+        entityLabel: null,
+      }] : []),
+      ...(reassessmentDue > 0 ? [{
+        id: 'reassessment-due',
+        actionLabel: `${reassessmentDue.toString()} player${reassessmentDue !== 1 ? 's' : ''} overdue for reassessment`,
+        riskLevel: 'high',
+        expiresAt: null,
+        entityLabel: null,
+      }] : []),
+      ...(pendingCount > 0 ? [{
+        id: 'pending-placement',
+        actionLabel: `${pendingCount.toString()} player${pendingCount !== 1 ? 's' : ''} awaiting curriculum placement`,
+        riskLevel: 'low',
+        expiresAt: null,
+        entityLabel: null,
+      }] : []),
+    ],
+    highAlerts: priorityQueue.map(item => ({
+      signalId: item.player_id ?? null,
+      playerId: item.player_id ?? null,
+      playerName: item.full_name ?? null,
+      title: item.primary_action ?? null,
+      severity: item.urgency === 'immediate' ? 'critical'
+              : (item.urgency === 'urgent' || item.urgency === 'high') ? 'high'
+              : 'medium',
+    })),
+    overCapacityGroups: [],
+    curriculumGapCount: curricGapCount,
+    noCoverageGroupCount: 0,
+  }
+  const attentionQueue = buildAttentionQueue(attentionQueueInput)
+
   const fitnessTemplateCount = ((templateCheckData ?? []) as Array<{ id: string; tags: string[] | null }>)
     .filter((t) => (t.tags ?? []).includes('fitness_template:true')).length
 
   // Academy live state — all 4 setup steps complete
   const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
 
-  // Highest-priority banner
-  const priorityAction: { title: string; body: string; href: string; actionLabel: string } | null = (() => {
-    if (pendingWrapUpsCount > 0) return {
-      title: `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting your review`,
-      body: 'Approve or provide feedback before coaches move to their next session.',
-      href: '/director/review?tab=wrap-ups',
-      actionLabel: 'Review Wrap-Ups',
-    }
-    if (pendingCount > 0) return {
-      title: `${pendingCount} player${pendingCount !== 1 ? 's' : ''} waiting for placement`,
-      body: 'Complete placement to activate profiles and assign curriculum levels.',
-      href: '/director/players',
-      actionLabel: 'Place Players',
-    }
-    if (attentionCount > 0) return {
-      title: `${attentionCount} player${attentionCount !== 1 ? 's' : ''} need attention`,
-      body: 'Players on hold or due for reassessment are not progressing.',
-      href: '/director/players',
-      actionLabel: 'Review Players',
-    }
-    if (newRequests > 0) return {
-      title: `${newRequests} lesson request${newRequests !== 1 ? 's' : ''} awaiting review`,
-      body: 'Parent requests need director review and routing.',
-      href: '/director/review',
-      actionLabel: 'Review Requests',
-    }
-    return null
-  })()
+  // Sprint 763: priorityAction banner removed — subsumed by DirectorAttentionQueueHero above.
 
   return (
     <div className="p-6 space-y-8 animate-fade-in">
@@ -439,6 +465,12 @@ export default async function DirectorDashboard() {
         fitnessTemplatesExist={fitnessTemplateCount > 0}
       />
 
+      {/* ── Director Attention Queue Hero ──────────────────── */}
+      {/* Sprint 763: structured attention queue from buildAttentionQueue(). */}
+      {/* Shows top 3 items: Decision / Risk / Watch / Opportunity categories. */}
+      {/* Empty state: "Today looks clear." Safe actions only. No mutations. */}
+      <DirectorAttentionQueueHero queue={attentionQueue} showMax={3} />
+
       {/* ── DONNA Executive Attention Card ─────────────────── */}
       <DonnaExecutiveCard items={donnaItems} directorName={directorDisplayName} />
 
@@ -450,17 +482,6 @@ export default async function DirectorDashboard() {
         newRequests={newRequests}
         advancementReady={advancementReadyCount}
       />
-
-      {/* ── Recommended next action ───────────────────────── */}
-      {priorityAction && (
-        <NextBestActionCard
-          variant="warning"
-          title={priorityAction.title}
-          body={priorityAction.body}
-          actionLabel={priorityAction.actionLabel}
-          actionHref={priorityAction.href}
-        />
-      )}
 
       {/* ── Academy Setup ─────────────────────────────────── */}
       {isAcademyLive ? (

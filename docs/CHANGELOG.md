@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-24 — Sprint 763 — Director Attention Queue Hero Wiring V1
+
+- Created `src/app/director/_components/DirectorAttentionQueueHero.tsx` — Pure UI hero component accepting `AttentionQueue` from `buildAttentionQueue()`; renders top 3 items with category chips (Decision/Risk/Watch/Opportunity/FYI), priority-colored left border (critical=red/high=orange/medium=yellow/low=neutral), "Do this first" label on item 1, safe action label derived from href (Open Review / View Player / View Sessions / View Curriculum / View Groups / View Details), "Ask DONNA →" footer link, "View all N items →" overflow link, and empty state "Today looks clear" when queue is empty
+- Modified `src/app/director/page.tsx` — Imported `buildAttentionQueue`, `AttentionQueueInput` from `@/lib/director/attentionQueue`; imported `DirectorAttentionQueueHero`; built `AttentionQueueInput` from existing fetched data (priorityQueue → highAlerts with urgency→severity mapping; synthetic aggregate pendingApprovals from pendingWrapUpsCount/newRequests/reassessmentDue/pendingCount; curricGapCount → curriculumGapCount; overCapacityGroups=[]; noCoverageGroupCount=0); called `buildAttentionQueue()`; rendered `<DirectorAttentionQueueHero queue={attentionQueue} showMax={3} />` as first content section above `DonnaExecutiveCard`; removed `priorityAction` computation and its `NextBestActionCard` priority-banner render (subsumed by hero); no new DB queries added
+- Created `docs/DIRECTOR_ATTENTION_QUEUE_HERO_WIRING_763.md` — Sprint documentation; attention queue source; input data mapping table; page order after sprint; category/priority visual system; empty state behavior; safe actions; DONNA integration status; protected files not staged; remaining gaps; Sprint 764 recommendation
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 762 — Director Dashboard KPI Engine Live Wiring V1
 
 - Modified `src/app/director/page.tsx` — Added import of `computeRecapCompletionRate` + `RecapCheckRow` from `coachExecutionKpiEngine`; extended `curricStateRows` query to include `enrolled_at`; computed `stalledPlayerCount` (players enrolled >180d, not yet advancement-eligible); added two scoped queries (completed sessions 30d + voice_notes by session_id) and called `computeRecapCompletionRate()` to produce `recapCompletionPct: number | null`; updated `DirectorKpiHealthSection` render with two new props
