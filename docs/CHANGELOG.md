@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-24 — Sprint 742A — DONNA Godmode Foundation Architecture Audit V1
+
+- Created `docs/DONNA_GODMODE_FOUNDATION_ARCHITECTURE_742A.md` — Full architecture and dependency audit for DONNA Godmode: 18 sections covering Godmode definition and contract, 14-domain capability map (view/explain/draft/approve-route/execute/audit columns), live data readiness map (identifies player_curriculum_states/assessments/groups/templates as NOT yet in DirectorDonnaContext), approval authority matrix, universal action draft architecture (identifies voice_command_id NOT NULL as the single biggest architectural blocker), AcademyOperatingContext TypeScript interface proposal, evidence graph proposal, impact preview architecture, audit/rollback architecture, data quality guardian architecture, role permission model, full migration dependency map (041–068), Tier 1 (no migration) vs Tier 2 buildable features, 6-phase sprint sequence (742B–760) to Godmode certification, 10-dimension readiness scores (overall 4.7/10)
+- Modified `docs/CHANGELOG.md` — Sprint 742A entry added
+- No code changes — architecture and dependency audit only
+- TypeScript: N/A (documentation-only sprint)
+
+---
+
 ## 2026-05-24 — Sprint 741 — DONNA Live Curriculum Gap Wire-Up V1
 
 - Created `src/lib/donna/curriculumStructuralGapLoader.ts` — Read-only curriculum structural gap query helper; `loadCurriculumStructuralGaps(db, academyId)` queries `curriculum_levels` (global spine, all 12 levels), `curriculum_gates` (global, counts active gates per level via `from_level_id`), `curriculum_drills` (global `academy_id = null` + academy-specific drills, counts per `level_min_id`); returns string[] of gap descriptions for levels missing drills or gates; fails safely with `[]` on any error or RLS block; includes `loadCurriculumStructuralGapDetail()` for curriculum builder UI use
