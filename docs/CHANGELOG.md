@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-24 — Sprint 742D — DONNA Assessment Coverage Gap Detector V1
+
+- Created `src/lib/donna/assessmentCoverageGapDetector.ts` — Pure logic detector; cross-references playerCurriculumStateSummaries with assessmentSummaries; detects: (1) players with curriculum state but no assessment in last 90 days, (2) advancement-eligible players with no promotion_ready assessment; severity: high when advancement_eligible or never assessed, medium otherwise; sorted by severity then gap type (eligible_no_promotion_evidence first); exports `detectAssessmentCoverageGaps(ctx)`, `summarizeAssessmentGaps(result)`, `AssessmentCoverageGap`, `AssessmentCoverageResult`; fails safely when either context unavailable
+- Modified `src/lib/donna/directorDonnaContext.ts` — Added 3 new fields (assessmentCoverageGaps, assessmentCoverageGapCount, eligibleWithoutAssessmentEvidence); section 7f-1 calls detector; added "Level movement without assessment evidence" risk signal (high urgency) when eligibleWithoutAssessmentEvidence > 0; updated buildDemoContext() and return value
+- Modified `src/lib/donna/curriculumLevelDonnaAnswer.ts` — Added ASSESSMENT_GAP_PATTERNS regex; added `buildAssessmentGapAnswer(ctx)` using `summarizeAssessmentGaps()`; wired into dispatch before TEMPLATE_COVERAGE_PATTERNS; imported `summarizeAssessmentGaps`; `isCurriculumLevelQuestion()` updated
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 742C — DONNA Curriculum Template Coverage Gap Detector V1
 
 - Created `src/lib/donna/curriculumTemplateCoverageGapDetector.ts` — Pure TypeScript gap detector (no DB, no AI, no side effects); exports `CurriculumTemplateCoverageGap`, `CurriculumTemplateCoverageResult`, `detectCurriculumTemplateCoverageGaps(ctx)`, `summarizeCoverageGaps(result)`; detection logic: group players by `current_level_id` UUID → build covered-level Set from `templates.curriculum_level_id` UUID → gap = levels with players but no template; severity high (≥3 players) / medium / low; sorted by severity then playerCount; fails safely with empty result if either context is unavailable; also tracks `unassignedTemplateCount`; fixed Map iteration TS error (replaced `for...of Map` with `Array.from().forEach()`)

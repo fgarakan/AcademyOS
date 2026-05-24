@@ -8,6 +8,7 @@
 import type { DonnaSafeReadAnswer } from '@/lib/donna/donnaSafeReadActions'
 import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import { summarizeCoverageGaps } from '@/lib/donna/curriculumTemplateCoverageGapDetector'
+import { summarizeAssessmentGaps } from '@/lib/donna/assessmentCoverageGapDetector'
 
 // -- Pattern detection --------------------------------------------------------
 
@@ -33,6 +34,10 @@ const HOW_CURRICULUM_PATTERNS =
 const TEMPLATE_COVERAGE_PATTERNS =
   /\b(levels?.{0,30}no templates?|templates?.{0,30}(missing|gaps?|coverage|which|levels?)|levels?.{0,20}(no|without|missing).{0,10}templates?|what templates?.{0,30}(build|create|need|next|fix|missing)|fix.{0,20}templates?|template.{0,20}(coverage|gaps?|priority)|which levels?.{0,20}(need|missing|no).{0,10}templates?|template.{0,20}fix first)\b/i
 
+// Sprint 742D — Assessment coverage gap patterns
+const ASSESSMENT_GAP_PATTERNS =
+  /\b(assessment.{0,20}(gap|overdue|missing|coverage|needed|due)|players?.{0,20}(no assessment|not assessed|overdue|need assessment)|who.{0,20}(needs?|needs? an) assessment|assess(ment)?.{0,20}(which|who|priority|next|fix)|advancement.{0,20}(no evidence|missing assessment|needs? assess))\b/i
+
 export function isCurriculumLevelQuestion(text: string): boolean {
   return (
     LEVEL_STRUCTURE_PATTERNS.test(text) ||
@@ -41,7 +46,8 @@ export function isCurriculumLevelQuestion(text: string): boolean {
     CONTENT_EXPLAIN_PATTERNS.test(text) ||
     GAP_PATTERNS.test(text) ||
     HOW_CURRICULUM_PATTERNS.test(text) ||
-    TEMPLATE_COVERAGE_PATTERNS.test(text)
+    TEMPLATE_COVERAGE_PATTERNS.test(text) ||
+    ASSESSMENT_GAP_PATTERNS.test(text)
   )
 }
 
@@ -224,6 +230,68 @@ function buildGapAnalysisAnswer(ctx: DirectorDonnaContext | null): DonnaSafeRead
   }
 }
 
+// Sprint 742D — Assessment coverage gap answer builder
+function buildAssessmentGapAnswer(ctx: DirectorDonnaContext | null): DonnaSafeReadAnswer {
+  if (!ctx) {
+    return {
+      actionId: 'assessment_gap_no_context',
+      text: 'I need live data to check assessment coverage. Make sure your academy is set up and DONNA is connected.',
+      confidence: 'insufficient',
+      sourceNote: 'No context available',
+      followUp: 'Take me to Players',
+      href: '/director/players',
+      isAnswerable: false,
+    }
+  }
+
+  if (!ctx.assessmentContextAvailable || !ctx.playerProgressContextAvailable) {
+    return {
+      actionId: 'assessment_gap_unavailable',
+      text: 'Assessment coverage analysis requires player curriculum states and assessment data. I\'m not seeing that data yet. Go to Players to review assessments.',
+      confidence: 'insufficient',
+      sourceNote: 'Assessment context not loaded',
+      followUp: 'Take me to Players',
+      href: '/director/players',
+      isAnswerable: true,
+    }
+  }
+
+  const summary = summarizeAssessmentGaps({
+    gaps: ctx.assessmentCoverageGaps,
+    playersChecked: ctx.playerCurriculumStateCount,
+    playersWithRecentAssessment: ctx.playerCurriculumStateCount - ctx.assessmentCoverageGapCount,
+    eligibleWithoutEvidence: ctx.eligibleWithoutAssessmentEvidence,
+    coverageAvailable: ctx.assessmentContextAvailable,
+  })
+
+  if (ctx.assessmentCoverageGaps.length === 0) {
+    return {
+      actionId: 'assessment_gap_none',
+      text: summary,
+      confidence: 'high',
+      sourceNote: 'Live assessment data',
+      followUp: 'View Players',
+      href: '/director/players',
+      isAnswerable: true,
+    }
+  }
+
+  const topGap = ctx.assessmentCoverageGaps[0]
+  const nextStep = topGap.gapType === 'eligible_no_promotion_evidence'
+    ? 'Run a formal assessment with promotion_ready=true before approving level movement for these players.'
+    : `Schedule assessments for the overdue players. Start with players who are advancement-eligible.`
+
+  return {
+    actionId: 'assessment_gaps_live',
+    text: [summary, '', `**Next step:** ${nextStep}`].join('\n'),
+    confidence: 'high',
+    sourceNote: 'Live player curriculum states + assessments',
+    followUp: 'Take me to Players',
+    href: '/director/players',
+    isAnswerable: true,
+  }
+}
+
 // Sprint 742C — Template coverage gap answer builder
 function buildTemplateCoverageGapAnswer(ctx: DirectorDonnaContext | null): DonnaSafeReadAnswer {
   // No context at all
@@ -338,8 +406,12 @@ export function tryAnswerCurriculumLevelQuestion(
 ): DonnaSafeReadAnswer | null {
   if (!isCurriculumLevelQuestion(text)) return null
 
-  // Template coverage gap questions — checked first among gap-type questions
-  // so "which levels have no templates" does not fall through to the general GAP_PATTERNS path.
+  // Assessment coverage gap questions (Sprint 742D)
+  if (ASSESSMENT_GAP_PATTERNS.test(text)) {
+    return buildAssessmentGapAnswer(ctx)
+  }
+
+  // Template coverage gap questions — checked before general GAP_PATTERNS
   if (TEMPLATE_COVERAGE_PATTERNS.test(text)) {
     return buildTemplateCoverageGapAnswer(ctx)
   }

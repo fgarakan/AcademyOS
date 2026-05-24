@@ -28,6 +28,12 @@ import {
 import type {
   CurriculumTemplateCoverageGap,
 } from '@/lib/donna/curriculumTemplateCoverageGapDetector'
+import {
+  detectAssessmentCoverageGaps,
+} from '@/lib/donna/assessmentCoverageGapDetector'
+import type {
+  AssessmentCoverageGap,
+} from '@/lib/donna/assessmentCoverageGapDetector'
 
 // ── Output types ──────────────────────────────────────────────────────────────
 
@@ -98,6 +104,10 @@ export interface DirectorDonnaContext {
   curriculumTemplateCoverageGaps: CurriculumTemplateCoverageGap[]
   curriculumTemplateCoverageGapCount: number
   templateCoverageContextAvailable: boolean
+  // Assessment coverage (Sprint 742D)
+  assessmentCoverageGaps: AssessmentCoverageGap[]
+  assessmentCoverageGapCount: number
+  eligibleWithoutAssessmentEvidence: number
   // Meta
   sourceLabels: DirectorSourceLabel[]
   confidence: DONNAConfidence
@@ -186,6 +196,9 @@ function buildDemoContext(): DirectorDonnaContext {
     curriculumTemplateCoverageGaps: [],
     curriculumTemplateCoverageGapCount: 0,
     templateCoverageContextAvailable: false,
+    assessmentCoverageGaps: [],
+    assessmentCoverageGapCount: 0,
+    eligibleWithoutAssessmentEvidence: 0,
     sourceLabels: [
       { field: 'Review queue', status: 'insufficient_data', label: 'Demo data' },
       { field: 'Sessions', status: 'insufficient_data', label: 'Demo data' },
@@ -503,6 +516,21 @@ export async function loadDirectorDonnaContext(
   templateSummaries = templateResult.summaries
   fieldStatuses.templates = templateResult.fieldStatus
 
+  // ── 7f-1. Assessment coverage gaps (Sprint 742D) ──────────────────────────
+  // Pure logic: cross-references playerCurriculumStateSummaries with assessmentSummaries.
+  // Detects overdue assessments (>90 days) and advancement-eligible players without promotion evidence.
+
+  const assessmentGapResult = detectAssessmentCoverageGaps({
+    playerCurriculumStateSummaries,
+    assessmentSummaries,
+    playerProgressContextAvailable: pcsResult.fieldStatus === 'live',
+    assessmentContextAvailable: assessmentResult.fieldStatus === 'live',
+  })
+
+  const assessmentCoverageGaps = assessmentGapResult.gaps
+  const assessmentCoverageGapCount = assessmentGapResult.gaps.length
+  const eligibleWithoutAssessmentEvidence = assessmentGapResult.eligibleWithoutEvidence
+
   // ── 7f. Curriculum-to-template coverage gaps (Sprint 742C) ───────────────
   // Pure logic: no new DB call. Runs on already-loaded summaries from 7b and 7e.
   // Detects levels with active players but no active class template assigned by UUID.
@@ -574,6 +602,15 @@ export async function loadDirectorDonnaContext(
       detail: `${curriculumTemplateCoverageGapCount} curriculum level${curriculumTemplateCoverageGapCount !== 1 ? 's' : ''} have active players but no class template assigned`,
       urgency: curriculumTemplateCoverageGapCount >= 3 ? 'high' : 'medium',
       actionHref: '/director/templates',
+    })
+  }
+
+  if (eligibleWithoutAssessmentEvidence > 0) {
+    academyRisks.push({
+      signal: 'Level movement without assessment evidence',
+      detail: `${eligibleWithoutAssessmentEvidence} advancement-eligible player${eligibleWithoutAssessmentEvidence !== 1 ? 's' : ''} have no promotion-ready assessment on record`,
+      urgency: 'high',
+      actionHref: '/director/players',
     })
   }
 
@@ -688,6 +725,10 @@ export async function loadDirectorDonnaContext(
     curriculumTemplateCoverageGaps,
     curriculumTemplateCoverageGapCount,
     templateCoverageContextAvailable,
+    // Assessment coverage (Sprint 742D)
+    assessmentCoverageGaps,
+    assessmentCoverageGapCount,
+    eligibleWithoutAssessmentEvidence,
     sourceLabels,
     confidence,
     isLive,
