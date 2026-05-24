@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-24 — Sprint 745 — DONNA Premium Assistant UI + Persistence Audit V1
+
+- Created `docs/DONNA_PREMIUM_UI_PERSISTENCE_AUDIT_745.md` — Full UX audit of the DONNA sidebar panel against 10 premium criteria; scores all dimensions (Visual Clarity 4/10, Cognitive Load 3/10, Scroll Burden 3/10, Repeated Elements 3/10, etc.); documents target 5-zone panel layout; lists all changes made in Sprint 745 and remaining gaps for Sprint 746/747+; no Godmode intelligence changes
+- Modified `src/components/donna/DonnaSessionContextProvider.tsx` — Added SSR-safe `sessionStorage` persistence for `donnaPanelOpen`; on mount reads and restores panel open state; on every `panelOpen` change writes boolean to sessionStorage; stores only boolean (no transcripts, no user data, no DB rows); both effects guarded with `typeof window !== 'undefined'`
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — (1) Greeting fix: changed `if (!introCompleted)` to `if (!introCompleted && !firstName)` so directors with a known name skip the "What is your name?" onboarding step; when firstName is set and intro not yet completed, writes `introCompleted` to sessionStorage immediately; (2) Removed always-visible "Current context" card (~100–130px scroll reduction); (3) Removed `DONNA_ACTIVATION_HELP` text line from panel header (duplicate of footer); (4) Simplified footer from two-line to one-line: "DONNA drafts. You approve."
+- Modified `src/components/assistant/DonnaVoiceLayer.tsx` — Voice unavailable UX: replaced generic error text with single clear line "Voice is unavailable. You can type, or retry microphone."; renamed dismiss button ✕ → "Retry mic" (same dismiss handler, clearer affordance)
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — Added "Retry voice" button when `voice.error` is set and not `'unsupported'`; button calls `voice.reset()` to return to idle state; clarified both error copy lines; unsupported path unchanged
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 742G — DONNA Voice Sentinel + Player Stall Detector + Full Certification
 
 - Created `src/lib/actions/donnaSentinelAction.ts` — Server action (`'use server'`); `submitDonnaActionDraft(input)` resolves voice_command_id NOT NULL blocker; asserts not preview mode; gets auth user from Supabase server session; looks up `academy_id` and `role` from `academy_memberships.profile_id` (never trusts client-passed data); inserts `voice_commands` sentinel row (`input_method: 'typed'`, `processing_status: 'processed'`); inserts `proposed_actions` row (`status: 'pending_review'`, `action_type: 'other'`); returns `{ actionId, error }`; no migration required

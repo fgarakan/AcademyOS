@@ -234,20 +234,22 @@ export function DonnaVoiceLayer({
           </div>
         )}
 
-        {/* Voice permission / browser notice — calm, not alarming */}
+        {/* Voice permission / browser notice — Sprint 745: clear one-line message + retry affordance */}
         {voicePermissionError && (
           <div
             className="mt-2.5 rounded-lg px-3 py-2.5 flex items-start justify-between gap-3"
             style={{ background: 'var(--bg-surface-raised)', border: '1px solid var(--border-subtle)' }}
           >
-            <p className="text-[11px] text-text-muted leading-snug">{voicePermissionError}</p>
+            <p className="text-[11px] text-text-muted leading-snug">
+              Voice is unavailable. You can type, or retry microphone.
+            </p>
             <button
               type="button"
               onClick={onDismissVoiceError}
-              aria-label="Dismiss voice notice"
-              className="shrink-0 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
+              aria-label="Retry microphone"
+              className="shrink-0 text-[10px] text-text-muted hover:text-text-secondary transition-colors whitespace-nowrap"
             >
-              ✕
+              Retry mic
             </button>
           </div>
         )}

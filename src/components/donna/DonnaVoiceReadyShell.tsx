@@ -751,13 +751,23 @@ export function DonnaVoiceReadyShell({
         </div>
       )}
 
+      {/* Sprint 745 — voice error: clear one-line message + retry button (non-unsupported errors only) */}
       {voice.error && (
-        <div className="px-4 py-1.5 bg-status-red/5 border-b border-status-red/20">
+        <div className="px-4 py-2 bg-status-red/5 border-b border-status-red/20 flex items-center justify-between gap-3">
           <span className="text-xs text-status-red">
             {voice.error === 'unsupported'
-              ? 'Voice input not supported in this browser.'
-              : 'Voice input error — try typing instead.'}
+              ? 'Voice is unavailable in this browser. Type your question.'
+              : 'Voice is unavailable. You can type, or retry microphone.'}
           </span>
+          {voice.error !== 'unsupported' && (
+            <button
+              type="button"
+              onClick={() => voice.reset()}
+              className="text-xs shrink-0 px-2.5 py-1 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors"
+            >
+              Retry voice
+            </button>
+          )}
         </div>
       )}
 

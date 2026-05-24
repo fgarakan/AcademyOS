@@ -22,6 +22,25 @@ export function DonnaSessionContextProvider({ children }: { children: ReactNode 
   const openDonnaPanel = useCallback(() => setPanelOpen(true), [])
   const closeDonnaPanel = useCallback(() => setPanelOpen(false), [])
 
+  // Sprint 745 — SSR-safe sessionStorage persistence for donnaPanelOpen.
+  // Restores open state on mount; persists on every change.
+  // Stores only the boolean — no transcripts, no user data, no DB rows.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      if (window.sessionStorage.getItem('donnaPanelOpen') === 'true') {
+        setPanelOpen(true)
+      }
+    } catch { /* sessionStorage may be blocked in some browser configurations */ }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.sessionStorage.setItem('donnaPanelOpen', panelOpen ? 'true' : 'false')
+    } catch { /* sessionStorage may be full or blocked */ }
+  }, [panelOpen])
+
   // Track route changes automatically
   useEffect(() => {
     if (!pathname) return

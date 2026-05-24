@@ -104,7 +104,6 @@ import {
   DONNA_PUBLIC_NAME,
   DONNA_PUBLIC_TITLE,
   DONNA_FULL_LABEL,
-  DONNA_ACTIVATION_HELP,
   DONNA_SAFETY_REMINDER,
   DONNA_WAKE_LABEL,
   DONNA_WAKE_ACTIVE_LABEL,
@@ -2749,7 +2748,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             const introCompleted =
               typeof window !== 'undefined' &&
               window.sessionStorage.getItem('academyos:donna:introCompleted:v1') === 'true'
-            if (!introCompleted) {
+            if (!introCompleted && !firstName) {
               // Sprint 290: start the guided onboarding intro instead of generic greeting.
               // Sprint 296B: do NOT auto-speak here — Chrome discards the gesture context
               // before speak() is reached after multiple setState calls. Director presses
@@ -2757,6 +2756,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               setOnboardingStep(0)
               setShowOnboardingSuggestions(false)
             } else {
+              // Sprint 745: if name already known from auth profile, skip the name question
+              // and mark intro complete so future opens also go straight to greeting.
+              if (!introCompleted && firstName && typeof window !== 'undefined') {
+                window.sessionStorage.setItem('academyos:donna:introCompleted:v1', 'true')
+              }
               const isOnSessionPage =
                 pathname.includes('/sessions/') && pathname.split('/sessions/')[1]?.length > 0
               if (role === 'director') {
@@ -2974,9 +2978,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             </div>
             <p className="text-[10px] text-text-muted leading-snug mt-0.5">
               {DONNA_PUBLIC_TITLE}
-            </p>
-            <p className="text-[11px] text-text-secondary leading-snug mt-0.5">
-              {DONNA_ACTIVATION_HELP}
             </p>
             {/* Sprint 373 — Review queue badge (director only — Sprint 657 regression fix) */}
             {role === 'director' && reviewQueuePendingCount > 0 && (
@@ -3479,34 +3480,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             </div>
           )}
 
-          {/* ── Current context card — hidden in template, guided-task, and review_queue modes ── */}
-          {activeMode !== 'create_template' && activeMode !== 'guided_task' && activeMode !== 'review_queue' && (
-            <div
-              className="rounded-xl px-3.5 py-3 space-y-2"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}
-            >
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold mb-0.5">
-                  Current context
-                </p>
-                <p className="text-sm font-semibold text-text-primary">{ctx.screenName}</p>
-              </div>
-              <p className="text-[12px] text-text-secondary leading-relaxed">{ctx.assistantIntro}</p>
-              {ctx.approvalRequiredFor.length > 0 && (
-                <p
-                  className="text-[10px] text-text-muted leading-snug pt-2"
-                  style={{ borderTop: '1px solid var(--border-subtle)' }}
-                >
-                  Requires approval:{' '}
-                  {ctx.approvalRequiredFor
-                    .slice(0, 2)
-                    .map(a => a.replace(/_/g, ' '))
-                    .join(', ')}
-                  .
-                </p>
-              )}
-            </div>
-          )}
+          {/* Current context card removed in Sprint 745 — context is available via Explain mode */}
 
           {/* ── Inline response: Guide me ── */}
           {activeMode === 'guide' && (
@@ -4050,14 +4024,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
         {/* Footer — approval boundary */}
         <div
-          className="px-4 py-3 shrink-0 space-y-1"
+          className="px-4 py-3 shrink-0"
           style={{ borderTop: '1px solid var(--border-subtle)' }}
         >
           <p className="text-[11px] font-semibold" style={{ color: 'rgba(200,255,0,0.7)' }}>
-            DONNA proposes. You approve. Always in control.
-          </p>
-          <p className="text-[10px] text-text-muted leading-snug">
-            All actions go to your review queue before anything changes.
+            DONNA drafts. You approve.
           </p>
         </div>
       </aside>
