@@ -18,6 +18,7 @@ import { SetupProgressChecklist } from '@/components/onboarding/SetupProgressChe
 import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 import { OnboardingProgressCard } from './OnboardingProgressCard'
 import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
+import { DirectorKpiHealthSection } from './_components/DirectorKpiHealthSection'
 import { DonnaExecutiveCard, type DonnaExecutivePriorityItem } from './_components/DonnaExecutiveCard'
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
@@ -449,6 +450,15 @@ export default async function DirectorDashboard() {
         curriculumExecution={curriculumExecutionPct}
         playerProgress={improvingCount}
         activePlayers={activePlayers}
+      />
+
+      {/* ── Academy KPI Health — formal threshold framework ── */}
+      <DirectorKpiHealthSection
+        activePlayers={activePlayers}
+        advancementReadyCount={advancementReadyCount}
+        curriculumExecutionPct={curriculumExecutionPct}
+        pendingWrapUpsCount={pendingWrapUpsCount}
+        improvingCount={improvingCount}
       />
 
       {/* ── Health Chart + Live Activity ─────────────────── */}

@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-24 — Sprint 761 — Director Dashboard KPI Wiring V1
+
+- Created `src/app/director/_components/DirectorKpiHealthSection.tsx` — New server-compatible component; wires `src/lib/kpis/academyKpiModel.ts` (ACADEMY_KPI_META, computeKpiStatus, formatKpiValue, buildKpiValue, getOverallAcademyHealth) into the director home page; accepts pre-computed props (activePlayers, advancementReadyCount, curriculumExecutionPct, pendingWrapUpsCount, improvingCount); builds KpiValue[] for all 12 academy KPIs with honest data provenance (live: level_readiness_queue_size; partial proxy: curriculum_coverage; no_data: all others); renders 4 grouped KPI health sections (Attendance & Engagement, Coach Operations, Development Health, Retention & Growth) with health-status color coding, status dots, provenance labels, and "Collecting data" fallback; overall health badge via getOverallAcademyHealth(); honesty footer with provenance key; link to /director/kpi for per-player signals
+- Modified `src/app/director/page.tsx` — Added import of DirectorKpiHealthSection; added section render between AcademyKpiCardsSection and health chart/live activity row; passes activePlayers, advancementReadyCount, curriculumExecutionPct, pendingWrapUpsCount, improvingCount as props; no new DB queries added
+- Created `docs/DIRECTOR_DASHBOARD_KPI_WIRING_761.md` — Sprint documentation; KPI module used; data status per KPI; provenance summary; fallback behavior; protected files not staged; remaining wiring gaps; Sprint 762 recommendation
+- Note: DonnaAssistantButton.tsx has uncommitted DONNA operator-step changes — intentionally not staged (unrelated to KPI wiring; dedicated DONNA sprint required)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 760 — DONNA Per-Page Action Surfacing V1
 
 - Modified `src/components/assistant/DonnaAssistantButton.tsx` — added `showPageActions` state; added `getSafetyLabel()` helper mapping UIActionSafetyClass to human labels ("✓ Safe", "Draft → Review", "Director Approval Required"); added `handleShowPageActions()` toggle; added "What can DONNA do here?" chip to both director and coach tab bar chips; added page-aware action surfacing panel in scrollable body using `getAvailableActionsForContext(uiActionRole, pathname)` (max 6 actions, color-coded safety labels, pure UI — no DB/AI); updated imports to include `getAvailableActionsForContext`, `getOperatorStep`, `UIActionSafetyClass`
