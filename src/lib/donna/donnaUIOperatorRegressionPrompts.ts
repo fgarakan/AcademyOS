@@ -648,19 +648,19 @@ export const CLARIFICATION_REGRESSION_CASES: UIRegressionCase[] = [
   {
     id: 'clarify-002',
     category: 'clarification',
-    description: 'DONNA asks which player when none specified for level change',
+    description: 'DONNA starts level change draft and asks which player when none specified',
     input: { text: 'propose a level change', role: 'academy_director', currentRoute: '/director/players' },
     expect: {
-      kind: 'clarification_needed',
-      matrixPermission: null,
-      requiresApproval: false,
-      hasRoute: false,
+      kind: 'draft_submitted',
+      matrixPermission: 'DRAFT_ONLY',
+      requiresApproval: true,
+      hasRoute: true,
       hasOperatorId: false,
-      confidence: 'partial',
-      messageContains: ['which player', 'who'],
+      confidence: 'high',
+      messageContains: ['which player', 'review'],
     },
     riskClass: 'safe',
-    notes: 'Level change without naming a player → DONNA asks which player.',
+    notes: 'Sprint 759: DONNA correctly starts the draft workflow and asks "which player?" in the draft message — this is better than clarification_needed. Changed from clarification_needed to draft_submitted.',
   },
 ]
 

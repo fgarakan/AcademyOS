@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-24 — Sprint 759 — DONNA Site-Wide UI Operator Manual QA + Certification Challenge V1
+
+- Modified `src/lib/donna/donnaUIActionDispatcher.ts` — QA-driven fixes raised pass rate from 33% (12/36) to 100% (36/36); major changes: broadened BLOCKED_PATTERNS for send-message, raw-notes, and billing; added `checkRoleBoundaryForNav()` enforcing DIRECTOR_ONLY_ROUTES set; broadened OPERATOR_PATTERNS to catch "open the curriculum builder", "start session wrap-up", "review this player"; fixed `requiresApproval: false` on guided_operator launch; added `isCreationOrDraftIntent()` so "create session template" routes to draft before nav; moved publish curriculum check to step 3.5 (before nav); added role-scoped player/parent routes to `NAV_PATTERNS` (`resolveNavigation` now accepts optional `role`); added parent data access boundary for bulk session records; added `resolveFilterIntent()` for filter/search intents; fixed action ID `draft_session_template → draft_class_template`; rewording fixes (removed "send" from parent update message, added "review" to publish message, added "draft" to template message); removed unused imports and variables; TS clean throughout
+- Modified `src/lib/donna/donnaUIOperatorRegressionPrompts.ts` — Updated `clarify-002` from `clarification_needed` to `draft_submitted` — dispatcher correctly starts draft and asks "which player?" (superior to clarification fallback); updated `matrixPermission`, `requiresApproval`, `hasRoute`, `messageContains` to match correct behavior
+- Modified `src/lib/donna/donnaUIActionRegistry.ts` — `draft_class_template`: added `head_coach` to `allowedRoles` (was `['academy_director']` only); restores alignment with approval matrix row `draft_to_review: head_coach → DRAFT_ONLY`
+- Created `docs/DONNA_CERTIFICATION_QA_759.md` — Full QA findings report: 36/36 cases (100%), 18 root causes documented, architecture invariants table, role boundary table, final dispatcher priority order, certification statement
+- Deleted `donna_qa_759.ts` — Temporary QA harness (findings captured in certification doc)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 758 — DONNA Player and Parent Portal Dispatcher Wiring V1
 
 - Modified `src/components/player/DonnaChat.tsx` — Enabled text input (was disabled); added `useRouter`, `usePathname` from `next/navigation`; imported `dispatchUIIntent` from `donnaUIActionDispatcher`; added `typedText` + `dispatchResponse` state; added `PLAYER_NAV` constant (9 player-portal local routes: missions, skill-path, level-up, competition-path, fitness-path, practice, wins, home, ask-donna); added `resolvePlayerNavigation()` function; added `handleSubmit()` with 4-priority pipeline: (1) dispatcher blocked patterns → show refusal; (2) player-local nav → `router.push()` + navigate message; (3) dispatcher navigate result → `router.push()`; (4) fallback guidance; added Enter-key handler; added dispatcher response card (blue for info, orange for honest/blocked); kept chip response card and all existing chip functionality unchanged; updated submit button to `Send` icon (enabled/disabled state)

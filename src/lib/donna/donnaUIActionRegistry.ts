@@ -635,7 +635,7 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     domain: 'templates',
     safetyClass: 'draft_to_review',
     method: 'draft_submit',
-    allowedRoles: ['academy_director'],
+    allowedRoles: ['academy_director', 'head_coach'],
     requiresApproval: true,
     approvalRoute: '/director/review',
     naturalLanguageExamples: [
@@ -646,7 +646,7 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: ['/director/class-templates'],
     blockedReason: null,
     implementationStatus: 'wired',
-    notes: 'TemplateDraftPanel + saveFitnessTemplateDraftAction() wired.',
+    notes: 'TemplateDraftPanel + saveFitnessTemplateDraftAction() wired. Sprint 759: head_coach added — aligns with draft_to_review matrix row (DRAFT_ONLY for head_coach).',
   },
 
   {

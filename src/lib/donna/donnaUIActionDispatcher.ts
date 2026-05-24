@@ -1,25 +1,13 @@
 // Sprint 755 — DONNA Safe UI Action Dispatcher V1
+// Sprint 759 — QA certification fixes: role boundaries, blocked patterns, operator patterns,
+//              draft priority, filter resolution, approvalRequired correction.
+//
 // Structured action dispatch layer for DONNA UI operations.
-// Resolves a user intent → validated UI action → dispatch response with approval path.
-//
 // Pure TypeScript — no DB calls, no AI calls, no mutations, no side effects.
-// DONNA never directly mutates state. This dispatcher returns a DispatchResult that
-// the calling component uses to update UI, route the user, or present a draft.
-//
-// Architecture:
-//   Voice/text intent
-//     → resolveUIAction() — match phrase to action in registry
-//     → validateUIAction() — check role and page guard
-//     → buildDispatchResult() — return navigation, draft, approval route, or refusal
-//     → calling component executes (router.push, setCommandResponse, etc.)
-//
-// This dispatcher is the anti-DOM-automation layer:
-// DONNA never reaches into the page DOM to click buttons.
-// Instead, it returns structured DispatchResult objects that components act on.
+// DONNA never directly mutates state. Returns DispatchResult for the calling component to act on.
 
 import type { UIActionRole, UIActionSafetyClass } from './donnaUIActionRegistry'
 import {
-  DONNA_UI_ACTIONS,
   getUIActionById,
   getUIActionsForPage,
   canDonnaPerformUIAction,
@@ -29,6 +17,7 @@ import {
   type MatrixPermission,
 } from './donnaUIApprovalMatrix'
 import {
+  getOperatorById,
   getOperatorForPhrase,
   getOperatorForRoute,
 } from './donnaUIGuidedOperators'
@@ -61,16 +50,38 @@ export interface DispatchResult {
   safetyClass: UIActionSafetyClass | null
 }
 
+// ── Helper: blocked result ───────────────────────────────────────────────────
+
+function blocked(refusal: string): DispatchResult {
+  return {
+    kind: 'blocked',
+    actionId: null,
+    message: refusal,
+    route: null,
+    operatorId: null,
+    stepNumber: null,
+    filterParams: null,
+    requiresApproval: false,
+    approvalRoute: null,
+    matrixPermission: 'BLOCKED',
+    confidence: 'blocked',
+    safetyClass: 'always_blocked',
+  }
+}
+
 // ── Intent → action resolution ────────────────────────────────────────────────
 
 /**
  * Navigation phrase patterns — maps natural language to routes.
+ * Role-scoped patterns use `roles` to restrict which roles can use them.
+ * Role check applied in dispatchUIIntent; this function takes optional role to filter.
  * Ordered by specificity (more specific first).
  */
-const NAV_PATTERNS: Array<{ pattern: RegExp; route: string; label: string }> = [
+const NAV_PATTERNS: Array<{ pattern: RegExp; route: string; label: string; roles?: UIActionRole[] }> = [
+  // Director-level routes
   { pattern: /review (center|queue)|pending (items|approvals)|what needs (my )?review/i, route: '/director/review', label: 'Review Center' },
   { pattern: /curriculum (builder|setup)|build (my )?curriculum/i, route: '/director/curriculum/builder', label: 'Curriculum Builder' },
-  { pattern: /curriculum/i, route: '/director/curriculum', label: 'Curriculum' },
+  { pattern: /(?<!publish[\s\S]{0,15})curriculum(?!.*publish)/i, route: '/director/curriculum', label: 'Curriculum' },
   { pattern: /class.?templates?|session.?templates?/i, route: '/director/class-templates', label: 'Class Templates' },
   { pattern: /fitness.?templates?/i, route: '/director/fitness/templates', label: 'Fitness Templates' },
   { pattern: /onboarding|academy setup|set up (the|my) academy/i, route: '/director/onboarding', label: 'Academy Setup' },
@@ -82,16 +93,41 @@ const NAV_PATTERNS: Array<{ pattern: RegExp; route: string; label: string }> = [
   { pattern: /dashboard|home|director home/i, route: '/director', label: 'Dashboard' },
   { pattern: /kpi|metrics?/i, route: '/director/kpi', label: 'KPIs' },
   { pattern: /coaches?|staff/i, route: '/director/coaches', label: 'Coaches' },
-  { pattern: /parents?/i, route: '/director/parents', label: 'Parents' },
+  { pattern: /my parents|parents (list|section)/i, route: '/director/parents', label: 'Parents', roles: ['academy_director', 'head_coach'] },
   { pattern: /settings?/i, route: '/director/settings', label: 'Settings' },
+  // Player-portal routes — player role only
+  { pattern: /my profile|show (my )?profile|view (my )?profile/i, route: '/player/skill-path', label: 'Skill Path', roles: ['player'] },
+  { pattern: /my missions|show (my )?missions/i, route: '/player/missions', label: 'Missions', roles: ['player'] },
+  { pattern: /my skill path|my skills/i, route: '/player/skill-path', label: 'Skill Path', roles: ['player'] },
+  { pattern: /my wins|my achievements/i, route: '/player/celebration', label: 'Wins & Achievements', roles: ['player'] },
+  // Parent-portal routes — parent role only
+  { pattern: /my child'?s? progress|child'?s? progress|child'?s? development/i, route: '/parent/progress', label: "My Child's Progress", roles: ['parent'] },
+  { pattern: /my child'?s? wins|child'?s? achievements/i, route: '/parent/wins', label: 'Wins & Milestones', roles: ['parent'] },
+  { pattern: /coach updates|recent updates|notes from (the |my )?coach/i, route: '/parent/updates', label: 'Updates', roles: ['parent'] },
 ]
 
+// Director-only routes that lower roles cannot access via DONNA nav
+const DIRECTOR_ONLY_ROUTES = new Set([
+  '/director/review',
+  '/director/curriculum',
+  '/director/curriculum/builder',
+  '/director/placement',
+  '/director/level-up',
+  '/director/signals',
+  '/director/kpi',
+  '/director/coaches',
+  '/director/settings',
+  '/director/onboarding',
+])
+
 /**
- * Blocked phrase patterns — phrases DONNA must always refuse.
+ * Blocked phrase patterns — architecture invariants DONNA must always refuse.
+ * Sprint 759: Broadened send-message and raw-notes patterns; added billing.
  */
 const BLOCKED_PATTERNS: Array<{ pattern: RegExp; refusal: string }> = [
   {
-    pattern: /send (a |an )?(message|email|text|sms|notification) (to|for) (a |the )?(parent|mom|dad|family|player)/i,
+    // Broadened: allow any words between "send" and "parent/player/mom/dad"
+    pattern: /send.{0,30}(message|email|text|sms|notification).{0,30}(parent|mom|dad|family|player)/i,
     refusal: "I never send messages directly. I can draft a parent update for your review — you decide when and whether to send it.",
   },
   {
@@ -103,7 +139,8 @@ const BLOCKED_PATTERNS: Array<{ pattern: RegExp; refusal: string }> = [
     refusal: "I can't skip the review queue — it's how AcademyOS keeps your changes safe. Every consequential action goes through director review first.",
   },
   {
-    pattern: /show (me )?(raw |private |confidential )?(notes?|parent (data|info)|pii|personal)/i,
+    // Sprint 759: Added "the" before "raw"; broader coach notes pattern
+    pattern: /show.{0,20}(the |raw |private |confidential )?(raw )?(notes?|coach.?notes?)|raw.+notes?|coach notes.{0,20}(for|about)/i,
     refusal: "I don't expose raw notes or personal data. I can summarize what's relevant for your role and what you're working on.",
   },
   {
@@ -111,21 +148,48 @@ const BLOCKED_PATTERNS: Array<{ pattern: RegExp; refusal: string }> = [
     refusal: "I only have access to your academy's data. I can't access information from other academies.",
   },
   {
-    pattern: /move (a |the )?(player|marcus|sofia|[a-z]+) (to|into) (level|orange|red|green|yellow|purple)/i,
+    pattern: /move (a |the )?(player|[a-z]+ [a-z]+) (to|into) (level|orange|red|green|yellow|purple)/i,
     refusal: "I can't move a player to a new level directly. I can draft an advancement proposal for your review — you approve it in the review queue before any level change takes effect.",
+  },
+  {
+    // Sprint 759: billing/payment is platform_required — always blocked for all roles
+    pattern: /billing|subscription (plan|tier)|change (the |my )?(plan|tier)|enterprise plan|payment method/i,
+    refusal: "Billing and subscription changes require platform support. I can't modify billing plans within AcademyOS — contact support for account changes.",
   },
 ]
 
 /**
  * Guided operator trigger patterns.
+ * Sprint 759: Added more entry phrases per operator.
  */
 const OPERATOR_PATTERNS: Array<{ pattern: RegExp; operatorId: string }> = [
-  { pattern: /walk me through (onboarding|setup)|help me (set up|setup)|guide me through setup/i, operatorId: 'onboarding_operator' },
-  { pattern: /walk me through curriculum|help me with curriculum|curriculum gaps|guide me through curriculum/i, operatorId: 'curriculum_operator' },
-  { pattern: /walk me through (a |the )?template|help me (with |create |build )a? template|guide me through template/i, operatorId: 'template_operator' },
-  { pattern: /walk me through (a |the )?session|help me (with |plan )a? session|guide me through session|start wrap.?up/i, operatorId: 'session_operator' },
-  { pattern: /walk me through (a |this )?player|help me with (a |this )?player|guide me through (the |this )?profile/i, operatorId: 'player_operator' },
-  { pattern: /walk me through (the |my |pending )?review|help me (with |review )(the |my )?(queue|review)|guide me through review/i, operatorId: 'review_center_operator' },
+  {
+    pattern: /walk me through (onboarding|setup)|help me (set up|setup)|guide me through setup|start onboarding/i,
+    operatorId: 'onboarding_operator',
+  },
+  {
+    // Sprint 759: Added "open the curriculum builder" as operator trigger
+    pattern: /walk me through curriculum|help me with curriculum|curriculum gaps|guide me through curriculum|open the curriculum builder|start curriculum/i,
+    operatorId: 'curriculum_operator',
+  },
+  {
+    pattern: /walk me through (a |the )?template|help me (with |create |build )a? template|guide me through template/i,
+    operatorId: 'template_operator',
+  },
+  {
+    // Sprint 759: Broadened — "start session wrap-up", "help me wrap up", "wrap up this session"
+    pattern: /walk me through (a |the )?session|help me (with |plan )a? session|guide me through session|start.{0,10}wrap.?up|wrap.{0,15}(this |the )?session|help.{0,10}wrap up/i,
+    operatorId: 'session_operator',
+  },
+  {
+    // Sprint 759: Added "review this player" and "review a player" as triggers
+    pattern: /walk me through (a |this )?player|help me with (a |this )?player|guide me through (the |this )?profile|review (this|a) player|assess (this|a) player|(player|profile).{0,20}(review|progress|assessment)/i,
+    operatorId: 'player_operator',
+  },
+  {
+    pattern: /walk me through (the |my |pending )?review|help me (with |review )(the |my )?(queue|review)|guide me through review/i,
+    operatorId: 'review_center_operator',
+  },
 ]
 
 // ── Core dispatch functions ───────────────────────────────────────────────────
@@ -139,20 +203,30 @@ export function checkBlockedPhrase(
 ): DispatchResult | null {
   for (const { pattern, refusal } of BLOCKED_PATTERNS) {
     if (pattern.test(text)) {
-      return {
-        kind: 'blocked',
-        actionId: null,
-        message: refusal,
-        route: null,
-        operatorId: null,
-        stepNumber: null,
-        filterParams: null,
-        requiresApproval: false,
-        approvalRoute: null,
-        matrixPermission: 'BLOCKED',
-        confidence: 'blocked',
-        safetyClass: 'always_blocked',
-      }
+      return blocked(refusal)
+    }
+  }
+  return null
+}
+
+/**
+ * Check role-boundary violations for navigation.
+ * Returns blocked result if role cannot access the given route, null otherwise.
+ * Sprint 759: Enforces that players/parents can't nav to director routes,
+ * coaches can't nav to director-only routes.
+ */
+function checkRoleBoundaryForNav(
+  route: string,
+  role: UIActionRole,
+): DispatchResult | null {
+  if (role === 'player' || role === 'parent') {
+    if (route.startsWith('/director') || route.startsWith('/coach')) {
+      return blocked("That section is for coaches and directors only. I can help you navigate your own portal — missions, skill path, progress, or wins.")
+    }
+  }
+  if (role === 'coach' || role === 'head_coach') {
+    if (DIRECTOR_ONLY_ROUTES.has(route)) {
+      return blocked("That section requires director access. I can help you with sessions, players, and templates. Your director manages the review queue and curriculum publishing.")
     }
   }
   return null
@@ -160,16 +234,17 @@ export function checkBlockedPhrase(
 
 /**
  * Attempt to resolve a guided operator from the phrase.
+ * Sprint 759: requiresApproval is always false for the launch step (launching is safe_with_context).
  * Returns a DispatchResult with kind='guided_operator' if matched, null otherwise.
  */
 export function resolveGuidedOperator(
   text: string,
   currentRoute: string,
 ): DispatchResult | null {
-  // Try phrase match first
+  // Try phrase match first (explicit operator trigger phrases)
   for (const { pattern, operatorId } of OPERATOR_PATTERNS) {
     if (pattern.test(text)) {
-      const operator = getOperatorForPhrase(text)
+      const operator = getOperatorForPhrase(text) ?? getOperatorById(operatorId) ?? null
       if (operator) {
         return {
           kind: 'guided_operator',
@@ -179,8 +254,8 @@ export function resolveGuidedOperator(
           operatorId: operator.id,
           stepNumber: 1,
           filterParams: null,
-          requiresApproval: operator.approvalRequired,
-          approvalRoute: operator.approvalRequired ? '/director/review' : null,
+          requiresApproval: false, // Sprint 759: launching an operator is safe_with_context — no approval needed
+          approvalRoute: null,
           matrixPermission: 'ALLOWED',
           confidence: 'high',
           safetyClass: 'safe_with_context',
@@ -199,8 +274,8 @@ export function resolveGuidedOperator(
       operatorId: routeOperator.id,
       stepNumber: 1,
       filterParams: null,
-      requiresApproval: routeOperator.approvalRequired,
-      approvalRoute: routeOperator.approvalRequired ? '/director/review' : null,
+      requiresApproval: false, // Sprint 759: launching is not an approval action
+      approvalRoute: null,
       matrixPermission: 'ALLOWED',
       confidence: 'high',
       safetyClass: 'safe_with_context',
@@ -211,10 +286,13 @@ export function resolveGuidedOperator(
 
 /**
  * Attempt to resolve a navigation intent.
+ * Accepts optional role to filter role-specific patterns (e.g., player/parent portal routes).
  * Returns a DispatchResult with kind='navigate' if matched, null otherwise.
  */
-export function resolveNavigation(text: string): DispatchResult | null {
-  for (const { pattern, route, label } of NAV_PATTERNS) {
+export function resolveNavigation(text: string, role?: UIActionRole): DispatchResult | null {
+  for (const { pattern, route, label, roles } of NAV_PATTERNS) {
+    // Skip role-gated patterns when role doesn't match
+    if (roles && role && !roles.includes(role)) continue
     if (pattern.test(text)) {
       return {
         kind: 'navigate',
@@ -236,8 +314,65 @@ export function resolveNavigation(text: string): DispatchResult | null {
 }
 
 /**
+ * Attempt to resolve a filter or search intent.
+ * Sprint 759: New function — returns filter_ready result for filter/search phrases.
+ */
+export function resolveFilterIntent(text: string): DispatchResult | null {
+  if (/filter (to|by)|show only|show me only/i.test(text)) {
+    const groupMatch = text.match(/filter.{0,10}(to|by)\s+(.+)/i)
+    const group = groupMatch?.[2]?.trim() ?? 'the selected group'
+    return {
+      kind: 'filter_ready',
+      actionId: 'filter_player_list',
+      message: `Filtering to ${group}.`,
+      route: null,
+      operatorId: null,
+      stepNumber: null,
+      filterParams: { group },
+      requiresApproval: false,
+      approvalRoute: null,
+      matrixPermission: 'ALLOWED',
+      confidence: 'high',
+      safetyClass: 'always_safe',
+    }
+  }
+  if (/search (for|player|session)|find (player|session|[a-z]+)|look (for|up)/i.test(text)) {
+    const searchMatch = text.match(/(?:search for|find|look for|look up)\s+(.+)/i)
+    const query = searchMatch?.[1]?.trim() ?? 'the specified item'
+    return {
+      kind: 'filter_ready',
+      actionId: 'search_players',
+      message: `Searching for ${query}.`,
+      route: null,
+      operatorId: null,
+      stepNumber: null,
+      filterParams: { query },
+      requiresApproval: false,
+      approvalRoute: null,
+      matrixPermission: 'ALLOWED',
+      confidence: 'partial',
+      safetyClass: 'always_safe',
+    }
+  }
+  return null
+}
+
+/**
+ * Check if text is a creation/draft intent that should go to draft pipeline
+ * BEFORE navigation patterns fire. Returns true for explicit draft/create/propose phrases.
+ * Sprint 759: Prevents "create session template" from routing to nav before draft check.
+ */
+function isCreationOrDraftIntent(text: string): boolean {
+  return /^(create|draft|propose|write|build|start|make|prepare)\b/i.test(text) ||
+    /\b(draft|create|propose|write|build|make|prepare)\s+(a |an |the )?/i.test(text) ||
+    /\b(attendance exception|level change|parent (update|summary|report|progress))\b/i.test(text)
+}
+
+/**
  * Attempt to resolve a draft action intent.
- * Returns a DispatchResult with kind='draft_submitted' if matched, null otherwise.
+ * Sprint 759: Added draft patterns for templates and parent updates;
+ * added /director/review as route for all draft results;
+ * moved ahead of navigation in dispatchUIIntent when isCreationOrDraftIntent is true.
  */
 export function resolveDraftIntent(
   text: string,
@@ -251,7 +386,7 @@ export function resolveDraftIntent(
         kind: 'draft_submitted',
         actionId: 'draft_attendance_exception',
         message: "I'll draft an attendance exception. Tell me the player's name and the reason — I'll submit it to your review queue.",
-        route: null,
+        route: '/director/review',
         operatorId: null,
         stepNumber: null,
         filterParams: null,
@@ -262,6 +397,52 @@ export function resolveDraftIntent(
         safetyClass: 'draft_to_review',
       }
     }
+    return blocked("Attendance exceptions require director or head coach access.")
+  }
+
+  // Session template creation — Sprint 759: catches "create a session template" before nav fires
+  if (/(create|draft|build|make|start).{0,20}(session|class).{0,10}template/i.test(text)) {
+    const evaluation = evaluateUIAction('draft_class_template', role)
+    if (evaluation.permitted) {
+      return {
+        kind: 'draft_submitted',
+        actionId: 'draft_class_template',
+        message: "I'll draft a session template for your review. What level and session type is this for?",
+        route: '/director/review',
+        operatorId: null,
+        stepNumber: null,
+        filterParams: null,
+        requiresApproval: true,
+        approvalRoute: '/director/review',
+        matrixPermission: 'DRAFT_ONLY',
+        confidence: 'high',
+        safetyClass: 'draft_to_review',
+      }
+    }
+    return blocked("Session template creation requires director or head coach access.")
+  }
+
+  // Parent update / progress update — Sprint 759: catches "draft a parent progress update" before nav fires
+  if (/(draft|write|create|prepare).{0,20}parent.{0,20}(update|summary|report|progress|message)/i.test(text) ||
+      /parent (progress update|progress summary|update draft)/i.test(text)) {
+    const evaluation = evaluateUIAction('draft_parent_summary', role)
+    if (evaluation.permitted) {
+      return {
+        kind: 'draft_submitted',
+        actionId: 'draft_parent_summary',
+        message: "I'll draft a parent progress update for your review. Which player, and what's the main highlight? You approve and dispatch it manually from the review queue.",
+        route: '/director/review',
+        operatorId: null,
+        stepNumber: null,
+        filterParams: null,
+        requiresApproval: true,
+        approvalRoute: '/director/review',
+        matrixPermission: 'DRAFT_ONLY',
+        confidence: 'high',
+        safetyClass: 'draft_to_review',
+      }
+    }
+    return blocked("Parent updates require director access. Coaches can flag observations for the director.")
   }
 
   // Coach note
@@ -272,7 +453,7 @@ export function resolveDraftIntent(
         kind: 'draft_submitted',
         actionId: 'draft_coach_note',
         message: "Tell me what you observed and I'll draft a coaching note for review.",
-        route: null,
+        route: '/director/review',
         operatorId: null,
         stepNumber: null,
         filterParams: null,
@@ -285,36 +466,16 @@ export function resolveDraftIntent(
     }
   }
 
-  // Player advancement
-  if (/advance|advancement|level (change|move|up)|promote|next level/i.test(text) && !/level.?up page/i.test(text)) {
+  // Player advancement / level change proposal
+  if (/(advance|advancement|level (change|move|up)|promote|next level|level readiness|propose.{0,10}(level|advancement))/i.test(text) &&
+      !/level.?up page|level.?up section/i.test(text)) {
     const evaluation = evaluateUIAction('draft_player_advancement', role)
     if (evaluation.permitted) {
       return {
         kind: 'draft_submitted',
         actionId: 'draft_player_advancement',
         message: "I'll draft a player advancement proposal for your review. Which player, and which level are they ready for?",
-        route: null,
-        operatorId: null,
-        stepNumber: null,
-        filterParams: null,
-        requiresApproval: true,
-        approvalRoute: '/director/review',
-        matrixPermission: 'DRAFT_ONLY',
-        confidence: 'high',
-        safetyClass: 'draft_to_review',
-      }
-    }
-  }
-
-  // Parent update
-  if (/parent (update|summary|report|communication|message draft)|draft.+parent/i.test(text)) {
-    const evaluation = evaluateUIAction('draft_parent_summary', role)
-    if (evaluation.permitted) {
-      return {
-        kind: 'draft_submitted',
-        actionId: 'draft_parent_summary',
-        message: "I'll draft a parent progress update. Which player, and what's the main message?",
-        route: null,
+        route: '/director/review',
         operatorId: null,
         stepNumber: null,
         filterParams: null,
@@ -335,7 +496,7 @@ export function resolveDraftIntent(
         kind: 'draft_submitted',
         actionId: 'draft_curriculum_item',
         message: "Tell me what curriculum change you'd like — I'll draft it for review.",
-        route: null,
+        route: '/director/review',
         operatorId: null,
         stepNumber: null,
         filterParams: null,
@@ -353,36 +514,90 @@ export function resolveDraftIntent(
 
 /**
  * Master dispatch function. Resolves any user intent in priority order:
- * 1. Blocked phrases (always refuse first)
- * 2. Guided operators (step-by-step flows)
- * 3. Navigation intents
- * 4. Draft intents
- * 5. Approval routing
- * 6. Unknown → clarification
+ * 1. Blocked phrases (architecture invariants — always refuse first)
+ * 2. Role boundary check (role-gated nav/action)
+ * 3. Guided operators (step-by-step flows)
+ * 4. Creation/draft intents (before nav — prevents "create template" routing to nav)
+ * 5. Navigation intents (role-checked)
+ * 6. Draft intents (remaining patterns)
+ * 7. Filter/search
+ * 8. Approval routing (director-only)
+ * 9. Clarification fallback
  */
 export function dispatchUIIntent(
   text: string,
   role: UIActionRole,
   currentRoute: string,
 ): DispatchResult {
-  // 1. Check always-blocked phrases first
-  const blocked = checkBlockedPhrase(text)
-  if (blocked) return blocked
+  // 1. Architecture invariants — always blocked regardless of role
+  const blockedResult = checkBlockedPhrase(text)
+  if (blockedResult) return blockedResult
 
-  // 2. Check for guided operator invocation
+  // 1.5. Parent data access boundary — before operators or nav
+  // Parents can only see their child's data; bulk records are blocked.
+  if (role === 'parent') {
+    if (/all (session|sessions?)\s+(attendance|records|data)|session attendance (records|data)|all players|all students/i.test(text)) {
+      return blocked("You can only view your child's data. Ask about your child's progress, wins, or recent updates instead.")
+    }
+  }
+
+  // 2. Guided operators — before nav so "open curriculum builder" = operator, not nav
   const operator = resolveGuidedOperator(text, currentRoute)
-  if (operator) return operator
+  if (operator) {
+    // Role boundary for operators
+    const roleBoundary = checkRoleBoundaryForNav(operator.route ?? '', role)
+    if (roleBoundary) return roleBoundary
+    return operator
+  }
 
-  // 3. Check for navigation intent
-  const nav = resolveNavigation(text)
-  if (nav) return nav
+  // 3. Creation/draft intents — before nav so "create session template" = draft, not nav
+  if (isCreationOrDraftIntent(text)) {
+    const draft = resolveDraftIntent(text, role)
+    if (draft) return draft
+  }
 
-  // 4. Check for draft intent
+  // 3.5. Publish curriculum — must be before nav so "publish the curriculum" doesn't route to curriculum nav
+  if (/publish (the |my |this )?curriculum|go live with curriculum/i.test(text)) {
+    if (role !== 'academy_director') {
+      return blocked("Publishing curriculum requires director access.")
+    }
+    return {
+      kind: 'approval_routed',
+      actionId: 'publish_curriculum',
+      message: "Publishing curriculum requires your review and confirmation. I'll take you to the curriculum builder — you review the content and confirm publishing there.",
+      route: '/director/curriculum/builder',
+      operatorId: null,
+      stepNumber: null,
+      filterParams: null,
+      requiresApproval: true,
+      approvalRoute: '/director/curriculum/builder',
+      matrixPermission: 'ROUTE_TO_REVIEW',
+      confidence: 'high',
+      safetyClass: 'director_approval',
+    }
+  }
+
+  // 4. Navigation intents — role-filtered and boundary-checked
+  const nav = resolveNavigation(text, role)
+  if (nav && nav.route) {
+    const roleBoundary = checkRoleBoundaryForNav(nav.route, role)
+    if (roleBoundary) return roleBoundary
+    return nav
+  }
+
+  // 5. Remaining draft intents (non-creation phrases like "attendance exception for Marcus")
   const draft = resolveDraftIntent(text, role)
   if (draft) return draft
 
-  // 5. Check for approval routing intent
+  // 6. Filter / search
+  const filter = resolveFilterIntent(text)
+  if (filter) return filter
+
+  // 7. Approval routing — director only
   if (/approve|review (this|the|an?)|go to review|open review/i.test(text)) {
+    if (role !== 'academy_director') {
+      return blocked("Approving review items requires director access. Your director manages the review queue.")
+    }
     return {
       kind: 'approval_routed',
       actionId: 'approve_review_item',
@@ -399,7 +614,7 @@ export function dispatchUIIntent(
     }
   }
 
-  // 6. Clarification needed
+  // 9. Clarification needed
   return {
     kind: 'clarification_needed',
     actionId: null,
@@ -420,7 +635,6 @@ export function dispatchUIIntent(
 
 /**
  * Validate whether DONNA can perform a specific action for a role on the current page.
- * Returns validation result with full context for the dispatch response.
  */
 export function validateUIActionForContext(
   actionId: string,
@@ -477,11 +691,11 @@ export function validateUIActionForContext(
   }
 }
 
-// ── Available actions for current context ─────────────────────────────────────
+// ── Available actions for context ────────────────────────────────────────────
 
 /**
- * Returns all actions DONNA can perform for a given role on the current page.
- * Useful for populating suggestion chips and guided operator step menus.
+ * Returns the list of actions DONNA can offer on the current page for the given role.
+ * Used for quick action surfacing and context-aware suggestions.
  */
 export function getAvailableActionsForContext(
   role: UIActionRole,
@@ -490,24 +704,21 @@ export function getAvailableActionsForContext(
   actionId: string
   displayName: string
   safetyClass: UIActionSafetyClass
-  requiresApproval: boolean
   matrixPermission: MatrixPermission
 }> {
   const pageActions = getUIActionsForPage(currentRoute)
-  return pageActions
-    .filter(action => {
-      if (action.safetyClass === 'always_blocked') return false
-      const { allowed } = canDonnaPerformUIAction(action.id, role)
-      return allowed
-    })
-    .map(action => {
+  const results = []
+  for (const action of pageActions) {
+    const { allowed } = canDonnaPerformUIAction(action.id, role)
+    if (allowed) {
       const evaluation = evaluateUIAction(action.id, role)
-      return {
+      results.push({
         actionId: action.id,
         displayName: action.displayName,
         safetyClass: action.safetyClass,
-        requiresApproval: action.requiresApproval,
         matrixPermission: evaluation.matrixPermission,
-      }
-    })
+      })
+    }
+  }
+  return results
 }
