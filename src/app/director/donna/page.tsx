@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import {
-  Sparkles, ChevronRight, AlertCircle, Calendar, ClipboardList,
-  Users, BookOpen, LayoutTemplate, Activity, ShieldCheck, ArrowRight,
-  AlertTriangle, CheckCircle2, Clock,
+  Sparkles, ChevronRight, AlertCircle,
+  Users, ShieldCheck, ArrowRight,
+  AlertTriangle, CheckCircle2, ClipboardList,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { loadDirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
@@ -10,15 +10,15 @@ import { Card, CardHeader, CardContent } from '@/components/ui'
 import { DonnaDirectorShellClient } from './DonnaDirectorShellClient'
 import { DonnaContextSummaryCard } from '@/components/donna/DonnaContextSummaryCard'
 import type { ContextSummaryItem, ContextSourceLabel } from '@/components/donna/DonnaContextSummaryCard'
-import { DonnaReviewQueueSurface } from '@/components/donna/DonnaReviewQueueSurface'
-import { DirectorDonnaDailyBrief } from '@/components/donna/DirectorDonnaDailyBrief'
-import type { BriefItem } from '@/components/donna/DirectorDonnaDailyBrief'
 import { DONNAAcademyPulseCard } from '@/components/donna/DONNAAcademyPulseCard'
 import type { PulseTrend } from '@/components/donna/DONNAAcademyPulseCard'
 
-// ── Director DONNA command center — Sprint 1038/1040 wiring ──────────────────
+// ── Director DONNA command center — Sprint 1038/1040 wiring + Sprint 777 AIQS
 // Full page wiring: loads DirectorDonnaContext, renders attention items, risks,
 // recommended actions, context summary card, and the DonnaVoiceReadyShell thread.
+// Sprint 777: removed duplicate Daily Glance card (stats live in DonnaContextSummaryCard),
+// removed Quick Navigation card (sidebar covers nav), removed full-width Daily Brief
+// and Review Queue Surface sections (created fourth zone duplicating left column).
 // No DB writes. No approvals on this page.
 
 const URGENCY_COLOR: Record<string, string> = {
@@ -36,18 +36,9 @@ const RISK_COLOR: Record<string, string> = {
 const CATEGORY_ICON: Record<string, React.ReactNode> = {
   review:      <ClipboardList className="w-3.5 h-3.5" />,
   approve:     <CheckCircle2 className="w-3.5 h-3.5" />,
-  investigate: <Activity className="w-3.5 h-3.5" />,
+  investigate: <AlertCircle className="w-3.5 h-3.5" />,
   communicate: <Users className="w-3.5 h-3.5" />,
 }
-
-const QUICK_LINKS = [
-  { label: 'Review Queue',     href: '/director/review',              icon: <ClipboardList className="w-4 h-4" /> },
-  { label: "Today's Academy",  href: '/director/today',               icon: <Calendar className="w-4 h-4" /> },
-  { label: 'Players',          href: '/director/players',             icon: <Users className="w-4 h-4" /> },
-  { label: 'Curriculum',       href: '/director/curriculum/builder',  icon: <BookOpen className="w-4 h-4" /> },
-  { label: 'Templates',        href: '/director/templates',           icon: <LayoutTemplate className="w-4 h-4" /> },
-  { label: 'Academy Intel',    href: '/director/donna-coo-demo',      icon: <Activity className="w-4 h-4" /> },
-]
 
 export default async function DirectorDonnaPage() {
   const db = await getSupabaseServer()
@@ -72,12 +63,14 @@ export default async function DirectorDonnaPage() {
   const academyRisks      = ctx?.academyRisks      ?? []
   const recommendedActions = ctx?.recommendedActions ?? []
 
-  // Build context summary items for DonnaContextSummaryCard
+  // Build context summary items for DonnaContextSummaryCard (right column)
+  // These are the 4 key stats — previously duplicated in a left-column "Today at a Glance"
+  // card that has been removed. DonnaContextSummaryCard is now the single source for them.
   const contextSummaryItems: ContextSummaryItem[] = ctx ? [
-    { label: 'Sessions today', value: ctx.todaySessions },
-    { label: 'Pending reviews', value: ctx.pendingReviews },
-    { label: 'Missing wrap-ups', value: ctx.missingWrapUps },
-    { label: 'Attention flags', value: ctx.attentionItems.length },
+    { label: 'Sessions today', value: todaySessions },
+    { label: 'Pending reviews', value: pendingReviews },
+    { label: 'Missing wrap-ups', value: missingWrapUps },
+    { label: 'Attention flags', value: attentionItems.length },
   ] : [
     { label: 'Sessions today', value: 5, note: 'demo' },
     { label: 'Pending reviews', value: 3, note: 'demo' },
@@ -127,38 +120,12 @@ export default async function DirectorDonnaPage() {
       {/* Main 2-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_3fr] gap-6">
 
-        {/* ── Left column: context panels ───────────────────────── */}
+        {/* ── Left column: focused context panels (max 4, all signal-bearing) ── */}
+        {/* Sprint 777: removed "Today at a Glance" (stats live in DonnaContextSummaryCard) */}
+        {/* Sprint 777: removed "Quick Navigation" (sidebar covers this; not signal-bearing) */}
         <div className="space-y-4">
 
-          {/* Daily Brief */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-xs font-bold text-text-primary flex items-center gap-2 uppercase tracking-widest">
-                <Clock className="w-3.5 h-3.5 text-lime" />
-                Today at a Glance
-              </h2>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: 'Sessions', value: todaySessions, color: 'text-lime' },
-                  { label: 'Pending', value: pendingReviews, color: pendingReviews > 0 ? 'text-status-orange' : 'text-text-muted' },
-                  { label: 'Missing Wrap-ups', value: missingWrapUps, color: missingWrapUps > 0 ? 'text-status-red' : 'text-text-muted' },
-                  { label: 'Attention Flags', value: attentionItems.length, color: attentionItems.length > 0 ? 'text-status-orange' : 'text-text-muted' },
-                ].map(({ label, value, color }) => (
-                  <div key={label} className="px-3 py-2 rounded-xl bg-surface-raised border border-border">
-                    <p className={`text-xl font-mono font-bold leading-none ${color}`}>{value}</p>
-                    <p className="text-[11px] uppercase tracking-widest text-text-muted mt-0.5">{label}</p>
-                  </div>
-                ))}
-              </div>
-              {!isLive && (
-                <p className="mt-2 text-xs text-status-orange/70">Demo fallback — no live academy data available.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Academy Pulse Card */}
+          {/* Academy Pulse — always shown; health score + trend + urgent counts */}
           {(() => {
             const highRisk = attentionItems.filter(i => i.risk === 'high').length
             const medRisk  = attentionItems.filter(i => i.risk === 'medium').length
@@ -180,14 +147,14 @@ export default async function DirectorDonnaPage() {
             )
           })()}
 
-          {/* Attention Items */}
+          {/* Attention Items — conditional */}
           {attentionItems.length > 0 && (
             <Card>
               <CardHeader>
-                <h2 className="text-xs font-bold text-text-primary flex items-center gap-2 uppercase tracking-widest">
+                <span className="label-xs flex items-center gap-2">
                   <AlertCircle className="w-3.5 h-3.5 text-status-orange" />
                   Attention Needed
-                </h2>
+                </span>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -213,14 +180,14 @@ export default async function DirectorDonnaPage() {
             </Card>
           )}
 
-          {/* Academy Risks */}
+          {/* Academy Risks — conditional */}
           {academyRisks.length > 0 && (
             <Card>
               <CardHeader>
-                <h2 className="text-xs font-bold text-text-primary flex items-center gap-2 uppercase tracking-widest">
+                <span className="label-xs flex items-center gap-2">
                   <AlertTriangle className="w-3.5 h-3.5 text-status-red" />
                   Academy Risks
-                </h2>
+                </span>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -240,15 +207,15 @@ export default async function DirectorDonnaPage() {
             </Card>
           )}
 
-          {/* Recommended Actions */}
+          {/* Next Best Actions — conditional */}
           {recommendedActions.length > 0 && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-xs font-bold text-text-primary flex items-center gap-2 uppercase tracking-widest">
+                  <span className="label-xs flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-lime" />
                     Next Best Actions
-                  </h2>
+                  </span>
                   <Link href="/director/review" className="text-xs text-lime/70 hover:text-lime transition-colors">
                     Review queue
                   </Link>
@@ -277,33 +244,11 @@ export default async function DirectorDonnaPage() {
             </Card>
           )}
 
-          {/* Quick Navigation */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Quick Navigation</h2>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-0.5">
-                {QUICK_LINKS.map(link => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="group flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-surface-raised transition-colors"
-                  >
-                    <span className="text-text-muted group-hover:text-lime transition-colors">{link.icon}</span>
-                    <span className="text-xs text-text-secondary group-hover:text-text-primary transition-colors">{link.label}</span>
-                    <ChevronRight className="w-3 h-3 text-text-muted/40 ml-auto group-hover:text-lime/60 transition-colors" />
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
         </div>
 
         {/* ── Right column: DONNA chat shell ──────────────────────── */}
         <div className="flex flex-col gap-4">
-          {/* Context summary — what DONNA can see */}
+          {/* Context summary — what DONNA can see (also carries the 4 key daily stats) */}
           <DonnaContextSummaryCard
             role="director"
             contextItems={contextSummaryItems}
@@ -346,43 +291,7 @@ export default async function DirectorDonnaPage() {
 
       </div>
 
-      {/* Daily Brief — full-width structured overview */}
-      {(() => {
-        const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-        const briefActions: BriefItem[] = (ctx?.recommendedActions ?? []).slice(0, 3).map(a => ({
-          text: a.label,
-          href: a.href,
-        }))
-        const briefRisks: string[] = (ctx?.academyRisks ?? []).map(r => r.signal)
-        return (
-          <DirectorDonnaDailyBrief
-            date={today}
-            todaySessions={todaySessions}
-            missingWrapUps={missingWrapUps}
-            attendanceExceptions={ctx?.attendanceExceptions ?? 0}
-            unrosteredPlayers={0}
-            observationDrafts={pendingReviews}
-            parentSafeDrafts={0}
-            templateDrafts={ctx?.templateDrafts ?? 0}
-            evidenceDrafts={ctx?.evidenceDrafts ?? 0}
-            academyRisks={briefRisks}
-            recommendedActions={briefActions}
-            isLive={isLive}
-          />
-        )
-      })()}
-
-      {/* Review Queue Surface */}
-      <DonnaReviewQueueSurface
-        pendingReviews={pendingReviews}
-        missingWrapUps={missingWrapUps}
-        templateDrafts={ctx?.templateDrafts ?? 0}
-        attendanceExceptions={ctx?.attendanceExceptions ?? 0}
-        evidenceDrafts={ctx?.evidenceDrafts ?? 0}
-        isDemo={!isLive}
-      />
-
-      {/* Safety notice */}
+      {/* Safety notice — Sprint 777: sole below-grid element; Daily Brief and Review Queue Surface removed */}
       <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-lime/15 bg-lime/4">
         <ShieldCheck className="w-4 h-4 text-lime shrink-0 mt-0.5" />
         <p className="text-[11px] text-text-secondary leading-relaxed">
