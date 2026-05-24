@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-24 — Create AcademyOS Interface Quality Audit Skill
+
+- Created `.claude/skills/academy-interface-quality-auditor/SKILL.md` — Reusable Claude Code skill for auditing any AcademyOS page against the AcademyOS Interface Quality Standard (AIQS); YAML frontmatter with name + description; full 100-point rubric across 11 categories (purpose clarity 10, primary action clarity 10, cognitive load 15, visual hierarchy 10, typography 10, spacing/layout 10, role fit 10, accessibility 10, state quality 5, DONNA integration 5, trust/safety 5); audit behavior rules; pass/fail conditions with hard-failure gate (max 54 if any hard failure present); page-specific standards for Director Home, Coach Home, Curriculum Map, Player Profile, Parent Portal, Player Portal; exact output format template; source principles (Nielsen Norman, WCAG, Apple HIG, Material Design, AcademyOS product philosophy); reference files; audit-first guardrail (never modifies code without explicit user instruction)
+- Created `docs/ACADEMY_INTERFACE_QUALITY_STANDARD.md` — Written version of the full AIQS standard; product philosophy (calm OS, command center, role-aware assistant); five-question page rule; all source principles with AcademyOS applications; role standards table for all four roles; full rubric with pass/fail criteria per category; minimum size/padding standards; hard failure conditions; sprint usage instructions with naming convention; related files table
+- Created `docs/UI_AUDIT_SCORECARD_TEMPLATE.md` — Blank reusable audit scorecard; all rubric categories with score/max columns; AIQS hard failure check table; top 5 problems template (with/evidence/fix/impact fields); typography audit checklist; layout audit checklist; accessibility audit checklist; DONNA audit checklist; fix plan (quick wins / medium / larger redesign / not now); sprint recommendation template; implementation guardrails template; audit history table
+- No code changes — documentation and skill creation only
+- TypeScript: clean
+
+---
+
+## 2026-05-24 — Sprint 768 — Director Home Consolidation QA + Mobile Pass V1
+
+- Created `docs/DIRECTOR_HOME_CONSOLIDATION_QA_768.md` — QA certification for Sprint 767 Director Home consolidation; TypeScript validation (EXIT 0); git status audit (only pre-existing protected files, Sprint 767 committed at 7736c3c); DONNA QA harness status (data file only, Sprint 759 36/36 holds); manual QA checklist (31 checks across 5 areas: unified command center, cognitive load + section order, mobile pass, desktop pass, safety/DONNA guardrails — all pass); before/after cognitive load table; updated 5-minute demo script for consolidated home; honest gap list (8 non-blocking gaps); files audited; Sprint 769 recommendation (DONNA morning brief panel); final decision: DEMO-READY CONSOLIDATED DIRECTOR HOME
+- No code changes — documentation-only sprint (no blocking bugs found during QA)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 767 — Director Home Consolidation: Today Command Center V1
 
 - Created `src/app/director/_components/DirectorTodayCommandCenter.tsx` — Unified command center component replacing `DirectorAttentionQueueHero` + `DonnaExecutiveCard`; DONNA-narrated priority queue in one surface; accepts `queue: AttentionQueue`, `directorName?: string`, `showMax?: number` (default 5); same category chips (Decision/Risk/Watch/Opportunity), priority-colored left borders, numbered items, "Do this first" label, DONNA safety disclaimer footer, "View all →" + "Ask DONNA →" links; empty state "Today looks clear"; pure UI — no DB calls
