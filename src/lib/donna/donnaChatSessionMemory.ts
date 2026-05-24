@@ -31,6 +31,16 @@ export interface ConversationTurn {
   timestamp: number
 }
 
+// ── Pending navigation offer (Sprint 724) ─────────────────────────────────────
+// When DONNA offers to navigate ("Want me to take you there?"), the offer is
+// stored here. The next user turn is checked for yes/no confirmation.
+
+export interface PendingNavOffer {
+  href: string
+  label: string
+  questionContext: string
+}
+
 // ── Session memory shape ──────────────────────────────────────────────────────
 
 export interface DonnaChatSessionState {
@@ -42,6 +52,7 @@ export interface DonnaChatSessionState {
   actionsDispatched: string[]
   contextLoadedAt: number | null
   lastActivityAt: number
+  pendingNavOffer: PendingNavOffer | null   // Sprint 724
 }
 
 // ── Module state ──────────────────────────────────────────────────────────────
@@ -62,6 +73,7 @@ export function initChatSession(role: DonnaRole): DonnaChatSessionState {
     actionsDispatched: [],
     contextLoadedAt: null,
     lastActivityAt: Date.now(),
+    pendingNavOffer: null,  // Sprint 724
   }
   return _state
 }
@@ -213,4 +225,27 @@ export function getContextualPrefix(domain: TopicDomain): string {
 export function clearChatSession(): void {
   _state = null
   _turnCounter = 0
+}
+
+// ── Pending navigation offer helpers (Sprint 724) ─────────────────────────────
+
+/** Store a navigation offer after DONNA asks "Want me to take you there?" */
+export function setPendingNavOffer(offer: PendingNavOffer): void {
+  if (_state) _state.pendingNavOffer = offer
+}
+
+/**
+ * Consume the pending nav offer — clears it and returns it.
+ * Returns null if no offer is pending.
+ */
+export function consumePendingNavOffer(): PendingNavOffer | null {
+  if (!_state || !_state.pendingNavOffer) return null
+  const offer = _state.pendingNavOffer
+  _state.pendingNavOffer = null
+  return offer
+}
+
+/** True when a navigation offer is stored and waiting for user confirmation. */
+export function hasPendingNavOffer(): boolean {
+  return _state?.pendingNavOffer !== null && _state?.pendingNavOffer !== undefined
 }

@@ -7,6 +7,7 @@
 // No DB writes. No mutations. Purely orchestration.
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import type { DonnaAssistantRole } from '@/components/donna/DonnaAssistantShell'
 import {
   DonnaChatThread,
@@ -18,6 +19,9 @@ import { useVoiceDictation } from '@/lib/donna/useVoiceDictation'
 import {
   recordTurn,
   ensureChatSession,
+  setPendingNavOffer,
+  consumePendingNavOffer,
+  type PendingNavOffer,
 } from '@/lib/donna/donnaChatSessionMemory'
 import {
   checkQuestionBoundary,
@@ -33,6 +37,16 @@ import { tryAnswerRosterAttentionQuestion } from '@/lib/donna/directorPlayersDon
 import { buildChatMessageFromAnswer } from '@/components/donna/DonnaChatThread'
 import { tryDirectorClarificationOrBlock } from '@/lib/donna/directorClarificationEngine'
 import { tryBuildActionPreview } from '@/lib/donna/directorActionPreview'
+import { detectMissingContext } from '@/lib/donna/donnaMissingContextEngine'
+import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
+import { getPageCapabilityMap } from '@/lib/donna/donnaPageContextEngine'
+import { DONNA_SYSTEM_MAP } from '@/lib/donna/donnaSystemMap'
+import { detectShortPhrase, buildShortPhraseAnswer } from '@/lib/donna/donnaShortPhraseEngine'
+import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
+
+// ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
+const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
+const NO_PATTERN  = /^(no|nope|not now|cancel|never mind|maybe later|skip|not yet|don'?t|no thanks|not right now)\b/i
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -64,17 +78,36 @@ export function DonnaVoiceReadyShell({
   const [isTyping, setIsTyping] = useState(false)
   const voice = useVoiceDictation()
   const pendingVoiceRef = useRef<string | null>(null)
+  const router = useRouter()
+  const pathname = usePathname()
+
+  // Sprint 731: TTS auto-speak tracking
+  const lastVoiceInputAt = useRef<number>(0)
+  const lastSpokenIdRef = useRef<string | null>(null)
 
   // Initialize session
   useEffect(() => {
     ensureChatSession(donnaRole)
   }, [donnaRole])
 
+  // Sprint 731: Auto-speak DONNA responses that follow a voice input (30-second window)
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1]
+    if (!lastMsg || lastMsg.role !== 'donna' || !lastMsg.text) return
+    if (lastMsg.id === lastSpokenIdRef.current) return  // already spoken
+    const msSinceVoice = Date.now() - lastVoiceInputAt.current
+    if (msSinceVoice > 30_000) return  // too long since voice input
+    lastSpokenIdRef.current = lastMsg.id
+    void speakWithServerTts(stripMarkdownForTts(lastMsg.text))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages])
+
   // Auto-send when voice transcript completes
   useEffect(() => {
     if (voice.status === 'idle' && voice.transcript.trim()) {
       if (pendingVoiceRef.current !== voice.transcript) {
         pendingVoiceRef.current = voice.transcript
+        lastVoiceInputAt.current = Date.now()  // Sprint 731: mark voice input timestamp
         handleSend(voice.transcript)
         voice.reset()
       }
@@ -105,7 +138,50 @@ export function DonnaVoiceReadyShell({
     setMessages(prev => [...prev, userMsg])
     setIsTyping(true)
 
-    // Check boundaries first
+    // ── Sprint 724: Yes/No navigation confirmation ───────────────────────────
+    // Check BEFORE boundary detection so "yes"/"no" isn't mis-classified.
+    const pendingOffer = consumePendingNavOffer()
+    if (pendingOffer) {
+      if (YES_PATTERN.test(trimmed)) {
+        const confirmMsg: ChatMessage = {
+          id: `donna-nav-confirm-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: `Taking you to ${pendingOffer.label} now.`,
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: null,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, confirmMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, confirmMsg.text, { actionId: 'navigate', confidence: 'high' })
+          // Brief delay so the user sees DONNA's message before page changes
+          setTimeout(() => router.push(pendingOffer.href), 500)
+        }, 300)
+        return
+      }
+      if (NO_PATTERN.test(trimmed)) {
+        const declineMsg: ChatMessage = {
+          id: `donna-nav-decline-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: "No problem. Let me know if you need anything else.",
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: null,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, declineMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, declineMsg.text, { actionId: 'nav_declined', confidence: 'high' })
+        }, 300)
+        return
+      }
+      // User said something other than yes/no — let the prompt fall through normally
+    }
+
+    // ── Boundary check ───────────────────────────────────────────────────────
     const boundary = checkQuestionBoundary(trimmed, plainRole)
     if (boundary) {
       const boundaryMsg = buildBoundaryMessage(boundary)
@@ -113,6 +189,30 @@ export function DonnaVoiceReadyShell({
       setIsTyping(false)
       recordTurn(trimmed, boundaryMsg.text, { confidence: boundary.confidenceKind })
       return
+    }
+
+    // ── Sprint 725: Missing context intercept ────────────────────────────────
+    // Fires BEFORE safe-read and KPI intercepts so onboarding/setup questions
+    // always get a proper explanation + navigation offer, not a fallback.
+    if (plainRole === 'director') {
+      const missingCtx = detectMissingContext(trimmed, directorCtx)
+      if (missingCtx) {
+        const donnaMsg = buildChatMessageFromAnswer(missingCtx)
+        setTimeout(() => {
+          setMessages(prev => [...prev, donnaMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, donnaMsg.text, {
+            actionId: missingCtx.actionId,
+            confidence: missingCtx.confidence,
+            sourceNote: missingCtx.sourceNote,
+          })
+          // Store nav offer so next user "yes" navigates
+          if (missingCtx.navOffer) {
+            setPendingNavOffer(missingCtx.navOffer)
+          }
+        }, 600)
+        return
+      }
     }
 
     // KPI question intercept — answer KPI questions from available director context
@@ -169,7 +269,7 @@ export function DonnaVoiceReadyShell({
       }
     }
 
-    // Clarification / blocked intent intercept — fires for director after roster check
+    // Clarification / blocked intent intercept
     if (plainRole === 'director') {
       const clarifyOrBlock = tryDirectorClarificationOrBlock(trimmed)
       if (clarifyOrBlock) {
@@ -187,8 +287,7 @@ export function DonnaVoiceReadyShell({
       }
     }
 
-    // Action preview intercept — fires for needs_review intents that passed clarification
-    // (i.e., enough context is present — show what will and will not happen before drafting)
+    // Action preview intercept
     if (plainRole === 'director') {
       const previewAnswer = tryBuildActionPreview(trimmed)
       if (previewAnswer) {
@@ -213,6 +312,9 @@ export function DonnaVoiceReadyShell({
       const answer = dispatchSafeReadAction(actionId, plainRole, directorCtx, coachCtx)
       if (answer) {
         const donnaMsg = buildChatMessageFromAnswer(answer)
+        // Sprint 730: if the answer has a nav href, store a pending offer so
+        // "yeah", "yes", "sure" on the next turn confirms navigation.
+        const safeReadNavOffer = buildNavOfferFromHref(answer.href, trimmed)
         setTimeout(() => {
           setMessages(prev => [...prev, donnaMsg])
           setIsTyping(false)
@@ -221,17 +323,69 @@ export function DonnaVoiceReadyShell({
             confidence: answer.confidence,
             sourceNote: answer.sourceNote,
           })
+          if (safeReadNavOffer) setPendingNavOffer(safeReadNavOffer)
         }, 600)
         return
       }
     }
 
-    // Fallback: honest "I don't know"
+    // ── Sprint 728: Short-phrase / vague-input handler ───────────────────────
+    // Catches "help", "confused", "what can you do", "what now", etc. for any role.
+    // Must fire BEFORE the router so these common queries never hit the bare fallback.
+    const shortPhraseCategory = detectShortPhrase(trimmed)
+    if (shortPhraseCategory) {
+      const spAnswer = buildShortPhraseAnswer(shortPhraseCategory, plainRole)
+      const spMsg: ChatMessage = {
+        id: `donna-sp-${Date.now()}`,
+        role: 'donna',
+        kind: 'text',
+        text: spAnswer.text,
+        timestamp: new Date().toISOString(),
+        confidence: spAnswer.confidence,
+        sourceNote: spAnswer.sourceNote,
+        followUp: spAnswer.followUp,
+      }
+      setTimeout(() => {
+        setMessages(prev => [...prev, spMsg])
+        setIsTyping(false)
+        recordTurn(trimmed, spMsg.text, { confidence: spAnswer.confidence })
+      }, 400)
+      return
+    }
+
+    // ── Sprint 726: Conversational router fallback ───────────────────────────
+    // For director role, run routeDonnaPrompt and handle system-map / page-context
+    // modes that were previously dead code.
+    if (plainRole === 'director') {
+      const routing = routeDonnaPrompt(trimmed, pathname ?? '/director')
+      const routerAnswer = buildRouterAnswer(trimmed, routing.responseMode, pathname ?? '/director')
+      if (routerAnswer) {
+        const routerMsg: ChatMessage = {
+          id: `donna-router-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: routerAnswer.text,
+          timestamp: new Date().toISOString(),
+          confidence: routerAnswer.confidence,
+          sourceNote: routerAnswer.sourceNote,
+          followUp: routerAnswer.followUp,
+          followUpHref: routerAnswer.href ?? undefined,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, routerMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, routerMsg.text, { confidence: routerAnswer.confidence })
+        }, 600)
+        return
+      }
+    }
+
+    // Fallback: honest "I don't know" — still better than silence
     const fallbackMsg: ChatMessage = {
       id: `donna-fallback-${Date.now()}`,
       role: 'donna',
       kind: 'text',
-      text: "I'm not sure how to answer that yet. Try one of the suggested questions below, or ask about sessions, pending reviews, or player attention.",
+      text: "I'm not sure how to answer that yet. Try asking about onboarding, sessions, pending reviews, player attention, or say 'help' for suggestions.",
       timestamp: new Date().toISOString(),
       confidence: 'insufficient',
     }
@@ -256,6 +410,7 @@ export function DonnaVoiceReadyShell({
     if (voice.status === 'listening') {
       voice.stop()
     } else {
+      stopServerTts()  // Sprint 731: stop any playing TTS before mic activates
       voice.reset()
       pendingVoiceRef.current = null
       voice.start()
@@ -303,6 +458,32 @@ export function DonnaVoiceReadyShell({
   )
 }
 
+// ── Sprint 730: Nav offer from safe-read answer href ───────────────────────────
+// When a safe-read action returns an href, build a PendingNavOffer so the user
+// can confirm navigation by saying "yes" / "yeah" on the next turn.
+
+const HREF_TO_LABEL: Record<string, string> = {
+  '/director/review': 'Review Center',
+  '/director/players': 'Players',
+  '/director/sessions': 'Sessions',
+  '/director/templates': 'Templates',
+  '/director/onboarding': 'Academy Setup',
+  '/director/onboarding/players-placement': 'Add Players',
+  '/director/onboarding/coaches-permissions': 'Add Coaches',
+  '/director/onboarding/curriculum': 'Curriculum Setup',
+  '/director': 'Dashboard',
+}
+
+function buildNavOfferFromHref(
+  href: string | null | undefined,
+  questionContext: string,
+): PendingNavOffer | null {
+  if (!href) return null
+  const label = HREF_TO_LABEL[href]
+  if (!label) return null
+  return { href, label, questionContext }
+}
+
 // ── Action detection from natural language ─────────────────────────────────────
 
 function detectActionIdFromText(text: string, role: DonnaRole): string | null {
@@ -320,4 +501,114 @@ function detectActionIdFromText(text: string, role: DonnaRole): string | null {
   }
 
   return null
+}
+
+// ── Sprint 726: Conversational router answer builder ──────────────────────────
+// Produces answer text for modes that were previously dead code.
+// Returns null if the mode has no useful text answer (caller falls through to fallback).
+
+interface RouterAnswerShape {
+  text: string
+  confidence: ChatMessage['confidence']
+  sourceNote: string | null
+  followUp: string | null
+  href: string | null
+}
+
+function buildRouterAnswer(
+  text: string,
+  mode: string,
+  pathname: string,
+): RouterAnswerShape | null {
+  // use_page_context — describe what the current page does and what to try
+  if (mode === 'use_page_context') {
+    const cap = getPageCapabilityMap(pathname)
+    const prompts = cap.suggestedPrompts.slice(0, 3).join(', ')
+    return {
+      text: `You're on the ${cap.pageLabel}. ${cap.directorIntent} You can try asking: ${prompts}.`,
+      confidence: 'high',
+      sourceNote: `Page context: ${cap.pageLabel}`,
+      followUp: null,
+      href: null,
+    }
+  }
+
+  // use_system_map — find and explain the relevant AcademyOS module
+  if (mode === 'use_system_map') {
+    const t = text.toLowerCase()
+    // Find the most relevant module by checking if any module label or id appears in the text
+    const match = DONNA_SYSTEM_MAP.find(m =>
+      t.includes(m.label.toLowerCase()) ||
+      t.includes(m.id.toLowerCase().replace(/_/g, ' ')) ||
+      t.includes(m.id.toLowerCase())
+    )
+    if (match) {
+      return {
+        text: match.userFacingExplanation,
+        confidence: 'high',
+        sourceNote: `AcademyOS system: ${match.label}`,
+        followUp: match.directorQuestions[0] ?? null,
+        href: null,
+      }
+    }
+    // Generic system map answer
+    return {
+      text: "AcademyOS works as a connected system: coaches run sessions and submit wrap-ups → the director reviews and approves → player records update → parents see approved summaries. Nothing moves without your explicit approval. What part would you like me to explain?",
+      confidence: 'high',
+      sourceNote: 'AcademyOS system overview',
+      followUp: 'How does the review center work?',
+      href: '/director/review',
+    }
+  }
+
+  // ask_clarification — the router detected ambiguity
+  if (mode === 'ask_clarification') {
+    return {
+      text: "Could you give me a bit more context? Are you asking about a specific player, a KPI, a module, or a pending action? The more specific you are, the better I can help.",
+      confidence: 'partial',
+      sourceNote: null,
+      followUp: null,
+      href: null,
+    }
+  }
+
+  // explain_limitation — honest about what DONNA can't do
+  if (mode === 'explain_limitation') {
+    return {
+      text: "I don't have enough context to answer that well here. I can explain what I do have — sessions, pending reviews, player attention signals, KPIs, and system explanations — but I may not have all the data you're looking for yet.",
+      confidence: 'insufficient',
+      sourceNote: 'Context limitation',
+      followUp: "What needs my attention right now?",
+      href: null,
+    }
+  }
+
+  return null
+}
+
+// ── Sprint 731: Strip markdown for TTS ────────────────────────────────────────
+// Removes markdown formatting so text reads naturally when spoken aloud.
+// Caps at ~300 chars (first natural paragraph) to avoid very long speech.
+
+function stripMarkdownForTts(text: string): string {
+  const cleaned = text
+    .replace(/\*\*(.+?)\*\*/g, '$1')       // **bold** → bold
+    .replace(/\*(.+?)\*/g, '$1')            // *italic* → italic
+    .replace(/`([^`]+)`/g, '$1')            // `code` → code
+    .replace(/^#{1,6}\s+/gm, '')            // ## Heading → Heading
+    .replace(/^[-*•]\s+/gm, '. ')           // bullet point → pause
+    .replace(/^\d+\.\s+/gm, '. ')           // numbered list → pause
+    .replace(/--/g, ', ')                   // -- → pause
+    .replace(/\n{2,}/g, '. ')              // blank lines → pause
+    .replace(/\n/g, '. ')                   // line breaks → pause
+    .replace(/\.\s*\.\s*\./g, '.')          // collapse repeated dots
+    .replace(/\s{2,}/g, ' ')               // collapse spaces
+    .trim()
+
+  // Speak only the first natural paragraph / ~300 chars to keep it concise
+  const breakAt = 300
+  if (cleaned.length <= breakAt) return cleaned
+  const cutoff = cleaned.lastIndexOf('.', breakAt)
+  if (cutoff > 60) return cleaned.slice(0, cutoff + 1)
+  return cleaned.slice(0, breakAt)
 }

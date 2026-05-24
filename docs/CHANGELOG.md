@@ -2,6 +2,86 @@
 
 ---
 
+## 2026-05-24 — Sprint 732 — DONNA ChatGPT-Quality Conversational Certification V2
+
+- Updated `docs/DONNA_CHATGPT_QUALITY_CONVERSATIONAL_CERTIFICATION.md` — full 45-prompt re-regression after Sprints 730-731; final score 87/100; 40 PASS / 5 PARTIAL / 0 FAIL; verdict: DEMO-READY BUT NOT CHATGPT-QUALITY; Sprint 733 recommendation with exact files and scope
+- TypeScript: clean (no code changes in this sprint)
+
+---
+
+## 2026-05-23 — Sprint 731 — DONNA Chat Response Auto-Speak (TTS Wiring) V1
+
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:
+  - Added `speakWithServerTts` + `stopServerTts` imports from `donnaServerTtsClient`
+  - Added `lastVoiceInputAt` ref — stamped on each voice transcript completion
+  - Added `lastSpokenIdRef` ref — deduplicates spoken messages
+  - Added `useEffect` watching `messages`: auto-speaks last DONNA response if a voice input occurred within 30 seconds; uses `stripMarkdownForTts()` for clean speech
+  - Voice toggle now calls `stopServerTts()` before activating mic (prevents TTS/mic conflict)
+  - Added `stripMarkdownForTts()` module-level helper (removes **, *, #, bullets, numbers, line breaks; caps at 300 chars / first natural paragraph)
+- TypeScript: clean
+
+---
+
+## 2026-05-23 — Sprint 730 — DONNA Nav Intent + Missing-Context Pattern Expansion V1
+
+- Modified `src/lib/donna/donnaMissingContextEngine.ts`:
+  - Added `detectNavigationIntent()` + `NAV_PAGE_MAP` (9 pages: review, players, sessions, templates, onboarding, add-coaches, add-players, curriculum, dashboard)
+  - Wired as step 0 in `detectMissingContext()` — fires before onboarding handler
+  - Extended `ONBOARDING_PATTERNS` to catch "I'm new", "where do I begin", "brand new", "just starting", "first time", etc.
+  - Extends `PLAYERS_QUESTION_PATTERNS` to catch "who should I focus on", "focus on today", "prioritize players"
+  - Fixes `COACHES_QUESTION_PATTERNS` to catch "add a coach" (singular)
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:
+  - Added `buildNavOfferFromHref()` helper + `HREF_TO_LABEL` map
+  - After safe-read dispatch fires: if `answer.href` exists, calls `setPendingNavOffer()` so "yes"/"yeah" on next turn confirms navigation
+  - Added `PendingNavOffer` to session-memory imports
+- TypeScript: clean
+
+---
+
+## 2026-05-23 — Sprint 729 — DONNA ChatGPT-Quality Conversational Certification V1
+
+- Created `docs/DONNA_CHATGPT_QUALITY_CONVERSATIONAL_CERTIFICATION.md` — full 45-prompt re-regression; 10-dimension score (73/100 vs 26/100 baseline); P0/P1/P2/P3 gap analysis; final verdict: **PILOT-READY**
+- TypeScript: clean (no code changes in this sprint)
+
+---
+
+## 2026-05-23 — Sprint 728 — DONNA Short Phrase Natural Language Engine V1
+
+- Created `src/lib/donna/donnaShortPhraseEngine.ts` — detects "help", "confused", "what can you do", "what now" (and variations) for any role; returns role-aware explanatory response with follow-up suggestion; fires before router/fallback
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — wired `detectShortPhrase()` + `buildShortPhraseAnswer()` as step 9 (before conversational router); adds import
+- TypeScript: clean
+
+---
+
+## 2026-05-23 — Sprint 727 — DONNA First-Time Setup Suggested Questions V1
+
+- Modified `src/lib/donna/donnaSuggestedQuestions.ts` — added `SETUP_QUESTIONS` bank (4 onboarding-oriented chips); `getDirectorSuggestedQuestions()` returns setup chips when `ctx.isFirstTimeSetup === true`
+- TypeScript: clean
+
+---
+
+## 2026-05-23 — Sprint 726 — DONNA Conversational Router Wiring V1
+
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — wired `routeDonnaPrompt()` and `buildRouterAnswer()` into `handleSend()` dispatch chain (step 10); added `buildRouterAnswer()` module-level helper for `use_page_context`, `use_system_map`, `ask_clarification`, `explain_limitation` modes
+- TypeScript: clean
+
+---
+
+## 2026-05-23 — Sprint 725 — DONNA Missing Context Intercept in Chat Shell V1
+
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — inserted `detectMissingContext()` call (step 3 in dispatch chain); stores `navOffer` via `setPendingNavOffer()` for yes/no confirmation
+- TypeScript: clean
+
+---
+
+## 2026-05-23 — Sprint 724 — DONNA Yes/No Navigation Confirmation V1
+
+- Modified `src/lib/donna/donnaChatSessionMemory.ts` — added `PendingNavOffer` interface and `pendingNavOffer` field to `DonnaChatSessionState`; added `setPendingNavOffer()`, `consumePendingNavOffer()`, `hasPendingNavOffer()` helpers
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — added `useRouter` + `usePathname` hooks; YES/NO pattern constants; yes/no dispatch step (step 1 in chain) with `router.push()` on YES
+- TypeScript: clean
+
+---
+
 ## 2026-05-23 — Sprint 723 — DONNA Setup State Context Queries V1
 
 - Modified `src/lib/donna/directorDonnaContext.ts` — added live `playerCount` and `coachCount` queries (sequential, RLS-safe); wired real values into return; `isFirstTimeSetup = playerCount === 0`

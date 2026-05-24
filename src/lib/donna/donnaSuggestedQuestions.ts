@@ -146,12 +146,54 @@ const COACH_BASE_QUESTIONS: DonnaSuggestedQuestion[] = [
   },
 ]
 
+// ── First-time setup question bank (Sprint 727) ───────────────────────────────
+
+const SETUP_QUESTIONS: DonnaSuggestedQuestion[] = [
+  {
+    id: 'setup_onboarding',
+    text: 'Can you help me with onboarding?',
+    actionId: 'navigate_onboarding',
+    domain: 'general',
+    role: 'director',
+    priority: 20,
+  },
+  {
+    id: 'setup_coaches',
+    text: 'How do I add my coaches?',
+    actionId: 'navigate_add_coaches',
+    domain: 'general',
+    role: 'director',
+    priority: 18,
+  },
+  {
+    id: 'setup_players',
+    text: 'How do I add my players?',
+    actionId: 'navigate_add_players',
+    domain: 'general',
+    role: 'director',
+    priority: 16,
+  },
+  {
+    id: 'setup_next',
+    text: 'What should I do first?',
+    actionId: 'dashboard_priority',
+    domain: 'general',
+    role: 'director',
+    priority: 14,
+  },
+]
+
 // ── Context-driven prioritized suggestions ────────────────────────────────────
 
 export function getDirectorSuggestedQuestions(
   ctx: DirectorDonnaContext | null,
   limit = 4,
 ): DonnaSuggestedQuestion[] {
+  // Sprint 727: first-time setup directors get setup-oriented chips
+  if (ctx?.isFirstTimeSetup) {
+    return SETUP_QUESTIONS.slice(0, limit)
+  }
+
   const questions = [...DIRECTOR_BASE_QUESTIONS]
   const boosts = new Map<string, number>()
 
