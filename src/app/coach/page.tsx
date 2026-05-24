@@ -435,18 +435,6 @@ export default async function CoachHome() {
               <ChevronRight className="w-3 h-3 text-text-muted group-hover:text-lime group-hover:translate-x-0.5 transition-all" />
             </div>
           </Link>
-          <Link href="/coach/donna" className="block group col-span-2">
-            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-surface border border-status-blue/15 hover:border-status-blue/35 hover:bg-surface-raised transition-all">
-              <div className="w-8 h-8 rounded-xl bg-status-blue/10 border border-status-blue/20 flex items-center justify-center shrink-0">
-                <Sparkles className="w-4 h-4 text-status-blue" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-xs font-medium text-text-secondary group-hover:text-text-primary transition-colors">Ask DONNA</span>
-                <p className="text-xs text-text-muted">Sessions, players, wrap-up, player watch-fors</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-status-blue/40 group-hover:text-status-blue transition-colors shrink-0" />
-            </div>
-          </Link>
         </div>
       </div>
 

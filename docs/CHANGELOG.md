@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-24 — Sprint 772 — AIQS DONNA Placement Correction V1
+
+- Modified `src/app/player/page.tsx` — Moved "Ask DONNA" chips block from before PlayerMissionPreview to after it (AIQS Player Portal Problem #2: mission buried below DONNA interface)
+- Modified `src/app/coach/page.tsx` — Removed duplicate "Ask DONNA" item from Quick Actions grid; DONNA Coach Assistant card remains as sole entry point (AIQS Coach Home Problem #1: DONNA appeared twice)
+- Created `docs/AIQS_DONNA_PLACEMENT_772.md` — sprint doc; AIQS issues; expected score improvements
+- Player Portal: DONNA integration 4 → 5/5; primary action clarity +2; cognitive load +2
+- Coach Home: DONNA integration 4 → 5/5; cognitive load +2
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 771 — AIQS Major Route Loading Skeletons V1
 
 - Created `src/app/director/loading.tsx` — Director Home skeleton: header, command center hero, KPI grid, sessions (was blank on load)

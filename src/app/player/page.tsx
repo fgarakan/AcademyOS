@@ -401,6 +401,17 @@ export default async function PlayerHome() {
         ))}
       </div>
 
+      {/* ── Today's Mission ───────────────────────────────────── */}
+      <PlayerMissionPreview
+        strength={idpView?.what_to_understand?.[0] ?? null}
+        mission={idpView?.recommended_next_mission ?? null}
+        nextWin={idpView?.requirements_to_move_up?.[0] ?? null}
+        currentLevel={idpView?.current_level ?? null}
+        whyItMatters={missionCopy?.whyItMatters ?? null}
+        tryThisNext={missionCopy?.tryThisNext ?? null}
+        coachIsWatchingFor={missionCopy?.coachIsWatchingFor ?? null}
+      />
+
       {/* ── Ask DONNA ────────────────────────────────────────── */}
       <div className="rounded-xl bg-surface border border-border px-4 py-4 space-y-3">
         <div className="flex items-center gap-2">
@@ -424,17 +435,6 @@ export default async function PlayerHome() {
           ))}
         </div>
       </div>
-
-      {/* ── Today's Mission ───────────────────────────────────── */}
-      <PlayerMissionPreview
-        strength={idpView?.what_to_understand?.[0] ?? null}
-        mission={idpView?.recommended_next_mission ?? null}
-        nextWin={idpView?.requirements_to_move_up?.[0] ?? null}
-        currentLevel={idpView?.current_level ?? null}
-        whyItMatters={missionCopy?.whyItMatters ?? null}
-        tryThisNext={missionCopy?.tryThisNext ?? null}
-        coachIsWatchingFor={missionCopy?.coachIsWatchingFor ?? null}
-      />
 
       {/* ── No Mapping State ──────────────────────────────────── */}
       {!idpView && noMappingReason && (
