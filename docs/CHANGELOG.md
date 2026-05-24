@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-24 — Sprint 773 — Coach Home Today Console AIQS Rebuild V1
+
+- Modified `src/app/coach/page.tsx` — Removed standalone "Next Session" card (duplicated first session in TODAY section); added lime "NEXT" badge to first incomplete session in TODAY list; eyebrow "Your Workspace" → "Coach Hub"; removed unused Clock/PlayCircle imports
+- Created `docs/AIQS_COACH_HOME_TODAY_CONSOLE_773.md` — sprint doc
+- Coach Home: cognitive load +3 (duplication removed); purpose clarity +1 (eyebrow fixed)
+- Estimated score improvement: 77 → 83+
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 772 — AIQS DONNA Placement Correction V1
 
 - Modified `src/app/player/page.tsx` — Moved "Ask DONNA" chips block from before PlayerMissionPreview to after it (AIQS Player Portal Problem #2: mission buried below DONNA interface)

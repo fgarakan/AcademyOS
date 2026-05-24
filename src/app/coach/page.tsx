@@ -1,4 +1,4 @@
-import { Calendar, Users, FileText, ChevronRight, ClipboardList, Sparkles, Clock, PlayCircle } from 'lucide-react'
+import { Calendar, Users, FileText, ChevronRight, ClipboardList, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import {
   Card,
@@ -80,7 +80,7 @@ export default async function CoachHome() {
 
       {/* ── Header ───────────────────────────────────────────── */}
       <div>
-        <p className="page-eyebrow">Your Workspace</p>
+        <p className="page-eyebrow">Coach Hub</p>
         <h1 className="page-title">
           {coachFirstName ? `${greeting}, ${coachFirstName}` : 'Coach Hub'}
         </h1>
@@ -103,47 +103,6 @@ export default async function CoachHome() {
           <ChevronRight className="w-4 h-4 text-status-orange/60 shrink-0 group-hover:text-status-orange transition-colors" />
         </Link>
       )}
-
-      {/* ── Next Session card ────────────────────────────────────── */}
-      {todaySessions.length > 0 && (() => {
-        const next = todaySessions.find(s => s.status !== 'completed' && s.status !== 'cancelled') ?? todaySessions[0]
-        return (
-          <Link href={`/coach/sessions/${next.id}`} className="block group">
-            <div className="rounded-2xl border border-lime/20 bg-surface p-4 space-y-3 hover:border-lime/40 hover:bg-surface-raised transition-all">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <PlayCircle className="w-4 h-4 text-lime shrink-0" />
-                  <p className="text-[11px] uppercase tracking-widest text-lime font-semibold">Next Session</p>
-                </div>
-                {next.scheduled_time && (
-                  <div className="flex items-center gap-1 text-[11px] text-text-muted">
-                    <Clock className="w-3 h-3" />
-                    <span className="font-mono">{next.scheduled_time.slice(0, 5)}</span>
-                  </div>
-                )}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-text-primary group-hover:text-lime transition-colors">
-                  {next.name ?? 'Session'}
-                </p>
-                {next.duration_min && (
-                  <p className="text-xs text-text-muted mt-0.5">{next.duration_min} min</p>
-                )}
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                  next.status === 'in_progress'
-                    ? 'bg-lime/10 text-lime border-lime/30'
-                    : 'bg-surface-raised text-text-muted border-border'
-                }`}>
-                  {next.status.replace('_', ' ')}
-                </span>
-                <span className="text-xs text-lime font-medium group-hover:opacity-80">Open →</span>
-              </div>
-            </div>
-          </Link>
-        )
-      })()}
 
       {/* ── Quick stats ────────────────────────────────────────── */}
       <div className="flex gap-4">
@@ -179,43 +138,54 @@ export default async function CoachHome() {
             </div>
           </CardHeader>
           <CardContent>
-            {todaySessions.length > 0 ? (
-              <ul className="space-y-1">
-                {todaySessions.map(s => (
-                  <li key={s.id}>
-                    <Link
-                      href={`/coach/sessions/${s.id}`}
-                      className="flex items-center justify-between gap-2 py-2 px-1 rounded-xl hover:bg-surface-raised transition-colors group border-b border-border last:border-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate group-hover:text-lime transition-colors">
-                          {s.name ?? 'Session'}
-                        </p>
-                        {s.scheduled_time && (
-                          <p className="text-xs text-text-muted">
-                            {s.scheduled_time.slice(0, 5)}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                          s.status === 'in_progress'
-                            ? 'bg-lime/10 text-lime border-lime/30'
-                            : s.status === 'completed'
-                            ? 'bg-status-green/10 text-status-green border-status-green/30'
-                            : s.status === 'cancelled'
-                            ? 'bg-status-red/10 text-status-red border-status-red/30'
-                            : 'bg-surface-raised text-text-muted border-border'
-                        }`}>
-                          {s.status.replace('_', ' ')}
-                        </span>
-                        <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime transition-colors" />
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
+            {todaySessions.length > 0 ? (() => {
+              const nextId = (todaySessions.find(s => s.status !== 'completed' && s.status !== 'cancelled') ?? todaySessions[0])?.id
+              return (
+                <ul className="space-y-1">
+                  {todaySessions.map(s => {
+                    const isNext = s.id === nextId
+                    return (
+                      <li key={s.id}>
+                        <Link
+                          href={`/coach/sessions/${s.id}`}
+                          className="flex items-center justify-between gap-2 py-2 px-1 rounded-xl hover:bg-surface-raised transition-colors group border-b border-border last:border-0"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              {isNext && (
+                                <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border bg-lime/10 text-lime border-lime/30">NEXT</span>
+                              )}
+                              <p className="text-sm font-medium text-text-primary truncate group-hover:text-lime transition-colors">
+                                {s.name ?? 'Session'}
+                              </p>
+                            </div>
+                            {s.scheduled_time && (
+                              <p className="text-xs text-text-muted">
+                                {s.scheduled_time.slice(0, 5)}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                              s.status === 'in_progress'
+                                ? 'bg-lime/10 text-lime border-lime/30'
+                                : s.status === 'completed'
+                                ? 'bg-status-green/10 text-status-green border-status-green/30'
+                                : s.status === 'cancelled'
+                                ? 'bg-status-red/10 text-status-red border-status-red/30'
+                                : 'bg-surface-raised text-text-muted border-border'
+                            }`}>
+                              {s.status.replace('_', ' ')}
+                            </span>
+                            <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime transition-colors" />
+                          </div>
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )
+            })() : (
               <EmptyState
                 icon={<Calendar className="w-5 h-5" />}
                 title="No sessions scheduled yet"
