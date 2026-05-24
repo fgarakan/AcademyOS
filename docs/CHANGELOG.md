@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 764 — Director Attention Queue Enrichment V1
+
+- Modified `src/app/director/page.tsx` — Added two enrichment queries: (A) `v_pending_proposed_actions` (select action_id/action_label/expires_at/risk_level, academy_id-scoped, limit 10) for real per-item pendingApprovals with expiry and risk data; (B) `v_group_summary` (select group_id/group_name/player_count/max_players, academy_id-scoped) for overCapacityGroups and noCoverageGroupCount; replaced synthetic wrap-up aggregate with real proposed_action items (+ defensive fallback if view empty); derived overCapacityGroups (player_count > max_players filter); derived noCoverageGroupCount from groups × weekSessions.group_id cross-check (no extra query); `overCapacityGroups` and `noCoverageGroupCount` now live — previously hardcoded `[]` and `0`
+- Created `docs/DIRECTOR_ATTENTION_QUEUE_ENRICHMENT_764.md` — Sprint documentation; enrichment audit table; per-source data provenance; fallback/empty behavior; deferred enrichments with reasons; protected files not staged
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 763 — Director Attention Queue Hero Wiring V1
 
 - Created `src/app/director/_components/DirectorAttentionQueueHero.tsx` — Pure UI hero component accepting `AttentionQueue` from `buildAttentionQueue()`; renders top 3 items with category chips (Decision/Risk/Watch/Opportunity/FYI), priority-colored left border (critical=red/high=orange/medium=yellow/low=neutral), "Do this first" label on item 1, safe action label derived from href (Open Review / View Player / View Sessions / View Curriculum / View Groups / View Details), "Ask DONNA →" footer link, "View all N items →" overflow link, and empty state "Today looks clear" when queue is empty

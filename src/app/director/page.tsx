@@ -337,20 +337,87 @@ export default async function DirectorDashboard() {
     })
   }
 
-  // Sprint 763 — Build attention queue from existing data, no new DB queries.
-  // pendingApprovals: aggregate items from counts already fetched.
+  // Sprint 764 — Enrichment query A: v_group_summary for group capacity signals.
+  // Provides overCapacityGroups (groups where player_count > max_players) and
+  // noCoverageGroupCount (groups with no session this week, crossed against weekSessions).
+  const { data: groupSummaryRaw } = await rawDb
+    .from('v_group_summary')
+    .select('group_id, group_name, player_count, max_players')
+    .eq('academy_id', academyId)
+  const groupSummaryRows = (groupSummaryRaw ?? []) as Array<{
+    group_id: string | null
+    group_name: string | null
+    player_count: number | null
+    max_players: number | null
+  }>
+
+  // Sprint 764 — Enrichment query B: v_pending_proposed_actions for real per-item data.
+  // Provides action_label, expires_at, risk_level per pending action (up to 10).
+  // View is pre-filtered to pending_review status by name convention.
+  const { data: pendingActionsRaw } = await rawDb
+    .from('v_pending_proposed_actions')
+    .select('action_id, action_label, expires_at, risk_level')
+    .eq('academy_id', academyId)
+    .limit(10)
+  const pendingActionsRows = (pendingActionsRaw ?? []) as Array<{
+    action_id: string | null
+    action_label: string | null
+    expires_at: string | null
+    risk_level: string | null
+  }>
+
+  // Sprint 764 — Derive overCapacityGroups from group summary.
+  const overCapacityGroups = groupSummaryRows
+    .filter(g =>
+      g.group_id !== null &&
+      g.group_name !== null &&
+      g.player_count !== null &&
+      g.max_players !== null &&
+      g.player_count > g.max_players,
+    )
+    .map(g => ({
+      id: g.group_id!,
+      name: g.group_name!,
+      memberCount: g.player_count!,
+      maxPlayers: g.max_players,
+    }))
+
+  // Sprint 764 — Derive noCoverageGroupCount from group summary × weekSessions.
+  // Groups with no sessions scheduled this week are coverage gaps.
+  const sessionGroupIds = new Set(
+    (weekSessions ?? []).map(s => s.group_id).filter(Boolean) as string[],
+  )
+  const noCoverageGroupCount = groupSummaryRows.filter(
+    g => g.group_id !== null && !sessionGroupIds.has(g.group_id),
+  ).length
+
+  // Sprint 763 / Sprint 764 — Build attention queue.
+  // pendingApprovals: real per-item data from v_pending_proposed_actions + non-action synthetics.
+  // Fallback: if view returned nothing and wrap-ups are known, add synthetic wrap-up item.
   // highAlerts: mapped from priorityQueue (already fetched via getAcademyPriorityQueue).
-  // overCapacityGroups: empty (no group capacity query on this page — not fabricated).
-  // noCoverageGroupCount: 0 (no per-group session coverage query — not fabricated).
+  // overCapacityGroups: now live from v_group_summary (Sprint 764).
+  // noCoverageGroupCount: now live from groups × sessions cross-check (Sprint 764).
   const attentionQueueInput: AttentionQueueInput = {
     pendingApprovals: [
-      ...(pendingWrapUpsCount > 0 ? [{
-        id: 'pending-wrap-ups',
+      // Real proposed-action items with expiry and risk data
+      ...pendingActionsRows
+        .filter(a => a.action_id !== null)
+        .map(a => ({
+          id: a.action_id!,
+          actionLabel: a.action_label ?? 'Pending action requiring review',
+          riskLevel: a.risk_level ?? null,
+          expiresAt: a.expires_at ?? null,
+          entityLabel: null,
+        })),
+      // Fallback: view returned nothing but we know wrap-ups exist
+      ...(pendingActionsRows.length === 0 && pendingWrapUpsCount > 0 ? [{
+        id: 'pending-wrap-ups-fallback',
         actionLabel: `${pendingWrapUpsCount.toString()} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting review`,
         riskLevel: 'medium',
         expiresAt: null,
         entityLabel: null,
       }] : []),
+      // Non-proposed-action items (private_lesson_requests, player status signals)
       ...(newRequests > 0 ? [{
         id: 'lesson-requests',
         actionLabel: `${newRequests.toString()} lesson request${newRequests !== 1 ? 's' : ''} need review`,
@@ -382,9 +449,9 @@ export default async function DirectorDashboard() {
               : (item.urgency === 'urgent' || item.urgency === 'high') ? 'high'
               : 'medium',
     })),
-    overCapacityGroups: [],
+    overCapacityGroups,
     curriculumGapCount: curricGapCount,
-    noCoverageGroupCount: 0,
+    noCoverageGroupCount,
   }
   const attentionQueue = buildAttentionQueue(attentionQueueInput)
 
