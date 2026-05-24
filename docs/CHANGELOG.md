@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-24 — Sprint 754 — DONNA Domain Guided Operators V1
+
+- Created `src/lib/donna/donnaUIGuidedOperators.ts` — 6 domain guided operators: (1) Onboarding — 5-step setup flow covering mode selection, interview, curriculum, placement, and activation; (2) Curriculum — 5-step flow covering structure review, gap identification, builder launch, draft submission, and publish; (3) Template — 5-step flow covering type selection, basics, draft, builder, and review; (4) Session — 5-step flow covering planning, today's sessions, wrap-up, and attendance exceptions; (5) Player Profile — 6-step flow covering status review, coach note draft, advancement proposal, placement, and parent update draft; (6) Review Center — 5-step flow covering queue overview, prioritization, item explanation, detail navigation, and approval gate; each operator defines entry phrases, opening line, per-step DONNA prompts, action types, approval notes, out-of-scope declarations, and role guards; lookup utilities (by id, route, phrase, role, step)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 753 — DONNA Site-Wide UI Action Registry + Approval Matrix V1
 
 - Created `src/lib/donna/donnaUIActionRegistry.ts` — 36 UI actions across 10 categories and 6 safety classes (always_safe, safe_with_context, draft_to_review, director_approval, platform_required, always_blocked); covers navigation, panel control, section toggle, filter/search, onboarding guidance, builder launch, guided flows, draft actions, director-approval actions, and always-blocked invariants; lookup utilities (by id, domain, role, page, safety class); coverage report generator; covers all 5 roles (director, head_coach, coach, player, parent)
