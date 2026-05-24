@@ -15,7 +15,7 @@
   --aos-accent-soft: rgba(17,217,223,0.10);
   --aos-text: #f4f7f8;
   --aos-text-muted: #a3aab4;
-  --aos-text-dim: #626b76;
+  --aos-text-dim: #7a8898;
   --aos-red: #ff4d55;
   --aos-orange: #ffb020;
   background: var(--aos-surface, #07090c);
@@ -47,7 +47,7 @@
   justify-content: center;
   background: transparent;
   border: none;
-  color: var(--aos-text-dim, #626b76);
+  color: var(--aos-text-dim, #7a8898);
   padding: 8px;
   border-radius: 6px;
   cursor: pointer;
@@ -63,7 +63,7 @@
 .aos-deck-skip {
   background: transparent;
   border: none;
-  color: var(--aos-text-dim, #626b76);
+  color: var(--aos-text-dim, #7a8898);
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
@@ -137,7 +137,7 @@
 }
 
 .aos-deck-illustration .illo-stroke-muted {
-  stroke: var(--aos-text-dim, #626b76);
+  stroke: var(--aos-text-dim, #7a8898);
   fill: none;
   stroke-width: 1;
   stroke-linecap: round;
@@ -238,7 +238,7 @@
 }
 
 .aos-deck-dot:hover {
-  background: var(--aos-text-dim, #626b76);
+  background: var(--aos-text-dim, #7a8898);
 }
 
 .aos-deck-dot.active {

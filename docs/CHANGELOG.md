@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-24 — Sprint 769 — AIQS Global Contrast Token Fix V1
+
+- Modified `tailwind.config.ts` — changed `text.muted` from `#626b76` → `#7a8898`; raises WCAG contrast on card background (#07090c) from ≈3.68:1 (fail) to ≈5.49:1 (pass); maintains blue-grey palette character; propagates to all 40+ usages of `text-text-muted` utility across all 14 audited pages with zero per-page code changes
+- Modified `src/app/globals.css` — changed `--text-muted` and `--text-muted-legacy` CSS variables from `#626b76` → `#7a8898` (2 lines); keeps CSS variable layer consistent with Tailwind token
+- Modified `src/components/onboarding/aos-deck.css` — changed `--aos-text-dim` token definition and 4 inline fallback values from `#626b76` → `#7a8898`; onboarding deck now matches global muted-text standard
+- Created `docs/AIQS_GLOBAL_CONTRAST_TOKEN_FIX_769.md` — sprint documentation; contrast before/after calculations; token source audit; remaining hardcoded #555555 gap list (deferred to Sprint 770); pages affected; guardrails confirmation
+- No layout, component hierarchy, typography size, or behavior changes
+- TypeScript: clean (no TS changes)
+
+---
+
 ## 2026-05-24 — AcademyOS Site-Wide UI/UX Certification (14 Pages)
 
 - Created `docs/ACADEMYOS_SITE_WIDE_UI_UX_CERTIFICATION.md` — Site-wide AIQS audit of 14 pages across all roles; site-wide decision: STRONG FOUNDATION — TARGETED POLISH NEEDED (average 76/100, no hard AIQS failures); summary scorecard table; 4 systemic issues identified (S-1: `text-text-muted` #555555 ≈ 2.6:1 contrast below WCAG AA, S-2: `text-[9px]`/`text-[10px]` micro-text for operational labels, S-3: missing loading skeletons on 8+ pages, S-4: DONNA appears before primary content in player + coach views); full individual audits for Director Home (78), Director Today (82), Director DONNA (71), Director KPI (65), Curriculum Map (74), Review Center (72), Players Directory (82), Player Profile (67), Sessions (80), Coach Home (77), Coach Session (74), Parent Portal (79), Player Portal (73), Settings (83); 3 systemic fix sprints recommended (contrast token, micro-text sweep, loading skeletons); per-page fix priority sequence; certification requirements for 90+ AIQS READY; 4-phase execution plan; no code changes
