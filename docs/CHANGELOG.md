@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 752 — DONNA VoiceReadyShell Quick Actions De-Clutter V1
+
+- Created `docs/DONNA_VOICE_READY_SHELL_QUICK_ACTIONS_DECLUTTER_752.md` — Audit of quick action chip behavior; suppression condition rationale (why ≥2 not ≥1); before/after layout diagram; impact assessment table (message dispatch, voice, TTS, input — all unaffected); UI score 8.6/10 → 9.1/10; remaining gaps for Sprint 753+
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — `quickActions` prop passed to `DonnaChatThread` changed from `quickActions` to `messages.length >= 2 ? [] : quickActions`; chips shown before first full exchange (empty state + while director's first message is in flight); hidden once DONNA has replied at least once; `DonnaChatThread` already guards on `quickActions.length > 0` — no component change needed
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 751 — DONNA VoiceReadyShell Response Audit V1
 
 - Created `docs/DONNA_VOICE_READY_SHELL_RESPONSE_AUDIT_751.md` — Full response surface audit of `DonnaVoiceReadyShell.tsx` and `DonnaChatThread.tsx`; confirms no duplicate surfaces (single `messages` state → single `DonnaChatThread`); voice state coverage table (Ready/Listening/Thinking/Speaking/Error); compares architecture to sidebar panel; UI score 8.1/10 → 8.6/10; remaining gaps for Sprint 752+

@@ -801,10 +801,13 @@ export function DonnaVoiceReadyShell({
       )}
 
       {/* Chat thread */}
+      {/* Sprint 752: quick action chips hidden once conversation is underway (≥2 messages). */}
+      {/* Chips are useful as conversation starters but add clutter mid-thread.             */}
+      {/* DonnaChatThread already guards on quickActions.length > 0 — no component change. */}
       <DonnaChatThread
         role={role}
         messages={messages}
-        quickActions={quickActions}
+        quickActions={messages.length >= 2 ? [] : quickActions}
         isTyping={isTyping}
         isListening={voice.status === 'listening'}
         onSend={handleSend}
