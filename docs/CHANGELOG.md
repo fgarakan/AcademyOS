@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-24 — Sprint 743 — DONNA Godmode Regression Prompt Harness V1
+
+- Created `docs/DONNA_GODMODE_REGRESSION_HARNESS_743.md` — Comprehensive 75-prompt regression harness across 14 DONNA domains; each prompt maps to expected behavior, responsible module, and current pass/fail status; results: 67/75 PASS (89%), 6 PARTIAL (8%), 3 BLOCKED (4%); all role-safety and honesty tests pass; blocked items documented: voice_command_id NOT NULL (action drafting, 2 prompts), player progress gap analysis (requires migrations 041-044, 1 prompt); partial items documented with specific fix paths; certification threshold recommendations included (CERTIFIED / FOUNDATION READY / DEMO-READY)
+- TypeScript: clean (no code changes)
+
+---
+
 ## 2026-05-24 — Sprint 742F — DONNA Recent Decisions Engine V1
 
 - Created `src/lib/donna/recentDecisionsLoader.ts` — Read-only loader for last 15 non-pending proposed_actions (approved/executed/rejected/modified/expired/failed); academy-scoped, rawDb pattern, capped at 15, ordered by updated_at desc; exports `RecentDecisionSummary`, `RecentDecisionsResult`, `loadRecentDecisions(db, academyId)`; fails safely with `insufficient_data` on error or empty result
