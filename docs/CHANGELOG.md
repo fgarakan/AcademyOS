@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — AcademyOS Site-Wide UI/UX Certification (14 Pages)
+
+- Created `docs/ACADEMYOS_SITE_WIDE_UI_UX_CERTIFICATION.md` — Site-wide AIQS audit of 14 pages across all roles; site-wide decision: STRONG FOUNDATION — TARGETED POLISH NEEDED (average 76/100, no hard AIQS failures); summary scorecard table; 4 systemic issues identified (S-1: `text-text-muted` #555555 ≈ 2.6:1 contrast below WCAG AA, S-2: `text-[9px]`/`text-[10px]` micro-text for operational labels, S-3: missing loading skeletons on 8+ pages, S-4: DONNA appears before primary content in player + coach views); full individual audits for Director Home (78), Director Today (82), Director DONNA (71), Director KPI (65), Curriculum Map (74), Review Center (72), Players Directory (82), Player Profile (67), Sessions (80), Coach Home (77), Coach Session (74), Parent Portal (79), Player Portal (73), Settings (83); 3 systemic fix sprints recommended (contrast token, micro-text sweep, loading skeletons); per-page fix priority sequence; certification requirements for 90+ AIQS READY; 4-phase execution plan; no code changes
+- No code changes — audit and documentation only
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Create AcademyOS Interface Quality Audit Skill
 
 - Created `.claude/skills/academy-interface-quality-auditor/SKILL.md` — Reusable Claude Code skill for auditing any AcademyOS page against the AcademyOS Interface Quality Standard (AIQS); YAML frontmatter with name + description; full 100-point rubric across 11 categories (purpose clarity 10, primary action clarity 10, cognitive load 15, visual hierarchy 10, typography 10, spacing/layout 10, role fit 10, accessibility 10, state quality 5, DONNA integration 5, trust/safety 5); audit behavior rules; pass/fail conditions with hard-failure gate (max 54 if any hard failure present); page-specific standards for Director Home, Coach Home, Curriculum Map, Player Profile, Parent Portal, Player Portal; exact output format template; source principles (Nielsen Norman, WCAG, Apple HIG, Material Design, AcademyOS product philosophy); reference files; audit-first guardrail (never modifies code without explicit user instruction)
