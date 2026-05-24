@@ -55,6 +55,8 @@ import { tryAnswerCoachCueQuestion } from '@/lib/donna/coachCueDonnaAnswer'
 import { tryAnswerCurriculumDraftProposal } from '@/lib/donna/curriculumDraftProposalDonnaAnswer'
 import { DATA_QUALITY_PATTERNS, buildDataQualityAnswer } from '@/lib/donna/dataQualityGuardian'
 import { RECENT_DECISIONS_PATTERNS, buildRecentDecisionsAnswer } from '@/lib/donna/recentDecisionsAnswerEngine'
+import { PLAYER_PROGRESS_STALL_PATTERNS, buildPlayerProgressStallAnswer } from '@/lib/donna/playerProgressStallDetector'
+import { submitDonnaActionDraft } from '@/lib/actions/donnaSentinelAction'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
@@ -276,6 +278,106 @@ export function DonnaVoiceReadyShell({
           sourceNote: rdAnswer.sourceNote,
         })
         if (rdNavOffer) setPendingNavOffer(rdNavOffer)
+      }, 600)
+      return
+    }
+
+    // Sprint 742G: Player progress stall detector — "Who is stalled?", "Player progress gaps?"
+    if (plainRole === 'director' && directorCtx && PLAYER_PROGRESS_STALL_PATTERNS.test(trimmed)) {
+      const stallAnswer = buildPlayerProgressStallAnswer(directorCtx)
+      const stallNavOffer = buildNavOfferFromHref(stallAnswer.href, trimmed)
+      setTimeout(() => {
+        setMessages(prev => [...prev, buildChatMessageFromAnswer(stallAnswer)])
+        setIsTyping(false)
+        recordTurn(trimmed, stallAnswer.text, {
+          actionId: stallAnswer.actionId,
+          confidence: stallAnswer.confidence,
+          sourceNote: stallAnswer.sourceNote,
+        })
+        if (stallNavOffer) setPendingNavOffer(stallNavOffer)
+      }, 600)
+      return
+    }
+
+    // Sprint 742G: Player action draft — "Advance player", "Propose level change for player"
+    // Creates a voice_commands sentinel row and a proposed_actions row for director review.
+    // DONNA never auto-approves — draft always lands in the Review Center.
+    const PLAYER_ACTION_DRAFT_PATTERNS =
+      /\b(advance (a |the |eligible )?players?|propose (a |the |an )?level (change|move|movement|advancement)|draft (an?|a) (player |level )?advancement|submit (an?|a) (player |level )?(advancement |promotion )?(proposal|draft)|create (an?|a) (player |level )?(advancement |promotion )?(proposal|draft)|propose (an?|a) (player )?advancement)\b/i
+
+    if (plainRole === 'director' && directorCtx && PLAYER_ACTION_DRAFT_PATTERNS.test(trimmed)) {
+      const eligibleCount = directorCtx.advancementEligibleCount
+      const pendingMsg = `📋 Submitting a player advancement draft to your Review Center…`
+      setMessages(prev => [...prev, buildUserChatMessage(trimmed)])
+      setTimeout(async () => {
+        if (eligibleCount === 0) {
+          const noEligMsg = '🟡 No players are currently marked advancement-eligible. Assess players first before proposing advancement.'
+          setMessages(prev => [...prev, buildChatMessageFromAnswer({
+            actionId: 'player_action_draft_no_eligible',
+            text: noEligMsg,
+            confidence: 'high',
+            sourceNote: 'Live player curriculum state',
+            followUp: 'Take me to Players',
+            href: '/director/players',
+            isAnswerable: true,
+          })])
+          setIsTyping(false)
+          recordTurn(trimmed, noEligMsg, { actionId: 'player_action_draft_no_eligible', confidence: 'high', sourceNote: 'Live player curriculum state' })
+          return
+        }
+
+        // Show typing indicator while submitting
+        setMessages(prev => [...prev, buildChatMessageFromAnswer({
+          actionId: 'player_action_draft_submitting',
+          text: pendingMsg,
+          confidence: 'high',
+          sourceNote: 'Submitting draft…',
+          followUp: 'Review Center',
+          href: '/director/review',
+          isAnswerable: false,
+        })])
+
+        const result = await submitDonnaActionDraft({
+          rawInput: trimmed,
+          actionLabel: `Player advancement proposal — ${eligibleCount} eligible player${eligibleCount !== 1 ? 's' : ''} pending review`,
+          targetModule: 'player_advancement_v1',
+          proposedPayload: {
+            intent: 'advance_player',
+            eligiblePlayerCount: eligibleCount,
+            requestedBy: 'donna_chat',
+            sourcePrompt: trimmed,
+          },
+          riskLevel: 'medium',
+        })
+
+        const responseText = result.error
+          ? `⚠️ Could not submit advancement draft: ${result.error}. Please go to the Review Center directly.`
+          : [
+              `✅ **Advancement proposal submitted to Review Center** (${eligibleCount} eligible player${eligibleCount !== 1 ? 's' : ''}).`,
+              '',
+              'Go to the Review Center to review each player, select who to advance, and approve the action.',
+              'DONNA does not automatically approve — your decision is required.',
+            ].join('\n')
+
+        setMessages(prev => [
+          ...prev.slice(0, -1), // Remove "submitting" message
+          buildChatMessageFromAnswer({
+            actionId: result.error ? 'player_action_draft_error' : 'player_action_draft_submitted',
+            text: responseText,
+            confidence: result.error ? 'partial' : 'high',
+            sourceNote: result.error ? 'Action draft failed' : `Draft ID: ${result.actionId}`,
+            followUp: 'Take me to Review Center',
+            href: '/director/review',
+            isAnswerable: true,
+          }),
+        ])
+        setIsTyping(false)
+        recordTurn(trimmed, responseText, {
+          actionId: result.error ? 'player_action_draft_error' : 'player_action_draft_submitted',
+          confidence: result.error ? 'partial' : 'high',
+          sourceNote: result.error ? 'Action draft failed' : `Draft ID: ${result.actionId}`,
+        })
+        if (!result.error) setPendingNavOffer({ label: 'Review Center', href: '/director/review', questionContext: trimmed })
       }, 600)
       return
     }

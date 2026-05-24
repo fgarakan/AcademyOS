@@ -13,8 +13,9 @@ import type { COOFieldStatus } from '@/lib/donna/cooDataStatus'
 
 export interface PlayerCurriculumStateSummary {
   playerId: string
+  playerName: string                       // Sprint 742G: joined from players.first_name + last_name
   currentLevelId: string
-  currentLevelDisplayName: string | null  // Sprint 742C: joined from curriculum_levels.display_name
+  currentLevelDisplayName: string | null   // Sprint 742C: joined from curriculum_levels.display_name
   advancementEligible: boolean
   enrolledAt: string
   lastEvaluatedAt: string | null
@@ -95,11 +96,13 @@ export async function loadPlayerCurriculumStates(
     // rawDb: player_curriculum_states has complex FK relationships that can trigger TS2589
     const rawDb = db as any
     // Sprint 742C: join curriculum_levels to get display_name for human-readable gap messages.
+    // Sprint 742G: join players to get first_name + last_name for stall detector answers.
     // curriculum_levels is global (no academy_id) with authenticated-read RLS — safe to join.
+    // players is academy-scoped; RLS ensures only academy players are returned.
     const { data, count } = await rawDb
       .from('player_curriculum_states')
       .select(
-        'player_id, current_level_id, advancement_eligible, enrolled_at, last_evaluated_at, curriculum_levels(display_name)',
+        'player_id, current_level_id, advancement_eligible, enrolled_at, last_evaluated_at, curriculum_levels(display_name), players(first_name, last_name)',
         { count: 'exact' },
       )
       .eq('academy_id', academyId)
@@ -113,10 +116,12 @@ export async function loadPlayerCurriculumStates(
       enrolled_at: string
       last_evaluated_at: string | null
       curriculum_levels: { display_name: string } | null
+      players: { first_name: string | null; last_name: string | null } | null
     }>
 
     const summaries: PlayerCurriculumStateSummary[] = rows.map(r => ({
       playerId: r.player_id,
+      playerName: [r.players?.first_name, r.players?.last_name].filter(Boolean).join(' ') || 'Player',
       currentLevelId: r.current_level_id,
       currentLevelDisplayName: r.curriculum_levels?.display_name ?? null,
       advancementEligible: r.advancement_eligible,

@@ -37,6 +37,8 @@ import type {
 } from '@/lib/donna/assessmentCoverageGapDetector'
 import { loadRecentDecisions } from '@/lib/donna/recentDecisionsLoader'
 import type { RecentDecisionSummary } from '@/lib/donna/recentDecisionsLoader'
+import { detectPlayerProgressStalls } from '@/lib/donna/playerProgressStallDetector'
+import type { PlayerProgressStall } from '@/lib/donna/playerProgressStallDetector'
 
 // ── Output types ──────────────────────────────────────────────────────────────
 
@@ -114,6 +116,10 @@ export interface DirectorDonnaContext {
   // Recent decisions (Sprint 742F)
   recentDecisions: RecentDecisionSummary[]
   recentDecisionContextAvailable: boolean
+  // Player progress stalls (Sprint 742G)
+  playerProgressStalls: PlayerProgressStall[]
+  playerProgressStallCount: number
+  playerProgressStallContextAvailable: boolean
   // Meta
   sourceLabels: DirectorSourceLabel[]
   confidence: DONNAConfidence
@@ -208,6 +214,10 @@ function buildDemoContext(): DirectorDonnaContext {
     // Recent decisions — empty in demo mode
     recentDecisions: [],
     recentDecisionContextAvailable: false,
+    // Player progress stalls — empty in demo mode
+    playerProgressStalls: [],
+    playerProgressStallCount: 0,
+    playerProgressStallContextAvailable: false,
     sourceLabels: [
       { field: 'Review queue', status: 'insufficient_data', label: 'Demo data' },
       { field: 'Sessions', status: 'insufficient_data', label: 'Demo data' },
@@ -567,6 +577,20 @@ export async function loadDirectorDonnaContext(
   recentDecisionContextAvailable = recentDecisionsResult.fieldStatus === 'live'
   fieldStatuses.recentDecisions = recentDecisionsResult.fieldStatus
 
+  // ── 7h. Player progress stalls (Sprint 742G) ──────────────────────────────
+  // Pure logic: no new DB call. Runs on already-loaded playerCurriculumStateSummaries.
+  // Detects players stalled at a level for >90 days without advancing.
+  // Does not overlap with advancementEligible — stalled players are NOT yet eligible.
+
+  const stallResult = detectPlayerProgressStalls({
+    playerProgressContextAvailable: pcsResult.fieldStatus === 'live',
+    playerCurriculumStateSummaries,
+  })
+
+  const playerProgressStalls = stallResult.stalls
+  const playerProgressStallCount = stallResult.stalls.length
+  const playerProgressStallContextAvailable = stallResult.stallContextAvailable
+
   // ── 8. Academy risks ───────────────────────────────────────────────────────
 
   const academyRisks: DirectorAcademyRisk[] = []
@@ -755,6 +779,10 @@ export async function loadDirectorDonnaContext(
     // Recent decisions (Sprint 742F)
     recentDecisions,
     recentDecisionContextAvailable,
+    // Player progress stalls (Sprint 742G)
+    playerProgressStalls,
+    playerProgressStallCount,
+    playerProgressStallContextAvailable,
     sourceLabels,
     confidence,
     isLive,
