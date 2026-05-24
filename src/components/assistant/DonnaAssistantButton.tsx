@@ -3352,28 +3352,39 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             isSpeaking={isSpeaking}
           />
 
-          {/* ── Sprint 711 — COO conversation history thread ── */}
-          {cooThread.length > 1 && (
-            <div className="mx-3 mb-2 space-y-2 border-b pb-3" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-              <p className="text-[9px] uppercase tracking-widest font-semibold mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                Conversation
-              </p>
-              {cooThread.slice(0, -1).slice(-3).map((turn, i) => (
-                <div key={i} className="space-y-1">
-                  <div className="flex justify-end">
-                    <div className="max-w-[80%] rounded-2xl rounded-tr-sm px-2.5 py-1.5" style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.12)' }}>
-                      <p className="text-[11px] text-text-primary leading-snug">{turn.user}</p>
+          {/* ── Sprint 747 — COO conversation thread — premium chat bubbles ── */}
+          {/* Shows last 5 turns including the current one. No section label.         */}
+          {/* commandResponse card in DonnaWorkflowCards still shows the current      */}
+          {/* response with its dismiss button — full single-surface merge is         */}
+          {/* Sprint 748 work (requires touching DonnaWorkflowCards).                 */}
+          {cooThread.length > 0 && (
+            <div className="pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="space-y-2.5 px-3">
+                {cooThread.slice(-5).map((turn, i) => (
+                  <div key={i} className="space-y-1.5">
+                    {/* User message — right-aligned, lime tint */}
+                    <div className="flex justify-end">
+                      <div
+                        className="max-w-[84%] rounded-2xl rounded-tr-sm px-3 py-2"
+                        style={{ background: 'rgba(200,255,0,0.07)', border: '1px solid rgba(200,255,0,0.15)' }}
+                      >
+                        <p className="text-[12px] text-text-primary leading-relaxed">{turn.user}</p>
+                      </div>
+                    </div>
+                    {/* DONNA message — left-aligned, violet tint */}
+                    <div className="flex justify-start">
+                      <div
+                        className="max-w-[88%] rounded-2xl rounded-tl-sm px-3 py-2"
+                        style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.12)' }}
+                      >
+                        <p className="text-[12px] text-text-secondary leading-relaxed">
+                          {turn.donna.length > 200 ? turn.donna.slice(0, 197) + '…' : turn.donna}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex justify-start">
-                    <div className="max-w-[88%] rounded-2xl rounded-tl-sm px-2.5 py-1.5" style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.1)' }}>
-                      <p className="text-[10px] text-text-muted leading-relaxed">
-                        {turn.donna.length > 130 ? turn.donna.slice(0, 127) + '…' : turn.donna}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 

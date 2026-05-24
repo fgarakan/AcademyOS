@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 747 — DONNA Chat Thread Unification V1
+
+- Created `docs/DONNA_CHAT_THREAD_UNIFICATION_747.md` — Full response-surface audit; documents all 15 response surfaces (default-visible, conditional, voice-specific); records thread upgrade, commandResponse residual, transcript assessment, mobile pass, UI score update (7/10 → 7.5/10), and Sprint 748 gaps
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — COO conversation thread upgraded to premium chat bubbles: trigger changed from `cooThread.length > 1` → `> 0` (visible from first message); shown turns changed from `cooThread.slice(0,-1).slice(-3)` (past 3, excluding current) → `cooThread.slice(-5)` (last 5 including current); "Conversation" section label removed; text size 12px (was 11px/10px); bubble padding px-3 py-2 (was px-2.5 py-1.5); lime tint user bubbles + violet tint DONNA bubbles; truncation 200 chars (was 130); border separator ultra-subtle (rgba 0.05); DONNA intelligence and state mutations fully untouched
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 746 — DONNA Mode Buttons Collapse + Greeting Thread Unification V1
 
 - Created `docs/DONNA_PREMIUM_UI_PASS_746.md` — Sprint 746 UI pass document; updated 10-criteria scores (overall 6/10 → 7/10); scroll reduction table (~308px removed from default view); remaining gaps for Sprint 747+
