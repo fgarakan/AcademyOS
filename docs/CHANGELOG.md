@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 755 — DONNA Safe Action Dispatcher + UI Regression Prompts V1
+
+- Created `src/lib/donna/donnaUIActionDispatcher.ts` — Master UI intent dispatcher for DONNA; priority-ordered dispatch pipeline: (1) blocked phrases → hard refusal, (2) guided operator launch → operator step 1, (3) navigation → route resolution, (4) draft intent → proposed_actions routing, (5) approval routing → director review queue, (6) clarification fallback; `DispatchResult` interface with `kind`, `actionId`, `message`, `route`, `operatorId`, `stepNumber`, `filterParams`, `requiresApproval`, `approvalRoute`, `matrixPermission`, `confidence`, `safetyClass`; 16 nav patterns, 6 blocked patterns, 6 operator trigger patterns; secondary utilities `validateUIActionForContext()` and `getAvailableActionsForContext()`
+- Created `src/lib/donna/donnaUIOperatorRegressionPrompts.ts` — 37 structured regression test cases across 8 categories: navigation (8 cases), guided operator (6), draft action (5), approval routing (3), always-blocked invariants (6), role boundary (4), filter/search (2), clarification (2); each case specifies input (text, role, route), expected dispatch result (kind, matrixPermission, requiresApproval, confidence, message assertions), and risk class (safe/medium/high); `getRegressionSummary()` aggregates counts; lookup utilities by category, role, risk class; covers all 5 roles and all 6 safety classes; architecture invariant cases flagged separately
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 754 — DONNA Domain Guided Operators V1
 
 - Created `src/lib/donna/donnaUIGuidedOperators.ts` — 6 domain guided operators: (1) Onboarding — 5-step setup flow covering mode selection, interview, curriculum, placement, and activation; (2) Curriculum — 5-step flow covering structure review, gap identification, builder launch, draft submission, and publish; (3) Template — 5-step flow covering type selection, basics, draft, builder, and review; (4) Session — 5-step flow covering planning, today's sessions, wrap-up, and attendance exceptions; (5) Player Profile — 6-step flow covering status review, coach note draft, advancement proposal, placement, and parent update draft; (6) Review Center — 5-step flow covering queue overview, prioritization, item explanation, detail navigation, and approval gate; each operator defines entry phrases, opening line, per-step DONNA prompts, action types, approval notes, out-of-scope declarations, and role guards; lookup utilities (by id, route, phrase, role, step)
