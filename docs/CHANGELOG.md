@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-24 — Sprint 748 — DONNA Single Response Surface V1
+
+- Created `docs/DONNA_SINGLE_RESPONSE_SURFACE_748.md` — Full commandResponse flow audit (Category A: main GODmode dispatch responses, also in cooThread; Category B: continuity, errors, role-boundary, controller responses, thread-only); documents suppression logic, cooThread metadata fields, auto-scroll, Category B card preservation, and remaining gaps; UI score update 7.5/10 → 8.3/10
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — (1) Extended `cooThread` type to carry `label?` and `type?` metadata fields; (2) Added `cooThreadBottomRef = useRef<HTMLDivElement>(null)` for auto-scroll anchor; (3) Added `useEffect` to smooth-scroll thread to bottom whenever `cooThread` changes; (4) Extended `setCooThread` push at main GODmode dispatch to include `label` (from `composed.isBlocked`/`composed.nextStepLabel`) and `type` (`'honest'`/`'info'`); (5) Updated thread bubble rendering: label shown in orange (honest) or violet (info) above bubble when present; bubble background tinted to match type; `<div ref={cooThreadBottomRef} />` anchor at bottom; (6) Passed `suppressCommandResponseCard` boolean prop to `DonnaWorkflowCards` — true only when the last cooThread donna turn exactly matches `commandResponse.message` (Category A responses only)
+- Modified `src/components/assistant/DonnaWorkflowCards.tsx` — Added `suppressCommandResponseCard?: boolean` prop (default `false`); wrapped commandResponse card render in `!suppressCommandResponseCard` condition; all Category B responses (continuity, errors, role-boundary, voice protection, controller, onboarding, context summary) unaffected — their text never matches the last cooThread donna turn
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 747 — DONNA Chat Thread Unification V1
 
 - Created `docs/DONNA_CHAT_THREAD_UNIFICATION_747.md` — Full response-surface audit; documents all 15 response surfaces (default-visible, conditional, voice-specific); records thread upgrade, commandResponse residual, transcript assessment, mobile pass, UI score update (7/10 → 7.5/10), and Sprint 748 gaps

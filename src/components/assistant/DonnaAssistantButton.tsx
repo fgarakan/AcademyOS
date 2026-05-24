@@ -716,7 +716,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Sprint 704 — action preview card for route_to_review responses
   const [actionPreview, setActionPreview] = useState<DirectorActionPreview | null>(null)
   // Sprint 711 — visible conversation thread for COO responses
-  const [cooThread, setCooThread] = useState<Array<{ user: string; donna: string }>>([])
+  // Sprint 748 — extended with label + type for metadata preservation when commandResponse card is suppressed
+  const [cooThread, setCooThread] = useState<Array<{
+    user: string
+    donna: string
+    label?: string
+    type?: 'info' | 'honest'
+  }>>([])
+  // Sprint 748 — auto-scroll ref: bottom of thread is scrolled into view on new turns
+  const cooThreadBottomRef = useRef<HTMLDivElement>(null)
 
   // Generic task draft state — contract-only, local only, no DB writes (Sprint 266)
   const [genericDraft, setGenericDraft] = useState<GenericTaskDraft | null>(null)
@@ -931,6 +939,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     window.addEventListener('donna:open', handleDonnaOpen)
     return () => window.removeEventListener('donna:open', handleDonnaOpen)
   }, [])
+
+  // Sprint 748 — auto-scroll thread to latest message whenever cooThread changes
+  // SSR-safe: guarded by typeof window check inside scrollIntoView path (browser-only API).
+  useEffect(() => {
+    if (cooThread.length === 0) return
+    cooThreadBottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [cooThread])
 
   // Clear all inline state on route change
   useEffect(() => {
@@ -2513,8 +2528,14 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (finalText) recordSummary(finalText)
     // Sprint 702 — record turn so follow-up questions have session context
     recordTurn(text, finalText, { domain })
-    // Sprint 711 — push to visible conversation thread (last 5 turns, prior turns shown above current response)
-    setCooThread(prev => [...prev.slice(-4), { user: text, donna: finalText }])
+    // Sprint 711 — push to visible conversation thread (last 5 turns)
+    // Sprint 748 — extended with label + type for metadata preservation
+    setCooThread(prev => [...prev.slice(-4), {
+      user: text,
+      donna: finalText,
+      label: composed.isBlocked ? 'Not allowed' : (composed.nextStepLabel ?? undefined),
+      type: composed.isBlocked ? 'honest' : 'info',
+    }])
     speakDonna(finalText)
     return true
   }
@@ -3352,11 +3373,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             isSpeaking={isSpeaking}
           />
 
-          {/* ── Sprint 747 — COO conversation thread — premium chat bubbles ── */}
-          {/* Shows last 5 turns including the current one. No section label.         */}
-          {/* commandResponse card in DonnaWorkflowCards still shows the current      */}
-          {/* response with its dismiss button — full single-surface merge is         */}
-          {/* Sprint 748 work (requires touching DonnaWorkflowCards).                 */}
+          {/* ── Sprint 747/748 — COO conversation thread — premium chat bubbles ── */}
+          {/* Sprint 747: premium bubbles, last 5 turns including current.            */}
+          {/* Sprint 748: extended with label/type metadata; auto-scroll ref;         */}
+          {/* commandResponse card suppressed when message matches last thread turn.  */}
           {cooThread.length > 0 && (
             <div className="pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="space-y-2.5 px-3">
@@ -3371,24 +3391,43 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                         <p className="text-[12px] text-text-primary leading-relaxed">{turn.user}</p>
                       </div>
                     </div>
-                    {/* DONNA message — left-aligned, violet tint */}
+                    {/* DONNA message — left-aligned, violet tint. Label shown for honest/named turns. */}
                     <div className="flex justify-start">
-                      <div
-                        className="max-w-[88%] rounded-2xl rounded-tl-sm px-3 py-2"
-                        style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.12)' }}
-                      >
-                        <p className="text-[12px] text-text-secondary leading-relaxed">
-                          {turn.donna.length > 200 ? turn.donna.slice(0, 197) + '…' : turn.donna}
-                        </p>
+                      <div className="max-w-[88%] space-y-1">
+                        {turn.label && (
+                          <p
+                            className="text-[10px] uppercase tracking-widest font-semibold px-1"
+                            style={{ color: turn.type === 'honest' ? '#FF9500' : 'rgba(139,92,246,0.7)' }}
+                          >
+                            {turn.label}
+                          </p>
+                        )}
+                        <div
+                          className="rounded-2xl rounded-tl-sm px-3 py-2"
+                          style={{
+                            background: turn.type === 'honest' ? 'rgba(255,149,0,0.06)' : 'rgba(139,92,246,0.06)',
+                            border: turn.type === 'honest' ? '1px solid rgba(255,149,0,0.18)' : '1px solid rgba(139,92,246,0.12)',
+                          }}
+                        >
+                          <p className="text-[12px] text-text-secondary leading-relaxed">
+                            {turn.donna.length > 200 ? turn.donna.slice(0, 197) + '…' : turn.donna}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
+                {/* Auto-scroll anchor */}
+                <div ref={cooThreadBottomRef} />
               </div>
             </div>
           )}
 
           {/* ── Sprint 384: Workflow output cards — extracted to DonnaWorkflowCards ── */}
+          {/* Sprint 748: suppressCommandResponseCard hides the "DONNA says" card     */}
+          {/* when the thread already shows this exact response as a chat bubble.     */}
+          {/* Category B responses (continuity, errors, role-boundary) still show    */}
+          {/* the card because their message does not match the last thread donna turn*/}
           <DonnaWorkflowCards
             convState={convState}
             convShowDraftReview={convShowDraftReview}
@@ -3403,6 +3442,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             templateDraft={templateDraft}
             commandResponse={commandResponse}
             onDismissCommandResponse={() => setCommandResponse(null)}
+            suppressCommandResponseCard={
+              cooThread.length > 0 &&
+              commandResponse !== null &&
+              cooThread[cooThread.length - 1]?.donna === commandResponse.message
+            }
             dailyBrief={dailyBrief}
             isDailyBriefLoading={isDailyBriefLoading}
             onDismissDailyBrief={() => setDailyBrief(null)}

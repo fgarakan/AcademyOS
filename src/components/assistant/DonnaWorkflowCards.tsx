@@ -60,6 +60,8 @@ interface Props {
   // Command response
   commandResponse: CommandResponse | null
   onDismissCommandResponse: () => void
+  // Sprint 748 — suppress card when the thread already shows this response as a chat bubble
+  suppressCommandResponseCard?: boolean
   // Daily brief
   dailyBrief: DailyBrief | null
   isDailyBriefLoading: boolean
@@ -116,6 +118,7 @@ export function DonnaWorkflowCards({
   templateDraft,
   commandResponse,
   onDismissCommandResponse,
+  suppressCommandResponseCard = false,
   dailyBrief,
   isDailyBriefLoading,
   onDismissDailyBrief,
@@ -253,8 +256,8 @@ export function DonnaWorkflowCards({
         </>
       )}
 
-      {/* Command response card */}
-      {commandResponse && (
+      {/* Command response card — Sprint 748: suppressed when thread already shows this response */}
+      {commandResponse && !suppressCommandResponseCard && (
         <div
           className="rounded-xl px-3.5 py-3"
           style={{
