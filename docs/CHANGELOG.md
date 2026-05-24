@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-24 — Sprint 742B — DONNA Extended Context Loader V1
+
+- Created `src/lib/donna/extendedContextLoaders.ts` — Four typed read-only loaders: `loadPlayerCurriculumStates` (player_curriculum_states: count, advancement_eligible count, 30-record summary), `loadAssessmentsSummary` (assessments: total count, recent-30d count, 30-record summary with promotion_ready/overall_score), `loadGroupsSummary` (groups: active group count and names/levels/tracks), `loadTemplatesSummary` (templates: active count and names/types/curriculum_level_key/curriculum_stage_key); all academy_id-scoped, all fail safely with insufficient_data, all capped at 30; rawDb pattern used for player_curriculum_states/assessments/templates to prevent TS2589; groups follows clean typed pattern from groupHealthLoader.ts
+- Modified `src/lib/donna/directorDonnaContext.ts` — Extended DirectorDonnaContext interface with 14 new fields (playerCurriculumStateCount, advancementEligibleCount, groupCount, templateCount, assessmentCount, recentAssessmentCount, 4 context availability booleans, 4 summary arrays); added sections 7b–7e calling the four new loaders; added advancement-eligible risk signal to academy risks (triggers when advancement_eligible players exist); added 4 new source labels (Player curriculum states, Assessments, Groups, Templates); updated buildDemoContext() with zero/empty extended fields; updated return value with all new fields and derived context flags
+- Created `docs/DONNA_EXTENDED_CONTEXT_LOADER_742B.md` — Full limitation and architecture doc: what was wired (4 loaders, 14 new fields, advancement-eligible risk signal, 4 new source labels), what remains blocked (player-progress gap analysis requires migrations 041-044, template-to-player-level gap join not yet built, assessment-to-curriculum-state linking not yet built, proposed_actions voice_command_id NOT NULL blocker), rawDb pattern rationale, updated Godmode readiness score (4.7/10 → 5.1/10), recommended next sprint (742C — Curriculum-to-Template Coverage Gap Detector)
+- Modified `docs/DONNA_GODMODE_FOUNDATION_ARCHITECTURE_742A.md` — Updated section 3 live data readiness map: player_curriculum_states, assessments, groups, templates now marked as wired (Sprint 742B)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 742A — DONNA Godmode Foundation Architecture Audit V1
 
 - Created `docs/DONNA_GODMODE_FOUNDATION_ARCHITECTURE_742A.md` — Full architecture and dependency audit for DONNA Godmode: 18 sections covering Godmode definition and contract, 14-domain capability map (view/explain/draft/approve-route/execute/audit columns), live data readiness map (identifies player_curriculum_states/assessments/groups/templates as NOT yet in DirectorDonnaContext), approval authority matrix, universal action draft architecture (identifies voice_command_id NOT NULL as the single biggest architectural blocker), AcademyOperatingContext TypeScript interface proposal, evidence graph proposal, impact preview architecture, audit/rollback architecture, data quality guardian architecture, role permission model, full migration dependency map (041–068), Tier 1 (no migration) vs Tier 2 buildable features, 6-phase sprint sequence (742B–760) to Godmode certification, 10-dimension readiness scores (overall 4.7/10)

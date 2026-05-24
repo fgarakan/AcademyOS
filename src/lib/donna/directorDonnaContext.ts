@@ -2,12 +2,25 @@
 // Aggregates all director-visible DONNA context from live sources.
 // Read-only. No DB writes. No migrations required. Fails safely with demo fallback.
 // Sprint 741 — Curriculum structural gap query wired (loadCurriculumStructuralGaps).
+// Sprint 742B — Extended context wired: player_curriculum_states, assessments, groups, templates.
 
 import type { DB } from '@/lib/types/db'
 import type { DONNAConfidence } from '@/lib/donna/donnaCOOAnswerEngine'
 import type { COOFieldStatus } from '@/lib/donna/cooDataStatus'
 import { deriveOverallStatus } from '@/lib/donna/cooDataStatus'
 import { loadCurriculumStructuralGaps } from '@/lib/donna/curriculumStructuralGapLoader'
+import {
+  loadPlayerCurriculumStates,
+  loadAssessmentsSummary,
+  loadGroupsSummary,
+  loadTemplatesSummary,
+} from '@/lib/donna/extendedContextLoaders'
+import type {
+  PlayerCurriculumStateSummary,
+  AssessmentSummary,
+  GroupSummary,
+  TemplateSummary,
+} from '@/lib/donna/extendedContextLoaders'
 
 // ── Output types ──────────────────────────────────────────────────────────────
 
@@ -59,6 +72,21 @@ export interface DirectorDonnaContext {
   curriculumGaps: string[]
   academyRisks: DirectorAcademyRisk[]
   recommendedActions: DirectorRecommendedAction[]
+  // Extended context (Sprint 742B)
+  playerCurriculumStateCount: number
+  advancementEligibleCount: number
+  groupCount: number
+  templateCount: number
+  assessmentCount: number
+  recentAssessmentCount: number
+  playerProgressContextAvailable: boolean
+  assessmentContextAvailable: boolean
+  groupContextAvailable: boolean
+  templateContextAvailable: boolean
+  playerCurriculumStateSummaries: PlayerCurriculumStateSummary[]
+  groupSummaries: GroupSummary[]
+  templateSummaries: TemplateSummary[]
+  assessmentSummaries: AssessmentSummary[]
   // Meta
   sourceLabels: DirectorSourceLabel[]
   confidence: DONNAConfidence
@@ -128,6 +156,21 @@ function buildDemoContext(): DirectorDonnaContext {
         category: 'investigate',
       },
     ],
+    // Extended context — empty in demo mode
+    playerCurriculumStateCount: 0,
+    advancementEligibleCount: 0,
+    groupCount: 0,
+    templateCount: 0,
+    assessmentCount: 0,
+    recentAssessmentCount: 0,
+    playerProgressContextAvailable: false,
+    assessmentContextAvailable: false,
+    groupContextAvailable: false,
+    templateContextAvailable: false,
+    playerCurriculumStateSummaries: [],
+    groupSummaries: [],
+    templateSummaries: [],
+    assessmentSummaries: [],
     sourceLabels: [
       { field: 'Review queue', status: 'insufficient_data', label: 'Demo data' },
       { field: 'Sessions', status: 'insufficient_data', label: 'Demo data' },
@@ -391,6 +434,60 @@ export async function loadDirectorDonnaContext(
     fieldStatuses.curriculum = 'insufficient_data'
   }
 
+  // ── 7b. Player curriculum states (Sprint 742B) ────────────────────────────
+  // Loads player_curriculum_states: level distribution, advancement-eligible count.
+  // Academy-scoped. Capped at 30. Fails safely.
+
+  let playerCurriculumStateCount = 0
+  let advancementEligibleCount = 0
+  let playerCurriculumStateSummaries: PlayerCurriculumStateSummary[] = []
+
+  const pcsResult = await loadPlayerCurriculumStates(db, academyId)
+  playerCurriculumStateCount = pcsResult.totalCount
+  advancementEligibleCount = pcsResult.advancementEligibleCount
+  playerCurriculumStateSummaries = pcsResult.summaries
+  fieldStatuses.playerCurriculumStates = pcsResult.fieldStatus
+
+  // ── 7c. Assessments (Sprint 742B) ─────────────────────────────────────────
+  // Loads assessments: total count, recent (last 30 days) count, promotion_ready signals.
+  // Academy-scoped. Capped at 30. Fails safely.
+  // Note: assessments table has no status column — recency used as pipeline health proxy.
+
+  let assessmentCount = 0
+  let recentAssessmentCount = 0
+  let assessmentSummaries: AssessmentSummary[] = []
+
+  const assessmentResult = await loadAssessmentsSummary(db, academyId)
+  assessmentCount = assessmentResult.totalCount
+  recentAssessmentCount = assessmentResult.recentCount
+  assessmentSummaries = assessmentResult.summaries
+  fieldStatuses.assessments = assessmentResult.fieldStatus
+
+  // ── 7d. Groups (Sprint 742B) ──────────────────────────────────────────────
+  // Loads active groups: name, level_id, track, max_players.
+  // Academy-scoped. Capped at 30. Fails safely.
+
+  let groupCount = 0
+  let groupSummaries: GroupSummary[] = []
+
+  const groupResult = await loadGroupsSummary(db, academyId)
+  groupCount = groupResult.totalCount
+  groupSummaries = groupResult.summaries
+  fieldStatuses.groups = groupResult.fieldStatus
+
+  // ── 7e. Templates (Sprint 742B) ───────────────────────────────────────────
+  // Loads active templates: name, type, curriculum_level_key, curriculum_stage_key.
+  // Academy-scoped. Capped at 30. Fails safely.
+  // curriculum_level_key surfaces template-to-curriculum coverage for DONNA gap reasoning.
+
+  let templateCount = 0
+  let templateSummaries: TemplateSummary[] = []
+
+  const templateResult = await loadTemplatesSummary(db, academyId)
+  templateCount = templateResult.totalCount
+  templateSummaries = templateResult.summaries
+  fieldStatuses.templates = templateResult.fieldStatus
+
   // ── 8. Academy risks ───────────────────────────────────────────────────────
 
   const academyRisks: DirectorAcademyRisk[] = []
@@ -428,6 +525,15 @@ export async function loadDirectorDonnaContext(
       signal: 'Player attention needed',
       detail: `${highRiskPlayers} player${highRiskPlayers !== 1 ? 's' : ''} flagged as high risk`,
       urgency: 'high',
+      actionHref: '/director/players',
+    })
+  }
+
+  if (advancementEligibleCount > 0) {
+    academyRisks.push({
+      signal: 'Advancement-eligible players',
+      detail: `${advancementEligibleCount} player${advancementEligibleCount !== 1 ? 's' : ''} ready to advance — director action needed`,
+      urgency: advancementEligibleCount >= 3 ? 'high' : 'medium',
       actionHref: '/director/players',
     })
   }
@@ -491,6 +597,11 @@ export async function loadDirectorDonnaContext(
     { field: 'Attendance exceptions', status: fieldStatuses.attendance as COOFieldStatus, label: statusLabel(fieldStatuses.attendance as COOFieldStatus) },
     { field: 'Attention flags', status: fieldStatuses.attentionItems as COOFieldStatus, label: statusLabel(fieldStatuses.attentionItems as COOFieldStatus) },
     { field: 'Curriculum gaps', status: fieldStatuses.curriculum as COOFieldStatus, label: statusLabel(fieldStatuses.curriculum as COOFieldStatus) },
+    // Extended context source labels (Sprint 742B)
+    { field: 'Player curriculum states', status: fieldStatuses.playerCurriculumStates as COOFieldStatus, label: statusLabel(fieldStatuses.playerCurriculumStates as COOFieldStatus) },
+    { field: 'Assessments', status: fieldStatuses.assessments as COOFieldStatus, label: statusLabel(fieldStatuses.assessments as COOFieldStatus) },
+    { field: 'Groups', status: fieldStatuses.groups as COOFieldStatus, label: statusLabel(fieldStatuses.groups as COOFieldStatus) },
+    { field: 'Templates', status: fieldStatuses.templates as COOFieldStatus, label: statusLabel(fieldStatuses.templates as COOFieldStatus) },
   ]
 
   // ── 11. Confidence and isLive ──────────────────────────────────────────────
@@ -519,6 +630,21 @@ export async function loadDirectorDonnaContext(
     curriculumGaps,
     academyRisks,
     recommendedActions,
+    // Extended context (Sprint 742B)
+    playerCurriculumStateCount,
+    advancementEligibleCount,
+    groupCount,
+    templateCount,
+    assessmentCount,
+    recentAssessmentCount,
+    playerProgressContextAvailable: pcsResult.fieldStatus === 'live',
+    assessmentContextAvailable: assessmentResult.fieldStatus === 'live',
+    groupContextAvailable: groupResult.fieldStatus === 'live',
+    templateContextAvailable: templateResult.fieldStatus === 'live',
+    playerCurriculumStateSummaries,
+    groupSummaries,
+    templateSummaries,
+    assessmentSummaries,
     sourceLabels,
     confidence,
     isLive,

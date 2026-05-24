@@ -70,10 +70,10 @@ No mutation reaches the database without:
 | `curriculum_levels` | ❌ global | ✅ via gap loader | No per-academy customization surface |
 | `curriculum_gates` | ❌ global | ✅ via gap loader | No active-gate-per-player status |
 | `curriculum_drills` | ✅ academy_id nullable | ✅ via gap loader | No session delivery tracking |
-| `player_curriculum_states` | ✅ academy_id | ❌ NOT in context | Level distribution unknown to DONNA |
-| `assessments` | ✅ academy_id | ❌ NOT in context | Assessment backlog invisible |
-| `groups` | ✅ academy_id | ❌ NOT in context | Group context invisible |
-| `templates` | ✅ academy_id | ❌ NOT in context | Template library unknown to DONNA |
+| `player_curriculum_states` | ✅ academy_id | ✅ Sprint 742B — wired | Count, advancement_eligible count, 30-record summary |
+| `assessments` | ✅ academy_id | ✅ Sprint 742B — wired | Count, recent count (30d), 30-record summary |
+| `groups` | ✅ academy_id | ✅ Sprint 742B — wired | Active group count, 30-record summary with level/track |
+| `templates` | ✅ academy_id | ✅ Sprint 742B — wired | Active template count, 30-record summary with curriculum keys |
 | `player_gate_status` | ✅ academy_id | ❌ blocked by migration 059/060 | Gate evidence counts unknown |
 
 ### What's missing from `DirectorDonnaContext` that Godmode needs
