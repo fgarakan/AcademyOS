@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 753 — DONNA Site-Wide UI Action Registry + Approval Matrix V1
+
+- Created `src/lib/donna/donnaUIActionRegistry.ts` — 36 UI actions across 10 categories and 6 safety classes (always_safe, safe_with_context, draft_to_review, director_approval, platform_required, always_blocked); covers navigation, panel control, section toggle, filter/search, onboarding guidance, builder launch, guided flows, draft actions, director-approval actions, and always-blocked invariants; lookup utilities (by id, domain, role, page, safety class); coverage report generator; covers all 5 roles (director, head_coach, coach, player, parent)
+- Created `src/lib/donna/donnaUIApprovalMatrix.ts` — Formal role/action approval matrix; 6 matrix rows mapping each safety class to per-role permission (ALLOWED / DRAFT_ONLY / ROUTE_TO_REVIEW / BLOCKED / NOT_APPLICABLE); role capability summaries with computed action counts; high-risk action summary table (6 entries); `evaluateUIAction()` function returning permission + approval path for any role × action combination; `canRolePerformClass()` for matrix lookups
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 752 — DONNA VoiceReadyShell Quick Actions De-Clutter V1
 
 - Created `docs/DONNA_VOICE_READY_SHELL_QUICK_ACTIONS_DECLUTTER_752.md` — Audit of quick action chip behavior; suppression condition rationale (why ≥2 not ≥1); before/after layout diagram; impact assessment table (message dispatch, voice, TTS, input — all unaffected); UI score 8.6/10 → 9.1/10; remaining gaps for Sprint 753+
