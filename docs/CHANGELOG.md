@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 750 — DONNA Voice Layer Response Suppression V1
+
+- Created `docs/DONNA_VOICE_LAYER_RESPONSE_SUPPRESSION_750.md` — Full audit of the third duplicate response surface (DonnaVoiceLayer "DONNA says" block, Sprint 694 origin); suppression condition; Category A vs B behavior table; response surface map across all sprints (747–750); voice controls preservation table; UI score update 8.6/10 → 9/10; remaining gaps for Sprint 751+
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — Changed `donnaLastResponse` prop passed to `DonnaVoiceLayer`: now passes `null` when the Sprint 748 Category A suppression condition is true (`cooThread.length > 0 && commandResponse !== null && cooThread[last]?.donna === commandResponse.message`); passes `commandResponse?.message ?? null` as before when condition is false (Category B responses — continuity, errors, role-boundary, controller — still shown in voice layer); `DonnaVoiceLayer.tsx` not modified — component already defaults to `null` and guards rendering with `{donnaLastResponse && ...}`
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 749 — DONNA Thread Height Voice Polish V1
 
 - Created `docs/DONNA_THREAD_HEIGHT_VOICE_POLISH_749.md` — Sprint documentation: thread height rule (280px cap, why chosen), auto-scroll preservation, voice quality pill de-emphasis, unchanged voice error states, UI score update 8.3/10 → 8.6/10, remaining gaps for Sprint 750+

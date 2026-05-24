@@ -3366,7 +3366,17 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             genericDraft={genericDraft}
             templateDraft={templateDraft}
             isThinking={isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading}
-            donnaLastResponse={commandResponse?.message ?? null}
+            donnaLastResponse={
+              // Sprint 750 — suppress voice-layer "DONNA says" for Category A responses
+              // (main GODmode dispatch) that are already shown as a cooThread bubble.
+              // Category B responses (continuity, errors, role-boundary) are not in
+              // cooThread and still pass through — their text never matches the last turn.
+              cooThread.length > 0 &&
+              commandResponse !== null &&
+              cooThread[cooThread.length - 1]?.donna === commandResponse.message
+                ? null
+                : (commandResponse?.message ?? null)
+            }
             promptSuggestions={getDonnaPromptSuggestions(pathname)}
             promptCategoryLabel={getPromptCategoryLabel(pathname)}
             pathname={pathname}
