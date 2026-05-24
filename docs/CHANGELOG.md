@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 765 — Director Command Center Layout Pass V1
+
+- Modified `src/app/director/page.tsx` — Cognitive load pass: moved `DirectorAttentionQueueHero` + `DonnaExecutiveCard` to immediately below the hero header (first operational sections); moved `DirectorContinueSetupPanel`, `DirectorDnaStatusBadge`, `DonnaDashboardPresenceCTA`, and Academy Setup / Live banner to new "Academy Setup" section at the bottom of the page with a faint divider; renamed section label "Player Activity" → "Roster Signals"; renamed section label "Signals + Intelligence" → "Academy Health Signals"; removed unused imports `SetupProgressChecklist` and `OnboardingProgressCard`; no new DB queries, no new components, no schema changes
+- Created `docs/DIRECTOR_COMMAND_CENTER_LAYOUT_PASS_765.md` — Sprint documentation; section order before/after table; per-change descriptions (A: attention queue to top; B: setup panels to bottom; C: section label updates; D: import cleanup); variable usage table for bottom section; protected files not staged; remaining command center gaps; Sprint 766 recommendation
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 764 — Director Attention Queue Enrichment V1
 
 - Modified `src/app/director/page.tsx` — Added two enrichment queries: (A) `v_pending_proposed_actions` (select action_id/action_label/expires_at/risk_level, academy_id-scoped, limit 10) for real per-item pendingApprovals with expiry and risk data; (B) `v_group_summary` (select group_id/group_name/player_count/max_players, academy_id-scoped) for overCapacityGroups and noCoverageGroupCount; replaced synthetic wrap-up aggregate with real proposed_action items (+ defensive fallback if view empty); derived overCapacityGroups (player_count > max_players filter); derived noCoverageGroupCount from groups × weekSessions.group_id cross-check (no extra query); `overCapacityGroups` and `noCoverageGroupCount` now live — previously hardcoded `[]` and `0`

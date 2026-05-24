@@ -15,9 +15,7 @@ import {
 } from '@/components/ui'
 import { urgencyToLabel } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
-import { SetupProgressChecklist } from '@/components/onboarding/SetupProgressChecklist'
 import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
-import { OnboardingProgressCard } from './OnboardingProgressCard'
 import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
 import { DirectorKpiHealthSection } from './_components/DirectorKpiHealthSection'
 import { DonnaExecutiveCard, type DonnaExecutivePriorityItem } from './_components/DonnaExecutiveCard'
@@ -525,65 +523,13 @@ export default async function DirectorDashboard() {
         />
       </div>
 
-      {/* ── Post-DNA Continue Setup Panel (client — localStorage driven) ── */}
-      <DirectorContinueSetupPanel
-        playersExist={players.length > 0}
-        classTemplatesExist={classTemplateCount > 0}
-        fitnessTemplatesExist={fitnessTemplateCount > 0}
-      />
-
-      {/* ── Director Attention Queue Hero ──────────────────── */}
-      {/* Sprint 763: structured attention queue from buildAttentionQueue(). */}
-      {/* Shows top 3 items: Decision / Risk / Watch / Opportunity categories. */}
-      {/* Empty state: "Today looks clear." Safe actions only. No mutations. */}
+      {/* ── Sprint 765: Attention Queue Hero — first operational section ── */}
+      {/* Sources: buildAttentionQueue() with live data from Sprints 763–764. */}
+      {/* Top 3 items: Decision / Risk / Watch / Opportunity. Empty: "Today looks clear." */}
       <DirectorAttentionQueueHero queue={attentionQueue} showMax={3} />
 
-      {/* ── DONNA Executive Attention Card ─────────────────── */}
+      {/* ── DONNA Executive Brief ─────────────────────────── */}
       <DonnaExecutiveCard items={donnaItems} directorName={directorDisplayName} />
-
-      {/* ── DONNA dashboard presence CTA ─────────────────── */}
-      <DonnaDashboardPresenceCTA
-        pendingWrapUps={pendingWrapUpsCount}
-        attentionCount={attentionCount}
-        pendingCount={pendingCount}
-        newRequests={newRequests}
-        advancementReady={advancementReadyCount}
-      />
-
-      {/* ── Academy Setup ─────────────────────────────────── */}
-      {isAcademyLive ? (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/5 border border-status-green/20">
-          <Sparkles className="w-4 h-4 text-status-green shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-status-green">Academy OS is live</p>
-            <p className="text-xs text-text-secondary mt-0.5">
-              Players, curriculum, templates, and sessions are all connected.
-            </p>
-          </div>
-          <Link href="/director/onboarding" className="shrink-0 text-[11px] text-text-muted hover:text-lime transition-colors">
-            Setup →
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <div>
-            <p className="label-xs">Academy Setup</p>
-            <p className="text-xs text-text-muted mt-1">
-              {hasAcademyDna
-                ? 'Academy DNA is saved. Complete the remaining setup steps to go live.'
-                : 'Complete these steps first. Academy OS uses this information to guide curriculum, placement, sessions, and coach workflows.'}
-            </p>
-          </div>
-          {hasAcademyDna && <DirectorDnaStatusBadge savedAt={dnaSavedAt} />}
-          <OnboardingProgressCard settings={onboardingSettings} />
-          <SetupProgressChecklist
-            playersExist={players.length > 0}
-            curriculumLevelsAssigned={playersWithLevel > 0}
-            templatesExist={classTemplateCount > 0}
-            sessionsExist={sessionsExist}
-          />
-        </div>
-      )}
 
       {/* ── Academy Overview — 8-card KPI grid ────────────── */}
       <AcademyKpiCardsSection
@@ -615,10 +561,11 @@ export default async function DirectorDashboard() {
         <LiveActivityCard sessions={weekSessions ?? []} pendingWrapUps={pendingWrapUpsCount} pendingPlacements={pendingCount} />
       </div>
 
-      {/* ── Player Activity ────────────────────────────────── */}
+      {/* ── Roster Signals ─────────────────────────────────── */}
+      {/* Sprint 765: renamed from "Player Activity" — label reflects signal-first framing. */}
       <div className="space-y-4">
         <div>
-          <p className="label-xs">Player Activity</p>
+          <p className="label-xs">Roster Signals</p>
           <p className="text-xs text-text-muted mt-1">Once players are added and placed, this section shows who needs placement, reassessment, or director attention.</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -756,10 +703,11 @@ export default async function DirectorDashboard() {
         </div>
       </div>
 
-      {/* ── Alerts + Intelligence ────────────────────────── */}
+      {/* ── Academy Health Signals ───────────────────────── */}
+      {/* Sprint 765: renamed from "Signals + Intelligence" — clearer command-center framing. */}
       <div className="space-y-4">
         <div>
-          <p className="label-xs">Signals + Intelligence</p>
+          <p className="label-xs">Academy Health Signals</p>
           <p className="text-xs text-text-muted mt-1">Alerts and AI suggestions appear here once sessions, coach notes, and player activity start producing signals.</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
@@ -948,6 +896,52 @@ export default async function DirectorDashboard() {
             href="/director/signals"
           />
         </div>
+      </div>
+
+      {/* ── Academy Setup + Admin ─────────────────────────── */}
+      {/* Sprint 765: moved from top to bottom to reduce cognitive load. */}
+      {/* Setup steps and DONNA presence CTA are secondary to operational signals. */}
+      <div
+        className="space-y-4 pt-4"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+      >
+        <div>
+          <p className="label-xs">Academy Setup</p>
+          <p className="text-xs text-text-muted mt-1">One-time setup steps and academy DNA. Revisit anytime to update your configuration.</p>
+        </div>
+
+        {/* DNA saved badge — shown when academy DNA has been completed */}
+        {hasAcademyDna && (
+          <DirectorDnaStatusBadge savedAt={dnaSavedAt} />
+        )}
+
+        {/* Academy live banner OR setup task list */}
+        {isAcademyLive ? (
+          <div className="rounded-xl border border-status-green/20 bg-status-green/5 px-4 py-3.5 flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-status-green animate-pulse shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-text-primary">Academy is live</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                Players, curriculum, templates, and sessions are all active.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <DirectorContinueSetupPanel
+            playersExist={players.length > 0}
+            classTemplatesExist={classTemplateCount > 0}
+            fitnessTemplatesExist={fitnessTemplateCount > 0}
+          />
+        )}
+
+        {/* DONNA dashboard presence CTA */}
+        <DonnaDashboardPresenceCTA
+          pendingWrapUps={pendingWrapUpsCount}
+          attentionCount={attentionCount}
+          pendingCount={pendingCount}
+          newRequests={newRequests}
+          advancementReady={advancementReadyCount}
+        />
       </div>
 
     </div>
