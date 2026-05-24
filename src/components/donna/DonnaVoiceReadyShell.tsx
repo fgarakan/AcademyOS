@@ -53,6 +53,7 @@ import { tryAnswerCurriculumImpactQuestion } from '@/lib/donna/curriculumImpactD
 import { tryAnswerSessionAdjustmentQuestion } from '@/lib/donna/sessionAdjustmentDonnaAnswer'
 import { tryAnswerCoachCueQuestion } from '@/lib/donna/coachCueDonnaAnswer'
 import { tryAnswerCurriculumDraftProposal } from '@/lib/donna/curriculumDraftProposalDonnaAnswer'
+import { DATA_QUALITY_PATTERNS, buildDataQualityAnswer } from '@/lib/donna/dataQualityGuardian'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
@@ -259,6 +260,23 @@ export function DonnaVoiceReadyShell({
         }, 600)
         return
       }
+    }
+
+    // Sprint 742E: Data quality guardian — "What's wrong?", "Academy health?", "Fix first?"
+    if (plainRole === 'director' && directorCtx && DATA_QUALITY_PATTERNS.test(trimmed)) {
+      const dqAnswer = buildDataQualityAnswer(directorCtx)
+      const dqNavOffer = buildNavOfferFromHref(dqAnswer.href, trimmed)
+      setTimeout(() => {
+        setMessages(prev => [...prev, buildChatMessageFromAnswer(dqAnswer)])
+        setIsTyping(false)
+        recordTurn(trimmed, dqAnswer.text, {
+          actionId: dqAnswer.actionId,
+          confidence: dqAnswer.confidence,
+          sourceNote: dqAnswer.sourceNote,
+        })
+        if (dqNavOffer) setPendingNavOffer(dqNavOffer)
+      }, 600)
+      return
     }
 
     // Roster attention intercept — "Who needs attention?" style questions

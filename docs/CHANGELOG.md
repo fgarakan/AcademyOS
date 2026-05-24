@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 742E — DONNA Data Quality Guardian V1
+
+- Created `src/lib/donna/dataQualityGuardian.ts` — Cross-domain data completeness checker; pure TypeScript, no DB calls, no mutations; operates on DirectorDonnaContext; exports `runDataQualityGuardian(ctx)` producing a `DataQualityReport` (signals[], criticalCount, warningCount, infoCount, overallScore 0–100, domainsHealthy[], domainsWithIssues[]); covers 7 domains: review_queue (backlog ≥10 critical, ≥5 warning), sessions (missing wrap-ups ≥3 warning, >0 info), players (no players critical, no curriculum states critical, advancement-eligible warning), curriculum (structural gaps critical/warning, template-coverage gap critical/warning), templates (no templates critical, unassigned templates info), assessments (eligible without evidence critical, overdue assessments warning/info), coaches (no coaches critical, high-concern observations warning); scoring: 100 - 20×critical - 8×warning - 2×info clamped 0–100; signals sorted critical→warning→info; exports `DATA_QUALITY_PATTERNS` regex and `buildDataQualityAnswer(ctx)` returning a `DonnaSafeReadAnswer`
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — Added import for `DATA_QUALITY_PATTERNS` and `buildDataQualityAnswer` from dataQualityGuardian; added dispatch block before roster attention intercept: director-only check, matches DATA_QUALITY_PATTERNS ("What's wrong?", "Academy health?", "Fix first?", etc.), calls `buildDataQualityAnswer(directorCtx)`, builds nav offer, records turn with actionId/confidence/sourceNote
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 742D — DONNA Assessment Coverage Gap Detector V1
 
 - Created `src/lib/donna/assessmentCoverageGapDetector.ts` — Pure logic detector; cross-references playerCurriculumStateSummaries with assessmentSummaries; detects: (1) players with curriculum state but no assessment in last 90 days, (2) advancement-eligible players with no promotion_ready assessment; severity: high when advancement_eligible or never assessed, medium otherwise; sorted by severity then gap type (eligible_no_promotion_evidence first); exports `detectAssessmentCoverageGaps(ctx)`, `summarizeAssessmentGaps(result)`, `AssessmentCoverageGap`, `AssessmentCoverageResult`; fails safely when either context unavailable
