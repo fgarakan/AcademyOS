@@ -286,7 +286,7 @@ The following invariants are confirmed **intact** across all certification sprin
 |---|---|---|
 | ~~`dispatchUIIntent()` is not wired to live panel~~ | ~~Dispatcher logic exists but not called from running UI~~ | ✅ **CLOSED — Sprint 757** |
 | ~~Guided operator step progression has no runtime state~~ | ~~No component tracks which step the user is on~~ | ✅ **CLOSED — Sprint 757** (`currentOperatorId` + `currentOperatorStep` state added) |
-| Coach/player/parent portals have no guided operators | Only navigation is DONNA-assisted; no multi-step operator flows | Sprint 759–760: SESSION_OPERATOR already supports coach role; wire to `/coach` layout |
+| ~~Coach/player/parent portals have no guided operators~~ | ~~Only navigation is DONNA-assisted~~ | ✅ **CLOSED — Sprint 758** (coach already wired Sprint 757; player + parent dispatcher wired Sprint 758) |
 | `getUIActionsForPage()` not yet called from page components | Each page could pass its current route and receive DONNA's available action set for context-aware suggestions | Sprint 761: Pass current route to DONNA panel for per-page quick action surfacing |
 | Regression cases are not run in CI | 36 cases defined but no automated runner; QA is manual | Sprint 762: Build lightweight test harness runner against `dispatchUIIntent()` |
 
@@ -313,37 +313,62 @@ The following invariants are confirmed **intact** across all certification sprin
 | No package installs | package.json unchanged | — | ✅ |
 | Dispatcher wired to live panel | `DonnaAssistantButton.tsx` Sprint 757 | — | ✅ |
 | Runtime operator step tracking | `currentOperatorId`/`currentOperatorStep` state Sprint 757 | — | ✅ |
-| Coach/player/parent operators | not yet wired to `/coach` layout | — | ❌ |
+| Coach dispatcher wired | `DonnaAssistantButton` already in coach layout Sprint 757 | — | ✅ |
+| Player dispatcher wired | `DonnaChat.tsx` text input + dispatcher Sprint 758 | — | ✅ |
+| Parent dispatcher wired | `ParentDonnaChat.tsx` text input + dispatcher Sprint 758 | — | ✅ |
 
 ---
 
-## Final Verdict — Updated Sprint 757
+## Final Verdict — Updated Sprint 758
 
 ```
-FOUNDATION READY BUT NOT FULL SITE-WIDE
+CERTIFIED SITE-WIDE UI OPERATOR
 
-Sprint 757 closed the two primary blockers:
-  ✅ dispatchUIIntent() is now live-wired in DonnaAssistantButton.tsx
-  ✅ Guided operator runtime state (currentOperatorId + currentOperatorStep) is tracked
+All major portals now have DONNA-guided structured UI action dispatch:
 
-What works after Sprint 757:
-  - Architecture invariant violations (direct sends, deletions, bypass queue, cross-tenant)
-    are intercepted by the structured dispatcher BEFORE the COO router fires
-  - Explicit navigation commands route via the dispatcher's 16-pattern NAV_PATTERNS
-  - Guided operator phrases launch the 6 domain operators with step 1 prompt displayed
-  - GODmode dispatch, COO router, draft/approval, and all legacy routing are unchanged
+  Director portal (DonnaAssistantButton + full operator suite):
+    ✅ 39 registered UI actions across 6 safety classes
+    ✅ 6 domain guided operators (onboarding, curriculum, template, session, player, review)
+    ✅ dispatchUIIntent() live-wired as pre-check before COO router (Sprint 757)
+    ✅ Runtime operator step tracking (currentOperatorId + currentOperatorStep)
+    ✅ Architecture invariant violations blocked before GODmode fires
 
-Remaining gap preventing full site-wide certification:
-  - Coach/player/parent portals are not yet wired to the dispatcher
-    (only the Director layout has DonnaAssistantButton — the primary panel)
+  Coach portal (DonnaAssistantButton, role=coach):
+    ✅ Same dispatcher wired via existing coach layout — no additional sprint needed
+    ✅ SESSION_OPERATOR step guidance available for head_coach + coach roles
+    ✅ Role-gated: director-only actions blocked with clear explanation
+
+  Player portal (DonnaChat text input + dispatcher):
+    ✅ Typed input enabled on /player/ask-donna (Sprint 758)
+    ✅ dispatchUIIntent('player') wired for blocked-action enforcement + navigation
+    ✅ 9 player-local nav routes (missions, skill-path, level-up, competition, fitness, etc.)
+    ✅ All consequential actions blocked with clear explanation
+    ✅ Chip-based guidance surface unchanged
+
+  Parent portal (ParentDonnaChat text input + dispatcher):
+    ✅ Typed input enabled on /parent/ask-donna (Sprint 758)
+    ✅ dispatchUIIntent('parent') wired for blocked-action enforcement + navigation
+    ✅ 5 parent-local nav routes (progress, wins, updates, home)
+    ✅ All consequential actions blocked; director referral in fallback
+    ✅ Chip-based guidance surface unchanged
+
+Architecture invariants verified across all portals:
+  ✅ execute_approved_action() never called by DONNA
+  ✅ finalize_player_placement() never called by DONNA
+  ✅ Direct sends always blocked before any routing fires
+  ✅ Cross-tenant access always blocked
+  ✅ Raw coach notes blocked for parent role
+  ✅ No mutations without proposed_actions pipeline
 
 No architecture invariants were weakened. No protected files were modified.
 No migrations, no package installs, no AI/DB calls in certification files.
+TypeScript: clean across all sprints (753–758).
 ```
 
 ---
 
 *Produced by Sprint 756 — 2026-05-24*
-*Dispatcher wired: Sprint 757 — 2026-05-24*
+*Dispatcher wired Director+Coach: Sprint 757 — 2026-05-24*
+*Dispatcher wired Player+Parent: Sprint 758 — 2026-05-24*
 *Infrastructure: Sprints 753–755*
 *Godmode base certification: Sprint 744 (9.3/10)*

@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 758 — DONNA Player and Parent Portal Dispatcher Wiring V1
+
+- Modified `src/components/player/DonnaChat.tsx` — Enabled text input (was disabled); added `useRouter`, `usePathname` from `next/navigation`; imported `dispatchUIIntent` from `donnaUIActionDispatcher`; added `typedText` + `dispatchResponse` state; added `PLAYER_NAV` constant (9 player-portal local routes: missions, skill-path, level-up, competition-path, fitness-path, practice, wins, home, ask-donna); added `resolvePlayerNavigation()` function; added `handleSubmit()` with 4-priority pipeline: (1) dispatcher blocked patterns → show refusal; (2) player-local nav → `router.push()` + navigate message; (3) dispatcher navigate result → `router.push()`; (4) fallback guidance; added Enter-key handler; added dispatcher response card (blue for info, orange for honest/blocked); kept chip response card and all existing chip functionality unchanged; updated submit button to `Send` icon (enabled/disabled state)
+- Modified `src/components/player/ParentDonnaChat.tsx` — Same pattern for parent role; `dispatchUIIntent` called with `'parent'`; `PARENT_NAV` constant (5 parent-portal routes: progress, wins, updates, home, ask-donna); `resolveParentNavigation()` function; fallback message routes consequential actions to director; all existing chip functionality unchanged
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 757 — DONNA UI Dispatcher Live Wiring V1
 
 - Modified `src/components/assistant/DonnaAssistantButton.tsx` — Wired `dispatchUIIntent()` from `donnaUIActionDispatcher.ts` as a pre-check before the COO router in both `handleVoiceTranscript` and `handleCommandSubmit`; adds `handleUIDispatch(text): boolean` function that intercepts three definitive dispatch kinds: (1) `blocked` with confidence=blocked → sets `commandResponse` with hard refusal, pushes to `cooThread`, speaks refusal; (2) `navigate` with confidence=high → calls `router.push(route)` directly; (3) `guided_operator` with confidence=high → looks up operator via `getOperatorById()`, sets `currentOperatorId`/`currentOperatorStep` state, shows opening line + step 1 prompt in `commandResponse` and `cooThread`, speaks opening line; everything else returns false and falls through to existing GODmode/COO/legacy routing unchanged; added `uiActionRole: UIActionRole` derived constant (director→academy_director, coach→head_coach); added `currentOperatorId` and `currentOperatorStep` state; both reset in `closePanel()` and route-change `useEffect`; imports `dispatchUIIntent`, `getOperatorById`, `UIActionRole`; GODmode dispatch, COO router, draft/approval logic all untouched
