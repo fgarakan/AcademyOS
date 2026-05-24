@@ -40,17 +40,17 @@ export interface DonnaMissingContextAnswer extends DonnaSafeReadAnswer {
 
 const ONBOARDING_PATTERNS = /\b(onboard|onboarding|set\s?up|setup|getting started|getting going|how to start|start using|configure academy|configure my academy|walk me through setup|help with setup|i'?m new|brand new|just starting|where do i begin|how do i begin|first time|first thing to configure|what (should|do) i configure|don'?t know where to start|just getting started)\b/i
 
-const PLAYERS_QUESTION_PATTERNS = /\b(which players?|who needs? attention|player attention|player data|no players?|missing players?|add players?|player profile|player progress|player list|players? need|player concern|who should i focus|focus on today|prioritize (my )?players?|player priorities?)\b/i
+const PLAYERS_QUESTION_PATTERNS = /\b(which players?|who needs? attention|player attention|player data|no players?|missing players?|add players?|player profile|player progress|player list|players? need|player concern|who should i focus|focus on today|prioritize (my )?players?|player priorities?|how many players?|player count|number of players?)\b/i
 
 const COACHES_QUESTION_PATTERNS = /\b(who should coach|which coach|assign coach|coach for|coach orange|coach green|coach red|coach white|coach blue|coach yellow|coaches? setup|no coaches?|add coaches?|add a coach|coach availability|coaching assignment|head coach)\b/i
 
-const CURRICULUM_QUESTION_PATTERNS = /\b(curriculum setup|curriculum structure|set up curriculum|configure curriculum|curriculum missing|no curriculum|curriculum levels?|build curriculum|curriculum content)\b/i
+const CURRICULUM_QUESTION_PATTERNS = /\b(curriculum setup|curriculum structure|set up curriculum|configure curriculum|curriculum missing|no curriculum|curriculum levels?|build curriculum|curriculum content|curriculum bottleneck|curriculum gap|curriculum problem|curriculum issue|curriculum coverage)\b/i
 
 const TEMPLATES_QUESTION_PATTERNS = /\b(session template|class template|plan a session|session planning|create a template|add a template|no templates?|template setup|template missing)\b/i
 
 const NEXT_STEP_PATTERNS = /\b(what should i do (first|next|now)|what do i do (first|next)|what comes first|first step|where do i start|what do i start with|what is my first|next step)\b/i
 
-const WHY_CANT_PATTERNS = /\b(why can'?t you|why won'?t you|why can'?t donna|why don'?t you know|why don'?t you have|why no data|what'?s missing|what are you missing|what do you need|what context)\b/i
+const WHY_CANT_PATTERNS = /\b(why can'?t you|why won'?t you|why can'?t donna|why don'?t you know|why don'?t you have|why no data|what'?s missing|what are you missing|what do you need|what context|don'?t have any data|have no data|no data at all|nothing in the system|system is empty|nothing set up)\b/i
 
 // ── Navigation intent patterns (Sprint 730) ───────────────────────────────────
 // Detects "Open the review center", "Show me the players page", etc.
@@ -278,6 +278,27 @@ export function detectMissingContext(
   // ── 7. Templates question in early setup ─────────────────────────────────────
   if (TEMPLATES_QUESTION_PATTERNS.test(t) && isFirstTimeSetup) {
     return handleNoTemplates(t)
+  }
+
+  // ── 8. Player/coach count when data exists (Sprint 733) ──────────────────────
+  if (/\b(how many players?|player count|number of players?)\b/i.test(t) && hasPlayers) {
+    const count = ctx?.playerCount ?? 0
+    return build(
+      `You have ${count} player${count !== 1 ? 's' : ''} registered in your academy. You can view and manage them from the Players page. Want me to take you there?`,
+      { href: '/director/players', label: 'Players', questionContext: t },
+      'answer_player_count',
+      ctx?.isLive ? 'Live player count' : 'Demo data',
+    )
+  }
+
+  // ── 9. Curriculum bottleneck when data exists (Sprint 733) ───────────────────
+  if (CURRICULUM_QUESTION_PATTERNS.test(t) && !isFirstTimeSetup) {
+    return build(
+      "Curriculum coverage gaps appear when players are assigned to levels but haven't covered all curriculum nodes for that level. The most common bottlenecks are: nodes with no session template coverage, levels where players are clustered but coaches lack templates, and nodes marked as required but not yet delivered. Want me to take you to the Curriculum Setup page to review?",
+      { href: '/director/onboarding/curriculum', label: 'Curriculum Setup', questionContext: t },
+      'explain_curriculum_coverage',
+      'Curriculum coverage explanation',
+    )
   }
 
   return null

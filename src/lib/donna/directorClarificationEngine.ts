@@ -159,6 +159,27 @@ export function buildBlockedRequestAnswer(text: string): DonnaSafeReadAnswer {
   }
 }
 
+// ── Sprint 733: Coach assignment clarification (coaches exist but no assignment data) ──
+// Fires when user asks "who should coach X" and coaches are already set up.
+// The missing-context engine handles the no-coaches case; this handles the has-coaches case.
+
+const COACH_ASSIGNMENT_PATTERN = /\b(who should coach|which coach (should|for|is best)|assign (a )?coach|coach (for|assignment|orange|green|red|white|blue|yellow))\b/i
+
+export function tryCoachAssignmentClarification(
+  text: string,
+): DonnaSafeReadAnswer | null {
+  if (!COACH_ASSIGNMENT_PATTERN.test(text)) return null
+  return {
+    actionId: 'coach_assignment_clarify',
+    text: "Coach-group assignments aren't automated yet -- I can't recommend a specific coach for a group without assignment data. You can set up coach-group assignments manually from the Coaches page. Want me to take you there?",
+    confidence: 'partial',
+    sourceNote: 'Coach assignment data not yet wired',
+    followUp: 'Take me to Coaches',
+    href: '/director/onboarding/coaches-permissions',
+    isAnswerable: true,
+  }
+}
+
 // ── Main director clarification dispatcher ────────────────────────────────────
 // Called from DonnaVoiceReadyShell after the answer intercepts miss.
 // Returns a clarifying question or blocked response — or null if DONNA should proceed normally.
@@ -166,6 +187,10 @@ export function buildBlockedRequestAnswer(text: string): DonnaSafeReadAnswer {
 export function tryDirectorClarificationOrBlock(
   text: string,
 ): DonnaSafeReadAnswer | null {
+  // Sprint 733: coach assignment clarification (when coaches exist — no-coaches case handled by missing-context engine)
+  const coachAssign = tryCoachAssignmentClarification(text)
+  if (coachAssign) return coachAssign
+
   const intentResult = classifyDirectorIntent(text)
 
   // Blocked — always respond

@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-24 — Sprint 733 — DONNA Five Partial Closures V1
+
+- Modified `src/lib/donna/donnaMissingContextEngine.ts` — extended PLAYERS_QUESTION_PATTERNS (how many players, player count), CURRICULUM_QUESTION_PATTERNS (bottleneck, gap, issue, coverage), WHY_CANT_PATTERNS (don't have any data, have no data, nothing set up); added step 8 (player count answer when data exists) and step 9 (curriculum coverage explanation when not first-time setup)
+- Created `src/lib/donna/coachHealthDonnaAnswer.ts` — `tryAnswerCoachHealthQuestion()` matches "how are my coaches doing", "coach status", "coach performance"; returns summary using coachCount/missingWrapUps/todaySessions from director context; navOffer to /director/sessions or /director/review
+- Modified `src/lib/donna/directorClarificationEngine.ts` — added `tryCoachAssignmentClarification()`: when "who should coach X" and coaches exist, returns helpful clarification with navOffer to /director/onboarding/coaches-permissions
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — wired `tryAnswerCoachHealthQuestion()` at step 6.5 (between roster and clarification); imports coachHealthDonnaAnswer
+- Updated `docs/DONNA_CHATGPT_QUALITY_CONVERSATIONAL_CERTIFICATION.md` — V3 final: 44 PASS / 1 PARTIAL / 0 FAIL, 92/100, CERTIFIED CHATGPT-QUALITY
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 732 — DONNA ChatGPT-Quality Conversational Certification V2
 
 - Updated `docs/DONNA_CHATGPT_QUALITY_CONVERSATIONAL_CERTIFICATION.md` — full 45-prompt re-regression after Sprints 730-731; final score 87/100; 40 PASS / 5 PARTIAL / 0 FAIL; verdict: DEMO-READY BUT NOT CHATGPT-QUALITY; Sprint 733 recommendation with exact files and scope

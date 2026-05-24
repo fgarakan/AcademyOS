@@ -36,6 +36,7 @@ import { tryAnswerDashboardPriorityQuestion } from '@/lib/donna/directorDashboar
 import { tryAnswerRosterAttentionQuestion } from '@/lib/donna/directorPlayersDonnaIntelligence'
 import { buildChatMessageFromAnswer } from '@/components/donna/DonnaChatThread'
 import { tryDirectorClarificationOrBlock } from '@/lib/donna/directorClarificationEngine'
+import { tryAnswerCoachHealthQuestion } from '@/lib/donna/coachHealthDonnaAnswer'
 import { tryBuildActionPreview } from '@/lib/donna/directorActionPreview'
 import { detectMissingContext } from '@/lib/donna/donnaMissingContextEngine'
 import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
@@ -264,6 +265,26 @@ export function DonnaVoiceReadyShell({
             confidence: rosterAnswer.confidence,
             sourceNote: rosterAnswer.sourceNote,
           })
+        }, 600)
+        return
+      }
+    }
+
+    // Sprint 733: Coach health intercept ("how are my coaches doing?", etc.)
+    if (plainRole === 'director') {
+      const coachHealth = tryAnswerCoachHealthQuestion(trimmed, directorCtx)
+      if (coachHealth) {
+        const donnaMsg = buildChatMessageFromAnswer(coachHealth)
+        const coachHealthNavOffer = buildNavOfferFromHref(coachHealth.href, trimmed)
+        setTimeout(() => {
+          setMessages(prev => [...prev, donnaMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, donnaMsg.text, {
+            actionId: coachHealth.actionId,
+            confidence: coachHealth.confidence,
+            sourceNote: coachHealth.sourceNote,
+          })
+          if (coachHealthNavOffer) setPendingNavOffer(coachHealthNavOffer)
         }, 600)
         return
       }
