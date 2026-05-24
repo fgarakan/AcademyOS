@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-24 — Sprint 739 — DONNA Session Adjustment, Coach Cue, and Curriculum Draft V1
+
+- Created `src/lib/donna/sessionAdjustmentDonnaAnswer.ts` — `isSessionAdjustmentQuestion()` matches session adjust/modify/level-mix/suggestion patterns; `tryAnswerSessionAdjustmentQuestion(text)` extracts levels from text using 14 level patterns; if 2+ levels detected returns `buildMixedLevelAdjustments()` with split-court/pair/challenge/template suggestions; if 1 level returns single-level note; if no levels asks for context
+- Created `src/lib/donna/coachCueDonnaAnswer.ts` — `isCoachCueQuestion()` matches coach cue/execution/tips patterns; `tryAnswerCoachCueQuestion(text)` detects block type first, then level stage; static `STAGE_COACHING_FOCUS` (red/orange/yellow/hp) and `BLOCK_TYPE_COACHING_CUES` (warm_up/rally/point_play/match_play/technical/fitness/agility/speed/coordination) with multi-point coaching cues per type
+- Created `src/lib/donna/curriculumDraftProposalDonnaAnswer.ts` — `isCurriculumDraftProposalIntent()` matches add/modify/remove curriculum content patterns; `tryAnswerCurriculumDraftProposal(text)` extracts change type (7 types), target level, proposed content; builds structured proposal text with change type, risk level, and 4-step review process; routes to curriculum builder; asks for level if missing
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — wired Sprint 739 three dispatch steps (draft proposal before impact, session adjustment, coach cue for director+coach roles); imports 3 new engines
+- Addresses CAP 5 (curriculum draft proposals), CAP 13 (session adjustments), CAP 14 (coach cue dispatch)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 738 — DONNA Curriculum Impact Explanation Engine V1
 
 - Created `src/lib/donna/curriculumImpactDonnaAnswer.ts` — `isCurriculumImpactQuestion()` detects "what happens if I add/remove/change X" patterns; `tryAnswerCurriculumImpactQuestion(text)` detects change type from 7 CHANGE_TYPE_PATTERNS (add_drill/gate/fitness, modify_gate, remove_drill, add_mission, rewrite_level); estimates players affected and rollout weeks using stage-based player estimates; `buildImpactAnswer()` returns structured estimate with urgency note per change type; fallback generic impact guidance when change type not detected; navOffer to /director/curriculum/builder

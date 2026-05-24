@@ -50,6 +50,9 @@ import { tryAnswerTemplateDraftRequest } from '@/lib/donna/templateDraftDonnaAns
 import { tryAnswerFitnessDraftRequest } from '@/lib/donna/fitnessDraftDonnaAnswer'
 import { tryAnswerCurriculumLevelQuestion } from '@/lib/donna/curriculumLevelDonnaAnswer'
 import { tryAnswerCurriculumImpactQuestion } from '@/lib/donna/curriculumImpactDonnaAnswer'
+import { tryAnswerSessionAdjustmentQuestion } from '@/lib/donna/sessionAdjustmentDonnaAnswer'
+import { tryAnswerCoachCueQuestion } from '@/lib/donna/coachCueDonnaAnswer'
+import { tryAnswerCurriculumDraftProposal } from '@/lib/donna/curriculumDraftProposalDonnaAnswer'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
@@ -291,6 +294,67 @@ export function DonnaVoiceReadyShell({
             sourceNote: coachHealth.sourceNote,
           })
           if (coachHealthNavOffer) setPendingNavOffer(coachHealthNavOffer)
+        }, 600)
+        return
+      }
+    }
+
+    // ── Sprint 739: Curriculum draft proposal intercept ──────────────────────
+    // Fires before impact (CAP 8) to catch "add a gate to Orange 2" intent.
+    if (plainRole === 'director') {
+      const draftProposal = tryAnswerCurriculumDraftProposal(trimmed)
+      if (draftProposal) {
+        const draftMsg = buildChatMessageFromAnswer(draftProposal)
+        const draftNavOffer = buildNavOfferFromHref(draftProposal.href, trimmed)
+        setTimeout(() => {
+          setMessages(prev => [...prev, draftMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, draftMsg.text, {
+            actionId: draftProposal.actionId,
+            confidence: draftProposal.confidence,
+            sourceNote: draftProposal.sourceNote,
+          })
+          if (draftNavOffer) setPendingNavOffer(draftNavOffer)
+        }, 600)
+        return
+      }
+    }
+
+    // ── Sprint 739: Session adjustment intercept ──────────────────────────────
+    if (plainRole === 'director') {
+      const sessionAdj = tryAnswerSessionAdjustmentQuestion(trimmed)
+      if (sessionAdj) {
+        const sessionMsg = buildChatMessageFromAnswer(sessionAdj)
+        const sessionNavOffer = buildNavOfferFromHref(sessionAdj.href, trimmed)
+        setTimeout(() => {
+          setMessages(prev => [...prev, sessionMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, sessionMsg.text, {
+            actionId: sessionAdj.actionId,
+            confidence: sessionAdj.confidence,
+            sourceNote: sessionAdj.sourceNote,
+          })
+          if (sessionNavOffer) setPendingNavOffer(sessionNavOffer)
+        }, 600)
+        return
+      }
+    }
+
+    // ── Sprint 739: Coach cue / execution suggestion intercept ────────────────
+    if (plainRole === 'director' || plainRole === 'coach') {
+      const coachCue = tryAnswerCoachCueQuestion(trimmed)
+      if (coachCue) {
+        const cueMsg = buildChatMessageFromAnswer(coachCue)
+        const cueNavOffer = buildNavOfferFromHref(coachCue.href, trimmed)
+        setTimeout(() => {
+          setMessages(prev => [...prev, cueMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, cueMsg.text, {
+            actionId: coachCue.actionId,
+            confidence: coachCue.confidence,
+            sourceNote: coachCue.sourceNote,
+          })
+          if (cueNavOffer) setPendingNavOffer(cueNavOffer)
         }, 600)
         return
       }
