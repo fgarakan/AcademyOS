@@ -96,15 +96,14 @@ export default async function CurriculumMapPage() {
           <div className="hidden sm:flex items-center gap-2 shrink-0">
             <Link
               href="/director/curriculum/guided"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-colors"
-              style={{ border: '1px solid rgba(17,217,223,0.20)', color: '#11d9df', background: 'rgba(17,217,223,0.05)' }}
+              className="btn-lime inline-flex items-center gap-1.5"
             >
               <Sparkles className="w-3 h-3" />
               Start Guided Review
             </Link>
             <Link
               href="/director/curriculum/builder"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border border-border text-text-muted hover:text-text-secondary transition-colors"
+              className="btn-ghost inline-flex items-center gap-1.5"
             >
               <Map className="w-3 h-3" />
               Jump to Level
@@ -113,9 +112,34 @@ export default async function CurriculumMapPage() {
         </div>
 
         {/* Dynamic subtitle */}
-        <p className="text-[12px] text-text-secondary leading-relaxed max-w-xl">
+        <p className="text-sm text-text-secondary leading-relaxed max-w-xl">
           {subtitle}
         </p>
+
+        {/* ── Mobile curriculum health summary (lg:hidden) ─────────────────── */}
+        <div className="block lg:hidden rounded-xl bg-surface border border-border px-4 py-3 space-y-3">
+          <p className="label-xs">Curriculum Health</p>
+          <div className="flex flex-wrap gap-2">
+            {healthItems.map(item => (
+              <div
+                key={item.label}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold"
+                style={{
+                  color: item.color,
+                  borderColor: `${item.color}33`,
+                  background: `${item.color}0f`,
+                }}
+              >
+                <span className="font-mono text-xs">{item.count}</span>
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+          <Link href="/director/curriculum/guided" className="inline-flex items-center gap-1 text-xs text-lime hover:opacity-80 font-medium">
+            <Sparkles className="w-3 h-3" />
+            Start Guided Review →
+          </Link>
+        </div>
 
         {/* Jump-to search */}
         {tablesAvailable && levels.length > 0 && (

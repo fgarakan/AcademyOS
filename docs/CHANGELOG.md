@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-24 — Sprint 774 — Curriculum Map Premium Expandable Editable Cards V1
+
+- Modified `src/app/director/curriculum/map/page.tsx` — Added `block lg:hidden` mobile health summary (4 health chips + Guided Review CTA); subtitle `text-[12px]` → `text-sm`; "Start Guided Review" → `btn-lime` primary; "Jump to Level" → `btn-ghost` secondary
+- Created `docs/AIQS_CURRICULUM_MAP_774.md` — sprint doc
+- Curriculum Map: DONNA integration 3 → 5/5; primary action clarity +2; typography +2
+- Estimated score improvement: 74 → 84+
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 773 — Coach Home Today Console AIQS Rebuild V1
 
 - Modified `src/app/coach/page.tsx` — Removed standalone "Next Session" card (duplicated first session in TODAY section); added lime "NEXT" badge to first incomplete session in TODAY list; eyebrow "Your Workspace" → "Coach Hub"; removed unused Clock/PlayCircle imports
