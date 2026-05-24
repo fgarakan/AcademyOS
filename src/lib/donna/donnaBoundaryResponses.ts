@@ -155,9 +155,11 @@ const BLOCKED_COACH_TOPICS: Array<{ pattern: RegExp; response: DonnaBoundaryResp
   },
 ]
 
+// Sprint 740 -- narrowed to only catch live-data queries, not explanations or draft creation.
+// "add a gate", "what are gates?", "what is a gate?" must NOT trigger schema gap.
 const SCHEMA_GAP_TOPICS: Array<{ pattern: RegExp; label: string }> = [
-  { pattern: /\b(gate|curriculum.?gate|gate.?progress|evidence)\b/i, label: 'Curriculum gate' },
-  { pattern: /\b(level.?requirement|requirement.?progress)\b/i, label: 'Level requirement' },
+  { pattern: /\b(gate.?progress|gate.?evidence|gate.?completion|gate.?status|passed.?gate|gate.?check.?for)\b/i, label: 'Curriculum gate progress' },
+  { pattern: /\b(requirement.?progress|requirement.?completion|level.?requirement.?status)\b/i, label: 'Level requirement progress' },
   { pattern: /\b(track.?requirement|curriculum.?track)\b/i, label: 'Curriculum track requirement' },
 ]
 

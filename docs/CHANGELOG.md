@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-24 — Sprint 740 — DONNA Builder Assistant Certification V1
+
+- Modified `src/lib/donna/donnaBoundaryResponses.ts` — narrowed `SCHEMA_GAP_TOPICS` gate pattern from broad `\b(gate|curriculum.?gate|gate.?progress|evidence)\b` to explicit live-data queries only (`gate.?progress|gate.?evidence|gate.?completion|gate.?status|passed.?gate|gate.?check.?for`); similarly narrowed level-requirement pattern; fixes CAP 5 regression where "add a gate to Orange 2" was being blocked by schema gap before the curriculum draft dispatch could intercept it
+- Created `docs/DONNA_BUILDER_ASSISTANT_CERTIFICATION.md` — full regression test of all 15 Builder Assistant Capabilities (CAPs 1–15); 45+ specific prompt tests across all dispatch paths; final verdict: CERTIFIED BUILDER ASSISTANT — 15 PASS / 0 PARTIAL / 0 FAIL; score 100/100; documents supported/unsupported action boundaries, draft/review behavior, 4 remaining honest gaps (live gate progress, full diff output, official send, player history depth)
+- Closes builder certification goal opened in Sprint 734 audit; Sprints 735–739 implementation complete; Sprint 740 confirms certification via regression
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 739 — DONNA Session Adjustment, Coach Cue, and Curriculum Draft V1
 
 - Created `src/lib/donna/sessionAdjustmentDonnaAnswer.ts` — `isSessionAdjustmentQuestion()` matches session adjust/modify/level-mix/suggestion patterns; `tryAnswerSessionAdjustmentQuestion(text)` extracts levels from text using 14 level patterns; if 2+ levels detected returns `buildMixedLevelAdjustments()` with split-court/pair/challenge/template suggestions; if 1 level returns single-level note; if no levels asks for context
