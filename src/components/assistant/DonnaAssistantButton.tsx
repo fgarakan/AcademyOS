@@ -227,6 +227,10 @@ import { ensureChatSession, recordTurn, getRecentTurns, getContextualPrefix } fr
 // Sprint 704 — Action preview cards wiring
 import { getActionPreviewForRequest } from '@/lib/donna/donnaActionPreviewIntegration'
 import type { DirectorActionPreview } from '@/lib/donna/directorActionPreview'
+// Sprint 757 — UI action dispatcher pre-check (structured safety + navigation layer)
+import { dispatchUIIntent } from '@/lib/donna/donnaUIActionDispatcher'
+import { getOperatorById } from '@/lib/donna/donnaUIGuidedOperators'
+import type { UIActionRole } from '@/lib/donna/donnaUIActionRegistry'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -764,6 +768,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [attendanceQueueing, setAttendanceQueueing] = useState(false)
   const [attendanceQueueResult, setAttendanceQueueResult] = useState<DonnaApprovalExecutionResult | null>(null)
 
+  // Sprint 757 — Active guided operator state (runtime step tracking)
+  const [currentOperatorId, setCurrentOperatorId] = useState<string | null>(null)
+  const [currentOperatorStep, setCurrentOperatorStep] = useState<number>(0)
+
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
   const [isLoadingReviewQueue, setIsLoadingReviewQueue] = useState(false)
@@ -815,6 +823,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Page context from registry — resolves to the richest matching context for this route.
   const ctx = resolvePageContext(pathname)
   const voicePrompts = ctx.suggestedPrompts
+
+  // Sprint 757 — Map DonnaRole to UIActionRole for structured dispatch
+  // 'director' → 'academy_director'; 'coach' → 'head_coach' (more permissive safe default)
+  const uiActionRole: UIActionRole = role === 'director' ? 'academy_director' : 'head_coach'
   // Single source of truth for the current missing question — same text shown and spoken.
   const currentTemplateQuestion: TemplateDraftQuestion | null = templateDraft?.missingQuestions?.[0] ?? null
   // Current missing question for the active generic task — shown in voice card spotlight.
@@ -877,6 +889,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setAttendanceExceptionDraft(null)
     setAttendanceSessionOptions([])
     setAttendanceQueueResult(null)
+    setCurrentOperatorId(null)
+    setCurrentOperatorStep(0)
     realtimeDisconnect()
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -1007,6 +1021,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setAttendanceSessionOptions([])
     setAttendanceQueueResult(null)
     setDailyGreetingState(null)
+    setCurrentOperatorId(null)
+    setCurrentOperatorStep(0)
     // Sprint 700 — wire route-change safe memory so DONNA session recall tracks navigation
     recordRouteChange(pathname, getPromptCategoryLabel(pathname))
   }, [pathname])
@@ -1363,7 +1379,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       return
     }
 
-    // 8. Sprint 697 — COO conversational router: runs before legacy detectAndHandleCommand
+    // 8. Sprint 757 — UI action dispatcher pre-check (blocked/nav/operator intercept)
+    if (handleUIDispatch(text)) return
+
+    // 9. Sprint 697 — COO conversational router: runs before legacy detectAndHandleCommand
     const cooHandled = handleDonnaCooPrompt(text)
     if (!cooHandled) {
       detectAndHandleCommand(text)
@@ -2377,6 +2396,47 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     return false
   }
 
+  // Sprint 757 — UI action dispatcher pre-check.
+  // Intercepts three definitive kinds before the COO router, in priority order:
+  //   1. blocked (confidence === 'blocked') — architecture invariant violations
+  //   2. navigate (confidence === 'high')   — explicit route navigation
+  //   3. guided_operator (confidence === 'high') — operator launch with step 1 prompt
+  // Everything else returns false so the existing COO + legacy routing runs unchanged.
+  // DOES NOT touch GODmode dispatch, conversational router, or any draft/approval logic.
+  function handleUIDispatch(text: string): boolean {
+    const result = dispatchUIIntent(text, uiActionRole, pathname)
+
+    if (result.kind === 'blocked' && result.confidence === 'blocked') {
+      const msg = result.message
+      setCommandResponse({ message: msg, type: 'honest', label: 'Not allowed' })
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, label: 'Not allowed', type: 'honest' }])
+      speakDonna(msg)
+      return true
+    }
+
+    if (result.kind === 'navigate' && result.route && result.confidence === 'high') {
+      router.push(result.route)
+      return true
+    }
+
+    if (result.kind === 'guided_operator' && result.operatorId && result.confidence === 'high') {
+      const operator = getOperatorById(result.operatorId)
+      if (operator) {
+        setCurrentOperatorId(operator.id)
+        setCurrentOperatorStep(1)
+        const step1 = operator.steps[0]
+        const stepDesc = step1 ? `\n\n**Step 1 — ${step1.label}:** ${step1.donnaPrompt}` : ''
+        const msg = `${operator.openingLine}${stepDesc}`
+        setCommandResponse({ message: msg, type: 'info', label: operator.label })
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, label: operator.label, type: 'info' }])
+        speakDonna(operator.openingLine)
+        return true
+      }
+    }
+
+    return false
+  }
+
   // Sprint 697 — COO conversational router: first-pass handler before legacy routing.
   // Returns true if the router handled the prompt (commandResponse set, speakDonna called).
   // Returns false to fall through to legacy detectAndHandleCommand.
@@ -2713,6 +2773,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     // Context query
     if (isContextQueryPhrase(text.toLowerCase())) {
       void handleContextSummary()
+      setTypedText('')
+      return
+    }
+
+    // Sprint 757 — UI action dispatcher pre-check (blocked/nav/operator intercept)
+    if (handleUIDispatch(text)) {
       setTypedText('')
       return
     }

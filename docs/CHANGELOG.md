@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-24 — Sprint 757 — DONNA UI Dispatcher Live Wiring V1
+
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — Wired `dispatchUIIntent()` from `donnaUIActionDispatcher.ts` as a pre-check before the COO router in both `handleVoiceTranscript` and `handleCommandSubmit`; adds `handleUIDispatch(text): boolean` function that intercepts three definitive dispatch kinds: (1) `blocked` with confidence=blocked → sets `commandResponse` with hard refusal, pushes to `cooThread`, speaks refusal; (2) `navigate` with confidence=high → calls `router.push(route)` directly; (3) `guided_operator` with confidence=high → looks up operator via `getOperatorById()`, sets `currentOperatorId`/`currentOperatorStep` state, shows opening line + step 1 prompt in `commandResponse` and `cooThread`, speaks opening line; everything else returns false and falls through to existing GODmode/COO/legacy routing unchanged; added `uiActionRole: UIActionRole` derived constant (director→academy_director, coach→head_coach); added `currentOperatorId` and `currentOperatorStep` state; both reset in `closePanel()` and route-change `useEffect`; imports `dispatchUIIntent`, `getOperatorById`, `UIActionRole`; GODmode dispatch, COO router, draft/approval logic all untouched
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 756 — DONNA Site-Wide UI Operator Certification V1
 
 - Created `docs/DONNA_SITE_WIDE_UI_OPERATOR_CERTIFICATION.md` — Formal certification document issuing verdict **FOUNDATION READY — NOT FULL SITE-WIDE CERTIFIED**; audits all 11 certification requirements (registry, matrix, page map, 6 operators, dispatcher, regression prompts); verifies all architecture invariants intact (execute_approved_action never bypassed, finalize_player_placement never called, direct sends always blocked, cross-tenant always blocked); documents Director portal as fully operator-covered; documents coach/player/parent as navigation-only; lists 5 gaps with suggested sprints (757: wire dispatcher to live panel; 758: runtime operator step tracking; 759–760: coach/player/parent operators; 761: per-page action surfacing; 762: CI regression harness); certification evidence table; upgrade path to CERTIFIED SITE-WIDE UI OPERATOR
