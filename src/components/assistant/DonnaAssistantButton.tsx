@@ -3379,7 +3379,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           {/* commandResponse card suppressed when message matches last thread turn.  */}
           {cooThread.length > 0 && (
             <div className="pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="space-y-2.5 px-3">
+              {/* Sprint 749: max-h + overflow-y-auto so thread scrolls internally.   */}
+              {/* Auto-scroll anchor (cooThreadBottomRef) is inside this container;   */}
+              {/* scrollIntoView targets the nearest scrollable ancestor — this div.   */}
+              <div className="space-y-2.5 px-3 max-h-[280px] overflow-y-auto">
                 {cooThread.slice(-5).map((turn, i) => (
                   <div key={i} className="space-y-1.5">
                     {/* User message — right-aligned, lime tint */}
@@ -4039,8 +4042,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           )}
 
           {/* Sprint 720 — Voice quality status pill: small, non-noisy, shown only after TTS is used */}
+          {/* Sprint 749 — opacity-50: reduces visual weight; not a critical status; errors stay visible above */}
           {lastServerTtsInfo && (
-            <div className="px-4 pb-1">
+            <div className="px-4 pb-1 opacity-50">
               <p className="text-[10px] text-text-muted flex items-center gap-1.5 leading-none">
                 <span
                   className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${

@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-24 — Sprint 749 — DONNA Thread Height Voice Polish V1
+
+- Created `docs/DONNA_THREAD_HEIGHT_VOICE_POLISH_749.md` — Sprint documentation: thread height rule (280px cap, why chosen), auto-scroll preservation, voice quality pill de-emphasis, unchanged voice error states, UI score update 8.3/10 → 8.6/10, remaining gaps for Sprint 750+
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — (1) Added `max-h-[280px] overflow-y-auto` to the cooThread inner scroll container (`space-y-2.5 px-3` div); thread now scrolls internally at ≥4 turns, panel body height stays fixed, input bar always reachable; auto-scroll anchor (`cooThreadBottomRef`) is inside this container — `scrollIntoView` now targets the nearest scrollable ancestor (the thread box) correctly; (2) Added `opacity-50` to the voice quality status pill wrapper — reduces visual weight of non-critical post-TTS status without removing it; all actual voice error states ("Mic blocked", "Voice unavailable", stall/error messages) are separate elements and fully unaffected
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 748 — DONNA Single Response Surface V1
 
 - Created `docs/DONNA_SINGLE_RESPONSE_SURFACE_748.md` — Full commandResponse flow audit (Category A: main GODmode dispatch responses, also in cooThread; Category B: continuity, errors, role-boundary, controller responses, thread-only); documents suppression logic, cooThread metadata fields, auto-scroll, Category B card preservation, and remaining gaps; UI score update 7.5/10 → 8.3/10
