@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-24 — Sprint 737 — DONNA Curriculum Level Explanation Engine V1
+
+- Created `src/lib/donna/curriculumLevelDonnaAnswer.ts` — `isCurriculumLevelQuestion()` matches 6 pattern groups (level structure, explain specific level, content type summary, content type explanation, gap analysis, how curriculum works); `tryAnswerCurriculumLevelQuestion(text, ctx)` dispatches to appropriate answer builder; static CURRICULUM_STAGES (4-stage 12-level framework), LEVEL_DESCRIPTIONS (all 12 levels from Red 1 to HP 3), CONTENT_TYPE_EXPLANATIONS (gates/skills/drills/assessments/missions/badges); `buildGapAnalysisAnswer` uses `ctx.curriculumGaps` when populated or routes to curriculum setup when empty; `normalizeLevelKey()` maps text to level keys
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — wired Sprint 737 curriculum intercept before fitness/template steps; imports `tryAnswerCurriculumLevelQuestion`
+- Addresses CAP 1 (curriculum level structure), CAP 2 (explain level in director-friendly language), CAP 3 (summarize content types), CAP 4 (identify missing curriculum info)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 736 — DONNA Fitness Template Draft Engine V1
 
 - Created `src/lib/donna/fitnessDraftDonnaAnswer.ts` — `isFitnessCreationIntent()` matches 9 fitness intent patterns; `buildFitnessDraft(text)` extracts ageGroup/sessionType(7 types)/trainingGoal/duration then calls `selectBlockSet()` for appropriate FitnessBlockType set; `allocateFitnessBlockDurations()` scales proportionally to total minutes; static `FITNESS_COACH_CUES` and `FITNESS_TENNIS_TRANSFER` per FitnessBlockType; `buildFitnessDraftAnswer()` formats block list with intent/cue/transfer notes; navOffer to /director/fitness/templates

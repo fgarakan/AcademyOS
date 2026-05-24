@@ -48,6 +48,7 @@ import { detectShortPhrase, buildShortPhraseAnswer } from '@/lib/donna/donnaShor
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
 import { tryAnswerTemplateDraftRequest } from '@/lib/donna/templateDraftDonnaAnswer'
 import { tryAnswerFitnessDraftRequest } from '@/lib/donna/fitnessDraftDonnaAnswer'
+import { tryAnswerCurriculumLevelQuestion } from '@/lib/donna/curriculumLevelDonnaAnswer'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
@@ -289,6 +290,28 @@ export function DonnaVoiceReadyShell({
             sourceNote: coachHealth.sourceNote,
           })
           if (coachHealthNavOffer) setPendingNavOffer(coachHealthNavOffer)
+        }, 600)
+        return
+      }
+    }
+
+    // ── Sprint 737: Curriculum level / gap explanation intercept ─────────────
+    // Fires before fitness/class template steps to catch "explain Orange 2",
+    // "what are gates", "what is missing from my curriculum", etc.
+    if (plainRole === 'director') {
+      const curriculumAnswer = tryAnswerCurriculumLevelQuestion(trimmed, directorCtx)
+      if (curriculumAnswer) {
+        const curriculumMsg = buildChatMessageFromAnswer(curriculumAnswer)
+        const curriculumNavOffer = buildNavOfferFromHref(curriculumAnswer.href, trimmed)
+        setTimeout(() => {
+          setMessages(prev => [...prev, curriculumMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, curriculumMsg.text, {
+            actionId: curriculumAnswer.actionId,
+            confidence: curriculumAnswer.confidence,
+            sourceNote: curriculumAnswer.sourceNote,
+          })
+          if (curriculumNavOffer) setPendingNavOffer(curriculumNavOffer)
         }, 600)
         return
       }
