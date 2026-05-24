@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-24 — Sprint 767 — Director Home Consolidation: Today Command Center V1
+
+- Created `src/app/director/_components/DirectorTodayCommandCenter.tsx` — Unified command center component replacing `DirectorAttentionQueueHero` + `DonnaExecutiveCard`; DONNA-narrated priority queue in one surface; accepts `queue: AttentionQueue`, `directorName?: string`, `showMax?: number` (default 5); same category chips (Decision/Risk/Watch/Opportunity), priority-colored left borders, numbered items, "Do this first" label, DONNA safety disclaimer footer, "View all →" + "Ask DONNA →" links; empty state "Today looks clear"; pure UI — no DB calls
+- Modified `src/app/director/page.tsx` — Removed `DirectorAttentionQueueHero` render, removed `DonnaExecutiveCard` render, removed `donnaItems: DonnaExecutivePriorityItem[]` array (~55 lines) and its imports; added `DirectorTodayCommandCenter` render with `showMax={5}`; reordered sections: Sessions This Week moved from #11 → #4, Quick Actions from #12 → #5, Health Chart + Live Activity from #5 → #8 (supporting), `DirectorKpiHealthSection` from #5 → #11 (supporting analysis); 13 sections → 11 sections (2 merged into 1)
+- Created `docs/DIRECTOR_HOME_CONSOLIDATION_767.md` — Sprint documentation; before/after section order; duplication diagnosis; cognitive load improvements; preserved components; safety guardrails; TypeScript result; recommended Sprint 768
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 766 — Director Command Center Final Demo QA V1
 
 - Created `docs/DIRECTOR_COMMAND_CENTER_FINAL_DEMO_QA_766.md` — Final QA certification for Director Command Center (Sprints 761–766); TypeScript validation result (EXIT 0); DONNA QA harness status (data-file only, no CLI runner; Sprint 759 36/36 certification holds); manual QA checklist (26 checks — all pass); 5-minute director demo script; honest blocker list (0 blocking bugs, 9 documented non-blocking gaps); final decision: DEMO-READY DIRECTOR COMMAND CENTER; sprint summary table (761–766); recommended next major block: Director-Only Dashboard Customization Architecture + Customize Mode

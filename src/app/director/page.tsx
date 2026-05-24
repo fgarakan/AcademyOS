@@ -18,8 +18,7 @@ import { formatDate } from '@/lib/utils'
 import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
 import { DirectorKpiHealthSection } from './_components/DirectorKpiHealthSection'
-import { DonnaExecutiveCard, type DonnaExecutivePriorityItem } from './_components/DonnaExecutiveCard'
-import { DirectorAttentionQueueHero } from './_components/DirectorAttentionQueueHero'
+import { DirectorTodayCommandCenter } from './_components/DirectorTodayCommandCenter'
 import { buildAttentionQueue, type AttentionQueueInput } from '@/lib/director/attentionQueue'
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
@@ -277,64 +276,6 @@ export default async function DirectorDashboard() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
 
-  // DONNA executive priority items — built from existing computed data, no new DB calls
-  const donnaItems: DonnaExecutivePriorityItem[] = []
-
-  if (pendingWrapUpsCount > 0) {
-    donnaItems.push({
-      id: 'wrap-ups',
-      text: `${pendingWrapUpsCount} coach wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} awaiting your review`,
-      actionLabel: 'Review',
-      href: '/director/review?tab=wrap-ups',
-      variant: 'review',
-    })
-  }
-  if (attentionCount > 0) {
-    donnaItems.push({
-      id: 'attention',
-      text: `${attentionCount} player${attentionCount !== 1 ? 's' : ''} on hold or due for reassessment`,
-      actionLabel: 'View Players',
-      href: '/director/players',
-      variant: 'urgent',
-    })
-  }
-  if (pendingCount > 0) {
-    donnaItems.push({
-      id: 'placement',
-      text: `${pendingCount} player${pendingCount !== 1 ? 's' : ''} waiting for curriculum placement`,
-      actionLabel: 'Place Players',
-      href: '/director/players',
-      variant: 'review',
-    })
-  }
-  if (newRequests > 0) {
-    donnaItems.push({
-      id: 'requests',
-      text: `${newRequests} parent lesson request${newRequests !== 1 ? 's' : ''} need your review`,
-      actionLabel: 'Open Review',
-      href: '/director/review',
-      variant: 'review',
-    })
-  }
-  if (playersWithoutLevel > 0) {
-    donnaItems.push({
-      id: 'curriculum',
-      text: `${playersWithoutLevel} active player${playersWithoutLevel !== 1 ? 's' : ''} missing a curriculum level`,
-      actionLabel: 'Assign Levels',
-      href: '/director/players',
-      variant: 'info',
-    })
-  }
-  if (reassessmentDue > 0 && donnaItems.length < 5) {
-    donnaItems.push({
-      id: 'reassessment',
-      text: `${reassessmentDue} player${reassessmentDue !== 1 ? 's' : ''} overdue for reassessment`,
-      actionLabel: 'View',
-      href: '/director/players',
-      variant: 'review',
-    })
-  }
-
   // Sprint 764 — Enrichment query A: v_group_summary for group capacity signals.
   // Provides overCapacityGroups (groups where player_count > max_players) and
   // noCoverageGroupCount (groups with no session this week, crossed against weekSessions).
@@ -523,15 +464,16 @@ export default async function DirectorDashboard() {
         />
       </div>
 
-      {/* ── Sprint 765: Attention Queue Hero — first operational section ── */}
-      {/* Sources: buildAttentionQueue() with live data from Sprints 763–764. */}
-      {/* Top 3 items: Decision / Risk / Watch / Opportunity. Empty: "Today looks clear." */}
-      <DirectorAttentionQueueHero queue={attentionQueue} showMax={3} />
+      {/* ── Sprint 767: Today Command Center — DONNA-narrated, unified priority surface ── */}
+      {/* Replaces DirectorAttentionQueueHero + DonnaExecutiveCard (Sprints 763–765).   */}
+      {/* One calm surface answering: "What needs my attention today?"                  */}
+      <DirectorTodayCommandCenter
+        queue={attentionQueue}
+        directorName={directorDisplayName}
+        showMax={5}
+      />
 
-      {/* ── DONNA Executive Brief ─────────────────────────── */}
-      <DonnaExecutiveCard items={donnaItems} directorName={directorDisplayName} />
-
-      {/* ── Academy Overview — 8-card KPI grid ────────────── */}
+      {/* ── Academy Overview — 8-card KPI snapshot ─────────── */}
       <AcademyKpiCardsSection
         sessionsToday={sessionsThisWeek}
         attendanceExceptions={pendingWrapUpsCount}
@@ -544,21 +486,84 @@ export default async function DirectorDashboard() {
         activePlayers={activePlayers}
       />
 
-      {/* ── Academy KPI Health — formal threshold framework ── */}
-      <DirectorKpiHealthSection
-        activePlayers={activePlayers}
-        advancementReadyCount={advancementReadyCount}
-        curriculumExecutionPct={curriculumExecutionPct}
-        pendingWrapUpsCount={pendingWrapUpsCount}
-        improvingCount={improvingCount}
-        recapCompletionPct={recapCompletionPct}
-        stalledPlayerCount={stalledPlayerCount}
-      />
+      {/* ── Sessions This Week ────────────────────────────── */}
+      {/* Sprint 767: moved up — answers "What should I do next?" immediately. */}
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="label-xs">Sessions This Week</p>
+            <p className="text-xs text-text-muted mt-1">Sessions scheduled for the current week. Create sessions from class templates to build your coaching history.</p>
+          </div>
+          <Link
+            href="/director/sessions"
+            className="shrink-0 text-xs text-lime hover:opacity-80 font-medium"
+          >
+            View all →
+          </Link>
+        </div>
+        <Card>
+          <CardContent className="py-4">
+            {(weekSessions ?? []).length === 0 ? (
+              <EmptyState
+                icon={<Calendar className="w-5 h-5" />}
+                title="No sessions this week"
+                description="Sessions appear here once created from a class template. Schedule your first session to get started."
+                className="py-6"
+              />
+            ) : (
+              <div className="space-y-1">
+                {(weekSessions ?? []).slice(0, 4).map(session => (
+                  <Link
+                    key={session.id}
+                    href={`/director/sessions/${session.id}`}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-text-primary truncate">
+                        {session.name ?? 'Untitled Session'}
+                      </p>
+                      <p className="text-xs text-text-muted">{formatDate(session.scheduled_date)}</p>
+                    </div>
+                    <SessionStatusPill status={session.status} />
+                    <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* ── Health Chart + Live Activity ─────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-        <AcademyHealthChartCard healthPct={academyHealthPct} totalAlerts={totalAlerts} />
-        <LiveActivityCard sessions={weekSessions ?? []} pendingWrapUps={pendingWrapUpsCount} pendingPlacements={pendingCount} />
+      {/* ── Quick Actions ─────────────────────────────────── */}
+      {/* Sprint 767: moved up alongside Sessions This Week — actionable navigation hub. */}
+      <div>
+        <p className="label-xs mb-4">Quick Actions</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <QuickActionCard
+            icon={<Calendar className="w-4 h-4 text-lime" />}
+            title="View Today's Academy"
+            description="Live session feed, attendance, and on-court status."
+            href="/director/today"
+          />
+          <QuickActionCard
+            icon={<ClipboardList className="w-4 h-4 text-lime" />}
+            title="Session Planning"
+            description="Build and manage sessions from class templates."
+            href="/director/sessions"
+          />
+          <QuickActionCard
+            icon={<Users className="w-4 h-4 text-lime" />}
+            title="Player Profiles"
+            description="View and manage your full player roster."
+            href="/director/players"
+          />
+          <QuickActionCard
+            icon={<Activity className="w-4 h-4 text-lime" />}
+            title="Signals"
+            description="Attendance concerns, missing levels, pending reviews, and lesson requests."
+            href="/director/signals"
+          />
+        </div>
       </div>
 
       {/* ── Roster Signals ─────────────────────────────────── */}
@@ -776,6 +781,13 @@ export default async function DirectorDashboard() {
         </div>
       </div>
 
+      {/* ── Health Chart + Live Activity ─────────────────── */}
+      {/* Sprint 767: moved down — supporting context, not primary signal. */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+        <AcademyHealthChartCard healthPct={academyHealthPct} totalAlerts={totalAlerts} />
+        <LiveActivityCard sessions={weekSessions ?? []} pendingWrapUps={pendingWrapUpsCount} pendingPlacements={pendingCount} />
+      </div>
+
       {/* ── Curriculum Coverage ───────────────────────────── */}
       <Card>
         <CardContent className="py-4">
@@ -820,87 +832,22 @@ export default async function DirectorDashboard() {
         />
       )}
 
-      {/* ── Sessions this week ────────────────────────────── */}
-      <div className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="label-xs">Sessions This Week</p>
-            <p className="text-xs text-text-muted mt-1">Sessions scheduled for the current week. Create sessions from class templates to build your coaching history.</p>
-          </div>
-          <Link
-            href="/director/sessions"
-            className="shrink-0 text-xs text-lime hover:opacity-80 font-medium"
-          >
-            View all →
-          </Link>
-        </div>
-        <Card>
-          <CardContent className="py-4">
-            {(weekSessions ?? []).length === 0 ? (
-              <EmptyState
-                icon={<Calendar className="w-5 h-5" />}
-                title="No sessions this week"
-                description="Sessions appear here once created from a class template. Schedule your first session to get started."
-                className="py-6"
-              />
-            ) : (
-              <div className="space-y-1">
-                {(weekSessions ?? []).slice(0, 4).map(session => (
-                  <Link
-                    key={session.id}
-                    href={`/director/sessions/${session.id}`}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary truncate">
-                        {session.name ?? 'Untitled Session'}
-                      </p>
-                      <p className="text-xs text-text-muted">{formatDate(session.scheduled_date)}</p>
-                    </div>
-                    <SessionStatusPill status={session.status} />
-                    <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ── Bottom Quick Actions ──────────────────────────── */}
-      <div>
-        <p className="label-xs mb-4">Quick Actions</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <QuickActionCard
-            icon={<Calendar className="w-4 h-4 text-lime" />}
-            title="View Today's Academy"
-            description="Live session feed, attendance, and on-court status."
-            href="/director/today"
-          />
-          <QuickActionCard
-            icon={<ClipboardList className="w-4 h-4 text-lime" />}
-            title="Session Planning"
-            description="Build and manage sessions from class templates."
-            href="/director/sessions"
-          />
-          <QuickActionCard
-            icon={<Users className="w-4 h-4 text-lime" />}
-            title="Player Profiles"
-            description="View and manage your full player roster."
-            href="/director/players"
-          />
-          <QuickActionCard
-            icon={<Activity className="w-4 h-4 text-lime" />}
-            title="Signals"
-            description="Attendance concerns, missing levels, pending reviews, and lesson requests."
-            href="/director/signals"
-          />
-        </div>
-      </div>
+      {/* ── Academy KPI Health — formal threshold framework ── */}
+      {/* Sprint 767: moved down — supporting analysis, not primary signal.              */}
+      {/* Director uses this to go deep on KPI trends; daily view lives in sections above. */}
+      <DirectorKpiHealthSection
+        activePlayers={activePlayers}
+        advancementReadyCount={advancementReadyCount}
+        curriculumExecutionPct={curriculumExecutionPct}
+        pendingWrapUpsCount={pendingWrapUpsCount}
+        improvingCount={improvingCount}
+        recapCompletionPct={recapCompletionPct}
+        stalledPlayerCount={stalledPlayerCount}
+      />
 
       {/* ── Academy Setup + Admin ─────────────────────────── */}
-      {/* Sprint 765: moved from top to bottom to reduce cognitive load. */}
-      {/* Setup steps and DONNA presence CTA are secondary to operational signals. */}
+      {/* Sprint 765: moved from top to bottom to reduce cognitive load.      */}
+      {/* Sprint 767: remains at bottom — setup is secondary to operations.   */}
       <div
         className="space-y-4 pt-4"
         style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
