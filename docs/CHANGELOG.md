@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-24 — Sprint 738 — DONNA Curriculum Impact Explanation Engine V1
+
+- Created `src/lib/donna/curriculumImpactDonnaAnswer.ts` — `isCurriculumImpactQuestion()` detects "what happens if I add/remove/change X" patterns; `tryAnswerCurriculumImpactQuestion(text)` detects change type from 7 CHANGE_TYPE_PATTERNS (add_drill/gate/fitness, modify_gate, remove_drill, add_mission, rewrite_level); estimates players affected and rollout weeks using stage-based player estimates; `buildImpactAnswer()` returns structured estimate with urgency note per change type; fallback generic impact guidance when change type not detected; navOffer to /director/curriculum/builder
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — wired Sprint 738 impact dispatch step before curriculum level step; imports `tryAnswerCurriculumImpactQuestion`
+- Addresses CAP 8 (Explain downstream impact before changes); CAP 10 (multi-turn build intent) already addressed by Sprint 735 pendingTemplateDraft
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 737 — DONNA Curriculum Level Explanation Engine V1
 
 - Created `src/lib/donna/curriculumLevelDonnaAnswer.ts` — `isCurriculumLevelQuestion()` matches 6 pattern groups (level structure, explain specific level, content type summary, content type explanation, gap analysis, how curriculum works); `tryAnswerCurriculumLevelQuestion(text, ctx)` dispatches to appropriate answer builder; static CURRICULUM_STAGES (4-stage 12-level framework), LEVEL_DESCRIPTIONS (all 12 levels from Red 1 to HP 3), CONTENT_TYPE_EXPLANATIONS (gates/skills/drills/assessments/missions/badges); `buildGapAnalysisAnswer` uses `ctx.curriculumGaps` when populated or routes to curriculum setup when empty; `normalizeLevelKey()` maps text to level keys

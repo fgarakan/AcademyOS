@@ -49,6 +49,7 @@ import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaS
 import { tryAnswerTemplateDraftRequest } from '@/lib/donna/templateDraftDonnaAnswer'
 import { tryAnswerFitnessDraftRequest } from '@/lib/donna/fitnessDraftDonnaAnswer'
 import { tryAnswerCurriculumLevelQuestion } from '@/lib/donna/curriculumLevelDonnaAnswer'
+import { tryAnswerCurriculumImpactQuestion } from '@/lib/donna/curriculumImpactDonnaAnswer'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
@@ -290,6 +291,28 @@ export function DonnaVoiceReadyShell({
             sourceNote: coachHealth.sourceNote,
           })
           if (coachHealthNavOffer) setPendingNavOffer(coachHealthNavOffer)
+        }, 600)
+        return
+      }
+    }
+
+    // ── Sprint 738: Curriculum impact explanation intercept ───────────────────
+    // "What happens if I add a gate to Orange 2?" style questions.
+    // Fires before curriculum level questions to avoid false-positive level match.
+    if (plainRole === 'director') {
+      const impactAnswer = tryAnswerCurriculumImpactQuestion(trimmed)
+      if (impactAnswer) {
+        const impactMsg = buildChatMessageFromAnswer(impactAnswer)
+        const impactNavOffer = buildNavOfferFromHref(impactAnswer.href, trimmed)
+        setTimeout(() => {
+          setMessages(prev => [...prev, impactMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, impactMsg.text, {
+            actionId: impactAnswer.actionId,
+            confidence: impactAnswer.confidence,
+            sourceNote: impactAnswer.sourceNote,
+          })
+          if (impactNavOffer) setPendingNavOffer(impactNavOffer)
         }, 600)
         return
       }
