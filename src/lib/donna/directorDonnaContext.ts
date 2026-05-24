@@ -4,6 +4,7 @@
 // Sprint 741 — Curriculum structural gap query wired (loadCurriculumStructuralGaps).
 // Sprint 742B — Extended context wired: player_curriculum_states, assessments, groups, templates.
 // Sprint 742C — Curriculum-to-template coverage gap detection wired (pure logic, no new DB calls).
+// Sprint 742F — Recent decisions loader wired (last 15 approved/executed/rejected proposed_actions).
 
 import type { DB } from '@/lib/types/db'
 import type { DONNAConfidence } from '@/lib/donna/donnaCOOAnswerEngine'
@@ -34,6 +35,8 @@ import {
 import type {
   AssessmentCoverageGap,
 } from '@/lib/donna/assessmentCoverageGapDetector'
+import { loadRecentDecisions } from '@/lib/donna/recentDecisionsLoader'
+import type { RecentDecisionSummary } from '@/lib/donna/recentDecisionsLoader'
 
 // ── Output types ──────────────────────────────────────────────────────────────
 
@@ -108,6 +111,9 @@ export interface DirectorDonnaContext {
   assessmentCoverageGaps: AssessmentCoverageGap[]
   assessmentCoverageGapCount: number
   eligibleWithoutAssessmentEvidence: number
+  // Recent decisions (Sprint 742F)
+  recentDecisions: RecentDecisionSummary[]
+  recentDecisionContextAvailable: boolean
   // Meta
   sourceLabels: DirectorSourceLabel[]
   confidence: DONNAConfidence
@@ -199,6 +205,9 @@ function buildDemoContext(): DirectorDonnaContext {
     assessmentCoverageGaps: [],
     assessmentCoverageGapCount: 0,
     eligibleWithoutAssessmentEvidence: 0,
+    // Recent decisions — empty in demo mode
+    recentDecisions: [],
+    recentDecisionContextAvailable: false,
     sourceLabels: [
       { field: 'Review queue', status: 'insufficient_data', label: 'Demo data' },
       { field: 'Sessions', status: 'insufficient_data', label: 'Demo data' },
@@ -546,6 +555,18 @@ export async function loadDirectorDonnaContext(
   const curriculumTemplateCoverageGapCount = coverageResult.gaps.length
   const templateCoverageContextAvailable = coverageResult.coverageAvailable
 
+  // ── 7g. Recent decisions (Sprint 742F) ───────────────────────────────────
+  // Loads last 15 approved/executed/rejected/modified proposed_actions.
+  // Director-scoped read. Used for "what happened last?" / audit trail answers.
+
+  let recentDecisions: RecentDecisionSummary[] = []
+  let recentDecisionContextAvailable = false
+
+  const recentDecisionsResult = await loadRecentDecisions(db, academyId)
+  recentDecisions = recentDecisionsResult.decisions
+  recentDecisionContextAvailable = recentDecisionsResult.fieldStatus === 'live'
+  fieldStatuses.recentDecisions = recentDecisionsResult.fieldStatus
+
   // ── 8. Academy risks ───────────────────────────────────────────────────────
 
   const academyRisks: DirectorAcademyRisk[] = []
@@ -678,6 +699,8 @@ export async function loadDirectorDonnaContext(
     { field: 'Assessments', status: fieldStatuses.assessments as COOFieldStatus, label: statusLabel(fieldStatuses.assessments as COOFieldStatus) },
     { field: 'Groups', status: fieldStatuses.groups as COOFieldStatus, label: statusLabel(fieldStatuses.groups as COOFieldStatus) },
     { field: 'Templates', status: fieldStatuses.templates as COOFieldStatus, label: statusLabel(fieldStatuses.templates as COOFieldStatus) },
+    // Sprint 742F
+    { field: 'Recent decisions', status: fieldStatuses.recentDecisions as COOFieldStatus, label: statusLabel(fieldStatuses.recentDecisions as COOFieldStatus) },
   ]
 
   // ── 11. Confidence and isLive ──────────────────────────────────────────────
@@ -729,6 +752,9 @@ export async function loadDirectorDonnaContext(
     assessmentCoverageGaps,
     assessmentCoverageGapCount,
     eligibleWithoutAssessmentEvidence,
+    // Recent decisions (Sprint 742F)
+    recentDecisions,
+    recentDecisionContextAvailable,
     sourceLabels,
     confidence,
     isLive,

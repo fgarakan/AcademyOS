@@ -54,6 +54,7 @@ import { tryAnswerSessionAdjustmentQuestion } from '@/lib/donna/sessionAdjustmen
 import { tryAnswerCoachCueQuestion } from '@/lib/donna/coachCueDonnaAnswer'
 import { tryAnswerCurriculumDraftProposal } from '@/lib/donna/curriculumDraftProposalDonnaAnswer'
 import { DATA_QUALITY_PATTERNS, buildDataQualityAnswer } from '@/lib/donna/dataQualityGuardian'
+import { RECENT_DECISIONS_PATTERNS, buildRecentDecisionsAnswer } from '@/lib/donna/recentDecisionsAnswerEngine'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
@@ -260,6 +261,23 @@ export function DonnaVoiceReadyShell({
         }, 600)
         return
       }
+    }
+
+    // Sprint 742F: Recent decisions — "What happened last?", "What was approved?", "Can we undo X?"
+    if (plainRole === 'director' && directorCtx && RECENT_DECISIONS_PATTERNS.test(trimmed)) {
+      const rdAnswer = buildRecentDecisionsAnswer(directorCtx, trimmed)
+      const rdNavOffer = buildNavOfferFromHref(rdAnswer.href, trimmed)
+      setTimeout(() => {
+        setMessages(prev => [...prev, buildChatMessageFromAnswer(rdAnswer)])
+        setIsTyping(false)
+        recordTurn(trimmed, rdAnswer.text, {
+          actionId: rdAnswer.actionId,
+          confidence: rdAnswer.confidence,
+          sourceNote: rdAnswer.sourceNote,
+        })
+        if (rdNavOffer) setPendingNavOffer(rdNavOffer)
+      }, 600)
+      return
     }
 
     // Sprint 742E: Data quality guardian — "What's wrong?", "Academy health?", "Fix first?"

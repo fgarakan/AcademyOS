@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-24 — Sprint 742F — DONNA Recent Decisions Engine V1
+
+- Created `src/lib/donna/recentDecisionsLoader.ts` — Read-only loader for last 15 non-pending proposed_actions (approved/executed/rejected/modified/expired/failed); academy-scoped, rawDb pattern, capped at 15, ordered by updated_at desc; exports `RecentDecisionSummary`, `RecentDecisionsResult`, `loadRecentDecisions(db, academyId)`; fails safely with `insufficient_data` on error or empty result
+- Created `src/lib/donna/recentDecisionsAnswerEngine.ts` — Pure logic answer builder; exports `RECENT_DECISIONS_PATTERNS` regex and `buildRecentDecisionsAnswer(ctx, userInput?)`; handles: rollback/undo questions (explains director-driven reversal policy, no automatic rollback), rejected-focus questions (shows only rejections with reviewer notes), general history questions (shows last 7 decisions with status icons, action labels, modules, dates); honest partial-confidence answer when context unavailable; all decisions link to /director/review
+- Modified `src/lib/donna/directorDonnaContext.ts` — Added `recentDecisions: RecentDecisionSummary[]` and `recentDecisionContextAvailable: boolean` to `DirectorDonnaContext` interface; added section 7g calling `loadRecentDecisions(db, academyId)`; added 'Recent decisions' source label; updated `buildDemoContext()` with empty fields; updated return value with new fields; import chain extended
+- Modified `src/components/donna/DonnaVoiceReadyShell.tsx` — Added import for `RECENT_DECISIONS_PATTERNS` and `buildRecentDecisionsAnswer`; added dispatch block before Data Quality Guardian: director-only, matches RECENT_DECISIONS_PATTERNS, passes `trimmed` user input to answer builder for intent detection (rollback vs. rejected vs. general), records turn, builds nav offer
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 742E — DONNA Data Quality Guardian V1
 
 - Created `src/lib/donna/dataQualityGuardian.ts` — Cross-domain data completeness checker; pure TypeScript, no DB calls, no mutations; operates on DirectorDonnaContext; exports `runDataQualityGuardian(ctx)` producing a `DataQualityReport` (signals[], criticalCount, warningCount, infoCount, overallScore 0–100, domainsHealthy[], domainsWithIssues[]); covers 7 domains: review_queue (backlog ≥10 critical, ≥5 warning), sessions (missing wrap-ups ≥3 warning, >0 info), players (no players critical, no curriculum states critical, advancement-eligible warning), curriculum (structural gaps critical/warning, template-coverage gap critical/warning), templates (no templates critical, unassigned templates info), assessments (eligible without evidence critical, overdue assessments warning/info), coaches (no coaches critical, high-concern observations warning); scoring: 100 - 20×critical - 8×warning - 2×info clamped 0–100; signals sorted critical→warning→info; exports `DATA_QUALITY_PATTERNS` regex and `buildDataQualityAnswer(ctx)` returning a `DonnaSafeReadAnswer`
