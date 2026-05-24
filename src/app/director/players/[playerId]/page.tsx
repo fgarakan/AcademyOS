@@ -804,11 +804,8 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         hasCurriculumState={hasCurriculum}
       />
 
-      {/* KPI signals — Sprint 434 */}
-      <PlayerKpiDrilldownCard playerId={params.playerId} academyId={academyId} />
-
       {/* ── Sprint 253: Action layer ─────────────────────────────────────── */}
-      {/* Action summary + clickable CTAs */}
+      {/* Action summary + clickable CTAs — kept adjacent to Command Center for above-fold contract */}
       <PlayerActionSummaryCard
         academyId={academyId}
         currentLevelName={curriculumSummary?.current_level_name ?? null}
@@ -820,6 +817,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         observationCount={enrichedObservations.length}
         advancementEligible={curriculumSummary?.advancement_eligible ?? null}
       />
+
+      {/* KPI signals — Sprint 434 — moved below action summary so command+action are above-fold together */}
+      <PlayerKpiDrilldownCard playerId={params.playerId} academyId={academyId} />
 
       {/* Three operational blocks — responsive grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1541,6 +1541,14 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Evidence Timeline — Phase 7A: multi-source, typed, director-only */}
       <PlayerEvidenceTimeline items={timelineItems} isSchemaMissing={timelineIsSchemaMissing} />
+
+      {/* ── Parent & Player view preview ──────────────────────────────── */}
+      {/* Boundary label: below this line, content reflects what parents/players see */}
+      <div className="mt-4 pt-4 border-t border-status-blue/20">
+        <p className="label-xs" style={{ color: 'rgba(10,132,255,0.75)' }}>
+          Parent &amp; player view — director preview only · Not sent automatically
+        </p>
+      </div>
 
       {/* Parent Guidance Preview — director-only, read-only, not sent */}
       <ParentGuidancePreviewPanel

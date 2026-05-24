@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-24 — Sprint 775 — Player Profile AIQS Development Command Profile V1
+
+- Modified `src/app/director/players/[playerId]/page.tsx` — Moved PlayerKpiDrilldownCard to after PlayerActionSummaryCard in overviewSlot (CommandCenter + ActionSummary now adjacent above-fold); added parent view divider in notesSlot before parent-safe preview components
+- Created `docs/AIQS_PLAYER_PROFILE_775.md` — sprint doc; tab label audit (all clear); expected score improvement
+- Player Profile: primary action clarity +2; trust/safety boundary now visually explicit
+- Estimated score improvement: 67 → 69 (partial fix; full above-fold simplification is a follow-up sprint)
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 774 — Curriculum Map Premium Expandable Editable Cards V1
 
 - Modified `src/app/director/curriculum/map/page.tsx` — Added `block lg:hidden` mobile health summary (4 health chips + Guided Review CTA); subtitle `text-[12px]` → `text-sm`; "Start Guided Review" → `btn-lime` primary; "Jump to Level" → `btn-ghost` secondary
