@@ -395,7 +395,7 @@ export default async function PlayerHome() {
                 <Icon className={`w-3.5 h-3.5 ${accent}`} />
               </div>
               <p className="text-xs font-semibold text-text-primary">{label}</p>
-              <p className="text-[10px] text-text-muted">{sub}</p>
+              <p className="text-xs text-text-muted">{sub}</p>
             </div>
           </Link>
         ))}
@@ -405,7 +405,7 @@ export default async function PlayerHome() {
       <div className="rounded-xl bg-surface border border-border px-4 py-4 space-y-3">
         <div className="flex items-center gap-2">
           <Shield className="w-3.5 h-3.5 text-status-blue shrink-0" />
-          <p className="text-[10px] text-text-muted">Coach-approved answers only — no rankings, no pressure</p>
+          <p className="text-xs text-text-muted">Coach-approved answers only — no rankings, no pressure</p>
         </div>
         <p className="text-xs font-semibold text-text-primary">Ask DONNA</p>
         <div className="flex flex-wrap gap-2">
@@ -465,7 +465,7 @@ export default async function PlayerHome() {
                       <TrendingUp className="w-5 h-5 text-lime" />
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Current Level</p>
+                      <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">Current Level</p>
                       <p className="font-bold text-text-primary text-base leading-tight">{idpView.current_level}</p>
                       {currentLevelStage && (
                         <p className="text-xs text-text-muted capitalize">{currentLevelStage.replace(/_/g, ' ')} stage</p>
@@ -474,7 +474,7 @@ export default async function PlayerHome() {
                   </div>
                   {nextLevelDisplayName && (
                     <div className="text-right shrink-0">
-                      <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Next Level</p>
+                      <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">Next Level</p>
                       <p className="text-xs text-text-secondary font-medium">{nextLevelDisplayName}</p>
                     </div>
                   )}
@@ -581,13 +581,13 @@ export default async function PlayerHome() {
               <CardContent className="space-y-4">
                 {idpView.mini_challenge && (
                   <div className="px-3 py-3 rounded-xl bg-lime/5 border border-lime/20">
-                    <p className="text-[10px] uppercase tracking-widest text-lime mb-1">Mini Challenge</p>
+                    <p className="text-[11px] uppercase tracking-widest text-lime mb-1">Mini Challenge</p>
                     <p className="text-sm text-text-primary leading-relaxed">{idpView.mini_challenge}</p>
                   </div>
                 )}
                 {idpView.reflection_question && (
                   <div className="px-3 py-3 rounded-xl bg-surface-raised border border-border">
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Reflect After Practice</p>
+                    <p className="text-[11px] uppercase tracking-widest text-text-muted mb-1">Reflect After Practice</p>
                     <p className="text-sm text-text-secondary leading-relaxed">{idpView.reflection_question}</p>
                   </div>
                 )}
@@ -624,7 +624,7 @@ export default async function PlayerHome() {
                     </li>
                   )}
                 </ul>
-                <p className="text-[10px] text-text-muted mt-3">
+                <p className="text-xs text-text-muted mt-3">
                   Great players ask great questions. These are safe to bring to any session.
                 </p>
               </CardContent>
@@ -772,7 +772,7 @@ export default async function PlayerHome() {
             </div>
             {badgeReport && badgeReport.earnedCount > 0 && (
               <Link href="/player/wins">
-                <span className="text-[10px] text-lime hover:text-lime/80 transition-colors">See all</span>
+                <span className="text-xs text-lime hover:text-lime/80 transition-colors">See all</span>
               </Link>
             )}
           </div>
@@ -794,7 +794,7 @@ export default async function PlayerHome() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-[11px] font-semibold text-lime leading-tight truncate">{def.name}</p>
-                          <p className="text-[9px] text-lime/60 capitalize">{def.rarity}</p>
+                          <p className="text-[11px] text-lime/60 capitalize">{def.rarity}</p>
                         </div>
                       </div>
                     )
@@ -808,11 +808,11 @@ export default async function PlayerHome() {
                 const pct = next.progressMax > 0 ? Math.round((next.progress / next.progressMax) * 100) : 0
                 return (
                   <div className="space-y-1">
-                    <p className="text-[9px] uppercase tracking-widest text-text-muted">Next Badge</p>
+                    <p className="text-[11px] uppercase tracking-widest text-text-muted">Next Badge</p>
                     <div className="px-3 py-2.5 rounded-xl border border-border bg-surface-raised">
                       <div className="flex items-center justify-between gap-2 mb-1.5">
                         <p className="text-xs font-medium text-text-secondary">{def.name}</p>
-                        <p className="text-[10px] text-text-muted">{next.progressLabel}</p>
+                        <p className="text-xs text-text-muted">{next.progressLabel}</p>
                       </div>
                       <div className="h-1.5 bg-surface rounded-full overflow-hidden">
                         <div className="h-full bg-lime/60 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -821,7 +821,7 @@ export default async function PlayerHome() {
                   </div>
                 )
               })()}
-              <p className="text-[9px] text-text-muted text-center">
+              <p className="text-xs text-text-muted text-center">
                 {badgeReport.earnedCount} badge{badgeReport.earnedCount !== 1 ? 's' : ''} earned · {badgeReport.inProgressCount} in progress
               </p>
             </div>
@@ -840,11 +840,11 @@ export default async function PlayerHome() {
                 const pct = next.progressMax > 0 ? Math.round((next.progress / next.progressMax) * 100) : 0
                 return (
                   <div className="space-y-1">
-                    <p className="text-[9px] uppercase tracking-widest text-text-muted">Working Toward</p>
+                    <p className="text-[11px] uppercase tracking-widest text-text-muted">Working Toward</p>
                     <div className="px-3 py-2.5 rounded-xl border border-border bg-surface">
                       <div className="flex items-center justify-between gap-2 mb-1.5">
                         <p className="text-xs font-medium text-text-secondary">{def.name}</p>
-                        <p className="text-[10px] text-text-muted">{next.progressLabel}</p>
+                        <p className="text-xs text-text-muted">{next.progressLabel}</p>
                       </div>
                       <div className="h-1.5 bg-surface-raised rounded-full overflow-hidden">
                         <div className="h-full bg-lime/40 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -860,10 +860,10 @@ export default async function PlayerHome() {
                 <Lock className="w-4 h-4 text-text-muted shrink-0" />
                 <div>
                   <p className="text-xs font-medium text-text-secondary">Badges unlock as you train</p>
-                  <p className="text-[10px] text-text-muted mt-0.5">Attend sessions and complete requirements to earn your first badge.</p>
+                  <p className="text-xs text-text-muted mt-0.5">Attend sessions and complete requirements to earn your first badge.</p>
                 </div>
               </div>
-              <p className="text-[9px] text-text-muted text-center">
+              <p className="text-xs text-text-muted text-center">
                 {getVisibleBadgesForPlayer().length} badges available to earn
               </p>
             </div>

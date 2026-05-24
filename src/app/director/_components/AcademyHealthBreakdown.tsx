@@ -473,7 +473,7 @@ export function AcademyHealthBadgeWithDrawer(props: AcademyHealthBadgeProps) {
           style={{ boxShadow: isHealthy ? '0 0 6px rgba(45,212,191,0.6)' : undefined }}
         />
         <div className="text-right">
-          <p className="text-[10px] uppercase tracking-widest font-semibold text-[#555555] leading-none mb-0.5">
+          <p className="text-[11px] uppercase tracking-widest font-semibold text-text-muted leading-none mb-0.5">
             Academy Health
           </p>
           <p className={`font-mono font-bold text-xl leading-none ${color.text}`}>

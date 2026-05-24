@@ -148,12 +148,12 @@ export default async function DirectorDonnaPage() {
                 ].map(({ label, value, color }) => (
                   <div key={label} className="px-3 py-2 rounded-xl bg-surface-raised border border-border">
                     <p className={`text-xl font-mono font-bold leading-none ${color}`}>{value}</p>
-                    <p className="text-[9px] uppercase tracking-widest text-text-muted mt-0.5">{label}</p>
+                    <p className="text-[11px] uppercase tracking-widest text-text-muted mt-0.5">{label}</p>
                   </div>
                 ))}
               </div>
               {!isLive && (
-                <p className="mt-2 text-[9px] text-status-orange/70">Demo fallback — no live academy data available.</p>
+                <p className="mt-2 text-xs text-status-orange/70">Demo fallback — no live academy data available.</p>
               )}
             </CardContent>
           </Card>
@@ -198,12 +198,12 @@ export default async function DirectorDonnaPage() {
                       </span>
                       <div className="min-w-0">
                         <p className="text-xs font-medium text-text-primary truncate">{item.playerName ?? 'Player'}</p>
-                        <p className="text-[10px] text-text-muted leading-snug">{item.reason}</p>
+                        <p className="text-xs text-text-muted leading-snug">{item.reason}</p>
                       </div>
                     </div>
                   ))}
                   {attentionItems.length > 4 && (
-                    <p className="text-[10px] text-text-muted">+{attentionItems.length - 4} more</p>
+                    <p className="text-xs text-text-muted">+{attentionItems.length - 4} more</p>
                   )}
                 </div>
                 <Link href="/director/players" className="flex items-center gap-1 mt-3 text-[11px] text-lime hover:text-lime/80">
@@ -227,9 +227,9 @@ export default async function DirectorDonnaPage() {
                   {academyRisks.slice(0, 3).map((risk, i) => (
                     <div key={i} className={`rounded-xl border px-3 py-2 ${URGENCY_COLOR[risk.urgency] ?? URGENCY_COLOR.low}`}>
                       <p className="text-xs font-semibold">{risk.signal}</p>
-                      <p className="text-[10px] opacity-80 leading-snug mt-0.5">{risk.detail}</p>
+                      <p className="text-xs opacity-80 leading-snug mt-0.5">{risk.detail}</p>
                       {risk.actionHref && (
-                        <Link href={risk.actionHref} className="inline-flex items-center gap-1 text-[10px] font-medium mt-1 opacity-90 hover:opacity-100">
+                        <Link href={risk.actionHref} className="inline-flex items-center gap-1 text-xs font-medium mt-1 opacity-90 hover:opacity-100">
                           Review <ArrowRight className="w-2.5 h-2.5" />
                         </Link>
                       )}
@@ -249,7 +249,7 @@ export default async function DirectorDonnaPage() {
                     <CheckCircle2 className="w-3.5 h-3.5 text-lime" />
                     Next Best Actions
                   </h2>
-                  <Link href="/director/review" className="text-[10px] text-lime/70 hover:text-lime transition-colors">
+                  <Link href="/director/review" className="text-xs text-lime/70 hover:text-lime transition-colors">
                     Review queue
                   </Link>
                 </div>
@@ -267,7 +267,7 @@ export default async function DirectorDonnaPage() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-text-secondary group-hover:text-text-primary transition-colors">{action.label}</p>
-                        <p className="text-[10px] text-text-muted leading-snug">{action.reason}</p>
+                        <p className="text-xs text-text-muted leading-snug">{action.reason}</p>
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-text-muted/30 group-hover:text-lime/50 shrink-0 mt-0.5 transition-colors" />
                     </Link>
@@ -327,7 +327,7 @@ export default async function DirectorDonnaPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-text-muted">Ask me anything about your academy</p>
+                <p className="text-xs text-text-muted">Ask me anything about your academy</p>
               </div>
             </div>
             {ctx ? (

@@ -113,7 +113,7 @@ export default async function CoachHome() {
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <PlayCircle className="w-4 h-4 text-lime shrink-0" />
-                  <p className="text-[10px] uppercase tracking-widest text-lime font-semibold">Next Session</p>
+                  <p className="text-[11px] uppercase tracking-widest text-lime font-semibold">Next Session</p>
                 </div>
                 {next.scheduled_time && (
                   <div className="flex items-center gap-1 text-[11px] text-text-muted">
@@ -149,16 +149,16 @@ export default async function CoachHome() {
       <div className="flex gap-4">
         <div className="flex flex-col items-center px-4 py-2.5 rounded-xl bg-surface-raised border border-border min-w-[72px]">
           <p className="text-xl font-mono font-bold text-lime leading-none">{todaySessions.length}</p>
-          <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Today</p>
+          <p className="text-[11px] uppercase tracking-widest text-text-muted mt-0.5">Today</p>
         </div>
         <div className="flex flex-col items-center px-4 py-2.5 rounded-xl bg-surface-raised border border-border min-w-[72px]">
           <p className="text-xl font-mono font-bold text-lime leading-none">{assignedPlayers.length}</p>
-          <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Players</p>
+          <p className="text-[11px] uppercase tracking-widest text-text-muted mt-0.5">Players</p>
         </div>
         {recentObservations.length > 0 && (
           <div className="flex flex-col items-center px-4 py-2.5 rounded-xl bg-surface-raised border border-border min-w-[72px]">
             <p className="text-xl font-mono font-bold text-lime leading-none">{recentObservations.length}</p>
-            <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Notes</p>
+            <p className="text-[11px] uppercase tracking-widest text-text-muted mt-0.5">Notes</p>
           </div>
         )}
       </div>
@@ -442,7 +442,7 @@ export default async function CoachHome() {
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-xs font-medium text-text-secondary group-hover:text-text-primary transition-colors">Ask DONNA</span>
-                <p className="text-[10px] text-text-muted">Sessions, players, wrap-up, player watch-fors</p>
+                <p className="text-xs text-text-muted">Sessions, players, wrap-up, player watch-fors</p>
               </div>
               <ChevronRight className="w-4 h-4 text-status-blue/40 group-hover:text-status-blue transition-colors shrink-0" />
             </div>

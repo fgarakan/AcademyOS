@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-24 — Sprint 770 — AIQS Micro-Text Sweep V1
+
+- Modified `src/app/director/page.tsx` — day labels + activity timestamp: `text-[10px]` → `text-[11px]`/`text-xs`
+- Modified `src/app/director/donna/page.tsx` — 8 instances: metric labels `text-[9px]` → `text-[11px]`; risk details, action reasons, DONNA subtitle `text-[10px]` → `text-xs`
+- Modified `src/app/coach/page.tsx` — 4 instances: "Next Session" + Today/Players/Notes stat labels `text-[10px]` → `text-[11px]`; DONNA description → `text-xs`
+- Modified `src/app/parent/page.tsx` — 13 instances: all section labels (uppercase tracking-widest) `text-[10px]` → `text-[11px]`; descriptions/metadata → `text-xs`
+- Modified `src/app/player/page.tsx` — 12 instances: section labels `text-[9px]`/`text-[10px]` → `text-[11px]`; descriptions → `text-xs`; badge rarity → `text-[11px]`
+- Modified `src/app/director/_components/AcademyHealthBreakdown.tsx` — `text-[10px] text-[#555555]` → `text-[11px] text-text-muted` (fixes micro-text + S-1 hardcoded contrast)
+- Modified `src/components/player/UtrHistoryChart.tsx` — XAxis + YAxis ticks: `fill: '#555555', fontSize: 10` → `fill: '#7a8898', fontSize: 11`
+- Created `docs/AIQS_MICRO_TEXT_SWEEP_770.md` — sprint doc; change rule table; scope; remaining gaps
+- Badge/chip patterns (text-[9px] with rounded border) unchanged — AIQS decorative chip exception
+- No layout, component hierarchy, or behavior changes
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 769 — AIQS Global Contrast Token Fix V1
 
 - Modified `tailwind.config.ts` — changed `text.muted` from `#626b76` → `#7a8898`; raises WCAG contrast on card background (#07090c) from ≈3.68:1 (fail) to ≈5.49:1 (pass); maintains blue-grey palette character; propagates to all 40+ usages of `text-text-muted` utility across all 14 audited pages with zero per-page code changes

@@ -950,7 +950,7 @@ function AcademyHealthChartCard({ healthPct, totalAlerts }: { healthPct: number;
         {/* Day labels */}
         <div className="flex justify-between">
           {labels.map((l, i) => (
-            <span key={i} className={`text-[10px] font-medium ${i === labels.length - 1 ? 'text-text-secondary' : 'text-text-muted'}`}>
+            <span key={i} className={`text-[11px] font-medium ${i === labels.length - 1 ? 'text-text-secondary' : 'text-text-muted'}`}>
               {l}
             </span>
           ))}
@@ -1052,7 +1052,7 @@ function LiveActivityCard({
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-text-primary truncate">{item.text}</p>
-                  <p className="text-[10px] text-text-muted">{item.time}</p>
+                  <p className="text-xs text-text-muted">{item.time}</p>
                 </div>
               </li>
             ))}

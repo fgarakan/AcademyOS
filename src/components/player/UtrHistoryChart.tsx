@@ -40,14 +40,14 @@ export function UtrHistoryChart({ history }: Props) {
       <LineChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
         <XAxis
           dataKey="label"
-          tick={{ fill: '#555555', fontSize: 10 }}
+          tick={{ fill: '#7a8898', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           interval="preserveStartEnd"
         />
         <YAxis
           domain={[min, max]}
-          tick={{ fill: '#555555', fontSize: 10 }}
+          tick={{ fill: '#7a8898', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           tickCount={4}

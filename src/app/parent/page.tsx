@@ -404,7 +404,7 @@ export default async function ParentHome({
                   <Icon className={`w-3.5 h-3.5 ${accent}`} />
                 </div>
                 <p className="text-xs font-semibold text-text-primary">{label}</p>
-                <p className="text-[10px] text-text-muted">{sub}</p>
+                <p className="text-xs text-text-muted">{sub}</p>
               </div>
             </Link>
           ))}
@@ -437,7 +437,7 @@ export default async function ParentHome({
                   <TrendingUp className="w-5 h-5 text-lime" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Current Level</p>
+                  <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">Current Level</p>
                   <p className="font-bold text-text-primary text-base leading-tight">{parentCurrentLevelName}</p>
                 </div>
               </div>
@@ -445,7 +445,7 @@ export default async function ParentHome({
                 <div className="text-right shrink-0 flex items-center gap-2">
                   <ArrowRight className="w-3.5 h-3.5 text-text-muted" />
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Next Level</p>
+                    <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">Next Level</p>
                     <p className="text-xs text-text-secondary font-medium">{parentNextLevelName}</p>
                   </div>
                 </div>
@@ -600,23 +600,23 @@ export default async function ParentHome({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="px-3 py-3 rounded-xl bg-status-green/5 border border-status-green/20">
-              <p className="text-[10px] uppercase tracking-widest text-status-green mb-1">What to Praise</p>
+              <p className="text-[11px] uppercase tracking-widest text-status-green mb-1">What to Praise</p>
               <p className="text-sm text-text-primary font-medium leading-relaxed">{parentSupportGuide.whatToPraise}</p>
             </div>
             <div className="px-3 py-3 rounded-xl bg-surface-raised border border-border">
-              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">At-Home Support Idea</p>
+              <p className="text-[11px] uppercase tracking-widest text-text-muted mb-1">At-Home Support Idea</p>
               <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.atHomeSupportIdea}</p>
             </div>
             <div className="px-3 py-3 rounded-xl bg-lime/5 border border-lime/15">
-              <p className="text-[10px] uppercase tracking-widest text-lime mb-1">After Practice, Try Saying</p>
+              <p className="text-[11px] uppercase tracking-widest text-lime mb-1">After Practice, Try Saying</p>
               <p className="text-sm text-text-secondary leading-relaxed italic">&ldquo;{parentSupportGuide.practiceLanguage.replace(/^"|"$/g, '')}&rdquo;</p>
             </div>
             <div className="px-3 py-3 rounded-xl bg-surface-raised border border-border">
-              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Leave This to the Coaching Team</p>
+              <p className="text-[11px] uppercase tracking-widest text-text-muted mb-1">Leave This to the Coaching Team</p>
               <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.avoidOvercoaching}</p>
             </div>
             <div className="px-3 py-3 rounded-xl bg-status-blue/5 border border-status-blue/15">
-              <p className="text-[10px] uppercase tracking-widest text-status-blue mb-1">A Question to Ask the Coach</p>
+              <p className="text-[11px] uppercase tracking-widest text-status-blue mb-1">A Question to Ask the Coach</p>
               <p className="text-sm text-text-secondary leading-relaxed">{parentSupportGuide.whenToAskCoach}</p>
             </div>
           </CardContent>
@@ -659,11 +659,11 @@ export default async function ParentHome({
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <p className="text-2xl font-mono font-bold text-lime">{attendanceStat.presentCount}</p>
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Attended</p>
+                  <p className="text-[11px] uppercase tracking-widest text-text-muted mt-0.5">Attended</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-mono font-bold text-text-secondary">{attendanceStat.totalRecorded}</p>
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted mt-0.5">Recorded</p>
+                  <p className="text-[11px] uppercase tracking-widest text-text-muted mt-0.5">Recorded</p>
                 </div>
                 {attendanceStat.totalRecorded > 0 && (
                   <div className="flex-1">
@@ -673,7 +673,7 @@ export default async function ParentHome({
                         style={{ width: `${Math.round((attendanceStat.presentCount / attendanceStat.totalRecorded) * 100)}%` }}
                       />
                     </div>
-                    <p className="text-[10px] text-text-muted mt-1">
+                    <p className="text-xs text-text-muted mt-1">
                       {Math.round((attendanceStat.presentCount / attendanceStat.totalRecorded) * 100)}% attendance rate
                     </p>
                   </div>
@@ -688,7 +688,7 @@ export default async function ParentHome({
               {/* Recent session list */}
               {attendanceStat.recentSessions.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-[10px] uppercase tracking-widest text-text-muted">Recent Sessions</p>
+                  <p className="text-[11px] uppercase tracking-widest text-text-muted">Recent Sessions</p>
                   {attendanceStat.recentSessions.map((s, i) => {
                     const statusLabel =
                       s.status === 'present' ? 'Attended'
@@ -702,7 +702,7 @@ export default async function ParentHome({
                       <div key={i} className="flex items-center justify-between gap-2 py-1 border-b border-border last:border-0">
                         <div className="min-w-0">
                           <p className="text-xs text-text-secondary truncate">{s.sessionName ?? 'Training session'}</p>
-                          <p className="text-[10px] text-text-muted">{formattedDate}</p>
+                          <p className="text-xs text-text-muted">{formattedDate}</p>
                         </div>
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
                           s.status === 'present'
@@ -779,7 +779,7 @@ export default async function ParentHome({
                     </div>
                   )}
                 </div>
-                <p className="text-[10px] text-text-muted">
+                <p className="text-xs text-text-muted">
                   Submitted {new Date(latestLessonRequest.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.
                   Your director will follow up directly.
                 </p>
@@ -793,7 +793,7 @@ export default async function ParentHome({
       {/* ── Safety note ───────────────────────────────────────────── */}
       {parentView && (
         <div className="pt-1 pb-2">
-          <p className="text-text-muted text-[10px] text-center leading-relaxed">
+          <p className="text-text-muted text-xs text-center leading-relaxed">
             {parentView.safety_note}
           </p>
         </div>
