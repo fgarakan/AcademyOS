@@ -8,6 +8,7 @@ import {
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { getAcademyPriorityQueue, getReassessmentPipeline } from '@/lib/backend/dashboard'
+import { computeRecapCompletionRate, type RecapCheckRow } from '@/lib/kpi/coachExecutionKpiEngine'
 import {
   Card, CardHeader, CardContent, CardFooter,
   EmptyState, Avatar, StatusBadge,
@@ -161,14 +162,31 @@ export default async function DirectorDashboard() {
   const highPrioritySuggestionsCount = pendingSuggestions.filter(s => s.priority === 'high').length
   const curricGapCount = pendingSuggestions.filter(s => s.suggestion_type === 'curriculum_gap').length
 
-  // Curriculum coverage — single query; derive players-with-level and advancement-ready count
+  // Curriculum coverage — single query; derive players-with-level, advancement-ready count,
+  // and stalled-player count (enrolled > 180 days, not yet advancement-eligible).
+  // Sprint 762: added enrolled_at to existing select (1 extra field, same RLS).
   const { data: curricStateRows } = await rawDb
     .from('player_curriculum_states')
-    .select('player_id, advancement_eligible')
+    .select('player_id, advancement_eligible, enrolled_at')
     .eq('academy_id', academyId)
-  const playersWithLevel = (curricStateRows ?? []).length
+  const typedCurricRows = (curricStateRows ?? []) as Array<{
+    player_id: string
+    advancement_eligible: boolean | null
+    enrolled_at: string | null
+  }>
+  const playersWithLevel = typedCurricRows.length
   const playersWithoutLevel = Math.max(0, activePlayers - playersWithLevel)
-  const advancementReadyCount = (curricStateRows ?? []).filter((r: { advancement_eligible: boolean }) => r.advancement_eligible === true).length
+  const advancementReadyCount = typedCurricRows.filter(r => r.advancement_eligible === true).length
+
+  // Stalled players: enrolled > 180 days AND not yet advancement-eligible.
+  // Sprint 762: computed from enrolled_at — no new query.
+  const now180dAgo = new Date()
+  now180dAgo.setDate(now180dAgo.getDate() - 180)
+  const stalledPlayerCount = typedCurricRows.filter(r =>
+    r.enrolled_at !== null &&
+    new Date(r.enrolled_at) <= now180dAgo &&
+    r.advancement_eligible !== true,
+  ).length
 
   // Pending coach wrap-ups
   const { data: pendingWrapUpData } = await rawDb
@@ -178,6 +196,46 @@ export default async function DirectorDashboard() {
     .eq('target_module', 'session_wrap_up_v1')
     .eq('status', 'pending_review')
   const pendingWrapUpsCount = (pendingWrapUpData ?? []).length
+
+  // Sprint 762 — Recap completion KPI (KPI 4) via coachExecutionKpiEngine.
+  // Query 1: completed sessions in last 30 days, academy scoped.
+  // Query 2: voice_notes linked to those sessions, academy scoped.
+  // Builds RecapCheckRow[] for computeRecapCompletionRate().
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
+
+  const { data: completedSessionsData } = await supabase
+    .from('sessions')
+    .select('id')
+    .eq('academy_id', academyId)
+    .eq('status', 'completed')
+    .gte('scheduled_date', thirtyDaysAgoStr)
+
+  const completedSessionIds = (completedSessionsData ?? []).map((s: { id: string }) => s.id)
+
+  let recapCompletionPct: number | null = null
+  if (completedSessionIds.length > 0) {
+    const { data: voiceNoteSessionData } = await supabase
+      .from('voice_notes')
+      .select('session_id')
+      .eq('academy_id', academyId)
+      .in('session_id', completedSessionIds)
+
+    const sessionsWithNote = new Set(
+      (voiceNoteSessionData ?? [])
+        .map((v: { session_id: string | null }) => v.session_id)
+        .filter(Boolean),
+    )
+
+    const recapChecks: RecapCheckRow[] = completedSessionIds.map(id => ({
+      session_id: id,
+      has_note: sessionsWithNote.has(id),
+    }))
+
+    const recapResult = computeRecapCompletionRate(recapChecks, 30)
+    recapCompletionPct = recapResult.value
+  }
 
   // Checklist
   const { data: templateCheckData } = await rawDb
@@ -459,6 +517,8 @@ export default async function DirectorDashboard() {
         curriculumExecutionPct={curriculumExecutionPct}
         pendingWrapUpsCount={pendingWrapUpsCount}
         improvingCount={improvingCount}
+        recapCompletionPct={recapCompletionPct}
+        stalledPlayerCount={stalledPlayerCount}
       />
 
       {/* ── Health Chart + Live Activity ─────────────────── */}

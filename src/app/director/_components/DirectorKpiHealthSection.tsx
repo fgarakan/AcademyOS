@@ -1,5 +1,7 @@
 // Sprint 761 — Director Dashboard KPI Wiring V1
-// Wires academyKpiModel.ts into the director home page.
+// Sprint 762 — Director Dashboard KPI Engine Live Wiring V1
+//   Added: recap_completion_rate wired via coachExecutionKpiEngine (partial).
+//   Added: stalledPlayerCount from enrolled_at enriches level_readiness provenance note.
 // Pure UI component — no DB calls, no Supabase imports.
 // Accepts pre-computed props from the director page server component.
 // Renders 4 grouped KPI sections with formal health-status framework.
@@ -8,8 +10,6 @@ import Link from 'next/link'
 import { BarChart2, ChevronRight, Info } from 'lucide-react'
 import {
   ACADEMY_KPI_META,
-  computeKpiStatus,
-  formatKpiValue,
   buildKpiValue,
   getOverallAcademyHealth,
   type AcademyKpiId,
@@ -25,6 +25,9 @@ export interface DirectorKpiHealthSectionProps {
   curriculumExecutionPct: number   // players-with-level / activePlayers * 100 — partial proxy
   pendingWrapUpsCount: number      // pending wrap-up count — signal only, not completion rate
   improvingCount: number           // players with positive score delta
+  // Sprint 762 additions
+  recapCompletionPct: number | null  // from computeRecapCompletionRate() — partial (any voice_note counts)
+  stalledPlayerCount: number         // players enrolled >180d, not yet advancement-eligible
 }
 
 // ── KPI group definitions (mirrors kpiDashboard.ts section structure) ─────────
@@ -75,7 +78,7 @@ type DataProvenance = 'live' | 'partial' | 'no_data'
 
 const PROVENANCE_LABEL: Record<DataProvenance, string> = {
   live:     'live',
-  partial:  'proxy',
+  partial:  'partial',
   no_data:  'no data',
 }
 
@@ -97,16 +100,20 @@ function buildKpiEntries(props: DirectorKpiHealthSectionProps): Map<AcademyKpiId
   const map = new Map<AcademyKpiId, KpiEntry>()
 
   // ── level_readiness_queue_size — LIVE
-  // Directly computed from player_curriculum_states.advancement_eligible in page.tsx
-  // Lower is better: 0 = healthy, 1-3 = warning, >3 = critical
+  // Directly computed from player_curriculum_states.advancement_eligible in page.tsx.
+  // Lower is better: 0 = healthy, 1–3 = warning, >3 = critical.
+  // Sprint 762: enriched with stalledPlayerCount from enrolled_at data.
+  const stalledNote = props.stalledPlayerCount > 0
+    ? ` Also: ${props.stalledPlayerCount} player${props.stalledPlayerCount !== 1 ? 's' : ''} enrolled >180 days without advancement.`
+    : ''
   map.set('level_readiness_queue_size', {
     kpiValue: buildKpiValue('level_readiness_queue_size', props.advancementReadyCount),
     provenance: 'live',
-    provenanceNote: 'From player curriculum states — director page query',
+    provenanceNote: `From player_curriculum_states.advancement_eligible — director page query.${stalledNote}`,
   })
 
   // ── curriculum_coverage — PARTIAL (proxy)
-  // curriculumExecutionPct = playersWithLevel / activePlayers * 100
+  // curriculumExecutionPct = playersWithLevel / activePlayers * 100.
   // True KPI: % of active curriculum requirements with at least one evidence record.
   // Proxy: % of active players assigned a curriculum level. Directionally correct.
   map.set('curriculum_coverage', {
@@ -115,13 +122,17 @@ function buildKpiEntries(props: DirectorKpiHealthSectionProps): Map<AcademyKpiId
     provenanceNote: 'Proxy: % of active players with a curriculum level assigned (true coverage requires evidence records)',
   })
 
-  // ── recap_completion_rate — PARTIAL signal only
-  // We have pending wrap-up count, not a completion rate (no session total on hand).
-  // Show no_data; a pending-recap signal is visible in the KPI cards section already.
+  // ── recap_completion_rate — PARTIAL (Sprint 762: now engine-wired)
+  // computeRecapCompletionRate() from coachExecutionKpiEngine called in page.tsx.
+  // Value = % of completed sessions (last 30d) that have any voice_note.
+  // Caveat: voice_notes has no recap_type column — any note counts as a recap.
+  // null when no completed sessions exist in the 30-day window.
   map.set('recap_completion_rate', {
-    kpiValue: buildKpiValue('recap_completion_rate', null),
-    provenance: 'no_data',
-    provenanceNote: 'Requires completed-session count vs. recapped-session count — not yet computed on this page',
+    kpiValue: buildKpiValue('recap_completion_rate', props.recapCompletionPct),
+    provenance: props.recapCompletionPct !== null ? 'partial' : 'no_data',
+    provenanceNote: props.recapCompletionPct !== null
+      ? 'From sessions (completed, 30d) + voice_notes presence — via coachExecutionKpiEngine. Any voice_note counts (no recap_type column yet — data model gap G8).'
+      : 'No completed sessions found in last 30 days — collecting data',
   })
 
   // ── attendance_rate — no_data
@@ -129,15 +140,17 @@ function buildKpiEntries(props: DirectorKpiHealthSectionProps): Map<AcademyKpiId
   map.set('attendance_rate', {
     kpiValue: buildKpiValue('attendance_rate', null),
     provenance: 'no_data',
-    provenanceNote: 'Requires session_attendance rollup — available from /director/kpi',
+    provenanceNote: 'Requires session_attendance rollup per player — available from /director/kpi',
   })
 
   // ── player_progress_velocity — no_data
-  // Needs 60 days of evidence history. Not computed on director home page.
+  // Needs average requirements advancing per player per month (60d evidence history).
+  // stalledPlayerCount is surfaced on level_readiness_queue_size instead
+  // (different metric — not comparable to the velocity ratio threshold).
   map.set('player_progress_velocity', {
     kpiValue: buildKpiValue('player_progress_velocity', null),
     provenance: 'no_data',
-    provenanceNote: 'Requires 60 days of evidence progression data',
+    provenanceNote: 'Requires 60 days of requirement-level evidence progression data',
   })
 
   // ── coach_followthrough_rate — no_data (partial in model)
@@ -148,7 +161,7 @@ function buildKpiEntries(props: DirectorKpiHealthSectionProps): Map<AcademyKpiId
   })
 
   // ── player_priority_coverage — no_data
-  // Needs player priorities query — not on director home page.
+  // Needs player priorities rollup — not on director home page.
   map.set('player_priority_coverage', {
     kpiValue: buildKpiValue('player_priority_coverage', null),
     provenance: 'no_data',
@@ -273,7 +286,7 @@ export function DirectorKpiHealthSection(props: DirectorKpiHealthSectionProps) {
     ? getOverallAcademyHealth(allValues)
     : 'no_data'
 
-  // Count by status across all KPIs
+  // Count by provenance across all KPIs
   const liveCount = allEntries.filter(e => e.provenance === 'live').length
   const partialCount = allEntries.filter(e => e.provenance === 'partial').length
   const noDataCount = allEntries.filter(e => e.provenance === 'no_data').length
@@ -290,7 +303,7 @@ export function DirectorKpiHealthSection(props: DirectorKpiHealthSectionProps) {
           <p className="text-[11px] text-text-muted mt-0.5">
             Formal health-status framework using defined thresholds.
             {liveCount > 0 && ` ${liveCount} live.`}
-            {partialCount > 0 && ` ${partialCount} proxy.`}
+            {partialCount > 0 && ` ${partialCount} partial.`}
             {noDataCount > 0 && ` ${noDataCount} collecting data.`}
           </p>
         </div>
@@ -334,7 +347,7 @@ export function DirectorKpiHealthSection(props: DirectorKpiHealthSectionProps) {
         <p className="text-[10px] text-text-muted leading-snug">
           <span className="font-semibold text-text-secondary">Data sources: </span>
           <span className="text-lime/80">live</span> — direct DB query on this page.{' '}
-          <span className="text-text-secondary">proxy</span> — derived from related data (directionally correct, not exact).{' '}
+          <span className="text-text-secondary">partial</span> — engine-derived or proxy (directionally correct, includes known caveat).{' '}
           <span className="opacity-60">Collecting data</span> — KPI engine not yet wired; visit{' '}
           <Link href="/director/kpi" className="underline underline-offset-2 hover:text-lime">
             KPI Dashboard

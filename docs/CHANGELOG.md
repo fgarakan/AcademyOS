@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-24 — Sprint 762 — Director Dashboard KPI Engine Live Wiring V1
+
+- Modified `src/app/director/page.tsx` — Added import of `computeRecapCompletionRate` + `RecapCheckRow` from `coachExecutionKpiEngine`; extended `curricStateRows` query to include `enrolled_at`; computed `stalledPlayerCount` (players enrolled >180d, not yet advancement-eligible); added two scoped queries (completed sessions 30d + voice_notes by session_id) and called `computeRecapCompletionRate()` to produce `recapCompletionPct: number | null`; updated `DirectorKpiHealthSection` render with two new props
+- Modified `src/app/director/_components/DirectorKpiHealthSection.tsx` — Updated props interface with `recapCompletionPct: number | null` and `stalledPlayerCount: number`; removed unused imports (`computeKpiStatus`, `formatKpiValue`); promoted `recap_completion_rate` from `no_data` → `partial` using real engine value; enriched `level_readiness_queue_size` provenance note with stalledPlayerCount; corrected `PROVENANCE_LABEL` from `proxy` → `partial`; updated honesty footer text accordingly
+- Created `docs/DIRECTOR_DASHBOARD_KPI_ENGINE_LIVE_WIRING_762.md` — Sprint documentation; engine audit table; KPI data status after sprint; provenance delta (partial: 1→2, no_data: 10→9); known caveats (gap G8, date filter, enrolled_at proxy); remaining wiring gaps for Sprint 763
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Sprint 761 — Director Dashboard KPI Wiring V1
 
 - Created `src/app/director/_components/DirectorKpiHealthSection.tsx` — New server-compatible component; wires `src/lib/kpis/academyKpiModel.ts` (ACADEMY_KPI_META, computeKpiStatus, formatKpiValue, buildKpiValue, getOverallAcademyHealth) into the director home page; accepts pre-computed props (activePlayers, advancementReadyCount, curriculumExecutionPct, pendingWrapUpsCount, improvingCount); builds KpiValue[] for all 12 academy KPIs with honest data provenance (live: level_readiness_queue_size; partial proxy: curriculum_coverage; no_data: all others); renders 4 grouped KPI health sections (Attendance & Engagement, Coach Operations, Development Health, Retention & Growth) with health-status color coding, status dots, provenance labels, and "Collecting data" fallback; overall health badge via getOverallAcademyHealth(); honesty footer with provenance key; link to /director/kpi for per-player signals
