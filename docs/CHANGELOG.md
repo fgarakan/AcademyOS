@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-05-25 — Sprint 787 — DONNA Preload Session Presence Idle V1
+
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — 10 surgical changes:
+  1. **New ref** `idleTimerRef` (after `panelOpenCountRef`) — tracks 3-min inactivity timeout
+  2. **New state** `isDonnaIdle: boolean` (after `sessionIntentContext`) — shows idle presence card
+  3. **New function** `resetIdleTimer()` — clears timer, sets `isDonnaIdle(false)`, starts new 3-min countdown
+  4. **`closePanel` extended** — clears `idleTimerRef` and resets `isDonnaIdle` before `realtimeDisconnect()`
+  5. **Mount restore useEffect** — reads `academyos:donna:panelOpen:v1` from sessionStorage; calls `openDonnaPanel()` if true
+  6. **panelOpen sync useEffect** — writes/removes `academyos:donna:panelOpen:v1` in sessionStorage when `panelOpen` changes
+  7. **Panel lifecycle idle useEffect** — starts `resetIdleTimer()` on open, clears timer on close
+  8. **typedText idle reset useEffect** — resets idle timer when director types in panel input
+  9. **`handleVoiceTranscript`** — `resetIdleTimer()` after `setVoiceTranscript(text)`
+  10. **`handleVoiceListeningChange`** — `resetIdleTimer()` when `listening === true`
+  11. **`handleCommandSubmit`** — `resetIdleTimer()` after `if (!text) return`
+  12. **"Back to page" chip** — `resetIdleTimer()` in chip action before navigation
+  13. **Scrollable body JSX** — idle presence card: "I'm here when you need me." shown when `isDonnaIdle === true`
+- Session presence behavior:
+  - Panel open → navigate within tab → panel re-opens automatically
+  - Panel open → refresh → panel re-opens automatically
+  - Tab closed / new tab → panel starts closed (sessionStorage is tab-scoped)
+  - Director explicitly closes panel → sessionStorage key removed → does not re-open on next navigation
+- Idle behavior:
+  - 3 min of no interaction while panel is open → `stopWakeListening()` (no-op if inactive), show idle card
+  - Any interaction (type, submit, mic, voice, chip) → timer resets, idle card disappears
+- Storage: `sessionStorage` key `academyos:donna:panelOpen:v1` (NOT localStorage — tab-scoped, clears on tab close)
+- Created `docs/DONNA_PRELOAD_SESSION_PRESENCE_IDLE_787.md` — full implementation audit
+- No routing logic changes. No DB/API changes. No migrations. No new components.
+- TypeScript: clean
+
+---
+
 ## 2026-05-25 — Sprint 786 — DONNA Response Style V1
 
 - Modified `src/lib/donna/donnaFollowUpResolver.ts` — rewrote all ~20 response strings to premium style:

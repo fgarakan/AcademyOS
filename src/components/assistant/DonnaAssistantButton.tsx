@@ -404,6 +404,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Spoken greeting — fires once on first intentional panel open, never again in this session
   const hasGreetedRef = useRef(false)
   const panelOpenCountRef = useRef(0)
+  // Sprint 787 — Idle timer ref: fires after 3 min of inactivity while panel is open
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showGreeting, setShowGreeting] = useState(false)
   // Sprint 647 — daily greeting state (localStorage-backed, once per day)
   const [dailyGreetingState, setDailyGreetingState] = useState<DailyGreetingState | null>(null)
@@ -786,6 +788,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [lastSessionData, setLastSessionData] = useState<DonnaLastSession | null>(null)
   // Sprint 785 — Current-session intent context for follow-up resolution (RAM only, never persisted)
   const [sessionIntentContext, setSessionIntentContext] = useState<DonnaSessionIntentContext | null>(null)
+  // Sprint 787 — Idle presence: true when panel has been open with no interaction for 3 min
+  const [isDonnaIdle, setIsDonnaIdle] = useState(false)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -916,12 +920,32 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setCurrentOperatorId(null)
     setCurrentOperatorStep(0)
     setSessionIntentContext(null) // Sprint 785 — clear follow-up context on panel close
+    // Sprint 787 — clear idle timer and reset idle presence on panel close
+    if (idleTimerRef.current !== null) {
+      clearTimeout(idleTimerRef.current)
+      idleTimerRef.current = null
+    }
+    setIsDonnaIdle(false)
     realtimeDisconnect()
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
     }
     stopServerTts()
   }, [realtimeDisconnect, closeDonnaPanel])
+
+  // Sprint 787 — Reset the 3-minute idle timer on any director interaction.
+  // When the timer fires: stop wake listening (no-op if inactive), show idle presence card.
+  function resetIdleTimer() {
+    if (!panelOpen) return
+    if (idleTimerRef.current !== null) clearTimeout(idleTimerRef.current)
+    setIsDonnaIdle(false)
+    idleTimerRef.current = setTimeout(() => {
+      // stopWakeListening() is a no-op when wake recognition is not active
+      stopWakeListening()
+      setIsDonnaIdle(true)
+      idleTimerRef.current = null
+    }, 3 * 60 * 1000) // 3 minutes
+  }
 
   // Escape closes the panel
   useEffect(() => {
@@ -943,6 +967,47 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   useEffect(() => {
     setLastSessionData(loadLastSession(academyId))
   }, [academyId])
+
+  // Sprint 787 — Restore panel open state from sessionStorage on mount (within-session persistence).
+  // If the director had the panel open and navigated or refreshed, re-open it automatically.
+  // Uses sessionStorage (not localStorage) so this is tab-scoped and clears on tab close.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const wasOpen = window.sessionStorage.getItem('academyos:donna:panelOpen:v1') === 'true'
+    if (wasOpen) openDonnaPanel()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally empty — mount only
+
+  // Sprint 787 — Sync panelOpen to sessionStorage so within-session presence persists across navigations.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (panelOpen) {
+      window.sessionStorage.setItem('academyos:donna:panelOpen:v1', 'true')
+    } else {
+      window.sessionStorage.removeItem('academyos:donna:panelOpen:v1')
+    }
+  }, [panelOpen])
+
+  // Sprint 787 — Idle timer lifecycle: start 3-min timer when panel opens, clear when it closes.
+  useEffect(() => {
+    if (panelOpen) {
+      resetIdleTimer()
+    } else {
+      if (idleTimerRef.current !== null) {
+        clearTimeout(idleTimerRef.current)
+        idleTimerRef.current = null
+      }
+      setIsDonnaIdle(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panelOpen])
+
+  // Sprint 787 — Reset idle timer whenever director types in the panel input.
+  useEffect(() => {
+    if (!panelOpen || !typedText) return
+    resetIdleTimer()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typedText, panelOpen])
 
   // Sprint 702 — Initialize chat session memory on mount (or role change)
   useEffect(() => {
@@ -1115,6 +1180,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // 7. Navigation / help commands      → detectAndHandleCommand
   function handleVoiceTranscript(text: string) {
     setVoiceTranscript(text)
+    resetIdleTimer() // Sprint 787 — voice transcript counts as interaction
     const lower = text.toLowerCase()
 
     // Sprint 315–321: Run conversation controller to track intent and handle undo/go-back.
@@ -1671,6 +1737,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   function handleVoiceListeningChange(listening: boolean) {
     setIsVoiceListening(listening)
     if (!listening) setInterimVoiceTranscript(null)
+    if (listening) resetIdleTimer() // Sprint 787 — mic activation counts as interaction
   }
 
   function handleInterimTranscript(text: string) {
@@ -2762,6 +2829,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     const text = (overrideText ?? typedText).trim()
     if (!text) return
 
+    resetIdleTimer() // Sprint 787 — any submitted prompt counts as interaction
+
     // Sprint 686 — track last safe prompt in session context for continuity
     updatePrompt(text)
 
@@ -3303,6 +3372,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   ? ([{
                       label: `↩ Back to ${lastSessionData.lastPageLabel}`,
                       action: () => {
+                        resetIdleTimer() // Sprint 787
                         if (lastSessionData?.lastPageRoute) router.push(lastSessionData.lastPageRoute)
                         closePanel()
                       },
@@ -3333,6 +3403,21 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+
+          {/* Sprint 787 — Idle presence card: shown after 3 min of no interaction */}
+          {isDonnaIdle && (
+            <div
+              className="rounded-xl px-3.5 py-3"
+              style={{
+                background: 'rgba(200,255,0,0.03)',
+                border: '1px solid rgba(200,255,0,0.1)',
+              }}
+            >
+              <p className="text-[13px] text-text-secondary leading-snug">
+                I'm here when you need me.
+              </p>
+            </div>
+          )}
 
           {/* ── Sprint 760: Page-aware action surfacing card ── */}
           {showPageActions && (
