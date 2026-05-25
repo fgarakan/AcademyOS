@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-25 — Sprint 779 — DONNA Operator Step Advance Completion V1
+
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — wired call site for the previously uncommitted `handleOperatorStepAdvance` function (48 lines, labeled Sprint 761, never staged)
+- Call site inserted in `handleVoiceTranscript` after voice-safety guard, before all intent classification (line ~1132): `if (handleOperatorStepAdvance(text)) return`
+- Guided operator step flow now functional: operator launch → step advance on any non-cancel input → cancel/stop/exit clears operator → final step triggers completion message
+- No new state, no new imports, no new components — all referenced state and helpers already existed
+- No DB mutations, no proposed_actions writes, no audit log entries — local React state only
+- No migrations, no RLS changes, no env changes
+- TypeScript: clean
+
+---
+
 ## 2026-05-24 — Working Tree Cleanup — Review Labels + Realtime Debug Log Cleanup
 
 - Removed 4 debug `console.log` statements from `src/app/api/director/interview/realtime-session/route.ts` — production noise cleanup; no logic changes

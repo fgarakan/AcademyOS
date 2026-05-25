@@ -1129,6 +1129,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       return
     }
 
+    // Sprint 779 — Guided operator step advance.
+    // If an operator is active, handleOperatorStepAdvance consumes the input and
+    // returns true (early exit). Returns false when no operator is active — routing
+    // continues normally below. Must run after voice-safety guard and before all
+    // intent classification so the operator can intercept cancel/step/complete turns.
+    if (handleOperatorStepAdvance(text)) return
+
     // Sprint 322: When the controller has an active draft and no legacy draft exists,
     // route ALL input through the controller (it owns this session).
     if (convState.activeDraft !== null && !genericDraft && !templateDraft) {
@@ -2397,6 +2404,54 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     }
 
     return false
+  }
+
+  // Sprint 761 — Advance an active guided operator step, or clear on cancel.
+  // Returns true if the operator consumed the input (caller should return early).
+  // Returns false if no operator is active (caller continues normal routing).
+  function handleOperatorStepAdvance(text: string): boolean {
+    if (!currentOperatorId) return false
+
+    // Cancel intent — clear operator and respond
+    if (/cancel|stop|exit|start over|reset|quit/i.test(text)) {
+      const opLabel = getOperatorById(currentOperatorId)?.label ?? 'current flow'
+      setCurrentOperatorId(null)
+      setCurrentOperatorStep(0)
+      const msg = "Okay, I've cleared the current flow. What would you like to do?"
+      setCommandResponse({ message: msg, type: 'info', label: opLabel })
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, label: opLabel, type: 'info' }])
+      speakDonna(msg)
+      return true
+    }
+
+    const nextStepNumber = currentOperatorStep + 1
+    const nextStep = getOperatorStep(currentOperatorId, nextStepNumber)
+    const operator = getOperatorById(currentOperatorId)
+
+    if (nextStep && operator) {
+      setCurrentOperatorStep(nextStepNumber)
+      const exitHint = "\n\n(Say 'cancel' or 'start over' to exit this flow)"
+      const msg = nextStep.donnaPrompt + exitHint
+      setCommandResponse({ message: msg, type: 'info', label: `Step ${nextStepNumber} — ${nextStep.label}` })
+      setCooThread(prev => [...prev.slice(-4), {
+        user: text,
+        donna: msg,
+        label: `Step ${nextStepNumber}`,
+        type: 'operator_step' as 'info',
+      }])
+      speakDonna(nextStep.donnaPrompt)
+      return true
+    }
+
+    // No next step — operator complete
+    const opLabel = operator?.label ?? 'flow'
+    setCurrentOperatorId(null)
+    setCurrentOperatorStep(0)
+    const completionMsg = `We've completed the ${opLabel}. What would you like to do next?`
+    setCommandResponse({ message: completionMsg, type: 'info', label: 'Flow complete' })
+    setCooThread(prev => [...prev.slice(-4), { user: text, donna: completionMsg, label: 'Complete', type: 'info' }])
+    speakDonna(completionMsg)
+    return true
   }
 
   // Sprint 760 — Safety label display for page-aware action surfacing
