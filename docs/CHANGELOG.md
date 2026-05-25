@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-25 — Sprint 808 — Director KPI Reduction + Progressive Disclosure V1
+
+- **Modified** `src/app/director/_components/AcademyKpiCardsSection.tsx` — added `'use client'`; restructured from 8 equal-weight cards to 4 primary (always visible: Attendance Exceptions, Coach Recaps, Level-Up Candidates, Academy Health) + 4 secondary (toggle-revealed: Sessions, Parent Updates, Curriculum Execution, Player Progress); added "View all metrics (4 more)" / "Show fewer" toggle button; updated section sublabel. Props interface and parent call site in `page.tsx` unchanged.
+- **Created** `docs/DIRECTOR_KPI_REDUCTION_808.md` — card ordering rationale, before/after layout, estimated score lift
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 807 — Director Dashboard Attention Consolidation V1
 
 - **Modified** `src/app/director/page.tsx` — removed duplicate Priority Queue card from Roster Signals section (already surfaced in DirectorTodayCommandCenter); renamed "Roster Signals" section to "Pending Placement" with referral subtitle; renamed "Academy Health Signals" section to "Alert Breakdown" with subdued label style and subtitle pointing directors to Command Center as primary surface. `getAcademyPriorityQueue` fetch and data pipeline unchanged — data still flows to command center via `buildAttentionQueue`.

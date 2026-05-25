@@ -1,4 +1,19 @@
+'use client'
+
+/**
+ * Sprint 808 — KPI Reduction + Progressive Disclosure
+ *
+ * Shows 4 priority KPI cards by default (attendance exceptions, coach recaps,
+ * level-up candidates, academy health). A "View all metrics" toggle expands to
+ * reveal the remaining 4 secondary cards.
+ *
+ * Sprint 803: Section moved below Sessions + Quick Actions.
+ * Sprint 808: Reduced from 8 equal-weight to 4 primary + 4 collapsed secondary.
+ */
+
+import { useState } from 'react'
 import Link from 'next/link'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import {
   Calendar, AlertTriangle, ClipboardList, TrendingUp,
   MessageSquare, Activity, BookOpen, BarChart2,
@@ -66,15 +81,10 @@ export function AcademyKpiCardsSection({
   playerProgress,
   activePlayers,
 }: AcademyKpiCardsSectionProps) {
-  const cards: KpiCard[] = [
-    {
-      label: "Today's Sessions",
-      value: sessionsToday,
-      sublabel: sessionsToday === 1 ? '1 session scheduled' : `${sessionsToday} sessions scheduled`,
-      href: '/director/sessions',
-      icon: <Calendar className="w-4 h-4" />,
-      accent: sessionsToday > 0 ? 'lime' : 'muted',
-    },
+  const [showAll, setShowAll] = useState(false)
+
+  // Sprint 808 — Primary: the 4 cards requiring director decision or action
+  const primaryCards: KpiCard[] = [
     {
       label: 'Attendance Exceptions',
       value: attendanceExceptions,
@@ -100,20 +110,32 @@ export function AcademyKpiCardsSection({
       accent: levelUpCandidates > 0 ? 'green' : 'muted',
     },
     {
-      label: 'Parent Updates',
-      value: parentUpdates,
-      sublabel: parentUpdates > 0 ? 'Requests pending' : 'No new requests',
-      href: '/director/review?tab=needs-approval',
-      icon: <MessageSquare className="w-4 h-4" />,
-      accent: parentUpdates > 0 ? 'orange' : 'muted',
-    },
-    {
       label: 'Academy Health',
       value: `${academyHealthPct}%`,
       sublabel: academyHealthPct >= 80 ? 'On track' : academyHealthPct >= 60 ? 'Needs attention' : 'At risk',
       href: '/director/signals',
       icon: <Activity className="w-4 h-4" />,
       accent: academyHealthPct >= 80 ? 'teal' : academyHealthPct >= 60 ? 'yellow' : 'red',
+    },
+  ]
+
+  // Sprint 808 — Secondary: contextual metrics, visible on demand
+  const secondaryCards: KpiCard[] = [
+    {
+      label: "Today's Sessions",
+      value: sessionsToday,
+      sublabel: sessionsToday === 1 ? '1 session scheduled' : `${sessionsToday} sessions scheduled`,
+      href: '/director/sessions',
+      icon: <Calendar className="w-4 h-4" />,
+      accent: sessionsToday > 0 ? 'lime' : 'muted',
+    },
+    {
+      label: 'Parent Updates',
+      value: parentUpdates,
+      sublabel: parentUpdates > 0 ? 'Requests pending' : 'No new requests',
+      href: '/director/review?tab=needs-approval',
+      icon: <MessageSquare className="w-4 h-4" />,
+      accent: parentUpdates > 0 ? 'orange' : 'muted',
     },
     {
       label: 'Curriculum Execution',
@@ -138,13 +160,45 @@ export function AcademyKpiCardsSection({
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="label-xs">Academy Overview</p>
-          <p className="text-[11px] text-text-muted mt-0.5">Live counts across your academy. Updates as sessions run and coaches submit recaps.</p>
+          <p className="text-[11px] text-text-muted mt-0.5">Priority metrics. Updates as sessions run and coaches submit recaps.</p>
         </div>
       </div>
+
+      {/* Primary 4 — always visible */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {cards.map(card => (
+        {primaryCards.map(card => (
           <KpiMetricCard key={card.label} {...card} />
         ))}
+      </div>
+
+      {/* Secondary 4 — revealed on toggle */}
+      {showAll && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+          {secondaryCards.map(card => (
+            <KpiMetricCard key={card.label} {...card} />
+          ))}
+        </div>
+      )}
+
+      {/* Toggle */}
+      <div className="mt-3 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setShowAll(prev => !prev)}
+          className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+        >
+          {showAll ? (
+            <>
+              <ChevronUp className="w-3.5 h-3.5" />
+              Show fewer metrics
+            </>
+          ) : (
+            <>
+              <ChevronDown className="w-3.5 h-3.5" />
+              View all metrics ({secondaryCards.length} more)
+            </>
+          )}
+        </button>
       </div>
     </div>
   )
