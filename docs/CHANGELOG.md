@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-25 — Sprint 800 — DONNA Side Panel Simplification V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx`:
+  - **Header badge consolidation:** Replaced 8 independent conditional status badges with a single priority-driven ternary block — only the highest-priority badge visible at any time. Priority: Thinking → Speaking → Listening → Paused → Mic blocked → Ready. "Stopped" and "Voice unavailable" removed from visible surface (not actionable for user).
+  - **Page context label:** Added `ctx.screenName` line below DONNA_PUBLIC_TITLE subtitle — shows current screen name so DONNA appears context-aware rather than generic.
+  - **Director chip trim:** Reduced from 6 director chips to 3 core (+ optional "Back to" = max 4). Removed: "What's on the agenda?", "What should I review first?", "Walk me through today." Preserved: "What do I need to do today?", "What needs my attention?", "What can you help me do here?". Coach chips (4) unchanged.
+  - **Typography:** Fixed all 7 remaining `text-[9px]` → `text-[10px]` in file: "Review-first" badge, voice status badges, page-aware actions safety chip, multi-step plan step number, review queue count badge, pending approval chip, "Coming soon" chip.
+- **Created** `docs/DONNA_SIDE_PANEL_SIMPLIFICATION_800.md` — sprint doc with before/after badge table, chip trim rationale, safety guardrails checklist
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 799 — DONNA Dashboard UX Recovery Audit V1
 
 - **Audit-only sprint** — no source code changes

@@ -3307,80 +3307,67 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               </div>
               <h2 className="text-sm font-semibold text-text-primary">{DONNA_PUBLIC_NAME}</h2>
               <span
-                className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-lime/10 border border-lime/20 text-lime"
+                className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-lime/10 border border-lime/20 text-lime"
               >
                 Review-first
               </span>
-              {/* Sprint 685 — Voice status indicator: full state from VoiceInputButton */}
-              {isSpeaking && (
+              {/* Sprint 800 — Single priority-driven status badge (replaces 8 competing badges).
+                  Priority order: Thinking > Speaking > Listening > Paused > Mic blocked > Ready.
+                  Only the highest-priority active state is shown at any one time. */}
+              {(isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading) && !isSpeaking ? (
                 <span
-                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                  style={{ background: 'rgba(139,92,246,0.15)', color: '#8b5cf6' }}
-                >
-                  Speaking
-                </span>
-              )}
-              {!isSpeaking && voiceStateForIndicator === 'listening' && (
-                <span
-                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold animate-pulse"
-                  style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}
-                >
-                  Listening
-                </span>
-              )}
-              {!isSpeaking && voiceStateForIndicator === 'paused' && (
-                <span
-                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                  style={{ background: 'rgba(255,149,0,0.15)', color: '#FF9500' }}
-                >
-                  Paused — active
-                </span>
-              )}
-              {!isSpeaking && voiceStateForIndicator === 'stopped' && (
-                <span
-                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                  style={{ background: 'rgba(85,85,85,0.2)', color: '#AAAAAA' }}
-                >
-                  Stopped
-                </span>
-              )}
-              {!isSpeaking && voiceStateForIndicator === 'idle' && isVoiceSupported === true && !voicePermissionError && (
-                <span
-                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                  style={{ background: 'rgba(200,255,0,0.06)', color: 'rgba(200,255,0,0.45)' }}
-                >
-                  Ready
-                </span>
-              )}
-              {voicePermissionError && voiceStateForIndicator === 'idle' && (
-                <span
-                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                  style={{ background: 'rgba(255,149,0,0.15)', color: '#FF9500' }}
-                >
-                  Mic blocked
-                </span>
-              )}
-              {isVoiceSupported === false && (
-                <span
-                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                  style={{ background: 'rgba(85,85,85,0.15)', color: '#555555' }}
-                >
-                  Voice unavailable
-                </span>
-              )}
-              {/* Sprint 694 — Thinking badge: shown when any async operation is in progress */}
-              {(isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading) && !isSpeaking && (
-                <span
-                  className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold animate-pulse"
+                  className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold animate-pulse"
                   style={{ background: 'rgba(10,132,255,0.15)', color: '#0A84FF' }}
                 >
                   Thinking…
                 </span>
-              )}
+              ) : isSpeaking ? (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'rgba(139,92,246,0.15)', color: '#8b5cf6' }}
+                >
+                  Speaking
+                </span>
+              ) : voiceStateForIndicator === 'listening' ? (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold animate-pulse"
+                  style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}
+                >
+                  Listening
+                </span>
+              ) : voiceStateForIndicator === 'paused' ? (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'rgba(255,149,0,0.15)', color: '#FF9500' }}
+                >
+                  Paused
+                </span>
+              ) : voicePermissionError ? (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'rgba(255,149,0,0.15)', color: '#FF9500' }}
+                >
+                  Mic blocked
+                </span>
+              ) : voiceStateForIndicator === 'idle' && isVoiceSupported === true ? (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                  style={{ background: 'rgba(200,255,0,0.06)', color: 'rgba(200,255,0,0.45)' }}
+                >
+                  Ready
+                </span>
+              ) : null}
             </div>
             <p className="text-xs text-text-muted leading-snug mt-0.5">
               {DONNA_PUBLIC_TITLE}
             </p>
+            {/* Sprint 800 — Page context label: shows which screen DONNA is aware of */}
+            {ctx.screenName && (
+              <p className="text-[10px] text-text-muted leading-snug mt-0.5">
+                <span style={{ color: 'rgba(200,255,0,0.55)' }}>↳</span>{' '}
+                <span className="text-text-muted">{ctx.screenName}</span>
+              </p>
+            )}
             {/* Sprint 373 — Review queue badge (director only — Sprint 657 regression fix) */}
             {role === 'director' && reviewQueuePendingCount > 0 && (
               <div className="mt-1.5">
@@ -3437,14 +3424,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                       },
                     }] as { label: string; action: () => void }[])
                   : []),
-                // Sprint 783 — Conversational entry chips; route through handleCommandSubmit for full
-                // intent pipeline (matchesDailyBriefIntent, operator advance, COO router, etc.).
-                // Replaces nav-shortcut chips with natural director questions.
+                // Sprint 800 — Trimmed to 3 core chips (+ optional "Back to" = max 4).
+                // Removed: "What's on the agenda?", "What should I review first?", "Walk me through today."
+                // — reduces chip overload; surviving chips cover daily intent, attention, and page context.
                 { label: 'What do I need to do today?', action: () => handleCommandSubmit('What do I need to do today?') },
                 { label: 'What needs my attention?', action: () => handleCommandSubmit('What needs my attention?') },
-                { label: "What's on the agenda?", action: () => handleCommandSubmit("What's on the agenda?") },
-                { label: 'What should I review first?', action: () => handleCommandSubmit('What should I review first?') },
-                { label: 'Walk me through today.', action: () => handleCommandSubmit('Walk me through today.') },
                 { label: 'What can you help me do here?', action: () => handleCommandSubmit('What can you help me do here?') },
               ] as { label: string; action: () => void }[])
           ).map(chip => (
@@ -3514,7 +3498,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                       <div key={action.actionId} className="flex items-start justify-between gap-2">
                         <p className="text-[12px] text-text-primary leading-snug flex-1">{action.displayName}</p>
                         <span
-                          className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                          className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
                           style={{
                             background: action.safetyClass === 'always_safe' || action.safetyClass === 'safe_with_context'
                               ? 'rgba(48,209,88,0.12)' : action.safetyClass === 'draft_to_review'
@@ -4203,7 +4187,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 {multiStepPlan.steps.map((step, i) => (
                   <div key={step.taskId} className="flex items-start gap-2">
                     <span
-                      className="shrink-0 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center mt-0.5"
+                      className="shrink-0 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center mt-0.5"
                       style={
                         i < multiStepIndex
                           ? { background: 'rgba(48,209,88,0.15)', color: '#30D158' }
@@ -4388,7 +4372,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                     <div className="flex items-center gap-1.5">
                       <p className="text-[12px] font-semibold leading-tight">Review Queue</p>
                       {reviewQueueData && reviewQueueData.totalCount > 0 && (
-                        <span className="text-[9px] font-semibold px-1 py-0.5 rounded"
+                        <span className="text-[10px] font-semibold px-1 py-0.5 rounded"
                           style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}>
                           {reviewQueueData.totalCount}
                         </span>
@@ -4457,7 +4441,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <p className="text-[12px] font-semibold leading-tight">{label}</p>
                           <span
-                            className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
                             style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.18)', color: '#a78bfa' }}
                           >
                             {category}
@@ -4500,7 +4484,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                     >
                       <span>{contract.label}</span>
                       {!isWired && (
-                        <span className="shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-surface border border-border text-text-muted leading-none">
+                        <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-surface border border-border text-text-muted leading-none">
                           Coming soon
                         </span>
                       )}
