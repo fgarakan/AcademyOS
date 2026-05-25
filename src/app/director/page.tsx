@@ -23,7 +23,8 @@ import { buildAttentionQueue, type AttentionQueueInput } from '@/lib/director/at
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
 import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
-import { DonnaDashboardPresenceCTA } from '@/components/donna/DonnaKpiExplainerPanel'
+// Sprint 803: DonnaDashboardPresenceCTA removed — duplicated top-of-page attention surface
+// import { DonnaDashboardPresenceCTA } from '@/components/donna/DonnaKpiExplainerPanel'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -473,21 +474,9 @@ export default async function DirectorDashboard() {
         showMax={5}
       />
 
-      {/* ── Academy Overview — 8-card KPI snapshot ─────────── */}
-      <AcademyKpiCardsSection
-        sessionsToday={sessionsThisWeek}
-        attendanceExceptions={pendingWrapUpsCount}
-        coachRecaps={pendingWrapUpsCount}
-        levelUpCandidates={advancementReadyCount}
-        parentUpdates={newRequests}
-        academyHealthPct={academyHealthPct}
-        curriculumExecution={curriculumExecutionPct}
-        playerProgress={improvingCount}
-        activePlayers={activePlayers}
-      />
-
       {/* ── Sessions This Week ────────────────────────────── */}
       {/* Sprint 767: moved up — answers "What should I do next?" immediately. */}
+      {/* Sprint 803: KPI section moved below Sessions + Quick Actions so the action surface comes first. */}
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -565,6 +554,21 @@ export default async function DirectorDashboard() {
           />
         </div>
       </div>
+
+      {/* ── Academy Overview — 8-card KPI snapshot ─────────── */}
+      {/* Sprint 803: moved below Sessions + Quick Actions so actionable surfaces come first.
+          KPIs are supporting data for the director — the command center and session list are primary. */}
+      <AcademyKpiCardsSection
+        sessionsToday={sessionsThisWeek}
+        attendanceExceptions={pendingWrapUpsCount}
+        coachRecaps={pendingWrapUpsCount}
+        levelUpCandidates={advancementReadyCount}
+        parentUpdates={newRequests}
+        academyHealthPct={academyHealthPct}
+        curriculumExecution={curriculumExecutionPct}
+        playerProgress={improvingCount}
+        activePlayers={activePlayers}
+      />
 
       {/* ── Roster Signals ─────────────────────────────────── */}
       {/* Sprint 765: renamed from "Player Activity" — label reflects signal-first framing. */}
@@ -881,14 +885,8 @@ export default async function DirectorDashboard() {
           />
         )}
 
-        {/* DONNA dashboard presence CTA */}
-        <DonnaDashboardPresenceCTA
-          pendingWrapUps={pendingWrapUpsCount}
-          attentionCount={attentionCount}
-          pendingCount={pendingCount}
-          newRequests={newRequests}
-          advancementReady={advancementReadyCount}
-        />
+        {/* Sprint 803: DonnaDashboardPresenceCTA removed — it duplicated the attention items
+            already shown in DirectorTodayCommandCenter at the top of the page. */}
       </div>
 
     </div>

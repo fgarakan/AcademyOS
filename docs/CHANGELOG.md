@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-25 — Sprint 803 — Director Dashboard Rebuild V1
+
+- **Modified** `src/app/director/page.tsx`:
+  - **Section reorder:** `AcademyKpiCardsSection` (8-card KPI snapshot) moved from between `DirectorTodayCommandCenter` and "Sessions This Week" to between "Quick Actions" and "Roster Signals". Dashboard section order is now: Command Center → Sessions → Quick Actions → KPIs → Roster Signals → Health Signals. KPIs are supporting data; action surfaces come first.
+  - **CTA removed:** `DonnaDashboardPresenceCTA` removed from the Academy Setup section. It duplicated the attention summary already shown by `DirectorTodayCommandCenter` at the top of the page. Import commented out (not deleted) for recoverability.
+  - Both changes reduce dashboard "needs attention" surfaces from 3 to 2 and bring actionable content above the fold before data/analysis.
+- **Created** `docs/DIRECTOR_DASHBOARD_REBUILD_803.md` — sprint doc with before/after section order table, rationale for each change, safety guardrails checklist
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 802 — DONNA Command Understanding V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx`:
