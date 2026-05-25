@@ -25,6 +25,8 @@ import { DirectorContinueSetupPanel } from '@/components/director/DirectorContin
 import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
 // Sprint 803: DonnaDashboardPresenceCTA removed — duplicated top-of-page attention surface
 // import { DonnaDashboardPresenceCTA } from '@/components/donna/DonnaKpiExplainerPanel'
+// Sprint 804: DONNA inline dashboard entry card
+import { DonnaDashboardOpenCard } from './_components/DonnaDashboardOpenCard'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -464,6 +466,13 @@ export default async function DirectorDashboard() {
           advancementReadyCount={advancementReadyCount}
         />
       </div>
+
+      {/* ── Sprint 804: DONNA inline entry card ──────────────────────────────────────── */}
+      {/* Shows attention signal count and one-click opens DONNA with daily brief prompt */}
+      <DonnaDashboardOpenCard
+        attentionCount={totalAlerts}
+        firstName={directorDisplayName.split(' ')[0]}
+      />
 
       {/* ── Sprint 767: Today Command Center — DONNA-narrated, unified priority surface ── */}
       {/* Replaces DirectorAttentionQueueHero + DonnaExecutiveCard (Sprints 763–765).   */}

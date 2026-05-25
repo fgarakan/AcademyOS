@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-25 — Sprint 804 — DONNA Dashboard Integration V1
+
+- **Created** `src/app/director/_components/DonnaDashboardOpenCard.tsx` — new client component. Shows attention alert count and a single "Ask DONNA →" call-to-action. On click, dispatches `donna:open` event with "What do I need to do today?" pre-seeded in the DONNA panel. Uses the existing event contract shared by `TodayDonnaSuggestionChip`, `LevelUpDonnaCTA`, etc. No DB calls — `attentionCount` (`totalAlerts`) already computed in the dashboard page.
+- **Modified** `src/app/director/page.tsx` — added `DonnaDashboardOpenCard` between Hero Header and `DirectorTodayCommandCenter`. Added `DonnaDashboardOpenCard` import. Dashboard now has an explicit inline DONNA entry surface — not just the sidebar icon.
+- **Created** `docs/DONNA_DASHBOARD_INTEGRATION_804.md` — sprint doc with before/after integration table, event contract docs, safety guardrails checklist
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 803 — Director Dashboard Rebuild V1
 
 - **Modified** `src/app/director/page.tsx`:
