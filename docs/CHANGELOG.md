@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-25 — Sprint 789 — DONNA Daily Brief Natural Walkthrough V1
+
+- Modified `src/components/assistant/DonnaAssistantButton.tsx`:
+  - Added `buildBriefVoiceSummary(brief)` — pure function, 1–2 sentence spoken summary from structural metadata
+  - Added `buildBriefWalkthroughText(brief)` — builds full section-by-section narration string
+  - Added `handleBriefWalkthrough()` — combines summary + details + Review Queue offer; calls `speakDonna`, sets `commandResponse`, pushes to `cooThread`
+  - In `handleFetchDailyBrief()`: after `setDailyBrief(json.brief)`, calls `speakDonna(buildBriefVoiceSummary(json.brief))` — brief now auto-narrates on load
+  - Wired `onDailyBriefWalkthrough={handleBriefWalkthrough}` to `DonnaWorkflowCards`
+- Modified `src/components/assistant/DonnaDailyBriefCard.tsx`:
+  - Added `onWalkthrough?: () => void` prop
+  - Added `PlayCircle` to lucide-react import
+  - Added "Walk me through it" CTA button (leftmost in CTA row)
+- Modified `src/components/assistant/DonnaWorkflowCards.tsx`:
+  - Added `onDailyBriefWalkthrough?: () => void` prop to interface + destructuring
+  - Wired to `DonnaDailyBriefCard` `onWalkthrough` prop
+- Brief experience before: visual card only, no spoken acknowledgment
+- Brief experience after: DONNA speaks 1–2 sentence summary on load; "Walk me through it" button triggers full narrated walkthrough
+- Auto-narrate examples: "You've got 3 areas today. 2 look higher priority — starting with Review Queue." / "You've got 4 areas today — nothing is marked urgent."
+- Walkthrough response style: `{summary} Here's the breakdown: {sections}. Want me to open the Review Queue?`
+- Created `docs/DONNA_DAILY_BRIEF_NATURAL_WALKTHROUGH_789.md`
+- No routing changes. No DB/API changes. No migrations. No new state.
+- TypeScript: clean
+
+---
+
 ## 2026-05-25 — Sprint 788 — DONNA Voice Persona Natural TTS V1
 
 - Modified `src/components/assistant/DonnaAssistantButton.tsx` — unified `speakAssistantText` with central voice config:

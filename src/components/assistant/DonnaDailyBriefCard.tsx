@@ -4,7 +4,7 @@
 // Sprint 382 — Added "Show pending approvals" + "Prepare coach briefs" CTAs
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, X, ArrowRight, Inbox, Users } from 'lucide-react'
+import { ChevronDown, ChevronUp, X, ArrowRight, Inbox, Users, PlayCircle } from 'lucide-react'
 import type { DailyBrief } from './donnaDailyBrief'
 
 interface Props {
@@ -12,9 +12,11 @@ interface Props {
   onDismiss: () => void
   onOpenReviewQueue?: () => void
   onPrepareCoachBriefs?: () => void
+  /** Sprint 789 — triggers DONNA voice narration of the full brief */
+  onWalkthrough?: () => void
 }
 
-export function DonnaDailyBriefCard({ brief, onDismiss, onOpenReviewQueue, onPrepareCoachBriefs }: Props) {
+export function DonnaDailyBriefCard({ brief, onDismiss, onOpenReviewQueue, onPrepareCoachBriefs, onWalkthrough }: Props) {
   const [expanded, setExpanded] = useState(false)
 
   const urgentSections = brief.sections.filter(s => s.priority === 'high')
@@ -94,8 +96,19 @@ export function DonnaDailyBriefCard({ brief, onDismiss, onOpenReviewQueue, onPre
       )}
 
       {/* CTAs */}
-      {(onOpenReviewQueue || onPrepareCoachBriefs) && (
+      {(onOpenReviewQueue || onPrepareCoachBriefs || onWalkthrough) && (
         <div className="flex items-center gap-2 flex-wrap pt-0.5" style={{ borderTop: '1px solid rgba(200,255,0,0.1)' }}>
+          {/* Sprint 789 — narrate brief via DONNA voice */}
+          {onWalkthrough && (
+            <button
+              type="button"
+              onClick={onWalkthrough}
+              className="flex items-center gap-1 text-[10px] font-semibold text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <PlayCircle className="w-3 h-3" />
+              Walk me through it
+            </button>
+          )}
           {onOpenReviewQueue && (
             <button
               type="button"

@@ -2096,6 +2096,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         const json = await res.json() as { ok: boolean; brief?: DailyBrief }
         if (json.ok && json.brief) {
           setDailyBrief(json.brief)
+          // Sprint 789 — auto-narrate brief summary via DONNA voice when brief loads
+          const voiceSummary = buildBriefVoiceSummary(json.brief)
+          speakDonna(voiceSummary)
           // Sprint 785 — record safe structural context so follow-ups can reference this brief
           const briefHighCount = json.brief.sections.filter(s => s.priority === 'high').length
           const briefTotalItems = json.brief.sections.reduce((n, s) => n + s.items.length, 0)
@@ -2120,6 +2123,49 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     } finally {
       setIsDailyBriefLoading(false)
     }
+  }
+
+  // Sprint 789 — Build a natural 1–2 sentence spoken summary of the daily brief.
+  // Used to auto-narrate when the brief loads. No player names, no raw content — structural metadata only.
+  function buildBriefVoiceSummary(brief: import('@/components/assistant/donnaDailyBrief').DailyBrief): string {
+    const total = brief.sections.length
+    const highCount = brief.sections.filter(s => s.priority === 'high').length
+    const firstHigh = brief.sections.find(s => s.priority === 'high')
+    if (total === 0) return "Today's brief is ready — nothing needs your attention right now."
+    if (highCount > 0 && firstHigh) {
+      const urgentNote = highCount === 1
+        ? `One area needs your attention first: ${firstHigh.title}.`
+        : `${highCount} areas look higher priority — starting with ${firstHigh.title}.`
+      return total === 1
+        ? urgentNote
+        : `You've got ${total} area${total !== 1 ? 's' : ''} today. ${urgentNote}`
+    }
+    return `You've got ${total} area${total !== 1 ? 's' : ''} today — nothing is marked urgent.`
+  }
+
+  // Sprint 789 — Build a full narration text from all brief sections.
+  // Each section contributes one sentence: title + first item + count of remaining items.
+  function buildBriefWalkthroughText(brief: import('@/components/assistant/donnaDailyBrief').DailyBrief): string {
+    if (brief.sections.length === 0) return "Today's brief is empty."
+    const parts = brief.sections.map(section => {
+      const priorityNote = section.priority === 'high' ? ' — urgent' : ''
+      const firstItem = section.items[0] ?? ''
+      const extra = section.items.length > 1 ? ` and ${section.items.length - 1} more` : ''
+      return `${section.title}${priorityNote}: ${firstItem}${extra}`
+    })
+    return parts.join('. ') + '.'
+  }
+
+  // Sprint 789 — Narrate the full brief via DONNA voice. Called by "Walk me through it" button.
+  function handleBriefWalkthrough() {
+    if (!dailyBrief) return
+    const summary = buildBriefVoiceSummary(dailyBrief)
+    const details = buildBriefWalkthroughText(dailyBrief)
+    const narration = `${summary} Here's the breakdown: ${details} Want me to open the Review Queue?`
+    setCommandResponse({ message: narration, type: 'info', label: 'Daily Brief — Walkthrough' })
+    setCooThread(prev => [...prev.slice(-4), { user: 'Walk me through it', donna: narration, type: 'info' as const }])
+    speakDonna(narration)
+    resetIdleTimer()
   }
 
   // Opens the review queue panel and fetches data.
@@ -3878,6 +3924,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             onDismissDailyBrief={() => setDailyBrief(null)}
             onDailyBriefOpenReviewQueue={() => void handleOpenReviewQueue()}
             onDailyBriefPrepareCoachBriefs={() => dispatchCooCommand('coach_brief')}
+            onDailyBriefWalkthrough={handleBriefWalkthrough}
             attentionReport={attentionReport}
             isAttentionLoading={isAttentionLoading}
             onDismissAttention={() => setAttentionReport(null)}

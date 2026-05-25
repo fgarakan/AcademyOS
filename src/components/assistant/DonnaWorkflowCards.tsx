@@ -68,6 +68,8 @@ interface Props {
   onDismissDailyBrief: () => void
   onDailyBriefOpenReviewQueue: () => void
   onDailyBriefPrepareCoachBriefs: () => void
+  /** Sprint 789 — triggers DONNA voice narration of the full brief */
+  onDailyBriefWalkthrough?: () => void
   // Attention
   attentionReport: AttentionReport | null
   isAttentionLoading: boolean
@@ -124,6 +126,7 @@ export function DonnaWorkflowCards({
   onDismissDailyBrief,
   onDailyBriefOpenReviewQueue,
   onDailyBriefPrepareCoachBriefs,
+  onDailyBriefWalkthrough,
   attentionReport,
   isAttentionLoading,
   onDismissAttention,
@@ -315,6 +318,7 @@ export function DonnaWorkflowCards({
             if (r) onSetLastCardAction(r)
             onDailyBriefPrepareCoachBriefs()
           }}
+          onWalkthrough={onDailyBriefWalkthrough}
         />
       )}
 
