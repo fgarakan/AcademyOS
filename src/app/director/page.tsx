@@ -579,84 +579,15 @@ export default async function DirectorDashboard() {
         activePlayers={activePlayers}
       />
 
-      {/* ── Roster Signals ─────────────────────────────────── */}
-      {/* Sprint 765: renamed from "Player Activity" — label reflects signal-first framing. */}
+      {/* ── Pending Placement ────────────────────────────────── */}
+      {/* Sprint 807: Renamed from "Roster Signals" — Priority Queue card removed (already shown in */}
+      {/* Command Center above). Pending Placement is the only distinct signal not in the command center. */}
       <div className="space-y-4">
         <div>
-          <p className="label-xs">Roster Signals</p>
-          <p className="text-xs text-text-muted mt-1">Once players are added and placed, this section shows who needs placement, reassessment, or director attention.</p>
+          <p className="label-xs">Pending Placement</p>
+          <p className="text-xs text-text-muted mt-1">Players awaiting onboarding completion. Priority action items are surfaced in the Command Center above.</p>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-          {/* Priority Queue */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-text-primary">Priority Queue</h2>
-                  <p className="text-xs text-text-muted mt-0.5">Players requiring immediate attention</p>
-                </div>
-                {priorityQueue.length > 0 && (
-                  <span className="font-mono text-lime text-xl font-bold leading-none">
-                    {priorityQueue.length}
-                  </span>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {priorityQueue.length === 0 ? (
-                <EmptyState
-                  icon={<Activity className="w-5 h-5" />}
-                  title="No urgent actions"
-                  description={players.length === 0 ? "Add players to start tracking priority actions, reassessments, and development needs." : "The academy is on track. Priority items appear when players need attention or reassessment."}
-                  className="py-10"
-                />
-              ) : (
-                <ul className="space-y-1">
-                  {priorityQueue.map(item => {
-                    if (!item.player_id) return null
-                    const { label } = urgencyToLabel(item.urgency)
-                    return (
-                      <li key={item.player_id}>
-                        <Link
-                          href={`/director/players/${item.player_id}`}
-                          className="flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
-                        >
-                          <Avatar name={item.full_name ?? '?'} size="sm" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-medium text-text-primary truncate">
-                                {item.full_name ?? '—'}
-                              </span>
-                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${urgencyBadgeClass(item.urgency)}`}>
-                                {label}
-                              </span>
-                            </div>
-                            {item.primary_action && (
-                              <p className="text-xs text-text-muted mt-0.5 truncate">
-                                {item.primary_action}
-                              </p>
-                            )}
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0 mt-1" />
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </CardContent>
-            {priorityQueue.length > 0 && (
-              <CardFooter>
-                <Link
-                  href="/director/players/active"
-                  className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
-                >
-                  View all active players →
-                </Link>
-              </CardFooter>
-            )}
-          </Card>
+        <div>
 
           {/* Pending Placement */}
           <Card>
@@ -721,12 +652,14 @@ export default async function DirectorDashboard() {
         </div>
       </div>
 
-      {/* ── Academy Health Signals ───────────────────────── */}
-      {/* Sprint 765: renamed from "Signals + Intelligence" — clearer command-center framing. */}
+      {/* ── Alert Breakdown ──────────────────────────────────── */}
+      {/* Sprint 807: Renamed from "Academy Health Signals" — demoted to detail section. */}
+      {/* Primary attention surface is DirectorTodayCommandCenter above. This section is   */}
+      {/* a supporting breakdown for directors who want to drill into individual alert types. */}
       <div className="space-y-4">
         <div>
-          <p className="label-xs">Academy Health Signals</p>
-          <p className="text-xs text-text-muted mt-1">Alerts and AI suggestions appear here once sessions, coach notes, and player activity start producing signals.</p>
+          <p className="text-[10px] uppercase tracking-widest font-medium text-text-muted">Alert Breakdown</p>
+          <p className="text-xs text-text-muted mt-1">Detailed breakdown by type — priority items are already shown in the Command Center above.</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
           <AcademyAlertsPanel

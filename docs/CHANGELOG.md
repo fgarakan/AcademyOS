@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-25 — Sprint 807 — Director Dashboard Attention Consolidation V1
+
+- **Modified** `src/app/director/page.tsx` — removed duplicate Priority Queue card from Roster Signals section (already surfaced in DirectorTodayCommandCenter); renamed "Roster Signals" section to "Pending Placement" with referral subtitle; renamed "Academy Health Signals" section to "Alert Breakdown" with subdued label style and subtitle pointing directors to Command Center as primary surface. `getAcademyPriorityQueue` fetch and data pipeline unchanged — data still flows to command center via `buildAttentionQueue`.
+- **Created** `docs/DIRECTOR_DASHBOARD_ATTENTION_CONSOLIDATION_807.md` — before/after surface count table, rationale for each change, data-path preservation notes
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 806 — DONNA Voice Debug Controls Cleanup V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — removed developer-level voice debug controls from DONNA onboarding panel: technical `realtimeStatus` status text, "Try Browser Voice" button, "Reset Donna voice" link, "Realtime voice is not configured" message, "Did you hear it? Yes/No" confirmation buttons, and dependent `voiceOutputConfirmed` follow-up states. Kept: `DONNA_SAFETY_REMINDER`, single "Play Donna voice" button, plain-language failure message "Voice unavailable — type your response instead." Also simplified voice quality pill: "Fallback device voice active" → "Device voice active", "Text-only fallback" → "Text-only mode".
