@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-25 — Sprint 814 — DONNA Panel Mobile Usability V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — 5 targeted Tailwind responsive class changes: (1) panel container `w-96 max-w-[90vw]` → `w-full sm:w-96` (true full-width mobile drawer, desktop 384px unchanged); (2) header padding `px-5 pt-5 pb-4` → `px-4 sm:px-5 pt-4 sm:pt-5 pb-3 sm:pb-4` (compact mobile, desktop unchanged); (3) `DONNA_PUBLIC_TITLE` subtitle hidden on mobile via `hidden sm:block` (page context label still visible); (4) close button `w-8 h-8` → `w-11 h-11 sm:w-8 sm:h-8` (44px mobile touch target, desktop unchanged); (5) chip padding `py-1` → `py-2.5 sm:py-1` (better mobile tap height, desktop unchanged). No logic, routing, voice behavior, persistence, or backend code touched.
+- **Created** `docs/DONNA_PANEL_MOBILE_USABILITY_814.md` — full mobile audit findings, before/after table, touch target analysis, persistence preservation, safety checklist, estimated score lift, Sprint 815 roadmap
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 813 — Director Daily Command Landing Page V1
 
 - **Modified** `src/app/director/page.tsx` — restructured `/director` landing from scrolling dashboard into no-scroll Daily Command screen. Added Today's Pulse strip (3 compact stat tiles: review queue, player attention, sessions this week — each a direct Link, no new data fetches). Wrapped sections 4–12 (Sessions This Week, Quick Actions, Academy Metrics, Alerts & Placement, Analytics) in 5 `CollapsibleSection` panels, all `defaultOpen={false}` (closed by default). Added `CollapsibleSection` function at bottom of file — pure HTML `<details>`/`<summary>`, no client state, Server Component compatible, `group-open:rotate-180` chevron via Tailwind 3. No data removed — all previous content preserved inside collapsed panels. No DONNA routing, data fetches, migrations, or RLS touched.

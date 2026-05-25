@@ -3323,7 +3323,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         aria-label={DONNA_FULL_LABEL}
         className={cn(
           // Sprint 714 — mobile: constrain panel to upper 70% of viewport so mobile bar stays visible
-          'fixed top-0 right-0 z-50 w-96 max-w-[90vw] flex flex-col',
+          // Sprint 814 — mobile: true full-width drawer (w-full on mobile, sm:w-96 on desktop)
+          'fixed top-0 right-0 z-50 w-full sm:w-96 flex flex-col',
           'sm:bottom-0 bottom-[60px]',
           'transition-transform duration-200 ease-out',
           panelOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none',
@@ -3335,7 +3336,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       >
         {/* Header */}
         <div
-          className="flex items-start justify-between px-5 pt-5 pb-4 shrink-0"
+          className="flex items-start justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-3 sm:pb-4 shrink-0"
           style={{ borderBottom: '1px solid var(--border-subtle)' }}
         >
           <div>
@@ -3398,7 +3399,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 </span>
               ) : null}
             </div>
-            <p className="text-xs text-text-muted leading-snug mt-0.5">
+            {/* Sprint 814 — hidden on mobile; page context label below is more useful on small screens */}
+            <p className="hidden sm:block text-xs text-text-muted leading-snug mt-0.5">
               {DONNA_PUBLIC_TITLE}
             </p>
             {/* Sprint 800 — Page context label: shows which screen DONNA is aware of */}
@@ -3421,7 +3423,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           <button
             onClick={closePanel}
             aria-label="Close assistant"
-            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ml-2 mt-0.5
+            className="w-11 h-11 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 ml-2 sm:mt-0.5
               text-text-muted hover:text-text-primary hover:bg-surface-raised transition-all"
           >
             <X className="w-4 h-4" />
@@ -3476,7 +3478,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               key={chip.label}
               type="button"
               onClick={chip.action}
-              className="shrink-0 text-[11px] px-2.5 py-1 rounded-full transition-all text-text-secondary hover:text-text-primary"
+              className="shrink-0 text-[11px] px-2.5 py-2.5 sm:py-1 rounded-full transition-all text-text-secondary hover:text-text-primary"
               style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', whiteSpace: 'nowrap' }}
             >
               {chip.label}
