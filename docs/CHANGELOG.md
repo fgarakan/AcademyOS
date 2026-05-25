@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-25 — Sprint 788 — DONNA Voice Persona Natural TTS V1
+
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — unified `speakAssistantText` with central voice config:
+  - Added import: `fallbackBrowserRate`, `fallbackBrowserPitch`, `fallbackBrowserVolume`, `preferredBrowserVoiceKeywords`, `avoidBrowserVoiceKeywords` from `donnaVoiceConfig`
+  - Replaced hardcoded `rate: 0.95`/`pitch: 0.98` with `fallbackBrowserRate`/`fallbackBrowserPitch`/`fallbackBrowserVolume`
+  - Replaced inline voice selection (only `natural`/`neural`/`enhanced`) with full `preferredBrowserVoiceKeywords` ranked loop + `avoidBrowserVoiceKeywords` filter
+  - Both speak paths (`speakAssistantText` and `speakDonna`) now use identical voice selection and config
+- Modified `src/lib/donna/donnaVoiceConfig.ts` — refined `DONNA_VOICE_INSTRUCTIONS`:
+  - "COO assistant" → "tennis academy director" (domain-specific)
+  - Added "trusted colleague, not a customer service assistant" (matches Sprint 786 persona)
+  - Added "Pause briefly before questions so they land naturally" (targets question-ending responses)
+  - Added "keep the final question short and clear" (targets "Want me to open it?" pattern)
+- Created `docs/DONNA_VOICE_PERSONA_NATURAL_TTS_788.md` — full audit: before/after voice config, speak path unification
+- `donnaVoiceConfig.ts` is now the single source of truth for all DONNA voice settings across all paths
+- No routing logic changes. No DB/API changes. No migrations. No new components.
+- TypeScript: clean
+
+---
+
 ## 2026-05-25 — Sprint 787 — DONNA Preload Session Presence Idle V1
 
 - Modified `src/components/assistant/DonnaAssistantButton.tsx` — 10 surgical changes:

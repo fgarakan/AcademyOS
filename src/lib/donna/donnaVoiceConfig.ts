@@ -30,12 +30,13 @@ export const DONNA_OPENAI_TTS_MODEL_FALLBACK = 'tts-1-hd'
 
 // Voice instructions — only supported on gpt-4o-mini-tts.
 // Shapes speaking cadence, tone, and style.
+// Sprint 788 — refined to match Sprint 786 response style persona (warm, calm, direct academy director)
 export const DONNA_VOICE_INSTRUCTIONS =
-  'Speak like a warm, professional academy COO assistant. ' +
-  'Calm, confident, concise, and natural. ' +
-  'Helpful but not overly cheerful. ' +
-  'No announcer voice. No robotic cadence. ' +
-  'Pace yourself evenly. Pause naturally between sentences.'
+  'Speak like a calm, professional tennis academy director. ' +
+  'Warm and composed — like a trusted colleague, not a customer service assistant. ' +
+  'Keep a measured, even pace. Pause briefly before questions so they land naturally. ' +
+  'No announcer tone. No robotic cadence. No filler words. ' +
+  'When offering to navigate or open something, keep the final question short and clear.'
 
 // ── Browser TTS fallback settings ────────────────────────────────────────────
 

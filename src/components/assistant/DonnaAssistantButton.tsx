@@ -159,6 +159,14 @@ import type { DonnaPreferences } from '@/components/assistant/donnaPreferenceMem
 import { appendAuditEvent } from '@/components/assistant/donnaAuditTrail'
 // Sprint 350 — Server TTS client + voice policy
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
+// Sprint 788 — Central voice config for speakAssistantText (greeting/onboarding path)
+import {
+  fallbackBrowserRate,
+  fallbackBrowserPitch,
+  fallbackBrowserVolume,
+  preferredBrowserVoiceKeywords,
+  avoidBrowserVoiceKeywords,
+} from '@/lib/donna/donnaVoiceConfig'
 // DONNA_VOICE_MODE_LABELS used in DonnaDeveloperTools
 import type { DonnaVoiceOutputMode } from '@/components/assistant/donnaVoicePolicy'
 // Sprint 359 — Persistent draft storage (sessionStorage only)
@@ -487,17 +495,22 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       window.speechSynthesis.cancel()
     }
     const utt = new SpeechSynthesisUtterance(text)
-    utt.rate = 0.95
-    utt.pitch = 0.98
-    // Sprint 719 — prefer natural/neural English voices; avoid compact/robotic variants
+    // Sprint 788 — use central voice config (replaces inline hardcoded values from Sprint 719)
+    utt.rate = fallbackBrowserRate
+    utt.pitch = fallbackBrowserPitch
+    utt.volume = fallbackBrowserVolume
+    // Sprint 788 — use central keyword lists for consistent voice selection across all speak paths
     const voices = window.speechSynthesis.getVoices()
-    const preferred = voices.find(v =>
-      v.lang.startsWith('en') && (
-        v.name.toLowerCase().includes('natural') ||
-        v.name.toLowerCase().includes('neural') ||
-        v.name.toLowerCase().includes('enhanced')
-      )
-    ) ?? voices.find(v => v.lang.startsWith('en') && v.localService) ?? voices.find(v => v.lang.startsWith('en')) ?? null
+    const usableVoices = voices.filter(v =>
+      v.lang.startsWith('en') &&
+      !avoidBrowserVoiceKeywords.some(kw => v.name.toLowerCase().includes(kw.toLowerCase()))
+    )
+    let preferred: SpeechSynthesisVoice | null = null
+    for (const keyword of preferredBrowserVoiceKeywords) {
+      const match = usableVoices.find(v => v.name.toLowerCase().includes(keyword.toLowerCase()))
+      if (match) { preferred = match; break }
+    }
+    if (!preferred) preferred = usableVoices.find(v => v.localService) ?? usableVoices[0] ?? null
     if (preferred) utt.voice = preferred
     utt.onstart = () => {
       setIsSpeaking(true)
