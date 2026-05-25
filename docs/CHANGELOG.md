@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-25 — Sprint 802 — DONNA Command Understanding V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx`:
+  - **"Close Donna" text command:** Added early-exit check at the top of `handleCommandSubmit` for explicit close phrases: "close donna", "close panel", "hide donna", "dismiss donna", "dismiss", "close this", "close assistant", "exit donna", "stop donna" → `closePanel()`. Runs before intent routing and before `updatePrompt()` so close commands are not logged as DONNA prompts.
+  - **COO follow-up context wiring:** After every non-blocked COO response in `handleDonnaCooPrompt`, now sets `sessionIntentContext` with `lastIntentFamily: 'coo_answer'` + `nextStepHref` + `nextStepLabel` from the composed response. Enables `resolveFollowUp`'s existing `lastSuggestedNavigationHref` path to resolve "go there", "open that", "which ones?", "show me" follow-ups after any COO answer with a navigation hint. Blocked COO responses do NOT set intent context.
+- **Created** `docs/DONNA_COMMAND_UNDERSTANDING_802.md` — sprint doc with before/after command test table, COO follow-up wire diagram, safety guardrails checklist
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 801 — DONNA Persistence Fix V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx`:

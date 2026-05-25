@@ -2862,6 +2862,21 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       label: composed.isBlocked ? 'Not allowed' : (composed.nextStepLabel ?? 'DONNA'),
     })
 
+    // Sprint 802 — record intent context so follow-up phrases ("go there", "open that", "which ones?")
+    // resolve correctly after any COO response, not just daily_brief / review_queue / attention.
+    if (!composed.isBlocked) {
+      setSessionIntentContext({
+        lastIntentFamily: 'coo_answer',
+        lastResultSectionCount: null,
+        lastResultHighPriorityCount: null,
+        lastResultItemCount: null,
+        lastSuggestedNavigationHref: composed.nextStepHref ?? null,
+        lastSuggestedNavigationLabel: composed.nextStepLabel ?? null,
+        lastTopicLabel: composed.nextStepLabel ?? null,
+        setAt: Date.now(),
+      })
+    }
+
     // Sprint 704 — show structured action preview card for route_to_review and build_action_preview
     if (routing.responseMode === 'route_to_review' || routing.responseMode === 'build_action_preview') {
       const previewResult = getActionPreviewForRequest(text)
@@ -2891,6 +2906,20 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (!text) return
 
     resetIdleTimer() // Sprint 787 — any submitted prompt counts as interaction
+
+    // Sprint 802 — "Close Donna" text command: explicit dismiss phrases close the panel.
+    // Checked before all routing so it always works regardless of active mode or draft state.
+    {
+      const lc = text.toLowerCase().trim()
+      if (
+        lc === 'close donna' || lc === 'close panel' || lc === 'hide donna' ||
+        lc === 'dismiss donna' || lc === 'dismiss' || lc === 'close this' ||
+        lc === 'close assistant' || lc === 'exit donna' || lc === 'stop donna'
+      ) {
+        closePanel()
+        return
+      }
+    }
 
     // Sprint 686 — track last safe prompt in session context for continuity
     updatePrompt(text)
