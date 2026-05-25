@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-25 — Sprint 791 — Curriculum Builder 10/10 Audit V1
+
+- **Audit-only sprint** — no code changes
+- Full audit of the Curriculum Builder system: 7 primary routes, ~50 components, ~37 lib files, 7 DONNA curriculum lib files
+- Evaluated against AIQS (11 dimensions, 100 points) and Curriculum Builder specific rubric (8 dimensions, 80 points)
+- **AIQS Score: 74/100** — no hard fail conditions triggered
+- **Curriculum Builder specific: 45/80 (56%)** — three critical gaps (voice input, mobile, workflow completeness)
+- **Combined score: ~65/100** — solid architecture, significant UX and capability gaps
+- **Edit Safety: 10/10 perfect** — `canPublish: false`, `neverAutoApply: true` enforced at TypeScript type level; no regressions
+- Top 10 blockers identified (priority order):
+  1. Voice curriculum drafting not wired — `draft_curriculum_item` action implemented but blocked by `voice_command_id` dependency; `VoiceOverrideInputPanel` production-gated
+  2. Hardcoded false on setup checklist items 4-5 ("Templates connected", "Players connected")
+  3. Two competing hub pages (`/curriculum` + `/curriculum/builder`) — navigation unclear
+  4. Advanced tools hidden in `<details>` collapse — Explorer, Academy Version, Customization Assistant have zero discoverability
+  5. Coverage report omits 6 content dimensions (skills, missions, badges, parent guidance, etc. hardcoded `0`)
+  6. Mobile experience severely limited — DONNA panel `hidden lg:block` on map and level pages
+  7. Academy Version page undiscoverable (single buried text link)
+  8. No direct level edit path from main page — 3 navigations required
+  9. Duplicate CTA in section 5 (conflicts with status hero CTA)
+  10. Builder hub uses off-brand teal accent instead of lime
+- Top 5 quick wins: fix checklist queries, surface Academy Version chip, fix `text-[9px]` AuditStat labels, navigable level tree, remove duplicate CTA
+- Structural changes roadmap: wire `draft_curriculum_item`, clarify two hub pages, mobile health bar component, DONNA operate mode, full coverage dimensions
+- Path to 10/10 mapped across Sprints 792–796 (estimated +91/100 post-796)
+- Key architectural strength: safety model is impeccable; DONNA knows 12 levels and 8 intent families at depth; the product needs to catch up to what DONNA already knows
+- Created `docs/CURRICULUM_BUILDER_10_10_AUDIT_791.md` — full audit with AIQS scoring, CB rubric, desktop UX, mobile UX, DONNA integration, edit safety, versioning, exact sprint file list
+- TypeScript: clean (audit-only — no files modified)
+
+---
+
 ## 2026-05-25 — Sprint 790 — DONNA 10/10 Certification V1
 
 - **Audit-only sprint** — no code changes
