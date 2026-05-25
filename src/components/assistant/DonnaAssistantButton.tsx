@@ -3667,23 +3667,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   <p className="text-[10px] text-text-muted mt-1.5 leading-snug">
                     {DONNA_SAFETY_REMINDER}
                   </p>
-                  {/* Voice mode status indicator */}
-                  <p className="text-[10px] mt-2 leading-snug" style={{
-                    color: realtimeStatus === 'unavailable' || realtimeStatus === 'error'
-                      ? '#FF9500'
-                      : realtimeStatus === 'ready' || realtimeStatus === 'speaking'
-                      ? '#30D158'
-                      : '#8b5cf6',
-                  }}>
-                    {realtimeStatus === 'idle' && 'Donna is ready.'}
-                    {realtimeStatus === 'connecting' && 'Donna is connecting…'}
-                    {realtimeStatus === 'ready' && 'Donna is ready.'}
-                    {realtimeStatus === 'speaking' && 'Donna is speaking.'}
-                    {realtimeStatus === 'unavailable' && (getFallbackMessage('realtime_unavailable') ?? 'Donna voice unavailable — browser voice available.')}
-                    {realtimeStatus === 'error' && getFallbackMessage('realtime_connect_failed')}
-                    {realtimeStatus === 'closed' && 'Donna is ready.'}
-                  </p>
-                  {/* Sprint 297: primary play button, Realtime → browser TTS cascade */}
+                  {/* Sprint 806 — Simplified voice section: debug/dev controls removed */}
                   <div className="mt-2 space-y-1.5">
                     <button
                       type="button"
@@ -3701,110 +3685,16 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                         color: voiceGreetingStatus === 'done' ? '#30D158' : '#c4b5fd',
                       }}
                     >
-                      {voiceGreetingStatus === 'idle' && (realtimeStatus === 'unavailable' ? 'Play Donna voice (browser)' : 'Play Donna voice')}
-                      {voiceGreetingStatus === 'starting' && (realtimeStatus === 'connecting' ? 'Connecting…' : 'Starting…')}
+                      {voiceGreetingStatus === 'idle' && 'Play Donna voice'}
+                      {voiceGreetingStatus === 'starting' && 'Starting…'}
                       {voiceGreetingStatus === 'speaking' && 'Speaking…'}
                       {(voiceGreetingStatus === 'stalled' || voiceGreetingStatus === 'error') && 'Play Donna voice again'}
                       {voiceGreetingStatus === 'done' && '✓ Donna spoke'}
                     </button>
-                    {/* Stall message — Realtime timeout vs browser TTS stall */}
-                    {voiceGreetingStatus === 'stalled' && (
-                      <p className="text-[10px] leading-snug" style={{ color: '#FF9500' }}>
-                        {activatedVoiceModeRef.current === 'realtime'
-                          ? 'Donna voice was not confirmed. Try Browser Voice or continue typed.'
-                          : "Donna's voice did not start. Click Play Donna voice again or type instead."}
-                      </p>
-                    )}
-                    {/* Error message — browser TTS threw an error (e.g. no speechSynthesis support) */}
-                    {voiceGreetingStatus === 'error' && (
-                      <p className="text-[10px] leading-snug" style={{ color: '#FF3B30' }}>
-                        {getFallbackMessage('browser_tts_error')}
-                      </p>
-                    )}
-                    {/* Try Browser Voice — direct browser TTS bypass, shown only after Realtime stall */}
-                    {voiceGreetingStatus === 'stalled' && activatedVoiceModeRef.current === 'realtime' && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          activatedVoiceModeRef.current = 'browser'
-                          const text = onboardingStep !== null
-                            ? (DONNA_ONBOARDING_STEPS[onboardingStep]?.spokenText ?? DONNA_ONBOARDING_STEPS[0].spokenText)
-                            : DONNA_ONBOARDING_STEPS[0].spokenText
-                          lastSpokenTextRef.current = null
-                          lastSpokenKeyRef.current = null
-                          setVoiceGreetingStatus('speaking')
-                          speakAssistantText(text, (s) => {
-                            if (s === 'done') setVoiceGreetingStatus('done')
-                            else if (s === 'error') setVoiceGreetingStatus('error')
-                          })
-                        }}
-                        className="w-full rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
-                        style={{
-                          background: 'rgba(48,209,88,0.1)',
-                          border: '1px solid rgba(48,209,88,0.25)',
-                          color: '#30D158',
-                        }}
-                      >
-                        Try Browser Voice
-                      </button>
-                    )}
-                    {/* Reset link — stall or error recovery */}
                     {(voiceGreetingStatus === 'stalled' || voiceGreetingStatus === 'error') && (
-                      <button
-                        type="button"
-                        onClick={resetVoice}
-                        className="text-[10px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
-                      >
-                        Reset Donna voice
-                      </button>
-                    )}
-                    {/* Realtime unavailable: show browser voice option explicitly */}
-                    {realtimeStatus === 'unavailable' && voiceGreetingStatus === 'idle' && (
-                      <p className="text-[10px] text-text-muted leading-snug">
-                        Realtime voice is not configured. Browser voice or typed setup is available.
+                      <p className="text-[10px] leading-snug" style={{ color: '#FF9500' }}>
+                        Voice unavailable — type your response instead.
                       </p>
-                    )}
-                    {/* After any failure: typed input is always available in the panel below */}
-                    {/* Voice output confirmation — shown after Donna speaks */}
-                    {(voiceGreetingStatus === 'done' || voiceGreetingStatus === 'speaking') && voiceOutputConfirmed === null && (
-                      <div className="flex items-center gap-2 pt-0.5">
-                        <button
-                          type="button"
-                          onClick={() => setVoiceOutputConfirmed(true)}
-                          className="text-[10px] px-2.5 py-1 rounded-lg transition-colors"
-                          style={{ background: 'rgba(48,209,88,0.1)', border: '1px solid rgba(48,209,88,0.25)', color: '#30D158' }}
-                        >
-                          {DONNA_HEARD_CONFIRM}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setVoiceOutputConfirmed(false)
-                            if (activatedVoiceModeRef.current === 'realtime') resetVoice()
-                          }}
-                          className="text-[10px] px-2.5 py-1 rounded-lg transition-colors"
-                          style={{ background: 'rgba(255,59,48,0.08)', border: '1px solid rgba(255,59,48,0.2)', color: '#FF3B30' }}
-                        >
-                          {DONNA_NOT_HEARD_CONFIRM}
-                        </button>
-                      </div>
-                    )}
-                    {voiceOutputConfirmed === true && (
-                      <p className="text-[10px] pt-0.5" style={{ color: '#30D158' }}>
-                        Donna is ready.
-                      </p>
-                    )}
-                    {voiceOutputConfirmed === false && (
-                      <div className="space-y-1 pt-0.5">
-                        <p className="text-[10px] text-text-muted">No problem — try browser voice or continue typed.</p>
-                        <button
-                          type="button"
-                          onClick={() => { setVoiceOutputConfirmed(null); void playOnboardingVoice() }}
-                          className="text-[10px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
-                        >
-                          Try again
-                        </button>
-                      </div>
                     )}
                   </div>
                 </>
@@ -4541,8 +4431,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 {lastServerTtsInfo.source === 'contract_tts'
                   ? 'Premium Donna voice active'
                   : lastServerTtsInfo.source === 'browser_tts'
-                  ? 'Fallback device voice active'
-                  : 'Text-only fallback'}
+                  ? 'Device voice active'
+                  : 'Text-only mode'}
               </p>
             </div>
           )}

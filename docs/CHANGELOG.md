@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-25 — Sprint 806 — DONNA Voice Debug Controls Cleanup V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — removed developer-level voice debug controls from DONNA onboarding panel: technical `realtimeStatus` status text, "Try Browser Voice" button, "Reset Donna voice" link, "Realtime voice is not configured" message, "Did you hear it? Yes/No" confirmation buttons, and dependent `voiceOutputConfirmed` follow-up states. Kept: `DONNA_SAFETY_REMINDER`, single "Play Donna voice" button, plain-language failure message "Voice unavailable — type your response instead." Also simplified voice quality pill: "Fallback device voice active" → "Device voice active", "Text-only fallback" → "Text-only mode".
+- **Created** `docs/DONNA_VOICE_DEBUG_CLEANUP_806.md` — full before/after table of removed controls, rationale for each, estimated score lift (+8 pts on DONNA Side Panel)
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 805 — DONNA Dashboard 10/10 Certification
 
 - **Audit-only sprint** — no source code changes
