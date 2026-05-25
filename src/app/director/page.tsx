@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import {
-  Users, Calendar, ChevronRight, Activity,
+  Users, Calendar, ChevronRight, ChevronDown, Activity,
   Clock, Brain, AlertTriangle,
   GraduationCap, Sparkles, ClipboardList,
 } from 'lucide-react'
@@ -483,111 +483,155 @@ export default async function DirectorDashboard() {
         showMax={5}
       />
 
-      {/* ── Sessions This Week ────────────────────────────── */}
-      {/* Sprint 767: moved up — answers "What should I do next?" immediately. */}
-      {/* Sprint 803: KPI section moved below Sessions + Quick Actions so the action surface comes first. */}
-      <div className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="label-xs">Sessions This Week</p>
-            <p className="text-xs text-text-muted mt-1">Sessions scheduled for the current week. Create sessions from class templates to build your coaching history.</p>
+      {/* ── Sprint 813: Today's Pulse — compact signal strip ──────────────────────── */}
+      {/* Three at-a-glance tiles: review queue, player attention, sessions this week. */}
+      {/* Each is a Link — tap to go directly to the relevant section.                */}
+      <div className="grid grid-cols-3 gap-3">
+        <Link href="/director/review" className="block">
+          <div className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-status-orange/30">
+            <p className={`font-mono font-bold text-2xl leading-none ${(pendingWrapUpsCount + newRequests) > 0 ? 'text-status-orange' : 'text-text-secondary'}`}>
+              {pendingWrapUpsCount + newRequests}
+            </p>
+            <p className="text-[11px] text-text-muted mt-1.5 leading-snug">Review queue</p>
           </div>
-          <Link
-            href="/director/sessions"
-            className="shrink-0 text-xs text-lime hover:opacity-80 font-medium"
-          >
-            View all →
-          </Link>
-        </div>
-        <Card>
-          <CardContent className="py-4">
-            {(weekSessions ?? []).length === 0 ? (
-              <EmptyState
-                icon={<Calendar className="w-5 h-5" />}
-                title="No sessions this week"
-                description="Sessions appear here once created from a class template. Schedule your first session to get started."
-                className="py-6"
-              />
-            ) : (
-              <div className="space-y-1">
-                {(weekSessions ?? []).slice(0, 4).map(session => (
-                  <Link
-                    key={session.id}
-                    href={`/director/sessions/${session.id}`}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary truncate">
-                        {session.name ?? 'Untitled Session'}
-                      </p>
-                      <p className="text-xs text-text-muted">{formatDate(session.scheduled_date)}</p>
-                    </div>
-                    <SessionStatusPill status={session.status} />
-                    <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        </Link>
+        <Link href="/director/players" className="block">
+          <div className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-status-orange/30">
+            <p className={`font-mono font-bold text-2xl leading-none ${attentionCount > 0 ? 'text-status-orange' : 'text-text-secondary'}`}>
+              {attentionCount}
+            </p>
+            <p className="text-[11px] text-text-muted mt-1.5 leading-snug">Players — attention</p>
+          </div>
+        </Link>
+        <Link href="/director/sessions" className="block">
+          <div className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-lime/30">
+            <p className="font-mono font-bold text-2xl leading-none text-lime">
+              {sessionsThisWeek}
+            </p>
+            <p className="text-[11px] text-text-muted mt-1.5 leading-snug">Sessions this week</p>
+          </div>
+        </Link>
       </div>
 
-      {/* ── Quick Actions ─────────────────────────────────── */}
-      {/* Sprint 767: moved up alongside Sessions This Week — actionable navigation hub. */}
-      <div>
-        <p className="label-xs mb-4">Quick Actions</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <QuickActionCard
-            icon={<Calendar className="w-4 h-4 text-lime" />}
-            title="View Today's Academy"
-            description="Live session feed, attendance, and on-court status."
-            href="/director/today"
-          />
-          <QuickActionCard
-            icon={<ClipboardList className="w-4 h-4 text-lime" />}
-            title="Session Planning"
-            description="Build and manage sessions from class templates."
-            href="/director/sessions"
-          />
-          <QuickActionCard
-            icon={<Users className="w-4 h-4 text-lime" />}
-            title="Player Profiles"
-            description="View and manage your full player roster."
-            href="/director/players"
-          />
-          <QuickActionCard
-            icon={<Activity className="w-4 h-4 text-lime" />}
-            title="Signals"
-            description="Attendance concerns, missing levels, pending reviews, and lesson requests."
-            href="/director/signals"
-          />
-        </div>
-      </div>
+      {/* ── Sprint 813: Collapsed sections — all closed by default ─────────────────── */}
+      {/* Director landing is a Daily Command screen, not a scrolling dashboard.       */}
+      {/* All detail sections are collapsed — open on demand. No scroll by default.   */}
+      <div className="space-y-2">
 
-      {/* ── Academy Overview — 8-card KPI snapshot ─────────── */}
-      {/* Sprint 803: moved below Sessions + Quick Actions so actionable surfaces come first.
-          KPIs are supporting data for the director — the command center and session list are primary. */}
-      <AcademyKpiCardsSection
-        sessionsToday={sessionsThisWeek}
-        attendanceExceptions={pendingWrapUpsCount}
-        coachRecaps={pendingWrapUpsCount}
-        levelUpCandidates={advancementReadyCount}
-        parentUpdates={newRequests}
-        academyHealthPct={academyHealthPct}
-        curriculumExecution={curriculumExecutionPct}
-        playerProgress={improvingCount}
-        activePlayers={activePlayers}
-      />
+        {/* Sessions This Week */}
+        <CollapsibleSection title="Sessions This Week">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="label-xs">Sessions This Week</p>
+              <p className="text-xs text-text-muted mt-1">Sessions scheduled for the current week. Create sessions from class templates to build your coaching history.</p>
+            </div>
+            <Link
+              href="/director/sessions"
+              className="shrink-0 text-xs text-lime hover:opacity-80 font-medium"
+            >
+              View all →
+            </Link>
+          </div>
+          <Card>
+            <CardContent className="py-4">
+              {(weekSessions ?? []).length === 0 ? (
+                <EmptyState
+                  icon={<Calendar className="w-5 h-5" />}
+                  title="No sessions this week"
+                  description="Sessions appear here once created from a class template. Schedule your first session to get started."
+                  className="py-6"
+                />
+              ) : (
+                <div className="space-y-1">
+                  {(weekSessions ?? []).slice(0, 4).map(session => (
+                    <Link
+                      key={session.id}
+                      href={`/director/sessions/${session.id}`}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-raised transition-colors group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate">
+                          {session.name ?? 'Untitled Session'}
+                        </p>
+                        <p className="text-xs text-text-muted">{formatDate(session.scheduled_date)}</p>
+                      </div>
+                      <SessionStatusPill status={session.status} />
+                      <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-lime transition-colors shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </CollapsibleSection>
 
-      {/* ── Pending Placement ────────────────────────────────── */}
-      {/* Sprint 807: Renamed from "Roster Signals" — Priority Queue card removed (already shown in */}
-      {/* Command Center above). Pending Placement is the only distinct signal not in the command center. */}
-      <div className="space-y-4">
-        <div>
-          <p className="label-xs">Pending Placement</p>
-          <p className="text-xs text-text-muted mt-1">Players awaiting onboarding completion. Priority action items are surfaced in the Command Center above.</p>
-        </div>
-        <div>
+        {/* Quick Actions */}
+        <CollapsibleSection title="Quick Actions">
+          <p className="label-xs mb-4">Quick Actions</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <QuickActionCard
+              icon={<Calendar className="w-4 h-4 text-lime" />}
+              title="View Today's Academy"
+              description="Live session feed, attendance, and on-court status."
+              href="/director/today"
+            />
+            <QuickActionCard
+              icon={<ClipboardList className="w-4 h-4 text-lime" />}
+              title="Session Planning"
+              description="Build and manage sessions from class templates."
+              href="/director/sessions"
+            />
+            <QuickActionCard
+              icon={<Users className="w-4 h-4 text-lime" />}
+              title="Player Profiles"
+              description="View and manage your full player roster."
+              href="/director/players"
+            />
+            <QuickActionCard
+              icon={<Activity className="w-4 h-4 text-lime" />}
+              title="Signals"
+              description="Attendance concerns, missing levels, pending reviews, and lesson requests."
+              href="/director/signals"
+            />
+          </div>
+        </CollapsibleSection>
+
+        {/* Academy Metrics */}
+        <CollapsibleSection title="Academy Metrics">
+          {/* Sprint 803: moved below Sessions + Quick Actions so actionable surfaces come first.
+              KPIs are supporting data for the director — the command center and session list are primary. */}
+          <AcademyKpiCardsSection
+            sessionsToday={sessionsThisWeek}
+            attendanceExceptions={pendingWrapUpsCount}
+            coachRecaps={pendingWrapUpsCount}
+            levelUpCandidates={advancementReadyCount}
+            parentUpdates={newRequests}
+            academyHealthPct={academyHealthPct}
+            curriculumExecution={curriculumExecutionPct}
+            playerProgress={improvingCount}
+            activePlayers={activePlayers}
+          />
+          {/* Sprint 767: moved down — supporting analysis, not primary signal.              */}
+          {/* Director uses this to go deep on KPI trends; daily view lives in sections above. */}
+          <DirectorKpiHealthSection
+            activePlayers={activePlayers}
+            advancementReadyCount={advancementReadyCount}
+            curriculumExecutionPct={curriculumExecutionPct}
+            pendingWrapUpsCount={pendingWrapUpsCount}
+            improvingCount={improvingCount}
+            recapCompletionPct={recapCompletionPct}
+            stalledPlayerCount={stalledPlayerCount}
+          />
+        </CollapsibleSection>
+
+        {/* Alerts & Placement */}
+        <CollapsibleSection title="Alerts &amp; Placement" badge={totalAlerts}>
+          {/* Sprint 807: Renamed from "Roster Signals" — Priority Queue card removed (already shown in */}
+          {/* Command Center above). Pending Placement is the only distinct signal not in the command center. */}
+          <div>
+            <p className="label-xs">Pending Placement</p>
+            <p className="text-xs text-text-muted mt-1">Players awaiting onboarding completion. Priority action items are surfaced in the Command Center above.</p>
+          </div>
 
           {/* Pending Placement */}
           <Card>
@@ -649,147 +693,135 @@ export default async function DirectorDashboard() {
               </CardFooter>
             )}
           </Card>
-        </div>
-      </div>
 
-      {/* ── Alert Breakdown ──────────────────────────────────── */}
-      {/* Sprint 807: Renamed from "Academy Health Signals" — demoted to detail section. */}
-      {/* Primary attention surface is DirectorTodayCommandCenter above. This section is   */}
-      {/* a supporting breakdown for directors who want to drill into individual alert types. */}
-      <div className="space-y-4">
-        <div>
-          <p className="text-[10px] uppercase tracking-widest font-medium text-text-muted">Alert Breakdown</p>
-          <p className="text-xs text-text-muted mt-1">Detailed breakdown by type — priority items are already shown in the Command Center above.</p>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-          <AcademyAlertsPanel
-            missingFocusCount={missingFocus}
-            attentionCount={attentionCount}
-            reassessmentDueCount={reassessmentDue}
-            newRequestsCount={newRequests}
-            pendingCount={pendingCount}
-            pendingWrapUpsCount={pendingWrapUpsCount}
-          />
+          {/* Alert Breakdown */}
+          {/* Sprint 807: Renamed from "Academy Health Signals" — demoted to detail section. */}
+          {/* Primary attention surface is DirectorTodayCommandCenter above. This section is   */}
+          {/* a supporting breakdown for directors who want to drill into individual alert types. */}
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-medium text-text-muted">Alert Breakdown</p>
+            <p className="text-xs text-text-muted mt-1">Detailed breakdown by type — priority items are already shown in the Command Center above.</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+            <AcademyAlertsPanel
+              missingFocusCount={missingFocus}
+              attentionCount={attentionCount}
+              reassessmentDueCount={reassessmentDue}
+              newRequestsCount={newRequests}
+              pendingCount={pendingCount}
+              pendingWrapUpsCount={pendingWrapUpsCount}
+            />
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-text-primary flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-lime" />
-                    AI Suggestions
-                  </h2>
-                  <p className="text-xs text-text-muted mt-0.5">Suggested actions for review</p>
-                </div>
-                {pendingSuggestionsCount > 0 && (
-                  <span className="font-mono text-lime text-xl font-bold leading-none">
-                    {pendingSuggestionsCount}
-                  </span>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {pendingSuggestionsCount === 0 ? (
-                <EmptyState
-                  icon={<Brain className="w-5 h-5" />}
-                  title="No pending suggestions"
-                  description="Suggestions are generated automatically from session data, coach notes, and curriculum gaps. They will appear here once your academy has activity."
-                  className="py-8"
-                />
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-xs text-text-secondary">
-                      {pendingSuggestionsCount} suggestion{pendingSuggestionsCount !== 1 ? 's' : ''} pending review
-                    </span>
-                    {highPrioritySuggestionsCount > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-status-orange/10 border-status-orange/20 text-status-orange">
-                        <AlertTriangle className="w-2.5 h-2.5" />
-                        {highPrioritySuggestionsCount} high priority
-                      </span>
-                    )}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-semibold text-text-primary flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-lime" />
+                      AI Suggestions
+                    </h2>
+                    <p className="text-xs text-text-muted mt-0.5">Suggested actions for review</p>
                   </div>
-                  <p className="text-xs text-text-muted px-1">
-                    Nothing changes until you review and accept each suggestion.
-                  </p>
+                  {pendingSuggestionsCount > 0 && (
+                    <span className="font-mono text-lime text-xl font-bold leading-none">
+                      {pendingSuggestionsCount}
+                    </span>
+                  )}
                 </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {pendingSuggestionsCount === 0 ? (
+                  <EmptyState
+                    icon={<Brain className="w-5 h-5" />}
+                    title="No pending suggestions"
+                    description="Suggestions are generated automatically from session data, coach notes, and curriculum gaps. They will appear here once your academy has activity."
+                    className="py-8"
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-xs text-text-secondary">
+                        {pendingSuggestionsCount} suggestion{pendingSuggestionsCount !== 1 ? 's' : ''} pending review
+                      </span>
+                      {highPrioritySuggestionsCount > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-status-orange/10 border-status-orange/20 text-status-orange">
+                          <AlertTriangle className="w-2.5 h-2.5" />
+                          {highPrioritySuggestionsCount} high priority
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-text-muted px-1">
+                      Nothing changes until you review and accept each suggestion.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Link
+                  href="/director/ai-suggestions"
+                  className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
+                >
+                  {pendingSuggestionsCount > 0 ? 'Review suggestions →' : 'Open AI Suggestions →'}
+                </Link>
+              </CardFooter>
+            </Card>
+          </div>
+        </CollapsibleSection>
+
+        {/* Analytics */}
+        <CollapsibleSection title="Analytics">
+          {/* Sprint 767: moved down — supporting context, not primary signal. */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+            <AcademyHealthChartCard healthPct={academyHealthPct} totalAlerts={totalAlerts} />
+            <LiveActivityCard sessions={weekSessions ?? []} pendingWrapUps={pendingWrapUpsCount} pendingPlacements={pendingCount} />
+          </div>
+
+          {/* Curriculum Coverage */}
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex items-center gap-2 mb-3">
+                <GraduationCap className="w-4 h-4 text-lime" />
+                <p className="label-xs">Curriculum Coverage</p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <Link href="/director/players" className="group">
+                  <div className="bg-surface-raised rounded-xl px-4 py-3 border border-border hover:border-lime/30 transition-colors">
+                    <p className="font-mono font-bold text-3xl text-lime leading-none">{playersWithLevel}</p>
+                    <p className="text-xs text-text-secondary mt-1">With curriculum level</p>
+                  </div>
+                </Link>
+                <Link href="/director/players" className="group">
+                  <div className={`bg-surface-raised rounded-xl px-4 py-3 border transition-colors ${playersWithoutLevel > 0 ? 'border-status-orange/30 hover:border-status-orange/50' : 'border-border hover:border-lime/30'}`}>
+                    <p className={`font-mono font-bold text-3xl leading-none ${playersWithoutLevel > 0 ? 'text-status-orange' : 'text-text-muted'}`}>{playersWithoutLevel}</p>
+                    <p className="text-xs text-text-secondary mt-1">Missing level</p>
+                  </div>
+                </Link>
+                <Link href="/director/signals" className="group hidden sm:block">
+                  <div className={`bg-surface-raised rounded-xl px-4 py-3 border transition-colors ${curricGapCount > 0 ? 'border-lime/20 hover:border-lime/40' : 'border-border hover:border-lime/30'}`}>
+                    <p className={`font-mono font-bold text-3xl leading-none ${curricGapCount > 0 ? 'text-lime' : 'text-text-muted'}`}>{curricGapCount}</p>
+                    <p className="text-xs text-text-secondary mt-1">Curriculum gap suggestions</p>
+                  </div>
+                </Link>
+              </div>
+              {players.length === 0 && (
+                <p className="text-xs text-text-muted mt-3">Add players and assign curriculum levels to see coverage stats here.</p>
               )}
             </CardContent>
-            <CardFooter>
-              <Link
-                href="/director/ai-suggestions"
-                className="text-xs text-lime hover:opacity-80 transition-opacity font-medium"
-              >
-                {pendingSuggestionsCount > 0 ? 'Review suggestions →' : 'Open AI Suggestions →'}
-              </Link>
-            </CardFooter>
           </Card>
-        </div>
-      </div>
 
-      {/* ── Health Chart + Live Activity ─────────────────── */}
-      {/* Sprint 767: moved down — supporting context, not primary signal. */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-        <AcademyHealthChartCard healthPct={academyHealthPct} totalAlerts={totalAlerts} />
-        <LiveActivityCard sessions={weekSessions ?? []} pendingWrapUps={pendingWrapUpsCount} pendingPlacements={pendingCount} />
-      </div>
-
-      {/* ── Curriculum Coverage ───────────────────────────── */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="flex items-center gap-2 mb-3">
-            <GraduationCap className="w-4 h-4 text-lime" />
-            <p className="label-xs">Curriculum Coverage</p>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <Link href="/director/players" className="group">
-              <div className="bg-surface-raised rounded-xl px-4 py-3 border border-border hover:border-lime/30 transition-colors">
-                <p className="font-mono font-bold text-3xl text-lime leading-none">{playersWithLevel}</p>
-                <p className="text-xs text-text-secondary mt-1">With curriculum level</p>
-              </div>
-            </Link>
-            <Link href="/director/players" className="group">
-              <div className={`bg-surface-raised rounded-xl px-4 py-3 border transition-colors ${playersWithoutLevel > 0 ? 'border-status-orange/30 hover:border-status-orange/50' : 'border-border hover:border-lime/30'}`}>
-                <p className={`font-mono font-bold text-3xl leading-none ${playersWithoutLevel > 0 ? 'text-status-orange' : 'text-text-muted'}`}>{playersWithoutLevel}</p>
-                <p className="text-xs text-text-secondary mt-1">Missing level</p>
-              </div>
-            </Link>
-            <Link href="/director/signals" className="group hidden sm:block">
-              <div className={`bg-surface-raised rounded-xl px-4 py-3 border transition-colors ${curricGapCount > 0 ? 'border-lime/20 hover:border-lime/40' : 'border-border hover:border-lime/30'}`}>
-                <p className={`font-mono font-bold text-3xl leading-none ${curricGapCount > 0 ? 'text-lime' : 'text-text-muted'}`}>{curricGapCount}</p>
-                <p className="text-xs text-text-secondary mt-1">Curriculum gap suggestions</p>
-              </div>
-            </Link>
-          </div>
-          {players.length === 0 && (
-            <p className="text-xs text-text-muted mt-3">Add players and assign curriculum levels to see coverage stats here.</p>
+          {/* First class template prompt */}
+          {classTemplateCount === 0 && players.length > 0 && (
+            <NextBestActionCard
+              variant="guide"
+              title="Create your first class template"
+              body="Class templates let you generate curriculum-aligned lesson plans that coaches can run on court."
+              actionLabel="New Template"
+              actionHref="/director/class-templates/new"
+            />
           )}
-        </CardContent>
-      </Card>
+        </CollapsibleSection>
 
-      {/* ── First class template prompt ───────────────────── */}
-      {classTemplateCount === 0 && players.length > 0 && (
-        <NextBestActionCard
-          variant="guide"
-          title="Create your first class template"
-          body="Class templates let you generate curriculum-aligned lesson plans that coaches can run on court."
-          actionLabel="New Template"
-          actionHref="/director/class-templates/new"
-        />
-      )}
-
-      {/* ── Academy KPI Health — formal threshold framework ── */}
-      {/* Sprint 767: moved down — supporting analysis, not primary signal.              */}
-      {/* Director uses this to go deep on KPI trends; daily view lives in sections above. */}
-      <DirectorKpiHealthSection
-        activePlayers={activePlayers}
-        advancementReadyCount={advancementReadyCount}
-        curriculumExecutionPct={curriculumExecutionPct}
-        pendingWrapUpsCount={pendingWrapUpsCount}
-        improvingCount={improvingCount}
-        recapCompletionPct={recapCompletionPct}
-        stalledPlayerCount={stalledPlayerCount}
-      />
+      </div>
 
       {/* ── Academy Setup + Admin ─────────────────────────── */}
       {/* Sprint 765: moved from top to bottom to reduce cognitive load.      */}
@@ -1188,5 +1220,42 @@ function SessionStatusPill({ status }: { status: string }) {
     <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${styles[status] ?? styles.planned}`}>
       {label[status] ?? status}
     </span>
+  )
+}
+
+// ── Collapsible Section (Sprint 813 — Daily Command) ───────────────────────────
+// Pure HTML <details>/<summary> — no client state, works as Server Component.
+// group-open:rotate-180 fires via Tailwind 3 when details[open] ancestor has class="group".
+// defaultOpen={false} renders open={undefined} so the section starts collapsed.
+
+function CollapsibleSection({
+  title,
+  badge,
+  defaultOpen = false,
+  children,
+}: {
+  title: string
+  badge?: number
+  defaultOpen?: boolean
+  children: ReactNode
+}) {
+  return (
+    <details open={defaultOpen || undefined} className="group">
+      <summary
+        className="list-none cursor-pointer flex items-center gap-2.5 px-4 py-3 rounded-xl transition-colors hover:bg-surface-raised"
+        style={{ background: 'var(--color-surface, #111111)', border: '1px solid var(--color-border, #222222)' }}
+      >
+        <ChevronDown className="w-3.5 h-3.5 text-text-muted shrink-0 transition-transform duration-200 group-open:rotate-180" />
+        <p className="flex-1 text-xs font-semibold text-text-secondary">{title}</p>
+        {badge !== undefined && badge > 0 && (
+          <span className="text-[10px] font-mono font-bold text-status-orange bg-status-orange/10 border border-status-orange/30 px-1.5 py-0.5 rounded-full leading-none">
+            {badge}
+          </span>
+        )}
+      </summary>
+      <div className="pt-4 space-y-4">
+        {children}
+      </div>
+    </details>
   )
 }

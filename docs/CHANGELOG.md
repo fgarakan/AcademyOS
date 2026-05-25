@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-25 — Sprint 813 — Director Daily Command Landing Page V1
+
+- **Modified** `src/app/director/page.tsx` — restructured `/director` landing from scrolling dashboard into no-scroll Daily Command screen. Added Today's Pulse strip (3 compact stat tiles: review queue, player attention, sessions this week — each a direct Link, no new data fetches). Wrapped sections 4–12 (Sessions This Week, Quick Actions, Academy Metrics, Alerts & Placement, Analytics) in 5 `CollapsibleSection` panels, all `defaultOpen={false}` (closed by default). Added `CollapsibleSection` function at bottom of file — pure HTML `<details>`/`<summary>`, no client state, Server Component compatible, `group-open:rotate-180` chevron via Tailwind 3. No data removed — all previous content preserved inside collapsed panels. No DONNA routing, data fetches, migrations, or RLS touched.
+- **Created** `docs/DIRECTOR_DAILY_COMMAND_LANDING_PAGE_813.md` — sprint rationale, Today's Pulse tile spec, CollapsibleSection design decisions, safety checklist
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 812 — DONNA + Dashboard Post-811 Re-Audit Certification V1
 
 - **Audit-only sprint** — no source code changes
