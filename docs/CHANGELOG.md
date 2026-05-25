@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-25 — Sprint 812 — DONNA + Dashboard Post-811 Re-Audit Certification V1
+
+- **Audit-only sprint** — no source code changes
+- Full re-audit of DONNA side panel, persistence, command understanding, and Director Dashboard after Sprint 811 context persistence lift
+- **Post-Sprint 811 scores:**
+  - DONNA Side Panel: **82/100** (unchanged — Sprint 811 made no panel changes)
+  - DONNA Persistence: **83/100** (was 72/100 — **+11 pts** from Sprint 811 persistence lift)
+  - Command Understanding: **80/100** (unchanged — Sprint 811 made no classifier changes)
+  - Dashboard Cognitive Load: **80/100** (unchanged — Sprint 811 made no dashboard changes)
+- **Sprint 812 composite: 81.4/100** (was 79.2/100, **+2.2 pts** from Sprint 811; **+27.6 pts** since Sprint 799)
+- **Grade: A- (81/100)** — persistence lift confirmed; desktop director workflow clean end-to-end
+- **Sprint 811 prediction accuracy:** Predicted ~81.8 composite — actual 81.4 (within rounding ✅)
+- **Remaining gaps:** Mobile panel usability (6/10); Stop/Start listening not text-commandable; no stale-context indicator for preserved `contextSummary`; AI Suggestions card alongside AcademyAlertsPanel
+- **Demo-ready:** Desktop YES; mobile partial
+- **Roadmap to 90+:** Sprint 813 — mobile panel usability lift (+2.0 composite pts at 40% weight); Sprint 813 also candidate for Stop/Start listening phrase map (+1.0 composite pts); projected 90+ at Sprint 816
+- **Created** `docs/DONNA_DASHBOARD_POST_811_CERTIFICATION_812.md` — full per-dimension re-scoring, 799–812 commit table, predicted vs actual table, roadmap to 90+
+- TypeScript: clean (audit sprint — no source changes)
+
+---
+
 ## 2026-05-25 — Sprint 811 — DONNA Context Persistence Lift V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — removed `setContextSummary(null)`, `setSuggestions([])`, and `setReviewQueueData(null)` from route-change `useEffect` (lines 1093, 1094, 1098). All three now persist across director navigation, matching the behavior established for `commandResponse` in Sprint 801. Added Sprint 811 comments for each explaining intentional persistence and remaining clear paths. `closePanel()` still clears all three (lines 896, 897, 901); explicit dismiss still clears `contextSummary` (line 3860); `handleContextSummary()` still clears both before re-fetch (lines 2212–2213); fetch error still clears `reviewQueueData` (line 2201).
