@@ -1086,7 +1086,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setGenericDraft(null)
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
-    setCommandResponse(null)
+    // Sprint 801 — commandResponse intentionally NOT cleared on route change.
+    // DONNA's answer now persists when the director navigates (e.g. clicks a link in the answer).
+    // It clears on: panel close, explicit dismiss, new submission, mode change, or closePanel().
     setActionPreview(null)
     setContextSummary(null)
     setSuggestions([])

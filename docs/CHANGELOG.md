@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-25 — Sprint 801 — DONNA Persistence Fix V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx`:
+  - Removed `setCommandResponse(null)` from the route-change `useEffect` — DONNA's answer now persists when the director navigates to another page
+  - `commandResponse` still clears on: panel close (`closePanel()`), new submission, explicit dismiss, and mode change — all other clear paths preserved
+  - Added code comment documenting the intentional persistence behavior and its clear conditions
+  - `cooThread` (COO conversation thread) was already preserved across route changes (Sprint 683); `commandResponse` now matches that behavior
+- **Created** `docs/DONNA_PERSISTENCE_FIX_801.md` — sprint doc with persistence matrix, before/after table, and safety guardrails checklist
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 800 — DONNA Side Panel Simplification V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx`:
