@@ -232,6 +232,8 @@ import type { DirectorActionPreview } from '@/lib/donna/directorActionPreview'
 import { dispatchUIIntent, getAvailableActionsForContext } from '@/lib/donna/donnaUIActionDispatcher'
 import { getOperatorById, getOperatorStep } from '@/lib/donna/donnaUIGuidedOperators'
 import type { UIActionRole, UIActionSafetyClass } from '@/lib/donna/donnaUIActionRegistry'
+// Sprint 780 — Daily brief intent registry (replaces inline isDailyBriefPhrase)
+import { matchesDailyBriefIntent } from '@/lib/donna/donnaIntentClassifier'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -1339,8 +1341,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       return
     }
 
-    // 5.55. Sprint 369 — Daily brief intent
-    if (isDailyBriefPhrase(lower)) {
+    // 5.55. Sprint 780 — Daily brief intent (expanded phrase map via matchesDailyBriefIntent)
+    if (matchesDailyBriefIntent(text)) {
       void handleFetchDailyBrief()
       return
     }
@@ -1893,24 +1895,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     )
   }
 
-  // Returns true if the phrase is a daily brief intent.
-  function isDailyBriefPhrase(lower: string): boolean {
-    return (
-      lower.includes("what's happening today") ||
-      lower.includes('daily brief') ||
-      lower.includes('morning brief') ||
-      lower.includes("what's going on today") ||
-      lower.includes('brief me') ||
-      lower.includes('give me a brief') ||
-      lower.includes('whats happening today') ||
-      lower.includes('today brief')
-    )
-  }
-
   // Returns true if the phrase is a review queue intent.
+  // Sprint 780: removed 'what needs my attention' — reclassified to daily_brief intent family
+  // via matchesDailyBriefIntent (fires at step 5.55, before this check at step 5.5).
+  // Review queue remains reachable via: "show review queue", "open review queue",
+  // "pending review", "what needs approval", "pending approvals", etc.
   function isReviewQueuePhrase(lower: string): boolean {
     return (
-      lower.includes('what needs my attention') ||
       lower.includes('show review queue') ||
       lower.includes('open review queue') ||
       lower.includes('review queue') ||
@@ -2826,8 +2817,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       return
     }
 
-    // Daily brief intent — Sprint 369
-    if (isDailyBriefPhrase(text.toLowerCase())) {
+    // Daily brief intent — Sprint 780 (expanded phrase map via matchesDailyBriefIntent)
+    if (matchesDailyBriefIntent(text)) {
       void handleFetchDailyBrief()
       setTypedText('')
       return

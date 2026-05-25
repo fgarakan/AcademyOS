@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-25 — Sprint 780 — DONNA Natural Intent Understanding V1
+
+- Added `matchesDailyBriefIntent(text: string): boolean` export to `src/lib/donna/donnaIntentClassifier.ts` — canonical `daily_brief` intent family registry; 18 patterns across 5 phrase families (agenda, day-start, today-activity, focus/priority, review/attention); normalization pipeline strips trailing punctuation, expands apostrophe contractions, removes filler words
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — 5 surgical changes:
+  - Added import of `matchesDailyBriefIntent` from `donnaIntentClassifier`
+  - Replaced `isDailyBriefPhrase(lower)` in voice path (step 5.55) with `matchesDailyBriefIntent(text)` — raw text, normalization internal
+  - Replaced `isDailyBriefPhrase(text.toLowerCase())` in typed-text path with `matchesDailyBriefIntent(text)`
+  - Removed `'what needs my attention'` from `isReviewQueuePhrase` — reclassified to `daily_brief` intent; review queue remains reachable via "show review queue", "pending review", "what needs approval", etc.
+  - Deleted dead `isDailyBriefPhrase` function (8 patterns, no normalization) — fully superseded by `matchesDailyBriefIntent`
+- Phrase coverage: 2 of 15 target phrases → 15 of 15; 4 mis-routed phrases corrected; 9 misses closed
+- No new state. No new API. No DB calls. No mutations. `handleFetchDailyBrief` and `/api/donna/brief` unchanged.
+- No SQL, RLS, migrations, env, seed changes.
+- TypeScript: clean
+
+---
+
 ## 2026-05-25 — Sprint 779 — DONNA Operator Step Advance Completion V1
 
 - Modified `src/components/assistant/DonnaAssistantButton.tsx` — wired call site for the previously uncommitted `handleOperatorStepAdvance` function (48 lines, labeled Sprint 761, never staged)

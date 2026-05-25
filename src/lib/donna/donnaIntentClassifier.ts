@@ -453,3 +453,66 @@ export function formatDirectorIntentLabel(intent: DonnaDirectorIntent): string {
   }
   return labels[intent]
 }
+
+// ── Sprint 780 — Daily Brief Intent Matcher ───────────────────────────────────
+// Canonical registry for the `daily_brief` intent family.
+// Exported so it can replace the inline isDailyBriefPhrase helper in
+// DonnaAssistantButton.tsx without duplicating pattern logic.
+//
+// Normalization applied before matching:
+//   • lowercase + trim
+//   • strip trailing ? ! .
+//   • expand common apostrophe contractions (what's → what is, etc.)
+//   • strip low-signal filler words (please, just, hey, ok, okay, so)
+//   • collapse runs of whitespace
+//
+// Pure function — no DB, no API, no mutations. Returns boolean only.
+
+function normalizeDailyBriefInput(raw: string): string {
+  return raw
+    .toLowerCase()
+    .trim()
+    .replace(/[?!.]+$/, '')
+    .replace(/what's\b/g, 'what is')
+    .replace(/\bwhats\b/g, 'what is')
+    .replace(/what'll\b/g, 'what will')
+    .replace(/\bi'm\b/g, 'i am')
+    .replace(/\bdon't\b/g, 'do not')
+    .replace(/\b(please|just|quickly|hey|ok|okay|so)\b/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+// Patterns are tested against the normalized string via substring match.
+// Order is documentation only — all patterns are tested on every call.
+const DAILY_BRIEF_PATTERNS: readonly string[] = [
+  // ── Existing patterns (preserved from isDailyBriefPhrase) ─────────────────
+  'daily brief',
+  'morning brief',
+  'brief me',
+  'give me a brief',
+  'today brief',
+  // ── Agenda intent family ──────────────────────────────────────────────────
+  'on the agenda',        // what's on the agenda / what is on the agenda
+  'my agenda',            // what's my agenda / what is my agenda / start my agenda
+  // ── Day-start intent family ───────────────────────────────────────────────
+  'start my day',
+  'walk me through today',
+  // ── Today-activity intent family ─────────────────────────────────────────
+  'what is happening today',   // normalised from: what's happening today
+  'what is going on today',    // normalised from: what's going on today
+  'what do i need to do today',
+  // ── Focus / priority intent family ───────────────────────────────────────
+  'what should i focus on',
+  'what are my priorities',
+  'what should i handle first',
+  // ── Review / attention intent family ─────────────────────────────────────
+  'what needs my attention',   // reclassified from isReviewQueuePhrase
+  'what do i need to review',
+  'anything urgent',           // intercepted before isAttentionPhrase
+] as const
+
+export function matchesDailyBriefIntent(text: string): boolean {
+  const n = normalizeDailyBriefInput(text)
+  return DAILY_BRIEF_PATTERNS.some(p => n.includes(p))
+}
