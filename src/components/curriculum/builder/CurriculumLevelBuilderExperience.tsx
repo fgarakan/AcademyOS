@@ -7,7 +7,7 @@ import type { CurriculumExplorerData, CurriculumLevel } from '@/lib/backend/curr
 import { CurriculumLevelBuilderGrid, type ActivePanel } from './CurriculumLevelBuilderGrid'
 import { CurriculumLevelBuilderShell } from './CurriculumLevelBuilderShell'
 import { CurriculumDonnaPanel } from './CurriculumDonnaPanel'
-import { CurriculumChangeDraftPanel } from './CurriculumChangeDraftPanel'
+import { CurriculumChangeDraftPanel, type ChangeType } from './CurriculumChangeDraftPanel'
 
 // ─── Stage config ─────────────────────────────────────────────────────────────
 
@@ -51,6 +51,20 @@ const STAGE_INFO: Record<string, StageInfo> = {
   },
 }
 
+// ─── DONNA action label → ChangeType pre-selection (no DB mutation, no auto-submit) ──
+
+function actionLabelToChangeType(label: string): ChangeType | null {
+  switch (label) {
+    case 'Add a skill':          return 'add_drill'
+    case 'Add a drill':          return 'add_drill'
+    case 'Add an assessment gate': return 'add_gate'
+    case 'Add a fitness exercise': return 'add_fitness'
+    case 'Add a player mission':   return 'add_mission'
+    case 'Rewrite this level':     return 'rewrite_level'
+    default:                       return null
+  }
+}
+
 // ─── activePanel → DONNA activeAction mapping ─────────────────────────────────
 
 function panelToAction(panel: ActivePanel): string | undefined {
@@ -75,6 +89,14 @@ interface Props {
 
 export function CurriculumLevelBuilderExperience({ level, explorerData }: Props) {
   const [activePanel, setActivePanel] = useState<ActivePanel>(null)
+  /** Pre-selects a change type in the DraftPanel when a DONNA chip is clicked.
+   *  Local state only — no DB mutation, no auto-submit. User must still type and submit. */
+  const [pendingDraftType, setPendingDraftType] = useState<ChangeType | null>(null)
+
+  function handleDonnaAction(label: string) {
+    const ct = actionLabelToChangeType(label)
+    if (ct) setPendingDraftType(ct)
+  }
 
   const stageKey  = level.stage ?? ''
   const stageInfo = STAGE_INFO[stageKey] ?? null
@@ -215,7 +237,11 @@ export function CurriculumLevelBuilderExperience({ level, explorerData }: Props)
         />
 
         {/* ── Propose a Change panel ───────────────────────────────── */}
-        <CurriculumChangeDraftPanel levelId={level.id} levelName={level.display_name} />
+        <CurriculumChangeDraftPanel
+          levelId={level.id}
+          levelName={level.display_name}
+          externalChangeType={pendingDraftType}
+        />
 
         {/* Advanced editor — collapsible */}
         <details className="group">
@@ -242,6 +268,7 @@ export function CurriculumLevelBuilderExperience({ level, explorerData }: Props)
           mode="level"
           levelName={level.display_name}
           activeAction={activeAction}
+          onAction={handleDonnaAction}
         />
       </aside>
     </div>

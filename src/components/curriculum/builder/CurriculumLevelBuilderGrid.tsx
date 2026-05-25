@@ -57,7 +57,7 @@ function EmptyBlock({ copy, onDonna }: { copy: string; onDonna: () => void }) {
       <button
         onClick={onDonna}
         className="text-[10px] transition-opacity hover:opacity-70"
-        style={{ color: '#11d9df' }}
+        style={{ color: '#C8FF00' }}
       >
         Ask DONNA to draft one
       </button>
@@ -95,7 +95,7 @@ function SectionCard({
       className="flex flex-col rounded-2xl overflow-hidden transition-all"
       style={{
         background: 'rgba(0,0,0,0.30)',
-        border: `1px solid ${isActive ? 'rgba(17,217,223,0.22)' : 'rgba(255,255,255,0.07)'}`,
+        border: `1px solid ${isActive ? 'rgba(200,255,0,0.22)' : 'rgba(255,255,255,0.07)'}`,
       }}
     >
       {/* Top color bar */}
@@ -108,7 +108,7 @@ function SectionCard({
           <span style={{ color: 'rgba(255,255,255,0.35)' }}>{icon}</span>
           <p className="text-[12px] font-semibold text-text-primary">{title}</p>
           <span
-            className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
             style={{ background: status.bg, color: status.color }}
           >
             {status.label}
@@ -133,9 +133,9 @@ function SectionCard({
               onClick={onDonna}
               className="flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded-lg transition-colors"
               style={{
-                border: '1px solid rgba(17,217,223,0.22)',
-                color: '#11d9df',
-                background: isActive ? 'rgba(17,217,223,0.10)' : 'rgba(17,217,223,0.05)',
+                border: '1px solid rgba(200,255,0,0.22)',
+                color: '#C8FF00',
+                background: isActive ? 'rgba(200,255,0,0.10)' : 'rgba(200,255,0,0.05)',
               }}
             >
               <Sparkles className="w-2.5 h-2.5" />
@@ -149,7 +149,7 @@ function SectionCard({
               Add
             </button>
           </div>
-          <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.18)' }}>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.18)' }}>
             Draft only &middot; director approval required
           </p>
         </div>

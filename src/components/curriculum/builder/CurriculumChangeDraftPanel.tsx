@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Shield, Sparkles, CheckCircle2, AlertTriangle, ChevronRight } from 'lucide-react'
 import { saveCurriculumDraftAction } from '@/lib/actions/curriculumDraft'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ChangeType = 'add_drill' | 'add_gate' | 'add_fitness' | 'add_mission' | 'rewrite_level'
+export type ChangeType = 'add_drill' | 'add_gate' | 'add_fitness' | 'add_mission' | 'rewrite_level'
 
 const CHANGE_TYPE_OPTIONS: { value: ChangeType; label: string; hint: string }[] = [
   {
@@ -42,12 +42,21 @@ const CHANGE_TYPE_OPTIONS: { value: ChangeType; label: string; hint: string }[] 
 interface Props {
   levelId: string
   levelName: string
+  /** Optional pre-selection from DONNA chip click — local state only, no DB mutation */
+  externalChangeType?: ChangeType | null
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function CurriculumChangeDraftPanel({ levelId, levelName }: Props) {
+export function CurriculumChangeDraftPanel({ levelId, levelName, externalChangeType }: Props) {
   const [changeType, setChangeType] = useState<ChangeType>('add_drill')
+
+  // Sync pre-selection from DONNA chip — local state only, no DB mutation, no auto-submit
+  useEffect(() => {
+    if (externalChangeType) {
+      setChangeType(externalChangeType)
+    }
+  }, [externalChangeType])
   const [description, setDescription] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<

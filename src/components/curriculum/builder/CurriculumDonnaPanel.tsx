@@ -110,12 +110,12 @@ const ADD_FITNESS_DEFAULTS = {
 
 function getModeDefaults(mode: CurriculumDonnaPanelMode) {
   switch (mode) {
-    case 'map':          return MAP_DEFAULTS
-    case 'level':        return LEVEL_DEFAULTS
+    case 'map':           return MAP_DEFAULTS
+    case 'level':         return LEVEL_DEFAULTS
     case 'guided_review': return GUIDED_DEFAULTS
-    case 'impact':       return IMPACT_DEFAULTS
-    case 'add_drill':    return ADD_DRILL_DEFAULTS
-    case 'add_fitness':  return ADD_FITNESS_DEFAULTS
+    case 'impact':        return IMPACT_DEFAULTS
+    case 'add_drill':     return ADD_DRILL_DEFAULTS
+    case 'add_fitness':   return ADD_FITNESS_DEFAULTS
   }
 }
 
@@ -141,9 +141,9 @@ export function CurriculumDonnaPanel({
       ? `You're ${mode === 'level' ? 'editing' : 'reviewing'} ${levelName}. ${defaults.promptTitle}`
       : defaults.promptTitle
   )
-  const resolvedBody = promptBody ?? defaults.promptBody
-  const resolvedActions = actions ?? defaults.actions
-  const resolvedPlaceholder = inputPlaceholder ?? 'Ask DONNA anything…'
+  const resolvedBody        = promptBody        ?? defaults.promptBody
+  const resolvedActions     = actions           ?? defaults.actions
+  const resolvedPlaceholder = inputPlaceholder  ?? 'Ask DONNA anything…'
 
   function handleActionClick(action: CurriculumDonnaPanelAction) {
     onAction?.(action.label)
@@ -159,21 +159,21 @@ export function CurriculumDonnaPanel({
       className="flex flex-col rounded-2xl overflow-hidden"
       style={{
         background: '#060f0d',
-        border: '1px solid rgba(17,217,223,0.16)',
-        borderTop: '2px solid rgba(17,217,223,0.55)',
+        border: '1px solid rgba(200,255,0,0.16)',
+        borderTop: '2px solid rgba(200,255,0,0.55)',
       }}
     >
       {/* Header */}
       <div
         className="flex items-center gap-3 px-4 py-3.5 border-b"
-        style={{ borderColor: 'rgba(17,217,223,0.10)' }}
+        style={{ borderColor: 'rgba(200,255,0,0.10)' }}
       >
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-bold"
           style={{
-            background: 'rgba(17,217,223,0.10)',
-            border: '1px solid rgba(17,217,223,0.28)',
-            color: '#11d9df',
+            background: 'rgba(200,255,0,0.10)',
+            border: '1px solid rgba(200,255,0,0.28)',
+            color: '#C8FF00',
           }}
         >
           D
@@ -184,11 +184,11 @@ export function CurriculumDonnaPanel({
               DONNA
             </p>
             <span
-              className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none"
+              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none"
               style={{
-                background: 'rgba(17,217,223,0.12)',
-                border: '1px solid rgba(17,217,223,0.22)',
-                color: '#11d9df',
+                background: 'rgba(200,255,0,0.12)',
+                border: '1px solid rgba(200,255,0,0.22)',
+                color: '#C8FF00',
               }}
             >
               Active
@@ -198,7 +198,7 @@ export function CurriculumDonnaPanel({
             AI Curriculum Assistant
           </p>
         </div>
-        <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: '#11d9df' }} />
+        <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: '#C8FF00' }} />
       </div>
 
       {/* Prompt card */}
@@ -206,8 +206,8 @@ export function CurriculumDonnaPanel({
         <div
           className="rounded-xl px-3.5 py-3 space-y-1.5"
           style={{
-            background: 'rgba(17,217,223,0.05)',
-            border: '1px solid rgba(17,217,223,0.12)',
+            background: 'rgba(200,255,0,0.05)',
+            border: '1px solid rgba(200,255,0,0.12)',
           }}
         >
           <p className="text-[12px] font-semibold text-text-primary leading-snug">
@@ -224,15 +224,15 @@ export function CurriculumDonnaPanel({
         {resolvedActions.map((action) => {
           const isActive = activeAction === action.label
           const chipStyle: React.CSSProperties = {
-            background: isActive ? 'rgba(17,217,223,0.10)' : 'rgba(17,217,223,0.03)',
-            border: `1px solid ${isActive ? 'rgba(17,217,223,0.30)' : 'rgba(17,217,223,0.08)'}`,
-            color: isActive ? '#11d9df' : '#9aa5b1',
+            background: isActive ? 'rgba(200,255,0,0.10)' : 'rgba(200,255,0,0.03)',
+            border: `1px solid ${isActive ? 'rgba(200,255,0,0.30)' : 'rgba(200,255,0,0.08)'}`,
+            color: isActive ? '#C8FF00' : '#9aa5b1',
           }
           const inner = (
             <>
               <ChevronRight
                 className="w-3 h-3 shrink-0 mt-px"
-                style={{ color: isActive ? '#11d9df' : '#4a5568' }}
+                style={{ color: isActive ? '#C8FF00' : '#4a5568' }}
               />
               <span className="text-[11px] leading-snug flex-1">{action.label}</span>
             </>
@@ -268,15 +268,15 @@ export function CurriculumDonnaPanel({
       {healthItems && healthItems.length > 0 && (
         <div
           className="mx-4 mb-3 rounded-xl overflow-hidden"
-          style={{ border: '1px solid rgba(17,217,223,0.08)' }}
+          style={{ border: '1px solid rgba(200,255,0,0.08)' }}
         >
           <div
             className="px-3 py-2 border-b"
-            style={{ borderColor: 'rgba(17,217,223,0.08)' }}
+            style={{ borderColor: 'rgba(200,255,0,0.08)' }}
           >
             <p
-              className="text-[9px] font-semibold uppercase tracking-widest"
-              style={{ color: 'rgba(17,217,223,0.55)' }}
+              className="text-[10px] font-semibold uppercase tracking-widest"
+              style={{ color: 'rgba(200,255,0,0.55)' }}
             >
               Curriculum Health
             </p>
@@ -285,7 +285,7 @@ export function CurriculumDonnaPanel({
             <div
               key={item.label}
               className="flex items-center justify-between px-3 py-2 border-b last:border-b-0"
-              style={{ borderColor: 'rgba(17,217,223,0.06)' }}
+              style={{ borderColor: 'rgba(200,255,0,0.06)' }}
             >
               <div className="flex items-center gap-2">
                 <span
@@ -310,13 +310,13 @@ export function CurriculumDonnaPanel({
       {/* Bottom input */}
       <div
         className="px-4 py-3 mt-auto border-t"
-        style={{ borderColor: 'rgba(17,217,223,0.10)' }}
+        style={{ borderColor: 'rgba(200,255,0,0.10)' }}
       >
         <div
           className="flex items-center gap-2 rounded-xl px-3 py-2"
           style={{
-            background: 'rgba(17,217,223,0.04)',
-            border: '1px solid rgba(17,217,223,0.12)',
+            background: 'rgba(200,255,0,0.04)',
+            border: '1px solid rgba(200,255,0,0.12)',
           }}
         >
           <input
@@ -333,12 +333,12 @@ export function CurriculumDonnaPanel({
             className="shrink-0 transition-opacity disabled:opacity-30 hover:opacity-70"
             aria-label="Send"
           >
-            <Send className="w-3.5 h-3.5" style={{ color: '#11d9df' }} />
+            <Send className="w-3.5 h-3.5" style={{ color: '#C8FF00' }} />
           </button>
         </div>
         <p
-          className="text-[9px] text-center mt-1.5"
-          style={{ color: 'rgba(17,217,223,0.30)' }}
+          className="text-[10px] text-center mt-1.5"
+          style={{ color: 'rgba(200,255,0,0.30)' }}
         >
           Drafts only · nothing applies without your approval
         </p>

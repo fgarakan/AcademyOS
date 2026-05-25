@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-25 — Sprint 798 — Curriculum Builder DONNA Grid Visual Pass V1
+
+- **Modified** `src/components/curriculum/builder/CurriculumDonnaPanel.tsx`:
+  - Replaced all 20+ teal accent values (`#11d9df`, `rgba(17,217,223,...)`) with AcademyOS lime (`#C8FF00`, `rgba(200,255,0,...)`) throughout: outer border, border-top, header separator, avatar ring + text, Active badge, Sparkles icon, prompt card, action chips (active + inactive), health section borders + label, input field border + bg, Send icon, footer disclaimer
+  - Fixed 3× `text-[9px]` → `text-[10px]`: Active badge, Curriculum Health label, bottom disclaimer
+  - Semantic curriculum stage colors (red/orange/green/yellow/purple in `healthItems`) preserved untouched
+- **Modified** `src/components/curriculum/builder/CurriculumLevelBuilderGrid.tsx`:
+  - Fixed teal "Ask DONNA to draft one" EmptyBlock button color: `#11d9df` → `#C8FF00`
+  - Fixed teal SectionCard active border: `rgba(17,217,223,0.22)` → `rgba(200,255,0,0.22)`
+  - Fixed teal "Ask DONNA" action button: border, color, background active/inactive → lime equivalents
+  - Fixed 2× `text-[9px]`: status chip label → `text-[10px]`; "Draft only" safety note → `text-[10px]`
+- **Modified** `src/components/curriculum/builder/CurriculumChangeDraftPanel.tsx`:
+  - Exported `ChangeType` (was unexported `type`)
+  - Added `useEffect` import
+  - Added optional `externalChangeType?: ChangeType | null` prop to `Props`
+  - Added `useEffect` that syncs `changeType` state when `externalChangeType` changes — local state only, no DB mutation, no auto-submit; user must still type description and manually click Create Draft
+- **Modified** `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx`:
+  - Imported `type ChangeType` from `CurriculumChangeDraftPanel`
+  - Added `actionLabelToChangeType()` mapper: 6 DONNA chip labels → `ChangeType` values; unrecognised labels → `null`
+  - Added `pendingDraftType` state (`ChangeType | null`)
+  - Added `handleDonnaAction()` handler that resolves chip label to change type and sets local state
+  - Wired `onAction={handleDonnaAction}` on the right `CurriculumDonnaPanel` aside
+  - Passed `externalChangeType={pendingDraftType}` to `CurriculumChangeDraftPanel`
+  - No database mutation, no auto-submit, no approval bypass — user must still type and confirm
+- **Created** `docs/CURRICULUM_BUILDER_DONNA_GRID_VISUAL_PASS_798.md` — sprint doc with change table, chip-to-draft wire diagram, safety guardrails checklist, before/after typography table
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 797 — Curriculum Builder 10/10 Re-Score + Certification V1
 
 - **Audit-only sprint** — no source code changes
