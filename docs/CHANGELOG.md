@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-25 — Sprint 816 — DONNA Guided Navigation + Highlight Architecture V1
+
+- **Architecture-only sprint** — no source code changes
+- Full audit of 12 guided navigation questions: which commands navigate vs. answer, existing router helpers, page focus target gaps, highlight implementation strategy
+- **DONNA Action Modes defined:** (1) Answer Mode — sidebar-only; (2) Navigate + Highlight Mode — routes + teal glow on target; (3) Guided Builder Mode — multi-step in workspace
+- **`DonnaFocusTarget` type specified:** `route`, `targetId`, `label`, `reason`, `highlightStyle` ('teal-glow' | 'warning'), `expiresAt` — sessionStorage-backed, no DB, no private data
+- **Command-to-route map defined:** 14 natural language commands mapped to routes + focus target IDs + DONNA arrival messages
+- **Teal highlight behavior spec:** `data-donna-focus-id` attributes + `donna-focus-ring` CSS class + `DonnaHighlightBanner` component (floating teal badge "DONNA is pointing here", auto-dismiss 8s, manual dismiss)
+- **Integration point:** `dispatchUIIntent()` result extended with optional `focusTarget` field; `setDonnaFocusTarget()` called before `router.push()`
+- **Sprint sequence 817–825 defined:** Runtime (817) → Daily Command targets (818) → Template Builder (819) → Player Directory (820) → Voice Singleton (821) → Dev Tools Guard (822) → Panel Simplification (823) → Teal Brand (824) → Certification (825)
+- **Created** `docs/DONNA_GUIDED_NAVIGATION_HIGHLIGHT_ARCHITECTURE_816.md` — full architecture document
+- TypeScript: clean (architecture sprint — no source changes)
+
+---
+
 ## 2026-05-25 — Sprint 815 — DONNA Unified Assistant Experience Audit V1
 
 - **Audit-only sprint** — no source code changes
