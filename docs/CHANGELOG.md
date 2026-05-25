@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-25 — Sprint 799 — DONNA Dashboard UX Recovery Audit V1
+
+- **Audit-only sprint** — no source code changes
+- Full diagnostic audit of DONNA side panel, persistence architecture, command understanding, and Director Dashboard cognitive load
+- **Scores:** DONNA Side Panel **58/100** · DONNA Persistence (experience) **45/100** · Command Understanding **55/100** · Dashboard Cognitive Load **40/100** · Weighted composite **~57/100**
+- **Top 10 blockers identified:** commandResponse cleared on route change, 8-badge header overload, 6-7 chip overload, no "Close Donna" command, no "Open that" follow-up, 3× "needs attention" surfaces, 8-card KPI section above fold, no inline DONNA context on dashboard, status badge visual hierarchy broken, DonnaDashboardPresenceCTA duplication at page bottom
+- **Top 5 quick wins identified:** reduce header badges to 1 priority at a time, reduce chips to 4, preserve commandResponse across route changes, wire "Close Donna" text command, move KPI section below action surfaces
+- **Sprint roadmap fixed:** Sprints 800–805 targets defined — side panel simplification, persistence fix, command understanding, dashboard rebuild, DONNA-dashboard integration, final certification
+- **Created** `docs/DONNA_DASHBOARD_UX_RECOVERY_AUDIT_799.md` — full audit with per-dimension scoring, blocker list, quick wins, and per-sprint file targets
+- TypeScript: clean (audit sprint — no source changes)
+
+---
+
 ## 2026-05-25 — Sprint 798 — Curriculum Builder DONNA Grid Visual Pass V1
 
 - **Modified** `src/components/curriculum/builder/CurriculumDonnaPanel.tsx`:
