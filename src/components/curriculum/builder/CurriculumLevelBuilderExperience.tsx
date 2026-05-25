@@ -7,6 +7,7 @@ import type { CurriculumExplorerData, CurriculumLevel } from '@/lib/backend/curr
 import { CurriculumLevelBuilderGrid, type ActivePanel } from './CurriculumLevelBuilderGrid'
 import { CurriculumLevelBuilderShell } from './CurriculumLevelBuilderShell'
 import { CurriculumDonnaPanel } from './CurriculumDonnaPanel'
+import { CurriculumChangeDraftPanel } from './CurriculumChangeDraftPanel'
 
 // ─── Stage config ─────────────────────────────────────────────────────────────
 
@@ -185,6 +186,9 @@ export function CurriculumLevelBuilderExperience({ level, explorerData }: Props)
           activePanel={activePanel}
           onActivePanelChange={setActivePanel}
         />
+
+        {/* ── Propose a Change panel ───────────────────────────────── */}
+        <CurriculumChangeDraftPanel levelId={level.id} levelName={level.display_name} />
 
         {/* Advanced editor — collapsible */}
         <details className="group">

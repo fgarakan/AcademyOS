@@ -50,7 +50,7 @@ export async function saveCurriculumDraftAction(input: {
       input_method: 'typed',
       raw_input: input.description,
       transcript: input.description,
-      processing_status: 'processed',
+      processing_status: 'normalized',
       normalized_intent: { source: 'curriculum_builder', change_type: input.changeType, level_id: input.levelId } as unknown as Json,
     })
     .select('id')

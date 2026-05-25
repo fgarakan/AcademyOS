@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-25 — Sprint 794 — DONNA Curriculum Draft Operator V1
+
+- **Modified** `src/lib/actions/curriculumDraft.ts`:
+  - Fixed root cause bug: `processing_status: 'processed'` → `'normalized'`; `'processed'` was not a valid CHECK constraint value on `voice_commands` — caused every draft insert to fail silently; `'normalized'` is valid and semantically correct for a typed curriculum draft
+  - No schema change, no migration; one-line application code fix
+  - `saveCurriculumDraftAction` now completes the full flow: voice_commands insert → proposed_actions insert → returns `{ ok: true, draftId }`; all safety invariants preserved (pending_review, low risk, no direct mutation)
+- **Created** `src/components/curriculum/builder/CurriculumChangeDraftPanel.tsx`:
+  - Client component rendered on every `/director/curriculum/level/[id]` page
+  - Change type selector: add_drill / add_gate / add_fitness / add_mission / rewrite_level
+  - Description textarea with change-type-aware placeholder
+  - Always-visible draft mode safety note (`Shield` icon, Review Queue link)
+  - Success state: green confirmation card + "Go to Review Queue" button + "Propose another" reset
+  - Error state: red card with action error message + "Try again" link
+  - Not production-gated — visible in all environments; previous `VoiceOverrideInputPanel` was production-gated; this panel is safe draft-only
+- **Modified** `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx`:
+  - Added `import { CurriculumChangeDraftPanel }` and rendered panel between `CurriculumLevelBuilderGrid` and the "Advanced Editor" `<details>` block
+- **Created** `docs/CURRICULUM_BUILDER_DONNA_DRAFT_OPERATOR_794.md` — full sprint doc with bug root cause analysis, component design, safety audit, score lift, remaining blockers
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+- Expected AIQS lift: ~87/100 → ~90/100; CB-2 DONNA Wiring 5/10 → 8/10
+
+---
+
 ## 2026-05-25 — Sprint 793 — Curriculum Builder Navigation Clarity V1
 
 - **Modified** `src/app/director/curriculum/page.tsx`:
