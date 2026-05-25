@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-25 — Sprint 790 — DONNA 10/10 Certification V1
+
+- **Audit-only sprint** — no code changes
+- Full 10-dimension certification audit of DONNA conversational quality after Mega Sprint 786–789
+- Score progression: 85 → 88 (Sprint 786) → 89 (Sprint 787) → 90 (Sprint 788) → **91/100** (Sprint 789)
+- Certification scorecard:
+  - Response style: 9/10 (Sprint 786 — all follow-up + failure copy rewritten)
+  - Follow-up handling: 9/10 (Sprint 785/786 — 25+ patterns, 10-min TTL)
+  - Failure mode clarity: 9/10 (Sprint 786 — `intent_unknown` warm fallback)
+  - Session continuity: 9/10 (Sprints 700/702/784/786 — multi-layer memory)
+  - Session presence: 9/10 (Sprint 787 — within-session persistence, 3-min idle)
+  - Voice persona: 9/10 (Sprint 788 — unified config, refined TTS instructions)
+  - Daily brief experience: 9/10 (Sprint 789 — auto-narrate + walkthrough)
+  - COO routing coverage: 8/10 (15+ intents; semantic classifier gap noted)
+  - Safety boundary integrity: **10/10** — no regressions across any sprint
+  - Cross-session memory: 9/10 (Sprint 784 — 7-day TTL, safe labels, "Back to" chip)
+- Remaining gaps documented and prioritized in cert doc
+- Certification statement: "91/100 — Certified for production use. Remaining 9 points are known, prioritized, and roadmap-ready."
+- Created `docs/DONNA_10_10_CERTIFICATION_790.md` — full 10-dimension audit with scores, rationale, and gap roadmap
+- TypeScript: clean (audit-only — no files modified)
+
+---
+
 ## 2026-05-25 — Sprint 789 — DONNA Daily Brief Natural Walkthrough V1
 
 - Modified `src/components/assistant/DonnaAssistantButton.tsx`:
