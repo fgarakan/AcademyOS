@@ -176,8 +176,9 @@ const FAILURE_MODES: Record<FailureModeKey, FailureMode> = {
 
   intent_unknown: {
     key: 'intent_unknown',
+    // Sprint 786 — warmer, less command-line
     userMessage:
-      "I'm not sure what you're asking. Try saying something like 'create a coach note' or 'create a class template'.",
+      "I didn't quite catch that. You can ask about today's brief, the review queue, players, or try asking in your own words.",
     developerMessage: 'classifyIntent returned intentType: unknown with confidence: low.',
     fallbackAction: 'none',
     autoRecoverable: true,

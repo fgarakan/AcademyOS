@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-05-25 — Sprint 786 — DONNA Response Style V1
+
+- Modified `src/lib/donna/donnaFollowUpResolver.ts` — rewrote all ~20 response strings to premium style:
+  - Responses reduced from 2–4 sentences to 1–2 sentences average
+  - "Opening the Review Queue now — that's where you can work through each item" → "I'll open the Review Queue — that's where you can go through each item"
+  - "The brief has N sections. M sections are high priority..." → "You've got N areas to look at today. M of them look higher priority..."
+  - "I can help with that — do you mean today's agenda..." → "Sure — are you asking about today's brief, something in the review queue, or this page specifically?"
+  - "Historical weekly data is available in the Reports section..." → "I don't have last week's data here, but I can show you what's happening today."
+  - All topic-shift responses warmed up; all recommendation responses tightened
+  - Added Sprint 786 style rules to file header (no routing changes, no logic changes)
+- Modified `src/components/assistant/donnaFailureModes.ts` — improved `intent_unknown` (most common fallback):
+  - Before: "I'm not sure what you're asking. Try saying something like 'create a coach note' or 'create a class template'."
+  - After: "I didn't quite catch that. You can ask about today's brief, the review queue, players, or try asking in your own words."
+- Modified `src/lib/donna/donnaSafeSessionMemory.ts` — polished `buildContinuityMessage` copy:
+  - Removed repetitive "Hi —" opener from all branches
+  - "Hi — you were working on 'X'. Want to continue?" → "You were working on 'X'. Want to pick up where you left off?"
+  - "Hi — earlier you were on the X. Do you want to continue there...?" → "You were on the X earlier. Want to go back there, or can I help with something here?"
+  - "Hi — you were asking about '...'" → "You were asking about '...' earlier. Still on that, or something new?"
+- Created `docs/DONNA_RESPONSE_STYLE_786.md` — full style audit with before/after table
+- Conversational quality: 85/100 → 88/100 (+3)
+- No routing logic changes. No DB/API changes. No migrations. No new components.
+- TypeScript: clean
+
+---
+
 ## 2026-05-25 — Sprint 785 — DONNA Conversational Depth V1
 
 - Created `src/lib/donna/donnaFollowUpResolver.ts` — pure TypeScript follow-up resolver:

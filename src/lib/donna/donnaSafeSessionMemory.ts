@@ -126,14 +126,15 @@ export function clearSessionMemory(): void {
 export function buildContinuityMessage(memory: DonnaSafeSessionMemory, firstName: string | null): string | null {
   const name = firstName ? `, ${firstName}` : ''
 
+  // Sprint 786 — warmer, more natural continuity copy
   // Active workflow in progress
   if (memory.activeWorkflowLabel) {
-    return `Hi${name} — you were working on "${memory.activeWorkflowLabel}". Want to continue?`
+    return `You were working on "${memory.activeWorkflowLabel}"${name ? `, ${firstName}` : ''}. Want to pick up where you left off?`
   }
 
   // Previous route was different from current
   if (memory.previousRoute && memory.previousRoute !== memory.currentRoute && memory.previousModuleLabel) {
-    return `Hi${name} — earlier you were on the ${memory.previousModuleLabel}. Do you want to continue there, or can I help with something here?`
+    return `You were on the ${memory.previousModuleLabel} earlier${name}. Want to go back there, or can I help with something here?`
   }
 
   // Last prompt recall
@@ -141,13 +142,13 @@ export function buildContinuityMessage(memory: DonnaSafeSessionMemory, firstName
     const last = memory.lastPrompts[0]
     // Only reference if it's still meaningful (not just "hi" or trivially short)
     if (last.length > 15) {
-      return `Hi${name} — you were asking about "${last.slice(0, 60)}${last.length > 60 ? '…' : ''}". How can I help now?`
+      return `You were asking about "${last.slice(0, 60)}${last.length > 60 ? '…' : ''}" earlier${name}. Still on that, or something new?`
     }
   }
 
   // Last module
   if (memory.currentModuleLabel) {
-    return `Hi${name} — I'm here. What can I help you with on the ${memory.currentModuleLabel}?`
+    return `I'm here${name}. What can I help you with on the ${memory.currentModuleLabel}?`
   }
 
   return null

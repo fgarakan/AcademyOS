@@ -1,5 +1,6 @@
 /**
  * Sprint 785 — DONNA Follow-Up Resolver V1
+ * Sprint 786 — Response Style polish applied to all copy
  *
  * Detects short follow-up phrases and resolves them using safe current-session
  * intent context. Fires ONLY after the operator guard and all explicit intent
@@ -12,6 +13,13 @@
  * - Context expires after 10 minutes of inactivity.
  * - Never bypasses the operator flow (operator guard runs before this at step 5.2).
  * - Never auto-executes approved actions.
+ *
+ * Response style rules (Sprint 786):
+ * - 1–3 sentences maximum.
+ * - Warm, calm, operationally sharp — not robotic, not hype.
+ * - Bullets only for 3+ concrete items (none in this file).
+ * - Always offer a clear next step.
+ * - Preserve safety and approval language.
  */
 
 // ── Context TTL ────────────────────────────────────────────────────────────────
@@ -167,19 +175,20 @@ function buildBriefAnaphoricResponse(context: DonnaSessionIntentContext, lower: 
   const highCount = context.lastResultHighPriorityCount ?? 0
 
   if (lower.startsWith('which')) {
+    // "Which ones?" — give a count summary, offer to navigate
     const urgentNote = highCount > 0
-      ? ` ${highCount} ${highCount === 1 ? 'section is' : 'sections are'} high priority.`
+      ? ` ${highCount} of them look higher priority.`
       : ''
     const text = sectionCount > 0
-      ? `The brief has ${sectionCount} section${sectionCount !== 1 ? 's' : ''}.${urgentNote} The Review Queue has the full item list — want me to open it?`
-      : `Today's brief is loaded. The Review Queue has the full item-by-item detail — want me to open it?`
+      ? `You've got ${sectionCount} area${sectionCount !== 1 ? 's' : ''} to look at today.${urgentNote} The Review Queue has the full list — want me to open it?`
+      : `Today's brief is ready. The Review Queue has the full item-by-item detail — want me to open it?`
     return { actionType: 'summarize', responseText: text, navigationHref: '/director/review', confidence: 'high' }
   }
 
-  // "show me", "open that", "open it", "the first one", etc.
+  // "show me", "open that", "open it", "the first one", etc. — navigate directly
   return {
     actionType: 'navigate',
-    responseText: `Opening the Review Queue now — that's where you can work through each item.`,
+    responseText: `I'll open the Review Queue — that's where you can go through each item.`,
     navigationHref: '/director/review',
     confidence: 'high',
   }
@@ -192,7 +201,7 @@ function buildBriefRecommendationResponse(context: DonnaSessionIntentContext): D
   if (highCount > 0) {
     return {
       actionType: 'recommend',
-      responseText: `Start with the ${highCount} high-priority ${highCount === 1 ? 'item' : 'items'} from the brief — those need attention first. I'd head to the Review Queue now. Want me to open it?`,
+      responseText: `I'd start with the ${highCount} higher-priority ${highCount === 1 ? 'item' : 'items'} — those are the ones that need your attention first. Want me to open the Review Queue?`,
       navigationHref: '/director/review',
       confidence: 'high',
     }
@@ -200,14 +209,14 @@ function buildBriefRecommendationResponse(context: DonnaSessionIntentContext): D
   if (totalItems > 0) {
     return {
       actionType: 'recommend',
-      responseText: `There are ${totalItems} ${totalItems === 1 ? 'item' : 'items'} in today's brief. I'd start by checking the Review Queue for any pending approvals. Want me to open it?`,
+      responseText: `There are ${totalItems} ${totalItems === 1 ? 'item' : 'items'} in today's brief. The Review Queue is the best place to start — that's where pending approvals live. Want me to open it?`,
       navigationHref: '/director/review',
       confidence: 'high',
     }
   }
   return {
     actionType: 'recommend',
-    responseText: `I'd start with the Review Queue — that's where pending approvals live and is usually the most time-sensitive. Want me to open it?`,
+    responseText: `The Review Queue is usually a good starting point — approvals waiting there tend to be the most time-sensitive. Want me to open it?`,
     navigationHref: '/director/review',
     confidence: 'medium',
   }
@@ -215,26 +224,57 @@ function buildBriefRecommendationResponse(context: DonnaSessionIntentContext): D
 
 function buildTopicShiftResponse(lower: string): DonnaFollowUpResult {
   if (lower.includes('player')) {
-    return { actionType: 'navigate', responseText: `Player Profiles show who needs attention. Want me to take you there?`, navigationHref: '/director/players', confidence: 'medium' }
+    return {
+      actionType: 'navigate',
+      responseText: `I can take you to Player Profiles to see who needs attention. Want to go there?`,
+      navigationHref: '/director/players',
+      confidence: 'medium',
+    }
   }
   if (lower.includes('session')) {
-    return { actionType: 'navigate', responseText: `Session data is on the Sessions page. Want me to take you there?`, navigationHref: '/director/sessions', confidence: 'medium' }
+    return {
+      actionType: 'navigate',
+      responseText: `Session details are on the Sessions page. Want me to take you there?`,
+      navigationHref: '/director/sessions',
+      confidence: 'medium',
+    }
   }
   if (lower.includes('review') || lower.includes('approval')) {
-    return { actionType: 'navigate', responseText: `The Review Queue has all pending approvals. Want me to open it?`, navigationHref: '/director/review', confidence: 'high' }
+    return {
+      actionType: 'navigate',
+      responseText: `The Review Queue has everything pending approval — want me to open it?`,
+      navigationHref: '/director/review',
+      confidence: 'high',
+    }
   }
   if (lower.includes('curriculum')) {
-    return { actionType: 'navigate', responseText: `Curriculum details are on the Curriculum page. Want me to take you there?`, navigationHref: '/director/curriculum', confidence: 'medium' }
+    return {
+      actionType: 'navigate',
+      responseText: `I can take you to the Curriculum page. Want to go there?`,
+      navigationHref: '/director/curriculum',
+      confidence: 'medium',
+    }
   }
   if (lower.includes('coach')) {
-    return { actionType: 'clarify', responseText: `I can help with coach-related questions — sessions, wrap-ups, or communications. What specifically would you like to know?`, navigationHref: null, confidence: 'medium' }
+    return {
+      actionType: 'clarify',
+      responseText: `Happy to help with coaches — ask me about their sessions, wrap-ups, or briefs. What do you need?`,
+      navigationHref: null,
+      confidence: 'medium',
+    }
   }
   if (lower.includes('parent')) {
-    return { actionType: 'clarify', responseText: `Parent updates go through the review process — I can help you draft one. Would you like to start a parent update draft?`, navigationHref: null, confidence: 'medium' }
+    return {
+      actionType: 'clarify',
+      responseText: `Parent messages always go through approval first. I can draft one if you'd like — just say the word.`,
+      navigationHref: null,
+      confidence: 'medium',
+    }
   }
+  // Generic fallback for any other topic shift
   return {
     actionType: 'clarify',
-    responseText: `I can help with that — do you mean today's agenda, review items, or this page?`,
+    responseText: `Sure — are you asking about today's brief, something in the review queue, or this page specifically?`,
     navigationHref: null,
     confidence: 'low',
   }
@@ -287,7 +327,7 @@ export function resolveFollowUp(
     if (contextIsFresh && (context!.lastIntentFamily === 'review_queue' || context!.lastIntentFamily === 'attention')) {
       return {
         actionType: 'navigate',
-        responseText: `Opening the Review Queue — that's where you can see and work through each item.`,
+        responseText: `I'll open the Review Queue so you can go through each item.`,
         navigationHref: '/director/review',
         confidence: 'high',
       }
@@ -300,10 +340,10 @@ export function resolveFollowUp(
         confidence: 'medium',
       }
     }
-    // No fresh context — helpful generic clarification
+    // No fresh context — helpful clarification
     return {
       actionType: 'clarify',
-      responseText: `I can help with that — do you mean today's agenda, review items, or this page?`,
+      responseText: `Sure — are you asking about today's brief, something in the review queue, or this page specifically?`,
       navigationHref: null,
       confidence: 'medium',
     }
@@ -313,19 +353,18 @@ export function resolveFollowUp(
 
   if (isElaboration) {
     if (contextIsFresh && context!.lastTopicLabel) {
-      const label = context!.lastTopicLabel
       const href = context!.lastSuggestedNavigationHref
-      const navLabel = context!.lastSuggestedNavigationLabel
+      const navLabel = context!.lastSuggestedNavigationLabel ?? 'the relevant page'
       return {
         actionType: 'elaborate',
-        responseText: `Regarding ${label}: the most important next action is to check${href ? ` the ${navLabel}` : ' today\'s pending items'} for anything requiring your approval or attention. Would you like me to open that?`,
+        responseText: `The main thing right now is checking ${href ? navLabel : 'today\'s items'} for anything that needs your sign-off. Want me to open it?`,
         navigationHref: href,
         confidence: 'medium',
       }
     }
     return {
       actionType: 'elaborate',
-      responseText: `Happy to explain — what specifically would you like me to expand on? You can ask about today's brief, a specific section, or how something works in AcademyOS.`,
+      responseText: `What would you like me to explain? You can ask about today's brief, a specific area, or how something works here.`,
       navigationHref: null,
       confidence: 'low',
     }
@@ -340,7 +379,7 @@ export function resolveFollowUp(
     if (contextIsFresh && (context!.lastIntentFamily === 'review_queue' || context!.lastIntentFamily === 'attention')) {
       return {
         actionType: 'recommend',
-        responseText: `I'd start with the highest-priority items in the Review Queue — those are the ones waiting longest for your approval. Want me to take you there?`,
+        responseText: `I'd look at the Review Queue first — the oldest pending items usually need attention soonest. Want me to open it?`,
         navigationHref: '/director/review',
         confidence: 'high',
       }
@@ -348,7 +387,7 @@ export function resolveFollowUp(
     // Generic recommendation (no fresh context)
     return {
       actionType: 'recommend',
-      responseText: `I'd check pending reviews first — those items are waiting on you and are usually the most time-sensitive. Want me to open the Review Queue?`,
+      responseText: `The Review Queue is usually a good starting point — those are the items waiting on your approval. Want me to open it?`,
       navigationHref: '/director/review',
       confidence: 'medium',
     }
@@ -360,14 +399,14 @@ export function resolveFollowUp(
     if (lower.includes('today')) {
       return {
         actionType: 'time_shift',
-        responseText: `Here's what I have for today — ask me "What do I need to do today?" for a full brief, or I can take you to the Review Queue.`,
+        responseText: `I can show you what's on today. Try "What do I need to do today?" for a full brief, or I can open the Review Queue.`,
         navigationHref: null,
         confidence: 'medium',
       }
     }
     return {
       actionType: 'time_shift',
-      responseText: `Historical weekly data is available in the Reports section. For now, I have today's activity. Would you like to see today's brief instead?`,
+      responseText: `I don't have last week's data here, but I can show you what's happening today. Want today's brief?`,
       navigationHref: null,
       confidence: 'medium',
     }
