@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-25 — Sprint 782 — Director Review Queue AIQS Rescore V1
+
+- Created `docs/AIQS_DIRECTOR_REVIEW_RE_SCORE_782.md` — full post-Sprint 781 rescore of `/director/review`
+- Score: 69/100 → **78/100** (+9 points)
+- Grade change: "USABLE BUT CLUTTERED" → "STRONG BUT NEEDS POLISH"
+- Above-fold layers confirmed: 7 → 3 (Sprint 781 change verified)
+- All 11 AIQS categories re-scored; rubric breakdown and before/after hierarchy documented
+- Cognitive load: 9/15 → 12/15 (+3) — largest single-category gain
+- DONNA integration: 3/5 → 4/5 (+1) — duplicate summary cards confirmed removed
+- Accessibility (6/10) and State quality (3/5) unchanged — remaining issues are systemic (System Sprint 1 contrast fix, System Sprint 3 loading skeletons)
+- 6 remaining issues documented (R-1 through R-6); all are systemic or minor — no blockers
+- AIQS hard failure gate: all 9 conditions pass
+- Trust and safety guardrails: verified fully intact — no approval simplifications made
+- Mobile notes: 4-column summary cards grid removal improves mobile fold significantly
+- Final decision: **DECISION 2 — REVIEW QUEUE USABLE — MINOR POLISH LATER**
+- Recommended next sprint: **Sprint 783 — DONNA Sidebar AIQS 10/10 Upgrade V1**
+- No code changes. No DB changes. No migrations. Documentation-only sprint.
+- TypeScript: clean
+
+---
+
 ## 2026-05-25 — Sprint 781 — Director Review Queue AIQS Cognitive Load V1
 
 - Modified `src/app/director/review/page.tsx` — 5 targeted AIQS cognitive-load fixes:
