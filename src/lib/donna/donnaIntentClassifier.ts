@@ -510,6 +510,17 @@ const DAILY_BRIEF_PATTERNS: readonly string[] = [
   'what needs my attention',   // reclassified from isReviewQueuePhrase
   'what do i need to review',
   'anything urgent',           // intercepted before isAttentionPhrase
+  // ── First-action / where-to-start intent family (Sprint 809) ─────────────
+  'what should i do first',    // "What should I do first?"
+  'where should i start',      // "Where should I start?"
+  'start me off',              // "Start me off" / "Start me off today"
+  'what matters most',         // "What matters most today?"
+  'what is most urgent',       // "What's most urgent?" (normalised: what is most urgent)
+  'prioritize my day',         // "Prioritize my day"
+  'give me my first action',   // "Give me my first action item"
+  'what is the first thing',   // "What's the first thing I should do?"
+  'what is most important',    // "What's most important?" (normalised: what is most important)
+  'what do i tackle first',    // "What do I tackle first?"
 ] as const
 
 export function matchesDailyBriefIntent(text: string): boolean {

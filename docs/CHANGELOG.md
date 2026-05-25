@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-25 — Sprint 809 — DONNA First-Action Phrase Map V1
+
+- **Modified** `src/lib/donna/donnaIntentClassifier.ts` — added 10 first-action / where-to-start phrases to `DAILY_BRIEF_PATTERNS`: `what should i do first`, `where should i start`, `start me off`, `what matters most`, `what is most urgent`, `prioritize my day`, `give me my first action`, `what is the first thing`, `what is most important`, `what do i tackle first`. Pattern count: 13 → 23. `matchesDailyBriefIntent` function and `normalizeDailyBriefInput` unchanged — new patterns work with existing substring + normalization pipeline.
+- **Created** `docs/DONNA_FIRST_ACTION_PHRASE_MAP_809.md` — normalization check table, example inputs, pattern count before/after, estimated +5 pts on Command Understanding
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 808 — Director KPI Reduction + Progressive Disclosure V1
 
 - **Modified** `src/app/director/_components/AcademyKpiCardsSection.tsx` — added `'use client'`; restructured from 8 equal-weight cards to 4 primary (always visible: Attendance Exceptions, Coach Recaps, Level-Up Candidates, Academy Health) + 4 secondary (toggle-revealed: Sessions, Parent Updates, Curriculum Execution, Player Progress); added "View all metrics (4 more)" / "Show fewer" toggle button; updated section sublabel. Props interface and parent call site in `page.tsx` unchanged.
