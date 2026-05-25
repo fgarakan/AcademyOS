@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-25 — Sprint 797 — Curriculum Builder 10/10 Re-Score + Certification V1
+
+- **Audit-only sprint** — no source code changes
+- Full re-audit of Curriculum Builder experience after Mega Sprint 792–796; 19 files inspected (11 source files, 8 sprint docs + rubric)
+- **Certified scores:** AIQS **91/100** · CB-Specific **74/80** (92.5%) · Combined **~87/100** — Grade A−
+- **Net lift since Sprint 791 baseline (74/100 AIQS · 45/80 CB):** +17 AIQS pts · +29 CB pts · +22 combined pts
+- All 14 regression checks passed: no safety regressions, no RLS changes, no service role, no auto-apply, no bypassed approval
+- All 13 Sprint 792–796 improvements verified in code (processing_status fix, DraftPanel, coverage normalization, mobile card, teal→lime, label-xs, breadcrumb, tools grid, live checklist, navigation clarity)
+- **Remaining gaps confirmed (Sprint 798 scope):** `CurriculumDonnaPanel.tsx` — 3× `text-[9px]`, all-teal brand; `CurriculumLevelBuilderGrid.tsx` `SectionCard` — 2× `text-[9px]`, teal "Ask DONNA" button and active border; DONNA panel action chips not wired to DraftPanel pre-selection
+- **Created** `docs/CURRICULUM_BUILDER_10_10_CERTIFICATION_797.md` — full scorecard, 15-question evaluation checklist, 14-item regression checklist, certification decision, Sprint 798 recommendation with estimated score lift
+
+---
+
 ## 2026-05-25 — Sprint 796 — Curriculum Builder Mobile 10/10 Pass V1
 
 - **Modified** `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx`:
