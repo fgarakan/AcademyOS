@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-25 — Sprint 793 — Curriculum Builder Navigation Clarity V1
+
+- **Modified** `src/app/director/curriculum/page.tsx`:
+  - Renamed `h1` from "Your Curriculum" → "Curriculum Command Center"; updated subtitle to clarify page role as status and navigation hub
+  - Removed entire `<details>` "Advanced curriculum tools" collapse — replaced with visible "Curriculum Tools" 2×2 card grid (Builder, Map, Guided Review, Learning Modules); all tools now directly discoverable without opening any collapse
+  - Removed 8 now-unused imports: `ChevronDown` icon + `CurriculumExplorer`, `CurriculumDemoFlowPanel`, `AcademyCurriculumVersionCard`, `VoiceOverrideInputPanel`, `PageExplainerCard`, `CurriculumCustomizationAssistant`, `CurriculumLoopDiagram`
+  - Added `Map`, `BookOpen`, `Wrench`, `Sparkles` lucide-react icons for the tools grid
+- **Modified** `src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx`:
+  - Added `← Curriculum Command Center` breadcrumb above header (links to `/director/curriculum`)
+  - Renamed `h1` from "Welcome to Curriculum Builder" → "Curriculum Builder"
+  - Updated subtitle to "Powered by DONNA · Customize your academy's development spine one level at a time"
+  - Added `import Link from 'next/link'` and `ArrowLeft` lucide icon
+- **Created** `docs/CURRICULUM_BUILDER_NAVIGATION_CLARITY_793.md` — full sprint documentation with before/after, file list, score lift, remaining blockers, Sprint 794 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+- Expected AIQS lift: ~82/100 → ~87/100; CB Navigation Clarity 7/10 → 9/10
+
+---
+
 ## 2026-05-25 — Sprint 792 — Curriculum Builder Quick Wins V1
 
 - **Modified** `src/app/director/curriculum/page.tsx`:

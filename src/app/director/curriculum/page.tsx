@@ -1,15 +1,8 @@
 import Link from 'next/link'
-import { CheckCircle2, Circle, ChevronRight, ChevronDown, Users, CalendarDays, MessageSquare, TrendingUp, GitBranch } from 'lucide-react'
+import { CheckCircle2, Circle, ChevronRight, Users, CalendarDays, MessageSquare, TrendingUp, GitBranch, Map, BookOpen, Wrench, Sparkles } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
-import { CurriculumExplorer } from '@/components/curriculum/CurriculumExplorer'
-import { CurriculumDemoFlowPanel } from '@/components/curriculum/CurriculumDemoFlowPanel'
-import { AcademyCurriculumVersionCard } from './AcademyCurriculumVersionCard'
-import { VoiceOverrideInputPanel } from './VoiceOverrideInputPanel'
-import { PageExplainerCard } from '@/components/onboarding/PageExplainerCard'
-import { CurriculumCustomizationAssistant } from '@/components/curriculum/CurriculumCustomizationAssistant'
-import { CurriculumLoopDiagram } from '@/components/onboarding/CurriculumLoopDiagram'
 import { CurriculumBuilderWelcome } from '@/components/curriculum/builder/CurriculumBuilderWelcome'
 import { buildCurriculumCoverageReport, type LevelCoverageInput } from '@/lib/curriculum/coverageModel'
 import type { CurriculumStage } from '@/lib/curriculum/visualMapModel'
@@ -296,10 +289,10 @@ export default async function DirectorCurriculumPage() {
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}
       <div>
         <p className="page-eyebrow">Curriculum</p>
-        <h1 className="page-title">Your Curriculum</h1>
+        <h1 className="page-title">Curriculum Command Center</h1>
         <p className="page-subtitle max-w-xl">
-          This is where your academy's development system lives — levels, requirements,
-          templates, and player progress all connect back to this spine.
+          Your academy's development spine — levels, gates, templates, and player progress
+          all connect here. Use the tools below to review, customize, and manage your curriculum.
         </p>
       </div>
 
@@ -473,112 +466,77 @@ export default async function DirectorCurriculumPage() {
         </div>
       </section>
 
-      {/* ── 8. Advanced curriculum tools — demoted, collapsed ────────────── */}
-      <details className="group rounded-2xl border border-border bg-surface overflow-hidden">
-        <summary className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-raised transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
-          <div>
-            <p className="text-[12px] font-medium text-text-secondary">Advanced curriculum tools</p>
-            <p className="text-[11px] text-text-muted mt-0.5">
-              Curriculum explorer, customization guide, and version management.
-            </p>
-          </div>
-          <ChevronDown className="w-4 h-4 text-text-muted shrink-0 transition-transform group-open:rotate-180" />
-        </summary>
+      {/* ── 8. Curriculum Tools ──────────────────────────────────────────── */}
+      <section className="space-y-3">
+        <p className="label-xs">Curriculum Tools</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-        <div className="border-t border-border px-5 py-6 space-y-8">
-
-          {/* Page context explainer */}
-          <PageExplainerCard
-            title="Customize your academy curriculum"
-            body="Academy OS starts with a global development spine. You can review each level, understand the gates, and later create academy-specific adjustments without changing the global default."
-            qa={[
-              {
-                q: 'What is this page?',
-                a: 'A read-only view of the Academy OS global curriculum — 15 levels, evidence-based gates, drills, and coach language.',
-              },
-              {
-                q: 'Why does it matter?',
-                a: 'The curriculum defines what players learn, in what order, and what evidence shows they are ready to advance.',
-              },
-              {
-                q: 'What should I do first?',
-                a: 'Explore one level — try Orange 1. Read the gates, browse the drills, and check the coach language.',
-              },
-              {
-                q: 'What happens after customization?',
-                a: 'Academy adjustments live in your version. They flow into templates and sessions without touching the global spine.',
-              },
-              {
-                q: 'Safe to ignore for now?',
-                a: 'Academy overrides and the voice customization input. Review the curriculum first, then customize later.',
-              },
-            ]}
-          />
-
-          {/* Curriculum execution loop diagram */}
-          <div className="px-5 py-4 rounded-2xl border border-border bg-surface-raised">
-            <CurriculumLoopDiagram />
-          </div>
-
-          {/* Customization assistant — 5-step guide, three-layer distinction, glossary */}
-          <CurriculumCustomizationAssistant />
-
-          {/* Global Curriculum Explorer */}
-          <section id="curriculum-explorer" className="space-y-4">
-            <p className="label-xs">Global Curriculum Explorer</p>
-            <CurriculumExplorer data={explorerData} />
-          </section>
-
-          {/* Academy Curriculum Version + Voice */}
-          <section className="space-y-4">
-            <p className="label-xs">Your Academy Curriculum</p>
-            <AcademyCurriculumVersionCard version={versionData} />
-            {process.env.NODE_ENV !== 'production' && (
-              <VoiceOverrideInputPanel hasActiveVersion={!!activeVersion} />
-            )}
-          </section>
-
-          {/* Demo flow — dev/staging only */}
-          {process.env.NODE_ENV !== 'production' && (
-            <CurriculumDemoFlowPanel />
-          )}
-
-          {/* How it works */}
-          <div className="px-5 py-4 rounded-2xl border border-border bg-surface-raised">
-            <p className="label-xs mb-3">How Customization Works</p>
-            <ol className="space-y-2">
-              {[
-                'Create your academy curriculum version.',
-                'Type a customization and submit it.',
-                'Approve it in the Review Queue.',
-                'Populate templates — sessions carry the academy context automatically.',
-              ].map((step, i) => (
-                <li key={i} className="flex items-start gap-3 text-[12px] text-text-secondary">
-                  <span className="shrink-0 w-5 h-5 rounded-full border border-border flex items-center justify-center text-[10px] font-mono text-text-muted">
-                    {i + 1}
-                  </span>
-                  {step}
-                </li>
-              ))}
-            </ol>
-            <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-4">
-              <Link href="/director/class-templates" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
-                Templates <ChevronRight className="w-3 h-3" />
-              </Link>
-              <Link href="/director/review" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
-                Review Queue <ChevronRight className="w-3 h-3" />
-              </Link>
-              <Link href="/director/curriculum/academy-version" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
-                Academy Version <ChevronRight className="w-3 h-3" />
-              </Link>
-              <Link href="/director/curriculum/learning" className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-lime transition-colors">
-                Learning Modules <ChevronRight className="w-3 h-3" />
-              </Link>
+          <Link
+            href="/director/curriculum/builder"
+            className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
+          >
+            <div className="flex items-center gap-2">
+              <Wrench className="w-3.5 h-3.5 text-lime shrink-0" />
+              <p className="text-[12px] font-semibold text-text-primary">Curriculum Builder</p>
             </div>
-          </div>
+            <p className="text-[11px] text-text-muted leading-relaxed">
+              Review and customize each level. DONNA guides you one stage at a time.
+            </p>
+            <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+              Open Builder <ChevronRight className="w-3 h-3" />
+            </p>
+          </Link>
+
+          <Link
+            href="/director/curriculum/map"
+            className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
+          >
+            <div className="flex items-center gap-2">
+              <Map className="w-3.5 h-3.5 text-text-muted shrink-0" />
+              <p className="text-[12px] font-semibold text-text-primary">Curriculum Map</p>
+            </div>
+            <p className="text-[11px] text-text-muted leading-relaxed">
+              Visual overview of all levels, gates, and connections across your academy spine.
+            </p>
+            <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+              View Map <ChevronRight className="w-3 h-3" />
+            </p>
+          </Link>
+
+          <Link
+            href="/director/curriculum/guided"
+            className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-text-muted shrink-0" />
+              <p className="text-[12px] font-semibold text-text-primary">Guided Review</p>
+            </div>
+            <p className="text-[11px] text-text-muted leading-relaxed">
+              Let DONNA walk you through incomplete levels and customization priorities.
+            </p>
+            <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+              Start Guided Review <ChevronRight className="w-3 h-3" />
+            </p>
+          </Link>
+
+          <Link
+            href="/director/curriculum/learning"
+            className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
+          >
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-3.5 h-3.5 text-text-muted shrink-0" />
+              <p className="text-[12px] font-semibold text-text-primary">Learning Modules</p>
+            </div>
+            <p className="text-[11px] text-text-muted leading-relaxed">
+              Player-facing learning content connected to each curriculum level and stage.
+            </p>
+            <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+              View Modules <ChevronRight className="w-3 h-3" />
+            </p>
+          </Link>
 
         </div>
-      </details>
+      </section>
 
     </div>
   )

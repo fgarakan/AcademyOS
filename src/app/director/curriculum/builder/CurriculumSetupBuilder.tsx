@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Sparkles, Shield, CheckCircle2, ChevronRight, BookOpen, Pencil, X, Settings } from 'lucide-react'
+import Link from 'next/link'
+import { Sparkles, Shield, CheckCircle2, ChevronRight, BookOpen, Pencil, X, Settings, ArrowLeft } from 'lucide-react'
 import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes'
 import type { CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 import { CurriculumKeyboardHintBar } from '@/components/curriculum/builder/CurriculumKeyboardHintBar'
@@ -100,13 +101,22 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
     <div className="min-h-screen" style={{ background: '#050b09' }}>
       <div className="max-w-[1180px] mx-auto px-6 pt-10 pb-20">
 
+        {/* ── Breadcrumb ──────────────────────────────── */}
+        <Link
+          href="/director/curriculum"
+          className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-lime transition-colors mb-6"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Curriculum Command Center
+        </Link>
+
         {/* ── Header ───────────────────────────────────── */}
         <div className="mb-10">
           <h1 className="text-2xl font-bold text-text-primary leading-tight">
-            Welcome to Curriculum Builder
+            Curriculum Builder
           </h1>
           <p className="text-sm text-text-muted mt-1.5">
-            Powered by DONNA · Your academy starts with the master curriculum
+            Powered by DONNA · Customize your academy's development spine one level at a time
           </p>
         </div>
 
