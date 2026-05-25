@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-25 — Sprint 810 — DONNA + Dashboard 90+ Certification
+
+- **Audit-only sprint** — no source code changes
+- Full re-audit of DONNA side panel, persistence, command understanding, and Director Dashboard after Sprints 806–809
+- **Post-block scores:**
+  - DONNA Side Panel: **82/100** (was 74/100, +8 pts) — voice debug controls removed; panel reads as finished product
+  - DONNA Persistence: **72/100** (unchanged — not targeted in this block)
+  - Command Understanding: **80/100** (was 70/100, +10 pts) — 10 first-action phrases added; 13 → 23 total patterns
+  - Dashboard Cognitive Load: **80/100** (was 62/100, +18 pts) — 1 primary attention surface; 4 priority KPI cards; clear hierarchy
+- **Sprint 810 composite: 79.2/100** (was 70.4/100, **+8.8 pts** this block; **+25.4 pts** since Sprint 799)
+- **Grade: A- (79/100)** — substantial real improvement, but 90+ not yet reached
+- **Remaining gaps:** `contextSummary` / `suggestions` clear on nav (persistence); Stop/Start listening not text-commandable; AI Suggestions card alongside AcademyAlertsPanel
+- **Roadmap to 90+:** Sprint 811 — persist `contextSummary` / `reviewQueueData` / `suggestions` across route changes (same approach as Sprint 801 `commandResponse` fix) — expected +13 pts on Persistence, lifting composite to ~82
+- **Created** `docs/DONNA_DASHBOARD_90_PLUS_CERTIFICATION_810.md` — full per-dimension re-scoring, full 799–810 commit table, Sprint 811 recommendation
+- TypeScript: clean (audit sprint — no source changes)
+
+---
+
 ## 2026-05-25 — Sprint 809 — DONNA First-Action Phrase Map V1
 
 - **Modified** `src/lib/donna/donnaIntentClassifier.ts` — added 10 first-action / where-to-start phrases to `DAILY_BRIEF_PATTERNS`: `what should i do first`, `where should i start`, `start me off`, `what matters most`, `what is most urgent`, `prioritize my day`, `give me my first action`, `what is the first thing`, `what is most important`, `what do i tackle first`. Pattern count: 13 → 23. `matchesDailyBriefIntent` function and `normalizeDailyBriefInput` unchanged — new patterns work with existing substring + normalization pipeline.
