@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-05-25 — Sprint 783 — DONNA Sidebar AIQS 10/10 Upgrade V1
+
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — 9 surgical changes:
+  - **Replaced 6 director chips** with 6 natural conversational question chips (primary goal):
+    - "What do I need to do today?" → `handleCommandSubmit('What do I need to do today?')`
+    - "What needs my attention?" → `handleCommandSubmit('What needs my attention?')`
+    - "What's on the agenda?" → `handleCommandSubmit("What's on the agenda?")`
+    - "What should I review first?" → `handleCommandSubmit('What should I review first?')`
+    - "Walk me through today." → `handleCommandSubmit('Walk me through today.')`
+    - "What can you help me do here?" → `handleCommandSubmit('What can you help me do here?')`
+  - All chips route through `handleCommandSubmit` — same function as typed text; subject to full intent pipeline (matchesDailyBriefIntent, operator advance, COO router, role checks)
+  - First 5 chips match `matchesDailyBriefIntent` patterns from Sprint 780; "What can you help me do here?" routes to COO page-context answer
+  - Replaced: "Review Today" (nav), "Prepare Coaches" (COO direct), "Player Progress" (nav), "Parent Updates" (nav), "What can DONNA do here?" (UI toggle), "Ask Anything" (input focus)
+  - **Upgraded 8 `text-[10px]` → `text-xs`** operational labels:
+    - Header subtitle "Director Operations Assistant"
+    - Page actions card header "What DONNA can do here"
+    - Page actions card footer text
+    - Greeting card DONNA label
+    - Coach quick actions section label
+    - "What would you like?" mode section label
+    - Mode button safe-status text (each mode card)
+    - Quick actions section header
+- Created `docs/DONNA_SIDEBAR_AIQS_10_10_783.md` — full audit with:
+  - AIQS score 66/100 → 72/100 (+6)
+  - Conversational quality score 71/100 → 76/100 (+5)
+  - Persistent: YES (Sprint 686 panel open state + session memory + draft persistence)
+  - Conversational: YES (functional level; not yet premium)
+  - Chip routing documentation
+  - Safety guardrails verification
+  - Final classification: DONNA SIDEBAR USABLE — NEEDS CONVERSATIONAL DEPTH
+- No new state. No new API. No DB calls. No mutations. No new components.
+- No SQL, RLS, migrations, env, seed changes.
+- No DONNA GODmode changes.
+- TypeScript: clean
+
+---
+
 ## 2026-05-25 — Sprint 782 — Director Review Queue AIQS Rescore V1
 
 - Created `docs/AIQS_DIRECTOR_REVIEW_RE_SCORE_782.md` — full post-Sprint 781 rescore of `/director/review`

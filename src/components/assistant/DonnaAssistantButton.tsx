@@ -3133,7 +3133,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-text-muted leading-snug mt-0.5">
+            <p className="text-xs text-text-muted leading-snug mt-0.5">
               {DONNA_PUBLIC_TITLE}
             </p>
             {/* Sprint 373 — Review queue badge (director only — Sprint 657 regression fix) */}
@@ -3181,24 +3181,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 },
               ] as { label: string; action: () => void }[])
             : ([
-                { label: 'Review Today', action: () => void handleOpenReviewQueue() },
-                { label: 'Prepare Coaches', action: () => dispatchCooCommand('coach_brief') },
-                { label: 'Player Progress', action: () => { router.push('/director/level-up') } },
-                { label: 'Parent Updates', action: () => { router.push('/director/parents') } },
-                // Sprint 760 — page-aware action surfacing chip
-                { label: 'What can DONNA do here?', action: handleShowPageActions },
-                {
-                  label: 'Ask Anything',
-                  action: () => {
-                    setActiveMode(null)
-                    setCommandResponse(null)
-                    setTimeout(() => {
-                      const el = document.querySelector<HTMLTextAreaElement>('[data-donna-input]')
-                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                      el?.focus()
-                    }, 50)
-                  },
-                },
+                // Sprint 783 — Conversational entry chips; route through handleCommandSubmit for full
+              // intent pipeline (matchesDailyBriefIntent, operator advance, COO router, etc.).
+              // Replaces nav-shortcut chips with natural director questions.
+              { label: 'What do I need to do today?', action: () => handleCommandSubmit('What do I need to do today?') },
+                { label: 'What needs my attention?', action: () => handleCommandSubmit('What needs my attention?') },
+                { label: "What's on the agenda?", action: () => handleCommandSubmit("What's on the agenda?") },
+                { label: 'What should I review first?', action: () => handleCommandSubmit('What should I review first?') },
+                { label: 'Walk me through today.', action: () => handleCommandSubmit('Walk me through today.') },
+                { label: 'What can you help me do here?', action: () => handleCommandSubmit('What can you help me do here?') },
               ] as { label: string; action: () => void }[])
           ).map(chip => (
             <button
@@ -3223,7 +3214,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               style={{ background: 'rgba(200,255,0,0.04)', border: '1px solid rgba(200,255,0,0.15)' }}
             >
               <div className="flex items-center justify-between">
-                <p className="text-[10px] uppercase tracking-widest font-semibold text-lime">
+                <p className="text-xs uppercase tracking-widest font-semibold text-lime">
                   What DONNA can do here
                 </p>
                 <button
@@ -3269,7 +3260,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   </div>
                 )
               })()}
-              <p className="text-[10px] text-text-muted leading-snug pt-1">
+              <p className="text-xs text-text-muted leading-snug pt-1">
                 Ask DONNA about any of these actions, or type a command below.
               </p>
             </div>
@@ -3287,7 +3278,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 border: '1px solid rgba(200,255,0,0.15)',
               }}
             >
-              <p className="text-[10px] uppercase tracking-widest font-semibold mb-1 text-lime">
+              <p className="text-xs uppercase tracking-widest font-semibold mb-1 text-lime">
                 {DONNA_PUBLIC_NAME}
               </p>
               <p className="text-[13px] text-text-primary font-medium leading-snug">
@@ -3355,7 +3346,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 if (sessionId) return null
                 return (
                   <div className="mt-3 space-y-1.5">
-                    <p className="text-[10px] uppercase tracking-widest font-semibold text-text-muted">Quick actions</p>
+                    <p className="text-xs uppercase tracking-widest font-semibold text-text-muted">Quick actions</p>
                     <div className="space-y-1">
                       <button
                         type="button"
@@ -4161,7 +4152,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             {/* Expanded mode list — visible when toggle is open OR a mode is already active */}
             {(showMoreOptions || activeMode !== null) && (
               <>
-                <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
+                <p className="text-xs uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
                   What would you like?
                 </p>
                 {MODES.filter(({ mode }) => isModeAllowedForRole(mode, role)).map(({ mode, label, desc, Icon, category, safeStatus }) => (
@@ -4201,7 +4192,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                           </span>
                         </div>
                         <p className="text-[11px] text-text-muted leading-snug mt-0.5">{desc}</p>
-                        <p className="text-[10px] leading-snug mt-1" style={{ color: '#2dd4bf' }}>{safeStatus}</p>
+                        <p className="text-xs leading-snug mt-1" style={{ color: '#2dd4bf' }}>{safeStatus}</p>
                       </div>
                     </div>
                   </button>
@@ -4216,7 +4207,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               className="rounded-xl px-3.5 py-3 space-y-1.5"
               style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
             >
-              <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">
+              <p className="text-xs uppercase tracking-widest text-text-muted font-semibold">
                 Quick actions for this page
               </p>
               <div className="space-y-0.5">
