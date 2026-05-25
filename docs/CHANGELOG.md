@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-05-25 — Sprint 784 — DONNA Cross Session Memory Natural Welcome V1
+
+- Created `src/lib/donna/donnaLastSessionStore.ts` — new localStorage-backed cross-session store:
+  - Key: `academyos:donna:last-session:<academyId>:v1`
+  - Stores: `lastPageLabel`, `lastPageRoute`, `lastSafeActionLabel`, `savedAt`
+  - 7-day TTL — expired data silently discarded on read
+  - Scoped per `academyId` — no cross-tenant leakage
+  - SSR-safe (`typeof window` guards on all localStorage calls)
+  - Fail-silent writes (won't crash if localStorage is blocked or full)
+  - Exports: `loadLastSession`, `saveLastSession`, `clearLastSession`, `buildCrossSessionWelcome`
+  - Safety: no PII, no player names, no coach identifiers, no scores or notes — module-label strings only
+- Modified `src/components/assistant/DonnaAssistantButton.tsx` — 7 surgical changes:
+  1. **Import** — added `loadLastSession`, `saveLastSession`, `buildCrossSessionWelcome`, `DonnaLastSession` from new store
+  2. **State** — added `lastSessionData: DonnaLastSession | null` after `showPageActions` state
+  3. **useEffect (mount)** — loads cross-session data from localStorage on mount (`[academyId]` dep)
+  4. **closePanel** — saves `currentModuleLabel + pathname + lastSafeTopic` to localStorage before clearing state; runs before any state resets so context is captured reliably
+  5. **pathname useEffect** — also saves to localStorage on every route change (catches navigations without explicit panel close)
+  6. **Director greeting block** — if `!isFirstOpenToday` and `lastSessionData.lastPageLabel` exists, uses `buildCrossSessionWelcome()` as `primaryText` instead of Sprint 685 page-reentry copy; followUp suppressed (welcome text already actionable)
+  7. **Director chip array** — prepends conditional `↩ Back to [lastPageLabel]` chip when prior session data exists; chip pushes to stored route and closes panel; absent when no prior data → chip row unchanged from Sprint 783
+- Created `docs/DONNA_CROSS_SESSION_WELCOME_784.md` — full sprint audit:
+  - Persistence gap analysis (pre-784 layer inventory)
+  - Implementation detail for all 7 changes
+  - Welcome text examples (first open today / return visit / return with context)
+  - Safety verification checklist (PII, scoping, TTL, SSR)
+  - Conversational quality rescore: 76/100 → 80/100 (+4)
+  - Dimension gains: context retention +3, memory layers +2, proactive orientation +1, first message quality +1, chip quality +1
+- No SQL, migrations, RLS, seed, or env changes.
+- No new API calls. No DB reads or writes. No new components.
+- TypeScript: clean
+
+---
+
 ## 2026-05-25 — Sprint 783 — DONNA Sidebar AIQS 10/10 Upgrade V1
 
 - Modified `src/components/assistant/DonnaAssistantButton.tsx` — 9 surgical changes:

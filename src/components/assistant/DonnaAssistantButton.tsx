@@ -234,6 +234,9 @@ import { getOperatorById, getOperatorStep } from '@/lib/donna/donnaUIGuidedOpera
 import type { UIActionRole, UIActionSafetyClass } from '@/lib/donna/donnaUIActionRegistry'
 // Sprint 780 — Daily brief intent registry (replaces inline isDailyBriefPhrase)
 import { matchesDailyBriefIntent } from '@/lib/donna/donnaIntentClassifier'
+// Sprint 784 — Cross-session memory (localStorage-backed, safe page context only)
+import { loadLastSession, saveLastSession, buildCrossSessionWelcome } from '@/lib/donna/donnaLastSessionStore'
+import type { DonnaLastSession } from '@/lib/donna/donnaLastSessionStore'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -776,6 +779,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [currentOperatorStep, setCurrentOperatorStep] = useState<number>(0)
   // Sprint 760 — Page-aware action surfacing
   const [showPageActions, setShowPageActions] = useState(false)
+  // Sprint 784 — Cross-session context loaded from localStorage on mount (SSR-safe)
+  const [lastSessionData, setLastSessionData] = useState<DonnaLastSession | null>(null)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -847,6 +852,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       : []
 
   const closePanel = useCallback(() => {
+    // Sprint 784 — persist current page context to localStorage before clearing state
+    const mem = getSessionMemory()
+    if (mem.currentModuleLabel) {
+      saveLastSession(academyId, {
+        lastPageLabel: mem.currentModuleLabel,
+        lastPageRoute: pathname,
+        lastSafeActionLabel: mem.lastSafeTopic ?? null,
+      })
+    }
     closeDonnaPanel()
     setActiveMode(null)
     setTemplateDraft(null)
@@ -918,6 +932,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setPreferences(loadPreferences())
     setPreferencesMounted(true)
   }, [])
+
+  // Sprint 784 — Load cross-session context from localStorage on mount (SSR-safe)
+  useEffect(() => {
+    setLastSessionData(loadLastSession(academyId))
+  }, [academyId])
 
   // Sprint 702 — Initialize chat session memory on mount (or role change)
   useEffect(() => {
@@ -1030,6 +1049,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setCurrentOperatorStep(0)
     // Sprint 700 — wire route-change safe memory so DONNA session recall tracks navigation
     recordRouteChange(pathname, getPromptCategoryLabel(pathname))
+    // Sprint 784 — also persist to localStorage for cross-session context
+    const routeMem = getSessionMemory()
+    if (routeMem.currentModuleLabel) {
+      saveLastSession(academyId, {
+        lastPageLabel: routeMem.currentModuleLabel,
+        lastPageRoute: pathname,
+        lastSafeActionLabel: routeMem.lastSafeTopic ?? null,
+      })
+    }
   }, [pathname])
 
   function handleModeClick(mode: AssistantMode) {
@@ -2927,10 +2955,16 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 const followUp = isOnSessionPage
                   ? "I can help you review this session or capture a coach note."
                   : content.followUp
+                // Sprint 784 — cross-session welcome: use prior-session context when not
+                // first open today and we have stored page context from a previous session.
+                const crossSessionText =
+                  !isFirstOpenToday && lastSessionData?.lastPageLabel
+                    ? buildCrossSessionWelcome(lastSessionData, firstName)
+                    : null
                 const greeting: DailyGreetingState = {
                   isFirstOpenToday,
-                  primaryText: content.primaryText,
-                  followUp,
+                  primaryText: crossSessionText ?? content.primaryText,
+                  followUp: crossSessionText ? '' : followUp,
                 }
                 setDailyGreetingState(greeting)
                 if (isFirstOpenToday) {
@@ -3181,10 +3215,20 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 },
               ] as { label: string; action: () => void }[])
             : ([
+                // Sprint 784 — conditional "Back to" chip (shown only when prior session data exists)
+                ...((lastSessionData?.lastPageLabel && lastSessionData?.lastPageRoute)
+                  ? ([{
+                      label: `↩ Back to ${lastSessionData.lastPageLabel}`,
+                      action: () => {
+                        if (lastSessionData?.lastPageRoute) router.push(lastSessionData.lastPageRoute)
+                        closePanel()
+                      },
+                    }] as { label: string; action: () => void }[])
+                  : []),
                 // Sprint 783 — Conversational entry chips; route through handleCommandSubmit for full
-              // intent pipeline (matchesDailyBriefIntent, operator advance, COO router, etc.).
-              // Replaces nav-shortcut chips with natural director questions.
-              { label: 'What do I need to do today?', action: () => handleCommandSubmit('What do I need to do today?') },
+                // intent pipeline (matchesDailyBriefIntent, operator advance, COO router, etc.).
+                // Replaces nav-shortcut chips with natural director questions.
+                { label: 'What do I need to do today?', action: () => handleCommandSubmit('What do I need to do today?') },
                 { label: 'What needs my attention?', action: () => handleCommandSubmit('What needs my attention?') },
                 { label: "What's on the agenda?", action: () => handleCommandSubmit("What's on the agenda?") },
                 { label: 'What should I review first?', action: () => handleCommandSubmit('What should I review first?') },
