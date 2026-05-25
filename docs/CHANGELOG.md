@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-25 — Sprint 781 — Director Review Queue AIQS Cognitive Load V1
+
+- Modified `src/app/director/review/page.tsx` — 5 targeted AIQS cognitive-load fixes:
+  - Removed summary cards grid (4-column `<div>` linking to tabs) — duplicate of tab counts already visible in `<TabLabel>` badges; was layer 3 of 7 competing above-fold surfaces
+  - Removed `<WrapUpCoveragePanel>` from above-tabs position — relocated inside `needs_approval` TabsContent before Coach Wrap-Ups; coverage panel is contextually correct where wrap-up decisions are made, not at page load
+  - Removed stale alert banner (orange `AlertTriangle` block) — stale-age signal is already encoded in each tab's oldest-day display; banner was visual noise for the common case
+  - Removed all-clear banner (green `CheckCircle` block) — zero-pending state is already communicated by tab badges showing `0`; empty state inside `needs_approval` tab handles the zero case
+  - Removed unused `AlertTriangle` from `lucide-react` import
+- Upgraded all section description `text-[10px]` → `text-xs` throughout page — meets AIQS Category 5 typography minimum (12px metadata floor)
+- Above-fold layer count: 7 → 3 (header, `DonnaReviewBriefPanel`, `Tabs`)
+- No new state, no new props, no API changes, no DB changes, no migrations
+- TypeScript: clean
+
+---
+
 ## 2026-05-25 — Sprint 780 — DONNA Natural Intent Understanding V1
 
 - Added `matchesDailyBriefIntent(text: string): boolean` export to `src/lib/donna/donnaIntentClassifier.ts` — canonical `daily_brief` intent family registry; 18 patterns across 5 phrase families (agenda, day-start, today-activity, focus/priority, review/attention); normalization pipeline strips trailing punctuation, expands apostrophe contractions, removes filler words

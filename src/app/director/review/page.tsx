@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { AlertTriangle, ArrowLeft, BookOpen, CheckCircle, Users } from 'lucide-react'
+import { ArrowLeft, BookOpen, CheckCircle, Users } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui'
 import { StructuredDraftCard } from './StructuredDraftCard'
@@ -1277,97 +1277,6 @@ export default async function DirectorReviewQueuePage({
         parentCommCount={parentCommDrafts.length}
       />
 
-      {/* Section summary cards — Sprint 662: now clickable links to respective tabs */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Link href="/director/review?tab=needs-approval" className={`rounded-xl border px-4 py-3 space-y-1 hover:opacity-80 transition-opacity ${needsApprovalPending > 0 ? 'bg-status-orange/5 border-status-orange/20' : 'bg-surface-raised border-border'}`}>
-          <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Needs Approval</p>
-          <p className={`text-xl font-mono font-bold ${needsApprovalPending > 0 ? 'text-status-orange' : 'text-text-muted'}`}>
-            {needsApprovalPending}
-          </p>
-          <p className="text-[9px] text-text-muted">Wrap-ups, attendance, placement</p>
-          {needsApprovalOldestDays !== null && needsApprovalPending > 0 && (
-            <p className={`text-[9px] font-semibold tabular-nums ${needsApprovalOldestDays >= 7 ? 'text-status-orange' : 'text-text-muted'}`}>
-              oldest: {needsApprovalOldestDays}d
-            </p>
-          )}
-          {needsApprovalReady > 0 && (
-            <p className="text-[9px] font-semibold tabular-nums text-lime">{needsApprovalReady} ready to apply</p>
-          )}
-        </Link>
-        <Link href="/director/review?tab=player-updates" className={`rounded-xl border px-4 py-3 space-y-1 hover:opacity-80 transition-opacity ${playerUpdatesPending > 0 ? 'bg-status-blue/5 border-status-blue/20' : 'bg-surface-raised border-border'}`}>
-          <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Player Updates</p>
-          <p className={`text-xl font-mono font-bold ${playerUpdatesPending > 0 ? 'text-status-blue' : 'text-text-muted'}`}>
-            {playerUpdatesPending}
-          </p>
-          <p className="text-[9px] text-text-muted">Notes, summaries, priorities</p>
-          {playerUpdatesOldestDays !== null && playerUpdatesPending > 0 && (
-            <p className={`text-[9px] font-semibold tabular-nums ${playerUpdatesOldestDays >= 7 ? 'text-status-orange' : 'text-text-muted'}`}>
-              oldest: {playerUpdatesOldestDays}d
-            </p>
-          )}
-          {playerUpdatesReady > 0 && (
-            <p className="text-[9px] font-semibold tabular-nums text-lime">{playerUpdatesReady} ready to apply</p>
-          )}
-        </Link>
-        <Link href="/director/review?tab=curriculum-session" className={`rounded-xl border px-4 py-3 space-y-1 hover:opacity-80 transition-opacity ${curriculumSessionPending > 0 ? 'bg-lime/5 border-lime/20' : 'bg-surface-raised border-border'}`}>
-          <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Curriculum / Sessions</p>
-          <p className={`text-xl font-mono font-bold ${curriculumSessionPending > 0 ? 'text-lime' : 'text-text-muted'}`}>
-            {curriculumSessionPending}
-          </p>
-          <p className="text-[9px] text-text-muted">Recaps, curriculum changes</p>
-          {curriculumSessionOldestDays !== null && curriculumSessionPending > 0 && (
-            <p className={`text-[9px] font-semibold tabular-nums ${curriculumSessionOldestDays >= 7 ? 'text-status-orange' : 'text-text-muted'}`}>
-              oldest: {curriculumSessionOldestDays}d
-            </p>
-          )}
-          {curriculumSessionReady > 0 && (
-            <p className="text-[9px] font-semibold tabular-nums text-lime">{curriculumSessionReady} ready to apply</p>
-          )}
-        </Link>
-        <Link href="/director/review?tab=completed" className="rounded-xl bg-surface-raised border border-border px-4 py-3 space-y-1 hover:opacity-80 transition-opacity">
-          <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Completed</p>
-          <p className="text-xl font-mono font-bold text-text-muted">{completedCount}</p>
-          <p className="text-[9px] text-text-muted">Approved, applied, or rejected</p>
-        </Link>
-      </div>
-
-      {/* Wrap-up coverage — Sprint 532 */}
-      <WrapUpCoveragePanel coverage={wrapUpCoverage} />
-
-      {/* Stale alert banner — shown when any section has pending items older than 7 days */}
-      {(needsApprovalPending > 0 || playerUpdatesPending > 0 || curriculumSessionPending > 0) && (
-        [needsApprovalOldestDays, playerUpdatesOldestDays, curriculumSessionOldestDays].some(d => d !== null && d >= 7)
-      ) && (
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-status-orange/10 border border-status-orange/30">
-          <AlertTriangle className="w-4 h-4 text-status-orange shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
-            <p className="text-sm text-status-orange font-semibold">
-              Stale items in your review queue
-            </p>
-            <p className="text-[11px] text-status-orange/80">
-              {[
-                needsApprovalOldestDays !== null && needsApprovalOldestDays >= 7 && needsApprovalPending > 0
-                  ? `Needs Approval (oldest: ${needsApprovalOldestDays}d)` : null,
-                playerUpdatesOldestDays !== null && playerUpdatesOldestDays >= 7 && playerUpdatesPending > 0
-                  ? `Player Updates (oldest: ${playerUpdatesOldestDays}d)` : null,
-                curriculumSessionOldestDays !== null && curriculumSessionOldestDays >= 7 && curriculumSessionPending > 0
-                  ? `Curriculum / Sessions (oldest: ${curriculumSessionOldestDays}d)` : null,
-              ].filter(Boolean).join(' · ')}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* All clear state */}
-      {needsApprovalPending + playerUpdatesPending + curriculumSessionPending === 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-status-green/10 border border-status-green/20">
-          <CheckCircle className="w-4 h-4 text-status-green shrink-0" />
-          <p className="text-sm text-status-green font-medium">
-            You&apos;re caught up — nothing needs approval right now.
-          </p>
-        </div>
-      )}
-
       <Tabs defaultValue={activeDefaultTab}>
         <TabsList>
           <TabsTrigger value="needs_approval">
@@ -1398,6 +1307,9 @@ export default async function DirectorReviewQueuePage({
             </Card>
           )}
 
+          {/* Wrap-up coverage — moved inside tab (Sprint 781) */}
+          <WrapUpCoveragePanel coverage={wrapUpCoverage} />
+
           {/* Coach Wrap-Ups */}
           {(pendingWrapUpDrafts.length + approvedWrapUpDrafts.length) > 0 && (
             <div className="space-y-4">
@@ -1414,7 +1326,7 @@ export default async function DirectorReviewQueuePage({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-muted">Guided coach recaps submitted after sessions. Review for accuracy, then approve and apply to record session actuals. Applying also creates individual player notes.</p>
+              <p className="text-xs text-text-muted">Guided coach recaps submitted after sessions. Review for accuracy, then approve and apply to record session actuals. Applying also creates individual player notes.</p>
               {approvedWrapUpDrafts.length > 0 && (
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -1459,7 +1371,7 @@ export default async function DirectorReviewQueuePage({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-muted">Coach-flagged attendance changes. Approve to confirm, then apply to write to attendance records. Unexpected attendees create follow-up placement items — no player is created automatically.</p>
+              <p className="text-xs text-text-muted">Coach-flagged attendance changes. Approve to confirm, then apply to write to attendance records. Unexpected attendees create follow-up placement items — no player is created automatically.</p>
               {approvedAttendanceDrafts.length > 0 && (
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -1499,7 +1411,7 @@ export default async function DirectorReviewQueuePage({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-muted">Unexpected attendees, intake candidates, and placement assessments. No player profile, roster entry, or parent communication is created until a placement recommendation is approved.</p>
+              <p className="text-xs text-text-muted">Unexpected attendees, intake candidates, and placement assessments. No player profile, roster entry, or parent communication is created until a placement recommendation is approved.</p>
 
               {pendingPlacementReviews.length > 0 && (
                 <section className="space-y-3">
@@ -1587,7 +1499,7 @@ export default async function DirectorReviewQueuePage({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-muted">Voice commands and unrouted quick captures awaiting a director decision. Nothing is written automatically.</p>
+              <p className="text-xs text-text-muted">Voice commands and unrouted quick captures awaiting a director decision. Nothing is written automatically.</p>
               {(approvedVoiceIntakeDrafts.length > 0) && (
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -1612,7 +1524,7 @@ export default async function DirectorReviewQueuePage({
               {generalCaptures.length > 0 && (
                 <section className="space-y-3">
                   <p className="label-xs">Unrouted Captures</p>
-                  <p className="text-[10px] text-text-muted">Quick-capture notes not yet assigned to a player. Route each one or dismiss it.</p>
+                  <p className="text-xs text-text-muted">Quick-capture notes not yet assigned to a player. Route each one or dismiss it.</p>
                   <CapturesBatchPanel captures={generalCaptures} players={playerOptions} />
                 </section>
               )}
@@ -1628,7 +1540,7 @@ export default async function DirectorReviewQueuePage({
                   {parentCommDrafts.length} to review
                 </span>
               </div>
-              <p className="text-[10px] text-text-muted">DONNA-generated parent update drafts. Structured in 5 sections. No message has been sent — review the draft and approve before any external action.</p>
+              <p className="text-xs text-text-muted">DONNA-generated parent update drafts. Structured in 5 sections. No message has been sent — review the draft and approve before any external action.</p>
               <div className="space-y-3">
                 {parentCommDrafts.map(item => (
                   <DonnaDraftCard key={item.id} item={item} />
@@ -1646,7 +1558,7 @@ export default async function DirectorReviewQueuePage({
                   {levelReviewDrafts.length} to review
                 </span>
               </div>
-              <p className="text-[10px] text-text-muted">DONNA-generated level readiness assessments. Player level has NOT been changed — this is a review-only draft for your decision.</p>
+              <p className="text-xs text-text-muted">DONNA-generated level readiness assessments. Player level has NOT been changed — this is a review-only draft for your decision.</p>
               <div className="space-y-3">
                 {levelReviewDrafts.map(item => (
                   <DonnaDraftCard key={item.id} item={item} />
@@ -1686,7 +1598,7 @@ export default async function DirectorReviewQueuePage({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-muted">Coach notes on individual players from session wrap-ups. Not added to player profiles until you apply them. Not visible to players or parents.</p>
+              <p className="text-xs text-text-muted">Coach notes on individual players from session wrap-ups. Not added to player profiles until you apply them. Not visible to players or parents.</p>
               {approvedObservationDrafts.length > 0 && (
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -1731,7 +1643,7 @@ export default async function DirectorReviewQueuePage({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-muted">Director-assembled development summary updates built from recent observations. Applying overwrites the player&apos;s current development summary. Not visible to players or parents until applied.</p>
+              <p className="text-xs text-text-muted">Director-assembled development summary updates built from recent observations. Applying overwrites the player&apos;s current development summary. Not visible to players or parents until applied.</p>
               {approvedSummaryDrafts.length > 0 && (
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -1776,7 +1688,7 @@ export default async function DirectorReviewQueuePage({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-muted">Training priority recommendations for individual players. Approve to confirm, then apply to update a player&apos;s current focus areas. Not visible to players or parents until applied.</p>
+              <p className="text-xs text-text-muted">Training priority recommendations for individual players. Approve to confirm, then apply to update a player&apos;s current focus areas. Not visible to players or parents until applied.</p>
               {approvedPriorityDrafts.length > 0 && (
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -1821,7 +1733,7 @@ export default async function DirectorReviewQueuePage({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-muted">Links connecting a performance moment to a curriculum requirement. Approve and apply to record evidence in the player&apos;s development record.</p>
+              <p className="text-xs text-text-muted">Links connecting a performance moment to a curriculum requirement. Approve and apply to record evidence in the player&apos;s development record.</p>
               {approvedEvidenceDrafts.length > 0 && (
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -1881,7 +1793,7 @@ export default async function DirectorReviewQueuePage({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-muted">AI-structured session recap drafts. Approve to confirm the proposed structure, then apply to write the structured data to the session record.</p>
+              <p className="text-xs text-text-muted">AI-structured session recap drafts. Approve to confirm the proposed structure, then apply to write the structured data to the session record.</p>
               {approvedDrafts.length > 0 && (
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -1919,7 +1831,7 @@ export default async function DirectorReviewQueuePage({
                   {pendingCoachSuggestions.length} unread
                 </span>
               </div>
-              <p className="text-[10px] text-text-muted">Coaches submitted these curriculum suggestions. No curriculum data has changed — use these as input when drafting changes in the Curriculum Builder.</p>
+              <p className="text-xs text-text-muted">Coaches submitted these curriculum suggestions. No curriculum data has changed — use these as input when drafting changes in the Curriculum Builder.</p>
               <div className="space-y-4">
                 {pendingCoachSuggestions.map(item => (
                   <CoachCurriculumSuggestionCard key={item.id} item={item as CoachCurriculumSuggestionItem} />
@@ -1944,7 +1856,7 @@ export default async function DirectorReviewQueuePage({
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-text-muted">Curriculum override suggestions — changes to the standard training plan. Approve and apply to modify what the curriculum prescribes. Not visible to players or parents until applied.</p>
+              <p className="text-xs text-text-muted">Curriculum override suggestions — changes to the standard training plan. Approve and apply to modify what the curriculum prescribes. Not visible to players or parents until applied.</p>
               {approvedCurriculumOverrideDrafts.length > 0 && (
                 <section className="space-y-3">
                   <div className="flex items-center gap-2">
