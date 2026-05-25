@@ -7,6 +7,11 @@ import type { CurriculumStage } from './visualMapModel'
 
 export type CoverageStatus = 'complete' | 'partial' | 'minimal' | 'empty'
 
+// Dimensions that can be excluded from scoring when they are not yet tracked.
+// Excluded dimensions do not contribute to the score and do not generate gap warnings.
+// The score is normalized to 100 based only on the available (non-excluded) dimensions.
+export type ExcludableScoreDimension = 'skills' | 'assessment' | 'missions' | 'parentGuidance' | 'badges'
+
 export interface LevelCoverageInput {
   levelId: string
   levelName: string
@@ -21,6 +26,11 @@ export interface LevelCoverageInput {
   badgeCount: number
   parentGuidanceCount: number
   learningModuleCount: number
+  // Optional: dimensions to exclude from scoring.
+  // When a dimension is excluded it is not counted against the score and
+  // does not produce a gap warning. Score is normalized to available weights.
+  // Fully backward-compatible — omitting this field preserves existing behaviour.
+  excludeFromScoring?: ExcludableScoreDimension[]
 }
 
 export interface LevelCoverageScore {
@@ -70,30 +80,59 @@ const COVERAGE_WEIGHTS = {
 
 function computeLevelCoverage(input: LevelCoverageInput): LevelCoverageScore {
   const gaps: CoverageGap[] = []
+  const excluded = new Set<ExcludableScoreDimension>(input.excludeFromScoring ?? [])
 
-  let score = 0
-  if (input.gateCount >= 3) score += COVERAGE_WEIGHTS.gates
-  else if (input.gateCount >= 1) score += Math.round(COVERAGE_WEIGHTS.gates * 0.5)
+  // ── Available weight sum ────────────────────────────────────────────────────
+  // When dimensions are excluded, the score is normalised to the remaining weight
+  // so that a level can still reach 100 with only tracked dimensions filled.
+  const availableWeightSum =
+    COVERAGE_WEIGHTS.gates +
+    COVERAGE_WEIGHTS.drills +
+    COVERAGE_WEIGHTS.coachCues +
+    (excluded.has('skills')        ? 0 : COVERAGE_WEIGHTS.skills) +
+    (excluded.has('assessment')    ? 0 : COVERAGE_WEIGHTS.assessment) +
+    (excluded.has('missions')      ? 0 : COVERAGE_WEIGHTS.missions) +
+    (excluded.has('parentGuidance')? 0 : COVERAGE_WEIGHTS.parentGuidance) +
+    (excluded.has('badges')        ? 0 : COVERAGE_WEIGHTS.badges)
 
-  if (input.drillCount >= 3) score += COVERAGE_WEIGHTS.drills
-  else if (input.drillCount >= 1) score += Math.round(COVERAGE_WEIGHTS.drills * 0.5)
+  // ── Raw score ───────────────────────────────────────────────────────────────
+  let rawScore = 0
 
-  if (input.coachCueCount >= 2) score += COVERAGE_WEIGHTS.coachCues
-  else if (input.coachCueCount >= 1) score += Math.round(COVERAGE_WEIGHTS.coachCues * 0.5)
+  // Gates, drills, coachCues — always tracked
+  if (input.gateCount >= 3) rawScore += COVERAGE_WEIGHTS.gates
+  else if (input.gateCount >= 1) rawScore += Math.round(COVERAGE_WEIGHTS.gates * 0.5)
 
-  if (input.skillCount >= 2) score += COVERAGE_WEIGHTS.skills
-  else if (input.skillCount >= 1) score += Math.round(COVERAGE_WEIGHTS.skills * 0.5)
+  if (input.drillCount >= 3) rawScore += COVERAGE_WEIGHTS.drills
+  else if (input.drillCount >= 1) rawScore += Math.round(COVERAGE_WEIGHTS.drills * 0.5)
 
-  if (input.assessmentCriteriaCount >= 1 && input.evidenceRequirementCount >= 1) {
-    score += COVERAGE_WEIGHTS.assessment
-  } else if (input.assessmentCriteriaCount >= 1 || input.evidenceRequirementCount >= 1) {
-    score += Math.round(COVERAGE_WEIGHTS.assessment * 0.5)
+  if (input.coachCueCount >= 2) rawScore += COVERAGE_WEIGHTS.coachCues
+  else if (input.coachCueCount >= 1) rawScore += Math.round(COVERAGE_WEIGHTS.coachCues * 0.5)
+
+  // Optional dimensions — skipped when excluded
+  if (!excluded.has('skills')) {
+    if (input.skillCount >= 2) rawScore += COVERAGE_WEIGHTS.skills
+    else if (input.skillCount >= 1) rawScore += Math.round(COVERAGE_WEIGHTS.skills * 0.5)
   }
 
-  if (input.missionCount >= 1) score += COVERAGE_WEIGHTS.missions
-  if (input.parentGuidanceCount >= 1) score += COVERAGE_WEIGHTS.parentGuidance
-  if (input.badgeCount >= 1) score += COVERAGE_WEIGHTS.badges
+  if (!excluded.has('assessment')) {
+    if (input.assessmentCriteriaCount >= 1 && input.evidenceRequirementCount >= 1) {
+      rawScore += COVERAGE_WEIGHTS.assessment
+    } else if (input.assessmentCriteriaCount >= 1 || input.evidenceRequirementCount >= 1) {
+      rawScore += Math.round(COVERAGE_WEIGHTS.assessment * 0.5)
+    }
+  }
 
+  if (!excluded.has('missions') && input.missionCount >= 1)      rawScore += COVERAGE_WEIGHTS.missions
+  if (!excluded.has('parentGuidance') && input.parentGuidanceCount >= 1) rawScore += COVERAGE_WEIGHTS.parentGuidance
+  if (!excluded.has('badges') && input.badgeCount >= 1)           rawScore += COVERAGE_WEIGHTS.badges
+
+  // ── Normalise to 100 ────────────────────────────────────────────────────────
+  const score = availableWeightSum > 0
+    ? Math.min(100, Math.round((rawScore / availableWeightSum) * 100))
+    : 0
+
+  // ── Gap generation ──────────────────────────────────────────────────────────
+  // Always-tracked dimensions: gates, drills, coachCues
   if (input.gateCount === 0) {
     gaps.push({
       area: 'Gates',
@@ -128,7 +167,8 @@ function computeLevelCoverage(input: LevelCoverageInput): LevelCoverageScore {
     })
   }
 
-  if (input.assessmentCriteriaCount === 0) {
+  // Optional dimensions: only generate gaps when NOT excluded
+  if (!excluded.has('assessment') && input.assessmentCriteriaCount === 0) {
     gaps.push({
       area: 'Assessment',
       severity: 'recommended',
@@ -137,7 +177,7 @@ function computeLevelCoverage(input: LevelCoverageInput): LevelCoverageScore {
     })
   }
 
-  if (input.parentGuidanceCount === 0) {
+  if (!excluded.has('parentGuidance') && input.parentGuidanceCount === 0) {
     gaps.push({
       area: 'Parent Guidance',
       severity: 'optional',

@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-25 — Sprint 795 — Curriculum Coverage Live Dimensions V1
+
+- **Modified** `src/lib/curriculum/coverageModel.ts`:
+  - Added `ExcludableScoreDimension` type alias: `'skills' | 'assessment' | 'missions' | 'parentGuidance' | 'badges'`
+  - Added optional `excludeFromScoring?: ExcludableScoreDimension[]` to `LevelCoverageInput` — fully backward-compatible; omitting preserves existing behaviour
+  - `computeLevelCoverage` now computes `availableWeightSum` (total weight of non-excluded dimensions) and normalises score: `Math.round((rawScore / availableWeightSum) * 100)` — a level with all tracked dimensions populated reaches 100
+  - Excluded dimensions are skipped in rawScore computation and do not generate gap warnings
+- **Modified** `src/app/director/curriculum/page.tsx`:
+  - Added `excludeFromScoring: ['skills', 'assessment', 'missions', 'parentGuidance', 'badges']` to each `levelCoverageInput` — score now computes against 60 available points (gates 25 + drills 20 + coachCues 15), normalised to 100; no fake data; hardcoded zeros remain but are excluded from scoring
+- **Modified** `src/app/director/curriculum/_components/CurriculumHealthPanel.tsx`:
+  - Updated subtitle to "Score based on 3 available dimensions — gates, drills, coach cues. Skills, assessment, missions, badges, and parent guidance are not yet tracked."
+  - Updated disclaimer block to explain normalisation and what a 100 score means
+  - Fixed `text-[9px]` micro-label on grade sub-label → `text-[10px]` (Sprint 791 audit flag)
+- **Created** `docs/CURRICULUM_COVERAGE_LIVE_DIMENSIONS_795.md` — full sprint doc with root cause table, before/after score table, safety audit, score lift
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+- Expected AIQS lift: ~90/100 → ~93/100; CB-3 Coverage Honesty 4/10 → 8/10
+
+---
+
 ## 2026-05-25 — Sprint 794 — DONNA Curriculum Draft Operator V1
 
 - **Modified** `src/lib/actions/curriculumDraft.ts`:

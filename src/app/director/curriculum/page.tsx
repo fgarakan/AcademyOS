@@ -122,6 +122,10 @@ export default async function DirectorCurriculumPage() {
     badgeCount:                0,
     parentGuidanceCount:       0,
     learningModuleCount:       0,
+    // Sprint 795: exclude dimensions not yet tracked from scoring so that levels
+    // are not unfairly penalised for content that has no data source yet.
+    // Score is normalised to the 3 available dimensions: gates, drills, coachCues.
+    excludeFromScoring: ['skills', 'assessment', 'missions', 'parentGuidance', 'badges'],
   }))
 
   const coverageReport = buildCurriculumCoverageReport(levelCoverageInputs)

@@ -65,7 +65,8 @@ export function CurriculumHealthPanel({ report, dimensionSummary }: Props) {
           <div className="min-w-0">
             <p className="label-xs">Curriculum Content Coverage</p>
             <p className="text-[11px] text-text-muted mt-1 leading-relaxed max-w-md">
-              Partial snapshot — gates, drills, and coach language only. Not a full health score.
+              Score based on 3 available dimensions — gates, drills, coach cues. Skills, assessment,
+              missions, badges, and parent guidance are not yet tracked.
             </p>
           </div>
           <div className="text-right shrink-0">
@@ -75,7 +76,7 @@ export function CurriculumHealthPanel({ report, dimensionSummary }: Props) {
             <p className="text-[10px] uppercase tracking-widest text-text-muted mt-1 font-mono">
               {report.overallScoreOutOf100}<span className="text-text-muted/50">/100</span>
             </p>
-            <p className="text-[9px] text-text-muted/50 mt-0.5">gates · drills · language</p>
+            <p className="text-[10px] text-text-muted/50 mt-0.5">gates · drills · cues</p>
           </div>
         </div>
       </CardHeader>
@@ -86,10 +87,11 @@ export function CurriculumHealthPanel({ report, dimensionSummary }: Props) {
         <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-surface-raised border border-border">
           <Info className="w-3.5 h-3.5 text-text-muted shrink-0 mt-0.5" />
           <p className="text-[11px] text-text-muted leading-relaxed">
-            <span className="text-text-secondary font-medium">Partial coverage snapshot.</span>{' '}
-            Counts gates, drills, and coach language per level. Assessment criteria, missions,
-            parent guidance, and badges are not yet counted. A complete score requires
-            all content types to be connected.
+            <span className="text-text-secondary font-medium">Score normalised to available dimensions.</span>{' '}
+            Gates, drills, and coach cues are tracked and scored. Skills, assessment criteria,
+            missions, badges, and parent guidance are not yet connected — they are excluded from
+            scoring so levels are not unfairly penalised. A 100 score means all 3 tracked
+            dimensions are fully populated.
           </p>
         </div>
 
