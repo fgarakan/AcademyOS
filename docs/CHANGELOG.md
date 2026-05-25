@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-25 — Sprint 815 — DONNA Unified Assistant Experience Audit V1
+
+- **Audit-only sprint** — no source code changes
+- Full 6-part audit of DONNA entry points, side panel clutter, voice systems, memory/context, page-awareness architecture, and proposed singleton architecture
+- **Entry points:** 21+ DONNA entry points found across the application; 3 parallel DONNA experiences not connected to the global panel (`DONNADirectorMobileCommandBar`, `/director/donna`, `/coach/donna`)
+- **Voice systems:** 3 TTS systems found (OpenAI Realtime, OpenAI Server TTS/marin, browser speechSynthesis); two AI voices can fire in the same session (Realtime for greetings + marin for task questions = two audibly different DONNAs)
+- **Panel clutter root causes:** 7+ sections visible simultaneously; Developer Tools visible in production; two separate "Recommendations" surfaces; context summary goes stale silently; no foreground/background separation
+- **Memory gaps:** `sessionIntentContext` clears on every route change (follow-up "the other two" lost on navigation); conversation thread lost on panel close/reopen; no structured page context registration
+- **Proposed singleton architecture:** 6-component target — Provider / Shell / FloatingButton / Context Registry / Voice Singleton / Memory Layer; detailed sprint roadmap 816–825
+- **"DONNA sees what I see" definition:** Structured `DonnaPageContext` contract defined; per-route target context inventory for 8 major routes
+- **Recommended Sprint 816:** DONNA Voice Singleton V1 — stop Realtime from firing in floating panel; route all panel TTS through Server TTS (marin) → browser fallback
+- **Created** `docs/DONNA_UNIFIED_ASSISTANT_EXPERIENCE_AUDIT_815.md` — full audit document
+- TypeScript: clean (audit sprint — no source changes)
+
+---
+
 ## 2026-05-25 — Sprint 814 — DONNA Panel Mobile Usability V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — 5 targeted Tailwind responsive class changes: (1) panel container `w-96 max-w-[90vw]` → `w-full sm:w-96` (true full-width mobile drawer, desktop 384px unchanged); (2) header padding `px-5 pt-5 pb-4` → `px-4 sm:px-5 pt-4 sm:pt-5 pb-3 sm:pb-4` (compact mobile, desktop unchanged); (3) `DONNA_PUBLIC_TITLE` subtitle hidden on mobile via `hidden sm:block` (page context label still visible); (4) close button `w-8 h-8` → `w-11 h-11 sm:w-8 sm:h-8` (44px mobile touch target, desktop unchanged); (5) chip padding `py-1` → `py-2.5 sm:py-1` (better mobile tap height, desktop unchanged). No logic, routing, voice behavior, persistence, or backend code touched.
