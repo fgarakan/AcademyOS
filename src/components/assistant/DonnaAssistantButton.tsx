@@ -237,6 +237,9 @@ import { matchesDailyBriefIntent } from '@/lib/donna/donnaIntentClassifier'
 // Sprint 784 — Cross-session memory (localStorage-backed, safe page context only)
 import { loadLastSession, saveLastSession, buildCrossSessionWelcome } from '@/lib/donna/donnaLastSessionStore'
 import type { DonnaLastSession } from '@/lib/donna/donnaLastSessionStore'
+// Sprint 785 — Follow-up resolver (current-session intent context, RAM only)
+import { resolveFollowUp } from '@/lib/donna/donnaFollowUpResolver'
+import type { DonnaSessionIntentContext } from '@/lib/donna/donnaFollowUpResolver'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -781,6 +784,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [showPageActions, setShowPageActions] = useState(false)
   // Sprint 784 — Cross-session context loaded from localStorage on mount (SSR-safe)
   const [lastSessionData, setLastSessionData] = useState<DonnaLastSession | null>(null)
+  // Sprint 785 — Current-session intent context for follow-up resolution (RAM only, never persisted)
+  const [sessionIntentContext, setSessionIntentContext] = useState<DonnaSessionIntentContext | null>(null)
 
   // Review queue state — Sprint 273
   const [reviewQueueData, setReviewQueueData] = useState<DonnaReviewQueueSummary | null>(null)
@@ -910,6 +915,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setAttendanceQueueResult(null)
     setCurrentOperatorId(null)
     setCurrentOperatorStep(0)
+    setSessionIntentContext(null) // Sprint 785 — clear follow-up context on panel close
     realtimeDisconnect()
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel()
@@ -1047,6 +1053,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setDailyGreetingState(null)
     setCurrentOperatorId(null)
     setCurrentOperatorStep(0)
+    setSessionIntentContext(null) // Sprint 785 — clear follow-up context on route change
     // Sprint 700 — wire route-change safe memory so DONNA session recall tracks navigation
     recordRouteChange(pathname, getPromptCategoryLabel(pathname))
     // Sprint 784 — also persist to localStorage for cross-session context
@@ -1379,6 +1386,26 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (isAttentionPhrase(lower)) {
       void handleFetchAttention()
       return
+    }
+
+    // 5.57. Sprint 785 — Follow-up resolver: uses safe current-session context only.
+    // Runs after all explicit intent matchers so it never steals first-turn commands.
+    // Operator flow guard at step 5.2 (handleOperatorStepAdvance) always runs before this.
+    {
+      const followUp = resolveFollowUp(text, sessionIntentContext)
+      if (followUp) {
+        if (followUp.navigationHref === '/director/review' && followUp.actionType === 'navigate') {
+          void handleOpenReviewQueue()
+        } else if (followUp.navigationHref) {
+          router.push(followUp.navigationHref)
+        }
+        setCommandResponse({ message: followUp.responseText, type: 'info', label: 'DONNA' })
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: followUp.responseText, type: 'info' as const }])
+        speakDonna(followUp.responseText)
+        recordPrompt(text)
+        recordTurn(text, followUp.responseText, { domain: 'general' })
+        return
+      }
     }
 
     // 5.6. Sprint 366 — Communication draft intent (for unrouted cases)
@@ -1954,6 +1981,17 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         const json = await res.json() as { ok: boolean; report?: AttentionReport }
         if (json.ok && json.report) {
           setAttentionReport(json.report)
+          // Sprint 785 — record intent context for follow-up resolver
+          setSessionIntentContext({
+            lastIntentFamily: 'attention',
+            lastResultSectionCount: null,
+            lastResultHighPriorityCount: null,
+            lastResultItemCount: null,
+            lastSuggestedNavigationHref: '/director/review',
+            lastSuggestedNavigationLabel: 'Review Queue',
+            lastTopicLabel: 'urgent items',
+            setAt: Date.now(),
+          })
         } else {
           setCommandResponse({ message: 'Could not load attention items. Try again.', type: 'info', label: 'Attention' })
         }
@@ -1978,6 +2016,19 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         const json = await res.json() as { ok: boolean; brief?: DailyBrief }
         if (json.ok && json.brief) {
           setDailyBrief(json.brief)
+          // Sprint 785 — record safe structural context so follow-ups can reference this brief
+          const briefHighCount = json.brief.sections.filter(s => s.priority === 'high').length
+          const briefTotalItems = json.brief.sections.reduce((n, s) => n + s.items.length, 0)
+          setSessionIntentContext({
+            lastIntentFamily: 'daily_brief',
+            lastResultSectionCount: json.brief.sections.length,
+            lastResultHighPriorityCount: briefHighCount,
+            lastResultItemCount: briefTotalItems,
+            lastSuggestedNavigationHref: '/director/review',
+            lastSuggestedNavigationLabel: 'Review Queue',
+            lastTopicLabel: "today's brief",
+            setAt: Date.now(),
+          })
         } else {
           setCommandResponse({ message: 'Brief unavailable — check back later.', type: 'info', label: 'Daily Brief' })
         }
@@ -2007,6 +2058,17 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     try {
       const data = await getDonnaReviewQueueAction()
       setReviewQueueData(data)
+      // Sprint 785 — record intent context for follow-up resolver
+      setSessionIntentContext({
+        lastIntentFamily: 'review_queue',
+        lastResultSectionCount: null,
+        lastResultHighPriorityCount: null,
+        lastResultItemCount: data?.totalCount ?? null,
+        lastSuggestedNavigationHref: '/director/review',
+        lastSuggestedNavigationLabel: 'Review Queue',
+        lastTopicLabel: 'pending reviews',
+        setAt: Date.now(),
+      })
     } catch {
       setReviewQueueData(null)
     } finally {
@@ -2857,6 +2919,27 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       void handleFetchAttention()
       setTypedText('')
       return
+    }
+
+    // Sprint 785 — Follow-up resolver: uses safe current-session context only.
+    // Runs after all explicit intent matchers so it never steals first-turn commands.
+    // Operator flow guard (handleOperatorStepAdvance) always runs before this path.
+    {
+      const followUp = resolveFollowUp(text, sessionIntentContext)
+      if (followUp) {
+        if (followUp.navigationHref === '/director/review' && followUp.actionType === 'navigate') {
+          void handleOpenReviewQueue()
+        } else if (followUp.navigationHref) {
+          router.push(followUp.navigationHref)
+        }
+        setCommandResponse({ message: followUp.responseText, type: 'info', label: 'DONNA' })
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: followUp.responseText, type: 'info' as const }])
+        speakDonna(followUp.responseText)
+        recordPrompt(text)
+        recordTurn(text, followUp.responseText, { domain: 'general' })
+        setTypedText('')
+        return
+      }
     }
 
     // Predictive suggestion phrases (Sprint 267) — before generic context query
