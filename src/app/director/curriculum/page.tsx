@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle2, Circle, ChevronRight, ChevronDown, Users, CalendarDays, MessageSquare, TrendingUp } from 'lucide-react'
+import { CheckCircle2, Circle, ChevronRight, ChevronDown, Users, CalendarDays, MessageSquare, TrendingUp, GitBranch } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/database.types'
 import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
@@ -186,6 +186,22 @@ export default async function DirectorCurriculumPage() {
       }
     : null
 
+  // ─── Setup checklist live counts ─────────────────────────────────────────
+  // QW-1: Replace hardcoded false on checklist items 4-5 with live queries.
+  // templates.curriculum_level_id may be pending migration 045 on live DB —
+  // guard with error check and fall back to honest "Not connected yet" state.
+  const { count: templatesWithLevelCount, error: templatesCheckError } = await rawDb
+    .from('templates')
+    .select('*', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .not('curriculum_level_id', 'is', null)
+
+  const { count: playersWithLevelCount, error: playersCheckError } = await rawDb
+    .from('player_curriculum_states')
+    .select('*', { count: 'exact', head: true })
+    .eq('academy_id', academyId)
+
   // ─── Status derivation ────────────────────────────────────────────────────
 
   let statusLabel: string
@@ -244,13 +260,13 @@ export default async function DirectorCurriculumPage() {
     },
     {
       label: 'Templates connected',
-      done: false,
-      hint: 'Not connected yet.',
+      done: !templatesCheckError && (templatesWithLevelCount ?? 0) > 0,
+      hint: templatesCheckError ? 'Data source not available yet.' : 'Not connected yet.',
     },
     {
       label: 'Players connected to levels',
-      done: false,
-      hint: 'Not connected yet.',
+      done: !playersCheckError && (playersWithLevelCount ?? 0) > 0,
+      hint: playersCheckError ? 'Data source not available yet.' : 'Not connected yet.',
     },
   ]
 
@@ -405,26 +421,6 @@ export default async function DirectorCurriculumPage() {
         </section>
       )}
 
-      {/* ── 5. Continue Builder ──────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-surface p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-text-primary mb-1">
-            Continue customizing your curriculum
-          </p>
-          <p className="text-[12px] text-text-secondary">
-            Review levels, approve gates, and adapt the development spine for your academy.
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-          <Link href="/director/onboarding/curriculum" className="btn-lime">
-            Continue Curriculum Setup
-          </Link>
-          <Link href="/director/curriculum/builder" className="btn-ghost">
-            Open Curriculum Builder
-          </Link>
-        </div>
-      </div>
-
       {/* ── 6. Connected System ──────────────────────────────────────────── */}
       <section className="space-y-3">
         <p className="label-xs">Connected System</p>
@@ -438,6 +434,24 @@ export default async function DirectorCurriculumPage() {
               <p className="text-[11px] text-text-muted leading-relaxed">{unlocks}</p>
             </div>
           ))}
+          {/* QW-2: Academy Version chip — visible without opening advanced tools */}
+          {versionData && (
+            <Link
+              href="/director/curriculum/academy-version"
+              className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-1.5 hover:border-lime/30 transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                <GitBranch className="w-3.5 h-3.5 text-lime shrink-0" />
+                <p className="text-[12px] font-semibold text-text-primary">Academy Version</p>
+              </div>
+              <p className="text-[11px] text-text-muted leading-relaxed">
+                View your overrides, customizations, and curriculum version history.
+              </p>
+              <p className="text-[11px] text-lime flex items-center gap-1 group-hover:underline">
+                View Academy Version <ChevronRight className="w-3 h-3" />
+              </p>
+            </Link>
+          )}
         </div>
       </section>
 

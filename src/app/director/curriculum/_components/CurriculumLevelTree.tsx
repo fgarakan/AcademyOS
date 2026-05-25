@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ChevronDown, ChevronRight, Search, X, ArrowRight } from 'lucide-react'
-import { CurriculumNodeDrawer } from './CurriculumNodeDrawer'
+import Link from 'next/link'
+import { ChevronDown, ChevronRight, Search, X, ExternalLink } from 'lucide-react'
 import type { CurriculumExplorerData, CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 
 const STAGE_ORDER = [
@@ -44,7 +44,6 @@ interface Props {
 export function CurriculumLevelTree({ explorerData }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [openStages, setOpenStages] = useState<Set<string>>(new Set(STAGE_ORDER))
-  const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null)
 
   const levelsByStage = useMemo(() => {
     const grouped = new Map<string, CurriculumLevel[]>()
@@ -85,29 +84,6 @@ export function CurriculumLevelTree({ explorerData }: Props) {
       return next
     })
   }
-
-  const selectedLevel = selectedLevelId
-    ? (explorerData.levels.find(l => l.id === selectedLevelId) ?? null)
-    : null
-
-  const drawerGates = selectedLevelId
-    ? explorerData.gates.filter(g => g.from_level_id === selectedLevelId)
-    : []
-  const drawerDrills = selectedLevelId
-    ? explorerData.drills.filter(d => d.level_min_id === selectedLevelId)
-    : []
-  const drawerCoachLanguage = selectedLevelId
-    ? explorerData.coachLanguage.filter(c => c.level_id === selectedLevelId)
-    : []
-  const drawerCompetition = selectedLevelId
-    ? (explorerData.competitionTrack.find(c => c.level_id === selectedLevelId) ?? null)
-    : null
-  const drawerFitness = selectedLevelId
-    ? (explorerData.fitnessGuidance.find(f => f.level_id === selectedLevelId) ?? null)
-    : null
-  const drawerVolume = selectedLevelId
-    ? (explorerData.volumeGuidance.find(v => v.level_id === selectedLevelId) ?? null)
-    : null
 
   return (
     <div className="space-y-3">
@@ -178,24 +154,15 @@ export function CurriculumLevelTree({ explorerData }: Props) {
                   const gateCount = explorerData.gates.filter(g => g.from_level_id === level.id).length
                   const drillCount = explorerData.drills.filter(d => d.level_min_id === level.id).length
                   const cueCount = explorerData.coachLanguage.filter(c => c.level_id === level.id).length
-                  const isSelected = selectedLevelId === level.id
 
                   return (
-                    <button
+                    <Link
                       key={level.id}
-                      onClick={() => setSelectedLevelId(level.id)}
-                      className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-colors ${
-                        isSelected
-                          ? 'bg-lime/5 border-l-2 border-l-lime'
-                          : 'bg-surface hover:bg-surface-raised'
-                      }`}
+                      href={`/director/curriculum/level/${level.id}`}
+                      className="flex items-center gap-3 px-4 py-3 bg-surface hover:bg-surface-raised hover:border-l-2 hover:border-l-lime transition-colors group"
                     >
                       <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-[12px] font-medium truncate ${
-                            isSelected ? 'text-text-primary' : 'text-text-secondary'
-                          }`}
-                        >
+                        <p className="text-[12px] font-medium truncate text-text-secondary group-hover:text-text-primary transition-colors">
                           {level.display_name}
                         </p>
                         {explorerData.tablesAvailable && (
@@ -204,12 +171,8 @@ export function CurriculumLevelTree({ explorerData }: Props) {
                           </p>
                         )}
                       </div>
-                      <ArrowRight
-                        className={`w-3.5 h-3.5 shrink-0 ${
-                          isSelected ? 'text-lime' : 'text-text-muted'
-                        }`}
-                      />
-                    </button>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0 text-text-muted group-hover:text-lime transition-colors" />
+                    </Link>
                   )
                 })}
               </div>
@@ -224,21 +187,6 @@ export function CurriculumLevelTree({ explorerData }: Props) {
         )
       })}
 
-      {/* Node drawer — Sprint 557 */}
-      {selectedLevel && (
-        <CurriculumNodeDrawer
-          key={selectedLevel.id}
-          level={selectedLevel}
-          gates={drawerGates}
-          drills={drawerDrills}
-          coachLanguage={drawerCoachLanguage}
-          competition={drawerCompetition}
-          fitness={drawerFitness}
-          volume={drawerVolume}
-          tablesAvailable={explorerData.tablesAvailable}
-          onClose={() => setSelectedLevelId(null)}
-        />
-      )}
     </div>
   )
 }

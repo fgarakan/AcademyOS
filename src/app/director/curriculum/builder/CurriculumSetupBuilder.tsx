@@ -115,15 +115,15 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
           className="relative rounded-2xl overflow-hidden mb-8"
           style={{
             background: '#060f0d',
-            border: '1px solid rgba(17,217,223,0.18)',
+            border: '1px solid rgba(200,255,0,0.15)',
           }}
         >
-          {/* Radial teal glow behind avatar/left */}
+          {/* Radial lime glow behind avatar/left */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                'radial-gradient(ellipse 55% 85% at 15% 50%, rgba(17,217,223,0.07) 0%, transparent 70%)',
+                'radial-gradient(ellipse 55% 85% at 15% 50%, rgba(200,255,0,0.06) 0%, transparent 70%)',
             }}
           />
 
@@ -135,8 +135,8 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
                 <div
                   className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
                   style={{
-                    background: 'rgba(17,217,223,0.10)',
-                    border: '1px solid rgba(17,217,223,0.24)',
+                    background: 'rgba(200,255,0,0.08)',
+                    border: '1px solid rgba(200,255,0,0.20)',
                   }}
                 >
                   <Sparkles className="w-6 h-6 text-lime" />
@@ -153,9 +153,9 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
               <span
                 className="text-[11px] font-semibold px-3 py-1 rounded-full"
                 style={{
-                  background: 'rgba(17,217,223,0.10)',
-                  border: '1px solid rgba(17,217,223,0.20)',
-                  color: '#11d9df',
+                  background: 'rgba(200,255,0,0.10)',
+                  border: '1px solid rgba(200,255,0,0.20)',
+                  color: '#C8FF00',
                 }}
               >
                 AI-Powered
@@ -184,7 +184,7 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
                 type="button"
                 onClick={() => router.push('/director/curriculum/guided')}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-80"
-                style={{ background: '#11d9df', color: '#03100d' }}
+                style={{ background: '#C8FF00', color: '#0A0A0A' }}
               >
                 <Sparkles className="w-4 h-4" />
                 Start Guided Review
@@ -194,8 +194,8 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
                 onClick={() => router.push('/director/curriculum/map')}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
                 style={{
-                  background: 'rgba(17,217,223,0.05)',
-                  border: '1px solid rgba(17,217,223,0.15)',
+                  background: 'rgba(200,255,0,0.05)',
+                  border: '1px solid rgba(200,255,0,0.12)',
                   color: '#a3aab4',
                 }}
               >
@@ -206,8 +206,8 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
                 onClick={() => setJumpOpen(true)}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
                 style={{
-                  background: 'rgba(17,217,223,0.05)',
-                  border: '1px solid rgba(17,217,223,0.15)',
+                  background: 'rgba(200,255,0,0.05)',
+                  border: '1px solid rgba(200,255,0,0.12)',
                   color: '#a3aab4',
                 }}
               >
@@ -223,8 +223,8 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
                 title={curriculumGapChip.safetyNote}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
                 style={{
-                  background: 'rgba(17,217,223,0.04)',
-                  border: '1px solid rgba(17,217,223,0.12)',
+                  background: 'rgba(200,255,0,0.04)',
+                  border: '1px solid rgba(200,255,0,0.10)',
                   color: '#a3aab4',
                 }}
               >
@@ -236,8 +236,8 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
                 onClick={() => router.push('/director/curriculum')}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
                 style={{
-                  background: 'rgba(17,217,223,0.02)',
-                  border: '1px solid rgba(17,217,223,0.08)',
+                  background: 'rgba(200,255,0,0.02)',
+                  border: '1px solid rgba(200,255,0,0.06)',
                   color: '#555',
                 }}
               >
@@ -263,14 +263,14 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
                   className="rounded-xl p-5"
                   style={{
                     background: '#060f0d',
-                    border: '1px solid rgba(17,217,223,0.09)',
+                    border: '1px solid rgba(200,255,0,0.09)',
                   }}
                 >
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center mb-4"
                     style={{
-                      background: 'rgba(17,217,223,0.08)',
-                      border: '1px solid rgba(17,217,223,0.18)',
+                      background: 'rgba(200,255,0,0.08)',
+                      border: '1px solid rgba(200,255,0,0.18)',
                     }}
                   >
                     <span className="text-[11px] font-bold text-lime leading-none">{item.num}</span>
@@ -293,7 +293,7 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
           className="rounded-2xl p-6 mb-10"
           style={{
             background: '#060f0d',
-            border: '1px solid rgba(17,217,223,0.09)',
+            border: '1px solid rgba(200,255,0,0.09)',
           }}
         >
           <div className="flex items-center justify-between mb-5">
@@ -339,11 +339,11 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
         <div className="flex items-center justify-center gap-2">
           <Shield
             className="w-3.5 h-3.5 shrink-0"
-            style={{ color: 'rgba(17,217,223,0.45)' }}
+            style={{ color: 'rgba(200,255,0,0.55)' }}
           />
           <p
             className="text-xs text-center"
-            style={{ color: 'rgba(17,217,223,0.45)' }}
+            style={{ color: 'rgba(200,255,0,0.55)' }}
           >
             Nothing changes until you review and approve. Your curriculum is safe.
           </p>
@@ -354,8 +354,8 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
       {/* ── Jump to Level Modal ─────────────────────── */}
       {jumpOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#060f0d', border: '1px solid rgba(17,217,223,0.18)' }}>
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(17,217,223,0.12)' }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl" style={{ background: '#060f0d', border: '1px solid rgba(200,255,0,0.15)' }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(200,255,0,0.10)' }}>
               <p className="text-[13px] font-semibold text-text-primary">Jump to level</p>
               <button onClick={() => setJumpOpen(false)} className="text-text-muted hover:text-lime transition-colors">
                 <X className="w-4 h-4" />
@@ -372,7 +372,7 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
                     key={level.id}
                     onClick={() => handleJump(level.id)}
                     className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors border-b last:border-b-0 hover:bg-white/[0.03]"
-                    style={{ borderColor: 'rgba(17,217,223,0.07)' }}
+                    style={{ borderColor: 'rgba(200,255,0,0.07)' }}
                   >
                     <span
                       className="w-2 h-2 rounded-full shrink-0"

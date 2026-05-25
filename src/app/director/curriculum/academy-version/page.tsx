@@ -348,7 +348,7 @@ function AuditStat({ label, value, highlight, warn, icon }: {
 }) {
   return (
     <div>
-      <p className="text-[9px] uppercase tracking-widest text-text-muted mb-0.5">{label}</p>
+      <p className="label-xs mb-0.5">{label}</p>
       <div className="flex items-center gap-1.5">
         {icon}
         <p className={`text-sm font-mono font-bold ${

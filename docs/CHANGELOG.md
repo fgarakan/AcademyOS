@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-25 — Sprint 792 — Curriculum Builder Quick Wins V1
+
+- **Modified** `src/app/director/curriculum/page.tsx`:
+  - QW-1: Replaced hardcoded `done: false` on setup checklist items 4–5 ("Templates connected", "Players connected to levels") with live rawDb count queries scoped to `academy_id`; error-safe fallback shows "Data source not available yet." if migration 045 not yet applied on live DB
+  - QW-2: Added visible "Academy Version" chip card to the Connected System section (shown when `versionData` exists); uses `GitBranch` icon, links to `/director/curriculum/academy-version`; visible without opening any `<details>` collapse
+  - QW-5a: Removed duplicate "Continue customizing your curriculum" CTA block (section 5) — exact duplicate of status hero CTA in section 2; reduces page from 12 sections to 11
+- **Modified** `src/app/director/curriculum/academy-version/page.tsx`:
+  - QW-3: Changed `text-[9px]` → `label-xs` in `AuditStat` component label (= `text-[11px] uppercase tracking-widest text-text-muted`); fixes AIQS typography below-minimum violation
+- **Modified** `src/app/director/curriculum/_components/CurriculumLevelTree.tsx`:
+  - QW-4: Changed level row `<button onClick(setSelectedLevelId)>` → `<Link href="/director/curriculum/level/${level.id}">` for direct one-click navigation to level editor; removed inline `CurriculumNodeDrawer` state and render from main-page level tree (drawer file untouched); reduces level edit path from 3 navigations to 1
+- **Modified** `src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx`:
+  - QW-5b: Replaced all brand-accent teal (`#11d9df`, `rgba(17,217,223,...)`) with lime (`#C8FF00`, `rgba(200,255,0,...)`); preserved `STAGE_COLOR['high_performance']` and `PATHWAYS[4]` stage colors (curriculum level indicators, not brand accent); builder hub now matches site-wide design system
+- **Created** `docs/CURRICULUM_BUILDER_QUICK_WINS_792.md` — full sprint documentation with before/after, file list, score lift, remaining blockers, Sprint 793 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+- Expected AIQS lift: 74/100 → ~82/100
+
+---
+
 ## 2026-05-25 — Sprint 791 — Curriculum Builder 10/10 Audit V1
 
 - **Audit-only sprint** — no code changes
