@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-25 — Sprint 811 — DONNA Context Persistence Lift V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — removed `setContextSummary(null)`, `setSuggestions([])`, and `setReviewQueueData(null)` from route-change `useEffect` (lines 1093, 1094, 1098). All three now persist across director navigation, matching the behavior established for `commandResponse` in Sprint 801. Added Sprint 811 comments for each explaining intentional persistence and remaining clear paths. `closePanel()` still clears all three (lines 896, 897, 901); explicit dismiss still clears `contextSummary` (line 3860); `handleContextSummary()` still clears both before re-fetch (lines 2212–2213); fetch error still clears `reviewQueueData` (line 2201).
+- **Created** `docs/DONNA_CONTEXT_PERSISTENCE_LIFT_811.md` — full persistence matrix, type safety analysis, before/after comparison, clear-path confirmation table, estimated score lift (+11 pts on Persistence, +2.6 composite)
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 810 — DONNA + Dashboard 90+ Certification
 
 - **Audit-only sprint** — no source code changes

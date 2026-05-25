@@ -1090,12 +1090,21 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     // DONNA's answer now persists when the director navigates (e.g. clicks a link in the answer).
     // It clears on: panel close, explicit dismiss, new submission, mode change, or closePanel().
     setActionPreview(null)
-    setContextSummary(null)
-    setSuggestions([])
+    // Sprint 811 — contextSummary intentionally NOT cleared on route change.
+    // DONNA's page context persists when the director navigates so they don't have to re-ask.
+    // Context may be from the previous page until the director explicitly re-requests it.
+    // It clears on: panel close (closePanel()), explicit dismiss (onDismissContextSummary),
+    // or when handleContextSummary() fires a fresh fetch (clears before re-fetching).
+    // Sprint 811 — suggestions intentionally NOT cleared on route change.
+    // Suggestions are derived from contextSummary — preserving both keeps them coherent.
+    // They clear on: panel close, individual dismiss, or new context fetch.
     setIsLoadingContext(false)
     setResolutionContext(null)
     setResolvedObjects({})
-    setReviewQueueData(null)
+    // Sprint 811 — reviewQueueData intentionally NOT cleared on route change.
+    // Review queue is academy-wide (not page-specific) — stale data is low-risk and
+    // preferable to forcing the director to re-fetch on every navigation.
+    // It clears on: panel close (closePanel()), fetch error, or next successful fetch.
     setIsLoadingReviewQueue(false)
     setPendingVoiceAnswer(null)
     setInterimVoiceTranscript(null)
