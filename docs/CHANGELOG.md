@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-25 — Sprint 796 — Curriculum Builder Mobile 10/10 Pass V1
+
+- **Modified** `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx`:
+  - Added `block lg:hidden` mobile DONNA context card between the Draft mode banner and the summary grid — shows stage dot + label, level goal, `DONNA Active` lime chip, and "Propose a Change below" safe next-step prompt; desktop `hidden lg:block` aside unchanged
+  - Fixed 3× `text-[9px]` stage info labels ("Level Goal", "Development Intent", "Evidence for Level-Up") → `label-xs` (`text-[11px] uppercase tracking-widest text-text-muted`); resolves last `text-[9px]` violation in the Curriculum Builder level editor
+  - Fixed "Preview Impact" button inline teal styles → lime-aligned: `rgba(200,255,0,0.20)` border, `rgba(200,255,0,0.05)` background, `color: '#C8FF00'`; last remaining teal accent in the level editor removed
+- **Created** `docs/CURRICULUM_BUILDER_MOBILE_796.md` — full sprint doc with change descriptions, ASCII mockup, before/after table, mega-sprint summary
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+- Expected lift: CB-4 Mobile Experience 2/10 → 7/10; AIQS ~93 → ~95; CB Specific ~70/80 → ~76/80; Combined ~84 → ~88
+
+---
+
 ## 2026-05-25 — Sprint 795 — Curriculum Coverage Live Dimensions V1
 
 - **Modified** `src/lib/curriculum/coverageModel.ts`:

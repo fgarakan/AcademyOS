@@ -120,7 +120,7 @@ export function CurriculumLevelBuilderExperience({ level, explorerData }: Props)
             <Link
               href={`/director/curriculum/level/${level.id}/impact`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-colors"
-              style={{ border: '1px solid rgba(17,217,223,0.20)', color: '#11d9df', background: 'rgba(17,217,223,0.05)' }}
+              style={{ border: '1px solid rgba(200,255,0,0.20)', color: '#C8FF00', background: 'rgba(200,255,0,0.05)' }}
             >
               <Zap className="w-3 h-3" />
               Preview Impact
@@ -144,6 +144,33 @@ export function CurriculumLevelBuilderExperience({ level, explorerData }: Props)
           </p>
         </div>
 
+        {/* ── Mobile DONNA context card (hidden on lg+, shown on small screens) */}
+        <div className="block lg:hidden rounded-xl border border-border bg-surface px-4 py-3 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: stageDot }} />
+              <p className="text-[11px] font-semibold text-text-secondary capitalize">{stageLabel}</p>
+            </div>
+            <span
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+              style={{
+                background: 'rgba(200,255,0,0.08)',
+                border: '1px solid rgba(200,255,0,0.16)',
+                color: '#C8FF00',
+              }}
+            >
+              DONNA Active
+            </span>
+          </div>
+          {stageInfo && (
+            <p className="text-[11px] text-text-muted leading-relaxed">{stageInfo.goal}</p>
+          )}
+          <p className="text-[11px] text-text-secondary leading-relaxed">
+            Use <span className="text-lime font-medium">Propose a Change</span> below to draft
+            curriculum changes. Nothing is applied until you approve in the Review Queue.
+          </p>
+        </div>
+
         {/* Summary row — 3 info cards */}
         {stageInfo && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -151,21 +178,21 @@ export function CurriculumLevelBuilderExperience({ level, explorerData }: Props)
               className="rounded-xl px-4 py-3.5 space-y-1"
               style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
             >
-              <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Level Goal</p>
+              <p className="label-xs">Level Goal</p>
               <p className="text-[11px] text-text-secondary leading-relaxed">{stageInfo.goal}</p>
             </div>
             <div
               className="rounded-xl px-4 py-3.5 space-y-1"
               style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
             >
-              <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Development Intent</p>
+              <p className="label-xs">Development Intent</p>
               <p className="text-[11px] text-text-secondary leading-relaxed">{stageInfo.intent}</p>
             </div>
             <div
               className="rounded-xl px-4 py-3.5 space-y-1"
               style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
             >
-              <p className="text-[9px] uppercase tracking-widest font-semibold text-text-muted">Evidence for Level-Up</p>
+              <p className="label-xs">Evidence for Level-Up</p>
               <p className="text-[11px] text-text-secondary leading-relaxed">{stageInfo.evidence}</p>
               {level.advance_min_outcomes > 0 && (
                 <p className="text-[10px] text-text-muted mt-1">
