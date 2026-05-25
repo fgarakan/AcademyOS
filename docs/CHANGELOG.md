@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-25 — Sprint 805 — DONNA Dashboard 10/10 Certification
+
+- **Audit-only sprint** — no source code changes
+- Full re-audit of DONNA side panel, persistence, command understanding, and Director Dashboard after Sprints 800–804
+- **Post-block scores:**
+  - DONNA Side Panel: **74/100** (was 58/100, +16 pts) — 1 priority badge, page context label, 3 core chips, clean typography
+  - DONNA Persistence: **72/100** (was 58/100 composite, +14 pts) — commandResponse now survives navigation
+  - Command Understanding: **70/100** (was 55/100, +15 pts) — "Close Donna" works, COO follow-ups work
+  - Dashboard Cognitive Load: **62/100** (was 40/100, +22 pts) — action-first order, inline DONNA entry, CTA removed
+- **Weighted composite: 70.4/100** (was 53.8/100, **+16.6 pts net lift**)
+- **Grade: B+ (70/100)** — significant real improvement, but 10/10 not yet reached
+- **Remaining gaps:** voice debug controls visible in panel, 2–3 "needs attention" surfaces on dashboard, 8 equal-weight KPI cards, "What should I do first?" not phrase-mapped
+- **Roadmap to 90+:** Sprints 806–810 targeting voice debug removal, dashboard alert consolidation, KPI reduction, phrase map expansion
+- **Created** `docs/DONNA_DASHBOARD_10_10_CERTIFICATION_805.md` — full per-dimension re-scoring with before/after tables
+- TypeScript: clean (audit sprint — no source changes)
+
+---
+
 ## 2026-05-25 — Sprint 804 — DONNA Dashboard Integration V1
 
 - **Created** `src/app/director/_components/DonnaDashboardOpenCard.tsx` — new client component. Shows attention alert count and a single "Ask DONNA →" call-to-action. On click, dispatches `donna:open` event with "What do I need to do today?" pre-seeded in the DONNA panel. Uses the existing event contract shared by `TodayDonnaSuggestionChip`, `LevelUpDonnaCTA`, etc. No DB calls — `attentionCount` (`totalAlerts`) already computed in the dashboard page.
