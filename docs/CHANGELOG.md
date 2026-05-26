@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 827 — DONNA Panel + Guided Assistant Certification V1
+
+- **Created** `docs/DONNA_PANEL_GUIDED_ASSISTANT_CERTIFICATION_827.md` — code audit and certification of DONNA panel after Sprints 822–826; 10 dimensions audited (panel clarity, conversation flow, scroll stability, input usability, mobile safety, workflow/draft safety, guided navigation, highlight behavior, voice consistency, director demo readiness); score 93/100; status ✅ CERTIFIED; known gaps logged (review-queue-card target unverified, no Thinking indicator for sync commands, card dismissal); recommended Sprint 828 target identified
+- **No source files modified** — audit-only sprint
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 826 — DONNA Panel Input Focus After Command V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added `focusDonnaInput()` helper (guards SSR + touch devices via `navigator.maxTouchPoints > 0`, uses `requestAnimationFrame`); called after `setTypedText('')` on the follow-up resolver path and the COO router / command fallthrough path only; all workflow-launching early-return paths unchanged and unaffected
