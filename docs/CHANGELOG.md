@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 851 — DONNA Review Queue Deep-link V1
+
+- **Modified** `src/app/director/players/[playerId]/PlayerActivePriorities.tsx` — (1) added `import Link from 'next/link'`; (2) added `"View in review queue →"` `<Link>` on each active priority card pointing to `/director/review?tab=player-updates`; link renders below the attribution line in lime/70 text (hover: full lime); read-only display — no data writes, no auto-navigation, no interface changes; `PlayerPriorityRow` interface and `page.tsx` query unchanged; Sprint 851 comment documents why direct `proposed_action_id` deep-link is not available (`player_priorities` has no `proposed_action_id` column — not stored at insert time in `actions.ts`, not in `database.types.ts` schema)
+- **Created** `docs/DONNA_REVIEW_QUEUE_DEEPLINK_851.md` — sprint doc: audit findings (`proposed_action_id` not available on `player_priorities`, `[actionId]` deep-link confirmed functional but inaccessible, fallback URL confirmed valid), solution (fallback to `/director/review?tab=player-updates`), behavior description, why-not-direct-link table, safety guarantees, score impact (Dim 5: 9→9.5), remaining gaps, recommended Sprint 852
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 850 — DONNA Player Notes Tab Navigation V1
 
 - **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — updated `buildFocusTargetForRoute` Sprint 841 player profile prefix fallback to be `sourceCommand`-aware: (1) added `NOTES_INTENT` regex (`/priorit|evidence|note|development|observation|coach|recommendation/i`) and `notesIntent` boolean (false when `sourceCommand` absent/null — safe default); (2) `targetId` now `'player-notes-tab'` when intent matches, `'player-profile-header'` otherwise; (3) `label` and `reason` adjusted accordingly; (4) updated JSDoc to document Sprint 850; all existing behavior preserved — "who needs attention?" and generic commands still get `player-profile-header`; `NAV_PATTERNS` and `focusTargetId` overrides unchanged; no routing changes; no tab auto-switching

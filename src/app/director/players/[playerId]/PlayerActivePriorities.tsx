@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
 import { Target } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
@@ -105,6 +106,18 @@ export function PlayerActivePriorities({ priorities }: Props) {
                 {p.updated_at !== p.generated_at && (
                   <p className="text-[11px] text-text-muted">Updated {formatDate(p.updated_at)}</p>
                 )}
+
+                {/* Sprint 851: Review queue link — player_priorities has no proposed_action_id column
+                    (not stored at insert time in actions.ts, not in database.types.ts schema).
+                    Fallback: link to the Player Updates tab of the review queue where the originating
+                    priority_recommendation proposed_action can be found by the director.
+                    Read-only display — no data writes, no auto-navigation. Director-only path. */}
+                <Link
+                  href="/director/review?tab=player-updates"
+                  className="inline-block text-[11px] text-lime/70 hover:text-lime transition-colors mt-0.5"
+                >
+                  View in review queue →
+                </Link>
               </div>
             ))}
           </div>
