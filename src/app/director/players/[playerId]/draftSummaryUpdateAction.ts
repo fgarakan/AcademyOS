@@ -72,19 +72,23 @@ export async function draftSummaryUpdateAction(
 
   const playerName = player.full_name ?? `${player.first_name} ${player.last_name}`.trim()
 
-  // Fetch recent coach_observations (is_private = true, ordered newest first)
+  // Sprint 846: Fetch recent coach_observations — both private and non-private.
+  // The is_private = true filter was removed because this draft is director-only and review-gated:
+  // it creates a proposed_actions row (pending_review) that requires explicit director apply
+  // before writing to player_development_summary. Expanding scope gives a fuller evidence picture.
+  // Non-private observations are not automatically exposed to parents/players by being included here.
+  // is_private is still selected so it is available for future logic if needed.
   const { data: observations } = await supabase
     .from('coach_observations')
     .select('id, content, observation_type, is_private, created_at')
     .eq('player_id', playerId)
     .eq('academy_id', academyId)
-    .eq('is_private', true)
     .order('created_at', { ascending: false })
-    .limit(10)
+    .limit(20)
 
   const obs = observations ?? []
   if (obs.length === 0) {
-    return fail('No internal observations found for this player. Add coach observations before drafting a summary update.')
+    return fail('No observations found for this player. Add coach observations before drafting a summary update.')
   }
 
   // Deterministic assembly from observation types

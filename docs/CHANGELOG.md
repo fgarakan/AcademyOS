@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 846 — draftSummaryUpdateAction Observation Scope Expansion V1
+
+- **Modified** `src/app/director/players/[playerId]/draftSummaryUpdateAction.ts` — (1) removed `.eq('is_private', true)` filter from observation query — draft is director-only and fully review-gated (`pending_review` proposed_action requires explicit director apply before writing to `player_development_summary`), so including non-private observations is safe and improves evidence completeness; (2) increased `.limit(10)` to `.limit(20)` — broader pool warrants larger sample; (3) updated comment to document expansion rationale and safety basis; (4) updated empty-state error message to remove "internal" (no longer accurate); `academy_id` + `player_id` scoping preserved; strength/work_on detection logic unchanged
+- **Created** `docs/DRAFT_SUMMARY_OBSERVATION_SCOPE_EXPANSION_846.md` — sprint doc: audit findings (filter confirmed, summary draft destination confirmed director-only/review-gated), before/after query table, safety guarantees matrix, score impact (Dimension 9: 8→8.5), remaining gaps, recommended Sprint 847
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 845 — Player Priority Loop End-to-End Audit V1
 
 - **Created** `docs/PLAYER_PRIORITY_LOOP_END_TO_END_AUDIT_845.md` — full re-audit of the Player Priority loop (Sprints 840–844); Sprint 833 baseline 76/100 → Sprint 845 87/100 (+11); all 5 critical/medium gaps from Sprint 833 confirmed closed; 10-dimension scoring with before/after comparison; full loop trace (signal → draft → CTA → review → approve → apply → attribution); gap resolution table; safety audit (all guardrails intact); certification: ✅ STRONG — MINOR POLISH REMAINS; director demo path confirmed; 9 remaining low-priority gaps documented; recommended Sprint 846
