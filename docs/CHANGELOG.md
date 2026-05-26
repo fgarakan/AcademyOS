@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-26 — Sprint 844 — Player Priority Named Approver Attribution V1
+
+- **Modified** `src/app/director/players/[playerId]/page.tsx` — after `activePriorities` declaration: (1) batched `audit_logs` query scoped by `academy_id` + `action = 'priority_recommendation.priority.applied'` + `target_id IN [priorityIds]`; (2) batched `profiles` query to resolve `actor_id → display_name`; (3) built `priorityApproverMap`; (4) created `enrichedActivePriorities: PlayerPriorityRow[]` mapping each priority with `approved_by_name`; (5) changed `<PlayerActivePriorities>` to pass `enrichedActivePriorities`; 0–2 DB calls added per render; academy_id scoped throughout; all other uses of `activePriorities` unchanged
+- **Modified** `src/app/director/players/[playerId]/PlayerActivePriorities.tsx` — (1) added `approved_by_name?: string | null` to `PlayerPriorityRow` interface (optional, backward-compatible); (2) updated attribution display to `Approved by {p.approved_by_name ?? 'director'}`; Sprint 843 fallback preserved for priorities with no audit entry
+- **Created** `docs/PLAYER_PRIORITY_NAMED_APPROVER_ATTRIBUTION_844.md` — sprint doc: audit findings (target_id mapping confirmed 1:1), pattern reference (gate activity log), query impact (0–2 batched calls), attribution matrix, safety guarantees, score impact (Dimension 5: 8.5→9), remaining gaps, recommended Sprint 845
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 843 — PlayerActivePriorities Attribution Display V1
 
 - **Modified** `src/app/director/players/[playerId]/PlayerActivePriorities.tsx` — replaced "Set [date]" line with "Approved by director · Applied [date]" using `generated_at` (DB INSERT default = apply timestamp); `updated_at` extracted into conditional separate line; no query change; `approved_by` not stored on `player_priorities` — "director" is the accurate safe fallback (apply action requires director or head_coach role); director-only view, no parent/player exposure

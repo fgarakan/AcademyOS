@@ -30,6 +30,9 @@ export interface PlayerPriorityRow {
   urgency: string
   generated_at: string
   updated_at: string
+  // Sprint 844: optional named approver resolved from audit_logs by page.tsx.
+  // Undefined/null → falls back to "director" in the display.
+  approved_by_name?: string | null
 }
 
 interface Props {
@@ -92,11 +95,12 @@ export function PlayerActivePriorities({ priorities }: Props) {
                   <p className="text-xs text-text-secondary leading-relaxed">{p.description}</p>
                 )}
 
-                {/* Attribution — Sprint 843
-                    approved_by is not stored on player_priorities; "director" is the safe fallback.
+                {/* Attribution — Sprint 843/844
+                    approved_by_name resolved from audit_logs by page.tsx; falls back to "director"
+                    if no audit entry found (e.g. legacy or manually-created priorities).
                     generated_at = DB INSERT default = timestamp the priority was applied via apply action. */}
                 <p className="text-[11px] text-text-muted">
-                  Approved by director · Applied {formatDate(p.generated_at)}
+                  Approved by {p.approved_by_name ?? 'director'} · Applied {formatDate(p.generated_at)}
                 </p>
                 {p.updated_at !== p.generated_at && (
                   <p className="text-[11px] text-text-muted">Updated {formatDate(p.updated_at)}</p>

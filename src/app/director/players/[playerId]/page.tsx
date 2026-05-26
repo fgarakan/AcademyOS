@@ -154,6 +154,51 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     .order('priority_rank', { ascending: true })
   const activePriorities: PlayerPriorityRow[] = rawPriorities ?? []
 
+  // Sprint 844: named approver resolution for active priorities.
+  // audit_logs.action = 'priority_recommendation.priority.applied'
+  // audit_logs.target_id = player_priorities.id (confirmed one-to-one in review/actions.ts)
+  // Batched: priority IDs → audit_logs → actor IDs → profiles display_names.
+  // Pattern: same as gate activity log attribution (lines ~302–325).
+  // Graceful fallback: missing entries → approved_by_name stays null → "director" shown.
+  // academy_id scoped throughout — no parent/player exposure.
+  const priorityApproverMap = new Map<string, string>()
+
+  if (activePriorities.length > 0) {
+    const priorityIds = activePriorities.map(p => p.id)
+    const { data: priorityAuditRows } = await rawDb
+      .from('audit_logs')
+      .select('target_id, actor_id')
+      .eq('academy_id', academyId)
+      .eq('action', 'priority_recommendation.priority.applied')
+      .in('target_id', priorityIds)
+
+    const auditRows = (priorityAuditRows ?? []) as Array<{ target_id: string; actor_id: string | null }>
+    const approverActorIds = Array.from(new Set(
+      auditRows.filter(r => r.actor_id).map(r => r.actor_id as string)
+    ))
+
+    if (approverActorIds.length > 0) {
+      const { data: approverProfiles } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', approverActorIds)
+      const approverNameMap = new Map<string, string>()
+      for (const p of (approverProfiles ?? [])) {
+        if (p.display_name) approverNameMap.set(p.id, p.display_name)
+      }
+      for (const row of auditRows) {
+        if (row.actor_id && row.target_id && approverNameMap.has(row.actor_id)) {
+          priorityApproverMap.set(row.target_id, approverNameMap.get(row.actor_id)!)
+        }
+      }
+    }
+  }
+
+  const enrichedActivePriorities: PlayerPriorityRow[] = activePriorities.map(p => ({
+    ...p,
+    approved_by_name: priorityApproverMap.get(p.id) ?? null,
+  }))
+
   // Progression requirements: level requirements + next level derivation.
   // curriculum_levels and v_curriculum_level_requirements are readable by all authenticated users.
   let progressionRequirements: {
@@ -1459,8 +1504,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
       {/* Active priorities — read-only visibility, no mutation controls */}
       {/* Sprint 841: DONNA focus target — visible when notes tab is active */}
+      {/* Sprint 844: enrichedActivePriorities includes approved_by_name from audit_logs */}
       <div data-donna-focus-id="player-active-priorities">
-        <PlayerActivePriorities priorities={activePriorities} />
+        <PlayerActivePriorities priorities={enrichedActivePriorities} />
       </div>
 
       {/* Evidence summary — derived from same observation data, no extra DB query */}
