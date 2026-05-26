@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-26 — Sprint 839 — Attendance Exception End-to-End Audit V2
+
+- **Created** `docs/ATTENDANCE_EXCEPTION_END_TO_END_AUDIT_V2_839.md` — full re-audit of the attendance exception loop after Sprints 835–838; verifies gap closure across 7 dimensions (DONNA dispatch, parse accuracy, ambiguous-name safety, review card rendering, apply action safety, navigation/highlight, error/edge-case handling); scores 10 dimensions; total score 83/100 (up from 75/100 post-Sprint 834); status upgraded from ⚠️ DEMO-READY WITH CAVEATS to ✅ STRONG — MINOR POLISH REMAINS; loop coverage matrix confirms 5 entry paths covered; 3 remaining gaps identified (all low priority); recommended Sprint 840 listed
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors) — audit-only sprint, no source files modified
+
+---
+
 ## 2026-05-26 — Sprint 838 — Session Detail Attendance Ambiguous Name Fix V1
 
 - **Modified** `src/app/director/sessions/[sessionId]/attendanceExceptionDraftAction.ts` — (1) added exported `AmbiguousAttendanceName` interface (`{ mentioned_name, candidate_players: Array<{ player_id, player_name }>, reason }`); (2) added optional `ambiguous_attendance_names?: AmbiguousAttendanceName[]` to exported `AttendanceExceptionPayload` (omitted from payload when empty — backward-compatible); (3) added `matchAllNamesToRoster()` — all-candidates lookup with same three-tier priority as Sprint 837 (exact full-name → exact first-name → prefix fallback); (4) retained `matchToRoster()` for `detectUnrosteredNames` (first-match sufficient there); (5) updated `parseAttendance()` absent-name loop: 1 candidate → `absentPlayerIds` (safe), >1 → `ambiguousNames` + `warnings` (never silently picks first), 0 → unmatched warning; (6) added `ambiguous_attendance_names` to `parseAttendance()` return value when non-empty; apply action confirmed safe — reads only `rostered_attendance` and `unrostered_attendees`, never `ambiguous_attendance_names`
