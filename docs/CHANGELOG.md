@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-26 — Sprint 853 — Player Priority Context Injection Audit + Design V1
+
+- **Created** `docs/PLAYER_PRIORITY_CONTEXT_INJECTION_853.md` — audit + design doc: 10 audit questions answered (DonnaAssistantButton mount location, prop-threading impossibility, existing context bridge analysis, DirectorDonnaContext scope, client context pattern evaluation, layout change requirement, DB query requirement, stale data risk, role safety); blocker identified: `updateObjectContext` uses `summary ? ... : prev.lastSummary` falsy guard — `null`/`undefined`/empty string cannot clear `lastSummary`, making the existing API unsuitable for clean player profile context without brittle sentinel workarounds; 5 architecture options evaluated; recommended architecture (Option D) designed in full: (1) extend `DonnaSessionState` with typed `playerProfileContext: DonnaPlayerProfileContext | null`, (2) add `updatePlayerProfileContext` to `DonnaSessionContextProvider`, (3) create `PlayerProfileDonnaRegistrar.tsx` client component, (4) render in `page.tsx`, (5) update `DonnaAssistantButton` chip logic; Sprint 854 implementation plan with file list and risk assessment; implementation deferred because sprint requires client context provider changes (`DonnaSessionContextProvider.tsx`)
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors) — audit only, no source files modified
+
+---
+
 ## 2026-05-26 — Sprint 852 — Player Priority DONNA Chips V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — replaced the `// Sprint 800` 3-chip static block with a route-aware conditional: when `pathname.startsWith('/director/players/') && pathname.split('/').length === 4` (dynamic player profile route), renders 3 player-profile chips — "View player notes" (`router.push(pathname + '?tab=notes')` + `closePanel()`), "Show priorities" (same nav — priorities are on Notes tab), "Open player updates" (`router.push('/director/review?tab=player-updates')` + `closePanel()`); otherwise falls back to existing Sprint 800 chips unchanged; "Back to" chip preserved for both branches; coach chips unchanged; Sprint 852 comment block documents active priority data limitation (not available in `DonnaAssistantButton` — receives only `academyId, directorName, role`), highlight limitation (DonnaHighlightBanner fires on pathname change not query-string change), and deferral rationale for true priority-aware chips
