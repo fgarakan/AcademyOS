@@ -41,7 +41,11 @@ export function PlayerProfileTabs({
         <TabsTrigger value="skill-path">Skill Path</TabsTrigger>
         <TabsTrigger value="competition">Competition</TabsTrigger>
         <TabsTrigger value="fitness">Fitness / Load</TabsTrigger>
-        <TabsTrigger value="notes">Notes</TabsTrigger>
+        {/* Sprint 849: data-donna-focus-id="player-notes-tab" gives DONNA a stable DOM anchor
+            on the Notes tab trigger. This is always visible in the TabsList regardless of which
+            tab is active — unlike player-active-priorities, player-priority-recommendation, and
+            player-evidence-hub, which only exist in the DOM when the Notes tab is active. */}
+        <TabsTrigger value="notes" data-donna-focus-id="player-notes-tab">Notes</TabsTrigger>
         <TabsTrigger value="session-history">Session History</TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="pt-6">{overview}</TabsContent>

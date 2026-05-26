@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-26 — Sprint 849 — Player Profile Tab Trigger Focus IDs V1
+
+- **Modified** `src/components/ui/Tabs.tsx` — extended `TabsTrigger` props: added optional `'data-donna-focus-id'?: string`; passes through to `<button>` as `{...(donnaFocusId ? { 'data-donna-focus-id': donnaFocusId } : {})}` spread; all existing usages unchanged (optional prop, no existing caller passes it); required to place attribute on actual DOM element for `DonnaHighlightBanner`'s `querySelector` + `classList.add` + `scrollIntoView` to work
+- **Modified** `src/app/director/players/[playerId]/_components/PlayerProfileTabs.tsx` — added `data-donna-focus-id="player-notes-tab"` to Notes `<TabsTrigger>` with explanatory comment; Notes tab trigger is always in DOM regardless of active tab, unlike the three notes-section IDs (`player-active-priorities`, `player-priority-recommendation`, `player-evidence-hub`) which are unmounted when Notes tab is inactive; no routing or tab behavior changed
+- **Created** `docs/PLAYER_PROFILE_TAB_TRIGGER_FOCUS_IDS_849.md` — sprint doc: audit findings (TabsTrigger prop limitation confirmed, DonnaHighlightBanner query mechanism confirmed, dispatcher not required this sprint), complete focus ID map (5 IDs total, 2 always-in-DOM), safety guarantees, dispatcher deferred to Sprint 850, recommended Sprint 850
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 848 — DONNA Roster Answer Nav Offer V1
 
 - **Modified** `src/components/donna/DonnaVoiceReadyShell.tsx` — (1) added imports: `setDonnaFocusTarget` from `@/lib/donna/donnaFocusTarget`, `buildFocusTargetForRoute` from `@/lib/donna/donnaUIActionDispatcher`; (2) added `buildRosterNavOffer` helper — resolves static hrefs via `HREF_TO_LABEL`, resolves dynamic `/director/players/<uuid>` hrefs using `followUp` text as label (fallback: `'Open player profile'`), returns `null` for absent or unrecognized hrefs; (3) wired roster answer: `buildRosterNavOffer` call + `if (rosterNavOffer) setPendingNavOffer(rosterNavOffer)` inside the `setTimeout` — roster answer now uses the same guided nav offer pattern as `coachHealth`, `stallAnswer`, `draftProposal`; (4) nav confirmation handler: added `buildFocusTargetForRoute(pendingOffer.href, pendingOffer.questionContext)` + `if (navFocusTarget) setDonnaFocusTarget(navFocusTarget)` before `router.push` — all nav offers now trigger teal-glow highlight on arrival via Sprint 841 focus targets; no existing function signatures changed; all changes null-guarded

@@ -46,10 +46,13 @@ export function TabsList({ children, className, scrollable = false }: {
   )
 }
 
-export function TabsTrigger({ value, children, className }: {
+export function TabsTrigger({ value, children, className, 'data-donna-focus-id': donnaFocusId }: {
   value: string
   children: ReactNode
   className?: string
+  // Sprint 849: optional DONNA focus anchor — passed through to the rendered <button>
+  // so DonnaHighlightBanner can query it via [data-donna-focus-id="..."].
+  'data-donna-focus-id'?: string
 }) {
   const { active, set } = useContext(TabsCtx)
   const isActive = active === value
@@ -58,6 +61,7 @@ export function TabsTrigger({ value, children, className }: {
       role="tab"
       aria-selected={isActive}
       onClick={() => set(value)}
+      {...(donnaFocusId ? { 'data-donna-focus-id': donnaFocusId } : {})}
       className={cn(
         'px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all duration-150 border-b-2 -mb-px',
         isActive
