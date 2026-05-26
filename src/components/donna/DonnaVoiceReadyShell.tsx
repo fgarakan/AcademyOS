@@ -57,6 +57,8 @@ import { DATA_QUALITY_PATTERNS, buildDataQualityAnswer } from '@/lib/donna/dataQ
 import { RECENT_DECISIONS_PATTERNS, buildRecentDecisionsAnswer } from '@/lib/donna/recentDecisionsAnswerEngine'
 import { PLAYER_PROGRESS_STALL_PATTERNS, buildPlayerProgressStallAnswer } from '@/lib/donna/playerProgressStallDetector'
 import { submitDonnaActionDraft } from '@/lib/actions/donnaSentinelAction'
+import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
+import { buildFocusTargetForRoute } from '@/lib/donna/donnaUIActionDispatcher'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
@@ -176,6 +178,11 @@ export function DonnaVoiceReadyShell({
           setMessages(prev => [...prev, confirmMsg])
           setIsTyping(false)
           recordTurn(trimmed, confirmMsg.text, { actionId: 'navigate', confidence: 'high' })
+          // Sprint 848: set focus target before navigation so the destination page can highlight.
+          // buildFocusTargetForRoute handles both static routes (FOCUS_TARGET_MAP) and dynamic
+          // player profile routes (/director/players/<uuid>) via Sprint 841 prefix fallback.
+          const navFocusTarget = buildFocusTargetForRoute(pendingOffer.href, pendingOffer.questionContext)
+          if (navFocusTarget) setDonnaFocusTarget(navFocusTarget)
           // Brief delay so the user sees DONNA's message before page changes
           setTimeout(() => router.push(pendingOffer.href), 500)
         }, 300)
@@ -410,6 +417,12 @@ export function DonnaVoiceReadyShell({
       const rosterAnswer = tryAnswerRosterAttentionQuestion(trimmed, directorCtx)
       if (rosterAnswer) {
         const donnaMsg = buildChatMessageFromAnswer(rosterAnswer)
+        // Sprint 848: build nav offer for guided navigation with teal-glow highlight.
+        // buildRosterNavOffer handles both static hrefs (via HREF_TO_LABEL) and dynamic
+        // /director/players/<uuid> hrefs from Sprint 847, using the answer's followUp
+        // text as label (e.g. "View Sarah's profile"). When the director says "yes",
+        // the nav confirmation handler calls setDonnaFocusTarget before router.push.
+        const rosterNavOffer = buildRosterNavOffer(rosterAnswer.href, rosterAnswer.followUp, trimmed)
         setTimeout(() => {
           setMessages(prev => [...prev, donnaMsg])
           setIsTyping(false)
@@ -418,6 +431,7 @@ export function DonnaVoiceReadyShell({
             confidence: rosterAnswer.confidence,
             sourceNote: rosterAnswer.sourceNote,
           })
+          if (rosterNavOffer) setPendingNavOffer(rosterNavOffer)
         }, 600)
         return
       }
@@ -843,6 +857,28 @@ function buildNavOfferFromHref(
   const label = HREF_TO_LABEL[href]
   if (!label) return null
   return { href, label, questionContext }
+}
+
+// Sprint 848: nav offer builder for the roster attention answer.
+// Extends buildNavOfferFromHref to handle dynamic /director/players/<uuid> hrefs
+// (Sprint 847) that cannot be resolved via HREF_TO_LABEL.
+// Label priority: (1) static HREF_TO_LABEL (e.g. /director/players → 'Players'),
+// (2) answer.followUp text (e.g. "View Sarah's profile"), (3) 'Open player profile'.
+// Returns null if href is absent or not a recognized path.
+function buildRosterNavOffer(
+  href: string | null | undefined,
+  followUp: string | null | undefined,
+  questionContext: string,
+): PendingNavOffer | null {
+  if (!href) return null
+  // Try static HREF_TO_LABEL first (handles /director/players fallback, etc.)
+  const staticLabel = HREF_TO_LABEL[href]
+  if (staticLabel) return { href, label: staticLabel, questionContext }
+  // Dynamic /director/players/<uuid> — use followUp text as label or default
+  if (href.startsWith('/director/players/') && href.split('/').length === 4) {
+    return { href, label: followUp?.trim() || 'Open player profile', questionContext }
+  }
+  return null
 }
 
 // ── Action detection from natural language ─────────────────────────────────────

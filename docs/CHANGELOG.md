@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 848 — DONNA Roster Answer Nav Offer V1
+
+- **Modified** `src/components/donna/DonnaVoiceReadyShell.tsx` — (1) added imports: `setDonnaFocusTarget` from `@/lib/donna/donnaFocusTarget`, `buildFocusTargetForRoute` from `@/lib/donna/donnaUIActionDispatcher`; (2) added `buildRosterNavOffer` helper — resolves static hrefs via `HREF_TO_LABEL`, resolves dynamic `/director/players/<uuid>` hrefs using `followUp` text as label (fallback: `'Open player profile'`), returns `null` for absent or unrecognized hrefs; (3) wired roster answer: `buildRosterNavOffer` call + `if (rosterNavOffer) setPendingNavOffer(rosterNavOffer)` inside the `setTimeout` — roster answer now uses the same guided nav offer pattern as `coachHealth`, `stallAnswer`, `draftProposal`; (4) nav confirmation handler: added `buildFocusTargetForRoute(pendingOffer.href, pendingOffer.questionContext)` + `if (navFocusTarget) setDonnaFocusTarget(navFocusTarget)` before `router.push` — all nav offers now trigger teal-glow highlight on arrival via Sprint 841 focus targets; no existing function signatures changed; all changes null-guarded
+- **Created** `docs/DONNA_ROSTER_ANSWER_NAV_OFFER_848.md` — sprint doc: audit findings (rosterAnswer no nav offer confirmed, buildNavOfferFromHref limitation confirmed, nav confirmation handler missing setDonnaFocusTarget confirmed), solution (4 targeted changes), complete flow, nav offer label matrix, focus target activation matrix, safety guarantees, score impact (Dim 8: 8→8.5), remaining gaps, recommended Sprint 849
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 847 — DONNA Attention Answer Deep-link V1
 
 - **Modified** `src/lib/donna/directorPlayersDonnaIntelligence.ts` — updated `buildRosterHubAnswer`: (1) added `playerHref` — resolves to `/director/players/${topItem.playerId}` when `playerId` is available, falls back to `/director/players`; (2) added `followUpText` — `View [name]'s profile` when player name is known, falls back to existing `'Want to see the full attention list?'`; (3) updated `followUp` and `href` return fields to use new variables; (4) added Sprint 847 comment documenting rationale and Sprint 841 compatibility; empty-state return unchanged; graceful fallback for `playerId: null` (demo context)
