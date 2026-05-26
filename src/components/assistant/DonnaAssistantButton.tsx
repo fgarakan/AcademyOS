@@ -3581,12 +3581,39 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                       },
                     }] as { label: string; action: () => void }[])
                   : []),
-                // Sprint 800 — Trimmed to 3 core chips (+ optional "Back to" = max 4).
-                // Removed: "What's on the agenda?", "What should I review first?", "Walk me through today."
-                // — reduces chip overload; surviving chips cover daily intent, attention, and page context.
-                { label: 'What do I need to do today?', action: () => handleCommandSubmit('What do I need to do today?') },
-                { label: 'What needs my attention?', action: () => handleCommandSubmit('What needs my attention?') },
-                { label: 'What can you help me do here?', action: () => handleCommandSubmit('What can you help me do here?') },
+                // Sprint 852 — Player profile route-aware chips.
+                // DonnaAssistantButton receives only { academyId, directorName, role } — no per-player
+                // data is available here. Active priority data lives in the player profile server component
+                // and is never passed to the DONNA panel. Chips are route-aware but data-honest:
+                // they navigate to the correct section without claiming to know what priorities exist.
+                //
+                // True active-priority-aware chips (e.g. "You have 2 active priorities — view them")
+                // require per-player context injection or a live context refresh call — deferred.
+                //
+                // Highlight note: DonnaHighlightBanner fires on usePathname() change. Player profile
+                // tab switches use query-string changes (?tab=notes), not path changes, so the teal
+                // focus highlight cannot be triggered from these chips. Navigation is immediate and direct.
+                //
+                // Sprint 800 — original generic chips preserved for all non-player-profile routes.
+                ...(pathname.startsWith('/director/players/') && pathname.split('/').length === 4
+                  ? ([
+                      // Route: /director/players/<uuid> — player profile chips.
+                      // "View player notes" and "Show priorities" both navigate to ?tab=notes
+                      // because active priorities live on the Notes tab.
+                      { label: 'View player notes',   action: () => { router.push(pathname + '?tab=notes'); closePanel() } },
+                      { label: 'Show priorities',     action: () => { router.push(pathname + '?tab=notes'); closePanel() } },
+                      { label: 'Open player updates', action: () => { router.push('/director/review?tab=player-updates'); closePanel() } },
+                    ] as { label: string; action: () => void }[])
+                  : ([
+                      // Generic director chips for all other director routes.
+                      // Sprint 800 — Trimmed to 3 core chips (+ optional "Back to" = max 4).
+                      // Removed: "What's on the agenda?", "What should I review first?", "Walk me through today."
+                      // — reduces chip overload; surviving chips cover daily intent, attention, and page context.
+                      { label: 'What do I need to do today?', action: () => handleCommandSubmit('What do I need to do today?') },
+                      { label: 'What needs my attention?', action: () => handleCommandSubmit('What needs my attention?') },
+                      { label: 'What can you help me do here?', action: () => handleCommandSubmit('What can you help me do here?') },
+                    ] as { label: string; action: () => void }[])
+                ),
               ] as { label: string; action: () => void }[])
           ).map(chip => (
             <button

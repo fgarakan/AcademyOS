@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 852 — Player Priority DONNA Chips V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — replaced the `// Sprint 800` 3-chip static block with a route-aware conditional: when `pathname.startsWith('/director/players/') && pathname.split('/').length === 4` (dynamic player profile route), renders 3 player-profile chips — "View player notes" (`router.push(pathname + '?tab=notes')` + `closePanel()`), "Show priorities" (same nav — priorities are on Notes tab), "Open player updates" (`router.push('/director/review?tab=player-updates')` + `closePanel()`); otherwise falls back to existing Sprint 800 chips unchanged; "Back to" chip preserved for both branches; coach chips unchanged; Sprint 852 comment block documents active priority data limitation (not available in `DonnaAssistantButton` — receives only `academyId, directorName, role`), highlight limitation (DonnaHighlightBanner fires on pathname change not query-string change), and deferral rationale for true priority-aware chips
+- **Created** `docs/PLAYER_PRIORITY_DONNA_CHIPS_852.md` — sprint doc: audit findings (DonnaVoiceReadyShell out of scope, active priority data unavailable, route detection pattern, highlight limitation explained), chip behavior matrix, chip action table, why both notes chips navigate to `?tab=notes`, limitations table, safety guarantees, score impact, remaining gaps, recommended Sprint 853
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 851 — DONNA Review Queue Deep-link V1
 
 - **Modified** `src/app/director/players/[playerId]/PlayerActivePriorities.tsx` — (1) added `import Link from 'next/link'`; (2) added `"View in review queue →"` `<Link>` on each active priority card pointing to `/director/review?tab=player-updates`; link renders below the attribution line in lime/70 text (hover: full lime); read-only display — no data writes, no auto-navigation, no interface changes; `PlayerPriorityRow` interface and `page.tsx` query unchanged; Sprint 851 comment documents why direct `proposed_action_id` deep-link is not available (`player_priorities` has no `proposed_action_id` column — not stored at insert time in `actions.ts`, not in `database.types.ts` schema)
