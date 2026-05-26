@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 830 — Template Creation End-to-End Audit V1
+
+- **Created** `docs/TEMPLATE_CREATION_END_TO_END_AUDIT_830.md` — end-to-end audit of class template creation loop (director intent → DONNA routing + highlight → template builder workspace → form draft → createClassTemplateWithBlocksAction → template detail stepper → curriculum level assignment → lesson plan draft generation → apply → session generation); 10 dimensions audited (entry clarity, DONNA guidance, page-aware context, navigation/highlight support, UI cognitive load, data honesty, draft/review/approval safety, error handling, mobile usability, director demo readiness); score 87/100; status ✅ STRONG — MINOR POLISH REMAINS; key architectural finding: template creation is a direct write by design (director-owned objects); Sprint 827 `review-queue-card` gap confirmed resolved; recommended Sprint 831: curriculum level integration in create form
+- **No source files modified** — audit-only sprint
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 829 — Coach Wrap-Up End-to-End Audit V1
 
 - **Created** `docs/COACH_WRAP_UP_END_TO_END_AUDIT_829.md` — end-to-end audit of the Coach Wrap-Up loop (session completion → coach recap → structured notes → attendance/session actuals → player observations → director review items → parent-safe drafts); 10 dimensions audited (entry clarity, DONNA involvement, data source honesty, draft/review/approval safety, parent/player safety, error handling, cognitive load/UX, session context availability, mobile usability, director demo readiness); score 90/100; status ✅ CERTIFIED WITH KNOWN GAPS; top gap: WrapUpPageClient lacks template/curriculum context in DONNA guidance (Sprint 830 recommended)
