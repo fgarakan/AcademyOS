@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 847 — DONNA Attention Answer Deep-link V1
+
+- **Modified** `src/lib/donna/directorPlayersDonnaIntelligence.ts` — updated `buildRosterHubAnswer`: (1) added `playerHref` — resolves to `/director/players/${topItem.playerId}` when `playerId` is available, falls back to `/director/players`; (2) added `followUpText` — `View [name]'s profile` when player name is known, falls back to existing `'Want to see the full attention list?'`; (3) updated `followUp` and `href` return fields to use new variables; (4) added Sprint 847 comment documenting rationale and Sprint 841 compatibility; empty-state return unchanged; graceful fallback for `playerId: null` (demo context)
+- **Created** `docs/DONNA_ATTENTION_ANSWER_DEEPLINK_847.md` — sprint doc: problem statement, audit findings (playerId availability confirmed, Sprint 841 prefix fallback compatibility confirmed, topItem already derived), before/after behavior table, safety guarantees matrix, what was not changed, remaining gaps
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 846 — draftSummaryUpdateAction Observation Scope Expansion V1
 
 - **Modified** `src/app/director/players/[playerId]/draftSummaryUpdateAction.ts` — (1) removed `.eq('is_private', true)` filter from observation query — draft is director-only and fully review-gated (`pending_review` proposed_action requires explicit director apply before writing to `player_development_summary`), so including non-private observations is safe and improves evidence completeness; (2) increased `.limit(10)` to `.limit(20)` — broader pool warrants larger sample; (3) updated comment to document expansion rationale and safety basis; (4) updated empty-state error message to remove "internal" (no longer accurate); `academy_id` + `player_id` scoping preserved; strength/work_on detection logic unchanged

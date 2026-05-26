@@ -64,13 +64,25 @@ export function buildRosterHubAnswer(ctx: DirectorDonnaContext): DonnaSafeReadAn
   const topItem = highRisk[0] ?? medRisk[0]
   const reasonNote = topItem?.reason ? ` Most urgent: ${topItem.reason}.` : ''
 
+  // Sprint 847: link directly to the top at-risk player's profile when a playerId is available,
+  // instead of the general player list. buildFocusTargetForRoute already handles
+  // /director/players/<uuid> routes with targetId: 'player-profile-header' (Sprint 841 prefix
+  // fallback), so this link is compatible with DONNA's navigate+highlight system if used through
+  // the dispatcher. The followUp CTA reflects the specific player when known.
+  const playerHref = topItem?.playerId
+    ? `/director/players/${topItem.playerId}`
+    : '/director/players'
+  const followUpText = topItem?.playerId && topItem?.playerName
+    ? `View ${topItem.playerName}'s profile`
+    : 'Want to see the full attention list?'
+
   return {
     actionId: 'roster_attention',
     text: `${prefix}${parts.join(' and ')} flagged for attention.${reasonNote} I can help draft a parent-safe update or coach summary for any of these players — it will go to your review queue before anything is sent. Visit the player directory for curriculum and advancement data.`,
     confidence: ctx.confidence,
     sourceNote: ctx.isLive ? 'Live from observations and attendance' : 'Demo data',
-    followUp: 'Want to see the full attention list?',
-    href: '/director/players',
+    followUp: followUpText,
+    href: playerHref,
     isAnswerable: true,
   }
 }
