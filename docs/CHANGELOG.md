@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 858 — DONNA Context Loading Indicator V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — (1) Context pill dot: replaced static `{contextSummary && !showContextSection && <span />}` with three-branch conditional: `isLoadingContext` → pulsing `animate-pulse` teal dot (shows during Sprint 856/857 auto-fetch regardless of section state); `contextSummary && !showContextSection` → static teal dot (loaded + collapsed); else → null; (2) Context section body: replaced always-on "Ask about this page" button with `isLoadingContext` branch: when loading → `"Refreshing context…"` skeleton (teal `animate-pulse` label + three skeleton lines at 72%/50%/62% width, matching teal palette); when idle → restored "Ask about this page" button without disabled state (button is never in a disabled/loading state now — skeleton handles that path); fixes blank-section gap on route-change refresh (Sprint 857) where `contextSummary` was cleared to null and section showed empty; no new state, no new imports, no TypeScript risk
+- **Created** `docs/DONNA_CONTEXT_LOADING_INDICATOR_858.md` — sprint report: pre-858 gap analysis (blank-section problem traced), dot state matrix (4 states), section state matrix (4 states), full loading experience per trigger path (panel open / route change / manual / panel closed), safety guarantees, known limitations
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 857 — DONNA Route Change Context Refresh V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added Sprint 857 `useEffect([pathname])` after Sprint 856 `[panelOpen]` block (line 1095) and before Sprint 405 `donna:open` listener (line 1097): when `pathname` changes and `panelOpen` is true, calls `void handleContextSummary()` to fetch fresh context for the new route; `if (!panelOpen) return` guard ensures no fetch when panel is closed (preserves Sprint 811 cross-navigation persistence for closed-panel path); dep array `[pathname]` only (not `panelOpen`) to avoid double-fetch on panel open (Sprint 856 `[panelOpen]` owns that trigger); `handleContextSummary` already clears `contextSummary`/`suggestions` at lines 2317–2318 before async fetch — no explicit pre-clears needed; function declaration (hoisted) — safe to reference before lexical definition; no infinite loop risk — `handleContextSummary` writes `contextSummary`/`suggestions` which are not in this effect's deps; Sprint 856 `[panelOpen]` behavior fully preserved

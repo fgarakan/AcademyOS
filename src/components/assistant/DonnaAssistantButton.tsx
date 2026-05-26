@@ -4437,9 +4437,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               }}
             >
               <span>Context</span>
-              {contextSummary && !showContextSection && (
+              {/* Sprint 858 — loading pulse when fetching; static dot when loaded + collapsed */}
+              {isLoadingContext ? (
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-teal-400 ml-0.5 animate-pulse" />
+              ) : (contextSummary && !showContextSection) ? (
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-teal-400 ml-0.5" />
-              )}
+              ) : null}
             </button>
 
             {/* Suggestions pill */}
@@ -4478,22 +4481,48 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           </div>
 
           {/* ── Sprint 823 — Context section (disclosure) ── */}
+          {/* ── Sprint 858 — skeleton replaces button while loading; button restores when idle ── */}
           {showContextSection && (
             <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => void handleContextSummary()}
-                disabled={isLoadingContext}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all disabled:opacity-60 hover:brightness-110"
-                style={{
-                  background: 'rgba(45,212,191,0.06)',
-                  border: '1px solid rgba(45,212,191,0.2)',
-                  color: '#2dd4bf',
-                }}
-              >
-                <Sparkles className="w-3 h-3 shrink-0" />
-                {isLoadingContext ? 'Reading…' : 'Ask about this page'}
-              </button>
+              {isLoadingContext ? (
+                /* Sprint 858 — "Refreshing context…" skeleton shown during auto-fetch
+                   (Sprint 856 panel-open trigger or Sprint 857 route-change trigger).
+                   Replaces the "Ask about this page" button so only one loading signal
+                   is visible at a time. Teal palette matches the Context pill. */
+                <div
+                  className="rounded-xl px-3.5 py-3 space-y-2.5"
+                  style={{
+                    background: 'rgba(45,212,191,0.04)',
+                    border: '1px solid rgba(45,212,191,0.1)',
+                  }}
+                >
+                  <p
+                    className="text-[10px] uppercase tracking-widest font-semibold animate-pulse"
+                    style={{ color: '#2dd4bf' }}
+                  >
+                    Refreshing context…
+                  </p>
+                  <div className="space-y-1.5 animate-pulse">
+                    <div className="h-2 rounded" style={{ background: 'rgba(45,212,191,0.08)', width: '72%' }} />
+                    <div className="h-2 rounded" style={{ background: 'rgba(45,212,191,0.08)', width: '50%' }} />
+                    <div className="h-2 rounded" style={{ background: 'rgba(45,212,191,0.08)', width: '62%' }} />
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void handleContextSummary()}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all hover:brightness-110"
+                  style={{
+                    background: 'rgba(45,212,191,0.06)',
+                    border: '1px solid rgba(45,212,191,0.2)',
+                    color: '#2dd4bf',
+                  }}
+                >
+                  <Sparkles className="w-3 h-3 shrink-0" />
+                  Ask about this page
+                </button>
+              )}
             </div>
           )}
 
