@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Layers, Inbox, ChevronDown,
+  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Layers, Inbox,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -399,8 +399,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const { panelOpen, openDonnaPanel, closeDonnaPanel, updatePrompt } = useDonnaSessionContext()
   const [captureOpen, setCaptureOpen] = useState(false)
   const [activeMode, setActiveMode] = useState<AssistantMode | null>(null)
-  // Sprint 746 — mode buttons collapsed by default; "More options" toggle reveals them
-  const [showMoreOptions, setShowMoreOptions] = useState(false)
+  // Sprint 823 — Panel disclosure section visibility (context / suggestions / actions)
+  const [showContextSection, setShowContextSection] = useState(false)
+  const [showSuggestionsSection, setShowSuggestionsSection] = useState(false)
+  const [showActionsSection, setShowActionsSection] = useState(false)
 
   // Sprint 297 — Realtime voice output (primary path, no mic required)
   const {
@@ -1083,6 +1085,18 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (cooThread.length === 0) return
     cooThreadBottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [cooThread])
+
+  // Sprint 823 — auto-expand Context when DONNA loads a context summary
+  useEffect(() => {
+    if (contextSummary) setShowContextSection(true)
+  }, [contextSummary])
+
+  // Sprint 823 — auto-expand Suggestions when DONNA populates recommendations
+  useEffect(() => {
+    if (suggestions.length > 0 || (recommendationSet && recommendationSet.recommendations.length > 0)) {
+      setShowSuggestionsSection(true)
+    }
+  }, [suggestions, recommendationSet])
 
   // Clear all inline state on route change
   useEffect(() => {
@@ -3863,7 +3877,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             onDismissAttention={() => setAttentionReport(null)}
             onClosePanel={closePanel}
             onAttentionOpenReviewQueue={() => void handleOpenReviewQueue()}
-            recommendationSet={recommendationSet}
+            recommendationSet={showSuggestionsSection ? recommendationSet : null}
             onRecommendationAction={handleRecommendationAction}
             onSetLastCardAction={setLastCardAction}
             communicationDraft={communicationDraft}
@@ -3884,7 +3898,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             showOnboardingSuggestions={showOnboardingSuggestions}
             onDismissOnboardingSuggestions={() => setShowOnboardingSuggestions(false)}
             onOnboardingSuggestionClick={(hint) => { setShowOnboardingSuggestions(false); handleVoiceTranscript(hint) }}
-            contextSummary={contextSummary}
+            contextSummary={showContextSection ? contextSummary : null}
             onDismissContextSummary={() => setContextSummary(null)}
           />
 
@@ -4251,12 +4265,83 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             />
           )}
 
-          {/* ── Predictive suggestions — shown when context is loaded (Sprint 267) ── */}
-          {suggestions.length > 0 && activeMode !== 'create_template' && activeMode !== 'guided_task' && activeMode !== 'review_queue' && (
+          {/* ── Sprint 823 — Compact disclosure bar: Context | Suggestions | Actions ── */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Context pill */}
+            <button
+              type="button"
+              onClick={() => setShowContextSection(prev => !prev)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
+              style={{
+                background: showContextSection ? 'rgba(45,212,191,0.12)' : 'rgba(45,212,191,0.04)',
+                border: `1px solid ${showContextSection ? 'rgba(45,212,191,0.4)' : 'rgba(45,212,191,0.15)'}`,
+                color: showContextSection ? '#2dd4bf' : 'rgba(45,212,191,0.6)',
+              }}
+            >
+              <span>Context</span>
+              {contextSummary && !showContextSection && (
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-teal-400 ml-0.5" />
+              )}
+            </button>
+
+            {/* Suggestions pill */}
+            <button
+              type="button"
+              onClick={() => setShowSuggestionsSection(prev => !prev)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
+              style={{
+                background: showSuggestionsSection ? 'rgba(45,212,191,0.12)' : 'rgba(45,212,191,0.04)',
+                border: `1px solid ${showSuggestionsSection ? 'rgba(45,212,191,0.4)' : 'rgba(45,212,191,0.15)'}`,
+                color: showSuggestionsSection ? '#2dd4bf' : 'rgba(45,212,191,0.6)',
+              }}
+            >
+              <span>Suggestions</span>
+              {(suggestions.length > 0 || (recommendationSet && recommendationSet.recommendations.length > 0)) && !showSuggestionsSection && (
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-teal-400 ml-0.5" />
+              )}
+            </button>
+
+            {/* Actions pill */}
+            <button
+              type="button"
+              onClick={() => setShowActionsSection(prev => !prev)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
+              style={{
+                background: showActionsSection ? 'rgba(45,212,191,0.12)' : 'rgba(45,212,191,0.04)',
+                border: `1px solid ${showActionsSection ? 'rgba(45,212,191,0.4)' : 'rgba(45,212,191,0.15)'}`,
+                color: showActionsSection ? '#2dd4bf' : 'rgba(45,212,191,0.6)',
+              }}
+            >
+              <span>Actions</span>
+              {reviewQueueData && reviewQueueData.totalCount > 0 && !showActionsSection && (
+                <span className="inline-block w-1.5 h-1.5 rounded-full ml-0.5" style={{ background: '#FF3B30' }} />
+              )}
+            </button>
+          </div>
+
+          {/* ── Sprint 823 — Context section (disclosure) ── */}
+          {showContextSection && (
             <div className="space-y-2">
-              <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold px-0.5">
-                Recommendations
-              </p>
+              <button
+                type="button"
+                onClick={() => void handleContextSummary()}
+                disabled={isLoadingContext}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all disabled:opacity-60 hover:brightness-110"
+                style={{
+                  background: 'rgba(45,212,191,0.06)',
+                  border: '1px solid rgba(45,212,191,0.2)',
+                  color: '#2dd4bf',
+                }}
+              >
+                <Sparkles className="w-3 h-3 shrink-0" />
+                {isLoadingContext ? 'Reading…' : 'Ask about this page'}
+              </button>
+            </div>
+          )}
+
+          {/* ── Sprint 823 — Suggestions section (disclosure) ── */}
+          {showSuggestionsSection && suggestions.length > 0 && (
+            <div className="space-y-2">
               {suggestions.map(suggestion => (
                 <DonnaSuggestionCard
                   key={suggestion.id}
@@ -4275,172 +4360,131 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             </div>
           )}
 
-          {/* ── Ask about this page — compact chip (Sprint 746) ── */}
-          {activeMode !== 'create_template' && activeMode !== 'guided_task' && activeMode !== 'review_queue' && (
-            <button
-              type="button"
-              onClick={() => void handleContextSummary()}
-              disabled={isLoadingContext}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all disabled:opacity-60 hover:brightness-110"
-              style={{
-                background: 'rgba(200,255,0,0.06)',
-                border: '1px solid rgba(200,255,0,0.2)',
-                color: '#C8FF00',
-              }}
-            >
-              <Sparkles className="w-3 h-3 shrink-0" />
-              {isLoadingContext ? 'Reading…' : 'Ask about this page'}
-            </button>
-          )}
-
-          {/* ── Mode buttons — collapsed by default (Sprint 746) ── */}
-          {/* Review Queue is always visible for directors (count badge = primary action) */}
-          {/* Secondary modes are behind "More options" toggle to reduce default scroll */}
-          <div className="space-y-1.5">
-            {/* Review Queue — always visible for directors */}
-            {role === 'director' && (
-              <button
-                onClick={() => void handleOpenReviewQueue()}
-                className={cn(
-                  'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150',
-                  activeMode === 'review_queue'
-                    ? 'text-text-primary'
-                    : 'text-text-secondary hover:text-text-primary',
-                )}
-                style={{
-                  background: activeMode === 'review_queue' ? 'rgba(139,92,246,0.06)' : 'var(--bg-surface)',
-                  border: activeMode === 'review_queue' ? '1px solid rgba(139,92,246,0.2)' : '1px solid var(--border)',
-                }}
-              >
-                <div className="flex items-start gap-2.5">
-                  <Inbox className={cn(
-                    'w-3.5 h-3.5 mt-0.5 shrink-0',
-                    activeMode === 'review_queue' ? 'text-violet-400' : 'text-text-muted',
-                  )} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-[12px] font-semibold leading-tight">Review Queue</p>
-                      {reviewQueueData && reviewQueueData.totalCount > 0 && (
-                        <span className="text-[10px] font-semibold px-1 py-0.5 rounded"
-                          style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}>
-                          {reviewQueueData.totalCount}
-                        </span>
-                      )}
+          {/* ── Sprint 823 — Actions section (disclosure) ── */}
+          {showActionsSection && (
+            <div className="space-y-1.5">
+              {/* Review Queue */}
+              {role === 'director' && (
+                <button
+                  onClick={() => void handleOpenReviewQueue()}
+                  className={cn(
+                    'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150',
+                    activeMode === 'review_queue'
+                      ? 'text-text-primary'
+                      : 'text-text-secondary hover:text-text-primary',
+                  )}
+                  style={{
+                    background: activeMode === 'review_queue' ? 'rgba(139,92,246,0.06)' : 'var(--bg-surface)',
+                    border: activeMode === 'review_queue' ? '1px solid rgba(139,92,246,0.2)' : '1px solid var(--border)',
+                  }}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <Inbox className={cn(
+                      'w-3.5 h-3.5 mt-0.5 shrink-0',
+                      activeMode === 'review_queue' ? 'text-violet-400' : 'text-text-muted',
+                    )} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-[12px] font-semibold leading-tight">Review Queue</p>
+                        {reviewQueueData && reviewQueueData.totalCount > 0 && (
+                          <span className="text-[10px] font-semibold px-1 py-0.5 rounded"
+                            style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}>
+                            {reviewQueueData.totalCount}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-text-muted leading-snug mt-0.5">
+                        Review pending notes, unlinked captures, and sessions that need blocks.
+                      </p>
                     </div>
-                    <p className="text-[11px] text-text-muted leading-snug mt-0.5">
-                      Review pending notes, unlinked captures, and sessions that need blocks.
-                    </p>
+                  </div>
+                </button>
+              )}
+
+              {/* Mode list */}
+              <p className="text-xs uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
+                What would you like?
+              </p>
+              {MODES.filter(({ mode }) => isModeAllowedForRole(mode, role)).map(({ mode, label, desc, Icon, category, safeStatus }) => (
+                <button
+                  key={mode}
+                  onClick={() => { handleModeClick(mode); setShowActionsSection(false) }}
+                  className={cn(
+                    'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150',
+                    activeMode === mode
+                      ? 'text-text-primary'
+                      : 'text-text-secondary hover:text-text-primary',
+                  )}
+                  style={{
+                    background:
+                      activeMode === mode ? 'rgba(139,92,246,0.06)' : 'var(--bg-surface)',
+                    border:
+                      activeMode === mode
+                        ? '1px solid rgba(139,92,246,0.2)'
+                        : '1px solid var(--border)',
+                  }}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <Icon
+                      className={cn(
+                        'w-3.5 h-3.5 mt-0.5 shrink-0',
+                        activeMode === mode ? 'text-violet-400' : 'text-text-muted',
+                      )}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-[12px] font-semibold leading-tight">{label}</p>
+                        <span
+                          className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                          style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.18)', color: '#a78bfa' }}
+                        >
+                          {category}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-text-muted leading-snug mt-0.5">{desc}</p>
+                      <p className="text-xs leading-snug mt-1" style={{ color: '#2dd4bf' }}>{safeStatus}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+
+              {/* Quick actions for this page */}
+              {pageTaskShortcuts.length > 0 && (
+                <div
+                  className="rounded-xl px-3.5 py-3 space-y-1.5"
+                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+                >
+                  <p className="text-xs uppercase tracking-widest text-text-muted font-semibold">
+                    Quick actions for this page
+                  </p>
+                  <div className="space-y-0.5">
+                    {pageTaskShortcuts.map(taskId => {
+                      const contract = DONNA_TASK_CONTRACTS[taskId]
+                      const isWired = WIRED_TASK_IDS.has(taskId)
+                      if (!contract) return null
+                      return (
+                        <button
+                          key={taskId}
+                          onClick={() => handleStartGenericTask(taskId, false)}
+                          className={cn(
+                            'w-full text-left px-2.5 py-1.5 rounded-lg transition-all leading-snug flex items-center justify-between gap-2',
+                            isWired
+                              ? 'text-[11px] text-text-secondary hover:text-text-primary hover:bg-surface-raised'
+                              : 'text-[11px] text-text-muted hover:bg-surface-raised',
+                          )}
+                        >
+                          <span>{contract.label}</span>
+                          {!isWired && (
+                            <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-surface border border-border text-text-muted leading-none">
+                              Coming soon
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
-              </button>
-            )}
-
-            {/* "More options" toggle — shown only when no mode is active */}
-            {activeMode === null && (
-              <button
-                type="button"
-                onClick={() => setShowMoreOptions(prev => !prev)}
-                className="w-full text-left px-3 py-2.5 rounded-xl flex items-center justify-between transition-all duration-150 text-text-secondary hover:text-text-primary"
-                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-              >
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-text-muted" />
-                  <span className="text-[12px] font-semibold">More options</span>
-                </div>
-                <ChevronDown className={cn(
-                  'w-3.5 h-3.5 text-text-muted transition-transform duration-150',
-                  showMoreOptions && 'rotate-180',
-                )} />
-              </button>
-            )}
-
-            {/* Expanded mode list — visible when toggle is open OR a mode is already active */}
-            {(showMoreOptions || activeMode !== null) && (
-              <>
-                <p className="text-xs uppercase tracking-widest text-text-muted font-semibold px-0.5 pt-1">
-                  What would you like?
-                </p>
-                {MODES.filter(({ mode }) => isModeAllowedForRole(mode, role)).map(({ mode, label, desc, Icon, category, safeStatus }) => (
-                  <button
-                    key={mode}
-                    onClick={() => { handleModeClick(mode); setShowMoreOptions(false) }}
-                    className={cn(
-                      'w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150',
-                      activeMode === mode
-                        ? 'text-text-primary'
-                        : 'text-text-secondary hover:text-text-primary',
-                    )}
-                    style={{
-                      background:
-                        activeMode === mode ? 'rgba(139,92,246,0.06)' : 'var(--bg-surface)',
-                      border:
-                        activeMode === mode
-                          ? '1px solid rgba(139,92,246,0.2)'
-                          : '1px solid var(--border)',
-                    }}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <Icon
-                        className={cn(
-                          'w-3.5 h-3.5 mt-0.5 shrink-0',
-                          activeMode === mode ? 'text-violet-400' : 'text-text-muted',
-                        )}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-[12px] font-semibold leading-tight">{label}</p>
-                          <span
-                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
-                            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.18)', color: '#a78bfa' }}
-                          >
-                            {category}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-text-muted leading-snug mt-0.5">{desc}</p>
-                        <p className="text-xs leading-snug mt-1" style={{ color: '#2dd4bf' }}>{safeStatus}</p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </>
-            )}
-          </div>
-
-          {/* ── Quick actions for this page — contextual task shortcuts (Sprint 266) ── */}
-          {pageTaskShortcuts.length > 0 && (
-            <div
-              className="rounded-xl px-3.5 py-3 space-y-1.5"
-              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-            >
-              <p className="text-xs uppercase tracking-widest text-text-muted font-semibold">
-                Quick actions for this page
-              </p>
-              <div className="space-y-0.5">
-                {pageTaskShortcuts.map(taskId => {
-                  const contract = DONNA_TASK_CONTRACTS[taskId]
-                  const isWired = WIRED_TASK_IDS.has(taskId)
-                  if (!contract) return null
-                  return (
-                    <button
-                      key={taskId}
-                      onClick={() => handleStartGenericTask(taskId, false)}
-                      className={cn(
-                        'w-full text-left px-2.5 py-1.5 rounded-lg transition-all leading-snug flex items-center justify-between gap-2',
-                        isWired
-                          ? 'text-[11px] text-text-secondary hover:text-text-primary hover:bg-surface-raised'
-                          : 'text-[11px] text-text-muted hover:bg-surface-raised',
-                      )}
-                    >
-                      <span>{contract.label}</span>
-                      {!isWired && (
-                        <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-surface border border-border text-text-muted leading-none">
-                          Coming soon
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
+              )}
             </div>
           )}
 

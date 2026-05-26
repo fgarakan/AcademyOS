@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 823 — DONNA Panel Default View Simplification V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added 3 disclosure state vars (`showContextSection`, `showSuggestionsSection`, `showActionsSection`); added 2 auto-expand `useEffect` hooks (context on `contextSummary` load, suggestions on `suggestions`/`recommendationSet` populate); gated `recommendationSet` and `contextSummary` props to `DonnaWorkflowCards` behind disclosure state; replaced always-visible predictive suggestions block + "Ask about this page" chip + mode buttons + quick actions with compact teal disclosure bar (3 pills: Context · Suggestions · Actions) + 3 collapsible sections; removed unused `ChevronDown` import and `showMoreOptions` state
+- **Created** `docs/DONNA_PANEL_DEFAULT_VIEW_SIMPLIFICATION_823.md` — panel before/after layout, disclosure bar design, auto-expand behaviour, dot badge indicators, preserved surfaces, recommended Sprint 824
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-26 — Sprint 822 — DONNA Developer Tools Production Guard V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added `process.env.NODE_ENV !== 'production'` guard to `lastServerTtsInfo` voice quality pill (lines 4449–4466); TTS source labels ("Premium Donna voice active", "Device voice active", "Text-only mode") now hidden in production, remain visible in development
