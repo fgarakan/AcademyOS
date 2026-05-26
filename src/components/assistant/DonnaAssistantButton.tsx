@@ -1081,6 +1081,19 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panelOpen])
 
+  // Sprint 856 — Auto-load live context on panel open.
+  // contextSummary is cleared on every panel close (closePanel line 929), so every fresh open
+  // starts with null and gets a live read-only refresh via the same fetchDonnaContext path
+  // the director would trigger manually. The null guard prevents a redundant fetch on the rare
+  // case where the panel was never closed (e.g. session-storage restore with in-flight state).
+  // handleContextSummary is a function declaration (hoisted) — safe to call here.
+  useEffect(() => {
+    if (!panelOpen) return
+    if (contextSummary !== null) return
+    void handleContextSummary()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panelOpen])
+
   // Sprint 405 — donna:open custom event listener
   // Allows any page component to open DONNA and pre-fill the input via:
   // window.dispatchEvent(new CustomEvent('donna:open', { detail: { prompt: '...' } }))

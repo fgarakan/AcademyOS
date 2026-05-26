@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 856 — DONNA Live Context Query V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added Sprint 856 `useEffect([panelOpen])` after the continuity-message block (line 1082): when `panelOpen` becomes true and `contextSummary` is null, calls `void handleContextSummary()` automatically; null guard prevents redundant fetch if context already loaded; `handleContextSummary` is a function declaration (hoisted) — safe to reference above its lexical position; follows existing `// eslint-disable-next-line react-hooks/exhaustive-deps` pattern; every panel close already calls `setContextSummary(null)` (closePanel line 929) so every fresh open triggers a live read-only refresh via the same `fetchDonnaContext` server action the director would call manually; Sprint 811 route-change persistence preserved; Sprint 823 auto-expand effect still fires; no new DB queries introduced — reuses `fetchPlayerProfile` (player profile route), `fetchAcademyOverview` (dashboard), and the full `deriveContextRequest` mapping
+- **Created** `docs/DONNA_LIVE_CONTEXT_QUERY_856.md` — sprint report: full audit findings (panelOpen useEffect inventory, contextSummary lifecycle, player_profile context path), implementation rationale, context-by-route table, safety guarantees, known limitations, score impact (Dim 2: 7→8.5, Dim 8: 9.7→9.8; projected total: 91/100)
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 855 — Player Priority 90+ Certification V1
 
 - **Created** `docs/PLAYER_PRIORITY_90_CERTIFICATION_855.md` — full 12-point audit + 10-dimension score across Sprints 849–854; Sprint 833 baseline 76/100 → Sprint 845 87/100 → Sprint 855 verified 89/100; delta 845→855: +2 (Dim 3 +0.5, Dim 5 +0.5, Dim 8 +0.5, Dim 10 +0.5); all Sprint 833 critical/medium gaps confirmed closed; all Sprints 849–854 implementations verified in source (player-notes-tab DOM anchor, NOTES_INTENT dispatcher, review queue link, route-aware chips, typed context injection); remaining gaps all low priority (Dim 2 freshness structural/architectural, Dim 3/8 attention deep-link, Dim 4 recommendation quality, Dim 9 observation scope, Dim 5/10 proposed_action_id schema change); certification decision: **STRONG — MINOR POLISH REMAINS, BUT READY FOR DONNA /GOAL**; safety audit clean; recommended next step: DONNA /goal block (live context query or attention deep-link first sprint)
