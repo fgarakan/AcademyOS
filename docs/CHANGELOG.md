@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 859 — DONNA Context Freshness Certification V1
+
+- **Created** `docs/DONNA_CONTEXT_FRESHNESS_CERTIFICATION_859.md` — static code audit certifying Sprints 856–858: 12/12 requirements pass; verified: panel-open auto-fetch (`[panelOpen]` effect lines 1090–1095), route-change refresh (`[pathname]` effect lines 1111–1115), Player A→B context isolation (`deriveContextRequest` regex extracts UUID from new pathname, `setContextSummary(null)` fires before fetch), dashboard→review and review→sessions route mapping confirmed in `donnaContextTypes.ts`, loading indicator pill pulse + section skeleton confirmed at lines 4441–4447 and 4487–4510, Sprint 857 `if (!panelOpen) return` guard confirmed at line 1112 (zero fetches on closed-panel navigation), mount-time `[pathname]` effect blocked by `panelOpen=false` guard (no mount double-fetch), `donnaContextActions.ts` grep for `.insert/.update/.delete/.upsert` → empty (no writes), no migrations/schema changes, no role changes, TypeScript clean; double-fetch / loop analysis table (6 scenarios all safe); `deriveContextRequest` route-coverage table; known gaps documented (header badge, in-flight race, auto-open timing, overview query cost); Dimension 2 score trajectory documented (7→8.0→9.0→9.5)
+- No source files modified — audit only
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 858 — DONNA Context Loading Indicator V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — (1) Context pill dot: replaced static `{contextSummary && !showContextSection && <span />}` with three-branch conditional: `isLoadingContext` → pulsing `animate-pulse` teal dot (shows during Sprint 856/857 auto-fetch regardless of section state); `contextSummary && !showContextSection` → static teal dot (loaded + collapsed); else → null; (2) Context section body: replaced always-on "Ask about this page" button with `isLoadingContext` branch: when loading → `"Refreshing context…"` skeleton (teal `animate-pulse` label + three skeleton lines at 72%/50%/62% width, matching teal palette); when idle → restored "Ask about this page" button without disabled state (button is never in a disabled/loading state now — skeleton handles that path); fixes blank-section gap on route-change refresh (Sprint 857) where `contextSummary` was cleared to null and section showed empty; no new state, no new imports, no TypeScript risk
