@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 855 — Player Priority 90+ Certification V1
+
+- **Created** `docs/PLAYER_PRIORITY_90_CERTIFICATION_855.md` — full 12-point audit + 10-dimension score across Sprints 849–854; Sprint 833 baseline 76/100 → Sprint 845 87/100 → Sprint 855 verified 89/100; delta 845→855: +2 (Dim 3 +0.5, Dim 5 +0.5, Dim 8 +0.5, Dim 10 +0.5); all Sprint 833 critical/medium gaps confirmed closed; all Sprints 849–854 implementations verified in source (player-notes-tab DOM anchor, NOTES_INTENT dispatcher, review queue link, route-aware chips, typed context injection); remaining gaps all low priority (Dim 2 freshness structural/architectural, Dim 3/8 attention deep-link, Dim 4 recommendation quality, Dim 9 observation scope, Dim 5/10 proposed_action_id schema change); certification decision: **STRONG — MINOR POLISH REMAINS, BUT READY FOR DONNA /GOAL**; safety audit clean; recommended next step: DONNA /goal block (live context query or attention deep-link first sprint)
+- No source files modified — audit only
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors) — audit only
+
+---
+
 ## 2026-05-26 — Sprint 854 — Player Priority Context Injection V1
 
 - **Created** `src/app/director/players/[playerId]/_components/PlayerProfileDonnaRegistrar.tsx` — thin `'use client'` component; renders null; calls `updatePlayerProfileContext(ctx)` on mount and prop update, clears to null on unmount; props: `activePriorityCount`, `topPriorityTitle`, `topPriorityLevel`; no DB reads — data passed from server component
