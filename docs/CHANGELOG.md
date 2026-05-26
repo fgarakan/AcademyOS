@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 826 — DONNA Panel Input Focus After Command V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added `focusDonnaInput()` helper (guards SSR + touch devices via `navigator.maxTouchPoints > 0`, uses `requestAnimationFrame`); called after `setTypedText('')` on the follow-up resolver path and the COO router / command fallthrough path only; all workflow-launching early-return paths unchanged and unaffected
+- **Created** `docs/DONNA_PANEL_INPUT_FOCUS_AFTER_COMMAND_826.md` — submit path audit, guard condition table, before/after behavior, mobile keyboard notes, recommended Sprint 827
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 825 — DONNA Panel Conversation Thread Visibility V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added `cooThreadWrapperRef` on the thread wrapper `div.pb-3`; added `previousCooThreadLengthRef` to track 0→1 transition; added first-reply `useEffect` that calls `cooThreadWrapperRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })` exactly once per panel session when `cooThread` transitions from empty to the first reply; all subsequent turns remain inner-scoped via Sprint 824

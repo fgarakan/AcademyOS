@@ -2965,6 +2965,18 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     return true
   }
 
+  // Sprint 826 — Refocus the typed input after a conversational command so follow-up
+  // questions feel natural without requiring a click. Only runs on non-touch devices
+  // (desktop/laptop): guards against re-opening the mobile virtual keyboard after submit.
+  function focusDonnaInput() {
+    if (typeof window === 'undefined') return
+    if (navigator.maxTouchPoints > 0) return
+    requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLTextAreaElement>('[data-donna-input]')
+      el?.focus()
+    })
+  }
+
   function handleCommandSubmit(overrideText?: string) {
     const text = (overrideText ?? typedText).trim()
     if (!text) return
@@ -3161,6 +3173,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         recordPrompt(text)
         recordTurn(text, followUp.responseText, { domain: 'general' })
         setTypedText('')
+        focusDonnaInput() // Sprint 826 — conversational reply; ready for follow-up
         return
       }
     }
@@ -3204,6 +3217,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       recordSignal('command_issued')
     }
     setTypedText('')
+    focusDonnaInput() // Sprint 826 — conversational reply; ready for follow-up
   }
 
   return (
