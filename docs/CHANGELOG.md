@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 832 — Session Planning End-to-End Audit V1
+
+- **Created** `docs/SESSION_PLANNING_END_TO_END_AUDIT_832.md` — end-to-end audit of the session planning loop (template selection → session generation → roster/group context → DONNA guidance → coach briefing → adjustment suggestions → planned vs actual); 10 dimensions audited (entry clarity, DONNA guidance, page-aware context, navigation/highlight support, UI cognitive load, data honesty, draft/review/approval safety, error/edge-case handling, mobile usability, director/coach demo readiness); score 82/100; status ⚠️ DEMO-READY WITH CAVEATS; key gaps: no `data-donna-focus-id` on any sessions page (highlight fires but finds nothing), `/director/sessions/new` empty state references only fitness templates (class templates invisible), 16-section session detail page has no progressive disclosure; recommended Sprint 833: Session Planning Navigation Highlight V1
+- **No source files modified** — audit-only sprint
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 831 — Director Daily Review End-to-End Audit V1
 
 - **Created** `docs/DIRECTOR_DAILY_REVIEW_END_TO_END_AUDIT_831.md` — end-to-end audit of the director's daily command/review loop ("What do I need to do today?" → priorities → review queue → action path); 10 dimensions audited (entry clarity, DONNA daily briefing, page-aware context, navigation/highlight support, dashboard cognitive load, data honesty, draft/review/approval safety, error/edge-case handling, mobile usability, director demo readiness); score 93/100; status ✅ STRONG — MINOR POLISH REMAINS; key finding: "Attendance Exceptions" and "Coach Recaps" KPI cards both receive `pendingWrapUpsCount` (same value under different labels); Sprint 827 `review-queue-card` gap confirmed fully resolved; recommended Sprint 832: Director Dashboard KPI Clarity V1
