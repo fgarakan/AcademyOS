@@ -1458,7 +1458,10 @@ export default async function PlayerProfilePage({ params }: PageProps) {
       </div>
 
       {/* Active priorities — read-only visibility, no mutation controls */}
-      <PlayerActivePriorities priorities={activePriorities} />
+      {/* Sprint 841: DONNA focus target — visible when notes tab is active */}
+      <div data-donna-focus-id="player-active-priorities">
+        <PlayerActivePriorities priorities={activePriorities} />
+      </div>
 
       {/* Evidence summary — derived from same observation data, no extra DB query */}
       <CoachObservationEvidenceSummary observations={enrichedObservations} />
@@ -1480,22 +1483,28 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      {/* Priority recommendation drafts — existing pending/approved drafts for this player */}
-      <PriorityRecommendationDrafts drafts={recommendationDrafts} />
+      {/* Priority recommendation drafts + create button
+          Sprint 841: DONNA focus target — visible when notes tab is active.
+          Covers both the draft list (PriorityRecommendationDrafts) and the generate button
+          so DONNA can highlight the full priority recommendation workflow in one target. */}
+      <div data-donna-focus-id="player-priority-recommendation">
+        <PriorityRecommendationDrafts drafts={recommendationDrafts} />
 
-      {/* Create priority recommendation draft — deterministic, director-reviewed */}
-      <Card>
-        <CardHeader>
-          <p className="label-xs">Priority Recommendation</p>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <PriorityRecommendationDraftButton onCreateDraft={createDraftAction} />
-        </CardContent>
-      </Card>
+        {/* Create priority recommendation draft — deterministic, director-reviewed */}
+        <Card>
+          <CardHeader>
+            <p className="label-xs">Priority Recommendation</p>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <PriorityRecommendationDraftButton onCreateDraft={createDraftAction} />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* ── Evidence Hub — Phase 7A (Sprints 1057–1062) ───────────────────────── */}
       {/* Director-only. No parent/player exposure. No writes. No automatic level movement. */}
-      <div className="mt-2 pt-2 border-t border-border">
+      {/* Sprint 841: DONNA focus target — visible when notes tab is active */}
+      <div className="mt-2 pt-2 border-t border-border" data-donna-focus-id="player-evidence-hub">
         <p className="label-xs text-text-muted mb-3">Evidence Hub</p>
       </div>
 
@@ -1585,7 +1594,10 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   return (
     <div className="animate-fade-in p-4 sm:p-6 max-w-5xl">
-      <PlayerProfileHeader player={player} curriculumSummary={curriculumSummary} />
+      {/* Sprint 841: DONNA focus target — always visible, outside tabs */}
+      <div data-donna-focus-id="player-profile-header">
+        <PlayerProfileHeader player={player} curriculumSummary={curriculumSummary} />
+      </div>
       <PlayerProfileTabs
         overview={overviewSlot}
         skillPath={skillPathSlot}

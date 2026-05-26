@@ -356,23 +356,45 @@ const FOCUS_TARGET_MAP: Record<string, Pick<DonnaFocusTarget, 'targetId' | 'labe
 
 /**
  * Build a DonnaFocusTarget for a given route + source command.
- * Returns null if no focus target is defined for the route.
+ * Returns undefined if no focus target is defined for the route.
+ *
+ * Sprint 841: added prefix fallback for dynamic player profile routes
+ * (/director/players/<uuid>). These can't be in FOCUS_TARGET_MAP (exact-key lookup),
+ * so a startsWith check handles them. No new routing behavior is added — this only
+ * activates when a dispatch result already routes to a specific player profile URL.
  */
 export function buildFocusTargetForRoute(
   route: string,
   sourceCommand?: string,
 ): DonnaFocusTarget | undefined {
   const entry = FOCUS_TARGET_MAP[route]
-  if (!entry) return undefined
-  return {
-    route,
-    targetId: entry.targetId,
-    label: entry.label,
-    reason: entry.reason,
-    sourceCommand,
-    highlightStyle: 'teal-glow',
-    // expiresAt set by setDonnaFocusTarget (8s default)
+  if (entry) {
+    return {
+      route,
+      targetId: entry.targetId,
+      label: entry.label,
+      reason: entry.reason,
+      sourceCommand,
+      highlightStyle: 'teal-glow',
+      // expiresAt set by setDonnaFocusTarget (8s default)
+    }
   }
+
+  // Sprint 841: dynamic player profile route — /director/players/<uuid>
+  // Matches any 4-segment path under /director/players/ (list is 3 segments).
+  // Returns player-profile-header as the default focus target.
+  if (route.startsWith('/director/players/') && route.split('/').length === 4) {
+    return {
+      route,
+      targetId: 'player-profile-header',
+      label: 'Player Profile',
+      reason: "Here's the player profile. Use the tabs to review priorities, notes, evidence, and session history.",
+      sourceCommand,
+      highlightStyle: 'teal-glow',
+    }
+  }
+
+  return undefined
 }
 
 /**

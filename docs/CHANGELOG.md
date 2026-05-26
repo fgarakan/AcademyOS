@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-26 — Sprint 841 — Player Profile DONNA Focus IDs V1
+
+- **Modified** `src/app/director/players/[playerId]/page.tsx` — added 4 `data-donna-focus-id` attributes: (1) `player-profile-header` wrapper around `<PlayerProfileHeader>` (always in DOM, outside tabs); (2) `player-active-priorities` wrapper around `<PlayerActivePriorities>` in notes tab; (3) `player-priority-recommendation` wrapper around `<PriorityRecommendationDrafts>` + Priority Recommendation card in notes tab; (4) `player-evidence-hub` on existing Evidence Hub border-div in notes tab; Notes-tab focus IDs only exist in DOM when notes tab is active (custom `TabsContent` returns null for inactive tabs)
+- **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — added prefix-match fallback to `buildFocusTargetForRoute` for dynamic player profile routes (`/director/players/<uuid>`, 4-segment path) returning `player-profile-header` target; no new routing behavior added — only activates when a dispatch result already routes to a specific player URL; player_operator guided_operator behavior unchanged
+- **Created** `docs/PLAYER_PROFILE_DONNA_FOCUS_IDS_841.md` — sprint doc: problem statement, 4 focus ID descriptions, activation matrix (always-in-DOM vs notes-tab-only), dispatcher prefix fallback spec, what was not changed, score impact estimate (Dimension 3: 8→9, Dimension 8: 7→8), remaining gaps, recommended Sprint 842
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 840 — Player Priority Approve Apply CTA V1
 
 - **Modified** `src/app/director/players/[playerId]/PriorityRecommendationDrafts.tsx` — (1) added `import Link from 'next/link'` and `ArrowRight` icon; (2) added `CTA_CONFIG` lookup: `pending_review → 'Review / Approve in Review Queue'` (orange), `approved → 'Apply in Review Queue'` (lime), `clarification_needed → 'Return to Review Queue'` (blue); (3) added CTA footer to each draft card — `<Link href="/director/review?tab=player-updates">` with arrow icon, renders only for active statuses; (4) updated header copy to state "Official priority changes require director approval in the Review Queue"; no approval or apply logic added to the component — CTA is a navigation bridge only
