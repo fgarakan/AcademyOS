@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 833 — Player Priority End-to-End Audit V1
+
+- **Created** `docs/PLAYER_PRIORITY_END_TO_END_AUDIT_833.md` — end-to-end audit of the player priority loop (attention signal detection → player profile review → evidence analysis → priority recommendation draft → review queue approval → player-facing mission surface); 10 dimensions audited (signal source completeness, data freshness, director-to-player navigation, priority recommendation quality, approve→apply path completeness, player-facing priority surface, visibility gate enforcement, DONNA integration quality, coach-to-director evidence handoff, loop closure and attribution); score 76/100; status ⚠️ DEMO-READY WITH CAVEATS; critical gaps: (1) `PriorityRecommendationDrafts` component shows draft status but has no approve/apply CTA — director must navigate to review queue separately with no navigation hint, (2) no `data-donna-focus-id` on any player profile page component — DONNA navigates to profile but cannot highlight any section; notable strengths: deterministic priority pipeline (no AI, fully auditable), three-layer visibility gate (query + pure TS + field selection), player missions page translates priorities to mission-framed UX; recommended Sprint 834: Player Priority Approve CTA V1
+- **No source files modified** — audit-only sprint
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 832 — Session Planning End-to-End Audit V1
 
 - **Created** `docs/SESSION_PLANNING_END_TO_END_AUDIT_832.md` — end-to-end audit of the session planning loop (template selection → session generation → roster/group context → DONNA guidance → coach briefing → adjustment suggestions → planned vs actual); 10 dimensions audited (entry clarity, DONNA guidance, page-aware context, navigation/highlight support, UI cognitive load, data honesty, draft/review/approval safety, error/edge-case handling, mobile usability, director/coach demo readiness); score 82/100; status ⚠️ DEMO-READY WITH CAVEATS; key gaps: no `data-donna-focus-id` on any sessions page (highlight fires but finds nothing), `/director/sessions/new` empty state references only fitness templates (class templates invisible), 16-section session detail page has no progressive disclosure; recommended Sprint 833: Session Planning Navigation Highlight V1
