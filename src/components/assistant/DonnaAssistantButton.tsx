@@ -238,6 +238,8 @@ import type { DirectorActionPreview } from '@/lib/donna/directorActionPreview'
 // Sprint 757 — UI action dispatcher pre-check (structured safety + navigation layer)
 // Sprint 760 — Page-aware action surfacing
 import { dispatchUIIntent, getAvailableActionsForContext } from '@/lib/donna/donnaUIActionDispatcher'
+// Sprint 817 — Focus target: set before router.push for teal highlight on arrival
+import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
 import { getOperatorById, getOperatorStep } from '@/lib/donna/donnaUIGuidedOperators'
 import type { UIActionRole, UIActionSafetyClass } from '@/lib/donna/donnaUIActionRegistry'
 // Sprint 780 — Daily brief intent registry (replaces inline isDailyBriefPhrase)
@@ -559,9 +561,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       ? (DONNA_ONBOARDING_STEPS[onboardingStep]?.spokenText ?? DONNA_ONBOARDING_STEPS[0].spokenText)
       : DONNA_ONBOARDING_STEPS[0].spokenText
 
-    // ── Path 1: Realtime (primary) ────────────────────────────────────────────
-    // Skip immediately if Realtime is already known to be unavailable or errored.
-    if (realtimeStatus !== 'unavailable' && realtimeStatus !== 'error') {
+    // ── Path 1: Realtime (primary) — restricted to onboarding/interview only ──
+    // Sprint 821: Realtime is only used on /director/onboarding/interview.
+    // Floating panel greeting must not start a second DONNA voice — use speakDonna() below.
+    const isInterviewPage = pathname.startsWith('/director/onboarding/interview')
+    if (isInterviewPage && realtimeStatus !== 'unavailable' && realtimeStatus !== 'error') {
       const result = await realtimeConnect()
       if (playVersionRef.current !== version) return // panel closed during connect
       if (result.ok) {
@@ -584,7 +588,18 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       console.warn('[Donna] Realtime connect failed — falling back to browser TTS')
     }
 
-    // ── Path 2: Browser TTS (fallback) ────────────────────────────────────────
+    // ── Path 1.5: Server TTS via speakDonna (floating panel — non-interview) ──
+    // Sprint 821: When not on interview page, route greeting through Server TTS (marin)
+    // with browser speechSynthesis fallback — same voice DONNA uses for all responses.
+    // Guarantees no two-voice experience in the floating assistant panel.
+    if (!isInterviewPage) {
+      activatedVoiceModeRef.current = 'browser' // treated as non-realtime for diagnostics
+      speakDonna(text)
+      setVoiceGreetingStatus('done')
+      return
+    }
+
+    // ── Path 2: Browser TTS (interview page fallback only) ────────────────────
     activatedVoiceModeRef.current = 'browser'
     if (typeof window === 'undefined' || !window.speechSynthesis) {
       setVoiceGreetingStatus('error')
@@ -2710,6 +2725,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     }
 
     if (result.kind === 'navigate' && result.route && result.confidence === 'high') {
+      // Sprint 817 — set teal focus target before navigation so destination page can highlight
+      if (result.focusTarget) setDonnaFocusTarget(result.focusTarget)
       router.push(result.route)
       return true
     }
@@ -4429,7 +4446,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
           {/* Sprint 720 — Voice quality status pill: small, non-noisy, shown only after TTS is used */}
           {/* Sprint 749 — opacity-50: reduces visual weight; not a critical status; errors stay visible above */}
-          {lastServerTtsInfo && (
+          {/* Sprint 822 — Hidden in production: TTS source labels are developer diagnostics, not user-facing */}
+          {process.env.NODE_ENV !== 'production' && lastServerTtsInfo && (
             <div className="px-4 pb-1 opacity-50">
               <p className="text-[10px] text-text-muted flex items-center gap-1.5 leading-none">
                 <span

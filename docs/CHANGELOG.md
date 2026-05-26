@@ -2,6 +2,63 @@
 
 ---
 
+## 2026-05-26 — Sprint 822 — DONNA Developer Tools Production Guard V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added `process.env.NODE_ENV !== 'production'` guard to `lastServerTtsInfo` voice quality pill (lines 4449–4466); TTS source labels ("Premium Donna voice active", "Device voice active", "Text-only mode") now hidden in production, remain visible in development
+- **Created** `docs/DONNA_DEVELOPER_TOOLS_PRODUCTION_GUARD_822.md` — full audit findings, surfaces found, what is hidden in production, what remains in development, user-facing status labels preserved, safety guardrails
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
+## 2026-05-25 — Sprint 821 — DONNA Voice Singleton V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — gated OpenAI Realtime voice path to `/director/onboarding/interview` only; added Path 1.5 for all other director pages routing greeting through `speakDonna()` (Server TTS → browser fallback); browser TTS retained as interview-page-only Realtime fallback
+- **Created** `docs/DONNA_VOICE_SINGLETON_821.md` — voice path architecture table, implementation notes, what was not changed
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
+## 2026-05-25 — Sprint 820 — Player Directory Guided Navigation V1
+
+- **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — added `focusTargetId?: string` to `NAV_PATTERNS` type; added 4 specific player-directory patterns with `players-missing-level` and `player-filter-bar` overrides; added "what should I do first" pattern with `review-queue-card` override; updated `resolveNavigation` to apply per-command `focusTargetId` override when present
+- **Modified** `src/app/director/players/page.tsx` — added `data-donna-focus-id="player-directory-summary"` to header div; `data-donna-focus-id="players-missing-level"` to "without curriculum level" Link; `data-donna-focus-id="add-player-button"` to "Add player" Link
+- **Modified** `src/app/director/players/_components/PlayersDirectoryClient.tsx` — added `data-donna-focus-id="player-filter-bar"` to `SearchFilterBar`; `data-donna-focus-id="player-list"` to table-card div
+- **Created** `docs/PLAYER_DIRECTORY_GUIDED_NAVIGATION_820.md` — focus target table, command maps, architecture notes
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
+## 2026-05-25 — Sprint 819 — Template Builder Guided Navigation V1
+
+- **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — updated `resolveDraftIntent` template creation case to return `kind: 'navigate'` to `/director/class-templates/new` with `focusTarget: {targetId: 'create-template-form', ...}` instead of `draft_submitted` to `/director/review`; DONNA now takes director to builder workspace instead of sidebar-drafting
+- **Modified** `src/app/director/class-templates/page.tsx` — added `data-donna-focus-id="create-template-button"` to "New Class Template" Link; added `data-donna-focus-id="template-list"` to template list wrapper div (both empty and populated states)
+- **Modified** `src/app/director/class-templates/new/page.tsx` — added `data-donna-focus-id="create-template-form"` wrapper div around the `<Card>` containing `<NewClassTemplateForm>`
+- **Created** `docs/TEMPLATE_BUILDER_GUIDED_NAVIGATION_819.md` — behavior change rationale, command maps, focus target table
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
+## 2026-05-25 — Sprint 818 — Director Daily Command Focus Targets V1
+
+- **Modified** `src/app/director/page.tsx` — added `data-donna-focus-id` attributes to 7 elements: `today-command-center` (wrapper around DirectorTodayCommandCenter), `todays-pulse` (3-tile grid), `review-queue-card`, `player-attention-card`, `sessions-this-week-card` (individual pulse tiles), `academy-metrics-section` (wrapper div around Academy Metrics CollapsibleSection), `alerts-placement-section` (wrapper div around Alerts & Placement CollapsibleSection). No data fetching, logic, or styling changes.
+- **Created** `docs/DIRECTOR_DAILY_COMMAND_FOCUS_TARGETS_818.md` — focus target map + behavior spec
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
+## 2026-05-25 — Sprint 817 — DONNA Navigate + Highlight Runtime V1
+
+- **Created** `src/components/donna/DonnaHighlightBanner.tsx` — client component mounted in director layout; reads sessionStorage on pathname change, finds `[data-donna-focus-id]` element, applies teal glow CSS class, shows floating "DONNA is pointing here" badge, auto-dismisses after 8s or on manual dismiss
+- **Modified** `src/lib/donna/donnaFocusTarget.ts` — added `isDonnaFocusTargetExpired()` utility for checking expiry without reading/clearing the stored target
+- **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — added `focusTarget?: DonnaFocusTarget` to `DispatchResult`; added `FOCUS_TARGET_MAP` (7 director routes); added `buildFocusTargetForRoute()` helper; updated `resolveNavigation` to populate `focusTarget`
+- **Modified** `src/app/globals.css` — added `.donna-focus-ring`, `.donna-focus-ring-warning`, `@keyframes donna-pulse`, `@keyframes donna-pulse-warning` (teal + amber variants)
+- **Modified** `src/app/director/layout.tsx` — imported and mounted `<DonnaHighlightBanner />` inside director layout
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — imported `setDonnaFocusTarget`; added one-line call before `router.push()` in `handleUIDispatch` navigate case
+- **Created** `docs/DONNA_NAVIGATE_HIGHLIGHT_RUNTIME_817.md` — sprint architecture + safety doc
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-25 — Sprint 816 — DONNA Guided Navigation + Highlight Architecture V1
 
 - **Architecture-only sprint** — no source code changes
