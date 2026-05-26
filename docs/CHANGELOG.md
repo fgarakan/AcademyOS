@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 860 — DONNA Page Context Coverage Audit V1
+
+- **Created** `docs/DONNA_PAGE_CONTEXT_COVERAGE_AUDIT_860.md` — full static audit of DONNA context coverage across 12 AcademyOS surfaces (Director Dashboard, Review Queue, Sessions Page, Session Detail, Class Templates, Template Builder, Player Directory, Player Profile, Coach Session, Coach Wrap-Up, Parent Portal, Player Portal); assessment dimensions: context type assigned, DB queries and depth, focus target count, 0–10 score, gap summary; system average 4.9/10; director surfaces 5.9/10; 1 excellent surface (player profile 9/10); 4 good surfaces (7/10); 3 critical surfaces (session detail 2/10, coach session 1/10, coach wrap-up 1/10); identified 5 gap types: (1) missing UUID routing for session detail + template builder — both get collection-level context instead of record-level, (2) all `/coach/**` routes fall through to `academy_overview` fallback — coach context entirely wrong, (3) shallow DB fetch for `session_context` (1 query, list only), (4) zero focus targets on sessions + coach pages, (5) `group_context` type defined but no route trigger or fetch function implemented; priority ranking for Sprint 861 registry; `fetchDonnaContext` function coverage table (11 functions: 8 adequate/good, 2 shallow/thin, 1 not implemented); confirms all fetch functions read-only, all academy_id scoped, no RLS bypass
+- No source files modified — audit only
+- TypeScript: N/A (no code changes)
+
+---
+
 ## 2026-05-26 — Sprint 859 — DONNA Context Freshness Certification V1
 
 - **Created** `docs/DONNA_CONTEXT_FRESHNESS_CERTIFICATION_859.md` — static code audit certifying Sprints 856–858: 12/12 requirements pass; verified: panel-open auto-fetch (`[panelOpen]` effect lines 1090–1095), route-change refresh (`[pathname]` effect lines 1111–1115), Player A→B context isolation (`deriveContextRequest` regex extracts UUID from new pathname, `setContextSummary(null)` fires before fetch), dashboard→review and review→sessions route mapping confirmed in `donnaContextTypes.ts`, loading indicator pill pulse + section skeleton confirmed at lines 4441–4447 and 4487–4510, Sprint 857 `if (!panelOpen) return` guard confirmed at line 1112 (zero fetches on closed-panel navigation), mount-time `[pathname]` effect blocked by `panelOpen=false` guard (no mount double-fetch), `donnaContextActions.ts` grep for `.insert/.update/.delete/.upsert` → empty (no writes), no migrations/schema changes, no role changes, TypeScript clean; double-fetch / loop analysis table (6 scenarios all safe); `deriveContextRequest` route-coverage table; known gaps documented (header badge, in-flight race, auto-open timing, overview query cost); Dimension 2 score trajectory documented (7→8.0→9.0→9.5)
