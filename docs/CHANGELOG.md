@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 857 — DONNA Route Change Context Refresh V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added Sprint 857 `useEffect([pathname])` after Sprint 856 `[panelOpen]` block (line 1095) and before Sprint 405 `donna:open` listener (line 1097): when `pathname` changes and `panelOpen` is true, calls `void handleContextSummary()` to fetch fresh context for the new route; `if (!panelOpen) return` guard ensures no fetch when panel is closed (preserves Sprint 811 cross-navigation persistence for closed-panel path); dep array `[pathname]` only (not `panelOpen`) to avoid double-fetch on panel open (Sprint 856 `[panelOpen]` owns that trigger); `handleContextSummary` already clears `contextSummary`/`suggestions` at lines 2317–2318 before async fetch — no explicit pre-clears needed; function declaration (hoisted) — safe to reference before lexical definition; no infinite loop risk — `handleContextSummary` writes `contextSummary`/`suggestions` which are not in this effect's deps; Sprint 856 `[panelOpen]` behavior fully preserved
+- **Created** `docs/DONNA_ROUTE_CHANGE_CONTEXT_REFRESH_857.md` — sprint report: audit findings (Sprint 856/811 interaction analysis, stale context bug path, double-fetch risk analysis, mount-time guard analysis), implementation rationale, behavior matrix (8 scenarios), context-by-route table, safety guarantees, known limitations, score impact (Dim 2: 8.5→9.5; projected total: 92/100)
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 856 — DONNA Live Context Query V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added Sprint 856 `useEffect([panelOpen])` after the continuity-message block (line 1082): when `panelOpen` becomes true and `contextSummary` is null, calls `void handleContextSummary()` automatically; null guard prevents redundant fetch if context already loaded; `handleContextSummary` is a function declaration (hoisted) — safe to reference above its lexical position; follows existing `// eslint-disable-next-line react-hooks/exhaustive-deps` pattern; every panel close already calls `setContextSummary(null)` (closePanel line 929) so every fresh open triggers a live read-only refresh via the same `fetchDonnaContext` server action the director would call manually; Sprint 811 route-change persistence preserved; Sprint 823 auto-expand effect still fires; no new DB queries introduced — reuses `fetchPlayerProfile` (player profile route), `fetchAcademyOverview` (dashboard), and the full `deriveContextRequest` mapping

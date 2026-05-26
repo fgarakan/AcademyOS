@@ -1094,6 +1094,26 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panelOpen])
 
+  // Sprint 857 — Route-change context refresh while DONNA panel is open.
+  // Sprint 811 intentionally preserved contextSummary across navigation so the director
+  // doesn't have to re-ask when closing and reopening. Sprint 856 added auto-fetch on
+  // panel open. Sprint 857 closes the remaining gap: when the panel stays open and the
+  // director navigates to a different route or player, this effect detects the route
+  // change and fetches fresh context for the new destination.
+  //
+  // Guard: only runs when panelOpen is true — no wasted server action when panel is closed.
+  // Does NOT depend on panelOpen — Sprint 856 [panelOpen] effect owns that trigger;
+  // adding panelOpen here would cause double-fetches on panel open.
+  // No infinite loop risk — handleContextSummary writes contextSummary/suggestions,
+  // which are not in this effect's deps. pathname only changes on real navigation events.
+  // handleContextSummary is a function declaration (hoisted) — safe to call here.
+  // handleContextSummary already clears contextSummary/suggestions before fetching (line 2317).
+  useEffect(() => {
+    if (!panelOpen) return
+    void handleContextSummary()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
+
   // Sprint 405 — donna:open custom event listener
   // Allows any page component to open DONNA and pre-fill the input via:
   // window.dispatchEvent(new CustomEvent('donna:open', { detail: { prompt: '...' } }))
