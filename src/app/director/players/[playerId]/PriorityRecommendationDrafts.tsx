@@ -1,5 +1,6 @@
+import Link from 'next/link'
 import { Card, CardHeader, CardContent } from '@/components/ui'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, ArrowRight } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -25,6 +26,16 @@ const STATUS_LABELS: Record<string, string> = {
   clarification_needed: 'Needs Clarification',
 }
 
+// Sprint 840: CTA copy + style per draft status.
+// All three active statuses (pending_review, approved, clarification_needed) link to
+// /director/review?tab=player-updates — the review queue section that renders
+// PriorityRecommendationDraftCard with full approve / apply controls.
+const CTA_CONFIG: Record<string, { label: string; color: string } | null> = {
+  pending_review:       { label: 'Review / Approve in Review Queue', color: 'text-status-orange hover:text-status-orange/80' },
+  approved:             { label: 'Apply in Review Queue',            color: 'text-lime hover:text-lime/80' },
+  clarification_needed: { label: 'Return to Review Queue',           color: 'text-status-blue hover:text-status-blue/80' },
+}
+
 export interface PriorityRecommendationDraftRow {
   id: string
   status: string
@@ -48,7 +59,8 @@ export function PriorityRecommendationDrafts({ drafts }: Props) {
 
         <p className="text-[11px] text-text-muted leading-relaxed">
           Draft recommendations generated from player evidence. None of these have been applied.
-          Active priorities are unchanged.
+          Active priorities are unchanged. Official priority changes require director approval in the
+          Review Queue.
         </p>
 
         {drafts.map((draft) => {
@@ -62,6 +74,8 @@ export function PriorityRecommendationDrafts({ drafts }: Props) {
           const title = (rec.title as string | null) ?? '—'
           const category = (rec.category as string | null) ?? ''
           const topTags = (evidence?.top_tags as string[] | null) ?? []
+
+          const cta = CTA_CONFIG[draft.status] ?? null
 
           return (
             <div
@@ -116,6 +130,25 @@ export function PriorityRecommendationDrafts({ drafts }: Props) {
               <p className="text-[11px] text-text-muted">
                 Created {formatDate(draft.created_at)}
               </p>
+
+              {/* Sprint 840: Review queue CTA — present for all active statuses.
+                  Links to /director/review?tab=player-updates where PriorityRecommendationDraftCard
+                  renders the full approve / apply controls. No approval happens here — all priority
+                  changes require explicit director action in the review queue. */}
+              {cta && (
+                <div className="pt-2 border-t border-border">
+                  <Link
+                    href="/director/review?tab=player-updates"
+                    className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${cta.color}`}
+                  >
+                    {cta.label}
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <p className="text-[10px] text-text-muted mt-1">
+                    Director approval required before any priority change is applied.
+                  </p>
+                </div>
+              )}
             </div>
           )
         })}

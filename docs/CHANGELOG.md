@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 840 — Player Priority Approve Apply CTA V1
+
+- **Modified** `src/app/director/players/[playerId]/PriorityRecommendationDrafts.tsx` — (1) added `import Link from 'next/link'` and `ArrowRight` icon; (2) added `CTA_CONFIG` lookup: `pending_review → 'Review / Approve in Review Queue'` (orange), `approved → 'Apply in Review Queue'` (lime), `clarification_needed → 'Return to Review Queue'` (blue); (3) added CTA footer to each draft card — `<Link href="/director/review?tab=player-updates">` with arrow icon, renders only for active statuses; (4) updated header copy to state "Official priority changes require director approval in the Review Queue"; no approval or apply logic added to the component — CTA is a navigation bridge only
+- **Created** `docs/PLAYER_PRIORITY_APPROVE_APPLY_CTA_840.md` — sprint doc: problem statement, backend investigation (proposed_actions confirmed, full review queue pipeline confirmed), solution details, CTA behavior matrix, full approval path trace, safety guardrail matrix, score impact estimate (Dimension 5: 5/10 → 8/10), remaining gaps, recommended Sprint 841
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 839 — Attendance Exception End-to-End Audit V2
 
 - **Created** `docs/ATTENDANCE_EXCEPTION_END_TO_END_AUDIT_V2_839.md` — full re-audit of the attendance exception loop after Sprints 835–838; verifies gap closure across 7 dimensions (DONNA dispatch, parse accuracy, ambiguous-name safety, review card rendering, apply action safety, navigation/highlight, error/edge-case handling); scores 10 dimensions; total score 83/100 (up from 75/100 post-Sprint 834); status upgraded from ⚠️ DEMO-READY WITH CAVEATS to ✅ STRONG — MINOR POLISH REMAINS; loop coverage matrix confirms 5 entry paths covered; 3 remaining gaps identified (all low priority); recommended Sprint 840 listed
