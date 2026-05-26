@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-26 — Sprint 838 — Session Detail Attendance Ambiguous Name Fix V1
+
+- **Modified** `src/app/director/sessions/[sessionId]/attendanceExceptionDraftAction.ts` — (1) added exported `AmbiguousAttendanceName` interface (`{ mentioned_name, candidate_players: Array<{ player_id, player_name }>, reason }`); (2) added optional `ambiguous_attendance_names?: AmbiguousAttendanceName[]` to exported `AttendanceExceptionPayload` (omitted from payload when empty — backward-compatible); (3) added `matchAllNamesToRoster()` — all-candidates lookup with same three-tier priority as Sprint 837 (exact full-name → exact first-name → prefix fallback); (4) retained `matchToRoster()` for `detectUnrosteredNames` (first-match sufficient there); (5) updated `parseAttendance()` absent-name loop: 1 candidate → `absentPlayerIds` (safe), >1 → `ambiguousNames` + `warnings` (never silently picks first), 0 → unmatched warning; (6) added `ambiguous_attendance_names` to `parseAttendance()` return value when non-empty; apply action confirmed safe — reads only `rostered_attendance` and `unrostered_attendees`, never `ambiguous_attendance_names`
+- **Created** `docs/SESSION_DETAIL_ATTENDANCE_AMBIGUOUS_NAME_FIX_838.md` — sprint doc: problem statement, structural note on how session detail path differs from wrap-up path (full roster map vs sparse list), three validation examples, apply action audit, safety guardrail matrix, remaining gaps, recommended Sprint 839
+- `src/app/director/review/AttendanceExceptionDraftCard.tsx` — **not modified** (Sprint 837 `ambiguous_attendance_names` rendering already works; TypeScript resolves the type extension cleanly with the updated base type)
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 837 — Attendance Exception Ambiguous Name Resolution V1
 
 - **Modified** `src/app/coach/sessions/[sessionId]/saveWrapUpDraftAction.ts` — (1) added `matchAllNamesToRoster()` — returns ALL roster entries matching a name (exact full-name → exact first-name → prefix fallback); retained existing `matchNameToRoster()` for `unexpectedNames` detection; (2) updated absent-name matching loop: 1 candidate → safe, add to `rostered_attendance`; >1 candidates → ambiguous, add to new `ambiguous_attendance_names` + `warnings`; 0 candidates → warning (existing behavior); (3) added optional `ambiguous_attendance_names` field to `attendancePayload` (omitted when empty); apply action (`applyApprovedAttendanceExceptionAction`) confirmed safe — it reads only `rostered_attendance` and `unrostered_attendees`, never `ambiguous_attendance_names`

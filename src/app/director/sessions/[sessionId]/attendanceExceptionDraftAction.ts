@@ -20,6 +20,16 @@ export interface UnrosteredAttendeeDraft {
   reason: string
 }
 
+// Sprint 838: optional ambiguous name entry — present when a mentioned name matches
+// multiple rostered players. Never included in rostered_attendance. Display-only.
+// The apply action (applyApprovedAttendanceExceptionAction) reads only rostered_attendance
+// and unrostered_attendees — ambiguous_attendance_names is safely ignored at apply time.
+export interface AmbiguousAttendanceName {
+  mentioned_name: string
+  candidate_players: Array<{ player_id: string; player_name: string }>
+  reason: string
+}
+
 export interface AttendanceExceptionPayload {
   draft_type: 'attendance_exception_v1'
   source: 'coach_attendance_voice_or_text'
@@ -28,6 +38,10 @@ export interface AttendanceExceptionPayload {
   group_id: string | null
   rostered_attendance: RosteredAttendanceDraft[]
   unrostered_attendees: UnrosteredAttendeeDraft[]
+  /** Sprint 838: names that matched multiple rostered players. Director must confirm
+   *  manually. These are never included in rostered_attendance (no silent first-pick).
+   *  Omitted from payload when empty. */
+  ambiguous_attendance_names?: AmbiguousAttendanceName[]
   warnings: string[]
 }
 
@@ -129,6 +143,8 @@ interface RosterPlayer {
   firstName: string
 }
 
+// First-match lookup — used for detectUnrosteredNames (we only need to know whether ANY
+// roster player matches; no ambiguity concern when checking for unrostered arrivals).
 function matchToRoster(name: string, roster: RosterPlayer[]): RosterPlayer | null {
   const lower = name.toLowerCase().trim()
   // Exact first name
@@ -146,6 +162,35 @@ function matchToRoster(name: string, roster: RosterPlayer[]): RosterPlayer | nul
   return null
 }
 
+// Sprint 838: all-candidates lookup — returns every roster entry that matches the name.
+// Used for absent-name matching so that multiple players sharing a first name are not
+// silently resolved to the first roster match.
+//
+// Match priority (stops at first tier that yields results):
+//   1. Exact full-name match  → always unambiguous for that full name
+//   2. Exact first-name match → may yield multiple players
+//   3. Prefix match (≥3 chars) → fallback, may also yield multiple players
+function matchAllNamesToRoster(name: string, roster: RosterPlayer[]): RosterPlayer[] {
+  const lower = name.toLowerCase().trim()
+
+  const fullMatches = roster.filter(p => p.fullName.toLowerCase() === lower)
+  if (fullMatches.length > 0) return fullMatches
+
+  const firstMatches = roster.filter(p => p.firstName.toLowerCase() === lower)
+  if (firstMatches.length > 0) return firstMatches
+
+  if (lower.length >= 3) {
+    const prefixMatches: RosterPlayer[] = []
+    for (const p of roster) {
+      if (p.firstName.toLowerCase().startsWith(lower)) prefixMatches.push(p)
+      else if (lower.startsWith(p.firstName.toLowerCase()) && p.firstName.length >= 3) prefixMatches.push(p)
+    }
+    return prefixMatches
+  }
+
+  return []
+}
+
 function parseAttendance(
   rawInput: string,
   sessionId: string,
@@ -161,13 +206,27 @@ function parseAttendance(
   const absentNames = extractAbsentNames(rawInput)
 
   // Match absent names → roster
+  // Sprint 838: use matchAllNamesToRoster to detect ambiguous first-name matches.
+  //   1 candidate  → safe, add to absentPlayerIds (existing behavior)
+  //   >1 candidates → ambiguous, add to ambiguousNames + warnings (never silently picks first)
+  //   0 candidates  → unmatched, add to warnings (existing behavior)
   const absentPlayerIds = new Set<string>()
   const unmatchedAbsentNames: string[] = []
+  const ambiguousNames: AmbiguousAttendanceName[] = []
 
   for (const name of absentNames) {
-    const match = matchToRoster(name, roster)
-    if (match) {
-      absentPlayerIds.add(match.playerId)
+    const candidates = matchAllNamesToRoster(name, roster)
+    if (candidates.length === 1) {
+      absentPlayerIds.add(candidates[0].playerId)
+    } else if (candidates.length > 1) {
+      ambiguousNames.push({
+        mentioned_name: name,
+        candidate_players: candidates.map(c => ({ player_id: c.playerId, player_name: c.fullName })),
+        reason: `"${name}" matches ${candidates.length} rostered players — director must confirm which player was absent.`,
+      })
+      warnings.push(
+        `"${name}" matched ${candidates.length} rostered players (${candidates.map(c => c.fullName).join(', ')}) — director must confirm before applying attendance.`,
+      )
     } else {
       unmatchedAbsentNames.push(name)
       warnings.push(`"${name}" was mentioned as absent but could not be matched to the roster.`)
@@ -225,6 +284,9 @@ function parseAttendance(
     group_id: groupId,
     rostered_attendance: rosteredAttendance,
     unrostered_attendees: unrosteredAttendees,
+    // Sprint 838: omit field entirely when no ambiguous names (keeps payload clean for
+    // existing records that were created before this sprint)
+    ...(ambiguousNames.length > 0 ? { ambiguous_attendance_names: ambiguousNames } : {}),
     warnings,
   }
 }
