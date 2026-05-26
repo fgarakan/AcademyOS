@@ -1,12 +1,15 @@
 // Sprint 755 — DONNA Safe UI Action Dispatcher V1
 // Sprint 759 — QA certification fixes: role boundaries, blocked patterns, operator patterns,
 //              draft priority, filter resolution, approvalRequired correction.
+// Sprint 817 — Navigate + Highlight Runtime: focusTarget field added to DispatchResult;
+//              FOCUS_TARGET_MAP populates teal-glow targets for navigate results.
 //
 // Structured action dispatch layer for DONNA UI operations.
 // Pure TypeScript — no DB calls, no AI calls, no mutations, no side effects.
 // DONNA never directly mutates state. Returns DispatchResult for the calling component to act on.
 
 import type { UIActionRole, UIActionSafetyClass } from './donnaUIActionRegistry'
+import type { DonnaFocusTarget } from './donnaFocusTarget'
 import {
   getUIActionById,
   getUIActionsForPage,
@@ -48,6 +51,8 @@ export interface DispatchResult {
   matrixPermission: MatrixPermission | null
   confidence: 'high' | 'partial' | 'blocked'
   safetyClass: UIActionSafetyClass | null
+  /** Sprint 817 — optional teal focus target; set before router.push() for highlight-on-arrival */
+  focusTarget?: DonnaFocusTarget
 }
 
 // ── Helper: blocked result ───────────────────────────────────────────────────
@@ -77,7 +82,15 @@ function blocked(refusal: string): DispatchResult {
  * Role check applied in dispatchUIIntent; this function takes optional role to filter.
  * Ordered by specificity (more specific first).
  */
-const NAV_PATTERNS: Array<{ pattern: RegExp; route: string; label: string; roles?: UIActionRole[] }> = [
+// Sprint 817: added focusTargetId — optional per-command override for the highlight target.
+// When set, overrides the default from FOCUS_TARGET_MAP for this specific command pattern.
+const NAV_PATTERNS: Array<{
+  pattern: RegExp
+  route: string
+  label: string
+  roles?: UIActionRole[]
+  focusTargetId?: string
+}> = [
   // Director-level routes
   { pattern: /review (center|queue)|pending (items|approvals)|what needs (my )?review/i, route: '/director/review', label: 'Review Center' },
   { pattern: /curriculum (builder|setup)|build (my )?curriculum/i, route: '/director/curriculum/builder', label: 'Curriculum Builder' },
@@ -88,8 +101,21 @@ const NAV_PATTERNS: Array<{ pattern: RegExp; route: string; label: string; roles
   { pattern: /player placement|place (a |new )?player/i, route: '/director/placement', label: 'Player Placement' },
   { pattern: /level.?up|advancement/i, route: '/director/level-up', label: 'Level Up' },
   { pattern: /signals?|attention signals?/i, route: '/director/signals', label: 'Signals' },
+  // Sprint 820: more specific player patterns BEFORE generic players$ pattern
+  // Commands about missing/needing levels → highlight players-missing-level section
+  { pattern: /players? without (levels?|curriculum)|missing (levels?|curriculum)|no (levels?|curriculum level)|players? need(ing)? (level|placement|curriculum)/i, route: '/director/players', label: 'Players Without Levels', focusTargetId: 'players-missing-level' },
+  // Commands about flags/attention → highlight player-filter-bar
+  { pattern: /player (flags?|alerts?|issues?)|flag(ged)? players?|players? need(ing)? attention/i, route: '/director/players', label: 'Player Attention', focusTargetId: 'player-filter-bar' },
+  // Commands about placement → highlight pending-placement-section
+  { pattern: /pending placement|players? (awaiting|pending) (placement|onboarding)|who needs placement/i, route: '/director/players', label: 'Pending Placement', focusTargetId: 'players-missing-level' },
+  // Commands about level assignment → highlight players-missing-level
+  { pattern: /assign (levels?|curriculum)|help.{0,15}(assign|set|fix).{0,15}levels?/i, route: '/director/players', label: 'Assign Levels', focusTargetId: 'players-missing-level' },
+  // Generic players → highlight player-directory-summary
   { pattern: /players?(\s+list)?$/i, route: '/director/players', label: 'Players' },
+  { pattern: /my players|all players|player directory|show players/i, route: '/director/players', label: 'Player Directory' },
   { pattern: /sessions?(\s+list)?$/i, route: '/director/sessions', label: 'Sessions' },
+  // Commands about today / daily / home → highlight today-command-center
+  { pattern: /what (do i|should i) (need to )?(do|focus on) today|what.{0,15}first/i, route: '/director', label: 'Daily Command', focusTargetId: 'review-queue-card' },
   { pattern: /dashboard|home|director home/i, route: '/director', label: 'Dashboard' },
   { pattern: /kpi|metrics?/i, route: '/director/kpi', label: 'KPIs' },
   { pattern: /coaches?|staff/i, route: '/director/coaches', label: 'Coaches' },
@@ -284,16 +310,96 @@ export function resolveGuidedOperator(
   return null
 }
 
+// ── Sprint 817 — Focus target map ────────────────────────────────────────────
+// Maps destination routes to default DONNA focus targets (teal-glow highlight on arrival).
+// Each entry specifies which element DONNA points to and what DONNA says on arrival.
+// targetId must match a data-donna-focus-id attribute on the destination page.
+// Routes without an entry get no focus target (navigation still works, just no highlight).
+
+const FOCUS_TARGET_MAP: Record<string, Pick<DonnaFocusTarget, 'targetId' | 'label' | 'reason'>> = {
+  '/director': {
+    targetId: 'today-command-center',
+    label: 'Daily Command',
+    reason: "Your most urgent actions are in the pulse tiles here.",
+  },
+  '/director/review': {
+    targetId: 'pending-review-list',
+    label: 'Review Center',
+    reason: "Your pending items are listed here — start with the most urgent.",
+  },
+  '/director/players': {
+    targetId: 'player-directory-summary',
+    label: 'Player Directory',
+    reason: "Players without a curriculum level assigned are shown at the top.",
+  },
+  '/director/sessions': {
+    targetId: 'sessions-list',
+    label: 'Sessions',
+    reason: "Here are your sessions — I can help find ones with missing recaps.",
+  },
+  '/director/class-templates': {
+    targetId: 'create-template-button',
+    label: 'Template Library',
+    reason: "Tap 'New Template' here to start building a class template.",
+  },
+  '/director/class-templates/new': {
+    targetId: 'create-template-form',
+    label: 'Class Template Builder',
+    reason: "Fill in the template details here — I'll help with the structure.",
+  },
+  '/director/curriculum/builder': {
+    targetId: 'curriculum-builder-hero',
+    label: 'Curriculum Builder',
+    reason: "Select a pathway here to start reviewing or customizing levels.",
+  },
+}
+
+/**
+ * Build a DonnaFocusTarget for a given route + source command.
+ * Returns null if no focus target is defined for the route.
+ */
+export function buildFocusTargetForRoute(
+  route: string,
+  sourceCommand?: string,
+): DonnaFocusTarget | undefined {
+  const entry = FOCUS_TARGET_MAP[route]
+  if (!entry) return undefined
+  return {
+    route,
+    targetId: entry.targetId,
+    label: entry.label,
+    reason: entry.reason,
+    sourceCommand,
+    highlightStyle: 'teal-glow',
+    // expiresAt set by setDonnaFocusTarget (8s default)
+  }
+}
+
 /**
  * Attempt to resolve a navigation intent.
  * Accepts optional role to filter role-specific patterns (e.g., player/parent portal routes).
  * Returns a DispatchResult with kind='navigate' if matched, null otherwise.
+ * Sprint 817: populates focusTarget for routes that have a registered focus target.
  */
 export function resolveNavigation(text: string, role?: UIActionRole): DispatchResult | null {
-  for (const { pattern, route, label, roles } of NAV_PATTERNS) {
+  for (const { pattern, route, label, roles, focusTargetId } of NAV_PATTERNS) {
     // Skip role-gated patterns when role doesn't match
     if (roles && role && !roles.includes(role)) continue
     if (pattern.test(text)) {
+      // Sprint 820: use per-command focusTargetId override if present,
+      // otherwise fall back to FOCUS_TARGET_MAP default for the route.
+      let focusTarget = buildFocusTargetForRoute(route, text)
+      if (focusTargetId && focusTarget) {
+        focusTarget = { ...focusTarget, targetId: focusTargetId }
+      } else if (focusTargetId) {
+        focusTarget = {
+          route,
+          targetId: focusTargetId,
+          label,
+          sourceCommand: text,
+          highlightStyle: 'teal-glow',
+        }
+      }
       return {
         kind: 'navigate',
         actionId: 'navigate_to_page',
@@ -307,6 +413,7 @@ export function resolveNavigation(text: string, role?: UIActionRole): DispatchRe
         matrixPermission: 'ALLOWED',
         confidence: 'high',
         safetyClass: 'always_safe',
+        focusTarget,
       }
     }
   }
@@ -395,28 +502,48 @@ export function resolveDraftIntent(
         matrixPermission: 'DRAFT_ONLY',
         confidence: 'high',
         safetyClass: 'draft_to_review',
+        // Sprint 836: highlight the Attendance Exceptions section after navigating to the review queue
+        focusTarget: {
+          route: '/director/review',
+          targetId: 'attendance-exceptions-section',
+          label: 'Attendance Exceptions',
+          reason: 'Your attendance exception draft is in this section — review and approve it here.',
+          sourceCommand: text,
+          highlightStyle: 'teal-glow',
+        },
       }
     }
     return blocked("Attendance exceptions require director or head coach access.")
   }
 
-  // Session template creation — Sprint 759: catches "create a session template" before nav fires
-  if (/(create|draft|build|make|start).{0,20}(session|class).{0,10}template/i.test(text)) {
+  // Session/class template creation — Sprint 819: navigate to builder instead of sidebar draft.
+  // DONNA takes the director to the Class Template Builder workspace and highlights the form.
+  // Director builds the template there; DONNA can guide step-by-step from the sidebar alongside.
+  if (/(create|draft|build|make|start).{0,20}(session|class).{0,10}template/i.test(text) ||
+      /\b(new|create|build|make)\s+(a\s+)?(class\s+)?template\b/i.test(text)) {
     const evaluation = evaluateUIAction('draft_class_template', role)
     if (evaluation.permitted) {
       return {
-        kind: 'draft_submitted',
-        actionId: 'draft_class_template',
-        message: "I'll draft a session template for your review. What level and session type is this for?",
-        route: '/director/review',
+        kind: 'navigate',
+        actionId: 'navigate_to_template_builder',
+        message: "I brought you to the Class Template Builder. Fill in the details here — I can help guide the structure, but the template should be built in this workspace.",
+        route: '/director/class-templates/new',
         operatorId: null,
         stepNumber: null,
         filterParams: null,
-        requiresApproval: true,
-        approvalRoute: '/director/review',
-        matrixPermission: 'DRAFT_ONLY',
+        requiresApproval: false,
+        approvalRoute: null,
+        matrixPermission: 'ALLOWED',
         confidence: 'high',
-        safetyClass: 'draft_to_review',
+        safetyClass: 'always_safe',
+        focusTarget: {
+          route: '/director/class-templates/new',
+          targetId: 'create-template-form',
+          label: 'Class Template Builder',
+          reason: 'Fill in the template name, level, and blocks here.',
+          sourceCommand: text,
+          highlightStyle: 'teal-glow',
+        },
       }
     }
     return blocked("Session template creation requires director or head coach access.")

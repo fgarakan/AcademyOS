@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-26 — Sprint 836 — Attendance Exception DONNA Highlight + Review Link V1
+
+- **Modified** `src/app/director/review/page.tsx` — added `data-donna-focus-id="attendance-exceptions-section"` to the outer `<div>` wrapping the pending + approved attendance drafts section; enables DONNA highlight navigation to this section after routing to `/director/review`; one attribute addition, no logic changes
+- **Modified** `src/components/assistant/DonnaAttendanceExceptionCard.tsx` — added `import Link from 'next/link'` and changed the `queueResult.ok` success paragraph to include an inline `<Link href="/director/review">Review Queue</Link>` link; eliminates manual navigation step after DONNA queues an exception draft; no prop or state changes
+- **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — added `focusTarget` to the `draft_attendance_exception` dispatch result pointing to `attendance-exceptions-section` on `/director/review`; after DONNA routes the director to the review queue, the DONNA highlight runtime glows the Attendance Exceptions section; pattern matches existing `start_class_template_builder` focusTarget
+- **Created** `docs/ATTENDANCE_EXCEPTION_DONNA_HIGHLIGHT_REVIEW_LINK_836.md` — full sprint documentation: problem (GAP-B, GAP-C from Sprint 834 audit), solution details for all three changes, before/after table, safety guardrail matrix, remaining gaps, recommended Sprint 837
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 835 — Attendance Exception Parsing Fix V1
 
 - **Created** `src/lib/attendance/parseAttendanceExceptionText.ts` — pure deterministic parser for coach attendance free text; no DB calls; outputs `{ rawText, absentNames, unexpectedNames, confidence, warnings }`; handles 16 "everyone present" phrase variants, 7 exception triggers, 3 absence pattern groups, 4 arrival pattern groups, 50-word stop list; isolates arrival sub-clauses before absent name extraction ("Jeremy showed up" not counted as absent in combined phrases); confidence scoring: `high` for "everyone except" baseline, `medium` for explicit patterns, `low` for unsure/ambiguous/short names; returns empty arrays for "everyone was here" with no exceptions (no draft created)

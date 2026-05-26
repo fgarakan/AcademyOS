@@ -6,6 +6,7 @@
 // Shows collected fields, session options, and readiness state.
 // No DB writes in this component. All writes go through saveAttendanceExceptionDraftAction.
 
+import Link from 'next/link'
 import { Loader2, X, ClipboardList, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react'
 import type { AttendanceExceptionDraft } from './donnaAttendanceWorkflow'
 import {
@@ -272,7 +273,14 @@ export function DonnaAttendanceExceptionCard({
           </div>
           {queueResult.ok && (
             <p className="text-[10px] text-text-muted">
-              View and apply in the Review Queue when ready.
+              View and apply in the{' '}
+              <Link
+                href="/director/review"
+                className="underline underline-offset-2 hover:text-text-secondary transition-colors"
+              >
+                Review Queue
+              </Link>{' '}
+              when ready. Director approval required before any attendance changes.
             </p>
           )}
           {queueResult.safetyNotes && queueResult.safetyNotes.length > 0 && (

@@ -1356,8 +1356,9 @@ export default async function DirectorReviewQueuePage({
           )}
 
           {/* Attendance Exceptions */}
+          {/* Sprint 836: data-donna-focus-id added so DONNA can highlight this section */}
           {(pendingAttendanceDrafts.length + approvedAttendanceDrafts.length) > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-4" data-donna-focus-id="attendance-exceptions-section">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Attendance Exceptions</h3>
                 {pendingAttendanceDrafts.length > 0 && (
