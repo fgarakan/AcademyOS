@@ -773,6 +773,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Sprint 824 — scroll container ref: scopes thread scroll to the inner container only;
   // prevents scrollIntoView from propagating to the outer panel and causing layout jumps.
   const cooThreadScrollRef = useRef<HTMLDivElement>(null)
+  // Sprint 825 — wrapper ref: used to reveal the thread wrapper in the outer panel on first reply.
+  const cooThreadWrapperRef = useRef<HTMLDivElement>(null)
+  // Sprint 825 — previous thread length: detects the 0→1 first-reply transition only.
+  const previousCooThreadLengthRef = useRef(0)
 
   // Generic task draft state — contract-only, local only, no DB writes (Sprint 266)
   const [genericDraft, setGenericDraft] = useState<GenericTaskDraft | null>(null)
@@ -1091,6 +1095,19 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     const el = cooThreadScrollRef.current
     if (!el) return
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  }, [cooThread])
+
+  // Sprint 825 — first-reply outer panel reveal.
+  // When cooThread transitions from empty (length 0) to the first reply (length > 0),
+  // scroll the outer panel to bring the thread wrapper into view exactly once.
+  // Guard: only fires on the 0→1 transition. All later turns (1→2, 2→3…) hit the
+  // !wasEmpty early return and leave the outer panel untouched (Sprint 824 behavior).
+  // cooThread resets to [] on panel close (Sprint 711), so this fires fresh each session.
+  useEffect(() => {
+    const wasEmpty = previousCooThreadLengthRef.current === 0
+    previousCooThreadLengthRef.current = cooThread.length
+    if (!wasEmpty || cooThread.length === 0) return
+    cooThreadWrapperRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [cooThread])
 
   // Sprint 823 — auto-expand Context when DONNA loads a context summary
@@ -3802,10 +3819,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           {/* Sprint 748: extended with label/type metadata; auto-scroll ref;         */}
           {/* commandResponse card suppressed when message matches last thread turn.  */}
           {cooThread.length > 0 && (
-            <div className="pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <div ref={cooThreadWrapperRef} className="pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               {/* Sprint 749: max-h + overflow-y-auto so thread scrolls internally.   */}
-              {/* Sprint 824: cooThreadScrollRef added here so scrollTo is scoped to  */}
-              {/* this container only; outer panel no longer jumps on new turns.       */}
+              {/* Sprint 824: cooThreadScrollRef — inner scroll scoped to this div.   */}
+              {/* Sprint 825: cooThreadWrapperRef — outer panel reveals this div once. */}
               <div ref={cooThreadScrollRef} className="space-y-2.5 px-3 max-h-[280px] overflow-y-auto">
                 {cooThread.slice(-5).map((turn, i) => (
                   <div key={i} className="space-y-1.5">

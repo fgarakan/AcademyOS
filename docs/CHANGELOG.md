@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 825 — DONNA Panel Conversation Thread Visibility V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added `cooThreadWrapperRef` on the thread wrapper `div.pb-3`; added `previousCooThreadLengthRef` to track 0→1 transition; added first-reply `useEffect` that calls `cooThreadWrapperRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })` exactly once per panel session when `cooThread` transitions from empty to the first reply; all subsequent turns remain inner-scoped via Sprint 824
+- **Created** `docs/DONNA_PANEL_CONVERSATION_THREAD_VISIBILITY_825.md` — audit findings, thread wrapper structure, first-reply reveal behavior, guard logic table, mobile confirmation, recommended Sprint 826
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 824 — DONNA Panel Scroll Stability V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added `cooThreadScrollRef` on the inner `max-h-[280px]` thread container; replaced `cooThreadBottomRef.current?.scrollIntoView(...)` with `cooThreadScrollRef.current?.scrollTo({ top: scrollHeight, behavior: 'smooth' })` to scope thread scrolling to the inner container only and prevent outer panel jumps; removed `el?.scrollIntoView(...)` from "Ask Anything" tab chip handler (input is near top and always in view — kept `el?.focus()` only)
