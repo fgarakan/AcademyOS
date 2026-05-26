@@ -396,7 +396,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const pathname = usePathname()
   const router = useRouter()
   // Sprint 686 — panelOpen lifted to DonnaSessionContextProvider; survives route changes
-  const { panelOpen, openDonnaPanel, closeDonnaPanel, updatePrompt } = useDonnaSessionContext()
+  // Sprint 854 — session destructured as donnaSession to avoid shadowing local `session` var (line ~1073)
+  const { session: donnaSession, panelOpen, openDonnaPanel, closeDonnaPanel, updatePrompt } = useDonnaSessionContext()
   const [captureOpen, setCaptureOpen] = useState(false)
   const [activeMode, setActiveMode] = useState<AssistantMode | null>(null)
   // Sprint 823 — Panel disclosure section visibility (context / suggestions / actions)
@@ -3581,29 +3582,42 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                       },
                     }] as { label: string; action: () => void }[])
                   : []),
-                // Sprint 852 — Player profile route-aware chips.
-                // DonnaAssistantButton receives only { academyId, directorName, role } — no per-player
-                // data is available here. Active priority data lives in the player profile server component
-                // and is never passed to the DONNA panel. Chips are route-aware but data-honest:
-                // they navigate to the correct section without claiming to know what priorities exist.
+                // Sprint 854 — Player profile priority-aware chips.
+                // donnaSession.playerProfileContext is injected by PlayerProfileDonnaRegistrar
+                // (mounts with the player profile server component, clears on unmount).
+                // Chip labels use real priority data when available; fall back to generic labels
+                // when context is null (e.g. panel opens before registrar mounts).
                 //
-                // True active-priority-aware chips (e.g. "You have 2 active priorities — view them")
-                // require per-player context injection or a live context refresh call — deferred.
-                //
-                // Highlight note: DonnaHighlightBanner fires on usePathname() change. Player profile
-                // tab switches use query-string changes (?tab=notes), not path changes, so the teal
-                // focus highlight cannot be triggered from these chips. Navigation is immediate and direct.
+                // Sprint 852 — route detection: /director/players/<uuid> (4 path segments).
+                // Highlight note: DonnaHighlightBanner fires on pathname change only.
+                // Tab switches via ?tab=notes (query-string) do NOT trigger the teal highlight.
                 //
                 // Sprint 800 — original generic chips preserved for all non-player-profile routes.
                 ...(pathname.startsWith('/director/players/') && pathname.split('/').length === 4
-                  ? ([
-                      // Route: /director/players/<uuid> — player profile chips.
-                      // "View player notes" and "Show priorities" both navigate to ?tab=notes
-                      // because active priorities live on the Notes tab.
-                      { label: 'View player notes',   action: () => { router.push(pathname + '?tab=notes'); closePanel() } },
-                      { label: 'Show priorities',     action: () => { router.push(pathname + '?tab=notes'); closePanel() } },
-                      { label: 'Open player updates', action: () => { router.push('/director/review?tab=player-updates'); closePanel() } },
-                    ] as { label: string; action: () => void }[])
+                  ? ((): { label: string; action: () => void }[] => {
+                      const playerCtx = donnaSession.playerProfileContext
+                      return [
+                        // Chip 1: top priority title + level if available, else generic
+                        {
+                          label: playerCtx?.topPriorityTitle
+                            ? `View: ${playerCtx.topPriorityTitle}${playerCtx.topPriorityLevel ? ` (${playerCtx.topPriorityLevel})` : ''}`
+                            : 'View player notes',
+                          action: () => { router.push(pathname + '?tab=notes'); closePanel() },
+                        },
+                        // Chip 2: count-aware if priorities exist, else generic
+                        {
+                          label: (playerCtx?.activePriorityCount ?? 0) > 0
+                            ? `Show priorities (${playerCtx!.activePriorityCount})`
+                            : 'Show priorities',
+                          action: () => { router.push(pathname + '?tab=notes'); closePanel() },
+                        },
+                        // Chip 3: always navigate to review queue player updates tab
+                        {
+                          label: 'Open player updates',
+                          action: () => { router.push('/director/review?tab=player-updates'); closePanel() },
+                        },
+                      ]
+                    })()
                   : ([
                       // Generic director chips for all other director routes.
                       // Sprint 800 — Trimmed to 3 core chips (+ optional "Back to" = max 4).

@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-26 — Sprint 854 — Player Priority Context Injection V1
+
+- **Created** `src/app/director/players/[playerId]/_components/PlayerProfileDonnaRegistrar.tsx` — thin `'use client'` component; renders null; calls `updatePlayerProfileContext(ctx)` on mount and prop update, clears to null on unmount; props: `activePriorityCount`, `topPriorityTitle`, `topPriorityLevel`; no DB reads — data passed from server component
+- **Modified** `src/lib/donna/donnaSessionContext.ts` — (1) added `DonnaPlayerProfileContext` interface (`activePriorityCount`, `topPriorityTitle`, `topPriorityLevel`); (2) added `playerProfileContext: DonnaPlayerProfileContext | null` to `DonnaSessionState`; (3) added `updatePlayerProfileContext: (ctx: DonnaPlayerProfileContext | null) => void` to `DonnaSessionContextValue`; (4) added `playerProfileContext: null` to `DEFAULT_DONNA_SESSION`; (5) added noop `updatePlayerProfileContext: () => {}` to context default
+- **Modified** `src/components/donna/DonnaSessionContextProvider.tsx` — (1) imported `type DonnaPlayerProfileContext`; (2) added `updatePlayerProfileContext` callback (no falsy guard — allows explicit null clearing, separate from `updateObjectContext` which has the `summary ? ... : prev.lastSummary` guard); (3) added to provider value
+- **Modified** `src/app/director/players/[playerId]/page.tsx` — (1) imported `PlayerProfileDonnaRegistrar`; (2) rendered `<PlayerProfileDonnaRegistrar activePriorityCount={activePriorities.length} topPriorityTitle={activePriorities[0]?.title ?? null} topPriorityLevel={activePriorities[0]?.priority_level ?? null} />` at top of return block; no new DB queries — uses existing `activePriorities` array
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — (1) added `session: donnaSession` to `useDonnaSessionContext()` destructure (aliased to avoid shadowing local `session` var); (2) updated player-profile chip block: Chip 1 shows `"View: <topPriorityTitle> (<topPriorityLevel>)"` when available else `"View player notes"`; Chip 2 shows `"Show priorities (<count>)"` when count > 0 else `"Show priorities"`; Chip 3 unchanged; fallback to generic labels when `playerProfileContext` is null
+- **Created** `docs/PLAYER_PRIORITY_CONTEXT_INJECTION_854.md` — sprint doc: architecture rationale (Option D), chip behavior matrix, safety guarantees, known limitations, score impact (Dim 8: 9.5→9.7)
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 853 — Player Priority Context Injection Audit + Design V1
 
 - **Created** `docs/PLAYER_PRIORITY_CONTEXT_INJECTION_853.md` — audit + design doc: 10 audit questions answered (DonnaAssistantButton mount location, prop-threading impossibility, existing context bridge analysis, DirectorDonnaContext scope, client context pattern evaluation, layout change requirement, DB query requirement, stale data risk, role safety); blocker identified: `updateObjectContext` uses `summary ? ... : prev.lastSummary` falsy guard — `null`/`undefined`/empty string cannot clear `lastSummary`, making the existing API unsuitable for clean player profile context without brittle sentinel workarounds; 5 architecture options evaluated; recommended architecture (Option D) designed in full: (1) extend `DonnaSessionState` with typed `playerProfileContext: DonnaPlayerProfileContext | null`, (2) add `updatePlayerProfileContext` to `DonnaSessionContextProvider`, (3) create `PlayerProfileDonnaRegistrar.tsx` client component, (4) render in `page.tsx`, (5) update `DonnaAssistantButton` chip logic; Sprint 854 implementation plan with file list and risk assessment; implementation deferred because sprint requires client context provider changes (`DonnaSessionContextProvider.tsx`)

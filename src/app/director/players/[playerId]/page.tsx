@@ -78,6 +78,8 @@ import { PlayerCurriculumConnectionBlock } from './_components/PlayerCurriculumC
 import { PlayerCoachNotesBlock } from './_components/PlayerCoachNotesBlock'
 import { PlayerParentSummaryBlock } from './_components/PlayerParentSummaryBlock'
 import { PlayerKpiDrilldownCard } from './_components/PlayerKpiDrilldownCard'
+// Sprint 854 — DONNA player profile context injection
+import { PlayerProfileDonnaRegistrar } from './_components/PlayerProfileDonnaRegistrar'
 import { PlayerSkillPathCurriculumPreview } from '@/components/player/PlayerSkillPathCurriculumPreview'
 import { PlayerCompetitionPathCurriculumPreview, type CompetitionPathPreviewData } from '@/components/player/PlayerCompetitionPathCurriculumPreview'
 
@@ -1640,6 +1642,14 @@ export default async function PlayerProfilePage({ params }: PageProps) {
 
   return (
     <div className="animate-fade-in p-4 sm:p-6 max-w-5xl">
+      {/* Sprint 854 — Register player priority context into DonnaSessionContext.
+          Renders null. Mounts with activePriorities data already fetched above.
+          Clears context to null on unmount (navigation away from this player). */}
+      <PlayerProfileDonnaRegistrar
+        activePriorityCount={activePriorities.length}
+        topPriorityTitle={activePriorities[0]?.title ?? null}
+        topPriorityLevel={activePriorities[0]?.priority_level ?? null}
+      />
       {/* Sprint 841: DONNA focus target — always visible, outside tabs */}
       <div data-donna-focus-id="player-profile-header">
         <PlayerProfileHeader player={player} curriculumSummary={curriculumSummary} />

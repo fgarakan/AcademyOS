@@ -11,6 +11,7 @@ import {
   DEFAULT_DONNA_SESSION,
   routeToModuleLabel,
   type DonnaSessionState,
+  type DonnaPlayerProfileContext,
 } from '@/lib/donna/donnaSessionContext'
 
 export function DonnaSessionContextProvider({ children }: { children: ReactNode }) {
@@ -76,13 +77,31 @@ export function DonnaSessionContextProvider({ children }: { children: ReactNode 
     }))
   }, [])
 
+  // Sprint 854 — Typed player profile context updater.
+  // No falsy guard — allows explicit null clearing on unmount (prevents stale data).
+  // Separate from updateObjectContext to avoid the summary ? ... : prev.lastSummary guard.
+  const updatePlayerProfileContext = useCallback((ctx: DonnaPlayerProfileContext | null) => {
+    setSession(prev => ({ ...prev, playerProfileContext: ctx }))
+  }, [])
+
   const clearSession = useCallback(() => {
     setSession(DEFAULT_DONNA_SESSION)
   }, [])
 
   return (
     <DonnaSessionContext.Provider
-      value={{ session, updateRoute, updateModule, updatePrompt, updateObjectContext, clearSession, panelOpen, openDonnaPanel, closeDonnaPanel }}
+      value={{
+        session,
+        updateRoute,
+        updateModule,
+        updatePrompt,
+        updateObjectContext,
+        clearSession,
+        updatePlayerProfileContext,
+        panelOpen,
+        openDonnaPanel,
+        closeDonnaPanel,
+      }}
     >
       {children}
     </DonnaSessionContext.Provider>

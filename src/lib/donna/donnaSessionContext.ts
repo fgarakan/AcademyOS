@@ -7,12 +7,25 @@ import { createContext, useContext } from 'react'
 
 // ── Session context shape ─────────────────────────────────────────────────────
 
+// Sprint 854 — Typed player profile context for DONNA chip awareness.
+// Injected by PlayerProfileDonnaRegistrar (client component) on player profile mount.
+// Cleared to null on unmount — prevents stale data after navigation away.
+// Contains only safe, non-sensitive summary data (counts, title strings, level labels).
+// No raw coach notes, no private player data, no parent-visible data.
+export interface DonnaPlayerProfileContext {
+  activePriorityCount: number
+  topPriorityTitle: string | null
+  topPriorityLevel: string | null
+}
+
 export interface DonnaSessionState {
   lastRoute: string | null
   lastModule: string | null
   lastPrompt: string | null
   lastObjectLabel: string | null
   lastSummary: string | null
+  // Sprint 854 — per-player profile context; null when not on a player profile page
+  playerProfileContext: DonnaPlayerProfileContext | null
 }
 
 export interface DonnaSessionContextValue {
@@ -22,6 +35,8 @@ export interface DonnaSessionContextValue {
   updatePrompt: (prompt: string) => void
   updateObjectContext: (label: string, summary?: string) => void
   clearSession: () => void
+  // Sprint 854 — typed player profile context updater; no falsy guard, allows explicit null clearing
+  updatePlayerProfileContext: (ctx: DonnaPlayerProfileContext | null) => void
   // Sprint 686 — panel open state lifted to provider so it survives across mounts
   panelOpen: boolean
   openDonnaPanel: () => void
@@ -36,6 +51,7 @@ export const DEFAULT_DONNA_SESSION: DonnaSessionState = {
   lastPrompt: null,
   lastObjectLabel: null,
   lastSummary: null,
+  playerProfileContext: null,
 }
 
 // ── React context ─────────────────────────────────────────────────────────────
@@ -47,6 +63,7 @@ export const DonnaSessionContext = createContext<DonnaSessionContextValue>({
   updatePrompt: () => {},
   updateObjectContext: () => {},
   clearSession: () => {},
+  updatePlayerProfileContext: () => {},
   panelOpen: false,
   openDonnaPanel: () => {},
   closeDonnaPanel: () => {},
