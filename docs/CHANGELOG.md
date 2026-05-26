@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-26 — Sprint 845 — Player Priority Loop End-to-End Audit V1
+
+- **Created** `docs/PLAYER_PRIORITY_LOOP_END_TO_END_AUDIT_845.md` — full re-audit of the Player Priority loop (Sprints 840–844); Sprint 833 baseline 76/100 → Sprint 845 87/100 (+11); all 5 critical/medium gaps from Sprint 833 confirmed closed; 10-dimension scoring with before/after comparison; full loop trace (signal → draft → CTA → review → approve → apply → attribution); gap resolution table; safety audit (all guardrails intact); certification: ✅ STRONG — MINOR POLISH REMAINS; director demo path confirmed; 9 remaining low-priority gaps documented; recommended Sprint 846
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors) — audit-only sprint, no source files modified
+
+---
+
 ## 2026-05-26 — Sprint 844 — Player Priority Named Approver Attribution V1
 
 - **Modified** `src/app/director/players/[playerId]/page.tsx` — after `activePriorities` declaration: (1) batched `audit_logs` query scoped by `academy_id` + `action = 'priority_recommendation.priority.applied'` + `target_id IN [priorityIds]`; (2) batched `profiles` query to resolve `actor_id → display_name`; (3) built `priorityApproverMap`; (4) created `enrichedActivePriorities: PlayerPriorityRow[]` mapping each priority with `approved_by_name`; (5) changed `<PlayerActivePriorities>` to pass `enrichedActivePriorities`; 0–2 DB calls added per render; academy_id scoped throughout; all other uses of `activePriorities` unchanged
