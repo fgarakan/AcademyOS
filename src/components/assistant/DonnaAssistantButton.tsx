@@ -770,6 +770,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   }>>([])
   // Sprint 748 — auto-scroll ref: bottom of thread is scrolled into view on new turns
   const cooThreadBottomRef = useRef<HTMLDivElement>(null)
+  // Sprint 824 — scroll container ref: scopes thread scroll to the inner container only;
+  // prevents scrollIntoView from propagating to the outer panel and causing layout jumps.
+  const cooThreadScrollRef = useRef<HTMLDivElement>(null)
 
   // Generic task draft state — contract-only, local only, no DB writes (Sprint 266)
   const [genericDraft, setGenericDraft] = useState<GenericTaskDraft | null>(null)
@@ -1079,11 +1082,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     return () => window.removeEventListener('donna:open', handleDonnaOpen)
   }, [])
 
-  // Sprint 748 — auto-scroll thread to latest message whenever cooThread changes
-  // SSR-safe: guarded by typeof window check inside scrollIntoView path (browser-only API).
+  // Sprint 748 — auto-scroll thread to latest message whenever cooThread changes.
+  // Sprint 824 — scoped to the inner thread container only (cooThreadScrollRef).
+  // scrollTo on the container scrollHeight replaces scrollIntoView, which was
+  // traversing the outer panel and causing the full panel to jump on new turns.
   useEffect(() => {
     if (cooThread.length === 0) return
-    cooThreadBottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    const el = cooThreadScrollRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
   }, [cooThread])
 
   // Sprint 823 — auto-expand Context when DONNA loads a context summary
@@ -3477,9 +3484,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   action: () => {
                     setActiveMode(null)
                     setCommandResponse(null)
+                    // Sprint 824 — input is near the top of the panel and already in view;
+                    // scrollIntoView removed to prevent the outer panel from jumping up.
                     setTimeout(() => {
                       const el = document.querySelector<HTMLTextAreaElement>('[data-donna-input]')
-                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
                       el?.focus()
                     }, 50)
                   },
@@ -3796,9 +3804,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           {cooThread.length > 0 && (
             <div className="pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               {/* Sprint 749: max-h + overflow-y-auto so thread scrolls internally.   */}
-              {/* Auto-scroll anchor (cooThreadBottomRef) is inside this container;   */}
-              {/* scrollIntoView targets the nearest scrollable ancestor — this div.   */}
-              <div className="space-y-2.5 px-3 max-h-[280px] overflow-y-auto">
+              {/* Sprint 824: cooThreadScrollRef added here so scrollTo is scoped to  */}
+              {/* this container only; outer panel no longer jumps on new turns.       */}
+              <div ref={cooThreadScrollRef} className="space-y-2.5 px-3 max-h-[280px] overflow-y-auto">
                 {cooThread.slice(-5).map((turn, i) => (
                   <div key={i} className="space-y-1.5">
                     {/* User message — right-aligned, lime tint */}

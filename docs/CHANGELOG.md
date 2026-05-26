@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 824 — DONNA Panel Scroll Stability V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added `cooThreadScrollRef` on the inner `max-h-[280px]` thread container; replaced `cooThreadBottomRef.current?.scrollIntoView(...)` with `cooThreadScrollRef.current?.scrollTo({ top: scrollHeight, behavior: 'smooth' })` to scope thread scrolling to the inner container only and prevent outer panel jumps; removed `el?.scrollIntoView(...)` from "Ask Anything" tab chip handler (input is near top and always in view — kept `el?.focus()` only)
+- **Created** `docs/DONNA_PANEL_SCROLL_STABILITY_824.md` — full scroll audit, two-layer container map, before/after behavior table, mobile safety confirmation, recommended Sprint 825
+- TypeScript: clean (`npx tsc --noEmit` — no errors)
+
+---
+
 ## 2026-05-26 — Sprint 823 — DONNA Panel Default View Simplification V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added 3 disclosure state vars (`showContextSection`, `showSuggestionsSection`, `showActionsSection`); added 2 auto-expand `useEffect` hooks (context on `contextSummary` load, suggestions on `suggestions`/`recommendationSet` populate); gated `recommendationSet` and `contextSummary` props to `DonnaWorkflowCards` behind disclosure state; replaced always-visible predictive suggestions block + "Ask about this page" chip + mode buttons + quick actions with compact teal disclosure bar (3 pills: Context · Suggestions · Actions) + 3 collapsible sections; removed unused `ChevronDown` import and `showMoreOptions` state
