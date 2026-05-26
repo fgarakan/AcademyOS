@@ -5,6 +5,7 @@ import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 import { createRequestId } from '@/lib/observability/requestTrace'
 import { createActionLogger } from '@/lib/observability/logger'
 import { createDuplicateSubmissionMessage } from '@/lib/idempotency/actionGuards'
+import { parseAttendanceExceptionText } from '@/lib/attendance/parseAttendanceExceptionText'
 
 // ─────────────────────────────────────────────────────────────
 // Payload types
@@ -35,6 +36,9 @@ export interface SaveWrapUpDraftResult {
   ok: boolean
   error: string | null
   draftId: string | null
+  /** Set when Q2 attendance text was parsed and a secondary attendance_exception_v1 draft
+   *  was created in the review queue. null when no exceptions detected or creation failed. */
+  attendanceExceptionDraftId?: string | null
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -94,9 +98,10 @@ export async function saveWrapUpDraftAction(
   }
 
   // 4. Verify session belongs to this academy
+  //    Also fetch group_id for attendance roster matching (Sprint 835)
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, name')
+    .select('id, name, group_id')
     .eq('id', sessionId)
     .eq('academy_id', academyId)
     .single()
@@ -194,5 +199,249 @@ export async function saveWrapUpDraftAction(
   }
 
   log.info('success', { sessionId, draftId: proposedAction.id })
-  return { ok: true, error: null, draftId: proposedAction.id as string }
+
+  // ── Sprint 835: Attendance Exception Parsing ───────────────────────────────
+  // Parse Q2 attendance answer. If exceptions are detected, create a secondary
+  // attendance_exception_v1 proposed_action for the director review queue.
+  //
+  // Safety rules:
+  //   - Best-effort: any failure here does NOT affect the main wrap-up save
+  //   - No official attendance is written — status: pending_review only
+  //   - No players created, no rosters changed, no parent comms triggered
+  //   - Only roster-matched players appear in rostered_attendance (no null player_id rows)
+  //   - Unmatched names go to warnings, not to rostered_attendance
+  // ──────────────────────────────────────────────────────────────────────────
+
+  let attendanceExceptionDraftId: string | null = null
+
+  try {
+    const attendanceText = answers.attendance?.trim() ?? ''
+
+    if (attendanceText) {
+      const parsed = parseAttendanceExceptionText(attendanceText)
+
+      // Only proceed if the parser detected at least one absent or unexpected name
+      if (parsed.absentNames.length > 0 || parsed.unexpectedNames.length > 0) {
+
+        // Duplicate guard: skip if an attendance_exception draft was already created for this
+        // session by this user in the last 30 seconds (prevents double-submit on retry)
+        const attExcWindowStart = new Date(Date.now() - 30_000).toISOString()
+        const { data: recentAttExc } = await rawDb
+          .from('proposed_actions')
+          .select('id')
+          .eq('academy_id', academyId)
+          .eq('proposed_by_id', user.id)
+          .eq('target_module', 'attendance_exception')
+          .eq('target_object_id', sessionId)
+          .gte('created_at', attExcWindowStart)
+          .limit(1)
+
+        if (recentAttExc && recentAttExc.length > 0) {
+          // A recent attendance exception draft already exists — skip creation
+          log.info('attendance_exception_skipped_duplicate', { sessionId })
+        } else {
+          // Fetch session roster for name matching
+          // Pattern: group_memberships → player_id list → players first_name / full_name
+          interface RosterEntry { playerId: string; fullName: string; firstName: string }
+          const roster: RosterEntry[] = []
+
+          const groupId: string | null = (session as { group_id?: string | null }).group_id ?? null
+
+          if (groupId) {
+            const { data: memberships } = await supabase
+              .from('group_memberships')
+              .select('player_id')
+              .eq('group_id', groupId)
+              .eq('is_current', true)
+              .eq('academy_id', academyId)
+
+            const playerIds = (memberships ?? []).map((m: { player_id: string }) => m.player_id)
+
+            if (playerIds.length > 0) {
+              const { data: players } = await supabase
+                .from('players')
+                .select('id, full_name, first_name, last_name')
+                .in('id', playerIds)
+                .eq('academy_id', academyId)
+
+              for (const p of players ?? []) {
+                const fullName = p.full_name ?? `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim()
+                roster.push({
+                  playerId: p.id,
+                  fullName,
+                  firstName: p.first_name ?? '',
+                })
+              }
+            }
+          }
+
+          // ── Match absent names against roster ──────────────────────────────
+          // Name matching: exact first name match, then prefix match (≥3 chars)
+          // Only roster-matched players go into rostered_attendance (no null player_ids)
+          // Unmatched names go to warnings for director to resolve manually
+
+          const matchNameToRoster = (name: string, rosterList: RosterEntry[]): RosterEntry | null => {
+            const lower = name.toLowerCase().trim()
+            for (const p of rosterList) {
+              if (p.firstName.toLowerCase() === lower) return p
+              if (p.fullName.toLowerCase() === lower) return p
+            }
+            if (lower.length >= 3) {
+              for (const p of rosterList) {
+                if (p.firstName.toLowerCase().startsWith(lower)) return p
+                if (lower.startsWith(p.firstName.toLowerCase()) && p.firstName.length >= 3) return p
+              }
+            }
+            return null
+          }
+
+          interface RosteredAttendanceEntry {
+            player_id: string
+            player_name: string
+            proposed_status: 'absent'
+            match_reason: string
+          }
+
+          const rosteredAttendance: RosteredAttendanceEntry[] = []
+          const payloadWarnings: string[] = [...parsed.warnings]
+          const matchedAbsentPlayerIds = new Set<string>()
+
+          for (const name of parsed.absentNames) {
+            const match = matchNameToRoster(name, roster)
+            if (match) {
+              matchedAbsentPlayerIds.add(match.playerId)
+              rosteredAttendance.push({
+                player_id: match.playerId,
+                player_name: match.fullName,
+                proposed_status: 'absent',
+                match_reason: 'Parsed from wrap-up Q2 text — confirmed against roster',
+              })
+            } else {
+              payloadWarnings.push(
+                `"${name}" was mentioned as absent but could not be matched to the session roster — director must confirm player identity.`,
+              )
+            }
+          }
+
+          // ── Detect unrostered arrivals ──────────────────────────────────────
+          // unexpectedNames from parser — skip if the name matched to roster (rostered player)
+          interface UnrosteredEntry { name: string; reason: string }
+          const unrosteredAttendees: UnrosteredEntry[] = []
+
+          for (const name of parsed.unexpectedNames) {
+            const onRoster = matchNameToRoster(name, roster)
+            if (!onRoster) {
+              unrosteredAttendees.push({
+                name,
+                reason: 'Appeared unexpectedly — detected from wrap-up Q2 text. Director review required.',
+              })
+            } else {
+              // Name IS on roster — flag as a possible confusion in the text, not unrostered
+              payloadWarnings.push(
+                `"${name}" appears to be a rostered player. Text may have been ambiguous — director should confirm whether this player was present or absent.`,
+              )
+            }
+          }
+
+          if (roster.length === 0 && groupId) {
+            payloadWarnings.push('No roster found for this session — names could not be matched to players.')
+          } else if (!groupId) {
+            payloadWarnings.push('Session has no linked group — names could not be matched to roster players.')
+          }
+
+          // ── Build attendance_exception_v1 payload ──────────────────────────
+          // Shape matches AttendanceExceptionPayload from attendanceExceptionDraftAction.ts
+          // source: 'wrap_up_q2_parse' distinguishes this from Director DONNA / session detail paths
+
+          const attendancePayload = {
+            draft_type: 'attendance_exception_v1' as const,
+            source: 'wrap_up_q2_parse',
+            raw_input: attendanceText,
+            session_id: sessionId,
+            group_id: groupId,
+            rostered_attendance: rosteredAttendance,
+            unrostered_attendees: unrosteredAttendees,
+            parsed_confidence: parsed.confidence,
+            warnings: payloadWarnings,
+          }
+
+          // issuer_role for voice_commands record
+          const issuerRoleForAttExc: 'academy_director' | 'head_coach' | 'coach' =
+            role === 'academy_director' ? 'academy_director'
+            : role === 'head_coach' ? 'head_coach'
+            : 'coach'
+
+          // Create voice_commands record (required FK for proposed_actions)
+          const { data: attExcVoiceCmd, error: attExcVcErr } = await supabase
+            .from('voice_commands')
+            .insert({
+              academy_id: academyId,
+              issuer_id: user.id,
+              issuer_role: issuerRoleForAttExc as any,
+              input_method: 'typed',
+              raw_input: attendanceText,
+              transcript: attendanceText,
+              processing_status: 'processed',
+            })
+            .select('id')
+            .single()
+
+          if (attExcVcErr || !attExcVoiceCmd) {
+            log.warn('attendance_exception_voice_cmd_failed', {
+              sessionId,
+              message: attExcVcErr?.message ?? 'unknown',
+            })
+          } else {
+            // Create proposed_actions row — attendance_exception target_module
+            const { data: attExcAction, error: attExcPaErr } = await rawDb
+              .from('proposed_actions')
+              .insert({
+                academy_id: academyId,
+                proposed_by_id: user.id,
+                voice_command_id: attExcVoiceCmd.id,
+                action_type: 'other',
+                action_label: `Attendance Exception — ${session.name ?? 'Session'} (from wrap-up Q2)`,
+                target_module: 'attendance_exception',
+                target_object_id: sessionId,
+                target_object_type: 'session',
+                proposed_payload: attendancePayload,
+                status: 'pending_review',
+                risk_level: 'low',
+                risk_notes: [
+                  'Draft only. No attendance was recorded.',
+                  'Parsed from coach wrap-up Q2 free text — director must verify names against roster.',
+                  'No player profiles, billing, or parent communications were modified.',
+                ],
+              })
+              .select('id')
+              .single()
+
+            if (attExcPaErr || !attExcAction) {
+              log.warn('attendance_exception_proposed_action_failed', {
+                sessionId,
+                message: attExcPaErr?.message ?? 'unknown',
+              })
+            } else {
+              attendanceExceptionDraftId = attExcAction.id as string
+              log.info('attendance_exception_draft_created', {
+                sessionId,
+                draftId: attendanceExceptionDraftId,
+                absentCount: rosteredAttendance.length,
+                unrosteredCount: unrosteredAttendees.length,
+                confidence: parsed.confidence,
+              })
+            }
+          }
+        }
+      }
+    }
+  } catch (attExcErr) {
+    // Best-effort: log and continue — main wrap-up save already succeeded
+    log.warn('attendance_exception_parse_error', {
+      sessionId,
+      message: attExcErr instanceof Error ? attExcErr.message : 'unknown',
+    })
+  }
+
+  return { ok: true, error: null, draftId: proposedAction.id as string, attendanceExceptionDraftId }
 }
