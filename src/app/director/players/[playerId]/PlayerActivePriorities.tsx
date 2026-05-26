@@ -92,11 +92,15 @@ export function PlayerActivePriorities({ priorities }: Props) {
                   <p className="text-xs text-text-secondary leading-relaxed">{p.description}</p>
                 )}
 
-                {/* Date */}
+                {/* Attribution — Sprint 843
+                    approved_by is not stored on player_priorities; "director" is the safe fallback.
+                    generated_at = DB INSERT default = timestamp the priority was applied via apply action. */}
                 <p className="text-[11px] text-text-muted">
-                  Set {formatDate(p.generated_at)}
-                  {p.updated_at !== p.generated_at && ` · Updated ${formatDate(p.updated_at)}`}
+                  Approved by director · Applied {formatDate(p.generated_at)}
                 </p>
+                {p.updated_at !== p.generated_at && (
+                  <p className="text-[11px] text-text-muted">Updated {formatDate(p.updated_at)}</p>
+                )}
               </div>
             ))}
           </div>

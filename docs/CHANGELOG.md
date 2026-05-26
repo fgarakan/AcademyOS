@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 843 — PlayerActivePriorities Attribution Display V1
+
+- **Modified** `src/app/director/players/[playerId]/PlayerActivePriorities.tsx` — replaced "Set [date]" line with "Approved by director · Applied [date]" using `generated_at` (DB INSERT default = apply timestamp); `updated_at` extracted into conditional separate line; no query change; `approved_by` not stored on `player_priorities` — "director" is the accurate safe fallback (apply action requires director or head_coach role); director-only view, no parent/player exposure
+- **Created** `docs/PLAYER_ACTIVE_PRIORITIES_ATTRIBUTION_843.md` — sprint doc: audit findings (approved_by field location, generated_at proxy rationale), before/after display, attribution matrix, V2 path for named approver (same pattern as gate activity log), score impact (Dimension 5: 8→8.5), remaining gaps, recommended Sprint 844
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 842 — playerAttentionRiskLoader Observation Type Expansion V1
 
 - **Modified** `src/lib/donna/playerAttentionRiskLoader.ts` — changed `.eq('observation_type', 'concern')` to `.in('observation_type', ['concern', 'injury_concern', 'behavioral'])` so DONNA attention risk now surfaces players with injury_concern and behavioral observations that were previously invisible; `academy_id` scoping and 30-day window unchanged; scoring thresholds unchanged; read-only data path change
