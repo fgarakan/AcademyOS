@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 850 — DONNA Player Notes Tab Navigation V1
+
+- **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — updated `buildFocusTargetForRoute` Sprint 841 player profile prefix fallback to be `sourceCommand`-aware: (1) added `NOTES_INTENT` regex (`/priorit|evidence|note|development|observation|coach|recommendation/i`) and `notesIntent` boolean (false when `sourceCommand` absent/null — safe default); (2) `targetId` now `'player-notes-tab'` when intent matches, `'player-profile-header'` otherwise; (3) `label` and `reason` adjusted accordingly; (4) updated JSDoc to document Sprint 850; all existing behavior preserved — "who needs attention?" and generic commands still get `player-profile-header`; `NAV_PATTERNS` and `focusTargetId` overrides unchanged; no routing changes; no tab auto-switching
+- **Created** `docs/DONNA_PLAYER_NOTES_TAB_NAVIGATION_850.md` — sprint doc: audit findings (NAV_PATTERNS not applicable for dynamic URLs, buildFocusTargetForRoute is correct lever, sourceCommand available at all call sites), intent detection matrix, call-site coverage table, behavior matrix, safety guarantees, what was not changed, score impact (Dim 8: 9→9.5), remaining gaps, recommended Sprint 851
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 849 — Player Profile Tab Trigger Focus IDs V1
 
 - **Modified** `src/components/ui/Tabs.tsx` — extended `TabsTrigger` props: added optional `'data-donna-focus-id'?: string`; passes through to `<button>` as `{...(donnaFocusId ? { 'data-donna-focus-id': donnaFocusId } : {})}` spread; all existing usages unchanged (optional prop, no existing caller passes it); required to place attribute on actual DOM element for `DonnaHighlightBanner`'s `querySelector` + `classList.add` + `scrollIntoView` to work

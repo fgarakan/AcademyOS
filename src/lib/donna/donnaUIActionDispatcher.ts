@@ -362,6 +362,10 @@ const FOCUS_TARGET_MAP: Record<string, Pick<DonnaFocusTarget, 'targetId' | 'labe
  * (/director/players/<uuid>). These can't be in FOCUS_TARGET_MAP (exact-key lookup),
  * so a startsWith check handles them. No new routing behavior is added — this only
  * activates when a dispatch result already routes to a specific player profile URL.
+ *
+ * Sprint 850: player profile prefix fallback is now sourceCommand-aware.
+ * Notes/priority/evidence intent in sourceCommand → player-notes-tab focus.
+ * Generic or absent sourceCommand → player-profile-header (unchanged default).
  */
 export function buildFocusTargetForRoute(
   route: string,
@@ -382,13 +386,23 @@ export function buildFocusTargetForRoute(
 
   // Sprint 841: dynamic player profile route — /director/players/<uuid>
   // Matches any 4-segment path under /director/players/ (list is 3 segments).
-  // Returns player-profile-header as the default focus target.
+  // Sprint 850: sourceCommand-aware — notes/priority/evidence intent → player-notes-tab.
+  // The Notes tab is always in the DOM (Sprint 849); section IDs inside it are only
+  // mounted when Notes is active. Highlighting the tab trigger first guides the director.
   if (route.startsWith('/director/players/') && route.split('/').length === 4) {
+    // Sprint 850: detect notes/priority/evidence intent from the user's command.
+    // Matches: priority, priorities, evidence, note, notes, development, observation,
+    //          coach, recommendation — any term that implies Notes-tab content.
+    const NOTES_INTENT = /priorit|evidence|note|development|observation|coach|recommendation/i
+    const notesIntent = sourceCommand ? NOTES_INTENT.test(sourceCommand) : false
+
     return {
       route,
-      targetId: 'player-profile-header',
-      label: 'Player Profile',
-      reason: "Here's the player profile. Use the tabs to review priorities, notes, evidence, and session history.",
+      targetId: notesIntent ? 'player-notes-tab' : 'player-profile-header',
+      label: notesIntent ? 'Player Notes' : 'Player Profile',
+      reason: notesIntent
+        ? "The Notes tab contains active priorities, recommendation drafts, coach notes, and evidence hub."
+        : "Here's the player profile. Use the tabs to review priorities, notes, evidence, and session history.",
       sourceCommand,
       highlightStyle: 'teal-glow',
     }
