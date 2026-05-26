@@ -276,10 +276,14 @@ export async function saveWrapUpDraftAction(
           }
 
           // ── Match absent names against roster ──────────────────────────────
-          // Name matching: exact first name match, then prefix match (≥3 chars)
-          // Only roster-matched players go into rostered_attendance (no null player_ids)
-          // Unmatched names go to warnings for director to resolve manually
+          // Sprint 835: exact first name match, then prefix match (≥3 chars)
+          // Sprint 837: matchAllNamesToRoster — returns ALL candidates to detect ambiguity.
+          //   1 candidate  → safe, added to rostered_attendance
+          //   >1 candidates → ambiguous, added to ambiguous_attendance_names + warnings
+          //   0 candidates  → unmatched warning (existing behavior)
+          // Only roster-matched, unambiguous players go into rostered_attendance (no null player_ids)
 
+          // First-match lookup — kept for unexpectedNames check (no ambiguity concern there)
           const matchNameToRoster = (name: string, rosterList: RosterEntry[]): RosterEntry | null => {
             const lower = name.toLowerCase().trim()
             for (const p of rosterList) {
@@ -295,6 +299,35 @@ export async function saveWrapUpDraftAction(
             return null
           }
 
+          // Sprint 837: all-candidates lookup — returns every roster entry that matches the name.
+          // Used for absent names so that multiple players sharing a first name are not silently
+          // resolved to the first roster match.
+          //
+          // Match priority (stops at the first tier that yields results):
+          //   1. Exact full-name match  → always unambiguous for that full name
+          //   2. Exact first-name match → may yield multiple players
+          //   3. Prefix match (≥3 chars) → fallback, may also yield multiple players
+          const matchAllNamesToRoster = (name: string, rosterList: RosterEntry[]): RosterEntry[] => {
+            const lower = name.toLowerCase().trim()
+
+            const fullMatches = rosterList.filter(p => p.fullName.toLowerCase() === lower)
+            if (fullMatches.length > 0) return fullMatches
+
+            const firstMatches = rosterList.filter(p => p.firstName.toLowerCase() === lower)
+            if (firstMatches.length > 0) return firstMatches
+
+            if (lower.length >= 3) {
+              const prefixMatches: RosterEntry[] = []
+              for (const p of rosterList) {
+                if (p.firstName.toLowerCase().startsWith(lower)) prefixMatches.push(p)
+                else if (lower.startsWith(p.firstName.toLowerCase()) && p.firstName.length >= 3) prefixMatches.push(p)
+              }
+              return prefixMatches
+            }
+
+            return []
+          }
+
           interface RosteredAttendanceEntry {
             player_id: string
             player_name: string
@@ -302,21 +335,44 @@ export async function saveWrapUpDraftAction(
             match_reason: string
           }
 
+          // Sprint 837: ambiguous name entry shape
+          interface AmbiguousNameEntry {
+            mentioned_name: string
+            candidate_players: Array<{ player_id: string; player_name: string }>
+            reason: string
+          }
+
           const rosteredAttendance: RosteredAttendanceEntry[] = []
+          const ambiguousNames: AmbiguousNameEntry[] = []
           const payloadWarnings: string[] = [...parsed.warnings]
           const matchedAbsentPlayerIds = new Set<string>()
 
           for (const name of parsed.absentNames) {
-            const match = matchNameToRoster(name, roster)
-            if (match) {
-              matchedAbsentPlayerIds.add(match.playerId)
+            const candidates = matchAllNamesToRoster(name, roster)
+
+            if (candidates.length === 1) {
+              // Unique roster match — safe to include
+              matchedAbsentPlayerIds.add(candidates[0].playerId)
               rosteredAttendance.push({
-                player_id: match.playerId,
-                player_name: match.fullName,
+                player_id: candidates[0].playerId,
+                player_name: candidates[0].fullName,
                 proposed_status: 'absent',
                 match_reason: 'Parsed from wrap-up Q2 text — confirmed against roster',
               })
+            } else if (candidates.length > 1) {
+              // Sprint 837: ambiguous — multiple rostered players share this name.
+              // Do NOT add to rostered_attendance (no null or silent-first-pick player_ids).
+              // Director must confirm manually before any attendance is applied.
+              ambiguousNames.push({
+                mentioned_name: name,
+                candidate_players: candidates.map(c => ({ player_id: c.playerId, player_name: c.fullName })),
+                reason: `"${name}" matches ${candidates.length} rostered players — director must confirm which player was absent.`,
+              })
+              payloadWarnings.push(
+                `"${name}" matched ${candidates.length} rostered players (${candidates.map(c => c.fullName).join(', ')}) — director must confirm before applying attendance.`,
+              )
             } else {
+              // No roster match
               payloadWarnings.push(
                 `"${name}" was mentioned as absent but could not be matched to the session roster — director must confirm player identity.`,
               )
@@ -352,6 +408,11 @@ export async function saveWrapUpDraftAction(
           // ── Build attendance_exception_v1 payload ──────────────────────────
           // Shape matches AttendanceExceptionPayload from attendanceExceptionDraftAction.ts
           // source: 'wrap_up_q2_parse' distinguishes this from Director DONNA / session detail paths
+          //
+          // Sprint 837: ambiguous_attendance_names is an optional extension field.
+          // The apply action (applyApprovedAttendanceExceptionAction) reads only
+          // rostered_attendance and unrostered_attendees — it never processes
+          // ambiguous_attendance_names. This field is for display-only review card warnings.
 
           const attendancePayload = {
             draft_type: 'attendance_exception_v1' as const,
@@ -361,6 +422,7 @@ export async function saveWrapUpDraftAction(
             group_id: groupId,
             rostered_attendance: rosteredAttendance,
             unrostered_attendees: unrosteredAttendees,
+            ...(ambiguousNames.length > 0 ? { ambiguous_attendance_names: ambiguousNames } : {}),
             parsed_confidence: parsed.confidence,
             warnings: payloadWarnings,
           }

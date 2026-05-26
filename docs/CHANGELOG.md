@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-26 — Sprint 837 — Attendance Exception Ambiguous Name Resolution V1
+
+- **Modified** `src/app/coach/sessions/[sessionId]/saveWrapUpDraftAction.ts` — (1) added `matchAllNamesToRoster()` — returns ALL roster entries matching a name (exact full-name → exact first-name → prefix fallback); retained existing `matchNameToRoster()` for `unexpectedNames` detection; (2) updated absent-name matching loop: 1 candidate → safe, add to `rostered_attendance`; >1 candidates → ambiguous, add to new `ambiguous_attendance_names` + `warnings`; 0 candidates → warning (existing behavior); (3) added optional `ambiguous_attendance_names` field to `attendancePayload` (omitted when empty); apply action (`applyApprovedAttendanceExceptionAction`) confirmed safe — it reads only `rostered_attendance` and `unrostered_attendees`, never `ambiguous_attendance_names`
+- **Modified** `src/app/director/review/AttendanceExceptionDraftCard.tsx` — (1) added local `AmbiguousAttendanceName` interface and `AttendanceExceptionPayloadWithAmbiguity` type extension (avoids modifying shared payload type in `attendanceExceptionDraftAction.ts`); (2) added `ambiguousNames` extraction from extended payload; (3) added "Ambiguous Names — Director Confirmation Required" render section between rostered and unrostered sections — shows mentioned name, candidate player full names, and director-confirmation copy; renders only when `ambiguous_attendance_names` is non-empty; existing payloads without the field render unchanged
+- **Created** `docs/ATTENDANCE_EXCEPTION_AMBIGUOUS_NAME_RESOLUTION_837.md` — sprint doc: problem statement, match-priority spec table, validation examples for all three cases (unique-first-name, duplicate-first-name, exact-full-name), apply action audit confirming no changes needed, safety guardrail matrix, name matching rules summary, remaining gaps, recommended Sprint 838
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 836 — Attendance Exception DONNA Highlight + Review Link V1
 
 - **Modified** `src/app/director/review/page.tsx` — added `data-donna-focus-id="attendance-exceptions-section"` to the outer `<div>` wrapping the pending + approved attendance drafts section; enables DONNA highlight navigation to this section after routing to `/director/review`; one attribute addition, no logic changes

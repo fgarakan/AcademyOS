@@ -4,6 +4,22 @@ import type { AttendanceExceptionPayload } from '@/app/director/sessions/[sessio
 import { AttendanceExceptionDraftDecisionControls } from './AttendanceExceptionDraftDecisionControls'
 import { ApplyApprovedAttendanceExceptionControls } from './ApplyApprovedAttendanceExceptionControls'
 
+// Sprint 837: optional ambiguous_attendance_names extension.
+// Not added to AttendanceExceptionPayload in attendanceExceptionDraftAction.ts because that
+// payload type covers the 'coach_attendance_voice_or_text' source path. This field is only
+// present in payloads from the 'wrap_up_q2_parse' path (Sprint 835 + 837).
+// The apply action (applyApprovedAttendanceExceptionAction) reads only rostered_attendance
+// and unrostered_attendees — ambiguous_attendance_names is display-only.
+interface AmbiguousAttendanceName {
+  mentioned_name: string
+  candidate_players: Array<{ player_id: string; player_name: string }>
+  reason: string
+}
+
+type AttendanceExceptionPayloadWithAmbiguity = AttendanceExceptionPayload & {
+  ambiguous_attendance_names?: AmbiguousAttendanceName[]
+}
+
 export interface EnrichedAttendanceExceptionDraftItem {
   id: string
   status: string
@@ -20,12 +36,14 @@ interface Props {
 }
 
 export function AttendanceExceptionDraftCard({ draft }: Props) {
-  const { payload } = draft
+  const payload = draft.payload as AttendanceExceptionPayloadWithAmbiguity
   const absentPlayers = payload.rostered_attendance?.filter(r => r.proposed_status === 'absent') ?? []
   const presentPlayers = payload.rostered_attendance?.filter(r => r.proposed_status === 'present') ?? []
   const unknownPlayers = payload.rostered_attendance?.filter(r => r.proposed_status === 'unknown') ?? []
   const unrostered = payload.unrostered_attendees ?? []
   const warnings = payload.warnings ?? []
+  // Sprint 837: ambiguous names — mentioned names that matched multiple rostered players
+  const ambiguousNames = payload.ambiguous_attendance_names ?? []
 
   const isPending = draft.status === 'pending_review'
   const isApproved = draft.status === 'approved'
@@ -93,6 +111,35 @@ export function AttendanceExceptionDraftCard({ draft }: Props) {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Sprint 837: Ambiguous names — multiple roster candidates for the same mentioned name */}
+        {ambiguousNames.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-text-muted flex items-center gap-1.5">
+              <HelpCircle className="w-3 h-3 text-status-orange" />
+              Ambiguous Names — Director Confirmation Required
+            </p>
+            {ambiguousNames.map((amb, i) => (
+              <div key={i} className="p-2.5 rounded-lg bg-status-orange/5 border border-status-orange/20 space-y-1.5">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-3 h-3 text-status-orange shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-text-primary">&ldquo;{amb.mentioned_name}&rdquo;</p>
+                    <p className="text-[10px] text-text-muted leading-snug">{amb.reason}</p>
+                  </div>
+                </div>
+                <div className="pl-5 space-y-0.5">
+                  {amb.candidate_players.map(cp => (
+                    <p key={cp.player_id} className="text-[10px] text-text-secondary">· {cp.player_name}</p>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <p className="text-[10px] text-text-muted">
+              These names matched multiple rostered players and were not included in the attendance rows above. Director must confirm the correct player manually before any attendance is applied.
+            </p>
           </div>
         )}
 
