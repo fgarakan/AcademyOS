@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 829 — Coach Wrap-Up End-to-End Audit V1
+
+- **Created** `docs/COACH_WRAP_UP_END_TO_END_AUDIT_829.md` — end-to-end audit of the Coach Wrap-Up loop (session completion → coach recap → structured notes → attendance/session actuals → player observations → director review items → parent-safe drafts); 10 dimensions audited (entry clarity, DONNA involvement, data source honesty, draft/review/approval safety, parent/player safety, error handling, cognitive load/UX, session context availability, mobile usability, director demo readiness); score 90/100; status ✅ CERTIFIED WITH KNOWN GAPS; top gap: WrapUpPageClient lacks template/curriculum context in DONNA guidance (Sprint 830 recommended)
+- **No source files modified** — audit-only sprint
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 828 — DONNA Thinking State Indicator Accuracy V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added `isProcessingCommand` state and `processingClearTimerRef`; added `useEffect` on `cooThread` to cancel timer and clear processing after conversational reply lands; added cleanup in `closePanel`; set `isProcessingCommand(true)` at the follow-up resolver path and at the COO router + fallthrough path (both synchronous conversational paths); wired `isProcessingCommand` into the header "Thinking…" badge condition and the `isThinking` prop on `DonnaVoiceLayer`; 600ms safety-net timer clears for paths that do not push to cooThread (navigation, fallback)
