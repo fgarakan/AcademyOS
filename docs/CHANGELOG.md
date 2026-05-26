@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 828 — DONNA Thinking State Indicator Accuracy V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — added `isProcessingCommand` state and `processingClearTimerRef`; added `useEffect` on `cooThread` to cancel timer and clear processing after conversational reply lands; added cleanup in `closePanel`; set `isProcessingCommand(true)` at the follow-up resolver path and at the COO router + fallthrough path (both synchronous conversational paths); wired `isProcessingCommand` into the header "Thinking…" badge condition and the `isThinking` prop on `DonnaVoiceLayer`; 600ms safety-net timer clears for paths that do not push to cooThread (navigation, fallback)
+- **Created** `docs/DONNA_THINKING_STATE_INDICATOR_828.md` — full audit of existing loading states, React 18 batching analysis, before/after behavior table, two-layer clear architecture (useEffect + timer), paths affected vs excluded, safety guardrails, recommended Sprint 829
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 827 — DONNA Panel + Guided Assistant Certification V1
 
 - **Created** `docs/DONNA_PANEL_GUIDED_ASSISTANT_CERTIFICATION_827.md` — code audit and certification of DONNA panel after Sprints 822–826; 10 dimensions audited (panel clarity, conversation flow, scroll stability, input usability, mobile safety, workflow/draft safety, guided navigation, highlight behavior, voice consistency, director demo readiness); score 93/100; status ✅ CERTIFIED; known gaps logged (review-queue-card target unverified, no Thinking indicator for sync commands, card dismissal); recommended Sprint 828 target identified

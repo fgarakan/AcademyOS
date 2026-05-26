@@ -777,6 +777,14 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const cooThreadWrapperRef = useRef<HTMLDivElement>(null)
   // Sprint 825 — previous thread length: detects the 0→1 first-reply transition only.
   const previousCooThreadLengthRef = useRef(0)
+  // Sprint 828 — brief thinking indicator for synchronous conversational commands.
+  // Set to true at the start of the follow-up resolver path and the COO router path
+  // so "Thinking…" appears in the header for the duration of that render frame.
+  const [isProcessingCommand, setIsProcessingCommand] = useState(false)
+  // Sprint 828 — safety-net timer ref: clears isProcessingCommand after 600ms if not
+  // already cleared by the cooThread useEffect. Handles paths that do not push to
+  // cooThread (navigation commands, fallback responses).
+  const processingClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Generic task draft state — contract-only, local only, no DB writes (Sprint 266)
   const [genericDraft, setGenericDraft] = useState<GenericTaskDraft | null>(null)
@@ -968,6 +976,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       window.speechSynthesis.cancel()
     }
     stopServerTts()
+    // Sprint 828 — clear processing indicator and cancel safety-net timer on panel close
+    if (processingClearTimerRef.current) {
+      clearTimeout(processingClearTimerRef.current)
+      processingClearTimerRef.current = null
+    }
+    setIsProcessingCommand(false)
   }, [realtimeDisconnect, closeDonnaPanel])
 
   // Sprint 787 — Reset the 3-minute idle timer on any director interaction.
@@ -1108,6 +1122,21 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     previousCooThreadLengthRef.current = cooThread.length
     if (!wasEmpty || cooThread.length === 0) return
     cooThreadWrapperRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [cooThread])
+
+  // Sprint 828 — clear processing indicator once a conversational reply lands in the thread.
+  // Runs after each paint that includes a cooThread update. Cancels the 600ms safety-net
+  // timer and clears isProcessingCommand so "Thinking…" disappears as soon as the reply
+  // bubble is visible. For paths that do not push to cooThread, the 600ms timer handles
+  // cleanup. Calling setIsProcessingCommand(false) when already false is a no-op.
+  useEffect(() => {
+    if (cooThread.length > 0) {
+      if (processingClearTimerRef.current) {
+        clearTimeout(processingClearTimerRef.current)
+        processingClearTimerRef.current = null
+      }
+      setIsProcessingCommand(false)
+    }
   }, [cooThread])
 
   // Sprint 823 — auto-expand Context when DONNA loads a context summary
@@ -3162,6 +3191,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     {
       const followUp = resolveFollowUp(text, sessionIntentContext)
       if (followUp) {
+        // Sprint 828 — mark processing before setting response so "Thinking…" fires
+        // for this render frame. The cooThread useEffect clears it after paint.
+        if (processingClearTimerRef.current) clearTimeout(processingClearTimerRef.current)
+        setIsProcessingCommand(true)
+        processingClearTimerRef.current = setTimeout(() => setIsProcessingCommand(false), 600)
         if (followUp.navigationHref === '/director/review' && followUp.actionType === 'navigate') {
           void handleOpenReviewQueue()
         } else if (followUp.navigationHref) {
@@ -3197,6 +3231,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       setTypedText('')
       return
     }
+
+    // Sprint 828 — mark processing before COO router and fallthrough commands.
+    // Both handleDonnaCooPrompt and detectAndHandleCommand are synchronous.
+    // The cooThread useEffect clears isProcessingCommand after paint for COO responses
+    // that push to cooThread. The 600ms timer handles navigation/fallback responses
+    // that set commandResponse but do not push to cooThread.
+    if (processingClearTimerRef.current) clearTimeout(processingClearTimerRef.current)
+    setIsProcessingCommand(true)
+    processingClearTimerRef.current = setTimeout(() => setIsProcessingCommand(false), 600)
 
     // Sprint 697 — COO conversational router: runs before legacy detectAndHandleCommand
     const cooHandled = handleDonnaCooPrompt(text)
@@ -3423,8 +3466,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               </span>
               {/* Sprint 800 — Single priority-driven status badge (replaces 8 competing badges).
                   Priority order: Thinking > Speaking > Listening > Paused > Mic blocked > Ready.
-                  Only the highest-priority active state is shown at any one time. */}
-              {(isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading) && !isSpeaking ? (
+                  Only the highest-priority active state is shown at any one time.
+                  Sprint 828 — isProcessingCommand added: fires for synchronous conversational
+                  commands (follow-up resolver + COO router) that have no async loading state. */}
+              {(isProcessingCommand || isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading) && !isSpeaking ? (
                 <span
                   className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold animate-pulse"
                   style={{ background: 'rgba(10,132,255,0.15)', color: '#0A84FF' }}
@@ -3810,7 +3855,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             convState={convState}
             genericDraft={genericDraft}
             templateDraft={templateDraft}
-            isThinking={isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading}
+            isThinking={isProcessingCommand || isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading}
             donnaLastResponse={
               // Sprint 750 — suppress voice-layer "DONNA says" for Category A responses
               // (main GODmode dispatch) that are already shown as a cooThread bubble.
