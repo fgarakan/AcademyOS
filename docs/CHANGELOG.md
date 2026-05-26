@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 834 — Attendance Exception End-to-End Audit V1
+
+- **Created** `docs/ATTENDANCE_EXCEPTION_END_TO_END_AUDIT_834.md` — end-to-end audit of the attendance exception loop ("Everyone was here except Sarah, and Jeremy showed up" → structured attendance draft → absence/update proposal → unrostered attendee review → director approval path → no accidental roster/player/billing/parent changes); 10 dimensions audited (entry clarity, DONNA guidance, page-aware context, navigation/highlight support, UI cognitive load, data honesty, draft/review/approval safety, error/edge-case handling, mobile usability, coach/director demo readiness); score 75/100; status ⚠️ DEMO-READY WITH CAVEATS; critical gaps: (1) WrapUpPageClient Q2 attendance answer stored as embedded text in session_recap_structuring draft, NOT parsed as a structured attendance_exception — coaches who type "everyone except Max" in Q2 produce a text note only, no director-actionable exception; (2) no `data-donna-focus-id` on review page attendance section — DONNA can navigate but cannot highlight; (3) DonnaAttendanceExceptionCard success state shows plain text "View and apply in the Review Queue when ready" with no link; notable strengths: three-step pipeline (draft → approve → apply) with hard guardrails, `no_automatic_player_creation: true` in placement_review payload, full audit_log at apply time, natural language path through DONNA works end-to-end; recommended Sprint 835: select highest-impact gap fix after all 7 loop audits reviewed
+- **No source files modified** — audit-only sprint
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 833 — Player Priority End-to-End Audit V1
 
 - **Created** `docs/PLAYER_PRIORITY_END_TO_END_AUDIT_833.md` — end-to-end audit of the player priority loop (attention signal detection → player profile review → evidence analysis → priority recommendation draft → review queue approval → player-facing mission surface); 10 dimensions audited (signal source completeness, data freshness, director-to-player navigation, priority recommendation quality, approve→apply path completeness, player-facing priority surface, visibility gate enforcement, DONNA integration quality, coach-to-director evidence handoff, loop closure and attribution); score 76/100; status ⚠️ DEMO-READY WITH CAVEATS; critical gaps: (1) `PriorityRecommendationDrafts` component shows draft status but has no approve/apply CTA — director must navigate to review queue separately with no navigation hint, (2) no `data-donna-focus-id` on any player profile page component — DONNA navigates to profile but cannot highlight any section; notable strengths: deterministic priority pipeline (no AI, fully auditable), three-layer visibility gate (query + pure TS + field selection), player missions page translates priorities to mission-framed UX; recommended Sprint 834: Player Priority Approve CTA V1
