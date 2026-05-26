@@ -38,14 +38,16 @@ export async function loadPlayerAttentionRisk(
     .toISOString()
     .slice(0, 10)
 
-  // Per-player concern counts (last 30 days)
+  // Sprint 842: Per-player flagged observation counts (last 30 days)
+  // Includes concern, injury_concern, and behavioral observation types.
+  // Previously only included 'concern' — expanded to surface all urgent signals.
   const concernsByPlayer = new Map<string, number>()
 
   const { data: concernObs } = await db
     .from('coach_observations')
     .select('player_id')
     .eq('academy_id', academyId)
-    .eq('observation_type', 'concern')
+    .in('observation_type', ['concern', 'injury_concern', 'behavioral'])
     .gte('created_at', thirtyDaysAgo)
 
   for (const obs of concernObs ?? []) {

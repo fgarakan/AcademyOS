@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 842 — playerAttentionRiskLoader Observation Type Expansion V1
+
+- **Modified** `src/lib/donna/playerAttentionRiskLoader.ts` — changed `.eq('observation_type', 'concern')` to `.in('observation_type', ['concern', 'injury_concern', 'behavioral'])` so DONNA attention risk now surfaces players with injury_concern and behavioral observations that were previously invisible; `academy_id` scoping and 30-day window unchanged; scoring thresholds unchanged; read-only data path change
+- **Created** `docs/PLAYER_ATTENTION_RISK_OBSERVATION_TYPES_842.md` — sprint doc: problem statement, before/after query comparison, risk assessment matrix, what was not changed, score impact estimate (Dimension 8: 8→8.5), remaining gaps, recommended Sprint 843
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 841 — Player Profile DONNA Focus IDs V1
 
 - **Modified** `src/app/director/players/[playerId]/page.tsx` — added 4 `data-donna-focus-id` attributes: (1) `player-profile-header` wrapper around `<PlayerProfileHeader>` (always in DOM, outside tabs); (2) `player-active-priorities` wrapper around `<PlayerActivePriorities>` in notes tab; (3) `player-priority-recommendation` wrapper around `<PriorityRecommendationDrafts>` + Priority Recommendation card in notes tab; (4) `player-evidence-hub` on existing Evidence Hub border-div in notes tab; Notes-tab focus IDs only exist in DOM when notes tab is active (custom `TabsContent` returns null for inactive tabs)
