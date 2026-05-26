@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-26 — Sprint 831 — Director Daily Review End-to-End Audit V1
+
+- **Created** `docs/DIRECTOR_DAILY_REVIEW_END_TO_END_AUDIT_831.md` — end-to-end audit of the director's daily command/review loop ("What do I need to do today?" → priorities → review queue → action path); 10 dimensions audited (entry clarity, DONNA daily briefing, page-aware context, navigation/highlight support, dashboard cognitive load, data honesty, draft/review/approval safety, error/edge-case handling, mobile usability, director demo readiness); score 93/100; status ✅ STRONG — MINOR POLISH REMAINS; key finding: "Attendance Exceptions" and "Coach Recaps" KPI cards both receive `pendingWrapUpsCount` (same value under different labels); Sprint 827 `review-queue-card` gap confirmed fully resolved; recommended Sprint 832: Director Dashboard KPI Clarity V1
+- **No source files modified** — audit-only sprint
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-26 — Sprint 830 — Template Creation End-to-End Audit V1
 
 - **Created** `docs/TEMPLATE_CREATION_END_TO_END_AUDIT_830.md` — end-to-end audit of class template creation loop (director intent → DONNA routing + highlight → template builder workspace → form draft → createClassTemplateWithBlocksAction → template detail stepper → curriculum level assignment → lesson plan draft generation → apply → session generation); 10 dimensions audited (entry clarity, DONNA guidance, page-aware context, navigation/highlight support, UI cognitive load, data honesty, draft/review/approval safety, error handling, mobile usability, director demo readiness); score 87/100; status ✅ STRONG — MINOR POLISH REMAINS; key architectural finding: template creation is a direct write by design (director-owned objects); Sprint 827 `review-queue-card` gap confirmed resolved; recommended Sprint 831: curriculum level integration in create form
