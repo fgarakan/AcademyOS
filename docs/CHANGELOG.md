@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-27 — Sprint 898 — Curriculum Intelligence Canonical Standards Bootstrap V1
+
+- **Documentation-only** — no source code changes, no migrations, no file moves; created two canonical reference docs that define documentation authority and curriculum intelligence product priorities
+- **Created `docs/DOCUMENTATION_IA.md`** — One-page practical navigation guide for the documentation ecosystem: Tier 1 session-load canonical docs (5 files, always load), Tier 2 per-feature docs (load when relevant), Tier 3 historical sprint logs (do not load into sprint context), Never-load list (`Academy_OS_Master_Build/`, `SPRINT_BOARD.md`, `NEXT_SPRINT_RECOMMENDATION.md`, root stale specs), naming convention table (`FEATURE_DESCRIPTION_NNN.md` = sprint log, `FEATURE_STANDARD.md` = canonical, `SPRINT_NNN_FEATURE.md` = deprecated), future folder structure note (do not move files yet), single rule: load fewer docs not more
+- **Created `docs/CURRICULUM_INTELLIGENCE_LOOP.md`** — Strategic definition of the 7-loop curriculum intelligence cycle: (1) core doctrine (Knowledge ≠ Curriculum; DONNA proposes, director approves; no hidden mutation), (2) full loop diagram (Spine → Interface/DONNA edit → Draft → Approval → Spine update → Template/Session → Coach feedback → Knowledge builder → Promotion → Suggestions → Better execution → loop), (3) 7 atomic loops defined with 10/10 requirements and current state for each loop — Loop 1 curriculum spine edit, Loop 2 DONNA natural-language edit, Loop 3 interface edit, Loop 4 knowledge ingestion, Loop 5 knowledge promotion, Loop 6 curriculum-to-template, Loop 7 coach feedback signal, (4) "10/10 atomic loop" criteria (10 criteria: low cognitive load, clear intent, structured output, human approval, safe data boundaries, visible result, reversible/auditable, no hidden mutation, connected to curriculum spine, useful in real workflow), (5) DONNA guardrails (DONNA can: draft/surface/route; DONNA cannot: apply changes/bypass review/mutate curriculum tables; language rules: conditional only), (6) knowledge promotion guardrails, academy customization guardrails, parent/player safety guardrails, (7) product priority order (curriculum intelligence loops > director dashboard KPI wiring > DONNA resolver maturity > docs cleanup), (8) 4 open architecture questions flagged for Loop 4, 5, 6, 7, (9) V2 wiring implementation checklist (6 server actions + 4 UI wirings + 38 pending migrations)
+- **Gaps identified (no action taken):** V2 curriculum draft server actions not yet implemented; `proposed_actions` write path not yet connected to curriculum builder UI; Knowledge Builder UI route unconfirmed; coach feedback aggregation surface undefined
+- **Key reference docs confirmed active:** `CURRICULUM_RIPPLE_ARCHITECTURE.md`, `CURRICULUM_INFORMATION_ARCHITECTURE.md`, `DONNA_CURRICULUM_IMPACT_MAP.md`, `ACADEMY_CURRICULUM_CLONE_ARCHITECTURE.md`, `CURRICULUM_BUILDER_ARCHITECTURE_759.md`, `CURRICULUM_BUILDER_V2_WIRING_PLAN_831.md`
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors, no code changes)
+
+---
+
 ## 2026-05-27 — Sprint 897 — AcademyOS Documentation Information Architecture Audit V1
 
 - **Audit only** — no source code changes, no migrations, no file moves, no file deletes; documentation ecosystem inventory + information architecture design + canonical-authority definition
