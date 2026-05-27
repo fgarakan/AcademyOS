@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-27 — Sprint 912.6 — DONNA Page-Aware Context V1
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Added `prevPathRef` and `prevConvModeRef` refs to track previous pathname and conversation mode state across renders
+  - Added `useEffect` for page-aware director greetings, firing on `conv.conversationMode`, `conv.isPaused`, `pathname`, and `role` changes
+  - When conversation mode activates: DONNA sends a message "You're on [Page Label]. [Director intent]. What would you like to do?" using `getPageCapabilityMap(pathname)` (already imported)
+  - When director navigates to a new page while conversation mode is active and not paused: same greeting fires for the new page
+  - Refs are always updated when conversation mode is on (even if paused) so no double-greeting fires on resume after navigation
+  - When conversation mode turns off: refs reset to null/false cleanly
+  - Greeting message has `confidence: 'high'` and `sourceNote: 'Page context: [label]'`
+  - TTS auto-speaks the greeting because conversation mode is on — no extra wiring needed
+
+---
+
 ## 2026-05-27 — Sprint 912.5 — DONNA Stop And Interrupt Speaking V1
 
 - **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**

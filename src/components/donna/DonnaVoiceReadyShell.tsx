@@ -139,6 +139,9 @@ export function DonnaVoiceReadyShell({
   // Sprint 912.4: ref so TTS callback can access latest conversationMode/isPaused/pendingConfirmation
   const convRef = useRef(conv)
   convRef.current = conv
+  // Sprint 912.6: page-aware greeting — track previous pathname and conv mode state
+  const prevPathRef = useRef<string | null>(null)
+  const prevConvModeRef = useRef(false)
 
   // Initialize session
   useEffect(() => {
@@ -151,6 +154,35 @@ export function DonnaVoiceReadyShell({
       if (autoListenTimerRef.current) clearTimeout(autoListenTimerRef.current)
     }
   }, [])
+
+  // Sprint 912.6: greet director when conversation mode activates or page changes while active
+  useEffect(() => {
+    if (role !== 'director') return
+    const currentPath = pathname ?? '/director'
+    if (!conv.conversationMode) {
+      prevConvModeRef.current = false
+      prevPathRef.current = null
+      return
+    }
+    const justActivated = !prevConvModeRef.current
+    const pageChanged = prevConvModeRef.current && prevPathRef.current !== null && prevPathRef.current !== currentPath
+    prevConvModeRef.current = true
+    prevPathRef.current = currentPath
+    if (conv.isPaused || (!justActivated && !pageChanged)) return
+    const cap = getPageCapabilityMap(currentPath)
+    const greeting = `You're on ${cap.pageLabel}. ${cap.directorIntent} What would you like to do?`
+    const pageMsg: ChatMessage = {
+      id: `donna-page-${Date.now()}`,
+      role: 'donna',
+      kind: 'text',
+      text: greeting,
+      timestamp: new Date().toISOString(),
+      confidence: 'high',
+      sourceNote: `Page context: ${cap.pageLabel}`,
+    }
+    setMessages(prev => [...prev, pageMsg])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conv.conversationMode, conv.isPaused, pathname, role])
 
   // Sprint 912.4: auto-listen loop helper — called after TTS 'done' when conversation mode is on
   function scheduleAutoListen() {
