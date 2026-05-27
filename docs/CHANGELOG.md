@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-27 — Sprint 876 — DONNA Section Navigation Intent Family V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Added `| 'section_nav'` to `DonnaSessionIntentContext.lastIntentFamily` union type (between `'coo_answer'` and `'roster_attention'`); no logic changes to `resolveFollowUp` — `'section_nav'` falls through to the existing `lastSuggestedNavigationHref` anaphoric catch-all exactly as `'coo_answer'` did, preserving all follow-up behaviour
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — In `handleUIDispatch` navigate block (Sprint 873, line 2853): changed `lastIntentFamily: 'coo_answer'` → `lastIntentFamily: 'section_nav'`; resolves Sprint 873 known limitation (section-navigation results were stored with a semantically incorrect intent family); real COO answer block (line 3047, Sprint 802) unchanged at `'coo_answer'`
+- **Created** `docs/DONNA_SECTION_NAV_INTENT_FAMILY_876.md` — Sprint doc: full audit of all `lastIntentFamily` write sites (5) and read sites (4), follow-up behavior proof (before/after identical), safety guarantees, Sprint 877 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 875 — DONNA Section Navigation Pattern Quality V1
 
 - **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — Expanded `pattern:` field for 3 entries in `SECTION_NAV_ENTRIES` to match all documented `naturalLanguageExamples` from `donnaUIActionRegistry.ts`: (1) `navigate_to_coach_wrap_up_link`: made `section` optional in `after\s+session(\s+section)?`; made `start|find` optional in `where\s+(do\s+i|to)\s+(start\s+|find\s+)?(the\s+)?wrap.?up`; added `show\s+me\s+where\s+to\s+wrap.?up`; added `where\s+(do\s+i|to)\s+submit\s+(my\s+)?notes?` — covers "Show me where to wrap up", "Take me to after session", "Where do I submit my notes?"; (2) `navigate_to_wrapup_question`: added `show\s+me\s+(the\s+)?current\s+question` — covers "Show me the current question"; (3) `navigate_to_wrapup_actions`: extended `submit\s+(wrap.?up|(for\s+)?review)` to cover "submit wrap-up" in reversed order; added `show\s+me\s+where\s+to\s+submit` — covers "Take me to submit wrap-up", "Show me where to submit"; all 11 previously-passing phrases unchanged; no new actions, no routing changes, no role boundary changes

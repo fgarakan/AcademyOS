@@ -2849,8 +2849,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       // "take me there", "go there") after a section navigation command re-navigate to the
       // same place DONNA just went. Previously handleUIDispatch navigate results were invisible
       // to sessionIntentContext — follow-up resolver used the last COO suggestion instead.
+      // Sprint 876 — changed lastIntentFamily from 'coo_answer' to 'section_nav' (semantic fix).
+      // resolveFollowUp does not explicitly check for 'coo_answer' or 'section_nav' — both
+      // fall through to the lastSuggestedNavigationHref catch-all (anaphoric handler line 335),
+      // so follow-up behaviour ("show me", "take me there", "go there") is fully preserved.
       setSessionIntentContext({
-        lastIntentFamily: 'coo_answer',
+        lastIntentFamily: 'section_nav',
         lastResultSectionCount: null,
         lastResultHighPriorityCount: null,
         lastResultItemCount: null,

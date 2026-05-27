@@ -41,6 +41,7 @@ export interface DonnaSessionIntentContext {
     | 'page_actions'
     | 'attention'
     | 'coo_answer'
+    | 'section_nav'     // Sprint 876 — dedicated family for handleUIDispatch section-navigation results
     | 'roster_attention'
     | null
   /** Number of sections in the last brief (safe: structural metadata only) */
