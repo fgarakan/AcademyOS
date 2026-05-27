@@ -491,20 +491,35 @@ async function fetchGroupContext(
 }
 
 // ---------------------------------------------------------------------------
-// Session context
+// Session context — Sprint 864 (deepened from 1 query to 5)
+// Surfaces coach names, today's sessions, attendance counts, block gaps, wrap-up gaps.
+// Safety: session_attendance and session_blocks have no academy_id column —
+// both are scoped exclusively via session IDs loaded from academy-scoped Q1.
 // ---------------------------------------------------------------------------
 
 async function fetchSessionContext(
   supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
   academyId: string,
 ): Promise<DonnaContextSummary> {
-  const { data: allSessions } = await supabase
+  const rawDb = supabase as any
+
+  // Query 1 — All sessions (enhanced: added coach_id, scheduled_time vs pre-864)
+  const { data: allSessionsRaw } = await rawDb
     .from('sessions')
-    .select('id, name, scheduled_date, status, template_id, group_id')
+    .select('id, name, scheduled_date, scheduled_time, status, template_id, group_id, coach_id')
     .eq('academy_id', academyId)
     .order('scheduled_date', { ascending: false })
 
-  const sessions = allSessions ?? []
+  const sessions = (allSessionsRaw ?? []) as Array<{
+    id: string
+    name: string | null
+    scheduled_date: string
+    scheduled_time: string | null
+    status: string
+    template_id: string | null
+    group_id: string | null
+    coach_id: string | null
+  }>
 
   const now = new Date()
   const today = now.toISOString().split('T')[0]
@@ -515,50 +530,209 @@ async function fetchSessionContext(
   const weekEndStr = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
   const sessionsThisWeek = sessions.filter(s => s.scheduled_date >= weekStartStr && s.scheduled_date < weekEndStr)
+  const todaySessions = sessions.filter(s => s.scheduled_date === today && s.status !== 'cancelled')
   const upcomingSessions = sessions.filter(s => s.scheduled_date >= today && s.status !== 'cancelled')
   const completedSessions = sessions.filter(s => s.status === 'completed')
   const plannedSessions = sessions.filter(s => s.status === 'planned')
   const sessionsWithoutTemplate = sessions.filter(s => !s.template_id)
   const sessionsWithoutGroup = sessions.filter(s => !s.group_id)
+  const upcomingWithoutCoach = upcomingSessions.filter(s => !s.coach_id)
 
+  // Query 2 — Coach names for sessions that have a coach_id (Sprint 864)
+  // Scoped by unique coach IDs extracted from academy-verified Q1 sessions.
+  const coachNameMap = new Map<string, string>()
+  const uniqueCoachIds = Array.from(
+    new Set(sessions.map(s => s.coach_id).filter(Boolean) as string[])
+  )
+  if (uniqueCoachIds.length > 0) {
+    const { data: profilesRaw } = await rawDb
+      .from('profiles')
+      .select('id, full_name, first_name')
+      .in('id', uniqueCoachIds)
+    for (const p of ((profilesRaw ?? []) as Array<{ id: string; full_name: string | null; first_name: string | null }>)) {
+      const name = p.full_name
+        ? String(p.full_name)
+        : p.first_name
+        ? String(p.first_name)
+        : null
+      if (name) coachNameMap.set(p.id, name)
+    }
+  }
+
+  // Query 3 — Attendance counts for sessions in the past 7 days (Sprint 864)
+  // Safety: session_attendance has no academy_id column.
+  // Scoped via session IDs from Q1, which is already academy_id-scoped.
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const recentWindowIds = sessions
+    .filter(s => s.scheduled_date >= sevenDaysAgo)
+    .map(s => s.id)
+  const attendanceBySession = new Map<string, { present: number; absent: number; total: number }>()
+  if (recentWindowIds.length > 0) {
+    const { data: attendanceRaw } = await rawDb
+      .from('session_attendance')
+      .select('session_id, status')
+      .in('session_id', recentWindowIds)
+    for (const row of ((attendanceRaw ?? []) as Array<{ session_id: string; status: string }>)) {
+      const existing = attendanceBySession.get(row.session_id) ?? { present: 0, absent: 0, total: 0 }
+      if (row.status === 'present') existing.present++
+      else if (row.status === 'absent') existing.absent++
+      existing.total++
+      attendanceBySession.set(row.session_id, existing)
+    }
+  }
+  const sessionsWithAttendance = recentWindowIds.filter(id => attendanceBySession.has(id)).length
+
+  // Query 4 — Block presence for upcoming sessions (Sprint 864)
+  // Identifies sessions with empty lesson plans before coaches run them.
+  // Safety: session_blocks has no academy_id column.
+  // Scoped via session IDs from Q1, which is already academy_id-scoped.
+  const upcomingSessionIds = upcomingSessions.map(s => s.id)
+  const sessionBlockCounts = new Map<string, number>()
+  if (upcomingSessionIds.length > 0) {
+    const { data: blocksRaw } = await rawDb
+      .from('session_blocks')
+      .select('session_id')
+      .in('session_id', upcomingSessionIds)
+    for (const row of ((blocksRaw ?? []) as Array<{ session_id: string }>)) {
+      sessionBlockCounts.set(row.session_id, (sessionBlockCounts.get(row.session_id) ?? 0) + 1)
+    }
+  }
+  const upcomingWithNoBlocks = upcomingSessionIds.filter(id => !sessionBlockCounts.has(id)).length
+
+  // Query 5 — Wrap-up coverage for recently completed sessions (Sprint 864)
+  // Identifies completed sessions where no wrap-up has been submitted at all.
+  // Safety: double-scoped by academy_id (Q5 explicit) + target_object_id IN (Q1 verified IDs).
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const recentCompletedIds = completedSessions
+    .filter(s => s.scheduled_date >= fourteenDaysAgo)
+    .map(s => s.id)
+  let completedMissingWrapUp = 0
+  if (recentCompletedIds.length > 0) {
+    const { data: wrapUpRaw } = await rawDb
+      .from('proposed_actions')
+      .select('target_object_id')
+      .eq('academy_id', academyId)
+      .eq('target_module', 'session_wrap_up_v1')
+      .in('target_object_id', recentCompletedIds)
+    const sessionsWithWrapUp = new Set(
+      ((wrapUpRaw ?? []) as Array<{ target_object_id: string | null }>)
+        .map(r => r.target_object_id)
+        .filter(Boolean) as string[]
+    )
+    completedMissingWrapUp = recentCompletedIds.filter(id => !sessionsWithWrapUp.has(id)).length
+  }
+
+  // Build today's session label (name + time + coach name)
+  const todayLabel: string | null = todaySessions.length > 0
+    ? todaySessions.map(s => {
+        const name = s.name ?? 'Unnamed session'
+        const coachName = s.coach_id ? (coachNameMap.get(s.coach_id) ?? null) : null
+        const timeStr = s.scheduled_time ? ` at ${s.scheduled_time.slice(0, 5)}` : ''
+        return coachName ? `${name}${timeStr} (${coachName})` : `${name}${timeStr}`
+      }).join('; ')
+    : null
+
+  // --- Build context ---
   const keyFacts: string[] = [
     `${sessions.length} session${sessions.length !== 1 ? 's' : ''} total`,
     `${sessionsThisWeek.length} this week, ${upcomingSessions.length} upcoming`,
     `${completedSessions.length} completed, ${plannedSessions.length} planned`,
   ]
-  if (sessionsWithoutTemplate.length > 0) keyFacts.push(`${sessionsWithoutTemplate.length} session${sessionsWithoutTemplate.length !== 1 ? 's' : ''} without a linked template`)
-  if (sessionsWithoutGroup.length > 0) keyFacts.push(`${sessionsWithoutGroup.length} session${sessionsWithoutGroup.length !== 1 ? 's' : ''} without a group assigned`)
+  if (todayLabel !== null) {
+    keyFacts.push(`Today: ${todayLabel}`)
+  } else if (upcomingSessions.length > 0) {
+    keyFacts.push('No sessions scheduled today')
+  }
+  if (upcomingWithoutCoach.length > 0) {
+    keyFacts.push(`${upcomingWithoutCoach.length} upcoming session${upcomingWithoutCoach.length !== 1 ? 's' : ''} without a coach assigned`)
+  }
+  if (upcomingWithNoBlocks > 0) {
+    keyFacts.push(`${upcomingWithNoBlocks} upcoming session${upcomingWithNoBlocks !== 1 ? 's' : ''} with no lesson plan blocks`)
+  }
+  if (sessionsWithAttendance > 0) {
+    keyFacts.push(`${sessionsWithAttendance} recent session${sessionsWithAttendance !== 1 ? 's' : ''} with attendance recorded (last 7 days)`)
+  }
+  if (completedMissingWrapUp > 0) {
+    keyFacts.push(`${completedMissingWrapUp} recently completed session${completedMissingWrapUp !== 1 ? 's' : ''} missing coach wrap-up`)
+  }
+  if (sessionsWithoutTemplate.length > 0) {
+    keyFacts.push(`${sessionsWithoutTemplate.length} session${sessionsWithoutTemplate.length !== 1 ? 's' : ''} without a linked template`)
+  }
+  if (sessionsWithoutGroup.length > 0) {
+    keyFacts.push(`${sessionsWithoutGroup.length} session${sessionsWithoutGroup.length !== 1 ? 's' : ''} without a group assigned`)
+  }
 
   const missingData: string[] = []
   if (sessions.length === 0) missingData.push('No sessions created yet — generate from a class template')
   if (sessionsWithoutTemplate.length > 0) missingData.push(`${sessionsWithoutTemplate.length} session${sessionsWithoutTemplate.length !== 1 ? 's' : ''} missing template link`)
+  if (upcomingWithNoBlocks > 0) missingData.push(`${upcomingWithNoBlocks} upcoming session${upcomingWithNoBlocks !== 1 ? 's' : ''} have no lesson plan blocks`)
+  if (completedMissingWrapUp > 0) missingData.push(`${completedMissingWrapUp} recently completed session${completedMissingWrapUp !== 1 ? 's' : ''} missing coach wrap-up`)
 
   const nextSteps: string[] = []
-  if (sessions.length === 0) nextSteps.push('Create a session from a class template to get started')
-  else if (upcomingSessions.length === 0) nextSteps.push('No upcoming sessions — generate one from a class template')
-  else nextSteps.push(`${upcomingSessions.length} upcoming session${upcomingSessions.length !== 1 ? 's' : ''} — review their setup before coaches run them`)
+  if (sessions.length === 0) {
+    nextSteps.push('Create a session from a class template to get started')
+  } else {
+    if (todaySessions.length > 0) {
+      nextSteps.push(`Review today's ${todaySessions.length} session${todaySessions.length !== 1 ? 's' : ''} and confirm coaches are ready`)
+    }
+    if (upcomingWithoutCoach.length > 0) {
+      nextSteps.push(`Assign coaches to ${upcomingWithoutCoach.length} upcoming session${upcomingWithoutCoach.length !== 1 ? 's' : ''}`)
+    }
+    if (completedMissingWrapUp > 0) {
+      nextSteps.push(`Check ${completedMissingWrapUp} completed session${completedMissingWrapUp !== 1 ? 's' : ''} missing wrap-ups`)
+    }
+    if (upcomingWithNoBlocks > 0 && nextSteps.length < 3) {
+      nextSteps.push(`Add lesson plan blocks to ${upcomingWithNoBlocks} upcoming session${upcomingWithNoBlocks !== 1 ? 's' : ''}`)
+    }
+    if (nextSteps.length === 0 && upcomingSessions.length > 0) {
+      nextSteps.push(`${upcomingSessions.length} upcoming session${upcomingSessions.length !== 1 ? 's' : ''} — review their setup before coaches run them`)
+    }
+    if (nextSteps.length === 0) {
+      nextSteps.push('No upcoming sessions — generate one from a class template')
+    }
+  }
+
+  const openQuestions: string[] = []
+  if (sessionsWithoutTemplate.length > 0) {
+    openQuestions.push(`${sessionsWithoutTemplate.length} session${sessionsWithoutTemplate.length !== 1 ? 's' : ''} are missing a template — were these created manually?`)
+  }
+  if (completedMissingWrapUp > 0) {
+    openQuestions.push(`${completedMissingWrapUp} completed session${completedMissingWrapUp !== 1 ? 's' : ''} have no wrap-up — should coaches be reminded?`)
+  }
 
   return {
     contextType: 'session_context',
     title: 'Sessions',
     summary: sessions.length === 0
       ? 'No sessions have been created yet.'
-      : `${sessions.length} session${sessions.length !== 1 ? 's' : ''} total. ${sessionsThisWeek.length} this week, ${completedSessions.length} completed.`,
+      : `${sessions.length} session${sessions.length !== 1 ? 's' : ''} total. ${sessionsThisWeek.length} this week, ${completedSessions.length} completed.${todaySessions.length > 0 ? ` ${todaySessions.length} session${todaySessions.length !== 1 ? 's' : ''} today.` : ''}`,
     keyFacts,
-    openQuestions: sessionsWithoutTemplate.length > 0
-      ? [`${sessionsWithoutTemplate.length} session${sessionsWithoutTemplate.length !== 1 ? 's' : ''} are missing a template — were these created manually?`]
-      : [],
+    openQuestions,
     suggestedNextSteps: nextSteps,
-    dataUsed: ['sessions'],
+    dataUsed: [
+      'sessions',
+      ...(uniqueCoachIds.length > 0 ? ['profiles (coach names)'] : []),
+      ...(recentWindowIds.length > 0 ? ['session_attendance'] : []),
+      ...(upcomingSessionIds.length > 0 ? ['session_blocks'] : []),
+      ...(recentCompletedIds.length > 0 ? ['proposed_actions (wrap-up status)'] : []),
+    ],
     missingData,
-    safetyNotes: ['Read-only summary. No session data was changed.'],
+    safetyNotes: [
+      'Read-only summary. No session data was changed.',
+      'session_attendance and session_blocks scoped via session IDs from academy-verified sessions query.',
+    ],
     recommendationInputsAvailable: [
       ...(sessions.length > 0 ? ['session_count', 'session_statuses'] : []),
       ...(completedSessions.length > 0 ? ['completed_sessions'] : []),
+      ...(coachNameMap.size > 0 ? ['coach_names'] : []),
+      ...(attendanceBySession.size > 0 ? ['attendance_data'] : []),
+      ...(sessionBlockCounts.size > 0 ? ['lesson_plan_coverage'] : []),
     ],
     recommendationInputsMissing: [
       ...(sessions.length === 0 ? ['any_sessions'] : []),
       ...(sessionsWithoutTemplate.length > 0 ? ['template_links_for_some_sessions'] : []),
+      ...(upcomingWithNoBlocks > 0 ? ['lesson_plan_blocks_for_upcoming'] : []),
+      ...(completedMissingWrapUp > 0 ? ['wrap_up_for_completed_sessions'] : []),
     ],
     possibleSuggestionTypes: ['session_focus_recommendation', 'template_recommendation'],
     fetchedAt: new Date().toISOString(),
