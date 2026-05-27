@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-27 — Sprint 880 — DONNA Follow-Up Section Nav Coverage Audit V1
+
+- **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — Bug fix in `resolveSectionNavigation`: removed `const registryAction = getUIActionById(entry.actionId)` local variable; changed `focusTarget.label` from `registryAction?.displayName ?? entry.label` (verbose registry description, e.g. "Navigate to the session blocks section") to `entry.label` (short user-facing label, e.g. "Session Blocks"); this fixes a critical bug where all 6 map lookups in `SECTION_NAV_ELABORATION_MAP` and `SECTION_NAV_RECOMMENDATION_MAP` silently failed (wrong key), and anaphoric copy included the verbose displayName string; `getUIActionById` import retained (still used by `validateUIActionForContext`); no routing, no SECTION_NAV_ENTRIES, no role boundary changes
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Map key correction: renamed `'Coach Run Session'` → `'Run Session'` in both `SECTION_NAV_ELABORATION_MAP` and `SECTION_NAV_RECOMMENDATION_MAP`; `navigate_to_coach_run_session` has `entry.label = 'Run Session'`; old key caused silent miss on that entry in both maps; no other logic changes
+- **Created** `docs/DONNA_FOLLOW_UP_SECTION_NAV_COVERAGE_AUDIT_880.md` — Full audit: 14 SECTION_NAV_ENTRIES × 3 follow-up types (anaphoric, elaboration, recommendation) = 42 scenarios certified; bug #1 (verbose displayName as focusTarget.label — all map lookups silently wrong); bug #2 ('Coach Run Session' key mismatch — Run Session entry silently missed); coverage post-fix: anaphoric 14/14 correct, elaboration 6/14 fully mapped + 8/14 baseline, recommendation 6/14 fully mapped + 8/14 baseline; all 42 scenarios confirmed safe
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 879 — DONNA Recommendation Follow-Up Depth V1
 
 - **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — (1) Added `/^what now$/` to `RECOMMENDATION_PATTERNS` — covers "what now?" which was not matched by any existing pattern; "what should I do next?" and "what do you recommend?" were already covered; (2) Added `SECTION_NAV_RECOMMENDATION_MAP` — 6-entry hardcoded map of section label → action-oriented next-step copy for Session Blocks, Session Attendance, Wrap-Up Actions, Wrap-Up Question, Template Blocks, Coach Run Session; same 6 keys as Sprint 878 `SECTION_NAV_ELABORATION_MAP`, different (action-oriented) values; (3) Added `buildSectionNavRecommendationResponse` helper — map lookup, label-baseline fallback, no-label fallback; (4) Inserted explicit `'section_nav'` check between `review_queue/attention` handler and generic fallback in `isRecommendation` branch — so "what do you recommend?" / "what now?" after section nav returns action-oriented copy ("In Session Blocks, review the planned activities…") instead of generic Review Queue redirect; existing `daily_brief`, `review_queue`, `attention`, `coo_answer` recommendation paths unchanged; SECTION_NAV_ENTRIES and dispatcher untouched

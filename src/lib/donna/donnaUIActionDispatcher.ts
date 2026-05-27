@@ -663,12 +663,14 @@ export function resolveSectionNavigation(
       }
     }
 
-    // Build a focus target from the registry action's display name
-    const registryAction = getUIActionById(entry.actionId)
+    // Build a focus target using entry.label (short, human-readable) rather than
+    // registryAction.displayName (verbose registry description).
+    // Sprint 880 audit: displayName is documentation-oriented ("Navigate to the session blocks section");
+    // entry.label is the user-facing name ("Session Blocks") — this is what resolveFollowUp map keys expect.
     const focusTarget: DonnaFocusTarget = {
       route: resolved.route,
       targetId: resolved.focusTargetId,
-      label: registryAction?.displayName ?? entry.label,
+      label: entry.label,
       reason: `DONNA highlighted ${entry.label} for you.`,
       sourceCommand: text,
       highlightStyle: 'teal-glow',

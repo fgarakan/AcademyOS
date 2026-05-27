@@ -165,7 +165,7 @@ const SECTION_NAV_RECOMMENDATION_MAP: Record<string, string> = {
   'Wrap-Up Actions':   'In Wrap-Up Actions, finish the coach wrap-up and submit anything that needs review.',
   'Wrap-Up Question':  'Answer the current wrap-up question clearly and specifically, then move to the next wrap-up action.',
   'Template Blocks':   'In Template Blocks, review the block structure, make sure the activities match the template goal, and adjust anything that feels off.',
-  'Coach Run Session': 'In Run Session, use the blocks as the live coaching guide, then update attendance or notes as needed.',
+  'Run Session':       'In Run Session, use the blocks as the live coaching guide, then update attendance or notes as needed.',  // Sprint 880: key corrected from 'Coach Run Session' — entry.label is 'Run Session'
 }
 
 // ── Section nav elaboration map ───────────────────────────────────────────────
@@ -179,7 +179,7 @@ const SECTION_NAV_ELABORATION_MAP: Record<string, string> = {
   'Wrap-Up Actions':   "It's where you finish or submit the coach wrap-up.",
   'Wrap-Up Question':  "It's the current coach wrap-up prompt DONNA is asking you to answer.",
   'Template Blocks':   "It's where the template's drills, activities, and block structure live.",
-  'Coach Run Session': "It's the coach-facing area for executing the session, including blocks and attendance.",
+  'Run Session':       "It's the coach-facing area for executing the session, including blocks and attendance.",  // Sprint 880: key corrected from 'Coach Run Session' — entry.label is 'Run Session'
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
