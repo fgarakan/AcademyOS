@@ -2828,7 +2828,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (result.kind === 'navigate' && result.route && result.confidence === 'high') {
       // Sprint 817 — set teal focus target before navigation so destination page can highlight
       if (result.focusTarget) setDonnaFocusTarget(result.focusTarget)
-      router.push(result.route)
+      // Sprint 871 — same-page: dispatch custom event so DonnaHighlightBanner re-runs
+      // without a pathname change. Cross-page: keep existing router.push behaviour.
+      if (result.route === pathname) {
+        window.dispatchEvent(new CustomEvent('donna:highlight'))
+      } else {
+        router.push(result.route)
+      }
       return true
     }
 
