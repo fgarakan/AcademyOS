@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-27 — Sprint 904 — Curriculum Override Approval Action V1
+
+- **Controlled source mutation only** — one new server action file; no TSX files, no migrations, no `proposed_actions`, no direct curriculum table mutations from TypeScript
+- **Created `src/lib/actions/curriculumOverrideApprovalActions.ts`** — exports `approveCurriculumOverrideDraft()` and `rejectCurriculumOverrideDraft()`; this is the ONLY TypeScript file that calls `execute_curriculum_override()`
+- **`approveCurriculumOverrideDraft(overrideId: string)`:**
+  - Guards: `assertNotPreviewMode()` → auth → `profiles.academy_id` → `academy_memberships` role check (director/head_coach, `is_active = true`) → override ownership (academy scope) → status guard (`pending_review` or `draft` only)
+  - Step 1: `UPDATE academy_curriculum_overrides SET status='approved', approved_by, approved_at` (required by `execute_curriculum_override()` Step 2)
+  - Step 2: `rawDb.rpc('execute_curriculum_override', { p_override_id, p_executor_id })` — SECURITY DEFINER function applies proposed_change to curriculum_content_items, marks row `applied`, writes audit_log
+  - On RPC success: revalidates `/director/curriculum` and `/director/curriculum/builder`; returns `{ ok: true, overrideId, appliedResult }`
+  - On RPC failure: row stays in `approved` state; function has already written `curriculum_override.apply_failed` audit entry; returns descriptive error — Sprint 905 cleanup recommended
+  - Human-readable errors: "I couldn't approve this curriculum draft yet." / "Only authorized academy leaders can approve curriculum drafts." / "This draft is no longer waiting for review."
+- **`rejectCurriculumOverrideDraft(overrideId: string, reason?: string)`:**
+  - Same permission checks as approval (preview → auth → profile → membership → ownership → status)
+  - Reason validation: max 500 chars
+  - `UPDATE academy_curriculum_overrides SET status='rejected', override_reason=reason` with `academy_id` scope guard
+  - `approved_by`/`approved_at` intentionally not set on rejection (schema has no rejected_by column); audit_logs captures `actor_id` as the authority for who rejected
+  - Non-fatal audit log: `INSERT audit_logs (action='curriculum_override.rejected', actor_id, override_id, reason)`
+  - Does NOT call `execute_curriculum_override()`
+  - Revalidates curriculum routes on success
+- **`rawDb = supabase as any`** — used for `academy_curriculum_overrides` table operations AND the `execute_curriculum_override` RPC (both not in generated types; migration 048 and 069 applied but types not regenerated)
+- **Global curriculum protection:** `execute_curriculum_override()` enforces `academy_id` scope in its content_item update/remove branches; the server action also verifies `override.academy_id === profile.academy_id` before reaching the RPC
+- **No UI approval controls added:** actions are server-action exports only; no buttons, no forms, no client components created — Sprint 905 wires the UI
+- **Risk documented:** If `execute_curriculum_override()` fails after status is set to `approved`, the row is stuck in `approved`. The function's WHEN OTHERS handler writes a `curriculum_override.apply_failed` audit entry. Sprint 905 should add a retry/cleanup path.
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 903 — Curriculum Change Queue Live Query V1
 
 - **Read/query/display only** — no approve/reject mutation, no `execute_curriculum_override()` call, no `proposed_actions` usage, no migration changes, no official curriculum mutation
