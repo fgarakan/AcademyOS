@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 873 — DONNA COO Router Context Awareness V1
+
+- **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — (1) Navigate block: added `setSessionIntentContext({ lastSuggestedNavigationHref: result.route, lastSuggestedNavigationLabel: result.focusTarget?.label ?? 'that section', ... })` after `setDonnaFocusTarget` so section-navigation results are visible to `resolveFollowUp` — previously `handleUIDispatch` navigate results were invisible to `sessionIntentContext`, causing anaphoric follow-ups ("show me", "take me there") to use stale COO hrefs; (2) Added `clarification_needed` handler block guarded by `result.actionId !== null && result.confidence === 'partial'` between navigate and guided_operator blocks — fires `setCommandResponse`, `setCooThread`, `speakDonna` and returns `true`, so section-nav guidance ("open a specific session first") reaches the user instead of falling through silently to the COO; guard (`actionId !== null`) preserves existing behaviour for generic dispatcher fallback (`actionId: null`) which must still reach the COO
+- **Created** `docs/DONNA_COO_ROUTER_CONTEXT_AWARENESS_873.md` — sprint doc: audit finding (COO path does not call `dispatchUIIntent` — section nav commands never reach COO), two gap analyses (sessionIntentContext blind spot, clarification suppression), end-to-end flow traces for anaphoric follow-up (before/after), clarification surfacing (before/after), generic fallback (unchanged), files modified/not-modified table, safety guarantees, known limitations, Sprint 874 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 872 — DONNA Context ID Resolution V1
 
 - **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — (1) Added exported type `DonnaSectionNavParams { sessionId?: string; templateId?: string }` for typed context-param passing; (2) Updated `SectionNavEntry.resolve` signature from `(currentRoute: string)` to `(currentRoute: string, ctxParams?: DonnaSectionNavParams)` — backward-compatible; (3) Updated all 11 dynamic SECTION_NAV_ENTRIES resolve functions to use `extractX(route) ?? ctxParams?.sessionId/templateId ?? null` — URL extraction is first choice, context params are fallback; (4) Updated `resolveSectionNavigation` to accept optional `ctxParams?: DonnaSectionNavParams` and pass it to `entry.resolve(currentRoute, ctxParams)`; (5) Updated `dispatchUIIntent` to accept optional `ctxParams?: DonnaSectionNavParams` and pass it to `resolveSectionNavigation`

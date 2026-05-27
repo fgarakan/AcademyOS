@@ -2845,6 +2845,20 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (result.kind === 'navigate' && result.route && result.confidence === 'high') {
       // Sprint 817 — set teal focus target before navigation so destination page can highlight
       if (result.focusTarget) setDonnaFocusTarget(result.focusTarget)
+      // Sprint 873 — update follow-up resolver context so anaphoric follow-ups ("show me",
+      // "take me there", "go there") after a section navigation command re-navigate to the
+      // same place DONNA just went. Previously handleUIDispatch navigate results were invisible
+      // to sessionIntentContext — follow-up resolver used the last COO suggestion instead.
+      setSessionIntentContext({
+        lastIntentFamily: 'coo_answer',
+        lastResultSectionCount: null,
+        lastResultHighPriorityCount: null,
+        lastResultItemCount: null,
+        lastSuggestedNavigationHref: result.route,
+        lastSuggestedNavigationLabel: result.focusTarget?.label ?? 'that section',
+        lastTopicLabel: result.focusTarget?.label ?? null,
+        setAt: Date.now(),
+      })
       // Sprint 871 — same-page: dispatch custom event so DonnaHighlightBanner re-runs
       // without a pathname change. Cross-page: keep existing router.push behaviour.
       if (result.route === pathname) {
@@ -2852,6 +2866,20 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       } else {
         router.push(result.route)
       }
+      return true
+    }
+
+    // Sprint 873 — surface section-nav clarification to the user.
+    // Fires when a Category 1A phrase matched (actionId !== null) but the required dynamic
+    // param (sessionId / templateId) was unavailable from both URL and ctxParams.
+    // DONNA's "Open a specific session first" guidance would otherwise be suppressed:
+    // handleUIDispatch returned false → COO classified as unknown intent → generic fallback.
+    // Guard: actionId !== null distinguishes section-nav clarification from the generic
+    // dispatchUIIntent fallback (actionId: null), which must still fall through to the COO.
+    if (result.kind === 'clarification_needed' && result.actionId !== null && result.confidence === 'partial') {
+      setCommandResponse({ message: result.message, type: 'info', label: 'DONNA' })
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: result.message, type: 'info' as const }])
+      speakDonna(result.message)
       return true
     }
 
