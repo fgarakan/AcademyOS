@@ -580,7 +580,7 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     },
   },
   {
-    pattern: /wrap.?up\s+(link|cta|button)|after\s+session\s+section|where\s+(do\s+i|to)\s+(start|find)\s+(the\s+)?wrap.?up|how\s+(do\s+i|to)\s+start\s+(the\s+)?wrap.?up/i,
+    pattern: /wrap.?up\s+(link|cta|button)|after\s+session(\s+section)?|where\s+(do\s+i|to)\s+(start\s+|find\s+)?(the\s+)?wrap.?up|show\s+me\s+where\s+to\s+wrap.?up|how\s+(do\s+i|to)\s+start\s+(the\s+)?wrap.?up|where\s+(do\s+i|to)\s+submit\s+(my\s+)?notes?/i,
     actionId: 'navigate_to_coach_wrap_up_link',
     label: 'Session Wrap-Up',
     allowedRoles: ['head_coach', 'coach'],
@@ -592,7 +592,7 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
   },
   // ── Coach: wrap-up page sections ───────────────────────────────────────────
   {
-    pattern: /wrap.?up\s+question|current\s+question\s+(in\s+)?wrap.?up|where\s+(do\s+i|to)\s+answer\s+(the\s+)?wrap.?up/i,
+    pattern: /wrap.?up\s+question|current\s+question\s+(in\s+)?wrap.?up|where\s+(do\s+i|to)\s+answer\s+(the\s+)?wrap.?up|show\s+me\s+(the\s+)?current\s+question/i,
     actionId: 'navigate_to_wrapup_question',
     label: 'Wrap-Up Question',
     allowedRoles: ['head_coach', 'coach'],
@@ -603,7 +603,7 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     },
   },
   {
-    pattern: /wrap.?up\s+(actions?|buttons?|submit|navigation)|submit\s+(for\s+)?review|finish\s+(the\s+)?wrap.?up|how\s+(do\s+i|to)\s+(submit|finish)\s+(the\s+|my\s+)?(session\s+notes?|wrap.?up)/i,
+    pattern: /wrap.?up\s+(actions?|buttons?|submit|navigation)|submit\s+(wrap.?up|(for\s+)?review)|finish\s+(the\s+)?wrap.?up|how\s+(do\s+i|to)\s+(submit|finish)\s+(the\s+|my\s+)?(session\s+notes?|wrap.?up)|show\s+me\s+where\s+to\s+submit/i,
     actionId: 'navigate_to_wrapup_actions',
     label: 'Wrap-Up Actions',
     allowedRoles: ['head_coach', 'coach'],

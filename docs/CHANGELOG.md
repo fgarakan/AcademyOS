@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 875 — DONNA Section Navigation Pattern Quality V1
+
+- **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — Expanded `pattern:` field for 3 entries in `SECTION_NAV_ENTRIES` to match all documented `naturalLanguageExamples` from `donnaUIActionRegistry.ts`: (1) `navigate_to_coach_wrap_up_link`: made `section` optional in `after\s+session(\s+section)?`; made `start|find` optional in `where\s+(do\s+i|to)\s+(start\s+|find\s+)?(the\s+)?wrap.?up`; added `show\s+me\s+where\s+to\s+wrap.?up`; added `where\s+(do\s+i|to)\s+submit\s+(my\s+)?notes?` — covers "Show me where to wrap up", "Take me to after session", "Where do I submit my notes?"; (2) `navigate_to_wrapup_question`: added `show\s+me\s+(the\s+)?current\s+question` — covers "Show me the current question"; (3) `navigate_to_wrapup_actions`: extended `submit\s+(wrap.?up|(for\s+)?review)` to cover "submit wrap-up" in reversed order; added `show\s+me\s+where\s+to\s+submit` — covers "Take me to submit wrap-up", "Show me where to submit"; all 11 previously-passing phrases unchanged; no new actions, no routing changes, no role boundary changes
+- **Created** `docs/DONNA_SECTION_NAV_PATTERN_QUALITY_875.md` — sprint doc: failing phrase map, before/after patterns for all 3 entries, preserved-behaviour table, pattern order rationale (wrap-up CTA before wrap-up actions), safety guarantees, known limitations, Sprint 876 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 874 — DONNA Navigation + Highlight Certification V1
 
 - **Created** `docs/DONNA_NAVIGATION_HIGHLIGHT_CERTIFICATION_874.md` — full chain audit of all 14 Category 1A DONNA section-navigation actions across Sprints 868–873: verified complete chain (natural language phrase → dispatchUIIntent → resolveSectionNavigation → ID resolution → setDonnaFocusTarget → router.push or donna:highlight event → DonnaHighlightBanner.triggerHighlight → DOM query → teal-glow class); certified all 14 actions by scenario (static routes, same-page dynamic, cross-page dynamic, missing context, role boundaries, conditional DOM targets); identified 3 minor pattern gap bugs (navigate_to_coach_wrap_up_link, navigate_to_wrapup_question, navigate_to_wrapup_actions — documented NL examples don't match dispatcher patterns); zero critical blockers; all pattern gaps deferred to Sprint 875; certification scores: route resolution 9/10, focus target coverage 10/10, same-page highlight 9/10, cross-page highlight 9/10, missing-context handling 10/10, role safety 9/10, conditional targets 8/10; overall 88/100
