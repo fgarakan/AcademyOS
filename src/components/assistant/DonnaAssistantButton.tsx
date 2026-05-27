@@ -419,6 +419,11 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const panelOpenCountRef = useRef(0)
   // Sprint 787 — Idle timer ref: fires after 3 min of inactivity while panel is open
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Sprint 872 — Track last known session/template ID for cross-page section navigation.
+  // Updated on every pathname change via deriveContextRequest(). Only written (not cleared)
+  // so IDs persist after navigating away from a session/template detail page.
+  // Passed into dispatchUIIntent → resolveSectionNavigation as ctxParams fallback.
+  const lastKnownContextParamsRef = useRef<{ sessionId?: string; templateId?: string }>({})
   const [showGreeting, setShowGreeting] = useState(false)
   // Sprint 647 — daily greeting state (localStorage-backed, once per day)
   const [dailyGreetingState, setDailyGreetingState] = useState<DailyGreetingState | null>(null)
@@ -1113,6 +1118,17 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     void handleContextSummary()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
+
+  // Sprint 872 — Update lastKnownContextParamsRef on every pathname change.
+  // Only WRITES params when the new route yields a sessionId or templateId — never clears
+  // them — so IDs persist when navigating to pages that don't have them (e.g., dashboard).
+  // This enables cross-page section navigation: DONNA can resolve a session/template ID
+  // even when the user has already navigated away from that detail page.
+  useEffect(() => {
+    const req = deriveContextRequest(pathname, role)
+    if (req.params?.sessionId) lastKnownContextParamsRef.current.sessionId = req.params.sessionId
+    if (req.params?.templateId) lastKnownContextParamsRef.current.templateId = req.params.templateId
+  }, [pathname, role])
 
   // Sprint 405 — donna:open custom event listener
   // Allows any page component to open DONNA and pre-fill the input via:
@@ -2815,7 +2831,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Everything else returns false so the existing COO + legacy routing runs unchanged.
   // DOES NOT touch GODmode dispatch, conversational router, or any draft/approval logic.
   function handleUIDispatch(text: string): boolean {
-    const result = dispatchUIIntent(text, uiActionRole, pathname)
+    // Sprint 872 — pass lastKnownContextParamsRef for cross-page section ID resolution
+    const result = dispatchUIIntent(text, uiActionRole, pathname, lastKnownContextParamsRef.current)
 
     if (result.kind === 'blocked' && result.confidence === 'blocked') {
       const msg = result.message

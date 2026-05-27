@@ -438,14 +438,26 @@ function extractCoachSessionId(route: string): string | null {
   return m?.[1] ?? null
 }
 
+/**
+ * Sprint 872 — Structured context params for cross-page section navigation ID resolution.
+ * Prefer URL extraction (currentRoute); fall back to these when not on the target detail page.
+ * Populated from deriveContextRequest(pathname) in DonnaAssistantButton — persists across
+ * navigations via lastKnownContextParamsRef so IDs survive route changes.
+ */
+export type DonnaSectionNavParams = {
+  sessionId?: string
+  templateId?: string
+}
+
 type SectionNavEntry = {
   pattern: RegExp
   actionId: string
   label: string
   allowedRoles: UIActionRole[]
-  /** Resolve the concrete route + focusTargetId from the current pathname.
-   *  Returns null when the required dynamic param is not in the current URL. */
-  resolve: (currentRoute: string) => { route: string; focusTargetId: string } | null
+  /** Resolve the concrete route + focusTargetId.
+   *  Tries currentRoute URL extraction first, then falls back to ctxParams.
+   *  Returns null when the required param is unavailable from both sources. */
+  resolve: (currentRoute: string, ctxParams?: DonnaSectionNavParams) => { route: string; focusTargetId: string } | null
 }
 
 // Sprint 870 — Section navigation patterns (maps phrases to Category 1A registry actions).
@@ -467,8 +479,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_session_blocks',
     label: 'Session Blocks',
     allowedRoles: ['academy_director', 'head_coach'],
-    resolve: (route) => {
-      const id = extractDirectorSessionId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractDirectorSessionId(route) ?? ctxParams?.sessionId ?? null
       if (!id) return null
       return { route: `/director/sessions/${id}`, focusTargetId: 'session-blocks' }
     },
@@ -478,8 +490,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_session_attendance',
     label: 'Session Attendance',
     allowedRoles: ['academy_director', 'head_coach'],
-    resolve: (route) => {
-      const id = extractDirectorSessionId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractDirectorSessionId(route) ?? ctxParams?.sessionId ?? null
       if (!id) return null
       return { route: `/director/sessions/${id}`, focusTargetId: 'session-roster-attendance' }
     },
@@ -489,8 +501,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_session_roster_intelligence',
     label: 'Roster Intelligence',
     allowedRoles: ['academy_director', 'head_coach'],
-    resolve: (route) => {
-      const id = extractDirectorSessionId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractDirectorSessionId(route) ?? ctxParams?.sessionId ?? null
       if (!id) return null
       return { route: `/director/sessions/${id}`, focusTargetId: 'session-roster-intelligence' }
     },
@@ -501,8 +513,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_template_stepper',
     label: 'Template Builder',
     allowedRoles: ['academy_director', 'head_coach'],
-    resolve: (route) => {
-      const id = extractDirectorTemplateId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractDirectorTemplateId(route) ?? ctxParams?.templateId ?? null
       if (!id) return null
       return { route: `/director/class-templates/${id}`, focusTargetId: 'template-stepper' }
     },
@@ -512,8 +524,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_template_blocks',
     label: 'Template Blocks',
     allowedRoles: ['academy_director', 'head_coach'],
-    resolve: (route) => {
-      const id = extractDirectorTemplateId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractDirectorTemplateId(route) ?? ctxParams?.templateId ?? null
       if (!id) return null
       return { route: `/director/class-templates/${id}`, focusTargetId: 'template-blocks-section' }
     },
@@ -523,8 +535,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_template_generate_session',
     label: 'Generate Session from Template',
     allowedRoles: ['academy_director', 'head_coach'],
-    resolve: (route) => {
-      const id = extractDirectorTemplateId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractDirectorTemplateId(route) ?? ctxParams?.templateId ?? null
       if (!id) return null
       return { route: `/director/class-templates/${id}`, focusTargetId: 'template-generate-session' }
     },
@@ -550,8 +562,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_coach_lesson_plan',
     label: "Today's Plan",
     allowedRoles: ['head_coach', 'coach'],
-    resolve: (route) => {
-      const id = extractCoachSessionId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractCoachSessionId(route) ?? ctxParams?.sessionId ?? null
       if (!id) return null
       return { route: `/coach/sessions/${id}`, focusTargetId: 'coach-lesson-plan' }
     },
@@ -561,8 +573,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_coach_run_session',
     label: 'Run Session',
     allowedRoles: ['head_coach', 'coach'],
-    resolve: (route) => {
-      const id = extractCoachSessionId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractCoachSessionId(route) ?? ctxParams?.sessionId ?? null
       if (!id) return null
       return { route: `/coach/sessions/${id}`, focusTargetId: 'coach-run-session' }
     },
@@ -572,8 +584,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_coach_wrap_up_link',
     label: 'Session Wrap-Up',
     allowedRoles: ['head_coach', 'coach'],
-    resolve: (route) => {
-      const id = extractCoachSessionId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractCoachSessionId(route) ?? ctxParams?.sessionId ?? null
       if (!id) return null
       return { route: `/coach/sessions/${id}`, focusTargetId: 'coach-wrap-up-link' }
     },
@@ -584,8 +596,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_wrapup_question',
     label: 'Wrap-Up Question',
     allowedRoles: ['head_coach', 'coach'],
-    resolve: (route) => {
-      const id = extractCoachSessionId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractCoachSessionId(route) ?? ctxParams?.sessionId ?? null
       if (!id) return null
       return { route: `/coach/sessions/${id}/wrap-up`, focusTargetId: 'wrapup-question-card' }
     },
@@ -595,8 +607,8 @@ const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
     actionId: 'navigate_to_wrapup_actions',
     label: 'Wrap-Up Actions',
     allowedRoles: ['head_coach', 'coach'],
-    resolve: (route) => {
-      const id = extractCoachSessionId(route)
+    resolve: (route, ctxParams) => {
+      const id = extractCoachSessionId(route) ?? ctxParams?.sessionId ?? null
       if (!id) return null
       return { route: `/coach/sessions/${id}/wrap-up`, focusTargetId: 'wrapup-nav-actions' }
     },
@@ -620,13 +632,15 @@ export function resolveSectionNavigation(
   text: string,
   role: UIActionRole,
   currentRoute: string,
+  /** Sprint 872 — Optional context params: used as fallback when ID not in current URL. */
+  ctxParams?: DonnaSectionNavParams,
 ): DispatchResult | null {
   for (const entry of SECTION_NAV_ENTRIES) {
     if (!entry.pattern.test(text)) continue
     // Role mismatch — continue so the phrase can still be handled by NAV_PATTERNS for other roles
     if (!entry.allowedRoles.includes(role)) continue
 
-    const resolved = entry.resolve(currentRoute)
+    const resolved = entry.resolve(currentRoute, ctxParams)
     if (!resolved) {
       // Phrase matched and role is valid, but dynamic param (sessionId/templateId) unavailable.
       // Return a graceful clarification so DONNA doesn't silently no-op.
@@ -959,6 +973,8 @@ export function dispatchUIIntent(
   text: string,
   role: UIActionRole,
   currentRoute: string,
+  /** Sprint 872 — Optional context params: sessionId / templateId for cross-page section nav. */
+  ctxParams?: DonnaSectionNavParams,
 ): DispatchResult {
   // 1. Architecture invariants — always blocked regardless of role
   const blockedResult = checkBlockedPhrase(text)
@@ -1010,8 +1026,9 @@ export function dispatchUIIntent(
 
   // 3.6. Sprint 870 — Section navigation (Category 1A: navigate to page + highlight section)
   // Runs before generic NAV_PATTERNS so section-specific phrases resolve correctly by role.
-  // Fails safely: returns clarification when dynamic params (sessionId/templateId) unavailable.
-  const sectionNav = resolveSectionNavigation(text, role, currentRoute)
+  // Sprint 872 — ctxParams passed for cross-page ID resolution (sessionId / templateId).
+  // Fails safely: returns clarification when dynamic params unavailable from both sources.
+  const sectionNav = resolveSectionNavigation(text, role, currentRoute, ctxParams)
   if (sectionNav) return sectionNav
 
   // 4. Navigation intents — role-filtered and boundary-checked
