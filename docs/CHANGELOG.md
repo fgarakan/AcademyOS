@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-27 — Sprint 897 — AcademyOS Documentation Information Architecture Audit V1
+
+- **Audit only** — no source code changes, no migrations, no file moves, no file deletes; documentation ecosystem inventory + information architecture design + canonical-authority definition
+- **Total inventory: 784 markdown files** across 6 zones — `docs/` flat (676), `docs/` subdirs (35), root level (9), `Academy_OS_Master_Build/` (48), `.claude/` (16)
+- **Categories identified (docs/ flat):** Session-load canonical standards (5 files), operational support standards (8), DONNA sprint docs (179), QA/certification/audit (235), architecture docs (32), demo/pilot/script (57), early-format `SPRINT_NNN_` docs (25), lowercase architecture layer (31), CHANGELOG + misc maintenance
+- **Canonical Tier 1 (session-load) confirmed:** `AI_BACKEND_RULES.md`, `CURRENT_BUILD_TARGET.md`, `LOCKED_MODULES.md`, `KNOWN_LIMITATIONS.md`, `MODULE_BUILD_PROCESS.md` — these 5 are absolute authority; all others are sprint logs, historical records, or reference docs
+- **Critical risk identified:** All 5 canonical docs are visually indistinguishable from 671 sprint log files in the flat `docs/` directory — primary AI context-drift risk
+- **Stale docs never to load:** `Academy_OS_Master_Build/` (pre-app; explicitly excluded by CLAUDE.md), `Academy_OS_Master_Build/packages/08_UI_UX_WIREFRAMES/DESIGN_SYSTEM.md` (actively harmful — CLAUDE.md warns), `docs/SPRINT_BOARD.md` (stale Sprint 397), `docs/NEXT_SPRINT_RECOMMENDATION.md` (stale Sprint 397), `BUILD_ORDER.md` (root, superseded by `CURRENT_BUILD_TARGET.md`), `PRODUCT_BLUEPRINT.md` (root, pre-app)
+- **Duplicate/overlap risks:** Root `BUILD_ORDER.md` vs `CURRENT_BUILD_TARGET.md` (HIGH), superseded `DONNA_FOLLOW_UP_RESOLVER_FULL_COVERAGE_AUDIT_886.md` (use V2_891 instead), superseded `CURRICULUM_BUILDER_V1_COMPLETION_AUDIT_798.md` (use _915)
+- **Recommended future folder structure:** `/docs/standards/` (canonical rules), `/docs/architecture/` (feature arch), `/docs/audits/` (certified audits), `/docs/sprints/` (sprint logs), `/docs/planning/` (working docs), `/docs/archive/` (stale); do NOT implement yet — CLAUDE.md reference updates required first
+- **Naming convention:** `FEATURE_DESCRIPTION_NNN.md` is the canonical sprint doc format (feature-first, sprint number suffix); `FEATURE_STANDARD.md` (no number) for canonical standards; `SPRINT_NNN_FEATURE.md` format is formally deprecated
+- **Context-load policy defined:** Tier 1 (always), Tier 2 (per-feature-track), Never-load list (Academy_OS_Master_Build/, SPRINT_BOARD.md, NEXT_SPRINT_RECOMMENDATION.md, root stale specs)
+- **Archive candidates (do not archive yet):** `Academy_OS_Master_Build/`, `SPRINT_BOARD.md`, `NEXT_SPRINT_RECOMMENDATION.md`, `BUILD_ORDER.md` (root), `PRODUCT_BLUEPRINT.md` (root), `DONNA_FOLLOW_UP_RESOLVER_FULL_COVERAGE_AUDIT_886.md` (superseded by V2_891), `CURRICULUM_BUILDER_V1_COMPLETION_AUDIT_798.md` (superseded by _915)
+- **Minimum viable standards-doc system:** The existing 5 Tier 1 docs are sufficient; Sprint 898 should add `docs/standards/README.md` + `docs/DOCUMENTATION_IA.md` as a navigation pointer; do NOT move files yet
+- **Documentation sprawl rating:** 🔴 CRITICAL — 784 files with no structural separation of standards from sprint logs; AI context-noise risk HIGH; stale-spec risk HIGH
+- **Created** `docs/ACADEMYOS_DOCUMENTATION_INFORMATION_ARCHITECTURE_AUDIT_897.md` — Full audit: total inventory table, Zone A–E classification, category counts, session-load canonical verification, DONNA sprint doc policy, QA/certification policy, stale-doc list, duplicate/overlap table, never-load list, future folder structure recommendation, context-load policy, naming convention table, archive candidates, risk matrix, Sprint 898 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors, no code changes)
+
+---
+
 ## 2026-05-27 — Sprint 896 — DONNA Guided Highlight Grouped Commit V1
 
 - **Grouped commit** — commits all Sprint 817–820 DONNA Guided Highlight / Directed Navigation source files and sprint docs in a single hygiene commit; no new code written; no schema changes; no server action changes; TypeScript clean throughout
