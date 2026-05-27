@@ -901,17 +901,52 @@ export function DonnaVoiceReadyShell({
   }
 
   // ── Voice toggle ────────────────────────────────────────────────────────────
+  // Sprint 912.5: interrupt support — pressing mic while DONNA is speaking stops
+  // TTS immediately and opens the mic. Conversation mode is preserved across interrupts.
 
   function handleVoiceToggle() {
     if (voice.status === 'listening') {
+      // Director presses mic while already listening — stop listening
       voice.stop()
+      // In conversation mode, this is an intentional pause by director (not a failure)
+      if (conv.conversationMode && !conv.isPaused) {
+        // Don't pause conversation mode — just stop the mic for this cycle
+        // Director can speak again by pressing the mic button or waiting for next cycle
+      }
     } else {
-      stopServerTts()  // Sprint 731: stop any playing TTS before mic activates
-      setIsSpeaking(false)  // Sprint 751: clear speaking indicator when mic activates
+      // Sprint 912.5: Interrupt DONNA while speaking — stop TTS, start mic immediately
+      if (isSpeaking) {
+        stopServerTts()
+        setIsSpeaking(false)
+        // Cancel any pending auto-listen timer so we don't double-restart
+        if (autoListenTimerRef.current) {
+          clearTimeout(autoListenTimerRef.current)
+          autoListenTimerRef.current = null
+        }
+        conv.endAutoListen()
+      } else {
+        stopServerTts()
+        setIsSpeaking(false)
+      }
       voice.reset()
       pendingVoiceRef.current = null
       voice.start()
     }
+  }
+
+  // ── Stop speaking (explicit stop button) ────────────────────────────────────
+  // Sprint 912.5: stopping TTS explicitly keeps conversation mode active;
+  // if conversation mode is on and not paused, schedule auto-listen after stopping.
+
+  function handleStopSpeaking() {
+    stopServerTts()
+    setIsSpeaking(false)
+    if (autoListenTimerRef.current) {
+      clearTimeout(autoListenTimerRef.current)
+      autoListenTimerRef.current = null
+    }
+    // Sprint 912.5: after explicit stop, resume auto-listen if in conversation mode
+    scheduleAutoListen()
   }
 
   return (
@@ -1051,7 +1086,7 @@ export function DonnaVoiceReadyShell({
         </div>
       )}
 
-      {/* Sprint 751 — speaking indicator: shown when TTS auto-play is active */}
+      {/* Sprint 751/912.5 — speaking indicator: shown when TTS auto-play is active */}
       {isSpeaking && (
         <div
           className="flex items-center justify-center gap-2 py-1.5 shrink-0"
@@ -1061,13 +1096,12 @@ export function DonnaVoiceReadyShell({
             className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
             style={{ background: '#8b5cf6' }}
           />
-          <span className="text-xs" style={{ color: '#8b5cf6' }}>Speaking…</span>
+          <span className="text-xs" style={{ color: '#8b5cf6' }}>
+            Speaking{conv.conversationMode ? ' — press mic to interrupt' : '…'}
+          </span>
           <button
             type="button"
-            onClick={() => {
-              stopServerTts()
-              setIsSpeaking(false)
-            }}
+            onClick={handleStopSpeaking}
             className="text-[10px] px-2 py-0.5 rounded-lg border ml-1 transition-colors hover:opacity-80"
             style={{ borderColor: 'rgba(139,92,246,0.3)', color: 'rgba(139,92,246,0.8)' }}
           >

@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-27 — Sprint 912.5 — DONNA Stop And Interrupt Speaking V1
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Replaced inline voice toggle with proper interrupt support:
+    - Pressing mic while DONNA is speaking: stops TTS via `stopServerTts()`, clears `isSpeaking`, cancels pending auto-listen timer, then starts mic immediately
+    - Pressing mic while listening: stops mic only (does not exit conversation mode)
+    - Pressing mic while idle: starts mic as before
+  - Added `handleStopSpeaking()` function for the Stop button: stops TTS, clears timer, then calls `scheduleAutoListen()` so conversation mode resumes after stopping
+  - Updated Stop button to call `handleStopSpeaking()` instead of inline handler
+  - Speaking indicator hint text: shows "press mic to interrupt" when conversation mode on
+  - Conversation mode survives interruption cleanly — mode setting is never cleared on interrupt
+  - Auto-listen timer guard: cancel before restarting to prevent double-fire
+
+---
+
 ## 2026-05-27 — Sprint 912.4 — DONNA Continuous Listening Loop V1
 
 - **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
