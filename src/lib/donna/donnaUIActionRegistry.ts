@@ -83,6 +83,7 @@ export interface UIAction {
   approvalRoute: '/director/review' | null
   naturalLanguageExamples: string[]
   pageGuard: string[]         // Routes where this action is valid ([] = any page)
+  focusTargetId?: string      // Sprint 869 — data-donna-focus-id of the section to highlight after navigation (undefined for page-level actions)
   blockedReason: string | null
   implementationStatus: 'wired' | 'partially_wired' | 'pattern_exists' | 'not_built'
   notes: string | null
@@ -157,6 +158,352 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     blockedReason: null,
     implementationStatus: 'pattern_exists',
     notes: 'Trivial to wire; not yet surfaced as an explicit DONNA action.',
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CATEGORY 1A — NAVIGATE TO SECTION (always_safe)
+  // Sprint 869 — wires Sprint 868 data-donna-focus-id targets into the registry.
+  // Each action navigates to a route AND requests section highlighting.
+  // Dispatcher pattern: setDonnaFocusTarget({ route, targetId: focusTargetId, label })
+  // called immediately before router.push(route). DonnaHighlightBanner reads the
+  // target from sessionStorage on mount and applies donna-focus-ring CSS.
+  // All actions are always_safe — read-only navigation only, no mutations.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Director: Sessions list ──────────────────────────────────────────────────
+
+  {
+    id: 'navigate_to_sessions_list',
+    displayName: 'Navigate to the sessions list',
+    description: 'DONNA navigates to /director/sessions and highlights the session list. No state mutation.',
+    domain: 'sessions',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['academy_director', 'head_coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Show me all sessions.',
+      'Take me to sessions.',
+      'Open the sessions list.',
+      'Go to the session calendar.',
+    ],
+    pageGuard: [],
+    focusTargetId: 'session-list',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /director/sessions. Focus target `session-list` only present when sessions exist. Sprint 868 added the DOM target.',
+  },
+
+  // ── Director: Session detail sections ────────────────────────────────────────
+
+  {
+    id: 'navigate_to_session_blocks',
+    displayName: 'Navigate to the session blocks section',
+    description: 'DONNA navigates to the session detail page and highlights the SESSION BLOCKS section. Requires sessionId in DONNA context.',
+    domain: 'sessions',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['academy_director', 'head_coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Show me the session blocks.',
+      'Take me to the blocks for this session.',
+      'Go to session blocks.',
+      'What blocks are in this session?',
+    ],
+    pageGuard: [],
+    focusTargetId: 'session-blocks',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /director/sessions/[sessionId]. Focus target `session-blocks` only present when blocks exist. Sprint 868 added the DOM target.',
+  },
+
+  {
+    id: 'navigate_to_session_attendance',
+    displayName: 'Navigate to the session roster and attendance section',
+    description: 'DONNA navigates to the session detail page and highlights the ROSTER & ATTENDANCE section.',
+    domain: 'sessions',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['academy_director', 'head_coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Show me attendance for this session.',
+      'Take me to the roster.',
+      'Open attendance.',
+      'Who attended this session?',
+    ],
+    pageGuard: [],
+    focusTargetId: 'session-roster-attendance',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /director/sessions/[sessionId]. Sprint 868 added the DOM target.',
+  },
+
+  {
+    id: 'navigate_to_session_roster_intelligence',
+    displayName: 'Navigate to the class roster intelligence section',
+    description: 'DONNA navigates to the session detail page and highlights the CLASS ROSTER INTELLIGENCE section. Only visible if a group is assigned to the session.',
+    domain: 'sessions',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['academy_director', 'head_coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Show me the class roster data.',
+      'What players are in this session?',
+      'Go to roster intelligence.',
+      'Who needs attention in this class?',
+    ],
+    pageGuard: [],
+    focusTargetId: 'session-roster-intelligence',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /director/sessions/[sessionId]. Focus target `session-roster-intelligence` only present when session has a group assigned. Sprint 868 added the DOM target.',
+  },
+
+  // ── Director: Template detail sections ────────────────────────────────────────
+
+  {
+    id: 'navigate_to_template_stepper',
+    displayName: 'Navigate to the template builder',
+    description: 'DONNA navigates to the class template detail page and highlights the builder stepper. Works from any step. Requires templateId in DONNA context.',
+    domain: 'templates',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['academy_director', 'head_coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Open the template builder.',
+      'Take me to this template.',
+      'Go to the template.',
+      'Show me the template editor.',
+    ],
+    pageGuard: [],
+    focusTargetId: 'template-stepper',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /director/class-templates/[templateId]. Focus target `template-stepper` is always visible regardless of active step. Sprint 868 added the DOM target.',
+  },
+
+  {
+    id: 'navigate_to_template_blocks',
+    displayName: 'Navigate to the template block builder section',
+    description: 'DONNA navigates to the class template detail page and highlights the Build Blocks section (Step 3). Focus only applies when the stepper is on Step 3.',
+    domain: 'templates',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['academy_director', 'head_coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Take me to the template blocks.',
+      'Show me where to add drills.',
+      'Open the block builder.',
+      'Help me add content to the template blocks.',
+    ],
+    pageGuard: [],
+    focusTargetId: 'template-blocks-section',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /director/class-templates/[templateId]. Focus target `template-blocks-section` only present in DOM on Step 3 of the stepper. Sprint 868 added the DOM target.',
+  },
+
+  {
+    id: 'navigate_to_template_generate_session',
+    displayName: 'Navigate to the generate session section of a template',
+    description: 'DONNA navigates to the class template detail page and highlights the Create Session from Template section (Step 5).',
+    domain: 'templates',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['academy_director', 'head_coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Show me how to create a session from this template.',
+      'Take me to generate session.',
+      'Go to session creation.',
+      'Where do I generate a session?',
+    ],
+    pageGuard: [],
+    focusTargetId: 'template-generate-session',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /director/class-templates/[templateId]. Focus target `template-generate-session` only present on Step 5. Sprint 868 added the DOM target.',
+  },
+
+  // ── Coach: Hub sections ───────────────────────────────────────────────────────
+
+  {
+    id: 'navigate_to_coach_home_today',
+    displayName: "Navigate to the coach hub today's sessions",
+    description: "DONNA navigates to /coach and highlights the TODAY section showing the coach's session plan for the day.",
+    domain: 'sessions',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['head_coach', 'coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      "Show me today's sessions.",
+      "What do I have today?",
+      'Take me to my session plan.',
+      'What is on my schedule?',
+    ],
+    pageGuard: [],
+    focusTargetId: 'coach-today-sessions',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /coach. Focus target `coach-today-sessions` wraps the TODAY section. Sprint 868 added the DOM target.',
+  },
+
+  // ── Coach: Players list ───────────────────────────────────────────────────────
+
+  {
+    id: 'navigate_to_coach_players',
+    displayName: 'Navigate to the coach players list',
+    description: 'DONNA navigates to /coach/players and highlights the player list. Only shows players assigned to this coach.',
+    domain: 'players',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['head_coach', 'coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Show me my players.',
+      'Take me to player list.',
+      'Open my players.',
+      'Who are my players?',
+    ],
+    pageGuard: [],
+    focusTargetId: 'coach-player-list',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /coach/players. Focus target `coach-player-list` wraps the full players directory. Coach-scoped — only assigned players shown. Sprint 868 added the DOM target.',
+  },
+
+  // ── Coach: Session detail sections ────────────────────────────────────────────
+
+  {
+    id: 'navigate_to_coach_lesson_plan',
+    displayName: "Navigate to the session's lesson plan",
+    description: "DONNA navigates to the coach session page and highlights the Today's Plan section. Only visible if the session has a template. Requires sessionId in context.",
+    domain: 'sessions',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['head_coach', 'coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      "Show me today's plan.",
+      'What are we doing today?',
+      'Go to the lesson plan.',
+      'Show me the curriculum for this session.',
+    ],
+    pageGuard: [],
+    focusTargetId: 'coach-lesson-plan',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /coach/sessions/[sessionId]. Focus target `coach-lesson-plan` only present when session has a template. Sprint 868 added the DOM target.',
+  },
+
+  {
+    id: 'navigate_to_coach_run_session',
+    displayName: 'Navigate to the run-session section',
+    description: 'DONNA navigates to the coach session page and highlights the Run the Session section (blocks, exercises, and attendance panel).',
+    domain: 'sessions',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['head_coach', 'coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Show me the session execution panel.',
+      'Take me to run session.',
+      'Open blocks and attendance.',
+      'Where do I mark attendance?',
+    ],
+    pageGuard: [],
+    focusTargetId: 'coach-run-session',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /coach/sessions/[sessionId]. Focus target `coach-run-session` wraps CoachSessionExecutionClient. Sprint 868 added the DOM target.',
+  },
+
+  {
+    id: 'navigate_to_coach_wrap_up_link',
+    displayName: 'Navigate to the session wrap-up CTA section',
+    description: 'DONNA navigates to the coach session page and highlights the After Session section containing the wrap-up CTA and status.',
+    domain: 'sessions',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['head_coach', 'coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Show me where to wrap up.',
+      'Take me to after session.',
+      'Where do I submit my notes?',
+      'How do I start wrap-up?',
+    ],
+    pageGuard: [],
+    focusTargetId: 'coach-wrap-up-link',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /coach/sessions/[sessionId]. Focus target `coach-wrap-up-link` wraps the After Session section with wrap-up CTA. Sprint 868 added the DOM target.',
+  },
+
+  // ── Coach: Wrap-up page sections ─────────────────────────────────────────────
+
+  {
+    id: 'navigate_to_wrapup_question',
+    displayName: 'Navigate to the active wrap-up question',
+    description: 'DONNA navigates to the session wrap-up page and highlights the current question card. Only visible in the questions phase (not after submission).',
+    domain: 'sessions',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['head_coach', 'coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Take me to the wrap-up question.',
+      'Show me the current question.',
+      'Where do I answer wrap-up?',
+      'Go to wrap-up.',
+    ],
+    pageGuard: [],
+    focusTargetId: 'wrapup-question-card',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /coach/sessions/[sessionId]/wrap-up. Focus target `wrapup-question-card` only present in questions phase; absent after submission. Sprint 868 added the DOM target.',
+  },
+
+  {
+    id: 'navigate_to_wrapup_actions',
+    displayName: 'Navigate to the wrap-up submit actions',
+    description: 'DONNA navigates to the session wrap-up page and highlights the navigation bar (Back / Skip / Submit for Review buttons).',
+    domain: 'sessions',
+    safetyClass: 'always_safe',
+    method: 'route_push',
+    allowedRoles: ['head_coach', 'coach'],
+    requiresApproval: false,
+    approvalRoute: null,
+    naturalLanguageExamples: [
+      'Show me where to submit.',
+      'Take me to submit wrap-up.',
+      'Where do I finish wrap-up?',
+      'How do I submit my session notes?',
+    ],
+    pageGuard: [],
+    focusTargetId: 'wrapup-nav-actions',
+    blockedReason: null,
+    implementationStatus: 'pattern_exists',
+    notes: 'Destination: /coach/sessions/[sessionId]/wrap-up. Focus target `wrapup-nav-actions` contains Back, Skip, and Submit for Review buttons. Sprint 868 added the DOM target.',
   },
 
   // ═══════════════════════════════════════════════════════════════════════════

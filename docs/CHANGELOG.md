@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 869 — DONNA Navigate Action Registry V1
+
+- **Modified** `src/lib/donna/donnaUIActionRegistry.ts` — (1) Added `focusTargetId?: string` (optional) to `UIAction` interface between `pageGuard` and `blockedReason` — backward-compatible, all 25 pre-869 actions unmodified; (2) Added Category 1A — NAVIGATE TO SECTION block with 14 new `always_safe` navigate-to-section actions, all `implementationStatus: 'pattern_exists'`, each with `focusTargetId` matching a Sprint 868 `data-donna-focus-id` target: `navigate_to_sessions_list` (→ `session-list`), `navigate_to_session_blocks` (→ `session-blocks`), `navigate_to_session_attendance` (→ `session-roster-attendance`), `navigate_to_session_roster_intelligence` (→ `session-roster-intelligence`), `navigate_to_template_stepper` (→ `template-stepper`), `navigate_to_template_blocks` (→ `template-blocks-section`), `navigate_to_template_generate_session` (→ `template-generate-session`), `navigate_to_coach_home_today` (→ `coach-today-sessions`), `navigate_to_coach_players` (→ `coach-player-list`), `navigate_to_coach_lesson_plan` (→ `coach-lesson-plan`), `navigate_to_coach_run_session` (→ `coach-run-session`), `navigate_to_coach_wrap_up_link` (→ `coach-wrap-up-link`), `navigate_to_wrapup_question` (→ `wrapup-question-card`), `navigate_to_wrapup_actions` (→ `wrapup-nav-actions`); director actions restricted to `['academy_director', 'head_coach']`; coach actions restricted to `['head_coach', 'coach']`; no parent/player routes; total registry: 25 → 39 actions
+- **Created** `docs/DONNA_NAVIGATE_ACTION_REGISTRY_869.md` — sprint doc: audit findings, interface change rationale, all 14 new actions tabulated by role group, dynamic route convention, dispatcher pattern for Sprint 870, role safety table, registry coverage before/after, known limitations, Sprint 870 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 868 — DONNA Focus Targets V1
 
 - **Modified** `src/app/director/sessions/[sessionId]/page.tsx` — added `data-donna-focus-id` to 4 section wrapper `<div>`s: `session-group-assignment` (Group Assignment panel), `session-roster-intelligence` (Class Roster Intelligence panel — conditional on `session.group_id`), `session-blocks` (Session Blocks list non-empty branch), `session-roster-attendance` (Roster & Attendance panel)
