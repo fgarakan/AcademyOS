@@ -2,6 +2,88 @@
 
 ---
 
+## 2026-05-27 — Sprint 901 — Curriculum Draft Server Actions V1
+
+- **Limited source mutation** — one new server action file created; no migrations, no UI files, no existing files modified
+- **Created `src/lib/actions/curriculumDraftActions.ts`** — new 'use server' action file with `createCurriculumContentItemDraft()` targeting `academy_curriculum_overrides` directly (not `proposed_actions`)
+- **Action: `createCurriculumContentItemDraft(input: CreateContentItemDraftInput): Promise<CreateContentItemDraftResult>`**
+  - Writes to `academy_curriculum_overrides` with `target_type='content_item'`, `override_type='add'`, `status='pending_review'`
+  - `proposed_change` JSONB contains all fields that `execute_curriculum_override()` (migration 069) reads in its add branch: `level_id`, `content_type`, `title`, `pathway`, optional `description`, `duration_min/max`, `difficulty`, `intensity`, `coach_cues`, `success_criteria`, `progressions`, `regressions`, `court_setup`
+  - `curriculum_version_id` resolved from `academy_curriculum_versions` (accepts `'active'` or `'draft'` status, most recent first)
+  - Writes audit_log entry (`curriculum_override.draft.created`) after successful insert — non-fatal if audit write fails
+  - Returns `{ ok: true, draftId: string }` on success, `{ ok: false, error: string, blocked: boolean }` on failure
+- **Replaces Sprint 831 three-function plan:** `createCurriculumDrillDraft()`, `createCurriculumFitnessExerciseDraft()`, `createCurriculumAssessmentGateDraft()` are all covered by `contentType: 'drill' | 'fitness' | 'assessment'` on one parameterized action — avoids code duplication
+- **Permission checks (in order):**
+  1. `assertNotPreviewMode()` — blocks preview mode writes
+  2. `supabase.auth.getUser()` — authentication required
+  3. `profiles.academy_id` resolved from DB — never from client input
+  4. `academy_memberships` role check — `academy_director` or `head_coach` only, `is_active = true`
+  5. Active curriculum version resolved from DB — `academy_curriculum_versions` (status IN ['active','draft'])
+- **Input validation:** `levelId` required; `contentType` required and validated against 9-value whitelist (migration 045 baseline CHECK constraint); `title` required, max 200 chars; `pathway` validated against 4-value whitelist; `difficulty` 1–5 range; `intensity` 1–10 range
+- **Types exported:** `CurriculumContentType`, `CurriculumPathway`, `CurriculumDraftSource`, `CreateContentItemDraftInput`, `CreateContentItemDraftResult` — all strongly typed with `as const` arrays
+- **rawDb pattern:** `supabase as unknown as { ... }` typed interface for `academy_curriculum_overrides` and `academy_curriculum_versions` (not in generated types as migrations 045/048 may not be applied to live DB yet); matches established codebase pattern from `rollbackCurriculumOverride.ts`, `academyCurriculumClone.ts`
+- **Does NOT call `execute_curriculum_override()`** — draft creation only; execution is a separate director-approval step (Sprint 904)
+- **Does NOT write to `proposed_actions`** — confirmed schema-incompatible (Sprint 899 audit: `voice_command_id NOT NULL`, field name mismatch, missing curriculum action_type enum values)
+- **Existing broken actions left in place (not deleted, not modified):** `curriculumDraft.ts` (Sprint 831 workaround — creates `voice_commands` row before `proposed_actions` insert) and `curriculumOverrideDraft.ts` (writes to `proposed_actions` without required NOT NULL fields); both will fail at the DB level; deprecation is a future sprint task
+- **Tests:** No automated test harness exists in this project (`KNOWN_LIMITATIONS.md`). TypeScript compilation (`npx tsc --noEmit` exit 0) is the validation. Manual testing requires live DB with migrations 045 and 048 applied.
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
+## 2026-05-27 — Sprint 900 — Curriculum Override Execution Migration V1
+
+- **Migration only** — no source code changes, no TypeScript changes, no UI changes; single new SQL migration file
+- **Created `supabase/migrations/069_execute_curriculum_override.sql`** — adds `execute_curriculum_override(p_override_id UUID, p_executor_id UUID) RETURNS JSONB`; the missing execution function for the `academy_curriculum_overrides` curriculum draft pipeline (identified as the critical gap in Sprint 899 audit)
+- **Function behavior — V1 scope (target_type = 'content_item' only):**
+  - `override_type = 'add'` — INSERT into `curriculum_content_items` with `academy_id = override.academy_id`, `source_type = 'academy_custom'`; required fields: `level_id`, `content_type`, `title` from `proposed_change` JSONB; optional: `description`, `pathway`, `duration_min/max`, `difficulty`, `intensity`, `coach_cues`, `success_criteria`, `progressions`, `regressions`, `court_setup`; returns `{ content_item_id, level_id, content_type, title }`
+  - `override_type = 'update'` — UPDATE academy-owned `curriculum_content_items` (academy_id = override.academy_id); global items (academy_id IS NULL) are blocked with a clear error; partial COALESCE pattern updates only the fields present in `proposed_change`
+  - `override_type = 'remove'` — soft-delete by setting `is_active = false` on academy-owned item; row preserved for audit; resolution engine excludes inactive items; global items blocked
+  - All other `override_type` values (`replace`, `emphasis_shift`) raise deferred exception with clear message
+  - All other `target_type` values (`level`, `requirement`, `mapping`, `template_rule`) raise deferred exception with actionable message for future sprint implementation
+- **Guards (in order of execution):**
+  1. Override must exist (`NOT FOUND` guard)
+  2. Status must be `'approved'` (rejects `'draft'`, `'pending_review'`, `'applied'`, `'rejected'`, `'rolled_back'`)
+  3. Explicit academy_memberships check using `p_executor_id` (not `auth.uid()`) — SECURITY DEFINER safe; only `academy_director` and `head_coach` roles pass
+  4. Global spine protection per branch — `academy_id = override.academy_id` check before any UPDATE/UPDATE; blocks global items at operation level, not just role level
+- **Post-execution:**
+  - UPDATE `academy_curriculum_overrides SET status='applied', applied_by=p_executor_id, applied_at=NOW(), applied_change=v_result`
+  - `write_audit_log()` called with `action='curriculum_override.applied'`, target_type='academy_curriculum_overrides', full result payload; source mapping: override.source `'typed'` → `'ui'`, `'voice'` → `'voice'`, `'ui'` → `'ui'` (matches audit_logs CHECK constraint)
+- **Exception handler:**
+  - Direct INSERT into `audit_logs` (not via `write_audit_log()`) to avoid nested exception risk; matches `execute_approved_action()` pattern (migration 009)
+  - Returns `{ "success": false, "error": "..." }` — never throws to caller
+- **Architecture invariants enforced:**
+  - Global curriculum (`academy_id IS NULL`) is NEVER mutated — enforcement is explicit and layered (role guard + per-operation academy_id check)
+  - No voice command dependency — `academy_curriculum_overrides` has no `voice_command_id NOT NULL` constraint; works for voice, typed, and UI origins
+  - All executions auditable — every call leaves an `audit_logs` record whether it succeeds or fails
+  - `SECURITY DEFINER` — bypasses RLS safely; all scope checks are explicit, not RLS-dependent
+- **COMMENT** on function added for Supabase Dashboard inspection
+- **No RLS changes** — existing policies on `academy_curriculum_overrides` (migration 048) and `curriculum_content_items` (migration 045) unchanged
+- **No new tables** — function only
+- **Migration validation:** SQL reviewed against schema of `academy_curriculum_overrides` (048), `curriculum_content_items` (045), `audit_logs` (002), `write_audit_log()` (011), `academy_memberships` (002), `auth_is_director_or_head()` pattern (003). No Supabase CLI available for dry-run; validation is by schema cross-reference.
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors; migration-only sprint has no TS changes)
+
+---
+
+## 2026-05-27 — Sprint 899 — Migration Readiness + Curriculum Tables Audit V1
+
+- **Audit only** — no source code changes, no migrations applied; full schema audit of curriculum table foundation, proposed_actions compatibility, and execute_approved_action() gaps before implementing V2 curriculum draft server actions
+- **Migration count corrected:** 68 total migrations (001–068), not 38 as Sprint 895 documented — migrations 039–068 were already tracked in git; Sprint 895 only reported untracked files; the full list spans 001_extensions.sql → 068_template_rls_policies.sql
+- **Curriculum spine tables confirmed (migration 036):** `curriculum_stages` (5 seeded), `curriculum_levels` (15 seeded), `skill_domains` (8 seeded), `skill_progressions`, `parent_level_descriptions`, `progression_rules`, `player_curriculum_states`, `player_domain_progress`, `player_curriculum_history` — all with RLS; global master (`academy_id IS NULL`) read-only for directors
+- **Academy curriculum clone confirmed (migration 048):** `academy_curriculum_versions` + `academy_curriculum_overrides` — `academy_curriculum_overrides` is the architecturally correct pipeline for curriculum draft → pending_review → approved → applied → rolled_back; has rollback FK, source field (voice/typed/ui), full RLS
+- **Curriculum content tables confirmed:** `curriculum_gates` (052, 57 gates), `curriculum_drills` (052, 152 drills), `curriculum_coach_language` (052, 120 entries), `curriculum_content_items` (045, source_type: global_default/academy_custom/imported/copied), `curriculum_archetypes` (052, A1–A8), `curriculum_failure_modes` (052, 14 modes), `curriculum_class_template_blocks` (062, junction for template-curriculum bridge), `player_gate_status` (059)
+- **Template-curriculum bridge confirmed:** `templates.curriculum_level_id` FK (migration 045) + `curriculum_class_template_blocks` junction (062) + `template_review_requests` + `template_version_history` (067); migration 067 comment confirms: `template_review_requests` handles UI-originated lifecycle; `proposed_actions` handles voice-command-originated create_template/modify_template
+- **Platform roles confirmed (migration 040):** `platform_roles` table with `platform_owner` / `platform_admin` roles; above-academy access; supports Knowledge Builder promotion loop (Loops 4–5)
+- **CRITICAL GAP 1 — action_type enum:** Migration 008 defines `action_type` enum with 15 values (create_session, modify_session, cancel_session, etc.); NO curriculum action types (`curriculum_add_drill`, `curriculum_add_gate`, `curriculum_add_fitness`) — adding them requires a DDL migration
+- **CRITICAL GAP 2 — proposed_actions schema incompatibility with Sprint 831 plan:** Three separate blockers: (1) `voice_command_id UUID NOT NULL` — plain INSERT without a voice_command_id will fail at runtime; Sprint 831 server action plan does not provide one; (2) field name mismatch — schema uses `proposed_by_id`, Sprint 831 plan uses `proposed_by`; (3) `execute_approved_action()` (migrations 009 + 054) has no WHEN clause for curriculum action types — hits ELSE → `RAISE EXCEPTION 'Unsupported action type'`
+- **Architectural recommendation:** Use `academy_curriculum_overrides` (migration 048) as the curriculum draft pipeline — purpose-built, no voice_command_id dependency, has native draft/review/apply lifecycle with rollback; only missing piece is an `execute_curriculum_override()` function (migration needed, Sprint 900)
+- **Loop readiness assessed:** Loop 1 (spine edit) — write wiring not yet implemented; Loop 2 (DONNA NL edit) — component shells exist, server action incompatible with proposed_actions; Loop 3 (interface edit) — shells exist, not wired; Loop 4 (knowledge ingestion) — library layer exists, UI route unconfirmed; Loop 5 (promotion) — schema supports it, no UI built; Loop 6 (curriculum-to-template) — FK + junction + lifecycle tables exist, template re-query vs. cache is open question; Loop 7 (coach feedback) — classification exists, aggregation surface undefined
+- **Recommended next 5 sprints:** Sprint 900 (curriculum override execution migration — `/supabase-sprint`), 901 (curriculum draft server actions targeting `academy_curriculum_overrides`), 902 (DONNA curriculum draft UI wire), 903 (CurriculumChangeQueue live query), 904 (approve-execute loop close)
+- **4 open architecture questions persist:** Knowledge Builder UI route, promotion console (director vs. platform-owner), template-curriculum cache vs. live re-query, coach signal aggregation surface — none of these 4 can be implemented until answered
+- **Created** `docs/MIGRATION_READINESS_CURRICULUM_TABLES_AUDIT_899.md` — Full audit: migration inventory correction (38→68), table-by-table curriculum foundation assessment, action_type enum gap analysis, proposed_actions schema incompatibility analysis (3 gaps), correct path recommendation (academy_curriculum_overrides), loop-by-loop readiness table, permission model readiness, critical path to V2 implementation (5 steps), recommended next 5 sprints, 4 open architecture questions, appendix of migrations read
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors, no code changes)
+
+---
+
 ## 2026-05-27 — Sprint 898 — Curriculum Intelligence Canonical Standards Bootstrap V1
 
 - **Documentation-only** — no source code changes, no migrations, no file moves; created two canonical reference docs that define documentation authority and curriculum intelligence product priorities
