@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-27 — Sprint 902 — DONNA Curriculum Draft UI Wire V1
+
+- **Limited UI mutation** — three existing client component files updated; no new files, no migrations, no server action changes
+- **Modified `src/components/curriculum/builder/DonnaAddDrillDraft.tsx`** — wired to `createCurriculumContentItemDraft()` with `contentType: 'drill'`; added `isSubmitting` / `error` states, `deriveTitle()` helper, `Loader2` spinner, exact sprint-specified error/success copy
+- **Modified `src/components/curriculum/builder/DonnaAddFitnessExerciseDraft.tsx`** — wired to `createCurriculumContentItemDraft()` with `contentType: 'fitness'`; same pattern as drill component; success heading: "Draft created. It is now waiting for director review."
+- **Modified `src/components/curriculum/builder/DonnaAddAssessmentGateDraft.tsx`** — wired to `createCurriculumContentItemDraft()` with `contentType: 'assessment'`; same pattern; success heading matches sprint spec
+- **All three components:** async `handleSubmit()` calls server action; `isSubmitting` disables textarea, X button, Cancel button; `Loader2` spinner on submit button during flight; `setError(null)` on textarea change; blocked errors map to "Only authorized academy leaders…" copy; non-blocked errors map to "I couldn't create this curriculum draft yet…" copy
+- **`deriveTitle()` helper** — extracts first sentence up to 80 chars as title; full text stored as `description` + `rawInput`; prevents empty title on `proposed_change` JSONB
+- **Does NOT call `execute_curriculum_override()`** — draft creation only; execution is a director-approval step
+- **Does NOT use `proposed_actions`** — confirmed schema-incompatible (Sprint 899 audit)
+- **`DonnaAddPlayerMissionDraft.tsx` excluded** — 'mission' is not in the 9-value baseline `content_type` CHECK constraint; out of scope for this sprint
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 901 — Curriculum Draft Server Actions V1
 
 - **Limited source mutation** — one new server action file created; no migrations, no UI files, no existing files modified
