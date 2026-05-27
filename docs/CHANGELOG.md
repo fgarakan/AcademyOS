@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-27 — Sprint 905 — Curriculum Draft Approval UI Controls V1
+
+- **UI mutation — controlled** — approve/reject buttons wired to existing Sprint 904 server actions; no new server actions, no migrations, no `proposed_actions`, no `execute_curriculum_override()` call from UI
+- **Modified `src/components/curriculum/builder/CurriculumChangeQueue.tsx`** — converted from pure display to interactive client component; added per-item action state (`loading: 'approving' | 'rejecting' | null`, `result: 'approved' | 'rejected' | null`, `error: string | null`) keyed by override id via `useState<Record<string, ItemActionState>>`
+- **Approve button:** calls `approveCurriculumOverrideDraft(item.id)` — visible only for `pending_review` and `draft` status items; lime-accented; shows `Loader2` spinner while `loading === 'approving'`; on success shows "Draft approved and applied." with lime CheckCircle2 icon; on error shows per-item error message below buttons (buttons remain for retry)
+- **Reject button:** calls `rejectCurriculumOverrideDraft(item.id)` — same visibility; ghost/muted style; shows `Loader2` spinner while `loading === 'rejecting'`; on success shows "Draft rejected." in muted style
+- **`router.refresh()`** called on both approve and reject success — triggers RSC re-render of `CurriculumBuilderChangeQueue`, which re-queries `academy_curriculum_overrides`; applied/rejected rows disappear from queue (query filters on `pending_review`/`draft` only)
+- **Context note:** "Approval applies this draft to the academy curriculum." shown above buttons for every actionable item
+- **Buttons disabled while any action is in flight** (`isBusy = state.loading !== null`) to prevent double-submit
+- **Non-actionable items** (`approved`, `applied`, `rejected`, `rolled_back`) show display-only — no buttons rendered
+- **Imports added:** `useState`, `useRouter`, `Loader2`, `approveCurriculumOverrideDraft`, `rejectCurriculumOverrideDraft`
+- **No bulk approval, no edit-before-approval, no reason input field** — kept compact and low-cognitive-load per sprint spec
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 904 — Curriculum Override Approval Action V1
 
 - **Controlled source mutation only** — one new server action file; no TSX files, no migrations, no `proposed_actions`, no direct curriculum table mutations from TypeScript

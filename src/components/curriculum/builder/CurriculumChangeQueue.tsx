@@ -1,7 +1,13 @@
 'use client'
 
-import { GitBranch, Clock, CheckCircle2, XCircle, RotateCcw } from 'lucide-react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { GitBranch, Clock, CheckCircle2, XCircle, RotateCcw, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import {
+  approveCurriculumOverrideDraft,
+  rejectCurriculumOverrideDraft,
+} from '@/lib/actions/curriculumOverrideApprovalActions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,6 +33,14 @@ export interface CurriculumChangeItem {
 interface Props {
   items: CurriculumChangeItem[]
   errorMessage?: string | null
+}
+
+// ─── Per-item action state ─────────────────────────────────────────────────────
+
+interface ItemActionState {
+  loading: 'approving' | 'rejecting' | null
+  result:  'approved' | 'rejected' | null
+  error:   string | null
 }
 
 // ─── Status display config ────────────────────────────────────────────────────
@@ -81,7 +95,45 @@ function formatOverrideType(ot: string): string {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function CurriculumChangeQueue({ items, errorMessage }: Props) {
-  // Error state
+  const router = useRouter()
+
+  // Per-item loading/result/error state keyed by override id
+  const [itemStates, setItemStates] = useState<Record<string, ItemActionState>>({})
+
+  function getState(id: string): ItemActionState {
+    return itemStates[id] ?? { loading: null, result: null, error: null }
+  }
+
+  function setState(id: string, patch: Partial<ItemActionState>) {
+    setItemStates(prev => ({
+      ...prev,
+      [id]: { ...(prev[id] ?? { loading: null, result: null, error: null }), ...patch },
+    }))
+  }
+
+  async function handleApprove(id: string) {
+    setState(id, { loading: 'approving', error: null, result: null })
+    const res = await approveCurriculumOverrideDraft(id)
+    if (res.ok) {
+      setState(id, { loading: null, result: 'approved', error: null })
+      router.refresh()
+    } else {
+      setState(id, { loading: null, result: null, error: res.error })
+    }
+  }
+
+  async function handleReject(id: string) {
+    setState(id, { loading: 'rejecting', error: null, result: null })
+    const res = await rejectCurriculumOverrideDraft(id)
+    if (res.ok) {
+      setState(id, { loading: null, result: 'rejected', error: null })
+      router.refresh()
+    } else {
+      setState(id, { loading: null, result: null, error: res.error })
+    }
+  }
+
+  // ── Error state ─────────────────────────────────────────────────────────────
   if (errorMessage) {
     return (
       <div className="rounded-xl border border-border bg-surface px-4 py-3">
@@ -90,7 +142,7 @@ export function CurriculumChangeQueue({ items, errorMessage }: Props) {
     )
   }
 
-  // Empty state
+  // ── Empty state ─────────────────────────────────────────────────────────────
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-border border-dashed bg-surface p-6 text-center space-y-2">
@@ -124,6 +176,11 @@ export function CurriculumChangeQueue({ items, errorMessage }: Props) {
         const displayContentType = formatContentType(item.contentType)
         const displaySource = formatSource(item.source)
         const displayOverrideType = formatOverrideType(item.overrideType)
+        const state = getState(item.id)
+
+        // Show approve/reject buttons only for actionable statuses
+        const isActionable = item.status === 'pending_review' || item.status === 'draft'
+        const isBusy = state.loading !== null
 
         return (
           <div
@@ -167,6 +224,64 @@ export function CurriculumChangeQueue({ items, errorMessage }: Props) {
                 {new Date(item.createdAt).toLocaleDateString()}
               </span>
             </div>
+
+            {/* ── Approve / Reject controls ──────────────────────────────── */}
+            {isActionable && state.result === null && (
+              <div className="pl-[22px] pt-0.5 space-y-1.5">
+                <p className="text-[9px] text-text-muted">
+                  Approval applies this draft to the academy curriculum.
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleApprove(item.id)}
+                    disabled={isBusy}
+                    className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background:  'rgba(200,255,0,0.10)',
+                      border:      '1px solid rgba(200,255,0,0.22)',
+                      color:       '#C8FF00',
+                    }}
+                  >
+                    {state.loading === 'approving' ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-3 h-3" />
+                    )}
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleReject(item.id)}
+                    disabled={isBusy}
+                    className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-lg border border-border text-text-muted hover:text-text-secondary hover:border-border/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {state.loading === 'rejecting' ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <XCircle className="w-3 h-3" />
+                    )}
+                    Reject
+                  </button>
+                </div>
+                {/* Per-item error */}
+                {state.error && (
+                  <p className="text-[10px] text-status-red leading-snug">{state.error}</p>
+                )}
+              </div>
+            )}
+
+            {/* ── Success feedback (before router.refresh() clears the item) */}
+            {isActionable && state.result === 'approved' && (
+              <div className="pl-[22px] pt-0.5 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3 h-3 text-lime shrink-0" />
+                <p className="text-[10px] font-semibold text-lime">Draft approved and applied.</p>
+              </div>
+            )}
+            {isActionable && state.result === 'rejected' && (
+              <div className="pl-[22px] pt-0.5 flex items-center gap-1.5">
+                <XCircle className="w-3 h-3 text-text-muted shrink-0" />
+                <p className="text-[10px] font-semibold text-text-secondary">Draft rejected.</p>
+              </div>
+            )}
           </div>
         )
       })}
