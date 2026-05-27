@@ -35,7 +35,7 @@ async function resolveAcademyId(): Promise<{ supabase: Awaited<ReturnType<typeof
 
 export async function fetchDonnaContext(
   contextType: DonnaContextType,
-  params?: { playerId?: string; coachId?: string },
+  params?: { playerId?: string; coachId?: string; sessionId?: string; templateId?: string },
 ): Promise<DonnaContextSummary> {
   try {
     const { supabase, academyId } = await resolveAcademyId()
@@ -50,6 +50,7 @@ export async function fetchDonnaContext(
       case 'coach_profile':              return fetchCoachContext(supabase, academyId, params?.coachId)
       case 'group_context':              return fetchGroupContext(supabase, academyId)
       case 'session_context':            return fetchSessionContext(supabase, academyId)
+      case 'session_detail':             return fetchSessionDetailContext(supabase, academyId, params?.sessionId)  // Sprint 863
       case 'class_template_collection':  return fetchClassTemplateCollection(supabase, academyId)
       case 'fitness_template_collection':return fetchFitnessTemplateCollection(supabase, academyId)
       case 'curriculum_context':         return fetchCurriculumContext(supabase, academyId)
@@ -1154,6 +1155,265 @@ async function fetchCoachContext(
       ...(observationCount === 0 ? ['observation_history'] : []),
     ],
     possibleSuggestionTypes: ['coach_execution_suggestion', 'observation_coverage_suggestion'],
+    fetchedAt: new Date().toISOString(),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Session detail context — Sprint 863
+// Fetches full context for a single session: meta, coach, blocks, attendance, wrap-up.
+// Safety: session query is double-scoped (id + academy_id). session_attendance has
+// no academy_id column — it is scoped via session_id, which is already verified above.
+// ---------------------------------------------------------------------------
+
+async function fetchSessionDetailContext(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  academyId: string,
+  sessionId: string | undefined,
+): Promise<DonnaContextSummary> {
+  if (!sessionId) {
+    return makeFallbackSummary('session_detail', 'No session ID found in the current URL. Open a specific session to use this summary.')
+  }
+
+  const rawDb = supabase as any
+
+  // Query 1 — Session meta (double-scoped: id + academy_id)
+  const { data: sessionRaw } = await supabase
+    .from('sessions')
+    .select('id, name, scheduled_date, scheduled_time, status, duration_min, location, coach_id, template_id, group_id, session_notes')
+    .eq('id', sessionId)
+    .eq('academy_id', academyId)
+    .maybeSingle()
+
+  if (!sessionRaw) {
+    return makeFallbackSummary('session_detail', 'Session not found or access denied.')
+  }
+
+  const session = sessionRaw as {
+    id: string
+    name: string | null
+    scheduled_date: string | null
+    scheduled_time: string | null
+    status: string
+    duration_min: number | null
+    location: string | null
+    coach_id: string | null
+    template_id: string | null
+    group_id: string | null
+    session_notes: string | null
+  }
+
+  // Query 2 — Coach name
+  let coachName: string | null = null
+  if (session.coach_id) {
+    const { data: profileRaw } = await rawDb
+      .from('profiles')
+      .select('full_name, first_name')
+      .eq('id', session.coach_id)
+      .maybeSingle()
+    coachName = profileRaw?.full_name
+      ? String(profileRaw.full_name)
+      : profileRaw?.first_name
+      ? String(profileRaw.first_name)
+      : null
+  }
+
+  // Query 3 — Session blocks
+  const { data: blocksRaw } = await rawDb
+    .from('session_blocks')
+    .select('id, name, type, duration_min, order_index, actual_status, intensity')
+    .eq('session_id', sessionId)
+    .order('order_index', { ascending: true })
+
+  const blocks = (blocksRaw ?? []) as Array<{
+    id: string
+    name: string
+    type: string
+    duration_min: number | null
+    order_index: number
+    actual_status: string | null
+    intensity: string | null
+  }>
+
+  // Query 4 — Session attendance
+  // NOTE: session_attendance has no academy_id column.
+  // Safety is provided by the session query above (academy_id verified via session).
+  const { data: attendanceRaw } = await rawDb
+    .from('session_attendance')
+    .select('player_id, status')
+    .eq('session_id', sessionId)
+
+  const attendanceRows = (attendanceRaw ?? []) as Array<{ player_id: string; status: string }>
+  const presentIds = attendanceRows.filter(r => r.status === 'present').map(r => r.player_id)
+  const absentIds = attendanceRows.filter(r => r.status === 'absent').map(r => r.player_id)
+  const lateIds = attendanceRows.filter(r => r.status === 'late').map(r => r.player_id)
+
+  // Query 5 — Player names (only if attendance exists)
+  const allPlayerIds = attendanceRows.map(r => r.player_id).filter(Boolean)
+  const playerNameMap = new Map<string, string>()
+  if (allPlayerIds.length > 0) {
+    const { data: playersRaw } = await rawDb
+      .from('players')
+      .select('id, full_name, first_name, last_name')
+      .in('id', allPlayerIds)
+      .eq('academy_id', academyId)  // explicit academy_id scope on players
+    for (const p of ((playersRaw ?? []) as Array<{ id: string; full_name: string | null; first_name: string | null; last_name: string | null }>)) {
+      playerNameMap.set(
+        p.id,
+        p.full_name ?? ([p.first_name, p.last_name].filter(Boolean).join(' ') || 'Unknown'),
+      )
+    }
+  }
+
+  // Query 6 — Wrap-up status (latest proposed_action for this session)
+  const { data: wrapUpRaw } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, created_at')
+    .eq('academy_id', academyId)
+    .eq('target_object_id', sessionId)
+    .eq('target_module', 'session_wrap_up_v1')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const wrapUpStatus: string | null = wrapUpRaw?.status ?? null
+
+  // --- Build context ---
+  const sessionLabel = session.name ?? `Session ${session.id.slice(0, 8)}`
+  const dateLabel = session.scheduled_date
+    ? new Date(session.scheduled_date + 'T12:00:00Z').toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      })
+    : 'Date unknown'
+
+  const completedBlocks = blocks.filter(b => b.actual_status === 'completed').length
+
+  const keyFacts: string[] = []
+  keyFacts.push(`Status: ${session.status}`)
+  keyFacts.push(`Date: ${dateLabel}${session.scheduled_time ? ` at ${session.scheduled_time.slice(0, 5)}` : ''}`)
+  if (coachName) keyFacts.push(`Coach: ${coachName}`)
+  else if (session.coach_id) keyFacts.push('Coach profile not loaded')
+  if (session.location) keyFacts.push(`Location: ${session.location}`)
+  if (session.duration_min) keyFacts.push(`Duration: ${session.duration_min} min`)
+  if (blocks.length > 0) {
+    keyFacts.push(
+      `${blocks.length} block${blocks.length !== 1 ? 's' : ''} in lesson plan${
+        completedBlocks > 0 ? ` (${completedBlocks} completed)` : ''
+      }`,
+    )
+  } else {
+    keyFacts.push('No blocks in lesson plan')
+  }
+  if (attendanceRows.length > 0) {
+    const parts: string[] = []
+    if (presentIds.length > 0) parts.push(`${presentIds.length} present`)
+    if (absentIds.length > 0) parts.push(`${absentIds.length} absent`)
+    if (lateIds.length > 0) parts.push(`${lateIds.length} late`)
+    keyFacts.push(`Attendance: ${parts.join(', ')} (${attendanceRows.length} total)`)
+  } else {
+    keyFacts.push('No attendance recorded')
+  }
+  if (wrapUpStatus) {
+    keyFacts.push(`Wrap-up: ${wrapUpStatus.replace(/_/g, ' ')}`)
+  } else if (session.status === 'completed') {
+    keyFacts.push('No wrap-up submitted yet')
+  }
+
+  const missingData: string[] = []
+  if (!session.coach_id) missingData.push('No coach assigned to this session')
+  if (blocks.length === 0) missingData.push('Lesson plan empty — no blocks added')
+  if (attendanceRows.length === 0 && session.status === 'completed') {
+    missingData.push('No attendance recorded for completed session')
+  }
+  if (!wrapUpStatus && session.status === 'completed') {
+    missingData.push('No coach wrap-up submitted')
+  }
+  if (!session.template_id) missingData.push('No template linked to this session')
+
+  const nextSteps: string[] = []
+  if (session.status === 'planned') {
+    if (!session.coach_id) {
+      nextSteps.push('Assign a coach before this session runs')
+    } else if (blocks.length === 0) {
+      nextSteps.push('Add blocks to the lesson plan before the session starts')
+    } else {
+      nextSteps.push('Session is planned — confirm coach has the lesson plan')
+    }
+  } else if (session.status === 'in_progress') {
+    nextSteps.push('Session is in progress — check back after it completes')
+  } else if (session.status === 'completed') {
+    if (!wrapUpStatus) {
+      nextSteps.push('Request coach wrap-up submission for this session')
+    } else if (wrapUpStatus === 'pending_review') {
+      nextSteps.push('Wrap-up is awaiting review — open the Review Queue to action it')
+    } else {
+      nextSteps.push('Session complete — check Signals for any player attention items')
+    }
+  } else {
+    nextSteps.push(`Session is ${session.status} — review if any action is required`)
+  }
+
+  const openQuestions: string[] = []
+  if (absentIds.length >= 2) {
+    const names = absentIds.slice(0, 2).map(id => playerNameMap.get(id) ?? 'Unknown').join(', ')
+    openQuestions.push(
+      `${absentIds.length} player${absentIds.length !== 1 ? 's' : ''} absent (${names}${absentIds.length > 2 ? ', …' : ''}) — should parents be notified?`,
+    )
+  }
+  if (wrapUpStatus === 'pending_review') {
+    openQuestions.push('Wrap-up is in the Review Queue — what were the key coaching observations?')
+  }
+  if (!session.template_id && session.status !== 'cancelled') {
+    openQuestions.push('No template linked — was this session created ad hoc?')
+  }
+
+  const summaryParts: string[] = [`${sessionLabel} — ${session.status}`]
+  if (coachName) summaryParts.push(`coached by ${coachName}`)
+  summaryParts.push(`on ${dateLabel}`)
+  if (attendanceRows.length > 0) {
+    summaryParts.push(`${presentIds.length} of ${attendanceRows.length} player${attendanceRows.length !== 1 ? 's' : ''} present`)
+  }
+
+  return {
+    contextType: 'session_detail',
+    title: `Session: ${sessionLabel}`,
+    summary: summaryParts.join(', ') + '.',
+    keyFacts,
+    openQuestions,
+    suggestedNextSteps: nextSteps,
+    dataUsed: [
+      'sessions',
+      ...(session.coach_id ? ['profiles (coach name)'] : []),
+      ...(blocks.length > 0 ? ['session_blocks'] : []),
+      ...(attendanceRows.length > 0 ? ['session_attendance', 'players'] : []),
+      ...(wrapUpStatus !== null ? ['proposed_actions (wrap-up)'] : []),
+    ],
+    missingData,
+    safetyNotes: [
+      'Read-only summary. No session data was changed.',
+      'session_attendance scoped via session_id — academy boundary verified by session query.',
+    ],
+    recommendationInputsAvailable: [
+      'session_status',
+      'session_date',
+      ...(coachName ? ['coach_name'] : []),
+      ...(blocks.length > 0 ? ['lesson_plan_blocks'] : []),
+      ...(attendanceRows.length > 0 ? ['attendance_data'] : []),
+      ...(wrapUpStatus ? ['wrap_up_status'] : []),
+    ],
+    recommendationInputsMissing: [
+      ...(!session.coach_id ? ['coach_assignment'] : []),
+      ...(blocks.length === 0 ? ['lesson_plan'] : []),
+      ...(attendanceRows.length === 0 ? ['attendance_records'] : []),
+      ...(!wrapUpStatus && session.status === 'completed' ? ['wrap_up'] : []),
+    ],
+    possibleSuggestionTypes: [
+      'session_focus_recommendation',
+      'player_attention_signal',
+      'parent_update_suggestion',
+    ],
     fetchedAt: new Date().toISOString(),
   }
 }
