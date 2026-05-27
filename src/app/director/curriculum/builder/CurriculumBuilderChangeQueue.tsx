@@ -131,6 +131,29 @@ export async function CurriculumBuilderChangeQueue() {
     )
   }
 
+  // ── Resolve level names from proposed_change.level_id ─────────────────────────
+  // curriculum_levels is in generated types — using typed Supabase client (no rawDb).
+  // Collect unique level IDs across all pending rows, then batch-fetch display names
+  // in a single read-only query.
+  // Non-fatal: if the query fails, levelNameMap stays empty → items will get
+  //   levelResolved=true (level_id was present) + levelName=null → shown as
+  //   "Unknown level" in the detail panel rather than crashing the queue.
+  const levelIds = new Set<string>()
+  for (const r of rows ?? []) {
+    const lid = jsonString(r.proposed_change, 'level_id')
+    if (lid) levelIds.add(lid)
+  }
+  const levelNameMap = new Map<string, string>()
+  if (levelIds.size > 0) {
+    const { data: levels } = await supabase
+      .from('curriculum_levels')
+      .select('id,display_name')
+      .in('id', Array.from(levelIds))
+    for (const lvl of levels ?? []) {
+      levelNameMap.set(lvl.id, lvl.display_name)
+    }
+  }
+
   // ── Map pending rows → CurriculumChangeItem ────────────────────────────────
   const items: CurriculumChangeItem[] = (rows ?? []).map((r: OverrideRow) => {
     const pc = r.proposed_change
@@ -167,6 +190,14 @@ export async function CurriculumBuilderChangeQueue() {
         : 'pending_review'
     ) as CurriculumChangeItem['status']
 
+    // ── Level name resolution (Sprint 911) ────────────────────────────────────
+    // levelResolved = true  → level_id was present in proposed_change
+    // levelResolved = false → no level_id; omit the Level row in the detail panel
+    // levelName = display_name from curriculum_levels, or null if lookup missed
+    const levelId      = jsonString(pc, 'level_id')
+    const levelResolved = levelId != null
+    const levelName     = levelId ? (levelNameMap.get(levelId) ?? null) : null
+
     return {
       id:              r.id,
       title,
@@ -188,6 +219,9 @@ export async function CurriculumBuilderChangeQueue() {
       successCriteria: jsonStringArray(pc, 'success_criteria'),
       progressions:    jsonStringArray(pc, 'progressions'),
       regressions:     jsonStringArray(pc, 'regressions'),
+      // ── Level name (Sprint 911) ───────────────────────────────────────
+      levelName,
+      levelResolved,
     }
   })
 

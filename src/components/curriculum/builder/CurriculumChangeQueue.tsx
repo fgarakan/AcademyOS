@@ -94,6 +94,19 @@ export interface CurriculumChangeItem {
   progressions: string[] | null
   /** proposed_change->>'regressions' */
   regressions: string[] | null
+
+  // ── Level resolution (Sprint 911) ────────────────────────────────────────────
+  /**
+   * Human-readable name from curriculum_levels.display_name.
+   * Null if no level_id existed in proposed_change, OR if the lookup failed.
+   */
+  levelName: string | null
+  /**
+   * true  → level_id was present in proposed_change (lookup was attempted).
+   *         Show levelName if non-null, else show "Unknown level".
+   * false → no level_id in proposed_change — omit the Level row entirely.
+   */
+  levelResolved: boolean
 }
 
 interface Props {
@@ -309,6 +322,7 @@ export function CurriculumChangeQueue({ items, errorMessage }: Props) {
           item.rawInput.trim() !== item.description?.trim()
         )
         const hasMeta = !!(
+          item.levelResolved ||
           item.pathway ||
           item.difficulty != null ||
           item.intensity != null ||
@@ -425,6 +439,13 @@ export function CurriculumChangeQueue({ items, errorMessage }: Props) {
                     {/* Scalar meta fields */}
                     {hasMeta && (
                       <div className="space-y-1.5">
+                        {/* Level — first: most important context for approval decision */}
+                        {item.levelResolved && (
+                          <DetailRow
+                            label="Level"
+                            value={item.levelName ?? 'Unknown level'}
+                          />
+                        )}
                         {item.pathway && (
                           <DetailRow label="Pathway" value={formatPathway(item.pathway)} />
                         )}

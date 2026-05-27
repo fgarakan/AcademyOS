@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-27 — Sprint 911 — Curriculum Draft Level Name Resolution V1
+
+- **Modified `src/app/director/curriculum/builder/CurriculumBuilderChangeQueue.tsx`:**
+  - Batch-collect unique `level_id` values from all pending draft rows' `proposed_change` JSONB before mapping
+  - Second read-only query: `supabase.from('curriculum_levels').select('id,display_name').in('id', [...])` — uses typed Supabase client (curriculum_levels is in generated types; no rawDb needed)
+  - Build `levelNameMap: Map<string, string>` of `id → display_name`; empty map if no level IDs or query fails (non-fatal)
+  - In pending-items mapping: extract `levelId = jsonString(pc, 'level_id')`, set `levelResolved = levelId != null`, `levelName = levelId ? (levelNameMap.get(levelId) ?? null) : null`
+  - Recovery items mapping (`ApprovalRecoveryItem`) unchanged
+- **Modified `src/components/curriculum/builder/CurriculumChangeQueue.tsx`:**
+  - `CurriculumChangeItem` extended with `levelName: string | null` and `levelResolved: boolean`
+  - `hasMeta` now includes `item.levelResolved` so the meta block opens when only a level is present
+  - Level `DetailRow` added first in the scalar meta section (before Pathway) — highest-priority context for approval decision
+  - Display logic: `levelResolved && levelName` → show name; `levelResolved && !levelName` → show "Unknown level"; `!levelResolved` → omit row entirely (no UUID shown)
+- **Not added:** edit functionality, before/after preview, bulk approval, new server actions, new mutations, proposed_actions, execute_curriculum_override() call, migrations
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 910 — Curriculum Draft Detail Review Drawer V1
 
 - **Added per-item expandable detail panel to `CurriculumChangeQueue.tsx`:**
