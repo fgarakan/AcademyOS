@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 877 — DONNA Follow-Up Intent Family Explicit Handlers V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Inserted explicit `'section_nav'` handler immediately before the generic `lastSuggestedNavigationHref` anaphoric catch-all in `resolveFollowUp`; when `lastIntentFamily === 'section_nav'` and context is fresh, returns context-aware copy `"I'll take you back to {label} — that's where we were."` (or `"I'll take you back to that section."` when no label is stored) instead of the generic `"I'll take you to the {label}."` from the catch-all; generic catch-all remains unchanged and continues to serve `'coo_answer'`, `'page_actions'`, `'roster_attention'`; `'daily_brief'` and `'review_queue'/'attention'` handlers at higher priority are untouched; no other changes to `resolveFollowUp` or any helper function
+- **Created** `docs/DONNA_FOLLOW_UP_INTENT_FAMILY_HANDLERS_877.md` — Sprint doc: handler priority table (post-877), response copy comparison (before/after for section_nav, COO unchanged path, no-label fallback), audit of anaphoric/sequential branch before Sprint 877, files modified/not-modified, safety guarantees, known limitations, Sprint 878 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 876 — DONNA Section Navigation Intent Family V1
 
 - **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Added `| 'section_nav'` to `DonnaSessionIntentContext.lastIntentFamily` union type (between `'coo_answer'` and `'roster_attention'`); no logic changes to `resolveFollowUp` — `'section_nav'` falls through to the existing `lastSuggestedNavigationHref` anaphoric catch-all exactly as `'coo_answer'` did, preserving all follow-up behaviour

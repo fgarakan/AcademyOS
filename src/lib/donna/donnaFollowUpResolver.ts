@@ -333,6 +333,20 @@ export function resolveFollowUp(
         confidence: 'high',
       }
     }
+    // Sprint 877 — explicit section_nav handler: context-aware copy via lastSuggestedNavigationLabel.
+    // Fires before the generic catch-all so section-navigation follow-ups return
+    // "I'll take you back to Session Blocks — that's where we were." instead of
+    // the generic "I'll take you to the relevant page."
+    if (contextIsFresh && context!.lastIntentFamily === 'section_nav' && context!.lastSuggestedNavigationHref) {
+      return {
+        actionType: 'navigate',
+        responseText: context!.lastSuggestedNavigationLabel
+          ? `I'll take you back to ${context!.lastSuggestedNavigationLabel} — that's where we were.`
+          : `I'll take you back to that section.`,
+        navigationHref: context!.lastSuggestedNavigationHref,
+        confidence: 'medium',
+      }
+    }
     if (contextIsFresh && context!.lastSuggestedNavigationHref) {
       return {
         actionType: 'navigate',
