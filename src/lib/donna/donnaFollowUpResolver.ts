@@ -469,6 +469,32 @@ export function resolveFollowUp(
   // ── Elaboration ────────────────────────────────────────────────────────────
 
   if (isElaboration) {
+    // Sprint 885 — explicit daily_brief elaboration handler.
+    // Fires first so "what is that?", "tell me more", "explain that" after the daily brief loads
+    // returns brief-specific explanation copy instead of the generic lastTopicLabel handler's
+    // "checking Review Queue for sign-off" framing (which fires because lastSuggestedNavigationLabel
+    // is 'Review Queue' and lastTopicLabel is "today's brief" — both semantically off for elaboration).
+    if (contextIsFresh && context!.lastIntentFamily === 'daily_brief') {
+      const sectionCount = context!.lastResultSectionCount
+      const highCount    = context!.lastResultHighPriorityCount
+      const href         = context!.lastSuggestedNavigationHref ?? '/director/review'
+
+      let responseText: string
+      if (sectionCount !== null && highCount !== null && highCount > 0) {
+        responseText = `Today's brief summarizes ${sectionCount} area${sectionCount !== 1 ? 's' : ''}, with ${highCount} higher-priority item${highCount !== 1 ? 's' : ''} to look at first. It helps you quickly see what needs attention before you start making decisions. I can open the Review Queue if you want the item-by-item list.`
+      } else if (sectionCount !== null) {
+        responseText = `Today's brief summarizes ${sectionCount} area${sectionCount !== 1 ? 's' : ''} that may need your attention. It helps you quickly understand what matters today before you start making decisions. I can open the Review Queue if you want the item-by-item list.`
+      } else {
+        responseText = `Today's brief is DONNA's quick summary of what needs your attention today. It helps you understand the important items before you start making decisions. I can open the Review Queue if you want the item-by-item list.`
+      }
+
+      return {
+        actionType: 'elaborate',
+        responseText,
+        navigationHref: href,
+        confidence: 'medium',
+      }
+    }
     // Sprint 878 — explicit section_nav elaboration handler.
     // Fires before the generic lastTopicLabel check so DONNA gives a useful
     // section-specific description (via SECTION_NAV_ELABORATION_MAP) instead of

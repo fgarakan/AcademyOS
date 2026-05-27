@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 885 — DONNA Daily Brief Elaboration Follow-Up V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Added explicit `'daily_brief'` elaboration handler at the top of the `isElaboration` branch (priority 1, before section_nav at priority 2); condition: fresh context + `lastIntentFamily === 'daily_brief'`; 3-variant count-aware copy: (a) sectionCount and highCount > 0: "Today's brief summarizes {N} area(s), with {M} higher-priority item(s) to look at first. It helps you quickly see what needs attention before you start making decisions. I can open the Review Queue if you want the item-by-item list." — (b) sectionCount only (highCount = 0 or null): "Today's brief summarizes {N} area(s) that may need your attention…" — (c) no counts: "Today's brief is DONNA's quick summary of what needs your attention today…"; `highCount > 0` guard avoids awkward "0 higher-priority items" phrasing; fixes semantically wrong generic copy "checking Review Queue for sign-off" that previously fired because lastSuggestedNavigationLabel = 'Review Queue' (a navigation label, not a description of the brief itself); navigationHref: lastSuggestedNavigationHref ?? '/director/review'; confidence: medium; no new patterns added
+- **Created** `docs/DONNA_DAILY_BRIEF_ELABORATION_FOLLOW_UP_885.md` — Sprint doc: pre-sprint elaboration branch audit confirming wrong copy ("checking Review Queue for sign-off"), daily_brief context fields confirmed from DonnaAssistantButton line 2248, ELABORATION_PATTERNS coverage table (no new patterns needed), before/after copy table, handler priority table (post-885, all 5 priorities), full elaboration handler summary across all active families, safety guarantees, Sprint 886 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 884 — DONNA page_actions Type Cleanup V1
 
 - **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — (1) Removed `| 'page_actions'` union member and its inline comment from `DonnaSessionIntentContext.lastIntentFamily` — confirmed dormant by Sprint 883 audit: never written, never read, no DonnaDirectorIntent counterpart, no write site; (2) Updated 3-line header comment above the union to drop "Dormant values" language and add a Sprint 884 removal notice; (3) Simplified Sprint 881 coo_answer handler comment — removed historical page_actions audit note (now documented in sprint docs); (4) Updated generic fallback comment — removed `page_actions if ever written`, added accurate roster_attention explanation; `'roster_attention'` preserved as future-reserved (active DonnaDirectorIntent infrastructure); TypeScript enforcement: any future `lastIntentFamily: 'page_actions'` assignment or check will now cause a compile error
