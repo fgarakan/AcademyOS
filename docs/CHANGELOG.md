@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-27 — Sprint 894 — DONNA Normalizer Final Audit V1
+
+- **Audit only** — no code changes, no pattern changes, no handler changes. Full certification of `normalize()` in `src/lib/donna/donnaFollowUpResolver.ts` at commit `81dce01` (post-Sprint 893)
+- **normalize() operation order confirmed (8 steps):** lowercase → trim → strip trailing `?!.` → strip leading "please " (Sprint 892) → strip leading "can you " (Sprint 893) → strip trailing " please" (Sprint 892) → trim → collapse spaces; operation order matches spec exactly; chaining confirmed: "please can you open it please" → step 4: "can you open it please" → step 5: "open it please" → step 6: "open it" ✅
+- **Pattern counts confirmed:** ANAPHORIC 17 ✅, SEQUENTIAL 7 ✅, ELABORATION 13 ✅, RECOMMENDATION 10 ✅, TIME_SHIFT 3 ✅, TOPIC_SHIFT 6 ✅ — all unchanged from Sprint 891
+- **Handler logic confirmed:** branch order, elaboration priorities (7), recommendation priorities (6), anaphoric priorities (5), response copy, navigation hrefs, return shape, word-count guards — all unchanged from Sprint 891
+- **Phrase coverage: 37/37 passed** — 19 anaphoric (bare + please trailing + please leading + can you + combined), 7 elaboration, 5 recommendation, 6 edge cases; all return expected result; no regressions found
+- **Edge cases confirmed:** "please" alone → NONE ✅; "can you" alone → NONE ✅; "can you please" → NONE ✅; internal "please" preserved ("i need to please confirm" → unchanged → NONE ✅); internal "can you" preserved ("tell me can you explain" → unchanged → NONE ✅); long unrelated text → NONE ✅
+- **Regressions found:** None
+- **Freeze recommendation:** resolver handlers (defect-fix-only), pattern arrays (additions for observed gaps only), normalize() (defect-fix-only), write sites (no new lastIntentFamily values without handler audit); "could you"/"would you" strips deferred until observed in real director usage
+- **Created** `docs/DONNA_NORMALIZER_FINAL_AUDIT_894.md` — Full audit doc: normalize() code listing, operation order table (8 steps), chaining step-by-step, pattern count table (6 groups), handler logic verification table, phrase coverage tables (19 anaphoric + 7 elaboration + 5 recommendation), edge case table (6 cases), safety certification table, certification statement, normalizer state summary, resolver+normalizer freeze recommendation, Sprint 895 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors, no code changes)
+
+---
+
 ## 2026-05-27 — Sprint 893 — DONNA Normalizer Can You Prefix Strip V1
 
 - **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — `normalize` function updated: one new `.replace(/^can you\s+/, '')` line added between Sprint 892's leading "please" strip (step 4) and trailing "please" strip (step 6); Sprint 893 inline comment added; `.trim()` comment updated; full operation order post-893: lowercase → trim → strip trailing `?!.` → strip leading "please " → strip leading "can you " → strip trailing " please" → trim → collapse spaces
