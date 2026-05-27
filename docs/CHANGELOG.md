@@ -2,6 +2,42 @@
 
 ---
 
+## 2026-05-27 — Sprint 912.2 — DONNA God Mode Architecture Plan V1
+
+- **Created `docs/architecture/DONNA_GOD_MODE_V1_PLAN.md`:**
+  - Full target architecture for DONNA God Mode V1
+  - 9-state conversation state machine: idle / listening / thinking / speaking / auto_listening / awaiting_confirmation / executing / paused / error
+  - Complete state transition map with safety guards
+  - Conversation Mode design: toggle that auto-restarts mic after TTS finishes
+  - Auto-listen loop spec: TTS done → 400ms pause → mic restart (conversation mode on only)
+  - Interruption model: Stop button, Pause button, mic press during TTS
+  - Page-aware context: pathname effect → DONNA announces current page when conversation mode turns on
+  - Session memory additions: pendingConfirmation type, multi-turn curriculum draft slot pattern
+  - Safe intent routing: 12 intent types with risk levels and routing rules
+  - Confirmation loop: DONNA summarizes → director yes/no → execute or clear
+  - Curriculum builder conversation: slot-filling for levelId, contentType, focusArea → existing draft action → review queue
+  - 14-mini-sprint implementation plan with file map and risk assessment
+  - Protected systems list confirmed: Sprint 904 actions, execute_curriculum_override(), review queue, global curriculum spine
+
+---
+
+## 2026-05-27 — Sprint 912.1 — DONNA God Mode Audit V1
+
+- **Created `docs/architecture/DONNA_GOD_MODE_AUDIT_V1.md`:**
+  - Full architecture audit of current DONNA system across 20 dimensions
+  - Two DONNA entry points identified: `DonnaVoiceReadyShell` (primary chat shell, /director/donna page) and `DonnaAssistantButton` (legacy floating panel, sidebar)
+  - Current state machine: implicit booleans only (isTyping, isSpeaking, voice.status) — no unified state machine
+  - TTS: OpenAI gpt-4o-mini-tts primary, tts-1-hd+nova fallback, 500-char cap, 30-sec auto-play window after voice input
+  - Voice input: useVoiceDictation with continuous=false — manual toggle only, no auto-restart after TTS
+  - Session memory: donnaChatSessionMemory records 30 turns but turns are never injected into routing
+  - Page awareness: getPageCapabilityMap() exists and is used in fallback router only, not at conversation start
+  - Curriculum draft: tryAnswerCurriculumDraftProposal is informational only — no actual draft creation from chat
+  - Safety: VOICE_PROTECTED_PHRASES blocks approval commands, role boundary checks work, Sprint 904 unchanged
+  - Current ratings: continuous 3/10, page awareness 6/10, voice UX 6/10, overall 6.0/10
+  - Top gap: no auto-listen loop after TTS completes — director must press mic every single turn
+
+---
+
 ## 2026-05-27 — Sprint 911 — Curriculum Draft Level Name Resolution V1
 
 - **Modified `src/app/director/curriculum/builder/CurriculumBuilderChangeQueue.tsx`:**
