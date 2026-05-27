@@ -512,7 +512,26 @@ export function resolveFollowUp(
     if (contextIsFresh && context!.lastIntentFamily === 'section_nav') {
       return buildSectionNavRecommendationResponse(context!)
     }
-    // Generic recommendation (no fresh context)
+    // Sprint 881 — explicit coo_answer recommendation handler.
+    // Audit finding: 'page_actions' is declared in the union type but never written — any handler
+    // for it would be dead code. The active family for COO page-suggestion responses is 'coo_answer'
+    // (set at DonnaAssistantButton.tsx line 3050 for all non-blocked COO answers).
+    // When lastSuggestedNavigationHref is set, the generic Review Queue fallback is semantically
+    // wrong — the user should go to the page DONNA just suggested, not the Review Queue.
+    if (contextIsFresh && context!.lastIntentFamily === 'coo_answer' && context!.lastSuggestedNavigationHref) {
+      const label = context!.lastSuggestedNavigationLabel ?? context!.lastTopicLabel
+      return {
+        actionType: 'recommend',
+        responseText: label
+          ? `DONNA suggested ${label}. The best next step is to open it and review what needs your attention there. I can take you there.`
+          : `DONNA suggested a page for this. The best next step is to open it and review what needs your attention there. I can take you there.`,
+        navigationHref: context!.lastSuggestedNavigationHref,
+        confidence: 'medium',
+      }
+    }
+    // Generic recommendation fallback — fires when: (a) no fresh context, or (b) coo_answer with
+    // no suggested href (DONNA answered conversationally without a page suggestion), or (c) any
+    // other intent family not handled above (roster_attention, page_actions if ever written).
     return {
       actionType: 'recommend',
       responseText: `The Review Queue is usually a good starting point — those are the items waiting on your approval. Want me to open it?`,

@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 881 — DONNA Page Actions Follow-Up Depth V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Added explicit `'coo_answer'` recommendation handler in `isRecommendation` branch (priority 4, after `'section_nav'` at priority 3, before generic fallback at priority 5); condition: fresh context + `lastIntentFamily === 'coo_answer'` + `lastSuggestedNavigationHref` non-null; copy: "DONNA suggested {label}. The best next step is to open it and review what needs your attention there. I can take you there." (or no-label variant); fixes semantically wrong generic Review Queue fallback that fired when DONNA's COO answer suggested a non-Review-Queue page; `coo_answer` with no `lastSuggestedNavigationHref` (conversational-only answer) still falls to generic fallback correctly; audit finding: `'page_actions'` is declared in type union but never written — no dead-code handler added
+- **Created** `docs/DONNA_PAGE_ACTIONS_FOLLOW_UP_DEPTH_881.md` — Sprint doc: `'page_actions'` never-written audit (all 5 write sites confirmed), before/after copy table, handler priority table (post-881), fields used, safety guarantees, known limitations, Sprint 882 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 880 — DONNA Follow-Up Section Nav Coverage Audit V1
 
 - **Modified** `src/lib/donna/donnaUIActionDispatcher.ts` — Bug fix in `resolveSectionNavigation`: removed `const registryAction = getUIActionById(entry.actionId)` local variable; changed `focusTarget.label` from `registryAction?.displayName ?? entry.label` (verbose registry description, e.g. "Navigate to the session blocks section") to `entry.label` (short user-facing label, e.g. "Session Blocks"); this fixes a critical bug where all 6 map lookups in `SECTION_NAV_ELABORATION_MAP` and `SECTION_NAV_RECOMMENDATION_MAP` silently failed (wrong key), and anaphoric copy included the verbose displayName string; `getUIActionById` import retained (still used by `validateUIActionForContext`); no routing, no SECTION_NAV_ENTRIES, no role boundary changes
