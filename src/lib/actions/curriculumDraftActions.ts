@@ -30,6 +30,7 @@
  *   docs/CURRICULUM_INTELLIGENCE_LOOP.md — Loop 2 (DONNA NL edit) and Loop 3 (Interface edit)
  */
 
+import { revalidatePath } from 'next/cache'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 import { getSupabaseServer } from '@/lib/supabase/server'
 
@@ -371,6 +372,15 @@ export async function createCurriculumContentItemDraft(
   }
 
   const draftId = created.id as string
+
+  // ── Revalidate curriculum routes ──────────────────────────
+  // Marks server-side cache stale so the next full page load reflects
+  // the new draft in CurriculumBuilderChangeQueue.
+  // Matches pattern from curriculumOverrideApprovalActions.ts.
+  // DONNA panels should also call router.refresh() for immediate
+  // client-side update — see GAP-1 in QA_CURRICULUM_DRAFT_PIPELINE_908.md.
+  revalidatePath('/director/curriculum')
+  revalidatePath('/director/curriculum/builder')
 
   // ── Write audit log ────────────────────────────────────────
   // Failure here is non-fatal — the draft is already created.

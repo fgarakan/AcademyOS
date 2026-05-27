@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-27 — Sprint 908 — Curriculum Draft Pipeline Internal QA V1
+
+- **QA audit** of Sprints 899–907 curriculum draft pipeline — no new features
+- **Created `docs/QA_CURRICULUM_DRAFT_PIPELINE_908.md`** — full test checklist, architecture invariant verification, bug/gap findings, fix documentation, Sprint 909 recommendations
+- **Architecture invariants confirmed:**
+  - `proposed_actions` — zero actual code usage (comment-only); never used in pipeline ✅
+  - `execute_curriculum_override()` — one `.rpc()` call site in `approveCurriculumOverrideDraft()` only ✅
+  - `academy_id` — always resolved from authenticated `profiles`, never from client ✅
+  - Global curriculum never mutated — multi-layered: DB function Step 4 + branch-level guards + RLS ✅
+  - RLS on `academy_curriculum_overrides` and `academy_curriculum_versions` — `auth_academy_id()` + `auth_is_director_or_head()` ✅
+  - UI language — director-safe throughout; no raw DB language exposed ✅
+- **Bugs found:**
+  - `DonnaAddPlayerMissionDraft` — stub, no server action called; director sees false-positive "submitted" UI (BUG-1 — CRITICAL; deferred pending `content_type` product decision)
+  - `DonnaRewriteLevelDraft` — stub, no server action called (BUG-2 — HIGH; deferred pending `target_type='level'` execution support in migration 069)
+- **Gaps found:**
+  - No `router.refresh()` in DONNA draft panels after success — queue does not auto-update (GAP-1 — MEDIUM; deferred to Sprint 909)
+  - `curriculum_version_id` not found is silent onboarding blocker with poor director error guidance (GAP-2 — MEDIUM)
+  - `rawDb` typing inconsistency in `curriculumDraftActions.ts` vs `as any` elsewhere (GAP-3 — LOW)
+  - Non-blocked error copy misleadingly says "check required fields" for non-validation failures (GAP-4 — LOW)
+  - Recovery notice 10-minute threshold is hardcoded magic number (GAP-5 — LOW)
+- **Fix F-1 — `revalidatePath` added to `createCurriculumContentItemDraft()`:**
+  - Modified `src/lib/actions/curriculumDraftActions.ts` — added `import { revalidatePath } from 'next/cache'`; added `revalidatePath('/director/curriculum')` and `revalidatePath('/director/curriculum/builder')` after successful draft creation
+  - Consistent with approval action pattern (Sprint 904/906)
+  - Server-side cache now stale after draft creation; next full page load reflects new draft in queue
+  - Full fix (DONNA panel `router.refresh()`) deferred to Sprint 909 (GAP-1)
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 907 — Curriculum Approved-Stuck Recovery View V1
 
 - **Read-only visibility only** — no mutations, no approve/reject/retry controls, no `execute_curriculum_override()` call, no `proposed_actions`, no migrations
