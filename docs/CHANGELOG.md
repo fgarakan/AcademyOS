@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 884 — DONNA page_actions Type Cleanup V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — (1) Removed `| 'page_actions'` union member and its inline comment from `DonnaSessionIntentContext.lastIntentFamily` — confirmed dormant by Sprint 883 audit: never written, never read, no DonnaDirectorIntent counterpart, no write site; (2) Updated 3-line header comment above the union to drop "Dormant values" language and add a Sprint 884 removal notice; (3) Simplified Sprint 881 coo_answer handler comment — removed historical page_actions audit note (now documented in sprint docs); (4) Updated generic fallback comment — removed `page_actions if ever written`, added accurate roster_attention explanation; `'roster_attention'` preserved as future-reserved (active DonnaDirectorIntent infrastructure); TypeScript enforcement: any future `lastIntentFamily: 'page_actions'` assignment or check will now cause a compile error
+- **Created** `docs/DONNA_PAGE_ACTIONS_TYPE_CLEANUP_884.md` — Sprint doc: pre-removal audit (3 page_actions references confirmed in resolver, 0 writes, 0 reads, 0 DonnaDirectorIntent counterpart), all 4 change descriptions (union removal + 3 comment updates), final union type listing (6 members post-removal), TypeScript enforcement guarantee, roster_attention preservation audit, Sprint 885 recommendation (daily_brief elaboration handler)
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 883 — DONNA Intent Family Type Union Audit V1
 
 - **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Added 3-line comment block before `lastIntentFamily` annotating the scheme; annotated all 7 union values + null with status (active / dormant / future-reserved), write site line number, and sprint reference; no logic changes — purely documentation; classified: `'daily_brief'` active (line 2248), `'review_queue'` active (line 2332), `'attention'` active (line 2208), `'coo_answer'` active (line 3050), `'section_nav'` active (line 2857), `'page_actions'` dormant (never written, no counterpart in DonnaDirectorIntent — candidate for removal Sprint 884), `'roster_attention'` future-reserved (roster_attention IS an active DonnaDirectorIntent routing value but COO path writes 'coo_answer'; plausible future write site when roster follow-up handler is built), `null` active (panel close + route change)

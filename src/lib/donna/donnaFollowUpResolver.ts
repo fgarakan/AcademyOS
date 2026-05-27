@@ -35,16 +35,16 @@ const CONTEXT_TTL_MS = 10 * 60 * 1000 // 10 minutes
  * Contains counts and safe labels only. No raw content, no player names.
  */
 export interface DonnaSessionIntentContext {
-  // Sprint 883 audit — each value annotated with active / dormant status.
+  // Sprint 883 audit — each value annotated with active / future-reserved status.
   // Active values have a confirmed write site in DonnaAssistantButton.tsx.
-  // Dormant values are declared but never written — see DONNA_INTENT_FAMILY_TYPE_UNION_AUDIT_883.md.
+  // Sprint 884 — removed 'page_actions' (confirmed dormant in Sprint 883 audit: never written,
+  // no write site, no DonnaDirectorIntent counterpart). See DONNA_INTENT_FAMILY_TYPE_UNION_AUDIT_883.md.
   lastIntentFamily:
     | 'daily_brief'      // Active — written by handleFetchDailyBrief (DonnaAssistantButton line 2248, Sprint 785)
     | 'review_queue'     // Active — written by handleOpenReviewQueue (DonnaAssistantButton line 2332, Sprint 785)
     | 'attention'        // Active — written by handleFetchAttentionReport (DonnaAssistantButton line 2208, Sprint 785)
     | 'coo_answer'       // Active — written by handleDonnaCooPrompt for all non-blocked COO answers (DonnaAssistantButton line 3050, Sprint 802)
     | 'section_nav'      // Active — written by handleUIDispatch navigate block (DonnaAssistantButton line 2857, Sprint 876)
-    | 'page_actions'     // Dormant — declared but never written; no write site; no counterpart in DonnaDirectorIntent (Sprint 883 audit — candidate for removal in Sprint 884)
     | 'roster_attention' // Future-reserved — roster_attention IS an active DonnaDirectorIntent routing value, but the COO path writes 'coo_answer'; no lastIntentFamily write site exists (Sprint 883 audit)
     | null               // Cleared state — set on panel close (line 973) and route change (line 1277)
   /** Number of sections in the last brief (safe: structural metadata only) */
@@ -532,9 +532,8 @@ export function resolveFollowUp(
       return buildSectionNavRecommendationResponse(context!)
     }
     // Sprint 881 — explicit coo_answer recommendation handler.
-    // Audit finding: 'page_actions' is declared in the union type but never written — any handler
-    // for it would be dead code. The active family for COO page-suggestion responses is 'coo_answer'
-    // (set at DonnaAssistantButton.tsx line 3050 for all non-blocked COO answers).
+    // The active family for COO page-suggestion responses is 'coo_answer' (written by
+    // handleDonnaCooPrompt at DonnaAssistantButton.tsx line 3050 for all non-blocked COO answers).
     // When lastSuggestedNavigationHref is set, the generic Review Queue fallback is semantically
     // wrong — the user should go to the page DONNA just suggested, not the Review Queue.
     if (contextIsFresh && context!.lastIntentFamily === 'coo_answer' && context!.lastSuggestedNavigationHref) {
@@ -550,7 +549,8 @@ export function resolveFollowUp(
     }
     // Generic recommendation fallback — fires when: (a) no fresh context, or (b) coo_answer with
     // no suggested href (DONNA answered conversationally without a page suggestion), or (c) any
-    // other intent family not handled above (roster_attention, page_actions if ever written).
+    // other intent family not handled above (roster_attention — future-reserved; COO path writes
+    // 'coo_answer' for roster intent today, so this catches stale or unhandled context only).
     return {
       actionType: 'recommend',
       responseText: `The Review Queue is usually a good starting point — those are the items waiting on your approval. Want me to open it?`,
