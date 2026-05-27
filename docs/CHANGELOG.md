@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-27 — Sprint 896 — DONNA Guided Highlight Grouped Commit V1
+
+- **Grouped commit** — commits all Sprint 817–820 DONNA Guided Highlight / Directed Navigation source files and sprint docs in a single hygiene commit; no new code written; no schema changes; no server action changes; TypeScript clean throughout
+- **Sprint 817 — DONNA Guided Highlight Runtime** (`src/app/globals.css`, `src/app/director/layout.tsx`, `src/lib/donna/donnaFocusTarget.ts`): CSS adds `.donna-focus-ring` (teal, `donna-pulse` keyframe) and `.donna-focus-ring-warning` (amber, `donna-pulse-warning` keyframe) classes; layout mounts `<DonnaHighlightBanner />` at director layout level (component at `src/components/donna/DonnaHighlightBanner.tsx`); `donnaFocusTarget.ts` is sessionStorage-backed focus target store (`setDonnaFocusTarget`, `getDonnaFocusTarget`, `clearDonnaFocusTarget`, `isDonnaFocusTargetExpired`; 8s default TTL; no DB, no RLS, no mutations)
+- **Sprint 818 — Director Daily Command Focus Targets** (`src/app/director/page.tsx`): `data-donna-focus-id` attributes added to 7 dashboard sections — `today-command-center` (wrapper div around `DirectorTodayCommandCenter`), `todays-pulse` (3-col pulse grid), `review-queue-card`, `player-attention-card`, `sessions-this-week-card` (three pulse tiles), `academy-metrics-section` (wrapper div around Academy Metrics `CollapsibleSection`), `alerts-placement-section` (wrapper div around Alerts & Placement `CollapsibleSection`)
+- **Sprint 819 — Template Builder Guided Navigation** (`src/app/director/class-templates/page.tsx`, `src/app/director/class-templates/new/page.tsx`): `data-donna-focus-id="create-template-button"` on New Class Template `<Link>`; `data-donna-focus-id="template-list"` on both the empty-state and populated-state container divs; `data-donna-focus-id="create-template-form"` wrapper div around the `<Card>` containing `NewClassTemplateForm`
+- **Sprint 820 — Player Directory Guided Navigation** (`src/app/director/players/page.tsx`, `src/app/director/players/_components/PlayersDirectoryClient.tsx`): `data-donna-focus-id="player-directory-summary"` on page header flex div; `data-donna-focus-id="players-missing-level"` on the missing-curriculum-level `<Link>`; `data-donna-focus-id="add-player-button"` on Add Player `<Link>`; `data-donna-focus-id="player-filter-bar"` on `SearchFilterBar`; `data-donna-focus-id="player-list"` on `table-card` container div
+- **Sprint docs committed:** `docs/DONNA_NAVIGATE_HIGHLIGHT_RUNTIME_817.md`, `docs/DIRECTOR_DAILY_COMMAND_FOCUS_TARGETS_818.md`, `docs/TEMPLATE_BUILDER_GUIDED_NAVIGATION_819.md`, `docs/PLAYER_DIRECTORY_GUIDED_NAVIGATION_820.md`
+- **Dependency verification:** `DonnaHighlightBanner` confirmed at `src/components/donna/DonnaHighlightBanner.tsx`; imports `donnaFocusTarget` at line 25; `SearchFilterBar` confirmed at `src/components/ui/SearchFilterBar.tsx`; no missing dependencies
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 895 — Pre-Migration Dirty Tree Audit V1
 
 - **Audit only** — no code changes, no source modifications. Full classification of every dirty working-tree file (7 modified + all untracked) before migration readiness and route-page wiring begins

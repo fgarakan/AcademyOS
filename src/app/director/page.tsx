@@ -477,18 +477,25 @@ export default async function DirectorDashboard() {
       {/* ── Sprint 767: Today Command Center — DONNA-narrated, unified priority surface ── */}
       {/* Replaces DirectorAttentionQueueHero + DonnaExecutiveCard (Sprints 763–765).   */}
       {/* One calm surface answering: "What needs my attention today?"                  */}
-      <DirectorTodayCommandCenter
-        queue={attentionQueue}
-        directorName={directorDisplayName}
-        showMax={5}
-      />
+      {/* Sprint 818: data-donna-focus-id added so DONNA can highlight this section     */}
+      <div data-donna-focus-id="today-command-center">
+        <DirectorTodayCommandCenter
+          queue={attentionQueue}
+          directorName={directorDisplayName}
+          showMax={5}
+        />
+      </div>
 
       {/* ── Sprint 813: Today's Pulse — compact signal strip ──────────────────────── */}
       {/* Three at-a-glance tiles: review queue, player attention, sessions this week. */}
       {/* Each is a Link — tap to go directly to the relevant section.                */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Sprint 818: data-donna-focus-id attributes added for DONNA teal highlighting */}
+      <div className="grid grid-cols-3 gap-3" data-donna-focus-id="todays-pulse">
         <Link href="/director/review" className="block">
-          <div className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-status-orange/30">
+          <div
+            data-donna-focus-id="review-queue-card"
+            className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-status-orange/30"
+          >
             <p className={`font-mono font-bold text-2xl leading-none ${(pendingWrapUpsCount + newRequests) > 0 ? 'text-status-orange' : 'text-text-secondary'}`}>
               {pendingWrapUpsCount + newRequests}
             </p>
@@ -496,7 +503,10 @@ export default async function DirectorDashboard() {
           </div>
         </Link>
         <Link href="/director/players" className="block">
-          <div className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-status-orange/30">
+          <div
+            data-donna-focus-id="player-attention-card"
+            className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-status-orange/30"
+          >
             <p className={`font-mono font-bold text-2xl leading-none ${attentionCount > 0 ? 'text-status-orange' : 'text-text-secondary'}`}>
               {attentionCount}
             </p>
@@ -504,7 +514,10 @@ export default async function DirectorDashboard() {
           </div>
         </Link>
         <Link href="/director/sessions" className="block">
-          <div className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-lime/30">
+          <div
+            data-donna-focus-id="sessions-this-week-card"
+            className="bg-surface border border-border rounded-xl px-4 py-3.5 transition-colors hover:border-lime/30"
+          >
             <p className="font-mono font-bold text-2xl leading-none text-lime">
               {sessionsThisWeek}
             </p>
@@ -597,34 +610,39 @@ export default async function DirectorDashboard() {
         </CollapsibleSection>
 
         {/* Academy Metrics */}
-        <CollapsibleSection title="Academy Metrics">
-          {/* Sprint 803: moved below Sessions + Quick Actions so actionable surfaces come first.
-              KPIs are supporting data for the director — the command center and session list are primary. */}
-          <AcademyKpiCardsSection
-            sessionsToday={sessionsThisWeek}
-            attendanceExceptions={pendingWrapUpsCount}
-            coachRecaps={pendingWrapUpsCount}
-            levelUpCandidates={advancementReadyCount}
-            parentUpdates={newRequests}
-            academyHealthPct={academyHealthPct}
-            curriculumExecution={curriculumExecutionPct}
-            playerProgress={improvingCount}
-            activePlayers={activePlayers}
-          />
-          {/* Sprint 767: moved down — supporting analysis, not primary signal.              */}
-          {/* Director uses this to go deep on KPI trends; daily view lives in sections above. */}
-          <DirectorKpiHealthSection
-            activePlayers={activePlayers}
-            advancementReadyCount={advancementReadyCount}
-            curriculumExecutionPct={curriculumExecutionPct}
-            pendingWrapUpsCount={pendingWrapUpsCount}
-            improvingCount={improvingCount}
-            recapCompletionPct={recapCompletionPct}
-            stalledPlayerCount={stalledPlayerCount}
-          />
-        </CollapsibleSection>
+        {/* Sprint 818: wrapper div carries data-donna-focus-id for DONNA highlight */}
+        <div data-donna-focus-id="academy-metrics-section">
+          <CollapsibleSection title="Academy Metrics">
+            {/* Sprint 803: moved below Sessions + Quick Actions so actionable surfaces come first.
+                KPIs are supporting data for the director — the command center and session list are primary. */}
+            <AcademyKpiCardsSection
+              sessionsToday={sessionsThisWeek}
+              attendanceExceptions={pendingWrapUpsCount}
+              coachRecaps={pendingWrapUpsCount}
+              levelUpCandidates={advancementReadyCount}
+              parentUpdates={newRequests}
+              academyHealthPct={academyHealthPct}
+              curriculumExecution={curriculumExecutionPct}
+              playerProgress={improvingCount}
+              activePlayers={activePlayers}
+            />
+            {/* Sprint 767: moved down — supporting analysis, not primary signal.              */}
+            {/* Director uses this to go deep on KPI trends; daily view lives in sections above. */}
+            <DirectorKpiHealthSection
+              activePlayers={activePlayers}
+              advancementReadyCount={advancementReadyCount}
+              curriculumExecutionPct={curriculumExecutionPct}
+              pendingWrapUpsCount={pendingWrapUpsCount}
+              improvingCount={improvingCount}
+              recapCompletionPct={recapCompletionPct}
+              stalledPlayerCount={stalledPlayerCount}
+            />
+          </CollapsibleSection>
+        </div>
 
         {/* Alerts & Placement */}
+        {/* Sprint 818: wrapper div carries data-donna-focus-id for DONNA highlight */}
+        <div data-donna-focus-id="alerts-placement-section">
         <CollapsibleSection title="Alerts &amp; Placement" badge={totalAlerts}>
           {/* Sprint 807: Renamed from "Roster Signals" — Priority Queue card removed (already shown in */}
           {/* Command Center above). Pending Placement is the only distinct signal not in the command center. */}
@@ -767,6 +785,7 @@ export default async function DirectorDashboard() {
             </Card>
           </div>
         </CollapsibleSection>
+        </div>{/* /alerts-placement-section */}
 
         {/* Analytics */}
         <CollapsibleSection title="Analytics">

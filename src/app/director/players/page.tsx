@@ -110,7 +110,8 @@ export default async function PlayersPage() {
 
   return (
     <div className="p-6 animate-fade-in space-y-6 max-w-5xl">
-      <div className="flex items-start justify-between gap-4">
+      {/* Sprint 820: data-donna-focus-id on page header for DONNA "player directory" highlight */}
+      <div className="flex items-start justify-between gap-4" data-donna-focus-id="player-directory-summary">
         <div>
           <p className="page-eyebrow">Academy</p>
           <h1 className="page-title">Player Directory</h1>
@@ -122,16 +123,20 @@ export default async function PlayersPage() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {missingCurriculumCount > 0 && (
+            // Sprint 820: data-donna-focus-id for DONNA "players without levels" highlight
             <Link
               href="/director/curriculum"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-status-orange/30 bg-status-orange/5 text-[11px] text-status-orange hover:bg-status-orange/10 transition-colors"
+              data-donna-focus-id="players-missing-level"
             >
               {missingCurriculumCount} without curriculum level
             </Link>
           )}
+          {/* Sprint 820: data-donna-focus-id for DONNA "add player" highlight */}
           <Link
             href="/director/players/new"
             className="btn-lime flex items-center gap-2 text-sm"
+            data-donna-focus-id="add-player-button"
           >
             <UserPlus className="w-4 h-4" />
             Add player

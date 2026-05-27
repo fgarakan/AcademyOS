@@ -127,7 +127,9 @@ export function PlayersDirectoryClient({ players, curriculumMap = {} }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Sprint 820: data-donna-focus-id for DONNA filter bar highlight */}
       <SearchFilterBar
+        data-donna-focus-id="player-filter-bar"
         value={search}
         onChange={setSearch}
         placeholder="Search players by name…"
@@ -212,7 +214,8 @@ export function PlayersDirectoryClient({ players, curriculumMap = {} }: Props) {
           description="Try a different name or filter."
         />
       ) : (
-        <div className="table-card">
+        /* Sprint 820: data-donna-focus-id for DONNA player-list highlight */
+        <div className="table-card" data-donna-focus-id="player-list">
           <ul style={{ '--divide-color': 'var(--border-subtle)' } as React.CSSProperties}>
             {filtered.map((player, idx) => {
               if (!player.player_id) return null

@@ -180,6 +180,43 @@ body {
 
 }
 
+/* ── Sprint 817 — DONNA Guided Highlight ──────────────────────────────────── */
+/* Applied dynamically to [data-donna-focus-id] elements by DonnaHighlightBanner. */
+/* Teal-glow variant is the default. Warning variant uses orange. */
+/* Never use lime for DONNA guidance — teal is the DONNA brand color. */
+
+.donna-focus-ring {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 4px;
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 4px var(--accent-cyan-dim),
+    0 0 20px rgba(17, 217, 223, 0.12);
+  animation: donna-pulse 2s ease-in-out infinite;
+}
+
+.donna-focus-ring-warning {
+  outline: 2px solid var(--accent-amber);
+  outline-offset: 4px;
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 4px rgba(255, 176, 32, 0.18),
+    0 0 20px rgba(255, 176, 32, 0.10);
+  animation: donna-pulse-warning 2s ease-in-out infinite;
+}
+
+@keyframes donna-pulse {
+  0%   { box-shadow: 0 0 0 4px var(--accent-cyan-dim), 0 0 20px rgba(17,217,223,0.12); }
+  50%  { box-shadow: 0 0 0 6px rgba(17,217,223,0.26),  0 0 28px rgba(17,217,223,0.20); }
+  100% { box-shadow: 0 0 0 4px var(--accent-cyan-dim), 0 0 20px rgba(17,217,223,0.12); }
+}
+
+@keyframes donna-pulse-warning {
+  0%   { box-shadow: 0 0 0 4px rgba(255,176,32,0.18), 0 0 20px rgba(255,176,32,0.10); }
+  50%  { box-shadow: 0 0 0 6px rgba(255,176,32,0.26), 0 0 28px rgba(255,176,32,0.18); }
+  100% { box-shadow: 0 0 0 4px rgba(255,176,32,0.18), 0 0 20px rgba(255,176,32,0.10); }
+}
+
 @layer utilities {
   /* iOS safe area — adds bottom padding equal to the home indicator height.
      Placed in @layer utilities so it wins over pb-* utility classes on the same element. */

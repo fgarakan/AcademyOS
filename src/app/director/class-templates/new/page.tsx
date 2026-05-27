@@ -80,15 +80,18 @@ export default async function NewClassTemplatePage() {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="py-5">
-          <NewClassTemplateForm
-            dnaSessionBlocks={dnaSessionBlocks}
-            dnaDevelopmentPriorities={dnaDevelopmentPriorities}
-            hasDna={hasDna}
-          />
-        </CardContent>
-      </Card>
+      {/* Sprint 819: data-donna-focus-id so DonnaHighlightBanner can glow this section */}
+      <div data-donna-focus-id="create-template-form">
+        <Card>
+          <CardContent className="py-5">
+            <NewClassTemplateForm
+              dnaSessionBlocks={dnaSessionBlocks}
+              dnaDevelopmentPriorities={dnaDevelopmentPriorities}
+              hasDna={hasDna}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

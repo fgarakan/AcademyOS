@@ -7,6 +7,7 @@ import { DonnaAssistantButton } from '@/components/assistant/DonnaAssistantButto
 import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
 import { DemoModeBanner } from '@/components/demo/DemoModeBanner'
 import { DonnaSessionContextProvider } from '@/components/donna/DonnaSessionContextProvider'
+import { DonnaHighlightBanner } from '@/components/donna/DonnaHighlightBanner'
 
 export default async function DirectorLayout({
   children,
@@ -105,6 +106,8 @@ export default async function DirectorLayout({
           />
         )}
         <DirectorMobileNav pendingCount={pendingCount} />
+        {/* Sprint 817 — DONNA guided highlight banner, mounted at layout level */}
+        <DonnaHighlightBanner />
       </div>
     </DonnaSessionContextProvider>
   )

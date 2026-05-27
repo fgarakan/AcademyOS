@@ -136,9 +136,11 @@ export default async function ClassTemplatesPage() {
             <Dumbbell className="w-3.5 h-3.5" />
             Fitness Templates
           </Link>
+          {/* Sprint 819: data-donna-focus-id for DONNA navigate+highlight */}
           <Link
             href="/director/class-templates/new"
             className="inline-flex items-center gap-1.5 btn-lime text-xs px-3 py-2"
+            data-donna-focus-id="create-template-button"
           >
             <Plus className="w-3.5 h-3.5" />
             New Class Template
@@ -201,8 +203,9 @@ export default async function ClassTemplatesPage() {
         </div>
       )}
 
+      {/* Sprint 819: data-donna-focus-id for DONNA template-list highlight */}
       {classTemplates.length === 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-3" data-donna-focus-id="template-list">
           <NextBestActionCard
             variant="guide"
             title="Create your first class template"
@@ -221,7 +224,7 @@ export default async function ClassTemplatesPage() {
           </Card>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3" data-donna-focus-id="template-list">
           {classTemplates.map(template => (
             <TemplateRow
               key={template.id}
