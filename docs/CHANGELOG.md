@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-27 — Sprint 895 — Pre-Migration Dirty Tree Audit V1
+
+- **Audit only** — no code changes, no source modifications. Full classification of every dirty working-tree file (7 modified + all untracked) before migration readiness and route-page wiring begins
+- **Modified files (7 total):** All from Sprints 817–820 DONNA Guided Highlight / Directed Navigation — `src/app/globals.css` (Sprint 817: `.donna-focus-ring` + `.donna-focus-ring-warning` CSS + keyframes), `src/app/director/layout.tsx` (Sprint 817: `DonnaHighlightBanner` at layout level), `src/app/director/page.tsx` (Sprint 818: 7x `data-donna-focus-id` on dashboard sections), `src/app/director/class-templates/page.tsx` (Sprint 819: `create-template-button` + `template-list`), `src/app/director/class-templates/new/page.tsx` (Sprint 819: `create-template-form` wrapper), `src/app/director/players/page.tsx` (Sprint 820: 3x `data-donna-focus-id`), `src/app/director/players/_components/PlayersDirectoryClient.tsx` (Sprint 820: `player-filter-bar` + `player-list`); all TypeScript clean; all classified as Intentional — Sprint 817–820 grouped commit pending
+- **Key untracked source:** `src/lib/donna/donnaFocusTarget.ts` — Sprint 817 sessionStorage-backed focus target store; required by `DonnaHighlightBanner`; TypeScript clean; include in Sprint 817–820 grouped commit
+- **Migration files (38 total):** `supabase/migrations/001_extensions.sql` through `038_curriculum_mappings.sql` — untracked; classified HIGH RISK; do NOT apply without explicit `/supabase-sprint` instruction; `docs/CURRENT_BUILD_TARGET.md` confirms migration is next build phase but not automatic
+- **Untracked sprint docs (~18):** Sprints 734, 817–821, player profile, voice demo, voice input, curriculum — all classified as safe to commit in their respective grouped commits; no migration dependency
+- **Untracked data files (9):** `data/airtable-import/*.csv` + `data/player-import/roster.csv` — keep; commit only when data-import sprint is initiated
+- **Planning artifacts:** `Academy_OS_Master_Build/`, `prototype-reference/`, `PRODUCT_BLUEPRINT.md` — stale; do not commit; `BUILD_ORDER.md`, `DATA_FLOW_MAP.md`, `MULTI_TENANT_SECURITY_AUDIT.md`, `PLAYER_PROFILE_SPEC.md`, `README_BACKEND.md`, `ROLE_CONNECTION_MAP.md`, `UI_SCREEN_MAP.md` — inspect next sprint
+- **Auto-generated:** `next-env.d.ts` — should be in `.gitignore`; do not commit
+- **Migration readiness verdict:** Working tree is safe to proceed toward migration — no uncommitted code carries schema dependencies or conflicts with the 38 pending migration files; Sprint 817–820 DONNA Guided Highlight code is pure client-side
+- **Regressions found:** None — all dirty files TypeScript-clean; no safety violations; all Sprint 817–820 imports confirmed to exist at declared paths
+- **Sprint 896 recommendation:** DONNA Guided Highlight Grouped Commit (Sprint 817–820 block) OR Begin Migration Sprint via `/supabase-sprint`
+- **Created** `docs/PRE_MIGRATION_DIRTY_TREE_AUDIT_895.md` — Full audit doc: modified file table (7 files × sprint attribution × risk), migration inventory (38 files, descriptions), untracked sprint doc table, data file table, planning artifact table, migration readiness verdict, grouped commit recommendations (4 groups A–D), file-by-file action table (35+ rows), Sprint 896 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors, no code changes)
+
+---
+
 ## 2026-05-27 — Sprint 894 — DONNA Normalizer Final Audit V1
 
 - **Audit only** — no code changes, no pattern changes, no handler changes. Full certification of `normalize()` in `src/lib/donna/donnaFollowUpResolver.ts` at commit `81dce01` (post-Sprint 893)
