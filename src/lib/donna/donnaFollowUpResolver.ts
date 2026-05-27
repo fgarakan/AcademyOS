@@ -473,6 +473,22 @@ export function resolveFollowUp(
     if (contextIsFresh && context!.lastIntentFamily === 'section_nav') {
       return buildSectionNavElaborationResponse(context!)
     }
+    // Sprint 882 — explicit coo_answer elaboration handler.
+    // When DONNA's COO answer suggested a specific page (lastSuggestedNavigationHref set),
+    // the generic lastTopicLabel handler's "checking {label} for sign-off" framing is too
+    // narrow — not every COO-suggested page is about sign-off. This handler returns copy
+    // that names the suggested page naturally and offers to navigate there.
+    if (contextIsFresh && context!.lastIntentFamily === 'coo_answer' && context!.lastSuggestedNavigationHref) {
+      const label = context!.lastSuggestedNavigationLabel ?? context!.lastTopicLabel
+      return {
+        actionType: 'elaborate',
+        responseText: label
+          ? `That was ${label} — the page DONNA suggested based on your question. I can take you there or help you decide whether it matters right now.`
+          : `That was the page DONNA suggested based on your question. I can take you there or help you decide whether it matters right now.`,
+        navigationHref: context!.lastSuggestedNavigationHref,
+        confidence: 'medium',
+      }
+    }
     if (contextIsFresh && context!.lastTopicLabel) {
       const href = context!.lastSuggestedNavigationHref
       const navLabel = context!.lastSuggestedNavigationLabel ?? 'the relevant page'

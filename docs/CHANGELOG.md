@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 882 — DONNA COO Elaboration Follow-Up Depth V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Added explicit `'coo_answer'` elaboration handler in `isElaboration` branch (priority 2, after `'section_nav'` at priority 1, before generic `lastTopicLabel` handler at priority 3); condition: fresh context + `lastIntentFamily === 'coo_answer'` + `lastSuggestedNavigationHref` non-null; copy: "That was {label} — the page DONNA suggested based on your question. I can take you there or help you decide whether it matters right now." (label-present); "That was the page DONNA suggested based on your question. I can take you there or help you decide whether it matters right now." (no-label variant); fixes "sign-off" framing that fired for all COO-suggested pages regardless of whether they involved sign-off; `coo_answer` with no `lastSuggestedNavigationHref` still falls to generic handlers correctly; no new patterns added; all trigger phrases ("what is that?", "explain that", "what does that mean?", "tell me more") already covered by existing ELABORATION_PATTERNS
+- **Created** `docs/DONNA_COO_ELABORATION_FOLLOW_UP_DEPTH_882.md` — Sprint doc: pre-sprint elaboration branch audit, ELABORATION_PATTERNS coverage table (no new patterns needed), before/after copy table, handler priority table (post-882), full 877–882 follow-up handler summary, safety guarantees, known limitations, Sprint 883 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 881 — DONNA Page Actions Follow-Up Depth V1
 
 - **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Added explicit `'coo_answer'` recommendation handler in `isRecommendation` branch (priority 4, after `'section_nav'` at priority 3, before generic fallback at priority 5); condition: fresh context + `lastIntentFamily === 'coo_answer'` + `lastSuggestedNavigationHref` non-null; copy: "DONNA suggested {label}. The best next step is to open it and review what needs your attention there. I can take you there." (or no-label variant); fixes semantically wrong generic Review Queue fallback that fired when DONNA's COO answer suggested a non-Review-Queue page; `coo_answer` with no `lastSuggestedNavigationHref` (conversational-only answer) still falls to generic fallback correctly; audit finding: `'page_actions'` is declared in type union but never written — no dead-code handler added
