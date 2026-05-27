@@ -80,7 +80,10 @@ export async function fetchDonnaContext(
       case 'coach_home_context':         return fetchCoachHomeContext(supabase, academyId, userId as string)
       case 'coach_players_context':      return fetchCoachPlayersContext(supabase, academyId, userId as string)
       case 'coach_session_context':      return fetchCoachSessionContext(supabase, academyId, userId as string, params?.sessionId)
-      // coach_wrap_up_context: Sprint 866 — falls to default until implemented
+      // Sprint 866 — Coach wrap-up context (userId verified non-null by guard above)
+      case 'coach_wrap_up_context':      return fetchCoachWrapUpContext(supabase, academyId, userId as string, params?.sessionId)
+      // Sprint 867 — Class template detail context
+      case 'class_template_detail':      return fetchClassTemplateDetailContext(supabase, academyId, params?.templateId)
       default:                           return fetchAcademyOverview(supabase, academyId)
     }
   } catch {
@@ -1879,6 +1882,534 @@ async function fetchCoachSessionContext(
       ...(attendanceRows.length === 0 ? ['attendance_records'] : []),
     ],
     possibleSuggestionTypes: ['session_focus_recommendation', 'player_attention_signal'],
+    fetchedAt: new Date().toISOString(),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Coach wrap-up context — Sprint 866
+// Full coach-facing context for the wrap-up screen of a session the authenticated coach owns.
+// Architecture: identical Q1–Q4 ownership gate + session detail from fetchCoachSessionContext.
+// Additional Q5: proposed_actions wrap-up lookup (latest only) to show submission state.
+// Identity: coachId MUST be the server-side authenticated user id.
+// Safety: Q1 triple-scoped ownership gate (id + academy_id + coach_id).
+//         If Q1 returns null, no further queries run → safe fallback.
+//         session_blocks and session_attendance scoped via Q1-verified session ID.
+//         Q5 double-scoped: academy_id + target_object_id = sessionId + proposed_by_id = coachId.
+// ---------------------------------------------------------------------------
+
+async function fetchCoachWrapUpContext(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  academyId: string,
+  coachId: string,  // ALWAYS resolveAcademyId().userId — never client-provided
+  sessionId: string | undefined,
+): Promise<DonnaContextSummary> {
+  if (!sessionId) {
+    return makeFallbackSummary(
+      'coach_wrap_up_context',
+      'No session ID found in the current URL. Open a specific session wrap-up to use this summary.',
+    )
+  }
+
+  const rawDb = supabase as any
+
+  // Query 1 — Session ownership gate
+  // Triple-scoped: id = sessionId + academy_id + coach_id = authenticated user
+  // Returns null if session does not exist, belongs to a different academy, or coach mismatch.
+  const { data: sessionRaw } = await supabase
+    .from('sessions')
+    .select('id, name, scheduled_date, scheduled_time, status, duration_min, location, template_id')
+    .eq('id', sessionId)
+    .eq('academy_id', academyId)
+    .eq('coach_id', coachId)
+    .maybeSingle()
+
+  if (!sessionRaw) {
+    return makeFallbackSummary(
+      'coach_wrap_up_context',
+      'Session not found or you are not assigned as the coach for this session.',
+    )
+  }
+
+  const session = sessionRaw as {
+    id: string
+    name: string | null
+    scheduled_date: string
+    scheduled_time: string | null
+    status: string
+    duration_min: number | null
+    location: string | null
+    template_id: string | null
+  }
+
+  // Query 2 — Session blocks
+  // Safety: session_blocks has no academy_id; scoped via sessionId verified in Q1
+  const { data: blocksRaw } = await rawDb
+    .from('session_blocks')
+    .select('id, name, type, duration_min, order_index')
+    .eq('session_id', sessionId)
+    .order('order_index', { ascending: true })
+
+  const blocks = (blocksRaw ?? []) as Array<{
+    id: string
+    name: string
+    type: string
+    duration_min: number
+    order_index: number
+  }>
+
+  // Query 3 — Session attendance
+  // Safety: session_attendance has no academy_id; scoped via sessionId verified in Q1
+  const { data: attendanceRaw } = await rawDb
+    .from('session_attendance')
+    .select('player_id, status')
+    .eq('session_id', sessionId)
+
+  const attendanceRows = (attendanceRaw ?? []) as Array<{ player_id: string; status: string }>
+  const presentIds = attendanceRows.filter(r => r.status === 'present').map(r => r.player_id)
+  const absentIds  = attendanceRows.filter(r => r.status === 'absent').map(r => r.player_id)
+
+  // Query 4 — Player names (explicitly academy-scoped)
+  const allPlayerIds = attendanceRows.map(r => r.player_id).filter(Boolean)
+  const playerNameMap = new Map<string, string>()
+  if (allPlayerIds.length > 0) {
+    const { data: playersRaw } = await rawDb
+      .from('players')
+      .select('id, full_name, first_name, last_name')
+      .in('id', allPlayerIds)
+      .eq('academy_id', academyId)
+    for (const p of ((playersRaw ?? []) as Array<{ id: string; full_name: string | null; first_name: string | null; last_name: string | null }>)) {
+      playerNameMap.set(
+        p.id,
+        p.full_name ?? ([p.first_name, p.last_name].filter(Boolean).join(' ') || 'Unknown Player'),
+      )
+    }
+  }
+
+  // Query 5 — Existing wrap-up submission (latest only)
+  // Double-scoped: academy_id + target_object_id = sessionId + proposed_by_id = coachId
+  // target_module = 'session_wrap_up_v1' — latest submission for this session by this coach
+  const { data: wrapUpRaw } = await rawDb
+    .from('proposed_actions')
+    .select('id, status, created_at')
+    .eq('academy_id', academyId)
+    .eq('target_object_id', sessionId)
+    .eq('proposed_by_id', coachId)
+    .eq('target_module', 'session_wrap_up_v1')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const existingWrapUp = wrapUpRaw as {
+    id: string
+    status: string
+    created_at: string
+  } | null
+
+  // --- Build context ---
+  const sessionLabel = session.name ?? `Session ${session.id.slice(0, 8)}`
+  const dateLabel = session.scheduled_date
+    ? new Date(session.scheduled_date + 'T12:00:00Z').toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      })
+    : 'Date unknown'
+
+  const isCompleted = session.status === 'completed'
+  const wrapUpSubmitted = existingWrapUp !== null
+  const wrapUpPendingReview = existingWrapUp?.status === 'pending_review'
+  const wrapUpApproved = existingWrapUp?.status === 'approved' || existingWrapUp?.status === 'executed'
+  const wrapUpRejected = existingWrapUp?.status === 'rejected' || existingWrapUp?.status === 'clarification_needed'
+
+  const wrapUpStatusLabel = !wrapUpSubmitted
+    ? 'Not submitted'
+    : wrapUpPendingReview
+      ? 'Submitted — awaiting director review'
+      : wrapUpApproved
+        ? 'Approved by director'
+        : wrapUpRejected
+          ? 'Needs revision — director requested changes'
+          : `Submitted (${existingWrapUp?.status ?? 'unknown'})`
+
+  const keyFacts: string[] = []
+  keyFacts.push(`Session: ${sessionLabel}`)
+  keyFacts.push(`Status: ${session.status}`)
+  keyFacts.push(`Date: ${dateLabel}${session.scheduled_time ? ` at ${session.scheduled_time.slice(0, 5)}` : ''}`)
+  if (session.location) keyFacts.push(`Location: ${session.location}`)
+  if (session.duration_min) keyFacts.push(`Duration: ${session.duration_min} min`)
+
+  // Blocks summary
+  if (blocks.length > 0) {
+    const blockNames = blocks.map(b => b.name).slice(0, 3).join(', ')
+    keyFacts.push(`${blocks.length} block${blocks.length !== 1 ? 's' : ''} planned: ${blockNames}${blocks.length > 3 ? '…' : ''}`)
+  } else {
+    keyFacts.push('No lesson plan blocks found')
+  }
+
+  // Attendance summary
+  if (attendanceRows.length > 0) {
+    const parts: string[] = []
+    if (presentIds.length > 0) {
+      const names = presentIds.slice(0, 3).map(id => playerNameMap.get(id) ?? 'Unknown').join(', ')
+      parts.push(`${presentIds.length} present (${names}${presentIds.length > 3 ? '…' : ''})`)
+    }
+    if (absentIds.length > 0) {
+      const names = absentIds.slice(0, 2).map(id => playerNameMap.get(id) ?? 'Unknown').join(', ')
+      parts.push(`${absentIds.length} absent (${names}${absentIds.length > 2 ? '…' : ''})`)
+    }
+    keyFacts.push(`Attendance: ${parts.join('; ')}`)
+  } else {
+    keyFacts.push('No attendance recorded yet — record before submitting wrap-up')
+  }
+
+  // Wrap-up submission state
+  keyFacts.push(`Wrap-up: ${wrapUpStatusLabel}`)
+
+  const missingData: string[] = []
+  if (attendanceRows.length === 0) missingData.push('No attendance recorded — required before wrap-up')
+  if (blocks.length === 0)         missingData.push('No lesson plan blocks found')
+  if (!wrapUpSubmitted && isCompleted) missingData.push('Wrap-up not submitted for completed session')
+
+  const openQuestions: string[] = []
+  if (presentIds.length > 0) {
+    openQuestions.push(`Which players stood out today? Mention them in your wrap-up.`)
+  }
+  if (absentIds.length > 0) {
+    const names = absentIds.slice(0, 2).map(id => playerNameMap.get(id) ?? 'Unknown').join(', ')
+    openQuestions.push(
+      `${absentIds.length} player${absentIds.length !== 1 ? 's' : ''} absent (${names}${absentIds.length > 2 ? '…' : ''}) — should a parent or director follow-up note be added?`,
+    )
+  }
+  if (wrapUpRejected) {
+    openQuestions.push('Your director requested changes to this wrap-up — review their notes and resubmit.')
+  }
+
+  const nextSteps: string[] = []
+  if (attendanceRows.length === 0) {
+    nextSteps.push('Record attendance before submitting your wrap-up')
+  } else if (presentIds.length > 0) {
+    nextSteps.push(`Confirm attendance for ${presentIds.length} present player${presentIds.length !== 1 ? 's' : ''}`)
+  }
+  if (!wrapUpSubmitted) {
+    nextSteps.push('Complete and submit your wrap-up — describe what worked, what to adjust, and any standout moments')
+    if (presentIds.length > 0) {
+      nextSteps.push(`Mention any players who need attention or showed strong progress`)
+    }
+  } else if (wrapUpPendingReview) {
+    nextSteps.push('Wrap-up submitted — waiting for director review. No further action needed unless they request changes.')
+  } else if (wrapUpApproved) {
+    nextSteps.push('Wrap-up approved. Session is complete — prepare for your next session.')
+  } else if (wrapUpRejected) {
+    nextSteps.push('Director requested changes — review their notes and resubmit your wrap-up')
+  }
+  if (absentIds.length > 0 && !wrapUpSubmitted) {
+    nextSteps.push(`Note ${absentIds.length} absent player${absentIds.length !== 1 ? 's' : ''} in your wrap-up`)
+  }
+
+  return {
+    contextType: 'coach_wrap_up_context',
+    title: `Wrap-Up: ${sessionLabel}`,
+    summary: `${sessionLabel} (${session.status}) — ${
+      wrapUpSubmitted ? wrapUpStatusLabel : 'wrap-up not yet submitted'
+    }. ${attendanceRows.length > 0 ? `${presentIds.length} of ${attendanceRows.length} present.` : 'No attendance recorded.'}`,
+    keyFacts,
+    openQuestions,
+    suggestedNextSteps: nextSteps,
+    dataUsed: [
+      'sessions (ownership-verified: id + academy_id + coach_id)',
+      ...(blocks.length > 0 ? ['session_blocks'] : []),
+      ...(attendanceRows.length > 0 ? ['session_attendance', 'players'] : []),
+      ...(wrapUpSubmitted ? ['proposed_actions (wrap-up submission)'] : []),
+    ],
+    missingData,
+    safetyNotes: [
+      'Read-only summary. No session data was changed.',
+      'Session verified as coach-owned: id + academy_id + coach_id = authenticated user.',
+      'session_blocks and session_attendance scoped via ownership-verified session ID.',
+      'proposed_actions Q5 double-scoped: academy_id + target_object_id + proposed_by_id = authenticated user.',
+      'No director-private notes, no other coaches\' data, no parent data exposed.',
+    ],
+    recommendationInputsAvailable: [
+      'session_status',
+      'session_date',
+      ...(blocks.length > 0 ? ['lesson_plan_blocks'] : []),
+      ...(attendanceRows.length > 0 ? ['attendance_data', 'present_players', 'absent_players'] : []),
+      ...(wrapUpSubmitted ? ['wrap_up_submission_status'] : []),
+    ],
+    recommendationInputsMissing: [
+      ...(attendanceRows.length === 0 ? ['attendance_records'] : []),
+      ...(!wrapUpSubmitted ? ['wrap_up_submission'] : []),
+    ],
+    possibleSuggestionTypes: ['session_focus_recommendation', 'player_attention_signal', 'parent_update_suggestion'],
+    fetchedAt: new Date().toISOString(),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Class template detail context — Sprint 867
+// Fetches context for a single class template: meta, block list, curriculum level,
+// recent session usage, and pending review items.
+// Safety: Q1 double-scoped (id + academy_id). template_blocks has no academy_id —
+// scoped via Q1-verified templateId. Sessions double-scoped (template_id + academy_id).
+// proposed_actions double-scoped (academy_id + target_object_id = templateId).
+// No curriculum_class_template_blocks queried — migration 062 pending on live DB.
+// ---------------------------------------------------------------------------
+
+async function fetchClassTemplateDetailContext(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  academyId: string,
+  templateId: string | undefined,
+): Promise<DonnaContextSummary> {
+  if (!templateId) {
+    return makeFallbackSummary(
+      'class_template_detail',
+      'No template ID found in the current URL. Open a specific class template to use this summary.',
+    )
+  }
+
+  const rawDb = supabase as any
+
+  // Query 1 — Template meta (double-scoped: id + academy_id)
+  // Returns null if template does not exist or belongs to a different academy.
+  const { data: templateRaw } = await rawDb
+    .from('templates')
+    .select('id, name, description, status, template_type, total_duration_min, is_active, tags, curriculum_level_id, created_at, updated_at, template_goal')
+    .eq('id', templateId)
+    .eq('academy_id', academyId)
+    .maybeSingle()
+
+  if (!templateRaw) {
+    return makeFallbackSummary(
+      'class_template_detail',
+      'Template not found or access denied.',
+    )
+  }
+
+  const template = templateRaw as {
+    id: string
+    name: string
+    description: string | null
+    status: string
+    template_type: string | null
+    total_duration_min: number | null
+    is_active: boolean
+    tags: string[] | null
+    curriculum_level_id: string | null
+    created_at: string
+    updated_at: string
+    template_goal: string | null
+  }
+
+  // Safety: verify this is a class template, not a fitness template.
+  // Fitness templates are tagged with 'fitness_template:true' — same guard
+  // used in fetchClassTemplateCollection.
+  const isFitnessTemplate = (template.tags ?? []).includes('fitness_template:true')
+  if (isFitnessTemplate) {
+    return makeFallbackSummary(
+      'class_template_detail',
+      'This is a fitness template, not a class template. Open a class template for curriculum context.',
+    )
+  }
+
+  // Query 2 — Template blocks
+  // Safety: template_blocks has no academy_id column.
+  // Scoped via templateId verified in Q1 (double-scoped at template level).
+  const { data: blocksRaw } = await rawDb
+    .from('template_blocks')
+    .select('id, name, type, duration_min, order_index, intensity_level')
+    .eq('template_id', templateId)
+    .order('order_index', { ascending: true })
+
+  const blocks = (blocksRaw ?? []) as Array<{
+    id: string
+    name: string
+    type: string
+    duration_min: number
+    order_index: number
+    intensity_level: string | null
+  }>
+
+  // Query 3 — Curriculum level name (only if curriculum_level_id is set)
+  // curriculum_levels is a global table with no academy_id — that is expected.
+  let levelName: string | null = null
+  if (template.curriculum_level_id) {
+    const { data: levelRaw } = await rawDb
+      .from('curriculum_levels')
+      .select('id, display_name')
+      .eq('id', template.curriculum_level_id)
+      .maybeSingle()
+    levelName = levelRaw?.display_name ?? null
+  }
+
+  // Query 4 — Recent session usage (past 30 days + upcoming)
+  // Double-scoped: template_id + academy_id.
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const today = new Date().toISOString().split('T')[0]
+
+  const { data: sessionsRaw } = await rawDb
+    .from('sessions')
+    .select('id, scheduled_date, status')
+    .eq('template_id', templateId)
+    .eq('academy_id', academyId)
+    .gte('scheduled_date', thirtyDaysAgo)
+    .order('scheduled_date', { ascending: false })
+
+  const recentSessions = (sessionsRaw ?? []) as Array<{
+    id: string
+    scheduled_date: string
+    status: string
+  }>
+
+  const pastSessions = recentSessions.filter(s => s.scheduled_date < today)
+  const upcomingSessions = recentSessions.filter(s => s.scheduled_date >= today && s.status !== 'cancelled')
+  const completedSessions = recentSessions.filter(s => s.status === 'completed')
+  const lastUsedDate = pastSessions.length > 0
+    ? new Date(pastSessions[0].scheduled_date + 'T12:00:00Z').toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+      })
+    : null
+
+  // Query 5 — Pending review items linked to this template
+  // Double-scoped: academy_id + target_object_id = templateId.
+  const { data: pendingRaw } = await rawDb
+    .from('proposed_actions')
+    .select('id, action_type, target_module, created_at')
+    .eq('academy_id', academyId)
+    .eq('target_object_id', templateId)
+    .eq('status', 'pending_review')
+
+  const pendingItems = (pendingRaw ?? []) as Array<{
+    id: string
+    action_type: string
+    target_module: string
+    created_at: string
+  }>
+  const pendingCount = pendingItems.length
+
+  // --- Derived values ---
+  const templateName = template.name ?? `Template ${templateId.slice(0, 8)}`
+  const statusLabel = template.is_active ? 'Active' : (template.status ?? 'Unknown')
+  const typeLabel = template.template_type ?? null
+  const totalDuration = template.total_duration_min ?? blocks.reduce((sum, b) => sum + (b.duration_min ?? 0), 0)
+  const hasBlocks = blocks.length > 0
+  const blockNames = blocks.map(b => b.name).slice(0, 3).join(', ')
+  const completedCount = completedSessions.length
+
+  // --- Build context ---
+  const keyFacts: string[] = []
+  keyFacts.push(`Status: ${statusLabel}${typeLabel ? ` — ${typeLabel}` : ''}`)
+  if (levelName) {
+    keyFacts.push(`Curriculum level: ${levelName}`)
+  } else {
+    keyFacts.push('No curriculum level assigned yet')
+  }
+  if (totalDuration > 0) keyFacts.push(`Duration: ${totalDuration} min`)
+  if (template.template_goal) keyFacts.push(`Goal: ${template.template_goal}`)
+  if (hasBlocks) {
+    keyFacts.push(`${blocks.length} block${blocks.length !== 1 ? 's' : ''}: ${blockNames}${blocks.length > 3 ? '…' : ''}`)
+  } else {
+    keyFacts.push('No blocks added yet — lesson plan is empty')
+  }
+  if (recentSessions.length > 0) {
+    keyFacts.push(
+      `Used ${recentSessions.length} time${recentSessions.length !== 1 ? 's' : ''} in last 30 days${
+        completedCount > 0 ? ` (${completedCount} completed)` : ''
+      }${lastUsedDate ? `, last on ${lastUsedDate}` : ''}`,
+    )
+    if (upcomingSessions.length > 0) {
+      keyFacts.push(`${upcomingSessions.length} upcoming session${upcomingSessions.length !== 1 ? 's' : ''} using this template`)
+    }
+  } else {
+    keyFacts.push('No sessions run from this template in the last 30 days')
+  }
+  if (pendingCount > 0) {
+    keyFacts.push(`${pendingCount} pending review item${pendingCount !== 1 ? 's' : ''} linked to this template`)
+  }
+
+  const missingData: string[] = []
+  if (!levelName) missingData.push('Curriculum level — needed to connect template to development pathway')
+  if (!hasBlocks) missingData.push('No lesson plan blocks — template cannot be used for sessions yet')
+  if (recentSessions.length === 0) missingData.push('No recent session usage — template may not be in active rotation')
+  if (!template.description && !template.template_goal) missingData.push('No description or goal — coaches may not know the purpose of this template')
+
+  const nextSteps: string[] = []
+  if (!hasBlocks) {
+    nextSteps.push('Add blocks to the lesson plan — this template is empty and cannot generate sessions yet')
+  } else if (blocks.length < 3) {
+    nextSteps.push(`Review block order — only ${blocks.length} block${blocks.length !== 1 ? 's' : ''} in the lesson plan`)
+  } else {
+    nextSteps.push('Review the block sequence to confirm it matches the curriculum level intent')
+  }
+  if (!levelName) {
+    nextSteps.push('Assign a curriculum level to connect this template to the development pathway')
+  }
+  if (hasBlocks && recentSessions.length === 0) {
+    nextSteps.push('Generate a session from this template to put it into active use')
+  }
+  if (upcomingSessions.length > 0) {
+    nextSteps.push(`${upcomingSessions.length} upcoming session${upcomingSessions.length !== 1 ? 's' : ''} use this template — confirm blocks are ready before coaches run them`)
+  }
+  if (pendingCount > 0) {
+    nextSteps.push(`Review ${pendingCount} pending item${pendingCount !== 1 ? 's' : ''} linked to this template in the Review Queue`)
+  }
+  if (nextSteps.length === 0) {
+    nextSteps.push('Template looks complete — check usage signals after next session runs')
+  }
+
+  const openQuestions: string[] = []
+  if (!levelName) {
+    openQuestions.push('What curriculum level does this template target? Assign one to make it searchable by coaches.')
+  }
+  if (!hasBlocks) {
+    openQuestions.push('This template has no blocks — is it still in draft?')
+  } else if (blocks.length > 0 && recentSessions.length === 0) {
+    openQuestions.push('Template has blocks but has not been used recently — is it still relevant to the current curriculum?')
+  }
+  if (pendingCount > 0) {
+    openQuestions.push(`${pendingCount} pending item${pendingCount !== 1 ? 's' : ''} linked to this template — what are they waiting on?`)
+  }
+
+  const summaryParts: string[] = [`${templateName} — ${statusLabel}`]
+  if (levelName) summaryParts.push(`targeting ${levelName}`)
+  if (hasBlocks) summaryParts.push(`${blocks.length} block${blocks.length !== 1 ? 's' : ''}`)
+  if (recentSessions.length > 0) summaryParts.push(`used ${recentSessions.length} time${recentSessions.length !== 1 ? 's' : ''} in last 30 days`)
+
+  return {
+    contextType: 'class_template_detail',
+    title: `Template: ${templateName}`,
+    summary: summaryParts.join(', ') + '.',
+    keyFacts,
+    openQuestions,
+    suggestedNextSteps: nextSteps,
+    dataUsed: [
+      'templates (academy_id + id scoped)',
+      ...(hasBlocks ? ['template_blocks (scoped via Q1-verified templateId)'] : []),
+      ...(levelName ? ['curriculum_levels'] : []),
+      ...(recentSessions.length > 0 ? ['sessions (template_id + academy_id scoped)'] : []),
+      ...(pendingCount > 0 ? ['proposed_actions (academy_id + target_object_id scoped)'] : []),
+    ],
+    missingData,
+    safetyNotes: [
+      'Read-only summary. No template data was changed.',
+      'template_blocks has no academy_id — scoped via Q1-verified templateId (academy boundary enforced at template level).',
+      'Fitness template guard applied — class template detail will not surface fitness template data.',
+      'curriculum_class_template_blocks not queried — migration 062 pending on live DB (documented in KNOWN_LIMITATIONS.md).',
+    ],
+    recommendationInputsAvailable: [
+      'template_status',
+      ...(levelName ? ['curriculum_level'] : []),
+      ...(hasBlocks ? ['block_count', 'block_names'] : []),
+      ...(recentSessions.length > 0 ? ['recent_usage_count'] : []),
+      ...(totalDuration > 0 ? ['total_duration'] : []),
+    ],
+    recommendationInputsMissing: [
+      ...(!levelName ? ['curriculum_level'] : []),
+      ...(!hasBlocks ? ['lesson_plan_blocks'] : []),
+      ...(recentSessions.length === 0 ? ['recent_session_usage'] : []),
+    ],
+    possibleSuggestionTypes: ['template_recommendation', 'session_focus_recommendation', 'curriculum_priority_suggestion'],
     fetchedAt: new Date().toISOString(),
   }
 }
