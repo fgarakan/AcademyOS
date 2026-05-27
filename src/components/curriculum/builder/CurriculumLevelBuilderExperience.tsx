@@ -83,11 +83,18 @@ function panelToAction(panel: ActivePanel): string | undefined {
 interface Props {
   level: CurriculumLevel
   explorerData: CurriculumExplorerData
+  /**
+   * RSC slot — passed from the server page component.
+   * Used to embed CurriculumBuilderChangeQueue (a server component)
+   * inside this client component without breaking RSC rules.
+   * Read-only display; no mutations performed here.
+   */
+  changeQueue?: React.ReactNode
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function CurriculumLevelBuilderExperience({ level, explorerData }: Props) {
+export function CurriculumLevelBuilderExperience({ level, explorerData, changeQueue }: Props) {
   const [activePanel, setActivePanel] = useState<ActivePanel>(null)
   /** Pre-selects a change type in the DraftPanel when a DONNA chip is clicked.
    *  Local state only — no DB mutation, no auto-submit. User must still type and submit. */
@@ -262,14 +269,16 @@ export function CurriculumLevelBuilderExperience({ level, explorerData }: Props)
 
       </div>
 
-      {/* ── Right DONNA panel — context-aware ─────────────────────────── */}
-      <aside className="hidden lg:block w-72 shrink-0 sticky top-6 self-start">
+      {/* ── Right DONNA panel + change queue ─────────────────────────── */}
+      <aside className="hidden lg:block w-72 shrink-0 sticky top-6 self-start space-y-4">
         <CurriculumDonnaPanel
           mode="level"
           levelName={level.display_name}
           activeAction={activeAction}
           onAction={handleDonnaAction}
         />
+        {/* RSC slot — CurriculumBuilderChangeQueue passed from server page */}
+        {changeQueue}
       </aside>
     </div>
   )

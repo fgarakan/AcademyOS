@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-05-27 — Sprint 903 — Curriculum Change Queue Live Query V1
+
+- **Read/query/display only** — no approve/reject mutation, no `execute_curriculum_override()` call, no `proposed_actions` usage, no migration changes, no official curriculum mutation
+- **Modified `src/app/director/curriculum/builder/CurriculumBuilderChangeQueue.tsx`** — replaced `proposed_actions` query (schema-incompatible, Sprint 899 finding) with live query against `academy_curriculum_overrides`; filters `status IN ('pending_review', 'draft')`; academy-scoped (`academy_id = profile.academy_id`, RLS also enforces); extracts `title`, `content_type`, `description` from `proposed_change` JSONB; uses `rawDb = supabase as any` (table not in generated types); limit 20, newest first; renders error state on query failure
+- **Modified `src/components/curriculum/builder/CurriculumChangeQueue.tsx`** — updated `CurriculumChangeItem` interface (`title`, `contentType`, `overrideType`, `source`, `status`, `createdAt`, `description`); updated display: source labels → "DONNA (typed)" / "DONNA (voice)" / "Director edit"; content type labels → "Drill" / "Fitness exercise" / "Assessment gate" etc.; empty state → "No curriculum drafts waiting for review."; status config covers all schema values ('draft', 'pending_review', 'approved', 'applied', 'rejected', 'rolled_back') for display only; badge row shows content type + override type + source; no approve/reject buttons
+- **Modified `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx`** — added `changeQueue?: React.ReactNode` slot prop to interface and component signature; renders `{changeQueue}` in right sidebar below `CurriculumDonnaPanel`; sidebar updated to `space-y-4`; RSC composition pattern — allows passing a server component into a client component without violating Next.js App Router rules
+- **Modified `src/app/director/curriculum/level/[levelId]/page.tsx`** — imported `CurriculumBuilderChangeQueue` and `Suspense`; renders `<CurriculumBuilderChangeQueue />` wrapped in `<Suspense fallback={<ChangeQueueSkeleton />}>`; passes as `changeQueue` prop to `CurriculumLevelBuilderExperience`; added `ChangeQueueSkeleton` (animated pulse placeholder with two skeleton cards); level builder renders immediately while queue streams in
+- **Mount point:** `/director/curriculum/level/[levelId]` — the change queue appears in the right sidebar at every curriculum level page, below DONNA's context panel; shows all pending academy curriculum overrides (not filtered per level — academy-wide queue)
+- **Query behavior:** `academy_curriculum_overrides` → `status IN ('pending_review', 'draft')` → `academy_id = profile.academy_id` → ordered `created_at DESC` → limit 20
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 902 — DONNA Curriculum Draft UI Wire V1
 
 - **Limited UI mutation** — three existing client component files updated; no new files, no migrations, no server action changes
