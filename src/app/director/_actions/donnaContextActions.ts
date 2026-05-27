@@ -14,19 +14,26 @@ import type {
 import { makeFallbackSummary } from '@/components/assistant/donnaContextTypes'
 
 // ---------------------------------------------------------------------------
-// Academy ID resolution
+// Academy ID + authenticated user ID resolution
+// Sprint 865: extended to return userId alongside academyId.
+// userId is the server-side auth user id — used as the coach identity anchor.
+// All existing call sites destructure only { supabase, academyId } — backward compatible.
 // ---------------------------------------------------------------------------
 
-async function resolveAcademyId(): Promise<{ supabase: Awaited<ReturnType<typeof getSupabaseServer>>; academyId: string | null }> {
+async function resolveAcademyId(): Promise<{
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>
+  academyId: string | null
+  userId: string | null  // Sprint 865 — authenticated user id for coach identity
+}> {
   const supabase = await getSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { supabase, academyId: null }
+  if (!user) return { supabase, academyId: null, userId: null }
   const { data: profile } = await supabase
     .from('profiles')
     .select('academy_id')
     .eq('id', user.id)
     .single()
-  return { supabase, academyId: profile?.academy_id ?? null }
+  return { supabase, academyId: profile?.academy_id ?? null, userId: user.id }
 }
 
 // ---------------------------------------------------------------------------
@@ -38,9 +45,22 @@ export async function fetchDonnaContext(
   params?: { playerId?: string; coachId?: string; sessionId?: string; templateId?: string },
 ): Promise<DonnaContextSummary> {
   try {
-    const { supabase, academyId } = await resolveAcademyId()
+    // Sprint 865: destructure userId for coach identity verification
+    const { supabase, academyId, userId } = await resolveAcademyId()
     if (!academyId) {
       return makeFallbackSummary(contextType, 'Academy context is unavailable. Please sign in.')
+    }
+
+    // Sprint 865: Coach contexts require server-side authenticated user id.
+    // params?.coachId is NEVER used as the identity anchor for coach-scoped queries.
+    if (
+      !userId &&
+      (contextType === 'coach_home_context' ||
+        contextType === 'coach_players_context' ||
+        contextType === 'coach_session_context' ||
+        contextType === 'coach_wrap_up_context')
+    ) {
+      return makeFallbackSummary(contextType, 'Coach identity could not be verified. Please sign in.')
     }
 
     switch (contextType) {
@@ -56,6 +76,11 @@ export async function fetchDonnaContext(
       case 'curriculum_context':         return fetchCurriculumContext(supabase, academyId)
       case 'review_queue_context':       return fetchReviewQueueContext(supabase, academyId)
       case 'signals_context':            return fetchSignalsContext(supabase, academyId)
+      // Sprint 865 — Coach contexts (userId verified non-null by guard above)
+      case 'coach_home_context':         return fetchCoachHomeContext(supabase, academyId, userId as string)
+      case 'coach_players_context':      return fetchCoachPlayersContext(supabase, academyId, userId as string)
+      case 'coach_session_context':      return fetchCoachSessionContext(supabase, academyId, userId as string, params?.sessionId)
+      // coach_wrap_up_context: Sprint 866 — falls to default until implemented
       default:                           return fetchAcademyOverview(supabase, academyId)
     }
   } catch {
@@ -1329,6 +1354,531 @@ async function fetchCoachContext(
       ...(observationCount === 0 ? ['observation_history'] : []),
     ],
     possibleSuggestionTypes: ['coach_execution_suggestion', 'observation_coverage_suggestion'],
+    fetchedAt: new Date().toISOString(),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Coach home context — Sprint 865
+// Coach's own sessions and review queue items only.
+// Identity: coachId MUST be the server-side authenticated user id (not URL/client param).
+// Safety: sessions double-scoped (academy_id + coach_id = auth user).
+//         proposed_actions double-scoped (academy_id + proposed_by_id = auth user).
+// ---------------------------------------------------------------------------
+
+async function fetchCoachHomeContext(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  academyId: string,
+  coachId: string,  // ALWAYS resolveAcademyId().userId — never client-provided
+): Promise<DonnaContextSummary> {
+  const rawDb = supabase as any
+
+  const now = new Date()
+  const today = now.toISOString().split('T')[0]
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+  // Query 1 — Coach's own sessions (past 30 days + upcoming)
+  // Double-scoped: academy_id + coach_id = authenticated user
+  const { data: sessionsRaw } = await rawDb
+    .from('sessions')
+    .select('id, name, scheduled_date, scheduled_time, status, template_id')
+    .eq('academy_id', academyId)
+    .eq('coach_id', coachId)
+    .gte('scheduled_date', thirtyDaysAgo)
+    .order('scheduled_date', { ascending: true })
+
+  const sessions = (sessionsRaw ?? []) as Array<{
+    id: string
+    name: string | null
+    scheduled_date: string
+    scheduled_time: string | null
+    status: string
+    template_id: string | null
+  }>
+
+  const todaySessions = sessions.filter(s => s.scheduled_date === today && s.status !== 'cancelled')
+  const upcomingSessions = sessions.filter(s => s.scheduled_date > today && s.status !== 'cancelled')
+  const completedSessions = sessions.filter(s => s.status === 'completed')
+
+  // Query 2 — Coach's own items in the review queue
+  // Double-scoped: academy_id + proposed_by_id = authenticated user
+  const { data: pendingRaw } = await rawDb
+    .from('proposed_actions')
+    .select('id, target_module, status')
+    .eq('academy_id', academyId)
+    .eq('proposed_by_id', coachId)
+    .eq('status', 'pending_review')
+
+  const pendingItems = (pendingRaw ?? []) as Array<{ id: string; target_module: string; status: string }>
+  const pendingWrapUps = pendingItems.filter(i => i.target_module === 'session_wrap_up_v1')
+  const otherPending = pendingItems.filter(i => i.target_module !== 'session_wrap_up_v1')
+
+  // Build today's session label
+  const todayLabel: string | null = todaySessions.length > 0
+    ? todaySessions.map(s => {
+        const name = s.name ?? 'Unnamed session'
+        const timeStr = s.scheduled_time ? ` at ${s.scheduled_time.slice(0, 5)}` : ''
+        return `${name}${timeStr}`
+      }).join('; ')
+    : null
+
+  const keyFacts: string[] = []
+  if (todayLabel !== null) {
+    keyFacts.push(`Today: ${todayLabel}`)
+  } else {
+    keyFacts.push('No sessions assigned today')
+  }
+  keyFacts.push(`${upcomingSessions.length} upcoming session${upcomingSessions.length !== 1 ? 's' : ''} assigned`)
+  keyFacts.push(`${completedSessions.length} session${completedSessions.length !== 1 ? 's' : ''} completed in last 30 days`)
+  if (pendingWrapUps.length > 0) {
+    keyFacts.push(`${pendingWrapUps.length} wrap-up${pendingWrapUps.length !== 1 ? 's' : ''} submitted and awaiting director review`)
+  }
+  if (otherPending.length > 0) {
+    keyFacts.push(`${otherPending.length} other item${otherPending.length !== 1 ? 's' : ''} pending director review`)
+  }
+
+  const missingData: string[] = []
+  if (sessions.length === 0) missingData.push('No sessions assigned in the last 30 days or upcoming')
+
+  const nextSteps: string[] = []
+  if (todaySessions.length > 0) {
+    nextSteps.push(`Run today's ${todaySessions.length} session${todaySessions.length !== 1 ? 's' : ''} — check lesson plans are ready`)
+  } else if (upcomingSessions.length > 0) {
+    nextSteps.push(`${upcomingSessions.length} upcoming session${upcomingSessions.length !== 1 ? 's' : ''} — review lesson plans ahead of time`)
+  } else {
+    nextSteps.push('No upcoming sessions assigned — check with your director')
+  }
+  if (completedSessions.length > 0 && pendingWrapUps.length === 0) {
+    nextSteps.push('Submit wrap-ups for any recently completed sessions')
+  }
+
+  const openQuestions: string[] = []
+  if (pendingWrapUps.length > 0) {
+    openQuestions.push(`${pendingWrapUps.length} wrap-up${pendingWrapUps.length !== 1 ? 's' : ''} awaiting director review — any feedback expected?`)
+  }
+
+  return {
+    contextType: 'coach_home_context',
+    title: 'My Sessions',
+    summary: sessions.length === 0
+      ? 'No sessions assigned recently.'
+      : `${todaySessions.length > 0 ? `${todaySessions.length} session${todaySessions.length !== 1 ? 's' : ''} today, ` : ''}${upcomingSessions.length} upcoming, ${completedSessions.length} completed in last 30 days.`,
+    keyFacts,
+    openQuestions,
+    suggestedNextSteps: nextSteps,
+    dataUsed: [
+      'sessions (coach-owned: academy_id + coach_id)',
+      'proposed_actions (coach-submitted: academy_id + proposed_by_id)',
+    ],
+    missingData,
+    safetyNotes: [
+      'Read-only summary. No session data was changed.',
+      'Sessions scoped by academy_id + coach_id = authenticated user — other coaches not visible.',
+      'Review queue items scoped by proposed_by_id = authenticated user — other coaches not visible.',
+    ],
+    recommendationInputsAvailable: [
+      ...(sessions.length > 0 ? ['coach_session_count', 'session_statuses'] : []),
+      ...(completedSessions.length > 0 ? ['completed_sessions'] : []),
+      ...(pendingWrapUps.length > 0 ? ['pending_wrap_up_count'] : []),
+    ],
+    recommendationInputsMissing: [
+      ...(sessions.length === 0 ? ['coach_session_history'] : []),
+    ],
+    possibleSuggestionTypes: ['session_focus_recommendation', 'coach_execution_suggestion'],
+    fetchedAt: new Date().toISOString(),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Coach players context — Sprint 865
+// Players encountered by this coach through their own sessions.
+// Identity: coachId MUST be the server-side authenticated user id.
+// Safety: player pool derived exclusively through coach-owned session IDs.
+//         session_attendance and players scoped via academy-verified chain.
+// ---------------------------------------------------------------------------
+
+async function fetchCoachPlayersContext(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  academyId: string,
+  coachId: string,  // ALWAYS resolveAcademyId().userId — never client-provided
+): Promise<DonnaContextSummary> {
+  const rawDb = supabase as any
+
+  const now = new Date()
+  const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+  // Query 1 — Coach's own session IDs (past 60 days) — player pool anchor
+  // Double-scoped: academy_id + coach_id = authenticated user
+  const { data: sessionsRaw } = await rawDb
+    .from('sessions')
+    .select('id')
+    .eq('academy_id', academyId)
+    .eq('coach_id', coachId)
+    .gte('scheduled_date', sixtyDaysAgo)
+
+  const coachSessionIds = ((sessionsRaw ?? []) as Array<{ id: string }>).map(s => s.id)
+
+  if (coachSessionIds.length === 0) {
+    return {
+      contextType: 'coach_players_context',
+      title: 'My Players',
+      summary: 'No sessions coached in the last 60 days — no player history available yet.',
+      keyFacts: ['No coached sessions found in the last 60 days'],
+      openQuestions: [],
+      suggestedNextSteps: ['Player history will appear once you have coached sessions with attendance recorded.'],
+      dataUsed: ['sessions (coach-owned)'],
+      missingData: ['No coached sessions in last 60 days'],
+      safetyNotes: [
+        'Read-only. No data changed.',
+        'Player pool derived exclusively from coach-owned sessions — other coaches not visible.',
+      ],
+      recommendationInputsAvailable: [],
+      recommendationInputsMissing: ['coached_session_history', 'attendance_records'],
+      possibleSuggestionTypes: ['player_attention_signal'],
+      fetchedAt: new Date().toISOString(),
+    }
+  }
+
+  // Query 2 — Attendance for coach's sessions
+  // Safety: session_attendance has no academy_id; scoped via coach-owned session IDs from Q1
+  const { data: attendanceRaw } = await rawDb
+    .from('session_attendance')
+    .select('player_id, session_id, status')
+    .in('session_id', coachSessionIds)
+
+  const attendanceRows = (attendanceRaw ?? []) as Array<{ player_id: string; session_id: string; status: string }>
+
+  // Derive unique player IDs and session counts per player
+  const playerSessionIds = new Map<string, Set<string>>()
+  for (const row of attendanceRows) {
+    if (row.player_id) {
+      const existing = playerSessionIds.get(row.player_id) ?? new Set<string>()
+      existing.add(row.session_id)
+      playerSessionIds.set(row.player_id, existing)
+    }
+  }
+  const playerSessionCount = new Map<string, number>(
+    Array.from(playerSessionIds.entries()).map(([id, ids]) => [id, ids.size])
+  )
+  const uniquePlayerIds = Array.from(playerSessionCount.keys())
+
+  if (uniquePlayerIds.length === 0) {
+    return {
+      contextType: 'coach_players_context',
+      title: 'My Players',
+      summary: 'No attendance records found for your coached sessions.',
+      keyFacts: [`${coachSessionIds.length} session${coachSessionIds.length !== 1 ? 's' : ''} coached — no attendance recorded yet`],
+      openQuestions: [],
+      suggestedNextSteps: ['Record attendance after each session to build your player history.'],
+      dataUsed: ['sessions (coach-owned)', 'session_attendance'],
+      missingData: ['No attendance records found for coached sessions'],
+      safetyNotes: [
+        'Read-only. No data changed.',
+        'Player pool derived from session_attendance scoped via coach-owned session IDs.',
+      ],
+      recommendationInputsAvailable: [],
+      recommendationInputsMissing: ['attendance_records'],
+      possibleSuggestionTypes: ['player_attention_signal'],
+      fetchedAt: new Date().toISOString(),
+    }
+  }
+
+  // Query 3 — Player names (academy-scoped — explicit academy_id on players)
+  const { data: playersRaw } = await rawDb
+    .from('players')
+    .select('id, full_name, first_name, last_name')
+    .in('id', uniquePlayerIds)
+    .eq('academy_id', academyId)
+
+  const playerNameMap = new Map<string, string>()
+  for (const p of ((playersRaw ?? []) as Array<{ id: string; full_name: string | null; first_name: string | null; last_name: string | null }>)) {
+    playerNameMap.set(
+      p.id,
+      p.full_name ?? ([p.first_name, p.last_name].filter(Boolean).join(' ') || 'Unknown Player'),
+    )
+  }
+
+  // Query 4 — Curriculum level IDs for these players (academy-scoped)
+  const { data: curricStatesRaw } = await rawDb
+    .from('player_curriculum_states')
+    .select('player_id, current_level_id')
+    .eq('academy_id', academyId)
+    .in('player_id', uniquePlayerIds)
+
+  const curricStates = (curricStatesRaw ?? []) as Array<{ player_id: string; current_level_id: string }>
+  const playerLevelIdMap = new Map<string, string>(curricStates.map(cs => [cs.player_id, cs.current_level_id]))
+  const uniqueLevelIds = Array.from(new Set(curricStates.map(cs => cs.current_level_id)))
+
+  // Query 5 — Level display names (curriculum_levels is a global table — no academy_id)
+  const levelNameMap = new Map<string, string>()
+  if (uniqueLevelIds.length > 0) {
+    const { data: levelsRaw } = await rawDb
+      .from('curriculum_levels')
+      .select('id, display_name')
+      .in('id', uniqueLevelIds)
+    for (const l of ((levelsRaw ?? []) as Array<{ id: string; display_name: string }>)) {
+      levelNameMap.set(l.id, l.display_name)
+    }
+  }
+
+  const playerLevelMap = new Map<string, string>()
+  for (const [playerId, levelId] of Array.from(playerLevelIdMap.entries())) {
+    const name = levelNameMap.get(levelId)
+    if (name) playerLevelMap.set(playerId, name)
+  }
+
+  const playersWithLevel = uniquePlayerIds.filter(id => playerLevelMap.has(id)).length
+  const playersWithoutLevel = uniquePlayerIds.length - playersWithLevel
+
+  // Top 5 most-sessioned players for keyFacts
+  const topPlayers = uniquePlayerIds
+    .sort((a, b) => (playerSessionCount.get(b) ?? 0) - (playerSessionCount.get(a) ?? 0))
+    .slice(0, 5)
+
+  const keyFacts: string[] = [
+    `${uniquePlayerIds.length} player${uniquePlayerIds.length !== 1 ? 's' : ''} coached in the last 60 days`,
+    `${playersWithLevel} of ${uniquePlayerIds.length} have curriculum levels assigned`,
+  ]
+  for (const playerId of topPlayers) {
+    const name = playerNameMap.get(playerId) ?? 'Unknown Player'
+    const count = playerSessionCount.get(playerId) ?? 0
+    const level = playerLevelMap.get(playerId)
+    keyFacts.push(`${name}: ${count} session${count !== 1 ? 's' : ''}${level ? ` (${level})` : ''}`)
+  }
+  if (uniquePlayerIds.length > 5) {
+    keyFacts.push(`…and ${uniquePlayerIds.length - 5} more player${uniquePlayerIds.length - 5 !== 1 ? 's' : ''}`)
+  }
+
+  const missingData: string[] = []
+  if (playersWithoutLevel > 0) {
+    missingData.push(`${playersWithoutLevel} of your players have no curriculum level — ask your director to assign one`)
+  }
+
+  const nextSteps: string[] = []
+  nextSteps.push(`Review your ${uniquePlayerIds.length} player${uniquePlayerIds.length !== 1 ? 's' : ''} and note any patterns across sessions`)
+  if (playersWithoutLevel > 0) {
+    nextSteps.push(`${playersWithoutLevel} player${playersWithoutLevel !== 1 ? 's' : ''} have no curriculum level — check with your director`)
+  }
+
+  return {
+    contextType: 'coach_players_context',
+    title: 'My Players',
+    summary: `${uniquePlayerIds.length} player${uniquePlayerIds.length !== 1 ? 's' : ''} coached in the last 60 days. ${playersWithLevel} have curriculum levels.`,
+    keyFacts,
+    openQuestions: playersWithoutLevel > 0
+      ? [`${playersWithoutLevel} coached player${playersWithoutLevel !== 1 ? 's' : ''} have no curriculum level — have they been placed?`]
+      : [],
+    suggestedNextSteps: nextSteps,
+    dataUsed: [
+      'sessions (coach-owned: academy_id + coach_id)',
+      'session_attendance (scoped via coach session IDs)',
+      'players (academy_id scoped)',
+      'player_curriculum_states (academy_id scoped)',
+      ...(uniqueLevelIds.length > 0 ? ['curriculum_levels'] : []),
+    ],
+    missingData,
+    safetyNotes: [
+      'Read-only. No data changed.',
+      'Player pool derived from session_attendance scoped via coach-owned session IDs — other coaches\' players not visible.',
+      'Player names and curriculum levels only — no coach notes, no assessment scores, no parent data.',
+      'players explicitly re-scoped by academy_id to prevent cross-academy exposure.',
+    ],
+    recommendationInputsAvailable: [
+      ...(uniquePlayerIds.length > 0 ? ['coached_player_count', 'session_count_per_player'] : []),
+      ...(playersWithLevel > 0 ? ['curriculum_levels'] : []),
+    ],
+    recommendationInputsMissing: [
+      ...(playersWithoutLevel > 0 ? ['curriculum_levels_for_some_players'] : []),
+    ],
+    possibleSuggestionTypes: ['player_attention_signal', 'curriculum_priority_suggestion'],
+    fetchedAt: new Date().toISOString(),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Coach session context — Sprint 865
+// Full coach-facing context for a single session the authenticated coach owns.
+// Identity: coachId MUST be the server-side authenticated user id.
+// Safety: Q1 is a triple-scoped ownership gate (id + academy_id + coach_id).
+//         If Q1 returns null, the session is not owned by this coach → fallback.
+//         session_blocks and session_attendance scoped via Q1-verified session ID.
+// ---------------------------------------------------------------------------
+
+async function fetchCoachSessionContext(
+  supabase: Awaited<ReturnType<typeof getSupabaseServer>>,
+  academyId: string,
+  coachId: string,  // ALWAYS resolveAcademyId().userId — never client-provided
+  sessionId: string | undefined,
+): Promise<DonnaContextSummary> {
+  if (!sessionId) {
+    return makeFallbackSummary('coach_session_context', 'No session ID found in the current URL. Open a specific session to use this summary.')
+  }
+
+  const rawDb = supabase as any
+
+  // Query 1 — Session ownership gate
+  // Triple-scoped: id = sessionId + academy_id + coach_id = authenticated user
+  // Returns null if session does not exist, belongs to a different academy, or coach mismatch.
+  const { data: sessionRaw } = await supabase
+    .from('sessions')
+    .select('id, name, scheduled_date, scheduled_time, status, duration_min, location, template_id')
+    .eq('id', sessionId)
+    .eq('academy_id', academyId)
+    .eq('coach_id', coachId)
+    .maybeSingle()
+
+  if (!sessionRaw) {
+    return makeFallbackSummary(
+      'coach_session_context',
+      'Session not found or you are not assigned as the coach for this session.',
+    )
+  }
+
+  const session = sessionRaw as {
+    id: string
+    name: string | null
+    scheduled_date: string
+    scheduled_time: string | null
+    status: string
+    duration_min: number | null
+    location: string | null
+    template_id: string | null
+  }
+
+  // Query 2 — Session blocks
+  // Safety: session_blocks has no academy_id; scoped via sessionId verified in Q1
+  const { data: blocksRaw } = await rawDb
+    .from('session_blocks')
+    .select('id, name, type, duration_min, order_index')
+    .eq('session_id', sessionId)
+    .order('order_index', { ascending: true })
+
+  const blocks = (blocksRaw ?? []) as Array<{
+    id: string
+    name: string
+    type: string
+    duration_min: number
+    order_index: number
+  }>
+
+  // Query 3 — Session attendance
+  // Safety: session_attendance has no academy_id; scoped via sessionId verified in Q1
+  const { data: attendanceRaw } = await rawDb
+    .from('session_attendance')
+    .select('player_id, status')
+    .eq('session_id', sessionId)
+
+  const attendanceRows = (attendanceRaw ?? []) as Array<{ player_id: string; status: string }>
+  const presentIds = attendanceRows.filter(r => r.status === 'present').map(r => r.player_id)
+  const absentIds = attendanceRows.filter(r => r.status === 'absent').map(r => r.player_id)
+
+  // Query 4 — Player names (explicitly academy-scoped on players table)
+  const allPlayerIds = attendanceRows.map(r => r.player_id).filter(Boolean)
+  const playerNameMap = new Map<string, string>()
+  if (allPlayerIds.length > 0) {
+    const { data: playersRaw } = await rawDb
+      .from('players')
+      .select('id, full_name, first_name, last_name')
+      .in('id', allPlayerIds)
+      .eq('academy_id', academyId)
+    for (const p of ((playersRaw ?? []) as Array<{ id: string; full_name: string | null; first_name: string | null; last_name: string | null }>)) {
+      playerNameMap.set(
+        p.id,
+        p.full_name ?? ([p.first_name, p.last_name].filter(Boolean).join(' ') || 'Unknown Player'),
+      )
+    }
+  }
+
+  // --- Build context ---
+  const sessionLabel = session.name ?? `Session ${session.id.slice(0, 8)}`
+  const dateLabel = session.scheduled_date
+    ? new Date(session.scheduled_date + 'T12:00:00Z').toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      })
+    : 'Date unknown'
+
+  const keyFacts: string[] = []
+  keyFacts.push(`Status: ${session.status}`)
+  keyFacts.push(`Date: ${dateLabel}${session.scheduled_time ? ` at ${session.scheduled_time.slice(0, 5)}` : ''}`)
+  if (session.location) keyFacts.push(`Location: ${session.location}`)
+  if (session.duration_min) keyFacts.push(`Duration: ${session.duration_min} min`)
+  if (blocks.length > 0) {
+    const blockNames = blocks.map(b => b.name).slice(0, 3).join(', ')
+    keyFacts.push(`${blocks.length} block${blocks.length !== 1 ? 's' : ''}: ${blockNames}${blocks.length > 3 ? '…' : ''}`)
+  } else {
+    keyFacts.push('No lesson plan blocks — session may need setup')
+  }
+  if (attendanceRows.length > 0) {
+    const parts: string[] = []
+    if (presentIds.length > 0) parts.push(`${presentIds.length} present`)
+    if (absentIds.length > 0) parts.push(`${absentIds.length} absent`)
+    keyFacts.push(`Attendance: ${parts.join(', ')} (${attendanceRows.length} rostered)`)
+  } else {
+    keyFacts.push('No attendance recorded yet')
+  }
+
+  const missingData: string[] = []
+  if (blocks.length === 0) missingData.push('No lesson plan blocks')
+  if (attendanceRows.length === 0) missingData.push('No attendance recorded yet')
+
+  const nextSteps: string[] = []
+  if (session.status === 'planned') {
+    if (blocks.length === 0) {
+      nextSteps.push('No lesson plan — check with your director or generate from a template')
+    } else {
+      nextSteps.push('Session is planned — review lesson plan before it starts')
+    }
+  } else if (session.status === 'in_progress') {
+    nextSteps.push('Session is in progress — record attendance and observations as you go')
+  } else if (session.status === 'completed') {
+    nextSteps.push('Session complete — submit a wrap-up to log what happened')
+  } else {
+    nextSteps.push(`Session is ${session.status} — check with your director if you have questions`)
+  }
+
+  const openQuestions: string[] = []
+  if (absentIds.length > 0 && attendanceRows.length > 0) {
+    const names = absentIds.slice(0, 2).map(id => playerNameMap.get(id) ?? 'Unknown').join(', ')
+    openQuestions.push(
+      `${absentIds.length} player${absentIds.length !== 1 ? 's' : ''} absent (${names}${absentIds.length > 2 ? '…' : ''}) — should parents be notified?`,
+    )
+  }
+  if (!session.template_id) {
+    openQuestions.push('No template linked to this session — was it created ad hoc?')
+  }
+
+  return {
+    contextType: 'coach_session_context',
+    title: `Session: ${sessionLabel}`,
+    summary: `${sessionLabel} — ${session.status}${attendanceRows.length > 0 ? `, ${presentIds.length} of ${attendanceRows.length} present` : ', attendance not recorded'}.`,
+    keyFacts,
+    openQuestions,
+    suggestedNextSteps: nextSteps,
+    dataUsed: [
+      'sessions (ownership-verified: id + academy_id + coach_id)',
+      ...(blocks.length > 0 ? ['session_blocks'] : []),
+      ...(attendanceRows.length > 0 ? ['session_attendance', 'players'] : []),
+    ],
+    missingData,
+    safetyNotes: [
+      'Read-only summary. No session data was changed.',
+      'Session verified as coach-owned: id + academy_id + coach_id = authenticated user.',
+      'session_blocks and session_attendance scoped via ownership-verified session ID.',
+      'No director-private notes, no other coaches\' data, no parent data exposed.',
+    ],
+    recommendationInputsAvailable: [
+      'session_status',
+      'session_date',
+      ...(blocks.length > 0 ? ['lesson_plan_blocks'] : []),
+      ...(attendanceRows.length > 0 ? ['attendance_data'] : []),
+    ],
+    recommendationInputsMissing: [
+      ...(blocks.length === 0 ? ['lesson_plan'] : []),
+      ...(attendanceRows.length === 0 ? ['attendance_records'] : []),
+    ],
+    possibleSuggestionTypes: ['session_focus_recommendation', 'player_attention_signal'],
     fetchedAt: new Date().toISOString(),
   }
 }
