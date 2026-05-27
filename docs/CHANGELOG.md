@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-27 — Sprint 892 — DONNA Normalizer Please Strip V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — `normalize` function updated to strip polite "please" tokens: added `/^please\s+/` strip (leading "please " token) and `/\s+please$/` strip (trailing " please" token) after the existing trailing-punctuation strip; added `.trim()` after the please strips as safety net; Sprint 892 inline comments added; operation order: lowercase → trim → strip trailing `?!.` → strip leading "please " → strip trailing " please" → trim → collapse spaces; no pattern arrays changed, no branch logic changed, no handler copy changed, no navigation changed
+- **Effect:** All "please"-prefixed and "please"-suffixed variants of all existing covered phrases now match: "open it please" → "open it" (ANAPHORIC ✅), "show me please" → "show me" (ANAPHORIC ✅), "bring it up please" → "bring it up" (ANAPHORIC ✅), "navigate there please" → "navigate there" (ANAPHORIC ✅), "please show me" → "show me" (ANAPHORIC ✅), "please open it" → "open it" (ANAPHORIC ✅), "what is that please" → "what is that" (ELABORATION ✅), "what should I do next please" → "what should i do next" (RECOMMENDATION ✅); "please" alone → "please" (no match, returns null ✅); all pre-892 phrases unchanged
+- **No new patterns:** All 17 ANAPHORIC_PATTERNS, 7 SEQUENTIAL_PATTERNS, 13 ELABORATION_PATTERNS, 10 RECOMMENDATION_PATTERNS, 3 TIME_SHIFT_PATTERNS, 6 TOPIC_SHIFT_PATTERNS unchanged
+- **Created** `docs/DONNA_NORMALIZER_PLEASE_STRIP_892.md` — Sprint doc: pre-sprint audit (normalizer behavior + 6 specified phrases confirmed uncovered), normalizer-strip vs. new-patterns safety comparison (strip chosen — covers all 6 pattern groups simultaneously, no pattern array changes), before/after normalizer code, design decisions (operation order, single-side anchoring, double-strip behavior, "please" alone edge case), full phrase coverage verification table (18 phrases tested, all ✅), word-count guard analysis, existing behavior preservation table, safety guarantees (22 checks), Sprint 893 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 891 — DONNA Follow-Up Resolver Full Coverage Audit V2
 
 - **Audit only** — no resolver code changes, no pattern changes, no write-site changes. Full re-certification of `src/lib/donna/donnaFollowUpResolver.ts` at commit `eb6fdc2` (post-Sprint 890) across all 6 active intent families (`'daily_brief'`, `'review_queue'`, `'attention'`, `'coo_answer'`, `'section_nav'`, `'roster_attention'`) and all pattern groups

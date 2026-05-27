@@ -199,7 +199,10 @@ function normalize(text: string): string {
   return text
     .toLowerCase()
     .trim()
-    .replace(/[?!.]+$/, '')
+    .replace(/[?!.]+$/, '')        // strip trailing punctuation
+    .replace(/^please\s+/, '')     // Sprint 892 — strip leading "please " politeness token
+    .replace(/\s+please$/, '')     // Sprint 892 — strip trailing " please" politeness token
+    .trim()                        // re-trim after politeness strip
     .replace(/\s{2,}/g, ' ')
 }
 
