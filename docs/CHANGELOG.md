@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-27 — Sprint 909 — Donna Draft Panels Queue Refresh And Stub Fixes V1
+
+- **BUG-1 fix — `DonnaAddPlayerMissionDraft.tsx` neutralized:**
+  - Removed `useState`, `handleSubmit`, fake success state, textarea, and false "Mission draft queued for review" copy
+  - Replaced with stateless panel: header + honest unavailable notice + close button
+  - Copy: "Player mission drafts are not connected to review yet."
+  - No server action called; no `pending_review` row implied
+- **BUG-2 fix — `DonnaRewriteLevelDraft.tsx` neutralized:**
+  - Removed `useState`, `handleSubmit`, fake success state, textarea, REWRITE_PROMPTS chips, and false "Rewrite draft queued for review" copy
+  - Replaced with stateless panel: header + honest unavailable notice + close button
+  - Copy: "Level rewrite drafts are not connected to review yet."
+  - No server action called; no `pending_review` row implied
+- **GAP-1 fix — `router.refresh()` added to real DONNA draft panels after successful draft creation:**
+  - `DonnaAddDrillDraft.tsx` — added `import { useRouter } from 'next/navigation'`, `const router = useRouter()`, `router.refresh()` after `setSubmitted(true)`
+  - `DonnaAddFitnessExerciseDraft.tsx` — same targeted addition
+  - `DonnaAddAssessmentGateDraft.tsx` — same targeted addition
+  - Queue sidebar (`CurriculumBuilderChangeQueue`) now re-renders immediately after a new draft is created, without requiring a manual page reload
+- **Not modified:** `CurriculumChangeQueue.tsx`, `curriculumDraftActions.ts`, `curriculumOverrideApprovalActions.ts`, migrations, `proposed_actions`, `execute_curriculum_override()`
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 908 — Curriculum Draft Pipeline Internal QA V1
 
 - **QA audit** of Sprints 899–907 curriculum draft pipeline — no new features

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Sparkles, X, Shield, Loader2 } from 'lucide-react'
 import type { CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 import { createCurriculumContentItemDraft } from '@/lib/actions/curriculumDraftActions'
@@ -29,6 +30,7 @@ function deriveTitle(text: string): string {
 }
 
 export function DonnaAddFitnessExerciseDraft({ level, onClose }: Props) {
+  const router = useRouter()
   const [text, setText] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -60,6 +62,7 @@ export function DonnaAddFitnessExerciseDraft({ level, onClose }: Props) {
     }
 
     setSubmitted(true)
+    router.refresh()
   }
 
   return (
