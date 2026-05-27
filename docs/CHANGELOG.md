@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-27 — Sprint 906 — Curriculum Approval Result Verification V1
+
+- **Server action only** — no UI changes, no migrations, no `proposed_actions`, no new mutation path; only `src/lib/actions/curriculumOverrideApprovalActions.ts` modified
+- **Added `attemptResetApprovedToPending()` internal helper:**
+  - Resets `status → pending_review`, clears `approved_by`/`approved_at` on a stuck `approved` row
+  - Safety guard: `.eq('status', 'approved')` — UPDATE is a no-op if row already reached `applied` (covers network-timeout edge case where function succeeded but response was lost)
+  - Writes `curriculum_override.approve_cleanup` audit log (`source_type = 'system'`), non-fatal
+  - Does NOT call `execute_curriculum_override()`; does NOT mutate `curriculum_content_items`
+  - Both try/catch blocks swallow errors — original failure is always surfaced to director
+- **Updated `approveCurriculumOverrideDraft()` — three-step flow:**
+  - **Step 1 (unchanged):** `UPDATE status='approved'` before RPC call
+  - **Step 2 (extended):** after `rpcError` (network/PostgREST): call cleanup helper → revalidate → return `"I couldn't approve this curriculum draft yet."` After `!rpcResult.success` (DB-level failure, function already wrote `apply_failed` audit): call cleanup helper → revalidate → return same error
+  - **Step 3 (new):** re-fetch `academy_curriculum_overrides` and verify `status === 'applied'`; if not, revalidate → return `"The draft was approved, but I couldn't verify that it applied yet."` — prevents false positives where RPC reported success but DB Step 6 did not complete
+  - Old verbose network error message (`"The draft was marked approved but execution failed — please retry or contact support."`) replaced with clean `"I couldn't approve this curriculum draft yet."` across all failure paths
+- **Rejection path (`rejectCurriculumOverrideDraft`) unchanged**
+- **UI unchanged** — `CurriculumChangeQueue.tsx` already handles `ok: false` by showing error and preserving buttons; no changes required
+- **`execute_curriculum_override()` call site:** exactly one — line 293 of `curriculumOverrideApprovalActions.ts` — unchanged
+- **Audit actions now written by this file:** `curriculum_override.rejected` (existing), `curriculum_override.approve_cleanup` (new, Sprint 906)
+- **Audit actions written by DB function:** `curriculum_override.applied` (existing), `curriculum_override.apply_failed` (existing, WHEN OTHERS handler)
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 905 — Curriculum Draft Approval UI Controls V1
 
 - **UI mutation — controlled** — approve/reject buttons wired to existing Sprint 904 server actions; no new server actions, no migrations, no `proposed_actions`, no `execute_curriculum_override()` call from UI

@@ -1,7 +1,7 @@
 'use server'
 
 /**
- * Curriculum Override Approval Actions — Sprint 904
+ * Curriculum Override Approval Actions — Sprint 904 / Sprint 906
  *
  * Provides the controlled approve/reject server actions for
  * academy_curriculum_overrides rows. This is the final step in the
@@ -14,13 +14,16 @@
  *   rejectCurriculumOverrideDraft()       Sprint 904 ← this file — reject
  *   rollbackAcademyCurriculumOverrideAction() — rolls back applied rows
  *
- * Approval flow (two-step, required by execute_curriculum_override()):
+ * Approval flow (three-step, Sprint 906):
  *   1. Permission checks (auth → profile → membership → override ownership)
  *   2. UPDATE academy_curriculum_overrides SET status = 'approved'
  *      (execute_curriculum_override() requires status = 'approved' at Step 2)
  *   3. CALL execute_curriculum_override(overrideId, user.id) via Supabase RPC
  *      → on success: function marks row status = 'applied', mutates curriculum
- *      → on failure: row remains in status = 'approved' — see Sprint 905 risk note
+ *      → on RPC failure (network or DB-level): attemptResetApprovedToPending()
+ *        resets status back to 'pending_review' so director can retry safely
+ *   4. VERIFY row status === 'applied' by re-fetching
+ *      → if not 'applied': return specific verification error (not a false positive)
  *
  * Rejection flow:
  *   1. Permission checks
@@ -38,12 +41,13 @@
  *     execute_curriculum_override().
  *   • rejectCurriculumOverrideDraft() never calls execute_curriculum_override().
  *   • All mutations write to audit_logs (via the DB function on approve,
- *     and directly on reject).
+ *     and directly on reject/cleanup).
  *
- * Risk: if execute_curriculum_override() fails after status is set to 'approved',
- *   the row is left in 'approved' state. The function writes a
- *   curriculum_override.apply_failed audit entry. A cleanup/retry path for
- *   stuck 'approved' rows is recommended for Sprint 905.
+ * Cleanup invariant (Sprint 906):
+ *   attemptResetApprovedToPending() uses AND status='approved' guard — it is a
+ *   no-op if the row has already reached 'applied'. This means a network-timeout
+ *   edge case (function succeeded but response was lost) correctly leaves the row
+ *   'applied' and the cleanup UPDATE silently no-ops.
  *
  * Related:
  *   supabase/migrations/069_execute_curriculum_override.sql — execution function
@@ -85,6 +89,75 @@ function rejectFail(error: string, blocked = false): RejectCurriculumOverrideRes
   return { ok: false, error, blocked }
 }
 
+// ─── attemptResetApprovedToPending ────────────────────────────────────────────
+
+/**
+ * Attempts to reset a stuck 'approved' override row back to 'pending_review'
+ * after an RPC failure.
+ *
+ * Safety invariant: the UPDATE uses AND status='approved', which makes this
+ * a no-op if the row has already moved to 'applied' (e.g. a network-timeout
+ * edge case where the function succeeded but the caller never received the
+ * response). The row is only reset when it is still stuck in 'approved'.
+ *
+ * Clears approved_by and approved_at so the row is semantically clean for
+ * the next approval attempt.
+ *
+ * Writes a 'curriculum_override.approve_cleanup' audit log entry on
+ * best-effort basis (non-fatal — errors are swallowed).
+ *
+ * Does NOT call execute_curriculum_override().
+ * Does NOT mutate curriculum_content_items.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function attemptResetApprovedToPending(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rawDb: any,
+  overrideId: string,
+  academyId: string,
+  userId: string,
+  failureReason: string,
+): Promise<void> {
+  // Reset — only if still stuck in 'approved'. No-op if already 'applied'.
+  // Errors are swallowed; we never let cleanup failure mask the original error.
+  try {
+    await rawDb
+      .from('academy_curriculum_overrides')
+      .update({
+        status:      'pending_review',
+        approved_by: null,
+        approved_at: null,
+      })
+      .eq('id', overrideId)
+      .eq('academy_id', academyId)
+      .eq('status', 'approved')  // ← safety guard: no-op if already applied
+  } catch {
+    // Non-fatal — original error is returned to director regardless
+  }
+
+  // Audit the cleanup attempt (non-fatal)
+  // audit_logs source_type CHECK: 'ui' | 'voice' | 'api' | 'system'
+  try {
+    await rawDb
+      .from('audit_logs')
+      .insert({
+        academy_id:  academyId,
+        actor_id:    userId,
+        action:      'curriculum_override.approve_cleanup',
+        target_type: 'academy_curriculum_overrides',
+        target_id:   overrideId,
+        payload: {
+          override_id:    overrideId,
+          failure_reason: failureReason,
+          cleanup_action: 'reset_approved_to_pending_review',
+        },
+        source_type: 'system',
+      })
+  } catch {
+    // Non-fatal — audit failure does not affect the error returned to director
+  }
+}
+
 // ─── approveCurriculumOverrideDraft ───────────────────────────────────────────
 
 /**
@@ -93,12 +166,23 @@ function rejectFail(error: string, blocked = false): RejectCurriculumOverrideRes
  *
  * This is the ONLY TypeScript call-site for execute_curriculum_override().
  *
+ * Three-step approval (Sprint 906):
+ *   Step 1: UPDATE status='approved' (required before RPC call)
+ *   Step 2: execute_curriculum_override() — mutates curriculum, marks 'applied'
+ *     → on RPC failure: attemptResetApprovedToPending() resets to 'pending_review'
+ *   Step 3: Verify override status === 'applied' by re-fetching
+ *     → if not 'applied': return verification-specific error (no false positives)
+ *     → if 'applied': revalidate + return ok
+ *
  * On success: override status = 'applied', curriculum_content_items mutated,
  *   audit_log written by the DB function.
  *
- * On RPC failure: override status remains 'approved'. The DB function writes
- *   a curriculum_override.apply_failed audit entry. The row will need manual
- *   cleanup or a retry path (Sprint 905).
+ * On RPC failure: attemptResetApprovedToPending() resets the row to
+ *   'pending_review' so the director can retry. The DB function's
+ *   WHEN OTHERS handler may have written a 'curriculum_override.apply_failed'
+ *   audit entry (for DB-level failures). For network-level failures the
+ *   function may not have run at all; in either case the cleanup UPDATE's
+ *   AND status='approved' guard ensures the row is only reset if still stuck.
  */
 export async function approveCurriculumOverrideDraft(
   overrideId: string,
@@ -201,13 +285,11 @@ export async function approveCurriculumOverrideDraft(
   //   • Applies the proposed_change to curriculum_content_items
   //   • Sets status = 'applied', applied_by, applied_at, applied_change
   //   • Writes audit_log entry ('curriculum_override.applied')
-  //   • On exception: writes 'curriculum_override.apply_failed' audit entry
-  //     and returns { success: false, error: "..." }
+  //   • On DB exception: writes 'curriculum_override.apply_failed' audit entry
+  //     and returns { success: false, error: SQLERRM }
   //
-  // ⚠️ RISK: if this call fails, the row stays in status = 'approved'.
-  //    The function always returns a JSONB result (WHEN OTHERS handler).
-  //    rpcError would indicate a network/PostgREST-level failure only.
-  //    Sprint 905 should add retry/cleanup for stuck 'approved' rows.
+  // On any failure (rpcError or success=false), attemptResetApprovedToPending()
+  // will try to restore the row to 'pending_review' for a clean retry.
   const { data: rpcData, error: rpcError } = await rawDb.rpc(
     'execute_curriculum_override',
     {
@@ -217,21 +299,55 @@ export async function approveCurriculumOverrideDraft(
   )
 
   if (rpcError) {
-    // Network or PostgREST-level failure — row is stuck in 'approved'
-    return approveFail(
-      "I couldn't approve this curriculum draft yet. The draft was marked approved but execution failed — please retry or contact support.",
-      false,
+    // Network or PostgREST-level failure.
+    // The DB function may or may not have run. The cleanup UPDATE uses
+    // AND status='approved', so it is a no-op if the function succeeded
+    // and already set status='applied' before the network error.
+    await attemptResetApprovedToPending(
+      rawDb, overrideId, academyId, user.id,
+      'rpc_network_error',
     )
+    revalidatePath('/director/curriculum')
+    revalidatePath('/director/curriculum/builder')
+    return approveFail("I couldn't approve this curriculum draft yet.", false)
   }
 
   // The function always returns JSONB; cast to known shape
   const rpcResult = rpcData as { success: boolean; error?: string; result?: unknown } | null
 
   if (!rpcResult?.success) {
+    // DB-level failure — function ran but returned { success: false }.
+    // The DB function's WHEN OTHERS handler has already written a
+    // 'curriculum_override.apply_failed' audit entry.
+    // Row is stuck in 'approved'; attempt to reset it to 'pending_review'.
+    await attemptResetApprovedToPending(
+      rawDb, overrideId, academyId, user.id,
+      rpcResult?.error ?? 'rpc_function_error',
+    )
+    revalidatePath('/director/curriculum')
+    revalidatePath('/director/curriculum/builder')
+    return approveFail("I couldn't approve this curriculum draft yet.", false)
+  }
+
+  // ── Step 3: Verify the override row is now 'applied' ──────────
+  // execute_curriculum_override() sets status='applied' in its Step 6.
+  // We re-fetch to confirm the mutation completed atomically before
+  // reporting success to the director. This prevents false positives
+  // where the function returned success=true but the row was not updated.
+  const { data: appliedRow } = await rawDb
+    .from('academy_curriculum_overrides')
+    .select('status')
+    .eq('id', overrideId)
+    .eq('academy_id', academyId)
+    .single()
+
+  if (appliedRow?.status !== 'applied') {
+    // RPC reported success but the row is not 'applied' — do not tell
+    // the director the curriculum changed when we cannot confirm it.
+    revalidatePath('/director/curriculum')
+    revalidatePath('/director/curriculum/builder')
     return approveFail(
-      rpcResult?.error
-        ? `I couldn't approve this curriculum draft yet: ${rpcResult.error}`
-        : "I couldn't approve this curriculum draft yet.",
+      "The draft was approved, but I couldn't verify that it applied yet.",
       false,
     )
   }
