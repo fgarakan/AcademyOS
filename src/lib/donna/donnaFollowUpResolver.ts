@@ -201,8 +201,9 @@ function normalize(text: string): string {
     .trim()
     .replace(/[?!.]+$/, '')        // strip trailing punctuation
     .replace(/^please\s+/, '')     // Sprint 892 — strip leading "please " politeness token
+    .replace(/^can you\s+/, '')    // Sprint 893 — strip leading "can you " prefix; after "please" so "please can you …" chains correctly
     .replace(/\s+please$/, '')     // Sprint 892 — strip trailing " please" politeness token
-    .trim()                        // re-trim after politeness strip
+    .trim()                        // re-trim after prefix/politeness strip
     .replace(/\s{2,}/g, ' ')
 }
 

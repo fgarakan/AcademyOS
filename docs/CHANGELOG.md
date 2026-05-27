@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-27 — Sprint 893 — DONNA Normalizer Can You Prefix Strip V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — `normalize` function updated: one new `.replace(/^can you\s+/, '')` line added between Sprint 892's leading "please" strip (step 4) and trailing "please" strip (step 6); Sprint 893 inline comment added; `.trim()` comment updated; full operation order post-893: lowercase → trim → strip trailing `?!.` → strip leading "please " → strip leading "can you " → strip trailing " please" → trim → collapse spaces
+- **Effect:** All "can you "-prefixed variants of all existing patterns now match — "can you show me" → "show me" (ANAPHORIC ✅), "can you open it" → "open it" (ANAPHORIC ✅), "can you bring it up" → "bring it up" (ANAPHORIC ✅), "can you navigate there" → "navigate there" (ANAPHORIC ✅), "can you take me there" → "take me there" (ANAPHORIC ✅), "can you tell me more" → "tell me more" (ELABORATION ✅), "can you explain that" → "explain that" (ELABORATION ✅ — also directly covered by existing `/^(can you )?(explain|clarify|expand) (that|this|it)$/` pattern); chaining: "please can you open it please" → "open it" (ANAPHORIC ✅); "can you" alone → no match (trailing `\s+` required) → null ✅; Sprint 892 phrases unchanged ✅
+- **No new patterns:** All 17 ANAPHORIC, 7 SEQUENTIAL, 13 ELABORATION, 10 RECOMMENDATION, 3 TIME_SHIFT, 6 TOPIC_SHIFT patterns unchanged
+- **Created** `docs/DONNA_NORMALIZER_CAN_YOU_PREFIX_STRIP_893.md` — Sprint doc: pre-sprint audit (7 target phrases confirmed uncovered pre-893; "can you explain that" already covered by built-in `(can you )?` pattern), chaining analysis ("please can you open it please" step-by-step), operation order table post-893 (8 steps), full phrase coverage verification (25/25 ✅), edge cases ("can you" alone, "can you please"), note on "can you what should I do next" (valid RECOMMENDATION result after strip), safety guarantees (23 checks), Sprint 894 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 892 — DONNA Normalizer Please Strip V1
 
 - **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — `normalize` function updated to strip polite "please" tokens: added `/^please\s+/` strip (leading "please " token) and `/\s+please$/` strip (trailing " please" token) after the existing trailing-punctuation strip; added `.trim()` after the please strips as safety net; Sprint 892 inline comments added; operation order: lowercase → trim → strip trailing `?!.` → strip leading "please " → strip trailing " please" → trim → collapse spaces; no pattern arrays changed, no branch logic changed, no handler copy changed, no navigation changed
