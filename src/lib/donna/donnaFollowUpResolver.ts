@@ -134,6 +134,7 @@ const RECOMMENDATION_PATTERNS: RegExp[] = [
   /^what (is the |is your )?best (next )?(step|move|action)$/,
   /^what do i do (first|next)$/,
   /^(what'?s|what is) the (best|right) (first |next )?step$/,
+  /^what now$/, // Sprint 879 — covers "what now?" after section nav (2-word phrase; no other group matches it)
 ]
 
 /** Time shift references (≤ 8 words) */
@@ -152,6 +153,20 @@ const TOPIC_SHIFT_PATTERNS: RegExp[] = [
   /what about (the )?review/,
   /what about (the )?parents?/,
 ]
+
+// ── Section nav recommendation map ───────────────────────────────────────────
+// Sprint 879 — hardcoded label → action-oriented next-step copy for known section labels.
+// Keys must match the focusTarget.label values set by SECTION_NAV_ENTRIES resolvers.
+// Kept intentionally small — unknown labels fall back to baseline copy.
+
+const SECTION_NAV_RECOMMENDATION_MAP: Record<string, string> = {
+  'Session Blocks':    'In Session Blocks, review the planned activities, check the order, and make sure the session flow matches the group\'s needs.',
+  'Session Attendance':'In Session Attendance, confirm who was present, absent, or needs follow-up before moving on.',
+  'Wrap-Up Actions':   'In Wrap-Up Actions, finish the coach wrap-up and submit anything that needs review.',
+  'Wrap-Up Question':  'Answer the current wrap-up question clearly and specifically, then move to the next wrap-up action.',
+  'Template Blocks':   'In Template Blocks, review the block structure, make sure the activities match the template goal, and adjust anything that feels off.',
+  'Coach Run Session': 'In Run Session, use the blocks as the live coaching guide, then update attendance or notes as needed.',
+}
 
 // ── Section nav elaboration map ───────────────────────────────────────────────
 // Sprint 878 — hardcoded label → description map for known section labels.
@@ -293,6 +308,40 @@ function buildTopicShiftResponse(lower: string): DonnaFollowUpResult {
     actionType: 'clarify',
     responseText: `Sure — are you asking about today's brief, something in the review queue, or this page specifically?`,
     navigationHref: null,
+    confidence: 'low',
+  }
+}
+
+// Sprint 879 — section_nav recommendation builder
+function buildSectionNavRecommendationResponse(context: DonnaSessionIntentContext): DonnaFollowUpResult {
+  const label = context.lastSuggestedNavigationLabel ?? context.lastTopicLabel
+  const href  = context.lastSuggestedNavigationHref
+
+  if (label) {
+    const nextStep = SECTION_NAV_RECOMMENDATION_MAP[label]
+    if (nextStep) {
+      return {
+        actionType: 'recommend',
+        responseText: `${nextStep} I can take you back there.`,
+        navigationHref: href,
+        confidence: 'medium',
+      }
+    }
+    // Label set but not in map — baseline copy
+    return {
+      actionType: 'recommend',
+      responseText: `You're at ${label}. The best next step is to review that section, make any needed updates, and continue with the related session or wrap-up flow. I can take you back there.`,
+      navigationHref: href,
+      confidence: 'medium',
+    }
+  }
+  // No label — minimal fallback
+  return {
+    actionType: 'recommend',
+    responseText: href
+      ? `The best next step is to review the section DONNA just navigated to and work through whatever's there. I can take you back.`
+      : `The best next step is to open the Review Queue — that's where pending items usually need attention first. Want me to open it?`,
+    navigationHref: href ?? '/director/review',
     confidence: 'low',
   }
 }
@@ -455,6 +504,13 @@ export function resolveFollowUp(
         navigationHref: '/director/review',
         confidence: 'high',
       }
+    }
+    // Sprint 879 — explicit section_nav recommendation handler.
+    // Fires before the generic fallback so "what should I do next?" / "what now?" after section
+    // navigation returns action-oriented guidance via SECTION_NAV_RECOMMENDATION_MAP instead of
+    // the generic "Review Queue is a good starting point" copy.
+    if (contextIsFresh && context!.lastIntentFamily === 'section_nav') {
+      return buildSectionNavRecommendationResponse(context!)
     }
     // Generic recommendation (no fresh context)
     return {

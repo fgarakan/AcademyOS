@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 879 — DONNA Recommendation Follow-Up Depth V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — (1) Added `/^what now$/` to `RECOMMENDATION_PATTERNS` — covers "what now?" which was not matched by any existing pattern; "what should I do next?" and "what do you recommend?" were already covered; (2) Added `SECTION_NAV_RECOMMENDATION_MAP` — 6-entry hardcoded map of section label → action-oriented next-step copy for Session Blocks, Session Attendance, Wrap-Up Actions, Wrap-Up Question, Template Blocks, Coach Run Session; same 6 keys as Sprint 878 `SECTION_NAV_ELABORATION_MAP`, different (action-oriented) values; (3) Added `buildSectionNavRecommendationResponse` helper — map lookup, label-baseline fallback, no-label fallback; (4) Inserted explicit `'section_nav'` check between `review_queue/attention` handler and generic fallback in `isRecommendation` branch — so "what do you recommend?" / "what now?" after section nav returns action-oriented copy ("In Session Blocks, review the planned activities…") instead of generic Review Queue redirect; existing `daily_brief`, `review_queue`, `attention`, `coo_answer` recommendation paths unchanged; SECTION_NAV_ENTRIES and dispatcher untouched
+- **Created** `docs/DONNA_RECOMMENDATION_FOLLOW_UP_DEPTH_879.md` — Sprint doc: RECOMMENDATION_PATTERNS coverage audit table, before/after copy table, handler priority table (post-879), full 877–879 section_nav handler summary table, files modified/not-modified, safety guarantees, known limitations, Sprint 880 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 878 — DONNA Follow-Up Elaboration Depth V1
 
 - **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — (1) Added 2 entries to `ELABORATION_PATTERNS`: `/^what is (that|this|it)$/` and `/^what does (that|this|it) mean$/` — covers "what is that?" and "what does that mean?" which previously fell through to COO; (2) Added `SECTION_NAV_ELABORATION_MAP` — 6-entry hardcoded map of section label → description for Session Blocks, Session Attendance, Wrap-Up Actions, Wrap-Up Question, Template Blocks, Coach Run Session; (3) Added `buildSectionNavElaborationResponse` helper — map lookup with label-baseline fallback and no-label fallback; (4) Inserted explicit `'section_nav'` check at top of `isElaboration` branch, before the existing generic `lastTopicLabel` handler — so elaboration after section nav returns contextual copy ("That was Session Blocks. It's where you review the planned activities or blocks inside that session. I can take you back there or help you use that section.") instead of generic sign-off copy; existing `daily_brief`, `review_queue`, `attention`, `coo_answer` elaboration paths unchanged; SECTION_NAV_ENTRIES and dispatcher untouched
