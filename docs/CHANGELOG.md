@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-27 — Sprint 912.3 — DONNA Conversation State Foundation V1
+
+- **Created `src/lib/donna/useDonnaConversationMode.ts`:**
+  - New hook encapsulating DONNA God Mode state
+  - Exports `DonnaGodModeState` type: idle / listening / thinking / speaking / auto_listening / awaiting_confirmation / executing / paused / error
+  - Exports `DonnaPendingConfirmation` interface for draft confirmation loop
+  - `useDonnaConversationMode()` hook: conversationMode toggle, isPaused, pendingConfirmation, isAutoListening, noSpeechCount
+  - Pure state — no DOM, no voice, no TTS side effects; all transitions explicit
+  - `computeGodModeState()` pure function derives unified display state from all inputs
+  - `getGodModeStateLabel()` returns user-facing state labels
+  - `MAX_NO_SPEECH_RETRIES = 3` constant for loop guard
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Imports and uses `useDonnaConversationMode` hook
+  - Derives `godModeState` from `computeGodModeState()` + existing voice/TTS/typing booleans
+  - Added `isExecuting` state for draft creation in-flight indicator
+  - Added confirmation loop handling at top of `handleSend()`: CONFIRM_PATTERN / CANCEL_CONFIRM_PATTERN detection → executes `pendingConfirmation.execute()` or clears → "Creating draft now…" / "Done" messages
+  - Added Conversation Mode header bar (director only): state label with color-coded dot, Conv Mode toggle button, Pause/Resume button
+  - Added awaiting confirmation banner with amber styling and clear yes/no instructions
+  - `isTyping || isExecuting` passed to DonnaChatThread for accurate typing indicator
+  - Existing behavior (button-triggered voice, 30-sec TTS window) fully preserved
+
+---
+
 ## 2026-05-27 — Sprint 912.2 — DONNA God Mode Architecture Plan V1
 
 - **Created `docs/architecture/DONNA_GOD_MODE_V1_PLAN.md`:**

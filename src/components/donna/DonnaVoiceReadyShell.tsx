@@ -2,8 +2,10 @@
 
 // Sprint 1035 — DONNA Voice Ready Interaction Shell V1
 // Wraps DonnaChatThread with voice input state management.
+// Sprint 912.3 — DONNA Conversation State Foundation: adds conversationMode toggle,
+// DonnaGodModeState computation, state labels, and Pause/Resume controls.
 // Connects useVoiceDictation → text → chat send flow.
-// Thin shell — voice logic lives in the hook, chat logic lives in DonnaChatThread.
+// Thin shell — voice logic lives in hooks, chat logic lives in DonnaChatThread.
 // No DB writes. No mutations. Purely orchestration.
 
 import { useEffect, useRef, useState } from 'react'
@@ -59,10 +61,20 @@ import { PLAYER_PROGRESS_STALL_PATTERNS, buildPlayerProgressStallAnswer } from '
 import { submitDonnaActionDraft } from '@/lib/actions/donnaSentinelAction'
 import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
 import { buildFocusTargetForRoute } from '@/lib/donna/donnaUIActionDispatcher'
+// Sprint 912.3 — Conversation Mode state machine
+import {
+  useDonnaConversationMode,
+  computeGodModeState,
+  getGodModeStateLabel,
+} from '@/lib/donna/useDonnaConversationMode'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
 const YES_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|take me there|yes please|definitely|absolutely|sounds good|let'?s go|open it|navigate|go there|open that)\b/i
 const NO_PATTERN  = /^(no|nope|not now|cancel|never mind|maybe later|skip|not yet|don'?t|no thanks|not right now)\b/i
+
+// ── Confirmation yes/no detection (Sprint 912.3) ──────────────────────────────
+const CONFIRM_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|confirm|confirmed|sounds good|let'?s go|absolutely|definitely|create it|make it|create the draft|make the draft)\b/i
+const CANCEL_CONFIRM_PATTERN = /^(no|nope|not now|cancel|never mind|forget it|don'?t|stop|skip it|scratch that|no thanks|not right now|don't do it|don't create it)\b/i
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -94,10 +106,29 @@ export function DonnaVoiceReadyShell({
   const [isTyping, setIsTyping] = useState(false)
   // Sprint 751 — track TTS speaking state so the UI shows a "Speaking…" indicator
   const [isSpeaking, setIsSpeaking] = useState(false)
+  // Sprint 912.3 — executing state for draft creation
+  const [isExecuting, setIsExecuting] = useState(false)
   const voice = useVoiceDictation()
   const pendingVoiceRef = useRef<string | null>(null)
   const router = useRouter()
   const pathname = usePathname()
+
+  // Sprint 912.3 — DONNA Conversation Mode state
+  const conv = useDonnaConversationMode()
+
+  // Sprint 912.3 — Derive unified god mode state from all sources
+  const godModeState = computeGodModeState({
+    conversationMode: conv.conversationMode,
+    isPaused: conv.isPaused,
+    pendingConfirmation: conv.pendingConfirmation,
+    isAutoListening: conv.isAutoListening,
+    isSpeaking,
+    isTyping,
+    isExecuting,
+    voiceIsListening: voice.status === 'listening' || voice.status === 'processing',
+  })
+
+  const godModeLabel = getGodModeStateLabel(godModeState)
 
   // Sprint 731: TTS auto-speak tracking
   const lastVoiceInputAt = useRef<number>(0)
@@ -159,6 +190,78 @@ export function DonnaVoiceReadyShell({
     const userMsg = buildUserChatMessage(trimmed)
     setMessages(prev => [...prev, userMsg])
     setIsTyping(true)
+
+    // ── Sprint 912.3: Pending confirmation intercept ─────────────────────────
+    // Check BEFORE nav offer and boundary detection so yes/no resolves correctly.
+    const pending = conv.pendingConfirmation
+    if (pending) {
+      if (CONFIRM_PATTERN.test(trimmed)) {
+        conv.clearPendingConfirmation()
+        setIsTyping(false)
+        setIsExecuting(true)
+        const confirmingMsg: ChatMessage = {
+          id: `donna-confirming-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: 'Creating the draft now…',
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: null,
+        }
+        setMessages(prev => [...prev, confirmingMsg])
+        void pending.execute().then(result => {
+          setIsExecuting(false)
+          const resultMsg: ChatMessage = {
+            id: `donna-result-${Date.now()}`,
+            role: 'donna',
+            kind: 'text',
+            text: result.ok
+              ? `${result.message} The draft is in your Review Center.`
+              : `Something went wrong: ${result.message}. Please try again.`,
+            timestamp: new Date().toISOString(),
+            confidence: result.ok ? 'high' : 'partial',
+            sourceNote: result.ok ? 'Draft created' : 'Action failed',
+            followUp: result.ok ? 'Take me to Review Center' : null,
+            followUpHref: result.ok ? '/director/curriculum/builder' : undefined,
+          }
+          setMessages(prev => [...prev, resultMsg])
+          recordTurn(trimmed, resultMsg.text, {
+            actionId: result.ok ? 'curriculum_draft_created' : 'curriculum_draft_failed',
+            confidence: result.ok ? 'high' : 'partial',
+          })
+        })
+        return
+      }
+      if (CANCEL_CONFIRM_PATTERN.test(trimmed)) {
+        conv.clearPendingConfirmation()
+        setIsTyping(false)
+        const cancelMsg: ChatMessage = {
+          id: `donna-cancel-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: "Cancelled. Nothing was created. What would you like to do instead?",
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: null,
+        }
+        setMessages(prev => [...prev, cancelMsg])
+        recordTurn(trimmed, cancelMsg.text, { confidence: 'high' })
+        return
+      }
+      // Neither yes nor no — re-state the confirmation and keep waiting
+      setIsTyping(false)
+      const repeatMsg: ChatMessage = {
+        id: `donna-repeat-confirm-${Date.now()}`,
+        role: 'donna',
+        kind: 'text',
+        text: `Just to confirm — ${pending.description}. Say "yes" to create the draft, or "no" to cancel.`,
+        timestamp: new Date().toISOString(),
+        confidence: 'high',
+        sourceNote: null,
+      }
+      setMessages(prev => [...prev, repeatMsg])
+      return
+    }
 
     // ── Sprint 724: Yes/No navigation confirmation ───────────────────────────
     // Check BEFORE boundary detection so "yes"/"no" isn't mis-classified.
@@ -759,11 +862,133 @@ export function DonnaVoiceReadyShell({
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
-      {/* Voice status indicator */}
+
+      {/* ── Sprint 912.3: Conversation Mode header bar ─────────────────────── */}
+      {role === 'director' && (
+        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border bg-surface shrink-0">
+          {/* State label — left side */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            {godModeLabel && (
+              <>
+                <span
+                  className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
+                  style={{
+                    background:
+                      godModeState === 'listening' || godModeState === 'auto_listening' ? '#C8FF00'
+                      : godModeState === 'speaking' ? '#8b5cf6'
+                      : godModeState === 'thinking' || godModeState === 'executing' ? '#0A84FF'
+                      : godModeState === 'awaiting_confirmation' ? '#FF9500'
+                      : godModeState === 'paused' ? '#555555'
+                      : '#555555',
+                  }}
+                />
+                <span
+                  className="text-[10px] font-medium truncate"
+                  style={{
+                    color:
+                      godModeState === 'listening' || godModeState === 'auto_listening' ? '#C8FF00'
+                      : godModeState === 'speaking' ? '#8b5cf6'
+                      : godModeState === 'thinking' || godModeState === 'executing' ? '#0A84FF'
+                      : godModeState === 'awaiting_confirmation' ? '#FF9500'
+                      : '#555555',
+                  }}
+                >
+                  {godModeLabel}
+                </span>
+              </>
+            )}
+            {!godModeLabel && (
+              <span className="text-[10px] text-text-muted">
+                {conv.conversationMode ? 'Conversation Mode' : 'DONNA'}
+              </span>
+            )}
+          </div>
+
+          {/* Right side controls */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Pause/Resume — only when conversation mode on */}
+            {conv.conversationMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (conv.isPaused) {
+                    conv.resumeConversation()
+                  } else {
+                    voice.stop()
+                    stopServerTts()
+                    setIsSpeaking(false)
+                    conv.pauseConversation()
+                  }
+                }}
+                className="text-[10px] px-2 py-1 rounded-lg border transition-colors"
+                style={{
+                  borderColor: conv.isPaused ? 'rgba(200,255,0,0.3)' : 'rgba(85,85,85,0.4)',
+                  color: conv.isPaused ? '#C8FF00' : '#888888',
+                  background: conv.isPaused ? 'rgba(200,255,0,0.05)' : 'transparent',
+                }}
+              >
+                {conv.isPaused ? 'Resume' : 'Pause'}
+              </button>
+            )}
+
+            {/* Conversation Mode toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                if (conv.conversationMode) {
+                  voice.stop()
+                  stopServerTts()
+                  setIsSpeaking(false)
+                  conv.disableConversationMode()
+                } else {
+                  conv.enableConversationMode()
+                }
+              }}
+              className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all"
+              style={{
+                borderColor: conv.conversationMode ? 'rgba(200,255,0,0.35)' : 'rgba(85,85,85,0.4)',
+                background: conv.conversationMode ? 'rgba(200,255,0,0.07)' : 'transparent',
+                color: conv.conversationMode ? '#C8FF00' : '#888888',
+              }}
+              title={conv.conversationMode ? 'Turn off Conversation Mode' : 'Turn on Conversation Mode — DONNA listens after each response'}
+            >
+              {conv.conversationMode && (
+                <span
+                  className="w-1.5 h-1.5 rounded-full animate-pulse"
+                  style={{ background: '#C8FF00' }}
+                />
+              )}
+              Conv Mode
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Awaiting confirmation banner ────────────────────────────────────── */}
+      {godModeState === 'awaiting_confirmation' && conv.pendingConfirmation && (
+        <div
+          className="px-3 py-2.5 border-b shrink-0"
+          style={{ background: 'rgba(255,149,0,0.06)', borderColor: 'rgba(255,149,0,0.2)' }}
+        >
+          <p className="text-[10px] uppercase tracking-widest font-semibold mb-1" style={{ color: '#FF9500' }}>
+            Waiting for confirmation
+          </p>
+          <p className="text-[11px] text-text-secondary leading-snug">
+            {conv.pendingConfirmation.description}
+          </p>
+          <p className="text-[10px] text-text-muted mt-1">
+            Say "yes" to create the draft, or "no" to cancel.
+          </p>
+        </div>
+      )}
+
+      {/* Voice status indicator — listening */}
       {voice.status === 'listening' && (
-        <div className="flex items-center justify-center gap-2 py-1.5 bg-lime/10 border-b border-lime/20">
+        <div className="flex items-center justify-center gap-2 py-1.5 bg-lime/10 border-b border-lime/20 shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-lime animate-pulse" />
-          <span className="text-xs text-lime">Listening...</span>
+          <span className="text-xs text-lime">
+            {conv.conversationMode ? 'Auto-listening…' : 'Listening…'}
+          </span>
           {voice.interimTranscript && (
             <span className="text-xs text-lime/70 truncate max-w-[200px]">
               {voice.interimTranscript}
@@ -772,10 +997,10 @@ export function DonnaVoiceReadyShell({
         </div>
       )}
 
-      {/* Sprint 751 — speaking indicator: shown when TTS auto-play is active after a voice input */}
+      {/* Sprint 751 — speaking indicator: shown when TTS auto-play is active */}
       {isSpeaking && (
         <div
-          className="flex items-center justify-center gap-2 py-1.5"
+          className="flex items-center justify-center gap-2 py-1.5 shrink-0"
           style={{ background: 'rgba(139,92,246,0.08)', borderBottom: '1px solid rgba(139,92,246,0.2)' }}
         >
           <span
@@ -785,7 +1010,10 @@ export function DonnaVoiceReadyShell({
           <span className="text-xs" style={{ color: '#8b5cf6' }}>Speaking…</span>
           <button
             type="button"
-            onClick={() => { stopServerTts(); setIsSpeaking(false) }}
+            onClick={() => {
+              stopServerTts()
+              setIsSpeaking(false)
+            }}
             className="text-[10px] px-2 py-0.5 rounded-lg border ml-1 transition-colors hover:opacity-80"
             style={{ borderColor: 'rgba(139,92,246,0.3)', color: 'rgba(139,92,246,0.8)' }}
           >
@@ -794,9 +1022,9 @@ export function DonnaVoiceReadyShell({
         </div>
       )}
 
-      {/* Sprint 745 — voice error: clear one-line message + retry button (non-unsupported errors only) */}
+      {/* Sprint 745 — voice error: clear one-line message + retry button */}
       {voice.error && (
-        <div className="px-4 py-2 bg-status-red/5 border-b border-status-red/20 flex items-center justify-between gap-3">
+        <div className="px-4 py-2 bg-status-red/5 border-b border-status-red/20 flex items-center justify-between gap-3 shrink-0">
           <span className="text-xs text-status-red">
             {voice.error === 'unsupported'
               ? 'Voice is unavailable in this browser. Type your question.'
@@ -816,13 +1044,11 @@ export function DonnaVoiceReadyShell({
 
       {/* Chat thread */}
       {/* Sprint 752: quick action chips hidden once conversation is underway (≥2 messages). */}
-      {/* Chips are useful as conversation starters but add clutter mid-thread.             */}
-      {/* DonnaChatThread already guards on quickActions.length > 0 — no component change. */}
       <DonnaChatThread
         role={role}
         messages={messages}
         quickActions={messages.length >= 2 ? [] : quickActions}
-        isTyping={isTyping}
+        isTyping={isTyping || isExecuting}
         isListening={voice.status === 'listening'}
         onSend={handleSend}
         onQuickAction={handleQuickAction}
