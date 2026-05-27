@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-27 — Sprint 874 — DONNA Navigation + Highlight Certification V1
+
+- **Created** `docs/DONNA_NAVIGATION_HIGHLIGHT_CERTIFICATION_874.md` — full chain audit of all 14 Category 1A DONNA section-navigation actions across Sprints 868–873: verified complete chain (natural language phrase → dispatchUIIntent → resolveSectionNavigation → ID resolution → setDonnaFocusTarget → router.push or donna:highlight event → DonnaHighlightBanner.triggerHighlight → DOM query → teal-glow class); certified all 14 actions by scenario (static routes, same-page dynamic, cross-page dynamic, missing context, role boundaries, conditional DOM targets); identified 3 minor pattern gap bugs (navigate_to_coach_wrap_up_link, navigate_to_wrapup_question, navigate_to_wrapup_actions — documented NL examples don't match dispatcher patterns); zero critical blockers; all pattern gaps deferred to Sprint 875; certification scores: route resolution 9/10, focus target coverage 10/10, same-page highlight 9/10, cross-page highlight 9/10, missing-context handling 10/10, role safety 9/10, conditional targets 8/10; overall 88/100
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 873 — DONNA COO Router Context Awareness V1
 
 - **Modified** `src/components/assistant/DonnaAssistantButton.tsx` — (1) Navigate block: added `setSessionIntentContext({ lastSuggestedNavigationHref: result.route, lastSuggestedNavigationLabel: result.focusTarget?.label ?? 'that section', ... })` after `setDonnaFocusTarget` so section-navigation results are visible to `resolveFollowUp` — previously `handleUIDispatch` navigate results were invisible to `sessionIntentContext`, causing anaphoric follow-ups ("show me", "take me there") to use stale COO hrefs; (2) Added `clarification_needed` handler block guarded by `result.actionId !== null && result.confidence === 'partial'` between navigate and guided_operator blocks — fires `setCommandResponse`, `setCooThread`, `speakDonna` and returns `true`, so section-nav guidance ("open a specific session first") reaches the user instead of falling through silently to the COO; guard (`actionId !== null`) preserves existing behaviour for generic dispatcher fallback (`actionId: null`) which must still reach the COO
