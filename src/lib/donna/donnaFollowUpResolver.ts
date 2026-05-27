@@ -35,15 +35,18 @@ const CONTEXT_TTL_MS = 10 * 60 * 1000 // 10 minutes
  * Contains counts and safe labels only. No raw content, no player names.
  */
 export interface DonnaSessionIntentContext {
+  // Sprint 883 audit — each value annotated with active / dormant status.
+  // Active values have a confirmed write site in DonnaAssistantButton.tsx.
+  // Dormant values are declared but never written — see DONNA_INTENT_FAMILY_TYPE_UNION_AUDIT_883.md.
   lastIntentFamily:
-    | 'daily_brief'
-    | 'review_queue'
-    | 'page_actions'
-    | 'attention'
-    | 'coo_answer'
-    | 'section_nav'     // Sprint 876 — dedicated family for handleUIDispatch section-navigation results
-    | 'roster_attention'
-    | null
+    | 'daily_brief'      // Active — written by handleFetchDailyBrief (DonnaAssistantButton line 2248, Sprint 785)
+    | 'review_queue'     // Active — written by handleOpenReviewQueue (DonnaAssistantButton line 2332, Sprint 785)
+    | 'attention'        // Active — written by handleFetchAttentionReport (DonnaAssistantButton line 2208, Sprint 785)
+    | 'coo_answer'       // Active — written by handleDonnaCooPrompt for all non-blocked COO answers (DonnaAssistantButton line 3050, Sprint 802)
+    | 'section_nav'      // Active — written by handleUIDispatch navigate block (DonnaAssistantButton line 2857, Sprint 876)
+    | 'page_actions'     // Dormant — declared but never written; no write site; no counterpart in DonnaDirectorIntent (Sprint 883 audit — candidate for removal in Sprint 884)
+    | 'roster_attention' // Future-reserved — roster_attention IS an active DonnaDirectorIntent routing value, but the COO path writes 'coo_answer'; no lastIntentFamily write site exists (Sprint 883 audit)
+    | null               // Cleared state — set on panel close (line 973) and route change (line 1277)
   /** Number of sections in the last brief (safe: structural metadata only) */
   lastResultSectionCount: number | null
   /** Number of high-priority sections in the last brief */

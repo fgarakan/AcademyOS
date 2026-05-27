@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 883 — DONNA Intent Family Type Union Audit V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Added 3-line comment block before `lastIntentFamily` annotating the scheme; annotated all 7 union values + null with status (active / dormant / future-reserved), write site line number, and sprint reference; no logic changes — purely documentation; classified: `'daily_brief'` active (line 2248), `'review_queue'` active (line 2332), `'attention'` active (line 2208), `'coo_answer'` active (line 3050), `'section_nav'` active (line 2857), `'page_actions'` dormant (never written, no counterpart in DonnaDirectorIntent — candidate for removal Sprint 884), `'roster_attention'` future-reserved (roster_attention IS an active DonnaDirectorIntent routing value but COO path writes 'coo_answer'; plausible future write site when roster follow-up handler is built), `null` active (panel close + route change)
+- **Created** `docs/DONNA_INTENT_FAMILY_TYPE_UNION_AUDIT_883.md` — Full audit: all 5 non-null write sites tabulated; all 9 conditional read sites tabulated; per-value classification with write/read/handler evidence; key distinction between roster_attention-as-DonnaDirectorIntent (active) vs. roster_attention-as-lastIntentFamily (dormant); complete handler coverage table (all 5 active families × 3 follow-up types); Sprint 884 recommendation (page_actions type cleanup or daily_brief elaboration handler)
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 882 — DONNA COO Elaboration Follow-Up Depth V1
 
 - **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Added explicit `'coo_answer'` elaboration handler in `isElaboration` branch (priority 2, after `'section_nav'` at priority 1, before generic `lastTopicLabel` handler at priority 3); condition: fresh context + `lastIntentFamily === 'coo_answer'` + `lastSuggestedNavigationHref` non-null; copy: "That was {label} — the page DONNA suggested based on your question. I can take you there or help you decide whether it matters right now." (label-present); "That was the page DONNA suggested based on your question. I can take you there or help you decide whether it matters right now." (no-label variant); fixes "sign-off" framing that fired for all COO-suggested pages regardless of whether they involved sign-off; `coo_answer` with no `lastSuggestedNavigationHref` still falls to generic handlers correctly; no new patterns added; all trigger phrases ("what is that?", "explain that", "what does that mean?", "tell me more") already covered by existing ELABORATION_PATTERNS
