@@ -119,6 +119,8 @@ const ELABORATION_PATTERNS: RegExp[] = [
   /^(can you )?(explain|clarify|expand) (that|this|it)$/,
   /^say more$/,
   /^expand on that$/,
+  /^what is (that|this|it)$/,        // Sprint 878 — covers "what is that?" after section nav
+  /^what does (that|this|it) mean$/, // Sprint 878 — covers "what does that mean?" after section nav
 ]
 
 /** Recommendation requests (≤ 10 words) */
@@ -150,6 +152,20 @@ const TOPIC_SHIFT_PATTERNS: RegExp[] = [
   /what about (the )?review/,
   /what about (the )?parents?/,
 ]
+
+// ── Section nav elaboration map ───────────────────────────────────────────────
+// Sprint 878 — hardcoded label → description map for known section labels.
+// Keys must match the focusTarget.label values set by SECTION_NAV_ENTRIES resolvers.
+// Kept intentionally small — unknown labels fall back to baseline copy.
+
+const SECTION_NAV_ELABORATION_MAP: Record<string, string> = {
+  'Session Blocks':    "It's where you review the planned activities or blocks inside that session.",
+  'Session Attendance':"It's where you check who is present, absent, or needs attendance review.",
+  'Wrap-Up Actions':   "It's where you finish or submit the coach wrap-up.",
+  'Wrap-Up Question':  "It's the current coach wrap-up prompt DONNA is asking you to answer.",
+  'Template Blocks':   "It's where the template's drills, activities, and block structure live.",
+  'Coach Run Session': "It's the coach-facing area for executing the session, including blocks and attendance.",
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -281,6 +297,40 @@ function buildTopicShiftResponse(lower: string): DonnaFollowUpResult {
   }
 }
 
+// Sprint 878 — section_nav elaboration builder
+function buildSectionNavElaborationResponse(context: DonnaSessionIntentContext): DonnaFollowUpResult {
+  const label = context.lastSuggestedNavigationLabel ?? context.lastTopicLabel
+  const href  = context.lastSuggestedNavigationHref
+
+  if (label) {
+    const description = SECTION_NAV_ELABORATION_MAP[label]
+    if (description) {
+      return {
+        actionType: 'elaborate',
+        responseText: `That was ${label}. ${description} I can take you back there or help you use that section.`,
+        navigationHref: href,
+        confidence: 'medium',
+      }
+    }
+    // Label is set but not in the map — baseline copy
+    return {
+      actionType: 'elaborate',
+      responseText: `That was ${label} — the section DONNA just helped you navigate to. I can take you back there if you'd like.`,
+      navigationHref: href,
+      confidence: 'medium',
+    }
+  }
+  // No label available — minimal fallback
+  return {
+    actionType: 'elaborate',
+    responseText: href
+      ? `That was the section DONNA just navigated to. I can take you back there if you'd like.`
+      : `That was the section DONNA just helped you find. Ask me anything else or let me know where to go next.`,
+    navigationHref: href,
+    confidence: 'low',
+  }
+}
+
 // ── Main resolver ──────────────────────────────────────────────────────────────
 
 /**
@@ -367,6 +417,13 @@ export function resolveFollowUp(
   // ── Elaboration ────────────────────────────────────────────────────────────
 
   if (isElaboration) {
+    // Sprint 878 — explicit section_nav elaboration handler.
+    // Fires before the generic lastTopicLabel check so DONNA gives a useful
+    // section-specific description (via SECTION_NAV_ELABORATION_MAP) instead of
+    // the generic "checking {navLabel} for sign-off" copy.
+    if (contextIsFresh && context!.lastIntentFamily === 'section_nav') {
+      return buildSectionNavElaborationResponse(context!)
+    }
     if (contextIsFresh && context!.lastTopicLabel) {
       const href = context!.lastSuggestedNavigationHref
       const navLabel = context!.lastSuggestedNavigationLabel ?? 'the relevant page'

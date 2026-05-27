@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-27 — Sprint 878 — DONNA Follow-Up Elaboration Depth V1
+
+- **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — (1) Added 2 entries to `ELABORATION_PATTERNS`: `/^what is (that|this|it)$/` and `/^what does (that|this|it) mean$/` — covers "what is that?" and "what does that mean?" which previously fell through to COO; (2) Added `SECTION_NAV_ELABORATION_MAP` — 6-entry hardcoded map of section label → description for Session Blocks, Session Attendance, Wrap-Up Actions, Wrap-Up Question, Template Blocks, Coach Run Session; (3) Added `buildSectionNavElaborationResponse` helper — map lookup with label-baseline fallback and no-label fallback; (4) Inserted explicit `'section_nav'` check at top of `isElaboration` branch, before the existing generic `lastTopicLabel` handler — so elaboration after section nav returns contextual copy ("That was Session Blocks. It's where you review the planned activities or blocks inside that session. I can take you back there or help you use that section.") instead of generic sign-off copy; existing `daily_brief`, `review_queue`, `attention`, `coo_answer` elaboration paths unchanged; SECTION_NAV_ENTRIES and dispatcher untouched
+- **Created** `docs/DONNA_FOLLOW_UP_ELABORATION_DEPTH_878.md` — Sprint doc: before/after copy table, elaboration handler priority table (post-878), `SECTION_NAV_ELABORATION_MAP` key list, audit of `isElaboration` branch, files modified/not-modified, safety guarantees, known limitations, Sprint 879 recommendation
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 877 — DONNA Follow-Up Intent Family Explicit Handlers V1
 
 - **Modified** `src/lib/donna/donnaFollowUpResolver.ts` — Inserted explicit `'section_nav'` handler immediately before the generic `lastSuggestedNavigationHref` anaphoric catch-all in `resolveFollowUp`; when `lastIntentFamily === 'section_nav'` and context is fresh, returns context-aware copy `"I'll take you back to {label} — that's where we were."` (or `"I'll take you back to that section."` when no label is stored) instead of the generic `"I'll take you to the {label}."` from the catch-all; generic catch-all remains unchanged and continues to serve `'coo_answer'`, `'page_actions'`, `'roster_attention'`; `'daily_brief'` and `'review_queue'/'attention'` handlers at higher priority are untouched; no other changes to `resolveFollowUp` or any helper function
