@@ -191,8 +191,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'session-list',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /director/sessions. Focus target `session-list` only present when sessions exist. Sprint 868 added the DOM target.',
+    implementationStatus: 'wired',
+    notes: 'Destination: /director/sessions. Focus target `session-list` only present when sessions exist. Sprint 868 DOM target. Sprint 870 dispatch wired (static route).',
   },
 
   // ── Director: Session detail sections ────────────────────────────────────────
@@ -216,8 +216,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'session-blocks',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /director/sessions/[sessionId]. Focus target `session-blocks` only present when blocks exist. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /director/sessions/[sessionId]. Focus target `session-blocks` only present when blocks exist. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — sessionId resolved from current URL).',
   },
 
   {
@@ -239,8 +239,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'session-roster-attendance',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /director/sessions/[sessionId]. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /director/sessions/[sessionId]. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — sessionId resolved from current URL).',
   },
 
   {
@@ -262,8 +262,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'session-roster-intelligence',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /director/sessions/[sessionId]. Focus target `session-roster-intelligence` only present when session has a group assigned. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /director/sessions/[sessionId]. Focus target `session-roster-intelligence` only present when session has a group assigned. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — sessionId resolved from current URL).',
   },
 
   // ── Director: Template detail sections ────────────────────────────────────────
@@ -287,8 +287,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'template-stepper',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /director/class-templates/[templateId]. Focus target `template-stepper` is always visible regardless of active step. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /director/class-templates/[templateId]. Focus target `template-stepper` is always visible regardless of active step. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — templateId resolved from current URL).',
   },
 
   {
@@ -310,8 +310,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'template-blocks-section',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /director/class-templates/[templateId]. Focus target `template-blocks-section` only present in DOM on Step 3 of the stepper. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /director/class-templates/[templateId]. Focus target `template-blocks-section` only present in DOM on Step 3 of the stepper. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — templateId resolved from current URL).',
   },
 
   {
@@ -333,8 +333,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'template-generate-session',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /director/class-templates/[templateId]. Focus target `template-generate-session` only present on Step 5. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /director/class-templates/[templateId]. Focus target `template-generate-session` only present on Step 5. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — templateId resolved from current URL).',
   },
 
   // ── Coach: Hub sections ───────────────────────────────────────────────────────
@@ -358,8 +358,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'coach-today-sessions',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /coach. Focus target `coach-today-sessions` wraps the TODAY section. Sprint 868 added the DOM target.',
+    implementationStatus: 'wired',
+    notes: 'Destination: /coach. Focus target `coach-today-sessions` wraps the TODAY section. Sprint 868 DOM target. Sprint 870 dispatch wired (static route).',
   },
 
   // ── Coach: Players list ───────────────────────────────────────────────────────
@@ -383,8 +383,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'coach-player-list',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /coach/players. Focus target `coach-player-list` wraps the full players directory. Coach-scoped — only assigned players shown. Sprint 868 added the DOM target.',
+    implementationStatus: 'wired',
+    notes: 'Destination: /coach/players. Focus target `coach-player-list` wraps the full players directory. Coach-scoped — only assigned players shown. Sprint 868 DOM target. Sprint 870 dispatch wired (static route).',
   },
 
   // ── Coach: Session detail sections ────────────────────────────────────────────
@@ -408,8 +408,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'coach-lesson-plan',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /coach/sessions/[sessionId]. Focus target `coach-lesson-plan` only present when session has a template. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /coach/sessions/[sessionId]. Focus target `coach-lesson-plan` only present when session has a template. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — sessionId resolved from current URL).',
   },
 
   {
@@ -431,8 +431,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'coach-run-session',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /coach/sessions/[sessionId]. Focus target `coach-run-session` wraps CoachSessionExecutionClient. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /coach/sessions/[sessionId]. Focus target `coach-run-session` wraps CoachSessionExecutionClient. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — sessionId resolved from current URL).',
   },
 
   {
@@ -454,8 +454,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'coach-wrap-up-link',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /coach/sessions/[sessionId]. Focus target `coach-wrap-up-link` wraps the After Session section with wrap-up CTA. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /coach/sessions/[sessionId]. Focus target `coach-wrap-up-link` wraps the After Session section with wrap-up CTA. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — sessionId resolved from current URL).',
   },
 
   // ── Coach: Wrap-up page sections ─────────────────────────────────────────────
@@ -479,8 +479,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'wrapup-question-card',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /coach/sessions/[sessionId]/wrap-up. Focus target `wrapup-question-card` only present in questions phase; absent after submission. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /coach/sessions/[sessionId]/wrap-up. Focus target `wrapup-question-card` only present in questions phase; absent after submission. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — sessionId resolved from current URL).',
   },
 
   {
@@ -502,8 +502,8 @@ export const DONNA_UI_ACTIONS: UIAction[] = [
     pageGuard: [],
     focusTargetId: 'wrapup-nav-actions',
     blockedReason: null,
-    implementationStatus: 'pattern_exists',
-    notes: 'Destination: /coach/sessions/[sessionId]/wrap-up. Focus target `wrapup-nav-actions` contains Back, Skip, and Submit for Review buttons. Sprint 868 added the DOM target.',
+    implementationStatus: 'partially_wired',
+    notes: 'Destination: /coach/sessions/[sessionId]/wrap-up. Focus target `wrapup-nav-actions` contains Back, Skip, and Submit for Review buttons. Sprint 868 DOM target. Sprint 870 dispatch wired (dynamic — sessionId resolved from current URL).',
   },
 
   // ═══════════════════════════════════════════════════════════════════════════

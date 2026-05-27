@@ -411,6 +411,274 @@ export function buildFocusTargetForRoute(
   return undefined
 }
 
+// ── Sprint 870 — Section navigation ─────────────────────────────────────────
+// Routes natural language section-navigate phrases to Category 1A registry actions.
+// Dynamic route params (sessionId, templateId) are extracted from currentRoute.
+// Returns null when no section phrase matches (falls through to generic NAV_PATTERNS).
+// Returns clarification result when phrase matches but route params can't be resolved.
+
+/** Extract sessionId from a director session detail route. Returns null if not on that route. */
+function extractDirectorSessionId(route: string): string | null {
+  const m = route.match(/^\/director\/sessions\/([^/]+)/)
+  return m?.[1] ?? null
+}
+
+/** Extract templateId from a director class-template detail route. Returns null if not on that route.
+ *  Also returns null for /director/class-templates/new (new-template form, not a detail page). */
+function extractDirectorTemplateId(route: string): string | null {
+  const m = route.match(/^\/director\/class-templates\/([^/]+)/)
+  const id = m?.[1] ?? null
+  if (!id || id === 'new') return null
+  return id
+}
+
+/** Extract sessionId from a coach session route. Returns null if not on that route. */
+function extractCoachSessionId(route: string): string | null {
+  const m = route.match(/^\/coach\/sessions\/([^/]+)/)
+  return m?.[1] ?? null
+}
+
+type SectionNavEntry = {
+  pattern: RegExp
+  actionId: string
+  label: string
+  allowedRoles: UIActionRole[]
+  /** Resolve the concrete route + focusTargetId from the current pathname.
+   *  Returns null when the required dynamic param is not in the current URL. */
+  resolve: (currentRoute: string) => { route: string; focusTargetId: string } | null
+}
+
+// Sprint 870 — Section navigation patterns (maps phrases to Category 1A registry actions).
+// Patterns are specific to avoid false positives. Generic page nav still handled by NAV_PATTERNS.
+// Role check in resolveSectionNavigation uses continue (not return) so a phrase can still
+// fall through to NAV_PATTERNS when the role doesn't match the section's allowedRoles.
+const SECTION_NAV_ENTRIES: SectionNavEntry[] = [
+  // ── Director: sessions list ─────────────────────────────────────────────────
+  {
+    pattern: /sessions?\s+list|session(s)?\s+overview|all\s+sessions?\b/i,
+    actionId: 'navigate_to_sessions_list',
+    label: 'Sessions List',
+    allowedRoles: ['academy_director', 'head_coach'],
+    resolve: () => ({ route: '/director/sessions', focusTargetId: 'session-list' }),
+  },
+  // ── Director: session detail sections ─────────────────────────────────────
+  {
+    pattern: /session\s+blocks?|blocks?\s+(for|in)\s+(this|the)\s+session/i,
+    actionId: 'navigate_to_session_blocks',
+    label: 'Session Blocks',
+    allowedRoles: ['academy_director', 'head_coach'],
+    resolve: (route) => {
+      const id = extractDirectorSessionId(route)
+      if (!id) return null
+      return { route: `/director/sessions/${id}`, focusTargetId: 'session-blocks' }
+    },
+  },
+  {
+    pattern: /session\s+attendance|roster\s+attendance|who\s+(was|is)\s+(at|in)\s+(this|the)\s+session|attendance\s+section\b/i,
+    actionId: 'navigate_to_session_attendance',
+    label: 'Session Attendance',
+    allowedRoles: ['academy_director', 'head_coach'],
+    resolve: (route) => {
+      const id = extractDirectorSessionId(route)
+      if (!id) return null
+      return { route: `/director/sessions/${id}`, focusTargetId: 'session-roster-attendance' }
+    },
+  },
+  {
+    pattern: /roster\s+intelligence|class\s+roster\s+intelligence/i,
+    actionId: 'navigate_to_session_roster_intelligence',
+    label: 'Roster Intelligence',
+    allowedRoles: ['academy_director', 'head_coach'],
+    resolve: (route) => {
+      const id = extractDirectorSessionId(route)
+      if (!id) return null
+      return { route: `/director/sessions/${id}`, focusTargetId: 'session-roster-intelligence' }
+    },
+  },
+  // ── Director: template detail sections ────────────────────────────────────
+  {
+    pattern: /template\s+(stepper|builder\s+stepper|steps?)|show\s+(me\s+)?(the\s+)?template\s+(stepper|steps?)\b/i,
+    actionId: 'navigate_to_template_stepper',
+    label: 'Template Builder',
+    allowedRoles: ['academy_director', 'head_coach'],
+    resolve: (route) => {
+      const id = extractDirectorTemplateId(route)
+      if (!id) return null
+      return { route: `/director/class-templates/${id}`, focusTargetId: 'template-stepper' }
+    },
+  },
+  {
+    pattern: /template\s+blocks?|block\s+builder|add\s+(drills?|content|exercises?)\s+to\s+(the\s+)?template/i,
+    actionId: 'navigate_to_template_blocks',
+    label: 'Template Blocks',
+    allowedRoles: ['academy_director', 'head_coach'],
+    resolve: (route) => {
+      const id = extractDirectorTemplateId(route)
+      if (!id) return null
+      return { route: `/director/class-templates/${id}`, focusTargetId: 'template-blocks-section' }
+    },
+  },
+  {
+    pattern: /generate\s+(a\s+)?session|where\s+(do\s+i|to)\s+generate\s+(a\s+)?session/i,
+    actionId: 'navigate_to_template_generate_session',
+    label: 'Generate Session from Template',
+    allowedRoles: ['academy_director', 'head_coach'],
+    resolve: (route) => {
+      const id = extractDirectorTemplateId(route)
+      if (!id) return null
+      return { route: `/director/class-templates/${id}`, focusTargetId: 'template-generate-session' }
+    },
+  },
+  // ── Coach: hub sections ────────────────────────────────────────────────────
+  {
+    pattern: /today'?s?\s+sessions?|my\s+session\s+(plan|schedule)\s+today|what\s+do\s+i\s+have\s+today|coach\s+home\s+today/i,
+    actionId: 'navigate_to_coach_home_today',
+    label: "Today's Sessions",
+    allowedRoles: ['head_coach', 'coach'],
+    resolve: () => ({ route: '/coach', focusTargetId: 'coach-today-sessions' }),
+  },
+  {
+    pattern: /my\s+players|show\s+(me\s+)?my\s+players|open\s+my\s+players|my\s+player\s+(list|directory)/i,
+    actionId: 'navigate_to_coach_players',
+    label: 'My Players',
+    allowedRoles: ['head_coach', 'coach'],
+    resolve: () => ({ route: '/coach/players', focusTargetId: 'coach-player-list' }),
+  },
+  // ── Coach: session detail sections ─────────────────────────────────────────
+  {
+    pattern: /lesson\s+plan|today'?s?\s+plan|show\s+(me\s+)?(the\s+)?lesson\s+plan|curriculum\s+for\s+(this|the)\s+session|what\s+are\s+we\s+doing\s+today/i,
+    actionId: 'navigate_to_coach_lesson_plan',
+    label: "Today's Plan",
+    allowedRoles: ['head_coach', 'coach'],
+    resolve: (route) => {
+      const id = extractCoachSessionId(route)
+      if (!id) return null
+      return { route: `/coach/sessions/${id}`, focusTargetId: 'coach-lesson-plan' }
+    },
+  },
+  {
+    pattern: /run\s+(the\s+|this\s+)?session|session\s+execution|mark\s+attendance|blocks\s+and\s+attendance/i,
+    actionId: 'navigate_to_coach_run_session',
+    label: 'Run Session',
+    allowedRoles: ['head_coach', 'coach'],
+    resolve: (route) => {
+      const id = extractCoachSessionId(route)
+      if (!id) return null
+      return { route: `/coach/sessions/${id}`, focusTargetId: 'coach-run-session' }
+    },
+  },
+  {
+    pattern: /wrap.?up\s+(link|cta|button)|after\s+session\s+section|where\s+(do\s+i|to)\s+(start|find)\s+(the\s+)?wrap.?up|how\s+(do\s+i|to)\s+start\s+(the\s+)?wrap.?up/i,
+    actionId: 'navigate_to_coach_wrap_up_link',
+    label: 'Session Wrap-Up',
+    allowedRoles: ['head_coach', 'coach'],
+    resolve: (route) => {
+      const id = extractCoachSessionId(route)
+      if (!id) return null
+      return { route: `/coach/sessions/${id}`, focusTargetId: 'coach-wrap-up-link' }
+    },
+  },
+  // ── Coach: wrap-up page sections ───────────────────────────────────────────
+  {
+    pattern: /wrap.?up\s+question|current\s+question\s+(in\s+)?wrap.?up|where\s+(do\s+i|to)\s+answer\s+(the\s+)?wrap.?up/i,
+    actionId: 'navigate_to_wrapup_question',
+    label: 'Wrap-Up Question',
+    allowedRoles: ['head_coach', 'coach'],
+    resolve: (route) => {
+      const id = extractCoachSessionId(route)
+      if (!id) return null
+      return { route: `/coach/sessions/${id}/wrap-up`, focusTargetId: 'wrapup-question-card' }
+    },
+  },
+  {
+    pattern: /wrap.?up\s+(actions?|buttons?|submit|navigation)|submit\s+(for\s+)?review|finish\s+(the\s+)?wrap.?up|how\s+(do\s+i|to)\s+(submit|finish)\s+(the\s+|my\s+)?(session\s+notes?|wrap.?up)/i,
+    actionId: 'navigate_to_wrapup_actions',
+    label: 'Wrap-Up Actions',
+    allowedRoles: ['head_coach', 'coach'],
+    resolve: (route) => {
+      const id = extractCoachSessionId(route)
+      if (!id) return null
+      return { route: `/coach/sessions/${id}/wrap-up`, focusTargetId: 'wrapup-nav-actions' }
+    },
+  },
+]
+
+/**
+ * Sprint 870 — Resolve a section-navigation intent.
+ * Maps natural language phrases to Category 1A actions (navigate-to-page-section).
+ * Dynamic route params (sessionId, templateId) are extracted from currentRoute.
+ *
+ * Returns:
+ * - navigate result (confidence: 'high') when the route can be resolved
+ * - clarification result (confidence: 'partial') when phrase matches but dynamic params unavailable
+ * - null when no section phrase matched (falls through to generic NAV_PATTERNS)
+ *
+ * Role check uses `continue` (not `return`) so a phrase can fall through to NAV_PATTERNS
+ * when the matched entry's allowedRoles does not include the current role.
+ */
+export function resolveSectionNavigation(
+  text: string,
+  role: UIActionRole,
+  currentRoute: string,
+): DispatchResult | null {
+  for (const entry of SECTION_NAV_ENTRIES) {
+    if (!entry.pattern.test(text)) continue
+    // Role mismatch — continue so the phrase can still be handled by NAV_PATTERNS for other roles
+    if (!entry.allowedRoles.includes(role)) continue
+
+    const resolved = entry.resolve(currentRoute)
+    if (!resolved) {
+      // Phrase matched and role is valid, but dynamic param (sessionId/templateId) unavailable.
+      // Return a graceful clarification so DONNA doesn't silently no-op.
+      const pageHint = entry.allowedRoles.includes('academy_director')
+        ? 'Open a specific session or template first, then ask again.'
+        : 'Open a specific session first, then ask again.'
+      return {
+        kind: 'clarification_needed',
+        actionId: entry.actionId,
+        message: `I can take you to ${entry.label}, but I need more context. ${pageHint}`,
+        route: null,
+        operatorId: null,
+        stepNumber: null,
+        filterParams: null,
+        requiresApproval: false,
+        approvalRoute: null,
+        matrixPermission: null,
+        confidence: 'partial',
+        safetyClass: 'always_safe',
+      }
+    }
+
+    // Build a focus target from the registry action's display name
+    const registryAction = getUIActionById(entry.actionId)
+    const focusTarget: DonnaFocusTarget = {
+      route: resolved.route,
+      targetId: resolved.focusTargetId,
+      label: registryAction?.displayName ?? entry.label,
+      reason: `DONNA highlighted ${entry.label} for you.`,
+      sourceCommand: text,
+      highlightStyle: 'teal-glow',
+    }
+
+    return {
+      kind: 'navigate',
+      actionId: entry.actionId,
+      message: `Taking you to ${entry.label}.`,
+      route: resolved.route,
+      operatorId: null,
+      stepNumber: null,
+      filterParams: null,
+      requiresApproval: false,
+      approvalRoute: null,
+      matrixPermission: 'ALLOWED',
+      confidence: 'high',
+      safetyClass: 'always_safe',
+      focusTarget,
+    }
+  }
+  return null
+}
+
 /**
  * Attempt to resolve a navigation intent.
  * Accepts optional role to filter role-specific patterns (e.g., player/parent portal routes).
@@ -739,6 +1007,12 @@ export function dispatchUIIntent(
       safetyClass: 'director_approval',
     }
   }
+
+  // 3.6. Sprint 870 — Section navigation (Category 1A: navigate to page + highlight section)
+  // Runs before generic NAV_PATTERNS so section-specific phrases resolve correctly by role.
+  // Fails safely: returns clarification when dynamic params (sessionId/templateId) unavailable.
+  const sectionNav = resolveSectionNavigation(text, role, currentRoute)
+  if (sectionNav) return sectionNav
 
   // 4. Navigation intents — role-filtered and boundary-checked
   const nav = resolveNavigation(text, role)
