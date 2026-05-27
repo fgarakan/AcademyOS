@@ -96,6 +96,14 @@ const ANAPHORIC_PATTERNS: RegExp[] = [
   /^go there$/,
   /^show me all$/,
   /^(can you )?show (it|that|those|them) to me$/,
+  // Sprint 889 — pattern expansion: natural phrases confirmed missing from pre-889 patterns.
+  // All patterns are start+end anchored; word count ≤ 4 (well within the 6-word guard).
+  // "take me to it" was already covered by /^take me (there|to it)$/ — not re-added.
+  /^open (it|that|this)( for me)?$/,          // "open it for me", "open that for me", "open this"
+  /^let me see (it|that|this)$/,              // "let me see it", "let me see that", "let me see this"
+  /^bring (it|that|this) up$/,               // "bring it up", "bring that up", "bring this up"
+  /^pull (it|that|this) up$/,                // "pull it up", "pull that up", "pull this up"
+  /^navigate (there|to it|to that|to this)$/, // "navigate there", "navigate to it", "navigate to that"
 ]
 
 /** Sequential navigation — very short only (≤ 3 words) */
