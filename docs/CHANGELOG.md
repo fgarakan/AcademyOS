@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-27 — Sprint 910 — Curriculum Draft Detail Review Drawer V1
+
+- **Added per-item expandable detail panel to `CurriculumChangeQueue.tsx`:**
+  - "Review draft" / "Hide details" toggle button per item (chevron toggle, director-safe copy)
+  - One item open at a time (`expandedId: string | null` state)
+  - Panel header: "What DONNA proposed"
+  - Compact description preview remains visible in collapsed state (line-clamped)
+  - Expanded panel: full description (unclamped), Director's notes (raw input, only shown when different from description), scalar meta fields (Pathway, Difficulty, Intensity, Duration, Court setup), array fields (Coaching cues, Success criteria, Progressions, Regressions)
+  - Fallback: "No additional details were included with this draft."
+  - Panel footer: "Waiting for director review."
+  - `CurriculumChangeItem` type extended with 11 new nullable detail fields
+  - Added `ChevronDown`, `ChevronUp` to lucide imports
+  - Added `DetailRow` and `DetailList` sub-components
+  - Added `formatPathway()` and `formatDuration()` formatters
+  - Approve/reject controls: unchanged — still wire to `approveCurriculumOverrideDraft()` / `rejectCurriculumOverrideDraft()` only
+- **Modified `CurriculumBuilderChangeQueue.tsx` (server component):**
+  - Added `jsonNumber()` JSONB helper — safely extracts `number` from JSONB
+  - Added `jsonStringArray()` JSONB helper — safely extracts `string[]` from JSONB
+  - Pending-items mapping extended: extracts `rawInput`, `pathway`, `difficulty`, `intensity`, `durationMin`, `durationMax`, `courtSetup`, `coachCues`, `successCriteria`, `progressions`, `regressions` from `proposed_change` + `raw_input`
+  - Recovery items mapping (`ApprovalRecoveryItem`) unchanged
+- **Not added:** edit functionality, before/after preview, bulk approval, new server actions, new mutations, proposed_actions, execute_curriculum_override() call, migrations
+- **Level name** not surfaced (requires additional DB query not in scope; level UUID from `proposed_change.level_id` omitted — deferred to Sprint 911)
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 909 — Donna Draft Panels Queue Refresh And Stub Fixes V1
 
 - **BUG-1 fix — `DonnaAddPlayerMissionDraft.tsx` neutralized:**

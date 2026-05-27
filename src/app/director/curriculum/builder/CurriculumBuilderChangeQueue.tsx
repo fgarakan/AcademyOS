@@ -48,6 +48,22 @@ function jsonString(obj: unknown, key: string): string | null {
   return null
 }
 
+/** Safely extract a number from an unknown JSONB object by key. */
+function jsonNumber(obj: unknown, key: string): number | null {
+  if (obj == null || typeof obj !== 'object' || Array.isArray(obj)) return null
+  const val = (obj as Record<string, unknown>)[key]
+  if (typeof val === 'number') return val
+  return null
+}
+
+/** Safely extract a string[] from an unknown JSONB object by key. */
+function jsonStringArray(obj: unknown, key: string): string[] | null {
+  if (obj == null || typeof obj !== 'object' || Array.isArray(obj)) return null
+  const val = (obj as Record<string, unknown>)[key]
+  if (Array.isArray(val) && val.every(v => typeof v === 'string')) return val as string[]
+  return null
+}
+
 // ─── Row shape returned by the queries ───────────────────────────────────────
 
 interface OverrideRow {
@@ -152,14 +168,26 @@ export async function CurriculumBuilderChangeQueue() {
     ) as CurriculumChangeItem['status']
 
     return {
-      id: r.id,
+      id:              r.id,
       title,
       contentType,
-      overrideType: r.override_type,
-      source: r.source,
+      overrideType:    r.override_type,
+      source:          r.source,
       status,
-      createdAt: r.created_at,
+      createdAt:       r.created_at,
       description,
+      // ── Detail fields (Sprint 910) ────────────────────────────────────
+      rawInput:        r.raw_input ?? null,
+      pathway:         jsonString(pc, 'pathway'),
+      difficulty:      jsonNumber(pc, 'difficulty'),
+      intensity:       jsonNumber(pc, 'intensity'),
+      durationMin:     jsonNumber(pc, 'duration_min'),
+      durationMax:     jsonNumber(pc, 'duration_max'),
+      courtSetup:      jsonString(pc, 'court_setup'),
+      coachCues:       jsonStringArray(pc, 'coach_cues'),
+      successCriteria: jsonStringArray(pc, 'success_criteria'),
+      progressions:    jsonStringArray(pc, 'progressions'),
+      regressions:     jsonStringArray(pc, 'regressions'),
     }
   })
 
