@@ -62,7 +62,7 @@ export function CoachPlayersClient({ players }: { players: PlayerRow[] }) {
   const sorted = sortPlayers(players, sortKey)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-donna-focus-id="coach-player-list">
       <div>
         <p className="page-eyebrow">Your Players</p>
         <h1 className="page-title">My Players</h1>

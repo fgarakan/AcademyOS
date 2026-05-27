@@ -330,7 +330,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
 
       {/* ── Player Watch List ──────────────────────────────────── */}
       {watchListPlayers.length > 0 && (
-        <section>
+        <section data-donna-focus-id="coach-player-watch-list">
           <div className="flex items-center gap-2 mb-3">
             <Users className="w-3.5 h-3.5 text-text-muted" />
             <p className="label-xs">Players in This Session</p>
@@ -341,7 +341,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
 
       {/* ── Today's Plan ── what to coach today */}
       {session.template_id && (
-        <section>
+        <section data-donna-focus-id="coach-lesson-plan">
           <p className="label-xs mb-3">Today's Plan</p>
           <CoachSessionCurriculumPanel templateId={session.template_id} />
         </section>
@@ -356,7 +356,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
       </div>
 
       {/* ── Run the Session ── blocks, exercises, attendance */}
-      <section>
+      <section data-donna-focus-id="coach-run-session">
         <p className="label-xs mb-3">Run the Session</p>
         {blockList.length === 0 ? (
           <NextBestActionCard
@@ -396,7 +396,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
       )}
 
       {/* ── After Session ── primary: Wrap-Up Session ── */}
-      <section>
+      <section data-donna-focus-id="coach-wrap-up-link">
         <p className="label-xs mb-1">After Session</p>
         <p className="text-[11px] text-text-muted mb-2">
           Use <span className="text-text-secondary font-medium">Wrap-Up Session</span> for your structured end-of-session recap.

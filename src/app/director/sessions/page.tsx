@@ -148,7 +148,7 @@ export default async function DirectorSessionsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2" data-donna-focus-id="session-list">
           {sessionList.map(session => {
             const coachName = coachMap.get(session.coach_id) ?? 'Unknown Coach'
             const templateName = session.template_id ? (templateMap.get(session.template_id) ?? null) : null

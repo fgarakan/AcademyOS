@@ -352,25 +352,27 @@ function Step1Identity({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <p className="label-xs">Curriculum Level</p>
-        </CardHeader>
-        <CardContent className="pt-0 space-y-2">
-          <p className="text-xs text-text-muted">
-            Choose the curriculum level this class is designed for. This powers coaching cues, learning goals, and session context for coaches.
-          </p>
-          {curriculumLevels.length > 0 ? (
-            <ClassTemplateCurriculumSelector
-              templateId={templateId}
-              currentLevelId={curriculumLevelId}
-              levels={curriculumLevels}
-            />
-          ) : (
-            <p className="text-[11px] text-text-muted">No curriculum levels available. Seed the curriculum to enable this feature.</p>
-          )}
-        </CardContent>
-      </Card>
+      <div data-donna-focus-id="template-level-picker">
+        <Card>
+          <CardHeader>
+            <p className="label-xs">Curriculum Level</p>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-2">
+            <p className="text-xs text-text-muted">
+              Choose the curriculum level this class is designed for. This powers coaching cues, learning goals, and session context for coaches.
+            </p>
+            {curriculumLevels.length > 0 ? (
+              <ClassTemplateCurriculumSelector
+                templateId={templateId}
+                currentLevelId={curriculumLevelId}
+                levels={curriculumLevels}
+              />
+            ) : (
+              <p className="text-[11px] text-text-muted">No curriculum levels available. Seed the curriculum to enable this feature.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
@@ -504,7 +506,7 @@ function Step3BuildBlocks({
   availableContent: AvailableContentItem[]
 }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" data-donna-focus-id="template-blocks-section">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
           Choose what coaches should run during each part of class. Add drills, games, coaching cues, or mental focus items. Remove anything that does not fit.
@@ -838,7 +840,7 @@ function Step5ReviewApply({
       />
 
       {/* Create session */}
-      <div>
+      <div data-donna-focus-id="template-generate-session">
         <p className="label-xs mb-3">Create Session from Template</p>
         <GenerateSessionFromTemplateButton
           templateId={templateId}
@@ -890,7 +892,7 @@ export function ClassTemplateBuilderStepper({
   function next() { setActiveStep(s => Math.min(totalSteps, s + 1)) }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" data-donna-focus-id="template-stepper">
       <StepperNav activeStep={activeStep} onGoTo={setActiveStep} />
 
       <div className="min-h-[400px]">

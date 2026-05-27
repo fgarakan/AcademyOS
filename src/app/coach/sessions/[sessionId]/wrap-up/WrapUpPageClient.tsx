@@ -239,7 +239,7 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
       </div>
 
       {/* Question card */}
-      <div className="flex-1 rounded-2xl border border-border bg-surface p-5 space-y-4">
+      <div className="flex-1 rounded-2xl border border-border bg-surface p-5 space-y-4" data-donna-focus-id="wrapup-question-card">
         <div>
           <h2 className="text-lg font-bold text-text-primary leading-snug">
             {currentQuestion.question}
@@ -331,7 +331,7 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
       )}
 
       {/* Navigation */}
-      <div className="flex gap-3 mt-4">
+      <div className="flex gap-3 mt-4" data-donna-focus-id="wrapup-nav-actions">
         <button
           onClick={goPrev}
           disabled={isFirst}

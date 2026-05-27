@@ -123,7 +123,7 @@ export default async function CoachHome() {
       </div>
 
       {/* ── Today ────────────────────────────────────────────── */}
-      <div>
+      <div data-donna-focus-id="coach-today-sessions">
         <SectionHeader title="TODAY" />
         <Card>
           <CardHeader>
@@ -203,7 +203,7 @@ export default async function CoachHome() {
       </div>
 
       {/* ── Players + Notes ───────────────────────────────────── */}
-      <div>
+      <div data-donna-focus-id="coach-players-section">
         <SectionHeader title="PLAYERS & NOTES" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 

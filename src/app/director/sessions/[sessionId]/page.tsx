@@ -915,7 +915,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
       />
 
       {/* Group Assignment */}
-      <div>
+      <div data-donna-focus-id="session-group-assignment">
         <SectionHeader title="GROUP ASSIGNMENT" />
         <Card className="mt-3">
           <CardContent className="py-4">
@@ -931,7 +931,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
 
       {/* Class Roster Intelligence */}
       {session.group_id && (
-        <div>
+        <div data-donna-focus-id="session-roster-intelligence">
           <SectionHeader title="CLASS ROSTER INTELLIGENCE" />
           {directorRoster.length === 0 ? (
             <Card className="mt-3">
@@ -955,7 +955,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4" data-donna-focus-id="session-blocks">
           <SectionHeader title="SESSION BLOCKS" />
           {blockList.length > 0 && totalExercises === 0 && (
             <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-status-orange/10 border border-status-orange/30">
@@ -1044,7 +1044,7 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
       )}
 
       {/* Roster and attendance (read-only) */}
-      <div>
+      <div data-donna-focus-id="session-roster-attendance">
         <SectionHeader title="ROSTER & ATTENDANCE" />
         <Card className="mt-3">
           <CardContent className="py-4">
