@@ -544,6 +544,24 @@ export function resolveFollowUp(
         confidence: 'medium',
       }
     }
+    // Sprint 890 — explicit review_queue and attention elaboration handlers.
+    // Both families previously fell to the generic lastTopicLabel handler: "checking Review Queue
+    // for sign-off" (Sprint 886 audit: "Generic + acceptable" — functionally correct but imprecise).
+    // review_queue copy should describe the queue's purpose; attention copy should name the feature
+    // rather than using "sign-off" framing. Combined check mirrors the existing pattern used in the
+    // anaphoric and recommendation branches for these two families.
+    if (contextIsFresh && (context!.lastIntentFamily === 'review_queue' || context!.lastIntentFamily === 'attention')) {
+      const isReviewQueue = context!.lastIntentFamily === 'review_queue'
+      const href = context!.lastSuggestedNavigationHref ?? '/director/review'
+      return {
+        actionType: 'elaborate',
+        responseText: isReviewQueue
+          ? `That was the Review Queue — the place where DONNA collects items waiting for your approval or review. I can open it so you can go through each item.`
+          : `That was the attention view — DONNA's summary of urgent items that may need your review first. I can open the Review Queue so you can handle them.`,
+        navigationHref: href,
+        confidence: 'medium',
+      }
+    }
     if (contextIsFresh && context!.lastTopicLabel) {
       const href = context!.lastSuggestedNavigationHref
       const navLabel = context!.lastSuggestedNavigationLabel ?? 'the relevant page'
