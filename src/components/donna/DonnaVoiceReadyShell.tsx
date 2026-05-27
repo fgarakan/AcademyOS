@@ -66,6 +66,7 @@ import {
   useDonnaConversationMode,
   computeGodModeState,
   getGodModeStateLabel,
+  MAX_NO_SPEECH_RETRIES,
 } from '@/lib/donna/useDonnaConversationMode'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
@@ -133,40 +134,93 @@ export function DonnaVoiceReadyShell({
   // Sprint 731: TTS auto-speak tracking
   const lastVoiceInputAt = useRef<number>(0)
   const lastSpokenIdRef = useRef<string | null>(null)
+  // Sprint 912.4: auto-listen timer ref for cleanup
+  const autoListenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Sprint 912.4: ref so TTS callback can access latest conversationMode/isPaused/pendingConfirmation
+  const convRef = useRef(conv)
+  convRef.current = conv
 
   // Initialize session
   useEffect(() => {
     ensureChatSession(donnaRole)
   }, [donnaRole])
 
+  // Sprint 912.4: cleanup auto-listen timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoListenTimerRef.current) clearTimeout(autoListenTimerRef.current)
+    }
+  }, [])
+
+  // Sprint 912.4: auto-listen loop helper — called after TTS 'done' when conversation mode is on
+  function scheduleAutoListen() {
+    const c = convRef.current
+    if (!c.conversationMode || c.isPaused || c.pendingConfirmation) return
+    if (c.noSpeechCount >= MAX_NO_SPEECH_RETRIES) {
+      c.pauseConversation()
+      return
+    }
+    c.beginAutoListen()
+    if (autoListenTimerRef.current) clearTimeout(autoListenTimerRef.current)
+    autoListenTimerRef.current = setTimeout(() => {
+      c.endAutoListen()
+      pendingVoiceRef.current = null
+      voice.reset()
+      voice.start()
+    }, 400) // brief pause so director knows DONNA finished before mic opens
+  }
+
   // Sprint 731: Auto-speak DONNA responses that follow a voice input (30-second window)
+  // Sprint 912.4: After TTS done, trigger auto-listen loop if conversation mode on
   useEffect(() => {
     const lastMsg = messages[messages.length - 1]
     if (!lastMsg || lastMsg.role !== 'donna' || !lastMsg.text) return
     if (lastMsg.id === lastSpokenIdRef.current) return  // already spoken
     const msSinceVoice = Date.now() - lastVoiceInputAt.current
-    if (msSinceVoice > 30_000) return  // too long since voice input
+    const c = convRef.current
+    // Sprint 912.4: in conversation mode, always speak DONNA's response; otherwise use 30-sec window
+    const shouldSpeak = c.conversationMode || msSinceVoice <= 30_000
+    if (!shouldSpeak) return
     lastSpokenIdRef.current = lastMsg.id
-    // Sprint 751: pass status callback to track speaking state for UI indicator
     setIsSpeaking(true)
     void speakWithServerTts(stripMarkdownForTts(lastMsg.text), (status) => {
-      if (status === 'done' || status === 'error') setIsSpeaking(false)
+      if (status === 'done' || status === 'error') {
+        setIsSpeaking(false)
+        // Sprint 912.4: after speaking, restart mic if conversation mode on
+        if (status === 'done') {
+          scheduleAutoListen()
+        }
+      }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages])
 
   // Auto-send when voice transcript completes
+  // Sprint 912.4: reset no-speech counter when a real transcript arrives
   useEffect(() => {
     if (voice.status === 'idle' && voice.transcript.trim()) {
       if (pendingVoiceRef.current !== voice.transcript) {
         pendingVoiceRef.current = voice.transcript
         lastVoiceInputAt.current = Date.now()  // Sprint 731: mark voice input timestamp
+        convRef.current.resetNoSpeechCount()   // Sprint 912.4: real speech received
         handleSend(voice.transcript)
         voice.reset()
       }
     }
+    // Sprint 912.4: no-speech error in conversation mode — increment counter and retry
+    if (voice.status === 'error' && voice.error === 'no_speech') {
+      const c = convRef.current
+      if (c.conversationMode && !c.isPaused && !c.pendingConfirmation) {
+        const count = c.incrementNoSpeech()
+        if (count < MAX_NO_SPEECH_RETRIES) {
+          scheduleAutoListen()
+        } else {
+          c.pauseConversation()
+        }
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [voice.status, voice.transcript])
+  }, [voice.status, voice.transcript, voice.error])
 
   // Build quick action chips from suggested questions
   const suggestedQuestions = getSuggestedQuestionsForRole(

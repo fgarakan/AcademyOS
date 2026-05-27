@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-05-27 — Sprint 912.4 — DONNA Continuous Listening Loop V1
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Added `autoListenTimerRef` for cleanup on unmount (no dangling timers)
+  - Added `convRef` — stable ref to latest `conv` state for use inside TTS callbacks without stale closure
+  - Added `scheduleAutoListen()` helper: checks `conversationMode`, `isPaused`, `pendingConfirmation`, `noSpeechCount >= MAX_NO_SPEECH_RETRIES`; calls `conv.beginAutoListen()`, then after 400ms delay calls `voice.reset()` + `voice.start()`
+  - Extended TTS `onStatus` callback: when `status === 'done'` and conversation mode on, calls `scheduleAutoListen()`; in conversation mode, always speaks (no 30-sec window restriction)
+  - Extended voice status `useEffect`: on `no_speech` error with conversation mode on, increments counter and retries via `scheduleAutoListen()`; auto-pauses when `noSpeechCount >= MAX_NO_SPEECH_RETRIES`
+  - On real speech transcript: calls `conv.resetNoSpeechCount()` so counter resets for next cycle
+  - Imported `MAX_NO_SPEECH_RETRIES` from `useDonnaConversationMode`
+- **Loop safety guards:**
+  - Max 3 consecutive no-speech retries before auto-pause
+  - `convRef.pendingConfirmation` check prevents mic restart while awaiting yes/no
+  - `isPaused` check prevents restart when director paused
+  - Timer cleanup on unmount prevents memory leaks
+  - Existing push-to-talk (conversation mode off) behavior fully preserved
+
+---
+
 ## 2026-05-27 — Sprint 912.3 — DONNA Conversation State Foundation V1
 
 - **Created `src/lib/donna/useDonnaConversationMode.ts`:**
