@@ -1,13 +1,20 @@
 /**
- * CurriculumBuilderChangeQueue — Sprint 903
+ * CurriculumBuilderChangeQueue — Sprint 903 / Sprint 907
  *
- * Server component. Queries academy_curriculum_overrides for pending
- * curriculum drafts and passes them to the CurriculumChangeQueue display
- * component.
+ * Server component. Runs two read-only queries against
+ * academy_curriculum_overrides and passes results to display components.
  *
- * Source: academy_curriculum_overrides (migration 048)
- *   status IN ('pending_review', 'draft')   — review-relevant only
- *   applied / rejected / rolled_back        — excluded from this queue
+ * Query 1 — Pending drafts (Sprint 903):
+ *   status IN ('pending_review', 'draft')
+ *   → CurriculumChangeQueue (approve/reject controls)
+ *
+ * Query 2 — Approval recovery (Sprint 907):
+ *   status = 'approved' AND approved_at < now() - 10 minutes
+ *   → CurriculumApprovalRecoveryNotice (read-only notice, hidden when empty)
+ *   Filters on approved_at to exclude newly approved rows that may still
+ *   be processing. Rows with approved_at IS NULL are excluded by the lt()
+ *   filter (SQL < on NULL = unknown/false).
+ *   Query failure is non-fatal — notice simply doesn't render.
  *
  * Does NOT call execute_curriculum_override().
  * Does NOT use proposed_actions.
@@ -16,8 +23,9 @@
  *
  * Related:
  *   src/lib/actions/curriculumDraftActions.ts — writes pending_review rows
+ *   src/lib/actions/curriculumOverrideApprovalActions.ts — approval actions
  *   supabase/migrations/048_academy_curriculum_clone.sql — table schema
- *   supabase/migrations/069_execute_curriculum_override.sql — execution (Sprint 904+)
+ *   supabase/migrations/069_execute_curriculum_override.sql — execution function
  */
 
 import { getSupabaseServer } from '@/lib/supabase/server'
@@ -25,6 +33,10 @@ import {
   CurriculumChangeQueue,
   type CurriculumChangeItem,
 } from '@/components/curriculum/builder/CurriculumChangeQueue'
+import {
+  CurriculumApprovalRecoveryNotice,
+  type ApprovalRecoveryItem,
+} from '@/components/curriculum/builder/CurriculumApprovalRecoveryNotice'
 
 // ─── JSONB helper ─────────────────────────────────────────────────────────────
 
@@ -36,7 +48,7 @@ function jsonString(obj: unknown, key: string): string | null {
   return null
 }
 
-// ─── Row shape returned by the query ─────────────────────────────────────────
+// ─── Row shape returned by the queries ───────────────────────────────────────
 
 interface OverrideRow {
   id: string
@@ -45,6 +57,7 @@ interface OverrideRow {
   source: string
   status: string
   created_at: string
+  approved_at: string | null
   proposed_change: unknown          // JSONB
   raw_input: string | null
 }
@@ -70,22 +83,24 @@ export async function CurriculumBuilderChangeQueue() {
 
   const academyId = profile.academy_id
 
-  // ── Query academy_curriculum_overrides ──────────────────────────────────────
-  // academy_curriculum_overrides is not in generated database.types.ts yet
-  // (migrations 048/069 applied but types not regenerated).
+  // ── rawDb: academy_curriculum_overrides not in generated types ──────────────
+  // Migrations 048/069 applied but database.types.ts not regenerated.
   // Using rawDb = supabase as any per AI_BACKEND_RULES rule 4 (TS2589 workaround).
   // RLS enforces academy_id scoping server-side; we also filter explicitly.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawDb = supabase as any
+
+  // ── Query 1: Pending drafts ─────────────────────────────────────────────────
+  // status IN ('pending_review', 'draft') — review-relevant queue
   const { data: rows, error } = (await rawDb
     .from('academy_curriculum_overrides')
-    .select('id,target_type,override_type,source,status,created_at,proposed_change,raw_input')
+    .select('id,target_type,override_type,source,status,created_at,approved_at,proposed_change,raw_input')
     .eq('academy_id', academyId)
     .in('status', ['pending_review', 'draft'])
     .order('created_at', { ascending: false })
     .limit(20)) as { data: OverrideRow[] | null; error: { message: string } | null }
 
-  // Error state — non-null error means query failed
+  // Error state for pending query — shown to director
   if (error) {
     return (
       <div className="space-y-3">
@@ -100,7 +115,7 @@ export async function CurriculumBuilderChangeQueue() {
     )
   }
 
-  // ── Map rows → CurriculumChangeItem ────────────────────────────────────────
+  // ── Map pending rows → CurriculumChangeItem ────────────────────────────────
   const items: CurriculumChangeItem[] = (rows ?? []).map((r: OverrideRow) => {
     const pc = r.proposed_change
 
@@ -148,12 +163,53 @@ export async function CurriculumBuilderChangeQueue() {
     }
   })
 
+  // ── Query 2: Approval recovery ─────────────────────────────────────────────
+  // status = 'approved' AND approved_at < now() - 10 minutes.
+  // Excludes newly approved rows still processing.
+  // Rows with approved_at IS NULL are excluded by lt() (SQL < on NULL is false).
+  // Non-fatal: if this query fails, notice is hidden and pending queue still shows.
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+  const { data: stuckRows } = (await rawDb
+    .from('academy_curriculum_overrides')
+    .select('id,target_type,override_type,source,status,created_at,approved_at,proposed_change,raw_input')
+    .eq('academy_id', academyId)
+    .eq('status', 'approved')
+    .lt('approved_at', tenMinutesAgo)
+    .order('approved_at', { ascending: true })
+    .limit(10)) as { data: OverrideRow[] | null; error: unknown }
+
+  // ── Map stuck rows → ApprovalRecoveryItem ─────────────────────────────────
+  const recoveryItems: ApprovalRecoveryItem[] = (stuckRows ?? []).map((r: OverrideRow) => {
+    const pc = r.proposed_change
+
+    const title = (() => {
+      const fromChange = jsonString(pc, 'title')
+      if (fromChange) return fromChange
+      if (typeof r.raw_input === 'string' && r.raw_input.trim()) {
+        const raw = r.raw_input.trim()
+        return raw.length > 60 ? raw.slice(0, 59) + '…' : raw
+      }
+      return `${r.override_type} ${r.target_type}`
+    })()
+
+    return {
+      id:          r.id,
+      title,
+      contentType: jsonString(pc, 'content_type'),
+      approvedAt:  r.approved_at,
+      createdAt:   r.created_at,
+      description: jsonString(pc, 'description'),
+    }
+  })
+
   return (
     <div className="space-y-3">
       <p className="text-[11px] uppercase tracking-widest text-text-muted font-semibold">
         Pending Drafts
       </p>
       <CurriculumChangeQueue items={items} />
+      {/* Recovery notice — renders nothing when recoveryItems is empty */}
+      <CurriculumApprovalRecoveryNotice items={recoveryItems} />
     </div>
   )
 }

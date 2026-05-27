@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-27 — Sprint 907 — Curriculum Approved-Stuck Recovery View V1
+
+- **Read-only visibility only** — no mutations, no approve/reject/retry controls, no `execute_curriculum_override()` call, no `proposed_actions`, no migrations
+- **Created `src/components/curriculum/builder/CurriculumApprovalRecoveryNotice.tsx`:**
+  - Pure display RSC (no `'use client'`, no hooks, no event handlers)
+  - Exports `ApprovalRecoveryItem` type: `{ id, title, contentType, approvedAt, createdAt, description }`
+  - `items.length === 0` → returns `null` — card is fully hidden in the normal case
+  - Visual style: secondary, muted orange (`border: rgba(255,149,0,0.15)`, `bg: rgba(255,149,0,0.03)`) — calm, not alarming
+  - `AlertTriangle` icon (lucide-react), `text-status-orange`, label: "Needs Review"
+  - Director-safe copy: "Some approved curriculum drafts may need review." / "These drafts were approved, but I haven't confirmed that they finished applying yet. Leave them for now or ask an admin to review."
+  - Per-item display: title, content type badge (if available), approved/created date
+  - No buttons, no mutations, no links to approval actions
+- **Modified `src/app/director/curriculum/builder/CurriculumBuilderChangeQueue.tsx`:**
+  - Added `approved_at: string | null` to `OverrideRow` interface
+  - Added `approved_at` to both query `select()` strings
+  - Added **Query 2 — Approval recovery**: `status='approved' AND approved_at < now()-10min`, `limit(10)`, ordered `approved_at ASC` (oldest first)
+  - Threshold: `new Date(Date.now() - 10 * 60 * 1000).toISOString()` via `.lt('approved_at', tenMinutesAgo)` — rows with `approved_at IS NULL` excluded (SQL `<` on NULL = unknown/false, correct)
+  - Recovery query failure is **non-fatal** — destructured without `error` check; `stuckRows ?? []` degrades to empty array; pending queue still renders
+  - Maps stuck rows to `ApprovalRecoveryItem[]` using same `jsonString()` / title-fallback logic as pending query
+  - Renders `<CurriculumApprovalRecoveryNotice items={recoveryItems} />` below pending queue; component self-hides when empty
+  - **`CurriculumChangeQueue.tsx` not touched** — zero diff lines
+- **Mount point:** level builder sidebar (`/director/curriculum/level/[levelId]`) — recovery notice appears below pending drafts queue, only when stuck rows exist
+- TypeScript: clean (`npx tsc --noEmit` — exit 0, no errors)
+
+---
+
 ## 2026-05-27 — Sprint 906 — Curriculum Approval Result Verification V1
 
 - **Server action only** — no UI changes, no migrations, no `proposed_actions`, no new mutation path; only `src/lib/actions/curriculumOverrideApprovalActions.ts` modified
