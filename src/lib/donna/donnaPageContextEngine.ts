@@ -277,6 +277,104 @@ const PAGE_CAPABILITY_MAP: DonnaPageCapabilityMap[] = [
     blocked: ['run destructive commands', 'expose service keys', 'modify production data from diagnostics'],
     dataFallback: 'Diagnostics data may not be available. I can explain what each diagnostic checks for.',
   },
+  // ── Sprint 862 — Page Context Registry Foundation ────────────────────────────
+  {
+    route: '/director/sessions/[sessionId]',
+    pageLabel: 'Session Detail',
+    directorIntent: 'Review a specific session — who attended, what was delivered, and whether the coach submitted a wrap-up.',
+    safeContext: ['session name and date', 'assigned coach', 'attendance roster', 'blocks delivered', 'wrap-up status', 'pending review items for this session'],
+    suggestedPrompts: [
+      'Who attended this session?',
+      'Did the coach submit a wrap-up?',
+      'What blocks were on the plan?',
+      'Is there anything pending review for this session?',
+      'What curriculum levels were represented?',
+    ],
+    allowedAnswerTypes: ['session summary', 'attendance explanation', 'wrap-up status', 'curriculum context', 'pending item summary'],
+    reviewRequiredActions: ['approving coach wrap-up submissions', 'publishing session notes to parents'],
+    blocked: ['mutate session records from chat', 'auto-approve wrap-ups without director review', 'expose coach notes to parents'],
+    dataFallback: 'Session context is loading. I can explain what each section means while data loads.',
+  },
+  {
+    route: '/director/class-templates/[templateId]',
+    pageLabel: 'Template Detail',
+    directorIntent: 'Review or build a specific class template — its block structure, target curriculum level, and recent usage.',
+    safeContext: ['template name and status', 'block sequence', 'target curriculum level', 'recent usage in sessions'],
+    suggestedPrompts: [
+      'Review this template structure.',
+      'What curriculum level does this target?',
+      'How many times has this been used recently?',
+      'What blocks are in this template?',
+      'What is missing from a standard session of this type?',
+    ],
+    allowedAnswerTypes: ['template review', 'block guidance', 'curriculum alignment', 'usage summary'],
+    reviewRequiredActions: ['publishing templates to coaches', 'assigning templates to sessions'],
+    blocked: ['mutate template data directly from chat', 'publish templates without director review'],
+    dataFallback: 'Template data is loading. I can suggest typical block sequences for common session formats.',
+  },
+  {
+    route: '/coach',
+    pageLabel: 'Coach Hub',
+    directorIntent: 'See your session schedule for today, pending wrap-ups, and items currently in director review.',
+    safeContext: ['sessions today', 'pending wrap-ups', 'items in director review', 'next session'],
+    suggestedPrompts: [
+      'What sessions do I have today?',
+      'Do I have any missing wrap-ups?',
+      "What's waiting for director review?",
+      'How do I submit a wrap-up?',
+    ],
+    allowedAnswerTypes: ['schedule summary', 'wrap-up guidance', 'review status', 'process explanation'],
+    reviewRequiredActions: ['submitting wrap-ups', 'submitting observation drafts'],
+    blocked: ['approve director review items', 'access other coaches\' sessions', 'modify player records directly'],
+    dataFallback: 'Session context is loading. I can show you your sessions today and any pending wrap-ups.',
+  },
+  {
+    route: '/coach/players',
+    pageLabel: 'Coach Players',
+    directorIntent: 'See the players you have coached recently and their current development levels.',
+    safeContext: ['players from your sessions (last 30 days)', 'curriculum levels', 'session attendance counts'],
+    suggestedPrompts: [
+      'Show me my players.',
+      'What levels are my players at?',
+      'Who did I coach this month?',
+    ],
+    allowedAnswerTypes: ['player list summary', 'level explanation', 'session history summary'],
+    reviewRequiredActions: ['any player record changes require director review'],
+    blocked: ['access players from other coaches\' sessions', 'modify player records', 'expose parent data'],
+    dataFallback: 'Player data is loading. I can show you the players from your recent sessions.',
+  },
+  {
+    route: '/coach/sessions/[sessionId]',
+    pageLabel: 'Coach Session',
+    directorIntent: 'See your session roster, planned blocks, and player watch-fors before or during session delivery.',
+    safeContext: ['session roster', 'block delivery plan', 'player curriculum levels', 'active priorities per player (summary only)'],
+    suggestedPrompts: [
+      'Who is on the roster today?',
+      'What blocks do I deliver?',
+      'What should I focus on for each player?',
+      'How do I submit my wrap-up after this session?',
+    ],
+    allowedAnswerTypes: ['roster summary', 'block delivery guidance', 'player focus notes', 'process explanation'],
+    reviewRequiredActions: ['submitting wrap-ups after session', 'observation drafts go to director review'],
+    blocked: ['access other coaches\' sessions', 'modify player curriculum levels from chat', 'expose director-private notes or assessments'],
+    dataFallback: 'Session data is loading. I can explain what each section means while it loads.',
+  },
+  {
+    route: '/coach/sessions/[sessionId]/wrap-up',
+    pageLabel: 'Coach Wrap-Up',
+    directorIntent: 'Submit your session wrap-up — confirm who attended, what was delivered, and notes for the director.',
+    safeContext: ['attendance roster', 'blocks scheduled', 'prior wrap-up submission status for this session'],
+    suggestedPrompts: [
+      'Who was present today?',
+      'Have I already submitted a wrap-up for this session?',
+      'What should I include in my wrap-up?',
+      'What happens after I submit?',
+    ],
+    allowedAnswerTypes: ['wrap-up guidance', 'attendance summary', 'submission status', 'process explanation'],
+    reviewRequiredActions: ['wrap-up submission goes to director review queue — director must approve before any effects take place'],
+    blocked: ['auto-submit wrap-ups without coach input', 'modify attendance records directly', 'access other coaches\' sessions'],
+    dataFallback: 'Wrap-up context is loading. I can explain what to include in your wrap-up while data loads.',
+  },
 ]
 
 const FALLBACK_MAP: DonnaPageCapabilityMap = {
@@ -297,10 +395,29 @@ export function getPageCapabilityMap(pathname: string): DonnaPageCapabilityMap {
   // Exact match first
   const exact = PAGE_CAPABILITY_MAP.find(m => m.route === pathname)
   if (exact) return exact
-  // Player profile — parameterized
+
+  // Parameterized routes — matched before prefix fallback (Sprint 862 additions)
+  // Player profile — /director/players/<id>
   if (pathname.startsWith('/director/players/') && pathname.split('/').length >= 4) {
     return PAGE_CAPABILITY_MAP.find(m => m.route === '/director/players/[playerId]') ?? FALLBACK_MAP
   }
+  // Session detail — /director/sessions/<id>
+  if (pathname.startsWith('/director/sessions/') && pathname.split('/').length >= 4) {
+    return PAGE_CAPABILITY_MAP.find(m => m.route === '/director/sessions/[sessionId]') ?? FALLBACK_MAP
+  }
+  // Template detail — /director/class-templates/<id>
+  if (pathname.startsWith('/director/class-templates/') && pathname.split('/').length >= 4) {
+    return PAGE_CAPABILITY_MAP.find(m => m.route === '/director/class-templates/[templateId]') ?? FALLBACK_MAP
+  }
+  // Coach wrap-up — /coach/sessions/<id>/wrap-up (must match before coach session)
+  if (pathname.startsWith('/coach/sessions/') && pathname.endsWith('/wrap-up')) {
+    return PAGE_CAPABILITY_MAP.find(m => m.route === '/coach/sessions/[sessionId]/wrap-up') ?? FALLBACK_MAP
+  }
+  // Coach session — /coach/sessions/<id>
+  if (pathname.startsWith('/coach/sessions/') && pathname.split('/').length >= 4) {
+    return PAGE_CAPABILITY_MAP.find(m => m.route === '/coach/sessions/[sessionId]') ?? FALLBACK_MAP
+  }
+
   // Prefix match (longest first)
   const sorted = [...PAGE_CAPABILITY_MAP].sort((a, b) => b.route.length - a.route.length)
   return sorted.find(m => pathname.startsWith(m.route)) ?? FALLBACK_MAP

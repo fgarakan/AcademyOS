@@ -2338,7 +2338,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setSuggestions([])
     setCommandResponse(null)
     try {
-      const req = deriveContextRequest(pathname)
+      const req = deriveContextRequest(pathname, role)
       const summary = await fetchDonnaContext(req.contextType, req.params)
       setContextSummary(summary)
       setSuggestions(computePredictiveSuggestions(summary))
