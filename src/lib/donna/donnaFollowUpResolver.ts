@@ -502,14 +502,30 @@ export function resolveFollowUp(
     if (contextIsFresh && context!.lastIntentFamily === 'section_nav') {
       return buildSectionNavElaborationResponse(context!)
     }
+    // Sprint 888 — explicit roster_attention elaboration handler.
+    // Fires before the coo_answer handler (Sprint 882) so roster-specific copy replaces
+    // the generic "That was Player Directory — the page DONNA suggested" framing.
+    // Label-as-condition: lastSuggestedNavigationLabel is a follow-up prompt or player name —
+    // not suitable for direct injection into copy; presence determines which variant to use.
+    // Navigation: lastSuggestedNavigationHref always set for roster_attention
+    // (buildRosterHubAnswer guarantees href = '/director/players' or '/director/players/${id}').
+    if (contextIsFresh && context!.lastIntentFamily === 'roster_attention' && context!.lastSuggestedNavigationHref) {
+      return {
+        actionType: 'elaborate',
+        responseText: context!.lastSuggestedNavigationLabel
+          ? `That was the roster attention view — DONNA's summary of players or roster items that may need your attention. I can take you there or help you decide whether it matters right now.`
+          : `That was DONNA's roster attention summary. I can take you there or help you decide whether it matters right now.`,
+        navigationHref: context!.lastSuggestedNavigationHref,
+        confidence: 'medium',
+      }
+    }
     // Sprint 882 — explicit coo_answer elaboration handler.
     // When DONNA's COO answer suggested a specific page (lastSuggestedNavigationHref set),
     // the generic lastTopicLabel handler's "checking {label} for sign-off" framing is too
     // narrow — not every COO-suggested page is about sign-off. This handler returns copy
     // that names the suggested page naturally and offers to navigate there.
-    // Sprint 887 — extended to roster_attention: same behavior (DONNA suggested Players page,
-    // "sign-off" framing is off; correct copy names the suggested page naturally).
-    if (contextIsFresh && (context!.lastIntentFamily === 'coo_answer' || context!.lastIntentFamily === 'roster_attention') && context!.lastSuggestedNavigationHref) {
+    // Sprint 887 roster_attention extension superseded by Sprint 888 dedicated handler above.
+    if (contextIsFresh && context!.lastIntentFamily === 'coo_answer' && context!.lastSuggestedNavigationHref) {
       const label = context!.lastSuggestedNavigationLabel ?? context!.lastTopicLabel
       return {
         actionType: 'elaborate',
@@ -559,14 +575,27 @@ export function resolveFollowUp(
     if (contextIsFresh && context!.lastIntentFamily === 'section_nav') {
       return buildSectionNavRecommendationResponse(context!)
     }
+    // Sprint 888 — explicit roster_attention recommendation handler.
+    // Fires before the coo_answer handler (Sprint 881) so roster-specific copy replaces
+    // the generic "DONNA suggested Player Directory" framing.
+    // Label-as-condition: same rationale as elaboration handler above.
+    if (contextIsFresh && context!.lastIntentFamily === 'roster_attention' && context!.lastSuggestedNavigationHref) {
+      return {
+        actionType: 'recommend',
+        responseText: context!.lastSuggestedNavigationLabel
+          ? `DONNA flagged roster attention. The best next step is to open the roster view and review which players or roster items need attention. I can take you there.`
+          : `DONNA flagged something in the roster. The best next step is to open the roster view and review what needs attention. I can take you there.`,
+        navigationHref: context!.lastSuggestedNavigationHref,
+        confidence: 'medium',
+      }
+    }
     // Sprint 881 — explicit coo_answer recommendation handler.
     // Written at DonnaAssistantButton.tsx line 3051 for all non-blocked COO answers where
     // routing.intent !== 'roster_attention'. When lastSuggestedNavigationHref is set, the
     // generic Review Queue fallback is semantically wrong — the user should go to the page
     // DONNA just suggested, not the Review Queue.
-    // Sprint 887 — extended to roster_attention: same fix (DONNA suggested Players page;
-    // generic "Review Queue" fallback is wrong — user should go to Players, not Review Queue).
-    if (contextIsFresh && (context!.lastIntentFamily === 'coo_answer' || context!.lastIntentFamily === 'roster_attention') && context!.lastSuggestedNavigationHref) {
+    // Sprint 887 roster_attention extension superseded by Sprint 888 dedicated handler above.
+    if (contextIsFresh && context!.lastIntentFamily === 'coo_answer' && context!.lastSuggestedNavigationHref) {
       const label = context!.lastSuggestedNavigationLabel ?? context!.lastTopicLabel
       return {
         actionType: 'recommend',
@@ -577,9 +606,10 @@ export function resolveFollowUp(
         confidence: 'medium',
       }
     }
-    // Generic recommendation fallback — fires when: (a) no fresh context, or (b) coo_answer or
-    // roster_attention with no suggested href (DONNA answered conversationally without a page
-    // suggestion), or (c) any other intent family not handled above (stale or unhandled context).
+    // Generic recommendation fallback — fires when: (a) no fresh context, or (b) coo_answer
+    // with no suggested href (DONNA answered conversationally without a page suggestion), or
+    // (c) roster_attention with no href (impossible in practice — buildRosterHubAnswer always
+    // sets href), or (d) any other intent family not handled above (stale or unhandled context).
     return {
       actionType: 'recommend',
       responseText: `The Review Queue is usually a good starting point — those are the items waiting on your approval. Want me to open it?`,
