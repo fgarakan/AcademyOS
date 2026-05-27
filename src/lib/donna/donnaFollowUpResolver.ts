@@ -43,9 +43,9 @@ export interface DonnaSessionIntentContext {
     | 'daily_brief'      // Active — written by handleFetchDailyBrief (DonnaAssistantButton line 2248, Sprint 785)
     | 'review_queue'     // Active — written by handleOpenReviewQueue (DonnaAssistantButton line 2332, Sprint 785)
     | 'attention'        // Active — written by handleFetchAttentionReport (DonnaAssistantButton line 2208, Sprint 785)
-    | 'coo_answer'       // Active — written by handleDonnaCooPrompt for all non-blocked COO answers (DonnaAssistantButton line 3050, Sprint 802)
+    | 'coo_answer'       // Active — written by handleDonnaCooPrompt for all non-blocked COO answers where routing.intent !== 'roster_attention' (DonnaAssistantButton line 3051, Sprint 802; conditional added Sprint 887)
     | 'section_nav'      // Active — written by handleUIDispatch navigate block (DonnaAssistantButton line 2857, Sprint 876)
-    | 'roster_attention' // Future-reserved — roster_attention IS an active DonnaDirectorIntent routing value, but the COO path writes 'coo_answer'; no lastIntentFamily write site exists (Sprint 883 audit)
+    | 'roster_attention' // Active — written by handleDonnaCooPrompt when routing.intent === 'roster_attention' (DonnaAssistantButton line 3051, Sprint 887); same fields as coo_answer; href='/director/players' or specific player href
     | null               // Cleared state — set on panel close (line 973) and route change (line 1277)
   /** Number of sections in the last brief (safe: structural metadata only) */
   lastResultSectionCount: number | null
@@ -507,7 +507,9 @@ export function resolveFollowUp(
     // the generic lastTopicLabel handler's "checking {label} for sign-off" framing is too
     // narrow — not every COO-suggested page is about sign-off. This handler returns copy
     // that names the suggested page naturally and offers to navigate there.
-    if (contextIsFresh && context!.lastIntentFamily === 'coo_answer' && context!.lastSuggestedNavigationHref) {
+    // Sprint 887 — extended to roster_attention: same behavior (DONNA suggested Players page,
+    // "sign-off" framing is off; correct copy names the suggested page naturally).
+    if (contextIsFresh && (context!.lastIntentFamily === 'coo_answer' || context!.lastIntentFamily === 'roster_attention') && context!.lastSuggestedNavigationHref) {
       const label = context!.lastSuggestedNavigationLabel ?? context!.lastTopicLabel
       return {
         actionType: 'elaborate',
@@ -558,11 +560,13 @@ export function resolveFollowUp(
       return buildSectionNavRecommendationResponse(context!)
     }
     // Sprint 881 — explicit coo_answer recommendation handler.
-    // The active family for COO page-suggestion responses is 'coo_answer' (written by
-    // handleDonnaCooPrompt at DonnaAssistantButton.tsx line 3050 for all non-blocked COO answers).
-    // When lastSuggestedNavigationHref is set, the generic Review Queue fallback is semantically
-    // wrong — the user should go to the page DONNA just suggested, not the Review Queue.
-    if (contextIsFresh && context!.lastIntentFamily === 'coo_answer' && context!.lastSuggestedNavigationHref) {
+    // Written at DonnaAssistantButton.tsx line 3051 for all non-blocked COO answers where
+    // routing.intent !== 'roster_attention'. When lastSuggestedNavigationHref is set, the
+    // generic Review Queue fallback is semantically wrong — the user should go to the page
+    // DONNA just suggested, not the Review Queue.
+    // Sprint 887 — extended to roster_attention: same fix (DONNA suggested Players page;
+    // generic "Review Queue" fallback is wrong — user should go to Players, not Review Queue).
+    if (contextIsFresh && (context!.lastIntentFamily === 'coo_answer' || context!.lastIntentFamily === 'roster_attention') && context!.lastSuggestedNavigationHref) {
       const label = context!.lastSuggestedNavigationLabel ?? context!.lastTopicLabel
       return {
         actionType: 'recommend',
@@ -573,10 +577,9 @@ export function resolveFollowUp(
         confidence: 'medium',
       }
     }
-    // Generic recommendation fallback — fires when: (a) no fresh context, or (b) coo_answer with
-    // no suggested href (DONNA answered conversationally without a page suggestion), or (c) any
-    // other intent family not handled above (roster_attention — future-reserved; COO path writes
-    // 'coo_answer' for roster intent today, so this catches stale or unhandled context only).
+    // Generic recommendation fallback — fires when: (a) no fresh context, or (b) coo_answer or
+    // roster_attention with no suggested href (DONNA answered conversationally without a page
+    // suggestion), or (c) any other intent family not handled above (stale or unhandled context).
     return {
       actionType: 'recommend',
       responseText: `The Review Queue is usually a good starting point — those are the items waiting on your approval. Want me to open it?`,

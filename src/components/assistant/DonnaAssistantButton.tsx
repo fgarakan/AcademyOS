@@ -3046,9 +3046,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
     // Sprint 802 — record intent context so follow-up phrases ("go there", "open that", "which ones?")
     // resolve correctly after any COO response, not just daily_brief / review_queue / attention.
+    // Sprint 887 — set lastIntentFamily to 'roster_attention' when routing.intent is roster_attention,
+    // so roster-specific follow-up handlers can distinguish it from generic COO answers.
+    // All other COO intents continue to write 'coo_answer'.
     if (!composed.isBlocked) {
       setSessionIntentContext({
-        lastIntentFamily: 'coo_answer',
+        lastIntentFamily: routing.intent === 'roster_attention' ? 'roster_attention' : 'coo_answer',
         lastResultSectionCount: null,
         lastResultHighPriorityCount: null,
         lastResultItemCount: null,
