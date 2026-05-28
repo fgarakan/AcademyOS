@@ -52,7 +52,14 @@ import { tryAnswerCoachHealthQuestion } from '@/lib/donna/coachHealthDonnaAnswer
 import { tryBuildActionPreview } from '@/lib/donna/directorActionPreview'
 import { detectMissingContext } from '@/lib/donna/donnaMissingContextEngine'
 import { routeDonnaPrompt } from '@/lib/donna/donnaConversationalRouter'
-import { getPageCapabilityMap } from '@/lib/donna/donnaPageContextEngine'
+import {
+  getPageCapabilityMap,
+  whereAmI,
+  whatCanYouHelpWith,
+  whatActionsRequireApproval,
+  whatShouldINotDo,
+  whatIsTheBestNextStep,
+} from '@/lib/donna/donnaPageContextEngine'
 import { DONNA_SYSTEM_MAP } from '@/lib/donna/donnaSystemMap'
 import { detectShortPhrase, buildShortPhraseAnswer } from '@/lib/donna/donnaShortPhraseEngine'
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
@@ -736,6 +743,53 @@ export function DonnaVoiceReadyShell({
       setIsTyping(false)
       recordTurn(trimmed, boundaryMsg.text, { confidence: boundary.confidenceKind })
       return
+    }
+
+    // ── Sprint 912.14: Page guide intent routing ─────────────────────────────
+    // Answers page-specific questions using donnaPageContextEngine helpers.
+    // Uses pathname only — no directorCtx needed. Always resolves cleanly.
+    // Fires BEFORE missing-context and KPI interceptors so page questions
+    // always get page-specific answers rather than generic or data-dependent ones.
+    if (plainRole === 'director') {
+      const PAGE_WHERE_AM_I    = /\b(where am i|what page am i on|what.{0,10}this page|explain this page|which page is this|describe this page)\b/i
+      const PAGE_WHAT_CAN_I_DO = /\b(what can i do here|what can you help (me with )?(here|on this page)|what.{0,15}options (here|on this page)|what.{0,15}do (here|on this page))\b/i
+      const PAGE_NEXT_STEP     = /\b(what should i do (here|on this page)|what.{0,10}most important (task|thing) here|what.{0,10}best (next )?step (here|on this page)|where (should i |do i )start here)\b/i
+      const PAGE_APPROVAL      = /\b(what needs (approval|review|approving|reviewing)|what should i (review|approve)|what requires (my )?(approval|review))\b/i
+      const PAGE_SAFETY        = /\b(what should i not do|what.{0,10}risky here|what.{0,10}careful with|what.{0,10}avoid (here|on this page)|what.{0,10}not (do|try) here)\b/i
+
+      const currentPath = pathname ?? '/director'
+      let pageGuideText: string | null = null
+
+      if (PAGE_WHERE_AM_I.test(trimmed)) {
+        pageGuideText = whereAmI(currentPath)
+      } else if (PAGE_WHAT_CAN_I_DO.test(trimmed)) {
+        pageGuideText = whatCanYouHelpWith(currentPath)
+      } else if (PAGE_NEXT_STEP.test(trimmed)) {
+        pageGuideText = whatIsTheBestNextStep(currentPath)
+      } else if (PAGE_APPROVAL.test(trimmed)) {
+        pageGuideText = whatActionsRequireApproval(currentPath)
+      } else if (PAGE_SAFETY.test(trimmed)) {
+        pageGuideText = whatShouldINotDo(currentPath)
+      }
+
+      if (pageGuideText) {
+        const pageGuideCap = getPageCapabilityMap(currentPath)
+        const pageGuideMsg: ChatMessage = {
+          id: `donna-page-guide-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: pageGuideText,
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: `Page context: ${pageGuideCap.pageLabel}`,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, pageGuideMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, pageGuideText!, { domain: 'general', confidence: 'high', sourceNote: `Page: ${currentPath}` })
+        }, 400)
+        return
+      }
     }
 
     // ── Sprint 725: Missing context intercept ────────────────────────────────

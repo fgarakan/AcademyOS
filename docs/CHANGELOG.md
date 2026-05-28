@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.14 — DONNA Page Guide Mode V1
+
+- **Modified `src/lib/donna/donnaPageContextEngine.ts`:**
+  - Added `/director/templates` entry to `PAGE_CAPABILITY_MAP` — covers `/director/templates/*` sub-routes via prefix match; includes template library, fitness templates, block structure context, and approval/safety guidance
+  - Added `whatIsTheBestNextStep(pathname)` export — new Sprint 912.14 helper for "what should I do here?" / "what's the most important task here?" queries; combines `directorIntent` + `suggestedPrompts[0]` into a concise action-first answer
+  - No interface changes — existing 9-field `DonnaPageCapabilityMap` structure is sufficient for all 5 page-guide categories
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Extended import from `donnaPageContextEngine` to include `whereAmI`, `whatCanYouHelpWith`, `whatActionsRequireApproval`, `whatShouldINotDo`, `whatIsTheBestNextStep`
+  - Added Sprint 912.14 page guide intent intercept block in `handleSend()`: positioned after boundary check, before missing-context intercept — fires only for `plainRole === 'director'`, uses `pathname` only (no `directorCtx` needed)
+  - 5 pattern categories:
+    - `PAGE_WHERE_AM_I` → `whereAmI(path)` — "where am I?", "what is this page?", "explain this page"
+    - `PAGE_WHAT_CAN_I_DO` → `whatCanYouHelpWith(path)` — "what can I do here?", "what can you help me with here?"
+    - `PAGE_NEXT_STEP` → `whatIsTheBestNextStep(path)` — "what should I do here?", "what is the most important task here?"; requires "here" or "on this page" to avoid shadowing dashboard priority intercept
+    - `PAGE_APPROVAL` → `whatActionsRequireApproval(path)` — "what needs approval?", "what needs review?", "what requires my approval?"
+    - `PAGE_SAFETY` → `whatShouldINotDo(path)` — "what should I not do?", "what is risky here?", "what should I be careful with?"
+  - FALLBACK_MAP used for unknown pages — no null return, no crash
+
+- **Created `docs/QA_DONNA_PAGE_GUIDE_MODE_912_14.md`:**
+  - Supported phrases table with pattern source and example output for each category
+  - Pipeline position diagram (step 6 of 24) and rationale
+  - 10 static QA scenarios all pass: dashboard, curriculum builder, players page, player profile, onboarding, unknown sub-route, templates/fitness/create prefix match, drill creation unaffected, confirmation flow unaffected
+  - Pattern conflict analysis: no meaningful conflicts with existing interceptors
+  - Safety checks: no mutations, no LLM calls, no migrations, Sprint 904 untouched
+  - Risks: PAGE_APPROVAL fires without "here" guard (intentional, low risk); prefix match for template sub-routes (acceptable V1 behavior)
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.13 — DONNA Live DB Context Review UX V1
 
 - **Modified `src/lib/actions/curriculumDraftActions.ts`:**

@@ -227,6 +227,23 @@ const PAGE_CAPABILITY_MAP: DonnaPageCapabilityMap[] = [
     dataFallback: 'Template builder data may not be loaded. I can suggest typical block sequences for common session formats.',
   },
   {
+    route: '/director/templates',
+    pageLabel: 'Templates',
+    directorIntent: 'Browse, create, and manage class templates — structured session plans coaches use to deliver consistent training.',
+    safeContext: ['template library', 'template categories', 'fitness templates', 'session block structures', 'block sequences'],
+    suggestedPrompts: [
+      'Show me available templates.',
+      'How do I create a new template?',
+      'What is a fitness template?',
+      'Which templates do coaches use most?',
+      'How do coaches use templates in a session?',
+    ],
+    allowedAnswerTypes: ['template guidance', 'structure explanation', 'usage summary', 'creation guidance'],
+    reviewRequiredActions: ['publishing templates to coaches', 'assigning templates as session defaults'],
+    blocked: ['auto-assign templates to sessions without director review', 'modify template block content directly from chat'],
+    dataFallback: 'Template data is loading. I can explain how the template system works and what types of templates are available.',
+  },
+  {
     route: '/director/placement',
     pageLabel: 'Placement',
     directorIntent: 'Review incoming player placement recommendations before activating them.',
@@ -465,4 +482,17 @@ export function whatShouldINotDo(pathname: string): string {
 
 export function dataFallbackMessage(pathname: string): string {
   return getPageCapabilityMap(pathname).dataFallback
+}
+
+// Sprint 912.14 — recommended next step
+// Answers "what should I do here?" / "what's the most important task on this page?"
+// Uses directorIntent + the first suggested prompt to give a concrete, actionable answer.
+export function whatIsTheBestNextStep(pathname: string): string {
+  const map = getPageCapabilityMap(pathname)
+  const firstPrompt = map.suggestedPrompts[0] ?? null
+  const base = `On the **${map.pageLabel}**: ${map.directorIntent}`
+  if (firstPrompt) {
+    return `${base}\n\nA good place to start: ask me "${firstPrompt}"`
+  }
+  return base
 }
