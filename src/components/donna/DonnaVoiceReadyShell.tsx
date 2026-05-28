@@ -1779,7 +1779,7 @@ export function DonnaVoiceReadyShell({
                 background: conv.conversationMode ? 'rgba(200,255,0,0.07)' : 'transparent',
                 color: conv.conversationMode ? '#C8FF00' : '#888888',
               }}
-              title={conv.conversationMode ? 'Turn off Conversation Mode' : 'Turn on Conversation Mode — DONNA listens after each response'}
+              title={conv.conversationMode ? 'Turn off Conversation mode' : 'Turn on Conversation mode — DONNA listens after each response'}
             >
               {conv.conversationMode && (
                 <span
@@ -1787,7 +1787,7 @@ export function DonnaVoiceReadyShell({
                   style={{ background: '#C8FF00' }}
                 />
               )}
-              Conv Mode
+              Conversation
             </button>
           </div>
         </div>

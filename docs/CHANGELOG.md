@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.16 — DONNA Main Entry Point Upgrade V1
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Renamed "Conv Mode" button label → "Conversation" — clearer, first-time-friendly
+  - Updated tooltip text: `'Turn off/on Conversation Mode'` → `'Turn off/on Conversation mode'` (consistent casing)
+
+- **Modified `src/components/nav/SidebarNav.tsx`:**
+  - Added optional `subtitle?: string` prop to `NavItem` component — when provided, label area renders as flex column with subtitle below in `text-[9px]` (`text-lime/60` when active, `text-text-muted/50` when inactive)
+  - Passed `subtitle="Academy assistant"` for the DONNA nav item only — all other items unchanged
+  - DONNA sidebar entry: already existed at position #2 with Sparkles icon and `/director/donna` route; subtitle adds context for first-time directors
+
+- **Modified `src/app/director/curriculum/builder/page.tsx`:**
+  - Added `import Link from 'next/link'` and `import { Sparkles } from 'lucide-react'`
+  - Added "Ask DONNA" chip (lime-styled `<Link href="/director/donna">`) above `CurriculumSetupBuilder` — curriculum builder was the only major director page without a DONNA entry; chip links directly to the God Mode hub for the demo golden loop
+  - Return wrapped in `<>` fragment to accommodate the chip above the existing component
+
+- **Preserved (unchanged):** `DonnaAssistantButton` floating panel in director layout — legacy entry point kept; removing it is out of scope and risky due to its template draft panels and different architecture
+- **Also confirmed already present:** `DonnaDashboardOpenCard` on dashboard, `DonnaReviewBriefPanel` on review page, DONNA mobile nav item
+
+- **Created `docs/QA_DONNA_MAIN_ENTRY_912_16.md`:**
+  - Full inventory of 6 existing DONNA entry points pre-sprint
+  - Analysis of why curriculum builder was the correct new CTA target
+  - 10 manual/static QA scenarios all pass
+  - Decision rationale for preserving `DonnaAssistantButton`
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.15 — DONNA Session Context Injection V1
 
 - **Modified `src/lib/donna/donnaChatSessionMemory.ts`:**

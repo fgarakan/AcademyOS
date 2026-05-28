@@ -42,11 +42,13 @@ function NavItem({
   isActive,
   badge,
   attention = false,
+  subtitle,
 }: {
   item: { label: string; href: string; icon: React.ElementType }
   isActive: boolean
   badge?: number
   attention?: boolean
+  subtitle?: string
 }) {
   const Icon = item.icon
   return (
@@ -64,7 +66,14 @@ function NavItem({
         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-lime rounded-r-full" />
       )}
       <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-lime' : 'text-text-muted group-hover:text-text-secondary')} />
-      <span className="flex-1">{item.label}</span>
+      <span className="flex-1 flex flex-col min-w-0">
+        <span className="leading-tight">{item.label}</span>
+        {subtitle && (
+          <span className={cn('text-[9px] leading-tight font-normal', isActive ? 'text-lime/60' : 'text-text-muted/50')}>
+            {subtitle}
+          </span>
+        )}
+      </span>
       {attention && (
         isActive ? (
           // Calmer dot when already on the Onboarding page — no ping
@@ -148,6 +157,7 @@ export function SidebarNav({
             item={item}
             isActive={isActive(item.href)}
             badge={item.label === 'Review Queue' ? pendingCount : undefined}
+            subtitle={item.label === 'DONNA' ? 'Academy assistant' : undefined}
           />
         ))}
 

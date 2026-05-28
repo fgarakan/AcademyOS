@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { Sparkles } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { CurriculumSetupBuilder } from './CurriculumSetupBuilder'
 import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes'
@@ -69,6 +71,18 @@ export default async function CurriculumBuilderPage() {
   const explorerData = await getCurriculumExplorerData(supabase)
 
   return (
-    <CurriculumSetupBuilder initialState={initialState} origin="builder" levels={explorerData.levels} />
+    <>
+      {/* Sprint 912.16: DONNA entry chip — links to the God Mode conversation hub */}
+      <div className="flex justify-end px-4 pt-3 pb-1">
+        <Link
+          href="/director/donna"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-lime/20 bg-lime/5 text-lime text-[11px] font-medium hover:bg-lime/10 transition-colors"
+        >
+          <Sparkles className="w-3 h-3" />
+          Ask DONNA
+        </Link>
+      </div>
+      <CurriculumSetupBuilder initialState={initialState} origin="builder" levels={explorerData.levels} />
+    </>
   )
 }
