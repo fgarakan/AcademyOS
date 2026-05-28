@@ -91,6 +91,9 @@ import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
 import { buildFocusTargetForRoute } from '@/lib/donna/donnaUIActionDispatcher'
 // Sprint 914.3 — Backend Spine Wiring (fire-and-forget persistence)
 // Sprint 914.4 — Context Packet Integration
+// Sprint 914.6 — Event Ledger
+import { logDonnaEventAction } from '@/lib/actions/donnaEventActions'
+import { DONNA_EVENT_TYPES } from '@/lib/donna/donnaEventLedger'
 import {
   getOrCreateDonnaSession,
   appendDonnaMessage as persistDonnaMessage,
@@ -227,6 +230,13 @@ export function DonnaVoiceReadyShell({
       .then(result => {
         if (!result.ok) return
         sessionIdRef.current = result.data.sessionId
+        // Sprint 914.6: log session started event (fire-and-forget)
+        logDonnaEventAction({
+          eventType:  DONNA_EVENT_TYPES.SESSION_STARTED,
+          sessionId:  result.data.sessionId,
+          source:     'donna_god_mode',
+          metadata:   { activePage: pathname ?? null },
+        }).catch(() => {})
 
         // Sprint 914.5: try to restore curriculum draft context from backend memory.
         // Only restores when in-process memory is already empty (do not overwrite fresh state).
@@ -465,6 +475,7 @@ export function DonnaVoiceReadyShell({
       execute: action.execute,
     })
     // Sprint 914.4: persist safe (non-executable) action summary to working memory
+    // Sprint 914.6: log confirmation requested event
     const sId = sessionIdRef.current
     if (sId) {
       upsertDonnaMemory({
@@ -472,6 +483,12 @@ export function DonnaVoiceReadyShell({
         memoryKey: 'pending_action_summary',
         memoryValue: { actionType: action.actionType, description: action.description, storedAt: Date.now() },
         scope: 'workflow',
+      }).catch(() => {})
+      logDonnaEventAction({
+        eventType:  DONNA_EVENT_TYPES.CONFIRMATION_REQUESTED,
+        sessionId:  sId,
+        source:     'donna_god_mode',
+        metadata:   { actionType: action.actionType },
       }).catch(() => {})
     }
   }
@@ -703,7 +720,16 @@ export function DonnaVoiceReadyShell({
         directorContext: directorCtx,
       })
         .then(result => {
-          if (result.ok) lastContextPacketRef.current = result.data
+          if (result.ok) {
+            lastContextPacketRef.current = result.data
+            // Sprint 914.6: log context packet generated (fire-and-forget)
+            logDonnaEventAction({
+              eventType:  DONNA_EVENT_TYPES.CONTEXT_PACKET_GENERATED,
+              sessionId:  sIdPkt,
+              source:     'donna_god_mode',
+              metadata:   { recentConversationCount: result.data.recentConversationCount, workingMemoryKeyCount: result.data.workingMemoryKeys.length },
+            }).catch(() => {})
+          }
         })
         .catch(() => { /* non-fatal */ })
     }
@@ -752,8 +778,12 @@ export function DonnaVoiceReadyShell({
         conv.clearPendingConfirmation()
         clearPendingAction()   // Sprint 912.7: clear session memory too
         // Sprint 914.4: mark pending action as confirmed in working memory
+        // Sprint 914.6: log confirmation accepted event
         const sIdConfirm = sessionIdRef.current
-        if (sIdConfirm) upsertDonnaMemory({ sessionId: sIdConfirm, memoryKey: 'pending_action_summary', memoryValue: { status: 'confirmed', clearedAt: new Date().toISOString() }, scope: 'workflow' }).catch(() => {})
+        if (sIdConfirm) {
+          upsertDonnaMemory({ sessionId: sIdConfirm, memoryKey: 'pending_action_summary', memoryValue: { status: 'confirmed', clearedAt: new Date().toISOString() }, scope: 'workflow' }).catch(() => {})
+          logDonnaEventAction({ eventType: DONNA_EVENT_TYPES.CONFIRMATION_ACCEPTED, sessionId: sIdConfirm, source: 'donna_god_mode' }).catch(() => {})
+        }
         setIsTyping(false)
         setIsExecuting(true)
         const confirmingMsg: ChatMessage = {
@@ -786,12 +816,20 @@ export function DonnaVoiceReadyShell({
             actionId: result.ok ? 'curriculum_draft_created' : 'curriculum_draft_failed',
             confidence: result.ok ? 'high' : 'partial',
           })
-          // Sprint 912.12: soft-refresh the current route so the curriculum builder
-          // change queue (CurriculumBuilderChangeQueue) reflects the new draft without
-          // requiring manual navigation. revalidatePath() in the server action has
-          // already invalidated the server cache; router.refresh() flushes the client
-          // cache. Only fires on success — never on failure, never causes duplicate drafts.
-          if (result.ok) router.refresh()
+          // Sprint 912.12: soft-refresh the current route
+          if (result.ok) {
+            router.refresh()
+            // Sprint 914.6: log curriculum draft created event (fire-and-forget)
+            const sIdDraft = sessionIdRef.current
+            if (sIdDraft) {
+              logDonnaEventAction({
+                eventType: DONNA_EVENT_TYPES.CURRICULUM_DRAFT_CREATED,
+                sessionId: sIdDraft,
+                source:    'donna_god_mode',
+                metadata:  { source: 'voice_confirmation' },
+              }).catch(() => {})
+            }
+          }
         })
         return
       }
@@ -799,8 +837,12 @@ export function DonnaVoiceReadyShell({
         conv.clearPendingConfirmation()
         clearPendingAction()   // Sprint 912.7: clear session memory too
         // Sprint 914.4: mark pending action as cancelled in working memory
+        // Sprint 914.6: log confirmation cancelled event
         const sIdCancel = sessionIdRef.current
-        if (sIdCancel) upsertDonnaMemory({ sessionId: sIdCancel, memoryKey: 'pending_action_summary', memoryValue: { status: 'cancelled', clearedAt: new Date().toISOString() }, scope: 'workflow' }).catch(() => {})
+        if (sIdCancel) {
+          upsertDonnaMemory({ sessionId: sIdCancel, memoryKey: 'pending_action_summary', memoryValue: { status: 'cancelled', clearedAt: new Date().toISOString() }, scope: 'workflow' }).catch(() => {})
+          logDonnaEventAction({ eventType: DONNA_EVENT_TYPES.CONFIRMATION_CANCELLED, sessionId: sIdCancel, source: 'donna_god_mode' }).catch(() => {})
+        }
         setIsTyping(false)
         const cancelMsg: ChatMessage = {
           id: `donna-cancel-${Date.now()}`,

@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-28 — Sprint 914.6 — DONNA Event Ledger V1
+
+- `supabase/migrations/071_donna_events.sql`: `donna_events` table — id, academy_id, actor_id, actor_role, session_id, message_id, entity_type, entity_id, event_type (text), visibility_scope (CHECK), confidence (CHECK), source, metadata (jsonb), created_at. INSERT-only RLS. 4 indexes. No UPDATE/DELETE policies.
+- `src/lib/donna/donnaEventLedger.ts`: `DONNA_EVENT_TYPES` constants, `logDonnaEvent(db, input)`, `getRecentDonnaEvents(db, options)` — non-throwing, fire-and-forget safe.
+- `src/lib/actions/donnaEventActions.ts` (`'use server'`): `logDonnaEventAction(input)`, `getRecentDonnaEventsAction(sessionId, limit)` — resolve auth/academy_id server-side.
+- `DonnaVoiceReadyShell.tsx`: 6 fire-and-forget event log calls wired: session_started (session init), context_packet_generated (packet build), confirmation_requested (storeAndSetPendingConfirmation), confirmation_accepted (CONFIRM path), confirmation_cancelled (CANCEL path), curriculum_draft_created (execute success). All `.catch(() => {})`.
+- `docs/QA_DONNA_EVENT_LEDGER_914_6.md`
+
+---
+
 ## 2026-05-28 — Sprint 914.5 — DONNA Context Packet Routing Bridge V1
 
 - **Modified `src/lib/actions/donnaConversationActions.ts`:**
