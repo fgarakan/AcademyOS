@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-05-28 — Sprint 913.5 — DONNA Recommended Action Intelligence V1
+
+- **Modified `src/lib/donna/directorDashboardDonnaAnswer.ts`:**
+  - Added `formatRecommendedActions(actions, limit=3)` private helper:
+    - 0 actions → `''` (filtered out by `.filter(Boolean)`)
+    - 1 action → `"Recommended: [label] — [reason]."` (includes reason for context)
+    - 2–3 actions → `"Recommended: [label1], [label2], [label3]."` (labels only, concise)
+    - Uses only `action.label` and `action.reason` — never exposes `action.id`
+  - Updated `buildDirectorBriefSummary`: added `recLine = formatRecommendedActions(ctx.recommendedActions)` inserted after "Best next step" and before the safety note; omitted when empty via `.filter(Boolean)`
+  - `buildDashboardPriorityResponse` unchanged — its `bestNextAction` already serves the same purpose; adding recommended actions there would be redundant
+  - `academyRisks` deliberately NOT surfaced as a separate section — it overlaps with the ranked priorities from `donnaAttentionRankingEngine` which provide richer context
+
+- **Fields used:** `action.label` (SAFE — human-readable action description), `action.reason` (SAFE — prescriptive reason for single-action case). `action.id` NEVER used. `academyRisks` NOT surfaced.
+
+- **Created `docs/architecture/DONNA_RECOMMENDED_ACTION_INTELLIGENCE_913_5.md`** — shape audit, helper format rules, decision to omit academyRisks, example brief output
+- **Created `docs/QA_DONNA_RECOMMENDED_ACTIONS_913_5.md`** — 10 QA scenarios; all pass; ID exclusion verified; all-clear unchanged
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 913.4 — DONNA Evidence Detail Intelligence V1
 
 - **Modified `src/lib/donna/donnaAttentionRankingEngine.ts`:**

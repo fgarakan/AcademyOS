@@ -53,6 +53,24 @@ export function detectDashboardPriorityQuestion(text: string): boolean {
   )
 }
 
+// Sprint 913.5 — Recommended action formatter
+// Surfaces existing recommendedActions as a short prescriptive line.
+// Uses label only for multi-action case (keeps text concise/TTS-friendly).
+// Uses label + reason for the single-action case (adds context without verbosity).
+// Returns '' when no actions exist — callers skip empty strings with .filter(Boolean).
+function formatRecommendedActions(
+  actions: DirectorDonnaContext['recommendedActions'],
+  limit = 3,
+): string {
+  if (actions.length === 0) return ''
+  const top = actions.slice(0, limit)
+  if (top.length === 1) {
+    return `Recommended: ${top[0].label} — ${top[0].reason}.`
+  }
+  const labels = top.map(a => a.label).join(', ')
+  return `Recommended: ${labels}.`
+}
+
 // Sprint 912.17: sub-classifier — true when the question wants a SUMMARY list
 // rather than a single-action priority answer. Used to route to buildDirectorBriefSummary.
 function detectBriefQuestion(text: string): boolean {
@@ -152,8 +170,12 @@ export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeR
     .join('\n')
 
   // Sprint 913.4: include enriched evidence for the top priority only.
-  // Keeps the brief scannable while surfacing specific context for the #1 item.
   const evidenceLine = top.evidence ? `Evidence: ${top.evidence}` : ''
+
+  // Sprint 913.5: include recommended actions from directorCtx when available.
+  // These are prescriptive actions computed by the context engine — separate framing
+  // from the ranked priorities (which provide signal context, not just action labels).
+  const recLine = formatRecommendedActions(ctx.recommendedActions)
 
   const text = [
     `${prefix}Here's your academy status (ranked by urgency):`,
@@ -162,6 +184,7 @@ export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeR
     '',
     evidenceLine,
     `Best next step: ${top.bestNextAction}`,
+    recLine,
     '',
     'Nothing is applied until you approve it.',
   ].filter(Boolean).join('\n')
