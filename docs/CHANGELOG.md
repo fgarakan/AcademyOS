@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.10 — DONNA Curriculum Draft Loop QA V1
+
+- **Created `docs/QA_DONNA_CURRICULUM_DRAFT_LOOP_912_10.md`:**
+  - Full static code analysis of the Sprint 912.7–912.9 drill draft loop
+  - 12 QA scenarios documented with full code traces: all 12 PASS
+  - Scenarios: complete one-turn, missing level, missing focus, cancel-in-slot-fill, cancel-in-confirmation, route-change memory, orphan confirm, vague focus, invalid level, review queue visibility, approval safety, existing UI panels
+  - Bonus scenario documented: three-turn flow (no level, no focus) works correctly
+  - Risks identified: live-DB level name match (medium), focus area trailing punctuation (low), hard-reload session loss (expected), `about` pattern edge case (low)
+  - Sprint 912.11 recommendations: focus trim polish, level DB verification, gate/skill expansion, context injection, post-draft router.refresh()
+  - No code changes required — all behaviour verified by static analysis
+
+- **TypeScript:** clean (no files modified)
+
+---
+
 ## 2026-05-28 — Sprint 912.9 — DONNA Multi-Turn Drill Slot Fill V1
 
 - **Modified `src/lib/donna/donnaChatSessionMemory.ts`:**
