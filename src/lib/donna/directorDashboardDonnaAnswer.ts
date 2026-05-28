@@ -120,9 +120,13 @@ export function buildDashboardPriorityResponse(ctx: DirectorDonnaContext): Donna
     if (ctx.attendanceExceptions > 0) breakdown.push(`${ctx.attendanceExceptions} attendance exception${ctx.attendanceExceptions !== 1 ? 's' : ''}`)
     if (ctx.templateDrafts > 0) breakdown.push(`${ctx.templateDrafts} template draft${ctx.templateDrafts !== 1 ? 's' : ''}`)
     const breakdownText = breakdown.length > 0 ? `, including ${breakdown.join(', ')}` : ''
+    // Sprint 913.1: add staleness urgency when items are old
+    const staleWarning = (ctx.oldestPendingReviewAgeDays ?? 0) >= 7
+      ? ` The oldest item is ${ctx.oldestPendingReviewAgeDays} day${ctx.oldestPendingReviewAgeDays !== 1 ? 's' : ''} old — coaches may be waiting.`
+      : ''
     return {
       actionId: 'dashboard_priority',
-      text: `${prefix}Clear your review queue. ${ctx.pendingReviews} item${plural ? 's' : ''}${breakdownText} ${plural ? 'are' : 'is'} waiting for your decision. Coaches and players are waiting on these before their work can move forward. I can walk you through each one — nothing is applied until you approve it.`,
+      text: `${prefix}Clear your review queue. ${ctx.pendingReviews} item${plural ? 's' : ''}${breakdownText} ${plural ? 'are' : 'is'} waiting for your decision.${staleWarning} Nothing is applied until you approve it.`,
       confidence: ctx.confidence,
       sourceNote: ctx.isLive ? 'Live from proposed_actions' : 'Demo data',
       followUp: 'Want to go to the review queue now?',
@@ -158,8 +162,9 @@ export function buildDashboardPriorityResponse(ctx: DirectorDonnaContext): Donna
 
 export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeReadAnswer {
   const prefix = ctx.isLive ? '' : '[Demo] '
-  const highRisk = ctx.attentionItems.filter(a => a.risk === 'high').length
-  const medRisk  = ctx.attentionItems.filter(a => a.risk === 'medium').length
+  // Sprint 913.1: use pre-computed risk counts from context instead of recomputing
+  const highRisk = ctx.highRiskPlayerCount
+  const medRisk  = ctx.mediumRiskPlayerCount
 
   const items: string[] = []
 
@@ -173,7 +178,11 @@ export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeR
     items.push(`${medRisk} player${medRisk !== 1 ? 's' : ''} flagged medium-risk`)
   }
   if (ctx.pendingReviews > 0) {
-    items.push(`${ctx.pendingReviews} item${ctx.pendingReviews !== 1 ? 's' : ''} in the Review Queue`)
+    // Sprint 913.1: note staleness if oldest item is ≥7 days
+    const staleNote = (ctx.oldestPendingReviewAgeDays ?? 0) >= 7
+      ? ` (oldest is ${ctx.oldestPendingReviewAgeDays} day${ctx.oldestPendingReviewAgeDays !== 1 ? 's' : ''} old)`
+      : ''
+    items.push(`${ctx.pendingReviews} item${ctx.pendingReviews !== 1 ? 's' : ''} in the Review Queue${staleNote}`)
   }
   if (ctx.todaySessions > 0) {
     items.push(`${ctx.todaySessions} session${ctx.todaySessions !== 1 ? 's' : ''} scheduled today`)
@@ -183,6 +192,10 @@ export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeR
   }
   if (ctx.curriculumGaps.length > 0) {
     items.push(`${ctx.curriculumGaps.length} curriculum gap${ctx.curriculumGaps.length !== 1 ? 's' : ''} flagged`)
+  }
+  // Sprint 913.1: curriculum drafts from DONNA voice commands (separate queue)
+  if (ctx.curriculumDraftCount > 0) {
+    items.push(`${ctx.curriculumDraftCount} curriculum draft${ctx.curriculumDraftCount !== 1 ? 's' : ''} waiting in Curriculum Builder`)
   }
 
   // All clear — no signals

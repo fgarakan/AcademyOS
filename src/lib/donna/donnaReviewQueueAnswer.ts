@@ -49,9 +49,13 @@ export function buildReviewQueueAnswer(ctx: DirectorDonnaContext): DonnaSafeRead
 
   // ── Empty queue ─────────────────────────────────────────────────────────────
   if (ctx.pendingReviews === 0) {
+    // Sprint 913.1: even if proposed_actions is clear, show curriculum drafts if any
+    const cdNote = ctx.curriculumDraftCount > 0
+      ? ` ${ctx.curriculumDraftCount} curriculum draft${ctx.curriculumDraftCount !== 1 ? 's' : ''} are waiting in the Curriculum Builder — review them there.`
+      : ' Curriculum drafts from DONNA voice commands are tracked separately on the Curriculum Builder page.'
     return {
       actionId: 'review_queue_empty',
-      text: `${prefix}Your Review Queue is clear right now — no pending items in proposed_actions. Curriculum drafts from DONNA voice commands are tracked separately on the Curriculum Builder page.`,
+      text: `${prefix}Your Review Queue is clear right now — no pending items in proposed_actions.${cdNote}`,
       confidence: ctx.confidence,
       sourceNote: ctx.isLive ? 'Live from proposed_actions' : 'Demo data',
       followUp: 'Check Curriculum Builder',
@@ -85,9 +89,17 @@ export function buildReviewQueueAnswer(ctx: DirectorDonnaContext): DonnaSafeRead
     ? `: ${breakdown.join(', ')}`
     : ''
 
+  // Sprint 913.1: add curriculum drafts to the text when available
+  const cdBreakdown = ctx.curriculumDraftCount > 0
+    ? ` Plus ${ctx.curriculumDraftCount} curriculum draft${ctx.curriculumDraftCount !== 1 ? 's' : ''} in the Curriculum Builder queue.`
+    : ' Curriculum drafts from DONNA voice commands are in a separate queue on the Curriculum Builder page.'
+
+  // Sprint 913.1: staleness warning
+  const staleWarning = (ctx.oldestPendingReviewAgeDays ?? 0) >= 7
+    ? ` Oldest item is ${ctx.oldestPendingReviewAgeDays} day${ctx.oldestPendingReviewAgeDays !== 1 ? 's' : ''} old — coaches may be waiting on decisions.`
+    : ''
+
   // ── Prioritization guidance ─────────────────────────────────────────────────
-  // Attendance exceptions often affect parent visibility → highest priority after wrap-ups.
-  // Evidence drafts affect player advancement readiness → review carefully.
   let priorityNote = ''
   if (ctx.attendanceExceptions > 0) {
     priorityNote = ' Attendance exceptions may affect parent records — review these carefully.'
@@ -98,8 +110,8 @@ export function buildReviewQueueAnswer(ctx: DirectorDonnaContext): DonnaSafeRead
   const safetyNote = ' DONNA will not approve, reject, or apply any item — your explicit action in the Review Center is required.'
 
   const text =
-    `${prefix}Review Queue: ${ctx.pendingReviews} item${ctx.pendingReviews !== 1 ? 's' : ''} pending${breakdownText}.${priorityNote}` +
-    ` Curriculum drafts from DONNA voice commands are in a separate queue on the Curriculum Builder page.` +
+    `${prefix}Review Queue: ${ctx.pendingReviews} item${ctx.pendingReviews !== 1 ? 's' : ''} pending${breakdownText}.${staleWarning}${priorityNote}` +
+    cdBreakdown +
     safetyNote
 
   return {

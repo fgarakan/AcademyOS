@@ -2,6 +2,44 @@
 
 ---
 
+## 2026-05-28 — Sprint 913.1 — DONNA Operating Context Expansion V1
+
+- **Modified `src/lib/donna/directorDonnaContext.ts`:**
+  - Extended `DirectorDonnaContext` interface with 9 new fields
+  - `curriculumDraftCount: number` — new DB query: `academy_curriculum_overrides` WHERE `status IN ('pending_review','draft')`; uses `(db as any)` pattern since table not in generated types; non-fatal (defaults to 0)
+  - `oldestPendingReviewAgeDays: number | null` — new DB query: oldest `proposed_actions` `created_at` WHERE `status='pending_review'`; computes age in days; null when empty or query fails
+  - `highRiskPlayerCount: number` — derived: `attentionItems.filter(a => a.risk === 'high').length`
+  - `mediumRiskPlayerCount: number` — derived: `attentionItems.filter(a => a.risk === 'medium').length`
+  - `hasPlayers: boolean` — derived: `playerCount > 0`
+  - `hasCoaches: boolean` — derived: `coachCount > 0`
+  - `hasTemplates: boolean` — derived: `templateCount > 0`
+  - `hasCurriculumGaps: boolean` — derived: `curriculumGaps.length > 0`
+  - `onboardingReadinessLevel: 'not_started' | 'partial' | 'nearly_ready' | 'ready_signal' | 'unknown'` — computed from hasX booleans; APPROXIMATE (not formal academy.settings flags)
+  - Added curriculum draft and stale review risk signals to `academyRisks` array
+  - Updated demo context with realistic values for all new fields
+  - Added 'Curriculum drafts' source label
+
+- **Modified `src/lib/donna/directorDashboardDonnaAnswer.ts`:**
+  - `buildDashboardPriorityResponse`: added `staleWarning` when `oldestPendingReviewAgeDays >= 7`
+  - `buildDirectorBriefSummary`: uses `ctx.highRiskPlayerCount`/`mediumRiskPlayerCount` (pre-computed); adds curriculum draft item when `ctx.curriculumDraftCount > 0`; adds staleness note in queue item
+
+- **Modified `src/lib/donna/donnaReviewQueueAnswer.ts`:**
+  - Empty-queue response: shows actual curriculum draft count if `ctx.curriculumDraftCount > 0`
+  - Non-empty queue: adds `cdBreakdown` with curriculum draft count; adds `staleWarning` when `oldestPendingReviewAgeDays >= 7`
+
+- **Modified `src/lib/donna/donnaOnboardingGuideAnswer.ts`:**
+  - `buildGeneralOnboardingAnswer` uses `ctx.onboardingReadinessLevel` to route: `ready_signal` → all-positive, `not_started` → no data message, `partial`/`nearly_ready` → incomplete list using `ctx.hasX` booleans
+
+- **Created `docs/architecture/DONNA_OPERATING_INTELLIGENCE_CONTEXT_AUDIT_913_1.md`** — full field audit with source tables, live/derived status, answer engine usage, gaps identified and resolved
+
+- **Created `docs/architecture/DONNA_OPERATING_INTELLIGENCE_10_OF_10_STANDARD.md`** — defines the standard for 10/10 operating intelligence answers; current rating 8.5/10; gap analysis to 10/10
+
+- **Created `docs/QA_DONNA_OPERATING_CONTEXT_913_1.md`** — 10 static QA scenarios, all pass; safety checks; fields added/deferred table
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.20 — DONNA God Mode Live Demo QA V1
 
 - **Created `docs/QA_DONNA_GOD_MODE_V1_912_20.md`:**

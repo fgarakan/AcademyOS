@@ -120,6 +120,21 @@ export interface DirectorDonnaContext {
   playerProgressStalls: PlayerProgressStall[]
   playerProgressStallCount: number
   playerProgressStallContextAvailable: boolean
+  // Sprint 913.1 — Operating Intelligence Context Expansion
+  // curriculum override drafts (academy_curriculum_overrides — separate from proposed_actions)
+  curriculumDraftCount: number
+  // oldest proposed_action in queue — null when queue is empty
+  oldestPendingReviewAgeDays: number | null
+  // derived risk counts from attentionItems — for cleaner answer engine logic
+  highRiskPlayerCount: number
+  mediumRiskPlayerCount: number
+  // derived booleans from count fields
+  hasPlayers: boolean
+  hasCoaches: boolean
+  hasTemplates: boolean
+  hasCurriculumGaps: boolean
+  // inferred onboarding readiness (APPROXIMATE — not the formal academy.settings flags)
+  onboardingReadinessLevel: 'not_started' | 'partial' | 'nearly_ready' | 'ready_signal' | 'unknown'
   // Meta
   sourceLabels: DirectorSourceLabel[]
   confidence: DONNAConfidence
@@ -218,6 +233,16 @@ function buildDemoContext(): DirectorDonnaContext {
     playerProgressStalls: [],
     playerProgressStallCount: 0,
     playerProgressStallContextAvailable: false,
+    // Sprint 913.1 — Operating Intelligence (demo values)
+    curriculumDraftCount: 2,
+    oldestPendingReviewAgeDays: 3,
+    highRiskPlayerCount: 1,
+    mediumRiskPlayerCount: 1,
+    hasPlayers: true,
+    hasCoaches: true,
+    hasTemplates: false,
+    hasCurriculumGaps: true,
+    onboardingReadinessLevel: 'partial',
     sourceLabels: [
       { field: 'Review queue', status: 'insufficient_data', label: 'Demo data' },
       { field: 'Sessions', status: 'insufficient_data', label: 'Demo data' },
@@ -276,6 +301,30 @@ export async function loadDirectorDonnaContext(
     fieldStatuses.reviewQueue = 'live'
   } catch {
     fieldStatuses.reviewQueue = 'insufficient_data'
+  }
+
+  // ── 2.5 Oldest pending review age (Sprint 913.1) ─────────────────────────
+  // Finds the oldest proposed_action in pending_review status to detect stale queues.
+  // Non-fatal: null when queue is empty or query fails.
+
+  let oldestPendingReviewAgeDays: number | null = null
+
+  try {
+    const { data: oldestRows } = await db
+      .from('proposed_actions')
+      .select('created_at')
+      .eq('academy_id', academyId)
+      .eq('status', 'pending_review')
+      .order('created_at', { ascending: true })
+      .limit(1)
+
+    const oldestCreatedAt = oldestRows?.[0]?.created_at
+    if (oldestCreatedAt) {
+      const ageMs = Date.now() - new Date(oldestCreatedAt).getTime()
+      oldestPendingReviewAgeDays = Math.floor(ageMs / (1000 * 60 * 60 * 24))
+    }
+  } catch {
+    // non-fatal — null means age unknown
   }
 
   // ── 2b. Player count (Sprint 723) ─────────────────────────────────────────
@@ -376,6 +425,26 @@ export async function loadDirectorDonnaContext(
     fieldStatuses.drafts = 'live'
   } catch {
     fieldStatuses.drafts = 'insufficient_data'
+  }
+
+  // ── 5b. Curriculum override drafts (Sprint 913.1) ────────────────────────
+  // Counts pending/draft rows in academy_curriculum_overrides — the separate
+  // curriculum change queue written by DONNA voice commands.
+  // Uses (db as any) because academy_curriculum_overrides is not in generated types.
+  // Non-fatal: 0 when table unavailable or query fails.
+
+  let curriculumDraftCount = 0
+
+  try {
+    const { count: cdCount } = await (db as any)
+      .from('academy_curriculum_overrides')
+      .select('id', { count: 'exact', head: true })
+      .eq('academy_id', academyId)
+      .in('status', ['pending_review', 'draft'])
+    if (typeof cdCount === 'number') curriculumDraftCount = cdCount
+    fieldStatuses.curriculumDrafts = 'live'
+  } catch {
+    fieldStatuses.curriculumDrafts = 'insufficient_data'
   }
 
   // ── 6. Attention items (concern observations + absences) ───────────────────
@@ -591,6 +660,24 @@ export async function loadDirectorDonnaContext(
   const playerProgressStallCount = stallResult.stalls.length
   const playerProgressStallContextAvailable = stallResult.stallContextAvailable
 
+  // ── Sprint 913.1: Derived operating intelligence fields ──────────────────
+  // Computed from already-loaded context — no new DB queries.
+
+  const highRiskPlayerCount  = attentionItems.filter(a => a.risk === 'high').length
+  const mediumRiskPlayerCount = attentionItems.filter(a => a.risk === 'medium').length
+  const hasPlayers     = playerCount > 0
+  const hasCoaches     = coachCount > 0
+  const hasTemplates   = templateCount > 0
+  const hasCurriculumGaps = curriculumGaps.length > 0
+
+  // Inferred onboarding readiness from count signals.
+  // APPROXIMATE — not the formal academy.settings step-completion flags.
+  const onboardingReadinessLevel: DirectorDonnaContext['onboardingReadinessLevel'] =
+    !hasPlayers && !hasCoaches ? 'not_started' :
+    hasPlayers && hasCoaches && hasTemplates && !hasCurriculumGaps ? 'ready_signal' :
+    hasPlayers && hasCoaches && !hasCurriculumGaps ? 'nearly_ready' :
+    hasPlayers || hasCoaches ? 'partial' : 'unknown'
+
   // ── 8. Academy risks ───────────────────────────────────────────────────────
 
   const academyRisks: DirectorAcademyRisk[] = []
@@ -656,6 +743,26 @@ export async function loadDirectorDonnaContext(
       detail: `${eligibleWithoutAssessmentEvidence} advancement-eligible player${eligibleWithoutAssessmentEvidence !== 1 ? 's' : ''} have no promotion-ready assessment on record`,
       urgency: 'high',
       actionHref: '/director/players',
+    })
+  }
+
+  // Sprint 913.1: curriculum override drafts signal
+  if (curriculumDraftCount > 0) {
+    academyRisks.push({
+      signal: 'Curriculum drafts waiting',
+      detail: `${curriculumDraftCount} curriculum draft${curriculumDraftCount !== 1 ? 's' : ''} pending review in the Curriculum Builder`,
+      urgency: 'low',
+      actionHref: '/director/curriculum/builder',
+    })
+  }
+
+  // Sprint 913.1: stale review queue signal
+  if (oldestPendingReviewAgeDays !== null && oldestPendingReviewAgeDays >= 7) {
+    academyRisks.push({
+      signal: 'Stale review queue',
+      detail: `Oldest pending review is ${oldestPendingReviewAgeDays} day${oldestPendingReviewAgeDays !== 1 ? 's' : ''} old — coaches may be waiting on decisions`,
+      urgency: oldestPendingReviewAgeDays >= 14 ? 'high' : 'medium',
+      actionHref: '/director/review',
     })
   }
 
@@ -725,6 +832,8 @@ export async function loadDirectorDonnaContext(
     { field: 'Templates', status: fieldStatuses.templates as COOFieldStatus, label: statusLabel(fieldStatuses.templates as COOFieldStatus) },
     // Sprint 742F
     { field: 'Recent decisions', status: fieldStatuses.recentDecisions as COOFieldStatus, label: statusLabel(fieldStatuses.recentDecisions as COOFieldStatus) },
+    // Sprint 913.1
+    { field: 'Curriculum drafts', status: (fieldStatuses.curriculumDrafts ?? 'insufficient_data') as COOFieldStatus, label: statusLabel((fieldStatuses.curriculumDrafts ?? 'insufficient_data') as COOFieldStatus) },
   ]
 
   // ── 11. Confidence and isLive ──────────────────────────────────────────────
@@ -783,6 +892,16 @@ export async function loadDirectorDonnaContext(
     playerProgressStalls,
     playerProgressStallCount,
     playerProgressStallContextAvailable,
+    // Sprint 913.1 — Operating Intelligence Context Expansion
+    curriculumDraftCount,
+    oldestPendingReviewAgeDays,
+    highRiskPlayerCount,
+    mediumRiskPlayerCount,
+    hasPlayers,
+    hasCoaches,
+    hasTemplates,
+    hasCurriculumGaps,
+    onboardingReadinessLevel,
     sourceLabels,
     confidence,
     isLive,

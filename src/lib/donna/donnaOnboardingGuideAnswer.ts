@@ -122,30 +122,15 @@ function buildGeneralOnboardingAnswer(ctx: DirectorDonnaContext | null): DonnaSa
     }
   }
 
-  // Infer which areas look incomplete — use counts as APPROXIMATE signals.
-  // These are not the formal step-completion flags (those live in academy.settings).
-  const incomplete: string[] = []
-  const notes: string[] = []
-
-  if (ctx.playerCount === 0) incomplete.push('add players')
-  if (ctx.coachCount === 0) incomplete.push('add coaches')
-  if (ctx.curriculumGaps.length > 0) incomplete.push('resolve curriculum gaps')
-  if (ctx.templateCount === 0) incomplete.push('create session templates')
-
   const prefix = ctx.isLive ? '' : '[Demo] '
 
-  if (incomplete.length === 0) {
-    // All signals positive
-    notes.push(
-      `${prefix}Setup signals look positive — ${ctx.playerCount} player${ctx.playerCount !== 1 ? 's' : ''}, ` +
-      `${ctx.coachCount} coach${ctx.coachCount !== 1 ? 'es' : ''}, ` +
-      `${ctx.templateCount} template${ctx.templateCount !== 1 ? 's' : ''}.`,
-      'Check the progress checklist on this page — it is the authoritative source. When all steps are green, you are ready to launch.',
-      'I can see data counts but not the full step-by-step completion status. Confirm launch readiness through the setup screen.',
-    )
+  // Sprint 913.1: use pre-computed onboardingReadinessLevel and hasX booleans
+  const level = ctx.onboardingReadinessLevel
+
+  if (level === 'ready_signal') {
     return {
       actionId: 'onboarding_ready',
-      text: notes.join(' '),
+      text: `${prefix}Setup signals look positive — ${ctx.playerCount} player${ctx.playerCount !== 1 ? 's' : ''}, ${ctx.coachCount} coach${ctx.coachCount !== 1 ? 'es' : ''}, ${ctx.templateCount} template${ctx.templateCount !== 1 ? 's' : ''}, no curriculum gaps detected. Check the progress checklist on this page — it is the authoritative source. When all steps are green, you are ready to launch. I can see data counts but not the full step-by-step completion status.`,
       confidence: ctx.confidence,
       sourceNote: ctx.isLive ? 'Live data' : 'Demo data',
       followUp: 'What happens after I complete setup?',
@@ -154,12 +139,33 @@ function buildGeneralOnboardingAnswer(ctx: DirectorDonnaContext | null): DonnaSa
     }
   }
 
-  // Some signals are incomplete
+  if (level === 'not_started') {
+    return {
+      actionId: 'onboarding_not_started',
+      text: `${prefix}Setup looks like it hasn't started yet — no players or coaches are in the system. Start with academy basics (identity + interview), then configure curriculum levels, add coaches, add players, and create session templates. The progress checklist on this page is authoritative.`,
+      confidence: ctx.confidence,
+      sourceNote: ctx.isLive ? 'Live data' : 'Demo data',
+      followUp: 'Walk me through step by step',
+      href: '/director/onboarding',
+      isAnswerable: true,
+    }
+  }
+
+  // 'partial' or 'nearly_ready' — build incomplete list from booleans
+  const incomplete: string[] = []
+  if (!ctx.hasPlayers)      incomplete.push('add players')
+  if (!ctx.hasCoaches)      incomplete.push('add coaches')
+  if (ctx.hasCurriculumGaps) incomplete.push('resolve curriculum gaps')
+  if (!ctx.hasTemplates)    incomplete.push('create session templates')
+
   const incompleteList = incomplete.map((s, i) => `${i + 1}. ${s}`).join(', ')
+  const readinessNote = level === 'nearly_ready'
+    ? 'Nearly ready — '
+    : 'Setup in progress. '
 
   return {
     actionId: 'onboarding_in_progress',
-    text: `${prefix}Setup in progress. Based on what I can see: still need to ${incompleteList}. Work through steps in order — curriculum before coaches, coaches before players. The progress checklist on this page is authoritative. I can explain any step, but I won't mark anything complete.`,
+    text: `${prefix}${readinessNote}Based on what I can see: still need to ${incompleteList}. Work through steps in order — curriculum before coaches, coaches before players. The progress checklist on this page is authoritative. I can explain any step, but I won't mark anything complete.`,
     confidence: ctx.confidence,
     sourceNote: ctx.isLive ? 'Live data' : 'Demo data',
     followUp: 'Walk me through the remaining steps',
