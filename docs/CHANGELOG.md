@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-05-28 — Sprint 913.7 — DONNA Operating Intelligence Live QA Demo Readiness V1
+
+- **No code changes.** QA-only sprint. No blockers found. `npx tsc --noEmit` — 0 errors.
+
+- **Created `docs/QA_DONNA_OPERATING_INTELLIGENCE_LIVE_913_7.md`:**
+  - Part 1: Live data availability audit — SQL verification queries for all 14 data requirements; minimum demo data requirements documented
+  - Part 2: 7-section static QA covering: entry + page guide (4 tests), director brief (10 tests), review queue (7 tests), onboarding guide (7 tests), curriculum draft loop (12 tests), correlation engine (11 tests), failure handling (8 tests) — all pass
+  - Part 3: Full safety verification — 13 safety checks, all pass; `execute_curriculum_override()` absent from all DONNA code confirmed by grep
+  - Part 4: Full 34-interceptor pipeline map verified in `DonnaVoiceReadyShell.tsx`
+  - Part 5: No blockers found
+  - Part 6: Final ratings — DONNA Operating Intelligence 9.9/10; Brian Demo Readiness 8.5/10; Safety Confidence 10/10; manual pre-demo tests documented
+
+- **Created `docs/demo/DONNA_BRIAN_DEMO_SCRIPT_913_7.md`:**
+  - Setup section: browser requirements, pre-check SQL, entry point (sidebar not floating button), data minimum requirements
+  - 10-step golden path: open DONNA hub → page guide → director brief → "what should I do first?" → review queue → navigate to builder → create drill draft → confirm → "same for Green 2" → safety check → closing
+  - Talk track phrases for each demo moment
+  - Demo fallbacks for 8 failure scenarios (voice fails, thin data, empty queue, correlations absent, TTS muted, etc.)
+  - Post-demo SQL verification to confirm no official curriculum was modified
+  - Data seed guidance: "create a curriculum draft via DONNA during the demo — better than pre-seeding"
+
+---
+
 ## 2026-05-28 — Sprint 913.6 — DONNA Cross Signal Correlation Intelligence V1
 
 - **New `src/lib/donna/donnaSignalCorrelationEngine.ts`:**
