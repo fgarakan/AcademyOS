@@ -79,8 +79,18 @@ export type CurriculumDraftSource = (typeof VALID_SOURCES)[number]
 // ============================================================
 
 export interface CreateContentItemDraftInput {
-  /** curriculum_levels.id — which level this content item belongs to */
-  levelId: string
+  /**
+   * curriculum_levels.id — which level this content item belongs to.
+   * Required unless levelName is provided (Sprint 912.8: DONNA voice path).
+   */
+  levelId?: string
+
+  /**
+   * Fallback when levelId is not known at call time (Sprint 912.8).
+   * The server action resolves to an id via curriculum_levels.display_name ILIKE.
+   * Provide this OR levelId — not both. If both are given, levelId takes precedence.
+   */
+  levelName?: string
 
   /**
    * Content type.
@@ -190,8 +200,8 @@ export async function createCurriculumContentItemDraft(
   }
 
   // ── Guard: required fields ───────────────────────────────
-  if (!input.levelId?.trim()) {
-    return fail('levelId is required.', true)
+  if (!input.levelId?.trim() && !input.levelName?.trim()) {
+    return fail('levelId or levelName is required.', true)
   }
   if (!input.contentType) {
     return fail('contentType is required.', true)
@@ -262,6 +272,26 @@ export async function createCurriculumContentItemDraft(
     )
   }
 
+  // ── Resolve levelId from levelName if needed (Sprint 912.8) ─────────────
+  // levelId takes precedence when provided. When absent, resolve by display_name.
+  // curriculum_levels is global (no academy_id) — any authenticated director can read it.
+  let resolvedLevelId = input.levelId?.trim() ?? ''
+  if (!resolvedLevelId && input.levelName?.trim()) {
+    const { data: levelRow } = await supabase
+      .from('curriculum_levels')
+      .select('id')
+      .ilike('display_name', input.levelName.trim())
+      .maybeSingle()
+    if (!levelRow) {
+      return fail(
+        `Could not find a curriculum level named "${input.levelName}". ` +
+          'Check the level name (e.g., "Orange 2", "Yellow 1") and try again.',
+        true,
+      )
+    }
+    resolvedLevelId = levelRow.id as string
+  }
+
   const rawDb = supabase as unknown as {
     from: (table: string) => {
       select: (cols: string) => {
@@ -314,7 +344,7 @@ export async function createCurriculumContentItemDraft(
   // These field names match exactly what execute_curriculum_override()
   // reads in its content_item/add branch (migration 069).
   const proposedChange: Record<string, unknown> = {
-    level_id:     input.levelId,
+    level_id:     resolvedLevelId,
     content_type: input.contentType,
     title:        input.title.trim(),
     pathway,
@@ -399,7 +429,7 @@ export async function createCurriculumContentItemDraft(
         target_type:   'content_item',
         override_type: 'add',
         content_type:  input.contentType,
-        level_id:      input.levelId,
+        level_id:      resolvedLevelId,
         title:         input.title.trim(),
         source,
         draft_id:      draftId,

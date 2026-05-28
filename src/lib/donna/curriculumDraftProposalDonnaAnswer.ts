@@ -81,7 +81,7 @@ const CHANGE_TYPE_RISK: Record<DraftChangeType, string> = {
   note: 'low',
 }
 
-function extractTargetLevel(text: string): string | null {
+export function extractTargetLevel(text: string): string | null {
   const t = text.toLowerCase()
   const levelPatterns: Array<[RegExp, string]> = [
     [/red.?1/i, 'Red 1'], [/red.?2/i, 'Red 2'], [/red.?3/i, 'Red 3'],
@@ -165,6 +165,51 @@ function buildAskForLevelAnswer(): DonnaSafeReadAnswer {
     href: null,
     isAnswerable: true,
   }
+}
+
+// ── Sprint 912.8: Drill slot extraction helpers ───────────────────────────────
+
+/**
+ * Extracts a focus area from a drill creation request.
+ * Supports: "focused on X", "about X", "covering X", "add a [X] drill".
+ * Returns null if no focus area can be determined — caller should ask a clarifying question.
+ */
+export function extractFocusArea(text: string): string | null {
+  // "focused on X" / "focus on X"
+  const focusedOnMatch = text.match(/\bfocused?\s+on\s+([^,.\n]{3,60})/i)
+  if (focusedOnMatch) return focusedOnMatch[1].trim()
+
+  // "covering X"
+  const coveringMatch = text.match(/\bcovering\s+([^,.\n]{3,60})/i)
+  if (coveringMatch) return coveringMatch[1].trim()
+
+  // "about X" (only when no level name would be consumed — checked last)
+  const aboutMatch = text.match(/\babout\s+([a-z][^,.\n]{3,60})/i)
+  if (aboutMatch) return aboutMatch[1].trim()
+
+  // "add a [FOCUS] drill" / "create a [FOCUS] drill" — focus is between verb and "drill"
+  // Non-greedy so we get the shortest match before "\s+drill".
+  const betweenMatch = text.match(/\b(?:add|create)\s+(?:an?\s+)?(.{3,40}?)\s+drill\b/i)
+  if (betweenMatch) {
+    const candidate = betweenMatch[1].trim()
+    if (!/^(a|an|the|new|good|great|simple|basic)$/i.test(candidate)) {
+      return candidate
+    }
+  }
+
+  return null
+}
+
+/**
+ * Builds the DONNA summary text shown before asking for director confirmation
+ * when creating a drill draft via chat.
+ */
+export function buildDrillConfirmationSummaryText(levelName: string, focusArea: string): string {
+  return (
+    `I can create a draft to add a **${focusArea}** drill to your ${levelName} curriculum. ` +
+    `It will go to your Review Center for approval — nothing in the official curriculum changes until you approve it. ` +
+    `Should I create this draft?`
+  )
 }
 
 // -- Main entry point ---------------------------------------------------------

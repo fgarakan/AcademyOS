@@ -2,6 +2,39 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.8 — DONNA Curriculum Draft Confirmation Wiring V1
+
+- **Modified `src/lib/donna/curriculumDraftProposalDonnaAnswer.ts`:**
+  - Exported `extractTargetLevel` (was private; now available to shell for slot extraction)
+  - Added `extractFocusArea(text)` — extracts focus area from "focused on X", "covering X", "about X", and "add a [X] drill" patterns; returns null if not determinable
+  - Added `buildDrillConfirmationSummaryText(levelName, focusArea)` — produces the human-readable confirmation prompt DONNA shows before creating a draft
+
+- **Modified `src/lib/actions/curriculumDraftActions.ts`:**
+  - Made `levelId` optional in `CreateContentItemDraftInput` (was required)
+  - Added optional `levelName?: string` — when `levelId` is absent, the server action resolves `levelId` by querying `curriculum_levels.display_name ILIKE levelName` (safe, authenticated, no new server action)
+  - Validation guard updated: requires either `levelId` or `levelName`
+  - Level resolution runs after auth + role check; returns a clear error if no matching level found
+  - All downstream uses of `levelId` replaced with `resolvedLevelId`
+  - Audit log payload updated to use `resolvedLevelId`
+  - No changes to the Insert structure, RLS, or approval flow
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Imported `extractTargetLevel`, `extractFocusArea`, `buildDrillConfirmationSummaryText` from the proposal answer module
+  - Imported `createCurriculumContentItemDraft` from curriculum draft actions (valid server action call from client component)
+  - Added `DRILL_CREATION_PATTERN` constant — detects "add a drill" / "create a drill" intents
+  - Added Sprint 912.8 narrow drill handler block placed before the existing broad `tryAnswerCurriculumDraftProposal` intercept:
+    - If level name missing → DONNA asks "Which curriculum level should this drill go in?"
+    - If focus area missing → DONNA asks "What should the drill focus on?"
+    - If both present → builds confirmation summary, calls `storeAndSetPendingConfirmation()` with an `execute` closure that calls `createCurriculumContentItemDraft({ levelName, contentType: 'drill', ... })`
+    - On director "yes" → draft created with `status: pending_review`; DONNA reports success + points to Review Center
+    - On director "no" → cleared safely; nothing created
+    - Captures `capturedLevel`, `capturedFocus`, `capturedRaw` as closure values to avoid stale refs
+  - Broad `tryAnswerCurriculumDraftProposal` handler unchanged — gates/skills/missions still use informational path
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.7 — DONNA Session Memory V1
 
 - **Modified `src/lib/donna/donnaChatSessionMemory.ts`:**

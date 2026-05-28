@@ -58,7 +58,13 @@ import { tryAnswerCurriculumLevelQuestion } from '@/lib/donna/curriculumLevelDon
 import { tryAnswerCurriculumImpactQuestion } from '@/lib/donna/curriculumImpactDonnaAnswer'
 import { tryAnswerSessionAdjustmentQuestion } from '@/lib/donna/sessionAdjustmentDonnaAnswer'
 import { tryAnswerCoachCueQuestion } from '@/lib/donna/coachCueDonnaAnswer'
-import { tryAnswerCurriculumDraftProposal } from '@/lib/donna/curriculumDraftProposalDonnaAnswer'
+import {
+  tryAnswerCurriculumDraftProposal,
+  extractTargetLevel,
+  extractFocusArea,
+  buildDrillConfirmationSummaryText,
+} from '@/lib/donna/curriculumDraftProposalDonnaAnswer'
+import { createCurriculumContentItemDraft } from '@/lib/actions/curriculumDraftActions'
 import { DATA_QUALITY_PATTERNS, buildDataQualityAnswer } from '@/lib/donna/dataQualityGuardian'
 import { RECENT_DECISIONS_PATTERNS, buildRecentDecisionsAnswer } from '@/lib/donna/recentDecisionsAnswerEngine'
 import { PLAYER_PROGRESS_STALL_PATTERNS, buildPlayerProgressStallAnswer } from '@/lib/donna/playerProgressStallDetector'
@@ -85,6 +91,11 @@ const CANCEL_CONFIRM_PATTERN = /^(no|nope|not now|cancel|never mind|forget it|do
 // These are caught when nothing is pending to give DONNA a helpful "nothing to confirm" reply.
 // Generic words (yes/ok/sure) are intentionally excluded — too ambiguous.
 const STRONG_CONFIRM_PATTERN = /^(do it|confirm|confirmed|create it|make it|create the draft|make the draft|go ahead and create|yes please create|absolutely create)\b/i
+
+// Sprint 912.8: narrow drill creation pattern — "add a drill", "create a drill".
+// Fires before the broad curriculum draft proposal to intercept specific drill requests
+// that have enough info for a real createCurriculumContentItemDraft() call.
+const DRILL_CREATION_PATTERN = /\b(add|create)\b.{0,30}\bdrill\b/i
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -744,6 +755,106 @@ export function DonnaVoiceReadyShell({
         }, 600)
         return
       }
+    }
+
+    // ── Sprint 912.8: Narrow drill draft confirmation flow ────────────────────
+    // Handles "add a drill for [level] focused on [focus]" with a real draft action.
+    // Fires BEFORE the broad tryAnswerCurriculumDraftProposal so specific drill
+    // requests with enough info get the full confirmation → create → review path.
+    // Broad requests (gates, skills, missions, etc.) fall through to the existing handler.
+    if (plainRole === 'director' && DRILL_CREATION_PATTERN.test(trimmed)) {
+      const targetLevel = extractTargetLevel(trimmed)
+      const focusArea = extractFocusArea(trimmed)
+
+      if (!targetLevel) {
+        // Missing level — ask before proceeding
+        const askLevelMsg: ChatMessage = {
+          id: `donna-ask-level-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: 'Which curriculum level should this drill go in? (e.g., Orange 2, Yellow 1, Red 3)',
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: null,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, askLevelMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, askLevelMsg.text, { domain: 'curriculum', confidence: 'high' })
+        }, 400)
+        return
+      }
+
+      if (!focusArea) {
+        // Level known, focus area missing — ask for it
+        const askFocusMsg: ChatMessage = {
+          id: `donna-ask-focus-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: `Got it — a new drill for ${targetLevel}. What should the drill focus on? (e.g., forehand prep, serve mechanics, footwork)`,
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: null,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, askFocusMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, askFocusMsg.text, { domain: 'curriculum', confidence: 'high' })
+        }, 400)
+        return
+      }
+
+      // Both present — summarize and ask for director confirmation before creating
+      const summaryText = buildDrillConfirmationSummaryText(targetLevel, focusArea)
+      const summaryMsg: ChatMessage = {
+        id: `donna-drill-confirm-${Date.now()}`,
+        role: 'donna',
+        kind: 'text',
+        text: summaryText,
+        timestamp: new Date().toISOString(),
+        confidence: 'high',
+        sourceNote: 'DONNA drill draft proposal',
+      }
+
+      // Capture values for the closure — avoids stale reference after re-renders
+      const capturedLevel = targetLevel
+      const capturedFocus = focusArea
+      const capturedRaw = trimmed
+
+      storeAndSetPendingConfirmation({
+        actionType: 'curriculum_drill_draft',
+        description: `Add a "${capturedFocus}" drill to ${capturedLevel} curriculum`,
+        execute: async () => {
+          const result = await createCurriculumContentItemDraft({
+            levelName: capturedLevel,
+            contentType: 'drill',
+            title: `${capturedFocus} drill`,
+            description: `A drill focused on ${capturedFocus} for ${capturedLevel} players.`,
+            source: 'voice',
+            rawInput: capturedRaw,
+            overrideReason: `DONNA voice draft: ${capturedRaw}`,
+          })
+          if (result.ok) {
+            return {
+              ok: true,
+              message: `A "${capturedFocus}" drill draft for ${capturedLevel} has been created.`,
+            }
+          }
+          return { ok: false, message: result.error }
+        },
+      })
+
+      setTimeout(() => {
+        setMessages(prev => [...prev, summaryMsg])
+        setIsTyping(false)
+        recordTurn(trimmed, summaryText, {
+          actionId: 'curriculum_drill_draft_pending',
+          domain: 'curriculum',
+          confidence: 'high',
+          sourceNote: 'DONNA drill draft proposal',
+        })
+      }, 600)
+      return
     }
 
     // ── Sprint 739: Curriculum draft proposal intercept ──────────────────────
