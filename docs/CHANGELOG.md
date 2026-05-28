@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-05-28 — Sprint 914.5 — DONNA Context Packet Routing Bridge V1
+
+- **Modified `src/lib/actions/donnaConversationActions.ts`:**
+  - Added `getDonnaWorkingMemoryForSession({ sessionId, memoryKey })` — reads a single key from `donna_working_memory`; RLS-scoped to authenticated user's accessible sessions; respects `expires_at` TTL; returns `null` when key absent or expired; read-only, never throws
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Added `LAST_CURRICULUM_DRAFT_TTL_MS` import from `donnaChatSessionMemory`
+  - Extended session init `useEffect([donnaRole])`: after session ID is obtained, calls `getDonnaWorkingMemoryForSession({ memoryKey: 'last_curriculum_draft' })` and restores `setLastCurriculumDraftAttempt()` if:
+    1. Memory value is non-null
+    2. `levelName`, `focusArea`, `contentLabel`, `contentType` are all non-empty strings
+    3. `storedAt` is a number
+    4. Age is within `LAST_CURRICULUM_DRAFT_TTL_MS` (10 minutes)
+    5. `getLastCurriculumDraftAttempt() === null` — both before (guard) AND after (async gap guard)
+  - Restoration is silent and non-fatal — any validation failure is a no-op; `.catch(() => {})` on all async steps
+  - Updated context debug command: when `last_curriculum_draft` is in working memory keys, notes "I am actively using persisted curriculum draft context for follow-up commands like 'same for Orange 3'"
+
+- **Routing behavior changed (additive only):**
+  - After reload/route change: if valid `last_curriculum_draft` backend memory exists AND in-process memory is empty, follow-up commands ("same for Orange 3", "change focus to footwork") can resolve from restored context instead of falling back to "What would you like to create?"
+  - If in-process memory is fresh (no reload), behavior is UNCHANGED
+
+- **Routing behavior intentionally unchanged:** 34-interceptor pipeline, director brief, ranking engine, correlation engine, curriculum draft execution — all unchanged
+
+- **Created `docs/QA_DONNA_CONTEXT_PACKET_ROUTING_BRIDGE_914_5.md`** — validation rules, routing change table, 10 QA scenarios, safety checks
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 914.4 — DONNA Context Packet Integration V1
 
 - **Modified `src/lib/actions/donnaConversationActions.ts`:**

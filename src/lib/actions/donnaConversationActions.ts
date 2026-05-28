@@ -220,6 +220,46 @@ export async function buildDonnaContextPacketForSession(
   }
 }
 
+// ── getDonnaWorkingMemoryForSession ────────────────────────────────────────────
+// Sprint 914.5: Read a single working memory key for a session.
+// Verifies the session is accessible to the authenticated user via RLS.
+// Returns null data (not an error) when the key does not exist.
+
+export interface GetWorkingMemoryInput {
+  sessionId: string
+  memoryKey: string
+}
+
+export async function getDonnaWorkingMemoryForSession(
+  input: GetWorkingMemoryInput,
+): Promise<ActionResult<Record<string, unknown> | null>> {
+  try {
+    const supabase = await getSupabaseServer()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.id) return { ok: false, error: 'Not authenticated' }
+
+    // RLS scopes the query to the authenticated user's accessible sessions.
+    const { data, error } = await (supabase as any)
+      .from('donna_working_memory')
+      .select('memory_value, expires_at')
+      .eq('session_id', input.sessionId)
+      .eq('memory_key', input.memoryKey)
+      .maybeSingle()
+
+    if (error) return { ok: false, error: error.message }
+    if (!data) return { ok: true, data: null }
+
+    // Respect TTL: expired entries are treated as absent
+    if (data.expires_at && new Date(data.expires_at) <= new Date()) {
+      return { ok: true, data: null }
+    }
+
+    return { ok: true, data: (data.memory_value as Record<string, unknown>) ?? null }
+  } catch {
+    return { ok: false, error: 'Unexpected error reading DONNA working memory.' }
+  }
+}
+
 // ── recallRecentDonnaMessages ──────────────────────────────────────────────────
 
 export interface RecallMessagesInput {

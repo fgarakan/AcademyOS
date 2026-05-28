@@ -35,6 +35,7 @@ import {
   hasPendingDrillSlotFill,
   setLastCurriculumDraftAttempt,
   getLastCurriculumDraftAttempt,
+  LAST_CURRICULUM_DRAFT_TTL_MS,
   type PendingNavOffer,
 } from '@/lib/donna/donnaChatSessionMemory'
 import {
@@ -96,6 +97,7 @@ import {
   upsertDonnaMemory,
   recallRecentDonnaMessages,
   buildDonnaContextPacketForSession,
+  getDonnaWorkingMemoryForSession,
   type ContextPacketSummary,
 } from '@/lib/actions/donnaConversationActions'
 // Sprint 912.3 — Conversation Mode state machine
@@ -212,7 +214,9 @@ export function DonnaVoiceReadyShell({
   }, [donnaRole])
 
   // Sprint 914.3: Initialize backend spine session on mount (fire-and-forget).
-  // Failure is non-fatal — DONNA continues using in-process memory.
+  // Sprint 914.5: After session is obtained, restore last_curriculum_draft
+  //               from backend working memory if in-process memory is empty.
+  // Failure at any step is non-fatal — DONNA continues using in-process memory.
   useEffect(() => {
     if (role !== 'director') return
     getOrCreateDonnaSession({
@@ -221,7 +225,39 @@ export function DonnaVoiceReadyShell({
       title:          null,
     })
       .then(result => {
-        if (result.ok) sessionIdRef.current = result.data.sessionId
+        if (!result.ok) return
+        sessionIdRef.current = result.data.sessionId
+
+        // Sprint 914.5: try to restore curriculum draft context from backend memory.
+        // Only restores when in-process memory is already empty (do not overwrite fresh state).
+        if (getLastCurriculumDraftAttempt() !== null) return
+
+        getDonnaWorkingMemoryForSession({
+          sessionId: result.data.sessionId,
+          memoryKey: 'last_curriculum_draft',
+        })
+          .then(memResult => {
+            if (!memResult.ok || !memResult.data) return
+            const raw = memResult.data
+            // Validate shape before restoring — never trust unvalidated persisted data
+            const levelName   = typeof raw.levelName   === 'string' && raw.levelName   ? raw.levelName   : null
+            const focusArea   = typeof raw.focusArea   === 'string' && raw.focusArea   ? raw.focusArea   : null
+            const contentLabel = typeof raw.contentLabel === 'string' && raw.contentLabel ? raw.contentLabel : null
+            const contentType  = typeof raw.contentType  === 'string' && raw.contentType  ? raw.contentType  : null
+            const storedAt     = typeof raw.storedAt === 'number' ? raw.storedAt : null
+
+            if (!levelName || !focusArea || !contentLabel || !contentType || !storedAt) return
+
+            // Respect the same TTL as the in-process version
+            const ageMs = Date.now() - storedAt
+            if (ageMs > LAST_CURRICULUM_DRAFT_TTL_MS) return
+
+            // Only restore if in-process is still empty (double-check after async gap)
+            if (getLastCurriculumDraftAttempt() !== null) return
+
+            setLastCurriculumDraftAttempt({ levelName, focusArea, contentLabel, contentType })
+          })
+          .catch(() => { /* non-fatal */ })
       })
       .catch(() => { /* non-fatal — in-process memory continues */ })
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -624,6 +660,11 @@ export function DonnaVoiceReadyShell({
         ctxText = `Current session: ${sIdDebug ? 'active' : 'not initialized'}. Page: ${pathname ?? 'unknown'}. Director context: ${directorCtx ? 'loaded' : 'loading'}. I'm assembling a context packet for each message — it will be available from the next turn.`
       } else {
         const memKeys = pkt.workingMemoryKeys.length > 0 ? pkt.workingMemoryKeys.join(', ') : 'none'
+        // Sprint 914.5: note whether last_curriculum_draft is actively in use
+        const hasDraftMemory = pkt.workingMemoryKeys.includes('last_curriculum_draft')
+        const draftNote = hasDraftMemory
+          ? ' I am actively using persisted curriculum draft context for follow-up commands like "same for Orange 3".'
+          : ''
         ctxText = [
           `Here is my current context for this conversation:`,
           `• Page: ${pkt.activePage ?? pathname ?? 'unknown'}`,
@@ -632,7 +673,7 @@ export function DonnaVoiceReadyShell({
           `• Director operating context: ${pkt.hasDirectorContext ? 'loaded' : 'not loaded'}`,
           `• Session: active`,
           ``,
-          `I am not yet using this context packet to route answers — that comes in the next sprint. But it is being assembled for every director message.`,
+          `The context packet is assembled for every message.${draftNote} The main routing pipeline does not yet use this packet — that comes in the next sprint.`,
         ].join('\n')
       }
       const ctxMsg: ChatMessage = {
