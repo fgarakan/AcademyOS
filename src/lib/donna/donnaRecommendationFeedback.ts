@@ -1,4 +1,5 @@
 // Sprint 914.11 — DONNA Recommendation Feedback Loop V1
+// Sprint 915.1 — Invalidate recent_recommendations cache on create
 // Helpers for logging recommendations and recording director feedback.
 // Non-throwing — all functions return ok/error, never break DONNA.
 //
@@ -8,6 +9,7 @@
 //   - Feedback is for human analysis only — no automated learning model
 
 import type { DB } from '@/lib/types/db'
+import { onRecommendationLogged } from '@/lib/donna/donnaContextCache'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -82,6 +84,8 @@ export async function createDonnaRecommendation(
       .single()
 
     if (error) return { ok: false, error: error.message }
+    // Invalidate recent_recommendations cache so next context packet sees fresh data
+    try { onRecommendationLogged(input.academyId) } catch { /* never block on cache ops */ }
     return { ok: true, recommendationId: data?.id as string | undefined }
   } catch {
     return { ok: false, error: 'Unexpected error creating DONNA recommendation.' }

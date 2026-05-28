@@ -1,6 +1,7 @@
 // Sprint 914.2 — DONNA Context Packet Builder V1
 // Sprint 914.9 — Action Registry wired into context packet
 // Sprint 914.12 — Entity summaries optionally included when currentEntity set
+// Sprint 915.1 — Entity summary lookup wrapped with cachedFetch
 // Assembles a structured context packet before DONNA answer generation.
 // Read-only assembly — no DB writes, no mutations, no AI inference.
 // Accepts data from multiple sources (persisted messages, working memory,
@@ -19,6 +20,7 @@ import {
 } from '@/lib/donna/donnaConversationPersistence'
 import { getAllowedActionIds } from '@/lib/donna/donnaActionRegistryWiring'
 import { getEntitySummary } from '@/lib/donna/donnaEntitySummaries'
+import { cachedFetch, CACHE_TTL_MS } from '@/lib/donna/donnaContextCache'
 
 // ── Context packet type ────────────────────────────────────────────────────────
 
@@ -139,17 +141,23 @@ export async function buildDonnaContextPacket(
     ? input.allowedActions
     : getAllowedActionIds({ pathname: input.activePage })
 
-  // Sprint 914.12: fetch entity summary when currentEntity is set (non-fatal)
+  // Sprint 914.12 / 915.1: fetch entity summary via cache when currentEntity is set (non-fatal)
   let entitySummary: Record<string, unknown> | null = null
   if (input.currentEntityType && input.currentEntityId) {
-    const summaryResult = await getEntitySummary(db, {
-      academyId:   input.academyId,
-      entityType:  input.currentEntityType as any,
-      entityId:    input.currentEntityId,
-    })
-    if (summaryResult.ok && summaryResult.data) {
-      entitySummary = summaryResult.data.summaryJson
-    }
+    const entityCacheKey = `entity_summary:${input.currentEntityType}:${input.currentEntityId}`
+    entitySummary = await cachedFetch<Record<string, unknown>>(
+      input.academyId,
+      entityCacheKey,
+      CACHE_TTL_MS.PLAYER_SUMMARY_METADATA,
+      async () => {
+        const summaryResult = await getEntitySummary(db, {
+          academyId:  input.academyId,
+          entityType: input.currentEntityType as any,
+          entityId:   input.currentEntityId!,
+        })
+        return (summaryResult.ok && summaryResult.data) ? summaryResult.data.summaryJson : null
+      },
+    )
   }
 
   return {

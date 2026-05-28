@@ -27887,6 +27887,13 @@ See `docs/CURRENT_BUILD_TARGET.md` Step 4 for full specification.
 - `donnaEntitySummaries.ts`: upsertEntitySummary(), getEntitySummary(), getRelevantEntitySummaries().
 - `donnaContextPacketBuilder.ts`: entitySummary field added; populated when currentEntity set.
 
+## 2026-05-28 — Sprint 915.1 — DONNA Low-Latency Context Cache V1
+
+- `src/lib/donna/donnaContextCache.ts`: module-level in-process cache. `cacheGet`, `cacheSet`, `cacheInvalidate`, `cachedFetch`, `onCurriculumDraftCreated`, `onRecommendationLogged`. Conservative TTLs (1–5 min). Academy-keyed — no cross-academy leakage. Never throws.
+- `donnaContextPacketBuilder.ts`: entity summary fetch wrapped with `cachedFetch` (2 min TTL). Falls back to DB on miss or error.
+- `donnaRecommendationFeedback.ts`: calls `onRecommendationLogged` after successful recommendation insert to invalidate recent_recommendations cache.
+- `docs/architecture/DONNA_CONTEXT_CACHE_915_1.md`, `docs/QA_DONNA_CONTEXT_CACHE_915_1.md`.
+
 ## 2026-05-28 — Sprint 914.13 — DONNA Backend Spine Certification V1
 
 - docs/QA_DONNA_BACKEND_SPINE_CERTIFICATION_914_13.md: Certifies full 914.x spine. All 17 components verified. Safety: execute_curriculum_override absent, curriculum drafts pending_review only, Sprint 904 untouched, all 7 new tables RLS-enabled. Backend architecture rating: 8.5/10. V2 gaps documented.
