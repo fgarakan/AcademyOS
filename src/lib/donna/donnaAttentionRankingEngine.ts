@@ -62,6 +62,9 @@ const SCORE_ATTENDANCE_EXCEPTION_BASE = 70
 const SCORE_STALE_QUEUE_HIGH         = 75   // ≥14 days old
 const SCORE_STALE_QUEUE_MED          = 65   // 7–13 days old
 const SCORE_PENDING_REVIEWS_BASE     = 60
+const SCORE_PLAYER_STALLS_BASE       = 62   // Sprint 913.3
+const SCORE_ASSESSMENT_COVERAGE_BASE = 58   // Sprint 913.3
+const SCORE_TEMPLATE_COVERAGE_BASE   = 56   // Sprint 913.3
 const SCORE_MEDIUM_RISK_PLAYER_BASE  = 55
 const SCORE_ADVANCEMENT_ELIGIBLE_BASE = 50
 const SCORE_CURRICULUM_DRAFTS_BASE   = 40
@@ -225,6 +228,72 @@ export function buildAttentionPriorities(
       href: '/director/players',
       requiresApproval: true,
       donnaWillNotDo: 'DONNA will not move players to a new level. Level changes require explicit director approval through the Review Center.',
+    })
+  }
+
+  // ── Sprint 913.3: Player progress stalls ─────────────────────────────────
+  // Players who have not advanced at their current curriculum level for an extended period.
+  // Gated on playerProgressStallContextAvailable to avoid ranking on incomplete data.
+  if (ctx.playerProgressStallCount > 0 && ctx.playerProgressStallContextAvailable) {
+    const score = cap(SCORE_PLAYER_STALLS_BASE + ctx.playerProgressStallCount * 3, 78)
+    const plural = ctx.playerProgressStallCount !== 1
+    priorities.push({
+      id: 'player_progress_stalls',
+      label: `${ctx.playerProgressStallCount} player${plural ? 's' : ''} may be stalled in development`,
+      category: 'player_development',
+      severity: ctx.playerProgressStallCount >= 3 ? 'high' : 'medium',
+      score,
+      whyItMatters: 'Stalled players have been at their current curriculum level for an extended period without advancing. They may need updated evidence, a priority reset, or a coaching review before the next level decision.',
+      evidence: `${ctx.playerProgressStallCount} player progress stall signal${plural ? 's' : ''} detected in curriculum state tracking.`,
+      bestNextAction: 'Review the stalled player profiles, check recent coach notes for progress signals, and decide whether to schedule an assessment or update the development plan.',
+      href: '/director/players',
+      requiresApproval: false,
+      donnaWillNotDo: 'DONNA will not move stalled players to a new level or modify their development records automatically.',
+    })
+  }
+
+  // ── Sprint 913.3: Assessment coverage gaps ────────────────────────────────
+  // Players who need assessments before level movement can be justified.
+  // Gated on assessmentContextAvailable to avoid ranking on incomplete data.
+  if (ctx.assessmentCoverageGapCount > 0 && ctx.assessmentContextAvailable) {
+    const score = cap(SCORE_ASSESSMENT_COVERAGE_BASE + ctx.assessmentCoverageGapCount * 2, 72)
+    const plural = ctx.assessmentCoverageGapCount !== 1
+    const evidenceExtra = ctx.eligibleWithoutAssessmentEvidence > 0
+      ? ` Including ${ctx.eligibleWithoutAssessmentEvidence} advancement-eligible player${ctx.eligibleWithoutAssessmentEvidence !== 1 ? 's' : ''} without promotion-ready assessment on record.`
+      : ''
+    priorities.push({
+      id: 'assessment_coverage_gaps',
+      label: `${ctx.assessmentCoverageGapCount} assessment coverage gap${plural ? 's' : ''} flagged`,
+      category: 'curriculum',
+      severity: ctx.assessmentCoverageGapCount >= 3 ? 'high' : 'medium',
+      score,
+      whyItMatters: 'Assessment gaps mean the academy may lack sufficient evidence to justify level movement or advancement readiness decisions. This weakens the evidence base for coaching and director choices.',
+      evidence: `${ctx.assessmentCoverageGapCount} assessment coverage gap${plural ? 's' : ''} detected.${evidenceExtra}`,
+      bestNextAction: 'Review player assessment records. Schedule assessments for players with gaps before making level movement decisions.',
+      href: '/director/players',
+      requiresApproval: false,
+      donnaWillNotDo: 'DONNA will not schedule assessments or modify assessment records automatically.',
+    })
+  }
+
+  // ── Sprint 913.3: Curriculum-to-template coverage gaps ───────────────────
+  // Curriculum levels with active players but no session template assigned.
+  // Gated on templateCoverageContextAvailable to avoid ranking on incomplete data.
+  if (ctx.curriculumTemplateCoverageGapCount > 0 && ctx.templateCoverageContextAvailable) {
+    const score = cap(SCORE_TEMPLATE_COVERAGE_BASE + ctx.curriculumTemplateCoverageGapCount * 2, 70)
+    const plural = ctx.curriculumTemplateCoverageGapCount !== 1
+    priorities.push({
+      id: 'curriculum_template_coverage_gaps',
+      label: `${ctx.curriculumTemplateCoverageGapCount} curriculum level${plural ? 's' : ''} with active players but no session template`,
+      category: 'curriculum',
+      severity: ctx.curriculumTemplateCoverageGapCount >= 3 ? 'high' : 'medium',
+      score,
+      whyItMatters: 'When active curriculum levels have no session template, coaches cannot deliver structured sessions from a consistent plan. This weakens curriculum fidelity and consistency across the academy.',
+      evidence: `${ctx.curriculumTemplateCoverageGapCount} curriculum level${plural ? 's' : ''} with enrolled players have no matching session template assigned.`,
+      bestNextAction: 'Open Templates and create or assign session templates for the affected curriculum levels.',
+      href: '/director/templates',
+      requiresApproval: false,
+      donnaWillNotDo: 'DONNA will not create or assign templates automatically. Templates require director creation and review.',
     })
   }
 

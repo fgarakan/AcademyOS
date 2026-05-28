@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-28 — Sprint 913.3 — DONNA Coverage Gap Intelligence V1
+
+- **Modified `src/lib/donna/donnaAttentionRankingEngine.ts`:**
+  - Added 3 new scoring constants: `SCORE_PLAYER_STALLS_BASE=62`, `SCORE_ASSESSMENT_COVERAGE_BASE=58`, `SCORE_TEMPLATE_COVERAGE_BASE=56`
+  - Added 3 new signal blocks — all inserted between `advancement_eligible` and `curriculum_drafts` (correct score ordering), sorted by score at runtime:
+    - **`player_progress_stalls`** (base 62, +3/stall, cap 78) — `player_development` / medium/high; gated on `ctx.playerProgressStallContextAvailable`; evidence uses `ctx.playerProgressStallCount`; `href: '/director/players'`; `requiresApproval: false`; DONNA will not move stalled players automatically
+    - **`assessment_coverage_gaps`** (base 58, +2/gap, cap 72) — `curriculum` / medium/high; gated on `ctx.assessmentContextAvailable`; evidence enriched with `ctx.eligibleWithoutAssessmentEvidence` when > 0; `href: '/director/players'`; `requiresApproval: false`; DONNA will not schedule assessments automatically
+    - **`curriculum_template_coverage_gaps`** (base 56, +2/gap, cap 70) — `curriculum` / medium/high; gated on `ctx.templateCoverageContextAvailable`; covers levels with active players but no session template; `href: '/director/templates'`; `requiresApproval: false`; DONNA will not create or assign templates automatically
+  - Context guard rationale: when detection engines run on incomplete data, guard flags are false even if counts > 0 — prevents false-positive rankings
+
+- **Ranking order now complete (15 signal types, sorted by score):**
+  Missing wrap-ups (80–95) > High-risk players (75–90) > Attendance exceptions (70–85) > Stale queue (65–75) > Player stalls (62–78) > Pending reviews (60–75) > Assessment coverage gaps (58–72) > Template coverage gaps (56–70) > Medium-risk players (55–65) > Advancement eligible (50–60) > Curriculum drafts (40–55) > Onboarding not-started (45) > Curriculum gaps (35–50) > Onboarding partial (30)
+
+- **Created `docs/architecture/DONNA_COVERAGE_GAP_INTELLIGENCE_913_3.md`** — signal table, context guard rationale, full updated ranking order, justification for coverage gaps ranking above curriculum drafts
+- **Created `docs/QA_DONNA_COVERAGE_GAP_INTELLIGENCE_913_3.md`** — 10 static QA scenarios all pass; verification of "player stalls outrank curriculum drafts", "existing signals still outrank coverage gaps", context guard prevents false positives
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 913.2 — DONNA Attention Ranking Engine V1
 
 - **New `src/lib/donna/donnaAttentionRankingEngine.ts`:**
