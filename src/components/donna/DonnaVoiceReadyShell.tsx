@@ -83,6 +83,8 @@ import { RECENT_DECISIONS_PATTERNS, buildRecentDecisionsAnswer } from '@/lib/don
 import { PLAYER_PROGRESS_STALL_PATTERNS, buildPlayerProgressStallAnswer } from '@/lib/donna/playerProgressStallDetector'
 // Sprint 912.18 — Onboarding Guide Mode
 import { detectOnboardingProgressQuestion, buildOnboardingProgressAnswer } from '@/lib/donna/donnaOnboardingGuideAnswer'
+// Sprint 912.19 — Review Queue Intelligence
+import { detectReviewQueueQuestion, buildReviewQueueAnswer } from '@/lib/donna/donnaReviewQueueAnswer'
 import { submitDonnaActionDraft } from '@/lib/actions/donnaSentinelAction'
 import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
 import { buildFocusTargetForRoute } from '@/lib/donna/donnaUIActionDispatcher'
@@ -786,6 +788,39 @@ export function DonnaVoiceReadyShell({
       setMessages(prev => [...prev, boundaryMsg])
       setIsTyping(false)
       recordTurn(trimmed, boundaryMsg.text, { confidence: boundary.confidenceKind })
+      return
+    }
+
+    // ── Sprint 912.19: Review Queue Intelligence intercept ───────────────────
+    // Fires BEFORE the page guide so review-queue questions always get a
+    // data-driven answer (from directorCtx) rather than a page-contextual one.
+    // Requires directorCtx — falls through if null (handled by later interceptors).
+    if (plainRole === 'director' && directorCtx && detectReviewQueueQuestion(trimmed)) {
+      const rqAnswer = buildReviewQueueAnswer(directorCtx)
+      const rqMsg: ChatMessage = {
+        id: `donna-review-queue-${Date.now()}`,
+        role: 'donna',
+        kind: 'text',
+        text: rqAnswer.text,
+        timestamp: new Date().toISOString(),
+        confidence: rqAnswer.confidence,
+        sourceNote: rqAnswer.sourceNote,
+        followUp: rqAnswer.followUp,
+        followUpHref: rqAnswer.href ?? undefined,
+      }
+      setTimeout(() => {
+        setMessages(prev => [...prev, rqMsg])
+        setIsTyping(false)
+        recordTurn(trimmed, rqAnswer.text, {
+          actionId: rqAnswer.actionId,
+          domain: 'review_queue',
+          confidence: rqAnswer.confidence,
+          sourceNote: rqAnswer.sourceNote,
+        })
+        if (rqAnswer.href) {
+          setPendingNavOffer({ href: rqAnswer.href, label: rqAnswer.followUp ?? 'Review Queue', questionContext: trimmed })
+        }
+      }, 500)
       return
     }
 

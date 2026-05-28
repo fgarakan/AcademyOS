@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.19 — DONNA Review Queue Intelligence V1
+
+- **New `src/lib/donna/donnaReviewQueueAnswer.ts`:**
+  - `detectReviewQueueQuestion(text)` — 11 regex patterns for review-queue-data requests: "what needs review?", "what is in the review queue?", "what curriculum drafts are waiting?", "what decisions are waiting on me?", "summarize pending reviews", "review queue summary/breakdown", "what is risky in the queue?", and more
+  - `buildReviewQueueAnswer(ctx)` — builds a breakdown response from `DirectorDonnaContext` fields:
+    - Shows total `pendingReviews` with category breakdown: `evidenceDrafts`, `attendanceExceptions`, `templateDrafts`, and `otherCount` (max(0, total - known) — covers wrap-up items, proposals, etc.)
+    - Priority note: attendance exceptions → parent record risk; evidence drafts → advancement readiness
+    - Explicitly notes curriculum override drafts are in a separate queue on the Curriculum Builder page
+    - Safety declaration: "DONNA will not approve, reject, or apply any item — your explicit action in the Review Center is required."
+    - Empty-queue variant: "Your Review Queue is clear right now — no pending items in proposed_actions."
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Added imports for `detectReviewQueueQuestion`, `buildReviewQueueAnswer`
+  - Added Sprint 912.19 review queue intercept at step 6 (after boundary check, **before** page guide) with guard `plainRole === 'director' && directorCtx`
+  - Positioned before page guide intentionally: "what needs review?" would otherwise get a page-contextual answer from `PAGE_APPROVAL` (e.g., on DONNA Hub: "no approval actions on this page") — the data-driven queue breakdown is always more useful
+  - Sets nav offer to `/director/review` so director can say "yes" to navigate
+  - Falls through gracefully if `directorCtx` is null
+
+- **Data source:** `DirectorDonnaContext` (live from `proposed_actions` at page render). Curriculum override drafts (`academy_curriculum_overrides`) NOT in ctx — documented in response rather than fabricated.
+
+- **Created `docs/QA_DONNA_REVIEW_QUEUE_INTELLIGENCE_912_19.md`:**
+  - Data audit table: what `directorCtx` has vs. what is missing
+  - 12 static QA scenarios all pass: queue on DONNA Hub, null ctx fallthrough, page guide still wins for "approval on this page", director brief unaffected, curriculum drafts unaffected
+  - Pattern conflict analysis: all clean
+  - Known limitations: curriculum overrides, "other" category, no per-item risk scores
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.18 — DONNA Onboarding Guide V1
 
 - **New `src/lib/donna/donnaOnboardingGuideAnswer.ts`:**
