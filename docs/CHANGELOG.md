@@ -27887,6 +27887,13 @@ See `docs/CURRENT_BUILD_TARGET.md` Step 4 for full specification.
 - `donnaEntitySummaries.ts`: upsertEntitySummary(), getEntitySummary(), getRelevantEntitySummaries().
 - `donnaContextPacketBuilder.ts`: entitySummary field added; populated when currentEntity set.
 
+## 2026-05-28 — Sprint 915.2 — DONNA Semantic Memory / Embeddings V1
+
+- `supabase/migrations/074_donna_embeddings.sql`: pgvector extension (IF NOT EXISTS). `donna_embeddings` table with entity_type, entity_id, source_kind, embedding_model, embedding_dim, embedding_vector(1536), visibility_scope. RLS academy-scoped. UNIQUE constraint for upsert safety.
+- `src/lib/donna/donnaSemanticMemory.ts`: `EMBEDDING_SOURCE_REGISTRY`, `storeEmbedding()`, `retrieveSimilarEmbeddings()`, `getEntityEmbeddings()`. Raw vectors never returned to callers. All failure paths return safe empty results.
+- `docs/architecture/DONNA_SEMANTIC_MEMORY_915_2.md`, `docs/QA_DONNA_SEMANTIC_MEMORY_915_2.md`.
+- V1 limitations: similarity scoring placeholder, IVFFlat deferred, embedding generation external, context packet not yet wired.
+
 ## 2026-05-28 — Sprint 915.1 — DONNA Low-Latency Context Cache V1
 
 - `src/lib/donna/donnaContextCache.ts`: module-level in-process cache. `cacheGet`, `cacheSet`, `cacheInvalidate`, `cachedFetch`, `onCurriculumDraftCreated`, `onRecommendationLogged`. Conservative TTLs (1–5 min). Academy-keyed — no cross-academy leakage. Never throws.
