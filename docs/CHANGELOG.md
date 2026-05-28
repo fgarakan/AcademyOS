@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-28 — Sprint 914.4 — DONNA Context Packet Integration V1
+
+- **Modified `src/lib/actions/donnaConversationActions.ts`:**
+  - Added `buildDonnaContextPacketForSession(input)` — calls `buildDonnaContextPacket()` server-side; resolves userId/academyId/role from auth; returns safe `ContextPacketSummary` (counts and keys only — no raw values, no directorCtx)
+  - Added `ContextPacketSummary` type: `sessionId, activePage, activeWorkflow, recentConversationCount, workingMemoryKeys[], hasDirectorContext, userId, role, assembledAt`
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Added import for `buildDonnaContextPacketForSession` and `type ContextPacketSummary`
+  - Added `lastContextPacketRef = useRef<ContextPacketSummary | null>(null)` — stores most recent assembled context packet summary
+  - Added context packet build in `handleSend()` (fire-and-forget, after recall/debug, before confirmation): calls `buildDonnaContextPacketForSession()` with `sessionId`, `userMessage`, `activePage`, `directorContext`; stores result in `lastContextPacketRef.current`
+  - Added `CONTEXT_DEBUG_PATTERN` intercept: "what context do you have?" → summarizes page, recent turn count, working memory keys, director context availability — no raw values or IDs exposed
+  - Added `storeAndSetPendingConfirmation()` working memory: persists `{ actionType, description, storedAt }` as `pending_action_summary` — no `execute()` function
+  - Added confirmed/cancelled state updates when `clearPendingAction()` is called
+  - Added `setPendingSlotFillWithPersist()` wrapper: wraps `setPendingDrillSlotFill()` and also calls `upsertDonnaMemory({ memoryKey: 'pending_slot_fill', memoryValue: safe POJO })`; replaced all 8 `setPendingDrillSlotFill(` calls
+
+- **What is still NOT using the context packet:**
+  - 34-interceptor routing pipeline (unchanged — Sprint 914.5)
+  - `buildDirectorBriefSummary`, `buildDashboardPriorityResponse` (unchanged)
+  - `donnaAttentionRankingEngine`, `donnaSignalCorrelationEngine` (unchanged)
+  - `allowedActions`, `pendingApprovals` fields (Sprint 914.5+)
+
+- **Created `docs/QA_DONNA_CONTEXT_PACKET_INTEGRATION_914_4.md`** — packet fields, pending state tables, debug command behavior, 10 QA scenarios
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 914.3 — DONNA Backend Spine Wiring V1
 
 - **New `src/lib/actions/donnaConversationActions.ts`** (`'use server'`):

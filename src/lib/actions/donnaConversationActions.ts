@@ -21,6 +21,7 @@ import {
   type DonnaConversationSession,
   type DonnaConversationMessage,
 } from '@/lib/donna/donnaConversationPersistence'
+import { buildDonnaContextPacket } from '@/lib/donna/donnaContextPacketBuilder'
 
 // ── Typed result ────────────────────────────────────────────────────────────────
 
@@ -137,6 +138,85 @@ export async function upsertDonnaMemory(
     return { ok: true, data: { ok: true } }
   } catch {
     return { ok: false, error: 'Unexpected error persisting DONNA working memory.' }
+  }
+}
+
+// ── buildDonnaContextPacketForSession ─────────────────────────────────────────
+// Sprint 914.4: Assembles a safe context packet summary for the current session.
+// Full packet is built server-side; only a safe summary is returned to the client.
+// Directs context, working memory values, and raw message content stay server-side.
+
+export interface BuildContextPacketInput {
+  sessionId: string
+  userMessage: string
+  activePage?: string | null
+  activeWorkflow?: string | null
+  currentEntityType?: string | null
+  currentEntityId?: string | null
+  directorContext?: unknown | null
+  metadata?: Record<string, unknown>
+}
+
+/** Safe summary returned to the client — no raw values, no IDs, no directorCtx. */
+export interface ContextPacketSummary {
+  sessionId: string | null
+  activePage: string | null
+  activeWorkflow: string | null
+  recentConversationCount: number
+  workingMemoryKeys: string[]
+  hasDirectorContext: boolean
+  userId: string
+  role: string
+  assembledAt: string
+}
+
+export async function buildDonnaContextPacketForSession(
+  input: BuildContextPacketInput,
+): Promise<ActionResult<ContextPacketSummary>> {
+  try {
+    const supabase = await getSupabaseServer()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.id) return { ok: false, error: 'Not authenticated' }
+
+    const { data: membership } = await (supabase as any)
+      .from('academy_memberships')
+      .select('role, academy_id')
+      .eq('profile_id', user.id)
+      .eq('is_active', true)
+      .limit(1)
+      .single()
+
+    if (!membership?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+
+    const packet = await buildDonnaContextPacket(supabase as any, {
+      userMessage:        input.userMessage,
+      academyId:          membership.academy_id as string,
+      userId:             user.id,
+      role:               (membership.role as string) ?? 'academy_director',
+      sessionId:          input.sessionId,
+      activePage:         input.activePage ?? null,
+      activeWorkflow:     input.activeWorkflow ?? null,
+      currentEntityType:  input.currentEntityType ?? null,
+      currentEntityId:    input.currentEntityId ?? null,
+      directorContext:    input.directorContext ?? null,
+      metadata:           input.metadata ?? {},
+    })
+
+    const summary: ContextPacketSummary = {
+      sessionId:               packet.sessionId,
+      activePage:              packet.activePage,
+      activeWorkflow:          packet.activeWorkflow,
+      recentConversationCount: packet.recentConversation.length,
+      workingMemoryKeys:       Object.keys(packet.workingMemory),
+      hasDirectorContext:      packet.directorContext !== null,
+      userId:                  packet.userId,
+      role:                    packet.role,
+      assembledAt:             new Date().toISOString(),
+    }
+
+    return { ok: true, data: summary }
+  } catch {
+    return { ok: false, error: 'Unexpected error building DONNA context packet.' }
   }
 }
 

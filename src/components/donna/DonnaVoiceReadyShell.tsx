@@ -89,11 +89,14 @@ import { submitDonnaActionDraft } from '@/lib/actions/donnaSentinelAction'
 import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
 import { buildFocusTargetForRoute } from '@/lib/donna/donnaUIActionDispatcher'
 // Sprint 914.3 — Backend Spine Wiring (fire-and-forget persistence)
+// Sprint 914.4 — Context Packet Integration
 import {
   getOrCreateDonnaSession,
   appendDonnaMessage as persistDonnaMessage,
   upsertDonnaMemory,
   recallRecentDonnaMessages,
+  buildDonnaContextPacketForSession,
+  type ContextPacketSummary,
 } from '@/lib/actions/donnaConversationActions'
 // Sprint 912.3 — Conversation Mode state machine
 import {
@@ -200,6 +203,8 @@ export function DonnaVoiceReadyShell({
   const sessionIdRef = useRef<string | null>(null)
   // Sprint 914.3: tracks last donna message ID persisted to avoid double-writes
   const lastPersistedDonnaIdRef = useRef<string | null>(null)
+  // Sprint 914.4: stores the most recently assembled context packet summary
+  const lastContextPacketRef = useRef<ContextPacketSummary | null>(null)
 
   // Initialize session
   useEffect(() => {
@@ -423,6 +428,16 @@ export function DonnaVoiceReadyShell({
       description: action.description,
       execute: action.execute,
     })
+    // Sprint 914.4: persist safe (non-executable) action summary to working memory
+    const sId = sessionIdRef.current
+    if (sId) {
+      upsertDonnaMemory({
+        sessionId: sId,
+        memoryKey: 'pending_action_summary',
+        memoryValue: { actionType: action.actionType, description: action.description, storedAt: Date.now() },
+        scope: 'workflow',
+      }).catch(() => {})
+    }
   }
 
   // ── Sprint 912.11: Shared curriculum content confirmation trigger ────────────
@@ -512,6 +527,22 @@ export function DonnaVoiceReadyShell({
 
   // ── Send handler ────────────────────────────────────────────────────────────
 
+  // Sprint 914.4: wrapper around setPendingDrillSlotFill that also persists a safe
+  // POJO summary to donna_working_memory. Replaces all direct setPendingDrillSlotFill calls.
+  // Never serializes execute() functions — only safe plain-JSON fields.
+  function setPendingSlotFillWithPersist(fill: Omit<import('@/lib/donna/donnaChatSessionMemory').PendingDrillSlotFill, 'storedAt'>) {
+    setPendingDrillSlotFill(fill)
+    const sId = sessionIdRef.current
+    if (sId) {
+      upsertDonnaMemory({
+        sessionId:   sId,
+        memoryKey:   'pending_slot_fill',
+        memoryValue: { kind: fill.kind, levelName: fill.levelName, focusArea: fill.focusArea, missingSlot: fill.missingSlot, rawInput: fill.rawInput, storedAt: Date.now() },
+        scope:       'workflow',
+      }).catch(() => {})
+    }
+  }
+
   // Sprint 914.3: recall pattern — "what did we discuss last time?"
   const RECALL_PATTERN = /\b(what did we (discuss|talk about|say)|recap (our|this|the) (donna )?(conversation|chat|session)|what were we (talking|discussing)|what have we (discussed|talked about))\b/i
 
@@ -583,6 +614,59 @@ export function DonnaVoiceReadyShell({
       return
     }
 
+    // Sprint 914.4: context debug command — "what context do you have?"
+    const CONTEXT_DEBUG_PATTERN = /\b(what context do you have|what do you know about this conversation|what are you using for context|what context are you working with)\b/i
+    if (plainRole === 'director' && CONTEXT_DEBUG_PATTERN.test(trimmed)) {
+      const pkt = lastContextPacketRef.current
+      let ctxText: string
+      if (!pkt) {
+        const sIdDebug = sessionIdRef.current
+        ctxText = `Current session: ${sIdDebug ? 'active' : 'not initialized'}. Page: ${pathname ?? 'unknown'}. Director context: ${directorCtx ? 'loaded' : 'loading'}. I'm assembling a context packet for each message — it will be available from the next turn.`
+      } else {
+        const memKeys = pkt.workingMemoryKeys.length > 0 ? pkt.workingMemoryKeys.join(', ') : 'none'
+        ctxText = [
+          `Here is my current context for this conversation:`,
+          `• Page: ${pkt.activePage ?? pathname ?? 'unknown'}`,
+          `• Recent saved turns: ${pkt.recentConversationCount}`,
+          `• Working memory keys: ${memKeys}`,
+          `• Director operating context: ${pkt.hasDirectorContext ? 'loaded' : 'not loaded'}`,
+          `• Session: active`,
+          ``,
+          `I am not yet using this context packet to route answers — that comes in the next sprint. But it is being assembled for every director message.`,
+        ].join('\n')
+      }
+      const ctxMsg: ChatMessage = {
+        id: `donna-ctx-debug-${Date.now()}`,
+        role: 'donna',
+        kind: 'text',
+        text: ctxText,
+        timestamp: new Date().toISOString(),
+        confidence: 'high',
+        sourceNote: 'Context packet summary',
+      }
+      setTimeout(() => {
+        setMessages(prev => [...prev, ctxMsg])
+        setIsTyping(false)
+        recordTurn(trimmed, ctxText, { domain: 'general', confidence: 'high' })
+      }, 300)
+      return
+    }
+
+    // Sprint 914.4: build context packet (fire-and-forget) — stored for next use
+    const sIdPkt = sessionIdRef.current
+    if (sIdPkt && role === 'director') {
+      buildDonnaContextPacketForSession({
+        sessionId:      sIdPkt,
+        userMessage:    trimmed,
+        activePage:     pathname ?? null,
+        directorContext: directorCtx,
+      })
+        .then(result => {
+          if (result.ok) lastContextPacketRef.current = result.data
+        })
+        .catch(() => { /* non-fatal */ })
+    }
+
     // ── Sprint 912.3 / 912.7: Pending confirmation intercept ─────────────────
     // Resolve activePending from conv state first; fall back to session memory
     // so confirmation survives route changes. Stale actions are discarded.
@@ -626,6 +710,9 @@ export function DonnaVoiceReadyShell({
       if (CONFIRM_PATTERN.test(trimmed)) {
         conv.clearPendingConfirmation()
         clearPendingAction()   // Sprint 912.7: clear session memory too
+        // Sprint 914.4: mark pending action as confirmed in working memory
+        const sIdConfirm = sessionIdRef.current
+        if (sIdConfirm) upsertDonnaMemory({ sessionId: sIdConfirm, memoryKey: 'pending_action_summary', memoryValue: { status: 'confirmed', clearedAt: new Date().toISOString() }, scope: 'workflow' }).catch(() => {})
         setIsTyping(false)
         setIsExecuting(true)
         const confirmingMsg: ChatMessage = {
@@ -670,6 +757,9 @@ export function DonnaVoiceReadyShell({
       if (CANCEL_CONFIRM_PATTERN.test(trimmed)) {
         conv.clearPendingConfirmation()
         clearPendingAction()   // Sprint 912.7: clear session memory too
+        // Sprint 914.4: mark pending action as cancelled in working memory
+        const sIdCancel = sessionIdRef.current
+        if (sIdCancel) upsertDonnaMemory({ sessionId: sIdCancel, memoryKey: 'pending_action_summary', memoryValue: { status: 'cancelled', clearedAt: new Date().toISOString() }, scope: 'workflow' }).catch(() => {})
         setIsTyping(false)
         const cancelMsg: ChatMessage = {
           id: `donna-cancel-${Date.now()}`,
@@ -772,7 +862,7 @@ export function DonnaVoiceReadyShell({
         if (!focusArea) {
           // Still need focus — store updated partial and ask
           const contentLbl = getContentLabel(slotKind)
-          setPendingDrillSlotFill({
+          setPendingSlotFillWithPersist({
             kind: slotKind,
             levelName: level,
             focusArea: null,
@@ -1367,7 +1457,7 @@ export function DonnaVoiceReadyShell({
 
       if (!targetLevel) {
         // Missing level — store partial slot-fill and ask
-        setPendingDrillSlotFill({
+        setPendingSlotFillWithPersist({
           kind: 'curriculum_drill_draft',
           levelName: null,
           focusArea,
@@ -1393,7 +1483,7 @@ export function DonnaVoiceReadyShell({
 
       if (!focusArea) {
         // Level known, focus area missing — store partial slot-fill and ask
-        setPendingDrillSlotFill({
+        setPendingSlotFillWithPersist({
           kind: 'curriculum_drill_draft',
           levelName: targetLevel,
           focusArea: null,
@@ -1432,7 +1522,7 @@ export function DonnaVoiceReadyShell({
       const focusArea = extractFocusArea(trimmed)
 
       if (!targetLevel) {
-        setPendingDrillSlotFill({
+        setPendingSlotFillWithPersist({
           kind: 'curriculum_gate_draft',
           levelName: null,
           focusArea,
@@ -1457,7 +1547,7 @@ export function DonnaVoiceReadyShell({
       }
 
       if (!focusArea) {
-        setPendingDrillSlotFill({
+        setPendingSlotFillWithPersist({
           kind: 'curriculum_gate_draft',
           levelName: targetLevel,
           focusArea: null,
@@ -1493,7 +1583,7 @@ export function DonnaVoiceReadyShell({
       const focusArea = extractFocusArea(trimmed)
 
       if (!targetLevel) {
-        setPendingDrillSlotFill({
+        setPendingSlotFillWithPersist({
           kind: 'curriculum_skill_draft',
           levelName: null,
           focusArea,
@@ -1518,7 +1608,7 @@ export function DonnaVoiceReadyShell({
       }
 
       if (!focusArea) {
-        setPendingDrillSlotFill({
+        setPendingSlotFillWithPersist({
           kind: 'curriculum_skill_draft',
           levelName: targetLevel,
           focusArea: null,
