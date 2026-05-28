@@ -164,7 +164,7 @@ export interface CreateContentItemDraftInput {
 }
 
 export type CreateContentItemDraftResult =
-  | { ok: true; draftId: string }
+  | { ok: true; draftId: string; pendingDraftCount: number }
   | { ok: false; error: string; blocked: boolean }
 
 // ============================================================
@@ -440,5 +440,20 @@ export async function createCurriculumContentItemDraft(
       source_type: auditSourceType,
     })
 
-  return { ok: true, draftId }
+  // Sprint 912.13: query current pending draft count for DONNA post-creation messaging.
+  // Runs after the INSERT so the newly created row is included in the count.
+  // Non-fatal: defaults to 1 (the draft just created) if the query fails.
+  let pendingDraftCount = 1
+  try {
+    const { count } = await (supabase as any)
+      .from('academy_curriculum_overrides')
+      .select('id', { count: 'exact', head: true })
+      .eq('academy_id', academyId)
+      .in('status', ['pending_review', 'draft'])
+    if (typeof count === 'number') pendingDraftCount = count
+  } catch {
+    // non-fatal — count defaults to 1
+  }
+
+  return { ok: true, draftId, pendingDraftCount }
 }

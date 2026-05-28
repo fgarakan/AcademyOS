@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.13 — DONNA Live DB Context Review UX V1
+
+- **Modified `src/lib/actions/curriculumDraftActions.ts`:**
+  - `CreateContentItemDraftResult` success type extended with `pendingDraftCount: number`
+  - After INSERT + audit log, queries `academy_curriculum_overrides` where `status IN ('pending_review', 'draft')` to get the live pending count at the moment of creation — the newly created row is included in the count
+  - Non-fatal design: `pendingDraftCount` defaults to 1 on query failure — DONNA still surfaces a valid success message, no silent failure
+  - Count query is read-only; no new server action created; uses existing auth connection
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - `triggerCurriculumContentConfirmation`: `execute()` now builds success message using `result.pendingDraftCount` — when N === 1: `"[focus] [type] draft created for [level]. Nothing in the curriculum changes until you approve it."` — when N > 1: `"[focus] [type] draft created for [level]. You now have N curriculum drafts waiting in the Review Center."`
+  - CONFIRM block result text: removed hardcoded `" The draft is in your Review Center."` suffix — execute() message is now fully self-contained with safety/count context; "Take me to Review Center" followUp link unchanged
+  - Added `NEEDS_LIVE_CTX` guard before KPI interceptor: when `directorCtx` is null and input matches data-dependent pattern (KPI, attention questions, advancement, coach health), returns honest "data still loading" message instead of falling silently through to the generic fallback
+
+- **Created `docs/QA_DONNA_LIVE_DB_CONTEXT_912_13.md`:**
+  - Part 1: inspection — no existing path returned pending count; decision to add inside action documented
+  - Part 2: 5 post-draft UX scenarios (single draft, multiple drafts, count failure, draft failure, existing UI panels) — all pass
+  - Part 2B: null-directorCtx guard pattern coverage table — 10 input patterns verified
+  - Part 3: live DB verification — static analysis from migration 036 confirms level name format; manual SQL for live verification provided; bare color fallback behavior documented
+  - Safety checks table — all pass; no migrations, no execute_curriculum_override, no proposed_actions, no fake success
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.13 (Audit Phase) — DONNA God Mode 10/10 Audit And Completion Plan V1
 
 - **Created `docs/architecture/DONNA_GOD_MODE_10_OF_10_AUDIT.md`:**

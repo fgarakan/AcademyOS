@@ -378,7 +378,12 @@ export function DonnaVoiceReadyShell({
           overrideReason: `DONNA voice draft: ${rawInput}`,
         })
         if (result.ok) {
-          return { ok: true, message: `A "${focusArea}" ${contentLabel} draft for ${levelName} has been created.` }
+          // Sprint 912.13: include live pending count so director knows their queue state.
+          const n = result.pendingDraftCount
+          const reviewNote = n > 1
+            ? ` You now have ${n} curriculum drafts waiting in the Review Center.`
+            : ` Nothing in the curriculum changes until you approve it.`
+          return { ok: true, message: `"${focusArea}" ${contentLabel} draft created for ${levelName}.${reviewNote}` }
         }
         return { ok: false, message: result.error }
       },
@@ -475,7 +480,7 @@ export function DonnaVoiceReadyShell({
             role: 'donna',
             kind: 'text',
             text: result.ok
-              ? `${result.message} The draft is in your Review Center.`
+              ? result.message
               : `Something went wrong: ${result.message}. Please try again.`,
             timestamp: new Date().toISOString(),
             confidence: result.ok ? 'high' : 'partial',
@@ -753,6 +758,30 @@ export function DonnaVoiceReadyShell({
             setPendingNavOffer(missingCtx.navOffer)
           }
         }, 600)
+        return
+      }
+    }
+
+    // Sprint 912.13: when directorCtx is null and director asks a live-data question,
+    // give an honest "data loading" message instead of falling silently through to
+    // the generic fallback. Only fires for unambiguously data-dependent question patterns.
+    if (plainRole === 'director' && !directorCtx) {
+      const NEEDS_LIVE_CTX = /\b(kpi|metric|what.{0,10}first|what.{0,10}attention|who.{0,10}attention|advance.{0,20}player|how.{0,10}coaches?)\b/i
+      if (NEEDS_LIVE_CTX.test(trimmed)) {
+        const loadingMsg: ChatMessage = {
+          id: `donna-ctx-loading-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: "Academy data is still loading. Give it a moment, then ask again — or ask me how any part of AcademyOS works while it loads.",
+          timestamp: new Date().toISOString(),
+          confidence: 'partial',
+          sourceNote: null,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, loadingMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, loadingMsg.text, { confidence: 'partial' })
+        }, 400)
         return
       }
     }
