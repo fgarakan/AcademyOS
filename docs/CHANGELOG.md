@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.15 — DONNA Session Context Injection V1
+
+- **Modified `src/lib/donna/donnaChatSessionMemory.ts`:**
+  - Added `LAST_CURRICULUM_DRAFT_TTL_MS = 10 minutes` — matches `SESSION_PENDING_ACTION_TTL_MS` for consistency
+  - Added `LastCurriculumDraftAttempt` interface: `{ levelName, focusArea, contentLabel, contentType, storedAt }`
+  - Added `lastCurriculumDraftAttempt: LastCurriculumDraftAttempt | null` to `DonnaChatSessionState` — initialized to null in `initChatSession()`
+  - Added `setLastCurriculumDraftAttempt()` — stamps `storedAt`, overwrites previous context on each new draft
+  - Added `getLastCurriculumDraftAttempt()` — returns null if absent or expired; auto-clears stale entry
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Imported `setLastCurriculumDraftAttempt`, `getLastCurriculumDraftAttempt` from session memory
+  - `triggerCurriculumContentConfirmation()`: added `setLastCurriculumDraftAttempt(...)` call at top — stores draft context for follow-up continuity each time a confirmation is shown to the director
+  - Added slot-fill remount reminder `useEffect([donnaRole])`: when shell remounts (e.g., after route change) and a pending slot-fill exists, adds a DONNA message "Still waiting for your answer — [the pending question]" to the fresh chat thread
+  - Slot-fill `missingSlot === 'focusArea'` handler: added `\b(?:to|use|focus\s+on)\s+([a-zA-Z]...)` extraction between `extractFocusArea` and the raw-text fallback — cleanly extracts "footwork" from "change the focus to footwork" instead of capturing the whole phrase
+  - Added Sprint 912.15 curriculum follow-up intercept block (positioned before Sprint 912.8 drill handler):
+    - **Case A** `DRAFT_SAME_FOR` + recent context + level extracted → `triggerCurriculumContentConfirmation` with new level, stored focus/type — "same for Orange 3", "also for Yellow 1"
+    - **Case B** `DRAFT_CHANGE_FOCUS` + recent context + focus extracted → `triggerCurriculumContentConfirmation` with new focus, stored level/type — "change the focus to footwork", "actually use serve mechanics", "use footwork instead"
+    - **Case C** `DRAFT_SAME_FOR` + no context + level extracted → "What would you like to create for [level]?" — helpful direction when no draft context exists
+  - All follow-up cases still require director confirmation — no draft created without explicit "yes"
+
+- **Created `docs/QA_DONNA_SESSION_CONTEXT_912_15.md`:**
+  - Supported follow-up patterns with input/output traces for all 3 cases
+  - Slot-fill focusArea improvement trace: "change focus to footwork" → "footwork" extraction
+  - 10 static QA scenarios all pass
+  - Safety boundaries table: all respected; stale context auto-expires; pending confirmation must be cancelled before follow-up fires
+  - What recent turns are and are NOT used for
+  - `getRecentTurns(3)` still available but not wired to non-curriculum routing — deferred to 912.17+
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.14 — DONNA Page Guide Mode V1
 
 - **Modified `src/lib/donna/donnaPageContextEngine.ts`:**

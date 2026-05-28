@@ -65,6 +65,19 @@ export interface PendingDrillSlotFill {
 
 export const SESSION_PENDING_ACTION_TTL_MS = 10 * 60 * 1000 // 10 minutes
 
+// Sprint 912.15: context stored when a curriculum draft confirmation is shown.
+// Used by follow-up phrases ("same for Orange 3", "change the focus to footwork").
+// TTL matches SESSION_PENDING_ACTION_TTL_MS for consistency.
+export const LAST_CURRICULUM_DRAFT_TTL_MS = 10 * 60 * 1000 // 10 minutes
+
+export interface LastCurriculumDraftAttempt {
+  levelName: string
+  focusArea: string
+  contentLabel: string  // display label: "drill", "assessment gate", "skill"
+  contentType: string   // action type value: 'drill', 'assessment', 'skill', etc.
+  storedAt: number
+}
+
 export interface SessionPendingAction {
   actionType: string
   description: string
@@ -87,6 +100,7 @@ export interface DonnaChatSessionState {
   pendingTemplateDraft: TemplateDraft | null      // Sprint 735
   pendingAction: SessionPendingAction | null      // Sprint 912.7
   pendingDrillSlotFill: PendingDrillSlotFill | null // Sprint 912.9
+  lastCurriculumDraftAttempt: LastCurriculumDraftAttempt | null // Sprint 912.15
 }
 
 // ── Module state ──────────────────────────────────────────────────────────────
@@ -111,6 +125,7 @@ export function initChatSession(role: DonnaRole): DonnaChatSessionState {
     pendingTemplateDraft: null,    // Sprint 735
     pendingAction: null,           // Sprint 912.7
     pendingDrillSlotFill: null,    // Sprint 912.9
+    lastCurriculumDraftAttempt: null, // Sprint 912.15
   }
   return _state
 }
@@ -353,4 +368,29 @@ export function clearPendingDrillSlotFill(): void {
 /** True when a drill slot-fill is waiting for the director's next answer. */
 export function hasPendingDrillSlotFill(): boolean {
   return _state?.pendingDrillSlotFill != null
+}
+
+// ── Last curriculum draft attempt helpers (Sprint 912.15) ─────────────────────
+// Stores the last curriculum draft shown for confirmation so follow-up phrases
+// ("same for Orange 3", "change the focus to footwork") can resolve context.
+
+/** Store context from the most recent curriculum draft confirmation. Stamps storedAt. */
+export function setLastCurriculumDraftAttempt(
+  attempt: Omit<LastCurriculumDraftAttempt, 'storedAt'>,
+): void {
+  if (_state) _state.lastCurriculumDraftAttempt = { ...attempt, storedAt: Date.now() }
+}
+
+/**
+ * Return the last curriculum draft attempt if it is within the TTL window.
+ * Clears and returns null if stale.
+ */
+export function getLastCurriculumDraftAttempt(): LastCurriculumDraftAttempt | null {
+  const attempt = _state?.lastCurriculumDraftAttempt ?? null
+  if (!attempt) return null
+  if (Date.now() - attempt.storedAt > LAST_CURRICULUM_DRAFT_TTL_MS) {
+    if (_state) _state.lastCurriculumDraftAttempt = null
+    return null
+  }
+  return attempt
 }

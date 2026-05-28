@@ -33,6 +33,8 @@ import {
   getPendingDrillSlotFill,
   clearPendingDrillSlotFill,
   hasPendingDrillSlotFill,
+  setLastCurriculumDraftAttempt,
+  getLastCurriculumDraftAttempt,
   type PendingNavOffer,
 } from '@/lib/donna/donnaChatSessionMemory'
 import {
@@ -209,6 +211,35 @@ export function DonnaVoiceReadyShell({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [donnaRole])
 
+  // Sprint 912.15: on remount, if a slot-fill is waiting for an answer, show a reminder.
+  // Fires when donnaRole changes (component remounts after route change).
+  // Uses getContentLabel from module scope — safe because function declarations are hoisted.
+  useEffect(() => {
+    if (role !== 'director') return
+    const slotFill = getPendingDrillSlotFill()
+    if (!slotFill) return
+    const age = Date.now() - slotFill.storedAt
+    if (age > SESSION_PENDING_ACTION_TTL_MS) {
+      clearPendingDrillSlotFill()
+      return
+    }
+    const contentLbl = getContentLabel(slotFill.kind)
+    const question = slotFill.missingSlot === 'levelName'
+      ? `Which curriculum level should this ${contentLbl} go in? (e.g., Orange 2, Yellow 1, Red 3)`
+      : `What should the ${contentLbl} focus on? (e.g., forehand prep, serve mechanics, footwork)`
+    const reminderMsg: ChatMessage = {
+      id: `donna-slotfill-reminder-${Date.now()}`,
+      role: 'donna',
+      kind: 'text',
+      text: `Still waiting for your answer — ${question}`,
+      timestamp: new Date().toISOString(),
+      confidence: 'high',
+      sourceNote: null,
+    }
+    setMessages(prev => [...prev, reminderMsg])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [donnaRole])
+
   // Sprint 912.4: cleanup auto-listen timer on unmount
   useEffect(() => {
     return () => {
@@ -360,6 +391,8 @@ export function DonnaVoiceReadyShell({
     focusArea: string
     rawInput: string
   }) {
+    // Sprint 912.15: store context so follow-ups ("same for Orange 3", "change focus to X") resolve correctly
+    setLastCurriculumDraftAttempt({ levelName, focusArea, contentLabel, contentType })
     clearPendingDrillSlotFill()
     const summaryText = buildContentConfirmationSummaryText(contentLabel, levelName, focusArea)
     const summaryMsg: ChatMessage = {
@@ -648,7 +681,16 @@ export function DonnaVoiceReadyShell({
         // Director is answering the "What should the [content] focus on?" question.
         // Try structured extraction first; fall back to using the whole answer.
         // Sprint 912.11: trim trailing punctuation from the fallback path.
+        // Sprint 912.15: also handle "change focus to X" / "use X instead" change-intent
+        // answers so "change the focus to footwork" extracts "footwork" not the whole phrase.
         let focus = extractFocusArea(trimmed)
+        if (!focus) {
+          const m = trimmed.match(/\b(?:to|use|focus\s+on)\s+([a-zA-Z][^,.\n!?]{2,80})[.!?,;:]?$/i)
+          if (m) {
+            const candidate = m[1].trim().replace(/\s+instead\s*$/i, '').replace(/[.!?,;:]+$/, '').trim()
+            if (candidate.length >= 3 && !VAGUE_ANSWER_PATTERN.test(candidate)) focus = candidate
+          }
+        }
         if (!focus) {
           const cleaned = trimmed.trim().replace(/[.!?,;:]+$/, '')
           if (cleaned.length >= 3 && cleaned.length <= 80 && !VAGUE_ANSWER_PATTERN.test(cleaned)) {
@@ -1052,6 +1094,73 @@ export function DonnaVoiceReadyShell({
           if (coachHealthNavOffer) setPendingNavOffer(coachHealthNavOffer)
         }, 600)
         return
+      }
+    }
+
+    // ── Sprint 912.15: Curriculum draft follow-up intercept ──────────────────
+    // Handles "same for Orange 3" and "change the focus to footwork" by reading
+    // recent draft context from session memory. Never bypasses confirmation.
+    // Fires BEFORE drill/gate/skill handlers so follow-ups get continuity answers.
+    if (plainRole === 'director') {
+      const DRAFT_SAME_FOR     = /\b(same for|also for|do (that |it )?for|add (one |that )?for|create (one )?for)\b/i
+      const DRAFT_CHANGE_FOCUS = /\b(change.{0,10}focus.{0,5}to|actually (use|focus\s+on)|use.{0,30}instead|change.{0,5}(the )?focus to)\b/i
+      const recentDraft = getLastCurriculumDraftAttempt()
+
+      if (recentDraft) {
+        // Case A: "same for Orange 3" — reuse focus/content-type, swap level
+        if (DRAFT_SAME_FOR.test(trimmed)) {
+          const newLevel = extractTargetLevel(trimmed)
+          if (newLevel) {
+            triggerCurriculumContentConfirmation({
+              contentType: recentDraft.contentType as CurriculumContentType,
+              contentLabel: recentDraft.contentLabel,
+              levelName: newLevel,
+              focusArea: recentDraft.focusArea,
+              rawInput: trimmed,
+            })
+            return
+          }
+        }
+        // Case B: "change the focus to footwork" — keep level, swap focus
+        if (DRAFT_CHANGE_FOCUS.test(trimmed)) {
+          let newFocus = extractFocusArea(trimmed)
+          if (!newFocus) {
+            const m = trimmed.match(/\b(?:to|use|focus\s+on)\s+([a-zA-Z][^,.\n!?]{2,80})[.!?,;:]?$/i)
+            if (m) newFocus = m[1].trim().replace(/\s+instead\s*$/i, '').replace(/[.!?,;:]+$/, '').trim()
+          }
+          if (newFocus && newFocus.length >= 3 && !VAGUE_ANSWER_PATTERN.test(newFocus)) {
+            triggerCurriculumContentConfirmation({
+              contentType: recentDraft.contentType as CurriculumContentType,
+              contentLabel: recentDraft.contentLabel,
+              levelName: recentDraft.levelName,
+              focusArea: newFocus,
+              rawInput: trimmed,
+            })
+            return
+          }
+        }
+      }
+
+      // Case C: "same for Orange 3" with no recent context — ask what to create
+      if (!recentDraft && DRAFT_SAME_FOR.test(trimmed)) {
+        const level = extractTargetLevel(trimmed)
+        if (level) {
+          const askMsg: ChatMessage = {
+            id: `donna-followup-ask-${Date.now()}`,
+            role: 'donna',
+            kind: 'text',
+            text: `What would you like to create for ${level}? I can add a drill, gate, or skill — just let me know.`,
+            timestamp: new Date().toISOString(),
+            confidence: 'high',
+            sourceNote: null,
+          }
+          setTimeout(() => {
+            setMessages(prev => [...prev, askMsg])
+            setIsTyping(false)
+            recordTurn(trimmed, askMsg.text, { domain: 'curriculum', confidence: 'high' })
+          }, 400)
+          return
+        }
       }
     }
 
