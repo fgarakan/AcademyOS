@@ -82,6 +82,8 @@ export interface AppendMessageInput {
   confidence?: string | null
   source?: string | null
   pagePath?: string | null
+  // Sprint 914.8: optional structured response schema metadata
+  metadata?: Record<string, unknown> | null
 }
 
 export async function appendDonnaMessage(
@@ -101,6 +103,7 @@ export async function appendDonnaMessage(
       confidence:   input.confidence ?? null,
       source:       input.source ?? null,
       pagePath:     input.pagePath ?? null,
+      metadata:     input.metadata ?? undefined,
     })
 
     if (!result.ok) return { ok: false, error: result.error }

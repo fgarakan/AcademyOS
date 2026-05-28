@@ -27854,3 +27854,10 @@ TypeScript: clean.
 **Player Profile tab content** — fill Step 4 tabs with real backend data
 
 See `docs/CURRENT_BUILD_TARGET.md` Step 4 for full specification.
+
+## 2026-05-28 — Sprint 914.8 — DONNA Response Schema V1
+
+- `src/lib/donna/donnaResponseSchema.ts`: `DonnaResponseSchema` type (responseText, intent, confidence, requiresApproval, proposedActions, suggestedUiOperations, eventLogPayload, sourceContext, followUpQuestion, safetyNote, metadata), `createDonnaResponse()`, `schemaFromChatMessage()`, `safeEventLogPayload()`.
+- `DonnaVoiceReadyShell.tsx`: DONNA message persistence now enriches stored metadata with `safeEventLogPayload(schemaFromChatMessage(msg))`. Existing text rendering unchanged.
+- `donnaConversationActions.ts`: `AppendMessageInput.metadata` field added.
+

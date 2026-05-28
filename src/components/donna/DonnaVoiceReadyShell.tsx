@@ -93,9 +93,11 @@ import { buildFocusTargetForRoute } from '@/lib/donna/donnaUIActionDispatcher'
 // Sprint 914.4 — Context Packet Integration
 // Sprint 914.6 — Event Ledger
 // Sprint 914.7 — Intent Router
+// Sprint 914.8 — Response Schema
 import { logDonnaEventAction } from '@/lib/actions/donnaEventActions'
 import { DONNA_EVENT_TYPES } from '@/lib/donna/donnaEventLedger'
 import { routeDonnaIntentV1 } from '@/lib/donna/donnaIntentRouterV1'
+import { schemaFromChatMessage, safeEventLogPayload } from '@/lib/donna/donnaResponseSchema'
 import {
   getOrCreateDonnaSession,
   appendDonnaMessage as persistDonnaMessage,
@@ -284,6 +286,12 @@ export function DonnaVoiceReadyShell({
     if (!lastMsg || lastMsg.role !== 'donna') return
     if (lastMsg.id === lastPersistedDonnaIdRef.current) return
     lastPersistedDonnaIdRef.current = lastMsg.id
+    // Sprint 914.8: build structured response schema for message metadata
+    const msgSchema = schemaFromChatMessage({
+      text: lastMsg.text, confidence: lastMsg.confidence,
+      sourceNote: lastMsg.sourceNote, followUp: lastMsg.followUp,
+      followUpHref: lastMsg.followUpHref,
+    })
     persistDonnaMessage({
       sessionId:   sId,
       role:        'donna',
@@ -292,6 +300,7 @@ export function DonnaVoiceReadyShell({
       source:      lastMsg.sourceNote ?? null,
       confidence:  lastMsg.confidence ?? null,
       pagePath:    pathname ?? null,
+      metadata:    safeEventLogPayload(msgSchema),
     }).catch(() => { /* non-fatal */ })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages])
