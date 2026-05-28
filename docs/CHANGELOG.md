@@ -27886,3 +27886,7 @@ See `docs/CURRENT_BUILD_TARGET.md` Step 4 for full specification.
 - `073_donna_entity_summaries.sql`: donna_entity_summaries table. UNIQUE (academy_id, entity_type, entity_id, summary_kind). Upsert-friendly. RLS academy-scoped.
 - `donnaEntitySummaries.ts`: upsertEntitySummary(), getEntitySummary(), getRelevantEntitySummaries().
 - `donnaContextPacketBuilder.ts`: entitySummary field added; populated when currentEntity set.
+
+## 2026-05-28 — Sprint 914.13 — DONNA Backend Spine Certification V1
+
+- docs/QA_DONNA_BACKEND_SPINE_CERTIFICATION_914_13.md: Certifies full 914.x spine. All 17 components verified. Safety: execute_curriculum_override absent, curriculum drafts pending_review only, Sprint 904 untouched, all 7 new tables RLS-enabled. Backend architecture rating: 8.5/10. V2 gaps documented.
