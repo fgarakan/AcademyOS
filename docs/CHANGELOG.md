@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-05-28 — Sprint 913.6 — DONNA Cross Signal Correlation Intelligence V1
+
+- **New `src/lib/donna/donnaSignalCorrelationEngine.ts`:**
+  - `DonnaSignalCorrelation` interface: `id`, `title`, `category`, `severity`, `confidence`, `evidence`, `whyItMatters`, `recommendedAction`, `href`, `donnaWillNotDo`
+  - `DonnaCorrelationCategory` union: `player_development | curriculum_execution | review_bottleneck | coach_execution | onboarding_readiness | system`
+  - `buildSignalCorrelations(ctx)` with 6 deterministic cross-signal rules:
+    1. **`player_stalled_and_risk_flagged`** — same player name appears in `playerProgressStalls` AND `attentionItems`; severity `high/medium` based on risk level; confidence `high`
+    2. **`level_stalled_and_assessment_gap`** — same level name in `playerProgressStalls.currentLevelDisplayName` AND `assessmentCoverageGaps.levelDisplayName`; confidence `medium`
+    3. **`level_double_gap_template_and_assessment`** — same level in `curriculumTemplateCoverageGaps` AND `assessmentCoverageGaps`; confidence `high`
+    4. **`stale_queue_with_high_impact`** — `oldestPendingReviewAgeDays >= 7` AND (`highRiskPlayerCount > 0` OR `attendanceExceptions > 0`); count-based; confidence `medium`
+    5. **`advancement_without_assessment_evidence`** — `advancementEligibleCount > 0` AND `eligibleWithoutAssessmentEvidence > 0`; confidence `high`
+    6. **`foundation_not_ready`** — `onboardingReadinessLevel` partial/not_started AND `!hasPlayers AND !hasCoaches`; confidence `medium`
+  - String matching uses `norm(s)` helper (lowercase + trim) for case-insensitive level/player name matching
+  - Context guards: rules 1–3 check `playerProgressStallContextAvailable`, `assessmentContextAvailable`, `templateCoverageContextAvailable`
+  - Sorted: high severity → high confidence → stable id
+  - `getTopSignalCorrelations(ctx, limit=3)` — top N correlations
+  - Privacy: `playerId`/`levelId`/`currentLevelId` raw UUIDs never accessed; all output uses display names and aggregate counts; causal claims hedged with "may" / "suggests"
+  - Deferred: wiring into `buildDashboardPriorityResponse` (sprint allowed deferral for complex matching)
+
+- **Modified `src/lib/donna/directorDashboardDonnaAnswer.ts`:**
+  - Added import for `getTopSignalCorrelations`
+  - `buildDirectorBriefSummary`: added `correlationLine` — top correlation (limit=1) shown as `"Connected insight: [evidence]"`; placed after "Recommended:" and before safety note; filtered when empty via `.filter(Boolean)`
+
+- **Created `docs/architecture/DONNA_SIGNAL_CORRELATION_ENGINE_913_6.md`** — 6 rule table, string match design, fields used/excluded, hedging language rationale, Part 4 deferral note
+- **Created `docs/QA_DONNA_SIGNAL_CORRELATION_913_6.md`** — 10 QA scenarios; all pass; UUID exclusion verified; all-clear unchanged; false-positive prevention verified
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 913.5 — DONNA Recommended Action Intelligence V1
 
 - **Modified `src/lib/donna/directorDashboardDonnaAnswer.ts`:**

@@ -6,6 +6,7 @@
 import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import type { DonnaSafeReadAnswer } from '@/lib/donna/donnaSafeReadActions'
 import { getTopPriority, getTopAttentionPriorities } from '@/lib/donna/donnaAttentionRankingEngine'
+import { getTopSignalCorrelations } from '@/lib/donna/donnaSignalCorrelationEngine'
 
 // ── Detection ──────────────────────────────────────────────────────────────────
 // Detects "what should I do first?" and "give me a brief" style questions.
@@ -173,9 +174,14 @@ export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeR
   const evidenceLine = top.evidence ? `Evidence: ${top.evidence}` : ''
 
   // Sprint 913.5: include recommended actions from directorCtx when available.
-  // These are prescriptive actions computed by the context engine — separate framing
-  // from the ranked priorities (which provide signal context, not just action labels).
   const recLine = formatRecommendedActions(ctx.recommendedActions)
+
+  // Sprint 913.6: include top cross-signal correlation when one exists.
+  // Only the #1 correlation is shown (keeps the brief scannable).
+  const correlations = getTopSignalCorrelations(ctx, 1)
+  const correlationLine = correlations.length > 0
+    ? `Connected insight: ${correlations[0].evidence}`
+    : ''
 
   const text = [
     `${prefix}Here's your academy status (ranked by urgency):`,
@@ -185,6 +191,7 @@ export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeR
     evidenceLine,
     `Best next step: ${top.bestNextAction}`,
     recLine,
+    correlationLine,
     '',
     'Nothing is applied until you approve it.',
   ].filter(Boolean).join('\n')
