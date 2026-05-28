@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-05-28 — Sprint 913.4 — DONNA Evidence Detail Intelligence V1
+
+- **Modified `src/lib/donna/donnaAttentionRankingEngine.ts`:**
+  - Added 5 private evidence summarizer helpers (Sprint 913.4 block):
+    - `summarizePlayerStallEvidence(stalls)` — uses `playerName`, `currentLevelDisplayName`, `daysAtCurrentLevel`; returns e.g. `"including Jordan at Orange 2 for 126 days"`
+    - `summarizeAssessmentGapEvidence(gaps)` — uses `levelDisplayName`, `gapType`, `daysSinceLastAssessment`; no player name (playerId-only type); handles `eligible_no_promotion_evidence` separately
+    - `summarizeTemplateCoverageEvidence(gaps)` — uses `levelDisplayName`, `playerCountAtLevel` for first 2 gaps
+    - `summarizeCurriculumGapEvidence(gaps)` — uses first string from `curriculumGaps[]`, trimmed to 70 chars
+    - `summarizeAttentionItemEvidence(items, riskLevel)` — uses `playerName` + `reason` (aggregate-safe) from attentionItems filtered by risk level
+  - All helpers: return `''` when data absent, max 1–2 examples, no raw UUIDs exposed
+  - Enriched evidence text in 6 ranking signals: `high_risk_players`, `medium_risk_players`, `player_progress_stalls`, `assessment_coverage_gaps`, `curriculum_template_coverage_gaps`, `curriculum_gaps`
+  - Evidence computed via IIFE `(() => { const detail = summarize...; return detail ? ... : base })()` — keeps signal blocks clean
+
+- **Modified `src/lib/donna/directorDashboardDonnaAnswer.ts`:**
+  - `buildDirectorBriefSummary`: added `evidenceLine` (top priority's enriched `evidence` field) between numbered list and "Best next step" — shows specific detail for #1 item while keeping the rest as labels; filtered with `.filter(Boolean)` to skip empty evidence gracefully
+
+- **Privacy/safety decisions:**
+  - Player names: surfaced from `attentionItems` and `playerProgressStalls` — already director-visible in existing UI
+  - `assessmentCoverageGaps`: no `playerName` field in the type → uses `levelDisplayName` only
+  - `playerId`, `currentLevelId`, `levelId` (raw UUIDs): never surfaced in any evidence text
+  - `attentionItems.reason`: aggregate language ("3 concern observations in last 30 days"), not raw coach note content
+
+- **Created `docs/architecture/DONNA_EVIDENCE_DETAIL_INTELLIGENCE_913_4.md`** — helper table, field audit (safe/excluded), before/after evidence examples
+- **Created `docs/QA_DONNA_EVIDENCE_DETAIL_913_4.md`** — 10 QA scenarios; all pass; UUID exclusion verified; all-clear state unchanged
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 913.3 — DONNA Coverage Gap Intelligence V1
 
 - **Modified `src/lib/donna/donnaAttentionRankingEngine.ts`:**

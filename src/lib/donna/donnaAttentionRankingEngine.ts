@@ -76,6 +76,75 @@ function cap(value: number, max: number): number {
   return Math.min(value, max)
 }
 
+// ── Evidence summarizer helpers (Sprint 913.4) ─────────────────────────────────
+// Pure functions that extract 1–2 safe, specific detail items from context arrays.
+// Privacy rules: never expose raw UUIDs, raw coach note content, or parent-sensitive
+// wording. Player names are safe when already present in attentionItems/stall records.
+// All helpers fall back to empty string when arrays are empty or detail unavailable.
+
+function summarizePlayerStallEvidence(
+  stalls: DirectorDonnaContext['playerProgressStalls'],
+): string {
+  if (stalls.length === 0) return ''
+  const first = stalls[0]
+  const parts: string[] = []
+  if (first.playerName) parts.push(first.playerName)
+  if (first.currentLevelDisplayName) parts.push(`at ${first.currentLevelDisplayName}`)
+  if (first.daysAtCurrentLevel > 0) parts.push(`for ${first.daysAtCurrentLevel} days`)
+  if (parts.length === 0) return ''
+  return `including ${parts.join(' ')}`
+}
+
+function summarizeAssessmentGapEvidence(
+  gaps: DirectorDonnaContext['assessmentCoverageGaps'],
+): string {
+  // assessmentCoverageGaps have no playerName — use levelDisplayName only
+  if (gaps.length === 0) return ''
+  const first = gaps[0]
+  const level = first.levelDisplayName
+  if (!level) return ''
+  if (first.gapType === 'eligible_no_promotion_evidence') {
+    return `including 1 advancement-eligible player at ${level} without promotion assessment`
+  }
+  const daysNote = first.daysSinceLastAssessment != null
+    ? ` with no assessment in ${first.daysSinceLastAssessment} days`
+    : ''
+  return `including 1 player at ${level}${daysNote}`
+}
+
+function summarizeTemplateCoverageEvidence(
+  gaps: DirectorDonnaContext['curriculumTemplateCoverageGaps'],
+): string {
+  if (gaps.length === 0) return ''
+  const items = gaps.slice(0, 2).map(g => {
+    const playerNote = g.playerCountAtLevel > 0
+      ? ` (${g.playerCountAtLevel} player${g.playerCountAtLevel !== 1 ? 's' : ''})`
+      : ''
+    return `${g.levelDisplayName}${playerNote}`
+  })
+  return `including ${items.join(' and ')}`
+}
+
+function summarizeCurriculumGapEvidence(gaps: string[]): string {
+  if (gaps.length === 0) return ''
+  const first = gaps[0]
+  const trimmed = first.length > 70 ? first.slice(0, 67) + '...' : first
+  return `including: "${trimmed}"`
+}
+
+function summarizeAttentionItemEvidence(
+  items: DirectorDonnaContext['attentionItems'],
+  riskLevel: 'high' | 'medium',
+): string {
+  // reason field is aggregate-safe ("3 concern observations in last 30 days")
+  // — not raw coach note content
+  const filtered = items.filter(a => a.risk === riskLevel)
+  if (filtered.length === 0) return ''
+  const first = filtered[0]
+  if (!first.playerName) return ''
+  return `including ${first.playerName} — ${first.reason}`
+}
+
 // ── Main builder ───────────────────────────────────────────────────────────────
 
 /**
@@ -125,7 +194,11 @@ export function buildAttentionPriorities(
       severity: ctx.highRiskPlayerCount >= 3 ? 'critical' : 'high',
       score,
       whyItMatters: 'High-risk flags indicate concern observations or attendance patterns that may affect player development, readiness, and upcoming parent communications.',
-      evidence: `${ctx.highRiskPlayerCount} player${plural ? 's' : ''} with high-risk signals from recent observations or session absences.`,
+      evidence: (() => {
+        const detail = summarizeAttentionItemEvidence(ctx.attentionItems, 'high')
+        const base = `${ctx.highRiskPlayerCount} player${plural ? 's' : ''} with high-risk signals from recent observations or session absences.`
+        return detail ? `${base} ${detail}.` : base
+      })(),
       bestNextAction: 'Review the flagged player profiles, check recent coach notes, and decide if a parent update or coaching intervention is needed.',
       href: '/director/players',
       requiresApproval: true,
@@ -204,7 +277,11 @@ export function buildAttentionPriorities(
       severity: 'medium',
       score,
       whyItMatters: 'Medium-risk flags are early warning signals — attendance gaps or isolated concern observations that may escalate without monitoring.',
-      evidence: `${ctx.mediumRiskPlayerCount} player${plural ? 's' : ''} with medium-risk signals from recent observations or session absences.`,
+      evidence: (() => {
+        const detail = summarizeAttentionItemEvidence(ctx.attentionItems, 'medium')
+        const base = `${ctx.mediumRiskPlayerCount} player${plural ? 's' : ''} with medium-risk signals from recent observations or session absences.`
+        return detail ? `${base} ${detail}.` : base
+      })(),
       bestNextAction: 'Review the flagged player profiles and decide whether to act now or continue monitoring.',
       href: '/director/players',
       requiresApproval: false,
@@ -244,7 +321,11 @@ export function buildAttentionPriorities(
       severity: ctx.playerProgressStallCount >= 3 ? 'high' : 'medium',
       score,
       whyItMatters: 'Stalled players have been at their current curriculum level for an extended period without advancing. They may need updated evidence, a priority reset, or a coaching review before the next level decision.',
-      evidence: `${ctx.playerProgressStallCount} player progress stall signal${plural ? 's' : ''} detected in curriculum state tracking.`,
+      evidence: (() => {
+        const detail = summarizePlayerStallEvidence(ctx.playerProgressStalls)
+        const base = `${ctx.playerProgressStallCount} player progress stall signal${plural ? 's' : ''} detected in curriculum state tracking.`
+        return detail ? `${base} ${detail}.` : base
+      })(),
       bestNextAction: 'Review the stalled player profiles, check recent coach notes for progress signals, and decide whether to schedule an assessment or update the development plan.',
       href: '/director/players',
       requiresApproval: false,
@@ -268,7 +349,11 @@ export function buildAttentionPriorities(
       severity: ctx.assessmentCoverageGapCount >= 3 ? 'high' : 'medium',
       score,
       whyItMatters: 'Assessment gaps mean the academy may lack sufficient evidence to justify level movement or advancement readiness decisions. This weakens the evidence base for coaching and director choices.',
-      evidence: `${ctx.assessmentCoverageGapCount} assessment coverage gap${plural ? 's' : ''} detected.${evidenceExtra}`,
+      evidence: (() => {
+        const detail = summarizeAssessmentGapEvidence(ctx.assessmentCoverageGaps)
+        const base = `${ctx.assessmentCoverageGapCount} assessment coverage gap${plural ? 's' : ''} detected.${evidenceExtra}`
+        return detail ? `${base} ${detail}.` : base
+      })(),
       bestNextAction: 'Review player assessment records. Schedule assessments for players with gaps before making level movement decisions.',
       href: '/director/players',
       requiresApproval: false,
@@ -289,7 +374,11 @@ export function buildAttentionPriorities(
       severity: ctx.curriculumTemplateCoverageGapCount >= 3 ? 'high' : 'medium',
       score,
       whyItMatters: 'When active curriculum levels have no session template, coaches cannot deliver structured sessions from a consistent plan. This weakens curriculum fidelity and consistency across the academy.',
-      evidence: `${ctx.curriculumTemplateCoverageGapCount} curriculum level${plural ? 's' : ''} with enrolled players have no matching session template assigned.`,
+      evidence: (() => {
+        const detail = summarizeTemplateCoverageEvidence(ctx.curriculumTemplateCoverageGaps)
+        const base = `${ctx.curriculumTemplateCoverageGapCount} curriculum level${plural ? 's' : ''} with enrolled players have no matching session template assigned.`
+        return detail ? `${base} ${detail}.` : base
+      })(),
       bestNextAction: 'Open Templates and create or assign session templates for the affected curriculum levels.',
       href: '/director/templates',
       requiresApproval: false,
@@ -327,7 +416,11 @@ export function buildAttentionPriorities(
       severity: ctx.curriculumGaps.length >= 4 ? 'medium' : 'low',
       score,
       whyItMatters: 'Curriculum gaps mean some levels lack content definitions, weakening coach delivery consistency and player development planning.',
-      evidence: `${ctx.curriculumGaps.length} structural gap${plural ? 's' : ''} detected in curriculum level definitions.`,
+      evidence: (() => {
+        const detail = summarizeCurriculumGapEvidence(ctx.curriculumGaps)
+        const base = `${ctx.curriculumGaps.length} structural gap${plural ? 's' : ''} detected in curriculum level definitions.`
+        return detail ? `${base} ${detail}.` : base
+      })(),
       bestNextAction: "Open the Curriculum Builder to review the gaps. Ask DONNA to draft new drills or gates to fill them — they'll go through the approval flow.",
       href: '/director/curriculum/builder',
       requiresApproval: true,

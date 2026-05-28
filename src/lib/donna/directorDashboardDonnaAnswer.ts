@@ -151,15 +151,20 @@ export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeR
     .map((p, i) => `${i + 1}. ${p.label}`)
     .join('\n')
 
+  // Sprint 913.4: include enriched evidence for the top priority only.
+  // Keeps the brief scannable while surfacing specific context for the #1 item.
+  const evidenceLine = top.evidence ? `Evidence: ${top.evidence}` : ''
+
   const text = [
     `${prefix}Here's your academy status (ranked by urgency):`,
     '',
     numbered,
     '',
+    evidenceLine,
     `Best next step: ${top.bestNextAction}`,
     '',
     'Nothing is applied until you approve it.',
-  ].join('\n')
+  ].filter(Boolean).join('\n')
 
   return {
     actionId: 'director_brief',
