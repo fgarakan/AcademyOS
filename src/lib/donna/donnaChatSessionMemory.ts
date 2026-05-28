@@ -44,6 +44,20 @@ export interface PendingNavOffer {
   questionContext: string
 }
 
+// ── Pending drill slot-fill (Sprint 912.9) ────────────────────────────────────
+// Stores partial drill-draft info when DONNA has asked for a missing field.
+// The next director message is treated as the answer to missingSlot.
+// Cleared when both slots are filled (moves to pendingAction) or cancelled.
+
+export interface PendingDrillSlotFill {
+  kind: 'curriculum_drill_draft'
+  levelName: string | null     // null when this is the slot being asked about
+  focusArea: string | null     // null when this is the slot being asked about
+  missingSlot: 'levelName' | 'focusArea'
+  rawInput: string             // original director message that started the flow
+  storedAt: number
+}
+
 // ── Pending action (Sprint 912.7) ─────────────────────────────────────────────
 // Mirrors DonnaPendingConfirmation shape. Stored here so the pending action
 // survives component remounts (e.g. route changes) within the same session.
@@ -69,9 +83,10 @@ export interface DonnaChatSessionState {
   actionsDispatched: string[]
   contextLoadedAt: number | null
   lastActivityAt: number
-  pendingNavOffer: PendingNavOffer | null       // Sprint 724
-  pendingTemplateDraft: TemplateDraft | null    // Sprint 735
-  pendingAction: SessionPendingAction | null    // Sprint 912.7
+  pendingNavOffer: PendingNavOffer | null         // Sprint 724
+  pendingTemplateDraft: TemplateDraft | null      // Sprint 735
+  pendingAction: SessionPendingAction | null      // Sprint 912.7
+  pendingDrillSlotFill: PendingDrillSlotFill | null // Sprint 912.9
 }
 
 // ── Module state ──────────────────────────────────────────────────────────────
@@ -92,9 +107,10 @@ export function initChatSession(role: DonnaRole): DonnaChatSessionState {
     actionsDispatched: [],
     contextLoadedAt: null,
     lastActivityAt: Date.now(),
-    pendingNavOffer: null,       // Sprint 724
-    pendingTemplateDraft: null,  // Sprint 735
-    pendingAction: null,         // Sprint 912.7
+    pendingNavOffer: null,         // Sprint 724
+    pendingTemplateDraft: null,    // Sprint 735
+    pendingAction: null,           // Sprint 912.7
+    pendingDrillSlotFill: null,    // Sprint 912.9
   }
   return _state
 }
@@ -313,4 +329,28 @@ export function clearPendingAction(): void {
 /** True when a pending action is stored and has not been cleared. */
 export function hasPendingAction(): boolean {
   return _state?.pendingAction != null
+}
+
+// ── Pending drill slot-fill helpers (Sprint 912.9) ────────────────────────────
+
+/** Store a partial drill slot-fill. Stamps storedAt automatically. */
+export function setPendingDrillSlotFill(
+  fill: Omit<PendingDrillSlotFill, 'storedAt'>,
+): void {
+  if (_state) _state.pendingDrillSlotFill = { ...fill, storedAt: Date.now() }
+}
+
+/** Return the current pending drill slot-fill without clearing it. */
+export function getPendingDrillSlotFill(): PendingDrillSlotFill | null {
+  return _state?.pendingDrillSlotFill ?? null
+}
+
+/** Clear the pending drill slot-fill. */
+export function clearPendingDrillSlotFill(): void {
+  if (_state) _state.pendingDrillSlotFill = null
+}
+
+/** True when a drill slot-fill is waiting for the director's next answer. */
+export function hasPendingDrillSlotFill(): boolean {
+  return _state?.pendingDrillSlotFill != null
 }

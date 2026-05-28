@@ -29,6 +29,10 @@ import {
   getPendingAction,
   clearPendingAction,
   SESSION_PENDING_ACTION_TTL_MS,
+  setPendingDrillSlotFill,
+  getPendingDrillSlotFill,
+  clearPendingDrillSlotFill,
+  hasPendingDrillSlotFill,
   type PendingNavOffer,
 } from '@/lib/donna/donnaChatSessionMemory'
 import {
@@ -96,6 +100,10 @@ const STRONG_CONFIRM_PATTERN = /^(do it|confirm|confirmed|create it|make it|crea
 // Fires before the broad curriculum draft proposal to intercept specific drill requests
 // that have enough info for a real createCurriculumContentItemDraft() call.
 const DRILL_CREATION_PATTERN = /\b(add|create)\b.{0,30}\bdrill\b/i
+
+// Sprint 912.9: vague/non-answer detector for slot-fill follow-ups.
+// When director answers a clarifying question with one of these, DONNA asks again.
+const VAGUE_ANSWER_PATTERN = /^(i don'?t know|not sure|idk|hmm+|uh+|um+|what|huh|whatever|anything|something|doesn'?t matter|no idea|any|either|both)$/i
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -321,6 +329,53 @@ export function DonnaVoiceReadyShell({
     })
   }
 
+  // ── Sprint 912.9: Drill confirmation trigger ────────────────────────────────
+  // Shared by the single-turn 912.8 path and the multi-turn slot-fill 912.9 path.
+  // Clears any pending slot-fill, sets pendingConfirmation, appends the summary message.
+
+  function triggerDrillConfirmation(levelName: string, focusArea: string, rawInput: string) {
+    clearPendingDrillSlotFill()
+    const summaryText = buildDrillConfirmationSummaryText(levelName, focusArea)
+    const summaryMsg: ChatMessage = {
+      id: `donna-drill-confirm-${Date.now()}`,
+      role: 'donna',
+      kind: 'text',
+      text: summaryText,
+      timestamp: new Date().toISOString(),
+      confidence: 'high',
+      sourceNote: 'DONNA drill draft proposal',
+    }
+    storeAndSetPendingConfirmation({
+      actionType: 'curriculum_drill_draft',
+      description: `Add a "${focusArea}" drill to ${levelName} curriculum`,
+      execute: async () => {
+        const result = await createCurriculumContentItemDraft({
+          levelName,
+          contentType: 'drill',
+          title: `${focusArea} drill`,
+          description: `A drill focused on ${focusArea} for ${levelName} players.`,
+          source: 'voice',
+          rawInput,
+          overrideReason: `DONNA voice draft: ${rawInput}`,
+        })
+        if (result.ok) {
+          return { ok: true, message: `A "${focusArea}" drill draft for ${levelName} has been created.` }
+        }
+        return { ok: false, message: result.error }
+      },
+    })
+    setTimeout(() => {
+      setMessages(prev => [...prev, summaryMsg])
+      setIsTyping(false)
+      recordTurn(rawInput, summaryText, {
+        actionId: 'curriculum_drill_draft_pending',
+        domain: 'curriculum',
+        confidence: 'high',
+        sourceNote: 'DONNA drill draft proposal',
+      })
+    }, 600)
+  }
+
   // ── Send handler ────────────────────────────────────────────────────────────
 
   function handleSend(text: string) {
@@ -458,6 +513,115 @@ export function DonnaVoiceReadyShell({
       setMessages(prev => [...prev, noPendingMsg])
       recordTurn(trimmed, noPendingMsg.text, { confidence: 'high' })
       return
+    }
+
+    // ── Sprint 912.9: Drill slot-fill answer handler ──────────────────────────
+    // Fires when a pending drill slot-fill is waiting for the director's answer.
+    // Intercepts the next turn regardless of content — treats it as the missing slot.
+    // Positioned after pending confirmation so a pending "yes" always wins.
+    if (plainRole === 'director' && hasPendingDrillSlotFill()) {
+      const slotFill = getPendingDrillSlotFill()!
+      const slotAge = Date.now() - slotFill.storedAt
+
+      if (slotAge > SESSION_PENDING_ACTION_TTL_MS) {
+        // Stale — clear silently and let the message fall through to normal routing
+        clearPendingDrillSlotFill()
+      } else if (CANCEL_CONFIRM_PATTERN.test(trimmed)) {
+        // Director cancelled — clear and acknowledge
+        clearPendingDrillSlotFill()
+        setIsTyping(false)
+        const cancelMsg: ChatMessage = {
+          id: `donna-slotfill-cancel-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: "No problem — the drill draft has been cancelled. Let me know if you'd like to try again.",
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: null,
+        }
+        setMessages(prev => [...prev, cancelMsg])
+        recordTurn(trimmed, cancelMsg.text, { domain: 'curriculum', confidence: 'high' })
+        return
+      } else if (slotFill.missingSlot === 'levelName') {
+        // Director is answering the "Which level?" question
+        const level = extractTargetLevel(trimmed)
+        if (!level) {
+          // Still can't resolve — ask again with examples
+          setIsTyping(false)
+          const askAgainMsg: ChatMessage = {
+            id: `donna-ask-level-again-${Date.now()}`,
+            role: 'donna',
+            kind: 'text',
+            text: "I didn't catch that level. Try something like: Orange 2, Yellow 1, or Red 3.",
+            timestamp: new Date().toISOString(),
+            confidence: 'high',
+            sourceNote: null,
+          }
+          setMessages(prev => [...prev, askAgainMsg])
+          recordTurn(trimmed, askAgainMsg.text, { domain: 'curriculum', confidence: 'high' })
+          return
+        }
+        // Level resolved
+        const focusArea = slotFill.focusArea
+        clearPendingDrillSlotFill()
+        if (!focusArea) {
+          // Still need focus — store updated partial and ask
+          setPendingDrillSlotFill({
+            kind: 'curriculum_drill_draft',
+            levelName: level,
+            focusArea: null,
+            missingSlot: 'focusArea',
+            rawInput: slotFill.rawInput,
+          })
+          setIsTyping(false)
+          const askFocusMsg: ChatMessage = {
+            id: `donna-ask-focus-${Date.now()}`,
+            role: 'donna',
+            kind: 'text',
+            text: `Got it — a new drill for ${level}. What should the drill focus on? (e.g., forehand prep, serve mechanics, footwork)`,
+            timestamp: new Date().toISOString(),
+            confidence: 'high',
+            sourceNote: null,
+          }
+          setMessages(prev => [...prev, askFocusMsg])
+          recordTurn(trimmed, askFocusMsg.text, { domain: 'curriculum', confidence: 'high' })
+          return
+        }
+        // Both present — go to confirmation
+        triggerDrillConfirmation(level, focusArea, slotFill.rawInput)
+        return
+      } else if (slotFill.missingSlot === 'focusArea') {
+        // Director is answering the "What should the drill focus on?" question.
+        // Try structured extraction first; fall back to using the whole answer.
+        let focus = extractFocusArea(trimmed)
+        if (!focus) {
+          const cleaned = trimmed.trim()
+          if (cleaned.length >= 3 && cleaned.length <= 80 && !VAGUE_ANSWER_PATTERN.test(cleaned)) {
+            focus = cleaned
+          }
+        }
+        if (!focus) {
+          // Still too vague — ask again with examples
+          setIsTyping(false)
+          const askAgainMsg: ChatMessage = {
+            id: `donna-ask-focus-again-${Date.now()}`,
+            role: 'donna',
+            kind: 'text',
+            text: "What should the drill focus on? For example: forehand prep, serve mechanics, or footwork.",
+            timestamp: new Date().toISOString(),
+            confidence: 'high',
+            sourceNote: null,
+          }
+          setMessages(prev => [...prev, askAgainMsg])
+          recordTurn(trimmed, askAgainMsg.text, { domain: 'curriculum', confidence: 'high' })
+          return
+        }
+        // Focus resolved — both slots now filled
+        const level = slotFill.levelName!
+        clearPendingDrillSlotFill()
+        triggerDrillConfirmation(level, focus, slotFill.rawInput)
+        return
+      }
     }
 
     // ── Sprint 724: Yes/No navigation confirmation ───────────────────────────
@@ -767,7 +931,14 @@ export function DonnaVoiceReadyShell({
       const focusArea = extractFocusArea(trimmed)
 
       if (!targetLevel) {
-        // Missing level — ask before proceeding
+        // Missing level — store partial slot-fill and ask
+        setPendingDrillSlotFill({
+          kind: 'curriculum_drill_draft',
+          levelName: null,
+          focusArea,
+          missingSlot: 'levelName',
+          rawInput: trimmed,
+        })
         const askLevelMsg: ChatMessage = {
           id: `donna-ask-level-${Date.now()}`,
           role: 'donna',
@@ -786,7 +957,14 @@ export function DonnaVoiceReadyShell({
       }
 
       if (!focusArea) {
-        // Level known, focus area missing — ask for it
+        // Level known, focus area missing — store partial slot-fill and ask
+        setPendingDrillSlotFill({
+          kind: 'curriculum_drill_draft',
+          levelName: targetLevel,
+          focusArea: null,
+          missingSlot: 'focusArea',
+          rawInput: trimmed,
+        })
         const askFocusMsg: ChatMessage = {
           id: `donna-ask-focus-${Date.now()}`,
           role: 'donna',
@@ -804,56 +982,8 @@ export function DonnaVoiceReadyShell({
         return
       }
 
-      // Both present — summarize and ask for director confirmation before creating
-      const summaryText = buildDrillConfirmationSummaryText(targetLevel, focusArea)
-      const summaryMsg: ChatMessage = {
-        id: `donna-drill-confirm-${Date.now()}`,
-        role: 'donna',
-        kind: 'text',
-        text: summaryText,
-        timestamp: new Date().toISOString(),
-        confidence: 'high',
-        sourceNote: 'DONNA drill draft proposal',
-      }
-
-      // Capture values for the closure — avoids stale reference after re-renders
-      const capturedLevel = targetLevel
-      const capturedFocus = focusArea
-      const capturedRaw = trimmed
-
-      storeAndSetPendingConfirmation({
-        actionType: 'curriculum_drill_draft',
-        description: `Add a "${capturedFocus}" drill to ${capturedLevel} curriculum`,
-        execute: async () => {
-          const result = await createCurriculumContentItemDraft({
-            levelName: capturedLevel,
-            contentType: 'drill',
-            title: `${capturedFocus} drill`,
-            description: `A drill focused on ${capturedFocus} for ${capturedLevel} players.`,
-            source: 'voice',
-            rawInput: capturedRaw,
-            overrideReason: `DONNA voice draft: ${capturedRaw}`,
-          })
-          if (result.ok) {
-            return {
-              ok: true,
-              message: `A "${capturedFocus}" drill draft for ${capturedLevel} has been created.`,
-            }
-          }
-          return { ok: false, message: result.error }
-        },
-      })
-
-      setTimeout(() => {
-        setMessages(prev => [...prev, summaryMsg])
-        setIsTyping(false)
-        recordTurn(trimmed, summaryText, {
-          actionId: 'curriculum_drill_draft_pending',
-          domain: 'curriculum',
-          confidence: 'high',
-          sourceNote: 'DONNA drill draft proposal',
-        })
-      }, 600)
+      // Both present — go straight to confirmation via shared helper
+      triggerDrillConfirmation(targetLevel, focusArea, trimmed)
       return
     }
 

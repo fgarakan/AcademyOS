@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.9 — DONNA Multi-Turn Drill Slot Fill V1
+
+- **Modified `src/lib/donna/donnaChatSessionMemory.ts`:**
+  - Added `PendingDrillSlotFill` interface: `kind`, `levelName | null`, `focusArea | null`, `missingSlot: 'levelName' | 'focusArea'`, `rawInput`, `storedAt`
+  - Added `pendingDrillSlotFill: PendingDrillSlotFill | null` to `DonnaChatSessionState` and `initChatSession()`
+  - Added 4 helpers: `setPendingDrillSlotFill` (stamps storedAt), `getPendingDrillSlotFill`, `clearPendingDrillSlotFill`, `hasPendingDrillSlotFill`
+  - Reuses `SESSION_PENDING_ACTION_TTL_MS` (10 min) — no new constant
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Imported 4 new drill slot-fill helpers
+  - Added `VAGUE_ANSWER_PATTERN` — catches non-answers ("I don't know", "idk", "hmm", etc.) so DONNA asks again with examples rather than using the noise as a focus area
+  - Extracted `triggerDrillConfirmation(levelName, focusArea, rawInput)` as a named component function — shared by both the single-turn 912.8 path and the new multi-turn 912.9 path; eliminates code duplication; always calls `clearPendingDrillSlotFill()` before setting pending confirmation
+  - Added Sprint 912.9 slot-fill answer handler in `handleSend`, positioned after the pending confirmation intercept and before the nav offer check:
+    - Stale slot-fill (>10 min): clears silently, lets message fall through to normal routing
+    - `CANCEL_CONFIRM_PATTERN` match: clears slot-fill, DONNA acknowledges cancellation
+    - `missingSlot === 'levelName'`: runs `extractTargetLevel(trimmed)` — if resolved, checks focusArea; if still needed, stores updated partial and asks; if both filled, calls `triggerDrillConfirmation`; if unresolvable, asks again with examples
+    - `missingSlot === 'focusArea'`: tries `extractFocusArea(trimmed)` first, then falls back to using the whole trimmed text (3–80 chars, not vague); if still unresolvable, asks again with examples; when filled, calls `triggerDrillConfirmation`
+  - Updated Sprint 912.8 drill handler: both ask-for-missing-slot branches now call `setPendingDrillSlotFill()` before showing the question; the confirmation branch replaced with `triggerDrillConfirmation()`
+  - All Sprint 912.3–912.8 behavior preserved: conversation mode, auto-listen, TTS, pending confirmation, route-change memory
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.8 — DONNA Curriculum Draft Confirmation Wiring V1
 
 - **Modified `src/lib/donna/curriculumDraftProposalDonnaAnswer.ts`:**
