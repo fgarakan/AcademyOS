@@ -277,10 +277,13 @@ export async function createCurriculumContentItemDraft(
   // curriculum_levels is global (no academy_id) — any authenticated director can read it.
   let resolvedLevelId = input.levelId?.trim() ?? ''
   if (!resolvedLevelId && input.levelName?.trim()) {
+    // Prefix wildcard so "Orange 2" matches "Orange 2 — Direction" in the DB.
+    // maybeSingle() returns null on no match (clean fail) and errors on multiple
+    // matches (e.g. bare "Orange"), which also surfaces as a clean fail via !levelRow.
     const { data: levelRow } = await supabase
       .from('curriculum_levels')
       .select('id')
-      .ilike('display_name', input.levelName.trim())
+      .ilike('display_name', `${input.levelName.trim()}%`)
       .maybeSingle()
     if (!levelRow) {
       return fail(

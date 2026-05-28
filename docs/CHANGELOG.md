@@ -2,6 +2,46 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.11 — DONNA Focus Trim Polish and Gate/Skill Expansion V1
+
+- **Modified `src/lib/donna/curriculumDraftProposalDonnaAnswer.ts`:**
+  - `extractFocusArea`: extracted `trimPunctuation` helper; applied `.replace(/[.!?,;:]+$/, '').trim()` to all 4 return branches so trailing punctuation is stripped from every extraction path (not just the slot-fill fallback)
+  - Added `buildContentConfirmationSummaryText(contentLabel, levelName, focusArea)` — generalised confirmation summary builder for drill, assessment gate, and skill content types
+  - `buildDrillConfirmationSummaryText` refactored as a wrapper calling `buildContentConfirmationSummaryText('drill', ...)` — backward-compatible; no callers outside this module need changing
+
+- **Modified `src/lib/donna/donnaChatSessionMemory.ts`:**
+  - Extended `PendingDrillSlotFill.kind` union to `'curriculum_drill_draft' | 'curriculum_gate_draft' | 'curriculum_skill_draft'`
+  - Zero other changes — gate/skill slot-fill fully reuses the existing infrastructure (same interface, same helpers, same TTL)
+
+- **Modified `src/lib/actions/curriculumDraftActions.ts`:**
+  - Fixed level name resolution: `.ilike('display_name', input.levelName.trim())` → `.ilike('display_name', `${input.levelName.trim()}%`)`
+  - Critical fix: DB stores `"Orange 2 — Direction"` not `"Orange 2"` — the previous exact-match ILIKE would always fail for voice-path level resolution; prefix wildcard now matches correctly
+  - Static verification: all 12 numbered levels (Red 1–3, Orange 1–3, Yellow 1–3, HP 1–3) now resolve correctly; Green 1–3 remain unresolvable until `extractTargetLevel` patterns are added (Sprint 912.12)
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Imported `buildContentConfirmationSummaryText` (replaces `buildDrillConfirmationSummaryText` in import) and `type CurriculumContentType`
+  - Added `GATE_CREATION_PATTERN` and `SKILL_CREATION_PATTERN` constants
+  - Added `getContentLabel(kind)` and `getContentTypeFromKind(kind)` file-level helpers
+  - Added `triggerCurriculumContentConfirmation({ contentType, contentLabel, levelName, focusArea, rawInput })` — shared component function for drill/gate/skill confirmation flows; replaces the drill-specific logic that was inline in `triggerDrillConfirmation`
+  - `triggerDrillConfirmation` refactored to a one-liner calling `triggerCurriculumContentConfirmation`
+  - Updated slot-fill answer handler: cancel message, ask-focus message, and `triggerXxx` calls now use `getContentLabel(slotFill.kind)` and `getContentTypeFromKind(slotFill.kind)` so gate/skill slot-fills get correct DONNA copy; `kind` is propagated correctly when storing a partial update
+  - Focus trim fix: slot-fill fallback path now applies `.replace(/[.!?,;:]+$/, '')` to `cleaned` before using it as a focus area
+  - Added Sprint 912.11 gate handler block (after drill handler, before broad proposal): complete one-turn confirmation + slot-fill for missing level or missing focus; uses `contentType: 'assessment'`, `contentLabel: 'assessment gate'`
+  - Added Sprint 912.11 skill handler block (after gate handler): complete one-turn confirmation + slot-fill; uses `contentType: 'skill'`, `contentLabel: 'skill'`
+  - All Sprint 912.3–912.10 behavior preserved; drill flow unchanged
+
+- **Created `docs/QA_DONNA_CURRICULUM_CONTENT_EXPANSION_912_11.md`:**
+  - 10 QA scenarios documented with full static code traces: all 10 PASS
+  - Level name DB verification: all 12 numbered levels confirmed to resolve with prefix ILIKE; Green levels identified as a gap (missing extraction patterns)
+  - Focus trim before/after table for 6 input cases
+  - Handler execution order diagram updated for 912.11
+  - Risks: Green levels gap (medium), gate/skill pattern edge cases (low)
+  - Sprint 912.12 recommendations: Green patterns, router.refresh(), context injection
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.10 — DONNA Curriculum Draft Loop QA V1
 
 - **Created `docs/QA_DONNA_CURRICULUM_DRAFT_LOOP_912_10.md`:**

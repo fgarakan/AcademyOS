@@ -50,7 +50,7 @@ export interface PendingNavOffer {
 // Cleared when both slots are filled (moves to pendingAction) or cancelled.
 
 export interface PendingDrillSlotFill {
-  kind: 'curriculum_drill_draft'
+  kind: 'curriculum_drill_draft' | 'curriculum_gate_draft' | 'curriculum_skill_draft'
   levelName: string | null     // null when this is the slot being asked about
   focusArea: string | null     // null when this is the slot being asked about
   missingSlot: 'levelName' | 'focusArea'
