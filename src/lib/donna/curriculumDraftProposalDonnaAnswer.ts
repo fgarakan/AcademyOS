@@ -87,8 +87,17 @@ export function extractTargetLevel(text: string): string | null {
     [/red.?1/i, 'Red 1'], [/red.?2/i, 'Red 2'], [/red.?3/i, 'Red 3'],
     [/orange.?1/i, 'Orange 1'], [/orange.?2/i, 'Orange 2'], [/orange.?3/i, 'Orange 3'],
     [/yellow.?1/i, 'Yellow 1'], [/yellow.?2/i, 'Yellow 2'], [/yellow.?3/i, 'Yellow 3'],
+    // Sprint 912.12: Green levels — wider infix pattern ([^0-9]{0,12}) handles
+    // "Green 1", "Green Ball 1", and "Green Dot 1" by allowing up to 12 non-digit
+    // chars between "green" and the level number. Word boundary after digit prevents
+    // "green ball 10" from matching "Green 1".
+    [/\bgreen[^0-9]{0,12}1\b/i, 'Green 1'], [/\bgreen[^0-9]{0,12}2\b/i, 'Green 2'], [/\bgreen[^0-9]{0,12}3\b/i, 'Green 3'],
     [/hp.?1|high.?perf.?1/i, 'HP 1'], [/hp.?2|high.?perf.?2/i, 'HP 2'], [/hp.?3|high.?perf.?3/i, 'HP 3'],
     [/\bred\b/i, 'Red'], [/\borange\b/i, 'Orange'], [/\byellow\b/i, 'Yellow'],
+    // Sprint 912.12: bare Green fallback — consistent with Red/Orange/Yellow.
+    // Returns "Green"; ILIKE "Green%" matches 3 DB rows → maybeSingle() returns
+    // error → clean fail message surfaced to director. Not a silent failure.
+    [/\bgreen\b/i, 'Green'],
     [/\bhp\b|\bhigh.?perf/i, 'High Performance'],
   ]
 

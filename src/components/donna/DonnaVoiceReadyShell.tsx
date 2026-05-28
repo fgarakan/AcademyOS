@@ -488,6 +488,12 @@ export function DonnaVoiceReadyShell({
             actionId: result.ok ? 'curriculum_draft_created' : 'curriculum_draft_failed',
             confidence: result.ok ? 'high' : 'partial',
           })
+          // Sprint 912.12: soft-refresh the current route so the curriculum builder
+          // change queue (CurriculumBuilderChangeQueue) reflects the new draft without
+          // requiring manual navigation. revalidatePath() in the server action has
+          // already invalidated the server cache; router.refresh() flushes the client
+          // cache. Only fires on success — never on failure, never causes duplicate drafts.
+          if (result.ok) router.refresh()
         })
         return
       }

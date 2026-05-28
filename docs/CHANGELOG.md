@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.12 — DONNA Green Levels And Refresh V1
+
+- **Modified `src/lib/donna/curriculumDraftProposalDonnaAnswer.ts`:**
+  - Added Green 1, Green 2, Green 3 extraction patterns to `extractTargetLevel()` using `[^0-9]{0,12}` infix — handles "Green 1", "Green Ball 1", and "Green Dot 1" all normalizing to "Green 1/2/3"
+  - Added bare `\bgreen\b` fallback (consistent with existing Red/Orange/Yellow fallbacks); documented as cleanly-failing with ambiguous DB match — director sees a helpful "be more specific" error message
+  - Numbered Green patterns inserted after Yellow, before HP — maintains first-match-wins ordering (specific before general)
+  - No changes to existing Red/Orange/Yellow/HP patterns
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Added `if (result.ok) router.refresh()` inside `activePending.execute().then()` success path
+  - `router` (from `useRouter()` at line 148) was already available — no new import needed
+  - `router.refresh()` fires only on `result.ok === true` — never on failure, never before draft is confirmed created, never causes duplicate drafts
+  - Works with the `revalidatePath()` calls already in `createCurriculumContentItemDraft()`: server cache invalidated by the action, client cache flushed by `router.refresh()`
+
+- **Created `docs/QA_DONNA_LEVEL_EXTRACTION_912_12.md`:**
+  - Level extraction QA table for all 15 levels (Red/Orange/Green/Yellow/HP numbered + bare fallbacks)
+  - Green "Ball" and "Dot" variant extraction verified with infix char count analysis
+  - Invalid input table: Purple 9, Green 9, Orange 7, Evergreen, Green Ball 10, Greenery — all return null correctly
+  - 10 manual scenarios with full traces: all 10 PASS
+  - `router.refresh()` safety analysis table
+  - Sprint 912.13 recommendations
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.11 — DONNA Focus Trim Polish and Gate/Skill Expansion V1
 
 - **Modified `src/lib/donna/curriculumDraftProposalDonnaAnswer.ts`:**
