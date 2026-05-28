@@ -2,6 +2,42 @@
 
 ---
 
+## 2026-05-28 — Sprint 914.2 — DONNA Backend Spine V1
+
+- **New `supabase/migrations/070_donna_conversation_spine.sql`:**
+  - Three new tables using established RLS helpers (`auth_academy_id()`, `auth_is_director_or_head()`, `auth_is_staff()`):
+    - `donna_conversation_sessions` — academy-scoped, user-scoped session records; fields: `id, academy_id, user_id, role (user_role enum), title, active_page, active_workflow, current_entity_type, current_entity_id, status (CHECK: active/archived/ended), started_at, last_message_at, ended_at, metadata`; auto-update trigger on `updated_at`
+    - `donna_conversation_messages` — one row per user/donna message; fields: `session_id (FK), role (CHECK: user/donna/system/tool), message_text, message_kind (CHECK: text/voice/system/action_result/error), intent, confidence (CHECK: high/medium/low/partial/insufficient), source, page_path, entity_type, entity_id, proposed_action_id`; 4 indexes
+    - `donna_working_memory` — session-scoped key-value store; UNIQUE (session_id, memory_key); fields: `memory_key, memory_value (jsonb), scope (CHECK: session/workflow/page/entity), expires_at`; auto-update trigger on `updated_at`
+  - RLS on all 3 tables: staff INSERT/UPDATE own records; directors SELECT all in their academy; staff SELECT own records
+  - Additive only — no existing tables modified; rollback = drop 3 tables
+
+- **New `src/lib/donna/donnaConversationPersistence.ts`:**
+  - `createDonnaConversationSession(db, input)` — creates session; resolves `academy_id` server-side from user profile (never from caller)
+  - `getOrCreateDonnaConversationSession(db, input)` — returns most recent active session or creates one
+  - `appendDonnaConversationMessage(db, input)` — appends message; updates `last_message_at` on session
+  - `getRecentDonnaConversationMessages(db, sessionId, limit)` — returns N messages in chronological order
+  - `upsertDonnaWorkingMemory(db, userId, input)` — INSERT ... ON CONFLICT upsert
+  - `getDonnaWorkingMemory(db, sessionId)` — returns all non-expired entries as `Record<string, unknown>`
+  - All functions return `DonnaPersistenceResult<T>` — never throw; errors are `{ ok: false, error, code }`
+  - Uses `(db as any)` for new tables (established project pattern; not yet in generated types)
+
+- **New `src/lib/donna/donnaContextPacketBuilder.ts`:**
+  - `DonnaContextPacket` type: `userMessage, academyId, userId, role, sessionId, activePage, activeWorkflow, currentEntity, recentConversation[], workingMemory{}, directorContext, allowedActions[], pendingApprovals[], metadata{}`
+  - `buildDonnaContextPacket(db, input)` — assembles context from persisted messages + working memory when sessionId available; degrades gracefully to empty context; read-only; no mutations
+  - V1 scope: persisted conversation + working memory wired; `directorContext`, `allowedActions`, `pendingApprovals` accepted as optional pass-through (full wiring in Sprint 914.3)
+
+- **Intentionally NOT wired in Sprint 914.2:**
+  - `DonnaVoiceReadyShell.tsx` still uses in-process `donnaChatSessionMemory.ts` (Sprint 914.3)
+  - `donnaChatSessionMemory.ts` NOT removed or modified (preserved)
+  - `buildDonnaContextPacket` not called from any component yet (Sprint 914.3)
+
+- **Created `docs/QA_DONNA_BACKEND_SPINE_914_2.md`** — table schemas, RLS assumptions, helper function table, safety checks, manual SQL verification for all 6 operations, rollback notes
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 914.1 — DONNA Backend Architecture Audit V1
 
 - **No code changes.** Audit-only sprint. `npx tsc --noEmit` — 0 errors.
