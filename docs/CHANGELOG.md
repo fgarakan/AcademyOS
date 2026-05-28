@@ -27868,3 +27868,8 @@ See `docs/CURRENT_BUILD_TARGET.md` Step 4 for full specification.
 - `donnaContextPacketBuilder.ts`: `allowedActions` now auto-populated from `getAllowedActionIds()` when not explicitly passed.
 - High-risk action classes (unsafe, blocked) never surfaced. Domain restrictions applied.
 
+
+## 2026-05-28 — Sprint 914.10 — DONNA Backend Approval Enforcement V1
+
+- `src/lib/donna/donnaApprovalGate.ts`: `DonnaApprovalLevel` enum (none/confirmation/review_queue/director_approval/platform_owner), `APPROVAL_REQUIREMENTS` map, `assertDonnaApprovalAllowed()`, `requireDonnaApproval()`, `blockUnsafeDonnaAction()`, `HIGH_RISK_ACTION_CATEGORIES`. Pure TypeScript — no DB, no mutations. Sprint 904 unchanged. Curriculum draft path unchanged.
+
