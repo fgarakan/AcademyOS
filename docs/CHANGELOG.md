@@ -27880,3 +27880,9 @@ See `docs/CURRENT_BUILD_TARGET.md` Step 4 for full specification.
 - `src/lib/donna/donnaRecommendationFeedback.ts`: createDonnaRecommendation(), recordDonnaRecommendationFeedback(), getRecentDonnaRecommendations().
 - `donnaConversationActions.ts`: logDonnaRecommendation() server action.
 - Shell: dashboard priority answer logs recommendation fire-and-forget.
+
+## 2026-05-28 — Sprint 914.12 — DONNA Entity Summary Spine V1
+
+- `073_donna_entity_summaries.sql`: donna_entity_summaries table. UNIQUE (academy_id, entity_type, entity_id, summary_kind). Upsert-friendly. RLS academy-scoped.
+- `donnaEntitySummaries.ts`: upsertEntitySummary(), getEntitySummary(), getRelevantEntitySummaries().
+- `donnaContextPacketBuilder.ts`: entitySummary field added; populated when currentEntity set.

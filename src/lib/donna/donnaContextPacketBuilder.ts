@@ -1,5 +1,6 @@
 // Sprint 914.2 — DONNA Context Packet Builder V1
 // Sprint 914.9 — Action Registry wired into context packet
+// Sprint 914.12 — Entity summaries optionally included when currentEntity set
 // Assembles a structured context packet before DONNA answer generation.
 // Read-only assembly — no DB writes, no mutations, no AI inference.
 // Accepts data from multiple sources (persisted messages, working memory,
@@ -17,6 +18,7 @@ import {
   type DonnaConversationMessage,
 } from '@/lib/donna/donnaConversationPersistence'
 import { getAllowedActionIds } from '@/lib/donna/donnaActionRegistryWiring'
+import { getEntitySummary } from '@/lib/donna/donnaEntitySummaries'
 
 // ── Context packet type ────────────────────────────────────────────────────────
 
@@ -60,6 +62,9 @@ export interface DonnaContextPacket {
 
   // Pending approvals — populated from proposed_actions in future sprint
   pendingApprovals: unknown[]
+
+  // Sprint 914.12: entity summary for currentEntity (if available)
+  entitySummary: Record<string, unknown> | null
 
   // Extensible metadata
   metadata: Record<string, unknown>
@@ -134,6 +139,19 @@ export async function buildDonnaContextPacket(
     ? input.allowedActions
     : getAllowedActionIds({ pathname: input.activePage })
 
+  // Sprint 914.12: fetch entity summary when currentEntity is set (non-fatal)
+  let entitySummary: Record<string, unknown> | null = null
+  if (input.currentEntityType && input.currentEntityId) {
+    const summaryResult = await getEntitySummary(db, {
+      academyId:   input.academyId,
+      entityType:  input.currentEntityType as any,
+      entityId:    input.currentEntityId,
+    })
+    if (summaryResult.ok && summaryResult.data) {
+      entitySummary = summaryResult.data.summaryJson
+    }
+  }
+
   return {
     userMessage:        input.userMessage,
     academyId:          input.academyId,
@@ -148,6 +166,7 @@ export async function buildDonnaContextPacket(
     directorContext:    input.directorContext ?? null,
     allowedActions:     resolvedAllowedActions,
     pendingApprovals:   input.pendingApprovals ?? [],
+    entitySummary,
     metadata:           input.metadata ?? {},
   }
 }
