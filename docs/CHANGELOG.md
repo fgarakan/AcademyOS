@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-28 — Sprint 914.7 — DONNA Intent Router Unification V1
+
+- `src/lib/donna/donnaIntentRouterV1.ts`: `DonnaUnifiedIntentType` (24 intent types), `routeDonnaIntentV1(text, pathname)` pure function, `LEGACY_CATEGORY_MAP` bridging `DonnaCommandCategory` → unified types. Additive — does NOT replace 34-interceptor pipeline.
+- `DonnaVoiceReadyShell.tsx`: calls `routeDonnaIntentV1()` at start of `handleSend()` for director role; intent/confidence included in persisted user message row. No behavior changes.
+- Architecture doc: `DONNA_INTENT_ROUTER_UNIFICATION_914_7.md`
+
+---
+
 ## 2026-05-28 — Sprint 914.6 — DONNA Event Ledger V1
 
 - `supabase/migrations/071_donna_events.sql`: `donna_events` table — id, academy_id, actor_id, actor_role, session_id, message_id, entity_type, entity_id, event_type (text), visibility_scope (CHECK), confidence (CHECK), source, metadata (jsonb), created_at. INSERT-only RLS. 4 indexes. No UPDATE/DELETE policies.

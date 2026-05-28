@@ -92,8 +92,10 @@ import { buildFocusTargetForRoute } from '@/lib/donna/donnaUIActionDispatcher'
 // Sprint 914.3 — Backend Spine Wiring (fire-and-forget persistence)
 // Sprint 914.4 — Context Packet Integration
 // Sprint 914.6 — Event Ledger
+// Sprint 914.7 — Intent Router
 import { logDonnaEventAction } from '@/lib/actions/donnaEventActions'
 import { DONNA_EVENT_TYPES } from '@/lib/donna/donnaEventLedger'
+import { routeDonnaIntentV1 } from '@/lib/donna/donnaIntentRouterV1'
 import {
   getOrCreateDonnaSession,
   appendDonnaMessage as persistDonnaMessage,
@@ -607,6 +609,11 @@ export function DonnaVoiceReadyShell({
     setMessages(prev => [...prev, userMsg])
     setIsTyping(true)
 
+    // Sprint 914.7: classify intent for metadata/logging (additive — does NOT change routing)
+    const intentResult = role === 'director'
+      ? routeDonnaIntentV1(trimmed, pathname ?? '/director')
+      : null
+
     // Sprint 914.3: persist user message to backend spine (fire-and-forget)
     const sId = sessionIdRef.current
     if (sId) {
@@ -615,6 +622,8 @@ export function DonnaVoiceReadyShell({
         role:        'user',
         messageText: trimmed,
         messageKind: 'text',
+        intent:      intentResult?.intent ?? null,
+        confidence:  intentResult?.confidence ?? null,
         pagePath:    pathname ?? null,
       }).catch(() => { /* non-fatal */ })
     }

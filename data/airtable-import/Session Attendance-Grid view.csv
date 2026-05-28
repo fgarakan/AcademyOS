@@ -1,0 +1,4 @@
+﻿Attendance ID,Player,Session,Session Date,Present,Participation Status,Blocks Completed JSON,Coach,Notes
+ATT-ANNA-M-001,Anna Mendez,SES-1776059383083,4/16/2026 12:00am,checked,Present,"{""completed"":[""Movement"",""Agility"",""Speed""],""partial"":[""Games""],""missed"":[""Cool Down""]}",Farshad,"Completed movement, agility, and speed blocks well. Partial participation in games. Missed cool down."
+ATT-ANNA-S-002,Anna Silva,SES-1776059383083,4/16/2026 12:00am,checked,Partial,"{""completed"":[""Movement"",""Agility""],""partial"":[""Speed"",""Games""],""missed"":[""Cool Down""]}",Farshad,Good participation overall. Strong movement and agility work. Partial completion in speed and games.
+,,,,,,,,
