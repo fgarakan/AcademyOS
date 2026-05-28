@@ -1,4 +1,5 @@
 // Sprint 914.2 — DONNA Context Packet Builder V1
+// Sprint 914.9 — Action Registry wired into context packet
 // Assembles a structured context packet before DONNA answer generation.
 // Read-only assembly — no DB writes, no mutations, no AI inference.
 // Accepts data from multiple sources (persisted messages, working memory,
@@ -15,6 +16,7 @@ import {
   getDonnaWorkingMemory,
   type DonnaConversationMessage,
 } from '@/lib/donna/donnaConversationPersistence'
+import { getAllowedActionIds } from '@/lib/donna/donnaActionRegistryWiring'
 
 // ── Context packet type ────────────────────────────────────────────────────────
 
@@ -127,6 +129,11 @@ export async function buildDonnaContextPacket(
       ? { type: input.currentEntityType, id: input.currentEntityId }
       : null
 
+  // Sprint 914.9: populate allowedActions from action registry when not explicitly passed
+  const resolvedAllowedActions = input.allowedActions && input.allowedActions.length > 0
+    ? input.allowedActions
+    : getAllowedActionIds({ pathname: input.activePage })
+
   return {
     userMessage:        input.userMessage,
     academyId:          input.academyId,
@@ -139,7 +146,7 @@ export async function buildDonnaContextPacket(
     recentConversation,
     workingMemory,
     directorContext:    input.directorContext ?? null,
-    allowedActions:     input.allowedActions ?? [],
+    allowedActions:     resolvedAllowedActions,
     pendingApprovals:   input.pendingApprovals ?? [],
     metadata:           input.metadata ?? {},
   }

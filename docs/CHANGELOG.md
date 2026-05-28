@@ -27861,3 +27861,10 @@ See `docs/CURRENT_BUILD_TARGET.md` Step 4 for full specification.
 - `DonnaVoiceReadyShell.tsx`: DONNA message persistence now enriches stored metadata with `safeEventLogPayload(schemaFromChatMessage(msg))`. Existing text rendering unchanged.
 - `donnaConversationActions.ts`: `AppendMessageInput.metadata` field added.
 
+
+## 2026-05-28 — Sprint 914.9 — DONNA Action Registry Wiring V1
+
+- `src/lib/donna/donnaActionRegistryWiring.ts`: `getAllowedDonnaActionsForContext()` — looks up `DIRECTOR_DONNA_ACTIONS`, filters to V1 safe set (answer_only + specific draft IDs), marks high-risk domains as requiresApproval. `getAllowedActionIds()` for context packet.
+- `donnaContextPacketBuilder.ts`: `allowedActions` now auto-populated from `getAllowedActionIds()` when not explicitly passed.
+- High-risk action classes (unsafe, blocked) never surfaced. Domain restrictions applied.
+
