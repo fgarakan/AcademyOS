@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.18 — DONNA Onboarding Guide V1
+
+- **New `src/lib/donna/donnaOnboardingGuideAnswer.ts`:**
+  - `detectOnboardingProgressQuestion(text, pathname)`: detects progress/readiness phrases not covered by existing `detectMissingContext`:
+    - `SETUP_PROGRESS_PATTERNS` (always-fire): "am I ready to launch?", "what is left in setup?", "setup checklist", "all steps complete?", "how close am I to done?", "what do I need to complete before launch?"
+    - `STEP_EXPLAIN_PATTERNS` (page-gated, only on `/director/onboarding/*`): "what is this step?", "explain this section", "what do I fill in here?", "help with this step"
+  - `buildOnboardingProgressAnswer(ctx, pathname)`: routes to sub-page-specific or general response:
+    - `/interview` → explains 7-question academy interview (philosophy, player focus, competition, 90-day vision)
+    - `/onboarding/curriculum` → explains curriculum structure selection; includes live gap count if available
+    - `/players-placement` → explains player activation process; includes live player count
+    - `/coaches-permissions` → explains coach permissions setup; includes live coach count
+    - `/programs-groups` → explains optional programs/groups organization
+    - General `/director/onboarding` → infers incomplete areas from `directorCtx` counts (playerCount, coachCount, templateCount, curriculumGaps); lists what's likely still missing; always states "progress checklist on this page is authoritative — I won't mark anything complete"
+  - Handles null `directorCtx` gracefully: provides 5-step order guidance without fabricated counts
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Added import for `detectOnboardingProgressQuestion` and `buildOnboardingProgressAnswer`
+  - Added Sprint 912.18 onboarding guide intercept at step 9 (after null-directorCtx guard, before KPI), fires for `plainRole === 'director'` regardless of `directorCtx`
+  - Fires AFTER `detectMissingContext` (step 7, which handles navigation-offer onboarding questions) — complements rather than replaces it
+
+- **Design decision:** `detectMissingContext` already handles "walk me through setup", "add coaches", "curriculum setup" with navigation offers. Sprint 912.18 adds IN-PAGE guidance for directors already on onboarding pages and progress/readiness questions. No conflict — different phrase sets, different response types.
+
+- **Data source:** `DirectorDonnaContext` counts used as approximations — formal `academy_identity_completed` flags are in `academy.settings` and not in `directorCtx`. All responses defer to the on-screen progress checklist. No fake data.
+
+- **Created `docs/QA_DONNA_ONBOARDING_GUIDE_912_18.md`:**
+  - Inventory of what `detectMissingContext` already covers
+  - 11 static QA scenarios all pass
+  - Pattern conflict analysis: no conflicts with page guide, missing context, KPI, or dashboard priority
+  - Known limitations: count-based inference vs. formal step flags; STEP_EXPLAIN_PATTERNS conservative by design
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.17 — DONNA Director Brief V1
 
 - **Modified `src/lib/donna/directorDashboardDonnaAnswer.ts`:**

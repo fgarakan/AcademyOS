@@ -81,6 +81,8 @@ import { createCurriculumContentItemDraft, type CurriculumContentType } from '@/
 import { DATA_QUALITY_PATTERNS, buildDataQualityAnswer } from '@/lib/donna/dataQualityGuardian'
 import { RECENT_DECISIONS_PATTERNS, buildRecentDecisionsAnswer } from '@/lib/donna/recentDecisionsAnswerEngine'
 import { PLAYER_PROGRESS_STALL_PATTERNS, buildPlayerProgressStallAnswer } from '@/lib/donna/playerProgressStallDetector'
+// Sprint 912.18 — Onboarding Guide Mode
+import { detectOnboardingProgressQuestion, buildOnboardingProgressAnswer } from '@/lib/donna/donnaOnboardingGuideAnswer'
 import { submitDonnaActionDraft } from '@/lib/actions/donnaSentinelAction'
 import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
 import { buildFocusTargetForRoute } from '@/lib/donna/donnaUIActionDispatcher'
@@ -878,6 +880,40 @@ export function DonnaVoiceReadyShell({
           setIsTyping(false)
           recordTurn(trimmed, loadingMsg.text, { confidence: 'partial' })
         }, 400)
+        return
+      }
+    }
+
+    // Sprint 912.18: Onboarding Guide Mode intercept
+    // Answers setup-progress questions not covered by detectMissingContext:
+    // "Am I ready to launch?", "What is left in setup?", "What is this setup step?"
+    // Fires AFTER detectMissingContext (which handles navigation offers + "walk me through")
+    // and BEFORE dashboard priority. Works with or without directorCtx.
+    if (plainRole === 'director') {
+      const currentPathForOnboarding = pathname ?? '/director'
+      if (detectOnboardingProgressQuestion(trimmed, currentPathForOnboarding)) {
+        const onboardingAnswer = buildOnboardingProgressAnswer(directorCtx, currentPathForOnboarding)
+        const onboardingMsg: ChatMessage = {
+          id: `donna-onboarding-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: onboardingAnswer.text,
+          timestamp: new Date().toISOString(),
+          confidence: onboardingAnswer.confidence,
+          sourceNote: onboardingAnswer.sourceNote,
+          followUp: onboardingAnswer.followUp,
+          followUpHref: onboardingAnswer.href ?? undefined,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, onboardingMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, onboardingAnswer.text, {
+            actionId: onboardingAnswer.actionId,
+            domain: 'general',
+            confidence: onboardingAnswer.confidence,
+            sourceNote: onboardingAnswer.sourceNote,
+          })
+        }, 500)
         return
       }
     }
