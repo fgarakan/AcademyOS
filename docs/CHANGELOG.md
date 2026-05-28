@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.17 — DONNA Director Brief V1
+
+- **Modified `src/lib/donna/directorDashboardDonnaAnswer.ts`:**
+  - Extended `detectDashboardPriorityQuestion` with 8 new detection patterns:
+    - `give me (a|my|the)? (brief|briefing|status report|digest)` — "give me a brief", "give me my briefing"
+    - `\b(director brief|daily brief|academy brief|status report)\b` — "director brief", "daily brief"
+    - `what'?s? (pending|outstanding|in the queue)` — "what's pending", "what is pending"
+    - `anything (pending|outstanding|in the queue)` — "anything pending?"
+    - `show me what... (pending|outstanding|needs attention)` — "show me what's pending"
+    - `what (should i|do i) review (first|today|now)` — "what should I review first?"
+    - `\bacademy status\b` — "academy status"
+    - `how (is|are) ... academy doing` — "how is the academy doing?"
+  - Added private `detectBriefQuestion` sub-classifier — distinguishes summary-style requests from single-action priority requests; used to route to the appropriate response builder
+  - Added `buildDirectorBriefSummary(ctx)` — answers "give me a brief" / "what is pending?" with a structured numbered list of all active signals from `DirectorDonnaContext`:
+    1. Missing wrap-ups (highest priority, listed first)
+    2. High/medium-risk player count
+    3. Pending Review Queue items
+    4. Sessions today
+    5. Players ready to advance
+    6. Curriculum gaps
+    - Best next step: determined by same priority order as `buildDashboardPriorityResponse`
+    - All-clear fallback when no items
+    - Always states "Nothing is applied until you approve it."
+    - `sourceNote: 'Live data'` or `'Demo data'` based on `ctx.isLive`
+  - Updated `tryAnswerDashboardPriorityQuestion`: routes via `detectBriefQuestion` → `buildDirectorBriefSummary` (true) or `buildDashboardPriorityResponse` (false) — existing priority behavior fully preserved
+  - No changes to `buildDashboardPriorityResponse` or any other existing function
+
+- **Data source:** `DirectorDonnaContext` — loaded from real DB at `/director/donna` page render time. All numbers are genuine. Curriculum draft count (`academy_curriculum_overrides`) is NOT in `directorCtx` and is deliberately omitted from the brief rather than fabricated — documented as known limitation.
+
+- **Created `docs/QA_DONNA_DIRECTOR_BRIEF_912_17.md`:**
+  - Data source analysis table: what `directorCtx` has vs. what is missing
+  - 8 new patterns with example phrases
+  - Routing logic diagram: brief vs. priority sub-routing
+  - 11 static QA scenarios all pass
+  - Safety checks: no mutations, no fake data, no migrations
+  - Known limitations: curriculum drafts and pending placements not in ctx
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 912.16 — DONNA Main Entry Point Upgrade V1
 
 - **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**

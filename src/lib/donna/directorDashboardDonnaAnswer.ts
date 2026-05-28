@@ -6,8 +6,9 @@ import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import type { DonnaSafeReadAnswer } from '@/lib/donna/donnaSafeReadActions'
 
 // ── Detection ──────────────────────────────────────────────────────────────────
-// Detects "what should I do first?" style dashboard priority questions.
+// Detects "what should I do first?" and "give me a brief" style questions.
 // Must NOT overlap with KPI vocabulary — those are caught by detectKpiQuestionType.
+// Sprint 912.17: extended with brief/status/pending patterns.
 
 export function detectDashboardPriorityQuestion(text: string): boolean {
   const t = text.toLowerCase().trim()
@@ -31,7 +32,37 @@ export function detectDashboardPriorityQuestion(text: string): boolean {
     // "give me a summary/overview for today"
     /give me (a )?(summary|overview|briefing|rundown) (of today|for today)/.test(t) ||
     // "what should I do today"
-    /what should i (do|work on|tackle|focus on) today/.test(t)
+    /what should i (do|work on|tackle|focus on) today/.test(t) ||
+
+    // Sprint 912.17: brief/status/pending patterns
+    // "give me a brief" / "director brief" / "academy brief"
+    /give me (a |my |the )?(brief|briefing|status report|digest)/.test(t) ||
+    /\b(director brief|daily brief|academy brief|status report)\b/.test(t) ||
+    // "what is pending" / "what's pending" / "anything pending"
+    /what'?s? (pending|outstanding|in (the )?queue)/.test(t) ||
+    /anything (pending|outstanding|in (the )?queue)/.test(t) ||
+    /show me what.{0,15}(pending|outstanding|needs attention)/.test(t) ||
+    // "what should I review first"
+    /what (should i|do i) review (first|today|now)/.test(t) ||
+    // "academy status"
+    /\bacademy status\b/.test(t) ||
+    // "how is the academy doing"
+    /how (is|are) (the |my |this )?academy doing/.test(t)
+  )
+}
+
+// Sprint 912.17: sub-classifier — true when the question wants a SUMMARY list
+// rather than a single-action priority answer. Used to route to buildDirectorBriefSummary.
+function detectBriefQuestion(text: string): boolean {
+  const t = text.toLowerCase().trim()
+  return (
+    /give me (a |my |the )?(brief|briefing|status report|digest)/.test(t) ||
+    /\b(director brief|daily brief|academy brief|status report)\b/.test(t) ||
+    /what'?s? (pending|outstanding|in (the )?queue)/.test(t) ||
+    /anything (pending|outstanding|in (the )?queue)/.test(t) ||
+    /show me what.{0,15}(pending|outstanding|needs attention)/.test(t) ||
+    /\bacademy status\b/.test(t) ||
+    /how (is|are) (the |my |this )?academy doing/.test(t)
   )
 }
 
@@ -118,6 +149,93 @@ export function buildDashboardPriorityResponse(ctx: DirectorDonnaContext): Donna
   }
 }
 
+// ── Director Brief Summary ────────────────────────────────────────────────────
+// Sprint 912.17: answers "give me a brief" / "what is pending" / "academy status"
+// with a structured numbered list of all active signals.
+// Different from buildDashboardPriorityResponse (which returns ONE priority action):
+// this function returns ALL pending items so the director has a complete picture.
+// Pure TypeScript — no DB calls, no mutations. Uses DirectorDonnaContext only.
+
+export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeReadAnswer {
+  const prefix = ctx.isLive ? '' : '[Demo] '
+  const highRisk = ctx.attentionItems.filter(a => a.risk === 'high').length
+  const medRisk  = ctx.attentionItems.filter(a => a.risk === 'medium').length
+
+  const items: string[] = []
+
+  // Priority order matches buildDashboardPriorityResponse so the brief is consistent
+  if (ctx.missingWrapUps > 0) {
+    items.push(`${ctx.missingWrapUps} missing coach wrap-up${ctx.missingWrapUps !== 1 ? 's' : ''} from today`)
+  }
+  if (highRisk > 0) {
+    items.push(`${highRisk} player${highRisk !== 1 ? 's' : ''} flagged high-risk`)
+  } else if (medRisk > 0) {
+    items.push(`${medRisk} player${medRisk !== 1 ? 's' : ''} flagged medium-risk`)
+  }
+  if (ctx.pendingReviews > 0) {
+    items.push(`${ctx.pendingReviews} item${ctx.pendingReviews !== 1 ? 's' : ''} in the Review Queue`)
+  }
+  if (ctx.todaySessions > 0) {
+    items.push(`${ctx.todaySessions} session${ctx.todaySessions !== 1 ? 's' : ''} scheduled today`)
+  }
+  if (ctx.advancementEligibleCount > 0) {
+    items.push(`${ctx.advancementEligibleCount} player${ctx.advancementEligibleCount !== 1 ? 's' : ''} ready to advance`)
+  }
+  if (ctx.curriculumGaps.length > 0) {
+    items.push(`${ctx.curriculumGaps.length} curriculum gap${ctx.curriculumGaps.length !== 1 ? 's' : ''} flagged`)
+  }
+
+  // All clear — no signals
+  if (items.length === 0) {
+    const sessionNote = ctx.todaySessions > 0
+      ? ` ${ctx.todaySessions} session${ctx.todaySessions !== 1 ? 's' : ''} today.`
+      : ''
+    return {
+      actionId: 'director_brief',
+      text: `${prefix}Academy looks clear — nothing urgent right now.${sessionNote} Good time to review curriculum coverage or check in on player progress.`,
+      confidence: ctx.confidence,
+      sourceNote: ctx.isLive ? 'Live data' : 'Demo data',
+      followUp: 'Ask me what to focus on',
+      href: '/director/donna',
+      isAnswerable: true,
+    }
+  }
+
+  // Determine the single most urgent next step
+  let nextStep: string
+  let nextHref: string
+  let followUpLabel: string
+  if (ctx.missingWrapUps > 0) {
+    nextStep = 'Check missing wrap-ups — coaching observations from today cannot be recovered later.'
+    nextHref = '/director/sessions'
+    followUpLabel = 'Show sessions'
+  } else if (highRisk > 0) {
+    nextStep = `Review the ${highRisk} high-risk player${highRisk !== 1 ? 's' : ''} — check recent observations and attendance.`
+    nextHref = '/director/players'
+    followUpLabel = 'View players'
+  } else if (ctx.pendingReviews > 0) {
+    nextStep = 'Clear your Review Queue — coaches and players are waiting on your decisions.'
+    nextHref = '/director/review'
+    followUpLabel = 'Open Review Queue'
+  } else {
+    nextStep = 'Review player progress or curriculum coverage.'
+    nextHref = '/director/donna'
+    followUpLabel = 'Ask me more'
+  }
+
+  const numbered = items.map((item, i) => `${i + 1}. ${item}.`).join('\n')
+
+  return {
+    actionId: 'director_brief',
+    text: `${prefix}Here's your academy status:\n\n${numbered}\n\nBest next step: ${nextStep}\n\nNothing is applied until you approve it.`,
+    confidence: ctx.confidence,
+    sourceNote: ctx.isLive ? 'Live data' : 'Demo data',
+    followUp: followUpLabel,
+    href: nextHref,
+    isAnswerable: true,
+  }
+}
+
 // ── Combined detector + answerer ───────────────────────────────────────────────
 
 export function tryAnswerDashboardPriorityQuestion(
@@ -125,5 +243,8 @@ export function tryAnswerDashboardPriorityQuestion(
   ctx: DirectorDonnaContext,
 ): DonnaSafeReadAnswer | null {
   if (!detectDashboardPriorityQuestion(text)) return null
+  // Sprint 912.17: route brief/status questions to the summary format;
+  // priority questions ("what should I do first?") use the single-action format.
+  if (detectBriefQuestion(text)) return buildDirectorBriefSummary(ctx)
   return buildDashboardPriorityResponse(ctx)
 }
