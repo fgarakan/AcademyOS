@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-05-28 — Sprint 914.1 — DONNA Backend Architecture Audit V1
+
+- **No code changes.** Audit-only sprint. `npx tsc --noEmit` — 0 errors.
+
+- **Created `docs/architecture/DONNA_BACKEND_ARCHITECTURE_AUDIT_914_1.md`:**
+  - Audited ~130+ DONNA lib files, 3 API routes, 18 server actions, 69 migrations
+  - **Critical finding:** Two parallel DONNA architectures exist simultaneously — God Mode shell (DonnaVoiceReadyShell.tsx) uses new 34-interceptor regex pipeline, while legacy DonnaAssistantButton.tsx uses richer infrastructure (donnaIntentClassifier, donnaResponseComposer, donnaSafeSessionMemory). Neither uses DB-persisted conversation sessions.
+  - **Overall backend rating: 5.5/10**
+  - 12-category audit with ratings, implementation details, risks, and recommended fixes:
+    1. Conversation Memory: 4/10 — 3 parallel non-coordinated implementations; no DB persistence
+    2. Operational Data Retrieval: 7/10 — rich but stale after page render; no caching
+    3. Event Ledger: 6/10 — audit_logs + voice_commands + object_snapshots exist; no DONNA-specific event types
+    4. Snapshot System: 6/10 — object_snapshots table exists; no periodic academy snapshots
+    5. Vector/Semantic Memory: 1/10 — nothing found; no pgvector, no embeddings table
+    6. Intent Routing: 6/10 — donnaIntentClassifier exists (Sprint 592) but not wired to God Mode shell; 34-interceptor flat pipeline instead
+    7. Context Packet Builder: 4/10 — contextPackages.ts has types but no builder; directorCtx is the closest equivalent
+    8. DONNA Response Schema: 6/10 — DonnaSafeReadAnswer is partial; missing suggested_ui_operations, event_log_payload
+    9. Action Registry: 8/10 — directorActionRegistry.ts has 50+ typed actions with implementationStatus; not wired to God Mode shell
+    10. Approval Gates: 7/10 — proposed_actions state machine + donnaGateway.ts are strong; curriculum override path has frontend-only confirmation
+    11. Recommendation Feedback Loop: 3/10 — pilotFeedbackModel exists; no DB tracking of recommendation outcomes
+    12. Caching: 2/10 — no data cache; context rebuilt on every page render
+  - Architecture gap map: Already solid / Partially built / Missing / Dangerous-fragile / Not needed yet
+  - V1 recommendation: 3 priority tables (donna_conversation_sessions, donna_conversation_messages, donna_working_memory) + buildDonnaContextPacket() function
+  - Sprint 914.2 plan: DONNA Backend Spine V1 — DB schema, context packet builder, session persistence, RLS, acceptance criteria, rollback notes
+
+---
+
 ## 2026-05-28 — Sprint 913.7 — DONNA Operating Intelligence Live QA Demo Readiness V1
 
 - **No code changes.** QA-only sprint. No blockers found. `npx tsc --noEmit` — 0 errors.
