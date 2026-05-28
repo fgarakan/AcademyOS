@@ -88,6 +88,13 @@ import { detectReviewQueueQuestion, buildReviewQueueAnswer } from '@/lib/donna/d
 import { submitDonnaActionDraft } from '@/lib/actions/donnaSentinelAction'
 import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
 import { buildFocusTargetForRoute } from '@/lib/donna/donnaUIActionDispatcher'
+// Sprint 914.3 — Backend Spine Wiring (fire-and-forget persistence)
+import {
+  getOrCreateDonnaSession,
+  appendDonnaMessage as persistDonnaMessage,
+  upsertDonnaMemory,
+  recallRecentDonnaMessages,
+} from '@/lib/actions/donnaConversationActions'
 // Sprint 912.3 — Conversation Mode state machine
 import {
   useDonnaConversationMode,
@@ -189,11 +196,52 @@ export function DonnaVoiceReadyShell({
   // Sprint 912.6: page-aware greeting — track previous pathname and conv mode state
   const prevPathRef = useRef<string | null>(null)
   const prevConvModeRef = useRef(false)
+  // Sprint 914.3: persisted session ID (null until server-side session is created)
+  const sessionIdRef = useRef<string | null>(null)
+  // Sprint 914.3: tracks last donna message ID persisted to avoid double-writes
+  const lastPersistedDonnaIdRef = useRef<string | null>(null)
 
   // Initialize session
   useEffect(() => {
     ensureChatSession(donnaRole)
   }, [donnaRole])
+
+  // Sprint 914.3: Initialize backend spine session on mount (fire-and-forget).
+  // Failure is non-fatal — DONNA continues using in-process memory.
+  useEffect(() => {
+    if (role !== 'director') return
+    getOrCreateDonnaSession({
+      activePage:     pathname ?? '/director/donna',
+      activeWorkflow: null,
+      title:          null,
+    })
+      .then(result => {
+        if (result.ok) sessionIdRef.current = result.data.sessionId
+      })
+      .catch(() => { /* non-fatal — in-process memory continues */ })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [donnaRole])
+
+  // Sprint 914.3: Persist latest DONNA response to backend spine (fire-and-forget).
+  // Watches messages array; persists only new donna messages not yet persisted.
+  useEffect(() => {
+    const sId = sessionIdRef.current
+    if (!sId) return
+    const lastMsg = messages[messages.length - 1]
+    if (!lastMsg || lastMsg.role !== 'donna') return
+    if (lastMsg.id === lastPersistedDonnaIdRef.current) return
+    lastPersistedDonnaIdRef.current = lastMsg.id
+    persistDonnaMessage({
+      sessionId:   sId,
+      role:        'donna',
+      messageText: lastMsg.text ?? '',
+      messageKind: 'text',
+      source:      lastMsg.sourceNote ?? null,
+      confidence:  lastMsg.confidence ?? null,
+      pagePath:    pathname ?? null,
+    }).catch(() => { /* non-fatal */ })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages])
 
   // Sprint 912.7: restore non-stale pending action from session memory on mount.
   // Runs when donnaRole changes (component remounts after route change).
@@ -397,6 +445,16 @@ export function DonnaVoiceReadyShell({
   }) {
     // Sprint 912.15: store context so follow-ups ("same for Orange 3", "change focus to X") resolve correctly
     setLastCurriculumDraftAttempt({ levelName, focusArea, contentLabel, contentType })
+    // Sprint 914.3: persist safe (non-executable) summary to backend working memory
+    const sId = sessionIdRef.current
+    if (sId) {
+      upsertDonnaMemory({
+        sessionId:   sId,
+        memoryKey:   'last_curriculum_draft',
+        memoryValue: { levelName, focusArea, contentLabel, contentType, storedAt: Date.now() },
+        scope:       'workflow',
+      }).catch(() => { /* non-fatal */ })
+    }
     clearPendingDrillSlotFill()
     const summaryText = buildContentConfirmationSummaryText(contentLabel, levelName, focusArea)
     const summaryMsg: ChatMessage = {
@@ -454,6 +512,9 @@ export function DonnaVoiceReadyShell({
 
   // ── Send handler ────────────────────────────────────────────────────────────
 
+  // Sprint 914.3: recall pattern — "what did we discuss last time?"
+  const RECALL_PATTERN = /\b(what did we (discuss|talk about|say)|recap (our|this|the) (donna )?(conversation|chat|session)|what were we (talking|discussing)|what have we (discussed|talked about))\b/i
+
   function handleSend(text: string) {
     const trimmed = text.trim()
     if (!trimmed) return
@@ -461,6 +522,66 @@ export function DonnaVoiceReadyShell({
     const userMsg = buildUserChatMessage(trimmed)
     setMessages(prev => [...prev, userMsg])
     setIsTyping(true)
+
+    // Sprint 914.3: persist user message to backend spine (fire-and-forget)
+    const sId = sessionIdRef.current
+    if (sId) {
+      persistDonnaMessage({
+        sessionId:   sId,
+        role:        'user',
+        messageText: trimmed,
+        messageKind: 'text',
+        pagePath:    pathname ?? null,
+      }).catch(() => { /* non-fatal */ })
+    }
+
+    // Sprint 914.3: recall intercept — must check for sessionId
+    if (plainRole === 'director' && RECALL_PATTERN.test(trimmed) && sId) {
+      recallRecentDonnaMessages({ sessionId: sId, limit: 10 })
+        .then(result => {
+          let recallText: string
+          if (!result.ok || result.data.length === 0) {
+            recallText = "I don't have a saved conversation history for this session yet — this may be your first interaction or the session was recently started. I can continue from here."
+          } else {
+            const userTurns = result.data
+              .filter(m => m.role === 'user')
+              .slice(-3)
+              .reverse()
+            if (userTurns.length === 0) {
+              recallText = "I found recent messages in this session, but no user turns yet."
+            } else {
+              const topics = userTurns.map((m, i) => `${i + 1}. "${m.messageText.length > 60 ? m.messageText.slice(0, 57) + '...' : m.messageText}"`).join('\n')
+              recallText = `Recent conversation topics from this session:\n\n${topics}\n\nLet me know where you'd like to continue.`
+            }
+          }
+          const recallMsg: ChatMessage = {
+            id: `donna-recall-${Date.now()}`,
+            role: 'donna',
+            kind: 'text',
+            text: recallText,
+            timestamp: new Date().toISOString(),
+            confidence: 'high',
+            sourceNote: 'Persisted conversation history',
+          }
+          setMessages(prev => [...prev, recallMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, recallText, { domain: 'general', confidence: 'high' })
+        })
+        .catch(() => {
+          const fallbackMsg: ChatMessage = {
+            id: `donna-recall-fallback-${Date.now()}`,
+            role: 'donna',
+            kind: 'text',
+            text: "I wasn't able to retrieve the conversation history right now. You can continue our conversation from here.",
+            timestamp: new Date().toISOString(),
+            confidence: 'partial',
+            sourceNote: null,
+          }
+          setMessages(prev => [...prev, fallbackMsg])
+          setIsTyping(false)
+        })
+      return
+    }
 
     // ── Sprint 912.3 / 912.7: Pending confirmation intercept ─────────────────
     // Resolve activePending from conv state first; fall back to session memory

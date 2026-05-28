@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-05-28 — Sprint 914.3 — DONNA Backend Spine Wiring V1
+
+- **New `src/lib/actions/donnaConversationActions.ts`** (`'use server'`):
+  - Bridge between client DonnaVoiceReadyShell and server-side persistence helpers
+  - `getOrCreateDonnaSession(input)` — resolves userId + role from auth; returns `{ sessionId }`
+  - `appendDonnaMessage(input)` — persists one message row
+  - `upsertDonnaMemory(input)` — upserts working memory key
+  - `recallRecentDonnaMessages(input)` — returns last N messages as safe summaries
+  - All functions: `'use server'`, auth from `getSupabaseServer()`, return `{ ok, data/error }`, never throw
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Added imports for 4 new server actions
+  - Added `sessionIdRef = useRef<string | null>(null)` — stores persisted session ID
+  - Added `lastPersistedDonnaIdRef = useRef<string | null>(null)` — dedup guard for DONNA message persistence
+  - Added `useEffect([donnaRole])` for session initialization: calls `getOrCreateDonnaSession()` fire-and-forget; failure leaves `sessionIdRef.current = null` (DONNA continues normally)
+  - Added `useEffect([messages])` for DONNA response persistence: persists each new DONNA message with text, source, confidence, pagePath; dedup via `lastPersistedDonnaIdRef`
+  - Added user message persistence in `handleSend()`: `persistDonnaMessage({ role:'user', ... })` fire-and-forget before any interceptor
+  - Added curriculum draft working memory in `triggerCurriculumContentConfirmation()`: `upsertDonnaMemory({ memoryKey:'last_curriculum_draft', memoryValue: safe POJO })` — safe POJO only (no execute function)
+  - Added `RECALL_PATTERN` and recall intercept in `handleSend()`: "what did we discuss last time?" → calls `recallRecentDonnaMessages()` → formats last 3 user turns as topic list; graceful fallback on error
+
+- **What is intentionally NOT persisted:**
+  - `pendingAction.execute` closure (not serializable)
+  - `pendingDrillSlotFill` (Sprint 914.4)
+  - `directorCtx` (Sprint 914.4 — context packet injection)
+  - TTS/voice/UI state
+
+- **Failure behavior:** all persistence calls are `.catch(() => {})` fire-and-forget; `donnaChatSessionMemory.ts` (in-process) continues unchanged
+
+- **Created `docs/QA_DONNA_BACKEND_SPINE_WIRING_914_3.md`** — client/server boundary decision, 10 QA scenarios, safety checks
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 914.2 — DONNA Backend Spine V1
 
 - **New `supabase/migrations/070_donna_conversation_spine.sql`:**
