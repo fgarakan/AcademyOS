@@ -94,7 +94,9 @@ import { buildFocusTargetForRoute } from '@/lib/donna/donnaUIActionDispatcher'
 // Sprint 914.6 — Event Ledger
 // Sprint 914.7 — Intent Router
 // Sprint 914.8 — Response Schema
+// Sprint 914.11 — Recommendation Feedback
 import { logDonnaEventAction } from '@/lib/actions/donnaEventActions'
+import { logDonnaRecommendation } from '@/lib/actions/donnaConversationActions'
 import { DONNA_EVENT_TYPES } from '@/lib/donna/donnaEventLedger'
 import { routeDonnaIntentV1 } from '@/lib/donna/donnaIntentRouterV1'
 import { schemaFromChatMessage, safeEventLogPayload } from '@/lib/donna/donnaResponseSchema'
@@ -1288,6 +1290,17 @@ export function DonnaVoiceReadyShell({
       const dashAnswer = tryAnswerDashboardPriorityQuestion(trimmed, directorCtx)
       if (dashAnswer) {
         const donnaMsg = buildChatMessageFromAnswer(dashAnswer)
+        // Sprint 914.11: log recommendation (fire-and-forget)
+        const sIdRec = sessionIdRef.current
+        if (sIdRec && dashAnswer.actionId !== 'dashboard_priority' || (dashAnswer.actionId ?? '').includes('priority')) {
+          logDonnaRecommendation({
+            sessionId:           sIdRec,
+            sourceSignal:        dashAnswer.actionId ?? 'dashboard_priority',
+            recommendationType:  'operating_priority',
+            recommendationText:  dashAnswer.followUp ?? dashAnswer.text.slice(0, 200),
+            confidence:          (dashAnswer.confidence as any) ?? null,
+          }).catch(() => {})
+        }
         setTimeout(() => {
           setMessages(prev => [...prev, donnaMsg])
           setIsTyping(false)

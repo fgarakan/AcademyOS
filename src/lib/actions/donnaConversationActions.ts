@@ -22,6 +22,7 @@ import {
   type DonnaConversationMessage,
 } from '@/lib/donna/donnaConversationPersistence'
 import { buildDonnaContextPacket } from '@/lib/donna/donnaContextPacketBuilder'
+import { createDonnaRecommendation } from '@/lib/donna/donnaRecommendationFeedback'
 
 // ── Typed result ────────────────────────────────────────────────────────────────
 
@@ -220,6 +221,46 @@ export async function buildDonnaContextPacketForSession(
     return { ok: true, data: summary }
   } catch {
     return { ok: false, error: 'Unexpected error building DONNA context packet.' }
+  }
+}
+
+// ── logDonnaRecommendation ─────────────────────────────────────────────────────
+// Sprint 914.11: log a recommendation that DONNA surfaced to the director.
+
+export interface LogRecommendationInput {
+  sessionId?: string | null
+  sourceSignal: string
+  recommendationType: 'operating_priority' | 'review_queue' | 'onboarding_guide' | 'curriculum_gap' | 'player_attention'
+  recommendationText: string
+  confidence?: 'high' | 'medium' | 'low' | 'partial' | null
+}
+
+export async function logDonnaRecommendation(
+  input: LogRecommendationInput,
+): Promise<ActionResult<{ recommendationId: string | undefined }>> {
+  try {
+    const supabase = await getSupabaseServer()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.id) return { ok: false, error: 'Not authenticated' }
+
+    const { data: profile } = await (supabase as any)
+      .from('profiles').select('academy_id').eq('id', user.id).single()
+    if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable.' }
+
+    const result = await createDonnaRecommendation(supabase as any, {
+      academyId:           profile.academy_id as string,
+      sessionId:           input.sessionId ?? null,
+      sourceSignal:        input.sourceSignal,
+      recommendationType:  input.recommendationType,
+      recommendationText:  input.recommendationText,
+      confidence:          input.confidence ?? null,
+      createdBy:           user.id,
+    })
+
+    if (!result.ok) return { ok: false, error: result.error ?? 'Failed to log recommendation.' }
+    return { ok: true, data: { recommendationId: result.recommendationId } }
+  } catch {
+    return { ok: false, error: 'Unexpected error logging DONNA recommendation.' }
   }
 }
 

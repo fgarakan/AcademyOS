@@ -27873,3 +27873,10 @@ See `docs/CURRENT_BUILD_TARGET.md` Step 4 for full specification.
 
 - `src/lib/donna/donnaApprovalGate.ts`: `DonnaApprovalLevel` enum (none/confirmation/review_queue/director_approval/platform_owner), `APPROVAL_REQUIREMENTS` map, `assertDonnaApprovalAllowed()`, `requireDonnaApproval()`, `blockUnsafeDonnaAction()`, `HIGH_RISK_ACTION_CATEGORIES`. Pure TypeScript — no DB, no mutations. Sprint 904 unchanged. Curriculum draft path unchanged.
 
+
+## 2026-05-28 — Sprint 914.11 — DONNA Recommendation Feedback Loop V1
+
+- `supabase/migrations/072_donna_recommendation_feedback.sql`: donna_recommendations + donna_recommendation_feedback tables. Academy-scoped RLS. UPDATE trigger on recommendations.
+- `src/lib/donna/donnaRecommendationFeedback.ts`: createDonnaRecommendation(), recordDonnaRecommendationFeedback(), getRecentDonnaRecommendations().
+- `donnaConversationActions.ts`: logDonnaRecommendation() server action.
+- Shell: dashboard priority answer logs recommendation fire-and-forget.
