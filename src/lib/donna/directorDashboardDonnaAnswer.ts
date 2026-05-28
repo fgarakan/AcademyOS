@@ -1,9 +1,11 @@
 // Sprint 623 — DONNA Dashboard Priority Answer Engine V1
 // Pure TypeScript — no DB calls, no server actions, no mutations, no UI imports.
 // Answers "what should I do first?" style questions from DirectorDonnaContext signals.
+// Sprint 913.2: updated to delegate priority logic to donnaAttentionRankingEngine.
 
 import type { DirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
 import type { DonnaSafeReadAnswer } from '@/lib/donna/donnaSafeReadActions'
+import { getTopPriority, getTopAttentionPriorities } from '@/lib/donna/donnaAttentionRankingEngine'
 
 // ── Detection ──────────────────────────────────────────────────────────────────
 // Detects "what should I do first?" and "give me a brief" style questions.
@@ -66,140 +68,68 @@ function detectBriefQuestion(text: string): boolean {
   )
 }
 
-// ── COO-quality answer builder ────────────────────────────────────────────────
-// Priority order: wrap-ups → at-risk players → review queue → healthy state.
-// Uses available DirectorDonnaContext signals only — does not invent unseen data.
+// ── Priority answer builder (Sprint 913.2) ───────────────────────────────────
+// Uses the attention ranking engine to produce a structured single-action answer.
+// Format: Top priority → Why it matters → Evidence → Best next action → Safety note.
 
 export function buildDashboardPriorityResponse(ctx: DirectorDonnaContext): DonnaSafeReadAnswer {
-  const highRisk = ctx.attentionItems.filter(a => a.risk === 'high').length
-  const medRisk = ctx.attentionItems.filter(a => a.risk === 'medium').length
   const prefix = ctx.isLive ? '' : '[Demo] '
+  const top = getTopPriority(ctx)
 
-  // ── 1. Missing coach wrap-ups ────────────────────────────────────────────────
-  if (ctx.missingWrapUps > 0) {
-    const plural = ctx.missingWrapUps !== 1
-    const urgencyNote = ctx.missingWrapUps > 3
-      ? 'This is a significant gap — multiple sessions have no coaching record today.'
-      : 'Observations not captured today are gone — these cannot be recovered retroactively.'
-    return {
-      actionId: 'dashboard_priority',
-      text: `${prefix}Start with missing coach wrap-ups. ${ctx.missingWrapUps} wrap-up${plural ? 's are' : ' is'} pending from today's sessions. ${urgencyNote} Once submitted, I can help draft parent-safe summaries or route items for your review. Nothing will be published without your approval.`,
-      confidence: ctx.confidence,
-      sourceNote: ctx.isLive ? 'Live from sessions' : 'Demo data',
-      followUp: 'Want me to show which sessions are missing wrap-ups?',
-      href: '/director/sessions',
-      isAnswerable: true,
-    }
-  }
-
-  // ── 2. High-risk player attention ────────────────────────────────────────────
-  if (highRisk > 0) {
-    const namedPlayers = ctx.attentionItems
-      .filter(a => a.risk === 'high' && a.playerName)
-      .slice(0, 3)
-      .map(a => a.playerName as string)
-    const nameNote = namedPlayers.length > 0 ? ` (${namedPlayers.join(', ')})` : ''
-    const plural = highRisk !== 1
-    const medNote = medRisk > 0 ? `, with ${medRisk} more at medium risk` : ''
-    return {
-      actionId: 'dashboard_priority',
-      text: `${prefix}Focus on player attention. ${highRisk} player${plural ? 's' : ''}${nameNote} ${plural ? 'are' : 'is'} flagged as high risk${medNote}. Review their recent observations and attendance patterns. If a parent update or coaching conversation is needed, I can help draft a parent-safe summary — it goes to review before anything is sent.`,
-      confidence: ctx.confidence,
-      sourceNote: ctx.isLive ? 'Live from observations and attendance' : 'Demo data',
-      followUp: 'Want to see the full attention list?',
-      href: '/director/players',
-      isAnswerable: true,
-    }
-  }
-
-  // ── 3. Pending review queue ──────────────────────────────────────────────────
-  if (ctx.pendingReviews > 0) {
-    const plural = ctx.pendingReviews !== 1
-    const breakdown: string[] = []
-    if (ctx.evidenceDrafts > 0) breakdown.push(`${ctx.evidenceDrafts} evidence draft${ctx.evidenceDrafts !== 1 ? 's' : ''}`)
-    if (ctx.attendanceExceptions > 0) breakdown.push(`${ctx.attendanceExceptions} attendance exception${ctx.attendanceExceptions !== 1 ? 's' : ''}`)
-    if (ctx.templateDrafts > 0) breakdown.push(`${ctx.templateDrafts} template draft${ctx.templateDrafts !== 1 ? 's' : ''}`)
-    const breakdownText = breakdown.length > 0 ? `, including ${breakdown.join(', ')}` : ''
-    // Sprint 913.1: add staleness urgency when items are old
-    const staleWarning = (ctx.oldestPendingReviewAgeDays ?? 0) >= 7
-      ? ` The oldest item is ${ctx.oldestPendingReviewAgeDays} day${ctx.oldestPendingReviewAgeDays !== 1 ? 's' : ''} old — coaches may be waiting.`
+  if (!top) {
+    // All-clear state
+    const sessionNote = ctx.todaySessions > 0
+      ? ` You have ${ctx.todaySessions} session${ctx.todaySessions !== 1 ? 's' : ''} scheduled today.`
       : ''
+    const suggestNote = ctx.curriculumGaps.length > 0
+      ? ' Curriculum gaps have been flagged — this is a good time to review them.'
+      : ' Good time to review curriculum coverage or check player progress.'
     return {
       actionId: 'dashboard_priority',
-      text: `${prefix}Clear your review queue. ${ctx.pendingReviews} item${plural ? 's' : ''}${breakdownText} ${plural ? 'are' : 'is'} waiting for your decision.${staleWarning} Nothing is applied until you approve it.`,
+      text: `${prefix}Academy looks healthy — no urgent signals right now.${sessionNote}${suggestNote} If you want, I can summarize what is in progress or look at any specific area.`,
       confidence: ctx.confidence,
-      sourceNote: ctx.isLive ? 'Live from proposed_actions' : 'Demo data',
-      followUp: 'Want to go to the review queue now?',
-      href: '/director/review',
+      sourceNote: ctx.isLive ? 'Live data' : 'Demo data',
+      followUp: 'Want me to check curriculum coverage or player progress?',
+      href: '/director/donna',
       isAnswerable: true,
     }
   }
 
-  // ── 4. Healthy academy — no urgent signals ───────────────────────────────────
-  const sessionNote = ctx.todaySessions > 0
-    ? ` You have ${ctx.todaySessions} session${ctx.todaySessions !== 1 ? 's' : ''} scheduled today.`
-    : ''
-  const suggestNote = ctx.curriculumGaps.length > 0
-    ? ' Curriculum gaps have been flagged — this is a good time to review them.'
-    : ' Good time to review curriculum coverage or check player progress.'
+  const text = [
+    `${prefix}Top priority: ${top.label}`,
+    ``,
+    `Why it matters: ${top.whyItMatters}`,
+    ``,
+    `Evidence: ${top.evidence}`,
+    ``,
+    `Best next action: ${top.bestNextAction}`,
+    ``,
+    top.donnaWillNotDo,
+  ].join('\n')
+
   return {
-    actionId: 'dashboard_priority',
-    text: `${prefix}Academy looks healthy — no urgent signals right now.${sessionNote}${suggestNote} If you want, I can summarize what is in progress or look at any specific area.`,
+    actionId: `dashboard_priority_${top.id}`,
+    text,
     confidence: ctx.confidence,
     sourceNote: ctx.isLive ? 'Live data' : 'Demo data',
-    followUp: 'Want me to check curriculum coverage or player progress?',
-    href: '/director/donna',
+    followUp: top.href ? 'Open now' : 'Ask me more',
+    href: top.href ?? null,
     isAnswerable: true,
   }
 }
 
-// ── Director Brief Summary ────────────────────────────────────────────────────
-// Sprint 912.17: answers "give me a brief" / "what is pending" / "academy status"
-// with a structured numbered list of all active signals.
-// Different from buildDashboardPriorityResponse (which returns ONE priority action):
-// this function returns ALL pending items so the director has a complete picture.
-// Pure TypeScript — no DB calls, no mutations. Uses DirectorDonnaContext only.
+// ── Director Brief Summary (Sprint 913.2) ─────────────────────────────────────
+// Answers "give me a brief" / "what is pending" / "academy status" with a
+// ranked list from the attention ranking engine.
+// Preserves the numbered list format; uses ranking engine for ordering and "why".
+// Pure TypeScript — no DB calls, no mutations.
 
 export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeReadAnswer {
   const prefix = ctx.isLive ? '' : '[Demo] '
-  // Sprint 913.1: use pre-computed risk counts from context instead of recomputing
-  const highRisk = ctx.highRiskPlayerCount
-  const medRisk  = ctx.mediumRiskPlayerCount
-
-  const items: string[] = []
-
-  // Priority order matches buildDashboardPriorityResponse so the brief is consistent
-  if (ctx.missingWrapUps > 0) {
-    items.push(`${ctx.missingWrapUps} missing coach wrap-up${ctx.missingWrapUps !== 1 ? 's' : ''} from today`)
-  }
-  if (highRisk > 0) {
-    items.push(`${highRisk} player${highRisk !== 1 ? 's' : ''} flagged high-risk`)
-  } else if (medRisk > 0) {
-    items.push(`${medRisk} player${medRisk !== 1 ? 's' : ''} flagged medium-risk`)
-  }
-  if (ctx.pendingReviews > 0) {
-    // Sprint 913.1: note staleness if oldest item is ≥7 days
-    const staleNote = (ctx.oldestPendingReviewAgeDays ?? 0) >= 7
-      ? ` (oldest is ${ctx.oldestPendingReviewAgeDays} day${ctx.oldestPendingReviewAgeDays !== 1 ? 's' : ''} old)`
-      : ''
-    items.push(`${ctx.pendingReviews} item${ctx.pendingReviews !== 1 ? 's' : ''} in the Review Queue${staleNote}`)
-  }
-  if (ctx.todaySessions > 0) {
-    items.push(`${ctx.todaySessions} session${ctx.todaySessions !== 1 ? 's' : ''} scheduled today`)
-  }
-  if (ctx.advancementEligibleCount > 0) {
-    items.push(`${ctx.advancementEligibleCount} player${ctx.advancementEligibleCount !== 1 ? 's' : ''} ready to advance`)
-  }
-  if (ctx.curriculumGaps.length > 0) {
-    items.push(`${ctx.curriculumGaps.length} curriculum gap${ctx.curriculumGaps.length !== 1 ? 's' : ''} flagged`)
-  }
-  // Sprint 913.1: curriculum drafts from DONNA voice commands (separate queue)
-  if (ctx.curriculumDraftCount > 0) {
-    items.push(`${ctx.curriculumDraftCount} curriculum draft${ctx.curriculumDraftCount !== 1 ? 's' : ''} waiting in Curriculum Builder`)
-  }
+  const ranked = getTopAttentionPriorities(ctx, 7)
 
   // All clear — no signals
-  if (items.length === 0) {
+  if (ranked.length === 0) {
     const sessionNote = ctx.todaySessions > 0
       ? ` ${ctx.todaySessions} session${ctx.todaySessions !== 1 ? 's' : ''} today.`
       : ''
@@ -214,37 +144,30 @@ export function buildDirectorBriefSummary(ctx: DirectorDonnaContext): DonnaSafeR
     }
   }
 
-  // Determine the single most urgent next step
-  let nextStep: string
-  let nextHref: string
-  let followUpLabel: string
-  if (ctx.missingWrapUps > 0) {
-    nextStep = 'Check missing wrap-ups — coaching observations from today cannot be recovered later.'
-    nextHref = '/director/sessions'
-    followUpLabel = 'Show sessions'
-  } else if (highRisk > 0) {
-    nextStep = `Review the ${highRisk} high-risk player${highRisk !== 1 ? 's' : ''} — check recent observations and attendance.`
-    nextHref = '/director/players'
-    followUpLabel = 'View players'
-  } else if (ctx.pendingReviews > 0) {
-    nextStep = 'Clear your Review Queue — coaches and players are waiting on your decisions.'
-    nextHref = '/director/review'
-    followUpLabel = 'Open Review Queue'
-  } else {
-    nextStep = 'Review player progress or curriculum coverage.'
-    nextHref = '/director/donna'
-    followUpLabel = 'Ask me more'
-  }
+  const top = ranked[0]
 
-  const numbered = items.map((item, i) => `${i + 1}. ${item}.`).join('\n')
+  // Build numbered list from ranked priorities (label only — keeps output concise)
+  const numbered = ranked
+    .map((p, i) => `${i + 1}. ${p.label}`)
+    .join('\n')
+
+  const text = [
+    `${prefix}Here's your academy status (ranked by urgency):`,
+    '',
+    numbered,
+    '',
+    `Best next step: ${top.bestNextAction}`,
+    '',
+    'Nothing is applied until you approve it.',
+  ].join('\n')
 
   return {
     actionId: 'director_brief',
-    text: `${prefix}Here's your academy status:\n\n${numbered}\n\nBest next step: ${nextStep}\n\nNothing is applied until you approve it.`,
+    text,
     confidence: ctx.confidence,
     sourceNote: ctx.isLive ? 'Live data' : 'Demo data',
-    followUp: followUpLabel,
-    href: nextHref,
+    followUp: top.href ? 'Open now' : 'Ask me more',
+    href: top.href ?? null,
     isAnswerable: true,
   }
 }

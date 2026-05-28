@@ -2,6 +2,40 @@
 
 ---
 
+## 2026-05-28 — Sprint 913.2 — DONNA Attention Ranking Engine V1
+
+- **New `src/lib/donna/donnaAttentionRankingEngine.ts`:**
+  - `DonnaAttentionPriority` interface: `id`, `label`, `category`, `severity`, `score`, `whyItMatters`, `evidence`, `bestNextAction`, `href`, `requiresApproval`, `donnaWillNotDo`
+  - `DonnaAttentionCategory` union: `safety | parent_records | player_development | coach_execution | review_queue | curriculum | onboarding | sessions | system`
+  - `buildAttentionPriorities(ctx)` — builds 0–11 ranked priorities from DirectorDonnaContext; empty array = all clear; sorted by score descending
+  - 11 signal types with explicit scoring rules (base + per-unit multiplier + cap):
+    - `missing_wrap_ups` (80+3n, max 95) — coach_execution / high/critical
+    - `high_risk_players` (75+3n, max 90) — player_development / high/critical
+    - `attendance_exceptions` (70+2n, max 85) — parent_records / medium/high
+    - `stale_review_queue` (75 if ≥14d, 65 if 7-13d) — review_queue / medium/high; replaces pending when stale
+    - `pending_reviews` (60+n, max 75) — review_queue / medium/high; only when NOT stale
+    - `medium_risk_players` (55+2n, max 65) — player_development / medium; only when highRisk===0
+    - `advancement_eligible` (50+n, max 60) — player_development / medium
+    - `curriculum_drafts` (40+2n, max 55) — curriculum / low/medium
+    - `curriculum_gaps` (35+2n, max 50) — curriculum / low/medium
+    - `onboarding_not_started` (45) — onboarding / high
+    - `onboarding_partial` (30) — onboarding / medium
+  - `getTopAttentionPriorities(ctx, limit=5)` — returns top N priorities
+  - `getTopPriority(ctx)` — returns top 1 or null (all clear)
+
+- **Modified `src/lib/donna/directorDashboardDonnaAnswer.ts`:**
+  - `buildDashboardPriorityResponse`: replaced hand-coded IF-chain with ranking engine; new structured 5-section format: "Top priority → Why it matters → Evidence → Best next action → DONNA won't do X"
+  - `buildDirectorBriefSummary`: replaced hand-coded item list with ranked priorities from engine; numbered list in score order; best next step from top priority's `bestNextAction`
+  - Both functions preserve all-clear handling and keep existing response quality
+  - TypeScript fix: `top.href ?? null` for `string | undefined → string | null` compatibility
+
+- **Created `docs/architecture/DONNA_ATTENTION_RANKING_ENGINE_913_2.md`** — scoring rules, category map, example rankings, fields used/ignored
+- **Created `docs/QA_DONNA_ATTENTION_RANKING_913_2.md`** — 10 static QA scenarios, all pass; safety checks; deduplication verification (stale vs fresh, high vs medium)
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-28 — Sprint 913.1 — DONNA Operating Context Expansion V1
 
 - **Modified `src/lib/donna/directorDonnaContext.ts`:**
