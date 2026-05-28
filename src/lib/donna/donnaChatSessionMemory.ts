@@ -44,6 +44,20 @@ export interface PendingNavOffer {
   questionContext: string
 }
 
+// ── Pending action (Sprint 912.7) ─────────────────────────────────────────────
+// Mirrors DonnaPendingConfirmation shape. Stored here so the pending action
+// survives component remounts (e.g. route changes) within the same session.
+// storedAt is used to detect staleness — actions older than TTL are discarded.
+
+export const SESSION_PENDING_ACTION_TTL_MS = 10 * 60 * 1000 // 10 minutes
+
+export interface SessionPendingAction {
+  actionType: string
+  description: string
+  execute: () => Promise<{ ok: boolean; message: string }>
+  storedAt: number
+}
+
 // ── Session memory shape ──────────────────────────────────────────────────────
 
 export interface DonnaChatSessionState {
@@ -57,6 +71,7 @@ export interface DonnaChatSessionState {
   lastActivityAt: number
   pendingNavOffer: PendingNavOffer | null       // Sprint 724
   pendingTemplateDraft: TemplateDraft | null    // Sprint 735
+  pendingAction: SessionPendingAction | null    // Sprint 912.7
 }
 
 // ── Module state ──────────────────────────────────────────────────────────────
@@ -79,6 +94,7 @@ export function initChatSession(role: DonnaRole): DonnaChatSessionState {
     lastActivityAt: Date.now(),
     pendingNavOffer: null,       // Sprint 724
     pendingTemplateDraft: null,  // Sprint 735
+    pendingAction: null,         // Sprint 912.7
   }
   return _state
 }
@@ -273,4 +289,28 @@ export function consumePendingNavOffer(): PendingNavOffer | null {
 /** True when a navigation offer is stored and waiting for user confirmation. */
 export function hasPendingNavOffer(): boolean {
   return _state?.pendingNavOffer !== null && _state?.pendingNavOffer !== undefined
+}
+
+// ── Pending action helpers (Sprint 912.7) ─────────────────────────────────────
+
+/** Store a pending action in session memory. Stamps storedAt automatically. */
+export function setPendingAction(
+  action: Omit<SessionPendingAction, 'storedAt'>,
+): void {
+  if (_state) _state.pendingAction = { ...action, storedAt: Date.now() }
+}
+
+/** Return the current pending action without clearing it. Returns null if none. */
+export function getPendingAction(): SessionPendingAction | null {
+  return _state?.pendingAction ?? null
+}
+
+/** Clear the pending action from session memory. */
+export function clearPendingAction(): void {
+  if (_state) _state.pendingAction = null
+}
+
+/** True when a pending action is stored and has not been cleared. */
+export function hasPendingAction(): boolean {
+  return _state?.pendingAction != null
 }

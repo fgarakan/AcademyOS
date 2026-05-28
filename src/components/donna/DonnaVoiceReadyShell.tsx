@@ -25,6 +25,10 @@ import {
   consumePendingNavOffer,
   setPendingTemplateDraft,
   getPendingTemplateDraft,
+  setPendingAction,
+  getPendingAction,
+  clearPendingAction,
+  SESSION_PENDING_ACTION_TTL_MS,
   type PendingNavOffer,
 } from '@/lib/donna/donnaChatSessionMemory'
 import {
@@ -67,6 +71,7 @@ import {
   computeGodModeState,
   getGodModeStateLabel,
   MAX_NO_SPEECH_RETRIES,
+  type DonnaPendingConfirmation,
 } from '@/lib/donna/useDonnaConversationMode'
 
 // ── Yes/No detection patterns (Sprint 724) ────────────────────────────────────
@@ -76,6 +81,10 @@ const NO_PATTERN  = /^(no|nope|not now|cancel|never mind|maybe later|skip|not ye
 // ── Confirmation yes/no detection (Sprint 912.3) ──────────────────────────────
 const CONFIRM_PATTERN = /^(yes|yeah|yep|sure|ok|okay|go ahead|please|do it|confirm|confirmed|sounds good|let'?s go|absolutely|definitely|create it|make it|create the draft|make the draft)\b/i
 const CANCEL_CONFIRM_PATTERN = /^(no|nope|not now|cancel|never mind|forget it|don'?t|stop|skip it|scratch that|no thanks|not right now|don't do it|don't create it)\b/i
+// Sprint 912.7: strong-intent confirmation words that unambiguously mean "confirm an action".
+// These are caught when nothing is pending to give DONNA a helpful "nothing to confirm" reply.
+// Generic words (yes/ok/sure) are intentionally excluded — too ambiguous.
+const STRONG_CONFIRM_PATTERN = /^(do it|confirm|confirmed|create it|make it|create the draft|make the draft|go ahead and create|yes please create|absolutely create)\b/i
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -146,6 +155,26 @@ export function DonnaVoiceReadyShell({
   // Initialize session
   useEffect(() => {
     ensureChatSession(donnaRole)
+  }, [donnaRole])
+
+  // Sprint 912.7: restore non-stale pending action from session memory on mount.
+  // Runs when donnaRole changes (component remounts after route change).
+  // Skips if a pending confirmation is already set in conv state.
+  useEffect(() => {
+    if (conv.pendingConfirmation) return
+    const stored = getPendingAction()
+    if (!stored) return
+    const age = Date.now() - stored.storedAt
+    if (age > SESSION_PENDING_ACTION_TTL_MS) {
+      clearPendingAction()
+      return
+    }
+    conv.setPendingConfirmation({
+      actionType: stored.actionType,
+      description: stored.description,
+      execute: stored.execute,
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [donnaRole])
 
   // Sprint 912.4: cleanup auto-listen timer on unmount
@@ -267,6 +296,20 @@ export function DonnaVoiceReadyShell({
     label: q.text,
   }))
 
+  // ── Sprint 912.7: Dual-store pending confirmation ──────────────────────────
+  // Sets the confirmation in both conv state (immediate UI) and session memory
+  // (survives route changes). Intent handlers in future sprints call this instead
+  // of calling conv.setPendingConfirmation directly.
+
+  function storeAndSetPendingConfirmation(action: DonnaPendingConfirmation) {
+    conv.setPendingConfirmation(action)
+    setPendingAction({
+      actionType: action.actionType,
+      description: action.description,
+      execute: action.execute,
+    })
+  }
+
   // ── Send handler ────────────────────────────────────────────────────────────
 
   function handleSend(text: string) {
@@ -277,12 +320,49 @@ export function DonnaVoiceReadyShell({
     setMessages(prev => [...prev, userMsg])
     setIsTyping(true)
 
-    // ── Sprint 912.3: Pending confirmation intercept ─────────────────────────
-    // Check BEFORE nav offer and boundary detection so yes/no resolves correctly.
-    const pending = conv.pendingConfirmation
-    if (pending) {
+    // ── Sprint 912.3 / 912.7: Pending confirmation intercept ─────────────────
+    // Resolve activePending from conv state first; fall back to session memory
+    // so confirmation survives route changes. Stale actions are discarded.
+    let activePending: DonnaPendingConfirmation | null = conv.pendingConfirmation
+
+    if (!activePending) {
+      const stored = getPendingAction()
+      if (stored) {
+        const age = Date.now() - stored.storedAt
+        if (age > SESSION_PENDING_ACTION_TTL_MS) {
+          // Stale — discard silently; DONNA only responds if user explicitly confirms
+          clearPendingAction()
+          if (STRONG_CONFIRM_PATTERN.test(trimmed)) {
+            setIsTyping(false)
+            const staleMsg: ChatMessage = {
+              id: `donna-stale-${Date.now()}`,
+              role: 'donna',
+              kind: 'text',
+              text: "My previous request timed out. Please restate what you'd like me to do.",
+              timestamp: new Date().toISOString(),
+              confidence: 'high',
+              sourceNote: null,
+            }
+            setMessages(prev => [...prev, staleMsg])
+            recordTurn(trimmed, staleMsg.text, { confidence: 'high' })
+            return
+          }
+        } else {
+          // Restore into conv state for this turn
+          activePending = {
+            actionType: stored.actionType,
+            description: stored.description,
+            execute: stored.execute,
+          }
+          conv.setPendingConfirmation(activePending)
+        }
+      }
+    }
+
+    if (activePending) {
       if (CONFIRM_PATTERN.test(trimmed)) {
         conv.clearPendingConfirmation()
+        clearPendingAction()   // Sprint 912.7: clear session memory too
         setIsTyping(false)
         setIsExecuting(true)
         const confirmingMsg: ChatMessage = {
@@ -295,7 +375,7 @@ export function DonnaVoiceReadyShell({
           sourceNote: null,
         }
         setMessages(prev => [...prev, confirmingMsg])
-        void pending.execute().then(result => {
+        void activePending.execute().then(result => {
           setIsExecuting(false)
           const resultMsg: ChatMessage = {
             id: `donna-result-${Date.now()}`,
@@ -320,6 +400,7 @@ export function DonnaVoiceReadyShell({
       }
       if (CANCEL_CONFIRM_PATTERN.test(trimmed)) {
         conv.clearPendingConfirmation()
+        clearPendingAction()   // Sprint 912.7: clear session memory too
         setIsTyping(false)
         const cancelMsg: ChatMessage = {
           id: `donna-cancel-${Date.now()}`,
@@ -340,12 +421,31 @@ export function DonnaVoiceReadyShell({
         id: `donna-repeat-confirm-${Date.now()}`,
         role: 'donna',
         kind: 'text',
-        text: `Just to confirm — ${pending.description}. Say "yes" to create the draft, or "no" to cancel.`,
+        text: `Just to confirm — ${activePending.description}. Say "yes" to create the draft, or "no" to cancel.`,
         timestamp: new Date().toISOString(),
         confidence: 'high',
         sourceNote: null,
       }
       setMessages(prev => [...prev, repeatMsg])
+      return
+    }
+
+    // Sprint 912.7: orphaned strong-confirm guard — fires when nothing is pending
+    // but director says "do it" / "confirm" / "create it" (unambiguous intent words).
+    // Generic words (yes/ok/sure) are intentionally excluded — too ambiguous.
+    if (STRONG_CONFIRM_PATTERN.test(trimmed)) {
+      setIsTyping(false)
+      const noPendingMsg: ChatMessage = {
+        id: `donna-no-pending-${Date.now()}`,
+        role: 'donna',
+        kind: 'text',
+        text: "I don't have anything waiting for your confirmation. What would you like me to do?",
+        timestamp: new Date().toISOString(),
+        confidence: 'high',
+        sourceNote: null,
+      }
+      setMessages(prev => [...prev, noPendingMsg])
+      recordTurn(trimmed, noPendingMsg.text, { confidence: 'high' })
       return
     }
 

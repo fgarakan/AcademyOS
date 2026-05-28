@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-05-28 — Sprint 912.7 — DONNA Session Memory V1
+
+- **Modified `src/lib/donna/donnaChatSessionMemory.ts`:**
+  - Added `storedAt: number` to `SessionPendingAction` interface for staleness detection
+  - Added `SESSION_PENDING_ACTION_TTL_MS = 10 * 60 * 1000` (10-minute TTL) as a named export
+  - Fixed `initChatSession()` to include `pendingAction: null` (was missing from the initialization object — TypeScript error)
+  - Added 4 helper functions: `setPendingAction` (stamps `storedAt` automatically), `getPendingAction`, `clearPendingAction`, `hasPendingAction`
+
+- **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
+  - Imported `setPendingAction`, `getPendingAction`, `clearPendingAction`, `SESSION_PENDING_ACTION_TTL_MS` from session memory
+  - Imported `DonnaPendingConfirmation` type from `useDonnaConversationMode`
+  - Added `STRONG_CONFIRM_PATTERN` — unambiguous confirmation phrases ("do it", "confirm", "create it", "make the draft") used for orphaned-confirm detection; generic words excluded
+  - Added mount `useEffect` (keyed on `donnaRole`) — on mount, checks session memory for a non-stale pending action and restores it into `conv.setPendingConfirmation`; stale actions are silently cleared
+  - Added `storeAndSetPendingConfirmation()` local helper — writes to both conv state and session memory in one call; future sprint intent handlers use this instead of calling both separately
+  - Refactored pending confirmation block in `handleSend` to resolve `activePending` from conv state first, then session memory fallback; stale session action clears itself and responds only if a strong-confirm word was used
+  - `clearPendingAction()` called on both confirm and cancel paths — session memory is cleaned up whenever the pending action resolves
+  - Added orphaned strong-confirm guard: if `STRONG_CONFIRM_PATTERN` matches and no pending action exists anywhere, DONNA responds "I don't have anything waiting for your confirmation. What would you like me to do?"
+  - All existing Sprint 912.3–912.6 behavior preserved (conversation mode, auto-listen, page-aware greetings, TTS interrupt, pause/resume)
+
+- **TypeScript:** clean (`npx tsc --noEmit` — 0 errors)
+
+---
+
 ## 2026-05-27 — Sprint 912.6 — DONNA Page-Aware Context V1
 
 - **Modified `src/components/donna/DonnaVoiceReadyShell.tsx`:**
