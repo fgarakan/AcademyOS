@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 961 — Onboarding Flow Cognitive Load Reduction V1
+
+- `src/components/onboarding/OnboardingProgressRail.tsx` (modified): Upgraded from bar-only to bar + 9-step dot strip. Completed steps show lime checkmark; current step shows lime ring; upcoming steps show muted dots; next-step name hint shown on ≥ sm screens; strip is scrollable on narrow viewports.
+- `src/components/onboarding/OnboardingShell.tsx` (modified): Fixed WelcomeStep step count from "5 steps / 4 minutes" to "9 steps / 10–15 minutes"; corrected FLOW_STEPS from 6 inaccurate items to 9 items matching actual steps 1–9; added `data-donna-focus-id="onboarding-cta"` to welcome CTA wrapper.
+- `docs/architecture/ONBOARDING_COGNITIVE_LOAD_REDUCTION_961.md` (new): Problems, changes, before/after, principles, DONNA highlight support, no-migration guarantee, V2 path.
+- `docs/QA_ONBOARDING_COGNITIVE_LOAD_REDUCTION_961.md` (new): TypeScript, flow, CTA, mobile, DONNA highlight, no-mutation, protected systems checklists.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 960 — DONNA God Mode Certification V1
 
 - `docs/architecture/DONNA_GOD_MODE_CERTIFICATION_960.md` (new): Final certification for the DONNA God Mode mega sprint (939–960). Executive summary, full sprint map, capability map with ratings, role readiness (5 roles), UI readiness (9 surfaces), safety certification (12 invariants confirmed), eval certification (6 cases), intelligence visibility, pilot readiness (8.5/10), demo readiness (8/10), 12 remaining gaps to 10/10, roadmap options A+B, final rating table (pre-939: 6.5 → Sprint 946: 8.5 → Sprint 960: 8.7/10).

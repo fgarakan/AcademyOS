@@ -305,13 +305,19 @@ function WelcomeStep({
   updateDraft: (p: Partial<OnboardingDraft>) => void
   onNext: () => void
 }) {
+  // Sprint 961: corrected step list — 9 substantive steps, not 5.
+  // WelcomeStep is step 0, reached only when skipping the AcademyDnaLanding.
+  // Normal flow enters at step 1 (Academy Basics) via AcademyDnaLanding.
   const FLOW_STEPS = [
     'Academy Basics',
-    'Coaching DNA',
+    'Coaching Philosophy',
+    'Coach Communication',
     'Session Design',
-    'Player Priorities',
-    'Parent Comms',
-    'Review & Activate',
+    'Player Development',
+    'Parent Communication',
+    'DNA Summary',
+    'DONNA Adjustment',
+    'Final Activation',
   ]
 
   return (
@@ -341,10 +347,10 @@ function WelcomeStep({
           DONNA learns how your academy thinks, coaches, and communicates — then prepares your curriculum defaults, session templates, and communication system.
         </p>
 
-        {/* 5-step flow preview */}
+        {/* 9-step flow preview — Sprint 961: corrected from 5 steps */}
         <div className="mb-8">
           <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted mb-3">
-            5 steps — takes about 4 minutes
+            9 steps — takes about 10–15 minutes
           </p>
           <div className="flex flex-wrap items-center gap-0">
             {FLOW_STEPS.map((step, i) => (
@@ -440,7 +446,8 @@ function WelcomeStep({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Sprint 961: data-donna-focus-id so DONNA can highlight the primary CTA */}
+        <div className="flex items-center gap-3" data-donna-focus-id="onboarding-cta">
           <button
             onClick={onNext}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-lime text-base hover:brightness-110 shadow-lime transition-all"
