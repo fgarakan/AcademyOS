@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 940 — DONNA Page Element Registry V1
+
+- `src/lib/donna/donnaPageElementRegistry.ts` (new): 38-element structured registry of every highlightable/explainable UI element DONNA knows about across director + coach pages. Each entry has id (matches data-donna-focus-id), label, route, roles, priority (urgent/high/medium/low), actionType, safetyLevel, explanation, optional href, and dataDependent flag. Lookup functions: getPageElements, getPageElementsSorted, getTopPageElement, getPageElementSummary, getElementsBySafetyLevel. No new DOM attributes needed — all elements already exist from Sprint 868+.
+- `src/lib/donna/donnaContextResolver.ts`: Added `topPageElement: DonnaPageElement | null` field — highest-priority registered element for current route + role. Foundation for Sprint 941 "What next?" engine.
+- Architecture doc: `docs/architecture/DONNA_PAGE_ELEMENT_REGISTRY_940.md`
+- QA doc: `docs/QA_DONNA_PAGE_ELEMENT_REGISTRY_940.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 939 — DONNA Context Resolver Personality V1
 
 - `src/lib/donna/donnaPersonality.ts` (new): Single personality/identity module — `DonnaContextRole` type, `DONNA_PERSONALITY` constants (name, tagline, voice principles, role tones for all 5 roles, safety language, parent-safe language, player-safe language), helper functions (getRoleTone, getSafetyMessage, roleSupportsHighlight, roleCanCreateDrafts, roleSeesApprovalGates). Pure TypeScript, no DB/React/API.

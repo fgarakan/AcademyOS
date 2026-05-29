@@ -1,4 +1,5 @@
 // Sprint 939 — DONNA Context Resolver V1
+// Sprint 940 — Added topPageElement from donnaPageElementRegistry.
 // Single function that resolves a structured DONNA context object from role + pathname.
 // Pure TypeScript — no DB calls, no React, no API calls, no mutations, no side effects.
 // V1 uses page capability map (static route metadata) + role.
@@ -16,6 +17,7 @@ import {
   getPageCapabilityMap,
   type DonnaPageCapabilityMap,
 } from './donnaPageContextEngine'
+import { getTopPageElement, type DonnaPageElement } from './donnaPageElementRegistry'
 
 // ── Output type ───────────────────────────────────────────────────────────────
 
@@ -46,6 +48,8 @@ export interface DonnaResolvedContext {
   canCreateDrafts: boolean
   /** Whether this role can see the approval-required action list */
   seesApprovalGates: boolean
+  /** Sprint 940: Highest-priority registered page element for this route + role, or null */
+  topPageElement: DonnaPageElement | null
   /** Names of context systems that are relevant for this role + route */
   contextSources: readonly string[]
 }
@@ -77,6 +81,7 @@ export function resolveDonnaContext(
     highlightAvailable: roleSupportsHighlight(role),
     canCreateDrafts: roleCanCreateDrafts(role),
     seesApprovalGates: roleSeesApprovalGates(role),
+    topPageElement: getTopPageElement(pathname, role),
     contextSources: deriveContextSources(role),
   }
 }
