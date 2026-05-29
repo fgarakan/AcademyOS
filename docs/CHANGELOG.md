@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 942 — DONNA Tool Calling Contract V1
+
+- `src/lib/donna/donnaToolContract.ts` (new): 18-tool registry with 5 categories (read, ui_guidance, draft, approval_required, always_blocked). Each tool has id, displayName, description, category, safetyLevel, allowedRoles, requiresApproval, makesDbWrite, affectsParentOrPlayerVisibility, blockedReason. Structured output schema `DonnaStructuredOutput` (spokenAnswer, reasoningSummary, recommendedAction, uiHighlight, safety, toolRequest, confidence, sourceNote). Validation function `validateDonnaOutput`. Lookup helpers: getDonnaTool, getToolsByCategory, isToolAllowedForRole, isToolBlocked, buildBlockedToolResponse. Pure TypeScript, no DB/React/API.
+- Architecture doc: `docs/architecture/DONNA_TOOL_CALLING_CONTRACT_942.md`
+- QA doc: `docs/QA_DONNA_TOOL_CALLING_CONTRACT_942.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 941 — DONNA What Should I Do Next Engine V1
 
 - `src/lib/donna/donnaWhatNextEngine.ts` (new): Priority-ranked next-action engine — `buildWhatNextAnswer(role, pathname, liveCtx?)` returns `WhatNextAnswer {text, targetId?, label?, explanation?, safetyNote?, href?, confidence, source}`. Priority ranking: live pending reviews > attendance exceptions > advancement eligibility > player stalls > urgent page element > high page element > page fallback. `buildCoachWhatNextAnswer(pathname)` convenience for coach role.
