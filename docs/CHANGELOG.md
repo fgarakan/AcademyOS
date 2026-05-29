@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 937 — DONNA God Mode Unification Audit V1
+
+- `docs/architecture/DONNA_GOD_MODE_UNIFICATION_AUDIT_937.md`: Full DONNA architecture audit — three shells identified (Shell A: DonnaVoiceReadyShell, Shell B: DonnaAssistantButton legacy, Shell C: DonnaVoiceWrapUpShell); two competing page context registries; two competing action routing layers; highlight system gap for coach layout; "What next?" engine gap (text-only, no live data, no highlight); role-awareness map for all 5 roles; recommended single-source-of-truth architecture; page element registry design; highlight/focus system extension plan; decision-ranking engine standard; sprint sequence Sprints 938–946; full DONNA file inventory (150+ files across 7 layers); protected systems confirmed untouched.
+- `docs/QA_DONNA_GOD_MODE_UNIFICATION_AUDIT_937.md`: Full QA checklist — duplicate assistant risk (6 confirmed risks); role-aware QA (director/coach/parent/player/platform-owner); page-aware QA (20+ routes); highlight readiness (confirmed gaps); safety checklist (all invariants pass); "What next?" gaps; mobile checklist; next-sprint prerequisites. Audit validation: clean repo, clean TypeScript, no app code changed.
+- Current God Mode readiness: 6.5/10. Critical gaps: shell fragmentation, coach highlight absent, "What next?" is text-only with no live data or visual pointer.
+- TypeScript: clean (no app code changed)
+
+---
+
 ## 2026-05-29 — Sprint 936 — Coach Wrap-Up Loop Certification V1
 
 - `docs/architecture/COACH_WRAP_UP_LOOP_CERTIFICATION_936.md`: Full end-to-end certification for Sprints 926–936 — loop map, files, coach/director workflows, observation draft path, attendance exception path, status visibility map, safety boundaries, read-only vs mutation table, approval gates, parent/player safety, known risks, V2 completion badge rationale, pilot readiness rating (8/10), manual QA script for Brian + Coach Farshad, recommended next 10 sprints.
