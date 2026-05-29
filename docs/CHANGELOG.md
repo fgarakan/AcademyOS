@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 955 — Parent Communication Intelligence V1
+
+- `src/lib/donna/donnaParentCommunicationIntelligence.ts` (new): Detects 4 parent communication opportunity types (new_applied_observation, repeated_priority_signal, summary_ready, communication_gap_aging). `detectParentCommOpportunity(input)` returns `ParentCommOpportunity | null`. Draft-only recommendations; no message sent, no DB calls, no mutations. `safetyNote` (noAutoSend) present on every non-null return.
+- `docs/architecture/PARENT_COMMUNICATION_INTELLIGENCE_955.md` (new): Input/output model, opportunity types, parent-safe boundaries, no-send/no-mutation guarantees, safety risks, V2 path.
+- `docs/QA_PARENT_COMMUNICATION_INTELLIGENCE_955.md` (new): TypeScript, no-send, no-mutation, parent-safe language, raw ID/JSON, protected systems, and future-sprint exclusion checklists.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 951 — Academy Intelligence Signals V1
 
 - `src/lib/donna/donnaAcademySignals.ts` (new): 4 signal types (review_queue, attendance_exception, player_evidence, curriculum_execution) with severity levels. `buildAcademySignalSuite(input)` returns full suite + overallSeverity. Feeds DONNA context for COO judgment. Read-only; no mutations. TypeScript: clean.
