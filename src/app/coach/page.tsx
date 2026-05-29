@@ -15,6 +15,7 @@ import {
 } from '@/lib/backend/coachWorkspace'
 import { loadWrapUpSessionSelector } from '@/lib/coach/wrapUpSessionSelector'
 import { CoachOnCourtActionsBar } from './_components/CoachOnCourtActionsBar'
+import { CoachDailyBriefCard } from './_components/CoachDailyBriefCard'
 
 function playerInitials(fullName: string | null): string {
   if (!fullName) return '?'
@@ -121,6 +122,28 @@ export default async function CoachHome() {
           </div>
         )}
       </div>
+
+      {/* Sprint 926 — Coach Daily Brief: next session focus card */}
+      {todaySessions.length > 0 && (() => {
+        const next = todaySessions.find(s => s.status !== 'completed' && s.status !== 'cancelled') ?? todaySessions[0]
+        return next ? (
+          <div className="space-y-2">
+            <p className="label-xs">Daily Brief</p>
+            <CoachDailyBriefCard
+              nextSession={{
+                id: next.id,
+                name: next.name ?? null,
+                scheduledTime: (next as { scheduled_time?: string | null }).scheduled_time ?? null,
+                groupName: null,
+                blockCount: 0,
+                curriculumFocus: null,
+                watchFors: [],
+              }}
+              totalToday={todaySessions.length}
+            />
+          </div>
+        ) : null
+      })()}
 
       {/* ── Today ────────────────────────────────────────────── */}
       <div data-donna-focus-id="coach-today-sessions">
