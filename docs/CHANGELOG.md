@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Sprint 921 — DONNA Recommendation Learning Dashboard V1
+
+- `src/lib/donna/donnaRecommendationLearningLoader.ts`: Loads aggregate feedback signals from `donna_recommendation_feedback`/`donna_recommendations`. `loadRecommendationFeedbackSummary()` + `formatLearningSignalsForDonna()`.
+- `src/app/director/donna/learning/page.tsx`: `/director/donna/learning` — acceptance rate, stat cards, signal patterns. Safe aggregate counts only.
+- `src/app/director/donna/page.tsx`: Added Brain import + "What DONNA is learning →" link.
+- QA doc: `docs/QA_DONNA_RECOMMENDATION_LEARNING_DASHBOARD_921.md`
+- Architecture doc: `docs/architecture/DONNA_RECOMMENDATION_LEARNING_DASHBOARD_921.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 920 — DONNA Insight Engine V1
 
 - `src/lib/donna/donnaInsightEngine.ts`: Deterministic insight engine — 7 insight types from DirectorDonnaContext signals. `generateDonnaInsights()`, `formatInsightsForDonna()`. No LLM, no DB calls, no mutations.

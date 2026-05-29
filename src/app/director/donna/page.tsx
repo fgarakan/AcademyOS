@@ -2,7 +2,7 @@ import Link from 'next/link'
 import {
   Sparkles, ChevronRight, AlertCircle,
   Users, ShieldCheck, ArrowRight,
-  AlertTriangle, CheckCircle2, ClipboardList,
+  AlertTriangle, CheckCircle2, ClipboardList, Brain,
 } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { loadDirectorDonnaContext } from '@/lib/donna/directorDonnaContext'
@@ -304,6 +304,14 @@ export default async function DirectorDonnaPage() {
           </div>
         </div>
 
+      </div>
+
+      {/* Sprint 921 — link to recommendation learning dashboard */}
+      <div className="flex justify-end">
+        <Link href="/director/donna/learning" className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors">
+          <Brain className="w-3.5 h-3.5" />
+          What DONNA is learning →
+        </Link>
       </div>
 
       {/* Safety notice — Sprint 777: sole below-grid element; Daily Brief and Review Queue Surface removed */}
