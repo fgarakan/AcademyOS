@@ -73,6 +73,31 @@ function obsTypeDotColor(type: string): string {
   }
 }
 
+// ── Sprint 933 — Loop completion state derivation ─────────────
+// Pure function — no queries. Derived from existing action + obs data.
+
+type LoopState =
+  | 'pending'          // wrap-up or obs draft still awaiting review
+  | 'wrapup_rejected'  // session wrap-up itself was rejected (existing banner handles this)
+  | 'needs_attention'  // at least one obs draft has clarification_needed
+  | 'needs_revision'   // at least one obs draft rejected (and none pending/clarification)
+  | 'partial'          // wrap-up reviewed; some obs drafts approved but not yet applied
+  | 'complete'         // wrap-up reviewed; all obs drafts applied or none exist
+
+function deriveLoopState(
+  wrapUpStatus: string,
+  obs: Array<{ status: ObsStatus }>,
+): LoopState {
+  if (wrapUpStatus === 'pending_review') return 'pending'
+  if (wrapUpStatus === 'rejected') return 'wrapup_rejected'
+  // Wrap-up is 'approved' or 'executed'
+  if (obs.some(o => o.status === 'clarification_needed')) return 'needs_attention'
+  if (obs.some(o => o.status === 'pending_review')) return 'pending'
+  if (obs.some(o => o.status === 'rejected')) return 'needs_revision'
+  if (obs.some(o => o.status === 'approved')) return 'partial'
+  return 'complete'
+}
+
 // ─────────────────────────────────────────────────────────────
 
 export default async function CoachWrapUpReviewPage({ params }: PageProps) {
@@ -172,6 +197,15 @@ export default async function CoachWrapUpReviewPage({ params }: PageProps) {
     : action.status === 'rejected' ? 'text-status-red'
     : 'text-text-muted'
 
+  // Sprint 933 — derive loop completion state and counts from existing data (no new queries)
+  const loopState: LoopState | null = action ? deriveLoopState(action.status, obsDrafts) : null
+  const appliedCount   = obsDrafts.filter(o => o.status === 'executed').length
+  const approvedCount  = obsDrafts.filter(o => o.status === 'approved').length
+  const pendingObsCount = obsDrafts.filter(o => o.status === 'pending_review').length
+  const attentionCount = obsDrafts.filter(o => o.status === 'clarification_needed').length
+  const revisionCount  = obsDrafts.filter(o => o.status === 'rejected').length
+  const totalNotes     = obsDrafts.length
+
   return (
     <div className="min-h-screen bg-base max-w-lg mx-auto px-4 py-6 space-y-5">
 
@@ -199,6 +233,90 @@ export default async function CoachWrapUpReviewPage({ params }: PageProps) {
           </p>
         )}
       </div>
+
+      {/* Sprint 933 — Loop completion summary card */}
+      {loopState && loopState !== 'wrapup_rejected' && (() => {
+        const isComplete = loopState === 'complete'
+        const isPartial  = loopState === 'partial'
+        const isAttention = loopState === 'needs_attention'
+        const isRevision  = loopState === 'needs_revision'
+
+        const borderBg = isComplete  ? 'border-status-green/30 bg-status-green/5' :
+                         isPartial   ? 'border-lime/25 bg-lime/4' :
+                         isAttention ? 'border-status-orange/30 bg-status-orange/5' :
+                         isRevision  ? 'border-status-red/25 bg-status-red/5' :
+                         'border-border bg-surface-raised'
+
+        const icon = isComplete || isPartial
+          ? <CheckCircle className={`w-4 h-4 shrink-0 ${isComplete ? 'text-status-green' : 'text-lime'}`} />
+          : <Clock className={`w-4 h-4 shrink-0 ${isAttention ? 'text-status-orange' : isRevision ? 'text-status-red' : 'text-text-muted'}`} />
+
+        const headline =
+          isComplete  ? 'Loop complete' :
+          isPartial   ? 'Reviewed — waiting to be applied' :
+          isAttention ? 'Director has questions' :
+          isRevision  ? 'Some notes need revision' :
+          'Waiting for director review'
+
+        const headlineColor =
+          isComplete  ? 'text-status-green' :
+          isPartial   ? 'text-lime' :
+          isAttention ? 'text-status-orange' :
+          isRevision  ? 'text-status-red' :
+          'text-text-primary'
+
+        const explanation =
+          isComplete && totalNotes > 0
+            ? `Your recap and ${appliedCount} player note${appliedCount !== 1 ? 's' : ''} are now in the official record.`
+          : isComplete
+            ? 'Your session recap is now in the official record.'
+          : isPartial
+            ? 'Your recap was reviewed. Some player notes are approved and waiting to be added to official records.'
+          : isAttention
+            ? 'Your director has questions about some player notes. Check the details below and follow up.'
+          : isRevision
+            ? 'Your director could not approve some player notes. See the details below.'
+          : 'Your recap has been submitted. You\'ll see updates here after your director reviews it.'
+
+        return (
+          <div className={`rounded-2xl border p-4 space-y-3 ${borderBg}`}>
+            <div className="flex items-center gap-2">
+              {icon}
+              <p className={`text-sm font-semibold ${headlineColor}`}>{headline}</p>
+            </div>
+            <p className="text-xs text-text-secondary leading-snug">{explanation}</p>
+            {totalNotes > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {appliedCount > 0 && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-status-green/10 text-status-green border-status-green/30">
+                    {appliedCount} applied
+                  </span>
+                )}
+                {approvedCount > 0 && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-lime/10 text-lime border-lime/30">
+                    {approvedCount} approved
+                  </span>
+                )}
+                {pendingObsCount > 0 && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-status-blue/10 text-status-blue border-status-blue/30">
+                    {pendingObsCount} pending review
+                  </span>
+                )}
+                {attentionCount > 0 && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-status-orange/10 text-status-orange border-status-orange/30">
+                    {attentionCount} director has questions
+                  </span>
+                )}
+                {revisionCount > 0 && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-status-red/10 text-status-red border-status-red/30">
+                    {revisionCount} needs revision
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* No submission yet */}
       {!action && (

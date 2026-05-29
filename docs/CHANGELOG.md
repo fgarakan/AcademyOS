@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 933 — Coach Wrap-Up Loop Completion Summary V1
+
+- `src/app/coach/sessions/[sessionId]/wrap-up/review/page.tsx`: Added `deriveLoopState` helper (pure, no new queries); added loop state/count computation; added loop summary card between page header and existing submission review section.
+- Architecture doc: `docs/architecture/COACH_WRAP_UP_LOOP_COMPLETION_SUMMARY_933.md`
+- QA doc: `docs/QA_COACH_WRAP_UP_LOOP_COMPLETION_SUMMARY_933.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 932 — Coach Session Recap Review Status V1
 
 - `src/app/coach/sessions/[sessionId]/wrap-up/review/page.tsx`: Added best-effort observation draft query (academy_id + proposed_by_id + target_module scoped; server-filtered by payload.session_id); added "Your player notes" section with per-draft status badges, note preview, and director note for clarification/rejection.
