@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 965 — DONNA Voice Persona Spoken Greeting V1
+
+- `src/lib/donna/donnaVoiceConfig.ts` (modified): `DONNA_VOICE_PERSONALITY` updated to `'female_british_calm_coo'`; `DONNA_VOICE_INSTRUCTIONS` updated to request slight English/British accent and COO persona framing (applied via `gpt-4o-mini-tts` instructions); `preferredBrowserVoiceKeywords` reordered to prioritize British/UK female browser voices (Hazel, Libby, Serena, Moira, Fiona) before US quality voices — browser fallback honestly documented as best-effort and OS/browser-dependent.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Director greeting branch — 3-line change: replaced `speakAssistantText(content.primaryText)` with `speakDonna(content.primaryText)`. Greeting now routes through server TTS (marin + British-accent instructions) → browser fallback. Anti-repeat guards (`hasGreetedRef` + `isFirstOpenToday`) preserved unchanged. No new voice button, widget, or surface.
+- `docs/architecture/DONNA_VOICE_PERSONA_SPOKEN_GREETING_965.md` (new): Architecture doc covering official DONNA voice persona, TTS path, server voice ID, voice instructions, browser fallback preference order, greeting trigger, anti-repeat behavior, V2 voice settings and coach/parent/player parity, no-duplicate guarantee, and safety boundaries.
+- `docs/QA_DONNA_VOICE_PERSONA_SPOKEN_GREETING_965.md` (new): Full QA checklist: TypeScript, voice config, spoken greeting, anti-repeat, one-shell, no-duplicate voice path, browser fallback, route safety, no-mutation, and protected systems.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 964 — DONNA Single Role Shell Persistent Panel V1
 
 - `src/lib/donna/donnaPageChipRegistry.ts` (new): Per-route chip definitions for the DONNA side panel — 11 routes covered; two action types: `'highlight'` (targets existing `data-donna-focus-id` elements) and `'prompt'` (sends text into DONNA conversation). Pure TypeScript — no DB, no client/server marker.

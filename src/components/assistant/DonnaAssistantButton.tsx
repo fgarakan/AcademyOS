@@ -3440,9 +3440,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 setDailyGreetingState(greeting)
                 if (isFirstOpenToday) {
                   markDailyDonnaGreetingShown()
-                  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                    speakAssistantText(content.primaryText)
-                  }
+                  // Sprint 965 — upgraded to speakDonna: server TTS (marin + British-accent
+                  // instructions) → browser fallback. No browser guard needed — speakDonna
+                  // handles environment checks internally. Anti-repeat is preserved via
+                  // hasGreetedRef (fires at most once per component mount) and isFirstOpenToday
+                  // (fires at most once per calendar day, backed by localStorage).
+                  speakDonna(content.primaryText)
                 }
               } else {
                 // Coach path — keep existing donnaDailyGreeting behavior.
