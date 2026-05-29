@@ -1,3 +1,7 @@
+// Sprint 930 — Coach Player Profile Wrap-Up Signal V1
+// Added: pending observation draft count + recent group session wrap-up status signals.
+// All new queries are best-effort (try/catch). Player profile renders normally on failure.
+
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -5,10 +9,51 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, EmptyState, SectionHeader } from '@/components/ui'
 import { CoachPlayerSnapshot } from '@/components/player/CoachPlayerSnapshot'
 import { formatDate } from '@/lib/utils'
+import { loadWrapUpStatusMap, type WrapUpDisplayStatus } from '@/lib/coach/wrapUpStatusMap'
 
 interface PageProps {
   params: { playerId: string }
 }
+
+// ── Signal helpers (pure, module-level) ──────────────────────────────────────
+
+function wrapUpSignalLabel(status: WrapUpDisplayStatus | undefined): string {
+  if (!status || status === 'not_started') return 'Wrap-up needed'
+  switch (status) {
+    case 'pending_review':       return 'Pending review'
+    case 'approved':             return 'Approved'
+    case 'executed':             return 'Applied'
+    case 'rejected':             return 'Needs revision'
+    case 'clarification_needed': return 'Director has questions'
+    default:                     return 'Wrap-up needed'
+  }
+}
+
+function wrapUpSignalTextColor(status: WrapUpDisplayStatus | undefined): string {
+  if (!status || status === 'not_started') return 'text-status-orange'
+  switch (status) {
+    case 'pending_review':       return 'text-status-blue'
+    case 'approved':
+    case 'executed':             return 'text-status-green'
+    case 'rejected':             return 'text-status-red'
+    case 'clarification_needed': return 'text-status-orange'
+    default:                     return 'text-status-orange'
+  }
+}
+
+function wrapUpSignalDotColor(status: WrapUpDisplayStatus | undefined): string {
+  if (!status || status === 'not_started') return 'bg-status-orange'
+  switch (status) {
+    case 'pending_review':       return 'bg-status-blue'
+    case 'approved':
+    case 'executed':             return 'bg-status-green'
+    case 'rejected':             return 'bg-status-red'
+    case 'clarification_needed': return 'bg-status-orange'
+    default:                     return 'bg-status-orange'
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default async function CoachPlayerProfilePage({ params }: PageProps) {
   const supabase = await getSupabaseServer()
@@ -132,6 +177,59 @@ export default async function CoachPlayerProfilePage({ params }: PageProps) {
     groupName = grp?.name ?? null
   }
 
+  // 6. Sprint 930 — Pending observation drafts for this player (read-only, best-effort)
+  let pendingDraftCount = 0
+  try {
+    const { data: draftRows } = await rawDb
+      .from('proposed_actions')
+      .select('id')
+      .eq('academy_id', academyId)
+      .eq('target_module', 'coach_observation_draft_v1')
+      .eq('target_object_id', player.id)
+      .eq('status', 'pending_review')
+      .limit(10)
+    pendingDraftCount = (draftRows ?? []).length
+  } catch { /* non-critical — signal hidden if query fails */ }
+
+  // 7. Sprint 930 — Recent group session wrap-up status (read-only, best-effort)
+  let latestGroupWrapUpStatus: WrapUpDisplayStatus | undefined = undefined
+  let sessionsNeedingWrapUp = 0
+  let hasCompletedGroupSession = false
+
+  if (firstGroupId) {
+    try {
+      const { data: groupSessionRows } = await rawDb
+        .from('sessions')
+        .select('id, status')
+        .eq('group_id', firstGroupId)
+        .eq('academy_id', academyId)
+        .not('status', 'eq', 'cancelled')
+        .order('scheduled_date', { ascending: false })
+        .limit(3)
+
+      type GroupSession = { id: string; status: string }
+      const groupSessions: GroupSession[] = (groupSessionRows ?? []) as GroupSession[]
+      const groupSessionIds = groupSessions.map(s => s.id)
+
+      if (groupSessionIds.length > 0) {
+        const wrapUpStatusRecord = await loadWrapUpStatusMap(supabase, groupSessionIds, academyId)
+
+        const latestCompleted = groupSessions.find(s => s.status === 'completed') ?? null
+        if (latestCompleted) {
+          hasCompletedGroupSession = true
+          latestGroupWrapUpStatus = wrapUpStatusRecord[latestCompleted.id]
+        }
+
+        sessionsNeedingWrapUp = groupSessions.filter(s =>
+          s.status === 'completed' &&
+          (!wrapUpStatusRecord[s.id] || wrapUpStatusRecord[s.id] === 'not_started')
+        ).length
+      }
+    } catch { /* non-critical — signal hidden if query fails */ }
+  }
+
+  const hasSignals = pendingDraftCount > 0 || hasCompletedGroupSession
+
   return (
     <div className="space-y-6 pb-10">
 
@@ -166,6 +264,61 @@ export default async function CoachPlayerProfilePage({ params }: PageProps) {
         recentNoteDate={recentNoteDate}
         updatedAt={levelUpdatedAt}
       />
+
+      {/* Sprint 930 — Coach Signals */}
+      <div>
+        <SectionHeader title="COACH SIGNALS" />
+        {hasSignals ? (
+          <Card>
+            <CardContent className="py-4 space-y-3">
+              {/* Pending observation drafts */}
+              {pendingDraftCount > 0 && (
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-status-blue shrink-0" />
+                  <p className="text-sm text-text-secondary">
+                    <span className="font-medium text-text-primary">{pendingDraftCount}</span>{' '}
+                    observation draft{pendingDraftCount !== 1 ? 's' : ''} pending director review
+                  </p>
+                </div>
+              )}
+
+              {/* Latest group session wrap-up status */}
+              {hasCompletedGroupSession && (
+                <div className="flex items-center gap-2.5">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${wrapUpSignalDotColor(latestGroupWrapUpStatus)}`} />
+                  <p className="text-sm text-text-secondary">
+                    Latest group wrap-up:{' '}
+                    <span className={`font-medium ${wrapUpSignalTextColor(latestGroupWrapUpStatus)}`}>
+                      {wrapUpSignalLabel(latestGroupWrapUpStatus)}
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              {/* Additional sessions needing wrap-up (when more than the one shown above) */}
+              {sessionsNeedingWrapUp > 1 && (
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-status-orange shrink-0" />
+                  <p className="text-sm text-text-secondary">
+                    <span className="font-medium text-status-orange">{sessionsNeedingWrapUp}</span>{' '}
+                    group sessions still need a wrap-up
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="py-8">
+              <EmptyState
+                icon={<span className="text-xl">📋</span>}
+                title="No recent signals"
+                description="No recent signals — add observations after sessions."
+              />
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Recent Observations */}
       <div>

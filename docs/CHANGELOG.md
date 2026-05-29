@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 930 — Coach Player Profile Wrap-Up Signal V1
+
+- `src/app/coach/players/[playerId]/page.tsx`: Added best-effort queries for pending observation draft count (proposed_actions) and recent group session wrap-up status (loadWrapUpStatusMap). Added compact "Coach Signals" section between CoachPlayerSnapshot and observations list.
+- Architecture doc: `docs/architecture/COACH_PLAYER_PROFILE_WRAP_UP_SIGNAL_930.md`
+- QA doc: `docs/QA_COACH_PLAYER_PROFILE_WRAP_UP_SIGNAL_930.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 929 — Coach Sessions List Wrap-Up Status V1
 
 - `src/app/coach/sessions/page.tsx`: Replaced inline proposed_actions query with `loadWrapUpStatusMap` (Sprint 928 helper); aligned `WrapUpBadge` labels to Sprint 928 language; added "Wrap-up needed" badge for completed rows with no draft; added `sessionCompleted` prop to suppress badge on upcoming/in-progress sessions.
