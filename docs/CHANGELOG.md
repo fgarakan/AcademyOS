@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Sprint 920 — DONNA Insight Engine V1
+
+- `src/lib/donna/donnaInsightEngine.ts`: Deterministic insight engine — 7 insight types from DirectorDonnaContext signals. `generateDonnaInsights()`, `formatInsightsForDonna()`. No LLM, no DB calls, no mutations.
+- `src/app/director/donna/DonnaInsightSection.tsx`: Insight card component for `/director/donna` left column.
+- `src/app/director/donna/page.tsx`: Wired `generateDonnaInsights(ctx)` + `DonnaInsightSection` render.
+- QA doc: `docs/QA_DONNA_INSIGHT_ENGINE_920.md`
+- Architecture doc: `docs/architecture/DONNA_INSIGHT_ENGINE_920.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 919 — DONNA Page-Aware Help 10/10 V1
 
 - `src/lib/donna/donnaPageContextEngine.ts`: Added 4 pages (Today's Academy, Parent Portal, Player Portal, Settings). Added `walkMeThrough()`, `whyDoesThisMatter()`, `whatShouldIClickNext()` functions.

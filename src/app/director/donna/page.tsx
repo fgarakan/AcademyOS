@@ -13,6 +13,8 @@ import type { ContextSummaryItem, ContextSourceLabel } from '@/components/donna/
 import { DONNAAcademyPulseCard } from '@/components/donna/DONNAAcademyPulseCard'
 import type { PulseTrend } from '@/components/donna/DONNAAcademyPulseCard'
 import { DonnaEntitySummarySection } from './DonnaEntitySummarySection'
+import { DonnaInsightSection } from './DonnaInsightSection'
+import { generateDonnaInsights } from '@/lib/donna/donnaInsightEngine'
 
 // ── Director DONNA command center — Sprint 1038/1040 wiring + Sprint 777 AIQS
 // Full page wiring: loads DirectorDonnaContext, renders attention items, risks,
@@ -55,6 +57,9 @@ export default async function DirectorDonnaPage() {
   const ctx = academyId
     ? await loadDirectorDonnaContext(db, academyId)
     : null
+
+  // Sprint 920 — generate insights from ctx (deterministic, no DB calls, no mutations)
+  const donnaInsights = ctx ? generateDonnaInsights(ctx, 4) : []
 
   const isLive = ctx?.isLive ?? false
   const pendingReviews    = ctx?.pendingReviews    ?? 3
@@ -206,6 +211,11 @@ export default async function DirectorDonnaPage() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Sprint 920 — Insight Engine: deterministic pattern detection */}
+          {donnaInsights.length > 0 && (
+            <DonnaInsightSection insights={donnaInsights} />
           )}
 
           {/* Next Best Actions — conditional */}
