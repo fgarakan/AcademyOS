@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 944 — DONNA Memory Learning Loop V1
+
+- `src/lib/donna/donnaMemoryPolicy.ts` (new): Memory categories (user_preference, academy_operation, coach_behavior, player_development, recommendation_outcome) with retention policies (retention days, canInfluenceRecommendations, canBeShownToUser, requiresDirectorApproval). 8 core policy rules (DB = truth, memory = pattern recognition). Feedback event weights for learning loop: accepted(0.8), completed(1.0), edited(0.5), dismissed(-0.3), ignored(-0.1). Helpers: getRetentionPolicy, isContentSafeToStore, memoryActionRequiresApproval, getFeedbackWeight, buildMemorySummary.
+- Architecture doc: `docs/architecture/DONNA_MEMORY_LEARNING_LOOP_944.md`
+- QA doc: `docs/QA_DONNA_MEMORY_LEARNING_LOOP_944.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 943 — DONNA Safe Action Router V1
 
 - `src/lib/donna/donnaSafeActionRouter.ts` (new): Routes DONNA tool requests through safety levels. `routeDonnaAction(toolId, role, currentPath)` returns `DonnaActionRoutingDecision {outcome, canExecute, tool, explanation, approvalRoute, donnaResponse}`. Outcomes: execute_immediately (read/ui), submit_to_draft (draft tools → proposed_actions), route_to_queue (approval_required → review), role_blocked, always_blocked. No tool bypasses execute_approved_action(). Batch helper `routeBestAction`. Audit helpers: getImmediateToolsForRole, getParentPlayerVisibilityTools.
