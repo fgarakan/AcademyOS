@@ -2,6 +2,7 @@
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import { triggerEntitySummaryAfterObservation } from '@/lib/donna/donnaEntitySummaryPopulator'
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -163,6 +164,20 @@ export async function saveWrapUpObservationsAction(
       })
 
     if (!paError) savedCount++
+  }
+
+  // Sprint 925 — fire-and-forget entity summary updates per observed player
+  // Never throws, never blocks the return value above.
+  if (savedCount > 0) {
+    for (const obs of observations) {
+      if (!validPlayerIds.has(obs.playerId) || !obs.note.trim()) continue
+      void triggerEntitySummaryAfterObservation(supabase, {
+        academyId,
+        playerId: obs.playerId,
+        playerName: obs.playerName,
+        lastObservationDate: new Date().toISOString(),
+      })
+    }
   }
 
   return { ok: true, savedCount, error: null }

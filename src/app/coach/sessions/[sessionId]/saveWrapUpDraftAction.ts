@@ -6,6 +6,7 @@ import { createRequestId } from '@/lib/observability/requestTrace'
 import { createActionLogger } from '@/lib/observability/logger'
 import { createDuplicateSubmissionMessage } from '@/lib/idempotency/actionGuards'
 import { parseAttendanceExceptionText } from '@/lib/attendance/parseAttendanceExceptionText'
+import { triggerEntitySummaryAfterWrapUp } from '@/lib/donna/donnaEntitySummaryPopulator'
 
 // ─────────────────────────────────────────────────────────────
 // Payload types
@@ -504,6 +505,12 @@ export async function saveWrapUpDraftAction(
       message: attExcErr instanceof Error ? attExcErr.message : 'unknown',
     })
   }
+
+  // Sprint 925 — fire-and-forget group entity summary update after wrap-up
+  void triggerEntitySummaryAfterWrapUp(supabase, {
+    academyId,
+    groupId: session.group_id ?? null,
+  })
 
   return { ok: true, error: null, draftId: proposedAction.id as string, attendanceExceptionDraftId }
 }

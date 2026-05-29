@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Sprint 925 — Entity Summary Auto-Population V1
+
+- `src/lib/donna/donnaEntitySummaryPopulator.ts`: Deterministic summary generators + trigger functions for player, group, curriculum_level entities. All triggers fire-and-forget.
+- `src/app/coach/sessions/[sessionId]/saveWrapUpObservationsAction.ts`: Added `triggerEntitySummaryAfterObservation` fire-and-forget trigger after observation draft creation.
+- `src/app/coach/sessions/[sessionId]/saveWrapUpDraftAction.ts`: Added `triggerEntitySummaryAfterWrapUp` fire-and-forget trigger after wrap-up draft creation.
+- QA doc: `docs/QA_ENTITY_SUMMARY_AUTO_POPULATION_925.md`
+- Architecture doc: `docs/architecture/ENTITY_SUMMARY_AUTO_POPULATION_925.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 924 — DONNA Safe UI Action Suggestions V1
 
 - `src/app/director/donna/DonnaUIActionSuggestionPanel.tsx`: Client component showing safe/approval-required UI actions for current page. Uses `donnaUIActionRegistry.getUIActionsForPage()`.
