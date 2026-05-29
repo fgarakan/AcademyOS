@@ -19,6 +19,7 @@
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { isPreviewMode } from '@/lib/utils/previewMode'
+import { assertDonnaApprovalAllowed } from '@/lib/donna/donnaApprovalGate'
 
 export interface DonnaLevelMovementResult {
   ok: boolean
@@ -68,6 +69,18 @@ export async function applyApprovedLevelMovementAction(
 ): Promise<DonnaLevelMovementResult> {
   if (await isPreviewMode()) {
     return { ok: false, message: 'Writes are disabled in preview mode.', safetyNotes: [] }
+  }
+
+  // Sprint 917 — Approval gate pre-flight: level_movement requires director_approval level.
+  // This apply path only executes when proposed_action.status='approved' (verified below),
+  // so passing director_approval as currentLevel confirms the gate is satisfied.
+  const gateCheck = assertDonnaApprovalAllowed('level_movement', 'director_approval')
+  if (!gateCheck.allowed) {
+    return {
+      ok: false,
+      message: `Approval gate blocked: ${gateCheck.reason}`,
+      safetyNotes: ['Level movement requires explicit director approval through the Review Queue.'],
+    }
   }
 
   const ctx = await getDirectorContext()

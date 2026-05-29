@@ -57,6 +57,30 @@ export interface DonnaIntentRouteResult {
   routeReason: string
   /** Legacy DonnaCommandCategory if applicable */
   legacyCategory?: string | null
+  // Sprint 917 — Approval gate fields
+  /** Approval gate category mapping for this intent (null for read-only intents) */
+  approvalGateCategory: string | null
+  /** Approval gate requirement for this intent */
+  gateRequirement: {
+    requiredLevel: string
+    isHighRisk: boolean
+    canBeProposed: boolean
+    approvalRoute: string | null
+  } | null
+}
+
+// Sprint 917 — Approval gate integration
+import { requireDonnaApproval } from '@/lib/donna/donnaApprovalGate'
+
+/** Maps unified intent types → approval gate action categories */
+const INTENT_TO_APPROVAL_CATEGORY: Partial<Record<DonnaUnifiedIntentType, string>> = {
+  curriculum_draft_create:    'curriculum_draft_create',
+  curriculum_draft_follow_up: 'curriculum_draft_create',
+  parent_draft:               'parent_communication',
+  level_readiness:            'level_movement',
+  attendance:                 'attendance_exception',
+  coach_observation:          'recommend',
+  coach_wrap_up:              'recommend',
 }
 
 // ── Regex patterns (mirror God Mode 34-interceptor patterns) ─────────────────
@@ -166,5 +190,20 @@ function make(
   source: DonnaIntentRouteResult['source'] = 'regex_pipeline',
   legacyCategory?: string,
 ): DonnaIntentRouteResult {
-  return { intent, confidence, source, requiresApproval, routeReason, legacyCategory: legacyCategory ?? null }
+  // Sprint 917: attach approval gate requirement for callers that need it
+  const gateCategory = INTENT_TO_APPROVAL_CATEGORY[intent] ?? null
+  const gateInfo = gateCategory ? requireDonnaApproval(gateCategory) : null
+  return {
+    intent, confidence, source, requiresApproval, routeReason,
+    legacyCategory: legacyCategory ?? null,
+    approvalGateCategory: gateCategory,
+    gateRequirement: gateInfo
+      ? {
+          requiredLevel:  gateInfo.requiredLevel,
+          isHighRisk:     gateInfo.isHighRisk,
+          canBeProposed:  gateInfo.canBeProposed,
+          approvalRoute:  gateInfo.approvalRoute,
+        }
+      : null,
+  }
 }

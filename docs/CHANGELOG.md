@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-29 — Sprint 917 — DONNA Approval Gate Full Wiring V1
+
+- `src/lib/donna/donnaIntentRouterV1.ts`: Added `approvalGateCategory` + `gateRequirement` fields to `DonnaIntentRouteResult`. Intent types now expose their gate requirement for callers.
+- `src/app/director/_actions/donnaCurriculumAdjustmentApplyActions.ts`: Added `assertDonnaApprovalAllowed('curriculum_edit', 'director_approval')` pre-flight gate check.
+- `src/app/director/_actions/donnaLevelMovementActions.ts`: Added `assertDonnaApprovalAllowed('level_movement', 'director_approval')` pre-flight gate check.
+- `src/lib/donna/donnaWritePathRegistry.ts`: Canonical registry of 10 DONNA write paths with compliance status.
+- QA doc: `docs/QA_DONNA_APPROVAL_GATE_FULL_WIRING_917.md`
+- Architecture doc: `docs/architecture/DONNA_APPROVAL_GATE_FULL_WIRING_917.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 916 — DONNA Director UX Integration V1
 
 - `src/lib/donna/donnaReviewFeedbackAction.ts`: Server Action — creates `donna_recommendations` row + records director feedback (accepted/rejected). Uses `assertDonnaApprovalAllowed` gate check. Fire-and-forget, non-throwing.
