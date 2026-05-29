@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 957 — DONNA Evaluation Harness V1
+
+- `src/lib/donna/donnaEvaluationHarness.ts` (new, routing fix applied): 6 static eval cases across 3 categories — what-next (director + coach), director brief, and tool routing (allow/block/role-block). `runEvalCase(evalCase)` exercises real DONNA engines and asserts expected outputs. `runAllEvals()` returns all results. Routing fix: moved toolId detection before the what-next condition to prevent fake pass results on tool routing cases. Pure TypeScript — no DB calls, no mutations, no communication dispatch.
+- `docs/architecture/DONNA_EVALUATION_HARNESS_957.md` (new): Eval categories, input/output model, all 6 eval cases, routing behavior, what is/isn't measured, no-mutation guarantee, V2 path.
+- `docs/QA_DONNA_EVALUATION_HARNESS_957.md` (new): TypeScript, import-resolution, eval coverage, routing fix verification, no-mutation, no-unsafe-action, safety/refusal, highlight-target, protected systems, and future-sprint exclusion checklists.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 956 — Recommendation Feedback Learning V1
 
 - `src/lib/donna/donnaRecommendationLearning.ts` (new): Learning contract for DONNA recommendation outcomes. `buildRecommendationOutcome()` attaches `FEEDBACK_WEIGHTS` to an event. `computeLearningStats()` aggregates acceptance/dismissal rates and net score. `getAdjustedPriorityWeight()` returns a clamped [0.3–1.5] priority multiplier. Pure TypeScript — no DB calls, no mutations, no communication dispatch. Imports `FEEDBACK_WEIGHTS` and `RecommendationFeedbackEvent` from `donnaMemoryPolicy`.
