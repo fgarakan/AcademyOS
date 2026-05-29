@@ -65,6 +65,8 @@ import {
 } from '@/lib/donna/donnaPageContextEngine'
 // Sprint 941 — What Next engine with live-data ranking + highlight target
 import { buildWhatNextAnswer } from '@/lib/donna/donnaWhatNextEngine'
+// Sprint 945 — Director intelligence brief
+import { buildDirectorBrief, formatBriefAsMessage, type DirectorBriefInput } from '@/lib/donna/donnaDirectorBrief'
 import { DONNA_SYSTEM_MAP } from '@/lib/donna/donnaSystemMap'
 import { detectShortPhrase, buildShortPhraseAnswer } from '@/lib/donna/donnaShortPhraseEngine'
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
@@ -1144,6 +1146,67 @@ export function DonnaVoiceReadyShell({
         }
       }, 500)
       return
+    }
+
+    // ── Sprint 945: Director Intelligence Brief intercept ────────────────────
+    // Fires when director asks for a brief, daily summary, or "what's going on".
+    // Uses directorCtx if available; falls back to minimal text-only brief otherwise.
+    if (plainRole === 'director') {
+      const BRIEF_PATTERN = /\b(give me (a |the )?(daily )?(brief|briefing|summary|overview)|what('?s| is) (going on|happening|my (status|situation)|the status)|morning brief|daily brief|what('?s| is) urgent|what('?s| is) (the |my )?academy (status|situation|health)|brief me|catch me up|status update|what do i need to know)\b/i
+      if (BRIEF_PATTERN.test(trimmed)) {
+        const briefInput: DirectorBriefInput = directorCtx ? {
+          pendingReviews: directorCtx.pendingReviews,
+          attendanceExceptions: directorCtx.attendanceExceptions,
+          highRiskPlayerCount: directorCtx.highRiskPlayerCount,
+          advancementEligibleCount: directorCtx.advancementEligibleCount,
+          playerProgressStallCount: directorCtx.playerProgressStallCount,
+          curriculumDraftCount: directorCtx.curriculumDraftCount,
+        } : {}
+        const brief = buildDirectorBrief(briefInput)
+        const briefText = formatBriefAsMessage(brief)
+        // Set highlight target to top priority element if available
+        const topPriority = brief.priorities[0]
+        if (topPriority?.targetId) {
+          setDonnaFocusTarget({
+            route: pathname ?? '/director',
+            targetId: topPriority.targetId,
+            label: topPriority.headline,
+            reason: topPriority.whyItMatters,
+            sourceCommand: trimmed,
+            highlightStyle: 'teal-glow',
+          })
+          window.dispatchEvent(new CustomEvent('donna:highlight'))
+        }
+        const briefMsg: ChatMessage = {
+          id: `donna-brief-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: briefText,
+          timestamp: new Date().toISOString(),
+          confidence: directorCtx ? 'high' : 'partial',
+          sourceNote: directorCtx ? 'Live academy data' : 'Context loading — data may be incomplete',
+          followUp: topPriority?.href && topPriority.href !== (pathname ?? '/director') ? `Take me to ${topPriority.headline}` : undefined,
+          followUpHref: topPriority?.href && topPriority.href !== (pathname ?? '/director') ? topPriority.href : undefined,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, briefMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, briefText, {
+            actionId: 'director_brief',
+            domain: 'general',
+            confidence: directorCtx ? 'high' : 'partial',
+            sourceNote: 'Director intelligence brief',
+          })
+          if (topPriority?.href && topPriority.href !== (pathname ?? '/director')) {
+            setPendingNavOffer({
+              href: topPriority.href,
+              label: topPriority.headline,
+              questionContext: trimmed,
+            })
+          }
+        }, 400)
+        return
+      }
     }
 
     // ── Sprint 912.14: Page guide intent routing ─────────────────────────────

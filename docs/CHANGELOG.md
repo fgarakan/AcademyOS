@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 945 — DONNA Director Intelligence Brief V1
+
+- `src/lib/donna/donnaDirectorBrief.ts` (new): COO-style director brief generator. `buildDirectorBrief(input)` ranks up to 6 live signal types (pending reviews, attendance exceptions, high-risk players, advancement-eligible, stalls, curriculum drafts) and returns top 3 `DirectorBriefPriority` items with headline, text, whyItMatters, recommendedAction, targetId, href, safetyNote. `formatBriefAsMessage` renders for Shell A chat. Overall health: critical/attention_needed/on_track/insufficient_data.
+- `src/components/donna/DonnaVoiceReadyShell.tsx`: Added BRIEF_PATTERN intercept before page guide section. Triggers `buildDirectorBrief` with live directorCtx, fires `setDonnaFocusTarget` + `donna:highlight` for top priority element, sets pendingNavOffer for navigation, works with no live context.
+- Architecture doc: `docs/architecture/DONNA_DIRECTOR_INTELLIGENCE_BRIEF_945.md`
+- QA doc: `docs/QA_DONNA_DIRECTOR_INTELLIGENCE_BRIEF_945.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 944 — DONNA Memory Learning Loop V1
 
 - `src/lib/donna/donnaMemoryPolicy.ts` (new): Memory categories (user_preference, academy_operation, coach_behavior, player_development, recommendation_outcome) with retention policies (retention days, canInfluenceRecommendations, canBeShownToUser, requiresDirectorApproval). 8 core policy rules (DB = truth, memory = pattern recognition). Feedback event weights for learning loop: accepted(0.8), completed(1.0), edited(0.5), dismissed(-0.3), ignored(-0.1). Helpers: getRetentionPolicy, isContentSafeToStore, memoryActionRequiresApproval, getFeedbackWeight, buildMemorySummary.
