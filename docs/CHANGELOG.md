@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 949 — Parent Safe DONNA Guidance V1
+
+- `src/lib/donna/donnaParentGuidance.ts` (new): Parent-safe guidance builder. `buildParentGuidance(category, ctx)` for 7 categories (current_focus, why_it_matters, support_at_home, after_practice, when_worried, when_to_contact, progress_context). Uses DONNA_PERSONALITY.parentSafeLanguage for safety copy. No raw notes, no rankings, no peer comparisons. `buildAllParentGuidance(ctx)` returns all guidance responses. Pure TypeScript. Existing parent chip interface unchanged.
+- Architecture doc: `docs/architecture/PARENT_SAFE_DONNA_GUIDANCE_949.md`
+- QA doc: `docs/QA_PARENT_SAFE_DONNA_GUIDANCE_949.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 948 — Coach DONNA God Mode Parity V1
 
 - `src/lib/donna/donnaWhatNextEngine.ts`: Added coach signals to WhatNextLiveContext (missingWrapUps, todaySessions, observationDraftsToday, activeSessionId). Coach priority logic: missingWrapUps > 0 → coach-wrap-up-link highlight; todaySessions > 0 on /coach → coach-today-sessions highlight.
