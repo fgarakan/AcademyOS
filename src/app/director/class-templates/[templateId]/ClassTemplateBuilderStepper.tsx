@@ -396,10 +396,19 @@ function Step2Structure({
 
   return (
     <div className="space-y-5">
-      <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
-        <p className="text-[11px] text-text-secondary leading-relaxed">
-          Your class has these major sections in order. Each block needs content before coaches can follow a guided plan.
-        </p>
+      {/* Sprint 963: explanatory note — what's editable now vs V2 */}
+      <div className="space-y-2">
+        <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
+          <p className="text-[11px] text-text-secondary leading-relaxed">
+            Your class has these major sections in order. Each block needs curriculum activities before coaches can follow a guided plan. Go to <span className="text-lime font-medium">Build Blocks</span> (Step 3) to add drills, games, and coaching cues.
+          </p>
+        </div>
+        <div className="px-4 py-2.5 rounded-xl border border-border/50 bg-surface/50 flex items-start gap-2">
+          <Circle className="w-3 h-3 text-text-muted shrink-0 mt-0.5" />
+          <p className="text-[11px] text-text-muted leading-relaxed">
+            <span className="font-medium text-text-secondary">Block sections and order</span> (Warm-Up, Skill Foundation, etc.) reflect the template&apos;s default structure. Adding, removing, or reordering these sections is available in a future update. The default order here is separate from any live session runtime adjustments coaches make on court.
+          </p>
+        </div>
       </div>
 
       {blockList.length === 0 ? (
@@ -413,7 +422,7 @@ function Step2Structure({
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3" data-donna-focus-id="class-template-block-list">
           <div className="flex items-center justify-between px-1">
             <p className="text-xs text-text-muted">
               {blockList.length} section{blockList.length !== 1 ? 's' : ''}
@@ -453,6 +462,10 @@ function Step2Structure({
                           {block.duration_min} min
                         </p>
                       )}
+                      {/* Sprint 963: block purpose copy — reuses blockPurposeCopy() defined above */}
+                      <p className="text-[10px] text-text-muted/70 mt-1 leading-snug hidden sm:block">
+                        {blockPurposeCopy(block.type ?? '')}
+                      </p>
                     </div>
                     <div className="shrink-0">
                       {hasContent ? (
@@ -505,7 +518,9 @@ function Step3BuildBlocks({
   curriculumByBlock: Record<string, CurriculumBlockRowProp[]>
   availableContent: AvailableContentItem[]
 }) {
+  // Sprint 963: outer wrapper adds data-donna-focus-id="class-template-primary-action"
   return (
+    <div data-donna-focus-id="class-template-primary-action">
     <div className="space-y-5" data-donna-focus-id="template-blocks-section">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
@@ -574,6 +589,7 @@ function Step3BuildBlocks({
           })}
         </div>
       )}
+    </div>
     </div>
   )
 }
@@ -832,12 +848,14 @@ function Step5ReviewApply({
         />
       </div>
 
-      {/* Lesson plan draft + apply */}
-      <LessonPlanDraftPanel
-        templateId={templateId}
-        hasCurriculumContent={hasCurriculumContent}
-        curriculumLevelName={currentLevelName}
-      />
+      {/* Lesson plan draft + apply — Sprint 963: data-donna-focus-id for DONNA highlight */}
+      <div data-donna-focus-id="class-template-review-draft">
+        <LessonPlanDraftPanel
+          templateId={templateId}
+          hasCurriculumContent={hasCurriculumContent}
+          curriculumLevelName={currentLevelName}
+        />
+      </div>
 
       {/* Create session */}
       <div data-donna-focus-id="template-generate-session">

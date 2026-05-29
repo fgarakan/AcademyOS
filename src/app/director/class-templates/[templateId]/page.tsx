@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen } from 'lucide-react'
+import { ArrowLeft, BookOpen, Sparkles } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import type { CurriculumLevelOption } from './ClassTemplateCurriculumSelector'
 import type { AvailableContentItem } from './BlockContentPickerCard'
@@ -291,10 +291,19 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
   const curriculumByBlockRecord: Record<string, CurriculumBlockRow[]> = {}
   curriculumByBlock.forEach((v, k) => { curriculumByBlockRecord[k] = v })
 
+  // Sprint 963 — Template Readiness: derive recommended step from already-loaded data.
+  // No new queries. Used only for the readiness card below.
+  const emptyBlocksCount = blockList.filter(b => (curriculumByBlockRecord[b.id] ?? []).length === 0).length
+  const recommendedStep = !curriculumLevelId ? 1
+    : hasCurriculumContent && emptyBlocksCount === 0 ? 5
+    : 3
+  const STEP_LABELS = ['Class Identity', 'Class Structure', 'Build Blocks', 'Coach Preview', 'Review + Apply']
+  const recommendedStepLabel = STEP_LABELS[recommendedStep - 1] ?? 'Build Blocks'
+
   return (
     <div className="p-6 animate-fade-in space-y-6">
-      {/* Page header — server-rendered, no state needed */}
-      <div className="flex items-start justify-between gap-4">
+      {/* Page header — Sprint 963: data-donna-focus-id for DONNA highlight */}
+      <div data-donna-focus-id="class-template-header" className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <Link
             href="/director/class-templates"
@@ -312,6 +321,48 @@ export default async function ClassTemplateDetailPage({ params }: PageProps) {
         <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border text-xs text-text-muted">
           <BookOpen className="w-3 h-3" />
           {template.track ?? 'Class'}
+        </div>
+      </div>
+
+      {/* Sprint 963 — Template Readiness card: at-a-glance status + recommended step.
+          Server-rendered. Uses only data already loaded above — no new queries. */}
+      <div className="rounded-xl border border-border bg-surface px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+        {/* Stats row */}
+        <div className="flex items-center gap-6 flex-wrap flex-1">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Blocks</p>
+            <p className="font-mono font-bold text-xl text-lime leading-none">{blockList.length}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Activities</p>
+            <p className={[
+              'font-mono font-bold text-xl leading-none',
+              totalCurriculumItems > 0 ? 'text-lime' : 'text-text-muted',
+            ].join(' ')}>{totalCurriculumItems}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Curriculum Level</p>
+            <p className={[
+              'text-sm font-medium leading-none',
+              currentLevelName ? 'text-text-primary' : 'text-status-orange',
+            ].join(' ')}>
+              {currentLevelName ?? 'Not set'}
+            </p>
+          </div>
+          {template.total_duration_min != null && (
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-text-muted mb-0.5">Duration</p>
+              <p className="text-sm text-text-primary leading-none">{template.total_duration_min} min</p>
+            </div>
+          )}
+        </div>
+        {/* Recommended step */}
+        <div className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg bg-lime/5 border border-lime/15">
+          <Sparkles className="w-3.5 h-3.5 text-lime shrink-0" />
+          <div>
+            <p className="text-[9px] uppercase tracking-widest text-lime/60 leading-none mb-0.5">Recommended</p>
+            <p className="text-[11px] font-semibold text-lime leading-none">Step {recommendedStep} — {recommendedStepLabel}</p>
+          </div>
         </div>
       </div>
 

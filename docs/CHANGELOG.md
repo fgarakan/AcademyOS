@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 963 — Class Template Builder Completion V1
+
+- `src/app/director/class-templates/[templateId]/page.tsx` (modified): Added `data-donna-focus-id="class-template-header"` to page header; added `Sparkles` import; added compact Template Readiness card above stepper showing block count, activity count, curriculum level, duration, and recommended step — derived from already-loaded data, no new queries.
+- `src/app/director/class-templates/[templateId]/ClassTemplateBuilderStepper.tsx` (modified): Step 2 — added updated explanatory note, V2 boundary note (block-section add/remove/reorder is V2; template default order is separate from session runtime), block purpose copy per row (`hidden sm:block`), `data-donna-focus-id="class-template-block-list"`. Step 3 — added outer wrapper with `data-donna-focus-id="class-template-primary-action"`. Step 5 — added wrapper with `data-donna-focus-id="class-template-review-draft"` around LessonPlanDraftPanel.
+- `docs/architecture/CLASS_TEMPLATE_BUILDER_COMPLETION_963.md` (new): Problems, changes, block editor behavior, existing mutation behavior preserved, template order vs session runtime distinction, DONNA targets, V2 path.
+- `docs/QA_CLASS_TEMPLATE_BUILDER_COMPLETION_963.md` (new): TypeScript, flow, block editor, proposed actions, CTA, DONNA targets, mobile, no-mutation, protected systems checklists.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 962 — Curriculum Builder Cognitive Load Reduction V1
 
 - `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx` (modified): Added compact prev/next level navigation strip using already-loaded `explorerData.levels` sorted by canonical stage order — no new queries. Added `data-donna-focus-id="curriculum-current-level"` on header and `data-donna-focus-id="curriculum-primary-action"` on Propose a Change wrapper. Renamed "Advanced Editor" collapsible to "Detailed Content View".
