@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 941 — DONNA What Should I Do Next Engine V1
+
+- `src/lib/donna/donnaWhatNextEngine.ts` (new): Priority-ranked next-action engine — `buildWhatNextAnswer(role, pathname, liveCtx?)` returns `WhatNextAnswer {text, targetId?, label?, explanation?, safetyNote?, href?, confidence, source}`. Priority ranking: live pending reviews > attendance exceptions > advancement eligibility > player stalls > urgent page element > high page element > page fallback. `buildCoachWhatNextAnswer(pathname)` convenience for coach role.
+- `src/components/donna/DonnaVoiceReadyShell.tsx`: PAGE_NEXT_STEP pattern extended to catch "What should I do next?", "What's next?", "What's my next step?", "What to do next". PAGE_NEXT_STEP now calls `buildWhatNextAnswer` with live `directorCtx` fields. When engine returns `targetId`, fires `setDonnaFocusTarget` + `donna:highlight`. When engine returns `href`, sets `setPendingNavOffer` for yes/no confirmation.
+- Architecture doc: `docs/architecture/DONNA_WHAT_NEXT_ENGINE_941.md`
+- QA doc: `docs/QA_DONNA_WHAT_NEXT_ENGINE_941.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 940 — DONNA Page Element Registry V1
 
 - `src/lib/donna/donnaPageElementRegistry.ts` (new): 38-element structured registry of every highlightable/explainable UI element DONNA knows about across director + coach pages. Each entry has id (matches data-donna-focus-id), label, route, roles, priority (urgent/high/medium/low), actionType, safetyLevel, explanation, optional href, and dataDependent flag. Lookup functions: getPageElements, getPageElementsSorted, getTopPageElement, getPageElementSummary, getElementsBySafetyLevel. No new DOM attributes needed — all elements already exist from Sprint 868+.

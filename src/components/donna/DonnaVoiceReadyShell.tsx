@@ -63,6 +63,8 @@ import {
   whatShouldINotDo,
   whatIsTheBestNextStep,
 } from '@/lib/donna/donnaPageContextEngine'
+// Sprint 941 — What Next engine with live-data ranking + highlight target
+import { buildWhatNextAnswer } from '@/lib/donna/donnaWhatNextEngine'
 import { DONNA_SYSTEM_MAP } from '@/lib/donna/donnaSystemMap'
 import { detectShortPhrase, buildShortPhraseAnswer } from '@/lib/donna/donnaShortPhraseEngine'
 import { speakWithServerTts, stopServerTts } from '@/components/assistant/donnaServerTtsClient'
@@ -1149,22 +1151,43 @@ export function DonnaVoiceReadyShell({
     // Uses pathname only — no directorCtx needed. Always resolves cleanly.
     // Fires BEFORE missing-context and KPI interceptors so page questions
     // always get page-specific answers rather than generic or data-dependent ones.
+    // Sprint 941: PAGE_NEXT_STEP now uses buildWhatNextAnswer (live data + element registry + highlight).
     if (plainRole === 'director') {
       const PAGE_WHERE_AM_I    = /\b(where am i|what page am i on|what.{0,10}this page|explain this page|which page is this|describe this page)\b/i
       const PAGE_WHAT_CAN_I_DO = /\b(what can i do here|what can you help (me with )?(here|on this page)|what.{0,15}options (here|on this page)|what.{0,15}do (here|on this page))\b/i
-      const PAGE_NEXT_STEP     = /\b(what should i do (here|on this page)|what.{0,10}most important (task|thing) here|what.{0,10}best (next )?step (here|on this page)|where (should i |do i )start here)\b/i
+      const PAGE_NEXT_STEP     = /\b(what should i do (here|on this page|next)|what.{0,10}most important (task|thing) here|what.{0,10}best (next )?step (here|on this page|next)|where (should i |do i )start here|what('?s| is) (my |the )?next (step|action|move)|what to do next|what('?s| is) next)\b/i
       const PAGE_APPROVAL      = /\b(what needs (approval|review|approving|reviewing)|what should i (review|approve)|what requires (my )?(approval|review))\b/i
       const PAGE_SAFETY        = /\b(what should i not do|what.{0,10}risky here|what.{0,10}careful with|what.{0,10}avoid (here|on this page)|what.{0,10}not (do|try) here)\b/i
 
       const currentPath = pathname ?? '/director'
       let pageGuideText: string | null = null
+      // Sprint 941: highlight info from what-next engine
+      let whatNextTargetId: string | undefined
+      let whatNextLabel: string | undefined
+      let whatNextHref: string | undefined
 
       if (PAGE_WHERE_AM_I.test(trimmed)) {
         pageGuideText = whereAmI(currentPath)
       } else if (PAGE_WHAT_CAN_I_DO.test(trimmed)) {
         pageGuideText = whatCanYouHelpWith(currentPath)
       } else if (PAGE_NEXT_STEP.test(trimmed)) {
-        pageGuideText = whatIsTheBestNextStep(currentPath)
+        // Sprint 941: use live-data engine with element registry + optional highlight
+        const whatNext = buildWhatNextAnswer(
+          'director',
+          currentPath,
+          directorCtx ? {
+            pendingReviews: directorCtx.pendingReviews,
+            attendanceExceptions: directorCtx.attendanceExceptions,
+            advancementEligibleCount: directorCtx.advancementEligibleCount,
+            playerProgressStallCount: directorCtx.playerProgressStallCount,
+            highRiskPlayerCount: directorCtx.highRiskPlayerCount,
+            curriculumDraftCount: directorCtx.curriculumDraftCount,
+          } : undefined,
+        )
+        pageGuideText = whatNext.text
+        whatNextTargetId = whatNext.targetId
+        whatNextLabel = whatNext.label
+        whatNextHref = whatNext.href
       } else if (PAGE_APPROVAL.test(trimmed)) {
         pageGuideText = whatActionsRequireApproval(currentPath)
       } else if (PAGE_SAFETY.test(trimmed)) {
@@ -1181,11 +1204,33 @@ export function DonnaVoiceReadyShell({
           timestamp: new Date().toISOString(),
           confidence: 'high',
           sourceNote: `Page context: ${pageGuideCap.pageLabel}`,
+          followUp: whatNextHref ? (whatNextLabel ?? 'Take me there') : undefined,
+          followUpHref: whatNextHref,
         }
         setTimeout(() => {
           setMessages(prev => [...prev, pageGuideMsg])
           setIsTyping(false)
           recordTurn(trimmed, pageGuideText!, { domain: 'general', confidence: 'high', sourceNote: `Page: ${currentPath}` })
+          // Sprint 941: trigger highlight when engine provides a target element
+          if (whatNextTargetId) {
+            setDonnaFocusTarget({
+              route: currentPath,
+              targetId: whatNextTargetId,
+              label: whatNextLabel ?? 'Next action',
+              reason: undefined,
+              sourceCommand: trimmed,
+              highlightStyle: 'teal-glow',
+            })
+            window.dispatchEvent(new CustomEvent('donna:highlight'))
+          }
+          // Sprint 941: if engine recommends navigating away, set a nav offer
+          if (whatNextHref && whatNextHref !== currentPath) {
+            setPendingNavOffer({
+              href: whatNextHref,
+              label: whatNextLabel ?? 'that section',
+              questionContext: trimmed,
+            })
+          }
         }, 400)
         return
       }
