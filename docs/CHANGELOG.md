@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 934 — Director Session Wrap-Up Review Improvement V1
+
+- `src/app/director/review/WrapUpDraftCard.tsx`: Added `COMMON_NON_NAMES` exclusion set, `extractCapitalizedNames()` heuristic helper, and `PlayerMentionChips` sub-component. Chips render below `raw_standouts_answer` and `raw_attention_answer` text fields. Max 6 chips; "+N more" overflow. No LLM, no DB calls, no mutations.
+- Architecture doc: `docs/architecture/DIRECTOR_SESSION_WRAP_UP_REVIEW_IMPROVEMENT_934.md`
+- QA doc: `docs/QA_DIRECTOR_SESSION_WRAP_UP_REVIEW_IMPROVEMENT_934.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 933 — Coach Wrap-Up Loop Completion Summary V1
 
 - `src/app/coach/sessions/[sessionId]/wrap-up/review/page.tsx`: Added `deriveLoopState` helper (pure, no new queries); added loop state/count computation; added loop summary card between page header and existing submission review section.

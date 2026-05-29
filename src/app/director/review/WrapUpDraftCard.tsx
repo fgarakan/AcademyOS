@@ -34,6 +34,53 @@ function blockStatusLabel(status: BlockCompletionDraft['status']) {
   return 'Modified'
 }
 
+// ── Sprint 934 — Heuristic player name extraction ──────────────
+// Deterministic only. No LLM. No DB calls. No mutation.
+// Extracts likely names from free-text wrap-up answers using the same
+// capitalized-word pattern as the coach-side name guardrail (CoachWrapUpDrawer).
+
+const COMMON_NON_NAMES = new Set([
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august',
+  'september', 'october', 'november', 'december',
+  'yes', 'no', 'ok', 'today', 'tomorrow', 'next', 'last', 'session', 'block',
+  'coach', 'player', 'group', 'team', 'all', 'some', 'none', 'one', 'two',
+  'three', 'four', 'five', 'the', 'and', 'but', 'for', 'with', 'this', 'that',
+  'good', 'great', 'nice', 'well', 'well-done', 'focus', 'work', 'worked',
+])
+
+function extractCapitalizedNames(text: string): string[] {
+  if (!text?.trim()) return []
+  const capitalized = text.match(/\b[A-Z][a-z]{1,}/g) ?? []
+  const unique = Array.from(new Set(capitalized))
+  return unique.filter(word => !COMMON_NON_NAMES.has(word.toLowerCase()) && word.length >= 2)
+}
+
+const MAX_CHIPS = 6
+
+function PlayerMentionChips({ names }: { names: string[] }) {
+  if (names.length === 0) return null
+  const visible = names.slice(0, MAX_CHIPS)
+  const overflow = names.length - MAX_CHIPS
+  return (
+    <div className="flex flex-wrap gap-1.5 pt-1.5">
+      {visible.map(name => (
+        <span
+          key={name}
+          className="text-[10px] px-2 py-0.5 rounded-full border bg-surface text-text-secondary border-border"
+        >
+          {name}
+        </span>
+      ))}
+      {overflow > 0 && (
+        <span className="text-[10px] px-2 py-0.5 rounded-full border bg-surface text-text-muted border-border">
+          +{overflow} more
+        </span>
+      )}
+    </div>
+  )
+}
+
 export function WrapUpDraftCard({ draft }: { draft: EnrichedWrapUpDraftItem }) {
   const { payload } = draft
   const completed = payload.block_completion.filter(b => b.status === 'completed').length
@@ -192,6 +239,7 @@ export function WrapUpDraftCard({ draft }: { draft: EnrichedWrapUpDraftItem }) {
               <p className="text-xs text-text-secondary px-3 py-2 rounded-lg bg-surface-raised border border-border">
                 {payload.raw_standouts_answer}
               </p>
+              <PlayerMentionChips names={extractCapitalizedNames(payload.raw_standouts_answer)} />
             </div>
           )}
           {payload.raw_attention_answer && (
@@ -203,6 +251,7 @@ export function WrapUpDraftCard({ draft }: { draft: EnrichedWrapUpDraftItem }) {
               <p className="text-xs text-text-secondary px-3 py-2 rounded-lg bg-surface-raised border border-border">
                 {payload.raw_attention_answer}
               </p>
+              <PlayerMentionChips names={extractCapitalizedNames(payload.raw_attention_answer)} />
             </div>
           )}
         </div>
