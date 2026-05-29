@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 956 — Recommendation Feedback Learning V1
+
+- `src/lib/donna/donnaRecommendationLearning.ts` (new): Learning contract for DONNA recommendation outcomes. `buildRecommendationOutcome()` attaches `FEEDBACK_WEIGHTS` to an event. `computeLearningStats()` aggregates acceptance/dismissal rates and net score. `getAdjustedPriorityWeight()` returns a clamped [0.3–1.5] priority multiplier. Pure TypeScript — no DB calls, no mutations, no communication dispatch. Imports `FEEDBACK_WEIGHTS` and `RecommendationFeedbackEvent` from `donnaMemoryPolicy`.
+- `docs/architecture/RECOMMENDATION_FEEDBACK_LEARNING_956.md` (new): Purpose, input/output model, feedback event weights, learning/scoring formula, memory policy connection, no-mutation and no-auto-action guarantees, safety boundaries, V2 path.
+- `docs/QA_RECOMMENDATION_FEEDBACK_LEARNING_956.md` (new): TypeScript, import-resolution, no-mutation, no-auto-action, no parent/player communication, sensitive-data, protected systems, and future-sprint exclusion checklists.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 955 — Parent Communication Intelligence V1
 
 - `src/lib/donna/donnaParentCommunicationIntelligence.ts` (new): Detects 4 parent communication opportunity types (new_applied_observation, repeated_priority_signal, summary_ready, communication_gap_aging). `detectParentCommOpportunity(input)` returns `ParentCommOpportunity | null`. Draft-only recommendations; no message sent, no DB calls, no mutations. `safetyNote` (noAutoSend) present on every non-null return.
