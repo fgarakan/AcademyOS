@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 936 — Coach Wrap-Up Loop Certification V1
+
+- `docs/architecture/COACH_WRAP_UP_LOOP_CERTIFICATION_936.md`: Full end-to-end certification for Sprints 926–936 — loop map, files, coach/director workflows, observation draft path, attendance exception path, status visibility map, safety boundaries, read-only vs mutation table, approval gates, parent/player safety, known risks, V2 completion badge rationale, pilot readiness rating (8/10), manual QA script for Brian + Coach Farshad, recommended next 10 sprints.
+- `docs/QA_COACH_WRAP_UP_LOOP_CERTIFICATION_936.md`: Full manual QA checklist covering coach path, director path, observation drafts, attendance exceptions, safety, protected systems, TypeScript, and pilot go/no-go criteria.
+- Completion badge deferred to V2 (Sprint 946) — "Applied" badge from Sprint 929 is the practical wrap-up completion indicator; true loop-complete badge requires `session_id` column on obs draft rows (Sprint 937 migration).
+- TypeScript: clean (no app code changed)
+
+---
+
 ## 2026-05-29 — Sprint 935 — Coach Wrap-Up Attendance Parse Visibility V1
 
 - `src/app/coach/sessions/[sessionId]/wrap-up/review/page.tsx`: Added attendance exception query (academy_id + target_module + target_object_id + proposed_by_id scoped; direct column query, no JSON filter); added "Attendance exceptions" section between "Your player notes" and "Back to session" with status badge, concise summary (absent/unexpected counts), and optional director note.
