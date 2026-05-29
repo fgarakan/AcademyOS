@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-29 — Sprint 950 — Player Mission DONNA Guidance V1
+
+- `src/lib/donna/donnaPlayerGuidance.ts` (new): Mission-focused player guidance. `buildPlayerGuidance(category, ctx)` for 8 categories (current_mission, practice_today, how_to_level_up, how_am_i_doing, feel_stuck, before_match, after_loss, stay_focused). Uses DONNA_PERSONALITY.playerSafeLanguage. No assessments, no rankings, no pressure. Existing player chip interface unchanged.
+- Architecture doc + QA doc created.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 949 — Parent Safe DONNA Guidance V1
 
 - `src/lib/donna/donnaParentGuidance.ts` (new): Parent-safe guidance builder. `buildParentGuidance(category, ctx)` for 7 categories (current_focus, why_it_matters, support_at_home, after_practice, when_worried, when_to_contact, progress_context). Uses DONNA_PERSONALITY.parentSafeLanguage for safety copy. No raw notes, no rankings, no peer comparisons. `buildAllParentGuidance(ctx)` returns all guidance responses. Pure TypeScript. Existing parent chip interface unchanged.
