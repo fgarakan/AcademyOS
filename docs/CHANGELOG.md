@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-29 — Sprint 918 — DONNA Persistent Conversation Mode V1
+
+- `src/lib/donna/donnaSessionContext.ts`: Added `panelMinimized`, `minimizePanel`, `expandPanel`, `contextRefreshedAt`, `contextPageLabel` to context value type and default.
+- `src/components/donna/DonnaSessionContextProvider.tsx`: Implemented minimize state (sessionStorage backed), route-change context refresh signal.
+- `src/components/assistant/DonnaAssistantButton.tsx`: Minus button (minimize without clearing thread), context refresh flash (3s), FAB lime indicator when minimized, `expandPanel()` on FAB when minimized.
+- `src/lib/donna/useDonnaPersistentPanel.ts`: Convenience hook for persistent panel state.
+- QA doc: `docs/QA_DONNA_PERSISTENT_CONVERSATION_MODE_918.md`
+- Architecture doc: `docs/architecture/DONNA_PERSISTENT_CONVERSATION_MODE_918.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 917 — DONNA Approval Gate Full Wiring V1
 
 - `src/lib/donna/donnaIntentRouterV1.ts`: Added `approvalGateCategory` + `gateRequirement` fields to `DonnaIntentRouteResult`. Intent types now expose their gate requirement for callers.

@@ -41,6 +41,13 @@ export interface DonnaSessionContextValue {
   panelOpen: boolean
   openDonnaPanel: () => void
   closeDonnaPanel: () => void
+  // Sprint 918 — persistent conversation: minimize preserves thread state; expand restores
+  panelMinimized: boolean
+  minimizePanel: () => void
+  expandPanel: () => void
+  // Sprint 918 — context refresh signal: set when route changes while panel is open
+  contextRefreshedAt: number | null
+  contextPageLabel: string | null
 }
 
 // ── Default / empty state ─────────────────────────────────────────────────────
@@ -67,6 +74,12 @@ export const DonnaSessionContext = createContext<DonnaSessionContextValue>({
   panelOpen: false,
   openDonnaPanel: () => {},
   closeDonnaPanel: () => {},
+  // Sprint 918
+  panelMinimized: false,
+  minimizePanel: () => {},
+  expandPanel: () => {},
+  contextRefreshedAt: null,
+  contextPageLabel: null,
 })
 
 // ── Hook ─────────────────────────────────────────────────────────────────────

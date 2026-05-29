@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Layers, Inbox,
+  Sparkles, X, Compass, BookOpen, Search, PenLine, ArrowRight, Layers, Inbox, Minus,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -397,7 +397,19 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const router = useRouter()
   // Sprint 686 — panelOpen lifted to DonnaSessionContextProvider; survives route changes
   // Sprint 854 — session destructured as donnaSession to avoid shadowing local `session` var (line ~1073)
-  const { session: donnaSession, panelOpen, openDonnaPanel, closeDonnaPanel, updatePrompt } = useDonnaSessionContext()
+  const {
+    session: donnaSession, panelOpen, openDonnaPanel, closeDonnaPanel, updatePrompt,
+    // Sprint 918 — minimize/expand + context refresh
+    panelMinimized, minimizePanel, expandPanel, contextRefreshedAt, contextPageLabel,
+  } = useDonnaSessionContext()
+  // Sprint 918 — brief context-refresh flash (3s) when route changes while panel open
+  const [showContextRefresh, setShowContextRefresh] = useState(false)
+  useEffect(() => {
+    if (!contextRefreshedAt) return
+    setShowContextRefresh(true)
+    const t = setTimeout(() => setShowContextRefresh(false), 3000)
+    return () => clearTimeout(t)
+  }, [contextRefreshedAt])
   const [captureOpen, setCaptureOpen] = useState(false)
   const [activeMode, setActiveMode] = useState<AssistantMode | null>(null)
   // Sprint 823 — Panel disclosure section visibility (context / suggestions / actions)
@@ -3362,6 +3374,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       {/* ------------------------------------------------------------------ */}
       <button
         onClick={() => {
+          // Sprint 918: if minimized, expand (restores panel without full re-init)
+          if (panelMinimized) { expandPanel(); return }
           openDonnaPanel()
           // Sprint 359: restore draft from session if no active draft currently
           // Must run before the onboarding check so restored drafts skip intro.
@@ -3483,7 +3497,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         aria-label={`Ask ${DONNA_PUBLIC_NAME}`}
         title={`Ask ${DONNA_PUBLIC_NAME}`}
         className={cn(
-          'fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full',
+          'fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full relative',
           // Sprint 707 — hide floating button on mobile for directors; mobile bar replaces it
           role === 'director' ? 'hidden sm:flex' : 'flex',
           'items-center justify-center',
@@ -3499,12 +3513,21 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
           border: '1px solid rgba(139,92,246,0.7)',
           boxShadow: '0 4px 16px rgba(139,92,246,0.6), 0 0 0 3px rgba(139,92,246,0.18)',
+        } : panelMinimized ? {
+          // Sprint 918: lime tint when minimized — signals "resume conversation"
+          background: 'linear-gradient(135deg, #1a2e00, #243800)',
+          border: '1px solid rgba(200,255,0,0.4)',
+          boxShadow: '0 4px 16px rgba(200,255,0,0.15)',
         } : {
           background: 'linear-gradient(135deg, #6d28d9, #4338ca)',
           border: '1px solid rgba(139,92,246,0.35)',
         }}
       >
-        <Sparkles className="w-[18px] h-[18px]" />
+        <Sparkles className={panelMinimized ? 'w-[18px] h-[18px] text-lime' : 'w-[18px] h-[18px]'} />
+        {/* Sprint 918: dot indicator when minimized — conversation preserved */}
+        {panelMinimized && (
+          <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-lime border border-black" />
+        )}
       </button>
 
       {/* ------------------------------------------------------------------ */}
@@ -3626,10 +3649,26 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               </div>
             )}
           </div>
+          {/* Sprint 918 — context refresh flash */}
+          {showContextRefresh && contextPageLabel && (
+            <span className="text-[9px] text-lime/70 font-medium px-1.5 py-0.5 rounded-full bg-lime/8 border border-lime/20 animate-pulse mr-1 shrink-0 whitespace-nowrap">
+              ↻ {contextPageLabel}
+            </span>
+          )}
+          {/* Sprint 918 — minimize: hides panel without clearing conversation thread */}
+          <button
+            onClick={minimizePanel}
+            aria-label="Minimize assistant"
+            title="Minimize — conversation preserved"
+            className="w-11 h-11 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 sm:mt-0.5
+              text-text-muted hover:text-text-primary hover:bg-surface-raised transition-all"
+          >
+            <Minus className="w-4 h-4" />
+          </button>
           <button
             onClick={closePanel}
             aria-label="Close assistant"
-            className="w-11 h-11 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 ml-2 sm:mt-0.5
+            className="w-11 h-11 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 ml-1 sm:mt-0.5
               text-text-muted hover:text-text-primary hover:bg-surface-raised transition-all"
           >
             <X className="w-4 h-4" />

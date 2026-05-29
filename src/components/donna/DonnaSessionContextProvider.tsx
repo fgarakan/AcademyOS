@@ -88,6 +88,48 @@ export function DonnaSessionContextProvider({ children }: { children: ReactNode 
     setSession(DEFAULT_DONNA_SESSION)
   }, [])
 
+  // Sprint 918 — Minimize: hides panel without clearing conversation thread state.
+  // Distinct from closeDonnaPanel: minimize preserves the thread; close clears it.
+  const [panelMinimized, setPanelMinimized] = useState(false)
+  const [contextRefreshedAt, setContextRefreshedAt] = useState<number | null>(null)
+  const [contextPageLabel, setContextPageLabel] = useState<string | null>(null)
+
+  // Sprint 918 — sessionStorage persistence for minimized state
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      if (window.sessionStorage.getItem('donnaPanelMinimized') === 'true') {
+        setPanelMinimized(true)
+      }
+    } catch { /* sessionStorage may be blocked */ }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.sessionStorage.setItem('donnaPanelMinimized', panelMinimized ? 'true' : 'false')
+    } catch { /* sessionStorage may be full or blocked */ }
+  }, [panelMinimized])
+
+  const minimizePanel = useCallback(() => {
+    setPanelOpen(false)
+    setPanelMinimized(true)
+  }, [])
+
+  const expandPanel = useCallback(() => {
+    setPanelOpen(true)
+    setPanelMinimized(false)
+  }, [])
+
+  // Sprint 918 — route-change context refresh signal:
+  // when route changes while panel is open and not minimized, emit a refresh signal.
+  useEffect(() => {
+    if (!pathname || !panelOpen || panelMinimized) return
+    const label = routeToModuleLabel(pathname)
+    setContextPageLabel(label)
+    setContextRefreshedAt(Date.now())
+  }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <DonnaSessionContext.Provider
       value={{
@@ -101,6 +143,11 @@ export function DonnaSessionContextProvider({ children }: { children: ReactNode 
         panelOpen,
         openDonnaPanel,
         closeDonnaPanel,
+        panelMinimized,
+        minimizePanel,
+        expandPanel,
+        contextRefreshedAt,
+        contextPageLabel,
       }}
     >
       {children}
