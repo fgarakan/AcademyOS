@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-29 — Emergency Fix — Templates Impact Preview Client Boundary Error
+
+- `src/app/director/templates/impact-preview/ImpactPreviewScopeActions.tsx` (new): `'use client'` component housing the Scope Actions buttons and their `onClick` handlers — extracted from the server page to resolve the Next.js server/client boundary error.
+- `src/app/director/templates/impact-preview/page.tsx` (modified): Replaced inline Scope Actions JSX (which contained `onClick` on a Server Component) with `<ImpactPreviewScopeActions actions={SCOPE_ACTIONS} />`. All static data stays server-side; only serializable props are passed to the client component. No data behavior, schema, permissions, or DONNA systems changed.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 963 — Class Template Builder Completion V1
 
 - `src/app/director/class-templates/[templateId]/page.tsx` (modified): Added `data-donna-focus-id="class-template-header"` to page header; added `Sparkles` import; added compact Template Readiness card above stepper showing block count, activity count, curriculum level, duration, and recommended step — derived from already-loaded data, no new queries.
