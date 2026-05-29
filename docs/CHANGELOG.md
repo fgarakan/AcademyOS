@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 932 — Coach Session Recap Review Status V1
+
+- `src/app/coach/sessions/[sessionId]/wrap-up/review/page.tsx`: Added best-effort observation draft query (academy_id + proposed_by_id + target_module scoped; server-filtered by payload.session_id); added "Your player notes" section with per-draft status badges, note preview, and director note for clarification/rejection.
+- Architecture doc: `docs/architecture/COACH_SESSION_RECAP_REVIEW_STATUS_932.md`
+- QA doc: `docs/QA_COACH_SESSION_RECAP_REVIEW_STATUS_932.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 931 — Director Review Queue Observation Draft Panel V1
 
 - `src/app/director/review/WrapUpObservationDraftDecisionControls.tsx`: Added "Request clarification" button using existing `updateObservationDraftDecisionAction` with `'clarification_needed'`.

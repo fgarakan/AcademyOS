@@ -1,6 +1,10 @@
+// Sprint 932 — Coach Session Recap Review Status V1
+// Added: "Your player notes" section showing observation draft review status.
+// Read-only, best-effort. Coach sees only their own drafts for this session.
+
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, CheckCircle, Clock, ShieldCheck, Target, Users, Sparkles } from 'lucide-react'
+import { ChevronLeft, CheckCircle, Clock, ShieldCheck, Target, Users, Sparkles, MessageSquare } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 
 interface PageProps {
@@ -26,6 +30,50 @@ const PAYLOAD_TO_SECTION: Array<{ key: string; payloadField: string }> = [
   { key: 'adjust',     payloadField: 'changes_note' },
   { key: 'followup',   payloadField: 'next_focus' },
 ]
+
+// ── Observation draft display helpers ─────────────────────────
+
+type ObsStatus = 'pending_review' | 'approved' | 'executed' | 'rejected' | 'clarification_needed' | string
+
+function obsStatusLabel(status: ObsStatus): string {
+  switch (status) {
+    case 'pending_review':       return 'Pending review'
+    case 'approved':             return 'Approved'
+    case 'executed':             return 'Applied'
+    case 'rejected':             return 'Needs revision'
+    case 'clarification_needed': return 'Director has questions'
+    default:                     return 'Pending review'
+  }
+}
+
+function obsStatusColor(status: ObsStatus): string {
+  switch (status) {
+    case 'pending_review':       return 'text-status-blue border-status-blue/30 bg-status-blue/10'
+    case 'approved':             return 'text-status-green border-status-green/30 bg-status-green/10'
+    case 'executed':             return 'text-status-green border-status-green/30 bg-status-green/10'
+    case 'rejected':             return 'text-status-red border-status-red/30 bg-status-red/10'
+    case 'clarification_needed': return 'text-status-orange border-status-orange/30 bg-status-orange/10'
+    default:                     return 'text-text-muted border-border bg-surface-raised'
+  }
+}
+
+function obsTypeLabel(type: string): string {
+  switch (type) {
+    case 'positive':       return 'Positive'
+    case 'needs_attention': return 'Needs attention'
+    default:               return 'General'
+  }
+}
+
+function obsTypeDotColor(type: string): string {
+  switch (type) {
+    case 'positive':       return 'bg-status-green'
+    case 'needs_attention': return 'bg-status-orange'
+    default:               return 'bg-text-muted'
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 
 export default async function CoachWrapUpReviewPage({ params }: PageProps) {
   const { sessionId } = params
@@ -65,6 +113,47 @@ export default async function CoachWrapUpReviewPage({ params }: PageProps) {
 
   const action = actions?.[0] ?? null
   const payload = action?.proposed_payload ?? null
+
+  // Sprint 932 — Observation draft review status for this session
+  // Scoped to: academy_id + current coach (proposed_by_id) + target_module
+  // Filtered server-side by payload.session_id === sessionId
+  interface ObsDraft {
+    id: string
+    status: ObsStatus
+    reviewer_notes: string | null
+    playerName: string
+    observationType: string
+    note: string
+  }
+  let obsDrafts: ObsDraft[] = []
+
+  try {
+    const { data: obsDraftRows } = await rawDb
+      .from('proposed_actions')
+      .select('id, status, reviewer_notes, proposed_payload')
+      .eq('academy_id', academyId)
+      .eq('target_module', 'coach_observation_draft_v1')
+      .eq('proposed_by_id', user.id)
+      .in('status', ['pending_review', 'approved', 'executed', 'rejected', 'clarification_needed'])
+      .order('created_at', { ascending: true })
+      .limit(20)
+
+    obsDrafts = ((obsDraftRows ?? []) as Array<{
+      id: string
+      status: string
+      reviewer_notes: string | null
+      proposed_payload: Record<string, unknown>
+    }>)
+      .filter(row => row.proposed_payload?.session_id === sessionId)
+      .map(row => ({
+        id: row.id,
+        status: row.status as ObsStatus,
+        reviewer_notes: row.reviewer_notes,
+        playerName: (row.proposed_payload?.player_name as string | null) ?? 'Unknown player',
+        observationType: (row.proposed_payload?.observation_type as string | null) ?? 'general',
+        note: (row.proposed_payload?.note as string | null) ?? '',
+      }))
+  } catch { /* non-critical — section renders empty if query fails */ }
 
   const sessionHref = `/coach/sessions/${sessionId}`
   const wrapUpHref  = `/coach/sessions/${sessionId}/wrap-up`
@@ -234,6 +323,56 @@ export default async function CoachWrapUpReviewPage({ params }: PageProps) {
           )}
         </>
       )}
+
+      {/* Sprint 932 — Your player notes section */}
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+          <MessageSquare className="w-3.5 h-3.5 text-text-muted shrink-0" />
+          <p className="text-[10px] uppercase tracking-widest text-text-muted">Your player notes</p>
+        </div>
+
+        {obsDrafts.length === 0 ? (
+          <div className="px-4 py-5 text-center">
+            <p className="text-xs text-text-muted">No player note drafts for this session yet.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {obsDrafts.map(draft => {
+              const notePreview = draft.note.length > 100
+                ? draft.note.slice(0, 100).trimEnd() + '…'
+                : draft.note
+              return (
+                <div key={draft.id} className="px-4 py-3 space-y-2">
+                  {/* Player + type */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${obsTypeDotColor(draft.observationType)}`} />
+                      <span className="text-xs font-medium text-text-primary truncate">{draft.playerName}</span>
+                    </div>
+                    <span className="text-[10px] text-text-muted shrink-0">{obsTypeLabel(draft.observationType)}</span>
+                    <span className={`ml-auto text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0 ${obsStatusColor(draft.status)}`}>
+                      {obsStatusLabel(draft.status)}
+                    </span>
+                  </div>
+
+                  {/* Note preview */}
+                  {notePreview && (
+                    <p className="text-xs text-text-secondary leading-snug">{notePreview}</p>
+                  )}
+
+                  {/* Director note (for clarification_needed or rejected) */}
+                  {draft.reviewer_notes && (draft.status === 'clarification_needed' || draft.status === 'rejected') && (
+                    <div className="flex items-start gap-1.5 px-2.5 py-2 rounded-lg bg-surface-raised border border-border">
+                      <span className="text-[10px] font-medium text-text-muted shrink-0">Director:</span>
+                      <p className="text-[10px] text-text-secondary leading-snug">{draft.reviewer_notes}</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Back to session */}
       <Link
