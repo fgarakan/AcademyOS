@@ -15,10 +15,12 @@
 // ── Unified intent type ────────────────────────────────────────────────────────
 
 export type DonnaUnifiedIntentType =
-  // Read-only / page-aware (God Mode 912.14)
+  // Read-only / page-aware (God Mode 912.14 + Sprint 919)
   | 'page_guide_explain'
   | 'page_guide_actions'
   | 'page_guide_next_step'
+  | 'page_guide_walk_through'
+  | 'page_guide_why'
   | 'page_guide_approval'
   | 'page_guide_safety'
   // Operating intelligence (God Mode 912.17-912.19)
@@ -86,10 +88,12 @@ const INTENT_TO_APPROVAL_CATEGORY: Partial<Record<DonnaUnifiedIntentType, string
 // ── Regex patterns (mirror God Mode 34-interceptor patterns) ─────────────────
 
 const PATTERNS = {
-  // Page guide (Sprint 912.14)
+  // Page guide (Sprint 912.14 + Sprint 919)
   PAGE_EXPLAIN:    /\b(where am i|what page am i on|what.{0,10}this page|explain this page|describe this page)\b/i,
   PAGE_ACTIONS:    /\b(what can i do here|what can you help (me with )?(here|on this page))\b/i,
-  PAGE_NEXT_STEP:  /\b(what should i do (here|on this page)|what.{0,10}most important (task|thing) here)\b/i,
+  PAGE_NEXT_STEP:  /\b(what should i do (here|on this page)|what.{0,10}most important (task|thing) here|what should i (click|focus on) (next|first))\b/i,
+  PAGE_WALK:       /\b(walk me through (this page|here)|give me a (tour|walkthrough)|how does this (page )?work)\b/i,
+  PAGE_WHY:        /\b(why does this (page )?matter|why (should|do) i (use|visit|check) (this|here)|what.{0,12}purpose.{0,12}(page|this))\b/i,
   PAGE_APPROVAL:   /\b(what needs (approval|review|approving|reviewing)|what should i (review|approve)|what requires (my )?(approval|review))\b/i,
   PAGE_SAFETY:     /\b(what should i not do|what.{0,10}risky here|what.{0,10}careful with)\b/i,
   // Brief / priority (Sprint 912.17)
@@ -136,6 +140,8 @@ export function routeDonnaIntentV1(
   if (PATTERNS.RECALL.test(t))        return make('recall_conversation', 'high', false, 'Recall pattern matched')
   if (PATTERNS.PAGE_EXPLAIN.test(t))  return make('page_guide_explain', 'high', false, 'Page explain pattern matched')
   if (PATTERNS.PAGE_ACTIONS.test(t))  return make('page_guide_actions', 'high', false, 'Page actions pattern matched')
+  if (PATTERNS.PAGE_WALK.test(t))     return make('page_guide_walk_through', 'high', false, 'Page walkthrough pattern matched')
+  if (PATTERNS.PAGE_WHY.test(t))      return make('page_guide_why', 'high', false, 'Page why pattern matched')
   if (PATTERNS.PAGE_NEXT_STEP.test(t)) return make('page_guide_next_step', 'high', false, 'Page next-step pattern matched')
   if (PATTERNS.PAGE_SAFETY.test(t))   return make('page_guide_safety', 'high', false, 'Page safety pattern matched')
   if (PATTERNS.PAGE_APPROVAL.test(t)) return make('page_guide_approval', 'high', false, 'Page approval pattern matched')

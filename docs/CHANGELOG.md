@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Sprint 919 — DONNA Page-Aware Help 10/10 V1
+
+- `src/lib/donna/donnaPageContextEngine.ts`: Added 4 pages (Today's Academy, Parent Portal, Player Portal, Settings). Added `walkMeThrough()`, `whyDoesThisMatter()`, `whatShouldIClickNext()` functions.
+- `src/lib/donna/donnaIntentRouterV1.ts`: Added `page_guide_walk_through` + `page_guide_why` intent types. Added `PAGE_WALK` + `PAGE_WHY` patterns.
+- `src/lib/donna/donnaSessionContext.ts`: Added `/parent`, `/player`, `/director/today` to `routeToModuleLabel`.
+- QA doc: `docs/QA_DONNA_PAGE_AWARE_HELP_919.md`
+- Architecture doc: `docs/architecture/DONNA_PAGE_AWARE_HELP_919.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 918 — DONNA Persistent Conversation Mode V1
 
 - `src/lib/donna/donnaSessionContext.ts`: Added `panelMinimized`, `minimizePanel`, `expandPanel`, `contextRefreshedAt`, `contextPageLabel` to context value type and default.

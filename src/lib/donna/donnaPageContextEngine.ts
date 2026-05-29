@@ -392,6 +392,74 @@ const PAGE_CAPABILITY_MAP: DonnaPageCapabilityMap[] = [
     blocked: ['auto-submit wrap-ups without coach input', 'modify attendance records directly', 'access other coaches\' sessions'],
     dataFallback: 'Wrap-up context is loading. I can explain what to include in your wrap-up while data loads.',
   },
+  // ── Sprint 919 additions ────────────────────────────────────────────────────
+  {
+    route: '/director/today',
+    pageLabel: "Today's Academy",
+    directorIntent: 'See everything happening at your academy right now — today\'s sessions, wrap-up status, pending review items, and player attention flags.',
+    safeContext: ['today\'s sessions', 'attendance counts', 'wrap-up coverage', 'pending review queue', 'player attention risk'],
+    suggestedPrompts: [
+      'What needs my attention today?',
+      'How many sessions are running right now?',
+      'Which coaches still need to submit wrap-ups?',
+      'What\'s in my review queue?',
+      'Give me a daily brief.',
+    ],
+    allowedAnswerTypes: ['daily brief', 'session summary', 'queue status', 'attention signals', 'wrap-up coverage'],
+    reviewRequiredActions: ['approving wrap-up drafts', 'acting on attendance exceptions'],
+    blocked: ['auto-approve review items from this page', 'modify session attendance directly'],
+    dataFallback: 'Today\'s data is loading. I can show you today\'s sessions, wrap-up status, and your review queue.',
+  },
+  {
+    route: '/parent',
+    pageLabel: 'Parent Portal',
+    directorIntent: 'See your child\'s current development focus, what they\'re working on, why it matters, and how you can support their progress at home.',
+    safeContext: ['current curriculum level', 'active development focus', 'recent session exposure', 'coach-approved progress notes'],
+    suggestedPrompts: [
+      'What is my child working on right now?',
+      'Why does this skill matter?',
+      'How can I support practice at home?',
+      'What progress have I missed?',
+      'What should I ask the coach about?',
+    ],
+    allowedAnswerTypes: ['development summary', 'skill explanation', 'home practice guidance', 'progress context', 'parent-safe communication'],
+    reviewRequiredActions: ['requesting a coach conversation', 'flagging a concern for director review'],
+    blocked: ['access coach internal notes', 'see other players\' profiles', 'access session planning details', 'see assessment raw scores'],
+    dataFallback: 'Your child\'s development profile is loading. I can explain what\'s generally worked on at this curriculum stage while data loads.',
+  },
+  {
+    route: '/player',
+    pageLabel: 'Player Portal',
+    directorIntent: 'See your current tennis mission, what skills you\'re developing, your progress toward the next level, and a daily practice suggestion.',
+    safeContext: ['current level', 'active mission', 'skills being developed', 'recent session attendance', 'practice suggestion'],
+    suggestedPrompts: [
+      'What am I working on right now?',
+      'How do I level up?',
+      'What should I practice today?',
+      'What did my coach say about me?',
+      'How close am I to the next level?',
+    ],
+    allowedAnswerTypes: ['mission summary', 'skill focus', 'practice suggestion', 'level progress', 'coach-safe encouragement'],
+    reviewRequiredActions: ['coach input is reviewed before showing official progress updates'],
+    blocked: ['access other players\' profiles', 'see coach internal notes or concerns', 'see assessment raw scores', 'modify personal profile data'],
+    dataFallback: 'Your player profile is loading. I can tell you about your current level and what players at this stage typically work on.',
+  },
+  {
+    route: '/director/settings',
+    pageLabel: 'Academy Settings',
+    directorIntent: 'Configure your academy name, billing preferences, and operational settings. Changes take effect immediately and affect the whole academy.',
+    safeContext: ['academy name', 'billing status', 'operational preferences', 'feature configuration'],
+    suggestedPrompts: [
+      'What can I change here?',
+      'Does changing a setting affect my coaches?',
+      'What should I configure first?',
+      'Is this change reversible?',
+    ],
+    allowedAnswerTypes: ['settings explanation', 'impact of changes', 'configuration guidance', 'reversibility information'],
+    reviewRequiredActions: ['billing changes', 'academy deactivation', 'bulk-role assignment changes'],
+    blocked: ['auto-apply billing changes', 'change academy-wide settings without confirmation', 'modify other academies\' settings'],
+    dataFallback: 'Settings context is loading. I can explain what each setting controls before you make changes.',
+  },
 ]
 
 const FALLBACK_MAP: DonnaPageCapabilityMap = {
@@ -495,4 +563,40 @@ export function whatIsTheBestNextStep(pathname: string): string {
     return `${base}\n\nA good place to start: ask me "${firstPrompt}"`
   }
   return base
+}
+
+// Sprint 919 — walk me through this page
+// Comprehensive structured walkthrough: what the page is, what you can do, what to check first,
+// what requires approval, and the single best next step.
+export function walkMeThrough(pathname: string, firstName: string | null = null): string {
+  const map = getPageCapabilityMap(pathname)
+  const greeting = firstName ? `Hi ${firstName}. ` : ''
+  const context = map.safeContext.slice(0, 3).map(c => `• ${c}`).join('\n')
+  const approvals = map.reviewRequiredActions.length > 0
+    ? `\n\n**Needs your approval:** ${map.reviewRequiredActions.slice(0, 2).join('; ')}.`
+    : ''
+  const nextStep = map.suggestedPrompts[0]
+    ? `\n\n**Start here:** Ask me "${map.suggestedPrompts[0]}"`
+    : ''
+  return `${greeting}**${map.pageLabel}** — ${map.directorIntent}\n\n**What you can check here:**\n${context}${approvals}${nextStep}`
+}
+
+// Sprint 919 — why does this page matter
+// Explains the strategic purpose of the page in the academy operating context.
+export function whyDoesThisMatter(pathname: string): string {
+  const map = getPageCapabilityMap(pathname)
+  const allowed = map.allowedAnswerTypes.slice(0, 3).join(', ')
+  return `The **${map.pageLabel}** matters because: ${map.directorIntent}\n\nI can help you with: ${allowed}.`
+}
+
+// Sprint 919 — what should I click next
+// Gives the single most actionable next step on this page.
+export function whatShouldIClickNext(pathname: string): string {
+  const map = getPageCapabilityMap(pathname)
+  const firstPrompt = map.suggestedPrompts[0] ?? null
+  const firstContext = map.safeContext[0] ?? null
+  if (firstPrompt) {
+    return `On the **${map.pageLabel}**, the most valuable next step: "${firstPrompt}". ${firstContext ? `Check the ${firstContext} section first.` : ''}`
+  }
+  return `On the **${map.pageLabel}**: ${map.directorIntent}`
 }

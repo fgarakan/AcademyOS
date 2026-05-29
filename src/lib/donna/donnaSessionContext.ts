@@ -105,6 +105,10 @@ export function routeToModuleLabel(route: string): string {
   if (route.includes('/director/templates')) return 'Templates'
   if (route.includes('/director/donna')) return 'DONNA Hub'
   if (route.includes('/director/settings')) return 'Settings'
+  if (route.includes('/director/today')) return "Today's Academy"
   if (route.startsWith('/director')) return 'Director Dashboard'
+  if (route.startsWith('/parent')) return 'Parent Portal'
+  if (route.startsWith('/player')) return 'Player Portal'
+  if (route.startsWith('/coach')) return 'Coach Hub'
   return 'Academy OS'
 }
