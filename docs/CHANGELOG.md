@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-29 — Sprint 951 — Academy Intelligence Signals V1
+
+- `src/lib/donna/donnaAcademySignals.ts` (new): 4 signal types (review_queue, attendance_exception, player_evidence, curriculum_execution) with severity levels. `buildAcademySignalSuite(input)` returns full suite + overallSeverity. Feeds DONNA context for COO judgment. Read-only; no mutations. TypeScript: clean.
+
+---
+
 ## 2026-05-29 — Sprint 950 — Player Mission DONNA Guidance V1
 
 - `src/lib/donna/donnaPlayerGuidance.ts` (new): Mission-focused player guidance. `buildPlayerGuidance(category, ctx)` for 8 categories (current_mission, practice_today, how_to_level_up, how_am_i_doing, feel_stuck, before_match, after_loss, stay_focused). Uses DONNA_PERSONALITY.playerSafeLanguage. No assessments, no rankings, no pressure. Existing player chip interface unchanged.
