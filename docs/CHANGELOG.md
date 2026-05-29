@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 922 — DONNA Director Brief 10/10 V1
+
+- `src/app/director/today/DonnaTodayBriefPanel.tsx`: Priority-ordered brief panel — up to 4 items with "why it matters" copy, urgency ordering, and safe next-action links. Uses existing loaded data.
+- `src/app/director/today/page.tsx`: Wired `DonnaTodayBriefPanel` above existing DONNA Command Brief in right column.
+- QA doc: `docs/QA_DONNA_DIRECTOR_BRIEF_922.md`
+- Architecture doc: `docs/architecture/DONNA_DIRECTOR_BRIEF_10_OF_10_922.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 921 — DONNA Recommendation Learning Dashboard V1
 
 - `src/lib/donna/donnaRecommendationLearningLoader.ts`: Loads aggregate feedback signals from `donna_recommendation_feedback`/`donna_recommendations`. `loadRecommendationFeedbackSummary()` + `formatLearningSignalsForDonna()`.

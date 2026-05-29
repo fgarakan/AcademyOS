@@ -14,6 +14,7 @@ import { DEMO_SESSIONS, DEMO_PENDING_COUNT } from '@/lib/demo/demoData'
 import type { DemoSession } from '@/lib/demo/demoData'
 import { TodayDonnaSuggestionChip } from './TodayDonnaSuggestionChip'
 import { TodayCommandBrief } from './TodayCommandBrief'
+import { DonnaTodayBriefPanel } from './DonnaTodayBriefPanel'
 import { loadCommandBriefLive } from '@/lib/donna/commandBriefLiveLoader'
 import type { CommandBriefLiveResult } from '@/lib/donna/commandBriefLiveLoader'
 import { DEMO_COMMAND_BRIEF_DATA, DEMO_PLAYER_ATTENTION_RISK } from '@/lib/donna/donnaDemoSeed'
@@ -350,6 +351,13 @@ export default async function TodaysAcademyPage({
 
         {/* Right column — 1/3 width */}
         <div className="space-y-4">
+
+          {/* Sprint 922 — DONNA Priority Brief ─────────────────────────────── */}
+          <div>
+            <p className="label-xs">DONNA Priority Brief</p>
+            <p className="text-xs text-text-muted mt-1">What needs your attention today.</p>
+          </div>
+          <DonnaTodayBriefPanel brief={commandBriefResult} risk={attentionRisk} />
 
           {/* DONNA Command Brief — live/partial data (Sprint 512) ──────────── */}
           <div>
