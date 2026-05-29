@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 935 — Coach Wrap-Up Attendance Parse Visibility V1
+
+- `src/app/coach/sessions/[sessionId]/wrap-up/review/page.tsx`: Added attendance exception query (academy_id + target_module + target_object_id + proposed_by_id scoped; direct column query, no JSON filter); added "Attendance exceptions" section between "Your player notes" and "Back to session" with status badge, concise summary (absent/unexpected counts), and optional director note.
+- Architecture doc: `docs/architecture/COACH_WRAP_UP_ATTENDANCE_PARSE_VISIBILITY_935.md`
+- QA doc: `docs/QA_COACH_WRAP_UP_ATTENDANCE_PARSE_VISIBILITY_935.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 934 — Director Session Wrap-Up Review Improvement V1
 
 - `src/app/director/review/WrapUpDraftCard.tsx`: Added `COMMON_NON_NAMES` exclusion set, `extractCapitalizedNames()` heuristic helper, and `PlayerMentionChips` sub-component. Chips render below `raw_standouts_answer` and `raw_attention_answer` text fields. Max 6 chips; "+N more" overflow. No LLM, no DB calls, no mutations.

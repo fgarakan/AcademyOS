@@ -180,6 +180,48 @@ export default async function CoachWrapUpReviewPage({ params }: PageProps) {
       }))
   } catch { /* non-critical — section renders empty if query fails */ }
 
+  // Sprint 935 — Attendance exception status for this session
+  // Direct column query: target_object_id = sessionId (no JSON filter needed)
+  // Scoped: academy_id + target_module + target_object_id + proposed_by_id (coach's own)
+  interface AttExcDraft {
+    id: string
+    status: string
+    reviewer_notes: string | null
+    absentCount: number
+    unrosteredCount: number
+  }
+  let attExcDrafts: AttExcDraft[] = []
+
+  try {
+    const { data: attExcRows } = await rawDb
+      .from('proposed_actions')
+      .select('id, status, reviewer_notes, proposed_payload')
+      .eq('academy_id', academyId)
+      .eq('target_module', 'attendance_exception')
+      .eq('target_object_id', sessionId)
+      .eq('proposed_by_id', user.id)
+      .in('status', ['pending_review', 'approved', 'executed', 'rejected', 'clarification_needed'])
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    attExcDrafts = ((attExcRows ?? []) as Array<{
+      id: string
+      status: string
+      reviewer_notes: string | null
+      proposed_payload: Record<string, unknown>
+    }>).map(row => ({
+      id: row.id,
+      status: row.status,
+      reviewer_notes: row.reviewer_notes,
+      absentCount: Array.isArray(row.proposed_payload?.rostered_attendance)
+        ? (row.proposed_payload.rostered_attendance as unknown[]).length
+        : 0,
+      unrosteredCount: Array.isArray(row.proposed_payload?.unrostered_attendees)
+        ? (row.proposed_payload.unrostered_attendees as unknown[]).length
+        : 0,
+    }))
+  } catch { /* non-critical — section renders with empty state if query fails */ }
+
   const sessionHref = `/coach/sessions/${sessionId}`
   const wrapUpHref  = `/coach/sessions/${sessionId}/wrap-up`
 
@@ -479,6 +521,54 @@ export default async function CoachWrapUpReviewPage({ params }: PageProps) {
                   )}
 
                   {/* Director note (for clarification_needed or rejected) */}
+                  {draft.reviewer_notes && (draft.status === 'clarification_needed' || draft.status === 'rejected') && (
+                    <div className="flex items-start gap-1.5 px-2.5 py-2 rounded-lg bg-surface-raised border border-border">
+                      <span className="text-[10px] font-medium text-text-muted shrink-0">Director:</span>
+                      <p className="text-[10px] text-text-secondary leading-snug">{draft.reviewer_notes}</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Sprint 935 — Attendance exceptions section */}
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+          <Users className="w-3.5 h-3.5 text-text-muted shrink-0" />
+          <p className="text-[10px] uppercase tracking-widest text-text-muted">Attendance exceptions</p>
+        </div>
+
+        {attExcDrafts.length === 0 ? (
+          <div className="px-4 py-5 text-center">
+            <p className="text-xs text-text-muted">No attendance exceptions detected.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {attExcDrafts.map(draft => {
+              const parts: string[] = []
+              if (draft.absentCount === 1)      parts.push('1 absent player')
+              else if (draft.absentCount > 1)   parts.push(`${draft.absentCount} absent players`)
+              if (draft.unrosteredCount === 1)    parts.push('1 unexpected attendee')
+              else if (draft.unrosteredCount > 1) parts.push(`${draft.unrosteredCount} unexpected attendees`)
+              const summary = parts.join(' · ') || 'Exception detected'
+              const isResolved = draft.status === 'executed' || draft.status === 'approved'
+
+              return (
+                <div key={draft.id} className="px-4 py-3 space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-text-secondary flex-1 min-w-0 truncate">{summary}</span>
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0 ${obsStatusColor(draft.status)}`}>
+                      {obsStatusLabel(draft.status)}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-text-muted leading-snug">
+                    {isResolved
+                      ? 'Director reviewed this exception.'
+                      : 'Sent for director review — no attendance changes until approved.'}
+                  </p>
                   {draft.reviewer_notes && (draft.status === 'clarification_needed' || draft.status === 'rejected') && (
                     <div className="flex items-start gap-1.5 px-2.5 py-2 rounded-lg bg-surface-raised border border-border">
                       <span className="text-[10px] font-medium text-text-muted shrink-0">Director:</span>
