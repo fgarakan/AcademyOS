@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-29 — Sprint 946 — DONNA God Mode Certification V1
+
+- `docs/architecture/DONNA_GOD_MODE_CERTIFICATION_946.md`: Full certification of DONNA foundation after Sprints 938–945. Architecture inventory (shells, new modules, highlight system). God Mode rating: 6.5/10 → 8.5/10. What DONNA can now do (10 capabilities). What DONNA cannot yet do (8 gaps). Legacy systems inventory. Safety guarantees audit. Internal pilot readiness (director 8/10, coach 7.5/10). Next sprint priorities 947–960.
+- `docs/QA_DONNA_GOD_MODE_CERTIFICATION_946.md`: QA checklist — TypeScript, module compilation, context, highlight, what-next, brief, tool safety, memory, protected systems, God Mode rating.
+- TypeScript: clean (no app code changed)
+
+---
+
 ## 2026-05-29 — Sprint 945 — DONNA Director Intelligence Brief V1
 
 - `src/lib/donna/donnaDirectorBrief.ts` (new): COO-style director brief generator. `buildDirectorBrief(input)` ranks up to 6 live signal types (pending reviews, attendance exceptions, high-risk players, advancement-eligible, stalls, curriculum drafts) and returns top 3 `DirectorBriefPriority` items with headline, text, whyItMatters, recommendedAction, targetId, href, safetyNote. `formatBriefAsMessage` renders for Shell A chat. Overall health: critical/attention_needed/on_track/insufficient_data.
