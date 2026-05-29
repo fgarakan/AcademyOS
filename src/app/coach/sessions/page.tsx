@@ -1,3 +1,8 @@
+// Sprint 929 — Coach Sessions List Wrap-Up Status V1
+// Replaced inline proposed_actions status query with loadWrapUpStatusMap (Sprint 928 helper).
+// Aligned WrapUpBadge labels to Sprint 928 language.
+// Added "Wrap-up needed" badge for completed sessions with no draft.
+
 import Link from 'next/link'
 import { Calendar, ChevronRight, CheckCircle2, ClipboardList } from 'lucide-react'
 import {
@@ -12,6 +17,7 @@ import { formatDate } from '@/lib/utils'
 import type { Tables } from '@/lib/supabase/database.types'
 import { loadWrapUpSessionSelector } from '@/lib/coach/wrapUpSessionSelector'
 import type { WrapUpSessionSelectorResult } from '@/lib/coach/wrapUpSessionSelector'
+import { loadWrapUpStatusMap, type WrapUpDisplayStatus } from '@/lib/coach/wrapUpStatusMap'
 import { DonnaOpenChip } from '@/components/assistant/DonnaOpenChip'
 
 type SessionRow = Pick<Tables<'sessions'>, 'id' | 'name' | 'scheduled_date' | 'scheduled_time' | 'status'>
@@ -36,7 +42,7 @@ export default async function CoachSessionsPage() {
   let recentCompleted: SessionRow[] = []
   let coachId: string | null = null
   let academyId: string | null = null
-  const wrapUpStatusMap = new Map<string, string>()
+  let wrapUpStatusRecord: Record<string, WrapUpDisplayStatus> = {}
   let wrapUpSelector: WrapUpSessionSelectorResult = { needsWrapUp: [], alreadySubmitted: [], totalSessions: 0 }
 
   if (user) {
@@ -73,29 +79,21 @@ export default async function CoachSessionsPage() {
         .limit(8)
       recentCompleted = completed ?? []
 
-      // Wrap-up status badges for Today + Completed rows
       if (academyId) {
-        // Wrap-up session selector (Sprint 526)
+        // Wrap-up session selector (Sprint 526) — used for "WRAP-UPS NEEDED" banner
         wrapUpSelector = await loadWrapUpSessionSelector(supabase, coachId, academyId)
 
+        // Sprint 929 — per-session wrap-up review status (replaces inline query)
+        // Best-effort: page renders normally if this fails
         const sessionIds = [
           ...todaySessions.map(s => s.id),
           ...recentCompleted.map(s => s.id),
         ]
         if (sessionIds.length > 0) {
-          const rawWrapUpDb = supabase as any
-          const { data: wrapUpRows } = await rawWrapUpDb
-            .from('proposed_actions')
-            .select('target_object_id, status, created_at')
-            .eq('academy_id', academyId)
-            .eq('target_module', 'session_wrap_up_v1')
-            .eq('proposed_by_id', user.id)
-            .in('target_object_id', sessionIds)
-            .order('created_at', { ascending: false })
-          for (const row of (wrapUpRows ?? [])) {
-            if (!wrapUpStatusMap.has(row.target_object_id)) {
-              wrapUpStatusMap.set(row.target_object_id, row.status as string)
-            }
+          try {
+            wrapUpStatusRecord = await loadWrapUpStatusMap(supabase, sessionIds, academyId)
+          } catch {
+            // non-critical — badges stay hidden if status load fails
           }
         }
       }
@@ -160,7 +158,12 @@ export default async function CoachSessionsPage() {
         <div className="space-y-2">
           {todaySessions.length > 0 ? (
             todaySessions.map(s => (
-              <SessionCard key={s.id} session={s} primary wrapUpStatus={wrapUpStatusMap.get(s.id)} />
+              <SessionCard
+                key={s.id}
+                session={s}
+                primary
+                wrapUpStatus={wrapUpStatusRecord[s.id]}
+              />
             ))
           ) : (
             <Card>
@@ -208,7 +211,12 @@ export default async function CoachSessionsPage() {
             <CardContent className="py-2">
               <ul className="divide-y divide-border">
                 {recentCompleted.map(s => (
-                  <SessionRow key={s.id} session={s} showDate wrapUpStatus={wrapUpStatusMap.get(s.id)} />
+                  <SessionRow
+                    key={s.id}
+                    session={s}
+                    showDate
+                    wrapUpStatus={wrapUpStatusRecord[s.id]}
+                  />
                 ))}
               </ul>
             </CardContent>
@@ -231,9 +239,10 @@ function SessionCard({
 }: {
   session: Pick<Tables<'sessions'>, 'id' | 'name' | 'scheduled_date' | 'scheduled_time' | 'status'>
   primary?: boolean
-  wrapUpStatus?: string
+  wrapUpStatus?: WrapUpDisplayStatus
 }) {
   const isActive = session.status === 'in_progress'
+  const sessionCompleted = session.status === 'completed'
   return (
     <Link href={`/coach/sessions/${session.id}`} className="block">
       <div className={[
@@ -260,8 +269,8 @@ function SessionCard({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <WrapUpBadge status={wrapUpStatus} />
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          <WrapUpBadge wrapUpStatus={wrapUpStatus} sessionCompleted={sessionCompleted} />
           <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${STATUS_STYLES[session.status] ?? STATUS_STYLES.planned}`}>
             {statusLabel(session.status)}
           </span>
@@ -286,7 +295,7 @@ function SessionRow({
 }: {
   session: SessionRow
   showDate?: boolean
-  wrapUpStatus?: string
+  wrapUpStatus?: WrapUpDisplayStatus
 }) {
   const isCompleted = session.status === 'completed'
   return (
@@ -309,7 +318,7 @@ function SessionRow({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <WrapUpBadge status={wrapUpStatus} />
+          <WrapUpBadge wrapUpStatus={wrapUpStatus} sessionCompleted={isCompleted} />
           <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${STATUS_STYLES[session.status] ?? STATUS_STYLES.planned}`}>
             {statusLabel(session.status)}
           </span>
@@ -321,18 +330,20 @@ function SessionRow({
 }
 
 // ─────────────────────────────────────────────────────────────
-// WrapUpBadge — compact inline status for submitted wrap-ups
+// WrapUpBadge — compact inline status badge
+// Sprint 929: aligned to Sprint 928 labels; added "Wrap-up needed"
+// for completed sessions with no draft.
 // ─────────────────────────────────────────────────────────────
 
-const WRAP_UP_LABEL: Record<string, string> = {
-  pending_review:       'Wrap-up pending',
-  approved:             'Wrap-up approved',
-  executed:             'Wrap-up applied',
-  clarification_needed: 'Clarification needed',
-  rejected:             'Not approved',
+const WRAP_UP_LABEL: Partial<Record<WrapUpDisplayStatus, string>> = {
+  pending_review:       'Pending review',
+  approved:             'Approved',
+  executed:             'Applied',
+  clarification_needed: 'Director has questions',
+  rejected:             'Needs revision',
 }
 
-const WRAP_UP_STYLE: Record<string, string> = {
+const WRAP_UP_STYLE: Partial<Record<WrapUpDisplayStatus, string>> = {
   pending_review:       'bg-status-blue/10 text-status-blue border-status-blue/30',
   approved:             'bg-status-green/10 text-status-green border-status-green/30',
   executed:             'bg-status-green/10 text-status-green border-status-green/30',
@@ -340,11 +351,27 @@ const WRAP_UP_STYLE: Record<string, string> = {
   rejected:             'bg-status-red/10 text-status-red border-status-red/30',
 }
 
-function WrapUpBadge({ status }: { status: string | undefined }) {
-  if (!status) return null
-  const label = WRAP_UP_LABEL[status]
-  const style = WRAP_UP_STYLE[status]
-  if (!label) return null
+function WrapUpBadge({
+  wrapUpStatus,
+  sessionCompleted = false,
+}: {
+  wrapUpStatus?: WrapUpDisplayStatus
+  sessionCompleted?: boolean
+}) {
+  // No draft (undefined or 'not_started'): only show badge for completed sessions
+  if (!wrapUpStatus || wrapUpStatus === 'not_started') {
+    if (!sessionCompleted) return null
+    return (
+      <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-status-orange/10 text-status-orange border-status-orange/30">
+        Wrap-up needed
+      </span>
+    )
+  }
+
+  const label = WRAP_UP_LABEL[wrapUpStatus]
+  const style = WRAP_UP_STYLE[wrapUpStatus]
+  if (!label || !style) return null
+
   return (
     <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${style}`}>
       {label}

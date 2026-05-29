@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 929 — Coach Sessions List Wrap-Up Status V1
+
+- `src/app/coach/sessions/page.tsx`: Replaced inline proposed_actions query with `loadWrapUpStatusMap` (Sprint 928 helper); aligned `WrapUpBadge` labels to Sprint 928 language; added "Wrap-up needed" badge for completed rows with no draft; added `sessionCompleted` prop to suppress badge on upcoming/in-progress sessions.
+- Architecture doc: `docs/architecture/COACH_SESSIONS_LIST_WRAP_UP_STATUS_929.md`
+- QA doc: `docs/QA_COACH_SESSIONS_LIST_WRAP_UP_STATUS_929.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 928 — Coach Session Wrap-Up Status Wiring V1
 
 - `src/lib/coach/wrapUpStatusMap.ts`: New read-only batch loader — returns `WrapUpDisplayStatus` per session ID from `proposed_actions`. academy_id-scoped, best-effort.
