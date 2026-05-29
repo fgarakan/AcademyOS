@@ -1299,6 +1299,76 @@ export function DonnaVoiceReadyShell({
       }
     }
 
+    // ── Sprint 948: Coach page guide intent routing ──────────────────────────
+    // Mirrors the director page guide for coach role.
+    // Uses coach page capability maps + coachCtx for live context.
+    if (plainRole === 'coach') {
+      const COACH_PAGE_NEXT_STEP = /\b(what should i do (here|on this page|next)|what.{0,10}most important|what.{0,10}best (next )?step|where (should i |do i )start|what('?s| is) (my |the )?next (step|action|move)|what to do next|what('?s| is) next)\b/i
+      const COACH_WHERE_AM_I     = /\b(where am i|what page am i on|what.{0,10}this page|explain this page)\b/i
+      const COACH_WHAT_CAN_I_DO  = /\b(what can i do here|what can you help (me with )?(here|on this page)|what.{0,15}options (here|on this page))\b/i
+
+      const coachPath = pathname ?? '/coach'
+      let coachGuideText: string | null = null
+      let coachNextTargetId: string | undefined
+      let coachNextLabel: string | undefined
+      let coachNextHref: string | undefined
+
+      if (COACH_WHERE_AM_I.test(trimmed)) {
+        coachGuideText = whereAmI(coachPath)
+      } else if (COACH_WHAT_CAN_I_DO.test(trimmed)) {
+        coachGuideText = whatCanYouHelpWith(coachPath)
+      } else if (COACH_PAGE_NEXT_STEP.test(trimmed)) {
+        const coachWhatNext = buildWhatNextAnswer(
+          'coach',
+          coachPath,
+          coachCtx ? {
+            missingWrapUps: coachCtx.missingWrapUps,
+            todaySessions: coachCtx.todaySessions,
+            observationDraftsToday: coachCtx.observationDraftsToday,
+            activeSessionId: coachCtx.activeSessionId,
+          } : undefined,
+        )
+        coachGuideText = coachWhatNext.text
+        coachNextTargetId = coachWhatNext.targetId
+        coachNextLabel = coachWhatNext.label
+        coachNextHref = coachWhatNext.href
+      }
+
+      if (coachGuideText) {
+        const coachCap = getPageCapabilityMap(coachPath)
+        const coachGuideMsg: ChatMessage = {
+          id: `donna-coach-guide-${Date.now()}`,
+          role: 'donna',
+          kind: 'text',
+          text: coachGuideText,
+          timestamp: new Date().toISOString(),
+          confidence: 'high',
+          sourceNote: `Page context: ${coachCap.pageLabel}`,
+          followUp: coachNextHref ? (coachNextLabel ?? 'Take me there') : undefined,
+          followUpHref: coachNextHref,
+        }
+        setTimeout(() => {
+          setMessages(prev => [...prev, coachGuideMsg])
+          setIsTyping(false)
+          recordTurn(trimmed, coachGuideText!, { domain: 'general', confidence: 'high', sourceNote: `Page: ${coachPath}` })
+          if (coachNextTargetId) {
+            setDonnaFocusTarget({
+              route: coachPath,
+              targetId: coachNextTargetId,
+              label: coachNextLabel ?? 'Next action',
+              sourceCommand: trimmed,
+              highlightStyle: 'teal-glow',
+            })
+            window.dispatchEvent(new CustomEvent('donna:highlight'))
+          }
+          if (coachNextHref && coachNextHref !== coachPath) {
+            setPendingNavOffer({ href: coachNextHref, label: coachNextLabel ?? 'that section', questionContext: trimmed })
+          }
+        }, 400)
+        return
+      }
+    }
+
     // ── Sprint 725: Missing context intercept ────────────────────────────────
     // Fires BEFORE safe-read and KPI intercepts so onboarding/setup questions
     // always get a proper explanation + navigation offer, not a fallback.

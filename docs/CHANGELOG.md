@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 948 — Coach DONNA God Mode Parity V1
+
+- `src/lib/donna/donnaWhatNextEngine.ts`: Added coach signals to WhatNextLiveContext (missingWrapUps, todaySessions, observationDraftsToday, activeSessionId). Coach priority logic: missingWrapUps > 0 → coach-wrap-up-link highlight; todaySessions > 0 on /coach → coach-today-sessions highlight.
+- `src/components/donna/DonnaVoiceReadyShell.tsx`: Added coach page guide branch — COACH_PAGE_NEXT_STEP, COACH_WHERE_AM_I, COACH_WHAT_CAN_I_DO patterns. buildWhatNextAnswer called with live coachCtx fields. Highlight and nav offer wired same as director branch. DonnaVoiceWrapUpShell (Shell C) untouched.
+- Architecture doc: `docs/architecture/COACH_DONNA_GOD_MODE_PARITY_948.md`
+- QA doc: `docs/QA_COACH_DONNA_GOD_MODE_PARITY_948.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 947 — Internal Pilot DONNA Guided Workflow QA V1
 
 - `docs/architecture/INTERNAL_PILOT_DONNA_GUIDED_WORKFLOW_947.md`: Complete guided workflow for Brian (director) and Farshad (coach). Director path: morning brief → what next? → review queue → approve/reject → apply → next step guidance. Coach path: session start → execution → wrap-up submission → director feedback visibility. Data seeding requirements documented. Pilot readiness: director 9/10, coach 9/10 wrap-up, overall 8.5/10. Go/No-Go: director path GO; voice/parent/player blocked by OPENAI_API_KEY and guardian/profile linkage.

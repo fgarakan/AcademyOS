@@ -1,4 +1,5 @@
 // Sprint 941 — DONNA "What Should I Do Next?" Engine V1
+// Sprint 948 — Coach context signals added to WhatNextLiveContext
 // Produces a priority-ranked next-action recommendation for DONNA.
 // Inputs: role, pathname, optional live context signals.
 // Outputs: text answer, optional UI highlight target, safety note.
@@ -32,6 +33,7 @@ import { whatIsTheBestNextStep } from './donnaPageContextEngine'
 
 /** Live context signals for the "what next?" engine. All fields are optional. */
 export interface WhatNextLiveContext {
+  // ── Director signals ────────────────────────────────────────────────────────
   /** Pending proposed_actions items awaiting director decision */
   pendingReviews?: number
   /** Pending attendance exceptions requiring director review */
@@ -44,6 +46,15 @@ export interface WhatNextLiveContext {
   highRiskPlayerCount?: number
   /** Curriculum drafts in pending_review state */
   curriculumDraftCount?: number
+  // ── Coach signals (Sprint 948) ───────────────────────────────────────────────
+  /** Wrap-ups the coach has not yet submitted */
+  missingWrapUps?: number
+  /** Today's session count for the coach */
+  todaySessions?: number
+  /** Observation drafts submitted by the coach today */
+  observationDraftsToday?: number
+  /** Active session ID (if coach is in a session right now) */
+  activeSessionId?: string | null
 }
 
 /** The resolved next-action recommendation from DONNA. */
@@ -152,6 +163,36 @@ export function buildWhatNextAnswer(
       href: '/director/players',
       confidence: 'high',
       source: 'live_stall',
+    }
+  }
+
+  // ── Coach priorities (Sprint 948) ──────────────────────────────────────────
+  if (role === 'coach') {
+    // Coach Priority 1: Missing wrap-ups
+    if (liveCtx?.missingWrapUps && liveCtx.missingWrapUps > 0) {
+      const n = liveCtx.missingWrapUps
+      const plural = n === 1 ? 'session is' : 'sessions are'
+      const targetId = 'coach-wrap-up-link'
+      return {
+        text: `You have **${n} ${plural} missing a wrap-up**. Head to the session and tap "Wrap-Up" in the After Session section. It takes under 3 minutes and goes to your director for review. ${getSafetyMessage('draftOnly')}`,
+        targetId,
+        label: 'Session Wrap-Up',
+        explanation: `${n} ${plural} missing a wrap-up submission.`,
+        safetyNote: getSafetyMessage('draftOnly'),
+        confidence: 'high',
+        source: 'page_element_urgent',
+      }
+    }
+    // Coach Priority 2: Sessions today
+    if (liveCtx?.todaySessions && liveCtx.todaySessions > 0 && pathname === '/coach') {
+      return {
+        text: `You have **${liveCtx.todaySessions} session${liveCtx.todaySessions > 1 ? 's' : ''} today**. I'm highlighting your schedule — tap a session to open it, mark attendance, and run your blocks.`,
+        targetId: 'coach-today-sessions',
+        label: "Today's Sessions",
+        explanation: `${liveCtx.todaySessions} session${liveCtx.todaySessions > 1 ? 's' : ''} scheduled today.`,
+        confidence: 'high',
+        source: 'page_element_urgent',
+      }
     }
   }
 
