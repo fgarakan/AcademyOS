@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-29 — Sprint 960 — DONNA God Mode Certification V1
+
+- `docs/architecture/DONNA_GOD_MODE_CERTIFICATION_960.md` (new): Final certification for the DONNA God Mode mega sprint (939–960). Executive summary, full sprint map, capability map with ratings, role readiness (5 roles), UI readiness (9 surfaces), safety certification (12 invariants confirmed), eval certification (6 cases), intelligence visibility, pilot readiness (8.5/10), demo readiness (8/10), 12 remaining gaps to 10/10, roadmap options A+B, final rating table (pre-939: 6.5 → Sprint 946: 8.5 → Sprint 960: 8.7/10).
+- `docs/QA_DONNA_GOD_MODE_CERTIFICATION_960.md` (new): TypeScript, docs, safety, protected systems, eval harness, UI visibility, role readiness, internal pilot go/no-go, public demo go/no-go, and remaining blockers checklists.
+- No app code changes — certification only. TypeScript: clean (inherited from Sprint 959).
+
+---
+
 ## 2026-05-29 — Sprint 959 — DONNA Intelligence Director UI Wiring V1
 
 - `src/components/donna/DonnaIntelligenceSignalsCard.tsx` (new): Read-only Server Component. Calls `buildProactiveAlerts` with `ctx.pendingReviews` and `ctx.missingWrapUps`. Renders urgency-sorted alert list with headline, body, safety note, and `actionRoute` link. Safe empty state when no alerts. `data-donna-focus-id="donna-intelligence-signals"` for DONNA highlight. No new queries. No mutations. No fake data.
