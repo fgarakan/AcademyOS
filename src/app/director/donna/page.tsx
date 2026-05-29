@@ -16,6 +16,7 @@ import { DonnaEntitySummarySection } from './DonnaEntitySummarySection'
 import { DonnaInsightSection } from './DonnaInsightSection'
 import { generateDonnaInsights } from '@/lib/donna/donnaInsightEngine'
 import { DonnaUIActionSuggestionPanel } from './DonnaUIActionSuggestionPanel'
+import { DonnaIntelligenceSignalsCard } from '@/components/donna/DonnaIntelligenceSignalsCard'
 
 // ── Director DONNA command center — Sprint 1038/1040 wiring + Sprint 777 AIQS
 // Full page wiring: loads DirectorDonnaContext, renders attention items, risks,
@@ -153,6 +154,15 @@ export default async function DirectorDonnaPage() {
               />
             )
           })()}
+
+          {/* Sprint 959 — Intelligence Signals: proactive alerts from buildProactiveAlerts */}
+          {/* Uses ctx.pendingReviews and ctx.missingWrapUps only. No new queries.        */}
+          {/* review_aging and parent_summary_ready require V2 data feeds.               */}
+          <DonnaIntelligenceSignalsCard
+            pendingReviews={pendingReviews}
+            sessionsWithoutWrapUp={missingWrapUps}
+            isLive={isLive}
+          />
 
           {/* Attention Items — conditional */}
           {attentionItems.length > 0 && (

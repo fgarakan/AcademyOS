@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 959 — DONNA Intelligence Director UI Wiring V1
+
+- `src/components/donna/DonnaIntelligenceSignalsCard.tsx` (new): Read-only Server Component. Calls `buildProactiveAlerts` with `ctx.pendingReviews` and `ctx.missingWrapUps`. Renders urgency-sorted alert list with headline, body, safety note, and `actionRoute` link. Safe empty state when no alerts. `data-donna-focus-id="donna-intelligence-signals"` for DONNA highlight. No new queries. No mutations. No fake data.
+- `src/app/director/donna/page.tsx` (modified): Import and render `DonnaIntelligenceSignalsCard` in left column after `DONNAAcademyPulseCard`. Props sourced from existing `ctx` — no new queries added.
+- `docs/architecture/DONNA_INTELLIGENCE_DIRECTOR_UI_WIRING_959.md` (new): Modules wired vs. V2, insertion point, data flow, alert coverage, empty state, safety boundaries, DONNA highlight target, certification impact.
+- `docs/QA_DONNA_INTELLIGENCE_DIRECTOR_UI_WIRING_959.md` (new): TypeScript, UI visibility, no-mutation, no-send, parent/player safety, highlight target, data accuracy, protected systems, and V2 modules checklists.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 958 — DONNA Proactive Alerts V1
 
 - `src/lib/donna/donnaProactiveAlerts.ts` (new): Safe in-app proactive alert generation for directors. Three V1 builders: `buildReviewAgingAlert` (urgency scaled by age: critical/high/medium), `buildMissingWrapUpsAlert` (high/medium), `buildParentSummaryReadyAlert` (low). Suite builder `buildProactiveAlerts(input)` combines all three with threshold guards and sorts by urgency. Safety notes from `getSafetyMessage` on approval and no-send alerts. All alerts dismissible. Pure TypeScript — no DB calls, no mutations, no push/email/SMS dispatch.
