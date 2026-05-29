@@ -44,6 +44,7 @@ import type { DonnaDraftItem } from './DonnaDraftCard'
 import { loadWrapUpReviewSurface } from '@/lib/donna/wrapUpReviewSurfaceLoader'
 import { WrapUpCoveragePanel } from './WrapUpCoveragePanel'
 import { DonnaReviewBriefPanel } from './DonnaReviewBriefPanel'
+import { DonnaReviewTabGuide } from './DonnaReviewTabGuide'
 
 const VALID_TAB_PARAMS: Record<string, string> = {
   // Director-facing section names (Sprint 247)
@@ -1296,6 +1297,7 @@ export default async function DirectorReviewQueuePage({
 
         {/* ─── Needs Approval tab ─── */}
         <TabsContent value="needs_approval" className="pt-6 space-y-8">
+          <DonnaReviewTabGuide tab="needs_approval" pendingCount={needsApprovalPending} />
           {needsApprovalPending + needsApprovalReady === 0 && (
             <Card>
               <CardContent className="py-12">
@@ -1572,6 +1574,7 @@ export default async function DirectorReviewQueuePage({
 
         {/* ─── Player Updates tab ─── */}
         <TabsContent value="player_updates" className="pt-6 space-y-8">
+          <DonnaReviewTabGuide tab="player_updates" pendingCount={playerUpdatesPending} />
           {playerUpdatesPending + playerUpdatesReady === 0 && (
             <Card>
               <CardContent className="py-12">
@@ -1767,6 +1770,7 @@ export default async function DirectorReviewQueuePage({
 
         {/* ─── Curriculum / Session Changes tab ─── */}
         <TabsContent value="curriculum_session" className="pt-6 space-y-8">
+          <DonnaReviewTabGuide tab="curriculum_session" pendingCount={curriculumSessionPending} />
           {curriculumSessionPending + curriculumSessionReady === 0 && (
             <Card>
               <CardContent className="py-12">
@@ -1890,6 +1894,7 @@ export default async function DirectorReviewQueuePage({
 
         {/* ─── Completed tab ─── */}
         <TabsContent value="completed" className="pt-6 space-y-8">
+          <DonnaReviewTabGuide tab="completed" />
           {completedCount === 0 && (
             <Card>
               <CardContent className="py-12">

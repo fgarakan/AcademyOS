@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 923 — Director Review Queue 10/10 V1
+
+- `src/app/director/review/DonnaReviewTabGuide.tsx`: Per-tab DONNA guidance component — what's in this tab, what to prioritize, safety model.
+- `src/app/director/review/page.tsx`: Added `DonnaReviewTabGuide` to top of all 4 tabs. Sprint 904 behavior unchanged.
+- QA doc: `docs/QA_DIRECTOR_REVIEW_QUEUE_923.md`
+- Architecture doc: `docs/architecture/DIRECTOR_REVIEW_QUEUE_10_OF_10_923.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 922 — DONNA Director Brief 10/10 V1
 
 - `src/app/director/today/DonnaTodayBriefPanel.tsx`: Priority-ordered brief panel — up to 4 items with "why it matters" copy, urgency ordering, and safe next-action links. Uses existing loaded data.
