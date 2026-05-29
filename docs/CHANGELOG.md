@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 924 — DONNA Safe UI Action Suggestions V1
+
+- `src/app/director/donna/DonnaUIActionSuggestionPanel.tsx`: Client component showing safe/approval-required UI actions for current page. Uses `donnaUIActionRegistry.getUIActionsForPage()`.
+- `src/app/director/donna/page.tsx`: Wired `DonnaUIActionSuggestionPanel` to right column.
+- QA doc: `docs/QA_DONNA_SAFE_UI_ACTION_SUGGESTIONS_924.md`
+- Architecture doc: `docs/architecture/DONNA_SAFE_UI_ACTION_SUGGESTIONS_924.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 923 — Director Review Queue 10/10 V1
 
 - `src/app/director/review/DonnaReviewTabGuide.tsx`: Per-tab DONNA guidance component — what's in this tab, what to prioritize, safety model.

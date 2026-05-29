@@ -15,6 +15,7 @@ import type { PulseTrend } from '@/components/donna/DONNAAcademyPulseCard'
 import { DonnaEntitySummarySection } from './DonnaEntitySummarySection'
 import { DonnaInsightSection } from './DonnaInsightSection'
 import { generateDonnaInsights } from '@/lib/donna/donnaInsightEngine'
+import { DonnaUIActionSuggestionPanel } from './DonnaUIActionSuggestionPanel'
 
 // ── Director DONNA command center — Sprint 1038/1040 wiring + Sprint 777 AIQS
 // Full page wiring: loads DirectorDonnaContext, renders attention items, risks,
@@ -271,6 +272,8 @@ export default async function DirectorDonnaPage() {
           {academyId && (
             <DonnaEntitySummarySection db={db} academyId={academyId} />
           )}
+          {/* Sprint 924 — Safe UI action suggestions for current page */}
+          <DonnaUIActionSuggestionPanel pathname="/director/donna" />
           <div className="rounded-2xl border border-border bg-surface overflow-hidden flex flex-col" style={{ height: '560px' }}>
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-surface-raised">
               <div className="w-7 h-7 rounded-xl bg-lime/15 border border-lime/25 flex items-center justify-center">
