@@ -14,8 +14,28 @@ import {
   type CoachWorkspaceSummary,
 } from '@/lib/backend/coachWorkspace'
 import { loadWrapUpSessionSelector } from '@/lib/coach/wrapUpSessionSelector'
+import { loadWrapUpStatusMap, type WrapUpDisplayStatus } from '@/lib/coach/wrapUpStatusMap'
 import { CoachOnCourtActionsBar } from './_components/CoachOnCourtActionsBar'
 import { CoachDailyBriefCard } from './_components/CoachDailyBriefCard'
+
+function deriveWrapUpBadge(
+  sessionStatus: string,
+  wrapUpStatus: WrapUpDisplayStatus | undefined,
+): { label: string; classes: string } | null {
+  if (!wrapUpStatus || wrapUpStatus === 'not_started') {
+    return sessionStatus === 'completed'
+      ? { label: 'Wrap-up needed', classes: 'bg-status-orange/10 text-status-orange border-status-orange/30' }
+      : null
+  }
+  switch (wrapUpStatus) {
+    case 'pending_review':     return { label: 'Pending review', classes: 'bg-status-blue/10 text-status-blue border-status-blue/30' }
+    case 'approved':           return { label: 'Approved', classes: 'bg-status-green/10 text-status-green border-status-green/30' }
+    case 'executed':           return { label: 'Applied', classes: 'bg-status-green/10 text-status-green border-status-green/30' }
+    case 'rejected':           return { label: 'Needs revision', classes: 'bg-status-red/10 text-status-red border-status-red/30' }
+    case 'clarification_needed': return { label: 'Director has questions', classes: 'bg-status-orange/10 text-status-orange border-status-orange/30' }
+    default: return null
+  }
+}
 
 function playerInitials(fullName: string | null): string {
   if (!fullName) return '?'
@@ -62,6 +82,20 @@ export default async function CoachHome() {
       pendingWrapUpCount = wrapUpSelector.needsWrapUp.length
     } catch {
       // non-critical — alert stays hidden if query fails
+    }
+  }
+
+  // Sprint 928 — per-session wrap-up review status from proposed_actions
+  let wrapUpStatusMap: Record<string, WrapUpDisplayStatus> = {}
+  if (todaySessions.length > 0 && profile?.academy_id) {
+    try {
+      wrapUpStatusMap = await loadWrapUpStatusMap(
+        supabase,
+        todaySessions.map(s => s.id),
+        profile.academy_id,
+      )
+    } catch {
+      // best-effort — home renders without wrap-up status if query fails
     }
   }
 
@@ -138,6 +172,8 @@ export default async function CoachHome() {
                 blockCount: 0,
                 curriculumFocus: null,
                 watchFors: [],
+                sessionStatus: next.status,
+                wrapUpStatus: wrapUpStatusMap[next.id],
               }}
               totalToday={todaySessions.length}
             />
@@ -188,7 +224,7 @@ export default async function CoachHome() {
                               </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                             <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                               s.status === 'in_progress'
                                 ? 'bg-lime/10 text-lime border-lime/30'
@@ -200,6 +236,14 @@ export default async function CoachHome() {
                             }`}>
                               {s.status.replace('_', ' ')}
                             </span>
+                            {(() => {
+                              const badge = deriveWrapUpBadge(s.status, wrapUpStatusMap[s.id])
+                              return badge ? (
+                                <span className={`text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${badge.classes}`}>
+                                  {badge.label}
+                                </span>
+                              ) : null
+                            })()}
                             <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-lime transition-colors" />
                           </div>
                         </Link>

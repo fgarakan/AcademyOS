@@ -1,11 +1,13 @@
 // Sprint 926 — Coach Daily Brief + Session Execution V1
-// Pre-session brief card for the coach home page.
-// Shows next session details, player watch-fors, coaching focus, and CTA.
-// Mobile-first, low cognitive load.
+// Sprint 928 — Coach Session Wrap-Up Status Wiring V1
+// Added: wrapUpStatus and sessionStatus props. Shows a human-friendly wrap-up
+// status strip below the existing CTA row when the session is complete or a
+// draft has been submitted. No mutations. Read-only display.
 
 import Link from 'next/link'
 import { Calendar, ArrowRight, Eye, Target, Clock } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
+import type { WrapUpDisplayStatus } from '@/lib/coach/wrapUpStatusMap'
 
 interface SessionBrief {
   id: string
@@ -15,6 +17,8 @@ interface SessionBrief {
   blockCount: number
   curriculumFocus: string | null
   watchFors: Array<{ playerName: string; focus: string }>
+  sessionStatus?: string
+  wrapUpStatus?: WrapUpDisplayStatus
 }
 
 interface Props {
@@ -44,6 +48,13 @@ export function CoachDailyBriefCard({ nextSession, totalToday }: Props) {
   }
 
   const time = formatTime(nextSession.scheduledTime)
+  const sessionDone = nextSession.sessionStatus === 'completed'
+  const wrapUpStatus = nextSession.wrapUpStatus
+  const hasDraft = wrapUpStatus !== undefined && wrapUpStatus !== 'not_started'
+  const showWrapUpSection = sessionDone || hasDraft
+
+  const wrapUpHref = `/coach/sessions/${nextSession.id}/wrap-up`
+  const sessionHref = `/coach/sessions/${nextSession.id}`
 
   return (
     <div className="rounded-2xl border border-lime/15 bg-lime/3 overflow-hidden">
@@ -76,7 +87,7 @@ export function CoachDailyBriefCard({ nextSession, totalToday }: Props) {
           </div>
         </div>
         <Link
-          href={`/coach/sessions/${nextSession.id}`}
+          href={sessionHref}
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-lime bg-lime/10 border border-lime/20 hover:bg-lime/20 transition-colors shrink-0 whitespace-nowrap"
         >
           View <ArrowRight className="w-3 h-3" />
@@ -125,12 +136,82 @@ export function CoachDailyBriefCard({ nextSession, totalToday }: Props) {
           <ArrowRight className="w-3 h-3" />
         </Link>
         <Link
-          href={`/coach/sessions/${nextSession.id}`}
+          href={sessionHref}
           className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs text-text-muted border border-border hover:border-lime/20 transition-colors"
         >
           Details
         </Link>
       </div>
+
+      {/* Wrap-up status strip — shown when session is done or a draft exists */}
+      {showWrapUpSection && (
+        <div className="px-4 py-2.5 border-t border-lime/10">
+          {(!wrapUpStatus || wrapUpStatus === 'not_started') && (
+            <Link
+              href={wrapUpHref}
+              className="flex items-center justify-between gap-2 group"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-status-orange shrink-0" />
+                <span className="text-xs font-medium text-status-orange">Wrap-up needed</span>
+              </div>
+              <span className="text-[10px] text-status-orange/70 group-hover:text-status-orange transition-colors">
+                Start →
+              </span>
+            </Link>
+          )}
+          {wrapUpStatus === 'pending_review' && (
+            <Link
+              href={sessionHref}
+              className="flex items-center justify-between gap-2 group"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-status-blue shrink-0 animate-pulse" />
+                <span className="text-xs text-status-blue">Pending review</span>
+              </div>
+              <span className="text-[10px] text-text-muted group-hover:text-text-secondary transition-colors">
+                View →
+              </span>
+            </Link>
+          )}
+          {(wrapUpStatus === 'approved' || wrapUpStatus === 'executed') && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-status-green shrink-0" />
+              <span className="text-xs text-status-green font-medium">
+                {wrapUpStatus === 'executed' ? 'Applied' : 'Approved'}
+              </span>
+            </div>
+          )}
+          {wrapUpStatus === 'rejected' && (
+            <Link
+              href={wrapUpHref}
+              className="flex items-center justify-between gap-2 group"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-status-red shrink-0" />
+                <span className="text-xs font-medium text-status-red">Needs revision</span>
+              </div>
+              <span className="text-[10px] text-status-red/70 group-hover:text-status-red transition-colors">
+                Revise →
+              </span>
+            </Link>
+          )}
+          {wrapUpStatus === 'clarification_needed' && (
+            <Link
+              href={sessionHref}
+              className="flex items-center justify-between gap-2 group"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-status-orange shrink-0" />
+                <span className="text-xs font-medium text-status-orange">Director has questions</span>
+              </div>
+              <span className="text-[10px] text-status-orange/70 group-hover:text-status-orange transition-colors">
+                View →
+              </span>
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   )
 }

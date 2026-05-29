@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Sprint 928 — Coach Session Wrap-Up Status Wiring V1
+
+- `src/lib/coach/wrapUpStatusMap.ts`: New read-only batch loader — returns `WrapUpDisplayStatus` per session ID from `proposed_actions`. academy_id-scoped, best-effort.
+- `src/app/coach/_components/CoachDailyBriefCard.tsx`: Added `wrapUpStatus` + `sessionStatus` props. Wrap-up status strip in card footer (human-friendly labels, contextual CTAs).
+- `src/app/coach/page.tsx`: Calls `loadWrapUpStatusMap` for today's sessions; passes status to DailyBriefCard; adds compact wrap-up badge to session list items.
+- Architecture doc: `docs/architecture/COACH_WRAP_UP_STATUS_WIRING_928.md`
+- QA doc: `docs/QA_COACH_WRAP_UP_STATUS_WIRING_928.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 927 — Coach Wrap-Up 10/10 V1
 
 - `src/app/coach/sessions/[sessionId]/wrap-up/WrapUpPageClient.tsx`: Added voice input (AudioRecorderButton + VoiceInputButton) per question, player name quick-chips for standouts/attention questions, optional player observation draft form in saved state.
