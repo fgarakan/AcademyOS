@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-29 — Sprint 947 — Internal Pilot DONNA Guided Workflow QA V1
+
+- `docs/architecture/INTERNAL_PILOT_DONNA_GUIDED_WORKFLOW_947.md`: Complete guided workflow for Brian (director) and Farshad (coach). Director path: morning brief → what next? → review queue → approve/reject → apply → next step guidance. Coach path: session start → execution → wrap-up submission → director feedback visibility. Data seeding requirements documented. Pilot readiness: director 9/10, coach 9/10 wrap-up, overall 8.5/10. Go/No-Go: director path GO; voice/parent/player blocked by OPENAI_API_KEY and guardian/profile linkage.
+- `docs/QA_INTERNAL_PILOT_DONNA_GUIDED_WORKFLOW_947.md`: Full QA checklist for both director and coach pilot paths.
+- TypeScript: clean (no app code changed)
+
+---
+
 ## 2026-05-29 — Sprint 946 — DONNA God Mode Certification V1
 
 - `docs/architecture/DONNA_GOD_MODE_CERTIFICATION_946.md`: Full certification of DONNA foundation after Sprints 938–945. Architecture inventory (shells, new modules, highlight system). God Mode rating: 6.5/10 → 8.5/10. What DONNA can now do (10 capabilities). What DONNA cannot yet do (8 gaps). Legacy systems inventory. Safety guarantees audit. Internal pilot readiness (director 8/10, coach 7.5/10). Next sprint priorities 947–960.
