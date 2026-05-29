@@ -1587,14 +1587,19 @@ export default async function DirectorReviewQueuePage({
             </Card>
           )}
 
-          {/* Player Notes */}
-          {(pendingObservationDrafts.length + approvedObservationDrafts.length) > 0 && (
+          {/* Player Notes — Sprint 931: includes clarification_needed items */}
+          {(pendingObservationDrafts.length + approvedObservationDrafts.length + clarificationNeededObservationDrafts.length) > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-1 border-b border-border">
                 <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest">Player Notes</h3>
                 {pendingObservationDrafts.length > 0 && (
                   <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
                     {pendingObservationDrafts.length} to review
+                  </span>
+                )}
+                {clarificationNeededObservationDrafts.length > 0 && (
+                  <span className="text-[9px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-status-orange/15 text-status-orange border border-status-orange/20 leading-none">
+                    {clarificationNeededObservationDrafts.length} needs clarification
                   </span>
                 )}
                 {approvedObservationDrafts.length > 0 && (
@@ -1621,9 +1626,22 @@ export default async function DirectorReviewQueuePage({
               )}
               {pendingObservationDrafts.length > 0 && (
                 <section className="space-y-3">
-                  {approvedObservationDrafts.length > 0 && <p className="label-xs">Pending Review</p>}
+                  {(approvedObservationDrafts.length > 0 || clarificationNeededObservationDrafts.length > 0) && (
+                    <p className="label-xs">Pending Review</p>
+                  )}
                   <div className="space-y-4">
                     {pendingObservationDrafts.map(draft => (
+                      <WrapUpObservationDraftCard key={draft.id} draft={draft} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {clarificationNeededObservationDrafts.length > 0 && (
+                <section className="space-y-3">
+                  <p className="label-xs">Needs Clarification</p>
+                  <p className="text-[10px] text-text-muted">Clarification was requested. Review the coach&apos;s note, discuss offline if needed, then approve or reject.</p>
+                  <div className="space-y-4">
+                    {clarificationNeededObservationDrafts.map(draft => (
                       <WrapUpObservationDraftCard key={draft.id} draft={draft} />
                     ))}
                   </div>

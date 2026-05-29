@@ -120,8 +120,8 @@ export function WrapUpObservationDraftCard({ draft }: { draft: EnrichedObservati
           </span>
         </div>
 
-        {/* Decision controls */}
-        {draft.status === 'pending_review' && (
+        {/* Decision controls — shown for pending review and clarification needed */}
+        {(draft.status === 'pending_review' || draft.status === 'clarification_needed') && (
           <WrapUpObservationDraftDecisionControls proposedActionId={draft.id} />
         )}
         {draft.status === 'approved' && (

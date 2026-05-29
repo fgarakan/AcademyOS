@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
+import { CheckCircle, XCircle, AlertTriangle, MessageCircle } from 'lucide-react'
 import { updateObservationDraftDecisionAction } from './actions'
 import type { DraftDecision } from './actions'
 
@@ -83,6 +83,14 @@ export function WrapUpObservationDraftDecisionControls({ proposedActionId }: Pro
         >
           <XCircle className="w-3.5 h-3.5" />
           Reject
+        </button>
+        <button
+          onClick={() => handleDecision('clarification_needed')}
+          disabled={isPending}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-status-orange/10 text-status-orange border border-status-orange/30 hover:bg-status-orange/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          Request clarification
         </button>
       </div>
 

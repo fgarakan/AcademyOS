@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Sprint 931 — Director Review Queue Observation Draft Panel V1
+
+- `src/app/director/review/WrapUpObservationDraftDecisionControls.tsx`: Added "Request clarification" button using existing `updateObservationDraftDecisionAction` with `'clarification_needed'`.
+- `src/app/director/review/WrapUpObservationDraftCard.tsx`: Decision controls now shown for `clarification_needed` status (same as `pending_review`).
+- `src/app/director/review/page.tsx`: Expanded "Player Notes" section condition to include `clarificationNeededObservationDrafts`; added "Needs Clarification" sub-section with helper text.
+- Architecture doc: `docs/architecture/DIRECTOR_REVIEW_QUEUE_OBSERVATION_DRAFT_PANEL_931.md`
+- QA doc: `docs/QA_DIRECTOR_REVIEW_QUEUE_OBSERVATION_DRAFT_PANEL_931.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 930 — Coach Player Profile Wrap-Up Signal V1
 
 - `src/app/coach/players/[playerId]/page.tsx`: Added best-effort queries for pending observation draft count (proposed_actions) and recent group session wrap-up status (loadWrapUpStatusMap). Added compact "Coach Signals" section between CoachPlayerSnapshot and observations list.
