@@ -46,7 +46,7 @@ export default async function CoachExecutePage({ params }: PageProps) {
     notes: b.notes,
   }))
 
-  const wrapUpHref = `/coach/sessions/${sessionId}`
+  const wrapUpHref = `/coach/sessions/${sessionId}/wrap-up`
 
   return (
     <ExecuteClient

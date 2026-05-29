@@ -1,17 +1,18 @@
 'use client'
 
 // Sprint 1042 — DONNA Coach Wrap-Up Integration Polish V1
-// Wrap-up flow polished to feel like DONNA final form:
-// - DONNA header with role badge
-// - One question at a time (preserved)
-// - Running structured summary with DONNA branding
-// - Clearer submit-for-review language
-// - Nothing sent/applied until director review
+// Sprint 927 — Coach Wrap-Up 10/10 V1
+// Added: voice input per question (AudioRecorderButton + VoiceInputButton),
+// player name quick-chips on standouts/attention questions,
+// optional player observation draft form in saved state.
 
 import { useState, useTransition } from 'react'
-import { ChevronLeft, ChevronRight, Check, Loader2, Sparkles, SkipForward, ShieldCheck } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, Loader2, Sparkles, SkipForward, ShieldCheck, Users } from 'lucide-react'
 import Link from 'next/link'
+import { AudioRecorderButton } from '@/components/assistant/AudioRecorderButton'
+import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
 import { saveWrapUpDraftAction, type BlockCompletionDraft } from '../saveWrapUpDraftAction'
+import { saveWrapUpObservationsAction } from '../saveWrapUpObservationsAction'
 
 // ── Question definitions ──────────────────────────────────────
 
@@ -63,18 +64,27 @@ const QUESTIONS: Question[] = [
 
 // ── Types ─────────────────────────────────────────────────────
 
+interface RosterPlayer {
+  id: string
+  fullName: string
+  firstName: string
+}
+
 interface Props {
   sessionId: string
   sessionName: string
   blockList: Array<{ id: string; name: string }>
   returnHref: string
+  roster?: RosterPlayer[]
 }
 
 type Phase = 'questions' | 'saved'
+type ObsType = 'positive' | 'needs_attention'
+interface ObsEntry { type: ObsType; note: string }
 
 // ── Main client component ────────────────────────────────────
 
-export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref }: Props) {
+export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref, roster = [] }: Props) {
   const [stepIndex, setStepIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
@@ -85,6 +95,13 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  // Observation drafts — optional, shown in saved state
+  const [obsMap, setObsMap] = useState<Record<string, ObsEntry>>({})
+  const [obsPhase, setObsPhase] = useState<'idle' | 'saved'>('idle')
+  const [obsSaved, setObsSaved] = useState(0)
+  const [obsError, setObsError] = useState<string | null>(null)
+  const [obsIsPending, startObsTransition] = useTransition()
+
   const currentQuestion = QUESTIONS[stepIndex]
   const isFirst = stepIndex === 0
   const isLast = stepIndex === QUESTIONS.length - 1
@@ -93,6 +110,70 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
   function goNext() { if (!isLast) setStepIndex(i => i + 1) }
   function goPrev() { if (!isFirst) setStepIndex(i => i - 1) }
   function skip() { if (!isLast) setStepIndex(i => i + 1) }
+
+  // Append transcript to the current question answer
+  function appendToAnswer(key: string, transcript: string) {
+    setAnswers(prev => {
+      const cur = prev[key] ?? ''
+      const sep = cur.trim() ? ' ' : ''
+      return { ...prev, [key]: cur + sep + transcript }
+    })
+  }
+
+  // Append a player's first name to the current answer (quick-chip tap)
+  function appendPlayerName(key: string, firstName: string) {
+    setAnswers(prev => {
+      const cur = prev[key] ?? ''
+      const sep = cur.trim()
+        ? (cur.trim().endsWith('.') || cur.trim().endsWith(',') ? ' ' : ', ')
+        : ''
+      return { ...prev, [key]: cur + sep + firstName }
+    })
+  }
+
+  // Cycle observation type for a player: none → positive → needs_attention → none
+  function cycleObsType(playerId: string) {
+    setObsMap(prev => {
+      const existing = prev[playerId]
+      if (!existing) return { ...prev, [playerId]: { type: 'positive', note: '' } }
+      if (existing.type === 'positive') return { ...prev, [playerId]: { ...existing, type: 'needs_attention' } }
+      const next = { ...prev }
+      delete next[playerId]
+      return next
+    })
+  }
+
+  function setObsNote(playerId: string, note: string) {
+    setObsMap(prev => {
+      if (!prev[playerId]) return prev
+      return { ...prev, [playerId]: { ...prev[playerId], note } }
+    })
+  }
+
+  function handleSubmitObs() {
+    const observations = Object.entries(obsMap)
+      .filter(([, v]) => v.note.trim())
+      .map(([playerId, v]) => {
+        const player = roster.find(p => p.id === playerId)
+        return {
+          playerId,
+          playerName: player?.fullName ?? '',
+          note: v.note.trim(),
+          observationType: v.type as ObsType,
+        }
+      })
+    if (observations.length === 0) return
+    setObsError(null)
+    startObsTransition(async () => {
+      const result = await saveWrapUpObservationsAction(sessionId, observations, sessionName)
+      if (result.ok) {
+        setObsSaved(result.savedCount)
+        setObsPhase('saved')
+      } else {
+        setObsError(result.error ?? 'Failed to save player notes.')
+      }
+    })
+  }
 
   function handleSave() {
     setSaveError(null)
@@ -125,9 +206,14 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
     })
   }
 
+  // ── Saved state ──────────────────────────────────────────────
+
   if (phase === 'saved') {
+    const hasObsWithNote = Object.values(obsMap).some(v => v.note.trim())
+    const obsCount = Object.keys(obsMap).length
+
     return (
-      <div className="min-h-screen bg-base flex flex-col items-center justify-center px-4 text-center space-y-5">
+      <div className="min-h-screen bg-base flex flex-col items-center justify-start px-4 pt-10 pb-10 space-y-5">
         {/* DONNA submitted state */}
         <div className="flex items-center gap-2 mb-1">
           <div className="w-7 h-7 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center">
@@ -139,13 +225,13 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
         <div className="w-14 h-14 rounded-full bg-status-green/10 border border-status-green/30 flex items-center justify-center">
           <Check className="w-7 h-7 text-status-green" />
         </div>
-        <div>
+        <div className="text-center">
           <h2 className="text-xl font-bold text-text-primary">Wrap-up submitted for review</h2>
           <p className="text-sm text-text-secondary mt-1 leading-relaxed max-w-xs mx-auto">
             Your wrap-up draft is in the director review queue. Nothing has been sent to parents or applied to player profiles.
           </p>
         </div>
-        <div className="flex items-start gap-2 max-w-xs px-3 py-2.5 rounded-xl border border-lime/15 bg-lime/4 text-left">
+        <div className="flex items-start gap-2 max-w-xs w-full px-3 py-2.5 rounded-xl border border-lime/15 bg-lime/4 text-left">
           <ShieldCheck className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
           <p className="text-[10px] text-text-secondary leading-relaxed">
             The director will review and approve before any information reaches parents or becomes part of the official player record.
@@ -172,9 +258,87 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
             Ask DONNA
           </Link>
         </div>
+
+        {/* ── Optional player observation drafts ── */}
+        {roster.length > 0 && obsPhase !== 'saved' && (
+          <div className="w-full max-w-xs pt-4 border-t border-border space-y-3">
+            <div className="flex items-center gap-2">
+              <Users className="w-3.5 h-3.5 text-text-muted shrink-0" />
+              <p className="text-[10px] uppercase tracking-widest text-text-muted">Add player notes (optional)</p>
+            </div>
+            <p className="text-[10px] text-text-muted leading-snug">
+              Tap a player to flag as positive or needing attention. Add a note, then submit — goes to director review only. Not visible to players or parents.
+            </p>
+            <div className="space-y-2">
+              {roster.map(player => {
+                const obs = obsMap[player.id]
+                return (
+                  <div key={player.id} className="rounded-xl border border-border bg-surface p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-text-primary flex-1 truncate">{player.firstName}</span>
+                      <button
+                        type="button"
+                        onClick={() => cycleObsType(player.id)}
+                        className={`text-[10px] px-2 py-0.5 rounded border transition-colors shrink-0 ${
+                          !obs
+                            ? 'border-border text-text-muted hover:border-lime/30 hover:text-text-secondary'
+                            : obs.type === 'positive'
+                            ? 'border-status-green/30 bg-status-green/10 text-status-green'
+                            : 'border-status-orange/30 bg-status-orange/10 text-status-orange'
+                        }`}
+                      >
+                        {!obs ? '+ Note' : obs.type === 'positive' ? '✓ Positive' : '! Needs attention'}
+                      </button>
+                    </div>
+                    {obs && (
+                      <input
+                        type="text"
+                        value={obs.note}
+                        onChange={e => setObsNote(player.id, e.target.value)}
+                        placeholder={obs.type === 'positive' ? 'What stood out?' : 'What needs attention?'}
+                        className="w-full text-[11px] bg-surface-raised border border-border rounded-lg px-2.5 py-1.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-lime/40"
+                      />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            {obsError && (
+              <p className="text-[10px] text-status-red text-center">{obsError}</p>
+            )}
+            {obsCount > 0 && (
+              <button
+                type="button"
+                onClick={handleSubmitObs}
+                disabled={obsIsPending || !hasObsWithNote}
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-lime/10 border border-lime/20 text-xs font-semibold text-lime hover:bg-lime/20 transition-colors disabled:opacity-40"
+              >
+                {obsIsPending
+                  ? <><Loader2 className="w-3 h-3 animate-spin" /> Submitting…</>
+                  : <><Check className="w-3 h-3" /> Submit player notes for review</>
+                }
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Observation saved confirmation */}
+        {obsPhase === 'saved' && obsSaved > 0 && (
+          <div className="w-full max-w-xs flex items-center gap-2 px-3 py-2.5 rounded-xl border border-status-green/30 bg-status-green/10">
+            <Check className="w-3.5 h-3.5 text-status-green shrink-0" />
+            <p className="text-[10px] text-status-green leading-snug">
+              {obsSaved} player note{obsSaved !== 1 ? 's' : ''} submitted for director review.
+            </p>
+          </div>
+        )}
       </div>
     )
   }
+
+  // ── Question step ────────────────────────────────────────────
+
+  const isStandoutsOrAttention = currentQuestion.key === 'standouts' || currentQuestion.key === 'attention'
+  const showPlayerChips = isStandoutsOrAttention && roster.length > 0
 
   return (
     <div className="min-h-screen bg-base flex flex-col max-w-lg mx-auto px-4 py-6">
@@ -247,6 +411,25 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
           <p className="text-xs text-text-muted mt-1 leading-relaxed">{currentQuestion.hint}</p>
         </div>
 
+        {/* Player name quick-chips — standouts and attention questions only */}
+        {showPlayerChips && (
+          <div className="space-y-1.5">
+            <p className="text-[9px] uppercase tracking-widest text-text-muted">Quick add</p>
+            <div className="flex flex-wrap gap-1.5">
+              {roster.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => appendPlayerName(currentQuestion.key, p.firstName)}
+                  className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-surface-raised text-text-secondary hover:border-lime/30 hover:text-lime transition-colors"
+                >
+                  {p.firstName}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <textarea
           value={answers[currentQuestion.key] ?? ''}
           onChange={e => setAnswers(prev => ({ ...prev, [currentQuestion.key]: e.target.value }))}
@@ -255,6 +438,23 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
           rows={4}
           autoFocus
         />
+
+        {/* Voice input — appends transcript to current answer */}
+        <div className="space-y-2 pt-1 border-t border-border/50">
+          <p className="text-[9px] uppercase tracking-widest text-text-muted">Voice input</p>
+          <div className="flex flex-wrap gap-3 items-start">
+            <AudioRecorderButton
+              sessionId={sessionId}
+              onTranscript={transcript => appendToAnswer(currentQuestion.key, transcript)}
+            />
+            <span className="text-[9px] text-text-muted self-center">or</span>
+            <VoiceInputButton
+              onTranscript={transcript => appendToAnswer(currentQuestion.key, transcript)}
+              appendMode
+              label="Browser Dictation"
+            />
+          </div>
+        </div>
 
         {/* Running answer summary */}
         <div className="space-y-1">

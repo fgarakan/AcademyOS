@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Sprint 927 — Coach Wrap-Up 10/10 V1
+
+- `src/app/coach/sessions/[sessionId]/wrap-up/WrapUpPageClient.tsx`: Added voice input (AudioRecorderButton + VoiceInputButton) per question, player name quick-chips for standouts/attention questions, optional player observation draft form in saved state.
+- `src/app/coach/sessions/[sessionId]/wrap-up/page.tsx`: Added roster query (group_memberships → players, best-effort). Passes `roster` prop to WrapUpPageClient.
+- `src/app/coach/sessions/[sessionId]/execute/page.tsx`: Changed `wrapUpHref` to point directly to `/wrap-up` instead of session detail.
+- Architecture doc: `docs/architecture/COACH_WRAP_UP_10_OF_10_927.md`
+- QA doc: `docs/QA_COACH_WRAP_UP_927.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 925 — Entity Summary Auto-Population V1
 
 - `src/lib/donna/donnaEntitySummaryPopulator.ts`: Deterministic summary generators + trigger functions for player, group, curriculum_level entities. All triggers fire-and-forget.
