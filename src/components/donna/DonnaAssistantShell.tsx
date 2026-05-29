@@ -6,6 +6,7 @@
 // The full stateful DonnaAssistantButton lives in src/components/assistant/.
 
 import { Sparkles } from 'lucide-react'
+import { DONNA_PERSONALITY } from '@/lib/donna/donnaPersonality'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -63,7 +64,7 @@ const ROLE_LABEL: Record<DonnaAssistantRole, string> = {
 
 export function DonnaAssistantShell({
   role,
-  title = 'DONNA',
+  title = DONNA_PERSONALITY.name,
   subtitle,
   statusLabel,
   contextLabel,

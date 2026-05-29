@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Sprint 939 — DONNA Context Resolver Personality V1
+
+- `src/lib/donna/donnaPersonality.ts` (new): Single personality/identity module — `DonnaContextRole` type, `DONNA_PERSONALITY` constants (name, tagline, voice principles, role tones for all 5 roles, safety language, parent-safe language, player-safe language), helper functions (getRoleTone, getSafetyMessage, roleSupportsHighlight, roleCanCreateDrafts, roleSeesApprovalGates). Pure TypeScript, no DB/React/API.
+- `src/lib/donna/donnaContextResolver.ts` (new): Single context resolver — `resolveDonnaContext(role, pathname)` returns `DonnaResolvedContext` (role, route, pageKey, pagePurpose, roleCapabilities, safetyBoundaries, knownApprovalActions, allowedAnswerTypes, suggestedPrompts, dataFallback, highlightAvailable, canCreateDrafts, seesApprovalGates, contextSources). Wraps `donnaPageContextEngine.ts` (modern). Pure TypeScript, no DB.
+- `src/components/donna/DonnaAssistantShell.tsx`: Default title changed from hardcoded `'DONNA'` to `DONNA_PERSONALITY.name` — single source of truth wired to Shell A presentation.
+- Architecture doc: `docs/architecture/DONNA_CONTEXT_RESOLVER_PERSONALITY_939.md`
+- QA doc: `docs/QA_DONNA_CONTEXT_RESOLVER_PERSONALITY_939.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 938 — DONNA Shell Highlight Unification V1
 
 - `src/components/donna/DonnaVoiceReadyShell.tsx`: Added same-page highlight dispatch in navigation confirmation handler — when `pendingOffer.href === pathname`, dispatches `donna:highlight` custom event instead of calling `router.push`. Cross-page path (setTimeout + router.push) is unchanged. Shell A now mirrors Shell B's Sprint 871 pattern.
