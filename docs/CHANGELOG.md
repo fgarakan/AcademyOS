@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-29 — Sprint 916 — DONNA Director UX Integration V1
+
+- `src/lib/donna/donnaReviewFeedbackAction.ts`: Server Action — creates `donna_recommendations` row + records director feedback (accepted/rejected). Uses `assertDonnaApprovalAllowed` gate check. Fire-and-forget, non-throwing.
+- `src/app/director/review/DonnaReviewFeedbackChip.tsx`: Client component — "Act on this" + "Dismiss" buttons on DonnaReviewBriefPanel recommended action. Feedback logged silently; navigation never blocked.
+- `src/app/director/donna/DonnaEntitySummarySection.tsx`: Server component — fetches `donna_entity_summaries` for academy, renders director-safe summary cards (summaryText + confidence only; no IDs, no JSON). Graceful empty fallback.
+- `src/app/director/review/DonnaReviewBriefPanel.tsx`: Added `academyId` prop + `DonnaReviewFeedbackChip` below recommended action.
+- `src/app/director/review/page.tsx`: Passes `academyId` to `DonnaReviewBriefPanel`.
+- `src/app/director/donna/page.tsx`: Imports + renders `DonnaEntitySummarySection` in right column below `DonnaContextSummaryCard`.
+- QA doc: `docs/QA_DONNA_DIRECTOR_UX_INTEGRATION_916.md`
+- Architecture doc: `docs/architecture/DONNA_DIRECTOR_UX_INTEGRATION_916.md` (includes approval gate coverage audit)
+- TypeScript: clean
+
+---
+
 ## 2026-05-28 — Sprint 914.7 — DONNA Intent Router Unification V1
 
 - `src/lib/donna/donnaIntentRouterV1.ts`: `DonnaUnifiedIntentType` (24 intent types), `routeDonnaIntentV1(text, pathname)` pure function, `LEGACY_CATEGORY_MAP` bridging `DonnaCommandCategory` → unified types. Additive — does NOT replace 34-interceptor pipeline.

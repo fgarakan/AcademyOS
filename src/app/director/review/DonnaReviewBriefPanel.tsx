@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react'
+import { DonnaReviewFeedbackChip } from './DonnaReviewFeedbackChip'
 
 interface RecommendedAction {
   label: string
@@ -18,6 +19,7 @@ interface Props {
   wrapUpsPending: number
   attendanceCount: number
   parentCommCount: number
+  academyId?: string | null
 }
 
 function buildRecommendedAction(props: Props): RecommendedAction | null {
@@ -69,6 +71,7 @@ export function DonnaReviewBriefPanel(props: Props) {
     wrapUpsPending,
     attendanceCount,
     parentCommCount,
+    academyId,
   } = props
 
   const recommended = buildRecommendedAction(props)
@@ -147,14 +150,24 @@ export function DonnaReviewBriefPanel(props: Props) {
 
       {/* Recommended action */}
       {recommended && (
-        <Link
-          href={recommended.href}
-          className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${recommended.urgency === 'high' ? 'bg-status-orange/10 border border-status-orange/30 text-status-orange hover:bg-status-orange/20' : 'bg-lime/10 border border-lime/20 text-lime hover:bg-lime/20'}`}
-        >
-          <ArrowRight className="w-3.5 h-3.5 shrink-0" />
-          <span>Start here: {recommended.label}</span>
-          <span className="ml-auto font-mono tabular-nums">{recommended.count}</span>
-        </Link>
+        <div>
+          <Link
+            href={recommended.href}
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${recommended.urgency === 'high' ? 'bg-status-orange/10 border border-status-orange/30 text-status-orange hover:bg-status-orange/20' : 'bg-lime/10 border border-lime/20 text-lime hover:bg-lime/20'}`}
+          >
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+            <span>Start here: {recommended.label}</span>
+            <span className="ml-auto font-mono tabular-nums">{recommended.count}</span>
+          </Link>
+          {/* Sprint 916 — feedback chip: fire-and-forget logging, never blocks navigation */}
+          {academyId && (
+            <DonnaReviewFeedbackChip
+              href={recommended.href}
+              recommendationText={`Start here: ${recommended.label}`}
+              recommendationType="review_queue"
+            />
+          )}
+        </div>
       )}
 
       {/* Safety notice */}

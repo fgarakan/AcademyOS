@@ -1275,6 +1275,7 @@ export default async function DirectorReviewQueuePage({
         wrapUpsPending={pendingWrapUpDrafts.length}
         attendanceCount={pendingAttendanceDrafts.length}
         parentCommCount={parentCommDrafts.length}
+        academyId={academyId}
       />
 
       <Tabs defaultValue={activeDefaultTab}>
