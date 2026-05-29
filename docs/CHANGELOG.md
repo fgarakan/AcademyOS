@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Sprint 964 — DONNA Single Role Shell Persistent Panel V1
+
+- `src/lib/donna/donnaPageChipRegistry.ts` (new): Per-route chip definitions for the DONNA side panel — 11 routes covered; two action types: `'highlight'` (targets existing `data-donna-focus-id` elements) and `'prompt'` (sends text into DONNA conversation). Pure TypeScript — no DB, no client/server marker.
+- `src/components/donna/DonnaPanelPageChips.tsx` (new): `'use client'` chip bar rendered inside the DONNA panel. Reads chips from registry, tracks repeat-highlight count per target via `useRef`, escalates `highlightStyle` from `'teal-glow'` to `'warning'` on repeat. Uses existing `setDonnaFocusTarget` + `donna:highlight` event. Fails gracefully when `data-donna-focus-id` target is absent from the page.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Added `import { DonnaPanelPageChips }` and one `<DonnaPanelPageChips pathname={pathname} onPrompt={(text) => handleCommandSubmit(text)} />` element inside the panel scrollable body — inserted after the greeting card, before `DonnaVoiceLayer`. No other changes to the 4 871-line file.
+- `docs/architecture/DONNA_SINGLE_ROLE_SHELL_PERSISTENT_PANEL_964.md` (new): Architecture doc covering role-shell model, button toggle, greeting, chip model, highlight escalation, voice-ready path, Sprint 965 voice persona target, V2 coach/parent/player parity, and safety boundaries.
+- `docs/QA_DONNA_SINGLE_ROLE_SHELL_PERSISTENT_PANEL_964.md` (new): Full QA checklist: TypeScript, one-button, panel, greeting, chip, highlight, escalation, prompt chip, voice-ready, route safety, no-mutation, and protected-systems.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Emergency Fix — Templates Impact Preview Client Boundary Error
 
 - `src/app/director/templates/impact-preview/ImpactPreviewScopeActions.tsx` (new): `'use client'` component housing the Scope Actions buttons and their `onClick` handlers — extracted from the server page to resolve the Next.js server/client boundary error.

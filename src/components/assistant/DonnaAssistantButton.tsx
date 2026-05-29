@@ -201,6 +201,8 @@ import { DonnaVoiceLayer } from '@/components/assistant/DonnaVoiceLayer'
 import { DonnaWorkflowCards } from '@/components/assistant/DonnaWorkflowCards'
 // Sprint 707 — Mobile command bar
 import { DONNADirectorMobileCommandBar } from '@/components/donna/DONNADirectorMobileCommandBar'
+// Sprint 964 — Page-aware chip bar (highlight + prompt chips per route)
+import { DonnaPanelPageChips } from '@/components/donna/DonnaPanelPageChips'
 // Sprint 647 — First Daily Welcome
 import {
   getDailyGreetingState,
@@ -3998,6 +4000,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               )}
             </div>
           )}
+
+          {/* ── Sprint 964 — Page-aware chip bar ────────────────────────────────── */}
+          {/* Chips appear after the greeting and before the voice/text input.      */}
+          {/* Highlight chips use existing data-donna-focus-id targets + escalation. */}
+          {/* Prompt chips route through handleCommandSubmit — no new DONNA surface. */}
+          <DonnaPanelPageChips
+            pathname={pathname}
+            onPrompt={(text) => handleCommandSubmit(text)}
+          />
 
           {/* ── Primary voice card — Sprint 384: extracted to DonnaVoiceLayer ── */}
           <DonnaVoiceLayer
