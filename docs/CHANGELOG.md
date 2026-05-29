@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 958 — DONNA Proactive Alerts V1
+
+- `src/lib/donna/donnaProactiveAlerts.ts` (new): Safe in-app proactive alert generation for directors. Three V1 builders: `buildReviewAgingAlert` (urgency scaled by age: critical/high/medium), `buildMissingWrapUpsAlert` (high/medium), `buildParentSummaryReadyAlert` (low). Suite builder `buildProactiveAlerts(input)` combines all three with threshold guards and sorts by urgency. Safety notes from `getSafetyMessage` on approval and no-send alerts. All alerts dismissible. Pure TypeScript — no DB calls, no mutations, no push/email/SMS dispatch.
+- `docs/architecture/DONNA_PROACTIVE_ALERTS_958.md` (new): Alert categories (3 V1, 2 V2 deferred), input/output model, urgency/threshold behavior, safety copy, no-mutation/no-push/no-parent-comm guarantees, V2 path.
+- `docs/QA_DONNA_PROACTIVE_ALERTS_958.md` (new): TypeScript, import-resolution, alert coverage, no-mutation, no-push/email, no parent/player communication, safety/refusal, and protected systems checklists.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 957 — DONNA Evaluation Harness V1
 
 - `src/lib/donna/donnaEvaluationHarness.ts` (new, routing fix applied): 6 static eval cases across 3 categories — what-next (director + coach), director brief, and tool routing (allow/block/role-block). `runEvalCase(evalCase)` exercises real DONNA engines and asserts expected outputs. `runAllEvals()` returns all results. Routing fix: moved toolId detection before the what-next condition to prevent fake pass results on tool routing cases. Pure TypeScript — no DB calls, no mutations, no communication dispatch.
