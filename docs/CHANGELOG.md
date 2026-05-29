@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-29 — Sprint 943 — DONNA Safe Action Router V1
+
+- `src/lib/donna/donnaSafeActionRouter.ts` (new): Routes DONNA tool requests through safety levels. `routeDonnaAction(toolId, role, currentPath)` returns `DonnaActionRoutingDecision {outcome, canExecute, tool, explanation, approvalRoute, donnaResponse}`. Outcomes: execute_immediately (read/ui), submit_to_draft (draft tools → proposed_actions), route_to_queue (approval_required → review), role_blocked, always_blocked. No tool bypasses execute_approved_action(). Batch helper `routeBestAction`. Audit helpers: getImmediateToolsForRole, getParentPlayerVisibilityTools.
+- Architecture doc: `docs/architecture/DONNA_SAFE_ACTION_ROUTER_943.md`
+- QA doc: `docs/QA_DONNA_SAFE_ACTION_ROUTER_943.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 942 — DONNA Tool Calling Contract V1
 
 - `src/lib/donna/donnaToolContract.ts` (new): 18-tool registry with 5 categories (read, ui_guidance, draft, approval_required, always_blocked). Each tool has id, displayName, description, category, safetyLevel, allowedRoles, requiresApproval, makesDbWrite, affectsParentOrPlayerVisibility, blockedReason. Structured output schema `DonnaStructuredOutput` (spokenAnswer, reasoningSummary, recommendedAction, uiHighlight, safety, toolRequest, confidence, sourceNote). Validation function `validateDonnaOutput`. Lookup helpers: getDonnaTool, getToolsByCategory, isToolAllowedForRole, isToolBlocked, buildBlockedToolResponse. Pure TypeScript, no DB/React/API.
