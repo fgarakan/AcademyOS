@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 962 — Curriculum Builder Cognitive Load Reduction V1
+
+- `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx` (modified): Added compact prev/next level navigation strip using already-loaded `explorerData.levels` sorted by canonical stage order — no new queries. Added `data-donna-focus-id="curriculum-current-level"` on header and `data-donna-focus-id="curriculum-primary-action"` on Propose a Change wrapper. Renamed "Advanced Editor" collapsible to "Detailed Content View".
+- `src/app/director/curriculum/page.tsx` (modified): Added `data-donna-focus-id="curriculum-status"` on status hero card, `data-donna-focus-id="curriculum-review-draft"` on primary CTA link, `data-donna-focus-id="curriculum-level-tree"` on level tree section. No behavior changes.
+- `docs/architecture/CURRICULUM_BUILDER_COGNITIVE_LOAD_REDUCTION_962.md` (new): Problems, changes, before/after, DONNA focus targets, no-migration/no-permission guarantees, curriculum safety boundaries, V2 path.
+- `docs/QA_CURRICULUM_BUILDER_COGNITIVE_LOAD_REDUCTION_962.md` (new): TypeScript, flow, CTA, nav, draft safety, DONNA highlight, mobile, no-mutation, protected systems checklists.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 961 — Onboarding Flow Cognitive Load Reduction V1
 
 - `src/components/onboarding/OnboardingProgressRail.tsx` (modified): Upgraded from bar-only to bar + 9-step dot strip. Completed steps show lime checkmark; current step shows lime ring; upcoming steps show muted dots; next-step name hint shown on ≥ sm screens; strip is scrollable on narrow viewports.

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Shield, Zap, ChevronRight, ChevronDown } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Shield, Zap, ChevronRight, ChevronDown } from 'lucide-react'
 import type { CurriculumExplorerData, CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 import { CurriculumLevelBuilderGrid, type ActivePanel } from './CurriculumLevelBuilderGrid'
 import { CurriculumLevelBuilderShell } from './CurriculumLevelBuilderShell'
@@ -49,6 +49,16 @@ const STAGE_INFO: Record<string, StageInfo> = {
     evidence: 'UTR trajectory, match statistics, coach-assessed mental resilience.',
     dot: '#a78bfa',
   },
+}
+
+// Sprint 962 — stage sort order for level navigation strip.
+// Defines the canonical curriculum progression for prev/next navigation.
+const STAGE_ORDER: Record<string, number> = {
+  red_foundation:     1,
+  orange_development: 2,
+  green_performance:  3,
+  yellow_competitive: 4,
+  high_performance:   5,
 }
 
 // ─── DONNA action label → ChangeType pre-selection (no DB mutation, no auto-submit) ──
@@ -117,14 +127,27 @@ export function CurriculumLevelBuilderExperience({ level, explorerData, changeQu
 
   const activeAction  = panelToAction(activePanel)
 
+  // Sprint 962 — level navigation: sort explorerData.levels by stage order,
+  // then find prev/next relative to the current level.
+  // Uses already-loaded data — no new queries.
+  const sortedLevels = [...explorerData.levels].sort((a, b) => {
+    const stageA = STAGE_ORDER[a.stage ?? ''] ?? 99
+    const stageB = STAGE_ORDER[b.stage ?? ''] ?? 99
+    return stageA - stageB
+  })
+  const currentIndex = sortedLevels.findIndex(l => l.id === level.id)
+  const prevLevel: CurriculumLevel | null = currentIndex > 0 ? sortedLevels[currentIndex - 1] : null
+  const nextLevel: CurriculumLevel | null = currentIndex < sortedLevels.length - 1 ? sortedLevels[currentIndex + 1] : null
+  const totalLevels = sortedLevels.length
+
   return (
     <div className="animate-fade-in flex gap-6 p-4 sm:p-6 items-start overflow-x-hidden max-w-[1440px]">
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
       <div className="flex-1 min-w-0 space-y-6">
 
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
+        {/* Header — Sprint 962: data-donna-focus-id for DONNA highlight */}
+        <div data-donna-focus-id="curriculum-current-level" className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0">
             <Link
               href="/director/curriculum/map"
@@ -163,6 +186,41 @@ export function CurriculumLevelBuilderExperience({ level, explorerData, changeQu
             </Link>
           </div>
         </div>
+
+        {/* Sprint 962 — Level navigation strip: prev/next using sorted explorerData.levels.
+            No new queries — uses data already loaded by the server page component.
+            Links are read-only navigation — no curriculum mutations. */}
+        {totalLevels > 1 && (
+          <div className="flex items-center justify-between gap-2 px-1">
+            {prevLevel ? (
+              <Link
+                href={`/director/curriculum/level/${prevLevel.id}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface text-[11px] text-text-muted hover:text-text-secondary hover:border-border-strong transition-all truncate max-w-[45%]"
+              >
+                <ArrowLeft className="w-3 h-3 shrink-0" />
+                <span className="truncate">{prevLevel.display_name}</span>
+              </Link>
+            ) : (
+              <div />
+            )}
+
+            <span className="text-[10px] text-text-muted/60 tabular-nums whitespace-nowrap shrink-0">
+              {currentIndex + 1} / {totalLevels}
+            </span>
+
+            {nextLevel ? (
+              <Link
+                href={`/director/curriculum/level/${nextLevel.id}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface text-[11px] text-text-muted hover:text-text-secondary hover:border-border-strong transition-all truncate max-w-[45%]"
+              >
+                <span className="truncate">{nextLevel.display_name}</span>
+                <ArrowRight className="w-3 h-3 shrink-0" />
+              </Link>
+            ) : (
+              <div />
+            )}
+          </div>
+        )}
 
         {/* Draft mode banner */}
         <div className="rounded-xl border border-lime/10 bg-lime/[0.02] flex items-center gap-2.5 px-4 py-3">
@@ -243,23 +301,25 @@ export function CurriculumLevelBuilderExperience({ level, explorerData, changeQu
           onActivePanelChange={setActivePanel}
         />
 
-        {/* ── Propose a Change panel ───────────────────────────────── */}
-        <CurriculumChangeDraftPanel
-          levelId={level.id}
-          levelName={level.display_name}
-          externalChangeType={pendingDraftType}
-        />
+        {/* Propose a Change panel — Sprint 962: wrapped with DONNA focus target */}
+        <div data-donna-focus-id="curriculum-primary-action">
+          <CurriculumChangeDraftPanel
+            levelId={level.id}
+            levelName={level.display_name}
+            externalChangeType={pendingDraftType}
+          />
+        </div>
 
-        {/* Advanced editor — collapsible */}
+        {/* Detailed Content View — Sprint 962: renamed from "Advanced Editor" to reduce intimidation */}
         <details className="group">
           <summary
             className="flex items-center gap-2 cursor-pointer list-none select-none px-4 py-3 rounded-xl border border-border hover:border-border/80 transition-colors"
             style={{ background: 'rgba(0,0,0,0.20)' }}
           >
             <ChevronDown className="w-3.5 h-3.5 text-text-muted transition-transform group-open:rotate-180" />
-            <span className="text-[11px] font-semibold text-text-secondary">Advanced Editor</span>
+            <span className="text-[11px] font-semibold text-text-secondary">Detailed Content View</span>
             <span className="text-[10px] text-text-muted ml-1">
-              — detailed tab view: drills, gates, fitness, competition, language
+              — tab view: drills, gates, fitness, competition, coach language
             </span>
           </summary>
           <div className="mt-4">

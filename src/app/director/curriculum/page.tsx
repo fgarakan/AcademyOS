@@ -303,8 +303,8 @@ export default async function DirectorCurriculumPage() {
       {/* ── 1b. DONNA Welcome ─────────────────────────────────────────────── */}
       <CurriculumBuilderWelcome hasActiveVersion={!!versionData} />
 
-      {/* ── 2. Curriculum Status hero card ───────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
+      {/* ── 2. Curriculum Status hero card ── Sprint 962: data-donna-focus-id added */}
+      <div data-donna-focus-id="curriculum-status" className="rounded-2xl border border-border bg-surface p-5 space-y-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1">
             <p className="label-xs">Curriculum Status</p>
@@ -314,7 +314,8 @@ export default async function DirectorCurriculumPage() {
             </div>
             <p className="text-[12px] text-text-secondary leading-relaxed">{statusDescription}</p>
           </div>
-          <Link href={primaryCtaHref} className="btn-lime shrink-0">
+          {/* Sprint 962: data-donna-focus-id="curriculum-review-draft" on primary CTA */}
+          <Link href={primaryCtaHref} className="btn-lime shrink-0" data-donna-focus-id="curriculum-review-draft">
             {primaryCtaLabel}
           </Link>
         </div>
@@ -410,9 +411,9 @@ export default async function DirectorCurriculumPage() {
         </section>
       )}
 
-      {/* ── 4c. Level tree — Sprint 556 ───────────────────────────────────── */}
+      {/* ── 4c. Level tree — Sprint 556 / Sprint 962: data-donna-focus-id added */}
       {explorerData.levels.length > 0 && (
-        <section className="space-y-3">
+        <section className="space-y-3" data-donna-focus-id="curriculum-level-tree">
           <p className="label-xs">Curriculum Levels</p>
           <CurriculumLevelTree explorerData={explorerData} />
         </section>
