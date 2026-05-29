@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-29 — Sprint 938 — DONNA Shell Highlight Unification V1
+
+- `src/components/donna/DonnaVoiceReadyShell.tsx`: Added same-page highlight dispatch in navigation confirmation handler — when `pendingOffer.href === pathname`, dispatches `donna:highlight` custom event instead of calling `router.push`. Cross-page path (setTimeout + router.push) is unchanged. Shell A now mirrors Shell B's Sprint 871 pattern.
+- `src/app/coach/layout.tsx`: Imported and mounted `DonnaHighlightBanner` at layout level. Coach pages already had 9 `data-donna-focus-id` attributes from Sprint 868+ — highlight now functional without new DOM targets. No `DonnaSessionContextProvider` needed (banner uses only `usePathname` + sessionStorage).
+- Architecture doc: `docs/architecture/DONNA_SHELL_HIGHLIGHT_UNIFICATION_938.md`
+- QA doc: `docs/QA_DONNA_SHELL_HIGHLIGHT_UNIFICATION_938.md`
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 937 — DONNA God Mode Unification Audit V1
 
 - `docs/architecture/DONNA_GOD_MODE_UNIFICATION_AUDIT_937.md`: Full DONNA architecture audit — three shells identified (Shell A: DonnaVoiceReadyShell, Shell B: DonnaAssistantButton legacy, Shell C: DonnaVoiceWrapUpShell); two competing page context registries; two competing action routing layers; highlight system gap for coach layout; "What next?" engine gap (text-only, no live data, no highlight); role-awareness map for all 5 roles; recommended single-source-of-truth architecture; page element registry design; highlight/focus system extension plan; decision-ranking engine standard; sprint sequence Sprints 938–946; full DONNA file inventory (150+ files across 7 layers); protected systems confirmed untouched.

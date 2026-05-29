@@ -1070,8 +1070,14 @@ export function DonnaVoiceReadyShell({
           // player profile routes (/director/players/<uuid>) via Sprint 841 prefix fallback.
           const navFocusTarget = buildFocusTargetForRoute(pendingOffer.href, pendingOffer.questionContext)
           if (navFocusTarget) setDonnaFocusTarget(navFocusTarget)
-          // Brief delay so the user sees DONNA's message before page changes
-          setTimeout(() => router.push(pendingOffer.href), 500)
+          // Sprint 938: same-page highlight via donna:highlight event; cross-page via router.push.
+          // Mirrors Shell B (DonnaAssistantButton lines 2880-2884) so highlight fires regardless
+          // of which shell the user is in.
+          if (pendingOffer.href === pathname) {
+            window.dispatchEvent(new CustomEvent('donna:highlight'))
+          } else {
+            setTimeout(() => router.push(pendingOffer.href), 500)
+          }
         }, 300)
         return
       }

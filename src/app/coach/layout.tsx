@@ -3,6 +3,7 @@ import { PreviewBanner } from '@/components/platform/PreviewBanner'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { FirstRunDeckGate } from '@/components/onboarding/FirstRunDeckGate'
 import { DonnaAssistantButton } from '@/components/assistant/DonnaAssistantButton'
+import { DonnaHighlightBanner } from '@/components/donna/DonnaHighlightBanner'
 
 const COACH_TABS = [
   { label: 'Home',     href: '/coach',          iconKey: 'home',     exact: true },
@@ -48,6 +49,10 @@ export default async function CoachLayout({ children }: { children: React.ReactN
           role="coach"
         />
       )}
+      {/* Sprint 938: DONNA guided highlight banner — reads sessionStorage focus target,
+          applies donna-focus-ring glow and teal badge when DONNA points to a UI element.
+          Does not use DonnaSessionContextProvider — safe to mount without it. */}
+      <DonnaHighlightBanner />
     </div>
   )
 }
