@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 988 — DONNA Knowledge Builder Retrieval Bridge V1
+
+- `src/lib/donna/llmOrchestration/knowledgeBuilderBridge.ts` (new): Safe Knowledge Builder retrieval bridge. `KnowledgeEntry`, `KnowledgeApprovalStatus` (draft/under_review/approved/deprecated), `KnowledgeVisibilityLevel`, `KnowledgeContentType` types. `filterKnowledgeByRole` (drafts always blocked), `filterKnowledgeByStage`, `rankKnowledgeByPageAffinity`, `buildCitation`, `buildKnowledgeResponse`, `retrieveApprovedKnowledge` (V1 stub — returns []). Platform owner approval always required before DONNA uses content.
+- `docs/architecture/DONNA_KNOWLEDGE_BUILDER_RETRIEVAL_BRIDGE_988.md` (new): Architecture doc with 5 core rules.
+- `docs/QA_DONNA_KNOWLEDGE_BUILDER_RETRIEVAL_BRIDGE_988.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 987 — DONNA Human Approval Bridge V1
 
 - `src/lib/donna/llmOrchestration/humanApprovalBridge.ts` (new): Bridge between DONNA drafts and proposed_actions pipeline. `DraftActionType` (6 types), `DraftApprovalInput`, `DraftApprovalPayload` (status always 'pending_review', generated_by_donna: true), `DraftValidationResult`. `validateDraftInput` — checks IDs, rationale, blocked content patterns, parent/player flags. `buildDraftApprovalPayload` — validates + builds payload (null on invalid). `buildConfirmationPrompt` — director must see before server action runs. No DB calls — caller (server action) handles write.
