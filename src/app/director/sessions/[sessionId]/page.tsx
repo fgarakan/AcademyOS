@@ -679,7 +679,8 @@ export default async function DirectorSessionDetailPage({ params }: PageProps) {
                 {session.duration_min} min
               </span>
             )}
-            <span>Coach: {coachName}</span>
+            {/* Sprint 975: data-donna-focus-id for DONNA coach assignment highlight */}
+            <span data-donna-focus-id="session-coach-assignment">Coach: {coachName}</span>
           </div>
         </div>
         <DirectorSessionStatusCTA sessionId={session.id} initialStatus={session.status} />

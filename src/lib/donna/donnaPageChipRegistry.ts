@@ -374,10 +374,44 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
     ],
   },
 
-  // ── Sessions (/director/sessions) ─────────────────────────────────────────
+  // ── Session Detail (/director/sessions/[sessionId]) — more specific prefix wins ──
+  // Sprint 975: chip set for session detail pages with coach assignment highlight.
+  // Must appear BEFORE the sessions list entry so the longer prefix takes priority.
+  {
+    routePattern: '/director/sessions/',
+    matchPrefix: true,
+    chips: [
+      {
+        id: 'ses-detail-coach',
+        label: 'Highlight coach assignment',
+        actionType: 'highlight',
+        targetId: 'session-coach-assignment',
+      },
+      {
+        id: 'ses-detail-blocks',
+        label: 'Highlight session blocks',
+        actionType: 'highlight',
+        targetId: 'session-blocks',
+      },
+      {
+        id: 'ses-detail-group',
+        label: 'Highlight group assignment',
+        actionType: 'highlight',
+        targetId: 'session-group-assignment',
+      },
+      {
+        id: 'ses-detail-next',
+        label: 'What should I do next?',
+        actionType: 'prompt',
+        prompt: 'What should I do next for this session?',
+      },
+    ],
+  },
+
+  // ── Sessions List (/director/sessions) ─────────────────────────────────────
   {
     routePattern: '/director/sessions',
-    matchPrefix: true,
+    matchPrefix: false,
     chips: [
       {
         id: 'ses-next',

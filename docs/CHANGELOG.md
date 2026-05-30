@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Sprint 975 — DONNA Coach Assignment From Session V1
+
+- `src/app/director/sessions/[sessionId]/page.tsx` (modified): Added `data-donna-focus-id="session-coach-assignment"` to the coach name span in the session header metadata row, making coach assignment directly highlightable by DONNA.
+- `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added session detail chip set (`/director/sessions/` prefix, covers all detail pages) with 4 chips — Highlight coach assignment, Highlight session blocks, Highlight group assignment, What should I do next?. Changed sessions list chip set from `matchPrefix: true` to `matchPrefix: false` (exact match) so detail pages use the more specific chip set.
+- `docs/architecture/DONNA_COACH_ASSIGNMENT_FROM_SESSION_975.md` (new): Architecture doc — V1 coach assignment at creation time, session detail display, chip set, V2 in-session reassignment roadmap, no-migration guarantee.
+- `docs/QA_DONNA_COACH_ASSIGNMENT_FROM_SESSION_975.md` (new): QA checklist — TypeScript, focus target presence, chip behavior, routing correctness, no-mutation.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 974 — DONNA Session Creation From Template V1
 
 - `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added `tpl-generate-session` highlight chip to template detail chip set — points to `template-generate-session` focus ID on ClassTemplateBuilderStepper, making the Generate Session button directly discoverable via DONNA.
