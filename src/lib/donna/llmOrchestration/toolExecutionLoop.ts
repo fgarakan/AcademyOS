@@ -26,6 +26,8 @@ import type { ContextPacket } from './contextPacket'
 import { executeToolCall } from './toolCallingContract'
 import { interpretToolResult } from './toolResultInterpreter'
 import { getToolSafetyLevel, validateToolRequest } from './safetyContract'
+// Sprint 1002 — live tool set (server-side async DB execution)
+import { isLiveTool } from './liveContextToolExecutor'
 
 // ── Safe-to-execute set ───────────────────────────────────────────────────────
 
@@ -194,4 +196,70 @@ export function runToolExecutionLoop(
     output: enhanced,
     auditEntry: `executed:${tool}`,
   }
+}
+
+// ── Sprint 1002: Async live tool execution loop ───────────────────────────────
+
+/**
+ * Async wrapper for the tool execution loop that also handles live DB-backed tools.
+ * For live tools (get_academy_state, get_player_development_summary):
+ *   - Uses liveContextToolExecutor.ts (server-side, dynamic import, RLS enforced)
+ *   - Injects academyId from ctx.safeSignals (set by caller, never from LLM)
+ * For all other tools:
+ *   - Delegates to the synchronous runToolExecutionLoop()
+ *
+ * Never throws. Always returns ToolLoopResult.
+ */
+export async function runLiveToolExecutionLoop(
+  output: OrchestratorOutput,
+  ctx: ContextPacket,
+  safetyAudit: string[],
+): Promise<ToolLoopResult> {
+  const fallback = { executed: false, output, auditEntry: 'no_tool_request' }
+
+  if (!output.toolRequest) return fallback
+
+  const { tool, params } = output.toolRequest
+
+  // Route live tools through async executor
+  if (isLiveTool(tool)) {
+    const academyId = ctx.safeSignals.academyId
+    if (!academyId) {
+      safetyAudit.push(`LiveToolLoop: BLOCKED — academyId not available in context for live tool '${tool}'.`)
+      return { executed: false, output, auditEntry: `no_academyId:${tool}` }
+    }
+
+    safetyAudit.push(`LiveToolLoop: Executing live tool '${tool}' with academyId (${academyId.slice(0, 8)}...).`)
+
+    let liveResult
+    try {
+      const { executeLiveTool } = await import('./liveContextToolExecutor')
+      liveResult = await executeLiveTool(tool, { ...params, academyId })
+    } catch (err) {
+      safetyAudit.push(`LiveToolLoop: EXCEPTION in executeLiveTool: ${err instanceof Error ? err.message : String(err)}`)
+      return { executed: false, output, auditEntry: `exception:live:${tool}` }
+    }
+
+    safetyAudit.push(liveResult.auditEntry)
+
+    if (!liveResult.ok) {
+      safetyAudit.push(`LiveToolLoop: Live tool '${tool}' failed — ${liveResult.error ?? 'unknown'}. Using original output.`)
+      return { executed: false, output, auditEntry: `live_failed:${tool}` }
+    }
+
+    let interpretation
+    try {
+      interpretation = interpretToolResult(liveResult)
+    } catch (err) {
+      safetyAudit.push(`LiveToolLoop: EXCEPTION in interpretToolResult: ${err instanceof Error ? err.message : String(err)}`)
+      return { executed: false, output, auditEntry: `interpret_exception:live:${tool}` }
+    }
+
+    const enhanced = interpretationToOutput(tool, interpretation, output)
+    safetyAudit.push(`LiveToolLoop: SUCCESS — tool='${tool}' donnaText(${interpretation.donnaText.length} chars)`)
+    return { executed: true, output: enhanced, auditEntry: `live_executed:${tool}` }
+  }
+
+  // Non-live tools: synchronous path
+  return runToolExecutionLoop(output, ctx, safetyAudit)
 }

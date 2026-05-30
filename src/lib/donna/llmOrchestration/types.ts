@@ -68,14 +68,17 @@ export interface OrchestratorToolRequest {
  * Each tool has a defined input/output contract in the safety contract registry.
  */
 export type OrchestratorToolId =
-  | 'get_pending_review_count'       // Read: count of pending proposed_actions
-  | 'get_next_action_recommendation' // Deterministic: buildDirectorNextAction()
-  | 'get_action_explanation'         // Deterministic: buildActionExplanation()
-  | 'get_review_queue_guidance'      // Deterministic: buildReviewQueueGuidance()
-  | 'get_page_context'               // Read: current page label + context
-  | 'set_highlight_target'           // UI: dispatch donna:highlight
-  | 'draft_proposed_action'          // Write (gated): create proposed_action draft
-  | 'route_to_page'                  // UI: suggest navigation (no auto-nav)
+  | 'get_pending_review_count'         // Read: count of pending proposed_actions
+  | 'get_next_action_recommendation'   // Deterministic: buildDirectorNextAction()
+  | 'get_action_explanation'           // Deterministic: buildActionExplanation()
+  | 'get_review_queue_guidance'        // Deterministic: buildReviewQueueGuidance()
+  | 'get_page_context'                 // Read: current page label + context
+  | 'set_highlight_target'             // UI: dispatch donna:highlight
+  | 'draft_proposed_action'            // Write (gated): create proposed_action draft
+  | 'route_to_page'                    // UI: suggest navigation (no auto-nav)
+  // Sprint 1002 — Live DB-backed context tools (server-side only, RLS enforced)
+  | 'get_academy_state'                // DB read: AcademyStateSummary (counts + flags, no names)
+  | 'get_player_development_summary'   // DB read: PlayerDevelopmentSummary (counts + flags, no names)
 
 // ── Orchestrator output ───────────────────────────────────────────────────────
 

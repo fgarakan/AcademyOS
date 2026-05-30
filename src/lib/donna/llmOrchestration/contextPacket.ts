@@ -54,6 +54,8 @@ export interface ContextPacketInput {
   conversationHistory?: ConversationHistory
   /** Sprint 979 — Safe academy state summary from panel state or brief */
   academyState?: Partial<AcademyStateSummary>
+  /** Sprint 1002 — Academy ID for server-side live context tool retrieval (never sent to LLM) */
+  academyId?: string
 }
 
 // ── Safe signals ──────────────────────────────────────────────────────────────
@@ -77,6 +79,8 @@ export interface SafeSignals {
   hasAdvancementEligiblePlayers: boolean
   academyHealthSignal: AcademyStateSummary['academyHealthSignal']
   conversationTurnCount: number
+  /** Sprint 1002 — Academy ID for server-side live tool retrieval (stored in signals, never in LLM prompt) */
+  academyId: string | null
 }
 
 // ── Tool manifest ─────────────────────────────────────────────────────────────
@@ -144,6 +148,9 @@ const TOOL_MANIFEST_ALL: ToolManifestEntry[] = [
   { id: 'set_highlight_target', description: 'Highlights a UI element by writing to sessionStorage and dispatching donna:highlight.', safetyLevel: 'safe', requiresParams: ['targetId', 'label', 'route'] },
   { id: 'draft_proposed_action', description: 'Creates a proposed_action draft for director review. Requires confirmation before execution.', safetyLevel: 'approval_gated', requiresParams: ['actionType', 'payload', 'actorId', 'academyId'] },
   { id: 'route_to_page', description: 'Suggests navigation to a route. Does not navigate automatically — director clicks.', safetyLevel: 'safe', requiresParams: ['route'] },
+  // Sprint 1002 — Live DB-backed context tools (server-side only, RLS enforced, counts and flags only)
+  { id: 'get_academy_state', description: 'Returns live academy operational state: pending reviews, sessions, player counts, health signal. Counts and flags only — no player names. RLS enforced server-side.', safetyLevel: 'safe', requiresParams: ['academyId'] },
+  { id: 'get_player_development_summary', description: 'Returns live player development signals: active count, placement/advancement flags, overdue assessments. Counts and flags only — no player names. RLS enforced server-side.', safetyLevel: 'safe', requiresParams: ['academyId'] },
 ]
 
 function buildToolManifest(role: OrchestratorRole): ToolManifest {
@@ -318,6 +325,8 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     hasAdvancementEligiblePlayers: academyState.hasAdvancementEligiblePlayers ?? false,
     academyHealthSignal: academyState.academyHealthSignal ?? 'unknown',
     conversationTurnCount: sanitizedHistory.length,
+    // Sprint 1002 — academyId stored in signals for live tool retrieval, never in LLM prompt
+    academyId: input.academyId ?? null,
   }
 
   const pageContext = buildPageContext(pathname)

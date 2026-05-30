@@ -40,7 +40,8 @@ import { matchesReviewQueueGuidanceIntent, buildReviewQueueGuidance } from '../r
 // Sprint 999 — LLM API client (server-side only, imported lazily via dynamic require when called)
 import type { LlmCallResult } from './llmApiClient'
 // Sprint 1000 — Tool execution loop (safe single-tool execution after LLM output validates)
-import { runToolExecutionLoop } from './toolExecutionLoop'
+// Sprint 1002 — runLiveToolExecutionLoop handles DB-backed tools (async, server-only)
+import { runToolExecutionLoop, runLiveToolExecutionLoop } from './toolExecutionLoop'
 // Sprint 1001 — Multi-turn tool loop (second LLM call for grounded final answer)
 import { runMultiTurnToolLoop } from './multiTurnToolLoop'
 
@@ -242,9 +243,10 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
           safetyAudit.push(`LLM: Response validated. model=${llmResult.model} latency=${llmResult.latencyMs}ms`)
 
           // Sprint 1000 — Tool execution loop: execute toolRequest if present and safe.
+          // Sprint 1002 — runLiveToolExecutionLoop also handles DB-backed live tools.
           // Only safe/read-only tools execute directly. approval_gated tools return an
           // explanation that director confirmation is required. Max one tool per turn.
-          const toolLoopResult = runToolExecutionLoop(llmResult.output, ctx, safetyAudit)
+          const toolLoopResult = await runLiveToolExecutionLoop(llmResult.output, ctx, safetyAudit)
 
           // Sprint 1001 — Multi-turn tool loop: if tool executed, call LLM once more
           // with the tool result as context for a grounded final answer.

@@ -293,6 +293,21 @@ function execRouteToPage(params: Record<string, unknown>): ToolCallResult {
 
 // ── Main dispatcher ───────────────────────────────────────────────────────────
 
+// Sprint 1002 — Stubs for live DB-backed tools.
+// Actual execution happens in liveContextToolExecutor.ts (server-side, async).
+// These stubs return a clear message that live context requires server-side invocation.
+function execLiveContextStub(tool: OrchestratorToolId): ToolCallResult {
+  return {
+    tool,
+    ok: false,
+    data: null,
+    summary: '',
+    error: `Tool '${tool}' requires server-side live context retrieval. Use runLiveToolExecutionLoop() from the orchestrator — not the synchronous executeToolCall().`,
+    requiresConfirmation: false,
+    auditEntry: `tool:${tool} STUB requires live context`,
+  }
+}
+
 const EXECUTORS: Record<OrchestratorToolId, (params: Record<string, unknown>) => ToolCallResult> = {
   get_pending_review_count: execGetPendingReviewCount,
   get_next_action_recommendation: execGetNextActionRecommendation,
@@ -302,6 +317,9 @@ const EXECUTORS: Record<OrchestratorToolId, (params: Record<string, unknown>) =>
   set_highlight_target: execSetHighlightTarget,
   draft_proposed_action: execDraftProposedAction,
   route_to_page: execRouteToPage,
+  // Sprint 1002 — live tools route through liveContextToolExecutor, not here
+  get_academy_state: () => execLiveContextStub('get_academy_state'),
+  get_player_development_summary: () => execLiveContextStub('get_player_development_summary'),
 }
 
 /**

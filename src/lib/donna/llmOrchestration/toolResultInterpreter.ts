@@ -181,6 +181,50 @@ function interpretRouteToPage(result: ToolCallResult): ToolInterpretation {
   }
 }
 
+// ── Sprint 1002: Live context tool interpreters ───────────────────────────────
+
+function interpretAcademyState(result: ToolCallResult): ToolInterpretation {
+  if (!result.ok || !result.summary) {
+    return {
+      tool: result.tool,
+      donnaText: 'I was unable to retrieve live academy state. Here is what I know from panel context.',
+      shouldHighlight: false,
+      shouldSuggestNavigation: false,
+      requiresConfirmation: false,
+    }
+  }
+  return {
+    tool: result.tool,
+    donnaText: `Here is your live academy state: ${result.summary} This data is retrieved directly from your academy database.`,
+    shouldHighlight: false,
+    shouldSuggestNavigation: false,
+    requiresConfirmation: false,
+  }
+}
+
+function interpretPlayerDevelopmentSummary(result: ToolCallResult): ToolInterpretation {
+  if (!result.ok || !result.summary) {
+    return {
+      tool: result.tool,
+      donnaText: 'I was unable to retrieve player development signals. Here is what I know from panel context.',
+      shouldHighlight: true,
+      targetFocusId: 'player-list',
+      targetRoute: '/director/players',
+      shouldSuggestNavigation: false,
+      requiresConfirmation: false,
+    }
+  }
+  return {
+    tool: result.tool,
+    donnaText: `Here are your live player development signals: ${result.summary} These counts come directly from your academy database.`,
+    shouldHighlight: true,
+    targetFocusId: 'player-list',
+    targetRoute: '/director/players',
+    shouldSuggestNavigation: false,
+    requiresConfirmation: false,
+  }
+}
+
 // ── Main interpreter ──────────────────────────────────────────────────────────
 
 const INTERPRETERS: Record<OrchestratorToolId, (result: ToolCallResult) => ToolInterpretation> = {
@@ -192,6 +236,9 @@ const INTERPRETERS: Record<OrchestratorToolId, (result: ToolCallResult) => ToolI
   set_highlight_target: interpretSetHighlightTarget,
   draft_proposed_action: interpretDraftProposedAction,
   route_to_page: interpretRouteToPage,
+  // Sprint 1002 — live context tools
+  get_academy_state: interpretAcademyState,
+  get_player_development_summary: interpretPlayerDevelopmentSummary,
 }
 
 /**

@@ -131,6 +131,19 @@ export const SAFE_TOOL_REGISTRY: Record<OrchestratorToolId, {
     requiredParams: ['route'],
     blockedFor: [],
   },
+  // Sprint 1002 — Live DB-backed context tools (server-side only, RLS enforced)
+  get_academy_state: {
+    safetyLevel: 'safe',
+    description: 'Returns live AcademyStateSummary: pending reviews, sessions, players, health signal. Counts and flags only — no player names, no coach notes. RLS enforced. Server-side only.',
+    requiredParams: ['academyId'],
+    blockedFor: [],
+  },
+  get_player_development_summary: {
+    safetyLevel: 'safe',
+    description: 'Returns live PlayerDevelopmentSummary: active player count, placement/advancement flags, attention flags. Counts and flags only — no player names, no raw notes. RLS enforced. Server-side only.',
+    requiredParams: ['academyId'],
+    blockedFor: [],
+  },
 }
 
 // ── Safety validators ─────────────────────────────────────────────────────────

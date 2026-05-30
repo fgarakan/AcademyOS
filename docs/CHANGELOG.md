@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-30 — Sprint 1002 — DONNA Live Academy Context Tools V1
+
+- `src/lib/donna/llmOrchestration/types.ts` (modified): Added `get_academy_state` and `get_player_development_summary` to `OrchestratorToolId` union (10 total tools).
+- `src/lib/donna/llmOrchestration/safetyContract.ts` (modified): Registered 2 new tools in `SAFE_TOOL_REGISTRY` — safetyLevel: safe, requiredParams: ['academyId'], description emphasizes counts/flags only and RLS enforcement.
+- `src/lib/donna/llmOrchestration/contextPacket.ts` (modified): Added `academyId?: string` to `ContextPacketInput`. Added `academyId: string | null` to `SafeSignals`. Added 2 new live tool entries to `TOOL_MANIFEST_ALL`. `academyId` stored in `safeSignals` for live tool retrieval — never included in LLM system prompt.
+- `src/lib/donna/llmOrchestration/toolCallingContract.ts` (modified): Added stubs for `get_academy_state` and `get_player_development_summary` in EXECUTORS map — stubs return `ok: false` directing caller to use `runLiveToolExecutionLoop` instead. All 10 tool IDs now type-safe in EXECUTORS.
+- `src/lib/donna/llmOrchestration/toolResultInterpreter.ts` (modified): Added `interpretAcademyState` and `interpretPlayerDevelopmentSummary` interpreters. Academy state produces COO-style summary text. Player development highlights `player-list` focus target.
+- `src/lib/donna/llmOrchestration/liveContextToolExecutor.ts` (new): Async DB-backed executors for live tools. `LIVE_TOOL_IDS` set, `isLiveTool(toolId)`, `executeLiveTool(tool, params)`. Uses dynamic imports for `getSupabaseServer()`, `retrieveAcademyState()`, `retrievePlayerDevelopmentContext()`. academyId required + validated. Partial failures non-fatal. Returns counts/flags only — no names, no notes. Never throws.
+- `src/lib/donna/llmOrchestration/toolExecutionLoop.ts` (modified): Added `runLiveToolExecutionLoop(output, ctx, safetyAudit): Promise<ToolLoopResult>` — async wrapper that routes live tools through `executeLiveTool` with `ctx.safeSignals.academyId`, and non-live tools through existing sync `runToolExecutionLoop`. Imported `isLiveTool` from liveContextToolExecutor.
+- `src/lib/donna/llmOrchestration/orchestrator.ts` (modified): Import updated to include `runLiveToolExecutionLoop`. In LLM path, `runToolExecutionLoop` replaced with `await runLiveToolExecutionLoop` so live tools execute correctly.
+- `docs/architecture/DONNA_LIVE_ACADEMY_CONTEXT_TOOLS_1002.md` (new): Architecture doc.
+- `docs/QA_DONNA_LIVE_ACADEMY_CONTEXT_TOOLS_1002.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1001 — DONNA Multi-Turn Tool Loop V1
 
 - `src/lib/donna/llmOrchestration/multiTurnToolLoop.ts` (new): Safe two-step LLM + tool reasoning loop. `buildToolResultSummary(toolLoopResult)` — compact safe summary of interpreted tool data (max 300 chars at sentence boundary, no private data). `buildSecondTurnInput(originalInput, toolSummary)` — appends [user: original_question] + [donna: tool_summary] to conversation history, sets refinement user input. `runMultiTurnToolLoop(originalInput, toolLoopResult, safetyAudit)` — validates tool summary (detectBlockedAction gate), builds second-turn context packet, calls callDonnaLlm (dynamic import), validates output through safety contract (isOutputAllowed + detectBlockedAction + safetyLevel gate), preserves highlight/navigation from tool loop if second turn lacks them. Falls back to tool interpretation on any failure. Never throws. Max one follow-up LLM call per user turn.
