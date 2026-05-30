@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 1010 — DONNA Live Orchestrator Server Action V1
+
+- `src/app/director/_actions/donnaOrchestratorAction.ts` (new): Server action bridge from the DONNA panel to the live LLM orchestrator. `DonnaOrchestratorInput` — accepted from client: `userInput` (max 800 chars), `pathname`, `pageLabel`, `firstName`, `pendingReviews`, `conversationHistory`, `playerId`, `sessionId`, `useLlm` (default: true). Never accepts `academyId` or `role` from client — both resolved from `getAuthorizedContext()`. Director and Head Coach access only. Input validation: non-empty userInput, max 800 chars, pathname must start with `/`. Calls `orchestrate()` with auth-resolved `academyId`/`role`. On orchestrate() exception: returns safe `'DONNA is temporarily unavailable.'`. After response: writes `donna_intelligence_call` usage event to DB via `writeUsageEventToDb()` (fire-and-forget — never blocks response). `DonnaOrchestratorResult` returned to client: `ok`, `output` (primaryOutput only), `hadBlockedAttempt`, `error`. `safetyAudit`, `contextSummary`, `secondaryOutputs`, and all raw DB errors are NOT returned. Not yet wired to DonnaAssistantButton — Sprint 1011 handles panel integration.
+- `docs/architecture/DONNA_LIVE_ORCHESTRATOR_SERVER_ACTION_1010.md` (new): Architecture doc.
+- `docs/QA_DONNA_LIVE_ORCHESTRATOR_SERVER_ACTION_1010.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1009 — DONNA Cross-Page Guided Action V1
 
 - `src/lib/donna/llmOrchestration/donnaGuidedAction.ts` (new): Client-side helper for executing highlight and navigation side effects from an `OrchestratorOutput`. `isAllowedRoute(route)` — validates against `/director|/coach|/player|/parent` prefixes; rejects all external URLs. `executeDonnaHighlight(highlightTarget, currentPathname, onNavigate)` — same-page: `setDonnaFocusTarget` + `donna:highlight` dispatch; cross-page: `setDonnaFocusTarget` + `onNavigate(route)`. `executeDonnaNavigation(route, onNavigate)` — route-validated navigation call. `executeDonnaPrimaryAction(output, pathname, onNavigate)` — convenience wrapper: highlight first if `highlightTarget` present, else navigation. Module is client-only (guards with `typeof window === 'undefined'`). Never calls `router.push` directly. No DB, no API, no mutations. Not yet wired to `DonnaAssistantButton` — Sprint 1011 handles panel integration.
