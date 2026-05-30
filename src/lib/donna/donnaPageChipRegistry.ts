@@ -8,7 +8,9 @@
 // Types
 // ---------------------------------------------------------------------------
 
-export type DonnaChipActionType = 'highlight' | 'prompt'
+// Sprint 966 — added 'brief' to trigger handleFetchDailyBrief via onBrief prop.
+// No new API, no new voice path, no new DONNA surface.
+export type DonnaChipActionType = 'highlight' | 'prompt' | 'brief'
 
 export interface DonnaPageChip {
   /** Unique identifier for this chip within its route */
@@ -69,6 +71,17 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
         label: 'Highlight academy metrics',
         actionType: 'highlight',
         targetId: 'academy-metrics-section',
+      },
+      // Sprint 966 — brief chips: reuse existing /api/donna/brief + handleFetchDailyBrief
+      {
+        id: 'dir-brief-walk',
+        label: 'Walk me through academy priorities',
+        actionType: 'brief',
+      },
+      {
+        id: 'dir-brief-attention',
+        label: 'What needs my attention?',
+        actionType: 'brief',
       },
     ],
   },
@@ -202,6 +215,12 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
         actionType: 'prompt',
         prompt: 'Explain how the director review queue works.',
       },
+      // Sprint 966 — brief chip
+      {
+        id: 'rev-brief',
+        label: 'Show daily brief',
+        actionType: 'brief',
+      },
     ],
   },
 
@@ -235,6 +254,12 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
         label: 'Highlight player list',
         actionType: 'highlight',
         targetId: 'player-list',
+      },
+      // Sprint 966 — brief chip
+      {
+        id: 'plist-brief',
+        label: 'Show daily brief',
+        actionType: 'brief',
       },
     ],
   },
@@ -275,6 +300,12 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
         label: 'What needs attention?',
         actionType: 'prompt',
         prompt: 'Which sessions need my attention right now?',
+      },
+      // Sprint 966 — brief chip
+      {
+        id: 'ses-brief',
+        label: 'Show daily brief',
+        actionType: 'brief',
       },
     ],
   },

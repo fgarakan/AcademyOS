@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-30 — Sprint 966 — DONNA Director Daily Brief V1
+
+- `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added `'brief'` to `DonnaChipActionType` union. Added brief chips to four safe director routes: `/director` gets "Walk me through academy priorities" + "What needs my attention?"; `/director/review`, `/director/sessions`, and `/director/players` each get "Show daily brief". No new routes touched. Existing highlight and prompt chips unchanged.
+- `src/components/donna/DonnaPanelPageChips.tsx` (modified): Added `onBrief?: () => void` prop. Brief chips call `onBrief?.()` on click. Added `'brief'` branch to click handler and title/style logic — brief chips use a slightly brighter lime style to distinguish them as action-oriented. Highlight escalation logic untouched.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Added `onBrief={() => void handleFetchDailyBrief()}` to the existing `<DonnaPanelPageChips>` element. No other changes. `handleFetchDailyBrief` (Sprint 369) fetches `/api/donna/brief`, renders via `DonnaWorkflowCards`/`DonnaDailyBriefCard`, and narrates via `speakDonna`. No new API, surface, or voice path.
+- `docs/architecture/DONNA_DIRECTOR_DAILY_BRIEF_966.md` (new): Architecture doc covering what was/was not created, chip placement, data sources, brief behavior, voice behavior, highlight escalation, safety, and future V2 note.
+- `docs/QA_DONNA_DIRECTOR_DAILY_BRIEF_966.md` (new): Full QA checklist: TypeScript, chip presence per route, brief behavior, voice behavior, Sprint 964 highlight regression, Sprint 904 approval gate regression, safety, and architecture compliance.
+- TypeScript: clean
+
+---
+
 ## 2026-05-29 — Sprint 965 — DONNA Voice Persona Spoken Greeting V1
 
 - `src/lib/donna/donnaVoiceConfig.ts` (modified): `DONNA_VOICE_PERSONALITY` updated to `'female_british_calm_coo'`; `DONNA_VOICE_INSTRUCTIONS` updated to request slight English/British accent and COO persona framing (applied via `gpt-4o-mini-tts` instructions); `preferredBrowserVoiceKeywords` reordered to prioritize British/UK female browser voices (Hazel, Libby, Serena, Moira, Fiona) before US quality voices — browser fallback honestly documented as best-effort and OS/browser-dependent.

@@ -32,13 +32,19 @@ interface Props {
    * so the prompt enters the existing DONNA conversation flow — no new surface.
    */
   onPrompt: (text: string) => void
+  /**
+   * Sprint 966 — Called for brief chips. Parent passes () => void handleFetchDailyBrief()
+   * so brief chips reuse the existing daily brief fetch + speak + render path.
+   * No new API, no new voice path, no new DONNA surface.
+   */
+  onBrief?: () => void
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function DonnaPanelPageChips({ pathname, onPrompt }: Props) {
+export function DonnaPanelPageChips({ pathname, onPrompt, onBrief }: Props) {
   const chips = getChipsForRoute(pathname)
 
   // Track how many times each targetId has been highlighted this session.
@@ -86,6 +92,11 @@ export function DonnaPanelPageChips({ pathname, onPrompt }: Props) {
     onPrompt(chip.prompt)
   }
 
+  // Sprint 966 — brief chips reuse handleFetchDailyBrief via onBrief prop.
+  function handleBriefChip() {
+    onBrief?.()
+  }
+
   return (
     <div
       className="flex flex-wrap gap-1.5"
@@ -105,10 +116,13 @@ export function DonnaPanelPageChips({ pathname, onPrompt }: Props) {
                 ? isEscalated
                   ? `Point to "${chip.label}" again (escalated highlight)`
                   : `Point to "${chip.label}" on this page`
-                : chip.prompt
+                : chip.actionType === 'brief'
+                  ? 'Load DONNA daily brief'
+                  : chip.prompt
             }
             onClick={() => {
               if (chip.actionType === 'highlight') handleHighlightChip(chip)
+              else if (chip.actionType === 'brief') handleBriefChip()
               else handlePromptChip(chip)
             }}
             className="inline-flex items-center gap-1 shrink-0 text-[11px] px-2.5 py-1 rounded-full transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
@@ -117,17 +131,23 @@ export function DonnaPanelPageChips({ pathname, onPrompt }: Props) {
                 ? 'rgba(17,217,223,0.12)'
                 : chip.actionType === 'highlight'
                   ? 'rgba(17,217,223,0.05)'
-                  : 'rgba(200,255,0,0.04)',
+                  : chip.actionType === 'brief'
+                    ? 'rgba(200,255,0,0.07)'
+                    : 'rgba(200,255,0,0.04)',
               border: isEscalated
                 ? '1px solid rgba(17,217,223,0.45)'
                 : chip.actionType === 'highlight'
                   ? '1px solid rgba(17,217,223,0.18)'
-                  : '1px solid rgba(200,255,0,0.15)',
+                  : chip.actionType === 'brief'
+                    ? '1px solid rgba(200,255,0,0.25)'
+                    : '1px solid rgba(200,255,0,0.15)',
               color: isEscalated
                 ? '#11d9df'
                 : chip.actionType === 'highlight'
                   ? 'rgba(17,217,223,0.65)'
-                  : 'rgba(200,255,0,0.55)',
+                  : chip.actionType === 'brief'
+                    ? 'rgba(200,255,0,0.75)'
+                    : 'rgba(200,255,0,0.55)',
               whiteSpace: 'nowrap',
             }}
           >

@@ -4011,6 +4011,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           <DonnaPanelPageChips
             pathname={pathname}
             onPrompt={(text) => handleCommandSubmit(text)}
+            onBrief={() => void handleFetchDailyBrief()}
           />
 
           {/* ── Primary voice card — Sprint 384: extracted to DonnaVoiceLayer ── */}
