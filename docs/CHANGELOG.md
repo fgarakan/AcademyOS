@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 980 — DONNA Tool Calling Contract V2
+
+- `src/lib/donna/llmOrchestration/toolCallingContract.ts` (new): Full typed tool calling contract for all 8 V1 registered tools. `ToolCallResult` type with ok, data, summary, error, requiresConfirmation, auditEntry. Typed input interfaces per tool. `executeToolCall(tool, params)` dispatcher — never throws, always returns ToolCallResult. `getRegisteredTools()`. Executors: get_pending_review_count (deterministic), get_next_action_recommendation (deterministic engine), get_action_explanation (deterministic engine), get_review_queue_guidance (deterministic engine), get_page_context (chip registry), set_highlight_target (UI instruction), draft_proposed_action (stub — Sprint 987 wires real write, always requiresConfirmation: true), route_to_page (internal routes only).
+- `docs/architecture/DONNA_TOOL_CALLING_CONTRACT_V2_980.md` (new): Architecture doc.
+- `docs/QA_DONNA_TOOL_CALLING_CONTRACT_V2_980.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 979 — DONNA LLM Context Packet V2
 
 - `src/lib/donna/llmOrchestration/types.ts` (modified): Added `ConversationTurn` (role/content/timestamp/outputType), `ConversationHistory` (capped array), `PageContextSummary` (highlightTargets, promptChips, hasApprovalGates, isDirectorOnly), `AcademyStateSummary` (counts + health signal — no private data).
