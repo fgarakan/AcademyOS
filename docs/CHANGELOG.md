@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-30 — Sprint 996 — DONNA Voice Conversation Mode V2
+
+- `src/lib/donna/llmOrchestration/voiceConversationMode.ts` (new): Voice-specific conversation routing and response formatting. `VoiceIntent` type (7 intents), `detectVoiceIntent(transcript)`, `formatForVoice(text, maxChars=150)` strips markdown and truncates at sentence boundary, `validateVoiceResponse(text)` checks for blocked patterns (raw notes, scores, rankings, PII), `buildVoiceTurn(params)` combines all. Pure functions, no DB, no TTS call.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 995 — DONNA Long Conversation Persistence V1
 
 - `src/lib/donna/llmOrchestration/conversationPersistence.ts` (new): localStorage-backed conversation state persistence. `saveConversationHistory/loadConversationHistory` (capped at 20 turns, 30-day TTL, academy-scoped), `saveIntentContext/loadIntentContext` (24h TTL), `saveWorkflowState/loadWorkflowState/clearWorkflowState`, `clearAllConversationState`, `appendAndSaveTurn`. No DB writes, no private data stored.
