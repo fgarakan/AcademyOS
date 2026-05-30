@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Sprint 1006 — DONNA Usage Aggregation V1
+
+- `src/lib/donna/llmOrchestration/donnaUsageSummary.ts` (new): Safe in-process DONNA usage aggregation. Types: `DonnaUsageSummary`, `DonnaUsageWindow`, `DonnaToolUsageSummary`, `DonnaFallbackSummary`. Function: `getDonnaUsageSummary(academyId, windowDays)` — reads from `getInProcessDailyCount()` to return today's counts for `donna_intelligence_call`, `donna_tool_call`, and `donna_orchestration_fallback` events. Data source is in-process only (per-serverless-instance, resets on cold start, not shared across instances). `windowDays > 1` returns today's counts with an honest note — no fake multi-day totals. `dataSource` field is `'in_process'` (normal) or `'unavailable'` (error path). `tools.byToolId` and `fallbacks.byReason` are `undefined` in V1 — per-breakdown requires DB-backed store (V2+). Never throws — returns unavailable sentinel on any error. No raw prompts, responses, notes, payloads, or full UUIDs exposed.
+- UI indicator: **deferred** — `DonnaPanelShell.tsx` is a stub; DONNA panel is embedded in `DonnaAssistantButton.tsx` with 25+ coupled state values. Safe injection point does not exist in V1.
+- `docs/architecture/DONNA_USAGE_AGGREGATION_1006.md` (new): Architecture doc — aggregation strategy, data source audit, summary shape, safe/blocked fields, no-migration guarantee, V2 roadmap.
+- `docs/QA_DONNA_USAGE_AGGREGATION_1006.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1005 — DONNA Usage Tracking V1
 
 - `src/lib/donna/llmOrchestration/donnaUsageTracking.ts` (new): Safe log-based usage instrumentation for DONNA LLM and tool calls. `logDonnaLlmUsage()` — logs model, latency, token counts, success flag, and output type label via `logDonnaCall()`; never logs raw prompts, raw responses, player names, or full UUIDs. `logDonnaToolUsage()` — logs tool ID, latency, success/failure, role, and failure category via `logUsageEvent()`; never logs raw tool payloads or DB error messages. `logDonnaFallbackUsage()` — logs fallback reason category and role; never logs fallback response text. All three functions are wrapped in try/catch — logging failure pushes a note to `safetyAudit` but never blocks DONNA's response.
