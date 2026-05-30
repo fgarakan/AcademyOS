@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 985 — DONNA Multi-Step Planning V1
+
+- `src/lib/donna/llmOrchestration/multiStepPlanner.ts` (new): 6 safe multi-step workflow plans (onboard_new_player, run_session_cycle, review_pending_queue, update_curriculum, create_class_template, assign_coach_to_session). Each plan has typed steps with route, focus target, safety level, approval requirements, and time estimates. `detectWorkflowIntent`, `getWorkflowPlan`, `formatWorkflowPlan`, `getAllWorkflowPlans`. No plan step executes automatically — informational only.
+- `docs/architecture/DONNA_MULTI_STEP_PLANNING_985.md` (new): Architecture doc.
+- `docs/QA_DONNA_MULTI_STEP_PLANNING_985.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 984 — DONNA Director Judgment Engine V1
 
 - `src/lib/donna/llmOrchestration/directorJudgmentEngine.ts` (new): Confidence-scored ranking of director priorities. `DirectorJudgmentSignals`, `RankedAction`, `DirectorJudgment` types. `judgeDirectorPriorities(signals)` combines live signals, page context, and Sprint 983 feedback preferences into top-3 ranked actions with urgency scoring. Urgency levels: low/medium/high/critical. No DB calls, no mutations.
