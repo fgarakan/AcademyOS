@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-30 — Sprint 1005 — DONNA Usage Tracking V1
+
+- `src/lib/donna/llmOrchestration/donnaUsageTracking.ts` (new): Safe log-based usage instrumentation for DONNA LLM and tool calls. `logDonnaLlmUsage()` — logs model, latency, token counts, success flag, and output type label via `logDonnaCall()`; never logs raw prompts, raw responses, player names, or full UUIDs. `logDonnaToolUsage()` — logs tool ID, latency, success/failure, role, and failure category via `logUsageEvent()`; never logs raw tool payloads or DB error messages. `logDonnaFallbackUsage()` — logs fallback reason category and role; never logs fallback response text. All three functions are wrapped in try/catch — logging failure pushes a note to `safetyAudit` but never blocks DONNA's response.
+- `src/lib/usage/usageTypes.ts` (modified): Added `donna_tool_call` and `donna_orchestration_fallback` to `UsageEventType` union.
+- `src/lib/donna/llmOrchestration/llmApiClient.ts` (modified): Wired `logDonnaLlmUsage` after successful LLM call (with model, latency, token counts, outputTypeLabel). Wired `logDonnaFallbackUsage` when `ANTHROPIC_API_KEY` is not configured. Logging called after response is ready, uses `ctx.safeSignals.academyId` only.
+- `src/lib/donna/llmOrchestration/toolExecutionLoop.ts` (modified): Wired `logDonnaToolUsage` in `runLiveToolExecutionLoop` — called on both `ok: true` and `ok: false` live tool paths. Uses `ctx.safeSignals.academyId` and `ctx.safeSignals.role` for attribution.
+- `docs/architecture/DONNA_USAGE_TRACKING_1005.md` (new): Architecture doc.
+- `docs/QA_DONNA_USAGE_TRACKING_1005.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1004 — DONNA Session Context Tool V1
 
 - `src/lib/donna/llmOrchestration/sessionContextRetrieval.ts` (new): Safe director/coach-facing session context retrieval. `SessionContextSummary` (sessionName, sessionStatus, scheduledDate/Time, durationMin, templateName, coachName, groupName, blockCount, attendance counts, wrapUpStatus, needsDirectorReview). `retrieveSessionContext(supabase, sessionId, academyId)` — 7 sequential queries: session core, template label, coach display name, group name, block count, attendance counts, wrap-up status from proposed_actions. Labels/counts only — no session_notes, no individual player names, no coach observation text, no wrap-up draft content. Partial failures non-fatal.

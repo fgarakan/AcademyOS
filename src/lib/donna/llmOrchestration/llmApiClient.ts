@@ -20,6 +20,8 @@ import type { OrchestratorOutput, OrchestratorOutputType, OrchestratorSafetyLeve
 import type { ContextPacket } from './contextPacket'
 import { isOutputAllowed, isActionBlocked } from './safetyContract'
 import { detectBlockedAction } from './orchestrator'
+// Sprint 1005 — Safe usage tracking (stdout/log only — no DB writes)
+import { logDonnaLlmUsage, logDonnaFallbackUsage } from './donnaUsageTracking'
 
 // ── LLM response schema ───────────────────────────────────────────────────────
 
@@ -123,6 +125,8 @@ export async function callDonnaLlm(
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey || apiKey.startsWith('your_') || apiKey === '') {
     safetyAudit.push('LLM: ANTHROPIC_API_KEY not configured. Returning null.')
+    // Sprint 1005: log fallback — API key not configured
+    logDonnaFallbackUsage({ academyId: ctx.safeSignals.academyId, reason: 'api_key_missing', safetyAudit })
     return { output: null, error: 'API key not configured.', inputTokens: 0, outputTokens: 0, model: 'none', latencyMs: 0, hadBlockedContent: false }
   }
 
@@ -267,6 +271,18 @@ export async function callDonnaLlm(
   }
 
   safetyAudit.push(`LLM: Valid response. type=${output.type} safety=${output.safetyLevel} confidence=${output.confidence} tokens=${inputTokens}+${outputTokens}`)
+
+  // Sprint 1005: log successful LLM call — safe metadata only, no raw content
+  logDonnaLlmUsage({
+    academyId: ctx.safeSignals.academyId,
+    model,
+    latencyMs: Date.now() - startMs,
+    inputTokens,
+    outputTokens,
+    success: true,
+    outputTypeLabel: output.type,
+    safetyAudit,
+  })
 
   return {
     output,

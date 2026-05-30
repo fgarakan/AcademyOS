@@ -11,6 +11,9 @@ export type UsageEventType =
   | 'portal_ai_question'
   | 'coaching_message_generation'
   | 'recommendation_generation'
+  // Sprint 1005 — DONNA orchestration usage tracking
+  | 'donna_tool_call'                // Safe live context tool execution (get_academy_state, etc.)
+  | 'donna_orchestration_fallback'   // Fallback path used (API key missing, validation fail, etc.)
 
 export interface UsageEvent {
   eventType: UsageEventType

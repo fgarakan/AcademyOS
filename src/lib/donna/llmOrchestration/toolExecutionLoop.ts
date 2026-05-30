@@ -28,6 +28,8 @@ import { interpretToolResult } from './toolResultInterpreter'
 import { getToolSafetyLevel, validateToolRequest } from './safetyContract'
 // Sprint 1002 — live tool set (server-side async DB execution)
 import { isLiveTool } from './liveContextToolExecutor'
+// Sprint 1005 — safe usage tracking for live tool calls
+import { logDonnaToolUsage } from './donnaUsageTracking'
 
 // ── Safe-to-execute set ───────────────────────────────────────────────────────
 
@@ -255,6 +257,8 @@ export async function runLiveToolExecutionLoop(
 
     if (!liveResult.ok) {
       safetyAudit.push(`LiveToolLoop: Live tool '${tool}' failed — ${liveResult.error ?? 'unknown'}. Using original output.`)
+      // Sprint 1005: log tool failure — safe metadata only, no raw error content
+      logDonnaToolUsage({ academyId, toolId: tool, latencyMs: 0, success: false, role: ctx.safeSignals.role, failureCategory: 'db_error', safetyAudit })
       return { executed: false, output, auditEntry: `live_failed:${tool}` }
     }
 
@@ -268,6 +272,8 @@ export async function runLiveToolExecutionLoop(
 
     const enhanced = interpretationToOutput(tool, interpretation, output)
     safetyAudit.push(`LiveToolLoop: SUCCESS — tool='${tool}' donnaText(${interpretation.donnaText.length} chars)`)
+    // Sprint 1005: log tool success — safe metadata only, no raw returned data
+    logDonnaToolUsage({ academyId, toolId: tool, latencyMs: 0, success: true, role: ctx.safeSignals.role, safetyAudit })
     return { executed: true, output: enhanced, auditEntry: `live_executed:${tool}` }
   }
 
