@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 989 — DONNA Knowledge → Recommendation Guardrails V1
+
+- `src/lib/donna/llmOrchestration/knowledgeGuardrails.ts` (new): 6-rule guardrail enforcer for Knowledge Builder content use. `evaluateKnowledgeGuardrails`, `enrichResponseWithGuardrails`, `isKnowledgeBlockedForTrigger`, `getKnowledgeScopeLabel`. Blocked triggers include level changes, parent comms, curriculum publishes. Deprecated entries always show warning. Advisory label + citation mandatory. Pure functions, no DB.
+- `docs/architecture/DONNA_KNOWLEDGE_RECOMMENDATION_GUARDRAILS_989.md` (new): Architecture doc.
+- `docs/QA_DONNA_KNOWLEDGE_RECOMMENDATION_GUARDRAILS_989.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 988 — DONNA Knowledge Builder Retrieval Bridge V1
 
 - `src/lib/donna/llmOrchestration/knowledgeBuilderBridge.ts` (new): Safe Knowledge Builder retrieval bridge. `KnowledgeEntry`, `KnowledgeApprovalStatus` (draft/under_review/approved/deprecated), `KnowledgeVisibilityLevel`, `KnowledgeContentType` types. `filterKnowledgeByRole` (drafts always blocked), `filterKnowledgeByStage`, `rankKnowledgeByPageAffinity`, `buildCitation`, `buildKnowledgeResponse`, `retrieveApprovedKnowledge` (V1 stub — returns []). Platform owner approval always required before DONNA uses content.
