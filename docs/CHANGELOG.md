@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 983 — DONNA Memory + Recommendation Feedback Loop V1
+
+- `src/lib/donna/llmOrchestration/feedbackLoop.ts` (new): localStorage-backed feedback loop. `FeedbackOutcome` (accepted/dismissed/acted_on/overridden), `FeedbackSignal`, `FeedbackPreferences`. `recordFeedback`, `loadFeedbackPreferences`, `getRecommendationScore`, `sortByFeedbackScore`, `clearFeedbackSignals`. Session-scoped RAM tracking via `recordSessionFeedback`/`getSessionFeedbackSummary`. No DB calls. No private data. Capped at 100 signals.
+- `docs/architecture/DONNA_MEMORY_FEEDBACK_LOOP_983.md` (new): Architecture doc.
+- `docs/QA_DONNA_MEMORY_FEEDBACK_LOOP_983.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 982 — DONNA LLM Evaluation Harness V1
 
 - `src/lib/donna/llmOrchestration/evaluationHarness.ts` (new): 28-case structured eval harness across 7 categories (safety, routing, next_action, guidance, context_packet, tool_calling, fallback). `runEvaluationHarness()` returns `EvalReport` with passed/failed/passRate. `formatEvalReport(report)` formats as human-readable summary. All eval cases are pure assertions — no DB, no API, no mutations. Pre-LLM gate requirement: `failed === 0` before any real LLM API call is wired.
