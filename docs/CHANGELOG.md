@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 970 — DONNA Director Action Explanation Layer V1
+
+- `src/lib/donna/directorActionExplanation.ts` (new): Structured safety/approval explanation layer for every `DirectorNextAction`. Exports `DirectorActionExplanation` type (whatItDoes, changesRecords, approvalRequired, whatHappensNext, safetyStatement, safetyBadge, safetyLevel), `buildActionExplanation(action)`, `formatExplanationAsText(explanation)`, `getSafetyBadge(level)`, `requiresDirectorApproval(level)`, `canChangeRecords(level)`. Single source of truth for DONNA safety language — consumed by panel responses (V1) and Sprint 978 LLM context packet. All 8 action IDs have specific `whatItDoes` / `whatHappensNext` copy. Unknown IDs fall back to `action.why`. Pure TypeScript — no DB, no API, no mutations.
+- `docs/architecture/DONNA_DIRECTOR_ACTION_EXPLANATION_LAYER_970.md` (new): Architecture doc — purpose, exported functions, safety level templates, action ID coverage table, integration notes, Sprint 978 roadmap.
+- `docs/QA_DONNA_DIRECTOR_ACTION_EXPLANATION_LAYER_970.md` (new): QA checklist — TypeScript, builder correctness per safety level, integration, no-mutation, Sprint 978 readiness.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 969 — DONNA Highlight Every Recommendation V1
 
 - `src/app/director/review/page.tsx` (modified): Added `data-donna-focus-id="review-queue-primary"` wrapper div around the `<Tabs>` component (the entire review queue content area). Always present when the review page renders — independent of which tab is active or which conditional sections have items. Does not affect tab behavior, approval/rejection logic, or data fetching.
