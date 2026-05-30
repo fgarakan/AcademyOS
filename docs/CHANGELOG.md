@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-30 — Sprint 973 — DONNA Curriculum Builder Guidance V1
+
+- `src/lib/donna/curriculumBuilderGuidance.ts` (new): Deterministic curriculum builder guidance. `CurriculumBuilderGuidanceIntent` type (explain_curriculum, explain_levels, explain_gates, what_to_edit_first, draft_review_behavior, global_vs_academy). `matchesCurriculumBuilderGuidanceIntent(text)` and `buildCurriculumBuilderGuidance(intent)`. Pure TypeScript — no DB, no API, no mutations.
+- `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added 4 chips to `/director/curriculum`: Explain this curriculum, What are levels?, What are gates?, What should I edit first?.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Import + handler for curriculum builder guidance in `detectAndHandleCommand`.
+- `docs/architecture/DONNA_CURRICULUM_BUILDER_GUIDANCE_973.md` (new): Architecture doc.
+- `docs/QA_DONNA_CURRICULUM_BUILDER_GUIDANCE_973.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 972 — DONNA Class Template Guidance V1
 
 - `src/lib/donna/classTemplateGuidance.ts` (new): Deterministic class template guidance. `ClassTemplateGuidanceIntent` type covering explain_template, template_readiness, explain_blocks, create_session_from_template, explain_template_list. `matchesClassTemplateGuidanceIntent(text)` detects intent. `buildClassTemplateGuidance(intent)` returns COO-style text. Pure TypeScript — no DB, no API, no mutations.

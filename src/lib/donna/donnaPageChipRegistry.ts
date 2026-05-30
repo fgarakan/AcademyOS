@@ -122,6 +122,31 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
         actionType: 'prompt',
         prompt: 'What should I do next on the curriculum page?',
       },
+      // Sprint 973 — curriculum builder guidance chips
+      {
+        id: 'cur-explain',
+        label: 'Explain this curriculum',
+        actionType: 'prompt',
+        prompt: 'Explain the curriculum builder.',
+      },
+      {
+        id: 'cur-levels-explain',
+        label: 'What are levels?',
+        actionType: 'prompt',
+        prompt: 'What are curriculum levels?',
+      },
+      {
+        id: 'cur-gates-explain',
+        label: 'What are gates?',
+        actionType: 'prompt',
+        prompt: 'What are curriculum gates?',
+      },
+      {
+        id: 'cur-edit-first',
+        label: 'What should I edit first?',
+        actionType: 'prompt',
+        prompt: 'What should I edit first in the curriculum?',
+      },
     ],
   },
 

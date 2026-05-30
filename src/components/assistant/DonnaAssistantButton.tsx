@@ -258,6 +258,8 @@ import { buildDirectorNextAction, matchesWhatNextIntent } from '@/lib/donna/dire
 import { buildReviewQueueGuidance, matchesReviewQueueGuidanceIntent } from '@/lib/donna/reviewQueueGuidance'
 // Sprint 972 — Class Template Guidance (deterministic guidance for class template workflow)
 import { buildClassTemplateGuidance, matchesClassTemplateGuidanceIntent } from '@/lib/donna/classTemplateGuidance'
+// Sprint 973 — Curriculum Builder Guidance (deterministic guidance for curriculum builder)
+import { buildCurriculumBuilderGuidance, matchesCurriculumBuilderGuidanceIntent } from '@/lib/donna/curriculumBuilderGuidance'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -2721,6 +2723,25 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           explain_template_list: 'Template Library',
         }
         setCommandResponse({ message: guidance, type: 'info', label: labels[ctIntent] ?? 'Class Template' })
+        setActiveMode('explain')
+        return true
+      }
+    }
+
+    // Sprint 973 — Curriculum Builder Guidance: "Explain levels", "What are gates?", etc.
+    {
+      const cbIntent = matchesCurriculumBuilderGuidanceIntent(text)
+      if (cbIntent) {
+        const guidance = buildCurriculumBuilderGuidance(cbIntent)
+        const labels: Record<string, string> = {
+          explain_curriculum: 'Curriculum',
+          explain_levels: 'Curriculum Levels',
+          explain_gates: 'Curriculum Gates',
+          what_to_edit_first: 'Where to Start',
+          draft_review_behavior: 'Draft & Review',
+          global_vs_academy: 'Global vs Academy',
+        }
+        setCommandResponse({ message: guidance, type: 'info', label: labels[cbIntent] ?? 'Curriculum' })
         setActiveMode('explain')
         return true
       }
