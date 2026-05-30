@@ -270,8 +270,8 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
     <div className="space-y-6 pb-10">
       <BackLink />
 
-      {/* Session header */}
-      <div>
+      {/* Session header — Sprint 977: data-donna-focus-id for DONNA session execution highlight */}
+      <div data-donna-focus-id="coach-session-header">
         <p className="page-eyebrow">Session</p>
         <h1 className="page-title text-xl">
           {session.name ?? 'Untitled Session'}

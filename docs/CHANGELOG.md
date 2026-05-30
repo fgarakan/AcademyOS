@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Sprint 977 — Coach Session Detail Execution View V1
+
+- `src/app/coach/sessions/[sessionId]/page.tsx` (modified): Added `data-donna-focus-id="coach-session-header"` to the session header `<div>` — contains session name, date/time, template, curriculum level, goal, block progress rail, and "Open focused execute view" link.
+- `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added chip set for `/coach/sessions/` (prefix, covers all coach session detail and wrap-up pages) with 5 chips — Highlight session info, Highlight today's plan, Highlight run session, Highlight wrap-up, What should I do next?.
+- `docs/architecture/COACH_SESSION_DETAIL_EXECUTION_VIEW_977.md` (new): Architecture doc confirming existing execution view architecture, full focus ID coverage table, V2 improvements.
+- `docs/QA_COACH_SESSION_DETAIL_EXECUTION_VIEW_977.md` (new): QA checklist — TypeScript, focus targets, chip behavior, routing, execution content, no-mutation.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 976 — Coach Assigned Sessions Dashboard V1
 
 - `src/app/coach/page.tsx` (modified): Added `data-donna-focus-id="coach-wrapup-alert"` to the wrap-up alert `<Link>` element — renders conditionally when `pendingWrapUpCount > 0`, making it highlightable by DONNA when sessions need wrap-up.

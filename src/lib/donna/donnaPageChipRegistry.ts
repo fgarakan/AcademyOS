@@ -444,6 +444,46 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
     ],
   },
 
+  // ── Coach Session Detail (/coach/sessions/[sessionId]) ───────────────────
+  // Sprint 977 — coach session detail execution view chips.
+  // More specific prefix than /coach/sessions so detail pages use this chip set.
+  {
+    routePattern: '/coach/sessions/',
+    matchPrefix: true,
+    chips: [
+      {
+        id: 'coach-ses-header',
+        label: 'Highlight session info',
+        actionType: 'highlight',
+        targetId: 'coach-session-header',
+      },
+      {
+        id: 'coach-ses-plan',
+        label: "Highlight today's plan",
+        actionType: 'highlight',
+        targetId: 'coach-lesson-plan',
+      },
+      {
+        id: 'coach-ses-run',
+        label: 'Highlight run session',
+        actionType: 'highlight',
+        targetId: 'coach-run-session',
+      },
+      {
+        id: 'coach-ses-wrapup',
+        label: 'Highlight wrap-up',
+        actionType: 'highlight',
+        targetId: 'coach-wrap-up-link',
+      },
+      {
+        id: 'coach-ses-next',
+        label: 'What should I do next?',
+        actionType: 'prompt',
+        prompt: 'What should I do next for this session?',
+      },
+    ],
+  },
+
   // ── Coach Home (/coach) ───────────────────────────────────────────────────
   // Sprint 976 — coach assigned sessions dashboard chips
   {
