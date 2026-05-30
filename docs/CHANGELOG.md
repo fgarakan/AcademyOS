@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 984 — DONNA Director Judgment Engine V1
+
+- `src/lib/donna/llmOrchestration/directorJudgmentEngine.ts` (new): Confidence-scored ranking of director priorities. `DirectorJudgmentSignals`, `RankedAction`, `DirectorJudgment` types. `judgeDirectorPriorities(signals)` combines live signals, page context, and Sprint 983 feedback preferences into top-3 ranked actions with urgency scoring. Urgency levels: low/medium/high/critical. No DB calls, no mutations.
+- `docs/architecture/DONNA_DIRECTOR_JUDGMENT_ENGINE_984.md` (new): Architecture doc.
+- `docs/QA_DONNA_DIRECTOR_JUDGMENT_ENGINE_984.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 983 — DONNA Memory + Recommendation Feedback Loop V1
 
 - `src/lib/donna/llmOrchestration/feedbackLoop.ts` (new): localStorage-backed feedback loop. `FeedbackOutcome` (accepted/dismissed/acted_on/overridden), `FeedbackSignal`, `FeedbackPreferences`. `recordFeedback`, `loadFeedbackPreferences`, `getRecommendationScore`, `sortByFeedbackScore`, `clearFeedbackSignals`. Session-scoped RAM tracking via `recordSessionFeedback`/`getSessionFeedbackSummary`. No DB calls. No private data. Capped at 100 signals.
