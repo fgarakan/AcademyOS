@@ -228,6 +228,25 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
         label: 'Show daily brief',
         actionType: 'brief',
       },
+      // Sprint 971 — review queue guidance chips
+      {
+        id: 'rev-review-first',
+        label: 'What should I review first?',
+        actionType: 'prompt',
+        prompt: 'What should I review first?',
+      },
+      {
+        id: 'rev-highlight-queue',
+        label: 'Highlight review queue',
+        actionType: 'highlight',
+        targetId: 'review-queue-primary',
+      },
+      {
+        id: 'rev-safe-approve',
+        label: 'What is safe to approve?',
+        actionType: 'prompt',
+        prompt: 'What is safe to approve?',
+      },
     ],
   },
 

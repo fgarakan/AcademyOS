@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-30 — Sprint 971 — DONNA Review Queue Guidance V1
+
+- `src/lib/donna/reviewQueueGuidance.ts` (new): Deterministic guidance for the Director Review Queue. `ReviewQueueGuidanceIntent` type (`first_priority`, `safe_to_approve`, `explain_queue`, `what_caution`). `matchesReviewQueueGuidanceIntent(text)` detects intent phrases without overlapping daily brief or next-action intent sets. `buildReviewQueueGuidance(intent)` returns COO-style text — wrap-up priority ordering, approval contract explanation, caution guidance. Pure TypeScript — no DB, no API, no mutations.
+- `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added 3 chips to `/director/review`: "What should I review first?" (prompt), "Highlight review queue" (highlight → `review-queue-primary`), "What is safe to approve?" (prompt). Existing chips preserved.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Added import for `buildReviewQueueGuidance` and `matchesReviewQueueGuidanceIntent`. Added handler block in `detectAndHandleCommand` that runs before the "what should I do next?" block — dispatches guidance text via `setCommandResponse` when review queue guidance intent detected.
+- `docs/architecture/DONNA_REVIEW_QUEUE_GUIDANCE_971.md` (new): Architecture doc — what was built, guidance intent coverage, chip set, review priority order, safety guarantees, no-migration guarantee.
+- `docs/QA_DONNA_REVIEW_QUEUE_GUIDANCE_971.md` (new): QA checklist — TypeScript, intent detection, chip behavior, Sprint 904 regression, Sprint 968/969 regression, no-mutation.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 970 — DONNA Director Action Explanation Layer V1
 
 - `src/lib/donna/directorActionExplanation.ts` (new): Structured safety/approval explanation layer for every `DirectorNextAction`. Exports `DirectorActionExplanation` type (whatItDoes, changesRecords, approvalRequired, whatHappensNext, safetyStatement, safetyBadge, safetyLevel), `buildActionExplanation(action)`, `formatExplanationAsText(explanation)`, `getSafetyBadge(level)`, `requiresDirectorApproval(level)`, `canChangeRecords(level)`. Single source of truth for DONNA safety language — consumed by panel responses (V1) and Sprint 978 LLM context packet. All 8 action IDs have specific `whatItDoes` / `whatHappensNext` copy. Unknown IDs fall back to `action.why`. Pure TypeScript — no DB, no API, no mutations.

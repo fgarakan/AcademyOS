@@ -254,6 +254,8 @@ import { resolveFollowUp } from '@/lib/donna/donnaFollowUpResolver'
 import type { DonnaSessionIntentContext } from '@/lib/donna/donnaFollowUpResolver'
 // Sprint 968 — Director Next Action Engine (deterministic "what should I do next?" routing)
 import { buildDirectorNextAction, matchesWhatNextIntent } from '@/lib/donna/directorNextActionEngine'
+// Sprint 971 — Review Queue Guidance (deterministic guidance for review queue intent phrases)
+import { buildReviewQueueGuidance, matchesReviewQueueGuidanceIntent } from '@/lib/donna/reviewQueueGuidance'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -2684,6 +2686,24 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       setCommandResponse({ message: ctx.nextAction, type: 'info', label: 'Suggested next step' })
       setActiveMode('guide')
       return true
+    }
+
+    // Sprint 971 — Review Queue Guidance: "What should I review first?", "What is safe to approve?"
+    // Runs before the daily brief check — phrases are exclusive to this guidance handler.
+    {
+      const rqIntent = matchesReviewQueueGuidanceIntent(text)
+      if (rqIntent) {
+        const guidance = buildReviewQueueGuidance(rqIntent)
+        const labels: Record<string, string> = {
+          first_priority: 'Review Priority',
+          safe_to_approve: 'Safe to Approve',
+          explain_queue: 'Review Queue',
+          what_caution: 'Use Caution',
+        }
+        setCommandResponse({ message: guidance, type: 'info', label: labels[rqIntent] ?? 'Review Queue' })
+        setActiveMode('guide')
+        return true
+      }
     }
 
     // "What should I do next?" — Sprint 968: routes through Director Next Action Engine.
