@@ -1,23 +1,20 @@
 // Sprint 978 — DONNA LLM Orchestration Foundation V1
+// Sprint 999 — LLM API Wire-Up V1: real Anthropic API call replaces stub.
 // The main orchestrator that coordinates context, tools, and safety validation.
-// Pure TypeScript — no DB, no API, no React, no mutations in this module.
 //
-// V1 architecture:
+// Architecture (post-Sprint 999):
 //   1. Build context packet from available signals
-//   2. Run deterministic intent classification first (fast path)
-//   3. If deterministic handlers resolve the intent: return without LLM
-//   4. If LLM is needed: send context packet + user input to LLM
-//   5. Validate LLM output against safety contract
-//   6. Execute only safe, validated tool requests
-//   7. Return structured response — no direct mutations
-//
-// V1 does NOT execute LLM calls directly.
-// V1 establishes the architecture, types, and safety contract so Sprint 979+
-// can wire real LLM calls safely with eval requirements already defined.
+//   2. Run deterministic fast paths first (no LLM needed, always fastest)
+//   3. If deterministic handlers resolve the intent: return immediately
+//   4. If useLlm: true — call Anthropic API via callDonnaLlm()
+//   5. Validate LLM output against safety contract (output type, blocked actions)
+//   6. Return structured OrchestratorResponse — no direct mutations
 //
 // Fallback behavior:
-//   If LLM is unavailable or response is invalid → deterministic fallback
-//   If tool request is blocked → explain why, do not execute, log to safetyAudit
+//   If ANTHROPIC_API_KEY missing → deterministic fallback (no crash)
+//   If LLM returns invalid JSON → deterministic fallback
+//   If LLM response contains blocked action → deterministic fallback
+//   If tool request is blocked → explain why, do not execute
 
 import type {
   OrchestratorResponse,
@@ -40,6 +37,8 @@ import { buildDirectorNextAction } from '../directorNextActionEngine'
 import { buildActionExplanation } from '../directorActionExplanation'
 import { matchesWhatNextIntent } from '../directorNextActionEngine'
 import { matchesReviewQueueGuidanceIntent, buildReviewQueueGuidance } from '../reviewQueueGuidance'
+// Sprint 999 — LLM API client (server-side only, imported lazily via dynamic require when called)
+import type { LlmCallResult } from './llmApiClient'
 
 // ── Orchestrator input ────────────────────────────────────────────────────────
 
@@ -162,14 +161,13 @@ function buildFallbackResponse(
 /**
  * Main orchestrator entry point.
  *
- * V1 behavior:
- *   1. Builds context packet
- *   2. Tries deterministic fast paths
- *   3. If `useLlm` is false or no LLM is configured: returns deterministic result or fallback
- *   4. If `useLlm` is true: (stub) — logs that LLM path is not yet wired; returns fallback
- *
- * V1 does NOT make real LLM API calls. The LLM path is stubbed.
- * Sprint 979 will wire the actual Anthropic API call behind this contract.
+ * Sprint 999 behavior:
+ *   1. Builds V2 context packet (role, page, tools, history, academy state)
+ *   2. Tries deterministic fast paths (next-action engine, review guidance)
+ *   3. If deterministic handler resolves: returns immediately (no LLM needed)
+ *   4. If useLlm: true — calls Anthropic API via callDonnaLlm() (dynamic import)
+ *   5. Validates LLM output against safety contract (type, blocked actions, routes)
+ *   6. Falls back to deterministic response if LLM fails or is blocked
  *
  * Safety invariants enforced regardless of path:
  *   - No auto-approve/reject
@@ -177,6 +175,7 @@ function buildFallbackResponse(
  *   - No level/roster/billing changes
  *   - All mutations go through proposed_actions pipeline
  *   - No raw private data exposed
+ *   - Blocked action detection runs before and after LLM call
  */
 export async function orchestrate(input: OrchestratorInput): Promise<OrchestratorResponse> {
   const safetyAudit: string[] = []
@@ -207,13 +206,57 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
     hadBlockedAttempt = true
   }
 
-  // Step 3: LLM path (V1 stub — not yet wired to real API)
+  // Step 3: LLM path — Sprint 999: real Anthropic API call.
+  // Dynamic import keeps the Anthropic SDK out of the client bundle.
+  // callDonnaLlm() checks API key, builds prompt, calls API, validates response.
   if (input.useLlm) {
-    // V1: LLM call is stubbed. Sprint 979 will wire the Anthropic API here.
-    // The contract is: send ctx.systemPrompt + ctx.userInput, receive OrchestratorOutput.
-    // All LLM outputs must pass validateLlmOutput() before returning.
-    safetyAudit.push('LLM: Path selected but not yet wired (Sprint 979). Returning fallback.')
-    return buildFallbackResponse(ctx, 'LLM path not yet wired in V1.')
+    safetyAudit.push('LLM: Attempting Anthropic API call via callDonnaLlm.')
+    try {
+      // Dynamic import — only resolved on server where ANTHROPIC_API_KEY is available.
+      const { callDonnaLlm } = await import('./llmApiClient')
+      const llmResult: LlmCallResult = await callDonnaLlm(ctx, safetyAudit)
+
+      if (llmResult.hadBlockedContent) {
+        hadBlockedAttempt = true
+        safetyAudit.push(`LLM: Blocked content detected. Falling back to deterministic response.`)
+        return {
+          ...buildFallbackResponse(ctx, 'LLM response contained blocked content.'),
+          hadBlockedAttempt: true,
+          safetyAudit,
+        }
+      }
+
+      if (llmResult.output) {
+        const isValid = validateLlmOutput(
+          llmResult.output.type,
+          llmResult.output.toolRequest,
+          safetyAudit,
+        )
+        if (isValid) {
+          safetyAudit.push(`LLM: Response validated. model=${llmResult.model} latency=${llmResult.latencyMs}ms`)
+          return {
+            primaryOutput: llmResult.output,
+            secondaryOutputs: [],
+            hadBlockedAttempt,
+            safetyAudit,
+            contextSummary: ctx.compactSummary,
+          }
+        }
+        safetyAudit.push('LLM: Response failed safety validation — falling back.')
+        hadBlockedAttempt = true
+      } else {
+        safetyAudit.push(`LLM: No output returned (${llmResult.error ?? 'unknown reason'}) — falling back.`)
+      }
+    } catch (err) {
+      safetyAudit.push(`LLM: Unexpected error in callDonnaLlm: ${err instanceof Error ? err.message : String(err)}`)
+    }
+
+    // LLM path failed or returned nothing — deterministic fallback
+    return {
+      ...buildFallbackResponse(ctx, 'LLM path failed — returning deterministic fallback.'),
+      hadBlockedAttempt,
+      safetyAudit,
+    }
   }
 
   // Step 4: No deterministic handler matched + LLM not requested → fallback

@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Sprint 999 — DONNA LLM API Wire-Up V1
+
+- `src/lib/donna/llmOrchestration/llmApiClient.ts` (new): Anthropic API client for DONNA orchestration. `callDonnaLlm(ctx, safetyAudit)` — checks API key, runs pre-call blocked-action gate, builds structured prompt with OUTPUT_TYPE_SCHEMA, calls claude-sonnet-4-6 (max_tokens: 800, prompt caching via cache_control), parses JSON response (strips markdown fences), validates via `isValidLlmResponse()`, runs post-parse safety checks (output type, blocked action in text, safety level, route whitelist). 1 retry on 429/500/529. Returns `LlmCallResult` with output or null — never throws.
+- `src/lib/donna/llmOrchestration/orchestrator.ts` (modified): Sprint 978 stub replaced with real `callDonnaLlm()` call (dynamic import — server-only, keeps Anthropic out of client bundle). Safety layers: pre-call detectBlockedAction → API call → validateLlmOutput → return or fallback. All failures return `buildFallbackResponse()`. `hadBlockedAttempt` set when content was blocked. Deterministic fast paths (next-action, review guidance) still run first — LLM only called when no deterministic match and `useLlm: true`.
+- `docs/architecture/DONNA_LLM_API_WIRE_UP_999.md` (new): Architecture doc — full call graph, LLM response schema, 9-layer safety chain, model/token guardrails, deterministic fast paths, fallback behavior, V2 roadmap.
+- `docs/QA_DONNA_LLM_API_WIRE_UP_999.md` (new): QA checklist — TypeScript, pre-certification gate, LLM client, safety validation, orchestrator integration, fallback, environment, Sprint 998 regression.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 998 — DONNA God Mode V2 Certification V1
 
 - `src/lib/donna/llmOrchestration/godModeV2Certification.ts` (new): 12-check certification suite for DONNA God Mode V2. `runGodModeV2Certification()` runs eval harness (Sprint 982), red-team (Sprint 997), and 10 module checks. Returns `GodModeV2CertificationReport` with GO/NO-GO determination. `formatCertificationReport` formats human-readable summary. GO requires: criticalFailures=0, failed=0. NO-GO blocks LLM API wire-up. Never throws. No DB, no mutations.
