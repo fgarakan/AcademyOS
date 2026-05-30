@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-30 — Sprint 997 — DONNA LLM Red-Team Safety QA V1
+
+- `src/lib/donna/llmOrchestration/redTeamSafetyQA.ts` (new): 21 adversarial red-team cases across 7 categories (prompt_injection, jailbreak, unsafe_action, privacy_violation, bypass_attempt, approval_bypass, voice_safety). `runRedTeamSafetyQA()` returns `RedTeamReport` with blocked/failed/criticalFailures. `formatRedTeamReport` formats summary. Includes eval harness gate case (rt_eh_001) — all 28 eval cases must also pass. No DB calls, no mutations.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 996 — DONNA Voice Conversation Mode V2
 
 - `src/lib/donna/llmOrchestration/voiceConversationMode.ts` (new): Voice-specific conversation routing and response formatting. `VoiceIntent` type (7 intents), `detectVoiceIntent(transcript)`, `formatForVoice(text, maxChars=150)` strips markdown and truncates at sentence boundary, `validateVoiceResponse(text)` checks for blocked patterns (raw notes, scores, rankings, PII), `buildVoiceTurn(params)` combines all. Pure functions, no DB, no TTS call.
