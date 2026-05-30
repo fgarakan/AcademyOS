@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 982 — DONNA LLM Evaluation Harness V1
+
+- `src/lib/donna/llmOrchestration/evaluationHarness.ts` (new): 28-case structured eval harness across 7 categories (safety, routing, next_action, guidance, context_packet, tool_calling, fallback). `runEvaluationHarness()` returns `EvalReport` with passed/failed/passRate. `formatEvalReport(report)` formats as human-readable summary. All eval cases are pure assertions — no DB, no API, no mutations. Pre-LLM gate requirement: `failed === 0` before any real LLM API call is wired.
+- `docs/architecture/DONNA_LLM_EVALUATION_HARNESS_982.md` (new): Architecture doc.
+- `docs/QA_DONNA_LLM_EVALUATION_HARNESS_982.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 981 — DONNA Safe Action Router V1
 
 - `src/lib/donna/llmOrchestration/safeActionRouter.ts` (new): Routes orchestrator outputs to immediate/draft/review_queue/blocked execution paths. `ActionRoutingPath`, `ActionRoutingResult`, `ActionInstruction` types. `routeAction(output)` — looks up routing table by output type + safety level, builds instructions. `routeToolResult(result)` — routes tool call results. `ActionInstructionType` covers show_text, set_highlight, suggest_navigation, show_draft_card, route_to_review, show_blocked_message. No DB calls. No direct mutations.
