@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 987 — DONNA Human Approval Bridge V1
+
+- `src/lib/donna/llmOrchestration/humanApprovalBridge.ts` (new): Bridge between DONNA drafts and proposed_actions pipeline. `DraftActionType` (6 types), `DraftApprovalInput`, `DraftApprovalPayload` (status always 'pending_review', generated_by_donna: true), `DraftValidationResult`. `validateDraftInput` — checks IDs, rationale, blocked content patterns, parent/player flags. `buildDraftApprovalPayload` — validates + builds payload (null on invalid). `buildConfirmationPrompt` — director must see before server action runs. No DB calls — caller (server action) handles write.
+- `docs/architecture/DONNA_HUMAN_APPROVAL_BRIDGE_987.md` (new): Architecture doc.
+- `docs/QA_DONNA_HUMAN_APPROVAL_BRIDGE_987.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 986 — DONNA Tool Result Interpreter V1
 
 - `src/lib/donna/llmOrchestration/toolResultInterpreter.ts` (new): Converts `ToolCallResult` into `ToolInterpretation` with COO-style DONNA text, highlight/navigation instructions, and confirmation requirements. Specific interpreters for all 8 V1 tools. Failed calls always return safe fallback. No DB calls, no mutations.
