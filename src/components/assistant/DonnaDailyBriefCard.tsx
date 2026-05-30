@@ -35,6 +35,10 @@ export function DonnaDailyBriefCard({ brief, onDismiss, onOpenReviewQueue, onPre
             Daily Brief
           </p>
           <p className="text-[11px] text-text-muted mt-0.5">{brief.date}</p>
+          {/* Sprint 967 — COO headline from buildDirectorDailyBriefing */}
+          {brief.headline && (
+            <p className="text-[12px] text-text-secondary mt-1 leading-snug">{brief.headline}</p>
+          )}
         </div>
         <button
           type="button"

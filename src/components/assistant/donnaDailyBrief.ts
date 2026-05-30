@@ -16,6 +16,8 @@ export interface DailyBrief {
   date: string    // YYYY-MM-DD
   sections: DailyBriefSection[]
   generatedAt: string  // ISO timestamp
+  /** Sprint 967 — COO-style headline from buildDirectorDailyBriefing. Optional; shown below date. */
+  headline?: string
 }
 
 // ── Utilities ──────────────────────────────────────────────────────────────────

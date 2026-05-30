@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-30 — Sprint 967 — DONNA Director Daily Brief V2
+
+- `src/lib/donna/briefings/directorBriefingAdapter.ts` (new): Converts `DirectorDailyBriefing` (library shape) to `DailyBrief` (UI shape). Pure utility — no DB, no AI, no React. Skips `ok`/`no_data` sections; maps `urgent` → `high`, `attention` → `normal`; builds human-readable item strings from label + value + action. Does not add fallback — caller owns empty-state. Caller (API route) appends extra sections and recommended action after adapter runs.
+- `src/app/api/donna/brief/route.ts` (modified): Replaced manual section construction with `buildDirectorDailyBriefing` + `adaptBriefingToDailyBrief`. Added two new RLS-scoped queries: `missingRecapCount` (past sessions not completed/cancelled) and `parentUpdatePendingCount` (pending `generate_parent_update` proposals). Appends Today's sessions, Advancement ready, and No curriculum level manually (not in library). Appends Recommended first action from `briefing.suggestedFirstAction`. V3 gaps (`highRiskSignalCount`, `curriculumGapCount`, `coachesWithNoRecentRecap`) passed as 0 and documented.
+- `src/components/assistant/donnaDailyBrief.ts` (modified): Added optional `headline?: string` to `DailyBrief` interface. Backward-compatible — `createEmptyBrief` unchanged, all existing callers unaffected.
+- `src/components/assistant/DonnaDailyBriefCard.tsx` (modified): Renders `brief.headline` below the date when present (2 lines). No other card changes — section rendering, expand/collapse, CTAs, and walk-through button all unchanged.
+- `docs/architecture/DONNA_DIRECTOR_DAILY_BRIEF_V2_967.md` (new): Architecture doc covering V1→V2 delta, adapter design, section assembly order, library param mapping, V3 gaps, voice behavior, empty-state, safety boundaries, and Sprint 966 integration.
+- `docs/QA_DONNA_DIRECTOR_DAILY_BRIEF_V2_967.md` (new): Full QA checklist: TypeScript, API, type, adapter, card rendering, voice, section presence matrix, empty-state, no-mutation, and protected systems.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 966 — DONNA Director Daily Brief V1
 
 - `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added `'brief'` to `DonnaChipActionType` union. Added brief chips to four safe director routes: `/director` gets "Walk me through academy priorities" + "What needs my attention?"; `/director/review`, `/director/sessions`, and `/director/players` each get "Show daily brief". No new routes touched. Existing highlight and prompt chips unchanged.
