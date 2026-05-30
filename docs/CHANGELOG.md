@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-05-30 — Sprint 994 — DONNA Parent-Safe Context Filter V1
+
+- `src/lib/donna/llmOrchestration/parentSafeContextFilter.ts` (new): `applyParentSafeFilter(data)` removes blocked fields (coach_notes, internal_assessment, risk_signals, behavioral_flags, etc.) from any data object before parent-facing use. `isTextParentSafe(text)` checks text for blocked patterns. `buildParentSafeSummary` builds encouraging parent-facing summary. Pure functions, no DB, no mutations.
+- TypeScript: clean
+
+---
+
+## 2026-05-30 — Sprint 993 — DONNA Coach/Session Context Retrieval V1
+
+- `src/lib/donna/llmOrchestration/coachSessionRetrieval.ts` (new): `retrieveCoachSessionContext(supabase, academyId)` queries active coaches, today's sessions, upcoming sessions, missing recap count, pending wrap-up count. Counts only — no coach notes returned. RLS enforced. Partial failure graceful.
+- TypeScript: clean
+
+---
+
+## 2026-05-30 — Sprint 992 — DONNA Curriculum Context Retrieval V1
+
+- `src/lib/donna/llmOrchestration/curriculumContextRetrieval.ts` (new): `retrieveCurriculumContext(supabase, academyId)` queries total curriculum levels and pending curriculum draft count. V2 will add content item join. RLS enforced.
+- TypeScript: clean
+
+---
+
+## 2026-05-30 — Sprint 991 — DONNA Player Development Context Retrieval V1
+
+- `src/lib/donna/llmOrchestration/playerDevelopmentRetrieval.ts` (new): `retrievePlayerDevelopmentContext(supabase, academyId)` queries active player count, curriculum level coverage, pending placement, advancement-eligible count, assessment overdue count. Counts and flags only — no player names. RLS enforced. Partial failure graceful.
+- TypeScript: clean
+
+---
+
+## 2026-05-30 — Sprint 990 — DONNA Academy State Retrieval V1
+
+- `src/lib/donna/llmOrchestration/academyStateRetrieval.ts` (new): `retrieveAcademyState(supabase, academyId)` provides DB-backed version of `AcademyStateSummary` (pending reviews, today sessions, missing recaps, active players, placement/advancement flags, health signal). All queries RLS-scoped. Errors non-fatal. Wires the `retrieveApprovedKnowledge` stub placeholder from Sprint 988.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 989 — DONNA Knowledge → Recommendation Guardrails V1
 
 - `src/lib/donna/llmOrchestration/knowledgeGuardrails.ts` (new): 6-rule guardrail enforcer for Knowledge Builder content use. `evaluateKnowledgeGuardrails`, `enrichResponseWithGuardrails`, `isKnowledgeBlockedForTrigger`, `getKnowledgeScopeLabel`. Blocked triggers include level changes, parent comms, curriculum publishes. Deprecated entries always show warning. Advisory label + citation mandatory. Pure functions, no DB.
