@@ -58,6 +58,8 @@ export interface ContextPacketInput {
   academyId?: string
   /** Sprint 1003 — Player ID from route context for player-specific tool (never guessed by LLM) */
   playerId?: string
+  /** Sprint 1004 — Session ID from route context for session-specific tool (never guessed by LLM) */
+  sessionId?: string
 }
 
 // ── Safe signals ──────────────────────────────────────────────────────────────
@@ -87,6 +89,10 @@ export interface SafeSignals {
   playerId: string | null
   /** Sprint 1003 — Whether player profile context is available for get_player_profile_summary */
   hasPlayerContext: boolean
+  /** Sprint 1004 — Session ID from route context (stored in signals, never guessed by LLM) */
+  sessionId: string | null
+  /** Sprint 1004 — Whether session context is available for get_session_context */
+  hasSessionContext: boolean
 }
 
 // ── Tool manifest ─────────────────────────────────────────────────────────────
@@ -159,6 +165,8 @@ const TOOL_MANIFEST_ALL: ToolManifestEntry[] = [
   { id: 'get_player_development_summary', description: 'Returns live player development signals: active count, placement/advancement flags, overdue assessments. Counts and flags only — no player names. RLS enforced server-side.', safetyLevel: 'safe', requiresParams: ['academyId'] },
   // Sprint 1003 — Player-specific context tool (only available when player profile context exists)
   { id: 'get_player_profile_summary', description: 'Returns director-safe player profile summary: current level, status, advancement flag, priority count, session count, evidence count, overdue assessment flag. Director-facing only. No raw notes. No assessment scores. No behavioral flags. playerId injected from route context — you cannot supply it directly.', safetyLevel: 'safe', requiresParams: ['playerId'] },
+  // Sprint 1004 — Session-specific context tool (only available when session context exists)
+  { id: 'get_session_context', description: 'Returns director/coach-safe session context: name, status, date/time, template label, coach name, group name, block count, attendance counts, wrap-up status. No raw coach notes. No individual player names. No observation text. sessionId injected from route context — you cannot supply it directly.', safetyLevel: 'safe', requiresParams: ['sessionId'] },
 ]
 
 function buildToolManifest(role: OrchestratorRole): ToolManifest {
@@ -236,6 +244,10 @@ function buildSystemPrompt(
   // Sprint 1003 — inform LLM that player profile context is available (without raw ID)
   if (safeSignals.hasPlayerContext) {
     lines.push('Player profile context is available for this page. You may use the get_player_profile_summary tool to retrieve director-safe player signals. You cannot supply playerId — it is injected from the route context automatically.')
+  }
+  // Sprint 1004 — inform LLM that session context is available (without raw ID)
+  if (safeSignals.hasSessionContext) {
+    lines.push('Session context is available for this page. You may use the get_session_context tool to retrieve director/coach-safe session signals: status, template, coach, blocks, attendance counts, and wrap-up status. You cannot supply sessionId — it is injected from the route context automatically.')
   }
 
   // 3. Recommended next action
@@ -342,6 +354,9 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     // Sprint 1003 — playerId stored in signals, never guessed by LLM
     playerId: input.playerId ?? null,
     hasPlayerContext: !!input.playerId,
+    // Sprint 1004 — sessionId stored in signals, never guessed by LLM
+    sessionId: input.sessionId ?? null,
+    hasSessionContext: !!input.sessionId,
   }
 
   const pageContext = buildPageContext(pathname)

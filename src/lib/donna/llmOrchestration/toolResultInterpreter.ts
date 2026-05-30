@@ -250,6 +250,36 @@ function interpretPlayerProfileSummary(result: ToolCallResult): ToolInterpretati
   }
 }
 
+// ── Sprint 1004: Session context interpreter ──────────────────────────────────
+
+function interpretSessionContext(result: ToolCallResult): ToolInterpretation {
+  if (!result.ok || !result.summary) {
+    return {
+      tool: result.tool,
+      donnaText: 'I was unable to retrieve session context for this session. This may be a temporary retrieval issue — the session details are still visible in the panel.',
+      shouldHighlight: true,
+      targetFocusId: 'session-blocks',
+      targetRoute: undefined,
+      shouldSuggestNavigation: false,
+      requiresConfirmation: false,
+    }
+  }
+  const data = result.data as { needsDirectorReview?: boolean } | null
+  const reviewNote = data?.needsDirectorReview
+    ? ' A wrap-up is waiting for your review in the Review Queue.'
+    : ''
+  return {
+    tool: result.tool,
+    donnaText: `Here is the session context I can safely see: ${result.summary}${reviewNote} This is read-only guidance and does not change the session.`,
+    shouldHighlight: true,
+    targetFocusId: 'session-blocks',
+    targetRoute: undefined,
+    shouldSuggestNavigation: data?.needsDirectorReview ? true : false,
+    suggestedRoute: data?.needsDirectorReview ? '/director/review' : undefined,
+    requiresConfirmation: false,
+  }
+}
+
 // ── Main interpreter ──────────────────────────────────────────────────────────
 
 const INTERPRETERS: Record<OrchestratorToolId, (result: ToolCallResult) => ToolInterpretation> = {
@@ -266,6 +296,8 @@ const INTERPRETERS: Record<OrchestratorToolId, (result: ToolCallResult) => ToolI
   get_player_development_summary: interpretPlayerDevelopmentSummary,
   // Sprint 1003 — player-specific context tool
   get_player_profile_summary: interpretPlayerProfileSummary,
+  // Sprint 1004 — session-specific context tool
+  get_session_context: interpretSessionContext,
 }
 
 /**

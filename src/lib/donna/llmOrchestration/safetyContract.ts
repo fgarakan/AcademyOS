@@ -131,6 +131,13 @@ export const SAFE_TOOL_REGISTRY: Record<OrchestratorToolId, {
     requiredParams: ['route'],
     blockedFor: [],
   },
+  // Sprint 1004 — Session-specific context tool (director/coach-side, sessionId from route context)
+  get_session_context: {
+    safetyLevel: 'safe',
+    description: 'Returns a director/coach-safe session context summary: name, status, date/time, duration, template label, coach name, group name, block count, attendance counts, and wrap-up status. No raw coach notes. No individual player names. No observation text. No session notes field. sessionId must come from route context — LLM cannot provide it. RLS enforced server-side.',
+    requiredParams: ['sessionId'],
+    blockedFor: [],
+  },
   // Sprint 1003 — Player-specific context tool (director-side only, playerId from route context)
   get_player_profile_summary: {
     safetyLevel: 'safe',

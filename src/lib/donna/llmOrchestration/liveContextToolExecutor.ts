@@ -25,6 +25,8 @@ export const LIVE_TOOL_IDS: ReadonlySet<OrchestratorToolId> = new Set<Orchestrat
   'get_player_development_summary',
   // Sprint 1003 — player-specific context tool (playerId from route context)
   'get_player_profile_summary',
+  // Sprint 1004 — session-specific context tool (sessionId from route context)
+  'get_session_context',
 ])
 
 export function isLiveTool(toolId: OrchestratorToolId): boolean {
@@ -138,6 +140,59 @@ async function execGetPlayerDevelopmentSummary(academyId: string): Promise<ToolC
   }
 }
 
+// ── Sprint 1004: Session context executor ────────────────────────────────────
+
+async function execGetSessionContext(
+  sessionId: string,
+  academyId: string,
+): Promise<ToolCallResult> {
+  try {
+    const { getSupabaseServer } = await import('@/lib/supabase/server')
+    const { retrieveSessionContext } = await import('./sessionContextRetrieval')
+
+    const supabase = await getSupabaseServer()
+    const result = await retrieveSessionContext(supabase, sessionId, academyId)
+
+    const { summary } = result
+    const parts = [
+      summary.sessionName ? `Session: ${summary.sessionName}` : 'Session: unnamed',
+      summary.sessionStatus ? `Status: ${summary.sessionStatus.replace(/_/g, ' ')}` : null,
+      summary.scheduledDate ? `Scheduled: ${summary.scheduledDate}${summary.scheduledTime ? ` at ${summary.scheduledTime}` : ''}` : null,
+      summary.durationMin ? `Duration: ${summary.durationMin} min` : null,
+      summary.templateName ? `Template: ${summary.templateName}` : 'Template: not assigned',
+      summary.coachName ? `Coach: ${summary.coachName}` : 'Coach: not assigned',
+      summary.groupName ? `Group: ${summary.groupName}` : null,
+      `Blocks planned: ${summary.blockCount}`,
+      summary.attendance.recorded
+        ? `Attendance: ${summary.attendance.present} present, ${summary.attendance.absent} absent of ${summary.attendance.total} total`
+        : 'Attendance: not yet recorded',
+      `Wrap-up status: ${summary.wrapUpStatus.replace(/_/g, ' ')}`,
+      summary.needsDirectorReview ? 'A coach wrap-up is waiting for your review.' : null,
+    ].filter(Boolean).join('. ')
+
+    const partialNote = result.errors.length > 0 ? ` (${result.errors.length} query error(s) — partial data)` : ''
+
+    return {
+      tool: 'get_session_context',
+      ok: true,
+      data: summary,
+      summary: parts + partialNote,
+      requiresConfirmation: false,
+      auditEntry: `tool:get_session_context status=${summary.sessionStatus ?? 'unknown'} wrapUp=${summary.wrapUpStatus} blocks=${summary.blockCount}`,
+    }
+  } catch (err) {
+    return {
+      tool: 'get_session_context',
+      ok: false,
+      data: null,
+      summary: '',
+      error: `Session context retrieval failed: ${err instanceof Error ? err.message : String(err)}`,
+      requiresConfirmation: false,
+      auditEntry: `tool:get_session_context ERROR`,
+    }
+  }
+}
+
 // ── Main live executor ────────────────────────────────────────────────────────
 
 // ── Sprint 1003: Player profile executor ─────────────────────────────────────
@@ -229,6 +284,36 @@ export async function executeLiveTool(
       }
     }
     return execGetPlayerProfileSummary(playerId, academyId)
+  }
+
+  // Sprint 1004 — session-specific tool (sessionId + academyId from route context)
+  if (tool === 'get_session_context') {
+    const sessionId = typeof params['sessionId'] === 'string' ? params['sessionId'] : null
+    const academyId = typeof params['academyId'] === 'string' ? params['academyId'] : null
+
+    if (!sessionId || sessionId.length < 10) {
+      return {
+        tool,
+        ok: false,
+        data: null,
+        summary: '',
+        error: `Tool '${tool}' requires a valid sessionId from route context. The LLM cannot supply this.`,
+        requiresConfirmation: false,
+        auditEntry: `tool:${tool} FAILED missing_sessionId`,
+      }
+    }
+    if (!academyId || academyId.length < 10) {
+      return {
+        tool,
+        ok: false,
+        data: null,
+        summary: '',
+        error: `Tool '${tool}' requires academyId for RLS scoping.`,
+        requiresConfirmation: false,
+        auditEntry: `tool:${tool} FAILED missing_academyId`,
+      }
+    }
+    return execGetSessionContext(sessionId, academyId)
   }
 
   // Academy-scoped tools require academyId

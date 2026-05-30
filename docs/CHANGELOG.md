@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-30 — Sprint 1004 — DONNA Session Context Tool V1
+
+- `src/lib/donna/llmOrchestration/sessionContextRetrieval.ts` (new): Safe director/coach-facing session context retrieval. `SessionContextSummary` (sessionName, sessionStatus, scheduledDate/Time, durationMin, templateName, coachName, groupName, blockCount, attendance counts, wrapUpStatus, needsDirectorReview). `retrieveSessionContext(supabase, sessionId, academyId)` — 7 sequential queries: session core, template label, coach display name, group name, block count, attendance counts, wrap-up status from proposed_actions. Labels/counts only — no session_notes, no individual player names, no coach observation text, no wrap-up draft content. Partial failures non-fatal.
+- `src/lib/donna/llmOrchestration/types.ts` (modified): Added `get_session_context` to `OrchestratorToolId` (12 total tools).
+- `src/lib/donna/llmOrchestration/safetyContract.ts` (modified): Registered `get_session_context` (safe, requiredParams: ['sessionId'], no mutation, director/coach-facing).
+- `src/lib/donna/llmOrchestration/contextPacket.ts` (modified): Added `sessionId` to `ContextPacketInput`, `SafeSignals` (`sessionId`, `hasSessionContext`), tool manifest, and system prompt context note. Raw UUID never in LLM prompt.
+- `src/lib/donna/llmOrchestration/toolCallingContract.ts` (modified): Added stub for `get_session_context` (all 12 IDs type-safe).
+- `src/lib/donna/llmOrchestration/toolResultInterpreter.ts` (modified): Added `interpretSessionContext` — highlights `session-blocks`, suggests review queue navigation when `needsDirectorReview`.
+- `src/lib/donna/llmOrchestration/liveContextToolExecutor.ts` (modified): Added `get_session_context` to `LIVE_TOOL_IDS` (now 4 live tools), `execGetSessionContext(sessionId, academyId)`, updated `executeLiveTool` for session-specific path.
+- `src/lib/donna/llmOrchestration/toolExecutionLoop.ts` (modified): `runLiveToolExecutionLoop` injects `sessionId` from `ctx.safeSignals` alongside `academyId` and `playerId`.
+- `docs/architecture/DONNA_SESSION_CONTEXT_TOOL_1004.md` (new): Architecture doc — live-context triangle complete (academy → player → session).
+- `docs/QA_DONNA_SESSION_CONTEXT_TOOL_1004.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1003 — DONNA Player-Specific Context Tool V1
 
 - `src/lib/donna/llmOrchestration/playerProfileRetrieval.ts` (new): Safe director-facing player profile retrieval. `PlayerProfileSummary` (currentLevelLabel, playerStatus, advancementEligible, activePriorityCount, recentSessionCount, evidenceCount, assessmentOverdue). `retrievePlayerProfileSummary(supabase, playerId, academyId)` — counts and flags only, no coach notes, no scores, no player name in LLM context. Partial failures non-fatal.

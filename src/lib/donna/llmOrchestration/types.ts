@@ -81,6 +81,8 @@ export type OrchestratorToolId =
   | 'get_player_development_summary'   // DB read: PlayerDevelopmentSummary (counts + flags, no names)
   // Sprint 1003 — Player-specific context tool (director-side only, playerId from route context)
   | 'get_player_profile_summary'       // DB read: PlayerProfileSummary (director-safe flags only, no raw notes)
+  // Sprint 1004 — Session-specific context tool (director/coach-side, sessionId from route context)
+  | 'get_session_context'              // DB read: SessionContextSummary (safe labels/counts/status, no raw notes)
 
 // ── Orchestrator output ───────────────────────────────────────────────────────
 

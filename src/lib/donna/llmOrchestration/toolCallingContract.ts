@@ -322,6 +322,8 @@ const EXECUTORS: Record<OrchestratorToolId, (params: Record<string, unknown>) =>
   get_player_development_summary: () => execLiveContextStub('get_player_development_summary'),
   // Sprint 1003 — player-specific live tool (playerId from route context, not LLM)
   get_player_profile_summary: () => execLiveContextStub('get_player_profile_summary'),
+  // Sprint 1004 — session-specific live tool (sessionId from route context, not LLM)
+  get_session_context: () => execLiveContextStub('get_session_context'),
 }
 
 /**
