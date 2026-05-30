@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-05-30 — Sprint 978 — DONNA LLM Orchestration Foundation V1
+
+- `src/lib/donna/llmOrchestration/types.ts` (new): Core type definitions — `OrchestratorRole`, `OrchestratorSafetyLevel` (safe/review_only/approval_gated/blocked), `OrchestratorOutputType` (7 V1 allowed), `OrchestratorToolId` (8 V1 registered), `OrchestratorToolRequest`, `OrchestratorOutput`, `OrchestratorResponse` (safe response envelope).
+- `src/lib/donna/llmOrchestration/contextPacket.ts` (new): Context packet builder. `buildContextPacket(input)` assembles `SafeSignals` (role, pathname, pendingReviews, next action, explanation) and system prompt for LLM. System prompt includes role context, page label, pending count, and safety rules. User input capped at 500 chars. No raw private data included.
+- `src/lib/donna/llmOrchestration/safetyContract.ts` (new): Complete safety contract. `ALLOWED_OUTPUTS` — 7 V1 output types with safety levels. `BLOCKED_ACTIONS` — 13 permanently blocked actions (approve/reject, parent/player comms, level/roster/billing/curriculum mutations, RLS bypass, raw note exposure). `SAFE_TOOL_REGISTRY` — 8 V1 tools with required params and safety levels. `validateToolRequest`, `isToolAllowed`, `isOutputAllowed`, `isActionBlocked`, `getToolSafetyLevel`.
+- `src/lib/donna/llmOrchestration/orchestrator.ts` (new): Main orchestrator. `orchestrate(input)` — builds context packet, runs deterministic fast paths (next-action engine, review queue guidance), validates outputs against safety contract, stubs LLM path with clear Sprint 979 hook. `detectBlockedAction(text)` — pre-filter for unsafe natural language. Fallback behavior: always returns safe OrchestratorResponse. V1 LLM path not wired — Sprint 979 replaces stub with real Anthropic API call.
+- `docs/architecture/DONNA_LLM_ORCHESTRATION_FOUNDATION_978.md` (new): Architecture doc — flow diagram, V1 allowed/blocked tables, tool registry, deterministic fast paths, fallback behavior, Sprint 979 hook, eval requirements, no-migration guarantee.
+- `docs/QA_DONNA_LLM_ORCHESTRATION_FOUNDATION_978.md` (new): QA checklist — TypeScript, types, context packet, safety contract, orchestrator, blocked action detector, regression, safety/no-mutation.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 977 — Coach Session Detail Execution View V1
 
 - `src/app/coach/sessions/[sessionId]/page.tsx` (modified): Added `data-donna-focus-id="coach-session-header"` to the session header `<div>` — contains session name, date/time, template, curriculum level, goal, block progress rail, and "Open focused execute view" link.
