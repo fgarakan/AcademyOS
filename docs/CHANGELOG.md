@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 1008 — DONNA Response Card UI V1
+
+- `src/components/donna/DonnaResponseCard.tsx` (new): Client component for rendering a single `OrchestratorOutput`. Props: `output`, `onNavigate?(route)`, `onHighlight?(targetId, route, label)`, `children?`. Layout: DONNA avatar + output type badge (7 types: answer/recommend/highlight/explain/draft/review/clarify) + LLM source label + text body + approval gate warning (approval_gated only) + confidence badge + safety badge + action row (highlight + navigate CTAs, only when handlers + targets present) + optional children slot. Pure display — no navigation, no sessionStorage, no mutations. `onNavigate` and `onHighlight` callbacks are fired by director action; parent handles all side effects. Approval gate warning: explicit "requires approval / nothing applied until confirmed in Review Queue." Not yet wired to DONNA panel (Sprint 1011) or server action (Sprint 1010).
+- `docs/architecture/DONNA_RESPONSE_CARD_UI_1008.md` (new): Architecture doc.
+- `docs/QA_DONNA_RESPONSE_CARD_UI_1008.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1007 — DONNA Usage Events DB Store V1
 
 - `supabase/migrations/075_donna_usage_events.sql` (new): Persistent `usage_events` table. Columns: `id`, `academy_id` (FK → academies ON DELETE CASCADE), `event_type`, `provider`, `model`, `input_tokens`, `output_tokens`, `latency_ms`, `blocked`, `blocked_reason`, `request_id`, `occurred_at`. Two indexes: `(academy_id, occurred_at DESC)` and `(academy_id, event_type, occurred_at DESC)`. RLS: INSERT for `auth_is_staff()`, SELECT for `auth_is_director_or_head()`. No UPDATE/DELETE — immutable by design. No FKs to player/session/curriculum systems.
