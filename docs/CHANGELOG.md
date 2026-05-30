@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Sprint 976 — Coach Assigned Sessions Dashboard V1
+
+- `src/app/coach/page.tsx` (modified): Added `data-donna-focus-id="coach-wrapup-alert"` to the wrap-up alert `<Link>` element — renders conditionally when `pendingWrapUpCount > 0`, making it highlightable by DONNA when sessions need wrap-up.
+- `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added chip set for `/coach` (exact match) with 4 chips — Highlight today's sessions, Highlight wrap-ups needed, Highlight player list, What should I do next?.
+- `docs/architecture/COACH_ASSIGNED_SESSIONS_DASHBOARD_976.md` (new): Architecture doc confirming existing coach dashboard coverage (today's sessions, daily brief, wrap-up alert, player section), focus ID table, V2 improvements.
+- `docs/QA_COACH_ASSIGNED_SESSIONS_DASHBOARD_976.md` (new): QA checklist — TypeScript, focus targets, chip behavior, dashboard content, no-mutation.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 975 — DONNA Coach Assignment From Session V1
 
 - `src/app/director/sessions/[sessionId]/page.tsx` (modified): Added `data-donna-focus-id="session-coach-assignment"` to the coach name span in the session header metadata row, making coach assignment directly highlightable by DONNA.

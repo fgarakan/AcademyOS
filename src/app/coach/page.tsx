@@ -123,9 +123,11 @@ export default async function CoachHome() {
       </div>
 
       {/* ── Wrap-up alert ────────────────────────────────────────── */}
+      {/* Sprint 976: data-donna-focus-id so DONNA can highlight sessions needing wrap-up */}
       {pendingWrapUpCount > 0 && (
         <Link
           href="/coach/sessions"
+          data-donna-focus-id="coach-wrapup-alert"
           className="flex items-center gap-3 px-4 py-3 rounded-xl border border-status-orange/30 bg-status-orange/5 hover:bg-status-orange/10 transition-colors group"
         >
           <ClipboardList className="w-4 h-4 text-status-orange shrink-0" />

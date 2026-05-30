@@ -443,6 +443,39 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
       },
     ],
   },
+
+  // ── Coach Home (/coach) ───────────────────────────────────────────────────
+  // Sprint 976 — coach assigned sessions dashboard chips
+  {
+    routePattern: '/coach',
+    matchPrefix: false,
+    chips: [
+      {
+        id: 'coach-today',
+        label: "Highlight today's sessions",
+        actionType: 'highlight',
+        targetId: 'coach-today-sessions',
+      },
+      {
+        id: 'coach-wrapup',
+        label: 'Highlight wrap-ups needed',
+        actionType: 'highlight',
+        targetId: 'coach-wrapup-alert',
+      },
+      {
+        id: 'coach-players',
+        label: 'Highlight player list',
+        actionType: 'highlight',
+        targetId: 'coach-players-section',
+      },
+      {
+        id: 'coach-next',
+        label: 'What should I do next?',
+        actionType: 'prompt',
+        prompt: 'What should I do next?',
+      },
+    ],
+  },
 ]
 
 // ---------------------------------------------------------------------------
