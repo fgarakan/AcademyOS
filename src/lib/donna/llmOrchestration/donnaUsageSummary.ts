@@ -1,19 +1,16 @@
 // Sprint 1006 — DONNA Usage Aggregation V1
-// Safe in-process usage summary for DONNA LLM calls, tool calls, and fallback events.
-// Pure TypeScript — no DB reads, no schema changes, no external calls.
+// Sprint 1007 — DB query path added via optional SupabaseClient parameter.
+// Safe usage summary for DONNA LLM calls, tool calls, and fallback events.
 //
-// Data source:
-//   Reads from the in-process accumulator in usageTracker.ts (getInProcessDailyCount).
-//   This store is per-serverless-instance and resets on cold start.
-//   It is NOT shared across instances and is NOT queryable from the database.
-//   Counts represent today (UTC date) on the current instance only.
+// Data source (Sprint 1007+):
+//   If a SupabaseClient is provided, queries the persistent `usage_events` table.
+//   dataSource === 'db_backed' — persistent, shared across instances, multi-day capable.
 //
-// V2 path:
-//   Replace getInProcessDailyCount() calls with a DB-backed usage_events query
-//   once a `usage_events` table is available (Sprint 1007+).
-//   The interface is stable — callers will not change when the backend is upgraded.
+// Data source (in-process fallback):
+//   If no SupabaseClient provided, reads from the in-process accumulator.
+//   dataSource === 'in_process' — today only, current instance only, resets on cold start.
 //
-// Privacy invariants (same as Sprint 1005):
+// Privacy invariants:
 //   NEVER EXPOSE: raw prompts, raw LLM responses, raw tool payloads,
 //                 raw notes, player names, full UUIDs.
 //   SAFE TO EXPOSE: event type counts, latency aggregates, success/failure totals,
@@ -23,7 +20,16 @@
 //   getDonnaUsageSummary() is wrapped in try/catch — never throws.
 //   Returns a clearly-labelled unavailable summary on any error.
 
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { getInProcessDailyCount } from '@/lib/usage/usageTracker'
+
+// ── Row type for usage_events DB query ────────────────────────────────────────
+// Manual interface — database.types.ts is generated-only and not modified here.
+
+interface UsageEventRow {
+  event_type: string
+  blocked: boolean
+}
 
 // ── Window metadata ───────────────────────────────────────────────────────────
 
@@ -145,21 +151,24 @@ function buildUnavailableSummary(academyId: string, windowDays: number, reason: 
 // ── Main aggregation function ─────────────────────────────────────────────────
 
 /**
- * Return a safe in-process DONNA usage summary for the given academy and window.
+ * Return a safe DONNA usage summary for the given academy and window.
  *
- * V1 behavior:
- *   - windowDays === 1: returns today's in-process counts for current serverless instance.
- *   - windowDays > 1: returns today's in-process counts (historical data unavailable in V1).
- *     The window metadata documents this honestly — no fake multi-day totals.
+ * Sprint 1007: if a SupabaseClient is provided, queries the persistent `usage_events` table
+ * for accurate multi-day counts (dataSource: 'db_backed').
+ *
+ * Fallback (no supabase param): reads from the in-process accumulator.
+ * In-process data: today only, current instance, resets on cold start.
  *
  * Never throws. Returns an unavailable summary on any error.
  *
- * @param academyId - Academy ID for usage attribution (internal — never exposed in output).
- * @param windowDays - Requested window in calendar days (1–90). Only day 0 (today) is available in V1.
+ * @param academyId  - Academy ID for usage attribution (internal — never exposed in output).
+ * @param windowDays - Requested window in calendar days (1–90).
+ * @param supabase   - Optional Supabase client. When provided, queries DB. When absent, uses in-process.
  */
 export async function getDonnaUsageSummary(
   academyId: string,
   windowDays: number,
+  supabase?: SupabaseClient,
 ): Promise<DonnaUsageSummary> {
   try {
     if (!academyId || typeof academyId !== 'string') {
@@ -173,23 +182,25 @@ export async function getDonnaUsageSummary(
     const clampedDays = Math.max(1, Math.min(windowDays, 90))
     const today = new Date().toISOString().slice(0, 10)
 
-    // ── Read in-process counts for today ─────────────────────────────────────
-    // getInProcessDailyCount() is synchronous — reads from the module-level Map.
-    // It only has today's counts for the current serverless instance.
-    const llmCallCount   = getInProcessDailyCount(academyId, 'donna_intelligence_call')
-    const toolCallCount  = getInProcessDailyCount(academyId, 'donna_tool_call')
-    const fallbackCount  = getInProcessDailyCount(academyId, 'donna_orchestration_fallback')
-
-    // ── Build window metadata ─────────────────────────────────────────────────
-    const isMultiDay = clampedDays > 1
-    const windowNote = isMultiDay
-      ? `In-process store: today's counts only (current instance). Historical data (${clampedDays}-day window) requires DB-backed event store (V2+). Counts reflect this instance since last cold start.`
-      : 'In-process store: today\'s counts only (current instance). Resets on cold start. Not shared across serverless instances.'
-
-    // Approximate window start — subtract windowDays, but data is today-only in V1.
+    // Compute window start
     const windowStartDate = new Date()
     windowStartDate.setUTCDate(windowStartDate.getUTCDate() - (clampedDays - 1))
+    windowStartDate.setUTCHours(0, 0, 0, 0)
     const windowStart = windowStartDate.toISOString().slice(0, 10)
+
+    // ── DB-backed path (Sprint 1007+) ─────────────────────────────────────────
+    if (supabase) {
+      return await buildDbSummary(supabase, academyId, clampedDays, windowStart, today)
+    }
+
+    // ── In-process fallback (no Supabase client available) ───────────────────
+    const llmCallCount  = getInProcessDailyCount(academyId, 'donna_intelligence_call')
+    const toolCallCount = getInProcessDailyCount(academyId, 'donna_tool_call')
+    const fallbackCount = getInProcessDailyCount(academyId, 'donna_orchestration_fallback')
+
+    const windowNote = clampedDays > 1
+      ? `In-process store: today's counts only (current instance). Historical data (${clampedDays}-day window) requires DB-backed event store. Counts reflect this instance since last cold start.`
+      : "In-process store: today's counts only (current instance). Resets on cold start. Not shared across serverless instances."
 
     return {
       academyId,
@@ -203,22 +214,92 @@ export async function getDonnaUsageSummary(
       llmCallCount,
       toolCallCount,
       fallbackCount,
-      tools: {
-        totalToolCalls: toolCallCount,
-        byToolId: undefined, // V2+: per-tool breakdown via DB-backed store
-      },
-      fallbacks: {
-        totalFallbacks: fallbackCount,
-        byReason: undefined, // V2+: per-reason breakdown via DB-backed store
-      },
+      tools: { totalToolCalls: toolCallCount, byToolId: undefined },
+      fallbacks: { totalFallbacks: fallbackCount, byReason: undefined },
       dataSource: 'in_process',
     }
   } catch {
-    // Aggregation failure must never surface — return unavailable sentinel
     return buildUnavailableSummary(
       academyId ?? 'unknown',
       windowDays ?? 1,
       'Usage aggregation encountered an unexpected error. DONNA is unaffected.',
+    )
+  }
+}
+
+// ── DB-backed aggregation ─────────────────────────────────────────────────────
+
+const DONNA_EVENT_TYPES = [
+  'donna_intelligence_call',
+  'donna_tool_call',
+  'donna_orchestration_fallback',
+] as const
+
+async function buildDbSummary(
+  supabase: SupabaseClient,
+  academyId: string,
+  clampedDays: number,
+  windowStart: string,
+  windowEnd: string,
+): Promise<DonnaUsageSummary> {
+  try {
+    // Fetch matching rows — counts and blocked flag only.
+    // windowEnd covers all of today (occurred_at < start of tomorrow).
+    const windowEndExclusive = new Date(windowEnd)
+    windowEndExclusive.setUTCDate(windowEndExclusive.getUTCDate() + 1)
+    const windowEndIso = windowEndExclusive.toISOString()
+
+    const { data, error } = await supabase
+      .from('usage_events')
+      .select('event_type, blocked')
+      .eq('academy_id', academyId)
+      .in('event_type', DONNA_EVENT_TYPES)
+      .gte('occurred_at', `${windowStart}T00:00:00.000Z`)
+      .lt('occurred_at', windowEndIso)
+
+    if (error || !data) {
+      // DB query failed — fall through to in-process counts
+      return buildUnavailableSummary(
+        academyId,
+        clampedDays,
+        `DB query error: ${error?.message ?? 'no data'}. DONNA is unaffected.`,
+      )
+    }
+
+    const rows = data as UsageEventRow[]
+
+    // Count by event type — pure JS aggregation, no raw payloads
+    let llmCallCount  = 0
+    let toolCallCount = 0
+    let fallbackCount = 0
+
+    for (const row of rows) {
+      if (row.event_type === 'donna_intelligence_call') llmCallCount++
+      else if (row.event_type === 'donna_tool_call')          toolCallCount++
+      else if (row.event_type === 'donna_orchestration_fallback') fallbackCount++
+    }
+
+    return {
+      academyId,
+      window: {
+        windowDays: clampedDays,
+        windowStart,
+        windowEnd,
+        isInProcessOnly: false,
+        note: `DB-backed: persistent counts from usage_events table. Covers ${clampedDays} day(s) ending today.`,
+      },
+      llmCallCount,
+      toolCallCount,
+      fallbackCount,
+      tools: { totalToolCalls: toolCallCount, byToolId: undefined },
+      fallbacks: { totalFallbacks: fallbackCount, byReason: undefined },
+      dataSource: 'db_backed',
+    }
+  } catch {
+    return buildUnavailableSummary(
+      academyId,
+      clampedDays,
+      'DB usage query failed unexpectedly. DONNA is unaffected.',
     )
   }
 }

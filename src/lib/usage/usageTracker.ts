@@ -2,9 +2,11 @@
 // Log-based usage tracker. Currently writes usage events to structured stdout.
 // The in-process store enables per-instance summaries; NOT shared across serverless instances.
 //
-// Future: replace logUsageEvent() with a DB-backed write to a `usage_events` table
-// (requires Sprint 419+ migration). The interface is stable so callers don't change.
+// Sprint 1007 — DB write path added via writeUsageEventToDb(supabase, event).
+// Existing logUsageEvent() is unchanged — DB writes are additive and opt-in.
+// The interface is stable so existing callers don't change.
 
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { UsageEvent, UsageEventType } from './usageTypes'
 import { logInfo } from '@/lib/observability/logger'
 
@@ -96,4 +98,41 @@ export function logVoiceStructuringCall(params: {
     provider: 'anthropic',
     ...params,
   })
+}
+
+// ── Sprint 1007 — DB-backed write path ────────────────────────────────────────
+
+/**
+ * Write a usage event to the persistent `usage_events` DB table.
+ * Runs alongside logUsageEvent() — additive, never replaces it.
+ * Call from server action context where a Supabase client is available.
+ *
+ * Safe fields written: event_type, academy_id, provider, model,
+ *   input_tokens, output_tokens, latency_ms, blocked, blocked_reason, request_id.
+ * Never written: raw prompts, raw responses, raw notes, player names, full UUIDs.
+ *
+ * Never throws — DB write failure is silently swallowed to protect callers.
+ * The in-process log (logUsageEvent) is always the source of truth for the current instance.
+ */
+export async function writeUsageEventToDb(
+  supabase: SupabaseClient,
+  event: UsageEvent,
+): Promise<void> {
+  try {
+    await supabase.from('usage_events').insert({
+      academy_id:    event.academyId,
+      event_type:    event.eventType,
+      provider:      event.provider    ?? null,
+      model:         event.model       ?? null,
+      input_tokens:  event.inputTokens  ?? null,
+      output_tokens: event.outputTokens ?? null,
+      latency_ms:    event.latencyMs    ?? null,
+      blocked:       event.blocked      ?? false,
+      blocked_reason: event.blockedReason ?? null,
+      request_id:    event.requestId    ?? null,
+      occurred_at:   event.occurredAt   ?? new Date().toISOString(),
+    })
+  } catch {
+    // DB write failure must never affect the caller or DONNA's response pipeline
+  }
 }

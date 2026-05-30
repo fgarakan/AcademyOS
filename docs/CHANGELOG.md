@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-30 — Sprint 1007 — DONNA Usage Events DB Store V1
+
+- `supabase/migrations/075_donna_usage_events.sql` (new): Persistent `usage_events` table. Columns: `id`, `academy_id` (FK → academies ON DELETE CASCADE), `event_type`, `provider`, `model`, `input_tokens`, `output_tokens`, `latency_ms`, `blocked`, `blocked_reason`, `request_id`, `occurred_at`. Two indexes: `(academy_id, occurred_at DESC)` and `(academy_id, event_type, occurred_at DESC)`. RLS: INSERT for `auth_is_staff()`, SELECT for `auth_is_director_or_head()`. No UPDATE/DELETE — immutable by design. No FKs to player/session/curriculum systems.
+- `src/lib/usage/usageTracker.ts` (modified): Added `writeUsageEventToDb(supabase, event): Promise<void>` — writes safe metadata fields to `usage_events`. Never writes raw prompts, responses, notes. Try/catch — never throws. Additive alongside existing `logUsageEvent()` (in-process + stdout unchanged).
+- `src/lib/donna/llmOrchestration/donnaUsageSummary.ts` (modified): `getDonnaUsageSummary` gains optional third parameter `supabase?: SupabaseClient`. When provided, queries `usage_events` table for multi-day window counts (`dataSource: 'db_backed'`). When absent, falls back to in-process accumulator (`dataSource: 'in_process'`). DB error path returns `dataSource: 'unavailable'`. Wiring into server action call stack deferred to Sprint 1010.
+- `docs/architecture/DONNA_USAGE_EVENTS_DB_STORE_1007.md` (new): Architecture doc.
+- `docs/QA_DONNA_USAGE_EVENTS_DB_STORE_1007.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1006 — DONNA Usage Aggregation V1
 
 - `src/lib/donna/llmOrchestration/donnaUsageSummary.ts` (new): Safe in-process DONNA usage aggregation. Types: `DonnaUsageSummary`, `DonnaUsageWindow`, `DonnaToolUsageSummary`, `DonnaFallbackSummary`. Function: `getDonnaUsageSummary(academyId, windowDays)` — reads from `getInProcessDailyCount()` to return today's counts for `donna_intelligence_call`, `donna_tool_call`, and `donna_orchestration_fallback` events. Data source is in-process only (per-serverless-instance, resets on cold start, not shared across instances). `windowDays > 1` returns today's counts with an honest note — no fake multi-day totals. `dataSource` field is `'in_process'` (normal) or `'unavailable'` (error path). `tools.byToolId` and `fallbacks.byReason` are `undefined` in V1 — per-breakdown requires DB-backed store (V2+). Never throws — returns unavailable sentinel on any error. No raw prompts, responses, notes, payloads, or full UUIDs exposed.
