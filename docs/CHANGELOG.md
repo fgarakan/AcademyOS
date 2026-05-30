@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 986 — DONNA Tool Result Interpreter V1
+
+- `src/lib/donna/llmOrchestration/toolResultInterpreter.ts` (new): Converts `ToolCallResult` into `ToolInterpretation` with COO-style DONNA text, highlight/navigation instructions, and confirmation requirements. Specific interpreters for all 8 V1 tools. Failed calls always return safe fallback. No DB calls, no mutations.
+- `docs/architecture/DONNA_TOOL_RESULT_INTERPRETER_986.md` (new): Architecture doc.
+- `docs/QA_DONNA_TOOL_RESULT_INTERPRETER_986.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 985 — DONNA Multi-Step Planning V1
 
 - `src/lib/donna/llmOrchestration/multiStepPlanner.ts` (new): 6 safe multi-step workflow plans (onboard_new_player, run_session_cycle, review_pending_queue, update_curriculum, create_class_template, assign_coach_to_session). Each plan has typed steps with route, focus target, safety level, approval requirements, and time estimates. `detectWorkflowIntent`, `getWorkflowPlan`, `formatWorkflowPlan`, `getAllWorkflowPlans`. No plan step executes automatically — informational only.
