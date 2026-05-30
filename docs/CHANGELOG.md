@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 981 — DONNA Safe Action Router V1
+
+- `src/lib/donna/llmOrchestration/safeActionRouter.ts` (new): Routes orchestrator outputs to immediate/draft/review_queue/blocked execution paths. `ActionRoutingPath`, `ActionRoutingResult`, `ActionInstruction` types. `routeAction(output)` — looks up routing table by output type + safety level, builds instructions. `routeToolResult(result)` — routes tool call results. `ActionInstructionType` covers show_text, set_highlight, suggest_navigation, show_draft_card, route_to_review, show_blocked_message. No DB calls. No direct mutations.
+- `docs/architecture/DONNA_SAFE_ACTION_ROUTER_981.md` (new): Architecture doc.
+- `docs/QA_DONNA_SAFE_ACTION_ROUTER_981.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 980 — DONNA Tool Calling Contract V2
 
 - `src/lib/donna/llmOrchestration/toolCallingContract.ts` (new): Full typed tool calling contract for all 8 V1 registered tools. `ToolCallResult` type with ok, data, summary, error, requiresConfirmation, auditEntry. Typed input interfaces per tool. `executeToolCall(tool, params)` dispatcher — never throws, always returns ToolCallResult. `getRegisteredTools()`. Executors: get_pending_review_count (deterministic), get_next_action_recommendation (deterministic engine), get_action_explanation (deterministic engine), get_review_queue_guidance (deterministic engine), get_page_context (chip registry), set_highlight_target (UI instruction), draft_proposed_action (stub — Sprint 987 wires real write, always requiresConfirmation: true), route_to_page (internal routes only).
