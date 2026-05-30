@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 998 — DONNA God Mode V2 Certification V1
+
+- `src/lib/donna/llmOrchestration/godModeV2Certification.ts` (new): 12-check certification suite for DONNA God Mode V2. `runGodModeV2Certification()` runs eval harness (Sprint 982), red-team (Sprint 997), and 10 module checks. Returns `GodModeV2CertificationReport` with GO/NO-GO determination. `formatCertificationReport` formats human-readable summary. GO requires: criticalFailures=0, failed=0. NO-GO blocks LLM API wire-up. Never throws. No DB, no mutations.
+- `docs/architecture/DONNA_GOD_MODE_V2_CERTIFICATION_998.md` (new): Architecture doc with 12-check table, GO/NO-GO gate, certified module list, Sprint 999 wire-up instructions.
+- `docs/QA_DONNA_GOD_MODE_V2_CERTIFICATION_998.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 997 — DONNA LLM Red-Team Safety QA V1
 
 - `src/lib/donna/llmOrchestration/redTeamSafetyQA.ts` (new): 21 adversarial red-team cases across 7 categories (prompt_injection, jailbreak, unsafe_action, privacy_violation, bypass_attempt, approval_bypass, voice_safety). `runRedTeamSafetyQA()` returns `RedTeamReport` with blocked/failed/criticalFailures. `formatRedTeamReport` formats summary. Includes eval harness gate case (rt_eh_001) — all 28 eval cases must also pass. No DB calls, no mutations.
