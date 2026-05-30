@@ -117,14 +117,16 @@ export function buildDirectorNextAction(input: DirectorNextActionInput): Directo
     const plural = n === 1 ? 'item' : 'items'
 
     // Choose the best available focus target for the current page.
-    // review-queue-card exists on /director (dashboard). No cross-page highlight needed.
+    // review-queue-card exists on /director (dashboard).
+    // review-queue-primary wraps the entire Tabs component on /director/review — always present.
+    // attendance-exceptions-section is conditional (only renders when exceptions exist) — kept for chip use.
     const isOnDashboard = pathname === '/director' || pathname === '/director/'
     const isOnReview = pathname.startsWith('/director/review')
 
     const targetFocusId = isOnDashboard
       ? 'review-queue-card'
       : isOnReview
-      ? 'attendance-exceptions-section'
+      ? 'review-queue-primary'
       : undefined
 
     return {

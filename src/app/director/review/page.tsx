@@ -1279,6 +1279,10 @@ export default async function DirectorReviewQueuePage({
         academyId={academyId}
       />
 
+      {/* Sprint 969: data-donna-focus-id="review-queue-primary" wraps the entire Tabs component
+          so DONNA can reliably highlight the review queue regardless of which tab is active.
+          Always present when the page renders — more stable than conditional section wrappers. */}
+      <div data-donna-focus-id="review-queue-primary">
       <Tabs defaultValue={activeDefaultTab}>
         <TabsList>
           <TabsTrigger value="needs_approval">
@@ -2109,6 +2113,7 @@ export default async function DirectorReviewQueuePage({
           </div>
         </TabsContent>
       </Tabs>
+      </div>{/* /review-queue-primary */}
     </div>
   )
 }

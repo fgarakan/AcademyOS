@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Sprint 969 — DONNA Highlight Every Recommendation V1
+
+- `src/app/director/review/page.tsx` (modified): Added `data-donna-focus-id="review-queue-primary"` wrapper div around the `<Tabs>` component (the entire review queue content area). Always present when the review page renders — independent of which tab is active or which conditional sections have items. Does not affect tab behavior, approval/rejection logic, or data fetching.
+- `src/lib/donna/directorNextActionEngine.ts` (modified): Changed `/director/review` focus target from `attendance-exceptions-section` (conditional on attendance exceptions existing) to `review-queue-primary` (always present). All 8 recommendation cases now have unconditionally-present highlight targets.
+- `docs/architecture/DONNA_HIGHLIGHT_EVERY_RECOMMENDATION_969.md` (new): Architecture doc — Sprint 968 coverage audit, gap identified, changes made, post-969 coverage table, no-mutation/no-migration guarantee, V2 improvements.
+- `docs/QA_DONNA_HIGHLIGHT_EVERY_RECOMMENDATION_969.md` (new): QA checklist — TypeScript, focus target presence, route-by-route highlight, Sprint 968 regression, Sprint 964 regression, no-mutation, protected systems.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 968 — DONNA What Should I Do Next Director Engine V1
 
 - `src/lib/donna/directorNextActionEngine.ts` (new): Deterministic Director Next Action Engine V1. Defines `DirectorNextAction` output shape (id, title, summary, why, targetRoute, targetFocusId, safetyLevel, requiresApproval, nextStepLabel, priority). `buildDirectorNextAction({ pendingReviews, pathname })` uses `reviewQueuePendingCount` as primary live signal and current route as secondary context signal — pure TypeScript, no DB calls, no mutations. `matchesWhatNextIntent(text)` detects the "what should I do next?" intent family without overlapping `matchesDailyBriefIntent`. Eight priority rules: pending review queue → curriculum page → class template detail → class template list → sessions → players → review page clear → fallback dashboard.
