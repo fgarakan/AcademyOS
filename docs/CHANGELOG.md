@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-30 — Sprint 972 — DONNA Class Template Guidance V1
+
+- `src/lib/donna/classTemplateGuidance.ts` (new): Deterministic class template guidance. `ClassTemplateGuidanceIntent` type covering explain_template, template_readiness, explain_blocks, create_session_from_template, explain_template_list. `matchesClassTemplateGuidanceIntent(text)` detects intent. `buildClassTemplateGuidance(intent)` returns COO-style text. Pure TypeScript — no DB, no API, no mutations.
+- `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added 3 chips to template detail (Explain this template, Create session from template, Explain block structure) and 1 to template list (What is the template library?).
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Import + handler for class template guidance in `detectAndHandleCommand`.
+- `docs/architecture/DONNA_CLASS_TEMPLATE_GUIDANCE_972.md` (new): Architecture doc.
+- `docs/QA_DONNA_CLASS_TEMPLATE_GUIDANCE_972.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 971 — DONNA Review Queue Guidance V1
 
 - `src/lib/donna/reviewQueueGuidance.ts` (new): Deterministic guidance for the Director Review Queue. `ReviewQueueGuidanceIntent` type (`first_priority`, `safe_to_approve`, `explain_queue`, `what_caution`). `matchesReviewQueueGuidanceIntent(text)` detects intent phrases without overlapping daily brief or next-action intent sets. `buildReviewQueueGuidance(intent)` returns COO-style text — wrap-up priority ordering, approval contract explanation, caution guidance. Pure TypeScript — no DB, no API, no mutations.

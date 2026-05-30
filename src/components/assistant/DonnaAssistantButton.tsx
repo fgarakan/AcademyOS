@@ -256,6 +256,8 @@ import type { DonnaSessionIntentContext } from '@/lib/donna/donnaFollowUpResolve
 import { buildDirectorNextAction, matchesWhatNextIntent } from '@/lib/donna/directorNextActionEngine'
 // Sprint 971 — Review Queue Guidance (deterministic guidance for review queue intent phrases)
 import { buildReviewQueueGuidance, matchesReviewQueueGuidanceIntent } from '@/lib/donna/reviewQueueGuidance'
+// Sprint 972 — Class Template Guidance (deterministic guidance for class template workflow)
+import { buildClassTemplateGuidance, matchesClassTemplateGuidanceIntent } from '@/lib/donna/classTemplateGuidance'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -2702,6 +2704,24 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         }
         setCommandResponse({ message: guidance, type: 'info', label: labels[rqIntent] ?? 'Review Queue' })
         setActiveMode('guide')
+        return true
+      }
+    }
+
+    // Sprint 972 — Class Template Guidance: "Explain this template", "What are blocks?", etc.
+    {
+      const ctIntent = matchesClassTemplateGuidanceIntent(text)
+      if (ctIntent) {
+        const guidance = buildClassTemplateGuidance(ctIntent)
+        const labels: Record<string, string> = {
+          explain_template: 'Class Template',
+          template_readiness: 'Template Readiness',
+          explain_blocks: 'Block Structure',
+          create_session_from_template: 'Session From Template',
+          explain_template_list: 'Template Library',
+        }
+        setCommandResponse({ message: guidance, type: 'info', label: labels[ctIntent] ?? 'Class Template' })
+        setActiveMode('explain')
         return true
       }
     }

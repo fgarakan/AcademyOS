@@ -156,6 +156,25 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
         actionType: 'prompt',
         prompt: 'What should I do next on this class template?',
       },
+      // Sprint 972 — class template guidance chips
+      {
+        id: 'tpl-explain',
+        label: 'Explain this template',
+        actionType: 'prompt',
+        prompt: 'Explain this template.',
+      },
+      {
+        id: 'tpl-session',
+        label: 'Create session from template',
+        actionType: 'prompt',
+        prompt: 'How do I create a session from this template?',
+      },
+      {
+        id: 'tpl-blocks-explain',
+        label: 'Explain block structure',
+        actionType: 'prompt',
+        prompt: 'What are blocks in a class template?',
+      },
     ],
   },
 
@@ -175,6 +194,13 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
         label: 'Highlight template list',
         actionType: 'highlight',
         targetId: 'template-list',
+      },
+      // Sprint 972 — template list guidance chips
+      {
+        id: 'tpl-list-explain',
+        label: 'What is the template library?',
+        actionType: 'prompt',
+        prompt: 'What is the template library for?',
       },
     ],
   },
