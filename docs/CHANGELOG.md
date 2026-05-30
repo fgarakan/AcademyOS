@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 974 — DONNA Session Creation From Template V1
+
+- `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added `tpl-generate-session` highlight chip to template detail chip set — points to `template-generate-session` focus ID on ClassTemplateBuilderStepper, making the Generate Session button directly discoverable via DONNA.
+- `docs/architecture/DONNA_SESSION_CREATION_FROM_TEMPLATE_974.md` (new): Architecture doc confirming existing `GenerateSessionFromTemplateButton` is fully built. Documents session creation fields (name, date, time, coach, notes, gates), safety guarantees (master template unchanged, no parent comms), and V2 improvements.
+- `docs/QA_DONNA_SESSION_CREATION_FROM_TEMPLATE_974.md` (new): QA checklist — TypeScript, chip behavior, session creation workflow, Sprint 972 regression, no-mutation.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 973 — DONNA Curriculum Builder Guidance V1
 
 - `src/lib/donna/curriculumBuilderGuidance.ts` (new): Deterministic curriculum builder guidance. `CurriculumBuilderGuidanceIntent` type (explain_curriculum, explain_levels, explain_gates, what_to_edit_first, draft_review_behavior, global_vs_academy). `matchesCurriculumBuilderGuidanceIntent(text)` and `buildCurriculumBuilderGuidance(intent)`. Pure TypeScript — no DB, no API, no mutations.

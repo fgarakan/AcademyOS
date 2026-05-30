@@ -200,6 +200,13 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
         actionType: 'prompt',
         prompt: 'What are blocks in a class template?',
       },
+      // Sprint 974 — highlight the Generate Session button directly
+      {
+        id: 'tpl-generate-session',
+        label: "Highlight 'Generate Session'",
+        actionType: 'highlight',
+        targetId: 'template-generate-session',
+      },
     ],
   },
 
