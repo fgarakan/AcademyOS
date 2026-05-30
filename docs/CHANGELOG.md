@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-30 — Sprint 995 — DONNA Long Conversation Persistence V1
+
+- `src/lib/donna/llmOrchestration/conversationPersistence.ts` (new): localStorage-backed conversation state persistence. `saveConversationHistory/loadConversationHistory` (capped at 20 turns, 30-day TTL, academy-scoped), `saveIntentContext/loadIntentContext` (24h TTL), `saveWorkflowState/loadWorkflowState/clearWorkflowState`, `clearAllConversationState`, `appendAndSaveTurn`. No DB writes, no private data stored.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 994 — DONNA Parent-Safe Context Filter V1
 
 - `src/lib/donna/llmOrchestration/parentSafeContextFilter.ts` (new): `applyParentSafeFilter(data)` removes blocked fields (coach_notes, internal_assessment, risk_signals, behavioral_flags, etc.) from any data object before parent-facing use. `isTextParentSafe(text)` checks text for blocked patterns. `buildParentSafeSummary` builds encouraging parent-facing summary. Pure functions, no DB, no mutations.
