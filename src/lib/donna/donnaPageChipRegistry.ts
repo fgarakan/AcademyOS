@@ -83,6 +83,13 @@ const PAGE_CHIP_REGISTRY: DonnaPageChipSet[] = [
         label: 'What needs my attention?',
         actionType: 'brief',
       },
+      // Sprint 968 — Director Next Action Engine chip
+      {
+        id: 'dir-what-next',
+        label: 'What should I do next?',
+        actionType: 'prompt',
+        prompt: 'What should I do next?',
+      },
     ],
   },
 

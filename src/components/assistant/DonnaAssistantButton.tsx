@@ -252,6 +252,8 @@ import type { DonnaLastSession } from '@/lib/donna/donnaLastSessionStore'
 // Sprint 785 — Follow-up resolver (current-session intent context, RAM only)
 import { resolveFollowUp } from '@/lib/donna/donnaFollowUpResolver'
 import type { DonnaSessionIntentContext } from '@/lib/donna/donnaFollowUpResolver'
+// Sprint 968 — Director Next Action Engine (deterministic "what should I do next?" routing)
+import { buildDirectorNextAction, matchesWhatNextIntent } from '@/lib/donna/directorNextActionEngine'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -2684,17 +2686,26 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       return true
     }
 
-    // "What should I do next?" — ambiguous phrase (Sprint 267 rule):
-    //   • contextSummary already loaded → show suggestions (they are already computed)
-    //   • no contextSummary → use page-guidance behavior
-    if (lower.includes('what should i do next')) {
-      if (contextSummary) {
-        // Suggestions are already in state from the context fetch — just show the guide section
-        // so the user sees the suggestions section that is rendered below the context card.
-        setActiveMode('guide')
-      } else {
-        setCommandResponse({ message: ctx.nextAction, type: 'info', label: 'Suggested next step' })
-        setActiveMode('guide')
+    // "What should I do next?" — Sprint 968: routes through Director Next Action Engine.
+    // Uses reviewQueuePendingCount (already in state) + pathname as live signals.
+    // If a targetFocusId is returned, highlights it via the existing donna:highlight path.
+    // Falls back gracefully when the recommended element is not on the current page.
+    if (matchesWhatNextIntent(text) || lower.includes('what should i do next')) {
+      const action = buildDirectorNextAction({
+        pendingReviews: reviewQueuePendingCount,
+        pathname,
+      })
+      setCommandResponse({ message: action.summary, type: 'info', label: action.title })
+      setActiveMode('guide')
+      if (action.targetFocusId && typeof window !== 'undefined') {
+        setDonnaFocusTarget({
+          route: pathname,
+          targetId: action.targetFocusId,
+          label: action.title,
+          highlightStyle: 'teal-glow',
+          expiresAt: Date.now() + 8000,
+        })
+        window.dispatchEvent(new CustomEvent('donna:highlight'))
       }
       return true
     }

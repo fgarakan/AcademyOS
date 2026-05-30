@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-30 — Sprint 968 — DONNA What Should I Do Next Director Engine V1
+
+- `src/lib/donna/directorNextActionEngine.ts` (new): Deterministic Director Next Action Engine V1. Defines `DirectorNextAction` output shape (id, title, summary, why, targetRoute, targetFocusId, safetyLevel, requiresApproval, nextStepLabel, priority). `buildDirectorNextAction({ pendingReviews, pathname })` uses `reviewQueuePendingCount` as primary live signal and current route as secondary context signal — pure TypeScript, no DB calls, no mutations. `matchesWhatNextIntent(text)` detects the "what should I do next?" intent family without overlapping `matchesDailyBriefIntent`. Eight priority rules: pending review queue → curriculum page → class template detail → class template list → sessions → players → review page clear → fallback dashboard.
+- `src/lib/donna/donnaPageChipRegistry.ts` (modified): Added "What should I do next?" prompt chip (`id: 'dir-what-next'`, `actionType: 'prompt'`) to the `/director` chip set. Sends `'What should I do next?'` into the existing DONNA conversation flow. No new surface, no new API.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Added import for `buildDirectorNextAction` and `matchesWhatNextIntent`. Updated `detectAndHandleCommand` block that previously returned `ctx.nextAction` (static text): now calls the engine with live `reviewQueuePendingCount` + `pathname`, sets `commandResponse` with the engine's COO-style summary, and dispatches `setDonnaFocusTarget` + `donna:highlight` when `targetFocusId` is present. Fails gracefully when target is absent.
+- `docs/architecture/DONNA_WHAT_SHOULD_I_DO_NEXT_DIRECTOR_ENGINE_968.md` (new): Architecture doc covering before/after behavior, output shape, signal priority rules, route/focus target mapping, highlight behavior, fallback behavior, safety levels, files changed, no-migration guarantee, and V2 improvements.
+- `docs/QA_DONNA_WHAT_SHOULD_I_DO_NEXT_DIRECTOR_ENGINE_968.md` (new): Full QA checklist: TypeScript, engine correctness, intent detector, chip behavior, highlight, fallback, safety/no-mutation, Sprint 964/965/966/967 regression, Sprint 904 approve/reject, and protected systems.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 967 — DONNA Director Daily Brief V2
 
 - `src/lib/donna/briefings/directorBriefingAdapter.ts` (new): Converts `DirectorDailyBriefing` (library shape) to `DailyBrief` (UI shape). Pure utility — no DB, no AI, no React. Skips `ok`/`no_data` sections; maps `urgent` → `high`, `attention` → `normal`; builds human-readable item strings from label + value + action. Does not add fallback — caller owns empty-state. Caller (API route) appends extra sections and recommended action after adapter runs.
