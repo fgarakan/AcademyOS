@@ -224,6 +224,9 @@ export async function runLiveToolExecutionLoop(
   // Route live tools through async executor
   if (isLiveTool(tool)) {
     const academyId = ctx.safeSignals.academyId
+    // Sprint 1003: player-specific tools also need playerId from route context
+    const playerId = (ctx.safeSignals as { playerId?: string | null }).playerId ?? null
+
     if (!academyId) {
       safetyAudit.push(`LiveToolLoop: BLOCKED — academyId not available in context for live tool '${tool}'.`)
       return { executed: false, output, auditEntry: `no_academyId:${tool}` }
@@ -234,7 +237,8 @@ export async function runLiveToolExecutionLoop(
     let liveResult
     try {
       const { executeLiveTool } = await import('./liveContextToolExecutor')
-      liveResult = await executeLiveTool(tool, { ...params, academyId })
+      // Sprint 1003: inject playerId for player-specific tools alongside academyId
+      liveResult = await executeLiveTool(tool, { ...params, academyId, ...(playerId ? { playerId } : {}) })
     } catch (err) {
       safetyAudit.push(`LiveToolLoop: EXCEPTION in executeLiveTool: ${err instanceof Error ? err.message : String(err)}`)
       return { executed: false, output, auditEntry: `exception:live:${tool}` }

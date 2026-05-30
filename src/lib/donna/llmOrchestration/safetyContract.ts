@@ -131,6 +131,13 @@ export const SAFE_TOOL_REGISTRY: Record<OrchestratorToolId, {
     requiredParams: ['route'],
     blockedFor: [],
   },
+  // Sprint 1003 — Player-specific context tool (director-side only, playerId from route context)
+  get_player_profile_summary: {
+    safetyLevel: 'safe',
+    description: 'Returns a director-safe player profile summary: current level label, status, advancement flag, priority count, session count, evidence count, overdue assessment flag. No raw coach notes. No assessment scores. No behavioral flags. No player name in LLM context. playerId must come from route/server context — LLM cannot provide it. Director-facing only. RLS enforced server-side.',
+    requiredParams: ['playerId'],
+    blockedFor: [],
+  },
   // Sprint 1002 — Live DB-backed context tools (server-side only, RLS enforced)
   get_academy_state: {
     safetyLevel: 'safe',

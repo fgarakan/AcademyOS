@@ -225,6 +225,31 @@ function interpretPlayerDevelopmentSummary(result: ToolCallResult): ToolInterpre
   }
 }
 
+// ── Sprint 1003: Player profile interpreter ───────────────────────────────────
+
+function interpretPlayerProfileSummary(result: ToolCallResult): ToolInterpretation {
+  if (!result.ok || !result.summary) {
+    return {
+      tool: result.tool,
+      donnaText: 'I was unable to retrieve player profile data for this player. This may be a temporary retrieval issue — the player is still visible in the panel.',
+      shouldHighlight: true,
+      targetFocusId: 'player-profile-header',
+      targetRoute: undefined,
+      shouldSuggestNavigation: false,
+      requiresConfirmation: false,
+    }
+  }
+  return {
+    tool: result.tool,
+    donnaText: `Here is the director-safe player summary I can see: ${result.summary} This is read-only guidance. Nothing about this player changes until you take an explicit action.`,
+    shouldHighlight: true,
+    targetFocusId: 'player-active-priorities',
+    targetRoute: undefined,
+    shouldSuggestNavigation: false,
+    requiresConfirmation: false,
+  }
+}
+
 // ── Main interpreter ──────────────────────────────────────────────────────────
 
 const INTERPRETERS: Record<OrchestratorToolId, (result: ToolCallResult) => ToolInterpretation> = {
@@ -239,6 +264,8 @@ const INTERPRETERS: Record<OrchestratorToolId, (result: ToolCallResult) => ToolI
   // Sprint 1002 — live context tools
   get_academy_state: interpretAcademyState,
   get_player_development_summary: interpretPlayerDevelopmentSummary,
+  // Sprint 1003 — player-specific context tool
+  get_player_profile_summary: interpretPlayerProfileSummary,
 }
 
 /**

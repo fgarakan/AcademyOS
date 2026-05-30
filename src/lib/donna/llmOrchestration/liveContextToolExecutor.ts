@@ -23,6 +23,8 @@ import type { ToolCallResult } from './toolCallingContract'
 export const LIVE_TOOL_IDS: ReadonlySet<OrchestratorToolId> = new Set<OrchestratorToolId>([
   'get_academy_state',
   'get_player_development_summary',
+  // Sprint 1003 — player-specific context tool (playerId from route context)
+  'get_player_profile_summary',
 ])
 
 export function isLiveTool(toolId: OrchestratorToolId): boolean {
@@ -138,18 +140,98 @@ async function execGetPlayerDevelopmentSummary(academyId: string): Promise<ToolC
 
 // ── Main live executor ────────────────────────────────────────────────────────
 
+// ── Sprint 1003: Player profile executor ─────────────────────────────────────
+
+async function execGetPlayerProfileSummary(
+  playerId: string,
+  academyId: string,
+): Promise<ToolCallResult> {
+  try {
+    const { getSupabaseServer } = await import('@/lib/supabase/server')
+    const { retrievePlayerProfileSummary } = await import('./playerProfileRetrieval')
+
+    const supabase = await getSupabaseServer()
+    const result = await retrievePlayerProfileSummary(supabase, playerId, academyId)
+
+    const { summary } = result
+    const parts = [
+      summary.currentLevelLabel ? `Current level: ${summary.currentLevelLabel}` : 'No curriculum level assigned',
+      summary.playerStatus ? `Status: ${summary.playerStatus.replace(/_/g, ' ')}` : null,
+      summary.advancementEligible ? 'Advancement: eligible for review' : null,
+      `Active priorities: ${summary.activePriorityCount}`,
+      `Recent sessions (30 days): ${summary.recentSessionCount}`,
+      summary.evidenceCount > 0 ? `Development evidence recorded: ${summary.evidenceCount}` : 'No development evidence yet',
+      summary.assessmentOverdue ? 'Assessment: overdue — review recommended' : null,
+    ].filter(Boolean).join('. ')
+
+    const partialNote = result.errors.length > 0 ? ` (${result.errors.length} query error(s) — partial data)` : ''
+
+    return {
+      tool: 'get_player_profile_summary',
+      ok: true,
+      data: summary,
+      summary: parts + partialNote,
+      requiresConfirmation: false,
+      auditEntry: `tool:get_player_profile_summary level=${summary.currentLevelLabel ?? 'none'} advancement=${summary.advancementEligible}`,
+    }
+  } catch (err) {
+    return {
+      tool: 'get_player_profile_summary',
+      ok: false,
+      data: null,
+      summary: '',
+      error: `Player profile retrieval failed: ${err instanceof Error ? err.message : String(err)}`,
+      requiresConfirmation: false,
+      auditEntry: `tool:get_player_profile_summary ERROR`,
+    }
+  }
+}
+
+// ── Main live executor ────────────────────────────────────────────────────────
+
 /**
  * Execute a live DB-backed context tool.
  * Server-side only — uses dynamic imports for Supabase.
  * Always returns ToolCallResult — never throws.
  *
- * academyId must be provided — live tools require RLS-scoped academy context.
- * If academyId is missing, returns ok:false with a clear error.
+ * academyId must be provided for academy-scoped tools.
+ * playerId must be provided for player-specific tools (from route context, never from LLM).
  */
 export async function executeLiveTool(
   tool: OrchestratorToolId,
   params: Record<string, unknown>,
 ): Promise<ToolCallResult> {
+  // Sprint 1003 — player-specific tool uses playerId (injected from route, not from LLM)
+  if (tool === 'get_player_profile_summary') {
+    const playerId = typeof params['playerId'] === 'string' ? params['playerId'] : null
+    const academyId = typeof params['academyId'] === 'string' ? params['academyId'] : null
+
+    if (!playerId || playerId.length < 10) {
+      return {
+        tool,
+        ok: false,
+        data: null,
+        summary: '',
+        error: `Tool '${tool}' requires a valid playerId from route context. The LLM cannot supply this.`,
+        requiresConfirmation: false,
+        auditEntry: `tool:${tool} FAILED missing_playerId`,
+      }
+    }
+    if (!academyId || academyId.length < 10) {
+      return {
+        tool,
+        ok: false,
+        data: null,
+        summary: '',
+        error: `Tool '${tool}' requires academyId for RLS scoping.`,
+        requiresConfirmation: false,
+        auditEntry: `tool:${tool} FAILED missing_academyId`,
+      }
+    }
+    return execGetPlayerProfileSummary(playerId, academyId)
+  }
+
+  // Academy-scoped tools require academyId
   const academyId = typeof params['academyId'] === 'string' ? params['academyId'] : null
 
   if (!academyId || academyId.length < 10) {

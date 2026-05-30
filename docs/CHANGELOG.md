@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-30 — Sprint 1003 — DONNA Player-Specific Context Tool V1
+
+- `src/lib/donna/llmOrchestration/playerProfileRetrieval.ts` (new): Safe director-facing player profile retrieval. `PlayerProfileSummary` (currentLevelLabel, playerStatus, advancementEligible, activePriorityCount, recentSessionCount, evidenceCount, assessmentOverdue). `retrievePlayerProfileSummary(supabase, playerId, academyId)` — counts and flags only, no coach notes, no scores, no player name in LLM context. Partial failures non-fatal.
+- `src/lib/donna/llmOrchestration/types.ts` (modified): Added `get_player_profile_summary` to `OrchestratorToolId` (11 total tools).
+- `src/lib/donna/llmOrchestration/safetyContract.ts` (modified): Registered `get_player_profile_summary` (safe, requiredParams: ['playerId'], no mutation, director-facing only).
+- `src/lib/donna/llmOrchestration/contextPacket.ts` (modified): Added `playerId` to `ContextPacketInput`, `SafeSignals` (`playerId`, `hasPlayerContext`), tool manifest, and system prompt context note (without raw UUID). `playerId` from route context — never in LLM prompt raw.
+- `src/lib/donna/llmOrchestration/toolCallingContract.ts` (modified): Added stub for `get_player_profile_summary` (all 11 IDs type-safe).
+- `src/lib/donna/llmOrchestration/toolResultInterpreter.ts` (modified): Added `interpretPlayerProfileSummary` — highlights `player-active-priorities`, no raw UUIDs in text.
+- `src/lib/donna/llmOrchestration/liveContextToolExecutor.ts` (modified): Added `get_player_profile_summary` to `LIVE_TOOL_IDS`, `execGetPlayerProfileSummary(playerId, academyId)`, updated `executeLiveTool` for player-specific path.
+- `src/lib/donna/llmOrchestration/toolExecutionLoop.ts` (modified): `runLiveToolExecutionLoop` injects `playerId` from `ctx.safeSignals` alongside `academyId`.
+- `docs/architecture/DONNA_PLAYER_SPECIFIC_CONTEXT_TOOL_1003.md` (new): Architecture doc.
+- `docs/QA_DONNA_PLAYER_SPECIFIC_CONTEXT_TOOL_1003.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1002 — DONNA Live Academy Context Tools V1
 
 - `src/lib/donna/llmOrchestration/types.ts` (modified): Added `get_academy_state` and `get_player_development_summary` to `OrchestratorToolId` union (10 total tools).

@@ -79,6 +79,8 @@ export type OrchestratorToolId =
   // Sprint 1002 — Live DB-backed context tools (server-side only, RLS enforced)
   | 'get_academy_state'                // DB read: AcademyStateSummary (counts + flags, no names)
   | 'get_player_development_summary'   // DB read: PlayerDevelopmentSummary (counts + flags, no names)
+  // Sprint 1003 — Player-specific context tool (director-side only, playerId from route context)
+  | 'get_player_profile_summary'       // DB read: PlayerProfileSummary (director-safe flags only, no raw notes)
 
 // ── Orchestrator output ───────────────────────────────────────────────────────
 

@@ -320,6 +320,8 @@ const EXECUTORS: Record<OrchestratorToolId, (params: Record<string, unknown>) =>
   // Sprint 1002 — live tools route through liveContextToolExecutor, not here
   get_academy_state: () => execLiveContextStub('get_academy_state'),
   get_player_development_summary: () => execLiveContextStub('get_player_development_summary'),
+  // Sprint 1003 — player-specific live tool (playerId from route context, not LLM)
+  get_player_profile_summary: () => execLiveContextStub('get_player_profile_summary'),
 }
 
 /**

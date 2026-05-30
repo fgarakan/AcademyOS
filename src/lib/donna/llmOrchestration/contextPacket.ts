@@ -56,6 +56,8 @@ export interface ContextPacketInput {
   academyState?: Partial<AcademyStateSummary>
   /** Sprint 1002 — Academy ID for server-side live context tool retrieval (never sent to LLM) */
   academyId?: string
+  /** Sprint 1003 — Player ID from route context for player-specific tool (never guessed by LLM) */
+  playerId?: string
 }
 
 // ── Safe signals ──────────────────────────────────────────────────────────────
@@ -81,6 +83,10 @@ export interface SafeSignals {
   conversationTurnCount: number
   /** Sprint 1002 — Academy ID for server-side live tool retrieval (stored in signals, never in LLM prompt) */
   academyId: string | null
+  /** Sprint 1003 — Player ID from route context (stored in signals, never guessed by LLM) */
+  playerId: string | null
+  /** Sprint 1003 — Whether player profile context is available for get_player_profile_summary */
+  hasPlayerContext: boolean
 }
 
 // ── Tool manifest ─────────────────────────────────────────────────────────────
@@ -151,6 +157,8 @@ const TOOL_MANIFEST_ALL: ToolManifestEntry[] = [
   // Sprint 1002 — Live DB-backed context tools (server-side only, RLS enforced, counts and flags only)
   { id: 'get_academy_state', description: 'Returns live academy operational state: pending reviews, sessions, player counts, health signal. Counts and flags only — no player names. RLS enforced server-side.', safetyLevel: 'safe', requiresParams: ['academyId'] },
   { id: 'get_player_development_summary', description: 'Returns live player development signals: active count, placement/advancement flags, overdue assessments. Counts and flags only — no player names. RLS enforced server-side.', safetyLevel: 'safe', requiresParams: ['academyId'] },
+  // Sprint 1003 — Player-specific context tool (only available when player profile context exists)
+  { id: 'get_player_profile_summary', description: 'Returns director-safe player profile summary: current level, status, advancement flag, priority count, session count, evidence count, overdue assessment flag. Director-facing only. No raw notes. No assessment scores. No behavioral flags. playerId injected from route context — you cannot supply it directly.', safetyLevel: 'safe', requiresParams: ['playerId'] },
 ]
 
 function buildToolManifest(role: OrchestratorRole): ToolManifest {
@@ -225,6 +233,10 @@ function buildSystemPrompt(
   if (safeSignals.hasPlayersNeedingPlacement) lines.push('One or more players need a curriculum placement decision.')
   if (safeSignals.hasAdvancementEligiblePlayers) lines.push('One or more players are marked advancement-eligible.')
   lines.push(`Academy health: ${safeSignals.academyHealthSignal.replace('_', ' ')}`)
+  // Sprint 1003 — inform LLM that player profile context is available (without raw ID)
+  if (safeSignals.hasPlayerContext) {
+    lines.push('Player profile context is available for this page. You may use the get_player_profile_summary tool to retrieve director-safe player signals. You cannot supply playerId — it is injected from the route context automatically.')
+  }
 
   // 3. Recommended next action
   if (safeSignals.nextActionId) {
@@ -327,6 +339,9 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     conversationTurnCount: sanitizedHistory.length,
     // Sprint 1002 — academyId stored in signals for live tool retrieval, never in LLM prompt
     academyId: input.academyId ?? null,
+    // Sprint 1003 — playerId stored in signals, never guessed by LLM
+    playerId: input.playerId ?? null,
+    hasPlayerContext: !!input.playerId,
   }
 
   const pageContext = buildPageContext(pathname)
