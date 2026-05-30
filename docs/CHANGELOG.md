@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Sprint 1001 — DONNA Multi-Turn Tool Loop V1
+
+- `src/lib/donna/llmOrchestration/multiTurnToolLoop.ts` (new): Safe two-step LLM + tool reasoning loop. `buildToolResultSummary(toolLoopResult)` — compact safe summary of interpreted tool data (max 300 chars at sentence boundary, no private data). `buildSecondTurnInput(originalInput, toolSummary)` — appends [user: original_question] + [donna: tool_summary] to conversation history, sets refinement user input. `runMultiTurnToolLoop(originalInput, toolLoopResult, safetyAudit)` — validates tool summary (detectBlockedAction gate), builds second-turn context packet, calls callDonnaLlm (dynamic import), validates output through safety contract (isOutputAllowed + detectBlockedAction + safetyLevel gate), preserves highlight/navigation from tool loop if second turn lacks them. Falls back to tool interpretation on any failure. Never throws. Max one follow-up LLM call per user turn.
+- `src/lib/donna/llmOrchestration/orchestrator.ts` (modified): After `runToolExecutionLoop()` succeeds (`executed: true`) in the LLM path, calls `runMultiTurnToolLoop()` for a grounded final answer. If tool was not executed, returns tool-interpreted output directly (Sprint 1000 behavior unchanged).
+- `docs/architecture/DONNA_MULTI_TURN_TOOL_LOOP_1001.md` (new): Architecture doc — before/after, full flow diagram, constraints, summary format, second-turn context structure, validation chain, fallback, safety audit trail, no-migration guarantee, V2 roadmap.
+- `docs/QA_DONNA_MULTI_TURN_TOOL_LOOP_1001.md` (new): QA checklist — TypeScript, second-turn LLM, summary, context, fallback, blocked output, approval-gated, no-mutation, Sprint 1000/999 regression, red-team/eval regression, protected systems.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1000 — DONNA Tool Execution Loop V1
 
 - `src/lib/donna/llmOrchestration/toolExecutionLoop.ts` (new): Safe single-tool execution loop. `DIRECTLY_EXECUTABLE_TOOLS` set (7 safe tools — all read-only/UI-only). `isSafeToExecuteDirectly(toolId)`. `runToolExecutionLoop(output, ctx, safetyAudit)` — validates toolRequest via Sprint 978 safety contract, checks `approval_gated` (returns confirmation-required response), checks `DIRECTLY_EXECUTABLE_TOOLS`, calls `executeToolCall()` (Sprint 980), interprets via `interpretToolResult()` (Sprint 986), converts to `OrchestratorOutput`. Any failure returns original output unchanged — never throws. Max one tool per turn. `draft_proposed_action` never executes directly — returns approval-gated response routing to review queue.
