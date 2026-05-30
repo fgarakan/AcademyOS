@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Sprint 979 — DONNA LLM Context Packet V2
+
+- `src/lib/donna/llmOrchestration/types.ts` (modified): Added `ConversationTurn` (role/content/timestamp/outputType), `ConversationHistory` (capped array), `PageContextSummary` (highlightTargets, promptChips, hasApprovalGates, isDirectorOnly), `AcademyStateSummary` (counts + health signal — no private data).
+- `src/lib/donna/llmOrchestration/contextPacket.ts` (modified): Expanded `ContextPacketInput` with `conversationHistory` and `academyState`. Expanded `SafeSignals` with missing recaps, placement, advancement, health signal, turn count. Added `ToolManifest`, `ToolManifestEntry`. Added `pageContext`, `toolManifest`, `conversationHistory`, `tokenBudget` to `ContextPacket`. Rebuilt `buildContextPacket` with structured 8-section system prompt. Added helpers: `appendUserTurn`, `appendDonnaTurn`, `buildAcademyStateSummary`. Backward-compatible with V1 inputs.
+- `docs/architecture/DONNA_LLM_CONTEXT_PACKET_V2_979.md` (new): V1→V2 delta table, new types, new helpers, safety guarantees, retrieval gaps for future sprints.
+- `docs/QA_DONNA_LLM_CONTEXT_PACKET_V2_979.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 978 — DONNA LLM Orchestration Foundation V1
 
 - `src/lib/donna/llmOrchestration/types.ts` (new): Core type definitions — `OrchestratorRole`, `OrchestratorSafetyLevel` (safe/review_only/approval_gated/blocked), `OrchestratorOutputType` (7 V1 allowed), `OrchestratorToolId` (8 V1 registered), `OrchestratorToolRequest`, `OrchestratorOutput`, `OrchestratorResponse` (safe response envelope).

@@ -1,4 +1,5 @@
 // Sprint 978 — DONNA LLM Orchestration Foundation V1
+// Sprint 979 — V2 additions: ConversationTurn, ConversationHistory, PageContextSummary, AcademyStateSummary
 // Core type definitions for the DONNA LLM orchestration layer.
 // Pure TypeScript — no DB, no API, no React, no mutations.
 //
@@ -104,6 +105,65 @@ export interface OrchestratorOutput {
   confidence: 'high' | 'medium' | 'low'
   /** What signal drove this output (for transparency) */
   source: 'deterministic' | 'llm_inferred' | 'fallback'
+}
+
+// ── Sprint 979: Conversation history ─────────────────────────────────────────
+
+/** A single turn in the DONNA conversation. Stored in RAM only — never persisted to DB here. */
+export interface ConversationTurn {
+  /** 'user' = director/coach input; 'donna' = DONNA response */
+  role: 'user' | 'donna'
+  /** Sanitized text content — no raw private data */
+  content: string
+  /** Unix timestamp for ordering */
+  timestamp: number
+  /** The output type that produced this DONNA turn */
+  outputType?: OrchestratorOutputType
+}
+
+/** Recent conversation history — capped at 10 turns to keep context small. */
+export type ConversationHistory = ConversationTurn[]
+
+// ── Sprint 979: Page context summary ─────────────────────────────────────────
+
+/** Safe summary of what's available on the current page for DONNA to reference. */
+export interface PageContextSummary {
+  /** Human-readable page label */
+  pageLabel: string
+  /** Current pathname */
+  pathname: string
+  /** Available highlight targets on this page (focus IDs) */
+  highlightTargets: string[]
+  /** Available prompt chips on this page */
+  promptChips: string[]
+  /** Whether the page has approval/review functionality */
+  hasApprovalGates: boolean
+  /** Whether the page is director-only */
+  isDirectorOnly: boolean
+}
+
+// ── Sprint 979: Safe academy state summary ────────────────────────────────────
+
+/**
+ * Safe high-level summary of academy state for LLM context.
+ * No raw player names, coach notes, or private data.
+ * Counts and status flags only.
+ */
+export interface AcademyStateSummary {
+  /** Number of pending review items (from panel state — no new DB query) */
+  pendingReviewCount: number
+  /** Number of sessions today (from brief or panel state) */
+  todaySessionCount: number
+  /** Whether any sessions are missing wrap-ups */
+  hasMissingRecaps: boolean
+  /** Number of active players (total — no names) */
+  activePlayers: number
+  /** Whether any players are pending placement */
+  hasPlayersNeedingPlacement: boolean
+  /** Whether any players are advancement-eligible */
+  hasAdvancementEligiblePlayers: boolean
+  /** Health signal from daily brief */
+  academyHealthSignal: 'on_track' | 'attention_needed' | 'critical' | 'unknown'
 }
 
 // ── Safe response envelope ────────────────────────────────────────────────────

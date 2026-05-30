@@ -1,5 +1,6 @@
 // Sprint 978 — DONNA LLM Orchestration Context Packet
-// Assembles the structured context the LLM receives before generating a response.
+// Sprint 979 — V2: conversation history, tool manifest, page context, approval rules,
+//               safe academy state summary, richer system prompt.
 // Pure TypeScript — no DB, no API, no React.
 //
 // The context packet is the LLM's complete world model for one DONNA turn.
@@ -7,14 +8,28 @@
 // No raw coach notes, no player observations, no private data.
 // No player names unless explicitly included by a future sprint with director approval.
 //
+// V1 (Sprint 978): role, page, pending count, next action, explanation, user input.
+// V2 (Sprint 979): + conversation history, available tools, blocked actions,
+//                    page context summary, academy state summary, approval rules.
+//
 // Usage:
-//   const packet = buildContextPacket({ role, pathname, pendingReviews, firstName })
-//   // packet.systemPrompt — safe system prompt with context
+//   const packet = buildContextPacket({ role, pathname, pendingReviews, firstName, conversationHistory })
+//   // packet.systemPrompt — full structured system prompt for LLM
 //   // packet.safeSignals — structured data the LLM can reference
+//   // packet.pageContext — page-specific context (chips, highlight targets)
+//   // packet.toolManifest — tools available to the LLM in this turn
 
-import type { OrchestratorRole } from './types'
+import type {
+  OrchestratorRole,
+  OrchestratorToolId,
+  ConversationHistory,
+  ConversationTurn,
+  PageContextSummary,
+  AcademyStateSummary,
+} from './types'
 import type { DirectorNextAction } from '../directorNextActionEngine'
 import type { DirectorActionExplanation } from '../directorActionExplanation'
+import { getChipsForRoute } from '../donnaPageChipRegistry'
 
 // ── Context packet input ──────────────────────────────────────────────────────
 
@@ -35,6 +50,10 @@ export interface ContextPacketInput {
   actionExplanation?: DirectorActionExplanation | null
   /** The director's typed/spoken input */
   userInput: string
+  /** Sprint 979 — Recent conversation turns (capped at 10 by builder) */
+  conversationHistory?: ConversationHistory
+  /** Sprint 979 — Safe academy state summary from panel state or brief */
+  academyState?: Partial<AcademyStateSummary>
 }
 
 // ── Safe signals ──────────────────────────────────────────────────────────────
@@ -52,7 +71,25 @@ export interface SafeSignals {
   nextActionRequiresApproval: boolean
   actionExplanationSafetyBadge: string | null
   actionExplanationChangesRecords: boolean
+  /** Sprint 979 — */
+  hasMissingRecaps: boolean
+  hasPlayersNeedingPlacement: boolean
+  hasAdvancementEligiblePlayers: boolean
+  academyHealthSignal: AcademyStateSummary['academyHealthSignal']
+  conversationTurnCount: number
 }
+
+// ── Tool manifest ─────────────────────────────────────────────────────────────
+
+/** The tools available to the LLM in the current turn, with descriptions. */
+export interface ToolManifestEntry {
+  id: OrchestratorToolId
+  description: string
+  safetyLevel: 'safe' | 'review_only' | 'approval_gated'
+  requiresParams: string[]
+}
+
+export type ToolManifest = ToolManifestEntry[]
 
 // ── Context packet ────────────────────────────────────────────────────────────
 
@@ -65,19 +102,181 @@ export interface ContextPacket {
   userInput: string
   /** Token-efficient summary for compact LLM requests */
   compactSummary: string
+  /** Sprint 979 — page context (chips, highlight targets, approval gates) */
+  pageContext: PageContextSummary
+  /** Sprint 979 — tool manifest for this turn */
+  toolManifest: ToolManifest
+  /** Sprint 979 — sanitized conversation history (last 6 turns max for tokens) */
+  conversationHistory: ConversationHistory
+  /** Sprint 979 — estimated token cost category for this context packet */
+  tokenBudget: 'compact' | 'standard' | 'extended'
 }
 
-// ── Builder ───────────────────────────────────────────────────────────────────
+// ── Role context ──────────────────────────────────────────────────────────────
 
 const ROLE_CONTEXT: Record<OrchestratorRole, string> = {
-  academy_director: 'You are DONNA, a COO-style operating assistant for an academy director. You have access to academy operational data but never expose raw private data. You help directors make decisions, not make decisions for them.',
-  head_coach: 'You are DONNA, a coaching assistant. You help coaches prepare for sessions and submit accurate wrap-ups. You never expose player data to parents or other coaches.',
-  coach: 'You are DONNA, a coaching assistant. You help coaches run sessions and submit wrap-ups for director review.',
+  academy_director: [
+    'You are DONNA, a COO-style operating assistant for an academy director.',
+    'You help directors understand their academy state, make good decisions, and take safe actions.',
+    'You have access to structured academy signals but never expose raw private data.',
+    'You help directors decide — you never decide for them.',
+  ].join(' '),
+  head_coach: [
+    'You are DONNA, a coaching assistant for a head coach.',
+    'You help head coaches prepare for sessions, submit accurate wrap-ups, and review player signals.',
+    'You never expose player data to parents or other coaches.',
+  ].join(' '),
+  coach: [
+    'You are DONNA, a coaching assistant.',
+    'You help coaches run sessions and submit wrap-ups for director review.',
+    'All notes you help create enter the director review queue before becoming official.',
+  ].join(' '),
 }
 
+// ── Tool manifest builder ─────────────────────────────────────────────────────
+
+const TOOL_MANIFEST_ALL: ToolManifestEntry[] = [
+  { id: 'get_pending_review_count', description: 'Returns pending review item count from panel state. No DB query.', safetyLevel: 'safe', requiresParams: [] },
+  { id: 'get_next_action_recommendation', description: 'Returns the deterministic next-action recommendation for the current page and signals.', safetyLevel: 'safe', requiresParams: ['pathname'] },
+  { id: 'get_action_explanation', description: 'Returns structured safety/approval explanation for a recommended action.', safetyLevel: 'safe', requiresParams: ['actionId'] },
+  { id: 'get_review_queue_guidance', description: 'Returns COO-style guidance for review queue decisions.', safetyLevel: 'safe', requiresParams: ['intent'] },
+  { id: 'get_page_context', description: 'Returns page label, chips, and highlight targets for the current route.', safetyLevel: 'safe', requiresParams: ['pathname'] },
+  { id: 'set_highlight_target', description: 'Highlights a UI element by writing to sessionStorage and dispatching donna:highlight.', safetyLevel: 'safe', requiresParams: ['targetId', 'label', 'route'] },
+  { id: 'draft_proposed_action', description: 'Creates a proposed_action draft for director review. Requires confirmation before execution.', safetyLevel: 'approval_gated', requiresParams: ['actionType', 'payload', 'actorId', 'academyId'] },
+  { id: 'route_to_page', description: 'Suggests navigation to a route. Does not navigate automatically — director clicks.', safetyLevel: 'safe', requiresParams: ['route'] },
+]
+
+function buildToolManifest(role: OrchestratorRole): ToolManifest {
+  // In V1, all roles get all tools. Future sprints may gate by role.
+  return TOOL_MANIFEST_ALL
+}
+
+// ── Page context builder ──────────────────────────────────────────────────────
+
+const DIRECTOR_ONLY_ROUTES = [
+  '/director/review', '/director/curriculum', '/director/class-templates',
+  '/director/sessions', '/director/players', '/director',
+]
+
+function buildPageContext(pathname: string): PageContextSummary {
+  const chips = getChipsForRoute(pathname)
+  const highlightTargets = chips.filter(c => c.actionType === 'highlight' && c.targetId).map(c => c.targetId!)
+  const promptChips = chips.filter(c => c.actionType === 'prompt' && c.prompt).map(c => c.label)
+  const hasApprovalGates = pathname.startsWith('/director/review')
+  const isDirectorOnly = DIRECTOR_ONLY_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
+
+  const PAGE_LABELS: Record<string, string> = {
+    '/director': 'Director Dashboard',
+    '/director/review': 'Review Queue',
+    '/director/curriculum': 'Curriculum Builder',
+    '/director/sessions': 'Sessions',
+    '/director/players': 'Player Directory',
+    '/director/class-templates': 'Class Templates',
+    '/coach': 'Coach Dashboard',
+  }
+
+  const pageLabel =
+    PAGE_LABELS[pathname] ??
+    (pathname.startsWith('/director/class-templates/') ? 'Class Template Detail' :
+     pathname.startsWith('/director/sessions/') ? 'Session Detail' :
+     pathname.startsWith('/director/players/') ? 'Player Profile' :
+     pathname.startsWith('/coach/sessions/') ? 'Coach Session Detail' :
+     pathname)
+
+  return {
+    pageLabel,
+    pathname,
+    highlightTargets,
+    promptChips,
+    hasApprovalGates,
+    isDirectorOnly,
+  }
+}
+
+// ── System prompt builder ─────────────────────────────────────────────────────
+
+function buildSystemPrompt(
+  role: OrchestratorRole,
+  firstName: string | null | undefined,
+  safeSignals: SafeSignals,
+  pageContext: PageContextSummary,
+  toolManifest: ToolManifest,
+  conversationHistory: ConversationHistory,
+): string {
+  const lines: string[] = []
+
+  // 1. Identity + role
+  lines.push('## Identity')
+  lines.push(ROLE_CONTEXT[role])
+  if (firstName) lines.push(`The user's name is ${firstName}.`)
+
+  // 2. Current state
+  lines.push('\n## Current State')
+  lines.push(`Page: ${pageContext.pageLabel} (${pageContext.pathname})`)
+  lines.push(`Pending review items: ${safeSignals.pendingReviews}${safeSignals.hasUrgentItems ? ' (URGENT)' : ''}`)
+  if (safeSignals.hasMissingRecaps) lines.push('One or more past sessions are missing coach wrap-ups.')
+  if (safeSignals.hasPlayersNeedingPlacement) lines.push('One or more players need a curriculum placement decision.')
+  if (safeSignals.hasAdvancementEligiblePlayers) lines.push('One or more players are marked advancement-eligible.')
+  lines.push(`Academy health: ${safeSignals.academyHealthSignal.replace('_', ' ')}`)
+
+  // 3. Recommended next action
+  if (safeSignals.nextActionId) {
+    lines.push('\n## Recommended Next Action')
+    lines.push(`Action: ${safeSignals.nextActionTitle ?? safeSignals.nextActionId}`)
+    lines.push(`Safety: ${safeSignals.nextActionSafetyLevel ?? 'safe'}`)
+    lines.push(`Requires approval: ${safeSignals.nextActionRequiresApproval ? 'Yes' : 'No'}`)
+  }
+
+  // 4. Page context
+  lines.push('\n## Page Context')
+  if (pageContext.highlightTargets.length > 0) {
+    lines.push(`Highlight targets available: ${pageContext.highlightTargets.join(', ')}`)
+  }
+  if (pageContext.promptChips.length > 0) {
+    lines.push(`Prompt suggestions available: ${pageContext.promptChips.join('; ')}`)
+  }
+  if (pageContext.hasApprovalGates) {
+    lines.push('This page has approval gates — nothing executes automatically here.')
+  }
+
+  // 5. Available tools
+  const safeTools = toolManifest.filter(t => t.safetyLevel === 'safe').map(t => t.id).join(', ')
+  const gatedTools = toolManifest.filter(t => t.safetyLevel === 'approval_gated').map(t => t.id).join(', ')
+  lines.push('\n## Available Tools')
+  lines.push(`Safe (no confirmation needed): ${safeTools}`)
+  lines.push(`Approval-gated (director must confirm): ${gatedTools}`)
+
+  // 6. Safety rules (always included)
+  lines.push('\n## Safety Rules (non-negotiable)')
+  lines.push('1. Never approve, reject, or execute proposed_actions autonomously.')
+  lines.push('2. Never send parent or player communications.')
+  lines.push('3. Never change player levels, rosters, billing, or curriculum without explicit director action.')
+  lines.push('4. Never expose raw coach notes, internal assessments, or player private data.')
+  lines.push('5. Never bypass the review queue. All proposed changes go through it.')
+  lines.push('6. If unsure: ask_clarifying_question. Do not guess at risky actions.')
+
+  // 7. Output format
+  lines.push('\n## Output Format')
+  lines.push('Respond with one of: answer, recommend_next_action, highlight_target, explain_action, draft_proposed_action, route_to_review, ask_clarifying_question.')
+  lines.push('Keep responses concise (under 200 words). Sound like a calm, experienced COO. No hype. No markdown headers in your response.')
+
+  // 8. Conversation history (last 6 turns, oldest first)
+  if (conversationHistory.length > 0) {
+    lines.push('\n## Recent Conversation')
+    conversationHistory.slice(-6).forEach(turn => {
+      lines.push(`${turn.role === 'user' ? 'Director' : 'DONNA'}: ${turn.content.slice(0, 150)}`)
+    })
+  }
+
+  return lines.join('\n')
+}
+
+// ── Main builder ──────────────────────────────────────────────────────────────
+
 /**
- * Build a structured context packet for the LLM.
- * Contains a system prompt, safe signals, and compact summary.
+ * Build a structured V2 context packet for the LLM.
+ * Includes: system prompt, safe signals, page context, tool manifest,
+ * conversation history, and compact summary.
  * No raw private data included.
  */
 export function buildContextPacket(input: ContextPacketInput): ContextPacket {
@@ -86,16 +285,26 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     pathname,
     firstName,
     pendingReviews = 0,
-    pageLabel = pathname,
+    pageLabel,
     nextAction = null,
     actionExplanation = null,
     userInput,
+    conversationHistory = [],
+    academyState = {},
   } = input
+
+  // Sanitize conversation history: cap at 10 turns, truncate content
+  const sanitizedHistory: ConversationHistory = conversationHistory
+    .slice(-10)
+    .map((turn): ConversationTurn => ({
+      ...turn,
+      content: turn.content.slice(0, 200),
+    }))
 
   const safeSignals: SafeSignals = {
     role,
     pathname,
-    pageLabel,
+    pageLabel: pageLabel ?? pathname,
     pendingReviews,
     hasUrgentItems: pendingReviews > 0,
     nextActionId: nextAction?.id ?? null,
@@ -104,35 +313,105 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     nextActionRequiresApproval: nextAction?.requiresApproval ?? false,
     actionExplanationSafetyBadge: actionExplanation?.safetyBadge ?? null,
     actionExplanationChangesRecords: actionExplanation?.changesRecords ?? false,
+    hasMissingRecaps: academyState.hasMissingRecaps ?? false,
+    hasPlayersNeedingPlacement: academyState.hasPlayersNeedingPlacement ?? false,
+    hasAdvancementEligiblePlayers: academyState.hasAdvancementEligiblePlayers ?? false,
+    academyHealthSignal: academyState.academyHealthSignal ?? 'unknown',
+    conversationTurnCount: sanitizedHistory.length,
   }
 
-  const greeting = firstName ? `The director's name is ${firstName}.` : ''
+  const pageContext = buildPageContext(pathname)
+  // Override pageLabel if provided
+  if (pageLabel) pageContext.pageLabel = pageLabel
 
-  const systemPrompt = [
-    ROLE_CONTEXT[role],
-    greeting,
-    `Current page: ${pageLabel} (${pathname}).`,
-    pendingReviews > 0
-      ? `There are ${pendingReviews} pending items in the review queue requiring the director's decision.`
-      : 'The review queue is currently clear.',
-    nextAction
-      ? `Recommended next action: "${nextAction.title}" — ${nextAction.summary.slice(0, 120)}...`
-      : '',
-    `Safety rule: Never approve, reject, or execute actions autonomously. Never send parent or player communications. Never change player levels, rosters, billing, or curriculum without explicit director action. All proposed changes go through the review queue.`,
-    `Output rule: Respond in one of these modes: answer, recommend_next_action, highlight_target, explain_action, draft_proposed_action, route_to_review, or ask_clarifying_question.`,
-  ].filter(Boolean).join('\n')
+  const toolManifest = buildToolManifest(role)
+
+  const systemPrompt = buildSystemPrompt(
+    role,
+    firstName,
+    safeSignals,
+    pageContext,
+    toolManifest,
+    sanitizedHistory,
+  )
+
+  // Token budget estimation: compact (<500 chars input+history), standard (500-1500), extended (>1500)
+  const totalInputSize = systemPrompt.length + userInput.length +
+    sanitizedHistory.reduce((sum, t) => sum + t.content.length, 0)
+  const tokenBudget: ContextPacket['tokenBudget'] =
+    totalInputSize < 2000 ? 'compact' : totalInputSize < 6000 ? 'standard' : 'extended'
 
   const compactSummary = [
     `role:${role}`,
-    `page:${pageLabel}`,
+    `page:${pageContext.pageLabel}`,
     `pending:${pendingReviews}`,
     nextAction ? `next:${nextAction.id}` : 'next:none',
+    `history:${sanitizedHistory.length}turns`,
+    `budget:${tokenBudget}`,
   ].join(' ')
 
   return {
     systemPrompt,
     safeSignals,
-    userInput: userInput.slice(0, 500), // cap at 500 chars for safety
+    userInput: userInput.slice(0, 500),
     compactSummary,
+    pageContext,
+    toolManifest,
+    conversationHistory: sanitizedHistory,
+    tokenBudget,
+  }
+}
+
+// ── Conversation history helpers ──────────────────────────────────────────────
+
+/** Append a user turn to conversation history. Returns new array — does not mutate. */
+export function appendUserTurn(history: ConversationHistory, content: string): ConversationHistory {
+  const turn: ConversationTurn = {
+    role: 'user',
+    content: content.slice(0, 200),
+    timestamp: Date.now(),
+  }
+  return [...history, turn].slice(-10)
+}
+
+/** Append a DONNA turn to conversation history. Returns new array — does not mutate. */
+export function appendDonnaTurn(
+  history: ConversationHistory,
+  content: string,
+  outputType?: import('./types').OrchestratorOutputType,
+): ConversationHistory {
+  const turn: ConversationTurn = {
+    role: 'donna',
+    content: content.slice(0, 200),
+    timestamp: Date.now(),
+    outputType,
+  }
+  return [...history, turn].slice(-10)
+}
+
+/** Build an AcademyStateSummary from available panel-state signals. No DB calls. */
+export function buildAcademyStateSummary(params: {
+  pendingReviews: number
+  todaySessionCount?: number
+  hasMissingRecaps?: boolean
+  activePlayers?: number
+  hasPlayersNeedingPlacement?: boolean
+  hasAdvancementEligiblePlayers?: boolean
+}): AcademyStateSummary {
+  const { pendingReviews } = params
+  const health: AcademyStateSummary['academyHealthSignal'] =
+    pendingReviews >= 10 ? 'critical'
+    : pendingReviews >= 3 || params.hasMissingRecaps ? 'attention_needed'
+    : pendingReviews === 0 ? 'on_track'
+    : 'attention_needed'
+
+  return {
+    pendingReviewCount: pendingReviews,
+    todaySessionCount: params.todaySessionCount ?? 0,
+    hasMissingRecaps: params.hasMissingRecaps ?? false,
+    activePlayers: params.activePlayers ?? 0,
+    hasPlayersNeedingPlacement: params.hasPlayersNeedingPlacement ?? false,
+    hasAdvancementEligiblePlayers: params.hasAdvancementEligiblePlayers ?? false,
+    academyHealthSignal: health,
   }
 }
