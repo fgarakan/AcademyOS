@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-30 — Sprint 1009 — DONNA Cross-Page Guided Action V1
+
+- `src/lib/donna/llmOrchestration/donnaGuidedAction.ts` (new): Client-side helper for executing highlight and navigation side effects from an `OrchestratorOutput`. `isAllowedRoute(route)` — validates against `/director|/coach|/player|/parent` prefixes; rejects all external URLs. `executeDonnaHighlight(highlightTarget, currentPathname, onNavigate)` — same-page: `setDonnaFocusTarget` + `donna:highlight` dispatch; cross-page: `setDonnaFocusTarget` + `onNavigate(route)`. `executeDonnaNavigation(route, onNavigate)` — route-validated navigation call. `executeDonnaPrimaryAction(output, pathname, onNavigate)` — convenience wrapper: highlight first if `highlightTarget` present, else navigation. Module is client-only (guards with `typeof window === 'undefined'`). Never calls `router.push` directly. No DB, no API, no mutations. Not yet wired to `DonnaAssistantButton` — Sprint 1011 handles panel integration.
+- `docs/architecture/DONNA_CROSS_PAGE_GUIDED_ACTION_1009.md` (new): Architecture doc.
+- `docs/QA_DONNA_CROSS_PAGE_GUIDED_ACTION_1009.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1008 — DONNA Response Card UI V1
 
 - `src/components/donna/DonnaResponseCard.tsx` (new): Client component for rendering a single `OrchestratorOutput`. Props: `output`, `onNavigate?(route)`, `onHighlight?(targetId, route, label)`, `children?`. Layout: DONNA avatar + output type badge (7 types: answer/recommend/highlight/explain/draft/review/clarify) + LLM source label + text body + approval gate warning (approval_gated only) + confidence badge + safety badge + action row (highlight + navigate CTAs, only when handlers + targets present) + optional children slot. Pure display — no navigation, no sessionStorage, no mutations. `onNavigate` and `onHighlight` callbacks are fired by director action; parent handles all side effects. Approval gate warning: explicit "requires approval / nothing applied until confirmed in Review Queue." Not yet wired to DONNA panel (Sprint 1011) or server action (Sprint 1010).
