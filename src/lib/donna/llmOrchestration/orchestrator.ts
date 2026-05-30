@@ -39,6 +39,8 @@ import { matchesWhatNextIntent } from '../directorNextActionEngine'
 import { matchesReviewQueueGuidanceIntent, buildReviewQueueGuidance } from '../reviewQueueGuidance'
 // Sprint 999 — LLM API client (server-side only, imported lazily via dynamic require when called)
 import type { LlmCallResult } from './llmApiClient'
+// Sprint 1000 — Tool execution loop (safe single-tool execution after LLM output validates)
+import { runToolExecutionLoop } from './toolExecutionLoop'
 
 // ── Orchestrator input ────────────────────────────────────────────────────────
 
@@ -194,8 +196,10 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
       safetyAudit,
     )
     if (isValid) {
+      // Sprint 1000: run tool loop for deterministic outputs with toolRequest too
+      const toolLoopResult = runToolExecutionLoop(deterministicResult, ctx, safetyAudit)
       return {
-        primaryOutput: deterministicResult,
+        primaryOutput: toolLoopResult.output,
         secondaryOutputs: [],
         hadBlockedAttempt: false,
         safetyAudit,
@@ -234,8 +238,14 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
         )
         if (isValid) {
           safetyAudit.push(`LLM: Response validated. model=${llmResult.model} latency=${llmResult.latencyMs}ms`)
+
+          // Sprint 1000 — Tool execution loop: execute toolRequest if present and safe.
+          // Only safe/read-only tools execute directly. approval_gated tools return an
+          // explanation that director confirmation is required. Max one tool per turn.
+          const toolLoopResult = runToolExecutionLoop(llmResult.output, ctx, safetyAudit)
+
           return {
-            primaryOutput: llmResult.output,
+            primaryOutput: toolLoopResult.output,
             secondaryOutputs: [],
             hadBlockedAttempt,
             safetyAudit,

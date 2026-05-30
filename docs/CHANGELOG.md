@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Sprint 1000 — DONNA Tool Execution Loop V1
+
+- `src/lib/donna/llmOrchestration/toolExecutionLoop.ts` (new): Safe single-tool execution loop. `DIRECTLY_EXECUTABLE_TOOLS` set (7 safe tools — all read-only/UI-only). `isSafeToExecuteDirectly(toolId)`. `runToolExecutionLoop(output, ctx, safetyAudit)` — validates toolRequest via Sprint 978 safety contract, checks `approval_gated` (returns confirmation-required response), checks `DIRECTLY_EXECUTABLE_TOOLS`, calls `executeToolCall()` (Sprint 980), interprets via `interpretToolResult()` (Sprint 986), converts to `OrchestratorOutput`. Any failure returns original output unchanged — never throws. Max one tool per turn. `draft_proposed_action` never executes directly — returns approval-gated response routing to review queue.
+- `src/lib/donna/llmOrchestration/orchestrator.ts` (modified): `runToolExecutionLoop` imported and called after LLM output validates (Step 3) and after deterministic fast paths (Step 2). The tool loop is a transparent wrapper — if it fails or is a no-op, the original output is returned.
+- `docs/architecture/DONNA_TOOL_EXECUTION_LOOP_1000.md` (new): Architecture doc — before/after behavior, execution flow diagram, allowed/blocked tools table, approval-gated behavior, one-tool limit, fallback, safety audit trail, no-migration guarantee, V2 roadmap.
+- `docs/QA_DONNA_TOOL_EXECUTION_LOOP_1000.md` (new): QA checklist — TypeScript, tool validation, read-only execution, blocked tools, fallback, safety contract regression, red-team regression, eval harness regression, no-mutation, protected systems.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 999 — DONNA LLM API Wire-Up V1
 
 - `src/lib/donna/llmOrchestration/llmApiClient.ts` (new): Anthropic API client for DONNA orchestration. `callDonnaLlm(ctx, safetyAudit)` — checks API key, runs pre-call blocked-action gate, builds structured prompt with OUTPUT_TYPE_SCHEMA, calls claude-sonnet-4-6 (max_tokens: 800, prompt caching via cache_control), parses JSON response (strips markdown fences), validates via `isValidLlmResponse()`, runs post-parse safety checks (output type, blocked action in text, safety level, route whitelist). 1 retry on 429/500/529. Returns `LlmCallResult` with output or null — never throws.
