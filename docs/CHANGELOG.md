@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-05-31 — Sprint 1064 — Shared Builder Stepper Component V1
+
+- `src/components/builder/CollapsibleBlockRow.tsx` (new): Shared collapsible block row for Fitness Builder and Class Builder. Props: index, name, accentClass, borderAccentClass, durationMin, itemCount, itemLabel, isComplete, intentHint, isExpanded, onToggle, quickActionLabel, onQuickAction, children. Renders: step number · completion indicator · name + intent hint · duration · count · quick action (collapsed only) · chevron. Expanded state shows children below the header row.
+- `src/components/builder/BuilderStepperNav.tsx` (new): Shared `BuilderStepperNav` and `BuilderBottomNav` components used by both Fitness and Class builders. DRYs up the identical stepper nav code duplicated across both builder steppers.
+- `src/components/builder/index.ts` (new): Barrel export for both components.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1063 — Fitness Exercise Category Guardrails V1
 
 - `src/lib/fitness/fitnessExerciseMatching.ts` (modified): (1) `CATEGORY_MATCH['coordination']` changed from `['fitness', 'movement']` to `['movement']` — removes free base score for all fitness exercises in coordination blocks. (2) Coordination keywords refined: removed `'tennis'` (too broad), added `'catch'`, `'toss'`, `'dribble'`, `'juggling'`, `'hand eye'`, `'bilateral'`. (3) `MIN_MATCH_SCORE = 3` — both `getDefaultExercisesForFitnessBlock` and `matchExerciseToFitnessBlock` now require at least one keyword match, not just a category-only score of 2. (4) Additional keyword improvements: speed removes `'fly'`/`'fly-in'`, adds `'first step'`/`'quickness'`; strength adds `'rdl'`/`'deadlift'`/`'pull-up'`; agility adds `'mirror'`/`'star drill'`/`'spider'`; mobility adds `'90/90'`/`'foam roll'`/`'stretch'`; recovery adds `'debrief'`/`'rpe'`.
