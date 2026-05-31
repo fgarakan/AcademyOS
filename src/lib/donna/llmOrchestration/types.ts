@@ -83,6 +83,10 @@ export type OrchestratorToolId =
   | 'get_player_profile_summary'       // DB read: PlayerProfileSummary (director-safe flags only, no raw notes)
   // Sprint 1004 — Session-specific context tool (director/coach-side, sessionId from route context)
   | 'get_session_context'              // DB read: SessionContextSummary (safe labels/counts/status, no raw notes)
+  // Sprint 1015 — Curriculum context tool (academy-scoped, no raw content returned)
+  | 'get_curriculum_context'           // DB read: CurriculumContextSummary (level count, pending drafts, no raw content)
+  // Sprint 1017 — Knowledge Builder retrieval (platform-owner-approved content only)
+  | 'get_knowledge_content'            // KB read: approved knowledge entries by content type/stage (empty in V1 — no KB table yet)
 
 // ── Orchestrator output ───────────────────────────────────────────────────────
 

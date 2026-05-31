@@ -30,6 +30,11 @@ import type {
 import type { DirectorNextAction } from '../directorNextActionEngine'
 import type { DirectorActionExplanation } from '../directorActionExplanation'
 import { getChipsForRoute } from '../donnaPageChipRegistry'
+// Sprint 1018 — curriculum strategy conversation framing
+import {
+  isCurriculumStrategyQuery,
+  CURRICULUM_STRATEGY_PROMPT_SECTION,
+} from './curriculumStrategyConversation'
 
 // ── Context packet input ──────────────────────────────────────────────────────
 
@@ -167,6 +172,10 @@ const TOOL_MANIFEST_ALL: ToolManifestEntry[] = [
   { id: 'get_player_profile_summary', description: 'Returns director-safe player profile summary: current level, status, advancement flag, priority count, session count, evidence count, overdue assessment flag. Director-facing only. No raw notes. No assessment scores. No behavioral flags. playerId injected from route context — you cannot supply it directly.', safetyLevel: 'safe', requiresParams: ['playerId'] },
   // Sprint 1004 — Session-specific context tool (only available when session context exists)
   { id: 'get_session_context', description: 'Returns director/coach-safe session context: name, status, date/time, template label, coach name, group name, block count, attendance counts, wrap-up status. No raw coach notes. No individual player names. No observation text. sessionId injected from route context — you cannot supply it directly.', safetyLevel: 'safe', requiresParams: ['sessionId'] },
+  // Sprint 1015 — Curriculum context tool (available for director role, academy-scoped)
+  { id: 'get_curriculum_context', description: 'Returns curriculum structure context: total levels, levels with content, pending curriculum change drafts. Structure and counts only — no raw curriculum content, no learning objectives text. RLS enforced server-side.', safetyLevel: 'safe', requiresParams: ['academyId'] },
+  // Sprint 1017 — Knowledge Builder retrieval (platform-owner-approved content only, advisory only)
+  { id: 'get_knowledge_content', description: 'Returns platform-owner-approved knowledge entries relevant to a query. Draft and under-review entries are always excluded. Advisory only — nothing changes automatically. V1: returns empty until Knowledge Builder DB table is wired. Provide: query (required), contentType (optional: drill/coaching_tip/curriculum_note/etc.), stage (optional: red/orange/green/etc.)', safetyLevel: 'safe', requiresParams: ['query'] },
 ]
 
 function buildToolManifest(role: OrchestratorRole): ToolManifest {
@@ -365,7 +374,7 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
 
   const toolManifest = buildToolManifest(role)
 
-  const systemPrompt = buildSystemPrompt(
+  let systemPrompt = buildSystemPrompt(
     role,
     firstName,
     safeSignals,
@@ -373,6 +382,12 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     toolManifest,
     sanitizedHistory,
   )
+
+  // Sprint 1018 — inject curriculum strategy framing when user input or page is curriculum-strategic
+  const isCurriculumPage = pathname.startsWith('/director/curriculum')
+  if (isCurriculumPage || isCurriculumStrategyQuery(userInput)) {
+    systemPrompt = systemPrompt + '\n\n' + CURRICULUM_STRATEGY_PROMPT_SECTION
+  }
 
   // Token budget estimation: compact (<500 chars input+history), standard (500-1500), extended (>1500)
   const totalInputSize = systemPrompt.length + userInput.length +

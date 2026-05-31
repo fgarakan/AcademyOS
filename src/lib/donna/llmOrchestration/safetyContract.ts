@@ -158,6 +158,20 @@ export const SAFE_TOOL_REGISTRY: Record<OrchestratorToolId, {
     requiredParams: ['academyId'],
     blockedFor: [],
   },
+  // Sprint 1015 — Curriculum context tool
+  get_curriculum_context: {
+    safetyLevel: 'safe',
+    description: 'Returns CurriculumContextSummary: total levels, levels with content, pending curriculum drafts. Structure and counts only — no raw curriculum content. RLS enforced. Server-side only.',
+    requiredParams: ['academyId'],
+    blockedFor: [],
+  },
+  // Sprint 1017 — Knowledge Builder retrieval (platform-owner-approved entries only)
+  get_knowledge_content: {
+    safetyLevel: 'safe',
+    description: 'Returns platform-owner-approved knowledge entries relevant to the query. Draft and under-review entries are always blocked. Advisory only — never triggers mutations. V1 returns empty until KB DB table is wired.',
+    requiredParams: ['query'],
+    blockedFor: [],
+  },
 }
 
 // ── Safety validators ─────────────────────────────────────────────────────────

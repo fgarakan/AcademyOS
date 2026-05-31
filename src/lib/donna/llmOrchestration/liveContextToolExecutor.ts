@@ -27,6 +27,10 @@ export const LIVE_TOOL_IDS: ReadonlySet<OrchestratorToolId> = new Set<Orchestrat
   'get_player_profile_summary',
   // Sprint 1004 — session-specific context tool (sessionId from route context)
   'get_session_context',
+  // Sprint 1015 — curriculum context tool (academyId from server auth)
+  'get_curriculum_context',
+  // Sprint 1017 — knowledge builder retrieval (query from LLM, academyId from server auth)
+  'get_knowledge_content',
 ])
 
 export function isLiveTool(toolId: OrchestratorToolId): boolean {
@@ -193,6 +197,93 @@ async function execGetSessionContext(
   }
 }
 
+// ── Sprint 1017: Knowledge Builder retrieval executor ────────────────────────
+
+async function execGetKnowledgeContent(params: Record<string, unknown>): Promise<ToolCallResult> {
+  const query = typeof params['query'] === 'string' ? params['query'].slice(0, 200) : 'general'
+  const contentType = typeof params['contentType'] === 'string' ? params['contentType'] : undefined
+  const stage = typeof params['stage'] === 'string' ? params['stage'] : undefined
+
+  try {
+    const { retrieveApprovedKnowledge, filterKnowledgeByRole, rankKnowledgeByPageAffinity, buildKnowledgeResponse } =
+      await import('./knowledgeBuilderBridge')
+
+    // V1: retrieveApprovedKnowledge returns [] until DB knowledge table is wired.
+    // When KB table exists, the bridge will return approved entries here.
+    const raw = await retrieveApprovedKnowledge({
+      role: 'academy_director',
+      contentTypes: contentType ? [contentType as import('./knowledgeBuilderBridge').KnowledgeContentType] : undefined,
+      stage,
+      pathname: '/director',
+      limit: 5,
+    })
+
+    const filtered = filterKnowledgeByRole(raw, 'academy_director')
+    const ranked = rankKnowledgeByPageAffinity(filtered, '/director')
+    const responseText = buildKnowledgeResponse(ranked, query)
+
+    return {
+      tool: 'get_knowledge_content',
+      ok: true,
+      data: { entries: ranked.map(e => ({ title: e.title, contentType: e.contentType, summary: e.summary })) },
+      summary: responseText,
+      requiresConfirmation: false,
+      auditEntry: `tool:get_knowledge_content query="${query.slice(0, 40)}" results=${ranked.length}`,
+    }
+  } catch (err) {
+    return {
+      tool: 'get_knowledge_content',
+      ok: false,
+      data: null,
+      summary: '',
+      error: `Knowledge content retrieval failed: ${err instanceof Error ? err.message : String(err)}`,
+      requiresConfirmation: false,
+      auditEntry: `tool:get_knowledge_content ERROR`,
+    }
+  }
+}
+
+// ── Sprint 1015: Curriculum context executor ─────────────────────────────────
+
+async function execGetCurriculumContext(academyId: string): Promise<ToolCallResult> {
+  try {
+    const { getSupabaseServer } = await import('@/lib/supabase/server')
+    const { retrieveCurriculumContext } = await import('./curriculumContextRetrieval')
+
+    const supabase = await getSupabaseServer()
+    const result = await retrieveCurriculumContext(supabase, academyId)
+
+    const { summary } = result
+    const parts = [
+      `Total curriculum levels: ${summary.totalLevels}`,
+      summary.hasCurriculumDraft
+        ? `Pending curriculum change drafts: ${summary.pendingCurriculumDrafts}`
+        : 'No pending curriculum change drafts',
+    ].join('. ')
+
+    const partialNote = result.errors.length > 0 ? ` (${result.errors.length} query error(s) — partial data)` : ''
+
+    return {
+      tool: 'get_curriculum_context',
+      ok: true,
+      data: summary,
+      summary: parts + partialNote,
+      requiresConfirmation: false,
+      auditEntry: `tool:get_curriculum_context levels=${summary.totalLevels} pendingDrafts=${summary.pendingCurriculumDrafts}`,
+    }
+  } catch (err) {
+    return {
+      tool: 'get_curriculum_context',
+      ok: false,
+      data: null,
+      summary: '',
+      error: `Curriculum context retrieval failed: ${err instanceof Error ? err.message : String(err)}`,
+      requiresConfirmation: false,
+      auditEntry: `tool:get_curriculum_context ERROR`,
+    }
+  }
+}
+
 // ── Main live executor ────────────────────────────────────────────────────────
 
 // ── Sprint 1003: Player profile executor ─────────────────────────────────────
@@ -336,6 +427,12 @@ export async function executeLiveTool(
       return execGetAcademyState(academyId)
     case 'get_player_development_summary':
       return execGetPlayerDevelopmentSummary(academyId)
+    // Sprint 1015 — curriculum context (academyId-scoped, no raw content)
+    case 'get_curriculum_context':
+      return execGetCurriculumContext(academyId)
+    // Sprint 1017 — knowledge builder retrieval (params from LLM, not route context)
+    case 'get_knowledge_content':
+      return execGetKnowledgeContent(params)
     default:
       return {
         tool,

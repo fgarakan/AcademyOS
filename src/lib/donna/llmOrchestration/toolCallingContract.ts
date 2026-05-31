@@ -324,6 +324,10 @@ const EXECUTORS: Record<OrchestratorToolId, (params: Record<string, unknown>) =>
   get_player_profile_summary: () => execLiveContextStub('get_player_profile_summary'),
   // Sprint 1004 — session-specific live tool (sessionId from route context, not LLM)
   get_session_context: () => execLiveContextStub('get_session_context'),
+  // Sprint 1015 — curriculum context live tool (academyId from server auth, not LLM)
+  get_curriculum_context: () => execLiveContextStub('get_curriculum_context'),
+  // Sprint 1017 — knowledge builder live tool (query from LLM, contentType/stage optional)
+  get_knowledge_content: () => execLiveContextStub('get_knowledge_content'),
 }
 
 /**
