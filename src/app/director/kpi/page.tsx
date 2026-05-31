@@ -160,7 +160,7 @@ export default async function KpiDashboardPage() {
         <p className="page-eyebrow">Academy Health</p>
         <h1 className="page-title">KPI Dashboard</h1>
         <p className="page-subtitle">
-          Per-player KPI signals — absences 30d, time in level, and advancement readiness.
+          Attendance, development velocity, and advancement readiness for your active players.
         </p>
       </div>
 

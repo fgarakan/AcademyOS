@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-05-31 — Sprint 1037 — Director Academy Health Page Simplification V1
+
+- `src/app/director/kpi/page.tsx` (modified): Subtitle changed from technical "Per-player KPI signals — absences 30d, time in level, and advancement readiness" to director-friendly "Attendance, development velocity, and advancement readiness for your active players." Data provenance notice, DONNA explainer, and all KPI logic unchanged. TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1036 — Director Approvals Page Simplification V1
 
 - `src/app/director/review/page.tsx` (modified): Page subtitle simplified from two competing paragraphs (one describing what's in the queue + one safety note) to one clear statement: "Everything here waits for your decision. Nothing is applied until you approve it." Safety message promoted from muted text to subtitle level — clearer trust signal for the director. All approval logic, tab structure, draft cards, and DONNA panels unchanged. TypeScript: clean.
