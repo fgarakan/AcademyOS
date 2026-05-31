@@ -1945,7 +1945,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   function handleVoiceError(error: string) {
     setVoicePermissionError(
       error === 'not-allowed'
-        ? 'Microphone access is blocked. You can enable it in your browser settings or type instead.'
+        // Sprint 1054: iOS requires a user tap each time; desktop may have mic blocked.
+        // Message is action-oriented — covers both cases without assuming settings change needed.
+        ? 'Tap the mic button to start voice, or type your question below.'
         : 'Voice is unavailable right now. You can type instead.',
     )
   }

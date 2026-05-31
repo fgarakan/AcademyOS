@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1054 — DONNA Voice Loop Mobile QA V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): `handleVoiceError` `not-allowed` message changed from "Microphone access is blocked. You can enable it in your browser settings or type instead." to "Tap the mic button to start voice, or type your question below." — accurate for both iOS gesture requirement and actually-blocked mic. TypeScript: clean.
+- `docs/architecture/DONNA_VOICE_LOOP_MOBILE_QA_1054.md` (new): Mobile voice behavior by platform (Android Chrome, iOS Safari, Desktop, Firefox) with iOS limitation documented.
+- `docs/QA_DONNA_VOICE_LOOP_MOBILE_1054.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1053 — DONNA Voice Permission + Fallback QA V1
 
 - `src/components/assistant/DonnaVoiceLayer.tsx` (modified): Voice permission error now shows the actual specific message from `voicePermissionError` prop instead of a hardcoded generic string. `not-allowed` → "Microphone access is blocked. You can enable it in your browser settings or type instead." Other errors → "Voice is unavailable right now. You can type instead." TypeScript: clean.
