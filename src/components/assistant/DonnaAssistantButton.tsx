@@ -269,6 +269,8 @@ import { buildReviewQueueGuidance, matchesReviewQueueGuidanceIntent } from '@/li
 import { buildClassTemplateGuidance, matchesClassTemplateGuidanceIntent } from '@/lib/donna/classTemplateGuidance'
 // Sprint 973 — Curriculum Builder Guidance (deterministic guidance for curriculum builder)
 import { buildCurriculumBuilderGuidance, matchesCurriculumBuilderGuidanceIntent } from '@/lib/donna/curriculumBuilderGuidance'
+// Sprint 1073 — Context Pack runtime wiring: page-specific Q&A lookup before routeDonnaPrompt
+import { getDonnaContextPackForRoute, lookupAnswerInContextPack } from '@/lib/donna/donnaContextPackRegistry'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -3012,58 +3014,32 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     return false
   }
 
-  // Sprint 1071 — Academy Health page-aware intercept helper.
-  // Returns true for broad health / KPI-overview questions asked on /director/kpi.
-  // Narrow scope: only fires when explicitly on the KPI page to avoid false positives elsewhere.
-  function isAcademyHealthQuestion(lower: string): boolean {
-    return (
-      lower.includes('health of') ||
-      lower.includes('health of my academy') ||
-      lower.includes('how is my academy') ||
-      lower.includes('how is the academy doing') ||
-      lower.includes('how is the academy') ||
-      lower.includes('tell me about the health') ||
-      lower.includes('explain these kpis') ||
-      lower.includes('what do these kpis') ||
-      lower.includes('what do the kpis') ||
-      lower.includes('which kpi needs attention') ||
-      lower.includes('which kpi needs') ||
-      lower.includes('academy health') ||
-      lower.includes('how healthy is') ||
-      lower.includes('overall health') ||
-      lower.includes('health score')
-    )
-  }
-
   // Sprint 697 — COO conversational router: first-pass handler before legacy routing.
   // Returns true if the router handled the prompt (commandResponse set, speakDonna called).
   // Returns false to fall through to legacy detectAndHandleCommand.
   // Falls through only for answer_directly (unknown intent) so all existing legacy routes are preserved.
   // Sprint 702 — records each turn to donnaChatSessionMemory; injects follow-up prefix when topic was previously discussed.
   // Sprint 703 — role-aware: coach gets director-referral response for director-only intents.
+  // Sprint 1073 — context pack lookup runs before routeDonnaPrompt; replaces Sprint 1071 narrow KPI intercept.
   function handleDonnaCooPrompt(text: string): boolean {
-    // Sprint 1071 — page-aware: when on the KPI page and the query is a broad academy health
-    // or KPI-overview question, answer deterministically without falling through to God Mode.
-    // This prevents the LLM asking for clarification when the page data is sufficient.
-    if (pathname === '/director/kpi' && isAcademyHealthQuestion(text.toLowerCase())) {
-      const name = firstName ? `${firstName}, ` : ''
-      const msg =
-        `${name}your Academy Health dashboard shows three headline signals:\n\n` +
-        `**Active Players** — your total enrolled roster. This is the base for all other measurements.\n\n` +
-        `**Advancement Ready** — players whose curriculum flag is set for level advancement. ` +
-        `If this count is above zero, open the Level Up queue to review evidence before approving movement.\n\n` +
-        `**Attention Signals** — players with 2 or more absences in the last 30 days, or 180+ days in a curriculum level. ` +
-        `Each signal is directly actionable: open the player directory to see who needs a follow-up.\n\n` +
-        `The table below lists per-player indicators — Time in Level and Absences (30 days). ` +
-        `Red or orange values are where to focus first. ` +
-        `Absences are based on explicitly marked sessions only — unmarked sessions are not counted.`
-      setCommandResponse({ message: msg, type: 'info', label: 'Academy Health' })
-      setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: 'info' as const }])
-      speakDonna(msg)
-      recordPrompt(text)
-      recordSummary(msg)
-      recordTurn(text, msg, { domain: 'academy_health' })
-      return true
+    // Sprint 1073 — context pack lookup: check page's exampleAnswers before routeDonnaPrompt.
+    // Covers all 8 context-pack pages (Today, Approvals, Academy Health, Fitness Builder,
+    // Class Builder, Players, Sessions, Parent Updates) with a single generalized path.
+    // Returns before the intent classifier for zero-latency, page-specific answers.
+    // Navigation commands ("open approvals") are handled upstream by handleUIDispatch and
+    // never reach handleDonnaCooPrompt, so this does not interfere with navigation dispatch.
+    const contextPack = getDonnaContextPackForRoute(pathname)
+    if (contextPack) {
+      const packAnswer = lookupAnswerInContextPack(contextPack, text)
+      if (packAnswer) {
+        setCommandResponse({ message: packAnswer.response, type: 'info', label: contextPack.pageName })
+        setCooThread(prev => [...prev.slice(-4), { user: text, donna: packAnswer.response, type: 'info' as const }])
+        speakDonna(packAnswer.response)
+        recordPrompt(text)
+        recordSummary(packAnswer.response)
+        recordTurn(text, packAnswer.response, { domain: 'general' })
+        return true
+      }
     }
 
     const routing = routeDonnaPrompt(text, pathname)

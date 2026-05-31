@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-05-31 — Sprint 1073 — Page Context Pack Runtime Wiring V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): (1) Added import of `getDonnaContextPackForRoute` and `lookupAnswerInContextPack` from `@/lib/donna/donnaContextPackRegistry`. (2) Removed `isAcademyHealthQuestion()` helper (Sprint 1071, 22 lines) — superseded by generalized pack lookup. (3) Replaced Sprint 1071 hard-coded Academy Health intercept with a generalized context-pack answer lookup at the top of `handleDonnaCooPrompt`. The lookup calls `getDonnaContextPackForRoute(pathname)` then `lookupAnswerInContextPack(pack, text)`; on a match it sets `commandResponse`, appends to `cooThread`, calls `speakDonna`, records prompt/summary/turn, and returns `true`. On no match it falls through to `routeDonnaPrompt` and God Mode unchanged. Covers all 8 context-pack pages: Today, Approvals, Academy Health, Fitness Builder, Class Builder, Players, Sessions, Parent Updates.
+- `docs/architecture/DONNA_CONTEXT_PACK_RUNTIME_WIRING_1073.md` (new): Full runtime answer stack diagram, wiring rationale, TopicDomain mapping note, pages-now-handled table, and fallback preservation description.
+- `docs/QA_DONNA_CONTEXT_PACK_RUNTIME_WIRING_1073.md` (new): 36-check QA table covering Academy Health, Fitness Builder, Approvals, 6 other pack pages, navigation non-interference, unknown-question fallthrough, duplicate-response check, and 10 regression checks.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1072 — DONNA Context Pack Architecture V1
 
 - `src/lib/donna/donnaContextPackRegistry.ts` (new): Additive context architecture layer. Defines `DonnaContextPack`, `DonnaContextPackAnswer`, `DonnaContextPackNeverDoRule`, and `DonnaContextPackRole` interfaces. Contains 8 initial context packs for high-value director pages: Today (`/director`), Approvals (`/director/review`), Academy Health (`/director/kpi`), Fitness Builder (`/director/fitness/templates/[templateId]`), Class Builder (`/director/class-templates/[templateId]`), Players (`/director/players`), Sessions (`/director/sessions`), Parent Updates (`/director/parents`). Exports `getDonnaContextPackForRoute(pathname)` (exact + dynamic route resolution) and `lookupAnswerInContextPack(pack, prompt)` (trigger-based Q&A lookup). Each pack includes: route, pageName, roles, pagePurpose, availableData, keyMetrics, commonQuestions, commonCommands, safeActions, approvalRequiredActions, neverDoRules, relatedRoutes, exampleAnswers, missingDataFallback. No existing DONNA runtime behavior changed — pure data foundation for future wiring.
