@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1040 — DONNA Sidebar 10 of 10 Simplification Pass V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Three simplifications. (1) Removed "DONNA says" duplication — `donnaLastResponse={null}` passed to DonnaVoiceLayer; `DonnaPanelResponseRenderer` (Sprint 1028) is now the sole response surface — the truncated card that appeared above the input is gone. (2) Fixed tab chips hidden when `DonnaPanelPageChips` covers the current route — prevents 6–8 chip overload on registered routes; player-profile data-driven chips preserved via `isPlayerProfilePage` guard; generic chips remain as fallback on routes without page chips. (3) Verbatim `pathname` display removed from "What DONNA can do here" card — URL was developer-facing, not director-facing. Voice, God Mode, response cards, guided highlights, workflow cards, and fallback behavior all preserved. TypeScript: clean.
+- `docs/architecture/DONNA_SIDEBAR_SIMPLIFICATION_1040.md` (new): Full audit, problem analysis, and decision record.
+- `docs/QA_DONNA_SIDEBAR_SIMPLIFICATION_1040.md` (new): QA checklist covering removed surfaces, chip deduplication, and preserved functionality.
+
 ## 2026-05-31 — Sprint 1039 — Director Template Builder UX Simplification V1
 
 - `src/app/director/class-templates/page.tsx` (modified): Removed always-rendered `PageExplainerCard` (5 Q&A items visible on every visit regardless of template count). Removed redundant `EmptyState` card from empty state — `NextBestActionCard` is now the sole first-time guide. Removed `PageExplainerCard` and `EmptyState` imports. All queries, stats strip, template rows, DONNA focus IDs, and CTAs unchanged. TypeScript: clean.

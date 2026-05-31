@@ -203,6 +203,8 @@ import { DonnaWorkflowCards } from '@/components/assistant/DonnaWorkflowCards'
 import { DONNADirectorMobileCommandBar } from '@/components/donna/DONNADirectorMobileCommandBar'
 // Sprint 964 — Page-aware chip bar (highlight + prompt chips per route)
 import { DonnaPanelPageChips } from '@/components/donna/DonnaPanelPageChips'
+// Sprint 1040 — chip deduplication: hide generic fixed chips when route has page chips
+import { getChipsForRoute } from '@/lib/donna/donnaPageChipRegistry'
 // Sprint 647 — First Daily Welcome
 import {
   getDailyGreetingState,
@@ -930,6 +932,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Sprint 757 — Map DonnaRole to UIActionRole for structured dispatch
   // 'director' → 'academy_director'; 'coach' → 'head_coach' (more permissive safe default)
   const uiActionRole: UIActionRole = role === 'director' ? 'academy_director' : 'head_coach'
+  // Sprint 1040 — derived vars for chip deduplication
+  const hasPageChips = getChipsForRoute(pathname).length > 0
+  const isPlayerProfilePage = pathname.startsWith('/director/players/') && pathname.split('/').length === 4
   // Single source of truth for the current missing question — same text shown and spoken.
   const currentTemplateQuestion: TemplateDraftQuestion | null = templateDraft?.missingQuestions?.[0] ?? null
   // Current missing question for the active generic task — shown in voice card spotlight.
@@ -3812,8 +3817,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           </button>
         </div>
 
-        {/* Tab chips — role-aware quick actions (Sprint 656) */}
-        <div
+        {/* Tab chips — role-aware quick actions (Sprint 656)
+            Sprint 1040: hidden when DonnaPanelPageChips covers this route (avoids double chip rows).
+            Player-profile pages are excluded — their data-driven chips must always show. */}
+        {(!hasPageChips || isPlayerProfilePage) && <div
           className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 overflow-x-auto"
           style={{ borderBottom: '1px solid var(--border-subtle)' }}
         >
@@ -3907,7 +3914,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
               {chip.label}
             </button>
           ))}
-        </div>
+        </div>}
 
         {/* Scrollable body — Sprint 1032: overscroll-contain prevents pull-to-refresh on mobile */}
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3">
@@ -3945,9 +3952,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   ✕
                 </button>
               </div>
-              <p className="text-[11px] text-text-secondary leading-snug">
-                On <span className="text-text-primary font-medium">{pathname}</span>
-              </p>
               {(() => {
                 const actions = getAvailableActionsForContext(uiActionRole, pathname).slice(0, 6)
                 if (actions.length === 0) {
@@ -4180,17 +4184,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             genericDraft={genericDraft}
             templateDraft={templateDraft}
             isThinking={isProcessingCommand || isGodModeLoading || isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading}
-            donnaLastResponse={
-              // Sprint 750 — suppress voice-layer "DONNA says" for Category A responses
-              // (main GODmode dispatch) that are already shown as a cooThread bubble.
-              // Category B responses (continuity, errors, role-boundary) are not in
-              // cooThread and still pass through — their text never matches the last turn.
-              cooThread.length > 0 &&
-              commandResponse !== null &&
-              cooThread[cooThread.length - 1]?.donna === commandResponse.message
-                ? null
-                : (commandResponse?.message ?? null)
-            }
+            donnaLastResponse={null /* Sprint 1040 — DonnaPanelResponseRenderer is now the unified response surface; "DONNA says" card above the input duplicated the thread */}
             promptSuggestions={getDonnaPromptSuggestions(pathname)}
             promptCategoryLabel={getPromptCategoryLabel(pathname)}
             pathname={pathname}
