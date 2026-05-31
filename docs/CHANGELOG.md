@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1062 — Template Builder Guided Collapse UX Audit V1
+
+- `docs/architecture/TEMPLATE_BUILDER_GUIDED_COLLAPSE_UX_AUDIT_1062.md` (new): Full UX audit of Fitness Builder (FitnessBuilderStepper + FitnessTemplateBuilderClient) and Class Builder (ClassTemplateBuilderStepper). Documents: current 5-step tracks vs goal-specified tracks, block collapse gaps, DONNA inline guidance gaps, advanced controls exposure, cognitive load evidence, proposed changes for Sprints 1065–1066, and TypeScript implications.
+- `docs/QA_TEMPLATE_BUILDER_GUIDED_COLLAPSE_UX_AUDIT_1062.md` (new): 14-check audit accuracy QA — confirms all blocks expanded by default, no collapse logic, step labels, cognitive load observation protocol, implementation readiness checks, and risk observations.
+- TypeScript: clean (docs-only sprint).
+
 ## 2026-05-31 — Sprint 1061 — Fitness Exercise Matching Audit V1
 
 - `src/app/director/fitness/templates/[templateId]/populateFitnessBlocksAction.ts` (modified): Fixed root cause of mismatched exercises in Coordination/Speed/Agility/Strength/Plyometrics blocks. Added imports for `inferFitnessBlockType` and `getDefaultExercisesForFitnessBlock`. For blocks where `inferFitnessBlockType(block.name)` resolves a fitness sub-type, all exercises are now scored by the scoring system in `fitnessExerciseMatching.ts` and ordered by score descending before duration-budget filling. Non-fitness blocks (warm_up, technical, tactical, cool_down) use the existing category map unchanged.
