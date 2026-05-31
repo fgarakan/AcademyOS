@@ -4,7 +4,7 @@ import { useState } from 'react'
 import {
   BookOpen, Layers, Pencil, Eye, ListChecks,
   ChevronLeft, ChevronRight, Clock, CheckCircle2, Circle,
-  AlertTriangle, GraduationCap, ArrowUpRight, ArrowRight,
+  AlertTriangle, GraduationCap, ArrowUpRight, ArrowRight, ChevronsUpDown,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import { ClassTemplateCurriculumSelector } from './ClassTemplateCurriculumSelector'
@@ -17,6 +17,7 @@ import type { PreviewBlock } from './TemplateSessionPreviewCard'
 import { ClassTemplateSetupGuide } from '@/components/onboarding/ClassTemplateSetupGuide'
 import { GenerateSessionFromTemplateButton } from './GenerateSessionFromTemplateButton'
 import type { CoachOption, GateOption } from './GenerateSessionFromTemplateButton'
+import { CollapsibleBlockRow } from '@/components/builder'
 
 // ─── Prop types ───────────────────────────────────────────────────────────────
 
@@ -88,11 +89,11 @@ export interface ClassTemplateBuilderStepperProps {
 // ─── Step definitions ─────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, label: 'Class Identity', shortLabel: '1', icon: BookOpen },
-  { id: 2, label: 'Class Structure', shortLabel: '2', icon: Layers },
-  { id: 3, label: 'Build Blocks', shortLabel: '3', icon: Pencil },
-  { id: 4, label: 'Coach Preview', shortLabel: '4', icon: Eye },
-  { id: 5, label: 'Review + Apply', shortLabel: '5', icon: ListChecks },
+  { id: 1, label: 'Class Goal', shortLabel: '1', icon: BookOpen },
+  { id: 2, label: 'Level', shortLabel: '2', icon: GraduationCap },
+  { id: 3, label: 'Session Flow', shortLabel: '3', icon: Layers },
+  { id: 4, label: 'Coach Notes', shortLabel: '4', icon: Eye },
+  { id: 5, label: 'Publish', shortLabel: '5', icon: ListChecks },
 ] as const
 
 // ─── Display helpers ──────────────────────────────────────────────────────────
@@ -224,8 +225,10 @@ function BottomNav({
   onNext: () => void
 }) {
   const nextLabel =
-    activeStep === 3 ? 'Coach Preview' :
-    activeStep === 4 ? 'Review + Apply' :
+    activeStep === 1 ? 'Level' :
+    activeStep === 2 ? 'Session Flow' :
+    activeStep === 3 ? 'Coach Notes' :
+    activeStep === 4 ? 'Publish' :
     activeStep === totalSteps ? null : 'Next'
 
   return (
@@ -259,18 +262,15 @@ function BottomNav({
   )
 }
 
-// ─── Step 1 — Class Identity ──────────────────────────────────────────────────
+// ─── Step 1 — Class Goal ──────────────────────────────────────────────────────
 
 function Step1Identity({
-  templateId,
   templateName,
   templateDescription,
   templateTrack,
   templateDurationMin,
   templateIsActive,
-  curriculumLevelId,
   currentLevelName,
-  curriculumLevels,
   blockList,
   blockDurationTotal,
 }: {
@@ -280,9 +280,7 @@ function Step1Identity({
   templateTrack: string | null
   templateDurationMin: number | null
   templateIsActive: boolean
-  curriculumLevelId: string | null
   currentLevelName: string | null
-  curriculumLevels: CurriculumLevelOption[]
   blockList: BlockProp[]
   blockDurationTotal: number
 }) {
@@ -290,7 +288,7 @@ function Step1Identity({
     <div className="space-y-5">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
-          Start with the class identity. This tells Academy OS what kind of players this plan is built for and what coaches should prioritize.
+          Confirm the class goal and what kind of players this plan is built for. Then set the curriculum level in Step 2.
         </p>
       </div>
 
@@ -351,6 +349,42 @@ function Step1Identity({
           </div>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+// ─── Step 2 — Level ───────────────────────────────────────────────────────────
+
+function Step2Level({
+  templateId,
+  curriculumLevelId,
+  currentLevelName,
+  curriculumLevels,
+  blockList,
+  blockDisplayNames,
+  curriculumByBlock,
+  blockDurationTotal,
+  onGoToFlow,
+}: {
+  templateId: string
+  curriculumLevelId: string | null
+  currentLevelName: string | null
+  curriculumLevels: CurriculumLevelOption[]
+  blockList: BlockProp[]
+  blockDisplayNames: Record<string, string>
+  curriculumByBlock: Record<string, CurriculumBlockRowProp[]>
+  blockDurationTotal: number
+  onGoToFlow: () => void
+}) {
+  const emptyCount = blockList.filter(b => (curriculumByBlock[b.id] ?? []).length === 0).length
+
+  return (
+    <div className="space-y-5">
+      <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
+        <p className="text-[11px] text-text-secondary leading-relaxed">
+          Choose the curriculum level this class is designed for. This drives coaching cues, learning goals, and session context for coaches.
+        </p>
+      </div>
 
       <div data-donna-focus-id="template-level-picker">
         <Card>
@@ -358,9 +392,6 @@ function Step1Identity({
             <p className="label-xs">Curriculum Level</p>
           </CardHeader>
           <CardContent className="pt-0 space-y-2">
-            <p className="text-xs text-text-muted">
-              Choose the curriculum level this class is designed for. This powers coaching cues, learning goals, and session context for coaches.
-            </p>
             {curriculumLevels.length > 0 ? (
               <ClassTemplateCurriculumSelector
                 templateId={templateId}
@@ -373,126 +404,46 @@ function Step1Identity({
           </CardContent>
         </Card>
       </div>
-    </div>
-  )
-}
 
-// ─── Step 2 — Class Structure ─────────────────────────────────────────────────
-
-function Step2Structure({
-  blockList,
-  blockDisplayNames,
-  curriculumByBlock,
-  blockDurationTotal,
-  onBuildBlocks,
-}: {
-  blockList: BlockProp[]
-  blockDisplayNames: Record<string, string>
-  curriculumByBlock: Record<string, CurriculumBlockRowProp[]>
-  blockDurationTotal: number
-  onBuildBlocks: () => void
-}) {
-  const emptyCount = blockList.filter(b => (curriculumByBlock[b.id] ?? []).length === 0).length
-
-  return (
-    <div className="space-y-5">
-      {/* Sprint 963: explanatory note — what's editable now vs V2 */}
-      <div className="space-y-2">
-        <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
-          <p className="text-[11px] text-text-secondary leading-relaxed">
-            Your class has these major sections in order. Each block needs curriculum activities before coaches can follow a guided plan. Go to <span className="text-lime font-medium">Build Blocks</span> (Step 3) to add drills, games, and coaching cues.
-          </p>
-        </div>
-        <div className="px-4 py-2.5 rounded-xl border border-border/50 bg-surface/50 flex items-start gap-2">
-          <Circle className="w-3 h-3 text-text-muted shrink-0 mt-0.5" />
-          <p className="text-[11px] text-text-muted leading-relaxed">
-            <span className="font-medium text-text-secondary">Block sections and order</span> (Warm-Up, Skill Foundation, etc.) reflect the template&apos;s default structure. Adding, removing, or reordering these sections is available in a future update. The default order here is separate from any live session runtime adjustments coaches make on court.
-          </p>
-        </div>
-      </div>
-
-      {blockList.length === 0 ? (
-        <Card>
-          <CardContent className="py-10">
-            <div className="text-center space-y-2">
-              <Layers className="w-8 h-8 text-text-muted mx-auto" />
-              <p className="text-sm text-text-primary">No blocks in this template yet.</p>
-              <p className="text-xs text-text-muted">Blocks are added when the template is created or seeded.</p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3" data-donna-focus-id="class-template-block-list">
-          <div className="flex items-center justify-between px-1">
-            <p className="text-xs text-text-muted">
+      {/* Block structure overview */}
+      {blockList.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between px-1 mb-3">
+            <p className="label-xs">Class Structure</p>
+            <p className="text-[10px] text-text-muted">
               {blockList.length} section{blockList.length !== 1 ? 's' : ''}
-              {blockDurationTotal > 0 ? ` · ${blockDurationTotal} min total` : ''}
+              {blockDurationTotal > 0 ? ` · ${blockDurationTotal} min` : ''}
             </p>
-            {emptyCount === 0 && (
-              <span className="text-[10px] text-status-green flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" />
-                All blocks have content
-              </span>
-            )}
           </div>
-
-          {blockList.map((block, i) => {
-            const items = curriculumByBlock[block.id] ?? []
-            const hasContent = items.length > 0
-            const displayName = blockDisplayNames[block.id] ?? block.name
-
-            const isFitnessBlock = isFitnessBlockInClassTemplate(block.type ?? '')
-            return (
-              <Card key={block.id}>
-                <CardContent className="py-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-mono text-text-muted w-5 shrink-0 text-center">{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-text-primary">{displayName}</p>
-                        {isFitnessBlock && (
-                          <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-status-orange/30 text-status-orange bg-status-orange/5 shrink-0">
-                            Optional Fitness Block
-                          </span>
-                        )}
-                      </div>
-                      {block.duration_min != null && (
-                        <p className="text-[10px] text-text-muted flex items-center gap-1 mt-0.5">
-                          <Clock className="w-2.5 h-2.5" />
-                          {block.duration_min} min
-                        </p>
-                      )}
-                      {/* Sprint 963: block purpose copy — reuses blockPurposeCopy() defined above */}
-                      <p className="text-[10px] text-text-muted/70 mt-1 leading-snug hidden sm:block">
-                        {blockPurposeCopy(block.type ?? '')}
-                      </p>
-                    </div>
-                    <div className="shrink-0">
-                      {hasContent ? (
-                        <span className="text-[10px] text-status-green flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" />
-                          {items.length} item{items.length !== 1 ? 's' : ''}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-text-muted flex items-center gap-1">
-                          <Circle className="w-3 h-3" />
-                          Nothing added yet
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-
+          <div className="space-y-2" data-donna-focus-id="class-template-block-list">
+            {blockList.map((block, i) => {
+              const items = curriculumByBlock[block.id] ?? []
+              const hasContent = items.length > 0
+              const displayName = blockDisplayNames[block.id] ?? block.name
+              return (
+                <div key={block.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border bg-surface">
+                  <span className="text-[10px] font-mono text-text-muted w-5 text-center shrink-0">{i + 1}</span>
+                  <p className="text-sm font-medium text-text-primary flex-1">{displayName}</p>
+                  {block.duration_min != null && (
+                    <span className="text-[10px] text-text-muted flex items-center gap-1">
+                      <Clock className="w-2.5 h-2.5" />{block.duration_min}m
+                    </span>
+                  )}
+                  <span className={`text-[10px] flex items-center gap-1 ${hasContent ? 'text-status-green' : 'text-text-muted'}`}>
+                    {hasContent ? <CheckCircle2 className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+                    {items.length}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
           {emptyCount > 0 && (
-            <div className="pt-1">
+            <div className="pt-2">
               <button
-                onClick={onBuildBlocks}
+                onClick={onGoToFlow}
                 className="btn-lime text-xs px-4 py-2 flex items-center gap-1.5"
               >
-                Build Out Blocks
+                Build Session Flow
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -503,28 +454,37 @@ function Step2Structure({
   )
 }
 
-// ─── Step 3 — Build Blocks ────────────────────────────────────────────────────
+// ─── Step 2 — Class Structure ─────────────────────────────────────────────────
 
-function Step3BuildBlocks({
+// ─── Step 3 — Session Flow ────────────────────────────────────────────────────
+
+function Step3SessionFlow({
   templateId,
   blockList,
   blockDisplayNames,
   curriculumByBlock,
   availableContent,
+  expandedBlockId,
+  expandAll,
+  onToggleBlock,
+  onSetExpandAll,
 }: {
   templateId: string
   blockList: BlockProp[]
   blockDisplayNames: Record<string, string>
   curriculumByBlock: Record<string, CurriculumBlockRowProp[]>
   availableContent: AvailableContentItem[]
+  expandedBlockId: string | null
+  expandAll: boolean
+  onToggleBlock: (blockId: string) => void
+  onSetExpandAll: (v: boolean) => void
 }) {
-  // Sprint 963: outer wrapper adds data-donna-focus-id="class-template-primary-action"
   return (
     <div data-donna-focus-id="class-template-primary-action">
-    <div className="space-y-5" data-donna-focus-id="template-blocks-section">
+    <div className="space-y-4" data-donna-focus-id="template-blocks-section">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
-          Choose what coaches should run during each part of class. Add drills, games, coaching cues, or mental focus items. Remove anything that does not fit.
+          Build the session flow. Add drills, games, coaching cues, or mental focus items to each block. Open one block at a time or use Expand All.
         </p>
       </div>
 
@@ -535,10 +495,29 @@ function Step3BuildBlocks({
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {blockList.map(block => {
+        <div className="space-y-2">
+          {/* Expand All control */}
+          {blockList.length >= 2 && (
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[10px] text-text-muted">
+                {blockList.length} section{blockList.length !== 1 ? 's' : ''}
+              </p>
+              <button
+                type="button"
+                onClick={() => onSetExpandAll(!expandAll)}
+                className="flex items-center gap-1 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
+              >
+                <ChevronsUpDown className="w-3 h-3" />
+                {expandAll ? 'Collapse All' : 'Expand All'}
+              </button>
+            </div>
+          )}
+
+          {blockList.map((block, i) => {
             const curriculumItems = curriculumByBlock[block.id] ?? []
             const displayName = blockDisplayNames[block.id] ?? block.name
+            const isExpanded = expandAll || expandedBlockId === block.id
+            const isComplete = curriculumItems.length > 0
 
             const assignedItems: AssignedItem[] = curriculumItems.map(row => ({
               cctbId: row.id,
@@ -552,30 +531,24 @@ function Step3BuildBlocks({
               orderIndex: row.order_index,
             }))
 
-            const isFitnessBlock = isFitnessBlockInClassTemplate(block.type ?? '')
-            return (
-              <Card key={block.id}>
-                <CardContent className="py-4 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-0.5 flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-text-primary">{displayName}</p>
-                        {isFitnessBlock && (
-                          <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-status-orange/30 text-status-orange bg-status-orange/5 shrink-0">
-                            Optional Fitness Block
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-text-muted">{blockPurposeCopy(block.type ?? '')}</p>
-                    </div>
-                    {block.duration_min != null && (
-                      <div className="shrink-0 flex items-center gap-1 text-xs text-text-muted">
-                        <Clock className="w-3 h-3" />
-                        {block.duration_min}min
-                      </div>
-                    )}
-                  </div>
+            const purposeHint = blockPurposeCopy(block.type ?? '').split('.')[0]
 
+            return (
+              <CollapsibleBlockRow
+                key={block.id}
+                index={i}
+                name={displayName}
+                accentClass="text-text-primary"
+                borderAccentClass="border-lime/30"
+                durationMin={block.duration_min}
+                itemCount={curriculumItems.length}
+                itemLabel="activity"
+                isComplete={isComplete}
+                intentHint={purposeHint}
+                isExpanded={isExpanded}
+                onToggle={() => onToggleBlock(block.id)}
+              >
+                <div className="px-4 py-3 space-y-3">
                   <BlockContentPickerCard
                     blockId={block.id}
                     blockName={displayName}
@@ -583,8 +556,8 @@ function Step3BuildBlocks({
                     initialAssigned={assignedItems}
                     available={availableContent}
                   />
-                </CardContent>
-              </Card>
+                </div>
+              </CollapsibleBlockRow>
             )
           })}
         </div>
@@ -901,6 +874,21 @@ export function ClassTemplateBuilderStepper({
   const [activeStep, setActiveStep] = useState(1)
   const totalSteps = STEPS.length
 
+  // Block collapse state for Session Flow step — one block open at a time
+  const [expandedBlockId, setExpandedBlockId] = useState<string | null>(
+    blockList[0]?.id ?? null
+  )
+  const [expandAll, setExpandAll] = useState(false)
+
+  function toggleBlock(blockId: string) {
+    if (expandAll) {
+      setExpandAll(false)
+      setExpandedBlockId(blockId)
+    } else {
+      setExpandedBlockId(prev => prev === blockId ? null : blockId)
+    }
+  }
+
   const blockDurationTotal = blockList.reduce((sum, b) => sum + (b.duration_min ?? 0), 0)
   const totalItems = Object.values(curriculumByBlock).reduce((sum, arr) => sum + arr.length, 0)
   const blocksWithContent = blockList.filter(b => (curriculumByBlock[b.id] ?? []).length > 0)
@@ -922,31 +910,37 @@ export function ClassTemplateBuilderStepper({
             templateTrack={templateTrack}
             templateDurationMin={templateDurationMin}
             templateIsActive={templateIsActive}
-            curriculumLevelId={curriculumLevelId}
             currentLevelName={currentLevelName}
-            curriculumLevels={curriculumLevels}
             blockList={blockList}
             blockDurationTotal={blockDurationTotal}
           />
         )}
 
         {activeStep === 2 && (
-          <Step2Structure
+          <Step2Level
+            templateId={templateId}
+            curriculumLevelId={curriculumLevelId}
+            currentLevelName={currentLevelName}
+            curriculumLevels={curriculumLevels}
             blockList={blockList}
             blockDisplayNames={blockDisplayNames}
             curriculumByBlock={curriculumByBlock}
             blockDurationTotal={blockDurationTotal}
-            onBuildBlocks={() => setActiveStep(3)}
+            onGoToFlow={() => setActiveStep(3)}
           />
         )}
 
         {activeStep === 3 && (
-          <Step3BuildBlocks
+          <Step3SessionFlow
             templateId={templateId}
             blockList={blockList}
             blockDisplayNames={blockDisplayNames}
             curriculumByBlock={curriculumByBlock}
             availableContent={availableContent}
+            expandedBlockId={expandedBlockId}
+            expandAll={expandAll}
+            onToggleBlock={toggleBlock}
+            onSetExpandAll={setExpandAll}
           />
         )}
 

@@ -3,6 +3,11 @@
 ---
 
 
+## 2026-05-31 — Sprint 1066 — Class Builder Guided Track + Collapse V1
+
+- `src/app/director/class-templates/[templateId]/ClassTemplateBuilderStepper.tsx` (modified): (1) Step labels renamed to match goal-specified Class track: 1→Class Goal, 2→Level, 3→Session Flow, 4→Coach Notes, 5→Publish. (2) BottomNav next-step labels updated. (3) CurriculumLevelSelector moved from Step 1 to dedicated Step 2 "Level" — Step 2 is now the level picker + block structure overview. (4) Step 3 "Session Flow" adds block collapse: `expandedBlockId` + `expandAll` state in main component, `onToggleBlock`/`onSetExpandAll` passed to `Step3SessionFlow`. Each block wrapped with `CollapsibleBlockRow` — one block open at a time, Expand All button shown when ≥2 blocks. (5) Old `Step2Structure` removed (absorbed into `Step2Level`). (6) Import `CollapsibleBlockRow` from `@/components/builder`.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1065 — Fitness Builder Guided Track + Collapse V1
 
 - `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` (modified): Added `expandedBlockId` + `expandAll` state. One block open at a time (auto-expands first block on mount). `toggleBlock()` handles expand-all exit. "Expand All / Collapse All" button shown when ≥2 blocks exist. `FitnessBlockCard` now uses `CollapsibleBlockRow` from `@/components/builder` as outer container — summary row shows block name, intent hint, duration, exercise count, completion indicator, and "+ Add" quick action when collapsed. Secondary controls (reorder ↑↓, observe, delete) moved inside expanded content area.
