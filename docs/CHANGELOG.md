@@ -2,6 +2,11 @@
 
 ---
 
+
+## 2026-05-31 — Sprint 1038 — Director Curriculum Entry Simplification V1
+
+- `src/app/director/curriculum/page.tsx` (modified): Title changed from "Curriculum Command Center" to "Curriculum". Subtitle simplified. TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1037 — Director Academy Health Page Simplification V1
 
 - `src/app/director/kpi/page.tsx` (modified): Subtitle changed from technical "Per-player KPI signals — absences 30d, time in level, and advancement readiness" to director-friendly "Attendance, development velocity, and advancement readiness for your active players." Data provenance notice, DONNA explainer, and all KPI logic unchanged. TypeScript: clean.

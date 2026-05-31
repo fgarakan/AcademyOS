@@ -293,10 +293,9 @@ export default async function DirectorCurriculumPage() {
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}
       <div>
         <p className="page-eyebrow">Curriculum</p>
-        <h1 className="page-title">Curriculum Command Center</h1>
+        <h1 className="page-title">Curriculum</h1>
         <p className="page-subtitle max-w-xl">
-          Your academy's development spine — levels, gates, templates, and player progress
-          all connect here. Use the tools below to review, customize, and manage your curriculum.
+          Your curriculum shapes how players develop. Review levels, check gaps, and manage templates from here.
         </p>
       </div>
 
