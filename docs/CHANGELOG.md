@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-05-31 — Sprint 1076 — DONNA Action Registry Expansion V1
+
+- `src/lib/donna/donnaActionRegistry.ts` (new): Intent-level DONNA action registry — orthogonal to the existing UIAction registry (Sprint 753, mechanism-level) and the dispatcher (Sprint 755, pattern-matching). Defines `DonnaActionCategory` (`navigation`, `explanation`, `draft`, `review`, `mutation_request`), `DonnaActionRiskLevel` (`low`, `medium`, `high`), `DonnaActionRole`, and the `DonnaAction` interface (12 fields: actionId, label, category, intentPhrases, route?, allowedRoles, riskLevel, requiresApproval, confirmationMessage, blockedMessage, safetyMessage, relatedContextPackRoutes). Contains 18 initial entries: 10 navigation (all low risk, no approval), 2 explanation (low risk), 4 draft (medium risk, requiresApproval: true), 1 review (low risk), 1 mutation_request (high risk, requiresApproval: true — suggest_level_movement). Exports `getDonnaActionById(actionId)`, `matchDonnaActionIntent(prompt, role?)` (case-insensitive substring, role filter), and `getDonnaActionsForRoute(route)` (exact + dynamic prefix matching). Not wired into runtime — future pre-classifier for `handleDonnaCooPrompt`.
+- `docs/architecture/DONNA_ACTION_REGISTRY_EXPANSION_1076.md` (new): Architecture notes — existing 5-layer problem, new interface spec, full 18-action table with categories/risk/approval, future wiring snippet.
+- `docs/QA_DONNA_ACTION_REGISTRY_EXPANSION_1076.md` (new): 47-check QA table covering compile, 18-action presence, safety rules (10 checks), role restrictions, 3 helper functions, and 9 regression checks.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1075 — Academy Profile Context Wiring V1
 
 - `src/app/director/_actions/donnaOrchestratorAction.ts` (modified): (1) Added imports for `buildAcademyProfileFromLiveData`, `buildEmptyAcademyProfile`, `getAcademyProfileSummaryText`. (2) Extended `getAuthorizedContext()` to query `academies.name, slug, timezone, country, settings` after the existing membership check — scoped to the authenticated `academyId`, fails gracefully via try/catch. (3) Calls `buildAcademyProfileFromLiveData` on success or `buildEmptyAcademyProfile` on failure, then `getAcademyProfileSummaryText` to produce the summary string. (4) Returns `academyProfileSummary` from `getAuthorizedContext`. (5) Passes `academyProfileSummary` into the `orchestrate()` call. Academy identity is always resolved server-side — never trusted from client input.
