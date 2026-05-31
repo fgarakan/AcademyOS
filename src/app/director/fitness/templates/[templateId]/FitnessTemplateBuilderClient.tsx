@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import {
   ChevronUp, ChevronDown, Plus, Trash2, RefreshCw,
   Clock, MessageSquare, Check, Loader2, X, Activity, AlertCircle,
-  ChevronsUpDown,
+  ChevronsUpDown, MoreHorizontal,
 } from 'lucide-react'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import { VoiceTextInput } from '@/components/voice/VoiceTextInput'
@@ -83,6 +83,8 @@ export function FitnessTemplateBuilderClient({
   } | null>(null)
   const [observationBlockId, setObservationBlockId] = useState<string | null>(null)
   const [observationDraft, setObservationDraft] = useState('')
+  // Advanced controls (reorder/delete) shown for one block at a time
+  const [advancedBlockId, setAdvancedBlockId] = useState<string | null>(null)
 
   function showStatus(type: 'ok' | 'error', text: string) {
     setStatusMsg({ type, text })
@@ -255,6 +257,7 @@ export function FitnessTemplateBuilderClient({
       ) : (
         blocks.map((block, blockIdx) => {
           const isExpanded = expandAll || expandedBlockId === block.id
+          const showAdvanced = advancedBlockId === block.id
           return (
             <FitnessBlockCard
               key={block.id}
@@ -264,6 +267,8 @@ export function FitnessTemplateBuilderClient({
               isPending={isPending}
               isExpanded={isExpanded}
               onToggle={() => toggleBlock(block.id)}
+              showAdvanced={showAdvanced}
+              onToggleAdvanced={() => setAdvancedBlockId(v => v === block.id ? null : block.id)}
               onMoveBlock={handleMoveBlock}
               onRemoveBlock={handleRemoveBlock}
               onRemoveExercise={handleRemoveExercise}
@@ -392,6 +397,8 @@ function FitnessBlockCard({
   isPending,
   isExpanded,
   onToggle,
+  showAdvanced,
+  onToggleAdvanced,
   onMoveBlock,
   onRemoveBlock,
   onRemoveExercise,
@@ -407,6 +414,8 @@ function FitnessBlockCard({
   isPending: boolean
   isExpanded: boolean
   onToggle: () => void
+  showAdvanced: boolean
+  onToggleAdvanced: () => void
   onMoveBlock: (blockId: string, dir: 'up' | 'down') => void
   onRemoveBlock: (blockId: string) => void
   onRemoveExercise: (blockId: string, tbeId: string) => void
@@ -446,27 +455,11 @@ function FitnessBlockCard({
     >
       {/* Expanded content */}
       <div className="px-4 py-3 space-y-3">
-        {/* Secondary controls row: reorder + observe + delete */}
+        {/* Primary controls row: duration + observe + block options toggle */}
         <div className="flex items-center gap-2 justify-between">
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onMoveBlock(block.id, 'up')}
-              disabled={blockIdx === 0 || isPending}
-              title="Move block up"
-              className="p-1 rounded text-text-muted hover:text-lime disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronUp className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onMoveBlock(block.id, 'down')}
-              disabled={blockIdx === totalBlocks - 1 || isPending}
-              title="Move block down"
-              className="p-1 rounded text-text-muted hover:text-lime disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </button>
+          <div className="flex items-center gap-2">
             {block.duration_min != null && (
-              <span className="flex items-center gap-1 text-xs text-text-muted ml-2">
+              <span className="flex items-center gap-1 text-xs text-text-muted">
                 <Clock className="w-3.5 h-3.5" />
                 {block.duration_min}min
               </span>
@@ -487,15 +480,53 @@ function FitnessBlockCard({
               <MessageSquare className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => onRemoveBlock(block.id)}
-              disabled={isPending}
-              title="Remove block"
-              className="p-1.5 rounded-lg border border-border text-text-muted hover:border-status-red/30 hover:text-status-red transition-colors"
+              onClick={onToggleAdvanced}
+              title="Block options"
+              className={[
+                'p-1.5 rounded-lg border text-xs transition-colors',
+                showAdvanced
+                  ? 'border-border bg-surface-raised text-text-secondary'
+                  : 'border-border text-text-muted hover:text-text-secondary',
+              ].join(' ')}
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <MoreHorizontal className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
+
+        {/* Advanced controls — reorder + delete (hidden by default) */}
+        {showAdvanced && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface-raised">
+            <span className="text-[10px] text-text-muted shrink-0">Move:</span>
+            <button
+              onClick={() => onMoveBlock(block.id, 'up')}
+              disabled={blockIdx === 0 || isPending}
+              title="Move block up"
+              className="p-1 rounded text-text-muted hover:text-lime disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onMoveBlock(block.id, 'down')}
+              disabled={blockIdx === totalBlocks - 1 || isPending}
+              title="Move block down"
+              className="p-1 rounded text-text-muted hover:text-lime disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            <div className="ml-auto">
+              <button
+                onClick={() => onRemoveBlock(block.id)}
+                disabled={isPending}
+                title="Remove block"
+                className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg border border-border text-text-muted hover:border-status-red/30 hover:text-status-red transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+                Remove block
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Block observation note (if any) */}
         {block.notes && (

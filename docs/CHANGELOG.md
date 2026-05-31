@@ -3,6 +3,11 @@
 ---
 
 
+## 2026-05-31 — Sprint 1067 — Builder Simple / Advanced Controls V1
+
+- `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` (modified): Added `advancedBlockId` state (one block at a time shows advanced controls). `FitnessBlockCard` now shows a "⋯" button (`MoreHorizontal`) next to the observe button in the primary controls row. Clicking it reveals/hides an advanced controls panel with: Move up/down arrows and "Remove block" button. Default state: advanced controls hidden. Observation button and duration remain always visible in the primary row.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1066 — Class Builder Guided Track + Collapse V1
 
 - `src/app/director/class-templates/[templateId]/ClassTemplateBuilderStepper.tsx` (modified): (1) Step labels renamed to match goal-specified Class track: 1→Class Goal, 2→Level, 3→Session Flow, 4→Coach Notes, 5→Publish. (2) BottomNav next-step labels updated. (3) CurriculumLevelSelector moved from Step 1 to dedicated Step 2 "Level" — Step 2 is now the level picker + block structure overview. (4) Step 3 "Session Flow" adds block collapse: `expandedBlockId` + `expandAll` state in main component, `onToggleBlock`/`onSetExpandAll` passed to `Step3SessionFlow`. Each block wrapped with `CollapsibleBlockRow` — one block open at a time, Expand All button shown when ≥2 blocks. (5) Old `Step2Structure` removed (absorbed into `Step2Level`). (6) Import `CollapsibleBlockRow` from `@/components/builder`.
