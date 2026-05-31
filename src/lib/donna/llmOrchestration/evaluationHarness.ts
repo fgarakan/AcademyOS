@@ -27,11 +27,13 @@ import { buildDirectorNextAction } from '../directorNextActionEngine'
 import { buildActionExplanation } from '../directorActionExplanation'
 import { buildReviewQueueGuidance } from '../reviewQueueGuidance'
 import { buildContextPacket } from './contextPacket'
-import { executeToolCall } from './toolCallingContract'
+import { executeToolCall, getRegisteredTools } from './toolCallingContract'
 import { routeAction } from './safeActionRouter'
 import { detectBlockedAction } from './orchestrator'
 import { isActionBlocked, isOutputAllowed, isToolAllowed } from './safetyContract'
-import type { OrchestratorOutput } from './types'
+import { isLiveTool } from './liveContextToolExecutor'
+import { isSafeToExecuteDirectly } from './toolExecutionLoop'
+import type { OrchestratorOutput, OrchestratorToolId } from './types'
 
 // ── Eval types ────────────────────────────────────────────────────────────────
 
@@ -42,6 +44,7 @@ export type EvalCategory =
   | 'guidance'
   | 'context_packet'
   | 'tool_calling'
+  | 'live_tools'
   | 'fallback'
 
 export interface EvalCase {
@@ -261,10 +264,10 @@ const EVAL_CASES: EvalCase[] = [
   {
     id: 'context_002',
     category: 'context_packet',
-    description: 'V2 context packet has toolManifest with 8 entries',
+    description: 'V2 context packet has toolManifest with 14 entries (includes Sprint 1002–1017 live tools)',
     assert: () => {
       const packet = buildContextPacket({ role: 'academy_director', pathname: '/director', userInput: 'hello' })
-      return packet.toolManifest.length === 8 ? null : `Expected 8 tools, got ${packet.toolManifest.length}`
+      return packet.toolManifest.length === 14 ? null : `Expected 14 tools, got ${packet.toolManifest.length}`
     },
   },
   {
@@ -315,6 +318,175 @@ const EVAL_CASES: EvalCase[] = [
       const result = executeToolCall('nonexistent_tool' as never, {})
       return !result.ok && result.error ? null : 'Should return ok:false with error for unknown tool'
     },
+  },
+  {
+    id: 'tool_005',
+    category: 'tool_calling',
+    description: 'getRegisteredTools returns 14 entries (Sprint 1002–1017 live tools included)',
+    assert: () => {
+      const tools = getRegisteredTools()
+      return tools.length === 14 ? null : `Expected 14 registered tools, got ${tools.length}`
+    },
+  },
+  {
+    id: 'tool_006',
+    category: 'tool_calling',
+    description: 'route_to_page allows a valid internal director route',
+    assert: () => {
+      const result = executeToolCall('route_to_page', { route: '/director/review', reason: 'test' })
+      return result.ok ? null : `Valid internal route should succeed: ${result.error}`
+    },
+  },
+
+  // ── Context packet: Sprint 1002–1004 additions ─────────────────────────────
+  {
+    id: 'context_004',
+    category: 'context_packet',
+    description: 'hasPlayerContext is true when playerId provided',
+    assert: () => {
+      const packet = buildContextPacket({ role: 'academy_director', pathname: '/director/players/abc123def456', userInput: 'hello', playerId: 'test-player-id-0000' })
+      return packet.safeSignals.hasPlayerContext === true ? null : 'hasPlayerContext should be true when playerId provided'
+    },
+  },
+  {
+    id: 'context_005',
+    category: 'context_packet',
+    description: 'hasPlayerContext is false when no playerId',
+    assert: () => {
+      const packet = buildContextPacket({ role: 'academy_director', pathname: '/director', userInput: 'hello' })
+      return packet.safeSignals.hasPlayerContext === false ? null : 'hasPlayerContext should be false when no playerId'
+    },
+  },
+  {
+    id: 'context_006',
+    category: 'context_packet',
+    description: 'hasSessionContext is true when sessionId provided',
+    assert: () => {
+      const packet = buildContextPacket({ role: 'academy_director', pathname: '/director/sessions/abc123def456', userInput: 'hello', sessionId: 'test-session-id-0000' })
+      return packet.safeSignals.hasSessionContext === true ? null : 'hasSessionContext should be true when sessionId provided'
+    },
+  },
+  {
+    id: 'context_007',
+    category: 'context_packet',
+    description: 'academyId stored in safeSignals for live tool retrieval',
+    assert: () => {
+      const packet = buildContextPacket({ role: 'academy_director', pathname: '/director', userInput: 'hello', academyId: 'test-academy-id-00' })
+      return packet.safeSignals.academyId === 'test-academy-id-00' ? null : `academyId should be in safeSignals, got ${packet.safeSignals.academyId}`
+    },
+  },
+  {
+    id: 'context_008',
+    category: 'context_packet',
+    description: 'tool manifest includes all Sprint 1002–1015 live tools',
+    assert: () => {
+      const packet = buildContextPacket({ role: 'academy_director', pathname: '/director', userInput: 'hello' })
+      const ids = packet.toolManifest.map(t => t.id)
+      const required: OrchestratorToolId[] = ['get_academy_state', 'get_player_development_summary', 'get_player_profile_summary', 'get_session_context', 'get_curriculum_context', 'get_knowledge_content']
+      const missing = required.filter(id => !ids.includes(id))
+      return missing.length === 0 ? null : `Missing live tools in manifest: ${missing.join(', ')}`
+    },
+  },
+
+  // ── Live tools: isLiveTool routing + direct executability safety ───────────
+  {
+    id: 'live_001',
+    category: 'live_tools',
+    description: 'get_academy_state is a live tool (Sprint 1002)',
+    assert: () => isLiveTool('get_academy_state') ? null : 'get_academy_state should be a live tool',
+  },
+  {
+    id: 'live_002',
+    category: 'live_tools',
+    description: 'get_player_development_summary is a live tool (Sprint 1002)',
+    assert: () => isLiveTool('get_player_development_summary') ? null : 'get_player_development_summary should be a live tool',
+  },
+  {
+    id: 'live_003',
+    category: 'live_tools',
+    description: 'get_player_profile_summary is a live tool (Sprint 1003)',
+    assert: () => isLiveTool('get_player_profile_summary') ? null : 'get_player_profile_summary should be a live tool',
+  },
+  {
+    id: 'live_004',
+    category: 'live_tools',
+    description: 'get_session_context is a live tool (Sprint 1004)',
+    assert: () => isLiveTool('get_session_context') ? null : 'get_session_context should be a live tool',
+  },
+  {
+    id: 'live_005',
+    category: 'live_tools',
+    description: 'get_pending_review_count is NOT a live tool (synchronous, no DB)',
+    assert: () => !isLiveTool('get_pending_review_count') ? null : 'get_pending_review_count should not be a live tool',
+  },
+  {
+    id: 'live_006',
+    category: 'live_tools',
+    description: 'get_academy_state is NOT directly executable (must use async live executor)',
+    assert: () => !isSafeToExecuteDirectly('get_academy_state') ? null : 'get_academy_state must not be in DIRECTLY_EXECUTABLE_TOOLS — use live executor',
+  },
+  {
+    id: 'live_007',
+    category: 'live_tools',
+    description: 'get_player_profile_summary is NOT directly executable',
+    assert: () => !isSafeToExecuteDirectly('get_player_profile_summary') ? null : 'get_player_profile_summary must not be directly executable — playerId is injected from route context',
+  },
+  {
+    id: 'live_008',
+    category: 'live_tools',
+    description: 'get_session_context is NOT directly executable',
+    assert: () => !isSafeToExecuteDirectly('get_session_context') ? null : 'get_session_context must not be directly executable — sessionId is injected from route context',
+  },
+  {
+    id: 'live_009',
+    category: 'live_tools',
+    description: 'executeToolCall stub for get_academy_state returns ok:false with live-context message',
+    assert: () => {
+      const result = executeToolCall('get_academy_state', { academyId: 'test-academy-id-000' })
+      return !result.ok && result.error?.includes('live context') ? null : `Expected ok:false with "live context" message, got ok:${result.ok} error:${result.error}`
+    },
+  },
+  {
+    id: 'live_010',
+    category: 'live_tools',
+    description: 'executeToolCall stub for get_player_profile_summary returns ok:false with live-context message',
+    assert: () => {
+      const result = executeToolCall('get_player_profile_summary', {})
+      return !result.ok && result.error?.includes('live context') ? null : `Expected ok:false with "live context" message, got ok:${result.ok} error:${result.error}`
+    },
+  },
+  {
+    id: 'live_011',
+    category: 'live_tools',
+    description: 'executeToolCall stub for get_session_context returns ok:false with live-context message',
+    assert: () => {
+      const result = executeToolCall('get_session_context', {})
+      return !result.ok && result.error?.includes('live context') ? null : `Expected ok:false with "live context" message, got ok:${result.ok} error:${result.error}`
+    },
+  },
+  {
+    id: 'live_012',
+    category: 'live_tools',
+    description: 'get_curriculum_context is a live tool (Sprint 1015)',
+    assert: () => isLiveTool('get_curriculum_context') ? null : 'get_curriculum_context should be a live tool',
+  },
+  {
+    id: 'live_013',
+    category: 'live_tools',
+    description: 'get_curriculum_context is NOT directly executable (must use async live executor)',
+    assert: () => !isSafeToExecuteDirectly('get_curriculum_context') ? null : 'get_curriculum_context must not be in DIRECTLY_EXECUTABLE_TOOLS',
+  },
+  {
+    id: 'live_014',
+    category: 'live_tools',
+    description: 'get_knowledge_content is a live tool (Sprint 1017)',
+    assert: () => isLiveTool('get_knowledge_content') ? null : 'get_knowledge_content should be a live tool',
+  },
+  {
+    id: 'live_015',
+    category: 'live_tools',
+    description: 'get_knowledge_content is NOT directly executable',
+    assert: () => !isSafeToExecuteDirectly('get_knowledge_content') ? null : 'get_knowledge_content must not be directly executable',
   },
 
   // ── Fallback: safe response when no match ──────────────────────────────────
