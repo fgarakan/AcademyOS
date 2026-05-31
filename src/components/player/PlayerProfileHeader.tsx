@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, AlertCircle } from 'lucide-react'
 import { LevelBadge } from '@/components/ui'
 import { AdvancementStatusBadge } from './AdvancementStatusBadge'
 import { formatRelativeDate, getInitials } from '@/lib/utils'
@@ -55,7 +55,10 @@ export function PlayerProfileHeader({ player, curriculumSummary }: PlayerProfile
               </span>
             )}
             {!curriculumSummary && (
-              <span className="text-sm text-text-muted">No curriculum placement</span>
+              <span className="flex items-center gap-1.5 text-sm text-status-orange">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                No curriculum level — assign one to begin tracking
+              </span>
             )}
           </div>
         </div>

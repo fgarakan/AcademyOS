@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1043 — Director Player Profile Header + Priority Clarity V1
+
+- `src/components/player/PlayerProfileHeader.tsx` (modified): "No curriculum placement" muted-grey text replaced with status-orange "No curriculum level — assign one to begin tracking" with an AlertCircle icon. Matches the urgency signal already used on the players directory ("X without curriculum level"). No prop changes, no layout changes, no DONNA targets changed. TypeScript: clean.
+- `docs/architecture/DIRECTOR_PLAYER_PROFILE_HEADER_UX_1043.md` (new): Audit and decision record.
+- `docs/QA_DIRECTOR_PLAYER_PROFILE_HEADER_UX_1043.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1042 — Director Players Directory UX Simplification V1
 
 - `src/app/director/players/page.tsx` (modified): `DonnaPlayersPresenceCTA` now conditional — shows only when `namedSignals.length > 0 || assessmentDueCount > 0 || missingCurriculumCount > 0`. Hides the "Who needs attention?" chip when the roster has no flags to surface; reappears the moment a signal is detected. Empty-state subtitle changed from "Academy-wide player tracking" to "Add your first player or import a roster to get started." TypeScript: clean.
