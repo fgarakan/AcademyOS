@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1048 — Player Mission Current Focus UX V1
+
+- `src/app/player/page.tsx` (modified): Removed bottom "Ask DONNA CTA" card — duplicate of the mid-page DONNA chip block and the bottom tab bar "Ask DONNA" tab. Mid-page chip block with 4 specific question prompts and trust note preserved. Bottom tab navigation preserved. TypeScript: clean.
+- `docs/architecture/PLAYER_MISSION_FOCUS_UX_1048.md` (new): Audit and decision record.
+- `docs/QA_PLAYER_MISSION_FOCUS_UX_1048.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1047 — Parent Progress Clarity UX V1
 
 - `src/app/parent/progress/page.tsx` (modified): Removed redundant bottom safety note ("Advancement requires coach and director confirmation — not automatic. Coaching teams decide timing.") — the ShieldCheck box at the top of the page already establishes the trust frame. Three explanation blocks reduced to two. Level journey, observation counts, encouragement box, and all other content unchanged. TypeScript: clean.

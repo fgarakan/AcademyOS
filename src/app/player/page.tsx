@@ -772,22 +772,6 @@ export default async function PlayerHome() {
         </CardContent>
       </Card>
 
-      {/* ── Ask DONNA CTA ─────────────────────────────────────── */}
-      <Link href="/player/ask-donna">
-        <div className="rounded-2xl bg-status-blue/5 border border-status-blue/20 px-4 py-4 flex items-center justify-between gap-3 hover:bg-status-blue/8 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-status-blue/15 border border-status-blue/20 flex items-center justify-center shrink-0">
-              <Sparkles className="w-4 h-4 text-status-blue" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-text-primary">Ask DONNA</p>
-              <p className="text-xs text-text-muted">Training guide, match prep, mission help</p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-status-blue/40 shrink-0" />
-        </div>
-      </Link>
-
     </div>
   )
 }
