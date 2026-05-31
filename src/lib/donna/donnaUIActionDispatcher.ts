@@ -92,6 +92,9 @@ const NAV_PATTERNS: Array<{
   focusTargetId?: string
 }> = [
   // Director-level routes
+  // Sprint 1071: "open approvals" / "go to approvals" / "approvals" standalone added so voice and
+  // typed navigation commands reach /director/review before the generic chat fallback.
+  { pattern: /open approvals?|go to approvals?|take me to approvals?|approvals? (section|center|page|queue)/i, route: '/director/review', label: 'Approvals' },
   { pattern: /review (center|queue)|pending (items|approvals)|what needs (my )?review/i, route: '/director/review', label: 'Review Center' },
   { pattern: /curriculum (builder|setup)|build (my )?curriculum/i, route: '/director/curriculum/builder', label: 'Curriculum Builder' },
   { pattern: /(?<!publish[\s\S]{0,15})curriculum(?!.*publish)/i, route: '/director/curriculum', label: 'Curriculum' },
@@ -117,8 +120,11 @@ const NAV_PATTERNS: Array<{
   // Commands about today / daily / home → highlight today-command-center
   { pattern: /what (do i|should i) (need to )?(do|focus on) today|what.{0,15}first/i, route: '/director', label: 'Daily Command', focusTargetId: 'review-queue-card' },
   { pattern: /dashboard|home|director home/i, route: '/director', label: 'Dashboard' },
+  // Sprint 1071: "academy health" and "parent updates" added for the expected nav mapping.
+  { pattern: /academy health|open kpi|kpi (page|dashboard)|health (page|dashboard|section)/i, route: '/director/kpi', label: 'Academy Health' },
   { pattern: /kpi|metrics?/i, route: '/director/kpi', label: 'KPIs' },
   { pattern: /coaches?|staff/i, route: '/director/coaches', label: 'Coaches' },
+  { pattern: /parent (updates?|communications?|section|page|center)/i, route: '/director/parents', label: 'Parent Updates', roles: ['academy_director', 'head_coach'] },
   { pattern: /my parents|parents (list|section)/i, route: '/director/parents', label: 'Parents', roles: ['academy_director', 'head_coach'] },
   { pattern: /settings?/i, route: '/director/settings', label: 'Settings' },
   // Player-portal routes — player role only

@@ -1927,8 +1927,14 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
   function handleVoiceListeningChange(listening: boolean) {
     setIsVoiceListening(listening)
-    if (!listening) setInterimVoiceTranscript(null)
-    if (listening) resetIdleTimer() // Sprint 787 — mic activation counts as interaction
+    if (!listening) {
+      setInterimVoiceTranscript(null)
+    } else {
+      resetIdleTimer() // Sprint 787 — mic activation counts as interaction
+      // Sprint 1071: clear any stale permission error from a prior session so "Listening"
+      // and "Voice is unavailable" never show at the same time.
+      setVoicePermissionError(null)
+    }
   }
 
   function handleInterimTranscript(text: string) {
@@ -3006,6 +3012,29 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     return false
   }
 
+  // Sprint 1071 — Academy Health page-aware intercept helper.
+  // Returns true for broad health / KPI-overview questions asked on /director/kpi.
+  // Narrow scope: only fires when explicitly on the KPI page to avoid false positives elsewhere.
+  function isAcademyHealthQuestion(lower: string): boolean {
+    return (
+      lower.includes('health of') ||
+      lower.includes('health of my academy') ||
+      lower.includes('how is my academy') ||
+      lower.includes('how is the academy doing') ||
+      lower.includes('how is the academy') ||
+      lower.includes('tell me about the health') ||
+      lower.includes('explain these kpis') ||
+      lower.includes('what do these kpis') ||
+      lower.includes('what do the kpis') ||
+      lower.includes('which kpi needs attention') ||
+      lower.includes('which kpi needs') ||
+      lower.includes('academy health') ||
+      lower.includes('how healthy is') ||
+      lower.includes('overall health') ||
+      lower.includes('health score')
+    )
+  }
+
   // Sprint 697 — COO conversational router: first-pass handler before legacy routing.
   // Returns true if the router handled the prompt (commandResponse set, speakDonna called).
   // Returns false to fall through to legacy detectAndHandleCommand.
@@ -3013,6 +3042,30 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Sprint 702 — records each turn to donnaChatSessionMemory; injects follow-up prefix when topic was previously discussed.
   // Sprint 703 — role-aware: coach gets director-referral response for director-only intents.
   function handleDonnaCooPrompt(text: string): boolean {
+    // Sprint 1071 — page-aware: when on the KPI page and the query is a broad academy health
+    // or KPI-overview question, answer deterministically without falling through to God Mode.
+    // This prevents the LLM asking for clarification when the page data is sufficient.
+    if (pathname === '/director/kpi' && isAcademyHealthQuestion(text.toLowerCase())) {
+      const name = firstName ? `${firstName}, ` : ''
+      const msg =
+        `${name}your Academy Health dashboard shows three headline signals:\n\n` +
+        `**Active Players** — your total enrolled roster. This is the base for all other measurements.\n\n` +
+        `**Advancement Ready** — players whose curriculum flag is set for level advancement. ` +
+        `If this count is above zero, open the Level Up queue to review evidence before approving movement.\n\n` +
+        `**Attention Signals** — players with 2 or more absences in the last 30 days, or 180+ days in a curriculum level. ` +
+        `Each signal is directly actionable: open the player directory to see who needs a follow-up.\n\n` +
+        `The table below lists per-player indicators — Time in Level and Absences (30 days). ` +
+        `Red or orange values are where to focus first. ` +
+        `Absences are based on explicitly marked sessions only — unmarked sessions are not counted.`
+      setCommandResponse({ message: msg, type: 'info', label: 'Academy Health' })
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: 'info' as const }])
+      speakDonna(msg)
+      recordPrompt(text)
+      recordSummary(msg)
+      recordTurn(text, msg, { domain: 'academy_health' })
+      return true
+    }
+
     const routing = routeDonnaPrompt(text, pathname)
     if (routing.responseMode === 'answer_directly') return false
 

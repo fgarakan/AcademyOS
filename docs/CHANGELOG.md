@@ -3,6 +3,16 @@
 ---
 
 
+## 2026-05-31 — Sprint 1071 — DONNA Page-Aware Answer + Navigation Intent Fix V1
+
+- `src/lib/donna/donnaUIActionDispatcher.ts` (modified): Added 3 deterministic NAV_PATTERNS before the existing review-center pattern — (1) `open approvals?|go to approvals?|take me to approvals?|approvals? (section|center|page|queue)` → `/director/review`; (2) `academy health|open kpi|kpi (page|dashboard)|health (page|dashboard|section)` → `/director/kpi`; (3) `parent (updates?|communications?|section|page|center)` → `/director/parents`. All resolve before generic chat fallback, covering both typed and voice input paths.
+- `src/components/assistant/donnaPageContextRegistry.ts` (modified): Added `/director/kpi` context entry with `screenName: 'Academy Health'` — fixes the page label passed to the LLM orchestrator (was "Today") and corrects the context indicator badge in the DONNA panel.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): (1) Added `isAcademyHealthQuestion()` helper for broad health/KPI phrases. (2) Added page-aware intercept at the top of `handleDonnaCooPrompt` — when `pathname === '/director/kpi'` and query matches, DONNA returns a deterministic three-section Academy Health answer without falling through to God Mode. (3) Fixed `handleVoiceListeningChange(true)` to call `setVoicePermissionError(null)` — clears stale error from prior session so "Listening" and "Voice unavailable" never show together.
+- `src/components/assistant/VoiceInputButton.tsx` (modified): In `recognition.onerror`, for all non-`no-speech` errors, immediately call `setVoiceState('idle')`, `onVoiceStateChange?.('idle')`, and `onListeningChange?.(false)` — eliminates the brief window between `onerror` and `onend` where "Listening" and the error text co-displayed.
+- `docs/architecture/DONNA_PAGE_AWARE_ANSWER_NAVIGATION_1071.md` (new): Root-cause breakdown, fix descriptions, file manifest.
+- `docs/QA_DONNA_PAGE_AWARE_ANSWER_NAVIGATION_1071.md` (new): 18-check QA table covering health answer, navigation commands, voice status, and regression.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1070 — Builder Live QA + Director Usability Test V1
 
 - `docs/architecture/BUILDER_INTELLIGENCE_GUIDED_COLLAPSE_1070.md` (new): Full block summary — what was built across Sprints 1061–1070, exercise matching results, component inventory, golden path for both builders, regression checklist, and complete file change manifest.

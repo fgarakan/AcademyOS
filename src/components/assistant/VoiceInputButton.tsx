@@ -189,6 +189,12 @@ export function VoiceInputButton({
       // 'no-speech' is not a real error in persistent mode — just silence; let onend handle it
       if (event.error !== 'no-speech') {
         onError?.(event.error)
+        // Sprint 1071: immediately reset listening state so "Listening" and an error message
+        // cannot display at the same time. onend fires right after and may set 'idle' again —
+        // calling setState with the same value is a no-op in React.
+        setVoiceState('idle')
+        onVoiceStateChange?.('idle')
+        onListeningChange?.(false)
       }
       // Sprint 1057: permanent permission errors — stop session so onend does not loop retries.
       // Without this, the persistent retry loop cycles 20× (~6s) before exhausting.

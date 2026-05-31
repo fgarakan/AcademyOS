@@ -792,6 +792,36 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     ],
   },
 
+  // ── Academy Health / KPI Dashboard ──────────────────────────────────────────
+  // Sprint 1071: registered before /director so /director/kpi doesn't fall back to 'Today'.
+  {
+    routePattern: '/director/kpi',
+    screenName: 'Academy Health',
+    objectType: 'academy_kpis',
+    purpose:
+      'Review academy-wide health indicators — active players, advancement readiness, and attention signals across your roster. Use these signals to prioritise who needs a follow-up today.',
+    nextAction: 'Check attention signals first, then review advancement-ready players in the Level Up queue.',
+    assistantIntro:
+      'This is your Academy Health dashboard. I can explain what each signal means, help you prioritise who needs attention, or take you to the relevant section to act.',
+    readableContext: [
+      'active_players',
+      'advancement_ready_count',
+      'attention_signals',
+      'player_kpi_table',
+      'time_in_level',
+      'absences_30d',
+    ],
+    safeDraftActions: ['explain_kpi', 'summarize_academy_health', 'identify_at_risk_players'],
+    approvalRequiredFor: ['level_movement', 'contact_parent'],
+    suggestedPrompts: [
+      'Tell me about the health of my academy.',
+      'Which KPI needs attention?',
+      'Open approvals.',
+      'What do these signals mean?',
+    ],
+    unsafeActions: ['auto_move_player', 'send_parent_message'],
+  },
+
   // ── Today (Director Dashboard) — registered last so /director prefix doesn't shadow other routes ──
   {
     routePattern: '/director',
