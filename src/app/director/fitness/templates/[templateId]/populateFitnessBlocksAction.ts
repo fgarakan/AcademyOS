@@ -2,9 +2,14 @@
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import { inferFitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
+import { getDefaultExercisesForFitnessBlock } from '@/lib/fitness/fitnessExerciseMatching'
+import type { ExerciseCandidate } from '@/lib/fitness/fitnessExerciseMatching'
 
 // ─────────────────────────────────────────────────────────────
 // Block type → exercise category mapping
+// Used only for non-fitness block types (warm_up, technical, etc.)
+// Fitness sub-types (agility, speed, coordination, etc.) use scoring-based matching below.
 // ─────────────────────────────────────────────────────────────
 
 const BLOCK_TO_EXERCISE_CATEGORY: Record<string, string[]> = {
@@ -143,13 +148,16 @@ export async function populateFitnessTemplateBlocksAction(
   if (exError) return fail(`Failed to load exercise library: ${exError.message}`)
   const exerciseList = (exercises ?? []) as ExerciseRow[]
 
-  // Index exercises by category for fast lookup
+  // Index exercises by category (used by non-fitness blocks)
   const exercisesByCategory = new Map<string, ExerciseRow[]>()
   for (const ex of exerciseList) {
     const arr = exercisesByCategory.get(ex.category) ?? []
     arr.push(ex)
     exercisesByCategory.set(ex.category, arr)
   }
+
+  // Index by id (used to look up ExerciseRow after scoring)
+  const exercisesById = new Map<string, ExerciseRow>(exerciseList.map(ex => [ex.id, ex]))
 
   // 8. For each block, select and insert matching exercises
   const blockResults: BlockPopulationResult[] = []
@@ -159,21 +167,42 @@ export async function populateFitnessTemplateBlocksAction(
   let totalInsertFailures = 0
 
   for (const block of blockList) {
-    const categories = BLOCK_TO_EXERCISE_CATEGORY[block.type] ?? []
-    if (categories.length === 0) continue
-
     const existingForBlock = existingByBlock.get(block.id) ?? new Set()
     const skippedExisting = existingForBlock.size
 
-    // Collect candidates from all matching categories
-    const candidates: ExerciseRow[] = []
-    for (const cat of categories) {
-      const catExercises = exercisesByCategory.get(cat) ?? []
-      candidates.push(...catExercises)
+    // Select candidates:
+    // - Fitness sub-type blocks (coordination, speed, agility, etc.): use scoring-based matching
+    //   so each block type receives semantically appropriate exercises.
+    // - All other block types: use the category map as before.
+    let orderedCandidates: ExerciseRow[]
+
+    const inferredFitnessType = inferFitnessBlockType(block.name)
+    if (inferredFitnessType) {
+      // Convert to ExerciseCandidate format for the scorer
+      const allCandidates: ExerciseCandidate[] = exerciseList.map(ex => ({
+        id: ex.id,
+        name: ex.name,
+        category: ex.category,
+        subcategory: ex.subcategory,
+        duration_min: ex.duration_min,
+        tags: ex.tags,
+      }))
+      // Score all exercises against this fitness block type; returns best matches in order
+      const scored = getDefaultExercisesForFitnessBlock(inferredFitnessType, allCandidates, exerciseList.length)
+      orderedCandidates = scored
+        .map(c => exercisesById.get(c.id))
+        .filter((ex): ex is ExerciseRow => ex != null)
+    } else {
+      const categories = BLOCK_TO_EXERCISE_CATEGORY[block.type] ?? []
+      if (categories.length === 0) continue
+      orderedCandidates = []
+      for (const cat of categories) {
+        orderedCandidates.push(...(exercisesByCategory.get(cat) ?? []))
+      }
     }
 
     // Exclude already-assigned exercises
-    const fresh = candidates.filter(ex => !existingForBlock.has(ex.id))
+    const fresh = orderedCandidates.filter(ex => !existingForBlock.has(ex.id))
     if (fresh.length === 0) {
       blockResults.push({
         blockId: block.id,

@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-05-31 — Sprint 1061 — Fitness Exercise Matching Audit V1
+
+- `src/app/director/fitness/templates/[templateId]/populateFitnessBlocksAction.ts` (modified): Fixed root cause of mismatched exercises in Coordination/Speed/Agility/Strength/Plyometrics blocks. Added imports for `inferFitnessBlockType` and `getDefaultExercisesForFitnessBlock`. For blocks where `inferFitnessBlockType(block.name)` resolves a fitness sub-type, all exercises are now scored by the scoring system in `fitnessExerciseMatching.ts` and ordered by score descending before duration-budget filling. Non-fitness blocks (warm_up, technical, tactical, cool_down) use the existing category map unchanged.
+- `docs/architecture/FITNESS_EXERCISE_MATCHING_AUDIT_1061.md` (new): Full audit — root cause (DB type collapse + missing scorer wire-up), two-path analysis, before/after scoring trace, secondary issues deferred to Sprint 1063.
+- `docs/QA_FITNESS_EXERCISE_MATCHING_AUDIT_1061.md` (new): 12-check QA checklist with before/after exercise comparison for Coordination block.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1060 — Director Navigation Rename IA Lock V1
 
 - `src/components/nav/SidebarNav.tsx` (modified): Replaced ACADEMY_ITEMS with 9 locked IA items in order (Today, Approvals, Players, Sessions, Curriculum, Parent Updates, Academy Health, Templates, Coaches); removed DONNA/Today's Academy/Signals from primary nav; removed Command Center from SYSTEM_ITEMS; badge check updated to `'Approvals'`; added MessageSquare import for Parent Updates.
