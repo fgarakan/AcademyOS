@@ -3,6 +3,11 @@
 ---
 
 
+## 2026-05-31 — Sprint 1069 — Class Builder Session Flow Review V1
+
+- `src/app/director/class-templates/[templateId]/ClassTemplateBuilderStepper.tsx` (modified): (1) Renamed `Step4CoachPreview` → `Step4CoachNotes`. (2) Updated render call. (3) Added "Session Flow Check" card at top of Step 4: checks for empty blocks (no activities) and blocks with activities but no coaching cues. Shows green "Ready to publish" if all clear; shows orange/grey flags per block otherwise. (4) Updated banner copy to "coach's perspective" framing. (5) Updated "Coach Plan" label → "Coach Notes". (6) `Pencil` import removed from STEPS (Step 3 now uses `Layers`).
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1068 — Fitness Builder Load + Age Fit Review V1
 
 - `src/app/director/fitness/templates/[templateId]/FitnessBuilderStepper.tsx` (modified): (1) Renamed `Step4TennisTransfer` → `Step4LoadCheck`. (2) Added `FitnessBlockType` import. (3) Added load check logic: `LOAD_REDUCE` (Red Ball: speed/plyometrics/strength are inappropriate), `LOAD_CAUTION` (Orange Ball: plyometrics/speed need modification), `getLoadCheckForBlock()` returns status (ok/caution/reduce) + message, `hasRecoveryBlock()` checks for recovery block. (4) Step 4 now shows: Load Flags summary card (red flags for reduce, orange for caution, missing recovery warning) + Level load guidance card (Load Guidance + Watch For from LEVEL_DEV_CONTEXT) + per-block load status badge (Load OK / Caution / Review Load). Tennis transfer copy retained per block.

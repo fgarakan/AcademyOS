@@ -567,9 +567,9 @@ function Step3SessionFlow({
   )
 }
 
-// ─── Step 4 — Coach Preview ───────────────────────────────────────────────────
+// ─── Step 4 — Coach Notes ─────────────────────────────────────────────────────
 
-function Step4CoachPreview({
+function Step4CoachNotes({
   previewBlocks,
   currentLevelName,
   blockList,
@@ -584,13 +584,57 @@ function Step4CoachPreview({
 }) {
   const hasAnyContent = blockList.some(b => (curriculumByBlock[b.id] ?? []).length > 0)
 
+  // Session flow quality checks
+  const emptyBlocks = blockList.filter(b => (curriculumByBlock[b.id] ?? []).length === 0)
+  const blocksWithoutCues = blockList.filter(b => {
+    const items = curriculumByBlock[b.id] ?? []
+    return items.length > 0 && items.every(row => {
+      const cues = row.content_item?.coach_cues ?? row.drill?.cues ?? null
+      return !cues || cues.length === 0
+    })
+  })
+  const hasGoodFlow = emptyBlocks.length === 0 && blocksWithoutCues.length === 0
+
   return (
     <div className="space-y-5">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
-          This is what coaches see when they run sessions from this template. Check that every block has clear goals, cues, and activities.
+          Review the session from a coach&apos;s perspective before publishing. Check that every block has clear activities and coaching cues.
+          {currentLevelName && <span className="text-lime"> Level: {currentLevelName}.</span>}
         </p>
       </div>
+
+      {/* Session flow check */}
+      <Card>
+        <CardContent className="py-4">
+          <p className="label-xs mb-3">Session Flow Check</p>
+          {hasGoodFlow ? (
+            <div className="flex items-center gap-2 text-status-green">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <p className="text-[11px]">All blocks have content and coaching cues. Ready to publish.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {emptyBlocks.map(b => (
+                <div key={b.id} className="flex items-start gap-2 text-status-orange">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <p className="text-[11px]">
+                    <span className="font-semibold">{blockDisplayNames[b.id] ?? b.name}</span> — no activities added yet.
+                  </p>
+                </div>
+              ))}
+              {blocksWithoutCues.map(b => (
+                <div key={b.id} className="flex items-start gap-2 text-text-muted">
+                  <Circle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <p className="text-[11px]">
+                    <span className="font-semibold">{blockDisplayNames[b.id] ?? b.name}</span> — has activities but no coaching cues.
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="py-4">
@@ -600,7 +644,7 @@ function Step4CoachPreview({
 
       {hasAnyContent && (
         <div className="space-y-4">
-          <p className="label-xs">Coach Plan — Drill and Activity Detail</p>
+          <p className="label-xs">Coach Notes — Drill and Activity Detail</p>
           {blockList.map(block => {
             const items = curriculumByBlock[block.id] ?? []
             if (items.length === 0) return null
@@ -945,7 +989,7 @@ export function ClassTemplateBuilderStepper({
         )}
 
         {activeStep === 4 && (
-          <Step4CoachPreview
+          <Step4CoachNotes
             previewBlocks={previewBlocks}
             currentLevelName={currentLevelName}
             blockList={blockList}
