@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-05-31 — Sprint 1063 — Fitness Exercise Category Guardrails V1
+
+- `src/lib/fitness/fitnessExerciseMatching.ts` (modified): (1) `CATEGORY_MATCH['coordination']` changed from `['fitness', 'movement']` to `['movement']` — removes free base score for all fitness exercises in coordination blocks. (2) Coordination keywords refined: removed `'tennis'` (too broad), added `'catch'`, `'toss'`, `'dribble'`, `'juggling'`, `'hand eye'`, `'bilateral'`. (3) `MIN_MATCH_SCORE = 3` — both `getDefaultExercisesForFitnessBlock` and `matchExerciseToFitnessBlock` now require at least one keyword match, not just a category-only score of 2. (4) Additional keyword improvements: speed removes `'fly'`/`'fly-in'`, adds `'first step'`/`'quickness'`; strength adds `'rdl'`/`'deadlift'`/`'pull-up'`; agility adds `'mirror'`/`'star drill'`/`'spider'`; mobility adds `'90/90'`/`'foam roll'`/`'stretch'`; recovery adds `'debrief'`/`'rpe'`.
+- `docs/architecture/FITNESS_EXERCISE_CATEGORY_GUARDRAILS_1063.md` (new): Before/after scoring for 6 key exercises, full change rationale, picker behavior change description.
+- `docs/QA_FITNESS_EXERCISE_CATEGORY_GUARDRAILS_1063.md` (new): 10-check QA + score verification table.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1062 — Template Builder Guided Collapse UX Audit V1
 
 - `docs/architecture/TEMPLATE_BUILDER_GUIDED_COLLAPSE_UX_AUDIT_1062.md` (new): Full UX audit of Fitness Builder (FitnessBuilderStepper + FitnessTemplateBuilderClient) and Class Builder (ClassTemplateBuilderStepper). Documents: current 5-step tracks vs goal-specified tracks, block collapse gaps, DONNA inline guidance gaps, advanced controls exposure, cognitive load evidence, proposed changes for Sprints 1065–1066, and TypeScript implications.
