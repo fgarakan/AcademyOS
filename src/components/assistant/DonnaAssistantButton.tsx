@@ -242,6 +242,11 @@ import type { DirectorActionPreview } from '@/lib/donna/directorActionPreview'
 import { dispatchUIIntent, getAvailableActionsForContext } from '@/lib/donna/donnaUIActionDispatcher'
 // Sprint 817 — Focus target: set before router.push for teal highlight on arrival
 import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
+// Sprint 1011 — DONNA God Mode: LLM orchestrator response card + guided actions
+import { DonnaResponseCard } from '@/components/donna/DonnaResponseCard'
+import { runDonnaOrchestratorAction } from '@/app/director/_actions/donnaOrchestratorAction'
+import { executeDonnaHighlight } from '@/lib/donna/llmOrchestration/donnaGuidedAction'
+import type { OrchestratorOutput, ConversationTurn as OrchestratorTurn } from '@/lib/donna/llmOrchestration/types'
 import { getOperatorById, getOperatorStep } from '@/lib/donna/donnaUIGuidedOperators'
 import type { UIActionRole, UIActionSafetyClass } from '@/lib/donna/donnaUIActionRegistry'
 // Sprint 780 — Daily brief intent registry (replaces inline isDailyBriefPhrase)
@@ -809,6 +814,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   // Set to true at the start of the follow-up resolver path and the COO router path
   // so "Thinking…" appears in the header for the duration of that render frame.
   const [isProcessingCommand, setIsProcessingCommand] = useState(false)
+  // Sprint 1011 — God Mode LLM orchestrator state
+  const [godModeOutput, setGodModeOutput] = useState<OrchestratorOutput | null>(null)
+  const [isGodModeLoading, setIsGodModeLoading] = useState(false)
+  const [godModeHistory, setGodModeHistory] = useState<OrchestratorTurn[]>([])
   // Sprint 828 — safety-net timer ref: clears isProcessingCommand after 600ms if not
   // already cleared by the cooThread useEffect. Handles paths that do not push to
   // cooThread (navigation commands, fallback responses).
@@ -1009,6 +1018,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       clearTimeout(processingClearTimerRef.current)
       processingClearTimerRef.current = null
     }
+    // Sprint 1011 — clear God Mode state on panel close
+    setGodModeOutput(null)
+    setIsGodModeLoading(false)
+    setGodModeHistory([])
     setIsProcessingCommand(false)
   }, [realtimeDisconnect, closeDonnaPanel])
 
@@ -3184,6 +3197,49 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     })
   }
 
+  // Sprint 1011 — God Mode: LLM orchestrator call for unrecognized inputs.
+  // Called as the final fallback when no existing deterministic handler claims the input.
+  // Never throws — falls back to commandResponse on any error.
+  // Academy ID and role are resolved server-side in the action — never from client state.
+  async function handleGodModeQuery(text: string): Promise<void> {
+    setGodModeOutput(null)
+    setIsGodModeLoading(true)
+    try {
+      const result = await runDonnaOrchestratorAction({
+        userInput: text,
+        pathname,
+        pageLabel: ctx.screenName ?? undefined,
+        firstName: firstName ?? undefined,
+        pendingReviews: reviewQueuePendingCount,
+        conversationHistory: godModeHistory,
+        useLlm: true,
+      })
+      if (result.ok && result.output) {
+        setGodModeOutput(result.output)
+        setGodModeHistory(prev => [
+          ...prev.slice(-8),
+          { role: 'user' as const, content: text, timestamp: Date.now() },
+          { role: 'donna' as const, content: result.output!.text, timestamp: Date.now(), outputType: result.output!.type },
+        ])
+      } else {
+        setCommandResponse({
+          message: result.error ?? 'DONNA is temporarily unavailable. Please try again.',
+          type: 'honest',
+          label: 'DONNA',
+        })
+      }
+    } catch {
+      setCommandResponse({
+        message: 'DONNA is temporarily unavailable. Please try again.',
+        type: 'honest',
+        label: 'DONNA',
+      })
+    } finally {
+      setIsGodModeLoading(false)
+      setIsProcessingCommand(false)
+    }
+  }
+
   function handleCommandSubmit(overrideText?: string) {
     const text = (overrideText ?? typedText).trim()
     if (!text) return
@@ -3424,13 +3480,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (!cooHandled) {
       const handled = detectAndHandleCommand(text)
       if (!handled) {
+        // Sprint 1011 — God Mode: LLM orchestrator as final fallback.
+        // Cancel the 600ms processingClear timer — handleGodModeQuery manages
+        // isProcessingCommand in its own finally block after the async response.
         recordSignal('command_unrecognized')
-        const fallback = getFailureMode('intent_unknown')
-        setCommandResponse({
-          message: fallback.userMessage,
-          type: 'honest',
-          label: 'Not recognized',
-        })
+        if (processingClearTimerRef.current) clearTimeout(processingClearTimerRef.current)
+        processingClearTimerRef.current = null
+        void handleGodModeQuery(text)
       } else {
         recordSignal('command_issued')
       }
@@ -4113,7 +4169,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             convState={convState}
             genericDraft={genericDraft}
             templateDraft={templateDraft}
-            isThinking={isProcessingCommand || isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading}
+            isThinking={isProcessingCommand || isGodModeLoading || isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading}
             donnaLastResponse={
               // Sprint 750 — suppress voice-layer "DONNA says" for Category A responses
               // (main GODmode dispatch) that are already shown as a cooThread bubble.
@@ -4243,6 +4299,36 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             contextSummary={showContextSection ? contextSummary : null}
             onDismissContextSummary={() => setContextSummary(null)}
           />
+
+          {/* ── Sprint 1011 — God Mode: LLM orchestrator loading dots + response card ── */}
+          {isGodModeLoading && (
+            <div className="px-3.5 py-4 flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-lime/10 border border-lime/30 flex items-center justify-center shrink-0">
+                <span className="text-lime text-[10px] font-bold">D</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-lime/60 animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-lime/40 animate-pulse [animation-delay:150ms]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-lime/20 animate-pulse [animation-delay:300ms]" />
+                <span className="text-[11px] text-text-muted ml-1">Thinking…</span>
+              </div>
+            </div>
+          )}
+          {godModeOutput && !isGodModeLoading && (
+            <div className="px-0 pb-1">
+              <DonnaResponseCard
+                output={godModeOutput}
+                onNavigate={(route) => {
+                  router.push(route)
+                  closePanel()
+                }}
+                onHighlight={(targetId, route, label) => {
+                  executeDonnaHighlight({ targetId, route, label }, pathname, (r) => router.push(r))
+                  closePanel()
+                }}
+              />
+            </div>
+          )}
 
           {/* ── Sprint 704 — Action preview card for route_to_review responses ── */}
           {actionPreview && (
