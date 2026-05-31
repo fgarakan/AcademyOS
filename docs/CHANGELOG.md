@@ -2,6 +2,175 @@
 
 ---
 
+## 2026-05-31 — Sprint 1027 — Internal Pilot God Mode Certification V1
+
+- `src/lib/donna/llmOrchestration/godModePilotCertification.ts` (new): `GOD_MODE_PILOT_CHECKS` — 30 certification checks across 6 categories: infrastructure (7 checks: live tool set, direct-executability safety), intelligence (4 checks: all Sprint 1013-1016 answer builders present), curriculum (5 checks: strategy query detection, philosophy profile, approval routing), safety (7 checks: approve_review_item/send_parent_message/change_player_level/publish_curriculum/bypass_rls blocked, curriculum reversible, knowledge tool non-executable), director_ux (3 checks: 10 audit criteria, 5 golden path steps, score ≥ 50), pilot_scenarios (5 checks: academy/player/curriculum/strategy/approval scenarios). `runGodModePilotCertification()` → `CertificationReport` with pilotReadiness: blocked (any safety/infra failure) / conditional (other failures) / ready (all 30 pass). `formatCertificationReport(report)` — human-readable report with blocker list. All 30 checks: pure TypeScript, no DB, no API.
+- `docs/architecture/DONNA_PILOT_CERTIFICATION_1027.md` (new): Architecture doc.
+- `docs/QA_DONNA_PILOT_CERTIFICATION_1027.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1026 — Director Golden Path UX Simplification V1
+
+- `src/lib/ux/directorGoldenPathSpec.ts` (new): `GoldenPathStep` type — stepId, label, description, targetPage, expectedTimeSeconds, successCriteria, currentBlockers[]. `DIRECTOR_GOLDEN_PATH` — 5-step golden path: open dashboard (3s) → act on review queue (60s) → ask DONNA (30s) → review players (45s) → check curriculum (30s). `SPRINT_1024_1025_READINESS` — readiness assessment for DirectorPrimaryActionHero and DonnaPanelResponseRenderer: both built and TypeScript-clean; DirectorPrimaryActionHero needs page refactor (would duplicate DirectorTodayCommandCenter); DonnaPanelResponseRenderer needs visual test. `computeGoldenPathScore()` → 60% (3 of 5 steps unblocked: review queue, players, curriculum). `getTopGoldenPathBlocker()` — "Multiple equal-weight attention surfaces compete". Key insight: DirectorPrimaryActionHero should replace DirectorTodayCommandCenter + DonnaDashboardOpenCard in a future page refactor, not be added alongside them. Pure TypeScript spec — no mutations.
+- `docs/architecture/DIRECTOR_GOLDEN_PATH_1026.md` (new): Architecture doc — current state, target state, phase 2/3 plan.
+- `docs/QA_DIRECTOR_GOLDEN_PATH_1026.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1025 — DONNA Panel Simplification + Premium Response UI V1
+
+- `src/components/donna/DonnaPanelResponseRenderer.tsx` (new): Unified DONNA panel response renderer. Props: `cooThread` (legacy COO turns), `godModeOutput` (OrchestratorOutput), `isGodModeLoading`, `commandResponse` (fallback/error), `suppressCommandResponseCard`, `onGodModeNavigate`, `onGodModeHighlight`. Render order: (1) COO thread bubbles (max 5 turns, max-h scrollable); (2) inline commandResponse bubble; (3) God Mode loading indicator (Loader2 spinner + "Thinking…"); (4) DonnaResponseCard for godModeOutput. Auto-scrolls to bottom on content change. Pure display — no navigation, no mutations. Not yet wired to DonnaAssistantButton — Sprint 1026 wires it.
+- `docs/architecture/DONNA_PANEL_SIMPLIFICATION_1025.md` (new): Architecture doc.
+- `docs/QA_DONNA_PANEL_SIMPLIFICATION_1025.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1024 — Director Dashboard One-Primary-Action Redesign V1
+
+- `src/app/director/_components/DirectorPrimaryActionHero.tsx` (new): Client component. `DirectorPrimaryActionHero` — renders the single highest-priority director action as a hero block at the top of the dashboard. Priority resolver: (1) critical attention items → red border, "Handle now" CTA; (2) pending review items → lime CTA "Review N items"; (3) pending placement → "Place players"; (4) high attention items; (5) default "Academy is on track". Props: `pendingReviewCount`, `attentionQueue`, `pendingPlacementCount`, `firstName`. Urgency styles: critical → red tones; high → orange tones with lime CTA; normal → surface tones with lime CTA. One lime CTA button per state, no competing actions. Not yet wired to director page — Sprint 1026 (Golden Path UX) wires it.
+- `docs/architecture/DIRECTOR_PRIMARY_ACTION_HERO_1024.md` (new): Architecture doc.
+- `docs/QA_DIRECTOR_PRIMARY_ACTION_HERO_1024.md` (new): QA checklist.
+- TypeScript: clean
+- V1 limitation: component not yet wired to `/director/page.tsx` — Sprint 1026 adds it to the page. Requires visual testing before production use.
+
+---
+
+## 2026-05-31 — Sprint 1023 — AcademyOS 10/10 UX Audit Skill Pack V1
+
+- `src/lib/ux/academyOsUxAudit.ts` (new): `AUDIT_CRITERIA` — 10 dimension definitions: primary_action_focus, visual_hierarchy, donna_integration, data_provenance, role_appropriate, mobile_usability, loading_empty_states, approval_gate_visibility, navigation_clarity, accessibility. Each dimension: id, description, tenOutOfTen, zeroOutOfTen, 3 auditQuestions, weight. `buildAuditReport(screenPath, screenLabel, dimensionScores)` — builds `ScreenAuditReport` with totalScore (0-100), per-dimension severity, criticalFindings, topRecommendations, sprintReadiness. `scoreToSprintReadiness(score)` — blocked/needs_work/good/excellent. `DIRECTOR_DASHBOARD_PRE_1024_AUDIT` — pre-baked audit of `/director` before Sprint 1024 redesign: score 65 / 10 dimensions / critical: primary_action_focus (multiple equal-weight actions), major: mobile_usability (dense on mobile), minor: data_provenance, accessibility. Informs Sprint 1024 scope directly.
+- `docs/architecture/ACADEMYOS_UX_AUDIT_1023.md` (new): Architecture doc.
+- `docs/QA_ACADEMYOS_UX_AUDIT_1023.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1022 — Director Curriculum Change Approval Flow V1
+
+- `src/lib/donna/llmOrchestration/curriculumChangeApprovalFlow.ts` (new): `buildCurriculumApprovalOutput(proposal, preview, context)` — builds an `OrchestratorOutput` (type: `draft_proposed_action`, safetyLevel: `approval_gated`, requiresConfirmation: true) that routes director to `/director/review` with highlight on `review-queue-primary`. Response text includes `formatImpactPreviewText` + "nothing changes until you approve in Review Queue." `routeCurriculumChangeToApproval(proposal, preview, context)` — returns `CurriculumChangeRoutingResult` with `routedToReviewQueue: true`, `autoApplied: false` (literal types, never overridable). `auditCurriculumChangeRouting(result)` — safety audit: verifies `autoApplied === false`, `safetyLevel === 'approval_gated'`, `requiresConfirmation === true`, `suggestedRoute === '/director/review'`, `proposal.safetyLevel === 'review_only'`. Returns null if clean, error string if violation. Pure TypeScript, no DB writes, no proposed_action creation, never auto-applies.
+- `docs/architecture/DONNA_CURRICULUM_CHANGE_APPROVAL_FLOW_1022.md` (new): Architecture doc.
+- `docs/QA_DONNA_CURRICULUM_CHANGE_APPROVAL_FLOW_1022.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1021 — Curriculum Impact Preview V1
+
+- `src/lib/donna/llmOrchestration/curriculumImpactPreview.ts` (new): `CurriculumImpactPreview` type — title, willHappen[], willNotHappen[], affectedStages, affectedDomains, effortLevel (low/moderate/significant), playerImpactSummary, approvalRequirement (always "requires explicit approval"), isReversible (always true). `buildCurriculumImpactPreview(proposal)` — builds preview from `CurriculumDraftProposal.changeType`: define_stage_structure → structural impact (no player movement); add_content_to_stage → content addition (no auto-session changes); rebalance_domain → domain coverage update (no player assessments); review_stage_coverage → analysis only. All previews: `willNotHappen` always includes "no parent/player communications", "no player movement", "no auto-session changes." `formatImpactPreviewText(preview)` — plain text for DONNA panel display. Pure TypeScript, no DB, no mutations.
+- `docs/architecture/DONNA_CURRICULUM_IMPACT_PREVIEW_1021.md` (new): Architecture doc.
+- `docs/QA_DONNA_CURRICULUM_IMPACT_PREVIEW_1021.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1020 — Philosophy-to-Curriculum Draft Engine V1
+
+- `src/lib/donna/llmOrchestration/philosophyCurriculumDraftEngine.ts` (new): `CurriculumDraftProposal` type — title, description, changeType (add_content_to_stage/rebalance_domain/define_stage_structure/review_stage_coverage), targetStage, targetDomain, gapRationale, safetyLevel (always review_only), approvalNote (always "nothing changes until approved"), reviewActionLabel, source (always philosophy_analysis). `buildProposalFromGap(gap, profile)` — converts a PhilosophyGapSignal + AcademyPhilosophyProfile into a CurriculumDraftProposal. No-content → "Define Initial Curriculum Structure". Stage gap → "Add Content to [Stage]". Domain gap → "Review [Domain] Balance". `buildProposalSummaryText(proposal)` — plain text for DonnaResponseCard. `buildProposalsFromGaps(gaps, profile)` — builds up to 3 proposals from a gap array. All functions: pure TypeScript, no DB writes, no proposed_action creation, never auto-applies.
+- `docs/architecture/DONNA_PHILOSOPHY_CURRICULUM_DRAFT_ENGINE_1020.md` (new): Architecture doc.
+- `docs/QA_DONNA_PHILOSOPHY_CURRICULUM_DRAFT_ENGINE_1020.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1019 — Academy Philosophy Profile V1
+
+- `src/lib/donna/llmOrchestration/academyPhilosophyProfile.ts` (new): `AcademyPhilosophyProfile` type — primaryStages, developmentEmphasis (skill_first/competition_first/balanced/fitness_first), contentDomainPriorities (1–5 ranking), targetSessionsPerWeek, hasFormalCurriculum, hasCompetitiveProgram, coachPlayerRatioGoal, philosophyNotes, source. `buildDefaultPhilosophyProfile(signals)` — derives a V1 profile from curriculum level count: 4+ levels → red/orange/green/yellow; 2-3 → red/orange; ≤1 → red only. `buildPhilosophyContextString(profile)` — generates safe LLM system prompt section from profile (no private data). `identifyPhilosophyGaps(profile, signals)` — detects primary stages without content and no-content-at-all gaps. All types and functions: pure TypeScript, no DB, no API, no mutations.
+- `docs/architecture/DONNA_ACADEMY_PHILOSOPHY_PROFILE_1019.md` (new): Architecture doc.
+- `docs/QA_DONNA_ACADEMY_PHILOSOPHY_PROFILE_1019.md` (new): QA checklist.
+- TypeScript: clean
+- V1 limitation: profile is always derived from signals. Sprint 1020+ can add director-defined philosophy via DB table.
+
+---
+
+## 2026-05-31 — Sprint 1018 — DONNA Strategic Curriculum Conversation Mode V1
+
+- `src/lib/donna/llmOrchestration/curriculumStrategyConversation.ts` (new): `isCurriculumStrategyQuery(text)` — detects curriculum strategy queries by phrase matching and 2+ keyword co-occurrence. `CURRICULUM_STRATEGY_PROMPT_SECTION` — 7-rule system prompt supplement: DONNA analyzes but doesn't apply, use get_curriculum_context for grounding, suggest as options not directives, no learning philosophy absolutism, explain draft→review→approval path for changes. `buildCurriculumStrategyAdvice(ctx)` — grounding statement from live curriculum counts. `CURRICULUM_STRATEGY_DISCLAIMER` — standard advisory footer. `curriculumStrategyRequiresDisclaimer()` — always true in V1.
+- `src/lib/donna/llmOrchestration/contextPacket.ts` (modified): `isCurriculumStrategyQuery` and `CURRICULUM_STRATEGY_PROMPT_SECTION` imported. `buildContextPacket` injects curriculum strategy section into system prompt when: (a) user is on `/director/curriculum` page, OR (b) `isCurriculumStrategyQuery(userInput)` returns true. Injection appended after existing system prompt — does not disrupt other sections.
+- `docs/architecture/DONNA_CURRICULUM_STRATEGY_CONVERSATION_1018.md` (new): Architecture doc.
+- `docs/QA_DONNA_CURRICULUM_STRATEGY_CONVERSATION_1018.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1017 — DONNA Knowledge Builder Live Retrieval V1
+
+- `src/lib/donna/llmOrchestration/types.ts` (modified): `'get_knowledge_content'` added to `OrchestratorToolId`. V1 comment: returns empty until Knowledge Builder DB table is wired.
+- `src/lib/donna/llmOrchestration/safetyContract.ts` (modified): `get_knowledge_content` registered (safe, advisory only, never triggers mutations).
+- `src/lib/donna/llmOrchestration/toolCallingContract.ts` (modified): `get_knowledge_content` stub added.
+- `src/lib/donna/llmOrchestration/liveContextToolExecutor.ts` (modified): `get_knowledge_content` added to `LIVE_TOOL_IDS`. `execGetKnowledgeContent()` implemented — calls `retrieveApprovedKnowledge` (existing stub, returns `[]` in V1), filters by role, ranks by page affinity, builds response via `buildKnowledgeResponse`. V1 returns honest "no approved content available" message. Architecture correct for when KB DB table is wired.
+- `src/lib/donna/llmOrchestration/contextPacket.ts` (modified): `get_knowledge_content` added to `TOOL_MANIFEST_ALL`. Tool count: 14.
+- `src/lib/donna/llmOrchestration/toolResultInterpreter.ts` (modified): `interpretKnowledgeContent` added. Uses `result.summary` from executor (pre-built by `buildKnowledgeResponse`). Advisory only — never suggests mutations or navigation. `INTERPRETERS` map entry added.
+- `src/lib/donna/llmOrchestration/evaluationHarness.ts` (modified): Counts updated 13→14. `context_008` includes `get_knowledge_content`. `live_014` (isLiveTool) and `live_015` (not directly executable) added. Total cases: 52.
+- TypeScript: clean
+- V1 limitation: `retrieveApprovedKnowledge` returns `[]` until Knowledge Builder DB migration exists. Knowledge answering produces honest "no content available" message in V1.
+
+---
+
+## 2026-05-31 — Sprint 1016 — DONNA Coach / Session Question Answering V1
+
+- `src/lib/donna/llmOrchestration/coachSessionAnswering.ts` (new): `buildSessionContextAnswer(session: SessionContextSummary): SessionContextAnswer`. Converts live session context into a COO answer. Priority: needs director review (wrap-up pending) → attendance (if recorded) → wrap-up status → coach/group/template/blocks → date/time. Safety: no coach notes, no player names, wrap-up pending → routes to Review Queue only. Always ends with safety note.
+- `src/lib/donna/llmOrchestration/toolResultInterpreter.ts` (modified): `interpretSessionContext` completely replaced with Sprint 1016 version using `buildSessionContextAnswer`. Old raw-summary Sprint 1004 version removed. Import added.
+- `docs/architecture/DONNA_COACH_SESSION_ANSWERING_1016.md` (new): Architecture doc.
+- `docs/QA_DONNA_COACH_SESSION_ANSWERING_1016.md` (new): QA checklist.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1015 — DONNA Curriculum Question Answering V1
+
+- `src/lib/donna/llmOrchestration/curriculumAnswering.ts` (new): `buildCurriculumContextAnswer(summary: CurriculumContextSummary): CurriculumIntelligenceAnswer`. Converts live curriculum context into a COO answer. Signals: pending curriculum drafts (approval-gated, routes to Review Queue) → total level count → levels without content. Safety: pending drafts explicitly noted as "proposed changes only — nothing applied until approved." Ends with read-only safety note.
+- `src/lib/donna/llmOrchestration/types.ts` (modified): `'get_curriculum_context'` added to `OrchestratorToolId`.
+- `src/lib/donna/llmOrchestration/safetyContract.ts` (modified): `get_curriculum_context` registered in `SAFE_TOOL_REGISTRY` (safe, academyId required).
+- `src/lib/donna/llmOrchestration/toolCallingContract.ts` (modified): `get_curriculum_context` stub added to `EXECUTORS` (routes through live executor, not synchronous path).
+- `src/lib/donna/llmOrchestration/liveContextToolExecutor.ts` (modified): `get_curriculum_context` added to `LIVE_TOOL_IDS`. `execGetCurriculumContext()` added — uses `retrieveCurriculumContext()` (Sprint 992). Switch case added to `executeLiveTool`.
+- `src/lib/donna/llmOrchestration/contextPacket.ts` (modified): `get_curriculum_context` added to `TOOL_MANIFEST_ALL`. Tool count: 13.
+- `src/lib/donna/llmOrchestration/toolResultInterpreter.ts` (modified): `interpretCurriculumContext()` added. `INTERPRETERS` map entry added. Uses `buildCurriculumContextAnswer`.
+- `src/lib/donna/llmOrchestration/evaluationHarness.ts` (modified): `context_002` updated 12→13. `tool_005` updated 12→13. `context_008` includes `get_curriculum_context`. `live_012` (isLiveTool check) and `live_013` (not directly executable) added. Total cases: 48.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1014 — DONNA Player Development Question Answering V1
+
+- `src/lib/donna/llmOrchestration/playerDevelopmentAnswering.ts` (new): `buildPlayerProfileAnswer(profile: PlayerProfileSummary): PlayerProfileAnswer`. Converts director-safe `PlayerProfileSummary` into a COO-quality DONNA answer. Priority order: assessment overdue → advancement eligible → non-active status → active priorities → recent sessions → evidence count → current level (baseline opening). Returns: `donnaText`, `primaryActionLabel`, `highlightTargetId`, `suggestedRoute`. Never exposes player names, coach notes, assessment scores. Always ends with safety note.
+- `src/lib/donna/llmOrchestration/toolResultInterpreter.ts` (modified): `interpretPlayerProfileSummary` updated to call `buildPlayerProfileAnswer(result.data)` instead of raw summary dump. Error path clarified. Highlight driven by answer builder return. Sprint 1013 interpreters unchanged. `interpretSessionContext` (Sprint 1004) unchanged.
+- `docs/architecture/DONNA_PLAYER_DEVELOPMENT_ANSWERING_1014.md` (new): Architecture doc — problem, module design, priority order, safety invariants.
+- `docs/QA_DONNA_PLAYER_DEVELOPMENT_ANSWERING_1014.md` (new): QA checklist — TypeScript, answer builder unit tests, interpreter update, safety, Sprint 1003 regression.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1013 — DONNA Academy Intelligence Answering V1
+
+- `src/lib/donna/llmOrchestration/academyIntelligenceAnswering.ts` (new): Pure TypeScript answer builders for live academy context tools. `buildAcademyStateAnswer(state)` — converts `AcademyStateSummary` into a COO-quality prioritized answer: health-signal headline, priority signals (review queue > missing recaps > placement > advancement > sessions), live-data provenance note, primary action label, route, highlight target. `buildPlayerDevelopmentAnswer(dev)` — converts `PlayerDevelopmentSummary` into a COO answer: placement > advancement > overdue assessment > curriculum gap > total active players, route to /director/players when action needed. Both builders: never expose player names, never throw, always end with safety/provenance note.
+- `src/lib/donna/llmOrchestration/toolResultInterpreter.ts` (modified): `interpretAcademyState` and `interpretPlayerDevelopmentSummary` updated to call the new answer builders instead of returning raw `result.summary` strings. Error paths updated with clearer messages. Highlight and navigation now driven by answer builder return. `interpretPlayerProfileSummary` (Sprint 1003) and `interpretSessionContext` (Sprint 1004) unchanged.
+- `docs/architecture/DONNA_ACADEMY_INTELLIGENCE_ANSWERING_1013.md` (new): Architecture doc — problem, module design, priority order, example before/after output, safety invariants.
+- `docs/QA_DONNA_ACADEMY_INTELLIGENCE_ANSWERING_1013.md` (new): QA checklist — TypeScript, answer builder unit tests, interpreter update, safety, Sprint 1002 regression.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1012 — DONNA Tool Execution Eval Expansion V1
+
+- `src/lib/donna/llmOrchestration/evaluationHarness.ts` (modified): Fixed regression in `context_002` (toolManifest count 8→12 after Sprint 1002–1004 added 4 live tools). Added `'live_tools'` to `EvalCategory` union. Added new imports: `isLiveTool` (liveContextToolExecutor), `isSafeToExecuteDirectly` (toolExecutionLoop), `getRegisteredTools` (toolCallingContract), `OrchestratorToolId` type. Added 18 new eval cases: 2 tool_calling (`tool_005`–`tool_006`), 5 context_packet (`context_004`–`context_008`), 11 live_tools (`live_001`–`live_011`). Total cases: 46 (was 28). All original 25 cases preserved and still passing. Zero new `as any`. Pure TypeScript — no DB, no API, no mutations.
+- `docs/architecture/DONNA_TOOL_EXECUTION_EVAL_EXPANSION_1012.md` (new): Architecture doc — regression fixed, new case rationale, live tool safety model, why stubs return informative errors, why playerId/sessionId must not be LLM-supplied, total coverage table, known gaps.
+- `docs/QA_DONNA_TOOL_EXECUTION_EVAL_EXPANSION_1012.md` (new): QA checklist — TypeScript, regression fix, all 18 new eval cases, coverage completeness, known gaps, Sprint 1011 regression, Sprint 1000–1004 regression.
+- TypeScript: clean
+
+---
+
+## 2026-05-31 — Sprint 1011 — DONNA Panel God Mode Integration V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Three targeted edits. (1) Submit flow: `handleGodModeQuery` replaces `getFailureMode('intent_unknown')` as the final fallback when no existing handler claims the input. The 600ms `processingClear` timer is cancelled before the async call so `isProcessingCommand` is managed by `handleGodModeQuery`'s own `finally` block. (2) `isThinking` prop on `DonnaInputPanel` now includes `|| isGodModeLoading` so the input area shows a thinking indicator during the async orchestrator call. (3) After `DonnaWorkflowCards` in the panel body: loading dots (DONNA avatar + three pulsing lime dots + "Thinking…") render while `isGodModeLoading` is true; `DonnaResponseCard` renders when `godModeOutput` is set. `onNavigate` → `router.push + closePanel`. `onHighlight` → `executeDonnaHighlight + closePanel`. All existing paths (COO router, legacy handler, voice, chips, drafts) are preserved. God Mode fires only when every prior handler passes.
+- `docs/architecture/DONNA_PANEL_GOD_MODE_INTEGRATION_1011.md` (new): Architecture doc — pre-Sprint-1011 state, integration point, full submit flow, server action call, response card render path, guided highlight path, fallback behavior, no-duplicate guarantee, V2 roadmap.
+- `docs/QA_DONNA_PANEL_GOD_MODE_INTEGRATION_1011.md` (new): QA checklist — TypeScript, submit flow, loading state, response card, guided highlight, navigation, fallback, no duplicate surface, voice regression, chip/mode regression, safety, parent/player exposure, Sprint 1008–1010 regression, god mode history.
+- TypeScript: clean
+
+---
+
 ## 2026-05-30 — Sprint 1010 — DONNA Live Orchestrator Server Action V1
 
 - `src/app/director/_actions/donnaOrchestratorAction.ts` (new): Server action bridge from the DONNA panel to the live LLM orchestrator. `DonnaOrchestratorInput` — accepted from client: `userInput` (max 800 chars), `pathname`, `pageLabel`, `firstName`, `pendingReviews`, `conversationHistory`, `playerId`, `sessionId`, `useLlm` (default: true). Never accepts `academyId` or `role` from client — both resolved from `getAuthorizedContext()`. Director and Head Coach access only. Input validation: non-empty userInput, max 800 chars, pathname must start with `/`. Calls `orchestrate()` with auth-resolved `academyId`/`role`. On orchestrate() exception: returns safe `'DONNA is temporarily unavailable.'`. After response: writes `donna_intelligence_call` usage event to DB via `writeUsageEventToDb()` (fire-and-forget — never blocks response). `DonnaOrchestratorResult` returned to client: `ok`, `output` (primaryOutput only), `hadBlockedAttempt`, `error`. `safetyAudit`, `contextSummary`, `secondaryOutputs`, and all raw DB errors are NOT returned. Not yet wired to DonnaAssistantButton — Sprint 1011 handles panel integration.
