@@ -3,7 +3,6 @@ import { Clock, Dumbbell, Plus, Activity } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent, EmptyState } from '@/components/ui'
 import type { Tables } from '@/lib/supabase/database.types'
-import { PageExplainerCard } from '@/components/onboarding/PageExplainerCard'
 
 type Template = Tables<'templates'>
 
@@ -102,30 +101,8 @@ export default async function FitnessTemplatesPage() {
     <div className="p-6 animate-fade-in space-y-6">
       <PageHeader />
 
-      <PageExplainerCard
-        title="Reusable physical training plans"
-        body="Fitness templates are structured training blueprints — not today's completed workout, and not yet a player-specific recommendation. Each template defines the blocks coaches will run: warm-up, mobility, coordination, speed, strength, and recovery. They support the physical pathway alongside class templates."
-        qa={[
-          {
-            q: 'What is a fitness template?',
-            a: 'A named, reusable training structure with blocks. Think of it as the physical protocol blueprint your coaches follow on court.',
-          },
-          {
-            q: 'What is it not?',
-            a: "It's not a log of today's completed workout and not a player-specific plan. It's a reusable structure that coaches adapt per session.",
-          },
-          {
-            q: 'What are the block categories?',
-            a: 'Warm-up, Mobility, Coordination, Speed, Strength, Recovery, and Tennis-transfer.',
-          },
-          {
-            q: 'What should I do first?',
-            a: 'Create a template, add blocks for each training phase, then generate sessions from it.',
-          },
-        ]}
-      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Total Templates" value={fitnessTemplates.length} />
         <StatCard
           label="Active"

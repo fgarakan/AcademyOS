@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1049 — Site-Wide AcademyOS UX Standard Enforcement V1
+
+- `src/app/director/fitness/templates/page.tsx` (modified): Removed `PageExplainerCard` (4-Q&A always-visible explainer block) — same pattern fixed for class templates in Sprint 1039. Only remaining `PageExplainerCard` usage after Sprint 1039. Removed unused import. Template list, stats, empty state, and all CTAs unchanged. TypeScript: clean.
+- `docs/architecture/SITE_WIDE_UX_ENFORCEMENT_1049.md` (new): Enforcement pass findings and remaining DONNA entry point audit.
+- `docs/QA_SITE_WIDE_UX_ENFORCEMENT_1049.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1048 — Player Mission Current Focus UX V1
 
 - `src/app/player/page.tsx` (modified): Removed bottom "Ask DONNA CTA" card — duplicate of the mid-page DONNA chip block and the bottom tab bar "Ask DONNA" tab. Mid-page chip block with 4 specific question prompts and trust note preserved. Bottom tab navigation preserved. TypeScript: clean.
