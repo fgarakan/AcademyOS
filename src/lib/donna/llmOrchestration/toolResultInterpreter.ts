@@ -15,7 +15,17 @@
 //   interpretation.targetFocusId   // the target to highlight
 
 import type { ToolCallResult } from './toolCallingContract'
-import type { OrchestratorToolId } from './types'
+import type { OrchestratorToolId, AcademyStateSummary } from './types'
+import type { PlayerDevelopmentSummary } from './playerDevelopmentRetrieval'
+// Sprint 1013 — COO-quality answer builders for live academy context tools
+import { buildAcademyStateAnswer, buildPlayerDevelopmentAnswer } from './academyIntelligenceAnswering'
+// Sprint 1014 — COO-quality answer builder for player profile (director-safe only)
+import { buildPlayerProfileAnswer } from './playerDevelopmentAnswering'
+// Sprint 1015 — COO-quality answer builder for curriculum context
+import { buildCurriculumContextAnswer } from './curriculumAnswering'
+// Sprint 1016 — COO-quality answer builder for session context
+import { buildSessionContextAnswer } from './coachSessionAnswering'
+// Sprint 1017 — Knowledge Builder retrieval interpreter (uses knowledgeBuilderBridge response text directly)
 
 // ── Interpretation result ─────────────────────────────────────────────────────
 
@@ -181,32 +191,37 @@ function interpretRouteToPage(result: ToolCallResult): ToolInterpretation {
   }
 }
 
-// ── Sprint 1002: Live context tool interpreters ───────────────────────────────
+// ── Sprint 1002/1013: Live context tool interpreters ─────────────────────────
 
 function interpretAcademyState(result: ToolCallResult): ToolInterpretation {
-  if (!result.ok || !result.summary) {
+  if (!result.ok || !result.data) {
     return {
       tool: result.tool,
-      donnaText: 'I was unable to retrieve live academy state. Here is what I know from panel context.',
+      donnaText: 'I was unable to retrieve live academy state. Please try again or check the dashboard for current signals.',
       shouldHighlight: false,
       shouldSuggestNavigation: false,
       requiresConfirmation: false,
     }
   }
+  // Sprint 1013 — use COO-quality answer builder instead of raw summary dump
+  const answer = buildAcademyStateAnswer(result.data as AcademyStateSummary)
   return {
     tool: result.tool,
-    donnaText: `Here is your live academy state: ${result.summary} This data is retrieved directly from your academy database.`,
-    shouldHighlight: false,
-    shouldSuggestNavigation: false,
+    donnaText: answer.donnaText,
+    shouldHighlight: !!answer.highlightTargetId,
+    targetFocusId: answer.highlightTargetId,
+    targetRoute: answer.highlightRoute,
+    shouldSuggestNavigation: !!answer.suggestedRoute,
+    suggestedRoute: answer.suggestedRoute,
     requiresConfirmation: false,
   }
 }
 
 function interpretPlayerDevelopmentSummary(result: ToolCallResult): ToolInterpretation {
-  if (!result.ok || !result.summary) {
+  if (!result.ok || !result.data) {
     return {
       tool: result.tool,
-      donnaText: 'I was unable to retrieve player development signals. Here is what I know from panel context.',
+      donnaText: 'I was unable to retrieve player development signals. The player directory is available at /director/players.',
       shouldHighlight: true,
       targetFocusId: 'player-list',
       targetRoute: '/director/players',
@@ -214,49 +229,27 @@ function interpretPlayerDevelopmentSummary(result: ToolCallResult): ToolInterpre
       requiresConfirmation: false,
     }
   }
+  // Sprint 1013 — use COO-quality answer builder instead of raw summary dump
+  const answer = buildPlayerDevelopmentAnswer(result.data as PlayerDevelopmentSummary)
   return {
     tool: result.tool,
-    donnaText: `Here are your live player development signals: ${result.summary} These counts come directly from your academy database.`,
-    shouldHighlight: true,
-    targetFocusId: 'player-list',
-    targetRoute: '/director/players',
-    shouldSuggestNavigation: false,
+    donnaText: answer.donnaText,
+    shouldHighlight: !!answer.highlightTargetId,
+    targetFocusId: answer.highlightTargetId,
+    targetRoute: answer.highlightRoute,
+    shouldSuggestNavigation: !!answer.suggestedRoute,
+    suggestedRoute: answer.suggestedRoute,
     requiresConfirmation: false,
   }
 }
 
-// ── Sprint 1003: Player profile interpreter ───────────────────────────────────
-
-function interpretPlayerProfileSummary(result: ToolCallResult): ToolInterpretation {
-  if (!result.ok || !result.summary) {
-    return {
-      tool: result.tool,
-      donnaText: 'I was unable to retrieve player profile data for this player. This may be a temporary retrieval issue — the player is still visible in the panel.',
-      shouldHighlight: true,
-      targetFocusId: 'player-profile-header',
-      targetRoute: undefined,
-      shouldSuggestNavigation: false,
-      requiresConfirmation: false,
-    }
-  }
-  return {
-    tool: result.tool,
-    donnaText: `Here is the director-safe player summary I can see: ${result.summary} This is read-only guidance. Nothing about this player changes until you take an explicit action.`,
-    shouldHighlight: true,
-    targetFocusId: 'player-active-priorities',
-    targetRoute: undefined,
-    shouldSuggestNavigation: false,
-    requiresConfirmation: false,
-  }
-}
-
-// ── Sprint 1004: Session context interpreter ──────────────────────────────────
+// ── Sprint 1004/1016: Session context interpreter ────────────────────────────
 
 function interpretSessionContext(result: ToolCallResult): ToolInterpretation {
-  if (!result.ok || !result.summary) {
+  if (!result.ok || !result.data) {
     return {
       tool: result.tool,
-      donnaText: 'I was unable to retrieve session context for this session. This may be a temporary retrieval issue — the session details are still visible in the panel.',
+      donnaText: 'I was unable to retrieve session context. The session details are still visible in the panel.',
       shouldHighlight: true,
       targetFocusId: 'session-blocks',
       targetRoute: undefined,
@@ -264,18 +257,100 @@ function interpretSessionContext(result: ToolCallResult): ToolInterpretation {
       requiresConfirmation: false,
     }
   }
-  const data = result.data as { needsDirectorReview?: boolean } | null
-  const reviewNote = data?.needsDirectorReview
-    ? ' A wrap-up is waiting for your review in the Review Queue.'
-    : ''
+  // Sprint 1016 — use COO-quality answer builder instead of raw summary dump
+  const answer = buildSessionContextAnswer(result.data as import('./sessionContextRetrieval').SessionContextSummary)
   return {
     tool: result.tool,
-    donnaText: `Here is the session context I can safely see: ${result.summary}${reviewNote} This is read-only guidance and does not change the session.`,
-    shouldHighlight: true,
-    targetFocusId: 'session-blocks',
+    donnaText: answer.donnaText,
+    shouldHighlight: !!answer.highlightTargetId,
+    targetFocusId: answer.highlightTargetId,
     targetRoute: undefined,
-    shouldSuggestNavigation: data?.needsDirectorReview ? true : false,
-    suggestedRoute: data?.needsDirectorReview ? '/director/review' : undefined,
+    shouldSuggestNavigation: !!answer.suggestedRoute,
+    suggestedRoute: answer.suggestedRoute,
+    requiresConfirmation: false,
+  }
+}
+
+// ── Sprint 1003/1014: Player profile interpreter ─────────────────────────────
+
+function interpretPlayerProfileSummary(result: ToolCallResult): ToolInterpretation {
+  if (!result.ok || !result.data) {
+    return {
+      tool: result.tool,
+      donnaText: 'I was unable to retrieve player profile data. This may be a temporary issue — the player profile is still visible in the panel.',
+      shouldHighlight: true,
+      targetFocusId: 'player-profile-header',
+      targetRoute: undefined,
+      shouldSuggestNavigation: false,
+      requiresConfirmation: false,
+    }
+  }
+  // Sprint 1014 — use COO-quality answer builder instead of raw summary dump
+  const answer = buildPlayerProfileAnswer(result.data as import('./playerProfileRetrieval').PlayerProfileSummary)
+  return {
+    tool: result.tool,
+    donnaText: answer.donnaText,
+    shouldHighlight: !!answer.highlightTargetId,
+    targetFocusId: answer.highlightTargetId,
+    targetRoute: undefined,
+    shouldSuggestNavigation: !!answer.suggestedRoute,
+    suggestedRoute: answer.suggestedRoute,
+    requiresConfirmation: false,
+  }
+}
+
+// ── Sprint 1017: Knowledge Builder retrieval interpreter ─────────────────────
+
+function interpretKnowledgeContent(result: ToolCallResult): ToolInterpretation {
+  if (!result.ok) {
+    return {
+      tool: result.tool,
+      donnaText: 'I was unable to retrieve Knowledge Builder content. This may be a temporary issue.',
+      shouldHighlight: false,
+      shouldSuggestNavigation: false,
+      requiresConfirmation: false,
+    }
+  }
+  // result.summary is already built by buildKnowledgeResponse in the executor
+  // (handles both empty and non-empty cases with proper citation)
+  const hasContent = Array.isArray((result.data as { entries?: unknown[] } | null)?.entries) &&
+    ((result.data as { entries: unknown[] }).entries.length > 0)
+  return {
+    tool: result.tool,
+    donnaText: result.summary,
+    shouldHighlight: false,
+    shouldSuggestNavigation: false,
+    requiresConfirmation: false,
+    // Knowledge content is advisory only — never suggests mutations
+    ...(hasContent
+      ? {}
+      : { suggestedRoute: undefined }),
+  }
+}
+
+// ── Sprint 1015: Curriculum context interpreter ───────────────────────────────
+
+function interpretCurriculumContext(result: ToolCallResult): ToolInterpretation {
+  if (!result.ok || !result.data) {
+    return {
+      tool: result.tool,
+      donnaText: 'I was unable to retrieve curriculum context. The curriculum builder is available at /director/curriculum.',
+      shouldHighlight: false,
+      shouldSuggestNavigation: true,
+      suggestedRoute: '/director/curriculum',
+      requiresConfirmation: false,
+    }
+  }
+  // Sprint 1015 — use COO-quality answer builder
+  const answer = buildCurriculumContextAnswer(result.data as import('./curriculumContextRetrieval').CurriculumContextSummary)
+  return {
+    tool: result.tool,
+    donnaText: answer.donnaText,
+    shouldHighlight: !!answer.highlightTargetId,
+    targetFocusId: answer.highlightTargetId,
+    targetRoute: answer.highlightRoute,
+    shouldSuggestNavigation: !!answer.suggestedRoute,
+    suggestedRoute: answer.suggestedRoute,
     requiresConfirmation: false,
   }
 }
@@ -298,6 +373,10 @@ const INTERPRETERS: Record<OrchestratorToolId, (result: ToolCallResult) => ToolI
   get_player_profile_summary: interpretPlayerProfileSummary,
   // Sprint 1004 — session-specific context tool
   get_session_context: interpretSessionContext,
+  // Sprint 1015 — curriculum context tool
+  get_curriculum_context: interpretCurriculumContext,
+  // Sprint 1017 — knowledge builder retrieval (advisory only — never triggers mutations)
+  get_knowledge_content: interpretKnowledgeContent,
 }
 
 /**
