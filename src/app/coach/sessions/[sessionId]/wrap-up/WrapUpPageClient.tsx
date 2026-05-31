@@ -7,7 +7,7 @@
 // optional player observation draft form in saved state.
 
 import { useState, useTransition } from 'react'
-import { ChevronLeft, ChevronRight, Check, Loader2, Sparkles, SkipForward, ShieldCheck, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, Loader2, Sparkles, SkipForward, Users } from 'lucide-react'
 import Link from 'next/link'
 import { AudioRecorderButton } from '@/components/assistant/AudioRecorderButton'
 import { VoiceInputButton } from '@/components/assistant/VoiceInputButton'
@@ -231,12 +231,6 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
             Your wrap-up draft is in the director review queue. Nothing has been sent to parents or applied to player profiles.
           </p>
         </div>
-        <div className="flex items-start gap-2 max-w-xs w-full px-3 py-2.5 rounded-xl border border-lime/15 bg-lime/4 text-left">
-          <ShieldCheck className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
-          <p className="text-[10px] text-text-secondary leading-relaxed">
-            The director will review and approve before any information reaches parents or becomes part of the official player record.
-          </p>
-        </div>
         <div className="flex flex-col gap-2 w-full max-w-xs">
           <Link
             href={`/coach/sessions/${sessionId}/wrap-up/review`}
@@ -249,13 +243,6 @@ export function WrapUpPageClient({ sessionId, sessionName, blockList, returnHref
             className="px-5 py-3 rounded-xl border border-border text-sm font-medium text-text-secondary hover:bg-surface-raised transition-all text-center"
           >
             Back to Session
-          </Link>
-          <Link
-            href="/coach/donna"
-            className="px-5 py-3 rounded-xl text-sm text-text-muted hover:text-text-secondary transition-all text-center flex items-center justify-center gap-1.5"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Ask DONNA
           </Link>
         </div>
 
