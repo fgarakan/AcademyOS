@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-05-31 — Sprint 1077 — DONNA Action Registry Runtime Wiring V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): (1) Added imports for `matchDonnaActionIntent` and `type DonnaActionRole` from `@/lib/donna/donnaActionRegistry`. (2) Added action-registry pre-classifier block inside `handleDonnaCooPrompt`, positioned after the Sprint 1073 context-pack lookup and before `routeDonnaPrompt`. The block calls `matchDonnaActionIntent(text, uiActionRole as DonnaActionRole)`, skips `navigation` category (handled upstream by `handleUIDispatch`), and for non-navigation matches produces `confirmationMessage ?? safetyMessage` with `responseType: 'honest'` for approval-required actions and `'info'` for read-only ones. No mutations, no proposed_actions writes, no auto-navigation for navigation-category actions. `suggest_level_movement` returns its `blockedMessage` as 'honest' type — zero record changes. All existing paths (dispatcher, context packs, routeDonnaPrompt, God Mode) preserved.
+- `docs/architecture/DONNA_ACTION_REGISTRY_RUNTIME_WIRING_1077.md` (new): Full runtime stack diagram, why after context-pack/before routeDonnaPrompt, wired-action table, navigation skip rationale, response type rules.
+- `docs/QA_DONNA_ACTION_REGISTRY_RUNTIME_WIRING_1077.md` (new): 36-check QA table covering mutation_request safety, explanation cross-page, review action, navigation non-interference, context-pack priority, unknown fallthrough, and 8 regression checks.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1076 — DONNA Action Registry Expansion V1
 
 - `src/lib/donna/donnaActionRegistry.ts` (new): Intent-level DONNA action registry — orthogonal to the existing UIAction registry (Sprint 753, mechanism-level) and the dispatcher (Sprint 755, pattern-matching). Defines `DonnaActionCategory` (`navigation`, `explanation`, `draft`, `review`, `mutation_request`), `DonnaActionRiskLevel` (`low`, `medium`, `high`), `DonnaActionRole`, and the `DonnaAction` interface (12 fields: actionId, label, category, intentPhrases, route?, allowedRoles, riskLevel, requiresApproval, confirmationMessage, blockedMessage, safetyMessage, relatedContextPackRoutes). Contains 18 initial entries: 10 navigation (all low risk, no approval), 2 explanation (low risk), 4 draft (medium risk, requiresApproval: true), 1 review (low risk), 1 mutation_request (high risk, requiresApproval: true — suggest_level_movement). Exports `getDonnaActionById(actionId)`, `matchDonnaActionIntent(prompt, role?)` (case-insensitive substring, role filter), and `getDonnaActionsForRoute(route)` (exact + dynamic prefix matching). Not wired into runtime — future pre-classifier for `handleDonnaCooPrompt`.

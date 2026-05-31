@@ -271,6 +271,9 @@ import { buildClassTemplateGuidance, matchesClassTemplateGuidanceIntent } from '
 import { buildCurriculumBuilderGuidance, matchesCurriculumBuilderGuidanceIntent } from '@/lib/donna/curriculumBuilderGuidance'
 // Sprint 1073 — Context Pack runtime wiring: page-specific Q&A lookup before routeDonnaPrompt
 import { getDonnaContextPackForRoute, lookupAnswerInContextPack } from '@/lib/donna/donnaContextPackRegistry'
+// Sprint 1077 — Action Registry runtime wiring: non-navigation intent classification before routeDonnaPrompt
+import { matchDonnaActionIntent } from '@/lib/donna/donnaActionRegistry'
+import type { DonnaActionRole } from '@/lib/donna/donnaActionRegistry'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -3040,6 +3043,26 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         recordTurn(text, packAnswer.response, { domain: 'general' })
         return true
       }
+    }
+
+    // Sprint 1077 — action registry pre-classifier: handles known non-navigation actions
+    // that were not covered by the context-pack lookup above.
+    // Navigation actions (category === 'navigation') are intentionally skipped — they are
+    // already handled upstream by handleUIDispatch before handleDonnaCooPrompt is reached.
+    // Draft/review/mutation_request actions receive a structured approval-aware response.
+    // High-risk actions (suggest_level_movement) return a blockedMessage that explains DONNA
+    // will only produce a draft proposal — never directly mutate records.
+    const registryAction = matchDonnaActionIntent(text, uiActionRole as DonnaActionRole)
+    if (registryAction && registryAction.category !== 'navigation') {
+      const msg = registryAction.confirmationMessage ?? registryAction.safetyMessage
+      const responseType: 'honest' | 'info' = registryAction.requiresApproval ? 'honest' : 'info'
+      setCommandResponse({ message: msg, type: responseType, label: registryAction.label })
+      setCooThread(prev => [...prev.slice(-4), { user: text, donna: msg, type: responseType }])
+      speakDonna(msg)
+      recordPrompt(text)
+      recordSummary(msg)
+      recordTurn(text, msg, { domain: 'general' })
+      return true
     }
 
     const routing = routeDonnaPrompt(text, pathname)
