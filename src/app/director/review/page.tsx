@@ -1253,15 +1253,12 @@ export default async function DirectorReviewQueuePage({
         Dashboard
       </Link>
 
-      {/* Page header */}
+      {/* Page header — Sprint 1036: safety note promoted to subtitle level */}
       <div className="space-y-1">
         <p className="page-eyebrow">Operations</p>
         <h1 className="page-title">Review Queue</h1>
         <p className="page-subtitle">
-          Coach notes, attendance exceptions, placement decisions, and system suggestions wait here until you review them.
-        </p>
-        <p className="text-[11px] text-text-muted pt-0.5">
-          Nothing parent-facing or player-level-changing is applied without your approval.
+          Everything here waits for your decision. Nothing is applied until you approve it.
         </p>
       </div>
 

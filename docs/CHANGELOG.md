@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-05-31 — Sprint 1036 — Director Approvals Page Simplification V1
+
+- `src/app/director/review/page.tsx` (modified): Page subtitle simplified from two competing paragraphs (one describing what's in the queue + one safety note) to one clear statement: "Everything here waits for your decision. Nothing is applied until you approve it." Safety message promoted from muted text to subtitle level — clearer trust signal for the director. All approval logic, tab structure, draft cards, and DONNA panels unchanged. TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1035 — Director Today Page Simplification V1
 
 - `src/app/director/today/page.tsx` (modified): Two simplifications. (1) Header Review Queue link only shown when `pending === 0` — when pending > 0, the orange "items need your review" notice IS the primary action; duplicate CTA removed. (2) `TodayCommandBrief` section (Sprint 512) removed — `DonnaTodayBriefPanel` (Sprint 922) covers the same need with better priority-ordered UX. Result: two competing DONNA sections collapsed to one; two competing Review Queue CTAs collapsed to one. TypeScript: clean (pre-existing unused-var warnings not from sprint changes).
