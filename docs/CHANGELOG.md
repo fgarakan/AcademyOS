@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-31 — Sprint 1034 — Replace DirectorTodayCommandCenter With Primary Action Hero V1
+
+- `src/app/director/page.tsx` (modified): (1) Removed `DonnaDashboardOpenCard` import and JSX section (Sprint 804 — Sprint 1033 audit: duplicates primary action). (2) Replaced `DirectorTodayCommandCenter` import and JSX section (Sprint 767) with `DirectorPrimaryActionHero` (Sprint 1024). Hero receives: `pendingReviewCount={pendingWrapUpsCount + newRequests}`, `attentionQueue`, `pendingPlacementCount={pendingCount}`, `firstName`. Today's Pulse grid (Sprint 813), KPI sections, and all conditional sections preserved. `buildAttentionQueue` import preserved (still needed by hero). `data-donna-focus-id="primary-action-hero"` added for DONNA teal highlighting. TypeScript: clean. Visual QA required.
+- `docs/architecture/REPLACE_TODAY_COMMAND_CENTER_1034.md` (new): Architecture doc.
+
 ## 2026-05-31 — Sprint 1033 — Director Dashboard Surface Audit V1
 
 - `src/lib/ux/directorDashboardSurfaceAudit.ts` (new): Complete audit of all 11 surfaces on /director/page.tsx. `DIRECTOR_DASHBOARD_SURFACES` — each surface: name, sprintAdded, location (top/mid/bottom), purpose, showsUrgency, showsCount, hasCTA, attentionConflict (none/duplicates_primary/equal_weight), recommendedAction (keep/replace/collapse/remove_when_live/move_down), rationale, sprint1034Impact. `COMPETING_SURFACE_PAIRS` — 3 identified pairs that create competing attention (DonnaDashboardOpenCard vs TodayCommandCenter; Pulse grid vs TodayCommandCenter; LiveActivityCard vs Pulse grid). `SPRINT_1034_PLAN` — remove: DonnaDashboardOpenCard + DirectorTodayCommandCenter; add: DirectorPrimaryActionHero; keep: Pulse grid + KPI sections; defer: LiveActivityCard simplification. `getCompetingCount()` and `getSurfacesByAction()` helpers. TypeScript: clean.

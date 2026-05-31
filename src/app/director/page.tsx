@@ -18,15 +18,14 @@ import { formatDate } from '@/lib/utils'
 import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
 import { DirectorKpiHealthSection } from './_components/DirectorKpiHealthSection'
-import { DirectorTodayCommandCenter } from './_components/DirectorTodayCommandCenter'
+// Sprint 1034 — DirectorTodayCommandCenter replaced by DirectorPrimaryActionHero
+import { DirectorPrimaryActionHero } from './_components/DirectorPrimaryActionHero'
 import { buildAttentionQueue, type AttentionQueueInput } from '@/lib/director/attentionQueue'
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
 import { DirectorDnaStatusBadge } from './_components/DirectorDnaStatusBadge'
 // Sprint 803: DonnaDashboardPresenceCTA removed — duplicated top-of-page attention surface
-// import { DonnaDashboardPresenceCTA } from '@/components/donna/DonnaKpiExplainerPanel'
-// Sprint 804: DONNA inline dashboard entry card
-import { DonnaDashboardOpenCard } from './_components/DonnaDashboardOpenCard'
+// Sprint 804: DonnaDashboardOpenCard removed in Sprint 1034 — replaced by DirectorPrimaryActionHero + persistent DONNA button
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -467,22 +466,15 @@ export default async function DirectorDashboard() {
         />
       </div>
 
-      {/* ── Sprint 804: DONNA inline entry card ──────────────────────────────────────── */}
-      {/* Shows attention signal count and one-click opens DONNA with daily brief prompt */}
-      <DonnaDashboardOpenCard
-        attentionCount={totalAlerts}
-        firstName={directorDisplayName.split(' ')[0]}
-      />
-
-      {/* ── Sprint 767: Today Command Center — DONNA-narrated, unified priority surface ── */}
-      {/* Replaces DirectorAttentionQueueHero + DonnaExecutiveCard (Sprints 763–765).   */}
-      {/* One calm surface answering: "What needs my attention today?"                  */}
-      {/* Sprint 818: data-donna-focus-id added so DONNA can highlight this section     */}
-      <div data-donna-focus-id="today-command-center">
-        <DirectorTodayCommandCenter
-          queue={attentionQueue}
-          directorName={directorDisplayName}
-          showMax={5}
+      {/* ── Sprint 1034: Primary Action Hero — one clear action at the top ── */}
+      {/* Replaces DonnaDashboardOpenCard (804) + DirectorTodayCommandCenter (767).    */}
+      {/* Sprint 1033 audit: both competed for attention. One hero removes the conflict. */}
+      <div data-donna-focus-id="primary-action-hero">
+        <DirectorPrimaryActionHero
+          pendingReviewCount={pendingWrapUpsCount + newRequests}
+          attentionQueue={attentionQueue}
+          pendingPlacementCount={pendingCount}
+          firstName={directorDisplayName.split(' ')[0]}
         />
       </div>
 
