@@ -1,4 +1,4 @@
-import { Calendar, Users, FileText, ChevronRight, ClipboardList, Sparkles } from 'lucide-react'
+import { Calendar, Users, FileText, ChevronRight, ClipboardList } from 'lucide-react'
 import Link from 'next/link'
 import {
   Card,
@@ -422,59 +422,10 @@ export default async function CoachHome() {
         </div>
       </div>
 
-      {/* ── DONNA Coach Assistant ─────────────────────────────── */}
-      <Link href="/coach/donna" className="group block rounded-2xl border border-status-blue/20 bg-surface hover:border-status-blue/40 hover:bg-surface-raised transition-all p-4 space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-status-blue/10 border border-status-blue/20 flex items-center justify-center shrink-0 group-hover:bg-status-blue/20 transition-colors">
-              <Sparkles className="w-3.5 h-3.5 text-status-blue" />
-            </div>
-            <p className="text-sm font-semibold text-text-primary">DONNA</p>
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold border bg-status-blue/10 text-status-blue border-status-blue/20">Coach</span>
-          </div>
-          <ChevronRight className="w-4 h-4 text-status-blue/40 group-hover:text-status-blue transition-colors" />
-        </div>
-        <p className="text-xs text-text-secondary leading-relaxed">
-          {todaySessions.length > 0
-            ? `You have ${todaySessions.length} session${todaySessions.length !== 1 ? 's' : ''} today. Ask DONNA about your sessions, players, or submit your wrap-up.`
-            : 'Ask DONNA about your sessions, players, or wrap-up flow. All notes enter the director review queue.'}
-        </p>
-        {pendingWrapUpCount > 0 && (
-          <p className="text-xs text-status-orange font-medium">
-            {pendingWrapUpCount} session{pendingWrapUpCount !== 1 ? 's' : ''} still need{pendingWrapUpCount === 1 ? 's' : ''} a wrap-up.
-          </p>
-        )}
-      </Link>
-
       {/* ── On-Court Capture ──────────────────────────────────── */}
       <div>
         <SectionHeader title="ON-COURT CAPTURE" />
         <CoachOnCourtActionsBar />
-      </div>
-
-      {/* ── Quick Actions ─────────────────────────────────────── */}
-      <div>
-        <SectionHeader title="QUICK ACTIONS" />
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/coach/sessions" className="block group">
-            <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface border border-lime/20 hover:border-lime/40 hover:bg-surface-raised transition-all">
-              <div className="w-9 h-9 rounded-xl bg-lime/10 border border-lime/20 flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-lime" />
-              </div>
-              <span className="text-xs font-medium text-text-primary text-center leading-tight">My Sessions</span>
-              <ChevronRight className="w-3 h-3 text-lime group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </Link>
-          <Link href="/coach/players" className="block group">
-            <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface border border-border hover:border-lime/30 hover:bg-surface-raised transition-all">
-              <div className="w-9 h-9 rounded-xl bg-surface-raised border border-border flex items-center justify-center">
-                <Users className="w-4 h-4 text-text-muted" />
-              </div>
-              <span className="text-xs font-medium text-text-secondary text-center leading-tight">My Players</span>
-              <ChevronRight className="w-3 h-3 text-text-muted group-hover:text-lime group-hover:translate-x-0.5 transition-all" />
-            </div>
-          </Link>
-        </div>
       </div>
 
     </div>

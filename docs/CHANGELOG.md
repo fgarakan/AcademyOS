@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1044 — Coach Assigned Sessions Dashboard UX Polish V1
+
+- `src/app/coach/page.tsx` (modified): Removed DONNA Coach Assistant body card (duplicate of bottom tab "DONNA" and floating button — third DONNA entry point). Removed Quick Actions section ("My Sessions" + "My Players" grid — duplicates bottom tab bar). Removed unused `Sparkles` import. On-Court Capture section, sessions/players/notes sections, wrap-up alert, daily brief, and all DONNA focus targets preserved. TypeScript: clean.
+- `docs/architecture/COACH_SESSIONS_DASHBOARD_UX_1044.md` (new): Audit and decision record.
+- `docs/QA_COACH_SESSIONS_DASHBOARD_UX_1044.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1043 — Director Player Profile Header + Priority Clarity V1
 
 - `src/components/player/PlayerProfileHeader.tsx` (modified): "No curriculum placement" muted-grey text replaced with status-orange "No curriculum level — assign one to begin tracking" with an AlertCircle icon. Matches the urgency signal already used on the players directory ("X without curriculum level"). No prop changes, no layout changes, no DONNA targets changed. TypeScript: clean.
