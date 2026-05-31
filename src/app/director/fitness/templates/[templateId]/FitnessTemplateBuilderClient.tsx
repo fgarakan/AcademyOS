@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import {
   ChevronUp, ChevronDown, Plus, Trash2, RefreshCw,
   Clock, MessageSquare, Check, Loader2, X, Activity, AlertCircle,
+  ChevronsUpDown,
 } from 'lucide-react'
-import { Card, CardHeader, CardContent, EmptyState } from '@/components/ui'
+import { Card, CardContent, EmptyState } from '@/components/ui'
 import { VoiceTextInput } from '@/components/voice/VoiceTextInput'
 import {
   addFitnessBlockAction,
@@ -26,6 +27,7 @@ import {
 } from '@/lib/fitness/fitnessBlockTypes'
 import type { FitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 import type { FitnessBlock, FitnessExercise, ExerciseLibraryItem } from './fitnessBuilderTypes'
+import { CollapsibleBlockRow } from '@/components/builder'
 
 interface FitnessTemplateBuilderClientProps {
   templateId: string
@@ -50,10 +52,22 @@ export function FitnessTemplateBuilderClient({
   const libraryCount = exerciseLibraryCount ?? exerciseLibrary.length
   const [blocks, setBlocks] = useState<FitnessBlock[]>(initialBlocks)
 
+  // Collapse state — one block open at a time; auto-expand first block
+  const [expandedBlockId, setExpandedBlockId] = useState<string | null>(
+    initialBlocks[0]?.id ?? null
+  )
+  const [expandAll, setExpandAll] = useState(false)
+
   // Sync client state when server delivers new data after router.refresh()
   useEffect(() => {
     setBlocks(initialBlocks)
+    // Keep expanded block open across refreshes; if it was removed, fall back to first
+    setExpandedBlockId(prev => {
+      if (prev && initialBlocks.some(b => b.id === prev)) return prev
+      return initialBlocks[0]?.id ?? null
+    })
   }, [initialBlocks])
+
   const [isPending, startTransition] = useTransition()
   const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
   const [addingBlock, setAddingBlock] = useState(false)
@@ -75,12 +89,21 @@ export function FitnessTemplateBuilderClient({
     setTimeout(() => setStatusMsg(null), 4000)
   }
 
+  function toggleBlock(blockId: string) {
+    if (expandAll) {
+      // Exit expand-all mode; collapse all except the tapped block
+      setExpandAll(false)
+      setExpandedBlockId(blockId)
+    } else {
+      setExpandedBlockId(prev => prev === blockId ? null : blockId)
+    }
+  }
+
   function handleAddBlock(blockType: FitnessBlockType) {
     setAddingBlock(false)
     startTransition(async () => {
       const result = await addFitnessBlockAction(templateId, blockType, true)
       if (!result.ok) { showStatus('error', result.error ?? 'Failed to add block.'); return }
-      // Re-fetch handled by server revalidation — reload the data by refreshing
       router.refresh()
     })
   }
@@ -192,13 +215,29 @@ export function FitnessTemplateBuilderClient({
         </div>
       )}
 
-      {/* Block exercises query error — typically indicates missing RLS policy on template_block_exercises */}
       {!!blockExercisesQueryError && (
         <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-status-orange/20 bg-status-orange/5 text-xs text-status-orange">
           <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>
             Block exercise data unavailable: {blockExercisesQueryError}. Contact your admin — a database policy may be missing.
           </span>
+        </div>
+      )}
+
+      {/* Block list header with Expand All control */}
+      {blocks.length >= 2 && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-[10px] text-text-muted">
+            {blocks.length} block{blocks.length !== 1 ? 's' : ''}
+          </p>
+          <button
+            type="button"
+            onClick={() => setExpandAll(v => !v)}
+            className="flex items-center gap-1 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
+          >
+            <ChevronsUpDown className="w-3 h-3" />
+            {expandAll ? 'Collapse All' : 'Expand All'}
+          </button>
         </div>
       )}
 
@@ -214,23 +253,28 @@ export function FitnessTemplateBuilderClient({
           </CardContent>
         </Card>
       ) : (
-        blocks.map((block, blockIdx) => (
-          <FitnessBlockCard
-            key={block.id}
-            block={block}
-            blockIdx={blockIdx}
-            totalBlocks={blocks.length}
-            isPending={isPending}
-            onMoveBlock={handleMoveBlock}
-            onRemoveBlock={handleRemoveBlock}
-            onRemoveExercise={handleRemoveExercise}
-            onOpenSwitcher={openSwitcher}
-            onOpenPicker={openPicker}
-            onOpenObservation={openObservation}
-            templateId={templateId}
-            exerciseLibrary={exerciseLibrary}
-          />
-        ))
+        blocks.map((block, blockIdx) => {
+          const isExpanded = expandAll || expandedBlockId === block.id
+          return (
+            <FitnessBlockCard
+              key={block.id}
+              block={block}
+              blockIdx={blockIdx}
+              totalBlocks={blocks.length}
+              isPending={isPending}
+              isExpanded={isExpanded}
+              onToggle={() => toggleBlock(block.id)}
+              onMoveBlock={handleMoveBlock}
+              onRemoveBlock={handleRemoveBlock}
+              onRemoveExercise={handleRemoveExercise}
+              onOpenSwitcher={openSwitcher}
+              onOpenPicker={openPicker}
+              onOpenObservation={openObservation}
+              templateId={templateId}
+              exerciseLibrary={exerciseLibrary}
+            />
+          )
+        })
       )}
 
       {/* Add Block */}
@@ -346,6 +390,8 @@ function FitnessBlockCard({
   blockIdx,
   totalBlocks,
   isPending,
+  isExpanded,
+  onToggle,
   onMoveBlock,
   onRemoveBlock,
   onRemoveExercise,
@@ -353,12 +399,14 @@ function FitnessBlockCard({
   onOpenPicker,
   onOpenObservation,
   templateId: _templateId,
-  exerciseLibrary: _exerciseLibrary,
+  exerciseLibrary,
 }: {
   block: FitnessBlock
   blockIdx: number
   totalBlocks: number
   isPending: boolean
+  isExpanded: boolean
+  onToggle: () => void
   onMoveBlock: (blockId: string, dir: 'up' | 'down') => void
   onRemoveBlock: (blockId: string) => void
   onRemoveExercise: (blockId: string, tbeId: string) => void
@@ -372,50 +420,59 @@ function FitnessBlockCard({
   const accentClass = fitnessType ? getFitnessBlockAccent(fitnessType) : 'text-lime'
   const borderClass = fitnessType ? getFitnessBlockBorderAccent(fitnessType) : 'border-border'
   const intentText = fitnessType ? getFitnessBlockIntent(fitnessType) : null
+  const isComplete = block.exercises.length > 0
+
+  // Short intent hint for collapsed row — first comma-separated phrase
+  const shortIntent = intentText
+    ? intentText.split(',')[0].trim()
+    : null
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            {/* Reorder controls */}
-            <div className="flex flex-col gap-0 shrink-0">
-              <button
-                onClick={() => onMoveBlock(block.id, 'up')}
-                disabled={blockIdx === 0 || isPending}
-                className="p-0.5 rounded text-text-muted hover:text-lime disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronUp className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onMoveBlock(block.id, 'down')}
-                disabled={blockIdx === totalBlocks - 1 || isPending}
-                className="p-0.5 rounded text-text-muted hover:text-lime disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronDown className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] uppercase tracking-widest font-semibold ${accentClass}`}>
-                  {block.name}
-                </span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded border ${borderClass} text-text-muted`}>
-                  Block {blockIdx + 1}
-                </span>
-              </div>
-              {intentText && (
-                <p className="text-[10px] text-text-muted mt-0.5">{intentText}</p>
-              )}
-            </div>
+    <CollapsibleBlockRow
+      index={blockIdx}
+      name={block.name}
+      accentClass={accentClass}
+      borderAccentClass={borderClass}
+      durationMin={block.duration_min}
+      itemCount={block.exercises.length}
+      itemLabel="exercise"
+      isComplete={isComplete}
+      intentHint={shortIntent}
+      isExpanded={isExpanded}
+      onToggle={onToggle}
+      quickActionLabel="Add"
+      onQuickAction={() => onOpenPicker(block.id, block.name, block.fitnessBlockType)}
+      quickActionDisabled={isPending || exerciseLibrary.length === 0}
+    >
+      {/* Expanded content */}
+      <div className="px-4 py-3 space-y-3">
+        {/* Secondary controls row: reorder + observe + delete */}
+        <div className="flex items-center gap-2 justify-between">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onMoveBlock(block.id, 'up')}
+              disabled={blockIdx === 0 || isPending}
+              title="Move block up"
+              className="p-1 rounded text-text-muted hover:text-lime disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onMoveBlock(block.id, 'down')}
+              disabled={blockIdx === totalBlocks - 1 || isPending}
+              title="Move block down"
+              className="p-1 rounded text-text-muted hover:text-lime disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            {block.duration_min != null && (
+              <span className="flex items-center gap-1 text-xs text-text-muted ml-2">
+                <Clock className="w-3.5 h-3.5" />
+                {block.duration_min}min
+              </span>
+            )}
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1 text-xs text-text-muted">
-              <Clock className="w-3.5 h-3.5" />
-              {block.duration_min}min
-            </div>
+          <div className="flex items-center gap-1">
             <button
               onClick={() => onOpenObservation(block.id, block.notes)}
               disabled={isPending}
@@ -439,20 +496,20 @@ function FitnessBlockCard({
             </button>
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="pt-0">
+        {/* Block observation note (if any) */}
         {block.notes && (
-          <div className="mb-3 px-3 py-2 rounded-lg bg-lime/5 border border-lime/10 text-[11px] text-text-secondary">
+          <div className="px-3 py-2 rounded-lg bg-lime/5 border border-lime/10 text-[11px] text-text-secondary">
             <span className="text-lime text-[10px] uppercase tracking-widest font-semibold mr-2">Observation</span>
             {block.notes}
           </div>
         )}
 
+        {/* Exercise list */}
         {block.exercises.length === 0 ? (
-          <p className="text-xs text-text-muted italic py-2">
+          <p className="text-xs text-text-muted italic py-1">
             No exercises in this block.
-            {_exerciseLibrary.length === 0
+            {exerciseLibrary.length === 0
               ? ' Exercise library is empty — import exercises and use Auto-Populate above.'
               : ' Use Auto-Populate above or add exercises manually.'
             }
@@ -474,18 +531,19 @@ function FitnessBlockCard({
           </div>
         )}
 
-        {_exerciseLibrary.length > 0 && (
+        {/* Add exercise button */}
+        {exerciseLibrary.length > 0 && (
           <button
             onClick={() => onOpenPicker(block.id, block.name, block.fitnessBlockType)}
             disabled={isPending}
-            className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border hover:border-lime/30 text-[11px] text-text-muted hover:text-lime transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border hover:border-lime/30 text-[11px] text-text-muted hover:text-lime transition-colors disabled:opacity-50"
           >
             <Plus className="w-3 h-3" />
             Add Exercise
           </button>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleBlockRow>
   )
 }
 

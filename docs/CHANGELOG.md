@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1065 — Fitness Builder Guided Track + Collapse V1
+
+- `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` (modified): Added `expandedBlockId` + `expandAll` state. One block open at a time (auto-expands first block on mount). `toggleBlock()` handles expand-all exit. "Expand All / Collapse All" button shown when ≥2 blocks exist. `FitnessBlockCard` now uses `CollapsibleBlockRow` from `@/components/builder` as outer container — summary row shows block name, intent hint, duration, exercise count, completion indicator, and "+ Add" quick action when collapsed. Secondary controls (reorder ↑↓, observe, delete) moved inside expanded content area.
+- `src/app/director/fitness/templates/[templateId]/FitnessBuilderStepper.tsx` (modified): Step labels renamed to match goal-specified Fitness track: 1→Goal, 2→Group, 3→Blocks, 4→Load Check, 5→Publish. BottomNav next-step labels updated. Step 4 description updated to reflect load-check framing. Step 5 description updated to "Publish".
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1064 — Shared Builder Stepper Component V1
 
 - `src/components/builder/CollapsibleBlockRow.tsx` (new): Shared collapsible block row for Fitness Builder and Class Builder. Props: index, name, accentClass, borderAccentClass, durationMin, itemCount, itemLabel, isComplete, intentHint, isExpanded, onToggle, quickActionLabel, onQuickAction, children. Renders: step number · completion indicator · name + intent hint · duration · count · quick action (collapsed only) · chevron. Expanded state shows children below the header row.

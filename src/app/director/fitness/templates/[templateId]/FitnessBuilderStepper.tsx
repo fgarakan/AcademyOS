@@ -28,11 +28,11 @@ import type { FitnessBlock, ExerciseLibraryItem } from './fitnessBuilderTypes'
 // ─── Step definitions ─────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, label: 'Development Focus', shortLabel: '1', icon: GraduationCap },
-  { id: 2, label: 'Training Goal', shortLabel: '2', icon: Target },
-  { id: 3, label: 'Physical Blocks', shortLabel: '3', icon: Dumbbell },
-  { id: 4, label: 'Tennis Transfer', shortLabel: '4', icon: Zap },
-  { id: 5, label: 'Review + Save', shortLabel: '5', icon: ListChecks },
+  { id: 1, label: 'Goal', shortLabel: '1', icon: GraduationCap },
+  { id: 2, label: 'Group', shortLabel: '2', icon: Target },
+  { id: 3, label: 'Blocks', shortLabel: '3', icon: Dumbbell },
+  { id: 4, label: 'Load Check', shortLabel: '4', icon: Zap },
+  { id: 5, label: 'Publish', shortLabel: '5', icon: ListChecks },
 ] as const
 
 // ─── Tennis transfer map (static — no DB calls) ───────────────────────────────
@@ -179,10 +179,10 @@ function BottomNav({
   onNext: () => void
 }) {
   const nextLabel =
-    activeStep === 1 ? 'Training Goal' :
-    activeStep === 2 ? 'Physical Blocks' :
-    activeStep === 3 ? 'Tennis Transfer' :
-    activeStep === 4 ? 'Review + Save' :
+    activeStep === 1 ? 'Group' :
+    activeStep === 2 ? 'Blocks' :
+    activeStep === 3 ? 'Load Check' :
+    activeStep === 4 ? 'Publish' :
     activeStep === totalSteps ? null : 'Next'
 
   return (
@@ -552,7 +552,7 @@ function Step4TennisTransfer({
     <div className="space-y-5">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
-          Show coaches how each fitness block transfers to tennis movement, balance, recovery, and performance.
+          Check that each fitness block is appropriate for the group&apos;s level, load capacity, and current training phase. Review how each block transfers to on-court performance.
           {currentLevelName && (
             <span className="text-lime"> Level: {currentLevelName}.</span>
           )}
@@ -669,7 +669,7 @@ function Step5ReviewSave({
     <div className="space-y-5">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
         <p className="text-[11px] text-text-secondary leading-relaxed">
-          Review the fitness plan before creating a session. Coaches will see this block structure and exercises when they run the session.
+          Review the fitness plan and publish it as a session. Coaches will see this block structure and exercises when they run the session.
         </p>
       </div>
 
