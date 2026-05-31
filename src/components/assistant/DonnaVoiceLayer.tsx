@@ -349,7 +349,7 @@ export function DonnaVoiceLayer({
               }
             }}
             data-donna-input
-            className="w-full rounded-lg px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
+            className="w-full rounded-lg px-3 py-2 text-base sm:text-xs text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
             style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',

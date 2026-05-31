@@ -3909,8 +3909,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           ))}
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        {/* Scrollable body — Sprint 1032: overscroll-contain prevents pull-to-refresh on mobile */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3">
 
           {/* Sprint 787 — Idle presence card: shown after 3 min of no interaction */}
           {isDonnaIdle && (

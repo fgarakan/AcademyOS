@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-31 — Sprint 1032 — DONNA Mobile Panel Polish V1
+
+- `src/components/assistant/DonnaVoiceLayer.tsx` (modified): Textarea font size changed from `text-xs` (12px) to `text-base sm:text-xs` — 16px on mobile to prevent iOS zoom-on-focus, 12px on desktop for compact layout.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Panel scrollable body gains `overscroll-contain` class — prevents pull-to-refresh interference when scrolling the DONNA panel on mobile. TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1031 — DONNA Highlight Escalation V1
 
 - `src/components/donna/DonnaHighlightBanner.tsx` (modified): Sprint 1031 escalation. Banner is now `pointer-events-auto` with `cursor-pointer` — clicking it re-scrolls the highlighted element into view (`scrollIntoView` via `scrollToTarget` callback). Text changed from "DONNA is pointing here — [label]" to "DONNA: [label]" (more direct). `target.reason` field is now displayed on sm+ screens. Dismiss button uses `e.stopPropagation()` so clicking X doesn't also trigger scroll. `hover:border-[#11d9df]/70` hover state added. TypeScript: clean.
