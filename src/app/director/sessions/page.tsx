@@ -205,7 +205,7 @@ function PageHeader() {
         <p className="page-eyebrow">Sessions</p>
         <h1 className="page-title">Sessions</h1>
         <p className="page-subtitle">
-          Sessions are created from class and fitness templates. Each session gives coaches a plan to run on court. After a session, coaches submit a wrap-up you can review in the Review Queue.
+          Sessions are generated from your templates and give coaches a structured plan to run on court.
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0 mt-1">
@@ -218,6 +218,7 @@ function PageHeader() {
         <Link
           href="/director/sessions/new"
           className="btn-lime flex items-center gap-1.5 text-xs px-3 py-2"
+          data-donna-focus-id="new-session-button"
         >
           <Zap className="w-3.5 h-3.5" />
           New Session

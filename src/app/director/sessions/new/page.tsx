@@ -69,7 +69,7 @@ export default async function NewSessionPage() {
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Sessions
         </Link>
-        <p className="page-eyebrow">Director</p>
+        <p className="page-eyebrow">Sessions</p>
         <h1 className="page-title">Create Session</h1>
         <p className="page-subtitle">Generate a new session from a fitness or class template.</p>
       </div>
@@ -80,11 +80,16 @@ export default async function NewSessionPage() {
             <EmptyState
               icon={<LayoutTemplate className="w-5 h-5" />}
               title="No templates found"
-              description="Create a fitness template first, then return here to generate a session."
+              description="Create a class or fitness template first, then return here to generate a session from it."
               action={
-                <Link href="/director/fitness/templates" className="btn-lime text-xs px-4 py-2">
-                  Go to Fitness Templates
-                </Link>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Link href="/director/class-templates" className="btn-lime text-xs px-4 py-2">
+                    Class Templates
+                  </Link>
+                  <Link href="/director/fitness/templates" className="btn-ghost text-xs px-4 py-2">
+                    Fitness Templates
+                  </Link>
+                </div>
               }
             />
           </CardContent>

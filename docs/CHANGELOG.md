@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-05-31 — Sprint 1041 — Director Session Creation UX Simplification V1
+
+- `src/app/director/sessions/page.tsx` (modified): Subtitle condensed from 3 explanatory sentences to one action line ("Sessions are generated from your templates and give coaches a structured plan to run on court."). Added `data-donna-focus-id="new-session-button"` to the "New Session" CTA for DONNA highlight targeting. All queries, session rows, status pills, and navigation unchanged. TypeScript: clean.
+- `src/app/director/sessions/new/page.tsx` (modified): Eyebrow corrected from "Director" to "Sessions" for consistency with all other director module pages. Empty state updated to mention both class and fitness templates — description now reads "Create a class or fitness template first, then return here to generate a session from it." — with "Class Templates" (btn-lime) and "Fitness Templates" (btn-ghost) actions, matching the sessions list empty state pattern. TypeScript: clean.
+- `docs/architecture/DIRECTOR_SESSION_CREATION_UX_1041.md` (new): Audit and decision record.
+- `docs/QA_DIRECTOR_SESSION_CREATION_UX_1041.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1040 — DONNA Sidebar 10 of 10 Simplification Pass V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): Three simplifications. (1) Removed "DONNA says" duplication — `donnaLastResponse={null}` passed to DonnaVoiceLayer; `DonnaPanelResponseRenderer` (Sprint 1028) is now the sole response surface — the truncated card that appeared above the input is gone. (2) Fixed tab chips hidden when `DonnaPanelPageChips` covers the current route — prevents 6–8 chip overload on registered routes; player-profile data-driven chips preserved via `isPlayerProfilePage` guard; generic chips remain as fallback on routes without page chips. (3) Verbatim `pathname` display removed from "What DONNA can do here" card — URL was developer-facing, not director-facing. Voice, God Mode, response cards, guided highlights, workflow cards, and fallback behavior all preserved. TypeScript: clean.
