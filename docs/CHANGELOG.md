@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-31 — Sprint 1029 — DONNA Persistent Session Toggle V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Two changes. (1) Button onClick: added `if (panelOpen) { minimizePanel(); return }` before `openDonnaPanel()` — clicking the DONNA button while the panel is open now minimizes (session preserved, lime dot appears) instead of being a no-op. Toggle behavior: closed → open, open → minimize, minimized → expand. (2) `aria-label` and `title` updated to reflect three states: open → "Minimize — session preserved"; minimized → "Resume DONNA session"; closed → "Ask DONNA". TypeScript: clean.
+- `docs/architecture/DONNA_PERSISTENT_SESSION_TOGGLE_1029.md` (new): Architecture doc.
+- `docs/QA_DONNA_PERSISTENT_SESSION_TOGGLE_1029.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1028 — Wire DONNA Panel Response Renderer V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): Removed two fragmented response sections (-82 lines JSX): (1) inline cooThread section (Sprints 747-825 — bubble JSX with 3 scroll refs); (2) Sprint 1011 standalone God Mode section (loading dots + DonnaResponseCard). Replaced with single `<DonnaPanelResponseRenderer>` call passing cooThread, godModeOutput, isGodModeLoading, onGodModeNavigate (router.push + closePanel), onGodModeHighlight (executeDonnaHighlight + closePanel). DonnaWorkflowCards unchanged — still handles commandResponse + all drafts. DonnaResponseCard import removed (now internal to renderer). Net: one unified DONNA response surface instead of three. TypeScript: clean.

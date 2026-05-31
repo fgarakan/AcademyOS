@@ -3506,6 +3506,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       {/* ------------------------------------------------------------------ */}
       <button
         onClick={() => {
+          // Sprint 1029: toggle — click while open minimizes (session preserved), not a no-op
+          if (panelOpen) { minimizePanel(); return }
           // Sprint 918: if minimized, expand (restores panel without full re-init)
           if (panelMinimized) { expandPanel(); return }
           openDonnaPanel()
@@ -3629,8 +3631,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             })
           }).catch(() => {})
         }}
-        aria-label={`Ask ${DONNA_PUBLIC_NAME}`}
-        title={`Ask ${DONNA_PUBLIC_NAME}`}
+        aria-label={panelOpen ? `Minimize ${DONNA_PUBLIC_NAME}` : panelMinimized ? `Resume ${DONNA_PUBLIC_NAME} session` : `Ask ${DONNA_PUBLIC_NAME}`}
+        title={panelOpen ? `Minimize — session preserved` : panelMinimized ? `Resume ${DONNA_PUBLIC_NAME} session` : `Ask ${DONNA_PUBLIC_NAME}`}
         className={cn(
           'fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full relative',
           // Sprint 707 — hide floating button on mobile for directors; mobile bar replaces it
