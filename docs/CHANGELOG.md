@@ -3,6 +3,10 @@
 ---
 
 
+## 2026-05-31 — Sprint 1055 — Internal Pilot Live Clickthrough QA V1
+
+- `docs/architecture/INTERNAL_PILOT_CLICKTHROUGH_QA_1055.md` (new): Complete golden-path clickthrough for director, coach, parent, and player. Pre-flight environment checklist. Known non-blocking issues for pilot. No code changes.
+
 ## 2026-05-31 — Sprint 1054 — DONNA Voice Loop Mobile QA V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): `handleVoiceError` `not-allowed` message changed from "Microphone access is blocked. You can enable it in your browser settings or type instead." to "Tap the mic button to start voice, or type your question below." — accurate for both iOS gesture requirement and actually-blocked mic. TypeScript: clean.
