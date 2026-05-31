@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1039 — Director Template Builder UX Simplification V1
+
+- `src/app/director/class-templates/page.tsx` (modified): Removed always-rendered `PageExplainerCard` (5 Q&A items visible on every visit regardless of template count). Removed redundant `EmptyState` card from empty state — `NextBestActionCard` is now the sole first-time guide. Removed `PageExplainerCard` and `EmptyState` imports. All queries, stats strip, template rows, DONNA focus IDs, and CTAs unchanged. TypeScript: clean.
+- `docs/architecture/DIRECTOR_TEMPLATE_BUILDER_UX_1039.md` (new): Audit and decision record.
+- `docs/QA_DIRECTOR_TEMPLATE_BUILDER_UX_1039.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1038 — Director Curriculum Entry Simplification V1
 
 - `src/app/director/curriculum/page.tsx` (modified): Title changed from "Curriculum Command Center" to "Curriculum". Subtitle simplified. TypeScript: clean.

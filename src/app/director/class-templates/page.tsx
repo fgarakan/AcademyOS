@@ -1,9 +1,8 @@
 import Link from 'next/link'
 import { BookOpen, Clock, Dumbbell, GraduationCap, Plus } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
-import { Card, CardContent, EmptyState } from '@/components/ui'
+import { Card, CardContent } from '@/components/ui'
 import type { Tables } from '@/lib/supabase/database.types'
-import { PageExplainerCard } from '@/components/onboarding/PageExplainerCard'
 import { NextBestActionCard } from '@/components/onboarding/NextBestActionCard'
 
 type Template = Tables<'templates'>
@@ -148,33 +147,6 @@ export default async function ClassTemplatesPage() {
         </div>
       </div>
 
-      <PageExplainerCard
-        title="Turn curriculum into coach-ready lesson plans"
-        body="Class templates are reusable teaching structures. Assign a curriculum level, generate a lesson plan, apply it to the template, then create sessions your coaches can run."
-        qa={[
-          {
-            q: 'What is a class template?',
-            a: 'A named, reusable session structure with blocks. Think of it as the blueprint your coaches execute on court.',
-          },
-          {
-            q: 'Why assign a curriculum level?',
-            a: 'The level tells the OS which goals, gates, drills, and coach language apply to this class — making the lesson plan relevant to the players in it.',
-          },
-          {
-            q: 'What does "lesson plan applied" mean?',
-            a: 'The lesson plan has been written to this template. Every session created from it will carry the curriculum content automatically.',
-          },
-          {
-            q: 'What should I do first?',
-            a: 'Open a template, assign a curriculum level, then use the lesson plan generator to create and apply a draft.',
-          },
-          {
-            q: 'What happens after a session is created?',
-            a: 'Coaches see the lesson plan during the session. After, they submit a wrap-up you can review in the Review Queue.',
-          },
-        ]}
-      />
-
       {error && (
         <p className="text-status-red text-sm">Failed to load templates: {error.message}</p>
       )}
@@ -213,15 +185,6 @@ export default async function ClassTemplatesPage() {
             actionLabel="New Class Template"
             actionHref="/director/class-templates/new"
           />
-          <Card>
-            <CardContent className="py-8">
-              <EmptyState
-                icon={<BookOpen className="w-5 h-5" />}
-                title="No class templates yet"
-                description="Templates you create will appear here. Each template is a curriculum-aligned session plan coaches can run on court."
-              />
-            </CardContent>
-          </Card>
         </div>
       ) : (
         <div className="space-y-3" data-donna-focus-id="template-list">
