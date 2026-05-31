@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1042 — Director Players Directory UX Simplification V1
+
+- `src/app/director/players/page.tsx` (modified): `DonnaPlayersPresenceCTA` now conditional — shows only when `namedSignals.length > 0 || assessmentDueCount > 0 || missingCurriculumCount > 0`. Hides the "Who needs attention?" chip when the roster has no flags to surface; reappears the moment a signal is detected. Empty-state subtitle changed from "Academy-wide player tracking" to "Add your first player or import a roster to get started." TypeScript: clean.
+- `docs/architecture/DIRECTOR_PLAYERS_DIRECTORY_UX_1042.md` (new): Audit and decision record.
+- `docs/QA_DIRECTOR_PLAYERS_DIRECTORY_UX_1042.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1041 — Director Session Creation UX Simplification V1
 
 - `src/app/director/sessions/page.tsx` (modified): Subtitle condensed from 3 explanatory sentences to one action line ("Sessions are generated from your templates and give coaches a structured plan to run on court."). Added `data-donna-focus-id="new-session-button"` to the "New Session" CTA for DONNA highlight targeting. All queries, session rows, status pills, and navigation unchanged. TypeScript: clean.

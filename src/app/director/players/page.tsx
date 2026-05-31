@@ -118,7 +118,7 @@ export default async function PlayersPage() {
           <p className="page-subtitle">
             {players.length > 0
               ? `${players.length} player${players.length !== 1 ? 's' : ''} registered`
-              : 'Academy-wide player tracking'}
+              : 'Add your first player or import a roster to get started.'}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -177,14 +177,18 @@ export default async function PlayersPage() {
         </div>
       )}
 
-      {/* DONNA players presence entry point */}
-      <DonnaPlayersPresenceCTA
-        activePlayers={players.length}
-        missingCurriculumCount={missingCurriculumCount}
-        advancementReadyCount={advancementReadyPlayers.length}
-        namedSignals={namedSignals}
-        assessmentDueCount={assessmentDueCount}
-      />
+      {/* DONNA players presence entry point — shown only when actionable signals exist.
+          Sprint 1042: hide when roster has no flags; showing "Who needs attention?" with nothing
+          to surface is clutter. The chip reappears the moment any signal is detected. */}
+      {(namedSignals.length > 0 || assessmentDueCount > 0 || missingCurriculumCount > 0) && (
+        <DonnaPlayersPresenceCTA
+          activePlayers={players.length}
+          missingCurriculumCount={missingCurriculumCount}
+          advancementReadyCount={advancementReadyPlayers.length}
+          namedSignals={namedSignals}
+          assessmentDueCount={assessmentDueCount}
+        />
+      )}
 
       <PlayersDirectoryClient players={players} curriculumMap={curriculumMap} />
     </div>
