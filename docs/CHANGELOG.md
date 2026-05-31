@@ -3,6 +3,10 @@
 ---
 
 
+## 2026-05-31 — Sprint 1051 — Brian Internal Pilot Readiness Release V1
+
+- `docs/architecture/BRIAN_INTERNAL_PILOT_READINESS_1051.md` (new): Release summary for Brian Dabul internal pilot. Covers readiness status of all director/coach/parent/player modules, completed UX simplification summary (Sprints 1034–1049), pre-pilot setup checklist, golden path walkthrough, known limitations, and full commit range. No code changes.
+
 ## 2026-05-31 — Sprint 1050 — Internal Pilot Visual QA Screenshot Audit V1
 
 - `docs/architecture/INTERNAL_PILOT_VISUAL_QA_1050.md` (new): Full audit of Sprints 1034–1049 UX changes, pre-pilot visual QA checklist for director/coach/parent/player critical paths, DONNA sidebar validation, and known gaps deferred to post-pilot. No code changes.
