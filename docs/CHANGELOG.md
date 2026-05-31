@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-05-31 — Sprint 1030 — DONNA Page-Aware Greeting + Chips V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Added page-context line to the greeting card. When `ctx.screenName` is set and is not "Director Dashboard", shows "You're on: [page name]" in lime below the greeting text. Chips were already page-aware via `getDonnaPromptSuggestions(pathname)` — no chip changes needed. The greeting card now confirms DONNA's page awareness to the director on first glance. TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1029 — DONNA Persistent Session Toggle V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): Two changes. (1) Button onClick: added `if (panelOpen) { minimizePanel(); return }` before `openDonnaPanel()` — clicking the DONNA button while the panel is open now minimizes (session preserved, lime dot appears) instead of being a no-op. Toggle behavior: closed → open, open → minimize, minimized → expand. (2) `aria-label` and `title` updated to reflect three states: open → "Minimize — session preserved"; minimized → "Resume DONNA session"; closed → "Ask DONNA". TypeScript: clean.

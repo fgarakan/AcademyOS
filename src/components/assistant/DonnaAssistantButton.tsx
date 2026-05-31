@@ -4012,6 +4012,12 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   {dailyGreetingState.followUp}
                 </p>
               )}
+              {/* Sprint 1030 — page-aware context line: tells director DONNA knows the current page */}
+              {!isOnboardingActive(onboardingStep) && ctx.screenName && ctx.screenName !== 'Director Dashboard' && (
+                <p className="text-[11px] mt-2 leading-snug text-text-muted">
+                  You're on: <span className="text-lime font-medium">{ctx.screenName}</span>
+                </p>
+              )}
               {/* Sprint 649 — live priority hint for director role */}
               {!isOnboardingActive(onboardingStep) && role === 'director' && reviewQueuePendingCount > 0 && (
                 <p className="text-[11px] mt-2 leading-snug" style={{ color: '#FF9500' }}>
