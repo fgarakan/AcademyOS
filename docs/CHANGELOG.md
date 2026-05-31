@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1070 — Builder Live QA + Director Usability Test V1
+
+- `docs/architecture/BUILDER_INTELLIGENCE_GUIDED_COLLAPSE_1070.md` (new): Full block summary — what was built across Sprints 1061–1070, exercise matching results, component inventory, golden path for both builders, regression checklist, and complete file change manifest.
+- `docs/QA_BUILDER_LIVE_QA_DIRECTOR_USABILITY_1070.md` (new): 35-check director usability QA covering exercise matching (A1–A5), fitness collapse (B1–B5), advanced controls (C1–C4), step labels (D1–D2), load check (E1–E5), class collapse + labels (F1–F7), coach notes step (G1–G5), and regression (H1–H6). Pass target: ≥31/35 checks.
+- TypeScript: clean (docs-only sprint).
+
 ## 2026-05-31 — Sprint 1069 — Class Builder Session Flow Review V1
 
 - `src/app/director/class-templates/[templateId]/ClassTemplateBuilderStepper.tsx` (modified): (1) Renamed `Step4CoachPreview` → `Step4CoachNotes`. (2) Updated render call. (3) Added "Session Flow Check" card at top of Step 4: checks for empty blocks (no activities) and blocks with activities but no coaching cues. Shows green "Ready to publish" if all clear; shows orange/grey flags per block otherwise. (4) Updated banner copy to "coach's perspective" framing. (5) Updated "Coach Plan" label → "Coach Notes". (6) `Pencil` import removed from STEPS (Step 3 now uses `Layers`).
