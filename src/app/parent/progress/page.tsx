@@ -306,11 +306,6 @@ export default async function ParentProgressPage() {
               <ArrowRight className="w-4 h-4 text-text-muted shrink-0" />
             </div>
           </Link>
-
-          {/* Safety note */}
-          <p className="text-[10px] text-text-muted text-center px-4">
-            Advancement requires coach and director confirmation — not automatic. Coaching teams decide timing.
-          </p>
         </>
       )}
     </div>

@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1047 — Parent Progress Clarity UX V1
+
+- `src/app/parent/progress/page.tsx` (modified): Removed redundant bottom safety note ("Advancement requires coach and director confirmation — not automatic. Coaching teams decide timing.") — the ShieldCheck box at the top of the page already establishes the trust frame. Three explanation blocks reduced to two. Level journey, observation counts, encouragement box, and all other content unchanged. TypeScript: clean.
+- `docs/architecture/PARENT_PROGRESS_CLARITY_UX_1047.md` (new): Audit and decision record.
+- `docs/QA_PARENT_PROGRESS_CLARITY_UX_1047.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1046 — Coach Wrap-Up Low-Friction UX V1
 
 - `src/app/coach/sessions/[sessionId]/wrap-up/WrapUpPageClient.tsx` (modified): Removed duplicate ShieldCheck safety notice from saved state — main confirmation text already says "Nothing has been sent to parents or applied to player profiles." Removed "Ask DONNA" link from saved state — floating button and bottom tab provide DONNA access. Removed unused `ShieldCheck` import. 6-question flow, voice input, player chips, save action, observation drafts, and all DONNA prompts unchanged. TypeScript: clean.
