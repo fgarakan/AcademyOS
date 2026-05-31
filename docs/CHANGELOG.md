@@ -3,6 +3,14 @@
 ---
 
 
+## 2026-05-31 — Sprint 1052 — DONNA Continuous Voice Session V1
+
+- `src/components/assistant/VoiceInputButton.tsx` (modified): Added `autoStart` prop — starts voice session automatically when `autoStart` becomes true (panel opens), persistent=true, and voice is supported. Guard: `voiceState !== 'idle'` prevents double-start. Fallback: if browser blocks mic, `onerror` fires and graceful permission error is shown.
+- `src/components/assistant/DonnaVoiceLayer.tsx` (modified): Threaded `autoStart` prop to VoiceInputButton. Bumped `maxRetries` from 5 to 20 (session survives ~6s of silence before stopping). Changed `shouldPause={isSpeaking}` to `shouldPause={isSpeaking || isThinking}` — mic now pauses during DONNA processing, preventing retry counter exhaustion while DONNA prepares a response.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Passes `autoStart={panelOpen && !isOnboardingActive(onboardingStep)}` to DonnaVoiceLayer. Session starts on panel open; skipped during onboarding flow. TypeScript: clean.
+- `docs/architecture/DONNA_CONTINUOUS_VOICE_1052.md` (new): Architecture and decision record.
+- `docs/QA_DONNA_CONTINUOUS_VOICE_1052.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1051 — Brian Internal Pilot Readiness Release V1
 
 - `docs/architecture/BRIAN_INTERNAL_PILOT_READINESS_1051.md` (new): Release summary for Brian Dabul internal pilot. Covers readiness status of all director/coach/parent/player modules, completed UX simplification summary (Sprints 1034–1049), pre-pilot setup checklist, golden path walkthrough, known limitations, and full commit range. No code changes.

@@ -75,6 +75,8 @@ interface Props {
   pathname?: string
   // Sprint 719 — TTS speaking state for hands-free voice loop pause/resume
   isSpeaking?: boolean
+  // Sprint 1052 — auto-start voice session when panel opens
+  autoStart?: boolean
 }
 
 export function DonnaVoiceLayer({
@@ -109,6 +111,7 @@ export function DonnaVoiceLayer({
   promptCategoryLabel,
   pathname = '',
   isSpeaking = false,
+  autoStart = false,
 }: Props) {
   const chips = promptSuggestions ?? getDefaultDonnaPromptSuggestions()
   const categoryLabel = promptCategoryLabel ?? getPromptCategoryLabel(pathname)
@@ -176,9 +179,11 @@ export function DonnaVoiceLayer({
 
         {/* VoiceInputButton — browser SpeechRecognition only, no API, no DB write */}
         {/* Sprint 684: persistent=true activates auto-restart on silence (built in Sprint 641). */}
-        {/* maxRetries=5 allows up to 5 consecutive silence cycles before stopping gracefully. */}
+        {/* maxRetries=20 allows up to 20 silence cycles (~6s each) before stopping gracefully. */}
         {/* Sprint 685: onVoiceStateChange exposes full VoiceState to the panel header indicator. */}
-        {/* Sprint 719: shouldPause pauses mic during TTS so DONNA doesn't hear herself. */}
+        {/* Sprint 719: shouldPause pauses mic during TTS so DONNA doesn't hear herself.          */}
+        {/* Sprint 1052: autoStart starts the session when the panel opens. shouldPause also      */}
+        {/*   fires during isThinking so retry counter doesn't exhaust while DONNA processes.     */}
         <VoiceInputButton
           onTranscript={onVoiceTranscriptRaw}
           label={`Ask ${DONNA_PUBLIC_NAME}`}
@@ -189,8 +194,9 @@ export function DonnaVoiceLayer({
           onSupportedChange={onSupportedChange}
           onVoiceStateChange={onVoiceStateChange}
           persistent={true}
-          maxRetries={5}
-          shouldPause={isSpeaking}
+          maxRetries={20}
+          shouldPause={isSpeaking || isThinking}
+          autoStart={autoStart}
         />
         {/* Sprint 719 — hands-free loop status: shown while DONNA is speaking */}
         {isSpeaking && (

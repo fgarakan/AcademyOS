@@ -4189,6 +4189,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             promptCategoryLabel={getPromptCategoryLabel(pathname)}
             pathname={pathname}
             isSpeaking={isSpeaking}
+            autoStart={panelOpen && !isOnboardingActive(onboardingStep)}
           />
 
           {/* ── Sprint 1028 — Unified DONNA response renderer ── */}

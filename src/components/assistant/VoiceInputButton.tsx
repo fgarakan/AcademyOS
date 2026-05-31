@@ -95,6 +95,13 @@ interface VoiceInputButtonProps {
    * Only applies when persistent=true and a session is active.
    */
   shouldPause?: boolean
+  /**
+   * Sprint 1052 — Auto-start session when this prop becomes true.
+   * Used to start the voice session automatically when the DONNA panel opens.
+   * Only fires when persistent=true, voice is supported, and the session is idle.
+   * Falls back gracefully if microphone permission is not granted.
+   */
+  autoStart?: boolean
 }
 
 // Sprint 641: four states for persistent mode
@@ -114,6 +121,7 @@ export function VoiceInputButton({
   persistent = false,
   maxRetries = 3,
   shouldPause = false,
+  autoStart = false,
 }: VoiceInputButtonProps) {
   const [voiceState, setVoiceState] = useState<VoiceState>('idle')
   const [supported, setSupported] = useState<boolean | null>(null)
@@ -243,6 +251,19 @@ export function VoiceInputButton({
       return () => clearTimeout(tid)
     }
   }, [shouldPause, persistent, startRecognition, onVoiceStateChange])
+
+  // Sprint 1052 — Auto-start voice session when the DONNA panel opens.
+  // Fires when autoStart changes to true AND voice is supported AND session is idle.
+  // Falls back gracefully: if browser blocks mic, onerror fires → voicePermissionError shown.
+  useEffect(() => {
+    if (!autoStart || !persistent || supported !== true) return
+    if (voiceState !== 'idle' || sessionActiveRef.current) return
+    sessionActiveRef.current = true
+    retryCountRef.current = 0
+    setRetryExhausted(false)
+    startRecognition()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, supported])
 
   function handleToggle() {
     if (voiceState === 'listening' || voiceState === 'paused') {
