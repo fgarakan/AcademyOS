@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Info, AlertTriangle, Sparkles, Users } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, Sparkles, Users } from 'lucide-react'
 import { CoachPlayerWatchList, type WatchListPlayer } from '@/components/coach/CoachPlayerWatchList'
 import { DonnaOpenChip } from '@/components/assistant/DonnaOpenChip'
 import { getSupabaseServer } from '@/lib/supabase/server'
@@ -347,14 +347,6 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* Snapshot notice */}
-      <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-lime/5 border border-lime/20 text-xs text-text-secondary">
-        <Info className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
-        <span>
-          Execution updates are saved to this session only — the master template is not changed.
-        </span>
-      </div>
-
       {/* ── Run the Session ── blocks, exercises, attendance */}
       <section data-donna-focus-id="coach-run-session">
         <p className="label-xs mb-3">Run the Session</p>
@@ -399,8 +391,7 @@ export default async function CoachSessionDetailPage({ params }: PageProps) {
       <section data-donna-focus-id="coach-wrap-up-link">
         <p className="label-xs mb-1">After Session</p>
         <p className="text-[11px] text-text-muted mb-2">
-          Use <span className="text-text-secondary font-medium">Wrap-Up Session</span> for your structured end-of-session recap.
-          Player observations go directly to the director review queue.
+          Use <span className="text-text-secondary font-medium">Wrap-Up Session</span> for your end-of-session recap.
         </p>
         {!existingWrapUpStatus && (
           <Link

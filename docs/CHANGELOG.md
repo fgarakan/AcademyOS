@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1045 — Coach Session Detail Execution UX Polish V1
+
+- `src/app/coach/sessions/[sessionId]/page.tsx` (modified): Removed "Snapshot notice" — technical developer note between Today's Plan and Run the Session sections ("Execution updates are saved to this session only — the master template is not changed."). Simplified "After Session" description from two sentences to one: "Use Wrap-Up Session for your end-of-session recap." Removed admin routing detail ("Player observations go directly to the director review queue"). Removed unused `Info` import. All wrap-up flows, execution client, DONNA chips, and data-donna-focus-id targets preserved. TypeScript: clean.
+- `docs/architecture/COACH_SESSION_DETAIL_UX_1045.md` (new): Audit and decision record.
+- `docs/QA_COACH_SESSION_DETAIL_UX_1045.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1044 — Coach Assigned Sessions Dashboard UX Polish V1
 
 - `src/app/coach/page.tsx` (modified): Removed DONNA Coach Assistant body card (duplicate of bottom tab "DONNA" and floating button — third DONNA entry point). Removed Quick Actions section ("My Sessions" + "My Players" grid — duplicates bottom tab bar). Removed unused `Sparkles` import. On-Court Capture section, sessions/players/notes sections, wrap-up alert, daily brief, and all DONNA focus targets preserved. TypeScript: clean.
