@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-05-31 — Sprint 1053 — DONNA Voice Permission + Fallback QA V1
+
+- `src/components/assistant/DonnaVoiceLayer.tsx` (modified): Voice permission error now shows the actual specific message from `voicePermissionError` prop instead of a hardcoded generic string. `not-allowed` → "Microphone access is blocked. You can enable it in your browser settings or type instead." Other errors → "Voice is unavailable right now. You can type instead." TypeScript: clean.
+- `docs/architecture/DONNA_VOICE_PERMISSION_QA_1053.md` (new): Complete voice permission + fallback flow documentation.
+- `docs/QA_DONNA_VOICE_PERMISSION_1053.md` (new): QA checklist.
+
 ## 2026-05-31 — Sprint 1052 — DONNA Continuous Voice Session V1
 
 - `src/components/assistant/VoiceInputButton.tsx` (modified): Added `autoStart` prop — starts voice session automatically when `autoStart` becomes true (panel opens), persistent=true, and voice is supported. Guard: `voiceState !== 'idle'` prevents double-start. Fallback: if browser blocks mic, `onerror` fires and graceful permission error is shown.
