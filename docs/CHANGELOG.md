@@ -3,6 +3,14 @@
 ---
 
 
+## 2026-05-31 — Sprint 1057 — DONNA One-Click Voice Activation Guarantee V1
+
+- `src/components/assistant/VoiceInputButton.tsx` (modified): In `startRecognition > recognition.onerror`, added guard: `if (event.error === 'not-allowed' || event.error === 'service-not-allowed') sessionActiveRef.current = false`. Stops persistent retry loop immediately on permanent permission errors — prevents "Voice stopped after repeated silence" from appearing after a mic denial.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): In the floating DONNA button `onClick` (fresh-open path only, after minimize/expand guards): calls `navigator.mediaDevices.getUserMedia({ audio: true })` within the user gesture, immediately stopping tracks after resolve. This pre-authorizes mic permission in Chrome/Edge's browser storage so that `recognition.start()` called from `VoiceInputButton`'s `useEffect` after panel mount succeeds without requiring a user gesture at that point. Guarded by `!isOnboardingActive(onboardingStep)` and `navigator.mediaDevices` availability.
+- `docs/architecture/DONNA_ONE_CLICK_VOICE_ACTIVATION_1057.md` (new): Root cause analysis, fix rationale, browser behavior model, invariants preserved.
+- `docs/QA_DONNA_ONE_CLICK_VOICE_ACTIVATION_1057.md` (new): Manual QA checklist — 9 test suites covering one-click activation, first-use permission, denied permission, voice loop continuity, minimize/expand, text input, God Mode, onboarding, and unsupported browsers.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1056 — Brian Pilot Demo Script + Seed Data V1
 
 - `docs/architecture/BRIAN_PILOT_DEMO_SCRIPT_1056.md` (new): Full demo script with narration for 6 scenes (Dashboard, Review Queue, Player Profile, Templates + Sessions, Coach Experience, DONNA Voice Loop), pre-demo setup checklist, FAQ for Brian, seed data reference. No code changes.

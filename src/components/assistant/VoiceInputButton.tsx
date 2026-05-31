@@ -190,6 +190,11 @@ export function VoiceInputButton({
       if (event.error !== 'no-speech') {
         onError?.(event.error)
       }
+      // Sprint 1057: permanent permission errors — stop session so onend does not loop retries.
+      // Without this, the persistent retry loop cycles 20× (~6s) before exhausting.
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        sessionActiveRef.current = false
+      }
       recognitionRef.current = null
     }
 

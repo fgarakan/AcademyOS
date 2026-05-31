@@ -3517,6 +3517,15 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           if (panelOpen) { minimizePanel(); return }
           // Sprint 918: if minimized, expand (restores panel without full re-init)
           if (panelMinimized) { expandPanel(); return }
+          // Sprint 1057: trigger mic permission within the user gesture so SpeechRecognition.start()
+          // works from VoiceInputButton's useEffect after the panel mounts. Chrome requires either a
+          // user gesture OR prior mic permission — this getUserMedia call satisfies the requirement.
+          // Tracks are stopped immediately; we only need the browser to record the permission grant.
+          if (!isOnboardingActive(onboardingStep) && typeof navigator !== 'undefined' && navigator.mediaDevices) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+              .then(stream => stream.getTracks().forEach(t => t.stop()))
+              .catch(() => { /* permission denied — VoiceInputButton surfaces error gracefully */ })
+          }
           openDonnaPanel()
           // Sprint 359: restore draft from session if no active draft currently
           // Must run before the onboarding check so restored drafts skip intro.
