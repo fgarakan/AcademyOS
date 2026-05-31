@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-05-31 — Sprint 1033 — Director Dashboard Surface Audit V1
+
+- `src/lib/ux/directorDashboardSurfaceAudit.ts` (new): Complete audit of all 11 surfaces on /director/page.tsx. `DIRECTOR_DASHBOARD_SURFACES` — each surface: name, sprintAdded, location (top/mid/bottom), purpose, showsUrgency, showsCount, hasCTA, attentionConflict (none/duplicates_primary/equal_weight), recommendedAction (keep/replace/collapse/remove_when_live/move_down), rationale, sprint1034Impact. `COMPETING_SURFACE_PAIRS` — 3 identified pairs that create competing attention (DonnaDashboardOpenCard vs TodayCommandCenter; Pulse grid vs TodayCommandCenter; LiveActivityCard vs Pulse grid). `SPRINT_1034_PLAN` — remove: DonnaDashboardOpenCard + DirectorTodayCommandCenter; add: DirectorPrimaryActionHero; keep: Pulse grid + KPI sections; defer: LiveActivityCard simplification. `getCompetingCount()` and `getSurfacesByAction()` helpers. TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1032 — DONNA Mobile Panel Polish V1
 
 - `src/components/assistant/DonnaVoiceLayer.tsx` (modified): Textarea font size changed from `text-xs` (12px) to `text-base sm:text-xs` — 16px on mobile to prevent iOS zoom-on-focus, 12px on desktop for compact layout.
