@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-31 — Sprint 1028 — Wire DONNA Panel Response Renderer V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Removed two fragmented response sections (-82 lines JSX): (1) inline cooThread section (Sprints 747-825 — bubble JSX with 3 scroll refs); (2) Sprint 1011 standalone God Mode section (loading dots + DonnaResponseCard). Replaced with single `<DonnaPanelResponseRenderer>` call passing cooThread, godModeOutput, isGodModeLoading, onGodModeNavigate (router.push + closePanel), onGodModeHighlight (executeDonnaHighlight + closePanel). DonnaWorkflowCards unchanged — still handles commandResponse + all drafts. DonnaResponseCard import removed (now internal to renderer). Net: one unified DONNA response surface instead of three. TypeScript: clean.
+- `docs/architecture/DONNA_PANEL_RESPONSE_RENDERER_WIRED_1028.md` (new): Architecture doc — problem, what changed, what was kept, new panel layout, what got simpler, visual QA items.
+- `docs/QA_DONNA_PANEL_RESPONSE_RENDERER_WIRED_1028.md` (new): QA checklist.
+
+---
+
 ## 2026-05-31 — Sprint 1027 — Internal Pilot God Mode Certification V1
 
 - `src/lib/donna/llmOrchestration/godModePilotCertification.ts` (new): `GOD_MODE_PILOT_CHECKS` — 30 certification checks across 6 categories: infrastructure (7 checks: live tool set, direct-executability safety), intelligence (4 checks: all Sprint 1013-1016 answer builders present), curriculum (5 checks: strategy query detection, philosophy profile, approval routing), safety (7 checks: approve_review_item/send_parent_message/change_player_level/publish_curriculum/bypass_rls blocked, curriculum reversible, knowledge tool non-executable), director_ux (3 checks: 10 audit criteria, 5 golden path steps, score ≥ 50), pilot_scenarios (5 checks: academy/player/curriculum/strategy/approval scenarios). `runGodModePilotCertification()` → `CertificationReport` with pilotReadiness: blocked (any safety/infra failure) / conditional (other failures) / ready (all 30 pass). `formatCertificationReport(report)` — human-readable report with blocker list. All 30 checks: pure TypeScript, no DB, no API.

@@ -243,7 +243,9 @@ import { dispatchUIIntent, getAvailableActionsForContext } from '@/lib/donna/don
 // Sprint 817 — Focus target: set before router.push for teal highlight on arrival
 import { setDonnaFocusTarget } from '@/lib/donna/donnaFocusTarget'
 // Sprint 1011 — DONNA God Mode: LLM orchestrator response card + guided actions
-import { DonnaResponseCard } from '@/components/donna/DonnaResponseCard'
+// Sprint 1028 — unified response renderer (cooThread + God Mode loading + response card)
+// DonnaResponseCard is rendered inside DonnaPanelResponseRenderer — no direct import needed here
+import { DonnaPanelResponseRenderer } from '@/components/donna/DonnaPanelResponseRenderer'
 import { runDonnaOrchestratorAction } from '@/app/director/_actions/donnaOrchestratorAction'
 import { executeDonnaHighlight } from '@/lib/donna/llmOrchestration/donnaGuidedAction'
 import type { OrchestratorOutput, ConversationTurn as OrchestratorTurn } from '@/lib/donna/llmOrchestration/types'
@@ -4187,58 +4189,22 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             isSpeaking={isSpeaking}
           />
 
-          {/* ── Sprint 747/748 — COO conversation thread — premium chat bubbles ── */}
-          {/* Sprint 747: premium bubbles, last 5 turns including current.            */}
-          {/* Sprint 748: extended with label/type metadata; auto-scroll ref;         */}
-          {/* commandResponse card suppressed when message matches last thread turn.  */}
-          {cooThread.length > 0 && (
-            <div ref={cooThreadWrapperRef} className="pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              {/* Sprint 749: max-h + overflow-y-auto so thread scrolls internally.   */}
-              {/* Sprint 824: cooThreadScrollRef — inner scroll scoped to this div.   */}
-              {/* Sprint 825: cooThreadWrapperRef — outer panel reveals this div once. */}
-              <div ref={cooThreadScrollRef} className="space-y-2.5 px-3 max-h-[280px] overflow-y-auto">
-                {cooThread.slice(-5).map((turn, i) => (
-                  <div key={i} className="space-y-1.5">
-                    {/* User message — right-aligned, lime tint */}
-                    <div className="flex justify-end">
-                      <div
-                        className="max-w-[84%] rounded-2xl rounded-tr-sm px-3 py-2"
-                        style={{ background: 'rgba(200,255,0,0.07)', border: '1px solid rgba(200,255,0,0.15)' }}
-                      >
-                        <p className="text-[12px] text-text-primary leading-relaxed">{turn.user}</p>
-                      </div>
-                    </div>
-                    {/* DONNA message — left-aligned, violet tint. Label shown for honest/named turns. */}
-                    <div className="flex justify-start">
-                      <div className="max-w-[88%] space-y-1">
-                        {turn.label && (
-                          <p
-                            className="text-[10px] uppercase tracking-widest font-semibold px-1"
-                            style={{ color: turn.type === 'honest' ? '#FF9500' : 'rgba(139,92,246,0.7)' }}
-                          >
-                            {turn.label}
-                          </p>
-                        )}
-                        <div
-                          className="rounded-2xl rounded-tl-sm px-3 py-2"
-                          style={{
-                            background: turn.type === 'honest' ? 'rgba(255,149,0,0.06)' : 'rgba(139,92,246,0.06)',
-                            border: turn.type === 'honest' ? '1px solid rgba(255,149,0,0.18)' : '1px solid rgba(139,92,246,0.12)',
-                          }}
-                        >
-                          <p className="text-[12px] text-text-secondary leading-relaxed">
-                            {turn.donna.length > 200 ? turn.donna.slice(0, 197) + '…' : turn.donna}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {/* Auto-scroll anchor */}
-                <div ref={cooThreadBottomRef} />
-              </div>
-            </div>
-          )}
+          {/* ── Sprint 1028 — Unified DONNA response renderer ── */}
+          {/* Replaces: inline cooThread section (Sprints 747-825) + Sprint 1011 God Mode section. */}
+          {/* DonnaWorkflowCards below handles commandResponse + all workflow/draft state.          */}
+          <DonnaPanelResponseRenderer
+            cooThread={cooThread}
+            godModeOutput={godModeOutput}
+            isGodModeLoading={isGodModeLoading}
+            onGodModeNavigate={(route) => {
+              router.push(route)
+              closePanel()
+            }}
+            onGodModeHighlight={(targetId, route, label) => {
+              executeDonnaHighlight({ targetId, route, label }, pathname, (r) => router.push(r))
+              closePanel()
+            }}
+          />
 
           {/* ── Sprint 384: Workflow output cards — extracted to DonnaWorkflowCards ── */}
           {/* Sprint 748: suppressCommandResponseCard hides the "DONNA says" card     */}
@@ -4299,36 +4265,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             contextSummary={showContextSection ? contextSummary : null}
             onDismissContextSummary={() => setContextSummary(null)}
           />
-
-          {/* ── Sprint 1011 — God Mode: LLM orchestrator loading dots + response card ── */}
-          {isGodModeLoading && (
-            <div className="px-3.5 py-4 flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-lime/10 border border-lime/30 flex items-center justify-center shrink-0">
-                <span className="text-lime text-[10px] font-bold">D</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-lime/60 animate-pulse" />
-                <div className="w-1.5 h-1.5 rounded-full bg-lime/40 animate-pulse [animation-delay:150ms]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-lime/20 animate-pulse [animation-delay:300ms]" />
-                <span className="text-[11px] text-text-muted ml-1">Thinking…</span>
-              </div>
-            </div>
-          )}
-          {godModeOutput && !isGodModeLoading && (
-            <div className="px-0 pb-1">
-              <DonnaResponseCard
-                output={godModeOutput}
-                onNavigate={(route) => {
-                  router.push(route)
-                  closePanel()
-                }}
-                onHighlight={(targetId, route, label) => {
-                  executeDonnaHighlight({ targetId, route, label }, pathname, (r) => router.push(r))
-                  closePanel()
-                }}
-              />
-            </div>
-          )}
 
           {/* ── Sprint 704 — Action preview card for route_to_review responses ── */}
           {actionPreview && (
