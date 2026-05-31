@@ -3,6 +3,14 @@
 ---
 
 
+## 2026-05-31 — Sprint 1059 — DONNA First Open Greeting Simplification V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Removed three noisy blocks from greeting card — (1) follow-up text (`dailyGreetingState.followUp` rendering); (2) page context line "You're on: X" (duplicate of header `↳ screen` label); (3) priority hint "N items waiting in review queue" (duplicate of header badge). Walk-me-through button, coach session wrap-up CTA, and onboarding section preserved.
+- `src/lib/donna/donnaGreeting.ts` (modified): Shortened director first-open-of-day `primaryText` from "I'm ready to help you review today's priorities, player signals, coach follow-ups, and anything waiting for approval." to "I'm ready to help you focus on what matters today." Set `followUp: ''`.
+- `docs/architecture/DONNA_FIRST_OPEN_GREETING_SIMPLIFICATION_1059.md` (new): Before/after greeting structure, change rationale, preserved invariants.
+- `docs/QA_DONNA_FIRST_OPEN_GREETING_SIMPLIFICATION_1059.md` (new): QA checklist — director first/subsequent open, coach with and without session, onboarding, header duplication checks, voice and sidebar regression checks.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1058 — DONNA Sidebar 10 of 10 UX Reduction V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): Five targeted reductions to make first-open calm and minimal: (1) removed `useEffect([contextSummary])` auto-expand of Context section; (2) removed `useEffect([suggestions, recommendationSet])` auto-expand of Suggestions section; (3) removed `setCommandResponse` review-queue notification card on panel open (header badge shows count); (4) removed coach quick-action buttons from greeting card; (5) added `showDevTools` state (default false) + `Dev tools ↓` disclosure toggle around DonnaDeveloperTools in non-production. One-click voice activation (Sprint 1057), text input, God Mode, response cards, chips, highlights, and all workflow cards preserved.

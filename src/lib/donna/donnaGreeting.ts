@@ -72,8 +72,8 @@ export function buildDonnaOpeningGreeting(
   if (isFirstOpenToday) {
     const salutation = firstName ? `${greetingWord()}, ${firstName}` : greetingWord()
     return {
-      primaryText: `${salutation}. I'm ready to help you review today's priorities, player signals, coach follow-ups, and anything waiting for approval.`,
-      followUp: 'Would you like me to walk you through what needs attention?',
+      primaryText: `${salutation}. I'm ready to help you focus on what matters today.`,
+      followUp: '',
     }
   }
   return {

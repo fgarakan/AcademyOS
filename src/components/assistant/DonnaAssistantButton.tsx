@@ -4010,26 +4010,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                   ? DONNA_ONBOARDING_STEPS[onboardingStep].question
                   : (dailyGreetingState?.primaryText ?? greetingText)}
               </p>
-              {/* Sprint 647/649 — daily welcome follow-up, priority hint, and role-aware CTA */}
-              {!isOnboardingActive(onboardingStep) && dailyGreetingState?.followUp && (
-                <p className="text-[12px] text-text-secondary mt-2 leading-snug">
-                  {dailyGreetingState.followUp}
-                </p>
-              )}
-              {/* Sprint 1030 — page-aware context line: tells director DONNA knows the current page */}
-              {!isOnboardingActive(onboardingStep) && ctx.screenName && ctx.screenName !== 'Director Dashboard' && (
-                <p className="text-[11px] mt-2 leading-snug text-text-muted">
-                  You're on: <span className="text-lime font-medium">{ctx.screenName}</span>
-                </p>
-              )}
-              {/* Sprint 649 — live priority hint for director role */}
-              {!isOnboardingActive(onboardingStep) && role === 'director' && reviewQueuePendingCount > 0 && (
-                <p className="text-[11px] mt-2 leading-snug" style={{ color: '#FF9500' }}>
-                  {reviewQueuePendingCount === 1
-                    ? '1 item is waiting in your review queue.'
-                    : `${reviewQueuePendingCount} items are waiting in your review queue.`}
-                </p>
-              )}
+              {/* Sprint 1059: follow-up text, page context line, and priority hint removed.
+                  Header shows page label (↳ screen) and review queue badge — no duplication needed. */}
               {/* Sprint 654 — wrap-up priority CTA when coach is on a session page */}
               {!isOnboardingActive(onboardingStep) && role === 'coach' && (() => {
                 const sessionSegment = pathname.includes('/sessions/')
