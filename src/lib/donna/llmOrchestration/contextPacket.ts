@@ -65,6 +65,13 @@ export interface ContextPacketInput {
   playerId?: string
   /** Sprint 1004 — Session ID from route context for session-specific tool (never guessed by LLM) */
   sessionId?: string
+  /**
+   * Sprint 1075 — Academy profile summary from server-side AcademyProfileContext.
+   * Built in donnaOrchestratorAction from authenticated academy data — never from client input.
+   * Injected into the system prompt as "## Academy Context" when present.
+   * Missing fields are explicit (see getAcademyProfileSummaryText).
+   */
+  academyProfileSummary?: string
 }
 
 // ── Safe signals ──────────────────────────────────────────────────────────────
@@ -234,6 +241,7 @@ function buildSystemPrompt(
   pageContext: PageContextSummary,
   toolManifest: ToolManifest,
   conversationHistory: ConversationHistory,
+  academyProfileSummary?: string,
 ): string {
   const lines: string[] = []
 
@@ -241,6 +249,14 @@ function buildSystemPrompt(
   lines.push('## Identity')
   lines.push(ROLE_CONTEXT[role])
   if (firstName) lines.push(`The user's name is ${firstName}.`)
+
+  // 1.5. Sprint 1075 — Academy context (injected server-side from AcademyProfileContext).
+  // Only included when the summary is present and not the generic fallback phrase.
+  // Keeps the section concise — summary text is already bounded by getAcademyProfileSummaryText.
+  if (academyProfileSummary && !academyProfileSummary.startsWith('Academy profile context is not available')) {
+    lines.push('\n## Academy Context')
+    lines.push(academyProfileSummary)
+  }
 
   // 2. Current state
   lines.push('\n## Current State')
@@ -381,6 +397,7 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     pageContext,
     toolManifest,
     sanitizedHistory,
+    input.academyProfileSummary,
   )
 
   // Sprint 1018 — inject curriculum strategy framing when user input or page is curriculum-strategic

@@ -18,6 +18,12 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { orchestrate } from '@/lib/donna/llmOrchestration/orchestrator'
 import type { OrchestratorOutput, ConversationTurn } from '@/lib/donna/llmOrchestration/types'
 import { writeUsageEventToDb } from '@/lib/usage/usageTracker'
+// Sprint 1075 — Academy profile context wiring
+import {
+  buildAcademyProfileFromLiveData,
+  buildEmptyAcademyProfile,
+  getAcademyProfileSummaryText,
+} from '@/lib/donna/donnaAcademyProfileContext'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -96,12 +102,43 @@ async function getAuthorizedContext() {
     return { ok: false as const, error: 'Director or Head Coach access required.' }
   }
 
+  // Sprint 1075 — fetch safe academy identity fields for profile context.
+  // Scoped to the authenticated user's academyId — never trusted from client input.
+  // name, slug, timezone, country, settings only — no sensitive player/coach data.
+  // Fails gracefully: empty profile used if the query fails or returns null.
+  const academyId = profile.academy_id as string
+  let academyProfileSummary = ''
+  try {
+    const { data: academy } = await supabase
+      .from('academies')
+      .select('name, slug, timezone, country, settings')
+      .eq('id', academyId)
+      .single()
+
+    const academyProfile = academy
+      ? buildAcademyProfileFromLiveData({
+          academyId,
+          academyName: academy.name ?? null,
+          academySlug: academy.slug ?? null,
+          timezone: academy.timezone ?? null,
+          country: (academy.country as string | null) ?? null,
+          rawAcademySettings: (academy.settings as Record<string, unknown> | null) ?? null,
+        })
+      : buildEmptyAcademyProfile(academyId)
+
+    academyProfileSummary = getAcademyProfileSummaryText(academyProfile)
+  } catch {
+    // Non-fatal — proceed without academy profile context
+    academyProfileSummary = buildEmptyAcademyProfile(academyId).missingDataFallback
+  }
+
   return {
     ok: true as const,
     supabase,
     userId: user.id,
-    academyId: profile.academy_id as string,
+    academyId,
     role: role as 'academy_director' | 'head_coach',
+    academyProfileSummary,
   }
 }
 
@@ -145,7 +182,7 @@ export async function runDonnaOrchestratorAction(
     return { ok: false, hadBlockedAttempt: false, error: auth.error }
   }
 
-  const { supabase, academyId, role } = auth
+  const { supabase, academyId, role, academyProfileSummary } = auth
 
   // 3. Run orchestrator
   let response
@@ -159,6 +196,8 @@ export async function runDonnaOrchestratorAction(
       firstName: input.firstName,
       pendingReviews: input.pendingReviews ?? 0,
       conversationHistory: input.conversationHistory,
+      // Sprint 1075 — academy profile summary injected server-side, never from client
+      academyProfileSummary: academyProfileSummary || undefined,
       // playerId and sessionId: route context only — scoped DB reads, not LLM-trusted
       ...(input.playerId ? { playerId: input.playerId } : {}),
       ...(input.sessionId ? { sessionId: input.sessionId } : {}),
