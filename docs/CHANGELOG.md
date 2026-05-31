@@ -3,6 +3,10 @@
 ---
 
 
+## 2026-05-31 — Sprint 1050 — Internal Pilot Visual QA Screenshot Audit V1
+
+- `docs/architecture/INTERNAL_PILOT_VISUAL_QA_1050.md` (new): Full audit of Sprints 1034–1049 UX changes, pre-pilot visual QA checklist for director/coach/parent/player critical paths, DONNA sidebar validation, and known gaps deferred to post-pilot. No code changes.
+
 ## 2026-05-31 — Sprint 1049 — Site-Wide AcademyOS UX Standard Enforcement V1
 
 - `src/app/director/fitness/templates/page.tsx` (modified): Removed `PageExplainerCard` (4-Q&A always-visible explainer block) — same pattern fixed for class templates in Sprint 1039. Only remaining `PageExplainerCard` usage after Sprint 1039. Removed unused import. Template list, stats, empty state, and all CTAs unchanged. TypeScript: clean.
