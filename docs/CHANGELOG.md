@@ -3,6 +3,11 @@
 ---
 
 
+## 2026-05-31 — Sprint 1068 — Fitness Builder Load + Age Fit Review V1
+
+- `src/app/director/fitness/templates/[templateId]/FitnessBuilderStepper.tsx` (modified): (1) Renamed `Step4TennisTransfer` → `Step4LoadCheck`. (2) Added `FitnessBlockType` import. (3) Added load check logic: `LOAD_REDUCE` (Red Ball: speed/plyometrics/strength are inappropriate), `LOAD_CAUTION` (Orange Ball: plyometrics/speed need modification), `getLoadCheckForBlock()` returns status (ok/caution/reduce) + message, `hasRecoveryBlock()` checks for recovery block. (4) Step 4 now shows: Load Flags summary card (red flags for reduce, orange for caution, missing recovery warning) + Level load guidance card (Load Guidance + Watch For from LEVEL_DEV_CONTEXT) + per-block load status badge (Load OK / Caution / Review Load). Tennis transfer copy retained per block.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1067 — Builder Simple / Advanced Controls V1
 
 - `src/app/director/fitness/templates/[templateId]/FitnessTemplateBuilderClient.tsx` (modified): Added `advancedBlockId` state (one block at a time shows advanced controls). `FitnessBlockCard` now shows a "⋯" button (`MoreHorizontal`) next to the observe button in the primary controls row. Clicking it reveals/hides an advanced controls panel with: Move up/down arrows and "Remove block" button. Default state: advanced controls hidden. Observation button and duration remain always visible in the primary row.

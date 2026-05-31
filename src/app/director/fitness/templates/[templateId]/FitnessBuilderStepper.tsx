@@ -24,6 +24,7 @@ import {
   isFitnessBlockType,
 } from '@/lib/fitness/fitnessBlockTypes'
 import type { FitnessBlock, ExerciseLibraryItem } from './fitnessBuilderTypes'
+import type { FitnessBlockType } from '@/lib/fitness/fitnessBlockTypes'
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
 
@@ -46,6 +47,57 @@ const TENNIS_TRANSFER: Record<string, string> = {
   coordination:      'Smooth stroke mechanics, racket-head control, hand-eye tracking on fast balls.',
   mobility:          'Full shoulder rotation on serve, hip flexibility for wide forehands, ankle range for split steps.',
   recovery_cool_down: 'Muscle recovery between points and games, breathing control under pressure, injury prevention.',
+}
+
+// ─── Load check — deterministic, no DB, no AI ────────────────────────────────
+
+type LoadStatus = 'ok' | 'caution' | 'reduce'
+
+interface LoadCheckResult {
+  status: LoadStatus
+  message: string | null
+}
+
+// Block types that are inappropriate or need caution at certain development stages
+const LOAD_REDUCE: Record<string, FitnessBlockType[]> = {
+  red: ['speed', 'plyometrics', 'strength'],
+}
+const LOAD_CAUTION: Record<string, FitnessBlockType[]> = {
+  orange: ['plyometrics', 'speed'],
+  green:  [],
+}
+
+function getLoadCheckForBlock(blockType: FitnessBlockType | null, levelName: string | null): LoadCheckResult {
+  if (!blockType || !levelName) return { status: 'ok', message: null }
+  const lvl = levelName.toLowerCase()
+  for (const key of Object.keys(LOAD_REDUCE)) {
+    if (lvl.includes(key)) {
+      const flagged = LOAD_REDUCE[key]
+      if (flagged.includes(blockType)) {
+        return {
+          status: 'reduce',
+          message: `${levelName} players are not ready for ${blockType.replace('_', ' ')} training at standard load. Modify or remove this block.`,
+        }
+      }
+    }
+  }
+  for (const key of Object.keys(LOAD_CAUTION)) {
+    if (lvl.includes(key)) {
+      const flagged = LOAD_CAUTION[key]
+      if (flagged.includes(blockType)) {
+        return {
+          status: 'caution',
+          message: `Use low-load progressions for ${blockType.replace('_', ' ')} with ${levelName} players. Monitor closely.`,
+        }
+      }
+    }
+  }
+  return { status: 'ok', message: null }
+}
+
+// Check if a template has a recovery block (required for high-load sessions)
+function hasRecoveryBlock(blocks: FitnessBlock[]): boolean {
+  return blocks.some(b => b.fitnessBlockType === 'recovery_cool_down')
 }
 
 // ─── Level-based physical development context (UI-only, no DB calls) ──────────
@@ -539,15 +591,20 @@ function Step3PhysicalBlocks({
   )
 }
 
-// ─── Step 4 — Tennis Transfer + Coach Cues ───────────────────────────────────
+// ─── Step 4 — Load Check ─────────────────────────────────────────────────────
 
-function Step4TennisTransfer({
+function Step4LoadCheck({
   fitnessBlocks,
   currentLevelName,
 }: {
   fitnessBlocks: FitnessBlock[]
   currentLevelName: string | null
 }) {
+  const devCtx = getDevContext(currentLevelName)
+  const missingRecovery = fitnessBlocks.length > 0 && !hasRecoveryBlock(fitnessBlocks)
+  const reduceBlocks = fitnessBlocks.filter(b => getLoadCheckForBlock(b.fitnessBlockType, currentLevelName).status === 'reduce')
+  const cautionBlocks = fitnessBlocks.filter(b => getLoadCheckForBlock(b.fitnessBlockType, currentLevelName).status === 'caution')
+
   return (
     <div className="space-y-5">
       <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
@@ -559,12 +616,63 @@ function Step4TennisTransfer({
         </p>
       </div>
 
+      {/* Load risk summary */}
+      {(reduceBlocks.length > 0 || cautionBlocks.length > 0 || missingRecovery) && (
+        <Card>
+          <CardContent className="py-4 space-y-3">
+            <p className="label-xs">Load Flags</p>
+            {reduceBlocks.map(b => (
+              <div key={b.id} className="flex items-start gap-2 text-status-red">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-snug">
+                  <span className="font-semibold">{b.name}</span> — {getLoadCheckForBlock(b.fitnessBlockType, currentLevelName).message}
+                </p>
+              </div>
+            ))}
+            {cautionBlocks.map(b => (
+              <div key={b.id} className="flex items-start gap-2 text-status-orange">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-snug">
+                  <span className="font-semibold">{b.name}</span> — {getLoadCheckForBlock(b.fitnessBlockType, currentLevelName).message}
+                </p>
+              </div>
+            ))}
+            {missingRecovery && (
+              <div className="flex items-start gap-2 text-status-orange">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-snug">
+                  No Recovery / Cool Down block — consider adding one for player welfare and injury prevention.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Level load guidance */}
+      {devCtx && currentLevelName && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Load Guidance</p>
+                <p className="text-[11px] text-text-secondary leading-relaxed">{devCtx.load}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-status-orange mb-1">Watch For</p>
+                <p className="text-[11px] text-text-secondary leading-relaxed">{devCtx.watchFor}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {fitnessBlocks.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center space-y-2">
             <Zap className="w-7 h-7 text-text-muted mx-auto" />
             <p className="text-sm text-text-primary">No fitness blocks yet.</p>
-            <p className="text-xs text-text-muted">Go back to Physical Blocks and add fitness blocks to see their tennis transfer context.</p>
+            <p className="text-xs text-text-muted">Go back to Blocks and add fitness blocks to see their load check and tennis transfer context.</p>
           </CardContent>
         </Card>
       ) : (
@@ -575,6 +683,7 @@ function Step4TennisTransfer({
             const accent = fbt ? getFitnessBlockAccent(fbt) : 'text-text-muted'
             const intent = fbt ? getFitnessBlockIntent(fbt) : null
             const transfer = fbt && isFitnessBlockType(fbt) ? TENNIS_TRANSFER[fbt] : null
+            const loadCheck = getLoadCheckForBlock(fbt, currentLevelName)
 
             return (
               <Card key={block.id}>
@@ -587,6 +696,21 @@ function Step4TennisTransfer({
                         {block.duration_min != null && (
                           <span className="flex items-center gap-1 text-[10px] text-text-muted">
                             <Clock className="w-2.5 h-2.5" />{block.duration_min}min
+                          </span>
+                        )}
+                        {loadCheck.status === 'ok' && block.exercises.length > 0 && (
+                          <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-status-green/30 text-status-green bg-status-green/5">
+                            Load OK
+                          </span>
+                        )}
+                        {loadCheck.status === 'caution' && (
+                          <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-status-orange/30 text-status-orange bg-status-orange/5">
+                            Caution
+                          </span>
+                        )}
+                        {loadCheck.status === 'reduce' && (
+                          <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-status-red/30 text-status-red bg-status-red/5">
+                            Review Load
                           </span>
                         )}
                       </div>
@@ -878,7 +1002,7 @@ export function FitnessBuilderStepper({
         )}
 
         {activeStep === 4 && (
-          <Step4TennisTransfer
+          <Step4LoadCheck
             fitnessBlocks={fitnessBlocks}
             currentLevelName={currentLevelName}
           />
