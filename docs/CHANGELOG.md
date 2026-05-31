@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-05-31 — Sprint 1072 — DONNA Context Pack Architecture V1
+
+- `src/lib/donna/donnaContextPackRegistry.ts` (new): Additive context architecture layer. Defines `DonnaContextPack`, `DonnaContextPackAnswer`, `DonnaContextPackNeverDoRule`, and `DonnaContextPackRole` interfaces. Contains 8 initial context packs for high-value director pages: Today (`/director`), Approvals (`/director/review`), Academy Health (`/director/kpi`), Fitness Builder (`/director/fitness/templates/[templateId]`), Class Builder (`/director/class-templates/[templateId]`), Players (`/director/players`), Sessions (`/director/sessions`), Parent Updates (`/director/parents`). Exports `getDonnaContextPackForRoute(pathname)` (exact + dynamic route resolution) and `lookupAnswerInContextPack(pack, prompt)` (trigger-based Q&A lookup). Each pack includes: route, pageName, roles, pagePurpose, availableData, keyMetrics, commonQuestions, commonCommands, safeActions, approvalRequiredActions, neverDoRules, relatedRoutes, exampleAnswers, missingDataFallback. No existing DONNA runtime behavior changed — pure data foundation for future wiring.
+- `docs/architecture/DONNA_CONTEXT_PACK_ARCHITECTURE_1072.md` (new): Full architecture notes — existing 4-system problem, new interface spec, 8-page inventory, future wiring plan, and relationship to existing registry/engine/chips.
+- `docs/QA_DONNA_CONTEXT_PACK_ARCHITECTURE_1072.md` (new): 40-check QA table covering interface completeness, 8 page coverage, 10 example answer checks, 10 helper function checks, and 9 regression checks.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1071 — DONNA Page-Aware Answer + Navigation Intent Fix V1
 
 - `src/lib/donna/donnaUIActionDispatcher.ts` (modified): Added 3 deterministic NAV_PATTERNS before the existing review-center pattern — (1) `open approvals?|go to approvals?|take me to approvals?|approvals? (section|center|page|queue)` → `/director/review`; (2) `academy health|open kpi|kpi (page|dashboard)|health (page|dashboard|section)` → `/director/kpi`; (3) `parent (updates?|communications?|section|page|center)` → `/director/parents`. All resolve before generic chat fallback, covering both typed and voice input paths.
