@@ -3,6 +3,10 @@
 ---
 
 
+## 2026-05-31 — Sprint 1056 — Brian Pilot Demo Script + Seed Data V1
+
+- `docs/architecture/BRIAN_PILOT_DEMO_SCRIPT_1056.md` (new): Full demo script with narration for 6 scenes (Dashboard, Review Queue, Player Profile, Templates + Sessions, Coach Experience, DONNA Voice Loop), pre-demo setup checklist, FAQ for Brian, seed data reference. No code changes.
+
 ## 2026-05-31 — Sprint 1055 — Internal Pilot Live Clickthrough QA V1
 
 - `docs/architecture/INTERNAL_PILOT_CLICKTHROUGH_QA_1055.md` (new): Complete golden-path clickthrough for director, coach, parent, and player. Pre-flight environment checklist. Known non-blocking issues for pilot. No code changes.
