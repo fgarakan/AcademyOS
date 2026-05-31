@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-05-31 — Sprint 1074 — Academy Profile Context Engine V1
+
+- `src/lib/donna/donnaAcademyProfileContext.ts` (new): Structured academy profile context layer. Exports `AcademyProfileContext` (18-field interface covering identity, roster, curriculum, preferences, setup gaps, and data quality tracking), `AcademySetupGap` (per-step completion + action href), `AcademySetupGapField` (7 onboarding steps), and `BuildAcademyProfileInput` (caller input shape). Three utilities: `buildAcademyProfileFromLiveData(input)` assembles a full profile from caller-provided optional data (no DB queries — accepts pre-fetched data from server components or actions); `buildEmptyAcademyProfile(academyId)` returns honest all-null fallback with `dataSource: 'fallback'`; `getAcademyProfileSummaryText(profile)` produces a 2–4 sentence natural-language academy summary for future DONNA prompt injection. Missing fields are always tracked explicitly in `missingFields` — never silently dropped or invented. Imports `AcademyDonnaPreferences` and `DEFAULT_DONNA_PREFERENCES` from Sprint 470 preferences file (no duplication). Not wired into `handleDonnaCooPrompt` or the orchestrator yet — pure data foundation.
+- `docs/architecture/DONNA_ACADEMY_PROFILE_CONTEXT_ENGINE_1074.md` (new): Problem statement, existing data source audit table, interface spec, setup gap definitions, utility descriptions, and future wiring plan.
+- `docs/QA_DONNA_ACADEMY_PROFILE_CONTEXT_ENGINE_1074.md` (new): 44-check QA table covering interface completeness, live data builder behavior (13 cases), empty builder behavior (9 cases), summary text (10 cases), setup gap definitions (5 cases), and regression checks (8 checks).
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1073 — Page Context Pack Runtime Wiring V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): (1) Added import of `getDonnaContextPackForRoute` and `lookupAnswerInContextPack` from `@/lib/donna/donnaContextPackRegistry`. (2) Removed `isAcademyHealthQuestion()` helper (Sprint 1071, 22 lines) — superseded by generalized pack lookup. (3) Replaced Sprint 1071 hard-coded Academy Health intercept with a generalized context-pack answer lookup at the top of `handleDonnaCooPrompt`. The lookup calls `getDonnaContextPackForRoute(pathname)` then `lookupAnswerInContextPack(pack, text)`; on a match it sets `commandResponse`, appends to `cooThread`, calls `speakDonna`, records prompt/summary/turn, and returns `true`. On no match it falls through to `routeDonnaPrompt` and God Mode unchanged. Covers all 8 context-pack pages: Today, Approvals, Academy Health, Fitness Builder, Class Builder, Players, Sessions, Parent Updates.
