@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-05-31 — Sprint 1031 — DONNA Highlight Escalation V1
+
+- `src/components/donna/DonnaHighlightBanner.tsx` (modified): Sprint 1031 escalation. Banner is now `pointer-events-auto` with `cursor-pointer` — clicking it re-scrolls the highlighted element into view (`scrollIntoView` via `scrollToTarget` callback). Text changed from "DONNA is pointing here — [label]" to "DONNA: [label]" (more direct). `target.reason` field is now displayed on sm+ screens. Dismiss button uses `e.stopPropagation()` so clicking X doesn't also trigger scroll. `hover:border-[#11d9df]/70` hover state added. TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1030 — DONNA Page-Aware Greeting + Chips V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): Added page-context line to the greeting card. When `ctx.screenName` is set and is not "Director Dashboard", shows "You're on: [page name]" in lime below the greeting text. Chips were already page-aware via `getDonnaPromptSuggestions(pathname)` — no chip changes needed. The greeting card now confirms DONNA's page awareness to the director on first glance. TypeScript: clean.

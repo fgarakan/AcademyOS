@@ -110,32 +110,46 @@ export function DonnaHighlightBanner() {
     setActive(null)
   }, [active])
 
+  // Sprint 1031 — escalation: click banner to re-scroll target into view
+  const scrollToTarget = useCallback(() => {
+    if (!active) return
+    const el = document.querySelector<HTMLElement>(`[data-donna-focus-id="${active.targetId}"]`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [active])
+
   if (!active) return null
 
   return (
     <div
       role="status"
       aria-live="polite"
+      onClick={scrollToTarget}
       className="fixed top-16 left-1/2 -translate-x-1/2 z-50
                  flex items-center gap-2
                  bg-[#07090c] border border-[#11d9df]/40 rounded-lg
                  px-3 py-2 shadow-lg
-                 pointer-events-none"
+                 pointer-events-auto cursor-pointer
+                 hover:border-[#11d9df]/70 transition-colors"
+      title="Click to scroll to highlighted element"
     >
       {/* Teal pulse dot */}
       <span className="w-1.5 h-1.5 rounded-full bg-[#11d9df] animate-pulse shrink-0" />
 
-      {/* Label */}
+      {/* Label — Sprint 1031: actionable text */}
       <span className="text-[#11d9df] text-xs font-medium whitespace-nowrap">
-        DONNA is pointing here
-        {active.label ? ` — ${active.label}` : ''}
+        {active.label ? `DONNA: ${active.label}` : 'DONNA is pointing here'}
       </span>
+
+      {/* Reason if provided */}
+      {active.reason && (
+        <span className="text-[#11d9df]/60 text-xs hidden sm:inline">— {active.reason}</span>
+      )}
 
       {/* Manual dismiss */}
       <button
         aria-label="Dismiss DONNA highlight"
-        className="ml-1 pointer-events-auto text-[#11d9df]/60 hover:text-[#11d9df] transition-colors"
-        onClick={dismiss}
+        className="ml-1 text-[#11d9df]/60 hover:text-[#11d9df] transition-colors"
+        onClick={(e) => { e.stopPropagation(); dismiss() }}
       >
         <X className="w-3 h-3" />
       </button>
