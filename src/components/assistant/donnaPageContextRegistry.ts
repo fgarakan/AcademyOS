@@ -103,10 +103,10 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     unsafeActions: ['skip_onboarding_steps', 'auto_complete_setup'],
   },
 
-  // ── Review Queue ──────────────────────────────────────────────────────────
+  // ── Approvals (Review Queue) ──────────────────────────────────────────────
   {
     routePattern: '/director/review',
-    screenName: 'Review Queue',
+    screenName: 'Approvals',
     objectType: 'review_queue',
     purpose:
       'Review and approve coach wrap-ups, voice drafts, attendance exceptions, and lesson requests before they affect players, parents, or curriculum.',
@@ -792,10 +792,10 @@ const PAGE_CONTEXT_REGISTRY: DonnaPageContext[] = [
     ],
   },
 
-  // ── Dashboard — registered last so /director prefix doesn't shadow other routes ──
+  // ── Today (Director Dashboard) — registered last so /director prefix doesn't shadow other routes ──
   {
     routePattern: '/director',
-    screenName: 'Dashboard',
+    screenName: 'Today',
     objectType: 'academy_overview',
     purpose:
       'See what needs attention across the academy — setup progress, players, sessions, review items, and signals all in one view.',

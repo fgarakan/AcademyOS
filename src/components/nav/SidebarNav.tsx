@@ -3,30 +3,30 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
-  LayoutDashboard, Users, BookOpen, Calendar, Sun,
-  LogOut, ClipboardList, Sparkles,
-  LayoutTemplate, Terminal, Activity, Settings, Rocket, BarChart2, UserCog,
+  LayoutDashboard, Users, BookOpen, Calendar,
+  LogOut, ClipboardList, MessageSquare,
+  LayoutTemplate, Settings, Rocket, BarChart2, UserCog,
 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
+// Sprint 1060 — locked director IA: 9 primary items in exact order
 const ACADEMY_ITEMS = [
-  { label: 'Dashboard',    href: '/director',                 icon: LayoutDashboard },
-  { label: 'DONNA',        href: '/director/donna',           icon: Sparkles },
-  { label: "Today's Academy", href: '/director/today',        icon: Sun },
-  { label: 'Players',      href: '/director/players',         icon: Users },
-  { label: 'Coaches',      href: '/director/coaches',         icon: UserCog },
-  { label: 'Sessions',     href: '/director/sessions',        icon: Calendar },
-  { label: 'Review Queue', href: '/director/review',          icon: ClipboardList },
-  { label: 'Signals',      href: '/director/signals',         icon: Activity },
-  { label: 'KPI',          href: '/director/kpi',             icon: BarChart2 },
-  { label: 'Curriculum',   href: '/director/curriculum/builder', icon: BookOpen },
-  { label: 'Templates',    href: '/director/templates',       icon: LayoutTemplate },
+  { label: 'Today',          href: '/director',                    icon: LayoutDashboard },
+  { label: 'Approvals',      href: '/director/review',             icon: ClipboardList },
+  { label: 'Players',        href: '/director/players',            icon: Users },
+  { label: 'Sessions',       href: '/director/sessions',           icon: Calendar },
+  { label: 'Curriculum',     href: '/director/curriculum/builder', icon: BookOpen },
+  { label: 'Parent Updates', href: '/director/parents',            icon: MessageSquare },
+  { label: 'Academy Health', href: '/director/kpi',                icon: BarChart2 },
+  { label: 'Templates',      href: '/director/templates',          icon: LayoutTemplate },
+  { label: 'Coaches',        href: '/director/coaches',            icon: UserCog },
 ]
 
+// DONNA is the persistent floating button — not a sidebar nav item (Sprint 1060)
+// Signals, Today's Academy, Command Center removed from primary nav (Sprint 1060)
 const SYSTEM_ITEMS = [
-  { label: 'Settings',       href: '/director/settings',       icon: Settings },
-  { label: 'Onboarding',     href: '/director/onboarding',     icon: Rocket },
-  { label: 'Command Center', href: '/director/command-center', icon: Terminal },
+  { label: 'Settings',   href: '/director/settings',   icon: Settings },
+  { label: 'Onboarding', href: '/director/onboarding', icon: Rocket },
 ]
 
 interface SidebarNavProps {
@@ -156,8 +156,7 @@ export function SidebarNav({
             key={item.href}
             item={item}
             isActive={isActive(item.href)}
-            badge={item.label === 'Review Queue' ? pendingCount : undefined}
-            subtitle={item.label === 'DONNA' ? 'Academy assistant' : undefined}
+            badge={item.label === 'Approvals' ? pendingCount : undefined}
           />
         ))}
 

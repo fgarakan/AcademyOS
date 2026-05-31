@@ -1250,13 +1250,13 @@ export default async function DirectorReviewQueuePage({
         className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        Dashboard
+        Today
       </Link>
 
       {/* Page header — Sprint 1036: safety note promoted to subtitle level */}
       <div className="space-y-1">
         <p className="page-eyebrow">Operations</p>
-        <h1 className="page-title">Review Queue</h1>
+        <h1 className="page-title">Approvals</h1>
         <p className="page-subtitle">
           Everything here waits for your decision. Nothing is applied until you approve it.
         </p>

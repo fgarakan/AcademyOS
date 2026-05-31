@@ -330,7 +330,7 @@ const QUICK_LINKS = [
   { label: 'Players',      href: '/director/players' },
   { label: 'Sessions',     href: '/director/sessions' },
   { label: 'Curriculum',   href: '/director/curriculum' },
-  { label: 'Review Queue', href: '/director/review' },
+  { label: 'Approvals', href: '/director/review' },
   { label: 'Onboarding',   href: '/director/onboarding' },
 ]
 
@@ -2248,7 +2248,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             lastResultHighPriorityCount: null,
             lastResultItemCount: null,
             lastSuggestedNavigationHref: '/director/review',
-            lastSuggestedNavigationLabel: 'Review Queue',
+            lastSuggestedNavigationLabel: 'Approvals',
             lastTopicLabel: 'urgent items',
             setAt: Date.now(),
           })
@@ -2288,7 +2288,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             lastResultHighPriorityCount: briefHighCount,
             lastResultItemCount: briefTotalItems,
             lastSuggestedNavigationHref: '/director/review',
-            lastSuggestedNavigationLabel: 'Review Queue',
+            lastSuggestedNavigationLabel: 'Approvals',
             lastTopicLabel: "today's brief",
             setAt: Date.now(),
           })
@@ -2341,7 +2341,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (!dailyBrief) return
     const summary = buildBriefVoiceSummary(dailyBrief)
     const details = buildBriefWalkthroughText(dailyBrief)
-    const narration = `${summary} Here's the breakdown: ${details} Want me to open the Review Queue?`
+    const narration = `${summary} Here's the breakdown: ${details} Want me to open Approvals?`
     setCommandResponse({ message: narration, type: 'info', label: 'Daily Brief — Walkthrough' })
     setCooThread(prev => [...prev.slice(-4), { user: 'Walk me through it', donna: narration, type: 'info' as const }])
     speakDonna(narration)
@@ -2716,10 +2716,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         const labels: Record<string, string> = {
           first_priority: 'Review Priority',
           safe_to_approve: 'Safe to Approve',
-          explain_queue: 'Review Queue',
+          explain_queue: 'Approvals',
           what_caution: 'Use Caution',
         }
-        setCommandResponse({ message: guidance, type: 'info', label: labels[rqIntent] ?? 'Review Queue' })
+        setCommandResponse({ message: guidance, type: 'info', label: labels[rqIntent] ?? 'Approvals' })
         setActiveMode('guide')
         return true
       }
@@ -4727,7 +4727,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                     )} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-[12px] font-semibold leading-tight">Review Queue</p>
+                        <p className="text-[12px] font-semibold leading-tight">Approvals</p>
                         {reviewQueueData && reviewQueueData.totalCount > 0 && (
                           <span className="text-[10px] font-semibold px-1 py-0.5 rounded"
                             style={{ background: 'rgba(255,59,48,0.15)', color: '#FF3B30' }}>

@@ -6,7 +6,7 @@
 export type NavItemId =
   | 'dashboard' | 'donna' | 'today' | 'players' | 'coaches' | 'sessions'
   | 'review_queue' | 'signals' | 'kpi' | 'curriculum' | 'templates'
-  | 'settings' | 'onboarding' | 'command_center' | 'groups'
+  | 'settings' | 'onboarding' | 'command_center' | 'groups' | 'parent_updates_page'
   | 'coach_home' | 'coach_sessions' | 'coach_recap' | 'coach_voice'
   | 'player_home' | 'player_missions' | 'player_progress' | 'player_badges' | 'player_donna'
   | 'parent_home' | 'parent_progress' | 'parent_updates' | 'parent_wins'
@@ -22,24 +22,26 @@ export interface NavItem {
 
 // ── Director nav ──────────────────────────────────────────────────────────────
 
+// Sprint 1060 — locked director IA in exact order
 export const DIRECTOR_PRIMARY_NAV: NavItem[] = [
-  { id: 'dashboard',       label: 'Dashboard',          href: '/director',                      iconKey: 'dashboard',  description: 'Academy health and at-a-glance status', exact: true },
-  { id: 'donna',           label: 'DONNA',              href: '/director/donna',                iconKey: 'donna',      description: 'Academy AI COO — ask anything, review proposals' },
-  { id: 'today',           label: "Today's Academy",    href: '/director/today',                iconKey: 'today',      description: "Live view of today's sessions and activity" },
-  { id: 'review_queue',    label: 'Review Queue',       href: '/director/review',               iconKey: 'review',     description: 'Pending approvals and actions requiring attention' },
-  { id: 'players',         label: 'Players',            href: '/director/players',              iconKey: 'players',    description: 'Player roster, profiles, and development' },
-  { id: 'coaches',         label: 'Coaches',            href: '/director/coaches',              iconKey: 'coaches',    description: 'Coach profiles and performance' },
-  { id: 'sessions',        label: 'Sessions',           href: '/director/sessions',             iconKey: 'sessions',   description: 'Session calendar, recaps, and attendance' },
-  { id: 'signals',         label: 'Signals',            href: '/director/signals',              iconKey: 'signals',    description: 'Player development signals and alerts' },
-  { id: 'kpi',             label: 'KPI',                href: '/director/kpi',                  iconKey: 'kpi',        description: 'Academy health KPIs and trend analysis' },
-  { id: 'curriculum',      label: 'Curriculum',         href: '/director/curriculum/builder',   iconKey: 'curriculum', description: 'Curriculum levels, requirements, badges, missions' },
-  { id: 'templates',       label: 'Templates',          href: '/director/templates',            iconKey: 'templates',  description: 'Session template library and builder' },
+  { id: 'dashboard',          label: 'Today',           href: '/director',                      iconKey: 'dashboard',      description: 'Director command center — today\'s priorities and signals', exact: true },
+  { id: 'review_queue',       label: 'Approvals',       href: '/director/review',               iconKey: 'review',         description: 'Pending approvals and actions requiring your decision' },
+  { id: 'players',            label: 'Players',         href: '/director/players',              iconKey: 'players',        description: 'Player roster, profiles, and development' },
+  { id: 'sessions',           label: 'Sessions',        href: '/director/sessions',             iconKey: 'sessions',       description: 'Session calendar, recaps, and attendance' },
+  { id: 'curriculum',         label: 'Curriculum',      href: '/director/curriculum/builder',   iconKey: 'curriculum',     description: 'Curriculum levels, requirements, badges, missions' },
+  { id: 'parent_updates_page',label: 'Parent Updates',  href: '/director/parents',              iconKey: 'parents',        description: 'Parent-facing updates — drafts, approved, and sent' },
+  { id: 'kpi',                label: 'Academy Health',  href: '/director/kpi',                  iconKey: 'kpi',            description: 'KPIs, signals, and academy health trends' },
+  { id: 'templates',          label: 'Templates',       href: '/director/templates',            iconKey: 'templates',      description: 'Session template library and builder' },
+  { id: 'coaches',            label: 'Coaches',         href: '/director/coaches',              iconKey: 'coaches',        description: 'Coach profiles and performance' },
 ]
 
+// Signals (/director/signals) removed from primary nav — hidden; can surface under Academy Health in future.
+// DONNA (/director/donna) removed — DONNA is the persistent floating button, not a nav page.
+// Today's Academy (/director/today) removed — /director (Today) serves this role.
+// Command Center (/director/command-center) removed — DONNA panel is the entry point.
 export const DIRECTOR_SYSTEM_NAV: NavItem[] = [
-  { id: 'settings',        label: 'Settings',           href: '/director/settings',             iconKey: 'settings',   description: 'Academy settings and configuration' },
-  { id: 'onboarding',      label: 'Onboarding',         href: '/director/onboarding',           iconKey: 'onboarding', description: 'Academy setup checklist' },
-  { id: 'command_center',  label: 'Command Center',     href: '/director/command-center',       iconKey: 'terminal',   description: 'DONNA command center — voice and text' },
+  { id: 'settings',   label: 'Settings',   href: '/director/settings',   iconKey: 'settings',   description: 'Academy settings and configuration' },
+  { id: 'onboarding', label: 'Onboarding', href: '/director/onboarding', iconKey: 'onboarding', description: 'Academy setup checklist' },
 ]
 
 // ── Coach nav ─────────────────────────────────────────────────────────────────

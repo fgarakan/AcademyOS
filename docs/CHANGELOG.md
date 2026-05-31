@@ -3,6 +3,19 @@
 ---
 
 
+## 2026-05-31 — Sprint 1060 — Director Navigation Rename IA Lock V1
+
+- `src/components/nav/SidebarNav.tsx` (modified): Replaced ACADEMY_ITEMS with 9 locked IA items in order (Today, Approvals, Players, Sessions, Curriculum, Parent Updates, Academy Health, Templates, Coaches); removed DONNA/Today's Academy/Signals from primary nav; removed Command Center from SYSTEM_ITEMS; badge check updated to `'Approvals'`; added MessageSquare import for Parent Updates.
+- `src/components/nav/DirectorMobileNav.tsx` (modified): Replaced 5 items with locked top-5 (Today→/director, Approvals→/director/review, Players, Sessions, Curriculum); removed DONNA and Today's Academy from mobile nav.
+- `src/components/assistant/donnaPageContextRegistry.ts` (modified): `screenName: 'Review Queue'`→`'Approvals'`; `screenName: 'Dashboard'`→`'Today'`.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): QUICK_LINKS, 3 `lastSuggestedNavigationLabel` values, narration text, response card labels, Actions section UI label — all `'Review Queue'`→`'Approvals'`.
+- `src/app/director/review/page.tsx` (modified): h1 `Review Queue`→`Approvals`; breadcrumb `Dashboard`→`Today`.
+- `src/app/director/page.tsx` (modified): Link text `Review Queue`→`Approvals`.
+- `src/lib/ux/navConfigs.ts` (modified): Labels renamed, DIRECTOR_PRIMARY_NAV reordered to locked IA, Parent Updates added, removed items documented in comments.
+- `docs/architecture/DIRECTOR_NAVIGATION_IA_LOCK_1060.md` (new): Before/after label mapping, removed items, route stability, Parent Updates verification.
+- `docs/QA_DIRECTOR_NAVIGATION_IA_LOCK_1060.md` (new): QA checklist for desktop sidebar, mobile nav, DONNA context labels, Parent Updates, removed items accessibility.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1059 — DONNA First Open Greeting Simplification V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): Removed three noisy blocks from greeting card — (1) follow-up text (`dailyGreetingState.followUp` rendering); (2) page context line "You're on: X" (duplicate of header `↳ screen` label); (3) priority hint "N items waiting in review queue" (duplicate of header badge). Walk-me-through button, coach session wrap-up CTA, and onboarding section preserved.

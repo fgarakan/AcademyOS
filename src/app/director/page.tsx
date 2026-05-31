@@ -429,7 +429,7 @@ export default async function DirectorDashboard() {
               className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-lime transition-colors"
             >
               <ClipboardList className="w-3.5 h-3.5" />
-              Review Queue
+              Approvals
               {pendingWrapUpsCount > 0 && (
                 <span className="font-mono text-[10px] font-bold text-status-orange bg-status-orange/10 border border-status-orange/30 px-1.5 py-0.5 rounded-full">
                   {pendingWrapUpsCount}
