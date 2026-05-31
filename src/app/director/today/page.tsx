@@ -247,16 +247,14 @@ export default async function TodaysAcademyPage({
           <h1 className="page-title text-3xl">Today's Academy</h1>
           <p className="font-mono text-lime text-sm mt-1">{formattedToday}</p>
         </div>
-        <Link
+        {/* Sprint 1035: only show header Review Queue link when there are no pending items — orange notice handles the CTA when pending > 0 */}
+        {pending === 0 && <Link
           href="/director/review"
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-border hover:border-lime/30 hover:shadow-cyan transition-all"
         >
           <ClipboardList className="w-4 h-4 text-lime" />
           <span className="text-sm font-medium text-text-primary">Review Queue</span>
-          {pending > 0 && (
-            <span className="font-mono text-lime font-bold text-sm">{pending}</span>
-          )}
-        </Link>
+        </Link>}
       </div>
 
       {/* Sprint 660 — Pending wrap-ups notice */}
@@ -359,15 +357,7 @@ export default async function TodaysAcademyPage({
           </div>
           <DonnaTodayBriefPanel brief={commandBriefResult} risk={attentionRisk} />
 
-          {/* DONNA Command Brief — live/partial data (Sprint 512) ──────────── */}
-          <div>
-            <p className="label-xs">DONNA Command Brief</p>
-            <p className="text-xs text-text-muted mt-1">Live academy operating summary.</p>
-          </div>
-          <TodayCommandBrief
-            data={commandBriefResult.data}
-            overallStatus={commandBriefResult.overallStatus}
-          />
+          {/* Sprint 1035: TodayCommandBrief (Sprint 512) removed — DonnaTodayBriefPanel (Sprint 922) covers the same need with better UX */}
 
           {/* Player Attention Risk — Sprint 524 ─────────────────────────────── */}
           {attentionRisk.players.length > 0 && (

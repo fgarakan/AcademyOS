@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-05-31 — Sprint 1035 — Director Today Page Simplification V1
+
+- `src/app/director/today/page.tsx` (modified): Two simplifications. (1) Header Review Queue link only shown when `pending === 0` — when pending > 0, the orange "items need your review" notice IS the primary action; duplicate CTA removed. (2) `TodayCommandBrief` section (Sprint 512) removed — `DonnaTodayBriefPanel` (Sprint 922) covers the same need with better priority-ordered UX. Result: two competing DONNA sections collapsed to one; two competing Review Queue CTAs collapsed to one. TypeScript: clean (pre-existing unused-var warnings not from sprint changes).
+
 ## 2026-05-31 — Sprint 1034 — Replace DirectorTodayCommandCenter With Primary Action Hero V1
 
 - `src/app/director/page.tsx` (modified): (1) Removed `DonnaDashboardOpenCard` import and JSX section (Sprint 804 — Sprint 1033 audit: duplicates primary action). (2) Replaced `DirectorTodayCommandCenter` import and JSX section (Sprint 767) with `DirectorPrimaryActionHero` (Sprint 1024). Hero receives: `pendingReviewCount={pendingWrapUpsCount + newRequests}`, `attentionQueue`, `pendingPlacementCount={pendingCount}`, `firstName`. Today's Pulse grid (Sprint 813), KPI sections, and all conditional sections preserved. `buildAttentionQueue` import preserved (still needed by hero). `data-donna-focus-id="primary-action-hero"` added for DONNA teal highlighting. TypeScript: clean. Visual QA required.
