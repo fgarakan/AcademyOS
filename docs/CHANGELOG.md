@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-05-31 — Sprint 1058 — DONNA Sidebar 10 of 10 UX Reduction V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Five targeted reductions to make first-open calm and minimal: (1) removed `useEffect([contextSummary])` auto-expand of Context section; (2) removed `useEffect([suggestions, recommendationSet])` auto-expand of Suggestions section; (3) removed `setCommandResponse` review-queue notification card on panel open (header badge shows count); (4) removed coach quick-action buttons from greeting card; (5) added `showDevTools` state (default false) + `Dev tools ↓` disclosure toggle around DonnaDeveloperTools in non-production. One-click voice activation (Sprint 1057), text input, God Mode, response cards, chips, highlights, and all workflow cards preserved.
+- `docs/architecture/DONNA_SIDEBAR_10_OF_10_UX_REDUCTION_1058.md` (new): Before/after section inventory, change rationale, preserved invariants.
+- `docs/QA_DONNA_SIDEBAR_10_OF_10_UX_REDUCTION_1058.md` (new): QA checklist — first-open state, coach role, disclosure pills, review queue, voice, conversation, dev tools, regression checks.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1057 — DONNA One-Click Voice Activation Guarantee V1
 
 - `src/components/assistant/VoiceInputButton.tsx` (modified): In `startRecognition > recognition.onerror`, added guard: `if (event.error === 'not-allowed' || event.error === 'service-not-allowed') sessionActiveRef.current = false`. Stops persistent retry loop immediately on permanent permission errors — prevents "Voice stopped after repeated silence" from appearing after a mic denial.
