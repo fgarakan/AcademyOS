@@ -274,6 +274,8 @@ import { getDonnaContextPackForRoute, lookupAnswerInContextPack } from '@/lib/do
 // Sprint 1077 — Action Registry runtime wiring: non-navigation intent classification before routeDonnaPrompt
 import { matchDonnaActionIntent } from '@/lib/donna/donnaActionRegistry'
 import type { DonnaActionRole } from '@/lib/donna/donnaActionRegistry'
+// Sprint 1086 — Deep Mode gate: intercept broad/expensive requests before God Mode
+import { isDeepModeRequest, buildDeepModeFirstPassResponse } from '@/lib/donna/donnaDeepModeGate'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -3534,6 +3536,24 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (!cooHandled) {
       const handled = detectAndHandleCommand(text)
       if (!handled) {
+        // Sprint 1086 — Deep Mode gate: intercept broad/expensive requests before God Mode.
+        // Runs after ALL deterministic handlers (context-pack, action-registry, routeDonnaPrompt,
+        // detectAndHandleCommand) have had their chance. Only triggers for clearly broad/all-scope
+        // requests. Normal questions pass through to God Mode unchanged.
+        if (isDeepModeRequest(text)) {
+          const gateResult = buildDeepModeFirstPassResponse(text, pathname)
+          if (gateResult.firstPassResponse) {
+            setCommandResponse({ message: gateResult.firstPassResponse, type: 'info', label: 'DONNA' })
+            setCooThread(prev => [...prev.slice(-4), { user: text, donna: gateResult.firstPassResponse!, type: 'info' as const }])
+            speakDonna(gateResult.firstPassResponse)
+            recordPrompt(text)
+            recordSummary(gateResult.firstPassResponse)
+            recordTurn(text, gateResult.firstPassResponse, { domain: 'general' })
+            setTypedText('')
+            focusDonnaInput()
+            return
+          }
+        }
         // Sprint 1011 — God Mode: LLM orchestrator as final fallback.
         // Cancel the 600ms processingClear timer — handleGodModeQuery manages
         // isProcessingCommand in its own finally block after the async response.

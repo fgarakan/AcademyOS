@@ -3,6 +3,14 @@
 ---
 
 
+## 2026-06-01 — Sprint 1086 — DONNA Deep Mode Gate Progressive Answering V1
+
+- `src/lib/donna/donnaDeepModeGate.ts` (new): Deep Mode gate with `DeepModeGateResult` interface, `isDeepModeRequest(text)` detector (22 phrase patterns + 7 exclusion guards), and `buildDeepModeFirstPassResponse(text, pathname)` progressive response builder. Detection uses two layers: exclusion guard (normal questions like "how is my academy?", "what needs attention?", "make this more game-based" are never gated) then 22 deep-scope patterns (audit the whole academy, analyze all players, find every gap, full/complete/comprehensive/thorough/deep analysis, compare all coaches, full strategy, everything about, academy-wide). Progressive response gives a quick page-aware read + explains deeper analysis option + asks for director confirmation before running Deep Mode.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Added import of `isDeepModeRequest`, `buildDeepModeFirstPassResponse`. Added 18-line Deep Mode gate in `handleCommandSubmit` just before `handleGodModeQuery` — after all deterministic handlers (context-pack, action-registry, routeDonnaPrompt, detectAndHandleCommand). When gate fires: sets `commandResponse`, appends to `cooThread`, calls `speakDonna`, records turn — `handleGodModeQuery` is NOT called. Normal questions pass through unchanged.
+- `docs/architecture/DONNA_DEEP_MODE_GATE_PROGRESSIVE_ANSWERING_1086.md` (new): Request flow diagram, detection pattern table, exclusion guard list, progressive response structure, safety invariants.
+- `docs/QA_DONNA_DEEP_MODE_GATE_PROGRESSIVE_ANSWERING_1086.md` (new): 38-check QA table covering 18 deep-mode triggers, 14 passthrough checks, 7 runtime behavior checks, and regression checks.
+- TypeScript: clean.
+
 ## 2026-06-01 — Mega Sprint 1079–1084 — DONNA Token Efficiency + Cost Control Block V1
 
 - **Sprint 1080** — Token Usage Logging: Added `inputTokens?`, `outputTokens?`, `latencyMs?`, `model?`, `toolCallCount?` to `OrchestratorResponse` in `types.ts`. Populated from `llmResult` in both LLM return paths in `orchestrator.ts`. Passed to `writeUsageEventToDb` in `donnaOrchestratorAction.ts`. Token data now flows to `usage_events` DB table on every God Mode call.
