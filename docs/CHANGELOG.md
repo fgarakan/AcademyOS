@@ -3,6 +3,11 @@
 ---
 
 
+## 2026-06-01 — Sprint 1095C — Curriculum Director Insight View Live QA V1
+
+- `docs/QA_CURRICULUM_DIRECTOR_INSIGHT_VIEW_LIVE_QA_1095C.md` (new): Live Playwright QA at 1366×768 and 375×667. All 5 stages confirmed with live `stage_goal` from DB. All 15 levels confirmed expandable. Expanded cards confirmed showing: DIRECTOR GOAL, EXIT PLAYER PROFILE, FOCUS AREAS, live READINESS GATES with domain badges + threshold text, COMMON BLOCKERS, PARENT-SAFE SUMMARY, "Open in Builder" link. CurriculumLevelTree preserved below. Mobile layout correct. HP 1 gates sample: Competition / Fitness Support / Tactical domains with criterion text and thresholds in monospace. Orange 2 gates sample: Technical rally 5+ shots (60%+ serve-in rate), Tactical zone naming. One-at-a-time expand confirmed. No code changes required.
+- No source code changes. TypeScript unchanged.
+
 ## 2026-06-01 — Sprint 1095B — Curriculum Director Insight View V1
 
 - `src/lib/curriculum/levelInsightMap.ts` (new): Typed `CURRICULUM_LEVEL_INSIGHT_MAP` for all 15 levels (Red 1-3, Orange 1-3, Green 1-3, Yellow 1-3, HP 1-3). Each entry has: `directorGoal`, `exitPlayerProfile`, `focusAreas` (3-4 items), `readinessSignals`, `commonBlockers`, `parentSafeSummary`, `donnaPrompt`. `getLevelInsight(stage, levelNumber)` helper. Pure TypeScript — no DB, no AI.
