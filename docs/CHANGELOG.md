@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-06-01 — Sprint 1095A — Curriculum Import Spine Comparison 10/10 Audit V1
+
+- `docs/architecture/CURRICULUM_IMPORT_SPINE_COMPARISON_10_10_AUDIT_1095A.md` (new): Full 10/10 readiness audit for curriculum import, spine comparison, and merge system. Confirmed: knowledge_items table does NOT exist in DB (TypeScript-only); no document upload endpoint; no spine mapping; no conflict classifier; no merge review UX. What works: academy_curriculum_overrides (full rollback/snapshot support), proposed_actions approval pipeline, knowledgeSimilarityDetector (token overlap), knowledgeCurriculumIntelligence gap matching, CurriculumEditPermissionGuard. Overall 10/10 model: 3/10. 17-dimension readiness matrix. Recommended 10-sprint sequence (1096A-1099A). Critical P0 blocker: knowledge_items table missing — blocks all import staging.
+- `docs/QA_CURRICULUM_IMPORT_SPINE_COMPARISON_10_10_AUDIT_1095A.md` (new): Component audit verification table, 10/10 readiness scores for 18 dimensions, critical path to 10/10, permission safety verification, confirmed "do not build yet" list.
+- No code changes. TypeScript unchanged.
+
 ## 2026-06-01 — Sprint 1095A — Curriculum Director Insight UX Audit V1
 
 - `docs/architecture/CURRICULUM_DIRECTOR_INSIGHT_UX_AUDIT_1095A.md` (new): Full audit of the curriculum section. Confirmed: 15 real sub-levels exist (Red 1-3, Orange 1-3, Green 1-3, Yellow 1-3, HP 1-3); 57 real gates exist (4/level); `curriculum_stages.stage_goal` exists and is rich but is NOT displayed anywhere in current UI (hardcoded instead); no `curriculum_levels.level_description` or `exit_player_profile` field in schema; `parent_level_descriptions` has placeholder data; `academy_curriculum_versions` is empty (no active version). DONNA has static level knowledge (curriculumLevelDonnaAnswer.ts) not surfaced in UI. Identifies 8 UX gaps fixable without schema changes using a `CURRICULUM_LEVEL_INSIGHT_MAP` TypeScript constant approach. Sprint 1095B implementation plan documented.
