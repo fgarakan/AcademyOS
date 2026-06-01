@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-06-01 — Sprint 1091 — Internal Pilot Critical Path Audit V1
+
+- `docs/architecture/ACADEMYOS_INTERNAL_PILOT_CRITICAL_PATH_AUDIT_1091.md` (new): End-to-end V1 pilot readiness audit across 14 critical loops (director/coach/parent/player). Executive summary: ~85% pilot-ready. 6 loops READY, 6 CONDITIONAL, 2 BLOCKED. Two critical blockers identified: (1) `applyWrapUpDraftAction` writes to session_notes text only — structured observations do not persist to player_observations or any indexed table, breaking the coach→director→player→parent observation loop; (2) no "Draft parent update" button/CTA on player profile page. Includes 4 DONNA usability gaps, pending migration list (056, 058, 041–044, 045), route coverage matrix (14 routes all exist with real data), and recommended 10-sprint sequence to pilot readiness (1092–1101). Documents what should NOT be built before pilot (reports, billing, automated parent sends, multi-academy, PWA).
+- `docs/QA_ACADEMYOS_INTERNAL_PILOT_CRITICAL_PATH_AUDIT_1091.md` (new): Pilot readiness matrix table, blocker detail with file references and fix scope, route coverage matrix, DONNA usability gap table, migration status table, and recommended sprint sequence 1092–1101.
+- No code changes. TypeScript unchanged.
+
 ## 2026-06-01 — Sprint 1089 — DONNA Retrieval Budget Caps V1
 
 - `src/lib/donna/donnaRetrievalBudget.ts` (new): Retrieval budget policy foundation. Exports `DonnaRetrievalMode` (`'default' | 'deep'`), `DonnaRetrievalSource` (7 sources), `DonnaRetrievalBudget` and `DonnaRetrievalBudgetUsage` interfaces. `DONNA_DEFAULT_RETRIEVAL_BUDGET` (productMemoryRules:3, curriculumNodes:5, knowledgeItems:3, playerEvidenceItems:5, coachNotes:3, sessionSummaries:3, parentCommunicationRules:2, totalContextItems:12) and `DONNA_DEEP_RETRIEVAL_BUDGET` (productMemoryRules:6, curriculumNodes:12, knowledgeItems:8, playerEvidenceItems:15, coachNotes:10, sessionSummaries:8, parentCommunicationRules:4, totalContextItems:40). Four helpers: `getDonnaRetrievalBudget(mode)`, `clampRetrievedItems<T>(items, source, mode)`, `buildRetrievalBudgetUsage(counts, mode)`, `summarizeRetrievalBudgetUsage(usage)`, `assertWithinRetrievalBudget(usage, mode)`. All helpers are pure functions — no DB, no API.
