@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-06-01 — Sprint 1078 — DONNA Product Memory Approved Learning V1
+
+- `src/lib/donna/donnaProductMemory.ts` (new): Approval-safe product memory foundation. Exports 6 types (`ProductMemoryCategory` with 8 values, `ProductMemorySourceType` with 5 values, `ProductMemoryStatus`, `ProductMemoryScope`, `ProductMemoryVisibility`, `ProductMemoryApprovalMeta`), the `ProductMemoryItem` interface (15 fields), `CreateProductMemoryInput` builder input shape, 4 pure-function helpers (`createProposedProductMemory`, `approveProductMemoryItem`, `rejectProductMemoryItem`, `getApprovedProductMemoryByCategory`), and `SEED_PRODUCT_MEMORY` — an array of 4 pre-approved rules codifying locked AcademyOS standards: (1) DONNA answers from page context before asking for clarification, (2) DONNA never mutates records without approval, (3) younger fitness must be game-based and developmentally appropriate, (4) parent communication must be parent-safe and approval-gated. All items start as `proposed`; seeds are pre-approved to reflect existing sprint implementations. Not wired into runtime.
+- `docs/architecture/DONNA_PRODUCT_MEMORY_APPROVED_LEARNING_1078.md` (new): Problem statement, existing memory architecture table, new type system, approval lifecycle model, 4 seed rule descriptions, future wiring plan.
+- `docs/QA_DONNA_PRODUCT_MEMORY_APPROVED_LEARNING_1078.md` (new): 43-check QA table covering file/type existence, interface completeness, seed rule presence/content quality, 4 helper behaviors, and 10 regression checks.
+- TypeScript: clean.
+
 ## 2026-05-31 — Sprint 1077 — DONNA Action Registry Runtime Wiring V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): (1) Added imports for `matchDonnaActionIntent` and `type DonnaActionRole` from `@/lib/donna/donnaActionRegistry`. (2) Added action-registry pre-classifier block inside `handleDonnaCooPrompt`, positioned after the Sprint 1073 context-pack lookup and before `routeDonnaPrompt`. The block calls `matchDonnaActionIntent(text, uiActionRole as DonnaActionRole)`, skips `navigation` category (handled upstream by `handleUIDispatch`), and for non-navigation matches produces `confirmationMessage ?? safetyMessage` with `responseType: 'honest'` for approval-required actions and `'info'` for read-only ones. No mutations, no proposed_actions writes, no auto-navigation for navigation-category actions. `suggest_level_movement` returns its `blockedMessage` as 'honest' type — zero record changes. All existing paths (dispatcher, context packs, routeDonnaPrompt, God Mode) preserved.
