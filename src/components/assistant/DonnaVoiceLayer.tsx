@@ -79,6 +79,8 @@ interface Props {
   autoStart?: boolean
   // Sprint 1094A — when true, suppress suggestion chips (already shown in top chip row when docked)
   hideChips?: boolean
+  // Sprint 1094B — when true, suppress the redundant DONNA label + subtitle to reduce dock height
+  compact?: boolean
 }
 
 export function DonnaVoiceLayer({
@@ -115,6 +117,7 @@ export function DonnaVoiceLayer({
   isSpeaking = false,
   autoStart = false,
   hideChips = false,
+  compact = false,
 }: Props) {
   const chips = promptSuggestions ?? getDefaultDonnaPromptSuggestions()
   const categoryLabel = promptCategoryLabel ?? getPromptCategoryLabel(pathname)
@@ -123,26 +126,30 @@ export function DonnaVoiceLayer({
       className="rounded-xl overflow-hidden"
       style={{ border: '1px solid rgba(139,92,246,0.2)' }}
     >
-      {/* Voice input area */}
+      {/* Voice input area — compact=true suppresses label/subtitle to reduce dock height */}
       <div
-        className="px-4 py-3.5"
+        className={compact ? 'px-4 py-2' : 'px-4 py-3.5'}
         style={{
           background: 'linear-gradient(135deg, rgba(109,40,217,0.09), rgba(67,56,202,0.05))',
         }}
       >
-        <div className="flex items-center gap-1.5 mb-1">
-          <Mic className="w-3.5 h-3.5 shrink-0" style={{ color: '#8b5cf6' }} />
-          <p className="text-sm font-semibold text-text-primary">{DONNA_PUBLIC_NAME}</p>
-        </div>
-        <p className="text-[11px] text-text-muted leading-snug mb-3">
-          {guidedCurrentQ
-            ? `Answer ${DONNA_NAME}'s question by voice or type below.`
-            : isOnboardingActive(onboardingStep)
-            ? `Answer the setup question by voice or type your response.`
-            : isThinking
-            ? `${DONNA_NAME} is thinking…`
-            : `Ask ${DONNA_NAME} what needs attention, or start a workflow.`}
-        </p>
+        {!compact && (
+          <div className="flex items-center gap-1.5 mb-1">
+            <Mic className="w-3.5 h-3.5 shrink-0" style={{ color: '#8b5cf6' }} />
+            <p className="text-sm font-semibold text-text-primary">{DONNA_PUBLIC_NAME}</p>
+          </div>
+        )}
+        {!compact && (
+          <p className="text-[11px] text-text-muted leading-snug mb-3">
+            {guidedCurrentQ
+              ? `Answer ${DONNA_NAME}'s question by voice or type below.`
+              : isOnboardingActive(onboardingStep)
+              ? `Answer the setup question by voice or type your response.`
+              : isThinking
+              ? `${DONNA_NAME} is thinking…`
+              : `Ask ${DONNA_NAME} what needs attention, or start a workflow.`}
+          </p>
+        )}
 
         {/* Sprint 694 — COO last response context: keeps conversation visible above input */}
         {donnaLastResponse && !guidedCurrentQ && !isOnboardingActive(onboardingStep) && !isThinking && (

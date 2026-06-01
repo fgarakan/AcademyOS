@@ -4039,7 +4039,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         </div>}
 
         {/* Scrollable body — Sprint 1032: overscroll-contain prevents pull-to-refresh on mobile */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3">
+        {/* Sprint 1094B: min-h-0 prevents flex min-content overflow in short viewports */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 space-y-3">
 
           {/* Sprint 787 — Idle presence card: shown after 3 min of no interaction */}
           {isDonnaIdle && (
@@ -4994,9 +4995,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
 
         </div>
 
-        {/* Sprint 1094A — Docked input: voice + text + send always visible, never inside scroll */}
+        {/* Sprint 1094A/1094B — Docked input: voice + text + send always visible, never inside scroll */}
+        {/* Sprint 1094B: compact=true reduces label/subtitle/padding to fit short viewports */}
         <div
-          className="shrink-0 px-4 pt-3 pb-2"
+          className="shrink-0 px-4 pt-2 pb-1"
           style={{ borderTop: '1px solid var(--border-subtle)' }}
         >
           <DonnaVoiceLayer
@@ -5033,6 +5035,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             isSpeaking={isSpeaking}
             autoStart={panelOpen && !isOnboardingActive(onboardingStep)}
             hideChips={true}
+            compact={true}
           />
         </div>
 

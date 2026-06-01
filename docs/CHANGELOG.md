@@ -3,6 +3,14 @@
 ---
 
 
+## 2026-06-01 — Sprint 1094B — DONNA Sidebar Viewport Height QA V1
+
+- `src/components/assistant/DonnaVoiceLayer.tsx` (modified): Added `compact?: boolean` prop (default `false`). When `compact=true`: DONNA label row and subtitle text are suppressed (saves ~52px — both are redundant in the docked position since the panel header already shows "DONNA"); inner div uses `py-2` instead of `py-3.5` (saves 12px). All voice behaviour, interim transcript, pending voice answer, and error display unchanged.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): (1) Added `min-h-0` to the `flex-1 overflow-y-auto` active surface div — prevents flex min-content overflow on short viewports where the scrollable child would otherwise refuse to shrink below content height. (2) Docked input wrapper padding reduced from `pt-3 pb-2` to `pt-2 pb-1` (saves ~8px). (3) Docked DonnaVoiceLayer receives `compact={true}` alongside existing `hideChips={true}`.
+- `docs/architecture/DONNA_SIDEBAR_VIEWPORT_HEIGHT_QA_1094B.md` (new): Full pixel-level height audit for pre/post 1094A/B, fixed section breakdown, active surface calculations at 5 viewport sizes, acceptance criteria table.
+- `docs/QA_DONNA_SIDEBAR_VIEWPORT_HEIGHT_QA_1094B.md` (new): 14-state QA matrix × 5 viewports, regression checklist, post-1094B height reference table.
+- TypeScript: clean.
+
 ## 2026-06-01 — Sprint 1094A — DONNA Sidebar No-Scroll Command Surface V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): Added `showHistory` (default `false`) and `showMoreChips` (default `false`) state. Chip row wrapped in IIFE — slices visible chips to 3; "More ↓ / Less ↑" toggle when chip count exceeds 3. Removed `<DonnaVoiceLayer>` from the `flex-1 overflow-y-auto` scrollable body. Added new `shrink-0` docked section between the scrollable body and the footer that renders `<DonnaVoiceLayer hideChips={true} />` — input, mic, and send are now always visible without scrolling. Passed `historyVisible={showHistory}` and `onToggleHistory` to `DonnaPanelResponseRenderer`.
