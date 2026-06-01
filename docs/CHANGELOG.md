@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-06-01 — Sprint 1095A — Curriculum Director Insight UX Audit V1
+
+- `docs/architecture/CURRICULUM_DIRECTOR_INSIGHT_UX_AUDIT_1095A.md` (new): Full audit of the curriculum section. Confirmed: 15 real sub-levels exist (Red 1-3, Orange 1-3, Green 1-3, Yellow 1-3, HP 1-3); 57 real gates exist (4/level); `curriculum_stages.stage_goal` exists and is rich but is NOT displayed anywhere in current UI (hardcoded instead); no `curriculum_levels.level_description` or `exit_player_profile` field in schema; `parent_level_descriptions` has placeholder data; `academy_curriculum_versions` is empty (no active version). DONNA has static level knowledge (curriculumLevelDonnaAnswer.ts) not surfaced in UI. Identifies 8 UX gaps fixable without schema changes using a `CURRICULUM_LEVEL_INSIGHT_MAP` TypeScript constant approach. Sprint 1095B implementation plan documented.
+- `docs/QA_CURRICULUM_DIRECTOR_INSIGHT_UX_AUDIT_1095A.md` (new): Route/component coverage checklist, data availability table, UX gaps ranked by director impact, Sprint 1095B readiness assessment, data available now vs what requires future schema work.
+- No code changes. TypeScript unchanged.
+
 ## 2026-06-01 — Sprint 1094E — DONNA Single Premium Voice Source V1
 
 - `src/components/assistant/DonnaAssistantButton.tsx` (modified): 25 `speakAssistantText(...)` call sites replaced with `speakDonna(...)`. These covered all template draft questions, template completion announcements, multi-step plan summaries, conversation controller speech (undo/cancel/revision), and guided task question speech — all of which were routing to the browser-only (`SpeechSynthesisUtterance`) path and producing a robotic system voice. All now route through `speakDonna()` → `speakWithServerTts()` → `/api/donna/tts` → OpenAI marin voice. Two legitimate `speakAssistantText()` uses preserved: (1) `playOnboardingVoice()` browser fallback for the interview page (has callback signature), (2) `testBrowserVoice()` dev tool. Comments added to both functions clarifying their scope.
