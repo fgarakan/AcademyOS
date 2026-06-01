@@ -24,6 +24,8 @@ import {
   buildEmptyAcademyProfile,
   getAcademyProfileSummaryText,
 } from '@/lib/donna/donnaAcademyProfileContext'
+// Sprint 1082 — Academy context TTL cache (avoids repeated DB query per orchestrator call)
+import { cachedFetch, CACHE_KEYS, CACHE_TTL_MS } from '@/lib/donna/donnaContextCache'
 
 // ── Input type ────────────────────────────────────────────────────────────────
 
@@ -104,16 +106,33 @@ async function getAuthorizedContext() {
 
   // Sprint 1075 — fetch safe academy identity fields for profile context.
   // Scoped to the authenticated user's academyId — never trusted from client input.
-  // name, slug, timezone, country, settings only — no sensitive player/coach data.
-  // Fails gracefully: empty profile used if the query fails or returns null.
+  // Sprint 1082 — wraps the DB query with a 5-min TTL cache (CACHE_KEYS.ACADEMY_PROFILE).
+  // Avoids a repeated academies table hit on every God Mode orchestrator call.
+  // Cache is per-academyId, invalidated on server restart (module-level Map).
   const academyId = profile.academy_id as string
   let academyProfileSummary = ''
   try {
-    const { data: academy } = await supabase
-      .from('academies')
-      .select('name, slug, timezone, country, settings')
-      .eq('id', academyId)
-      .single()
+    type AcademyRow = { name: string; slug: string; timezone: string; country: string | null; settings: Record<string, unknown> | null }
+    const academy = await cachedFetch<AcademyRow>(
+      academyId,
+      CACHE_KEYS.ACADEMY_PROFILE,
+      CACHE_TTL_MS.ACADEMY_PROFILE,
+      async () => {
+        const { data } = await supabase
+          .from('academies')
+          .select('name, slug, timezone, country, settings')
+          .eq('id', academyId)
+          .single()
+        if (!data) return null
+        return {
+          name: (data as AcademyRow).name,
+          slug: (data as AcademyRow).slug,
+          timezone: (data as AcademyRow).timezone,
+          country: (data as AcademyRow).country ?? null,
+          settings: (data as AcademyRow).settings ?? null,
+        }
+      },
+    )
 
     const academyProfile = academy
       ? buildAcademyProfileFromLiveData({
@@ -121,8 +140,8 @@ async function getAuthorizedContext() {
           academyName: academy.name ?? null,
           academySlug: academy.slug ?? null,
           timezone: academy.timezone ?? null,
-          country: (academy.country as string | null) ?? null,
-          rawAcademySettings: (academy.settings as Record<string, unknown> | null) ?? null,
+          country: academy.country ?? null,
+          rawAcademySettings: academy.settings ?? null,
         })
       : buildEmptyAcademyProfile(academyId)
 
