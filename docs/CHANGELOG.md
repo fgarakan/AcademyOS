@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-06-01 — Sprint 1094D — DONNA Sidebar Page Chips 3+More Cap V1
+
+- `src/components/donna/DonnaPanelPageChips.tsx` (modified): Added `showMore: boolean` state (default `false`) and `visibleChips = showMore ? chips : chips.slice(0, 3)`. Default render shows first 3 chips + "More ↓" button when `chips.length > 3`. Expanded shows all chips + "Less ↑". `escalatedIds` and `highlightCountsRef` track all chips regardless of visibility so escalation state is preserved across collapse/expand. No parent changes — fully self-contained.
+- `docs/architecture/DONNA_PANEL_PAGE_CHIPS_3_MORE_CAP_1094D.md` (new): Pre/post behavior, measured heights, what is not changed.
+- `docs/QA_DONNA_PANEL_PAGE_CHIPS_3_MORE_CAP_1094D.md` (new): Live Playwright QA results (1366×768): chipCount=3, containerHeight=59px (was 110px), activeOverflow=false (was true), sendVisible=true. Chip action and escalation regression checklist.
+- TypeScript: clean.
+
 ## 2026-06-01 — Sprint 1094C — DONNA Sidebar Live Browser QA V1
 
 - `docs/QA_DONNA_SIDEBAR_LIVE_BROWSER_QA_1094C.md` (new): Live Playwright headless Chromium QA against `npm run dev`. Tested 4 desktop viewports (1440×900, 1366×768, 1280×800, 1024×768) across 7 states (fresh open, Q1, Q2, daily brief, history, More chips, mobile). All 4 desktop viewports PASS — input/send dock visible at bottom, active surface scrolls only when content warrants it, safety language confirmed at all viewports. Measured send button bottom: 789–846px vs viewport 768–900px — never clipped. Mobile layout confirmed functional via bottom tab bar. No code changes required.

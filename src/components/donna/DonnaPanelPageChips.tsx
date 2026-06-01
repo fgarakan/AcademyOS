@@ -55,7 +55,12 @@ export function DonnaPanelPageChips({ pathname, onPrompt, onBrief }: Props) {
   // Used to apply stronger visual style and show the pulse dot.
   const [escalatedIds, setEscalatedIds] = useState<Set<string>>(new Set())
 
+  // Sprint 1094D — cap to 3 visible + More toggle to reduce active-surface height
+  const [showMore, setShowMore] = useState(false)
+
   if (chips.length === 0) return null
+
+  const visibleChips = showMore ? chips : chips.slice(0, 3)
 
   function handleHighlightChip(chip: DonnaPageChip) {
     if (!chip.targetId) return
@@ -102,7 +107,7 @@ export function DonnaPanelPageChips({ pathname, onPrompt, onBrief }: Props) {
       className="flex flex-wrap gap-1.5"
       aria-label="Page shortcuts"
     >
-      {chips.map(chip => {
+      {visibleChips.map(chip => {
         const isEscalated = chip.targetId
           ? escalatedIds.has(chip.targetId)
           : false
@@ -162,6 +167,23 @@ export function DonnaPanelPageChips({ pathname, onPrompt, onBrief }: Props) {
           </button>
         )
       })}
+
+      {/* Sprint 1094D — More / Less toggle when chip count exceeds 3 */}
+      {chips.length > 3 && (
+        <button
+          type="button"
+          onClick={() => setShowMore(p => !p)}
+          className="inline-flex items-center shrink-0 text-[11px] px-2.5 py-1 rounded-full transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+          style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: 'rgba(255,255,255,0.35)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {showMore ? 'Less ↑' : `More ↓`}
+        </button>
+      )}
     </div>
   )
 }
