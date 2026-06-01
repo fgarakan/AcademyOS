@@ -17,6 +17,8 @@
 
 import type { OrchestratorToolId } from './types'
 import type { ToolCallResult } from './toolCallingContract'
+// Sprint 1089 — retrieval budget policy: clamp knowledge items to budget cap
+import { clampRetrievedItems } from '@/lib/donna/donnaRetrievalBudget'
 
 // ── Live tool set ─────────────────────────────────────────────────────────────
 
@@ -220,15 +222,19 @@ async function execGetKnowledgeContent(params: Record<string, unknown>): Promise
 
     const filtered = filterKnowledgeByRole(raw, 'academy_director')
     const ranked = rankKnowledgeByPageAffinity(filtered, '/director')
-    const responseText = buildKnowledgeResponse(ranked, query)
+    // Sprint 1089 — apply retrieval budget cap (default mode: 3 items).
+    // The DB query already uses limit:5; this clamp enforces the policy cap at the
+    // point where items are injected into the LLM context.
+    const capped = clampRetrievedItems(ranked, 'knowledgeItems', 'default')
+    const responseText = buildKnowledgeResponse(capped, query)
 
     return {
       tool: 'get_knowledge_content',
       ok: true,
-      data: { entries: ranked.map(e => ({ title: e.title, contentType: e.contentType, summary: e.summary })) },
+      data: { entries: capped.map(e => ({ title: e.title, contentType: e.contentType, summary: e.summary })) },
       summary: responseText,
       requiresConfirmation: false,
-      auditEntry: `tool:get_knowledge_content query="${query.slice(0, 40)}" results=${ranked.length}`,
+      auditEntry: `tool:get_knowledge_content query="${query.slice(0, 40)}" results=${capped.length}`,
     }
   } catch (err) {
     return {

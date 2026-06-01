@@ -3,6 +3,14 @@
 ---
 
 
+## 2026-06-01 — Sprint 1089 — DONNA Retrieval Budget Caps V1
+
+- `src/lib/donna/donnaRetrievalBudget.ts` (new): Retrieval budget policy foundation. Exports `DonnaRetrievalMode` (`'default' | 'deep'`), `DonnaRetrievalSource` (7 sources), `DonnaRetrievalBudget` and `DonnaRetrievalBudgetUsage` interfaces. `DONNA_DEFAULT_RETRIEVAL_BUDGET` (productMemoryRules:3, curriculumNodes:5, knowledgeItems:3, playerEvidenceItems:5, coachNotes:3, sessionSummaries:3, parentCommunicationRules:2, totalContextItems:12) and `DONNA_DEEP_RETRIEVAL_BUDGET` (productMemoryRules:6, curriculumNodes:12, knowledgeItems:8, playerEvidenceItems:15, coachNotes:10, sessionSummaries:8, parentCommunicationRules:4, totalContextItems:40). Four helpers: `getDonnaRetrievalBudget(mode)`, `clampRetrievedItems<T>(items, source, mode)`, `buildRetrievalBudgetUsage(counts, mode)`, `summarizeRetrievalBudgetUsage(usage)`, `assertWithinRetrievalBudget(usage, mode)`. All helpers are pure functions — no DB, no API.
+- `src/lib/donna/llmOrchestration/liveContextToolExecutor.ts` (modified): Added import of `clampRetrievedItems`. In `execGetKnowledgeContent`, applied `clampRetrievedItems(ranked, 'knowledgeItems', 'default')` after ranking — policy cap (3 items) enforced at the LLM injection boundary. DB query still uses `limit: 5` for ranking headroom; the clamp ensures at most 3 knowledge entries reach the LLM context. `data.entries` and `auditEntry` use `capped` length.
+- `docs/architecture/DONNA_RETRIEVAL_BUDGET_CAPS_1089.md` (new): Problem statement, existing source audit table, budget constant table, helper descriptions, wiring doc, usage rules for future retrieval systems, what is not wired.
+- `docs/QA_DONNA_RETRIEVAL_BUDGET_CAPS_1089.md` (new): 55-check QA table covering file existence, 8 default budget values, 8 deep budget values, 4 helper functions (28 cases), knowledge tool wiring (7 checks), and 7 regression checks.
+- TypeScript: clean.
+
 ## 2026-06-01 — Sprint 1090 — DONNA Brian Alpha God Mode Sandbox V1
 
 - `src/lib/donna/donnaBrianAlphaSandbox.ts` (new): Alpha sandbox access control utility. `isBrianAlphaSandboxAllowed({ academyId })` checks `NEXT_PUBLIC_DONNA_ALPHA_SANDBOX_ACADEMY_IDS` (comma-separated UUID list) and optional `NEXT_PUBLIC_DONNA_ALPHA_SANDBOX_ENABLED` master switch — default OFF when env vars are empty or unset. `isBrianAlphaSandboxRequest(text)` detects 9 trigger patterns ("run brian alpha sandbox", "test donna god mode", "run sandbox academy audit", "alpha sandbox", etc.). `buildBrianAlphaSandboxDisclosure()` returns three-part response: authorized confirmation + explicit will-NOT-do list (no mutations, no parent sends, no curriculum publishing) + confirmation ask. `buildBrianAlphaSandboxBlockedMessage()` returns clear denial. No personal data hardcoded. Access managed entirely via env vars.
