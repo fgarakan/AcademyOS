@@ -185,8 +185,74 @@ const TOOL_MANIFEST_ALL: ToolManifestEntry[] = [
   { id: 'get_knowledge_content', description: 'Returns platform-owner-approved knowledge entries relevant to a query. Draft and under-review entries are always excluded. Advisory only — nothing changes automatically. V1: returns empty until Knowledge Builder DB table is wired. Provide: query (required), contentType (optional: drill/coaching_tip/curriculum_note/etc.), stage (optional: red/orange/green/etc.)', safetyLevel: 'safe', requiresParams: ['query'] },
 ]
 
-function buildToolManifest(role: OrchestratorRole): ToolManifest {
-  // In V1, all roles get all tools. Future sprints may gate by role.
+// Sprint 1081 — Page-relevant tool IDs per route category.
+// Sending all 14 tools on every call adds ~700 chars to the system prompt
+// for tools the LLM will never use on that page. Each set below is the
+// minimal useful subset for the route type. Falls back to TOOL_MANIFEST_ALL
+// for unknown routes (preserving full capability for complex queries).
+const TOOL_IDS_ACADEMY_HEALTH: Set<string> = new Set([
+  'get_academy_state',
+  'get_player_development_summary',
+  'get_pending_review_count',
+  'get_next_action_recommendation',
+  'route_to_page',
+])
+const TOOL_IDS_PLAYER: Set<string> = new Set([
+  'get_player_profile_summary',
+  'get_player_development_summary',
+  'get_pending_review_count',
+  'draft_proposed_action',
+  'route_to_page',
+])
+const TOOL_IDS_SESSION: Set<string> = new Set([
+  'get_session_context',
+  'get_player_profile_summary',
+  'get_pending_review_count',
+  'draft_proposed_action',
+  'route_to_page',
+])
+const TOOL_IDS_CURRICULUM: Set<string> = new Set([
+  'get_curriculum_context',
+  'get_knowledge_content',
+  'draft_proposed_action',
+  'route_to_page',
+])
+const TOOL_IDS_REVIEW: Set<string> = new Set([
+  'get_pending_review_count',
+  'get_review_queue_guidance',
+  'get_action_explanation',
+  'route_to_page',
+])
+const TOOL_IDS_DASHBOARD: Set<string> = new Set([
+  'get_academy_state',
+  'get_player_development_summary',
+  'get_pending_review_count',
+  'get_next_action_recommendation',
+  'get_page_context',
+  'route_to_page',
+])
+
+function resolveToolIds(pathname: string): Set<string> | null {
+  if (pathname === '/director/kpi') return TOOL_IDS_ACADEMY_HEALTH
+  if (pathname.startsWith('/director/players/') && pathname.split('/').length === 4) return TOOL_IDS_PLAYER
+  if (pathname === '/director/players') return TOOL_IDS_PLAYER
+  if (pathname.startsWith('/director/sessions/')) return TOOL_IDS_SESSION
+  if (pathname.startsWith('/director/curriculum')) return TOOL_IDS_CURRICULUM
+  if (pathname === '/director/review') return TOOL_IDS_REVIEW
+  if (pathname === '/director' || pathname === '/director/today') return TOOL_IDS_DASHBOARD
+  // Unknown route — return null to signal full manifest
+  return null
+}
+
+function buildToolManifest(role: OrchestratorRole, pathname?: string): ToolManifest {
+  // Sprint 1081 — filter to page-relevant tools when route is known.
+  // Falls back to full manifest for unknown routes (Deep Mode preservation).
+  if (pathname) {
+    const relevantIds = resolveToolIds(pathname)
+    if (relevantIds) {
+      return TOOL_MANIFEST_ALL.filter(t => relevantIds.has(t.id))
+    }
+  }
   return TOOL_MANIFEST_ALL
 }
 
@@ -388,7 +454,7 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
   // Override pageLabel if provided
   if (pageLabel) pageContext.pageLabel = pageLabel
 
-  const toolManifest = buildToolManifest(role)
+  const toolManifest = buildToolManifest(role, pathname)
 
   let systemPrompt = buildSystemPrompt(
     role,
