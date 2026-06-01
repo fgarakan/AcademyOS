@@ -519,6 +519,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [wakeListeningActive, setWakeListeningActive] = useState(false)
   const [wakeDetectedCommand, setWakeDetectedCommand] = useState<string | null>(null)
 
+  // Sprint 1094E — RESTRICTED: only call from (1) playOnboardingVoice browser fallback
+  // for the onboarding interview page, and (2) testBrowserVoice() dev tool.
+  // All other DONNA speech uses speakDonna() for the premium voice path.
   function speakAssistantText(text: string, onStatus?: (status: 'speaking' | 'done' | 'error') => void) {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
       return
@@ -694,8 +697,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   }
 
   // Sprint 350 — Contract TTS: server → browser cascade for known Donna prompts.
-  // Use ONLY for: onboarding questions, next missing-field questions, protected_action_blocked.
-  // Do NOT call globally — speakAssistantText remains for voice greeter, test paths, etc.
+  // Sprint 1094E — CANONICAL DONNA VOICE: all DONNA speech routes through speakDonna.
+  // speakAssistantText is kept ONLY for: (1) playOnboardingVoice browser fallback on the
+  // interview page, and (2) testBrowserVoice() dev tool. Do not add new callers.
   function speakDonna(text: string) {
     // Sprint 717 — sentence-boundary TTS truncation: cut at last sentence end within 150 chars,
     // then last clause, then raw truncation. Full text always shown in UI.
@@ -1355,8 +1359,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         setTemplateDraft(draft)
         setFromVoiceCapture(false)
         const firstQ = draft.missingQuestions[0] ?? null
-        if (firstQ) speakAssistantText(firstQ.question)
-        else speakAssistantText('I have enough to draft this. Review it before saving.')
+        if (firstQ) speakDonna(firstQ.question)
+        else speakDonna('I have enough to draft this. Review it before saving.')
       }
       return
     }
@@ -1403,7 +1407,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     ) {
       appendAuditEvent({ type: 'undo_applied', description: 'Director undid last draft change', workflowId: convState.activeDraft?.workflowId ?? undefined })
       setCommandResponse({ message: controllerTurn.speakText, type: 'info', label: 'Undo' })
-      speakAssistantText(controllerTurn.speakText)
+      speakDonna(controllerTurn.speakText)
       return
     }
 
@@ -1413,13 +1417,13 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     ) {
       setConvState(controllerDiscard(controllerTurn.nextState))
       setCommandResponse({ message: controllerTurn.speakText, type: 'info', label: 'Cancelled' })
-      speakAssistantText(controllerTurn.speakText)
+      speakDonna(controllerTurn.speakText)
       return
     }
 
     // Early return when controller just created a new draft — bypass legacy routing
     if (convState.activeDraft === null && controllerTurn.nextState.activeDraft !== null) {
-      if (controllerTurn.speakText) speakAssistantText(controllerTurn.speakText)
+      if (controllerTurn.speakText) speakDonna(controllerTurn.speakText)
       if (controllerTurn.showDraftReview) setConvShowDraftReview(true)
       appendAuditEvent({ type: 'draft_started', description: 'Draft started via voice', workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
       recordSignal('workflow_started', { workflowId: controllerTurn.nextState.activeDraft.workflowId ?? undefined })
@@ -1455,7 +1459,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       if (revision) {
         const turn = controllerHandleInput(text, convState)
         setConvState(turn.nextState)
-        if (turn.speakText) speakAssistantText(turn.speakText)
+        if (turn.speakText) speakDonna(turn.speakText)
         if (turn.showDraftReview) setConvShowDraftReview(true)
         appendAuditEvent({ type: 'revision_applied', description: `Revision: ${revision.fieldId} → ${revision.value}`, workflowId: convState.activeDraft?.workflowId ?? undefined, fieldId: revision.fieldId, value: revision.value })
         return
@@ -1464,7 +1468,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       // Route all other input through the controller
       const turn = controllerHandleInput(text, convState)
       setConvState(turn.nextState)
-      if (turn.speakText) speakAssistantText(turn.speakText)
+      if (turn.speakText) speakDonna(turn.speakText)
       if (turn.showDraftReview) setConvShowDraftReview(true)
       if (turn.displayMessage) {
         setCommandResponse({ message: turn.displayMessage, type: 'info', label: 'DONNA' })
@@ -1477,7 +1481,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           setFromVoiceCapture(true)
           setActiveMode('create_template')
           const firstQ = draft.missingQuestions[0] ?? null
-          if (firstQ) speakAssistantText(firstQ.question)
+          if (firstQ) speakDonna(firstQ.question)
           break
         }
         case 'open_review_queue':
@@ -1605,7 +1609,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       if (plan) {
         setMultiStepPlan(plan)
         setMultiStepIndex(0)
-        speakAssistantText(plan.summary)
+        speakDonna(plan.summary)
         return
       }
     }
@@ -1618,9 +1622,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       setActiveMode('create_template')
       const firstQ = draft.missingQuestions[0] ?? null
       if (firstQ) {
-        speakAssistantText(firstQ.question)
+        speakDonna(firstQ.question)
       } else {
-        speakAssistantText('I have enough to draft this. Review it before saving.')
+        speakDonna('I have enough to draft this. Review it before saving.')
       }
       return
     }
@@ -1739,9 +1743,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       setActiveMode('create_template')
       const firstQ = draft.missingQuestions[0] ?? null
       if (firstQ) {
-        speakAssistantText(firstQ.question)
+        speakDonna(firstQ.question)
       } else {
-        speakAssistantText('I have enough to draft this. Review it before saving.')
+        speakDonna('I have enough to draft this. Review it before saving.')
       }
       return
     }
@@ -1767,8 +1771,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     setFromVoiceCapture(false)
     setTemplateCommandInput('')
     const firstQ = draft.missingQuestions[0] ?? null
-    if (firstQ) speakAssistantText(firstQ.question)
-    else speakAssistantText('I have enough to draft this. Review it before saving.')
+    if (firstQ) speakDonna(firstQ.question)
+    else speakDonna('I have enough to draft this. Review it before saving.')
   }
 
   function handleCancelTemplate() {
@@ -3426,7 +3430,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
         setMultiStepPlan(plan)
         setMultiStepIndex(0)
         setTypedText('')
-        speakAssistantText(plan.summary)
+        speakDonna(plan.summary)
         return
       }
     }
@@ -3438,8 +3442,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
       setFromVoiceCapture(false)
       setActiveMode('create_template')
       const firstQ = draft.missingQuestions[0] ?? null
-      if (firstQ) speakAssistantText(firstQ.question)
-      else speakAssistantText('I have enough to draft this. Review it before saving.')
+      if (firstQ) speakDonna(firstQ.question)
+      else speakDonna('I have enough to draft this. Review it before saving.')
       return
     }
 
@@ -3705,7 +3709,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 if (greeting.isFirstOpenToday) {
                   markGreetedToday()
                   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                    speakAssistantText(greeting.primaryText)
+                    speakDonna(greeting.primaryText)
                   }
                 }
               }
@@ -4493,8 +4497,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                             setFromVoiceCapture(false)
                             setTemplateCommandInput('')
                             const firstQ = draft.missingQuestions[0] ?? null
-                            if (firstQ) speakAssistantText(firstQ.question)
-                            else speakAssistantText('I have enough to draft this. Review it before saving.')
+                            if (firstQ) speakDonna(firstQ.question)
+                            else speakDonna('I have enough to draft this. Review it before saving.')
                           }}
                           className="w-full text-left text-[11px] text-text-secondary hover:text-text-primary
                             px-2.5 py-1.5 rounded-lg hover:bg-surface-raised transition-all leading-snug"
@@ -4517,9 +4521,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                     fromVoice={fromVoiceCapture}
                     onQuestionAnswered={(nextQ, updatedDraft) => {
                       if (nextQ) {
-                        speakAssistantText(nextQ.question)
+                        speakDonna(nextQ.question)
                       } else if (isDraftReadyForReview(updatedDraft)) {
-                        speakAssistantText('I have enough to draft this. Review it before saving.')
+                        speakDonna('I have enough to draft this. Review it before saving.')
                       }
                     }}
                   />
@@ -4644,10 +4648,10 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                 onApprove={handleGenericDraftApprove}
                 onQuestionAnswered={(nextQ, updatedDraft) => {
                   if (nextQ) {
-                    speakAssistantText(nextQ.question)
+                    speakDonna(nextQ.question)
                   } else {
                     const c = DONNA_TASK_CONTRACTS[updatedDraft.taskId]
-                    speakAssistantText(`${c?.label ?? 'Draft'} is ready to review.`)
+                    speakDonna(`${c?.label ?? 'Draft'} is ready to review.`)
                   }
                 }}
               />

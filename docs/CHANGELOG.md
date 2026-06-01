@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-06-01 — Sprint 1094E — DONNA Single Premium Voice Source V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): 25 `speakAssistantText(...)` call sites replaced with `speakDonna(...)`. These covered all template draft questions, template completion announcements, multi-step plan summaries, conversation controller speech (undo/cancel/revision), and guided task question speech — all of which were routing to the browser-only (`SpeechSynthesisUtterance`) path and producing a robotic system voice. All now route through `speakDonna()` → `speakWithServerTts()` → `/api/donna/tts` → OpenAI marin voice. Two legitimate `speakAssistantText()` uses preserved: (1) `playOnboardingVoice()` browser fallback for the interview page (has callback signature), (2) `testBrowserVoice()` dev tool. Comments added to both functions clarifying their scope.
+- `docs/architecture/DONNA_SINGLE_PREMIUM_VOICE_SOURCE_1094E.md` (new): Split voice architecture audit, pre/post diagram, 25-call-site change table, fallback policy, what is not changed.
+- `docs/QA_DONNA_SINGLE_PREMIUM_VOICE_SOURCE_1094E.md` (new): Code audit result, browser QA states for sidebar/templates/controller/guided-task/multi-step, fallback verification table, regression checklist.
+- TypeScript: clean.
+
 ## 2026-06-01 — Sprint 1094D — DONNA Sidebar Page Chips 3+More Cap V1
 
 - `src/components/donna/DonnaPanelPageChips.tsx` (modified): Added `showMore: boolean` state (default `false`) and `visibleChips = showMore ? chips : chips.slice(0, 3)`. Default render shows first 3 chips + "More ↓" button when `chips.length > 3`. Expanded shows all chips + "Less ↑". `escalatedIds` and `highlightCountsRef` track all chips regardless of visibility so escalation state is preserved across collapse/expand. No parent changes — fully self-contained.
