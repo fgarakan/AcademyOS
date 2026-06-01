@@ -3,6 +3,11 @@
 ---
 
 
+## 2026-06-01 — Sprint 1094C — DONNA Sidebar Live Browser QA V1
+
+- `docs/QA_DONNA_SIDEBAR_LIVE_BROWSER_QA_1094C.md` (new): Live Playwright headless Chromium QA against `npm run dev`. Tested 4 desktop viewports (1440×900, 1366×768, 1280×800, 1024×768) across 7 states (fresh open, Q1, Q2, daily brief, history, More chips, mobile). All 4 desktop viewports PASS — input/send dock visible at bottom, active surface scrolls only when content warrants it, safety language confirmed at all viewports. Measured send button bottom: 789–846px vs viewport 768–900px — never clipped. Mobile layout confirmed functional via bottom tab bar. No code changes required.
+- No source code changes. TypeScript unchanged.
+
 ## 2026-06-01 — Sprint 1094B — DONNA Sidebar Viewport Height QA V1
 
 - `src/components/assistant/DonnaVoiceLayer.tsx` (modified): Added `compact?: boolean` prop (default `false`). When `compact=true`: DONNA label row and subtitle text are suppressed (saves ~52px — both are redundant in the docked position since the panel header already shows "DONNA"); inner div uses `py-2` instead of `py-3.5` (saves 12px). All voice behaviour, interim transcript, pending voice answer, and error display unchanged.
