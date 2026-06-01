@@ -3,6 +3,17 @@
 ---
 
 
+## 2026-06-01 — Mega Sprint 1079–1084 — DONNA Token Efficiency + Cost Control Block V1
+
+- **Sprint 1080** — Token Usage Logging: Added `inputTokens?`, `outputTokens?`, `latencyMs?`, `model?`, `toolCallCount?` to `OrchestratorResponse` in `types.ts`. Populated from `llmResult` in both LLM return paths in `orchestrator.ts`. Passed to `writeUsageEventToDb` in `donnaOrchestratorAction.ts`. Token data now flows to `usage_events` DB table on every God Mode call.
+- **Sprint 1081** — Page-Relevant Tool Manifest Filtering: Added 6 route-scoped tool ID sets in `contextPacket.ts`. `buildToolManifest(role, pathname)` now injects only relevant tools per route (5 tools for KPI, 4 for review, 5 for players/sessions, 4 for curriculum). Falls back to full 14-tool manifest for unknown routes. Saves ~350–400 chars (~100–120 tokens) per God Mode call on known pages.
+- **Sprint 1082** — Academy Context TTL Cache: Wrapped `academies` table query in `donnaOrchestratorAction.ts` with `cachedFetch(academyId, CACHE_KEYS.ACADEMY_PROFILE, CACHE_TTL_MS.ACADEMY_PROFILE, ...)`. Reuses existing `donnaContextCache.ts` infrastructure (5-min TTL). After first call per 5-min window: 0ms fetch, 0 DB queries for academy profile.
+- **Sprint 1083** — Conversation History Relevance Filter: Added `isConversationHistoryRelevant(userInput, history)` in `contextPacket.ts`. Skips history for navigation commands, inputs < 20 chars, and empty sessions. Keeps history for anaphoric references, inputs > 60 chars, and medium-length potential follow-ups. Saves 0–900 chars (~0–280 tokens) on command-style inputs.
+- **Sprint 1084** — Efficiency Tier Classification + Trace: Created `src/lib/donna/donnaEfficiencyTiers.ts` with `DonnaEfficiencyTier` (0–6), `DonnaEfficiencyClassification`, `DONNA_EFFICIENCY_TIERS` constant with token/latency estimates, `classifyDonnaEfficiencyPath(input)`, `getDonnaEfficiencyTierLabel(tier)`, and `buildEfficiencyTrace(input, classification)`. Not wired into runtime. Future pre-classifier for handleDonnaCooPrompt audit events.
+- `docs/architecture/DONNA_TOKEN_EFFICIENCY_AUDIT_1079.md` (new): Full audit findings, per-sprint change descriptions, tool-filtering table, remaining cost risks.
+- `docs/QA_DONNA_TOKEN_EFFICIENCY_AUDIT_1079.md` (new): 52-check QA table across all 5 sprints + 9 regression checks.
+- TypeScript: clean across all sprints.
+
 ## 2026-06-01 — Sprint 1078 — DONNA Product Memory Approved Learning V1
 
 - `src/lib/donna/donnaProductMemory.ts` (new): Approval-safe product memory foundation. Exports 6 types (`ProductMemoryCategory` with 8 values, `ProductMemorySourceType` with 5 values, `ProductMemoryStatus`, `ProductMemoryScope`, `ProductMemoryVisibility`, `ProductMemoryApprovalMeta`), the `ProductMemoryItem` interface (15 fields), `CreateProductMemoryInput` builder input shape, 4 pure-function helpers (`createProposedProductMemory`, `approveProductMemoryItem`, `rejectProductMemoryItem`, `getApprovedProductMemoryByCategory`), and `SEED_PRODUCT_MEMORY` — an array of 4 pre-approved rules codifying locked AcademyOS standards: (1) DONNA answers from page context before asking for clarification, (2) DONNA never mutates records without approval, (3) younger fitness must be game-based and developmentally appropriate, (4) parent communication must be parent-safe and approval-gated. All items start as `proposed`; seeds are pre-approved to reflect existing sprint implementations. Not wired into runtime.
