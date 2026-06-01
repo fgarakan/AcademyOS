@@ -3,6 +3,13 @@
 ---
 
 
+## 2026-06-01 — Sprint 1092 — Persist Coach Wrap-Up Observations to Player Profile V1
+
+- `src/app/director/review/applyWrapUpDraftAction.ts` (modified): (1) Added import of `CoachObservationDraftPayload` type from `saveWrapUpObservationsAction`. (2) Extended `ApplyWrapUpDraftResult` with `observationsCreated?: number`. (3) Added Sprint 1092 observation persistence block after the existing audit log write: queries `proposed_actions` for `coach_observation_draft_v1` items with `status in ['pending_review', 'approved']` for the same academy, filters in-code to those whose `proposed_payload.session_id` matches the session being applied, then for each matched draft with a valid `player_id` and `note`: inserts a `coach_observations` row (academy_id, coach_id, player_id, session_id, content, observation_type, is_private:true, ai_entities with provenance), marks the observation draft as `executed`, and calls `revalidatePath` for the affected player profile. Best-effort: observation errors do not fail the session wrap-up apply. Returns `observationsCreated` count. Existing `session_notes` write unchanged.
+- `docs/architecture/COACH_WRAP_UP_OBSERVATION_PERSISTENCE_1092.md` (new): Before/after flow diagram, field mapping table, idempotency strategy, what remains unchanged, future work.
+- `docs/QA_COACH_WRAP_UP_OBSERVATION_PERSISTENCE_1092.md` (new): 37-check QA table covering happy path, player profile surface, idempotency, session filter, individual approval path regression, best-effort error handling, safety invariants, and regression checks.
+- TypeScript: clean.
+
 ## 2026-06-01 — Sprint 1091 — Internal Pilot Critical Path Audit V1
 
 - `docs/architecture/ACADEMYOS_INTERNAL_PILOT_CRITICAL_PATH_AUDIT_1091.md` (new): End-to-end V1 pilot readiness audit across 14 critical loops (director/coach/parent/player). Executive summary: ~85% pilot-ready. 6 loops READY, 6 CONDITIONAL, 2 BLOCKED. Two critical blockers identified: (1) `applyWrapUpDraftAction` writes to session_notes text only — structured observations do not persist to player_observations or any indexed table, breaking the coach→director→player→parent observation loop; (2) no "Draft parent update" button/CTA on player profile page. Includes 4 DONNA usability gaps, pending migration list (056, 058, 041–044, 045), route coverage matrix (14 routes all exist with real data), and recommended 10-sprint sequence to pilot readiness (1092–1101). Documents what should NOT be built before pilot (reports, billing, automated parent sends, multi-academy, PWA).

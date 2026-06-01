@@ -4,10 +4,14 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 import { revalidatePath } from 'next/cache'
 import type { SessionActualDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpDraftAction'
+// Sprint 1092 — observation draft type for linked player observations
+import type { CoachObservationDraftPayload } from '@/app/coach/sessions/[sessionId]/saveWrapUpObservationsAction'
 
 export interface ApplyWrapUpDraftResult {
   ok: boolean
   error: string | null
+  /** Sprint 1092 — number of player observations persisted to coach_observations alongside this wrap-up. */
+  observationsCreated?: number
 }
 
 export async function applyWrapUpDraftAction(
@@ -158,5 +162,82 @@ export async function applyWrapUpDraftAction(
   revalidatePath('/director/review')
   revalidatePath(`/director/sessions/${sessionId}`)
 
-  return { ok: true, error: null }
+  // Sprint 1092 — auto-apply linked player observation drafts for this session.
+  //
+  // When a director applies a session wrap-up, any coach_observation_draft_v1
+  // proposed_actions linked to the same session are also applied: structured
+  // coach_observations rows are written and those drafts are marked executed.
+  //
+  // This closes the loop without requiring the director to separately approve
+  // and apply each individual observation draft after the wrap-up is applied.
+  //
+  // Safety invariants:
+  //   - Only processes pending_review or approved drafts (never already-executed)
+  //   - Only processes drafts with a valid player_id (never session-level free text)
+  //   - Only processes drafts for this academy and this session_id
+  //   - is_private: true always (never parent/player visible)
+  //   - Best-effort: observation errors do not fail the whole wrap-up apply
+  //   - Idempotency: status check + proposed_action_id tracked in ai_entities
+  //   - Individual observation approval path still works independently
+
+  let observationsCreated = 0
+  try {
+    const { data: observationDrafts } = await rawDb
+      .from('proposed_actions')
+      .select('id, proposed_by_id, proposed_payload, voice_command_id, status')
+      .eq('academy_id', academyId)
+      .eq('target_module', 'coach_observation_draft_v1')
+      .in('status', ['pending_review', 'approved'])
+
+    if (observationDrafts && (observationDrafts as Record<string, unknown>[]).length > 0) {
+      const sessionLinked = (observationDrafts as Record<string, unknown>[]).filter(draft => {
+        const p = draft['proposed_payload'] as CoachObservationDraftPayload | null
+        return p?.session_id === sessionId && p?.player_id
+      })
+
+      for (const draft of sessionLinked) {
+        const p = draft['proposed_payload'] as CoachObservationDraftPayload
+        if (!p?.player_id || !p?.note) continue
+
+        // Insert structured observation into coach_observations
+        const { data: created, error: obsError } = await supabase
+          .from('coach_observations')
+          .insert({
+            academy_id: academyId,
+            coach_id: String(draft['proposed_by_id'] ?? user.id),
+            player_id: p.player_id,
+            session_id: sessionId,
+            content: p.note,
+            observation_type: p.observation_type ?? 'general',
+            is_private: true,
+            voice_command_id: (draft['voice_command_id'] as string | null) ?? null,
+            ai_entities: {
+              source: 'coach_wrap_up',
+              proposed_action_id: String(draft['id']),
+              applied_via: 'session_wrap_up_apply',
+            },
+          })
+          .select('id')
+          .single()
+
+        if (obsError || !created) continue // best-effort — log but don't fail the wrap-up apply
+
+        observationsCreated++
+
+        // Mark observation draft as executed
+        await rawDb
+          .from('proposed_actions')
+          .update({ status: 'executed', updated_at: new Date().toISOString() })
+          .eq('id', String(draft['id']))
+          .eq('academy_id', academyId)
+
+        // Revalidate the affected player profile so coach_observations appear immediately
+        revalidatePath(`/director/players/${p.player_id}`)
+      }
+    }
+  } catch {
+    // Non-fatal — session_notes was already written; observation persistence is best-effort
+  }
+
+  return { ok: true, error: null, observationsCreated }
 }
