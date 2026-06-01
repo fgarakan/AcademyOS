@@ -3,6 +3,15 @@
 ---
 
 
+## 2026-06-01 — Sprint 1094A — DONNA Sidebar No-Scroll Command Surface V1
+
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Added `showHistory` (default `false`) and `showMoreChips` (default `false`) state. Chip row wrapped in IIFE — slices visible chips to 3; "More ↓ / Less ↑" toggle when chip count exceeds 3. Removed `<DonnaVoiceLayer>` from the `flex-1 overflow-y-auto` scrollable body. Added new `shrink-0` docked section between the scrollable body and the footer that renders `<DonnaVoiceLayer hideChips={true} />` — input, mic, and send are now always visible without scrolling. Passed `historyVisible={showHistory}` and `onToggleHistory` to `DonnaPanelResponseRenderer`.
+- `src/components/assistant/DonnaVoiceLayer.tsx` (modified): Added `hideChips?: boolean` prop (default `false`). When `true`, suppresses the suggestion chips section — prevents duplication with the top chip row when the voice layer is docked.
+- `src/components/donna/DonnaPanelResponseRenderer.tsx` (modified): Added `historyVisible?: boolean` (default `false`) and `onToggleHistory?: () => void`. When `historyVisible=false` and `cooThread.length > 1`, shows only the latest turn plus "History (N earlier) ↑" toggle. When expanded, shows full bounded history (max-h-[260px]) plus "Hide history ↓" to collapse.
+- `docs/architecture/DONNA_SIDEBAR_NO_SCROLL_COMMAND_SURFACE_1094A.md` (new): Before/after layout diagrams, change table, preserved features, acceptance criteria.
+- `docs/QA_DONNA_SIDEBAR_NO_SCROLL_COMMAND_SURFACE_1094A.md` (new): 12-section QA table covering no-scroll default, send flow, history toggle, chips, voice, God Mode, workflow cards, mobile, commands, and regression checks.
+- TypeScript: clean.
+
 ## 2026-06-01 — Sprint 1093 — Surface Coach Wrap-Up Observations on Player Profile V1
 
 - `src/app/director/players/[playerId]/CoachWrapUpObservationsPanel.tsx` (new): Read-only director-facing panel. Filters `CoachObservationRow[]` to `ai_entities.source === 'coach_wrap_up'` entries. Renders each observation with: content, coach name, session name/date, observation type label (from OBS_TYPE_LABELS), tags as chips, created date, "Coach Wrap-Up" green badge, "Private" badge when `is_private = true`. Header shows "Recent Coach Observations" + count badge + "Internal" guardrail label with shield icon. Empty state: "No coach wrap-up observations yet. Approved coach wrap-ups will appear here." No new DB queries — reuses `enrichedObservations` already fetched in `page.tsx`. Server Component. Director-only route; not exported to any shared index; not visible in player or parent portals.

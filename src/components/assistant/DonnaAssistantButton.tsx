@@ -451,6 +451,9 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
   const [showActionsSection, setShowActionsSection] = useState(false)
   // Sprint 1058 — Dev tools collapsed by default; toggle in non-production only
   const [showDevTools, setShowDevTools] = useState(false)
+  // Sprint 1094A — conversation history collapsed by default; more chips toggle
+  const [showHistory, setShowHistory] = useState(false)
+  const [showMoreChips, setShowMoreChips] = useState(false)
 
   // Sprint 297 — Realtime voice output (primary path, no mic required)
   const {
@@ -3926,7 +3929,7 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
           className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 overflow-x-auto"
           style={{ borderBottom: '1px solid var(--border-subtle)' }}
         >
-          {(role === 'coach'
+          {(() => { const allChips = (role === 'coach'
             ? ([
                 { label: 'My Sessions', action: () => { router.push('/coach/sessions'); closePanel() } },
                 { label: 'Player Notes', action: () => setTypedText('Capture a player note') },
@@ -4005,17 +4008,34 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
                     ] as { label: string; action: () => void }[])
                 ),
               ] as { label: string; action: () => void }[])
-          ).map(chip => (
-            <button
-              key={chip.label}
-              type="button"
-              onClick={chip.action}
-              className="shrink-0 text-[11px] px-2.5 py-2.5 sm:py-1 rounded-full transition-all text-text-secondary hover:text-text-primary"
-              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', whiteSpace: 'nowrap' }}
-            >
-              {chip.label}
-            </button>
-          ))}
+          )
+          const visibleChips = showMoreChips ? allChips : allChips.slice(0, 3)
+          return (
+            <>
+              {visibleChips.map(chip => (
+                <button
+                  key={chip.label}
+                  type="button"
+                  onClick={chip.action}
+                  className="shrink-0 text-[11px] px-2.5 py-2.5 sm:py-1 rounded-full transition-all text-text-secondary hover:text-text-primary"
+                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', whiteSpace: 'nowrap' }}
+                >
+                  {chip.label}
+                </button>
+              ))}
+              {allChips.length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => setShowMoreChips(p => !p)}
+                  className="shrink-0 text-[11px] px-2.5 py-2.5 sm:py-1 rounded-full transition-all text-text-muted hover:text-text-primary"
+                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', whiteSpace: 'nowrap' }}
+                >
+                  {showMoreChips ? 'Less ↑' : 'More ↓'}
+                </button>
+              )}
+            </>
+          )
+        })()}
         </div>}
 
         {/* Scrollable body — Sprint 1032: overscroll-contain prevents pull-to-refresh on mobile */}
@@ -4204,42 +4224,6 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             onBrief={() => void handleFetchDailyBrief()}
           />
 
-          {/* ── Primary voice card — Sprint 384: extracted to DonnaVoiceLayer ── */}
-          <DonnaVoiceLayer
-            onboardingStep={onboardingStep}
-            guidedCurrentQ={guidedCurrentQ}
-            onVoiceTranscriptRaw={handleVoiceTranscriptRaw}
-            onListeningChange={handleVoiceListeningChange}
-            onInterimTranscript={handleInterimTranscript}
-            onVoiceError={handleVoiceError}
-            onSupportedChange={setIsVoiceSupported}
-            onVoiceStateChange={setVoiceStateForIndicator}
-            isVoiceListening={isVoiceListening}
-            interimVoiceTranscript={interimVoiceTranscript}
-            voicePermissionError={voicePermissionError}
-            onDismissVoiceError={() => setVoicePermissionError(null)}
-            pendingVoiceAnswer={pendingVoiceAnswer}
-            onPendingVoiceAnswerChange={updated => setPendingVoiceAnswer(updated)}
-            onConfirmVoiceAnswer={handleConfirmVoiceAnswer}
-            onRetryVoice={handleRetryVoice}
-            voiceTranscript={voiceTranscript}
-            activeMode={activeMode}
-            onClearVoiceTranscript={() => setVoiceTranscript(null)}
-            typedText={typedText}
-            onTypedTextChange={setTypedText}
-            onCommandSubmit={handleCommandSubmit}
-            convState={convState}
-            genericDraft={genericDraft}
-            templateDraft={templateDraft}
-            isThinking={isProcessingCommand || isGodModeLoading || isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading}
-            donnaLastResponse={null /* Sprint 1040 — DonnaPanelResponseRenderer is now the unified response surface; "DONNA says" card above the input duplicated the thread */}
-            promptSuggestions={getDonnaPromptSuggestions(pathname)}
-            promptCategoryLabel={getPromptCategoryLabel(pathname)}
-            pathname={pathname}
-            isSpeaking={isSpeaking}
-            autoStart={panelOpen && !isOnboardingActive(onboardingStep)}
-          />
-
           {/* ── Sprint 1028 — Unified DONNA response renderer ── */}
           {/* Replaces: inline cooThread section (Sprints 747-825) + Sprint 1011 God Mode section. */}
           {/* DonnaWorkflowCards below handles commandResponse + all workflow/draft state.          */}
@@ -4247,6 +4231,8 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             cooThread={cooThread}
             godModeOutput={godModeOutput}
             isGodModeLoading={isGodModeLoading}
+            historyVisible={showHistory}
+            onToggleHistory={() => setShowHistory(p => !p)}
             onGodModeNavigate={(route) => {
               router.push(route)
               closePanel()
@@ -5006,6 +4992,48 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
             </>
           )}
 
+        </div>
+
+        {/* Sprint 1094A — Docked input: voice + text + send always visible, never inside scroll */}
+        <div
+          className="shrink-0 px-4 pt-3 pb-2"
+          style={{ borderTop: '1px solid var(--border-subtle)' }}
+        >
+          <DonnaVoiceLayer
+            onboardingStep={onboardingStep}
+            guidedCurrentQ={guidedCurrentQ}
+            onVoiceTranscriptRaw={handleVoiceTranscriptRaw}
+            onListeningChange={handleVoiceListeningChange}
+            onInterimTranscript={handleInterimTranscript}
+            onVoiceError={handleVoiceError}
+            onSupportedChange={setIsVoiceSupported}
+            onVoiceStateChange={setVoiceStateForIndicator}
+            isVoiceListening={isVoiceListening}
+            interimVoiceTranscript={interimVoiceTranscript}
+            voicePermissionError={voicePermissionError}
+            onDismissVoiceError={() => setVoicePermissionError(null)}
+            pendingVoiceAnswer={pendingVoiceAnswer}
+            onPendingVoiceAnswerChange={updated => setPendingVoiceAnswer(updated)}
+            onConfirmVoiceAnswer={handleConfirmVoiceAnswer}
+            onRetryVoice={handleRetryVoice}
+            voiceTranscript={voiceTranscript}
+            activeMode={activeMode}
+            onClearVoiceTranscript={() => setVoiceTranscript(null)}
+            typedText={typedText}
+            onTypedTextChange={setTypedText}
+            onCommandSubmit={handleCommandSubmit}
+            convState={convState}
+            genericDraft={genericDraft}
+            templateDraft={templateDraft}
+            isThinking={isProcessingCommand || isGodModeLoading || isLoadingContext || isLoadingReviewQueue || isDailyBriefLoading || isAttentionLoading}
+            donnaLastResponse={null}
+            promptSuggestions={getDonnaPromptSuggestions(pathname)}
+            promptCategoryLabel={getPromptCategoryLabel(pathname)}
+            pathname={pathname}
+            isSpeaking={isSpeaking}
+            autoStart={panelOpen && !isOnboardingActive(onboardingStep)}
+            hideChips={true}
+          />
         </div>
 
         {/* Footer — approval boundary */}

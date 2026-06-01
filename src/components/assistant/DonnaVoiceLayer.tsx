@@ -77,6 +77,8 @@ interface Props {
   isSpeaking?: boolean
   // Sprint 1052 — auto-start voice session when panel opens
   autoStart?: boolean
+  // Sprint 1094A — when true, suppress suggestion chips (already shown in top chip row when docked)
+  hideChips?: boolean
 }
 
 export function DonnaVoiceLayer({
@@ -112,6 +114,7 @@ export function DonnaVoiceLayer({
   pathname = '',
   isSpeaking = false,
   autoStart = false,
+  hideChips = false,
 }: Props) {
   const chips = promptSuggestions ?? getDefaultDonnaPromptSuggestions()
   const categoryLabel = promptCategoryLabel ?? getPromptCategoryLabel(pathname)
@@ -378,8 +381,8 @@ export function DonnaVoiceLayer({
         </div>
       </div>
 
-      {/* Suggestion chips — page-aware (Sprint 695), shown only when no active workflow */}
-      {!isOnboardingActive(onboardingStep) && convState.activeDraft === null && !genericDraft && !templateDraft && (
+      {/* Suggestion chips — hidden when docked (Sprint 1094A: top chip row covers these) */}
+      {!hideChips && !isOnboardingActive(onboardingStep) && convState.activeDraft === null && !genericDraft && !templateDraft && (
         <div
           className="px-4 py-3"
           style={{

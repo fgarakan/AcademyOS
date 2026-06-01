@@ -63,6 +63,14 @@ export interface DonnaPanelResponseRendererProps {
   onGodModeNavigate?: (route: string) => void
   /** onHighlight callback for DonnaResponseCard */
   onGodModeHighlight?: (targetId: string, route: string, label: string) => void
+  /**
+   * Sprint 1094A — when false (default), show only the latest cooThread turn
+   * plus a "History (N)" toggle when there are earlier turns. When true, show
+   * the full bounded history (existing max-h-[260px] behaviour).
+   */
+  historyVisible?: boolean
+  /** Sprint 1094A — called when the director taps the history toggle */
+  onToggleHistory?: () => void
 }
 
 // ── COO thread bubble ─────────────────────────────────────────────────────────
@@ -141,6 +149,8 @@ export function DonnaPanelResponseRenderer({
   suppressCommandResponseCard = false,
   onGodModeNavigate,
   onGodModeHighlight,
+  historyVisible = false,
+  onToggleHistory,
 }: DonnaPanelResponseRendererProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -161,22 +171,64 @@ export function DonnaPanelResponseRenderer({
 
   return (
     <div className="space-y-3">
-      {/* COO thread bubbles */}
+      {/* COO thread bubbles — Sprint 1094A: collapsed to last turn by default */}
       {hasCooContent && (
-        <div className="space-y-2.5 px-0 max-h-[260px] overflow-y-auto">
-          {cooThread.slice(-5).map((turn, i) => (
-            <div key={i} className="space-y-1.5">
-              <UserBubble text={turn.user} />
-              <div className="flex justify-start">
-                <DonnaBubble
-                  text={turn.donna}
-                  label={turn.label}
-                  type={turn.type}
-                />
+        <>
+          {(!historyVisible && cooThread.length > 1) ? (
+            <>
+              {/* Collapsed: show only the latest turn */}
+              <div className="space-y-1.5">
+                <UserBubble text={cooThread[cooThread.length - 1].user} />
+                <div className="flex justify-start">
+                  <DonnaBubble
+                    text={cooThread[cooThread.length - 1].donna}
+                    label={cooThread[cooThread.length - 1].label}
+                    type={cooThread[cooThread.length - 1].type}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+              {/* History toggle */}
+              {onToggleHistory && (
+                <button
+                  type="button"
+                  onClick={onToggleHistory}
+                  className="text-[11px] font-medium transition-colors hover:opacity-80"
+                  style={{ color: 'rgba(139,92,246,0.65)' }}
+                >
+                  History ({cooThread.length - 1} earlier) ↑
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="space-y-2.5 px-0 max-h-[260px] overflow-y-auto">
+                {cooThread.slice(-5).map((turn, i) => (
+                  <div key={i} className="space-y-1.5">
+                    <UserBubble text={turn.user} />
+                    <div className="flex justify-start">
+                      <DonnaBubble
+                        text={turn.donna}
+                        label={turn.label}
+                        type={turn.type}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Collapse history when expanded and there are multiple turns */}
+              {historyVisible && cooThread.length > 1 && onToggleHistory && (
+                <button
+                  type="button"
+                  onClick={onToggleHistory}
+                  className="text-[11px] font-medium transition-colors hover:opacity-80"
+                  style={{ color: 'rgba(139,92,246,0.65)' }}
+                >
+                  Hide history ↓
+                </button>
+              )}
+            </>
+          )}
+        </>
       )}
 
       {/* Inline command response (simple answers, errors) */}
