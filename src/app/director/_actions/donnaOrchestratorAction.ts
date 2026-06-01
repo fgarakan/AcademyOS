@@ -212,6 +212,7 @@ export async function runDonnaOrchestratorAction(
   }
 
   // 4. Write usage event to DB (fire-and-forget — never blocks response)
+  // Sprint 1080 — token/cost observability: pass token counts + latency when available.
   void writeUsageEventToDb(supabase, {
     eventType: 'donna_intelligence_call',
     academyId,
@@ -219,6 +220,10 @@ export async function runDonnaOrchestratorAction(
     blocked: response.hadBlockedAttempt,
     requestId: `${response.primaryOutput.type}:${response.primaryOutput.source}`,
     provider: 'anthropic',
+    model: response.model,
+    inputTokens: response.inputTokens,
+    outputTokens: response.outputTokens,
+    latencyMs: response.latencyMs,
   })
 
   // 5. Return safe result — safetyAudit and contextSummary are NOT returned

@@ -195,4 +195,15 @@ export interface OrchestratorResponse {
   safetyAudit: string[]
   /** The orchestration context that was used */
   contextSummary: string
+  // Sprint 1080 — token/cost observability fields
+  /** Input tokens consumed by the LLM call. 0 for deterministic paths. */
+  inputTokens?: number
+  /** Output tokens produced by the LLM call. 0 for deterministic paths. */
+  outputTokens?: number
+  /** Wall-clock latency of the LLM call in ms. 0 for deterministic paths. */
+  latencyMs?: number
+  /** Model used for the LLM call ('none' for deterministic paths). */
+  model?: string
+  /** Number of tool calls executed (0 for no-tool paths). */
+  toolCallCount?: number
 }

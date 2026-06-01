@@ -259,6 +259,12 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
               hadBlockedAttempt,
               safetyAudit,
               contextSummary: ctx.compactSummary,
+              // Sprint 1080 — token observability: tool path counts first + second LLM call
+              inputTokens: llmResult.inputTokens,
+              outputTokens: llmResult.outputTokens,
+              latencyMs: llmResult.latencyMs,
+              model: llmResult.model,
+              toolCallCount: 1,
             }
           }
 
@@ -268,6 +274,12 @@ export async function orchestrate(input: OrchestratorInput): Promise<Orchestrato
             hadBlockedAttempt,
             safetyAudit,
             contextSummary: ctx.compactSummary,
+            // Sprint 1080 — token observability: standard LLM path, no tool call
+            inputTokens: llmResult.inputTokens,
+            outputTokens: llmResult.outputTokens,
+            latencyMs: llmResult.latencyMs,
+            model: llmResult.model,
+            toolCallCount: 0,
           }
         }
         safetyAudit.push('LLM: Response failed safety validation — falling back.')
