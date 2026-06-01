@@ -393,6 +393,45 @@ function buildSystemPrompt(
   return lines.join('\n')
 }
 
+// ── Sprint 1083 — History relevance filter ────────────────────────────────────
+
+/**
+ * Returns false when conversation history is unlikely to help the LLM answer
+ * the current input — typically navigation commands, very short queries, and
+ * single-word inputs that are clearly not follow-ups to a prior conversation.
+ *
+ * Keeps history for: multi-turn follow-ups, complex questions (>60 chars),
+ * inputs that reference prior context ("that", "the last one", "those players").
+ *
+ * Skips history for: navigation commands, short queries, context-pack-style phrases.
+ * Skips when no history exists (trivially correct).
+ */
+function isConversationHistoryRelevant(
+  userInput: string,
+  history: ConversationHistory,
+): boolean {
+  if (history.length === 0) return false
+
+  const lower = userInput.toLowerCase().trim()
+
+  // Very short inputs are almost certainly commands, not follow-ups
+  if (lower.length < 20) return false
+
+  // Navigation command patterns — these never need history
+  if (/^(open|go to|take me to|show me|navigate to)\b/i.test(lower)) return false
+  if (/^(approvals?|players?|sessions?|curriculum|academy health|settings|coaches?|today|templates?)\s*$/i.test(lower)) return false
+
+  // Anaphoric / follow-up indicators — history is essential
+  const needsHistory = /\b(that|those|them|it|the last|the previous|what you just|what you said|you mentioned|from before|earlier)\b/i.test(lower)
+  if (needsHistory) return true
+
+  // Long, complex questions — likely to benefit from context
+  if (lower.length > 60) return true
+
+  // Default: include history for medium-length inputs (could be follow-ups)
+  return lower.length >= 30
+}
+
 // ── Main builder ──────────────────────────────────────────────────────────────
 
 /**
@@ -415,13 +454,22 @@ export function buildContextPacket(input: ContextPacketInput): ContextPacket {
     academyState = {},
   } = input
 
+  // Sprint 1083 — conversation history relevance filter.
+  // Single-turn or command-style inputs do not benefit from injecting prior turns.
+  // Saves up to ~900 chars (~280 tokens) on the most common non-conversational paths.
+  // History is kept for: multi-turn follow-ups, ambiguous questions, complex analysis.
+  // History is skipped for: navigation commands, very short inputs, context-pack style phrases.
+  const historyIsRelevant = isConversationHistoryRelevant(userInput, conversationHistory)
+
   // Sanitize conversation history: cap at 10 turns, truncate content
-  const sanitizedHistory: ConversationHistory = conversationHistory
-    .slice(-10)
-    .map((turn): ConversationTurn => ({
-      ...turn,
-      content: turn.content.slice(0, 200),
-    }))
+  const sanitizedHistory: ConversationHistory = historyIsRelevant
+    ? conversationHistory
+        .slice(-10)
+        .map((turn): ConversationTurn => ({
+          ...turn,
+          content: turn.content.slice(0, 200),
+        }))
+    : []
 
   const safeSignals: SafeSignals = {
     role,
