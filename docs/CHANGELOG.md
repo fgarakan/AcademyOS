@@ -3,6 +3,14 @@
 ---
 
 
+## 2026-06-01 — Sprint 1093 — Surface Coach Wrap-Up Observations on Player Profile V1
+
+- `src/app/director/players/[playerId]/CoachWrapUpObservationsPanel.tsx` (new): Read-only director-facing panel. Filters `CoachObservationRow[]` to `ai_entities.source === 'coach_wrap_up'` entries. Renders each observation with: content, coach name, session name/date, observation type label (from OBS_TYPE_LABELS), tags as chips, created date, "Coach Wrap-Up" green badge, "Private" badge when `is_private = true`. Header shows "Recent Coach Observations" + count badge + "Internal" guardrail label with shield icon. Empty state: "No coach wrap-up observations yet. Approved coach wrap-ups will appear here." No new DB queries — reuses `enrichedObservations` already fetched in `page.tsx`. Server Component. Director-only route; not exported to any shared index; not visible in player or parent portals.
+- `src/app/director/players/[playerId]/page.tsx` (modified): Imported `CoachWrapUpObservationsPanel` and added it to `notesSlot` after `CoachPlayerSnapshot` and before the Development Summary card. Receives `observations={enrichedObservations}`. No new DB queries. No changes to any other section.
+- `docs/architecture/PLAYER_PROFILE_COACH_OBSERVATIONS_SURFACE_1093.md` (new): Problem statement, data flow diagram, Notes tab layout after Sprint 1093, visibility guardrail table, what is intentionally not built.
+- `docs/QA_PLAYER_PROFILE_COACH_OBSERVATIONS_SURFACE_1093.md` (new): 48-check QA table covering file existence, component structure, observation card content (10 checks), header/label, empty state (5 checks), page integration, visibility guardrails (6 checks), regression checks (8 checks).
+- TypeScript: clean.
+
 ## 2026-06-01 — Sprint 1092 — Persist Coach Wrap-Up Observations to Player Profile V1
 
 - `src/app/director/review/applyWrapUpDraftAction.ts` (modified): (1) Added import of `CoachObservationDraftPayload` type from `saveWrapUpObservationsAction`. (2) Extended `ApplyWrapUpDraftResult` with `observationsCreated?: number`. (3) Added Sprint 1092 observation persistence block after the existing audit log write: queries `proposed_actions` for `coach_observation_draft_v1` items with `status in ['pending_review', 'approved']` for the same academy, filters in-code to those whose `proposed_payload.session_id` matches the session being applied, then for each matched draft with a valid `player_id` and `note`: inserts a `coach_observations` row (academy_id, coach_id, player_id, session_id, content, observation_type, is_private:true, ai_entities with provenance), marks the observation draft as `executed`, and calls `revalidatePath` for the affected player profile. Best-effort: observation errors do not fail the session wrap-up apply. Returns `observationsCreated` count. Existing `session_notes` write unchanged.

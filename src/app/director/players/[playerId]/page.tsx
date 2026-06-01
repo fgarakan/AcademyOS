@@ -82,6 +82,7 @@ import { PlayerKpiDrilldownCard } from './_components/PlayerKpiDrilldownCard'
 import { PlayerProfileDonnaRegistrar } from './_components/PlayerProfileDonnaRegistrar'
 import { PlayerSkillPathCurriculumPreview } from '@/components/player/PlayerSkillPathCurriculumPreview'
 import { PlayerCompetitionPathCurriculumPreview, type CompetitionPathPreviewData } from '@/components/player/PlayerCompetitionPathCurriculumPreview'
+import { CoachWrapUpObservationsPanel } from './CoachWrapUpObservationsPanel'
 
 interface PageProps {
   params: { playerId: string }
@@ -1462,6 +1463,11 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         recentNoteDate={(enrichedObservations[0] as any)?.created_at ?? null}
         updatedAt={developmentSummary?.updated_at ?? null}
       />
+
+      {/* Sprint 1093 — Coach Wrap-Up Observations: director-only surface for approved wrap-up observations.
+          Filters enrichedObservations to ai_entities.source === 'coach_wrap_up'.
+          No new DB query — reuses data already fetched above. Internal only. */}
+      <CoachWrapUpObservationsPanel observations={enrichedObservations} />
 
       {/* Development Summary display */}
       <Card>
