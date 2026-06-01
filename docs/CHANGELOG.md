@@ -3,6 +3,12 @@
 ---
 
 
+## 2026-06-01 — Sprint 1095D — Academy Onboarding Operating Lens Audit V1
+
+- `docs/architecture/ACADEMY_ONBOARDING_OPERATING_LENS_AUDIT_1095D.md` (new): Full audit of the academy onboarding process across both the 10-step DNA Shell and the old sub-route system. Critical finding: the 10-step DNA Shell (`OnboardingShell`) saves all rich data (coaching styles, session design, development priorities, parent styles) to localStorage only — never to the database. DONNA cannot access any of this data. The old sub-route interview captures 7 freetext fields and saves to `academies.settings` but is unstructured. DONNA's current context summary has no coaching philosophy, no coaching style, no development priorities. Documented 18 missing lens fields, 5 onboarding system gaps, schema-free fix path, and recommended next sprint (1095E: Academy DNA Persistence Bridge). No schema changes needed for the fix — `academies.settings` JSON can absorb all DNA Shell data.
+- `docs/QA_ACADEMY_ONBOARDING_OPERATING_LENS_AUDIT_1095D.md` (new): QA checklist — 22 audit items all confirmed. Critical finding double-verified by reading localStorage persistence hook, Activation Checklist step (no DB call), and server action file listing. DONNA context summary confirmed incomplete. AcademyPhilosophyProfile confirmed as derived-only (never uses director input).
+- No code changes. TypeScript unchanged.
+
 ## 2026-06-01 — Sprint 1095C — Curriculum Director Insight View Live QA V1
 
 - `docs/QA_CURRICULUM_DIRECTOR_INSIGHT_VIEW_LIVE_QA_1095C.md` (new): Live Playwright QA at 1366×768 and 375×667. All 5 stages confirmed with live `stage_goal` from DB. All 15 levels confirmed expandable. Expanded cards confirmed showing: DIRECTOR GOAL, EXIT PLAYER PROFILE, FOCUS AREAS, live READINESS GATES with domain badges + threshold text, COMMON BLOCKERS, PARENT-SAFE SUMMARY, "Open in Builder" link. CurriculumLevelTree preserved below. Mobile layout correct. HP 1 gates sample: Competition / Fitness Support / Tactical domains with criterion text and thresholds in monospace. Orange 2 gates sample: Technical rally 5+ shots (60%+ serve-in rate), Tactical zone naming. One-at-a-time expand confirmed. No code changes required.
