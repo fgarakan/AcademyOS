@@ -276,6 +276,13 @@ import { matchDonnaActionIntent } from '@/lib/donna/donnaActionRegistry'
 import type { DonnaActionRole } from '@/lib/donna/donnaActionRegistry'
 // Sprint 1086 — Deep Mode gate: intercept broad/expensive requests before God Mode
 import { isDeepModeRequest, buildDeepModeFirstPassResponse } from '@/lib/donna/donnaDeepModeGate'
+// Sprint 1090 — Brian Alpha Sandbox: controlled alpha testing for authorized academies
+import {
+  isBrianAlphaSandboxRequest,
+  isBrianAlphaSandboxAllowed,
+  buildBrianAlphaSandboxDisclosure,
+  buildBrianAlphaSandboxBlockedMessage,
+} from '@/lib/donna/donnaBrianAlphaSandbox'
 
 // ---------------------------------------------------------------------------
 // Wired task IDs — tasks that have a real server action behind them.
@@ -3536,6 +3543,29 @@ export function DonnaAssistantButton({ academyId, directorName, role = 'director
     if (!cooHandled) {
       const handled = detectAndHandleCommand(text)
       if (!handled) {
+        // Sprint 1090 — Brian Alpha Sandbox gate: intercept sandbox trigger phrases.
+        // Runs before the Sprint 1086 Deep Mode gate so sandbox requests get the
+        // disclosure flow rather than the generic deep-mode response.
+        // Access is gated by NEXT_PUBLIC_DONNA_ALPHA_SANDBOX_ACADEMY_IDS env var.
+        // Neither path calls handleGodModeQuery — confirmation is required first.
+        if (isBrianAlphaSandboxRequest(text)) {
+          const sandboxMsg = isBrianAlphaSandboxAllowed({ academyId })
+            ? buildBrianAlphaSandboxDisclosure()
+            : buildBrianAlphaSandboxBlockedMessage()
+          const sandboxLabel = isBrianAlphaSandboxAllowed({ academyId })
+            ? 'Sandbox / Alpha Analysis'
+            : 'Not authorized'
+          setCommandResponse({ message: sandboxMsg, type: 'info', label: sandboxLabel })
+          setCooThread(prev => [...prev.slice(-4), { user: text, donna: sandboxMsg, type: 'info' as const }])
+          speakDonna(sandboxMsg)
+          recordPrompt(text)
+          recordSummary(sandboxMsg)
+          recordTurn(text, sandboxMsg, { domain: 'general' })
+          setTypedText('')
+          focusDonnaInput()
+          return
+        }
+
         // Sprint 1086 — Deep Mode gate: intercept broad/expensive requests before God Mode.
         // Runs after ALL deterministic handlers (context-pack, action-registry, routeDonnaPrompt,
         // detectAndHandleCommand) have had their chance. Only triggers for clearly broad/all-scope

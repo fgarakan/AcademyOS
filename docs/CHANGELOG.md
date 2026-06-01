@@ -3,6 +3,14 @@
 ---
 
 
+## 2026-06-01 — Sprint 1090 — DONNA Brian Alpha God Mode Sandbox V1
+
+- `src/lib/donna/donnaBrianAlphaSandbox.ts` (new): Alpha sandbox access control utility. `isBrianAlphaSandboxAllowed({ academyId })` checks `NEXT_PUBLIC_DONNA_ALPHA_SANDBOX_ACADEMY_IDS` (comma-separated UUID list) and optional `NEXT_PUBLIC_DONNA_ALPHA_SANDBOX_ENABLED` master switch — default OFF when env vars are empty or unset. `isBrianAlphaSandboxRequest(text)` detects 9 trigger patterns ("run brian alpha sandbox", "test donna god mode", "run sandbox academy audit", "alpha sandbox", etc.). `buildBrianAlphaSandboxDisclosure()` returns three-part response: authorized confirmation + explicit will-NOT-do list (no mutations, no parent sends, no curriculum publishing) + confirmation ask. `buildBrianAlphaSandboxBlockedMessage()` returns clear denial. No personal data hardcoded. Access managed entirely via env vars.
+- `src/components/assistant/DonnaAssistantButton.tsx` (modified): Added imports of all 4 sandbox functions. Added 20-line sandbox gate in `handleCommandSubmit` positioned BEFORE the Sprint 1086 Deep Mode gate — checks phrase first, then access; either shows disclosure or blocked message. Neither path calls `handleGodModeQuery`. Label set to "Sandbox / Alpha Analysis" for authorized access or "Not authorized" for blocked access.
+- `docs/architecture/DONNA_BRIAN_ALPHA_GOD_MODE_SANDBOX_1090.md` (new): Access control design, allowlist method, request flow diagram, trigger phrases, disclosure structure, post-disclosure flow, safety invariants, how to disable.
+- `docs/QA_DONNA_BRIAN_ALPHA_GOD_MODE_SANDBOX_1090.md` (new): 38-check QA table covering trigger phrases, access control (7 env-var cases), disclosure content, runtime gate behavior, and passthrough regression.
+- TypeScript: clean.
+
 ## 2026-06-01 — Sprint 1086 — DONNA Deep Mode Gate Progressive Answering V1
 
 - `src/lib/donna/donnaDeepModeGate.ts` (new): Deep Mode gate with `DeepModeGateResult` interface, `isDeepModeRequest(text)` detector (22 phrase patterns + 7 exclusion guards), and `buildDeepModeFirstPassResponse(text, pathname)` progressive response builder. Detection uses two layers: exclusion guard (normal questions like "how is my academy?", "what needs attention?", "make this more game-based" are never gated) then 22 deep-scope patterns (audit the whole academy, analyze all players, find every gap, full/complete/comprehensive/thorough/deep analysis, compare all coaches, full strategy, everything about, academy-wide). Progressive response gives a quick page-aware read + explains deeper analysis option + asks for director confirmation before running Deep Mode.
