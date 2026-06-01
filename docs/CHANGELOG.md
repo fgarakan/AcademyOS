@@ -3,6 +3,15 @@
 ---
 
 
+## 2026-06-01 — Sprint 1095B — Curriculum Director Insight View V1
+
+- `src/lib/curriculum/levelInsightMap.ts` (new): Typed `CURRICULUM_LEVEL_INSIGHT_MAP` for all 15 levels (Red 1-3, Orange 1-3, Green 1-3, Yellow 1-3, HP 1-3). Each entry has: `directorGoal`, `exitPlayerProfile`, `focusAreas` (3-4 items), `readinessSignals`, `commonBlockers`, `parentSafeSummary`, `donnaPrompt`. `getLevelInsight(stage, levelNumber)` helper. Pure TypeScript — no DB, no AI.
+- `src/app/director/curriculum/_components/CurriculumStageInsightCard.tsx` (new): Client component. Stage header shows live `stage_goal` from DB + age range. Level rows collapsed by default; expand to show Director Goal, Exit Player Profile, Focus Areas, live Readiness Gates (from `curriculum_gates`), Common Blockers, Parent-Safe Summary, "Open in Builder" link. Gate count badge on each level row.
+- `src/app/director/curriculum/page.tsx` (modified): Added `curriculum_stages` query for live `stage_goal` and age ranges. Added stage insight data builder (merges live stage goals + levels + gates + static insights). Replaced hardcoded `SPINE_STAGES` section with `CurriculumStageInsightCard` components. Falls back to compact stage cards when levels are unavailable. Renamed `rawDb` to `stagesDb` in new query block to avoid redeclaration. Cleaned up unused Lucide icon imports.
+- `docs/architecture/CURRICULUM_DIRECTOR_INSIGHT_VIEW_1095B.md` (new): Architecture doc — problem, components, live verification results, what remains unchanged, future schema work.
+- `docs/QA_CURRICULUM_DIRECTOR_INSIGHT_VIEW_1095B.md` (new): Manual QA checklist — stage cards, expand/collapse, 15-level coverage table, stage goal source verification, regression checks.
+- TypeScript: clean.
+
 ## 2026-06-01 — Sprint 1095A — Curriculum Import Spine Comparison 10/10 Audit V1
 
 - `docs/architecture/CURRICULUM_IMPORT_SPINE_COMPARISON_10_10_AUDIT_1095A.md` (new): Full 10/10 readiness audit for curriculum import, spine comparison, and merge system. Confirmed: knowledge_items table does NOT exist in DB (TypeScript-only); no document upload endpoint; no spine mapping; no conflict classifier; no merge review UX. What works: academy_curriculum_overrides (full rollback/snapshot support), proposed_actions approval pipeline, knowledgeSimilarityDetector (token overlap), knowledgeCurriculumIntelligence gap matching, CurriculumEditPermissionGuard. Overall 10/10 model: 3/10. 17-dimension readiness matrix. Recommended 10-sprint sequence (1096A-1099A). Critical P0 blocker: knowledge_items table missing — blocks all import staging.

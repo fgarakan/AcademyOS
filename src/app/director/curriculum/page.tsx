@@ -8,39 +8,54 @@ import { buildCurriculumCoverageReport, type LevelCoverageInput } from '@/lib/cu
 import type { CurriculumStage } from '@/lib/curriculum/visualMapModel'
 import { CurriculumHealthPanel, type DimensionSummary } from './_components/CurriculumHealthPanel'
 import { CurriculumLevelTree } from './_components/CurriculumLevelTree'
+// Sprint 1095B — Curriculum Director Insight View
+import { CurriculumStageInsightCard, type StageInsightData } from './_components/CurriculumStageInsightCard'
+import { getLevelInsight } from '@/lib/curriculum/levelInsightMap'
 
-// ─── Static spine data ────────────────────────────────────────────────────────
+// ─── Stage display config (colors + fallback purpose) ─────────────────────────
+// stage_goal comes from DB; these provide color tokens and a fallback.
 
-const SPINE_STAGES = [
+const SPINE_STAGES: Array<{
+  stageKey: string
+  label: string
+  dotClass: string
+  textClass: string
+  fallbackPurpose: string
+}> = [
   {
+    stageKey: 'red_foundation',
     label: 'Red Ball',
     dotClass: 'bg-status-red',
     textClass: 'text-status-red',
-    purpose: 'Movement fundamentals, hand-eye coordination, and first contact with the game.',
+    fallbackPurpose: 'Movement fundamentals, hand-eye coordination, and first contact with the game.',
   },
   {
+    stageKey: 'orange_development',
     label: 'Orange Ball',
     dotClass: 'bg-status-orange',
     textClass: 'text-status-orange',
-    purpose: 'Technical building, consistent rallying, and introduction to tactical patterns.',
+    fallbackPurpose: 'Technical building, consistent rallying, and introduction to tactical patterns.',
   },
   {
+    stageKey: 'green_performance',
     label: 'Green Ball',
     dotClass: 'bg-status-green',
     textClass: 'text-status-green',
-    purpose: 'Tactical awareness, point construction, and first competitive match play.',
+    fallbackPurpose: 'Tactical awareness, point construction, and first competitive match play.',
   },
   {
+    stageKey: 'yellow_competitive',
     label: 'Yellow Ball',
     dotClass: 'bg-yellow-400',
     textClass: 'text-yellow-400',
-    purpose: 'Full-court development, match consistency, and competitive preparation.',
+    fallbackPurpose: 'Full-court development, match consistency, and competitive preparation.',
   },
   {
+    stageKey: 'high_performance',
     label: 'High Performance',
     dotClass: 'bg-lime',
     textClass: 'text-lime',
-    purpose: 'Advanced competition, elite technical refinement, and performance coaching.',
+    fallbackPurpose: 'Advanced competition, elite technical refinement, and performance coaching.',
   },
 ]
 
@@ -97,6 +112,76 @@ export default async function DirectorCurriculumPage() {
   }
 
   const explorerData = await getCurriculumExplorerData(supabase)
+
+  // ─── Sprint 1095B: query curriculum_stages for live stage_goal ───────────
+  interface StageRow {
+    id: string
+    stage: string
+    display_name: string
+    stage_goal: string
+    age_range_min: number | null
+    age_range_max: number | null
+    sort_order: number
+  }
+  const stagesDb = supabase as any
+  const { data: stagesRaw } = await stagesDb
+    .from('curriculum_stages')
+    .select('id,stage,display_name,stage_goal,age_range_min,age_range_max,sort_order')
+    .order('sort_order', { ascending: true })
+  const stageGoalMap: Record<string, string> = {}
+  const ageRangeMap: Record<string, string | null> = {}
+  if (stagesRaw) {
+    for (const s of stagesRaw as StageRow[]) {
+      stageGoalMap[s.stage] = s.stage_goal
+      ageRangeMap[s.stage] = (s.age_range_min != null && s.age_range_max != null)
+        ? `Ages ${s.age_range_min}–${s.age_range_max}`
+        : null
+    }
+  }
+
+  // ─── Sprint 1095B: build stage insight data for CurriculumStageInsightCard ─
+  const stageInsights: StageInsightData[] = SPINE_STAGES.map(stageDef => {
+    const levels = explorerData.levels
+      .filter(l => l.stage === stageDef.stageKey)
+      .map(level => {
+        const insight = getLevelInsight(level.stage, level.level_number)
+        const gates = explorerData.gates
+          .filter(g => g.from_level_id === level.id)
+          .map(g => ({
+            domain: g.domain,
+            criterion: g.criterion,
+            threshold: g.threshold,
+          }))
+        return {
+          id: level.id,
+          displayName: level.display_name,
+          levelNumber: level.level_number,
+          insight: insight ?? {
+            levelKey: `${stageDef.stageKey.split('_')[0]}${level.level_number}` as import('@/lib/curriculum/levelInsightMap').LevelKey,
+            stage: level.stage,
+            levelNumber: level.level_number,
+            directorGoal: `Develop ${level.display_name} competencies.`,
+            exitPlayerProfile: 'Player meets all advancement criteria for this level.',
+            focusAreas: [],
+            readinessSignals: [],
+            commonBlockers: [],
+            parentSafeSummary: 'Your child is developing tennis skills at this level.',
+            donnaPrompt: `What are the ${level.display_name} gates and readiness criteria?`,
+          },
+          gates,
+        }
+      })
+
+    return {
+      stageKey: stageDef.stageKey,
+      stageLabel: stageDef.label,
+      stageGoal: stageGoalMap[stageDef.stageKey] ?? stageDef.fallbackPurpose,
+      ageRange: ageRangeMap[stageDef.stageKey] ?? null,
+      dotClass: stageDef.dotClass,
+      textClass: stageDef.textClass,
+      levels,
+    }
+  })
 
   // ─── Curriculum coverage snapshot ────────────────────────────────────────
   // Maps DB curriculum_stage enum (snake_case) to the CurriculumStage union used by coverageModel.
@@ -338,24 +423,36 @@ export default async function DirectorCurriculumPage() {
         </div>
       </div>
 
-      {/* ── 3. Current Spine ─────────────────────────────────────────────── */}
-      <section className="space-y-3">
-        <p className="label-xs">Current Spine</p>
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-          {SPINE_STAGES.map(stage => (
-            <div
-              key={stage.label}
-              className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-2"
-            >
-              <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full shrink-0 ${stage.dotClass}`} />
-                <p className={`text-[11px] font-semibold ${stage.textClass}`}>{stage.label}</p>
+      {/* ── 3. Curriculum Spine Insight — Sprint 1095B ───────────────────── */}
+      {/* Replaced hardcoded stage cards with live stage_goal + expandable level insight. */}
+      {stageInsights.some(s => s.levels.length > 0) ? (
+        <section className="space-y-3" data-donna-focus-id="curriculum-spine-insight">
+          <p className="label-xs">Curriculum Spine</p>
+          <div className="space-y-3">
+            {stageInsights.map(stage => (
+              <CurriculumStageInsightCard key={stage.stageKey} stage={stage} />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="space-y-3">
+          <p className="label-xs">Curriculum Spine</p>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            {SPINE_STAGES.map(stage => (
+              <div
+                key={stage.label}
+                className="rounded-xl border border-border bg-surface-raised px-4 py-3 space-y-2"
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${stage.dotClass}`} />
+                  <p className={`text-[11px] font-semibold ${stage.textClass}`}>{stage.label}</p>
+                </div>
+                <p className="text-[11px] text-text-muted leading-relaxed">{stage.fallbackPurpose}</p>
               </div>
-              <p className="text-[11px] text-text-muted leading-relaxed">{stage.purpose}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Empty state — shown when no curriculum version exists */}
       {!versionData && (
