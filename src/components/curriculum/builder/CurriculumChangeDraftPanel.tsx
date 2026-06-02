@@ -169,19 +169,36 @@ export function CurriculumChangeDraftPanel({ levelId, levelName, externalChangeT
                 Draft created — pending your review
               </p>
               <p className="text-[11px] text-text-muted leading-relaxed">
-                Your proposed change is in the Review Queue. Nothing is applied until you
-                approve it there.
+                Your proposed change is now in the Pending Modifications queue.
+                Nothing is applied until you approve it.
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Link
-              href="/director/review"
+            {/* Scroll to the change queue on this page (desktop: sidebar; mobile: below this panel) */}
+            <a
+              href="#curriculum-change-queue"
+              onClick={e => {
+                e.preventDefault()
+                document.getElementById('curriculum-change-queue')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-semibold text-black transition-opacity hover:opacity-80"
               style={{ background: '#C8FF00' }}
             >
-              Go to Review Queue
+              View Pending Modifications
+              <ChevronRight className="w-3 h-3" />
+            </a>
+            <Link
+              href="/director/review"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-medium transition-opacity hover:opacity-80"
+              style={{
+                background: 'rgba(200,255,0,0.04)',
+                border: '1px solid rgba(200,255,0,0.10)',
+                color: '#a3aab4',
+              }}
+            >
+              Open Review Queue
               <ChevronRight className="w-3 h-3" />
             </Link>
             <button
@@ -189,9 +206,9 @@ export function CurriculumChangeDraftPanel({ levelId, levelName, externalChangeT
               onClick={handleReset}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-medium transition-opacity hover:opacity-80"
               style={{
-                background: 'rgba(200,255,0,0.04)',
-                border: '1px solid rgba(200,255,0,0.10)',
-                color: '#a3aab4',
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                color: '#666',
               }}
             >
               Propose another change

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, Shield, Zap, ChevronRight, ChevronDown } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Shield, Zap, ChevronRight, ChevronDown, Sparkles } from 'lucide-react'
 import type { CurriculumExplorerData, CurriculumLevel } from '@/lib/backend/curriculumExplorer'
 import { CurriculumLevelBuilderGrid, type ActivePanel } from './CurriculumLevelBuilderGrid'
 import { CurriculumLevelBuilderShell } from './CurriculumLevelBuilderShell'
@@ -222,72 +222,114 @@ export function CurriculumLevelBuilderExperience({ level, explorerData, changeQu
           </div>
         )}
 
-        {/* Draft mode banner */}
-        <div className="rounded-xl border border-lime/10 bg-lime/[0.02] flex items-center gap-2.5 px-4 py-3">
-          <Shield className="w-3.5 h-3.5 text-lime shrink-0" />
-          <p className="text-[11px] text-text-muted">
+        {/* Draft mode safety note — compact, not a full banner */}
+        <div className="flex items-center gap-2 text-[11px] text-text-muted">
+          <Shield className="w-3 h-3 text-lime shrink-0" />
+          <span>
             <span className="text-lime font-semibold">Draft mode — </span>
-            All changes create a draft in the Review Queue. Nothing is applied until you approve it there.
-          </p>
+            all changes go to Pending Modifications. Nothing applies until you approve.
+          </span>
         </div>
 
-        {/* ── Mobile DONNA context card (hidden on lg+, shown on small screens) */}
-        <div className="block lg:hidden rounded-xl border border-border bg-surface px-4 py-3 space-y-3">
-          <div className="flex items-center justify-between gap-3">
+        {/* ── Health snapshot — N of 4 sections have content ────────────────── */}
+        {(() => {
+          const filled = [
+            levelDrills.length > 0,
+            levelGates.length > 0,
+            competition !== null,
+            fitness !== null,
+          ].filter(Boolean).length
+          const color = filled === 4 ? '#30D158' : filled >= 2 ? '#FF9500' : '#FF3B30'
+          const label = filled === 4 ? 'All sections complete' : `${filled} of 4 sections have content`
+          return (
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: stageDot }} />
-              <p className="text-[11px] font-semibold text-text-secondary capitalize">{stageLabel}</p>
+              <div className="flex gap-0.5">
+                {[0,1,2,3].map(i => (
+                  <div
+                    key={i}
+                    className="h-1 w-6 rounded-full"
+                    style={{ background: i < filled ? color : 'rgba(255,255,255,0.10)' }}
+                  />
+                ))}
+              </div>
+              <span className="text-[10px]" style={{ color }}>{label}</span>
             </div>
-            <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+          )
+        })()}
+
+        {/* ── PRIMARY ACTION: Propose a Change — moved above the grid ──────── */}
+        {/* Director should reach the main action without scrolling past 5 cards */}
+        <div data-donna-focus-id="curriculum-primary-action">
+          <CurriculumChangeDraftPanel
+            levelId={level.id}
+            levelName={level.display_name}
+            externalChangeType={pendingDraftType}
+          />
+        </div>
+
+        {/* ── Mobile quick DONNA chips (hidden lg+) ─────────────────────────── */}
+        {/* On desktop, DONNA chips live in the sidebar. On mobile, show them    */}
+        {/* inline so the director doesn't have to scroll to find suggested actions */}
+        <div className="flex lg:hidden flex-wrap gap-2">
+          {[
+            'Add a skill',
+            'Add an assessment gate',
+            'Rewrite this level',
+          ].map(label => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => {
+                const map: Record<string, ChangeType> = {
+                  'Add a skill':              'add_drill',
+                  'Add an assessment gate':   'add_gate',
+                  'Rewrite this level':       'rewrite_level',
+                }
+                const ct = map[label]
+                if (ct) setPendingDraftType(ct)
+                document.getElementById('curriculum-primary-action')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] transition-colors"
               style={{
-                background: 'rgba(200,255,0,0.08)',
-                border: '1px solid rgba(200,255,0,0.16)',
+                background: 'rgba(200,255,0,0.05)',
+                border: '1px solid rgba(200,255,0,0.15)',
                 color: '#C8FF00',
               }}
             >
-              DONNA Active
-            </span>
-          </div>
-          {stageInfo && (
-            <p className="text-[11px] text-text-muted leading-relaxed">{stageInfo.goal}</p>
-          )}
-          <p className="text-[11px] text-text-secondary leading-relaxed">
-            Use <span className="text-lime font-medium">Propose a Change</span> below to draft
-            curriculum changes. Nothing is applied until you approve in the Review Queue.
-          </p>
+              <Sparkles className="w-3 h-3 shrink-0" />
+              {label}
+            </button>
+          ))}
         </div>
 
-        {/* Summary row — 3 info cards */}
+        {/* ── Level context — collapsed by default (informational, not operational) */}
         {stageInfo && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div
-              className="rounded-xl px-4 py-3.5 space-y-1"
-              style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <p className="label-xs">Level Goal</p>
-              <p className="text-[11px] text-text-secondary leading-relaxed">{stageInfo.goal}</p>
+          <details className="group">
+            <summary className="flex items-center gap-2 cursor-pointer list-none select-none px-4 py-2.5 rounded-xl border border-white/[0.07] hover:border-white/[0.12] transition-colors" style={{ background: 'rgba(0,0,0,0.20)' }}>
+              <ChevronDown className="w-3.5 h-3.5 text-text-muted transition-transform group-open:rotate-0 -rotate-90" />
+              <span className="text-[11px] font-semibold text-text-muted">Level context</span>
+              <span className="text-[10px] text-text-muted/60 ml-1">— goal, intent, evidence</span>
+            </summary>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-xl px-4 py-3.5 space-y-1" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <p className="label-xs">Level Goal</p>
+                <p className="text-[11px] text-text-secondary leading-relaxed">{stageInfo.goal}</p>
+              </div>
+              <div className="rounded-xl px-4 py-3.5 space-y-1" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <p className="label-xs">Development Intent</p>
+                <p className="text-[11px] text-text-secondary leading-relaxed">{stageInfo.intent}</p>
+              </div>
+              <div className="rounded-xl px-4 py-3.5 space-y-1" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <p className="label-xs">Evidence for Level-Up</p>
+                <p className="text-[11px] text-text-secondary leading-relaxed">{stageInfo.evidence}</p>
+                {level.advance_min_outcomes > 0 && (
+                  <p className="text-[10px] text-text-muted mt-1">
+                    Min <span className="font-mono text-lime">{level.advance_min_outcomes}</span> outcomes required
+                  </p>
+                )}
+              </div>
             </div>
-            <div
-              className="rounded-xl px-4 py-3.5 space-y-1"
-              style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <p className="label-xs">Development Intent</p>
-              <p className="text-[11px] text-text-secondary leading-relaxed">{stageInfo.intent}</p>
-            </div>
-            <div
-              className="rounded-xl px-4 py-3.5 space-y-1"
-              style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <p className="label-xs">Evidence for Level-Up</p>
-              <p className="text-[11px] text-text-secondary leading-relaxed">{stageInfo.evidence}</p>
-              {level.advance_min_outcomes > 0 && (
-                <p className="text-[10px] text-text-muted mt-1">
-                  Min <span className="font-mono text-lime">{level.advance_min_outcomes}</span> outcomes required
-                </p>
-              )}
-            </div>
-          </div>
+          </details>
         )}
 
         {/* 5-card section grid — controlled mode, synced with DONNA panel */}
@@ -301,14 +343,23 @@ export function CurriculumLevelBuilderExperience({ level, explorerData, changeQu
           onActivePanelChange={setActivePanel}
         />
 
-        {/* Propose a Change panel — Sprint 962: wrapped with DONNA focus target */}
-        <div data-donna-focus-id="curriculum-primary-action">
-          <CurriculumChangeDraftPanel
-            levelId={level.id}
-            levelName={level.display_name}
-            externalChangeType={pendingDraftType}
-          />
-        </div>
+        {/* ── Mobile Pending Modifications (hidden lg+) ─────────────────── */}
+        {/* On desktop, change queue lives in the sidebar. On mobile it must          */}
+        {/* appear here so the director can see + act on drafts without scrolling     */}
+        {/* to a hidden panel. Rendered immediately after "Propose a Change".          */}
+        {changeQueue && (
+          <div id="curriculum-change-queue" className="block lg:hidden scroll-mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[11px] uppercase tracking-widest text-text-muted font-semibold">
+                Pending Modifications
+              </p>
+            </div>
+            {/* Constrained height so long queues don't bury the form */}
+            <div className="max-h-[480px] overflow-y-auto pr-1 space-y-2">
+              {changeQueue}
+            </div>
+          </div>
+        )}
 
         {/* Detailed Content View — Sprint 962: renamed from "Advanced Editor" to reduce intimidation */}
         <details className="group">
@@ -317,9 +368,9 @@ export function CurriculumLevelBuilderExperience({ level, explorerData, changeQu
             style={{ background: 'rgba(0,0,0,0.20)' }}
           >
             <ChevronDown className="w-3.5 h-3.5 text-text-muted transition-transform group-open:rotate-180" />
-            <span className="text-[11px] font-semibold text-text-secondary">Detailed Content View</span>
+            <span className="text-[11px] font-semibold text-text-secondary">Full Content Details</span>
             <span className="text-[10px] text-text-muted ml-1">
-              — tab view: drills, gates, fitness, competition, coach language
+              — drills, gates, fitness, competition, and coach language
             </span>
           </summary>
           <div className="mt-4">
@@ -330,15 +381,19 @@ export function CurriculumLevelBuilderExperience({ level, explorerData, changeQu
       </div>
 
       {/* ── Right DONNA panel + change queue ─────────────────────────── */}
-      <aside className="hidden lg:block w-72 shrink-0 sticky top-6 self-start space-y-4">
+      <aside className="hidden lg:flex lg:flex-col w-72 shrink-0 sticky top-6 self-start gap-4">
         <CurriculumDonnaPanel
           mode="level"
           levelName={level.display_name}
           activeAction={activeAction}
           onAction={handleDonnaAction}
         />
-        {/* RSC slot — CurriculumBuilderChangeQueue passed from server page */}
-        {changeQueue}
+        {/* RSC slot — CurriculumBuilderChangeQueue passed from server page.
+            Scroll anchor id so "View pending mods" links land here.
+            max-h prevents the sidebar from growing taller than the viewport. */}
+        <div id="curriculum-change-queue" className="scroll-mt-4 max-h-[calc(100vh-280px)] overflow-y-auto">
+          {changeQueue}
+        </div>
       </aside>
     </div>
   )

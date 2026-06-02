@@ -264,11 +264,24 @@ export async function CurriculumBuilderChangeQueue() {
     }
   })
 
+  // When there are no pending items AND no recovery items, render nothing.
+  // This keeps the builder landing page clean when the queue is empty.
+  if (items.length === 0 && recoveryItems.length === 0) {
+    return null
+  }
+
   return (
     <div className="space-y-3">
-      <p className="text-[11px] uppercase tracking-widest text-text-muted font-semibold">
-        Pending Drafts
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] uppercase tracking-widest text-text-muted font-semibold">
+          Pending Modifications
+        </p>
+        {items.length > 0 && (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-status-orange/10 border border-status-orange/20 text-status-orange tabular-nums">
+            {items.length} to review
+          </span>
+        )}
+      </div>
       <CurriculumChangeQueue items={items} />
       {/* Recovery notice — renders nothing when recoveryItems is empty */}
       <CurriculumApprovalRecoveryNotice items={recoveryItems} />

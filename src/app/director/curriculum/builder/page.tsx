@@ -1,10 +1,12 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { Sparkles } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { CurriculumSetupBuilder } from './CurriculumSetupBuilder'
 import type { CurriculumSetupState } from '@/lib/curriculum/curriculumSetupTypes'
 import { DEFAULT_CURRICULUM_SETUP_STATE } from '@/lib/curriculum/curriculumSetupTypes'
 import { getCurriculumExplorerData } from '@/lib/backend/curriculumExplorer'
+import { CurriculumBuilderChangeQueue } from './CurriculumBuilderChangeQueue'
 
 export default async function CurriculumBuilderPage() {
   const supabase = await getSupabaseServer()
@@ -82,6 +84,16 @@ export default async function CurriculumBuilderPage() {
           Ask DONNA
         </Link>
       </div>
+
+      {/* Pending Modifications — visible at top of builder landing so directors
+          can see and act on outstanding drafts without navigating to a level page.
+          Streamed via Suspense; renders nothing when queue is empty. */}
+      <div className="px-4 sm:px-6 pb-2 max-w-[1180px] mx-auto">
+        <Suspense fallback={null}>
+          <CurriculumBuilderChangeQueue />
+        </Suspense>
+      </div>
+
       <CurriculumSetupBuilder initialState={initialState} origin="builder" levels={explorerData.levels} />
     </>
   )
