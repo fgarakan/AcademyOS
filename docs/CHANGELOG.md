@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-06-02 — Sprint 1123 — DONNA-First Simple UI Constitution Pass V1
+
+**Constitution Documents**
+- `docs/architecture/DONNA_UI_CONSTITUTION.md` (new): The AcademyOS UI law. Four laws: 1 primary job per screen, 1 primary action, 3–5 visible data points max, DONNA must explain what matters. Per-screen constitution for all 10 major screens. Anti-pattern removal guide. DONNA brief copy rules. Migration path for non-compliant screens.
+- `docs/qa/DONNA_UI_CONSTITUTION_SCREEN_AUDIT.md` (new): Screen-by-screen audit. Before/after for each screen. Summary table (compliant / partial / non-compliant). Component inventory. Migration steps.
+
+**Constitution Components**
+- `src/components/donna/DonnaScreenBrief.tsx` (new): `DonnaScreenBrief` (client-interactive) and `DonnaScreenBriefStatic` (Server Component). Shows 1–2 sentence DONNA brief + optional primary action button. Constitution-compliant: lime border, DONNA icon, 1 sentence max visible, action always at right edge.
+- `src/components/donna/DonnaSimplifiedPageHeader.tsx` (new): Standard page header pattern. Eyebrow + title + DONNA brief in one component. Use for all new pages. Replace `page-eyebrow / page-title / page-subtitle` triplet + brief logic.
+
+**First-Pass Screen Improvements**
+- `src/app/director/page.tsx` (modified): Added `DonnaScreenBriefStatic` import. Added `constitutionBrief` computation from real data (pendingWrapUpsCount + pendingCount + attentionCount). Brief placed between hero header and Primary Action Hero. Example: *"3 wrap-ups waiting for review, 2 players need placement."* Urgency = 'urgent' when total > 3. Primary action links to Review Queue or Players.
+- `src/app/director/players/page.tsx` (modified): Added `DonnaScreenBriefStatic` above player directory. Brief computes: active count · missing level count · advancement-ready count · overdue assessment count. Primary action: "Add Player". Urgency = 'urgent' when missing levels or overdue assessments exist.
+
+**TypeScript:** clean.
+
+**What this sprint is NOT:**
+- Not a full page rewrite. Existing cards, sections, and tabs are unchanged.
+- Not removing any data. The constitution makes data collapsed-by-default, not deleted.
+- The audit doc identifies which screens need full constitutional migration next.
+
 ## 2026-06-02 — Sprint 1122 — DONNA Post-Assessment Placement Recommendation Engine V1
 
 - `supabase/migrations/080_donna_placement_recommendations.sql` (new): `donna_placement_recommendations` table. Stores DONNA input snapshot (5 assessment scores, overall avg, player age, current level/stage, gates met/total), DONNA output (recommended stage, level, group, confidence 0–100, confidence_tier, top_reasons[], limiting_factors[], risk_notes[], alternative_placements JSONB, donna_explanation, evidence_used[], check_after_4_to_6_weeks[], reassessment_weeks), director decision (accepted/overridden/trial/deferred, decided_by/at, override_reason typed enum with 11 options, director_note, final_level, final_group), outcome tracking (outcome_assessment_id, outcome_notes). Full RLS: directors see all, can create and update.

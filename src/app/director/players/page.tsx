@@ -4,6 +4,7 @@ import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { PlayersDirectoryClient } from './_components/PlayersDirectoryClient'
 import { DonnaPlayersPresenceCTA } from '@/components/donna/DonnaKpiExplainerPanel'
+import { DonnaScreenBriefStatic } from '@/components/donna/DonnaScreenBrief'
 
 export interface PlayerCurriculumEntry {
   levelName: string
@@ -108,8 +109,27 @@ export default async function PlayersPage() {
     (p.next_assessment_due && new Date(p.next_assessment_due) < now)
   ).length
 
+  // DONNA UI Constitution brief for players list
+  const activePlayers = players.filter(p => p.player_status === 'active').length
+  const playersBrief = (() => {
+    if (players.length === 0) return 'No players yet. Add your first player to start tracking development.'
+    const parts: string[] = [`${activePlayers} active player${activePlayers !== 1 ? 's' : ''}`]
+    if (missingCurriculumCount > 0) parts.push(`${missingCurriculumCount} missing a level`)
+    if (advancementReadyPlayers.length > 0) parts.push(`${advancementReadyPlayers.length} ready for advancement`)
+    if (assessmentDueCount > 0) parts.push(`${assessmentDueCount} with overdue assessment`)
+    return parts.join(' · ') + '.'
+  })()
+
   return (
     <div className="p-6 animate-fade-in space-y-6 max-w-5xl">
+      {/* DONNA UI Constitution brief — Sprint 1123 */}
+      <DonnaScreenBriefStatic
+        brief={playersBrief}
+        primaryActionLabel="Add Player"
+        primaryActionHref="/director/players/new"
+        emphasis={assessmentDueCount > 0 || missingCurriculumCount > 0 ? 'urgent' : 'normal'}
+      />
+
       {/* Sprint 820: data-donna-focus-id on page header for DONNA "player directory" highlight */}
       <div className="flex items-start justify-between gap-4" data-donna-focus-id="player-directory-summary">
         <div>

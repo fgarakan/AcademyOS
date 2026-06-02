@@ -20,6 +20,8 @@ import { AcademyKpiCardsSection } from './_components/AcademyKpiCardsSection'
 import { DirectorKpiHealthSection } from './_components/DirectorKpiHealthSection'
 // Sprint 1034 — DirectorTodayCommandCenter replaced by DirectorPrimaryActionHero
 import { DirectorPrimaryActionHero } from './_components/DirectorPrimaryActionHero'
+// DONNA UI Constitution — DonnaScreenBriefStatic
+import { DonnaScreenBriefStatic } from '@/components/donna/DonnaScreenBrief'
 import { buildAttentionQueue, type AttentionQueueInput } from '@/lib/director/attentionQueue'
 import { AcademyHealthBadgeWithDrawer } from './_components/AcademyHealthBreakdown'
 import { DirectorContinueSetupPanel } from '@/components/director/DirectorContinueSetupPanel'
@@ -402,6 +404,30 @@ export default async function DirectorDashboard() {
   // Academy live state — all 4 setup steps complete
   const isAcademyLive = players.length > 0 && playersWithLevel > 0 && classTemplateCount > 0 && sessionsExist
 
+  // DONNA UI Constitution — compute screen brief (1–2 sentences from real data)
+  const constitutionTotal = pendingWrapUpsCount + pendingCount + attentionCount
+  let constitutionBrief: string
+  let constitutionUrgency: 'normal' | 'urgent' = 'normal'
+  let constitutionActionLabel: string | undefined
+  let constitutionActionHref: string | undefined
+
+  if (constitutionTotal === 0 && activePlayers === 0) {
+    constitutionBrief = 'Start by adding players and assigning curriculum levels — then today\'s signals will appear here.'
+    constitutionActionLabel = 'Add Players'
+    constitutionActionHref = '/director/players'
+  } else if (constitutionTotal === 0) {
+    constitutionBrief = `${activePlayers} active player${activePlayers !== 1 ? 's' : ''}. No urgent items today — academy is running smoothly.`
+  } else {
+    const parts: string[] = []
+    if (pendingWrapUpsCount > 0) parts.push(`${pendingWrapUpsCount} wrap-up${pendingWrapUpsCount !== 1 ? 's' : ''} waiting for review`)
+    if (pendingCount > 0) parts.push(`${pendingCount} player${pendingCount !== 1 ? 's' : ''} need${pendingCount !== 1 ? '' : 's'} placement`)
+    if (attentionCount > 0) parts.push(`${attentionCount} player${attentionCount !== 1 ? 's' : ''} need${attentionCount !== 1 ? '' : 's'} attention`)
+    constitutionBrief = parts.join(', ') + '.'
+    if (constitutionTotal > 3) constitutionUrgency = 'urgent'
+    constitutionActionLabel = pendingWrapUpsCount > 0 ? 'Review Queue' : 'Players'
+    constitutionActionHref = pendingWrapUpsCount > 0 ? '/director/review' : '/director/players'
+  }
+
   // Sprint 763: priorityAction banner removed — subsumed by DirectorAttentionQueueHero above.
 
   return (
@@ -465,6 +491,15 @@ export default async function DirectorDashboard() {
           advancementReadyCount={advancementReadyCount}
         />
       </div>
+
+      {/* ── DONNA UI Constitution Brief — one sentence, what matters right now ── */}
+      {/* Constitution: every screen has 1 DONNA brief before data. Sprint 1123.       */}
+      <DonnaScreenBriefStatic
+        brief={constitutionBrief}
+        primaryActionLabel={constitutionActionLabel}
+        primaryActionHref={constitutionActionHref}
+        emphasis={constitutionUrgency}
+      />
 
       {/* ── Sprint 1034: Primary Action Hero — one clear action at the top ── */}
       {/* Replaces DonnaDashboardOpenCard (804) + DirectorTodayCommandCenter (767).    */}
