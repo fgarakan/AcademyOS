@@ -5,6 +5,8 @@ import { Card, CardContent, EmptyState } from '@/components/ui'
 import { formatDate } from '@/lib/utils'
 import { DEMO_PARENT_UPDATES } from '@/lib/demo/demoData'
 import { DonnaOpenChip } from '@/components/assistant/DonnaOpenChip'
+// Sprint 1166-1185: add guardian form
+import { AddGuardianForm } from './_components/AddGuardianForm'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -162,6 +164,20 @@ export default async function ParentCommunicationCenterPage({
     )
   }
 
+  // ── Active players for guardian form ────────────────────────────────────────
+  const { data: activePlayers } = await supabase
+    .from('players')
+    .select('id, full_name, first_name, last_name')
+    .eq('academy_id', academyId)
+    .eq('is_active', true)
+    .order('full_name', { ascending: true })
+    .limit(50)
+
+  const playerOptions = (activePlayers ?? []).map(p => ({
+    id: p.id,
+    fullName: p.full_name ?? (`${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || 'Unknown'),
+  }))
+
   // ── Data source ────────────────────────────────────────────────────────────
   // Demo mode: use local static fixtures. Normal mode: query Supabase.
 
@@ -260,6 +276,9 @@ export default async function ParentCommunicationCenterPage({
           ))}
         </div>
       </div>
+
+      {/* Sprint 1166-1185: Add Guardian form */}
+      <AddGuardianForm players={playerOptions} />
 
       {/* Needs approval */}
       {needsApproval.length > 0 && (

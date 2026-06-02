@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardHeader, CardContent } from '@/components/ui'
 import { Users, ChevronRight } from 'lucide-react'
+// Sprint 1166-1185: invite coach form
+import { InviteCoachForm } from './_components/InviteCoachForm'
 
 export default async function CoachesPage() {
   const supabase = await getSupabaseServer()
@@ -105,14 +107,17 @@ export default async function CoachesPage() {
         <Users className="w-6 h-6 text-text-muted" />
       </div>
 
+      {/* Invite form — Sprint 1166-1185 */}
+      <InviteCoachForm />
+
       {/* Empty state */}
       {coaches.length === 0 && (
         <Card>
           <CardContent>
             <div className="py-12 text-center space-y-2">
               <Users className="w-8 h-8 text-text-muted mx-auto" />
-              <p className="text-text-secondary text-sm">No coaches added to this academy yet.</p>
-              <p className="text-text-muted text-[11px]">Add coaches in Settings to track sessions and observations.</p>
+              <p className="text-text-secondary text-sm">No coaches added yet.</p>
+              <p className="text-text-muted text-[11px]">Use the form above to invite a coach. They must have an AcademyOS account first.</p>
             </div>
           </CardContent>
         </Card>

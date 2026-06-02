@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1166-1185 — Internal Pilot Certification and Workflow Friction Elimination V1
+
+**Phase 9 — Critical Friction Fixes**
+- `src/app/director/coaches/_components/InviteCoachForm.tsx` (new): Client form. Email + role selector → inviteCoachAction. Shows outcome (linked/already_member/role_updated/no_account). Pilot blocker removed.
+- `src/app/director/coaches/page.tsx` (modified): Added InviteCoachForm above coach list. Empty state updated to reference form.
+- `src/app/director/parents/_components/AddGuardianForm.tsx` (new): Client form. First/last name, email, phone, relationship, player selector → addGuardianAction. Shows link status. Pilot blocker removed.
+- `src/app/director/parents/page.tsx` (modified): Added active player fetch + AddGuardianForm before updates list.
+
+**Phase 1+10 — Migration Audit + Certification Docs**
+- `docs/qa/MIGRATION_LIVE_DB_AUDIT.md` (new): Complete audit of migrations 076–080. None are applied to live DB. Apply order, instructions, verification SQL, conflict risks.
+- `docs/qa/INTERNAL_PILOT_CERTIFICATION.md` (new): Full pilot certification. Director 9.5/10, Coach 8.5/10, Parent 9.5/10, Player 8/10, DONNA 8.5/10. Overall: 8.5/10. Go/No-Go checklist.
+- `docs/qa/DONNA_PILOT_QUESTION_CERTIFICATION.md` (new): 30 director questions, 15 coach, 10 parent, 5 player. Pass/partial/fail for each. 18/30 director pass fully, 10/30 partial (need migrations).
+- `docs/qa/WORKFLOW_FRICTION_HEATMAP.md` (new): Friction heatmap by severity. 2 blockers fixed, 5 high friction pending migrations, 8 medium deferred to next sprint.
+
+**TypeScript:** clean.
+**Pilot readiness after this sprint:** 8.5/10. Apply migrations 076–080 and complete setup steps to reach full pilot readiness.
+
 ## 2026-06-02 — Mega Sprint 1156-1165 — DONNA Adoption Layer and Command Bar Wiring V1
 
 - `src/components/donna/DonnaSuggestedQuestions.tsx` (new): Page-specific question chips. 7 routes configured with 3-5 questions each. `getQuestionsForRoute()` resolves by exact/prefix match. Clicking chip calls `onSelect(question)`.
