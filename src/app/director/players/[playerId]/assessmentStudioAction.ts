@@ -6,6 +6,7 @@ import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 import type { AssessmentLabel, AssessmentMode, AssessmentView, ScoresDetail } from '@/lib/assessment/assessmentTemplateTypes'
 import { LABEL_TO_DB_TYPE } from '@/lib/assessment/assessmentTemplateTypes'
 import { deriveDomainScores } from '@/lib/assessment/assessmentComparisonEngine'
+import { writeAssessmentEvidence, writeReassessmentEvidence } from '@/lib/evidence/playerEvidenceWriter'
 
 export interface AssessmentStudioInput {
   playerId:          string
@@ -128,6 +129,35 @@ export async function submitAssessmentStudioAction(
         },
       })
     } catch { /* audit log failure is non-blocking */ }
+
+    // Write to player_evidence_records (non-blocking)
+    try {
+      if (input.isReassessment) {
+        await writeReassessmentEvidence(supabase, {
+          academyId:          profile.academy_id,
+          playerId:           input.playerId,
+          assessmentId:       inserted?.id ?? input.playerId,
+          overallDelta:       null,
+          improvedCount:      0,
+          declinedCount:      0,
+          curriculumLevelId:  null,
+          curriculumLevelName: input.assessmentView.replace(/_/g, ' '),
+          createdBy:          user.id,
+        })
+      } else {
+        await writeAssessmentEvidence(supabase, {
+          academyId:          profile.academy_id,
+          playerId:           input.playerId,
+          assessmentId:       inserted?.id ?? input.playerId,
+          overallScore:       derived.overall_score,
+          assessmentLabel:    input.assessmentLabel,
+          assessmentView:     input.assessmentView,
+          curriculumLevelId:  null,
+          curriculumLevelName: null,
+          createdBy:          user.id,
+        })
+      }
+    } catch { /* evidence write failure is non-blocking */ }
 
     revalidatePath(`/director/players/${input.playerId}`)
     return { ok: true, assessmentId: inserted?.id ?? null, isDraft: false, error: null }
@@ -297,6 +327,36 @@ export async function approveAssessmentDraftAction(
       },
     })
   } catch { /* non-blocking */ }
+
+  // Write to player_evidence_records (non-blocking)
+  try {
+    const isReassessment = (payload.is_reassessment as boolean | undefined) ?? false
+    if (isReassessment) {
+      await writeReassessmentEvidence(supabase, {
+        academyId:          profile.academy_id,
+        playerId:           action.target_object_id as string,
+        assessmentId:       inserted?.id ?? input.proposedActionId,
+        overallDelta:       null,
+        improvedCount:      0,
+        declinedCount:      0,
+        curriculumLevelId:  null,
+        curriculumLevelName: (payload.assessment_view as string | undefined)?.replace(/_/g, ' ') ?? null,
+        createdBy:          user.id,
+      })
+    } else {
+      await writeAssessmentEvidence(supabase, {
+        academyId:          profile.academy_id,
+        playerId:           action.target_object_id as string,
+        assessmentId:       inserted?.id ?? input.proposedActionId,
+        overallScore:       derived.overall_score,
+        assessmentLabel:    (payload.assessment_label as string | undefined) ?? 'coach_requested',
+        assessmentView:     (payload.assessment_view as string | undefined) ?? 'general',
+        curriculumLevelId:  null,
+        curriculumLevelName: null,
+        createdBy:          user.id,
+      })
+    }
+  } catch { /* evidence write failure is non-blocking */ }
 
   revalidatePath(`/director/players/${action.target_object_id}`)
   revalidatePath('/director/review')

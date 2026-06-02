@@ -36,6 +36,16 @@ import {
   type EvidenceSummary,
 } from '@/lib/donna/donnaEvidenceSynthesizer'
 import { generateDonnaPlayerSummary } from '@/lib/donna/donnaPlayerBlueprintContext'
+import { getPlayerEvidenceRecords } from '@/lib/evidence/playerEvidenceAggregator'
+import { computeProgressRollup } from '@/lib/evidence/playerProgressRollup'
+import {
+  buildWhyThisLevelAnswer,
+  buildEvidenceForNextLevelAnswer,
+  buildWhatChangedAnswer,
+  buildStalledCheckAnswer,
+  buildMissionConnectionAnswer,
+  buildCoachWatchNextAnswer,
+} from '@/lib/evidence/donnaEvidenceAnswers'
 import type { Database } from '@/lib/supabase/database.types'
 import type { DonnaIntent } from '@/lib/donna/donnaGlobalIntentRouter'
 import type { ProposedAction } from '@/lib/donna/donnaActionProposalEngine'
@@ -349,6 +359,26 @@ export async function donnaGlobalCommandAction(
       const level = playerData.currentLevelName ?? 'their current level'
       const pct = playerData.gatesTotal ? Math.round(((playerData.gatesMet ?? 0) / playerData.gatesTotal) * 100) : null
 
+      // Augment with evidence engine answer when player is scoped
+      if (input.playerId) {
+        try {
+          const evResult = await getPlayerEvidenceRecords(supabase, input.playerId, academyId, { limit: 30 })
+          if (evResult.records.length > 0) {
+            const rollup = computeProgressRollup(input.playerId, evResult.records, {
+              currentLevelName: playerData.currentLevelName ?? null,
+              nextLevelName: null,
+            })
+            const evAnswer = classification.intent === 'explain_level_blockers'
+              ? buildEvidenceForNextLevelAnswer(name, evResult.records, rollup, null)
+              : buildWhyThisLevelAnswer(name, evResult.records, rollup, playerData.currentLevelName ?? null)
+            if (evAnswer.confidence >= 50) {
+              answer = evAnswer.answer
+              break
+            }
+          }
+        } catch { /* evidence engine is best-effort */ }
+      }
+
       if (evidenceSummary.missing.length > 0 && evidenceSummary.points.length === 0) {
         answer = buildMissingDataAnswer(name, evidenceSummary.missing)
       } else if (pct !== null) {
@@ -422,6 +452,36 @@ export async function donnaGlobalCommandAction(
         answer = `No DONNA placement recommendation found for ${name}. ` +
           `Placement recommendations are generated after a scored assessment.`
       }
+      break
+    }
+
+    case 'stalled_players': {
+      // Use evidence engine for player-scoped stall check when playerId is provided
+      if (input.playerId) {
+        try {
+          const evResult = await getPlayerEvidenceRecords(supabase, input.playerId, academyId, { limit: 30 })
+          const rollup = computeProgressRollup(input.playerId, evResult.records, {
+            currentLevelName: playerData.currentLevelName ?? null,
+          })
+          const evAnswer = buildStalledCheckAnswer(playerFirstName, evResult.records, rollup)
+          answer = evAnswer.answer
+          evidenceSummary = {
+            points: evResult.records.slice(0, 3).map(r => ({
+              source: 'session_data' as const,
+              label: r.source_type.replace(/_/g, ' '),
+              detail: r.evidence_summary.slice(0, 80),
+              strength: r.evidence_strength as 'strong' | 'moderate' | 'weak',
+            })),
+            missing: evAnswer.missingEvidenceNote
+              ? [{ what: evAnswer.missingEvidenceNote, whyItMatters: 'Required for stall assessment', resolveAction: 'start_assessment' }]
+              : [],
+            overallStrength: evResult.records.length > 0 ? 'moderate' : 'weak',
+            evidenceNote: evAnswer.answer.slice(0, 120),
+          }
+          break
+        } catch { /* fall through to default */ }
+      }
+      answer = 'Provide a specific player name to check if they are stalled, or review the Players directory.'
       break
     }
 

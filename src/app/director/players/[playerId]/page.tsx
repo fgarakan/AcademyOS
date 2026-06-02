@@ -80,6 +80,8 @@ import { PriorityMissionEvidenceCard } from './_components/PriorityMissionEviden
 import { CollapsedDetailSection } from '@/components/donna/CollapsedDetailSection'
 // Sprint 1156: DONNA command section on player profile
 import { DonnaCommandSection } from '@/components/donna/DonnaCommandSection'
+// Sprint 1211: Evidence Summary Panel
+import { PlayerEvidenceSummaryPanel } from './_components/PlayerEvidenceSummaryPanel'
 import { GateHistoryTimeline, type GateAuditEntry } from '@/components/player/GateHistoryTimeline'
 import { DraftSummaryUpdateButton } from './DraftSummaryUpdateButton'
 import { PlayerSessionHistoryPanel } from './PlayerSessionHistoryPanel'
@@ -959,6 +961,18 @@ export default async function PlayerProfilePage({ params }: PageProps) {
           advancementEligible={curriculumSummary?.advancement_eligible ?? false}
         />
       )}
+
+      {/* Sprint 1211 — DONNA Evidence Summary (collapsed by default) */}
+      <CollapsedDetailSection label="DONNA Evidence Summary">
+        <PlayerEvidenceSummaryPanel
+          playerId={params.playerId}
+          academyId={academyId}
+          playerFirstName={player.first_name ?? null}
+          currentLevelName={curriculumSummary?.current_level_name ?? null}
+          nextLevelName={nextCurriculumLevel?.display_name ?? null}
+          activePriorityCount={activePriorities.length}
+        />
+      </CollapsedDetailSection>
 
       {/* Sprint 1131 — Development Timeline */}
       <CollapsedDetailSection label="Development Timeline" count={0}>
