@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1141-1155 — DONNA Global Command Layer V1
+
+- `src/lib/donna/donnaGlobalIntentRouter.ts` (new): `classifyDonnaIntent()` — 30+ intents, 8 categories, regex+keyword scoring, player name extraction, page context disambiguation. Pure TS.
+- `src/lib/donna/donnaActionProposalEngine.ts` (new): `getProposedActions()` — 3 risk levels, 30-action library, player-scoped href resolution.
+- `src/lib/donna/donnaEvidenceSynthesizer.ts` (new): Evidence assembly per intent — points, missing evidence, overall strength. Never invents facts.
+- `src/app/director/_actions/donnaGlobalCommandAction.ts` (new): Full pipeline — auth → intent → data → deterministic answer → evidence → actions → logging → DonnaCommandResult. Handles 15+ intents. High-risk audit log. Command logging to donna_events.
+- `src/components/donna/DonnaCommandBar.tsx` (new): Global command bar UI — input, pending state, answer, evidence toggle, action buttons, follow-up chips.
+- `src/components/donna/DonnaResultCards.tsx` (new): 6 result card types: Player, Review, Assessment, Placement, LevelReadiness, ParentUpdate.
+- `docs/architecture/DONNA_GLOBAL_COMMAND_LAYER.md` (new): Architecture reference.
+- `docs/qa/DONNA_GLOBAL_COMMAND_LAYER_QA.md` (new): QA checklist.
+- TypeScript: clean.
+
 ## 2026-06-02 — Mega Sprint 1131-1140 — Player Development Operating System Completion Pass V1
 
 **Phase 1 — Priority → Mission → Evidence Connection**
