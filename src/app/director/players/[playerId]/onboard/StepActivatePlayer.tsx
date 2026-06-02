@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { CheckCircle2, Loader2, ShieldCheck, Zap } from 'lucide-react'
+import { CheckCircle2, Loader2, ShieldCheck, Zap, Sparkles } from 'lucide-react'
 import { activatePlayerAction } from '@/app/director/placement/placementDraftAction'
 
 interface Props {
@@ -29,6 +29,7 @@ export function StepActivatePlayer({
   if (activated) {
     return (
       <div className="space-y-5">
+        {/* Activation success */}
         <div className="flex items-start gap-3 px-4 py-4 rounded-xl bg-lime/10 border border-lime/30">
           <CheckCircle2 className="w-5 h-5 text-lime shrink-0 mt-0.5" />
           <div>
@@ -37,16 +38,37 @@ export function StepActivatePlayer({
             </p>
             <p className="text-xs text-text-muted mt-1 leading-relaxed">
               Assigned to {groupName ?? 'group'}. No portal access or parent notifications have been sent.
-              Set those up from the full player profile.
             </p>
           </div>
         </div>
-        <Link
-          href={`/director/players/${playerId}`}
-          className="inline-flex items-center gap-1.5 text-sm px-5 py-2.5 rounded-xl border border-lime/40 text-lime hover:bg-lime/10 transition-colors"
-        >
-          View full player profile →
-        </Link>
+
+        {/* Blueprint generation notice */}
+        <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-surface-raised border border-border">
+          <Sparkles className="w-3.5 h-3.5 text-lime shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-medium text-text-primary">Development blueprint generating</p>
+            <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
+              DONNA is building the development priorities, 30-day plan, and initial missions based on
+              the assessment. These will appear in the full player profile within a few seconds.
+            </p>
+          </div>
+        </div>
+
+        {/* Next actions */}
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={`/director/players/${playerId}`}
+            className="inline-flex items-center gap-1.5 text-sm px-5 py-2.5 rounded-xl border border-lime/40 text-lime hover:bg-lime/10 transition-colors"
+          >
+            View full player profile →
+          </Link>
+          <Link
+            href={`/director/players/${playerId}?tab=development`}
+            className="inline-flex items-center gap-1.5 text-sm px-5 py-2.5 rounded-xl border border-border text-text-secondary hover:text-text-primary hover:border-lime/30 transition-colors"
+          >
+            View development plan →
+          </Link>
+        </div>
       </div>
     )
   }

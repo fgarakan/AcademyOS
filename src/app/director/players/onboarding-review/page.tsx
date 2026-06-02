@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle2, AlertCircle, Users, Sparkles, Upload, GraduationCap } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, AlertCircle, Users, Sparkles, Upload, GraduationCap, ChevronRight, Clock } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui'
 
@@ -87,6 +87,21 @@ export default async function OnboardingReviewPage() {
       </div>
     )
   }
+
+  // Load pending-placement players (still in the onboarding pipeline)
+  const { data: pendingRows } = await supabase
+    .from('players')
+    .select('id, full_name, first_name, last_name, status, created_at')
+    .eq('academy_id', academyId)
+    .in('status', ['pending_placement', 'placement_in_progress'])
+    .order('created_at', { ascending: false })
+
+  const pendingPlayers = (pendingRows ?? []).map(p => ({
+    playerId: p.id,
+    fullName: p.full_name ?? (`${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || 'Unnamed'),
+    status: p.status as string,
+    createdAt: p.created_at,
+  }))
 
   // Load active players
   const { data: playerRows } = await supabase
@@ -214,7 +229,42 @@ export default async function OnboardingReviewPage() {
         <p className="page-subtitle">Check which players are set up and ready for coach intelligence.</p>
       </div>
 
-      {/* Summary */}
+      {/* Pending Onboarding — players not yet activated */}
+      {pendingPlayers.length > 0 && (
+        <Card>
+          <CardContent className="py-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-status-orange shrink-0" />
+              <p className="label-xs text-status-orange">
+                {pendingPlayers.length} player{pendingPlayers.length !== 1 ? 's' : ''} in onboarding pipeline
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              {pendingPlayers.map(p => (
+                <Link
+                  key={p.playerId}
+                  href={`/director/players/${p.playerId}/onboard`}
+                  className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg bg-surface-raised border border-border hover:border-lime/30 transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-text-primary group-hover:text-lime transition-colors truncate">
+                      {p.fullName}
+                    </p>
+                    <p className="text-[10px] text-text-muted mt-0.5">
+                      {p.status === 'pending_placement' ? 'Pending placement' : 'Placement in progress'}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[10px] text-lime shrink-0">
+                    Resume <ChevronRight className="w-3 h-3" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Summary — active players */}
       <Card>
         <CardContent className="py-5 space-y-4">
           <div className="flex items-center justify-between gap-3">

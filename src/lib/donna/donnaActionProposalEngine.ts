@@ -169,6 +169,15 @@ const ACTIONS: Record<string, ProposedAction> = {
     description: 'Open the Add New Player form',
     requiresApproval: false,
   },
+  go_to_onboarding_review: {
+    id: 'go_to_onboarding_review',
+    label: 'Onboarding Dashboard',
+    type: 'navigate',
+    risk: 'low',
+    href: '/director/players/onboarding-review',
+    description: 'View pending and active player onboarding status',
+    requiresApproval: false,
+  },
 }
 
 // ── Intent → Actions mapping ──────────────────────────────────────────────────
@@ -208,6 +217,7 @@ const INTENT_ACTIONS: Record<string, string[]> = {
   go_to_assessments:             ['go_to_assessments'],
   assign_mission:                ['assign_mission'],
   add_player:                    ['go_to_add_player'],
+  resume_onboarding:             ['go_to_onboarding_review', 'go_to_add_player'],
   freeform_question:             ['go_to_approvals', 'go_to_players'],
 }
 

@@ -69,6 +69,7 @@ export type DonnaIntent =
   | 'go_to_assessments'
   | 'assign_mission'
   | 'add_player'
+  | 'resume_onboarding'
   // Freeform
   | 'freeform_question'
 
@@ -369,6 +370,26 @@ const INTENT_PATTERNS: IntentPattern[] = [
     keywords: ['draft parent', 'parent update for'],
     requiredData: ['player_profile', 'parent_summary'],
     requiresGlobalData: false,
+  },
+  // ── Resume onboarding ───────────────────────────────────────────────────────
+  {
+    intent: 'resume_onboarding',
+    category: 'navigation_action',
+    patterns: [
+      /resume\s+onboarding/i,
+      /who.+(still|hasn.t|needs to).+(onboard|be placed|be activated)/i,
+      /pending\s+(player|onboard|placement)/i,
+      /players?\s+(waiting|not\s+yet|still\s+pending)/i,
+      /finish\s+(onboarding|placing)\s+(\w+)/i,
+      /continue\s+onboarding/i,
+    ],
+    keywords: [
+      'resume onboarding', 'continue onboarding', 'pending players',
+      'pending placement', 'who needs to be placed', 'still onboarding',
+      'not yet activated', 'waiting for placement',
+    ],
+    requiredData: ['player_list'],
+    requiresGlobalData: true,
   },
   // ── Add player ──────────────────────────────────────────────────────────────
   {

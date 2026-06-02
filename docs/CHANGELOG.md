@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1301–1325 — Player Onboarding Experience 10/10
+
+**Created:**
+- `src/app/director/players/[playerId]/onboard/addGuardianAction.ts` — Server action: inserts guardian into `guardians` + `player_guardians`, academy scoped, audit logged
+- `src/app/director/players/[playerId]/onboard/StepParentCapture.tsx` — Inline guardian form for Step 2: first/last name, email, phone, relationship selector; replaces dead-link pattern
+- `src/app/director/players/[playerId]/onboard/createGroupFromOnboardingAction.ts` — Server action: creates a group in the `groups` table during placement step when none exist
+
+**Modified:**
+- `src/app/director/players/[playerId]/onboard/OnboardingStepperClient.tsx` — Added `localGuardianCount` state; wired Step 2 to `StepParentCapture`; `isComplete(2)` uses local count
+- `src/app/director/players/[playerId]/onboard/StepDirectorReview.tsx` — Added `localGroups` state, inline group creation form (empty-group recovery), "Create a new group" toggle when groups exist
+- `src/app/director/players/[playerId]/onboard/StepActivatePlayer.tsx` — Added blueprint generation status panel after activation; added "View development plan" link
+- `src/app/director/players/onboarding-review/page.tsx` — Added "Pending Onboarding" section: lists pending-placement players with Resume links; uses `Clock` icon + `ChevronRight`
+- `src/app/director/players/page.tsx` — Added Onboarding Review quick-link button alongside Import/Add Player
+- `src/lib/donna/donnaGlobalIntentRouter.ts` — Added `resume_onboarding` to `DonnaIntent` union + 6 patterns
+- `src/lib/donna/donnaActionProposalEngine.ts` — Added `go_to_onboarding_review` action; wired `resume_onboarding` intent to it
+- `src/app/director/_actions/donnaGlobalCommandAction.ts` — Added `resume_onboarding` answer case (live pending player query + names); added to exhaustive `Record<DonnaIntent, string[]>`
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-02 — Player Onboarding Workflow Certification V1
 
 **Created:**

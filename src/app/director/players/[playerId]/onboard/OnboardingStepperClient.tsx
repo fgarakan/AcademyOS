@@ -12,13 +12,13 @@ import {
   Sparkles,
   ClipboardCheck,
   Zap,
-  UserPlus,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui'
 import { StepAssessment, type AssessmentData } from './StepAssessment'
 import { StepDonnaRecommendation } from './StepDonnaRecommendation'
 import { StepDirectorReview } from './StepDirectorReview'
 import { StepActivatePlayer } from './StepActivatePlayer'
+import { StepParentCapture } from './StepParentCapture'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,6 +100,9 @@ export function OnboardingStepperClient({ data }: { data: OnboardingData }) {
 
   const [activeStep, setActiveStep] = useState(data.initialStep)
 
+  // Guardian count — updated when a guardian is added inline in Step 2
+  const [localGuardianCount, setLocalGuardianCount] = useState(data.guardianCount)
+
   // Assessment state (may be updated after Step 3 saves)
   const [localAssessment, setLocalAssessment] = useState<AssessmentData | null>(
     data.latestAssessment,
@@ -128,7 +131,7 @@ export function OnboardingStepperClient({ data }: { data: OnboardingData }) {
   function isComplete(step: number): boolean {
     switch (step) {
       case 1: return true
-      case 2: return data.guardianCount > 0
+      case 2: return localGuardianCount > 0
       case 3: return hasAssessment
       case 4: return hasAssessment
       case 5: return localApprovedRecId !== null
@@ -223,30 +226,11 @@ export function OnboardingStepperClient({ data }: { data: OnboardingData }) {
 
       case 2:
         return (
-          <div className="space-y-4">
-            {data.guardianCount > 0 ? (
-              <div className="flex items-center gap-2 py-1">
-                <Check className="w-4 h-4 text-status-green shrink-0" />
-                <p className="text-sm text-text-primary">
-                  {data.guardianCount} guardian{data.guardianCount !== 1 ? 's' : ''} linked
-                </p>
-              </div>
-            ) : (
-              <div className="px-4 py-3 rounded-xl bg-surface-raised border border-border">
-                <p className="text-sm text-text-secondary">No guardians linked yet.</p>
-                <p className="text-xs text-text-muted mt-1">
-                  Add parent or guardian contacts from the full player profile.
-                </p>
-              </div>
-            )}
-            <Link
-              href={`/director/players/${playerId}`}
-              className="inline-flex items-center gap-1.5 text-xs px-4 py-2 rounded-xl border border-border text-text-secondary hover:text-text-primary hover:border-lime/40 transition-colors"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              Link Guardian from Profile
-            </Link>
-          </div>
+          <StepParentCapture
+            playerId={playerId}
+            initialCount={localGuardianCount}
+            onGuardianAdded={() => setLocalGuardianCount(c => c + 1)}
+          />
         )
 
       case 3:

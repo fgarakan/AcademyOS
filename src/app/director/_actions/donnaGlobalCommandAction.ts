@@ -136,6 +136,7 @@ function buildFollowUpQuestions(
     go_to_assessments:             [],
     assign_mission:                [`What priority should this mission address?`],
     add_player:                    [`What happens after I create the player?`, `How does the placement work?`],
+    resume_onboarding:             [`Who needs to be placed?`, `Add a new player`, `Open Onboarding Dashboard`],
     freeform_question:             [`Ask DONNA anything else`, `Show academy health`, `Open Approvals`],
   }
 
@@ -581,6 +582,29 @@ export async function donnaGlobalCommandAction(
     case 'add_player':
       answer = "Let's add the player's basic information first. After that, I'll guide you through parent contact, assessment, placement, and activation."
       break
+
+    case 'resume_onboarding': {
+      const { data: pendingRows } = await supabase
+        .from('players')
+        .select('first_name, full_name')
+        .eq('academy_id', academyId)
+        .in('status', ['pending_placement', 'placement_in_progress'])
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      const pending = pendingRows ?? []
+      const count = pending.length
+
+      if (count === 0) {
+        answer = 'No players are currently in the onboarding pipeline. All players are placed or you have not added any yet. Use "Add a new player" to start.'
+      } else {
+        const names = pending
+          .map(p => p.first_name ?? p.full_name ?? 'Unnamed')
+          .join(', ')
+        answer = `${count} player${count !== 1 ? 's' : ''} still in the onboarding pipeline: ${names}. Open the Onboarding Dashboard to resume any of them.`
+      }
+      break
+    }
 
     default:
       // All other intents: use DONNA role-aware summary if player context exists

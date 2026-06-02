@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Upload, Users, UserPlus, Zap, ChevronRight } from 'lucide-react'
+import { Upload, Users, UserPlus, Zap, ChevronRight, ClipboardList } from 'lucide-react'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { getPlayerSummaries } from '@/lib/backend/players'
 import { PlayersDirectoryClient } from './_components/PlayersDirectoryClient'
@@ -171,6 +171,13 @@ export default async function PlayersPage() {
           >
             <Upload className="w-4 h-4" />
             Import
+          </Link>
+          <Link
+            href="/director/players/onboarding-review"
+            className="btn-ghost flex items-center gap-2 text-sm"
+          >
+            <ClipboardList className="w-4 h-4" />
+            Onboarding
           </Link>
         </div>
       </div>
