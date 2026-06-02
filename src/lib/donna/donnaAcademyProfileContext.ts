@@ -24,6 +24,26 @@ import {
 } from '@/lib/donna/preferences/academyPreferences'
 import type { AcademyDonnaPreferences } from '@/lib/donna/preferences/academyPreferences'
 
+// ── Operating lens types ──────────────────────────────────────────────────────
+
+/**
+ * The academy's operational identity as captured by the DNA Shell onboarding.
+ * Sourced from `academies.settings.academyOperatingLens`.
+ * Null when the director has not completed the DNA Shell or the data has not been persisted.
+ */
+export interface AcademyOperatingLens {
+  mission: string[]
+  playerDevelopmentPhilosophy: string
+  coachingStyle: string[]
+  developmentPriorities: string[]
+  curriculumPreference: string
+  parentCommunicationStyle: string[]
+  coachRecapExpectations: string
+  donnaCommunicationStyle: string
+  playerMissionStyle: string
+  setupMode: string
+}
+
 // ── Setup gap types ───────────────────────────────────────────────────────────
 
 /**
@@ -101,6 +121,14 @@ export interface AcademyProfileContext {
   /** True when all 7 setup steps are complete. False when any is incomplete. */
   onboardingComplete: boolean
 
+  // ── Operating lens ───────────────────────────────────────────────────────
+  /**
+   * Academy operating lens from the DNA Shell onboarding.
+   * Present when the director completed the DNA Shell and persisted it to the DB.
+   * Null when not yet persisted — DONNA must not claim to know any lens fields.
+   */
+  operatingLens: AcademyOperatingLens | null
+
   // ── Data quality ─────────────────────────────────────────────────────────
   /**
    * Fields that could not be resolved. DONNA must not claim to know these.
@@ -163,6 +191,43 @@ const SETUP_GAP_DEFINITIONS: Record<AcademySetupGapField, SetupGapDefinition> = 
     settingsKey: 'players_placement_completed',
     actionHref: '/director/placement',
   },
+}
+
+/**
+ * Extract the AcademyOperatingLens from the raw `academies.settings` JSON.
+ * Returns null if the key is absent or the lens has no meaningful data.
+ * Never throws — lens extraction is best-effort.
+ */
+function extractOperatingLens(
+  settings: Record<string, unknown> | null | undefined,
+): AcademyOperatingLens | null {
+  if (!settings) return null
+  const raw = settings['academyOperatingLens']
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const lens = raw as Record<string, unknown>
+
+  const arr = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+  const str = (v: unknown): string =>
+    typeof v === 'string' ? v : ''
+
+  // Only surface the lens if it has at least one meaningful field
+  const coachingStyle = arr(lens['coachingStyle'])
+  const developmentPriorities = arr(lens['developmentPriorities'])
+  if (coachingStyle.length === 0 && developmentPriorities.length === 0) return null
+
+  return {
+    mission: arr(lens['mission']),
+    playerDevelopmentPhilosophy: str(lens['playerDevelopmentPhilosophy']),
+    coachingStyle,
+    developmentPriorities,
+    curriculumPreference: str(lens['curriculumPreference']),
+    parentCommunicationStyle: arr(lens['parentCommunicationStyle']),
+    coachRecapExpectations: str(lens['coachRecapExpectations']),
+    donnaCommunicationStyle: str(lens['donnaCommunicationStyle']),
+    playerMissionStyle: str(lens['playerMissionStyle']),
+    setupMode: str(lens['setupMode']),
+  }
 }
 
 // ── Builder input ─────────────────────────────────────────────────────────────
@@ -318,6 +383,9 @@ export function buildAcademyProfileFromLiveData(
   const setupGaps = deriveSetupGaps(rawAcademySettings as Record<string, unknown> | null)
   const onboardingComplete = setupGaps.every(g => g.isComplete)
 
+  // Extract operating lens from raw settings
+  const operatingLens = extractOperatingLens(rawAcademySettings as Record<string, unknown> | null)
+
   // Track missing fields — never fake them
   const missingFields: string[] = []
   if (!academyName) missingFields.push('academyName')
@@ -331,6 +399,7 @@ export function buildAcademyProfileFromLiveData(
   if (!activeCurriculumVersionStatus) missingFields.push('activeCurriculumVersionStatus')
   if (ballLevelsUsed.length === 0) missingFields.push('ballLevelsUsed')
   if (!resolvedPreferences) missingFields.push('preferences')
+  if (!operatingLens) missingFields.push('operatingLens')
 
   const dataSource = deriveDataSource(academyName, academySlug, timezone)
 
@@ -357,6 +426,7 @@ export function buildAcademyProfileFromLiveData(
     parentCommunicationTone,
     setupGaps,
     onboardingComplete,
+    operatingLens,
     missingFields,
     dataSource,
     missingDataFallback,
@@ -390,6 +460,7 @@ export function buildEmptyAcademyProfile(academyId: string): AcademyProfileConte
     parentCommunicationTone: 'balanced',
     setupGaps,
     onboardingComplete: false,
+    operatingLens: null,
     missingFields: [
       'academyName',
       'academySlug',
@@ -402,6 +473,7 @@ export function buildEmptyAcademyProfile(academyId: string): AcademyProfileConte
       'activeCurriculumVersionStatus',
       'ballLevelsUsed',
       'preferences',
+      'operatingLens',
     ],
     dataSource: 'fallback',
     missingDataFallback:
@@ -475,6 +547,33 @@ export function getAcademyProfileSummaryText(profile: AcademyProfileContext): st
         .map(([k, v]) => `"${k}" → "${v}"`)
         .join(', ')
       parts.push(`Custom terminology: ${terms}.`)
+    }
+  }
+
+  // Operating lens — compact token-efficient summary of the academy's identity
+  if (profile.operatingLens) {
+    const lens = profile.operatingLens
+    const lensParts: string[] = []
+    if (lens.coachingStyle.length > 0) {
+      lensParts.push(`coaching: ${lens.coachingStyle.slice(0, 2).join(', ')}`)
+    }
+    if (lens.developmentPriorities.length > 0) {
+      lensParts.push(`priorities: ${lens.developmentPriorities.slice(0, 3).join(', ')}`)
+    }
+    if (lens.parentCommunicationStyle.length > 0) {
+      lensParts.push(`parent style: ${lens.parentCommunicationStyle.slice(0, 2).join(', ')}`)
+    }
+    if (lens.curriculumPreference) {
+      lensParts.push(`curriculum preference: ${lens.curriculumPreference}`)
+    }
+    if (lens.mission.length > 0) {
+      lensParts.push(`mission: ${lens.mission.slice(0, 2).join(', ')}`)
+    }
+    if (lens.playerMissionStyle) {
+      lensParts.push(`player mission style: ${lens.playerMissionStyle}`)
+    }
+    if (lensParts.length > 0) {
+      parts.push(`Operating lens: ${lensParts.join('; ')}.`)
     }
   }
 

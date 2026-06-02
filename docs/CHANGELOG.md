@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-02 — Sprint 1095E — Academy DNA Persistence Bridge V1
+
+- `src/lib/actions/saveAcademyOperatingLensAction.ts` (new): `'use server'` action. Auth → director role check → reads existing `academies.settings` → non-destructive merge → writes `academyOperatingLens` key. Fields: `mission` (from `primaryGoals`), `playerDevelopmentPhilosophy` (from `programType`), `coachingStyle`, `developmentPriorities`, `curriculumPreference` (from `curriculumStartingPoint`), `parentCommunicationStyle` (from `parentStyles`), `coachRecapExpectations`, `donnaCommunicationStyle`, `playerMissionStyle`, `setupMode`, `savedAt`, `source`, `version`. All inputs sanitized. Returns `{ ok, error }`.
+- `src/components/onboarding/OnboardingShell.tsx` (modified): Added `useEffect` (ref-guarded by `hasPersistedLens`) that fires once when the director reaches the activation step (`currentStep === TOTAL_STEPS - 1`). Calls `saveAcademyOperatingLensAction` fire-and-forget with the current draft. localStorage behavior unchanged.
+- `src/lib/donna/donnaAcademyProfileContext.ts` (modified): Added `AcademyOperatingLens` interface (exported). Added `operatingLens: AcademyOperatingLens | null` to `AcademyProfileContext`. Added `extractOperatingLens()` helper that reads `settings.academyOperatingLens` (null-safe, returns null when absent or empty). `buildAcademyProfileFromLiveData()` now populates `operatingLens` and tracks it in `missingFields`. `buildEmptyAcademyProfile()` sets `operatingLens: null`. `getAcademyProfileSummaryText()` emits compact "Operating lens: coaching: ...; priorities: ...; parent style: ...; curriculum preference: ...; mission: ...; player mission style: ..." when lens is present.
+- `docs/architecture/ACADEMY_DNA_PERSISTENCE_BRIDGE_1095E.md` (new): Architecture doc — problem, data flow, storage shape, storage key contract, DONNA TTL limitation, what is intentionally not changed, future schema work.
+- `docs/QA_ACADEMY_DNA_PERSISTENCE_BRIDGE_1095E.md` (new): QA checklist — file existence, server action safety (15 checks), OnboardingShell wiring (10 checks), DONNA context (15 checks), safety checks (9 checks), regression checks.
+- TypeScript: clean.
+
 
 ## 2026-06-01 — Sprint 1095D — Academy Onboarding Operating Lens Audit V1
 

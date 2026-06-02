@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { ArrowRight, Sparkles, Zap } from 'lucide-react'
+import { saveAcademyOperatingLensAction } from '@/lib/actions/saveAcademyOperatingLensAction'
 import { OnboardingProgressRail } from './OnboardingProgressRail'
 import { OnboardingDonnaPanel } from './OnboardingDonnaPanel'
 import { AcademyBasicsStep } from './steps/AcademyBasicsStep'
@@ -159,6 +160,27 @@ export function OnboardingShell({ initialStep = 0, initialSetupMode = '' }: Onbo
   }, [])
 
   const { lastSaved, restoreDraft, clearDraft, hasSavedDraft } = useOnboardingDraftPersistence(draft, setDraft)
+
+  // Persist DNA to DB once when the director reaches the activation step.
+  // Fire-and-forget — localStorage remains the source of truth if this fails.
+  // The ref guard ensures at most one DB write per shell mount.
+  const hasPersistedLens = useRef(false)
+  useEffect(() => {
+    if (currentStep !== TOTAL_STEPS - 1 || hasPersistedLens.current) return
+    hasPersistedLens.current = true
+    void saveAcademyOperatingLensAction({
+      mission: draft.primaryGoals,
+      playerDevelopmentPhilosophy: draft.programType,
+      coachingStyle: draft.coachingStyles,
+      developmentPriorities: draft.developmentPriorities,
+      curriculumPreference: draft.curriculumStartingPoint,
+      parentCommunicationStyle: draft.parentStyles,
+      coachRecapExpectations: '',
+      donnaCommunicationStyle: '',
+      playerMissionStyle: draft.playerMissionStyle,
+      setupMode: draft.setupMode,
+    })
+  }, [currentStep, draft])
 
   const goNext = useCallback(() => {
     setCurrentStep(s => Math.min(s + 1, TOTAL_STEPS - 1))
