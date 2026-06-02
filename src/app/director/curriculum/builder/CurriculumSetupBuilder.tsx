@@ -259,12 +259,14 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
           </div>
         </div>
 
-        {/* ── How It Works ──────────────────────────────── */}
-        <div className="mb-8">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-text-muted mb-4">
-            How It Works
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* ── How It Works — collapsed by default (tutorial content, not operational) */}
+        <details className="group mb-6">
+          <summary className="flex items-center gap-2 cursor-pointer list-none select-none px-4 py-2.5 rounded-xl border border-white/[0.07] hover:border-white/[0.12] transition-colors" style={{ background: 'rgba(0,0,0,0.20)' }}>
+            <ChevronRight className="w-3.5 h-3.5 text-text-muted transition-transform group-open:rotate-90" />
+            <span className="text-[11px] font-semibold text-text-muted">How it works</span>
+            <span className="text-[10px] text-text-muted/60 ml-1">— first-time guide</span>
+          </summary>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
             {HOW_IT_WORKS.map((item) => {
               const Icon = item.icon
               return (
@@ -296,28 +298,23 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
               )
             })}
           </div>
-        </div>
+        </details>
 
-        {/* ── Master Curriculum Overview ─────────────────── */}
-        <div
-          className="rounded-2xl p-6 mb-10"
-          style={{
-            background: '#060f0d',
-            border: '1px solid rgba(200,255,0,0.09)',
-          }}
-        >
-          <div className="flex items-center justify-between mb-5">
-            <p className="text-sm font-semibold text-text-primary">Master Curriculum Overview</p>
+        {/* ── Curriculum Map — collapsed by default (pathway overview, not operational) */}
+        <details className="group mb-8">
+          <summary className="flex items-center gap-2 cursor-pointer list-none select-none px-4 py-2.5 rounded-xl border border-white/[0.07] hover:border-white/[0.12] transition-colors" style={{ background: 'rgba(0,0,0,0.20)' }}>
+            <ChevronRight className="w-3.5 h-3.5 text-text-muted transition-transform group-open:rotate-90" />
+            <span className="text-[11px] font-semibold text-text-muted">Curriculum map</span>
+            <span className="text-[10px] text-text-muted/60 ml-1">— 5 pathways, 15 levels</span>
             <button
               type="button"
-              onClick={() => router.push('/director/curriculum/map')}
-              className="flex items-center gap-1 text-xs text-lime hover:opacity-75 transition-opacity"
+              onClick={e => { e.preventDefault(); router.push('/director/curriculum/map') }}
+              className="ml-auto text-[10px] text-lime hover:opacity-75 transition-opacity flex items-center gap-0.5"
             >
-              View full map
-              <ChevronRight className="w-3.5 h-3.5" />
+              Full map <ChevronRight className="w-3 h-3" />
             </button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          </summary>
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-3">
             {PATHWAYS.map((p) => (
               <div
                 key={p.name}
@@ -327,23 +324,13 @@ export function CurriculumSetupBuilder({ levels = [] }: Props) {
                   border: `1px solid ${p.border}`,
                 }}
               >
-                <div
-                  className="w-2.5 h-2.5 rounded-full mb-3"
-                  style={{ background: p.dot }}
-                />
-                <p className="text-xs font-semibold text-text-primary leading-tight mb-1">
-                  {p.name}
-                </p>
+                <div className="w-2.5 h-2.5 rounded-full mb-3" style={{ background: p.dot }} />
+                <p className="text-xs font-semibold text-text-primary leading-tight mb-1">{p.name}</p>
                 <p className="text-[11px] text-text-muted">{p.levels} levels</p>
               </div>
             ))}
           </div>
-        </div>
-
-        {/* ── Keyboard shortcuts (desktop only) ─────────── */}
-        <div className="mb-6">
-          <CurriculumKeyboardHintBar onJumpToLevel={() => setJumpOpen(true)} />
-        </div>
+        </details>
 
         {/* ── Safety Footer ─────────────────────────────── */}
         <div className="flex items-center justify-center gap-2">

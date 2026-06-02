@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Target, Trophy, Dumbbell, Shield, Sparkles, Plus } from 'lucide-react'
+import { Target, Trophy, Dumbbell, Shield, Sparkles } from 'lucide-react'
 import type {
   CurriculumLevel,
   CurriculumGate,
@@ -76,7 +76,6 @@ interface CardProps {
   isActive: boolean
   preview: React.ReactNode
   onDonna: () => void
-  onAdd: () => void
 }
 
 function SectionCard({
@@ -88,7 +87,6 @@ function SectionCard({
   isActive,
   preview,
   onDonna,
-  onAdd,
 }: CardProps) {
   return (
     <div
@@ -126,32 +124,20 @@ function SectionCard({
           {preview}
         </div>
 
-        {/* Footer: action buttons + safety note */}
-        <div className="pt-2 border-t border-white/[0.05] space-y-1.5">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onDonna}
-              className="flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded-lg transition-colors"
-              style={{
-                border: '1px solid rgba(200,255,0,0.22)',
-                color: '#C8FF00',
-                background: isActive ? 'rgba(200,255,0,0.10)' : 'rgba(200,255,0,0.05)',
-              }}
-            >
-              <Sparkles className="w-2.5 h-2.5" />
-              Ask DONNA
-            </button>
-            <button
-              onClick={onAdd}
-              className="flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded-lg border border-white/[0.10] text-text-muted hover:text-text-secondary hover:border-white/20 transition-colors"
-            >
-              <Plus className="w-2.5 h-2.5" />
-              Add
-            </button>
-          </div>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.18)' }}>
-            Draft only &middot; director approval required
-          </p>
+        {/* Footer: single action — reduces button clutter from 2 per card to 1 */}
+        <div className="pt-2 border-t border-white/[0.05]">
+          <button
+            onClick={onDonna}
+            className="flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg transition-colors w-full justify-center"
+            style={{
+              border: '1px solid rgba(200,255,0,0.16)',
+              color: isActive ? '#C8FF00' : '#7a8fa0',
+              background: isActive ? 'rgba(200,255,0,0.08)' : 'transparent',
+            }}
+          >
+            <Sparkles className="w-2.5 h-2.5 shrink-0" />
+            Ask DONNA to improve
+          </button>
         </div>
       </div>
     </div>
@@ -223,7 +209,6 @@ export function CurriculumLevelBuilderGrid({
             )
           }
           onDonna={() => open('skillDrill')}
-          onAdd={() => open('skillDrill')}
         />
 
         {/* ── Competition Path ────────────────────────────────────────────── */}
@@ -257,7 +242,6 @@ export function CurriculumLevelBuilderGrid({
             )
           }
           onDonna={() => open('competition')}
-          onAdd={() => open('competition')}
         />
 
         {/* ── Fitness Support ─────────────────────────────────────────────── */}
@@ -289,7 +273,6 @@ export function CurriculumLevelBuilderGrid({
             )
           }
           onDonna={() => open('fitness')}
-          onAdd={() => open('fitness')}
         />
 
         {/* ── Assessment Gates ────────────────────────────────────────────── */}
@@ -320,7 +303,6 @@ export function CurriculumLevelBuilderGrid({
             )
           }
           onDonna={() => open('gate')}
-          onAdd={() => open('gate')}
         />
 
         {/* ── Player Missions ─────────────────────────────────────────────── */}
@@ -334,7 +316,6 @@ export function CurriculumLevelBuilderGrid({
             <EmptyBlock copy="No missions connected yet." onDonna={() => open('missions')} />
           }
           onDonna={() => open('missions')}
-          onAdd={() => open('missions')}
         />
       </div>
 

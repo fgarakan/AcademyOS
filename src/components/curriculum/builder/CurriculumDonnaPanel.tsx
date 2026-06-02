@@ -143,7 +143,10 @@ export function CurriculumDonnaPanel({
   )
   const resolvedBody        = promptBody        ?? defaults.promptBody
   const resolvedActions     = actions           ?? defaults.actions
-  const resolvedPlaceholder = inputPlaceholder  ?? 'Ask DONNA anything…'
+  const defaultPlaceholder = mode === 'level' || mode === 'guided_review'
+    ? 'What would you like to improve in this level?'
+    : 'Ask DONNA anything…'
+  const resolvedPlaceholder = inputPlaceholder ?? defaultPlaceholder
 
   function handleActionClick(action: CurriculumDonnaPanelAction) {
     onAction?.(action.label)
@@ -219,8 +222,45 @@ export function CurriculumDonnaPanel({
         </div>
       </div>
 
+      {/* Input — moved to top so it's immediately reachable, before action chips */}
+      <div
+        className="px-4 py-3 border-b"
+        style={{ borderColor: 'rgba(200,255,0,0.10)' }}
+      >
+        <div
+          className="flex items-center gap-2 rounded-xl px-3 py-2"
+          style={{
+            background: 'rgba(200,255,0,0.06)',
+            border: '1px solid rgba(200,255,0,0.18)',
+          }}
+        >
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
+            placeholder={resolvedPlaceholder}
+            className="flex-1 bg-transparent text-[11px] text-text-primary placeholder:text-text-muted outline-none min-w-0"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!inputValue.trim()}
+            className="shrink-0 transition-opacity disabled:opacity-30 hover:opacity-70"
+            aria-label="Send"
+          >
+            <Send className="w-3.5 h-3.5" style={{ color: '#C8FF00' }} />
+          </button>
+        </div>
+        <p
+          className="text-[10px] mt-1.5"
+          style={{ color: 'rgba(200,255,0,0.30)' }}
+        >
+          Drafts only · nothing applies without your approval
+        </p>
+      </div>
+
       {/* Action chips */}
-      <div className="px-4 pb-3 space-y-1.5">
+      <div className="px-4 py-3 space-y-1.5">
         {resolvedActions.map((action) => {
           const isActive = activeAction === action.label
           const chipStyle: React.CSSProperties = {
@@ -307,42 +347,8 @@ export function CurriculumDonnaPanel({
         </div>
       )}
 
-      {/* Bottom input */}
-      <div
-        className="px-4 py-3 mt-auto border-t"
-        style={{ borderColor: 'rgba(200,255,0,0.10)' }}
-      >
-        <div
-          className="flex items-center gap-2 rounded-xl px-3 py-2"
-          style={{
-            background: 'rgba(200,255,0,0.04)',
-            border: '1px solid rgba(200,255,0,0.12)',
-          }}
-        >
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
-            placeholder={resolvedPlaceholder}
-            className="flex-1 bg-transparent text-[11px] text-text-primary placeholder:text-text-muted outline-none min-w-0"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim()}
-            className="shrink-0 transition-opacity disabled:opacity-30 hover:opacity-70"
-            aria-label="Send"
-          >
-            <Send className="w-3.5 h-3.5" style={{ color: '#C8FF00' }} />
-          </button>
-        </div>
-        <p
-          className="text-[10px] text-center mt-1.5"
-          style={{ color: 'rgba(200,255,0,0.30)' }}
-        >
-          Drafts only · nothing applies without your approval
-        </p>
-      </div>
+      {/* Spacer so panel has consistent bottom padding */}
+      <div className="pb-2" />
     </div>
   )
 }

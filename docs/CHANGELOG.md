@@ -2,6 +2,65 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1231-1245 — Curriculum Builder Cognitive Load Reduction V1
+
+**Audit findings:** 6 issues (builder landing), 7 issues (level builder), 2 issues (DONNA panel). Full report in `docs/qa/CURRICULUM_BUILDER_COGNITIVE_LOAD_AUDIT.md`.
+
+**Modified:**
+- `src/app/director/curriculum/builder/CurriculumSetupBuilder.tsx` (modified): Collapsed "How it works" tutorial behind `<details>` (collapsed by default). Collapsed "Curriculum map / pathway overview" behind `<details>` (collapsed by default). Removed keyboard shortcuts section. Result: builder landing shows DONNA hero → pending modifications → 4 action buttons above fold.
+- `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx` (modified): Moved "Propose a Change" panel ABOVE the 5-section grid (was buried 3–4 screens below fold). Collapsed 3 info cards (Level Goal, Development Intent, Evidence for Level-Up) behind `<details>`. Added health snapshot bar (N of 4 sections have content, color-coded). Added inline mobile DONNA chip strip (3 quick actions visible without sidebar). Removed verbose mobile DONNA context card. Renamed "Detailed Content View" subtitle to plain language. Replaced "Review Queue" references with "Pending Modifications".
+- `src/components/curriculum/builder/CurriculumDonnaPanel.tsx` (modified): Moved text input to TOP of panel (was at bottom, below all chips). Updated default placeholder for level/guided modes: "What would you like to improve in this level?". Removed duplicate input from bottom.
+- `src/components/curriculum/builder/CurriculumLevelBuilderGrid.tsx` (modified): Reduced per-section-card buttons from 2 (Ask DONNA + Add) to 1 (Ask DONNA to improve). Removed `Plus` import. Removed `onAdd` prop. Result: 5 cards × 1 button = 5 buttons instead of 10 before the primary action.
+
+**New docs:**
+- `docs/qa/CURRICULUM_BUILDER_COGNITIVE_LOAD_AUDIT.md` — full audit, per-screen findings, label map, 5-second test
+- `docs/architecture/CURRICULUM_BUILDER_SIMPLE_SCREEN_STANDARD.md` — screen structure rules, max visible elements, progressive disclosure pattern, button count targets, mobile rules
+
+**TypeScript:** clean.
+**No curriculum logic changed.** No approval rules changed. No advanced functionality removed — all collapsed behind `<details>`, not deleted.
+
+## 2026-06-02 — Curriculum Builder UI Containment Audit and Modification Visibility Fix
+
+- `src/components/curriculum/builder/CurriculumLevelBuilderExperience.tsx` (modified): Added mobile pending modifications section (`block lg:hidden`) rendering `changeQueue` RSC slot after "Propose a Change" panel — fixes complete invisibility of pending drafts on mobile. Added `max-h-[calc(100vh-280px)] overflow-y-auto` to desktop sidebar queue — prevents unbounded height. Added `id="curriculum-change-queue"` scroll anchor shared by both desktop and mobile. Changed aside to `lg:flex lg:flex-col gap-4`.
+- `src/components/curriculum/builder/CurriculumChangeDraftPanel.tsx` (modified): Success state now shows "View Pending Modifications" button that smooth-scrolls to `#curriculum-change-queue`. Added "Open Review Queue" secondary link. Both work from mobile and desktop.
+- `src/app/director/curriculum/builder/page.tsx` (modified): Added `CurriculumBuilderChangeQueue` (wrapped in `Suspense`) above the setup builder — pending modifications now visible on the builder landing page, not just on level pages.
+- `src/app/director/curriculum/builder/CurriculumBuilderChangeQueue.tsx` (modified): Returns `null` when both pending and recovery queues are empty (no unnecessary empty-state UI on landing page). Added count badge ("N to review") when items exist.
+- `docs/qa/CURRICULUM_BUILDER_UI_CONTAINMENT_AUDIT.md` (new): Full audit report — 6 findings, fixes applied, verification checklist.
+- TypeScript: clean.
+
+## 2026-06-02 — Mega Sprint 1211-1230 — Player Evidence Engine and Progress Intelligence V1
+
+**Migration (new — apply after 082):**
+- `supabase/migrations/083_player_evidence_records.sql` (new): Unified evidence table. 14 source types. `owner_scope` (player_owned/academy_owned/shared), `portability_status` (portable/internal_only/anonymized_on_exit), `consent_status`. Deduplication unique index on (player_id, source_type, source_id). 4 visibility booleans (director/coach/parent/player). Full RLS. Idempotent trigger + policies. Foundation for player passport / data portability.
+
+**Evidence library (new — `src/lib/evidence/`):**
+- `playerEvidenceTypes.ts` (new): All types — `EvidenceRecord`, `EvidenceSourceType` (14), `OwnerScope`, `PortabilityStatus`, `ConsentStatus`, `EVIDENCE_OWNERSHIP` defaults table per source type, `ProgressRollup`, `ProgressStatus`, `PathwaySignal`, `ReadinessBlocker`, `EvidenceAnswer`, `ParentSafeSummary`, `PlayerSafeSummary`.
+- `playerEvidenceWriter.ts` (new): `writeEvidenceRecord()` with deduplication handling. Convenience wrappers: `writeAssessmentEvidence`, `writeReassessmentEvidence`, `writeMissionAssignedEvidence`, `writeMissionCompletedEvidence`, `writePlacementDecisionEvidence`. Sets correct owner_scope and portability_status per source type automatically.
+- `playerEvidenceAggregator.ts` (new): `getPlayerEvidenceRecords()` — reads from `player_evidence_records`; falls back to assessments + missions tables when table is empty. `getPortablePlayerEvidence()` — portable records only for player passport export.
+- `playerProgressRollup.ts` (new): Pure TS. `computeProgressRollup()` — derives ProgressRollup from EvidenceRecord[]. Computes 5 status levels, 4 pathway signals, readiness blockers, staleness checks, DONNA summary, recommended next action, missing evidence list.
+- `evidenceCurriculumMapper.ts` (new): Pure TS. `mapSkillToRequirement()` — maps assessment skill keys to curriculum requirement labels with fuzzy fallback and match confidence. `getMissingEvidenceSignals()` — returns unmapped skills.
+- `evidenceParentTranslator.ts` (new): Pure TS. `generateParentSafeSummary()` + `generatePlayerSafeSummary()` from ProgressRollup. Never exposes raw scores, coach notes, or override reasoning. Positive development language only.
+- `donnaEvidenceAnswers.ts` (new): 6 deterministic DONNA answer builders: why_this_level, evidence_for_next_level, what_changed_since_assessment, which_mission_connects, stalled_check, coach_watch_next. Citation-only — explicit "I don't have enough evidence" when records are absent.
+- `pilotTestHarness.ts` (new): Player A (full flow: assessment → placement → mission → reassessment) + Player B (override + missing data) scenarios with typed assertions.
+
+**UI (new):**
+- `src/app/director/players/[playerId]/_components/PlayerEvidenceSummaryPanel.tsx` (new): Server Component. Loads evidence records via aggregator + progress rollup. Shows: ProgressStatus badge, DONNA summary, recommended action, high-severity blockers, top 5 evidence signals, missing evidence chips. Collapsed by default in player profile Overview. Director/coach only.
+
+**Modified:**
+- `src/app/director/players/[playerId]/assessmentStudioAction.ts` (modified): Added `writeAssessmentEvidence` + `writeReassessmentEvidence` calls on direct submit and on draft approval. Non-blocking try/catch.
+- `src/lib/actions/playerMissionDraftAction.ts` (modified): Added `writeMissionAssignedEvidence` in `approveMissionAction`. Added new `completeMissionAction` with `writeMissionCompletedEvidence`. New export.
+- `src/app/director/_actions/donnaGlobalCommandAction.ts` (modified): Wired `donnaEvidenceAnswers.ts` builders for `player_blockers`, `explain_level_blockers`, `stalled_players` intents. Evidence engine answers used when player is scoped and records are available; falls back gracefully to existing answers.
+- `src/app/director/players/[playerId]/page.tsx` (modified): Added `PlayerEvidenceSummaryPanel` import + `CollapsedDetailSection` in Overview slot.
+
+**Docs (new):**
+- `docs/architecture/PLAYER_EVIDENCE_ENGINE.md` — full evidence model, data ownership architecture, write/read path, portability rules, Player Passport future migration proposal.
+- `docs/architecture/PLAYER_PROGRESS_ROLLUP.md` — rollup engine, progress status derivation, staleness thresholds, pathway signals.
+- `docs/qa/PLAYER_EVIDENCE_ENGINE_QA.md` — creation hooks, aggregator, rollup, DONNA answers, panel, pilot harness QA.
+- `docs/qa/EVIDENCE_ROLE_SAFETY_QA.md` — role visibility matrix, data ownership matrix, parent/player safe content rules, post-anonymization safety, exit flow architecture.
+
+**TypeScript:** clean.
+**Migration needed:** Apply migration 083 to live DB.
+
 ## 2026-06-02 — Mega Sprint 1196-1210 — Assessment Studio Completion and Template Editor V1
 
 **Migrations (new — apply in order):**
