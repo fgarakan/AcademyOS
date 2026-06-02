@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-02 — Post-Migration Verification and Pilot Smoke Test V1
+
+- `src/app/director/_actions/postMigrationVerifyAction.ts` (new): Two server actions. `postMigrationVerifyAction()` — checks table existence for migrations 076–080 via rawDb queries, returns structured result with applied/missing/error per table + overall readiness. `runMigrationSmokeTest()` — non-destructive insert+delete on each new table to verify RLS and schema; director-only. Both return honest structured results.
+- `src/app/director/migration-verify/page.tsx` (new): Live verification dashboard (client component). Step 1: table existence check with one-click button. Step 2: write smoke test with per-table pass/fail. Step 3: DONNA question test — runs 5 core questions and shows intent + confidence + answer. Step 4: role safety manual checklist. Shows overall "Pilot Ready" or "Not Ready" banner. Director/head_coach only.
+- `docs/qa/POST_MIGRATION_VERIFICATION.md` (new): Verification checklist — what each step checks, expected results, what to do if migrations are missing.
+- `docs/qa/PILOT_SMOKE_TEST_RESULTS.md` (new): Comprehensive smoke test results template — 33 checkpoints across migration smoke tests, DONNA questions, director/coach/parent/player flows, role safety, sign-off. Fill in during pilot day.
+- TypeScript: clean.
+
 ## 2026-06-02 — Mega Sprint 1166-1185 — Internal Pilot Certification and Workflow Friction Elimination V1
 
 **Phase 9 — Critical Friction Fixes**
