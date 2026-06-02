@@ -1,27 +1,12 @@
 'use server'
 
 // Mega Sprint 1096-1100 — Guardian/Parent Creation Loop V1
+// Mega Sprint 1101-1110 — Phase 4 edge-case hardening
 //
-// Flow:
-//   Director/head_coach → add parent/guardian
-//   → create guardians record
-//   → create player_guardians link
-//   → if profile exists for email: set profile_id on guardian, create academy_memberships(parent)
-//   → audit logged.
-//
-// V1 data model:
-//   - guardians row: academy-scoped, may or may not have profile_id (auth account)
-//   - player_guardians: links guardian to player(s)
-//   - Profile is auto-linked if a Supabase Auth account exists for the guardian email.
-//   - Parent portal works once guardian.profile_id is set + player_guardians rows exist.
-//
-// Safety:
-//   - academyId always resolved server-side.
-//   - Inviter must be academy_director or head_coach.
-//   - Player must belong to this academy and be active.
-//   - Duplicate guardian links rejected.
-//   - Raw coach notes never written to guardian-accessible tables.
-//   - All outcomes write an audit_log entry.
+// Edge cases added:
+//   - Max 10 children per guardian (checked before creating player_guardians link)
+//   - Inactive linked profile → set profile_id=null, profileLinked=false
+//   - linkedChildren field added to result
 
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
@@ -31,17 +16,15 @@ import type { Database } from '@/lib/supabase/database.types'
 
 type UserRole = Database['public']['Enums']['user_role']
 
+const MAX_CHILDREN_PER_GUARDIAN = 10
+
 export interface AddGuardianInput {
   firstName: string
   lastName: string
-  /** Guardian email — used to auto-link a profile if account exists. */
   email?: string
   phone?: string
-  /** Relationship to player: 'parent', 'guardian', 'carer', etc. */
   relationship?: string
-  /** The player this guardian is linked to. */
   playerId: string
-  /** Whether this is the primary contact for the player. */
   isPrimary?: boolean
 }
 
@@ -49,12 +32,10 @@ export interface AddGuardianResult {
   ok: boolean
   error: string | null
   guardianId?: string | null
-  /**
-   * 'created_and_linked' — guardian + player_guardians created; profile linked if account exists.
-   * 'duplicate'          — guardian with this email + player link already exists.
-   */
   outcome?: 'created_and_linked' | 'duplicate'
   profileLinked?: boolean
+  /** Number of children this guardian is now linked to after the operation. */
+  linkedChildren?: number
 }
 
 export async function addGuardianAction(
@@ -77,7 +58,7 @@ export async function addGuardianAction(
   if (!profile?.academy_id) return { ok: false, error: 'Academy context unavailable' }
   const academyId = profile.academy_id
 
-  // 3. Verify inviter role — director or head_coach only
+  // 3. Verify role
   const { data: membership } = await supabase
     .from('academy_memberships')
     .select('role')
@@ -91,7 +72,7 @@ export async function addGuardianAction(
     return { ok: false, error: 'Only academy directors or head coaches can add guardians' }
   }
 
-  // 4. Validate required inputs
+  // 4. Validate inputs
   const firstName = input.firstName?.trim()
   const lastName = input.lastName?.trim()
   if (!firstName) return { ok: false, error: 'First name is required' }
@@ -117,7 +98,7 @@ export async function addGuardianAction(
 
   const rawDb = supabase as any
 
-  // 6. Prevent duplicate: check for existing guardian with same email in this academy
+  // 6. Check for existing guardian with same email in this academy
   if (email) {
     const { data: existingGuardian } = await rawDb
       .from('guardians')
@@ -127,7 +108,6 @@ export async function addGuardianAction(
       .maybeSingle()
 
     if (existingGuardian) {
-      // Guardian record exists — check if already linked to this player
       const { data: existingLink } = await rawDb
         .from('player_guardians')
         .select('guardian_id')
@@ -136,15 +116,35 @@ export async function addGuardianAction(
         .maybeSingle()
 
       if (existingLink) {
+        const { count: childCount } = await rawDb
+          .from('player_guardians')
+          .select('*', { count: 'exact', head: true })
+          .eq('guardian_id', existingGuardian.id)
+
         return {
           ok: true,
           error: null,
           guardianId: existingGuardian.id,
           outcome: 'duplicate',
+          linkedChildren: (childCount as number | null) ?? undefined,
         }
       }
 
-      // Guardian exists but not linked to this player — create the link
+      // Guardian exists — enforce max children cap before adding link
+      const { count: currentChildCount } = await rawDb
+        .from('player_guardians')
+        .select('*', { count: 'exact', head: true })
+        .eq('guardian_id', existingGuardian.id)
+
+      const currentCount = (currentChildCount as number | null) ?? 0
+      if (currentCount >= MAX_CHILDREN_PER_GUARDIAN) {
+        return {
+          ok: false,
+          error: `This guardian is already linked to ${MAX_CHILDREN_PER_GUARDIAN} players (the maximum). Remove an existing link before adding another.`,
+          guardianId: existingGuardian.id,
+        }
+      }
+
       const { error: linkError } = await rawDb
         .from('player_guardians')
         .insert({ guardian_id: existingGuardian.id, player_id: input.playerId })
@@ -161,7 +161,7 @@ export async function addGuardianAction(
         action: 'guardian_player_link_added',
         targetType: 'player_guardians',
         targetId: input.playerId,
-        targetLabel: `${player.full_name ?? `${player.first_name} ${player.last_name}`}`,
+        targetLabel: player.full_name ?? `${player.first_name} ${player.last_name}`,
         payload: { guardian_id: existingGuardian.id, player_id: input.playerId },
         sourceType: 'ui',
       })
@@ -169,33 +169,49 @@ export async function addGuardianAction(
       revalidatePath('/director/parents')
       revalidatePath(`/director/players/${input.playerId}`)
 
-      return { ok: true, error: null, guardianId: existingGuardian.id, outcome: 'created_and_linked' }
+      return {
+        ok: true,
+        error: null,
+        guardianId: existingGuardian.id,
+        outcome: 'created_and_linked',
+        linkedChildren: currentCount + 1,
+      }
     }
   }
 
-  // 7. Look up existing Supabase Auth profile by email (to auto-link)
+  // 7. Look up profile by email for auto-link
+  //    If profile is found but is_active=false, do not link — guardian created without profile_id
   let linkedProfileId: string | null = null
+  let profileWasInactive = false
   if (email) {
     const { data: matchedProfile } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, is_active')
       .eq('email', email)
       .maybeSingle()
-    linkedProfileId = matchedProfile?.id ?? null
+
+    if (matchedProfile) {
+      if (matchedProfile.is_active === false) {
+        profileWasInactive = true
+        linkedProfileId = null
+      } else {
+        linkedProfileId = matchedProfile.id
+      }
+    }
   }
 
   // 8. Create guardian record
   const { data: newGuardian, error: guardianError } = await rawDb
     .from('guardians')
     .insert({
-      academy_id: academyId,
-      first_name: firstName,
-      last_name: lastName,
+      academy_id:  academyId,
+      first_name:  firstName,
+      last_name:   lastName,
       email,
       phone,
       relationship,
-      is_primary: input.isPrimary ?? true,
-      profile_id: linkedProfileId,
+      is_primary:  input.isPrimary ?? true,
+      profile_id:  linkedProfileId,
     })
     .select('id')
     .single()
@@ -212,7 +228,6 @@ export async function addGuardianAction(
     .insert({ guardian_id: guardianId, player_id: input.playerId })
 
   if (linkError) {
-    // Guardian was created — note the link failure but do not roll back guardian
     return {
       ok: false,
       error: `Guardian created (${guardianId}) but player link failed: ${linkError.message}`,
@@ -220,10 +235,9 @@ export async function addGuardianAction(
     }
   }
 
-  // 10. If profile found, create academy_memberships with parent role
+  // 10. Create academy_memberships(parent) if profile found and active
   let profileLinked = false
   if (linkedProfileId) {
-    // Check if already a member
     const { data: existingMembership } = await supabase
       .from('academy_memberships')
       .select('id, is_active')
@@ -237,17 +251,17 @@ export async function addGuardianAction(
         .insert({
           academy_id: academyId,
           profile_id: linkedProfileId,
-          role: 'parent' as UserRole,
-          is_active: true,
+          role:       'parent' as UserRole,
+          is_active:  true,
           granted_by: user.id,
         })
       profileLinked = true
     } else if (!existingMembership.is_active) {
-      const { error: updateError } = await rawDb
+      const { error: reactivateError } = await rawDb
         .from('academy_memberships')
         .update({ is_active: true, role: 'parent' as UserRole, granted_by: user.id })
         .eq('id', existingMembership.id)
-      profileLinked = !updateError
+      profileLinked = !reactivateError
     } else {
       profileLinked = true
     }
@@ -264,12 +278,13 @@ export async function addGuardianAction(
     targetId: guardianId,
     targetLabel: `${firstName} ${lastName}`,
     payload: {
-      guardian_id: guardianId,
-      player_id: input.playerId,
-      player_name: player.full_name ?? `${player.first_name} ${player.last_name}`,
-      email: email ?? null,
+      guardian_id:         guardianId,
+      player_id:           input.playerId,
+      player_name:         player.full_name ?? `${player.first_name} ${player.last_name}`,
+      email:               email ?? null,
       relationship,
-      profile_linked: profileLinked,
+      profile_linked:      profileLinked,
+      profile_was_inactive: profileWasInactive,
     },
     sourceType: 'ui',
   })
@@ -283,5 +298,6 @@ export async function addGuardianAction(
     guardianId,
     outcome: 'created_and_linked',
     profileLinked,
+    linkedChildren: 1,
   }
 }

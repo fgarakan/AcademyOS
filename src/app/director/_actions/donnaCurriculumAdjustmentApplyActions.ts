@@ -159,16 +159,22 @@ export async function applyApprovedCurriculumAdjustmentAction(
   const { data: overrideRow, error: overrideError } = await rawDb
     .from('academy_curriculum_overrides')
     .insert({
-      academy_id: academyId,
+      academy_id:            academyId,
       curriculum_version_id: curriculumVersionId,
-      override_type: adjustmentType,
-      target_level_label: targetLevel,
-      change_description: proposedChange,
-      reason: reason,
-      proposed_action_id: proposedActionId,
-      applied_by_id: userId,
-      applied_at: now,
-      status: 'active',
+      override_type:         adjustmentType,
+      target_level_label:    targetLevel,
+      change_description:    proposedChange,
+      reason:                reason,
+      proposed_action_id:    proposedActionId,
+      applied_by_id:         userId,
+      applied_at:            now,
+      status:                'active',
+      // original_snapshot: captures the before-state for rollback reference.
+      // V1: stores the proposed change description as a recoverable snapshot.
+      // A future sprint can enrich this with the actual current DB field values.
+      original_snapshot:     { description: proposedChange, target_level: targetLevel, captured_at: now },
+      // applied_change: the change actually written; used by rollback to reconstruct before-state.
+      applied_change:        { description: proposedChange, adjustment_type: adjustmentType, applied_by: userId, applied_at: now },
     })
     .select('id')
     .single()
@@ -181,22 +187,24 @@ export async function applyApprovedCurriculumAdjustmentAction(
     }
   }
 
-  // 4. Write audit_log
+  // 4. Write audit_log with version and snapshot context
   await rawDb.from('audit_logs').insert({
-    academy_id: academyId,
-    actor_id: userId,
-    action: 'curriculum_adjustment_applied',
+    academy_id:  academyId,
+    actor_id:    userId,
+    action:      'curriculum_adjustment_applied',
     payload: {
-      override_id: overrideRow.id,
-      adjustment_type: adjustmentType,
-      target_level: targetLevel,
-      proposed_change: proposedChange,
+      override_id:           overrideRow.id,
+      adjustment_type:       adjustmentType,
+      target_level:          targetLevel,
+      proposed_change:       proposedChange,
       reason,
-      proposed_action_id: proposedActionId,
-      applied_at: now,
+      proposed_action_id:    proposedActionId,
+      applied_at:            now,
+      curriculum_version_id: curriculumVersionId,
+      rollback_available:    true,
     },
     target_type: 'curriculum',
-    target_id: overrideRow.id,
+    target_id:   overrideRow.id,
   })
 
   // 5. Mark proposed_action as executed
@@ -214,7 +222,9 @@ export async function applyApprovedCurriculumAdjustmentAction(
     message: `Curriculum adjustment applied. Override record created for: "${proposedChange.slice(0, 80)}".`,
     safetyNotes: [
       'A versioned override record was created in academy_curriculum_overrides.',
-      'Audit log written.',
+      'original_snapshot and applied_change captured for rollback support.',
+      'Rollback is available via rollbackAcademyCurriculumOverrideAction.',
+      'Audit log written with curriculum_version_id and rollback_available flag.',
       'No template_blocks, session_blocks, or curriculum_levels were modified.',
       'No one was notified.',
     ],

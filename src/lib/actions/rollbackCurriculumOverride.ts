@@ -1,5 +1,17 @@
 'use server'
 
+// Mega Sprint 1101-1110 — Curriculum Override Rollback V2
+//
+// Changes from V1:
+//   - Accepts both 'applied' and 'active' statuses (fixes inability to roll back
+//     DONNA-path overrides that use status='active')
+//   - Normalises field shape across both schema variants:
+//     donnaCurriculumAdjustmentApplyActions uses 'change_description'
+//     curriculumOverrideApprovalActions uses 'applied_change'/'proposed_change'
+//   - Enriched audit log with original_change and original_status
+//   - Added revalidatePath for curriculum and review pages
+
+import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
 
 export interface RollbackAcademyCurriculumOverrideResult {
@@ -22,7 +34,7 @@ export async function rollbackAcademyCurriculumOverrideAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return fail('Not authenticated.')
 
-  // 2. Resolve academy_id from authenticated profile — never trust client input
+  // 2. Resolve academy_id from authenticated profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('academy_id')
@@ -31,7 +43,7 @@ export async function rollbackAcademyCurriculumOverrideAction(
   if (!profile?.academy_id) return fail('Academy context unavailable.')
   const academyId = profile.academy_id
 
-  // 3. Verify active academy membership — director or head_coach only
+  // 3. Verify director or head_coach role
   const { data: membership } = await supabase
     .from('academy_memberships')
     .select('role')
@@ -47,49 +59,61 @@ export async function rollbackAcademyCurriculumOverrideAction(
   const rawDb = supabase as any
 
   // 4. Fetch the override — verify ownership and status
+  //    Accept both 'applied' (approval path) and 'active' (DONNA path)
   const { data: originalOverride } = await rawDb
     .from('academy_curriculum_overrides')
-    .select('id, academy_id, curriculum_version_id, status, target_type, target_id, scope, pathway, proposed_change, applied_change, source, raw_input')
+    .select('id, academy_id, curriculum_version_id, status, target_type, target_id, scope, pathway, proposed_change, applied_change, source, raw_input, override_type, change_description, reason')
     .eq('id', overrideId)
     .single()
 
   if (!originalOverride) return fail('Override not found.')
   if (originalOverride.academy_id !== academyId) return fail('Access denied.')
-  if (originalOverride.status !== 'applied') {
-    return fail(`Only applied overrides can be rolled back. Current status: ${originalOverride.status}`)
+
+  const rollbackableStatuses = ['applied', 'active']
+  if (!rollbackableStatuses.includes(originalOverride.status as string)) {
+    return fail(`Only applied or active overrides can be rolled back. Current status: ${originalOverride.status as string}`)
   }
 
   const now = new Date().toISOString()
 
-  // 5. Create a rollback record — preserves full audit trail
+  // 5. Normalise field shape — DONNA path uses 'change_description',
+  //    approval path uses 'applied_change' / 'proposed_change'
+  const originalChangeText =
+    originalOverride.change_description ??
+    originalOverride.applied_change ??
+    originalOverride.proposed_change
+
   const rollbackPayload = {
     summary: `Rollback of override ${overrideId}. Original change reversed.`,
     rolled_back_override_id: overrideId,
-    original_change: originalOverride.applied_change ?? originalOverride.proposed_change,
+    original_change: originalChangeText,
+    original_override_type: originalOverride.override_type,
+    original_status: originalOverride.status,
   }
 
+  // 6. Create rollback record
   const { data: rollbackRecord, error: rollbackInsertError } = await rawDb
     .from('academy_curriculum_overrides')
     .insert({
-      academy_id: academyId,
-      curriculum_version_id: originalOverride.curriculum_version_id,
-      target_type: originalOverride.target_type,
-      target_id: originalOverride.target_id,
-      override_type: 'remove',
-      scope: originalOverride.scope,
-      pathway: originalOverride.pathway,
-      original_snapshot: originalOverride.applied_change ?? originalOverride.proposed_change,
-      proposed_change: rollbackPayload,
-      applied_change: rollbackPayload,
-      override_reason: `Rollback of override ${overrideId}`,
-      source: originalOverride.source ?? 'ui',
-      raw_input: originalOverride.raw_input,
-      status: 'applied',
-      created_by: user.id,
-      approved_by: user.id,
-      approved_at: now,
-      applied_by: user.id,
-      applied_at: now,
+      academy_id:              academyId,
+      curriculum_version_id:   originalOverride.curriculum_version_id,
+      target_type:             originalOverride.target_type,
+      target_id:               originalOverride.target_id,
+      override_type:           'remove',
+      scope:                   originalOverride.scope,
+      pathway:                 originalOverride.pathway,
+      original_snapshot:       originalChangeText,
+      proposed_change:         rollbackPayload,
+      applied_change:          rollbackPayload,
+      override_reason:         `Rollback of override ${overrideId}`,
+      source:                  originalOverride.source ?? 'ui',
+      raw_input:               originalOverride.raw_input,
+      status:                  'applied',
+      created_by:              user.id,
+      approved_by:             user.id,
+      approved_at:             now,
+      applied_by:              user.id,
+      applied_at:              now,
       rollback_of_override_id: overrideId,
     })
     .select('id')
@@ -101,7 +125,7 @@ export async function rollbackAcademyCurriculumOverrideAction(
 
   const rollbackRecordId = rollbackRecord.id as string
 
-  // 6. Mark original override as rolled_back
+  // 7. Mark original as rolled_back
   const { error: updateError } = await rawDb
     .from('academy_curriculum_overrides')
     .update({ status: 'rolled_back' })
@@ -112,23 +136,28 @@ export async function rollbackAcademyCurriculumOverrideAction(
     return fail(`Rollback record created (${rollbackRecordId}) but failed to update original: ${updateError.message}`)
   }
 
-  // 7. Write audit log
+  // 8. Write audit log with enriched context
   await rawDb
     .from('audit_logs')
     .insert({
-      academy_id: academyId,
-      actor_id: user.id,
-      action: 'curriculum_override.rolled_back',
+      academy_id:  academyId,
+      actor_id:    user.id,
+      action:      'curriculum_override.rolled_back',
       target_type: 'academy_curriculum_override',
-      target_id: overrideId,
+      target_id:   overrideId,
       payload: {
-        original_override_id: overrideId,
-        rollback_record_id: rollbackRecordId,
-        rolled_back_by: user.id,
-        rolled_back_at: now,
+        original_override_id:  overrideId,
+        rollback_record_id:    rollbackRecordId,
+        rolled_back_by:        user.id,
+        rolled_back_at:        now,
+        original_change:       originalChangeText,
+        original_status:       originalOverride.status,
       },
       source_type: 'ui',
     })
+
+  revalidatePath('/director/review')
+  revalidatePath('/director/curriculum')
 
   return { ok: true, error: null, rollbackRecordId }
 }

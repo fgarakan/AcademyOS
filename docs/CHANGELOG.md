@@ -2,6 +2,44 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1101-1110 — Atomic Loops 10 of 10 Certification V1
+
+**Phase 1 — Parent Delivery Abstraction**
+- `src/lib/delivery/parentDeliveryService.ts` (new): Pure TypeScript delivery service. Defines `ParentDeliveryMethod`, `ParentDeliveryStatus`, `ParentDeliveryResult`, method metadata, V1 guards (`getDeliveryMethodUnsupportedReason`), and result builders (`buildPortalPublishedResult`, `buildFailedDeliveryResult`).
+- `src/app/director/review/applyParentCommunicationAction.ts` (modified): Integrated delivery service — pre-flight validates method, returns typed `ParentDeliveryResult`, includes `delivery_status` in audit log.
+
+**Phase 2 — DONNA Conversation Persistence**
+- `src/app/director/_actions/donnaConversationPersistAction.ts` (new): Two server actions — `upsertDonnaConversationSessionAction` (get-or-create active session) and `appendDonnaMessageAction` (append message with cross-academy ownership check). `rawDb` for tables not in generated types. Both catch all errors and never throw. Graceful fallback when migration 070 not applied.
+- `docs/architecture/DONNA_CONVERSATION_PERSISTENCE.md` (new): Architecture doc.
+
+**Phase 4 — Edge Case Hardening**
+- `src/app/director/coaches/inviteCoachAction.ts` (modified): Added email length cap (254 chars), director-role rejection, self-invite check, inactive profile rejection, same-email-different-role update path. New outcome: `role_updated`.
+- `src/app/director/parents/addGuardianAction.ts` (modified): Added max 10 children per guardian cap, inactive profile handling (creates guardian without profile_id), `linkedChildren` field on result.
+
+**Phase 5 — Player Mission Assignments**
+- `supabase/migrations/076_player_mission_assignments.sql` (new): `player_mission_assignments` table with status flow (draft→pending_review→active→completed/skipped/archived), RLS for all roles, curriculum fields as text snapshots (no live FKs), `proposed_action_id` back-link without FK.
+- `src/lib/actions/playerMissionDraftAction.ts` (new): Three exports — `playerMissionDraftAction` (role-gated status, duplicate guard, schema-missing detection), `approveMissionAction` (director-only pending→active), `skipMissionAction` (director/head_coach). All write audit logs.
+- `docs/architecture/PLAYER_MISSION_ASSIGNMENT.md` (new): Status flow, assignment paths, RLS table, architecture invariants.
+
+**Phase 6 — Curriculum Override Versioning**
+- `src/app/director/_actions/donnaCurriculumAdjustmentApplyActions.ts` (modified): Override insert now populates `original_snapshot` and `applied_change`. Audit log enriched with `curriculum_version_id` and `rollback_available: true`. safetyNotes updated.
+- `src/lib/actions/rollbackCurriculumOverride.ts` (modified): Accepts both `'applied'` and `'active'` statuses. Normalises field shape across DONNA and approval paths. Enriched audit log with `original_change` and `original_status`. Added revalidatePath.
+- `docs/architecture/CURRICULUM_OVERRIDE_VERSIONING.md` (new): Problem, solution, status lifecycle, what is not built.
+- `docs/architecture/PARENT_DELIVERY_RELIABILITY.md` (new): Delivery service design, V1 contract, future extension path.
+
+**Phase 7 — Friction Capture Infrastructure**
+- `supabase/migrations/077_friction_reports.sql` (new): `friction_reports` table with 10-value friction_type CHECK, severity/status constraints, RLS (staff insert own, directors see all, users see own, directors update). Updated_at trigger.
+- `src/app/director/friction/reportFrictionAction.ts` (new): Any active academy member can submit friction. Auth → membership → sanitize → rawDb insert. Never throws. Schema-missing detection.
+- `src/app/director/donna/donnaFrictionSummaryAction.ts` (new): Director/head_coach only. Returns totalOpen, blockerCount, highCount, topTypes[], recentReports[], deterministic summaryText. No AI calls.
+
+**Phase 8 — Certification and Pilot Documentation**
+- `docs/qa/ATOMIC_LOOP_10_OF_10_CERTIFICATION_FINAL.md` (new): 9/10 pilot readiness rating. Full feature inventory, architecture safety invariants, pending live DB migrations, pilot participant certification.
+- `docs/qa/REAL_USER_E2E_TEST_PLAN.md` (new): 16 pilot flows from DNA Shell through parent portal visibility. Prerequisites, steps, DB state, permission assertions, audit log assertions per flow.
+- `docs/qa/PILOT_FEEDBACK_AND_FRICTION_LOG.md` (new): Friction reporting instructions for all roles, type/severity definitions, active log template, V1 expected friction categories, post-pilot retro template.
+
+**TypeScript:** clean.
+**Pilot readiness:** 9/10. Brian + 1 coach + 2 parents + 2 players can complete full pilot without Supabase dashboard access. Three pending migrations (070/076/077) degrade gracefully if not yet applied.
+
 ## 2026-06-02 — Mega Sprint 1096-1100 — Atomic Loop Backend Certification V1
 
 **Phase 1 — Pilot-Blocking Identity Loops**
