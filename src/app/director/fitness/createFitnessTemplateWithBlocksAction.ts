@@ -3,7 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { isPreviewMode } from '@/lib/utils/previewMode'
+import { writeAuditLog } from '@/lib/audit/auditLogger'
 import type { FitnessTemplateType } from './fitnessTemplateActions'
+import type { Database } from '@/lib/supabase/database.types'
+
+type UserRole = Database['public']['Enums']['user_role']
 
 type DbBlockType =
   | 'warm_up' | 'technical' | 'tactical' | 'movement'
@@ -122,6 +126,23 @@ export async function createFitnessTemplateWithBlocksAction(
 
     await rawDb.from('template_blocks').insert(blockRows)
   }
+
+  await writeAuditLog({
+    db: supabase,
+    academyId,
+    actorId: user.id,
+    actorRole: role as UserRole,
+    action: 'fitness_template_created',
+    targetType: 'templates',
+    targetId: templateId,
+    targetLabel: name,
+    payload: {
+      template_type: input.templateType ?? 'standard',
+      block_count: Array.isArray(input.blocks) ? input.blocks.length : 0,
+      total_duration_min: input.totalDurationMin ?? null,
+    },
+    sourceType: 'ui',
+  })
 
   revalidatePath('/director/fitness/templates')
   return { ok: true, error: null, templateId }

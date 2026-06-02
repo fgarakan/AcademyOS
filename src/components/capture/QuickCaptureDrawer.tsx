@@ -116,7 +116,7 @@ export function QuickCaptureDrawer({ open, onClose, academyId }: Props) {
       const content = (formData.get('content') as string | null)?.trim() ?? ''
       startTransition(async () => {
         try {
-          await saveGeneralCaptureAction(academyId, content)
+          await saveGeneralCaptureAction(content)
           setSuccess(true)
           setTimeout(handleClose, 1200)
         } catch (err) {

@@ -3,6 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { isPreviewMode } from '@/lib/utils/previewMode'
+import { writeAuditLog } from '@/lib/audit/auditLogger'
+import type { Database } from '@/lib/supabase/database.types'
+
+type UserRole = Database['public']['Enums']['user_role']
 
 export interface CreateClassTemplateInput {
   name: string
@@ -66,6 +70,19 @@ export async function createClassTemplateAction(
     .single()
 
   if (error) return { ok: false, error: error.message, templateId: null }
+
+  await writeAuditLog({
+    db: supabase,
+    academyId,
+    actorId: user.id,
+    actorRole: role as UserRole,
+    action: 'class_template_created',
+    targetType: 'templates',
+    targetId: data.id,
+    targetLabel: input.name.trim(),
+    payload: { track: input.track ?? null, total_duration_min: input.totalDurationMin ?? null },
+    sourceType: 'ui',
+  })
 
   revalidatePath('/director/class-templates')
   return { ok: true, error: null, templateId: data.id }

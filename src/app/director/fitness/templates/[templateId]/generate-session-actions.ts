@@ -2,6 +2,8 @@
 
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import { writeAuditLog } from '@/lib/audit/auditLogger'
+import type { Database } from '@/lib/supabase/database.types'
 import {
   getActiveAcademyCurriculumVersion,
   getAcademyOverridesForContext,
@@ -253,6 +255,34 @@ export async function generateSessionFromTemplateAction(
       break
     }
   }
+
+  // Resolve actor role for audit log
+  const { data: actorMembership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+
+  await writeAuditLog({
+    db: supabase,
+    academyId,
+    actorId: user.id,
+    actorRole: (actorMembership?.role as Database['public']['Enums']['user_role']) ?? null,
+    action: 'session_created_from_template',
+    targetType: 'sessions',
+    targetId: sessionId,
+    targetLabel: input.name.trim() || template.name,
+    payload: {
+      template_id: input.templateId,
+      coach_id: input.coachId,
+      scheduled_date: input.scheduledDate,
+      block_count: templateBlocks.length,
+      exercise_warning: exerciseWarning ?? null,
+    },
+    sourceType: 'ui',
+  })
 
   return { sessionId, error: exerciseWarning }
 }

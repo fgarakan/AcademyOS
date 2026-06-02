@@ -1,11 +1,29 @@
 'use server'
 
+// Mega Sprint 1096-1100 — Quick Capture Security Fix
+//
+// FIXED: saveGeneralCaptureAction previously accepted academyId from the client
+// without verifying the caller was a member of that academy.
+// This was a cross-academy write vulnerability.
+//
+// FIX: academyId is now always resolved from the authenticated user's profiles row,
+// identical to the pattern used in all other server actions in this codebase.
+// The client-supplied academyId parameter is REMOVED from saveGeneralCaptureAction.
+// Academy membership is verified before any write.
+//
+// routeGeneralCaptureToPlayerAction and dismissGeneralCaptureAction already had
+// membership checks — the academy_id column-level constraint on the insert/update
+// prevents cross-academy operations there.
+
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import { writeAuditLog } from '@/lib/audit/auditLogger'
+import type { Database } from '@/lib/supabase/database.types'
+
+type UserRole = Database['public']['Enums']['user_role']
 
 export async function saveGeneralCaptureAction(
-  academyId: string,
   content: string
 ): Promise<void> {
   await assertNotPreviewMode()
@@ -14,10 +32,33 @@ export async function saveGeneralCaptureAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
+  // Resolve academy_id from authenticated user profile — never trust client input
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('academy_id')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.academy_id) throw new Error('Academy context unavailable')
+  const academyId = profile.academy_id
+
+  // Verify caller is active director, head_coach, or coach in this academy
+  const { data: membership } = await supabase
+    .from('academy_memberships')
+    .select('role')
+    .eq('academy_id', academyId)
+    .eq('profile_id', user.id)
+    .eq('is_active', true)
+    .single()
+
+  const role = membership?.role as UserRole | undefined
+  if (!role || !['academy_director', 'head_coach', 'coach'].includes(role)) {
+    throw new Error('Active staff membership required to create a capture')
+  }
+
   const trimmed = content?.trim()
   if (!trimmed) throw new Error('Capture content is required')
 
-  const { error } = await supabase
+  const { data: inserted, error } = await supabase
     .from('voice_notes')
     .insert({
       academy_id: academyId,
@@ -29,8 +70,26 @@ export async function saveGeneralCaptureAction(
       audio_path: null,
       processing_status: 'pending_review',
     })
+    .select('id')
+    .single()
 
   if (error) throw error
+
+  // Audit log — captures are internal notes and worth tracking
+  if (inserted?.id) {
+    await writeAuditLog({
+      db: supabase,
+      academyId,
+      actorId: user.id,
+      actorRole: role,
+      action: 'quick_capture_created',
+      targetType: 'voice_notes',
+      targetId: inserted.id,
+      targetLabel: trimmed.slice(0, 80),
+      payload: { content_length: trimmed.length },
+      sourceType: 'ui',
+    })
+  }
 
   revalidatePath('/director/review')
 }

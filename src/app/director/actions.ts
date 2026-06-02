@@ -3,6 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import { writeAuditLog } from '@/lib/audit/auditLogger'
+import type { Database } from '@/lib/supabase/database.types'
+
+type UserRole = Database['public']['Enums']['user_role']
 
 // ── Input type ──────────────────────────────────────────────────
 // Only Academy DNA fields — no templates, no players, no coaches,
@@ -143,6 +147,23 @@ export async function saveAcademyDnaSettings(
     .eq('id', academyId)
 
   if (error) return { ok: false, error: error.message ?? 'Failed to save Academy DNA' }
+
+  await writeAuditLog({
+    db: supabase,
+    academyId,
+    actorId: user.id,
+    actorRole: membership.role as UserRole,
+    action: 'academy_dna_saved',
+    targetType: 'academies',
+    targetId: academyId,
+    targetLabel: input.academyName,
+    payload: {
+      coaching_styles: dnaPayload.coaching_philosophy.coaching_styles,
+      development_priorities: dnaPayload.player_development.development_priorities,
+      parent_styles: dnaPayload.parent_communication.parent_styles,
+    },
+    sourceType: 'ui',
+  })
 
   revalidatePath('/director')
   return { ok: true, error: null }

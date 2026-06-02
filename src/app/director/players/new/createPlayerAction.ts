@@ -3,6 +3,10 @@
 import { redirect } from 'next/navigation'
 import { getSupabaseServer } from '@/lib/supabase/server'
 import { assertNotPreviewMode } from '@/lib/utils/previewMode'
+import { writeAuditLog } from '@/lib/audit/auditLogger'
+import type { Database } from '@/lib/supabase/database.types'
+
+type UserRole = Database['public']['Enums']['user_role']
 
 export interface CreatePlayerResult {
   ok: false
@@ -72,6 +76,25 @@ export async function createPlayerAction(formData: FormData): Promise<CreatePlay
   if (insertError || !inserted) {
     return { ok: false, error: insertError?.message ?? 'Failed to create player' }
   }
+
+  await writeAuditLog({
+    db: supabase,
+    academyId,
+    actorId: user.id,
+    actorRole: membership.role as UserRole,
+    action: 'player_created',
+    targetType: 'players',
+    targetId: inserted.id,
+    targetLabel: fullName,
+    payload: {
+      first_name: firstName,
+      last_name: lastName,
+      date_of_birth: dateOfBirth,
+      gender,
+      status: 'pending_placement',
+    },
+    sourceType: 'ui',
+  })
 
   redirect(`/director/players/${inserted.id}`)
 }

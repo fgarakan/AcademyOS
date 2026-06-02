@@ -5,6 +5,10 @@ import { assertNotPreviewMode } from '@/lib/utils/previewMode'
 import type { StructuredDraftPayload } from '@/app/director/sessions/[sessionId]/structureRecapAction'
 import { upsertPlayerDevelopmentSummary } from '@/lib/backend/notes'
 import type { DevelopmentSummaryDraftPayload } from '@/app/director/players/[playerId]/draftSummaryUpdateAction'
+import { writeAuditLog } from '@/lib/audit/auditLogger'
+import type { Database } from '@/lib/supabase/database.types'
+
+type ReviewDecisionRole = Database['public']['Enums']['user_role']
 
 export type DraftDecision = 'approved' | 'rejected' | 'clarification_needed'
 
@@ -109,6 +113,20 @@ export async function updateStructuredDraftDecisionAction(
     return { ok: false, error: `Failed to record decision: ${updateError.message}` }
   }
 
+  // Audit log for review decision — non-blocking
+  await writeAuditLog({
+    db: supabase,
+    academyId,
+    actorId: user.id,
+    actorRole: role as ReviewDecisionRole,
+    action: `review_decision_${decision}`,
+    targetType: 'proposed_actions',
+    targetId: proposedActionId,
+    targetLabel: proposedAction.target_module,
+    payload: { decision, module: proposedAction.target_module, review_notes: reviewNotes ?? null },
+    sourceType: 'ui',
+  })
+
   return { ok: true, error: null }
 }
 
@@ -206,6 +224,20 @@ export async function updateWrapUpDraftDecisionAction(
   if (updateError) {
     return { ok: false, error: `Failed to record decision: ${updateError.message}` }
   }
+
+  // Audit log for wrap-up review decision — non-blocking
+  await writeAuditLog({
+    db: supabase,
+    academyId,
+    actorId: user.id,
+    actorRole: role as ReviewDecisionRole,
+    action: `review_decision_${decision}`,
+    targetType: 'proposed_actions',
+    targetId: proposedActionId,
+    targetLabel: 'session_wrap_up_v1',
+    payload: { decision, module: 'session_wrap_up_v1', review_notes: reviewNotes ?? null },
+    sourceType: 'ui',
+  })
 
   return { ok: true, error: null }
 }

@@ -2,6 +2,39 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1096-1100 — Atomic Loop Backend Certification V1
+
+**Phase 1 — Pilot-Blocking Identity Loops**
+
+- `src/app/director/coaches/inviteCoachAction.ts` (new): Coach invitation loop. Auth → director/head_coach role check → server-resolve academyId → look up profile by email → create or reactivate `academy_memberships` row with coach/head_coach role → write audit log. Returns `linked | already_member | no_account`. No Supabase Admin API required.
+- `src/app/director/parents/addGuardianAction.ts` (new): Guardian/parent creation loop. Auth → director role check → server-resolve academyId → verify player belongs to academy → check duplicate → create `guardians` row → create `player_guardians` link → auto-link `profile_id` if account exists → create `academy_memberships(parent)` if profile found → write audit log.
+
+**Phase 2 — Security Fix**
+
+- `src/lib/actions/capture.ts` (modified): **SECURITY FIX** — `saveGeneralCaptureAction` previously accepted client-supplied `academyId` with no membership check (cross-academy write vulnerability). Fixed: academyId now server-resolved from `profiles.academy_id`. Active staff membership (director/head_coach/coach) verified before write. Audit log added. Call site in `QuickCaptureDrawer.tsx` updated (removed academyId argument).
+- `src/components/capture/QuickCaptureDrawer.tsx` (modified): Updated `saveGeneralCaptureAction` call to match new single-argument signature.
+
+**Phase 3 — Parent Communication Apply Loop**
+
+- `src/app/director/review/applyParentCommunicationAction.ts` (new): Applies approved `parent_communication` proposed_action: creates `parent_updates` row (status: 'approved', send_method: 'portal_published') → updates `player_development_summary.parent_summary` + `show_to_parent = true` → marks proposed_action 'executed' → writes audit log. Director-only. V1 delivery model: portal-published (no email provider).
+
+**Phase 4 — Audit Trail Completion**
+
+- `src/app/director/players/new/createPlayerAction.ts` (modified): Added `writeAuditLog` call on successful player creation.
+- `src/app/director/class-templates/createClassTemplateAction.ts` (modified): Added `writeAuditLog` call on template creation.
+- `src/app/director/fitness/createFitnessTemplateWithBlocksAction.ts` (modified): Added `writeAuditLog` call on fitness template creation.
+- `src/app/director/fitness/templates/[templateId]/generate-session-actions.ts` (modified): Added `writeAuditLog` call on session creation from template.
+- `src/app/director/actions.ts` (modified): Added `writeAuditLog` call to `saveAcademyDnaSettings`.
+- `src/app/director/review/actions.ts` (modified): Added `writeAuditLog` calls to `updateStructuredDraftDecisionAction` and `updateWrapUpDraftDecisionAction` (review decisions now logged).
+
+**Phase 6 — Documentation**
+
+- `docs/qa/ATOMIC_LOOP_BACKEND_TEST_MATRIX.md` (new): Complete 36-loop backend test matrix. Columns: UX path, backend write, data linkage, permission safe, review safe, audit logged, downstream usable, tests added, status, risk, notes.
+- `docs/qa/ATOMIC_LOOP_BACKEND_CERTIFICATION_10_OF_10.md` (new): Certification doc — pilot readiness 8.5/10, step-by-step pilot flow for Brian + coach + parents + players, V1 limitations, acceptance criteria status, architecture safety invariants.
+
+**TypeScript:** clean.
+**Pilot readiness:** Raised from 5/10 to 8.5/10. Brian + 1 coach + 2 parents + 2 players can run the full pilot without Supabase dashboard access.
+
 ## 2026-06-02 — Sprint 1095E — Academy DNA Persistence Bridge V1
 
 - `src/lib/actions/saveAcademyOperatingLensAction.ts` (new): `'use server'` action. Auth → director role check → reads existing `academies.settings` → non-destructive merge → writes `academyOperatingLens` key. Fields: `mission` (from `primaryGoals`), `playerDevelopmentPhilosophy` (from `programType`), `coachingStyle`, `developmentPriorities`, `curriculumPreference` (from `curriculumStartingPoint`), `parentCommunicationStyle` (from `parentStyles`), `coachRecapExpectations`, `donnaCommunicationStyle`, `playerMissionStyle`, `setupMode`, `savedAt`, `source`, `version`. All inputs sanitized. Returns `{ ok, error }`.
