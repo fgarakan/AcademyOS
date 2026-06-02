@@ -11,6 +11,7 @@ import { sanitizeParentFacingText } from '@/lib/communications/parentSafeRespons
 import { buildParentSupportGuide } from '@/lib/parent/parentSupportGuide'
 import { buildIndividualDevelopmentPlan, buildRoleSpecificIdpView } from '@/lib/player/individualDevelopmentPlan'
 import type { IdpParentView } from '@/lib/player/individualDevelopmentPlan'
+import { ParentDevelopmentPlanCard } from '@/app/parent/_components/ParentDevelopmentPlanCard'
 
 const CATEGORY_LABELS: Record<string, string> = {
   technical: 'Technical Development',
@@ -33,6 +34,9 @@ export default async function ParentDevelopmentPage() {
   let currentLevelName: string | null = null
   let supportGuide: ReturnType<typeof buildParentSupportGuide> | null = null
   let noAccess = false
+  // Sprint 1113-1120: blueprint-sourced parent plan (resolved player IDs stored here)
+  let resolvedPlayerId: string | null = null
+  let resolvedAcademyId: string | null = null
 
   if (user) {
     const rawDb = supabase as any
@@ -81,6 +85,9 @@ export default async function ParentDevelopmentPage() {
             noAccess = true
           } else {
             childFirstName = playerRow.first_name ?? playerRow.full_name ?? null
+            // Sprint 1113-1120: capture for blueprint card rendering
+            resolvedPlayerId = playerRow.id
+            resolvedAcademyId = academyId
 
             // Active mission (parent-safe fields only)
             const { data: priority } = await rawDb
@@ -283,6 +290,17 @@ export default async function ParentDevelopmentPage() {
                 </p>
               </div>
             </div>
+          )}
+
+          {/* Blueprint-sourced Development Plan — Sprint 1113-1120
+              Only shown if show_to_parent=true on player_development_summary.
+              Director must explicitly enable this. No raw scores or coach notes. */}
+          {resolvedPlayerId && resolvedAcademyId && (
+            <ParentDevelopmentPlanCard
+              playerId={resolvedPlayerId}
+              academyId={resolvedAcademyId}
+              childFirstName={name}
+            />
           )}
 
           {/* Links */}

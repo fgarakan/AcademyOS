@@ -20,6 +20,8 @@ import { getVisibleBadgesForPlayer, BADGE_DEFINITIONS } from '@/lib/badges/badge
 import type { BadgeEligibilityReport } from '@/lib/badges/badgeEligibilityEngine'
 import { buildPlayerProgressIndicators } from '@/lib/player/progressIndicators'
 import type { ProgressStatusSummary } from '@/lib/player/evidenceQueries'
+// Sprint 1113-1120: assigned missions from blueprint
+import { PlayerAssignedMissionsSection } from './_components/PlayerAssignedMissionsSection'
 
 
 export default async function PlayerHome() {
@@ -34,6 +36,9 @@ export default async function PlayerHome() {
   let currentLevelStage: string | null = null
   let nextLevelDisplayName: string | null = null
   let missionCopy: PlayerMissionCopy | null = null
+  // Sprint 1113-1120: player identity for blueprint missions
+  let resolvedPlayerId: string | null = null
+  let resolvedAcademyId: string | null = null
   interface SessionHistoryItem {
     sessionName: string | null
     date: string
@@ -70,6 +75,9 @@ export default async function PlayerHome() {
         noMappingReason = 'no_player_link'
       } else {
         playerFirstName = playerRow.first_name ?? playerRow.full_name ?? null
+        // Sprint 1113-1120: capture for blueprint missions
+        resolvedPlayerId = playerRow.id
+        resolvedAcademyId = academyId
 
         // 3. Get curriculum state
         const { data: csRows } = await rawDb
@@ -372,6 +380,18 @@ export default async function PlayerHome() {
         tryThisNext={missionCopy?.tryThisNext ?? null}
         coachIsWatchingFor={missionCopy?.coachIsWatchingFor ?? null}
       />
+
+      {/* ── Blueprint Missions — Sprint 1113-1120 ─────────────── */}
+      {/* Shows active missions from player_mission_assignments (migration 076).
+          Player sees mission title and description only — no scores or coach notes.
+          Falls back gracefully if migration not applied or player not linked. */}
+      {resolvedPlayerId && resolvedAcademyId && (
+        <PlayerAssignedMissionsSection
+          playerId={resolvedPlayerId}
+          academyId={resolvedAcademyId}
+          playerFirstName={playerFirstName ?? 'Player'}
+        />
+      )}
 
       {/* ── Ask DONNA ────────────────────────────────────────── */}
       <div className="rounded-xl bg-surface border border-border px-4 py-4 space-y-3">

@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-02 — Sprint 1121 — Parent + Player Portal Development Center Wiring V1
+
+- `src/app/parent/_components/ParentDevelopmentPlanCard.tsx` (new): Server Component. Reads `player_development_summary` where `show_to_parent=true`. Shows: approval badge, parent_summary, development_focus, things_to_work_on, student_friendly_summary (30-day preview). NO raw scores, NO coach notes, NO internal priorities. Director must explicitly enable show_to_parent before content appears.
+- `src/app/player/_components/PlayerAssignedMissionsSection.tsx` (new): Server Component. Reads `player_mission_assignments` where `status='active'`. Shows mission_label and mission_description only — no scores, no coach notes. Graceful fallback if migration 076 not applied.
+- `src/app/parent/development/page.tsx` (modified): Added `ParentDevelopmentPlanCard` import and render after existing support guide. Captures `resolvedPlayerId` and `resolvedAcademyId` when player is resolved.
+- `src/app/player/page.tsx` (modified): Added `PlayerAssignedMissionsSection` import and render between Today's Mission and Ask DONNA sections. Blueprint missions shown only when player is resolved.
+- TypeScript: clean.
+- Safety: Parent sees only `show_to_parent=true` content. Player sees only `status='active'` missions. Neither sees coachBrief, coach notes, or assessment scores.
+
 ## 2026-06-02 — Mega Sprint 1113-1120 — Player Development Center and Reusable Assessment Engine V1
 
 **Phase 1+2+7 — Player Development Center UI (3 new tabs)**
