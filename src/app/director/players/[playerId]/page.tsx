@@ -67,6 +67,10 @@ import { QuickAssessmentPanel } from './QuickAssessmentPanel'
 import { QuickAssessmentHistoryCard } from './QuickAssessmentHistoryCard'
 import { AssessmentHistoryCard } from './AssessmentHistoryCard'
 import { PlayerCommandCenterCard } from '@/components/player/PlayerCommandCenterCard'
+// Sprint 1113-1120: Development Center tabs
+import { DevelopmentCenterTab } from './_components/DevelopmentCenterTab'
+import { MissionsTab } from './_components/MissionsTab'
+import { AssessmentsTab } from './_components/AssessmentsTab'
 import { GateHistoryTimeline, type GateAuditEntry } from '@/components/player/GateHistoryTimeline'
 import { DraftSummaryUpdateButton } from './DraftSummaryUpdateButton'
 import { PlayerSessionHistoryPanel } from './PlayerSessionHistoryPanel'
@@ -1667,6 +1671,9 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         fitness={fitnessSlot}
         notes={notesSlot}
         sessionHistory={sessionHistorySlot}
+        development={<DevelopmentCenterTab playerId={params.playerId} academyId={academyId} />}
+        missions={<MissionsTab playerId={params.playerId} academyId={academyId} />}
+        assessments={<AssessmentsTab playerId={params.playerId} academyId={academyId} />}
       />
     </div>
   )

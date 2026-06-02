@@ -2,6 +2,35 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1113-1120 — Player Development Center and Reusable Assessment Engine V1
+
+**Phase 1+2+7 — Player Development Center UI (3 new tabs)**
+- `src/app/director/players/[playerId]/_components/DevelopmentCenterTab.tsx` (new): Server Component. Fetches active `player_development_blueprints` row. Shows: current level, pending missions alert, strengths/gaps grid, 4-pathway priority cards, 30-day plan, coach focus areas, DONNA brief collapsible. Empty state when no blueprint. Graceful fallback when migration 078 not applied.
+- `src/app/director/players/[playerId]/_components/MissionsTab.tsx` (new): Server Component. Fetches `player_mission_assignments`. Groups by pending_review/active/completed/other. Approve and Skip form buttons for pending_review missions.
+- `src/app/director/players/[playerId]/_components/AssessmentsTab.tsx` (new): Server Component. Reads from `assessments` (always available) + `assessment_events` (graceful fallback). Shows assessment history with per-domain score bars and change arrows. Blueprint recommendations from completed events.
+- `src/app/director/players/[playerId]/_components/missionFormActions.ts` (new): Form-compatible wrappers for `approveMissionAction` and `skipMissionAction` with correct `(id, FormData)` signature for Next.js 14 form actions.
+- `src/app/director/players/[playerId]/_components/PlayerProfileTabs.tsx` (modified): Added `development`, `missions`, `assessments` tabs. New tabs are optional props — won't break existing callers. Blueprint tab appears before Skill Path.
+- `src/app/director/players/[playerId]/page.tsx` (modified): Added 3 import statements and 3 new tab slot assignments. Minimal change — each tab is self-contained.
+
+**Phase 3+4 — Reusable Assessment Engine**
+- `supabase/migrations/079_assessment_events.sql` (new): `assessment_events` table with 10-type CHECK, 3-mode CHECK, 6-status lifecycle, FK to assessments, previous_assessment_id for comparison context, blueprint_recommendation field. Full RLS.
+- `src/app/director/players/[playerId]/assessmentEventActions.ts` (new): `createAssessmentEventAction` (creates event, links previous assessment) and `completeAssessmentEventAction` (creates scored assessment, runs comparison engine, generates blueprint recommendation, writes audit log).
+
+**Phase 5+6 — Assessment Comparison + Blueprint Update**
+- `src/lib/blueprint/assessmentComparisonEngine.ts` (new): Pure TypeScript. `compareAssessments(prev, current)` → per-domain change labels (8 tiers), derived flags (overallImproved, hasSignificantDecline, readyForLevelReview, blueprintUpdateRecommended), human-readable summaryText.
+- `src/lib/blueprint/blueprintUpdateRecommendationEngine.ts` (new): Pure TypeScript. `generateBlueprintUpdateRecommendations(comparison)` → ordered recommendations: keep / update_priorities / archive_and_regenerate / trigger_level_review / trigger_parent_update / flag_concern. All high-priority recs route to review queue; all require director approval.
+
+**Phase 8 — DONNA Development Intelligence**
+- `src/lib/donna/donnaPlayerBlueprintContext.ts` (modified): Added `DevelopmentIntelligenceInput` interface extending `BlueprintContextInput`. Added 5 new intents: `is_ready_for_reassessment`, `is_ready_for_level_review`, `what_improved_since_last_assessment`, `what_missions_should_stay_active`, `what_is_blocking_level_movement`. All answers data-driven; explicit "no movement without approval" language in level-related answers.
+
+**Phase 10 — Docs**
+- `docs/architecture/PLAYER_DEVELOPMENT_CENTER.md` (new): Tab architecture, component responsibilities, role label mapping, parent/player safety.
+- `docs/architecture/REUSABLE_ASSESSMENT_ENGINE.md` (new): Event table design, comparison engine, recommendation engine, reassessment workflow, DONNA extensions.
+- `docs/qa/PLAYER_DEVELOPMENT_CENTER_QA.md` (new): QA checklist.
+- `docs/qa/ASSESSMENT_EVENT_ENGINE_QA.md` (new): QA checklist.
+
+**TypeScript:** clean.
+
 ## 2026-06-02 — Sprint 1112 — Player Development Blueprint System V1
 
 - `supabase/migrations/078_player_development_blueprints.sql` (new): `player_development_blueprints` table. Stores assessment snapshot, 4-pathway priorities (JSONB), 30-day plan, coach brief, parent-safe summary, DONNA brief, initial mission context. Status lifecycle: active/superseded/archived. `superseded_by` FK for blueprint evolution chain. RLS: directors see all, coaches see active, players see own active. Indexed for single-player active lookup.

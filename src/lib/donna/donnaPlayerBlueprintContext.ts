@@ -58,6 +58,12 @@ export type BlueprintQuestionIntent =
   | 'player_home_practice'
   | 'thirty_day_plan'
   | 'mission_status'
+  // Sprint 1113-1120: Development intelligence questions
+  | 'is_ready_for_reassessment'
+  | 'is_ready_for_level_review'
+  | 'what_improved_since_last_assessment'
+  | 'what_missions_should_stay_active'
+  | 'what_is_blocking_level_movement'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -230,6 +236,145 @@ export function donnaAnswerMissionStatus(input: BlueprintContextInput): string {
     `Review and approve them to make them visible to the coach and player.`
 }
 
+// ── Sprint 1113-1120: Development intelligence answer functions ──────────────
+
+export interface DevelopmentIntelligenceInput extends BlueprintContextInput {
+  /** Days since last assessment (null if no previous assessment) */
+  daysSinceLastAssessment: number | null
+  /** Number of active missions */
+  activeMissionCount: number
+  /** Level gates met (completed) */
+  gatesMet: number
+  /** Total level gates required */
+  gatesTotal: number
+  /** Has any recent session data (last 30 days) */
+  hasRecentSessions: boolean
+  /** Assessment comparison summary from assessmentComparisonEngine (null if only one assessment) */
+  comparisonSummary: string | null
+}
+
+export function donnaAnswerIsReadyForReassessment(input: DevelopmentIntelligenceInput): string {
+  const { playerFirstName, daysSinceLastAssessment } = input
+
+  if (daysSinceLastAssessment === null) {
+    return `No previous assessment found for ${playerFirstName}. The initial onboarding placement serves as the baseline. ` +
+      `A first reassessment is typically recommended 4–6 weeks after placement.`
+  }
+
+  if (daysSinceLastAssessment < 28) {
+    return `${playerFirstName} was last assessed ${daysSinceLastAssessment} days ago. ` +
+      `A reassessment is generally most valuable after at least 4 weeks of training. ` +
+      `No reassessment is recommended yet.`
+  }
+
+  if (daysSinceLastAssessment >= 28 && daysSinceLastAssessment < 84) {
+    return `${playerFirstName} was last assessed ${daysSinceLastAssessment} days ago. ` +
+      `This is a good time to consider a reassessment — 4–12 weeks of training typically produces measurable changes. ` +
+      `A standard reassessment is recommended.`
+  }
+
+  return `${playerFirstName} has not been assessed for ${daysSinceLastAssessment} days. ` +
+    `A reassessment is overdue. Consider scheduling one soon to update the development blueprint.`
+}
+
+export function donnaAnswerIsReadyForLevelReview(input: DevelopmentIntelligenceInput): string {
+  const { playerFirstName, gatesMet, gatesTotal, activeMissionCount } = input
+
+  if (gatesTotal === 0) {
+    return `No level gate requirements are configured for ${playerFirstName}'s current level. ` +
+      `Contact the curriculum administrator or set up level gates to enable automated level readiness assessment.`
+  }
+
+  const gateCompletionPct = Math.round((gatesMet / gatesTotal) * 100)
+
+  if (gateCompletionPct < 50) {
+    return `${playerFirstName} has completed ${gatesMet} of ${gatesTotal} level gate requirements (${gateCompletionPct}%). ` +
+      `A level review is not recommended yet. Continue focusing on the active missions and current development priorities.`
+  }
+
+  if (gateCompletionPct >= 50 && gateCompletionPct < 80) {
+    return `${playerFirstName} has completed ${gatesMet} of ${gatesTotal} level gate requirements (${gateCompletionPct}%). ` +
+      `Progress is solid but not yet at the readiness threshold. ` +
+      `${activeMissionCount > 0 ? `${activeMissionCount} active mission${activeMissionCount > 1 ? 's' : ''} are still in progress.` : ''} ` +
+      `A level review in the next 4–6 weeks would be worth planning.`
+  }
+
+  return `${playerFirstName} has completed ${gatesMet} of ${gatesTotal} level gate requirements (${gateCompletionPct}%). ` +
+    `This player may be approaching readiness for a level review. ` +
+    `Recommend initiating a level readiness review — no movement happens without your explicit approval.`
+}
+
+export function donnaAnswerWhatImprovedSinceLastAssessment(input: DevelopmentIntelligenceInput): string {
+  const { playerFirstName, comparisonSummary, daysSinceLastAssessment } = input
+
+  if (!comparisonSummary) {
+    if (daysSinceLastAssessment === null) {
+      return `No previous assessment exists for ${playerFirstName} to compare against. The next assessment will produce a comparison.`
+    }
+    return `A comparison is not available yet. Complete a new assessment and the system will generate a comparison automatically.`
+  }
+
+  return `Here is the development comparison for ${playerFirstName}:\n\n${comparisonSummary}`
+}
+
+export function donnaAnswerWhatMissionsShouldStayActive(input: DevelopmentIntelligenceInput): string {
+  const { playerFirstName, activeMissionCount, pendingMissionCount, thirtyDayPlan } = input
+
+  if (activeMissionCount === 0 && pendingMissionCount === 0) {
+    return `${playerFirstName} has no active or pending missions. ` +
+      `Generate a new development blueprint or assign missions manually from the Missions tab.`
+  }
+
+  if (pendingMissionCount > 0) {
+    return `${playerFirstName} has ${pendingMissionCount} mission${pendingMissionCount > 1 ? 's' : ''} waiting for your review. ` +
+      `Approve the ones that align with the current development priorities — reject or skip any that are no longer relevant.`
+  }
+
+  let answer = `${playerFirstName} currently has ${activeMissionCount} active mission${activeMissionCount > 1 ? 's' : ''}. `
+
+  if (thirtyDayPlan) {
+    answer += `Based on the current 30-day plan, missions focused on **${thirtyDayPlan.skillFocus}** ` +
+      `and **${thirtyDayPlan.mentalFocus}** are the highest-priority ones to keep active. ` +
+      `Any mission not connected to the current development priorities can be archived to reduce cognitive load.`
+  } else {
+    answer += `Review the missions in the Missions tab and keep those that align with the player's current development focus.`
+  }
+
+  return answer
+}
+
+export function donnaAnswerWhatIsBlockingLevelMovement(input: DevelopmentIntelligenceInput): string {
+  const { playerFirstName, gatesMet, gatesTotal, gaps, thirtyDayPlan } = input
+
+  const parts: string[] = []
+
+  if (gatesTotal > 0) {
+    const remaining = gatesTotal - gatesMet
+    if (remaining > 0) {
+      parts.push(`${remaining} level gate requirement${remaining > 1 ? 's' : ''} not yet met (${gatesMet}/${gatesTotal} complete).`)
+    } else {
+      parts.push(`All ${gatesTotal} level gate requirements are met.`)
+    }
+  }
+
+  if (gaps.length > 0) {
+    const topGaps = gaps.slice(0, 3)
+    parts.push(`Current development gaps: ${topGaps.join(', ')}.`)
+  }
+
+  if (thirtyDayPlan) {
+    parts.push(`Current 30-day focus: ${thirtyDayPlan.skillFocus} (skill), ${thirtyDayPlan.competitionFocus} (competition).`)
+  }
+
+  if (parts.length === 0) {
+    return `No specific blockers identified for ${playerFirstName}. Review the level gate requirements and recent assessments for a complete picture.`
+  }
+
+  return `For ${playerFirstName}, the following are blocking or delaying level movement:\n\n` +
+    parts.map(p => `• ${p}`).join('\n') + `\n\n` +
+    `No level movement happens automatically — a level readiness review is required and you must approve any change.`
+}
+
 // ── Router ────────────────────────────────────────────────────────────────────
 
 /**
@@ -239,18 +384,40 @@ export function donnaAnswerMissionStatus(input: BlueprintContextInput): string {
  */
 export function donnaBlueprintAnswer(
   intent: BlueprintQuestionIntent,
-  input: BlueprintContextInput,
+  input: BlueprintContextInput | DevelopmentIntelligenceInput,
   requestingRole: 'academy_director' | 'head_coach' | 'coach' | 'parent' | 'player' = 'academy_director',
 ): string {
   switch (intent) {
-    case 'why_placed_here':    return donnaAnswerWhyPlacedHere(input)
-    case 'coach_first_focus':  return donnaAnswerCoachFirstFocus(input)
-    case 'player_strengths':   return donnaAnswerPlayerStrengths(input)
-    case 'player_gaps':        return donnaAnswerPlayerGaps(input)
-    case 'parent_summary':     return donnaAnswerParentSummary(input, requestingRole)
-    case 'player_home_practice': return donnaAnswerHomePractice(input)
-    case 'thirty_day_plan':    return donnaAnswerThirtyDayPlan(input)
-    case 'mission_status':     return donnaAnswerMissionStatus(input)
-    default:                   return `Blueprint question not recognised. Available topics: placement rationale, coach focus, strengths, development areas, parent summary, home practice, 30-day plan, mission status.`
+    case 'why_placed_here':       return donnaAnswerWhyPlacedHere(input)
+    case 'coach_first_focus':     return donnaAnswerCoachFirstFocus(input)
+    case 'player_strengths':      return donnaAnswerPlayerStrengths(input)
+    case 'player_gaps':           return donnaAnswerPlayerGaps(input)
+    case 'parent_summary':        return donnaAnswerParentSummary(input, requestingRole)
+    case 'player_home_practice':  return donnaAnswerHomePractice(input)
+    case 'thirty_day_plan':       return donnaAnswerThirtyDayPlan(input)
+    case 'mission_status':        return donnaAnswerMissionStatus(input)
+    // Sprint 1113-1120: development intelligence
+    case 'is_ready_for_reassessment':
+      return 'daysSinceLastAssessment' in input
+        ? donnaAnswerIsReadyForReassessment(input as DevelopmentIntelligenceInput)
+        : `Development intelligence data not available for this question.`
+    case 'is_ready_for_level_review':
+      return 'gatesTotal' in input
+        ? donnaAnswerIsReadyForLevelReview(input as DevelopmentIntelligenceInput)
+        : `Level gate data not available.`
+    case 'what_improved_since_last_assessment':
+      return 'comparisonSummary' in input
+        ? donnaAnswerWhatImprovedSinceLastAssessment(input as DevelopmentIntelligenceInput)
+        : `Assessment comparison data not available.`
+    case 'what_missions_should_stay_active':
+      return 'activeMissionCount' in input
+        ? donnaAnswerWhatMissionsShouldStayActive(input as DevelopmentIntelligenceInput)
+        : `Mission data not available.`
+    case 'what_is_blocking_level_movement':
+      return 'gatesTotal' in input
+        ? donnaAnswerWhatIsBlockingLevelMovement(input as DevelopmentIntelligenceInput)
+        : `Level gate data not available.`
+    default:
+      return `Blueprint question not recognised. Available topics: placement rationale, coach focus, strengths, development areas, parent summary, home practice, 30-day plan, mission status, reassessment readiness, level review readiness, improvement since last assessment, mission recommendations, level movement blockers.`
   }
 }
