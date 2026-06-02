@@ -17,6 +17,7 @@ import { loadWrapUpSessionSelector } from '@/lib/coach/wrapUpSessionSelector'
 import { loadWrapUpStatusMap, type WrapUpDisplayStatus } from '@/lib/coach/wrapUpStatusMap'
 import { CoachOnCourtActionsBar } from './_components/CoachOnCourtActionsBar'
 import { CoachDailyBriefCard } from './_components/CoachDailyBriefCard'
+import { DonnaScreenBriefStatic } from '@/components/donna/DonnaScreenBrief'
 
 function deriveWrapUpBadge(
   sessionStatus: string,
@@ -110,6 +111,27 @@ export default async function CoachHome() {
     day:     'numeric',
   })
 
+  // DONNA UI Constitution — compute coach home brief
+  const coachBrief = (() => {
+    const name = coachFirstName ?? 'Coach'
+    if (todaySessions.length === 0 && pendingWrapUpCount === 0) {
+      return `No sessions today, ${name}. Check your upcoming schedule or add a quick note.`
+    }
+    const parts: string[] = []
+    if (todaySessions.length > 0) {
+      const nextSession = todaySessions.find(s => s.status !== 'completed' && s.status !== 'cancelled')
+      const nextName = nextSession?.name ?? todaySessions[0]?.name ?? 'a session'
+      const nextTime = (nextSession as any)?.scheduled_time
+        ? ` at ${(nextSession as any).scheduled_time}`
+        : ''
+      parts.push(`You have ${todaySessions.length} session${todaySessions.length !== 1 ? 's' : ''} today — ${nextName}${nextTime} is next.`)
+    }
+    if (pendingWrapUpCount > 0) {
+      parts.push(`${pendingWrapUpCount} wrap-up${pendingWrapUpCount !== 1 ? 's' : ''} need${pendingWrapUpCount === 1 ? 's' : ''} submitting.`)
+    }
+    return parts.join(' ')
+  })()
+
   return (
     <div className="space-y-6">
 
@@ -121,6 +143,14 @@ export default async function CoachHome() {
         </h1>
         <p className="page-subtitle">{today}</p>
       </div>
+
+      {/* ── DONNA UI Constitution Brief — Sprint 1124 ─────────────── */}
+      <DonnaScreenBriefStatic
+        brief={coachBrief}
+        primaryActionLabel={pendingWrapUpCount > 0 ? 'Submit Wrap-Up' : todaySessions.length > 0 ? 'Open Session' : undefined}
+        primaryActionHref={pendingWrapUpCount > 0 ? '/coach/sessions' : todaySessions.length > 0 ? `/coach/sessions/${todaySessions[0]?.id ?? ''}` : undefined}
+        emphasis={pendingWrapUpCount > 0 ? 'urgent' : 'normal'}
+      />
 
       {/* ── Wrap-up alert ────────────────────────────────────────── */}
       {/* Sprint 976: data-donna-focus-id so DONNA can highlight sessions needing wrap-up */}

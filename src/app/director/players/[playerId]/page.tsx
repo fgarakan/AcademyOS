@@ -71,6 +71,8 @@ import { PlayerCommandCenterCard } from '@/components/player/PlayerCommandCenter
 import { DevelopmentCenterTab } from './_components/DevelopmentCenterTab'
 import { MissionsTab } from './_components/MissionsTab'
 import { AssessmentsTab } from './_components/AssessmentsTab'
+// Sprint 1124-1130: Constitution hero — 5 key signals above all tabs
+import { PlayerProfileConstitutionHero } from './_components/PlayerProfileConstitutionHero'
 import { GateHistoryTimeline, type GateAuditEntry } from '@/components/player/GateHistoryTimeline'
 import { DraftSummaryUpdateButton } from './DraftSummaryUpdateButton'
 import { PlayerSessionHistoryPanel } from './PlayerSessionHistoryPanel'
@@ -820,6 +822,28 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     }
   }
 
+  // ─── Sprint 1124: Mission counts for constitution hero ────────────────────
+  // Active and pending missions from player_mission_assignments (migration 076).
+  // Best-effort — hero renders with zero counts if table not yet migrated.
+  let profileActiveMissionCount = 0
+  let profilePendingMissionCount = 0
+  try {
+    const { count: activeCount } = await rawDb
+      .from('player_mission_assignments')
+      .select('*', { count: 'exact', head: true })
+      .eq('player_id', params.playerId)
+      .eq('academy_id', academyId)
+      .eq('status', 'active')
+    const { count: pendingCount } = await rawDb
+      .from('player_mission_assignments')
+      .select('*', { count: 'exact', head: true })
+      .eq('player_id', params.playerId)
+      .eq('academy_id', academyId)
+      .eq('status', 'pending_review')
+    profileActiveMissionCount  = (activeCount  as number | null) ?? 0
+    profilePendingMissionCount = (pendingCount as number | null) ?? 0
+  } catch { /* migration 076 not yet applied */ }
+
   // ─── Observations — fetched early so overviewSlot can reference them ────
   // rawDb cast avoids TS2589 on the multi-join select; RLS enforces academy scoping.
   const { data: rawObs } = await rawDb
@@ -838,6 +862,28 @@ export default async function PlayerProfilePage({ params }: PageProps) {
   // ─── Tab 1: Overview ─────────────────────────────────────────────────────
   const overviewSlot = (
     <div className="space-y-6">
+
+      {/* Sprint 1124 — Constitution Hero: 5 key signals above all detail cards */}
+      <PlayerProfileConstitutionHero
+        playerFirstName={player.first_name ?? ''}
+        playerLastName={player.last_name ?? ''}
+        playerStatus={player.status ?? null}
+        currentLevelName={curriculumSummary?.current_level_name ?? null}
+        currentStage={(curriculumSummary as any)?.stage ?? null}
+        nextLevelName={nextCurriculumLevel?.display_name ?? null}
+        advancementEligible={curriculumSummary?.advancement_eligible ?? false}
+        topPriorities={enrichedActivePriorities.slice(0, 3).map(p => ({
+          title: p.title,
+          urgency: p.urgency ?? null,
+          category: p.category ?? null,
+        }))}
+        activeMissionCount={profileActiveMissionCount}
+        pendingMissionCount={profilePendingMissionCount}
+        latestAssessmentDate={allAssessments[0]?.assessed_date ?? null}
+        latestAssessmentOverallScore={allAssessments[0]?.overall_score ?? null}
+        playerId={params.playerId}
+        academyId={academyId}
+      />
 
       {/* Command Center — answers the 6 key director questions at a glance */}
       <PlayerCommandCenterCard

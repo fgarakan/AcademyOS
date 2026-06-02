@@ -2,6 +2,42 @@
 
 ---
 
+## 2026-06-02 — Mega Sprint 1124-1130 — Player Profile Review Queue Coach Home Constitution Pass V1
+
+**Phase 7 — Shared Constitution Components**
+- `src/components/donna/DecisionCard.tsx` (new): Constitution-compliant decision item card. Shows: type label, title, why-it-matters (1 sentence), risk (high/medium/low with border color), status icon, age in days, DONNA recommendation line, inline action slot. Risk 'high' gets orange border and badge. Links to detail href.
+- `src/components/donna/CollapsedDetailSection.tsx` (new): Client Component wrapper that hides complex content behind a toggle. Shows label + count badge. Default collapsed. `defaultExpanded` prop for sections that should start open. Used for: assessment history, blueprint details, coach notes, placement history.
+- `src/components/donna/AskDonnaInlinePrompt.tsx` (new): Inline chip that dispatches `donna:open` event with pre-filled question. Used in player profile for "Why this level?", "What's blocking?", "Coach focus?", "Parent update?" prompts. Also exports `PlayerProfileDonnaPrompts` with 4 pre-built chips for any player.
+
+**Phase 1 — Player Profile Constitution Pass**
+- `src/app/director/players/[playerId]/_components/PlayerProfileConstitutionHero.tsx` (new): Server Component. 5-signal player header placed above all tabs and cards. Signals: (1) current level, (2) next target + advancement eligible flag, (3) top priority, (4) active/pending mission count, (5) Ask DONNA inline prompts. Constitution brief computed from real data: player name, level, top priority, pending missions, assessment age. Primary action = "Review Missions" or "Review Level Readiness" depending on state. Status alert for non-active players.
+- `src/app/director/players/[playerId]/page.tsx` (modified): Added `PlayerProfileConstitutionHero` import. Added mission count fetch (try/catch, graceful fallback). Wired hero at top of overview slot above `PlayerCommandCenterCard`.
+
+**Phase 3 — Coach Home Constitution Pass**
+- `src/app/coach/page.tsx` (modified): Added `DonnaScreenBriefStatic` import. Added `coachBrief` computation (session count + next session name + pending wrap-ups). Brief placed between page header and wrap-up alert. Urgency = 'urgent' when wrap-ups pending. Primary action = "Submit Wrap-Up" or "Open Session".
+
+**Phase 2/8 — QA + Pattern Docs**
+- `docs/architecture/DONNA_FIRST_SCREEN_PATTERNS.md` (new): Pattern library. 6 reusable patterns: Page Header with Brief, PlayerProfileConstitutionHero, DecisionCard, CollapsedDetailSection, AskDonnaInlinePrompt, DonnaSimplifiedPageHeader. When-to-use table, brief computation algorithm, screen migration status table.
+- `docs/qa/PLAYER_PROFILE_CONSTITUTION_QA.md` (new): Constitution checks, hero verification, safety checks, remaining gaps.
+- `docs/qa/REVIEW_QUEUE_CONSTITUTION_QA.md` (new): Constitution check (already compliant via DonnaReviewBriefPanel Sprint 1046), nav label check, remaining gaps.
+- `docs/qa/COACH_HOME_CONSTITUTION_QA.md` (new): Constitution checks, brief verification, coach portal safety checks, remaining gaps.
+
+**Review Queue — note:** Already compliant. `DonnaReviewBriefPanel` (Sprint 1046) provides the DONNA brief. Nav label already says "Approvals" (Sprint 1060). No changes needed.
+
+**TypeScript:** clean.
+
+**Acceptance criteria status:**
+- ✅ Player Profile has DONNA screen brief (in constitution hero)
+- ✅ Overview shows max 5 key visible data points (5-signal hero cards)
+- ✅ No raw coach notes in default view
+- ✅ No parent/player unsafe content exposed
+- ✅ Primary next action is obvious (approve missions / level review)
+- ✅ Review Queue has DONNA brief (existing DonnaReviewBriefPanel)
+- ✅ Coach Home has DONNA brief
+- ✅ Coach sees max 5 actionable items
+- ✅ Quick Capture and Wrap-Up are obvious on coach home
+- ✅ TypeScript clean
+
 ## 2026-06-02 — Sprint 1123 — DONNA-First Simple UI Constitution Pass V1
 
 **Constitution Documents**
