@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS assessment_templates (
 ALTER TABLE assessment_templates ENABLE ROW LEVEL SECURITY;
 
 -- Global template: readable by all authenticated users.
+DROP POLICY IF EXISTS "assessment_templates_select_global"
+  ON assessment_templates;
+
 CREATE POLICY "assessment_templates_select_global"
   ON assessment_templates FOR SELECT
   USING (
@@ -31,6 +34,9 @@ CREATE POLICY "assessment_templates_select_global"
   );
 
 -- Academy clone: readable by members of that academy.
+DROP POLICY IF EXISTS "assessment_templates_select_academy"
+  ON assessment_templates;
+
 CREATE POLICY "assessment_templates_select_academy"
   ON assessment_templates FOR SELECT
   USING (
@@ -42,6 +48,9 @@ CREATE POLICY "assessment_templates_select_academy"
   );
 
 -- Academy clone: directors and head coaches can insert/update their own.
+DROP POLICY IF EXISTS "assessment_templates_write_academy"
+  ON assessment_templates;
+
 CREATE POLICY "assessment_templates_write_academy"
   ON assessment_templates FOR ALL
   USING (
@@ -85,6 +94,9 @@ CREATE TABLE IF NOT EXISTS assessment_template_sections (
 
 ALTER TABLE assessment_template_sections ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "assessment_template_sections_select"
+  ON assessment_template_sections;
+
 CREATE POLICY "assessment_template_sections_select"
   ON assessment_template_sections FOR SELECT
   USING (
@@ -97,6 +109,9 @@ CREATE POLICY "assessment_template_sections_select"
          )
     )
   );
+
+DROP POLICY IF EXISTS "assessment_template_sections_write"
+  ON assessment_template_sections;
 
 CREATE POLICY "assessment_template_sections_write"
   ON assessment_template_sections FOR ALL
@@ -149,6 +164,9 @@ CREATE TABLE IF NOT EXISTS assessment_template_skills (
 
 ALTER TABLE assessment_template_skills ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "assessment_template_skills_select"
+  ON assessment_template_skills;
+
 CREATE POLICY "assessment_template_skills_select"
   ON assessment_template_skills FOR SELECT
   USING (
@@ -161,6 +179,9 @@ CREATE POLICY "assessment_template_skills_select"
          )
     )
   );
+
+DROP POLICY IF EXISTS "assessment_template_skills_write"
+  ON assessment_template_skills;
 
 CREATE POLICY "assessment_template_skills_write"
   ON assessment_template_skills FOR ALL
@@ -202,6 +223,9 @@ CREATE TABLE IF NOT EXISTS assessment_template_versions (
 
 ALTER TABLE assessment_template_versions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "assessment_template_versions_select"
+  ON assessment_template_versions;
+
 CREATE POLICY "assessment_template_versions_select"
   ON assessment_template_versions FOR SELECT
   USING (
@@ -214,6 +238,9 @@ CREATE POLICY "assessment_template_versions_select"
       AND auth.role() = 'authenticated'
     )
   );
+
+DROP POLICY IF EXISTS "assessment_template_versions_insert"
+  ON assessment_template_versions;
 
 CREATE POLICY "assessment_template_versions_insert"
   ON assessment_template_versions FOR INSERT
@@ -244,6 +271,9 @@ CREATE TABLE IF NOT EXISTS academy_assessment_templates (
 
 ALTER TABLE academy_assessment_templates ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "academy_assessment_templates_select"
+  ON academy_assessment_templates;
+
 CREATE POLICY "academy_assessment_templates_select"
   ON academy_assessment_templates FOR SELECT
   USING (
@@ -252,6 +282,9 @@ CREATE POLICY "academy_assessment_templates_select"
       WHERE profile_id = auth.uid() AND is_active = true
     )
   );
+
+DROP POLICY IF EXISTS "academy_assessment_templates_write"
+  ON academy_assessment_templates;
 
 CREATE POLICY "academy_assessment_templates_write"
   ON academy_assessment_templates FOR ALL
