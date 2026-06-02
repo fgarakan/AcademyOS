@@ -64,6 +64,8 @@ export type BlueprintQuestionIntent =
   | 'what_improved_since_last_assessment'
   | 'what_missions_should_stay_active'
   | 'what_is_blocking_level_movement'
+  // Placement recommendation intelligence
+  | 'explain_placement_recommendation'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -375,6 +377,81 @@ export function donnaAnswerWhatIsBlockingLevelMovement(input: DevelopmentIntelli
     `No level movement happens automatically — a level readiness review is required and you must approve any change.`
 }
 
+// ── Placement recommendation context ─────────────────────────────────────────
+
+export interface PlacementRecommendationContextInput {
+  recommendedLevelName: string
+  recommendedGroupName: string | null
+  confidenceScore: number
+  confidenceTier: 'high' | 'medium' | 'low'
+  topReasons: string[]
+  limitingFactors: string[]
+  riskNotes: string[]
+  donnaExplanation: string | null
+  checkAfter4to6Weeks: string[]
+  recommendedReassessmentWeeks: number | null
+  decision: string | null // 'accepted' | 'overridden' | 'trial' | 'deferred' | null
+  overrideReason: string | null
+  directorNote: string | null
+  finalLevelName: string | null
+}
+
+export function donnaAnswerExplainPlacementRecommendation(
+  playerFirstName: string,
+  rec: PlacementRecommendationContextInput,
+  requestingRole: 'academy_director' | 'head_coach' | 'coach' | 'parent' | 'player' = 'academy_director',
+): string {
+  // Parents and players never see placement recommendation details
+  if (requestingRole === 'parent') {
+    return `Your academy director is working on ${playerFirstName}'s development placement. You'll be notified when it's finalised.`
+  }
+  if (requestingRole === 'player') {
+    return `Your coach and director are setting up your development journey. More details will be shared with you soon.`
+  }
+
+  if (rec.donnaExplanation) return rec.donnaExplanation
+
+  // Fallback if full explanation not available
+  const parts: string[] = [
+    `**DONNA Placement Recommendation for ${playerFirstName}:**`,
+    `Recommended level: ${rec.recommendedLevelName}`,
+    rec.recommendedGroupName ? `Recommended group: ${rec.recommendedGroupName}` : '',
+    `Confidence: ${rec.confidenceScore}% (${rec.confidenceTier})`,
+    '',
+    '**Top reasons:**',
+    ...rec.topReasons.map(r => `• ${r}`),
+  ].filter(Boolean)
+
+  if (rec.limitingFactors.length > 0) {
+    parts.push('', '**What could make this wrong:**')
+    rec.limitingFactors.forEach(f => parts.push(`• ${f}`))
+  }
+
+  if (rec.checkAfter4to6Weeks.length > 0) {
+    parts.push('', '**Check after 4–6 weeks:**')
+    rec.checkAfter4to6Weeks.forEach(c => parts.push(`• ${c}`))
+  }
+
+  if (rec.decision) {
+    const decisionLabel = rec.decision.charAt(0).toUpperCase() + rec.decision.slice(1)
+    parts.push(``, `**Director decision:** ${decisionLabel}`)
+    if (rec.overrideReason) {
+      parts.push(`Override reason: ${rec.overrideReason.replace(/_/g, ' ')}`)
+    }
+    if (rec.directorNote) {
+      parts.push(`Director note: ${rec.directorNote}`)
+    }
+    if (rec.finalLevelName && rec.finalLevelName !== rec.recommendedLevelName) {
+      parts.push(`Final level: ${rec.finalLevelName} (different from DONNA recommendation)`)
+    }
+  } else {
+    parts.push(``, `**Status:** Pending director decision.`)
+    parts.push(`No placement is official until the director accepts or overrides this recommendation.`)
+  }
+
+  return parts.join('\n')
+}
+
 // ── Router ────────────────────────────────────────────────────────────────────
 
 /**
@@ -417,7 +494,9 @@ export function donnaBlueprintAnswer(
       return 'gatesTotal' in input
         ? donnaAnswerWhatIsBlockingLevelMovement(input as DevelopmentIntelligenceInput)
         : `Level gate data not available.`
+    case 'explain_placement_recommendation':
+      return `Placement recommendation explanation requires a PlacementRecommendationContextInput. Use donnaAnswerExplainPlacementRecommendation() directly.`
     default:
-      return `Blueprint question not recognised. Available topics: placement rationale, coach focus, strengths, development areas, parent summary, home practice, 30-day plan, mission status, reassessment readiness, level review readiness, improvement since last assessment, mission recommendations, level movement blockers.`
+      return `Blueprint question not recognised. Available topics: placement rationale, coach focus, strengths, development areas, parent summary, home practice, 30-day plan, mission status, reassessment readiness, level review readiness, improvement since last assessment, mission recommendations, level movement blockers, placement recommendation.`
   }
 }
