@@ -10,7 +10,7 @@ function computeInitialStep(
   if (isActive) return 6
   if (hasApprovedRec) return 6
   if (hasAssessment) return 4
-  return 3
+  return 1
 }
 
 function calcAge(dob: string | null): number | null {

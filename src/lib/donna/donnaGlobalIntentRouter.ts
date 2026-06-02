@@ -68,6 +68,7 @@ export type DonnaIntent =
   | 'go_to_approvals'
   | 'go_to_assessments'
   | 'assign_mission'
+  | 'add_player'
   // Freeform
   | 'freeform_question'
 
@@ -367,6 +368,22 @@ const INTENT_PATTERNS: IntentPattern[] = [
     patterns: [/draft\s+(a\s+)?parent/i, /parent\s+update\s+for/i],
     keywords: ['draft parent', 'parent update for'],
     requiredData: ['player_profile', 'parent_summary'],
+    requiresGlobalData: false,
+  },
+  // ── Add player ──────────────────────────────────────────────────────────────
+  {
+    intent: 'add_player',
+    category: 'navigation_action',
+    patterns: [
+      /add\s+(a\s+)?new\s+player/i,
+      /add\s+(a\s+)?player/i,
+      /create\s+(a\s+)?player/i,
+      /onboard\s+(a\s+)?player/i,
+      /new\s+student/i,
+      /register\s+(a\s+)?player/i,
+    ],
+    keywords: ['add player', 'new player', 'create player', 'onboard player', 'new student', 'add a player', 'add a new player'],
+    requiredData: ['none'],
     requiresGlobalData: false,
   },
 ]

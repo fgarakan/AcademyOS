@@ -135,6 +135,7 @@ function buildFollowUpQuestions(
     go_to_approvals:               [],
     go_to_assessments:             [],
     assign_mission:                [`What priority should this mission address?`],
+    add_player:                    [`What happens after I create the player?`, `How does the placement work?`],
     freeform_question:             [`Ask DONNA anything else`, `Show academy health`, `Open Approvals`],
   }
 
@@ -575,6 +576,10 @@ export async function donnaGlobalCommandAction(
 
     case 'go_to_assessments':
       answer = 'Opening the Assessments section.'
+      break
+
+    case 'add_player':
+      answer = "Let's add the player's basic information first. After that, I'll guide you through parent contact, assessment, placement, and activation."
       break
 
     default:

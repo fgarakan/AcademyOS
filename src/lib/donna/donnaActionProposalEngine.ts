@@ -160,6 +160,15 @@ const ACTIONS: Record<string, ProposedAction> = {
     description: 'Ask DONNA for a full explanation of this recommendation',
     requiresApproval: false,
   },
+  go_to_add_player: {
+    id: 'go_to_add_player',
+    label: 'Add New Player',
+    type: 'navigate',
+    risk: 'low',
+    href: '/director/players/new',
+    description: 'Open the Add New Player form',
+    requiresApproval: false,
+  },
 }
 
 // ── Intent → Actions mapping ──────────────────────────────────────────────────
@@ -198,6 +207,7 @@ const INTENT_ACTIONS: Record<string, string[]> = {
   go_to_approvals:               ['go_to_approvals'],
   go_to_assessments:             ['go_to_assessments'],
   assign_mission:                ['assign_mission'],
+  add_player:                    ['go_to_add_player'],
   freeform_question:             ['go_to_approvals', 'go_to_players'],
 }
 

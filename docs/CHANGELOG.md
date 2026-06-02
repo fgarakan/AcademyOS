@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-06-02 — Player Onboarding Workflow Certification V1
+
+**Created:**
+- `docs/qa/PLAYER_ONBOARDING_WORKFLOW_CERTIFICATION.md` — 14-item certification checklist with findings, fixes, architecture compliance notes, and known gaps
+
+**Modified:**
+- `src/lib/donna/donnaGlobalIntentRouter.ts` — Added `add_player` to `DonnaIntent` union + 6 intent patterns (add player, add a new player, create player, onboard player, new student, register player)
+- `src/lib/donna/donnaActionProposalEngine.ts` — Added `go_to_add_player` navigation action; wired `add_player` intent to it
+- `src/app/director/_actions/donnaGlobalCommandAction.ts` — Added `add_player` answer case + follow-up entry in exhaustive `Record<DonnaIntent, string[]>`
+- `src/app/director/players/new/page.tsx` — Added DONNA guidance banner with onboarding message
+- `src/app/director/players/[playerId]/onboard/page.tsx` — Fixed `computeInitialStep` to return `1` for brand-new players (was `3`, skipping Profile + Parent steps)
+
+**TypeScript:** clean
+
+---
+
 ## 2026-06-02 — Mega Sprint — Player Onboarding Stepper V1
 
 **Created:**
